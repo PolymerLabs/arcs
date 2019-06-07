@@ -220,11 +220,9 @@ class PECOuterPortImpl extends PECOuterPort {
             // resolution which will have already normalized the recipe.
             if ((missingHandles.length > 0) || recipe0.normalize(options)) {
               if (recipe0.isResolved()) {
-                // debugger;
-
                 // TODO: pass tags through too, and reconcile with similar logic
                 // in Arc.deserialize.
-                for (const store of manifest.stores) {  // .forEach(async store => {
+                for (const store of manifest.stores) {
                   if (store instanceof StorageStub) {
                     pec.arc._registerStore(await store.inflate(), []);
                   } else {

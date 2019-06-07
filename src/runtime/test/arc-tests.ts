@@ -519,7 +519,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
     }
-    Runtime.clearRuntimeForTesting();
+    // Runtime.clearRuntimeForTesting();
 
     const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as SingletonStorageProvider;
@@ -547,7 +547,7 @@ describe('Arc ' + storageKeyPrefix, () => {
   });
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
-    Runtime.clearRuntimeForTesting();
+    // Runtime.clearRuntimeForTesting();
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
@@ -564,7 +564,6 @@ describe('Arc ' + storageKeyPrefix, () => {
     `, {loader, fileName: ''});
 
     const recipe = manifest.recipes[0];
-console.log('>>>>', recipe.toString());
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
@@ -616,17 +615,17 @@ console.log('>>>>', recipe.toString());
 
         particle TestParticle in 'a.js'
           in Data var
-          // out [Data] col
-          // inout BigCollection<Data> big
+          out [Data] col
+          inout BigCollection<Data> big
 
         recipe
           use as handle0
-          // use as handle1
-          // use as handle2
+          use as handle1
+          use as handle2
           TestParticle
             var <- handle0
-            // col -> handle1
-            // big = handle2
+            col -> handle1
+            big = handle2
       `,
       'a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
@@ -639,70 +638,62 @@ console.log('>>>>', recipe.toString());
     const arc = new Arc({id, storageKey, loader, context: manifest});
 
     const varStore = await arc.createStore(dataClass.type, undefined, 'test:0') as SingletonStorageProvider;
-    // const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-    // const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), undefined, 'test:2') as BigCollectionStorageProvider;
+    const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), undefined, 'test:2') as BigCollectionStorageProvider;
 
     // TODO: Reference Mode: Deal With It (TM)
     varStore.referenceMode = false;
-    // colStore.referenceMode = false;
+    colStore.referenceMode = false;
 
     // Populate the stores, run the arc and get its serialization.
     // TODO: the serialization roundtrip re-generates keys using the entity ids; we should keep the actual keys
     await getSingletonHandle(varStore).set(new dataClass({value: 'v1'}));
-    // await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20}}, ['i2']);
-    // await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30}}, ['i3']);
-    // await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40}}, ['i4']);
-    // await bigStore.store({id: 'i5', rawData: {value: 'v5', size: 50}}, ['i5']);
+    await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20}}, ['i2']);
+    await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30}}, ['i3']);
+    await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40}}, ['i4']);
+    await bigStore.store({id: 'i5', rawData: {value: 'v5', size: 50}}, ['i5']);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(varStore);
-    // recipe.handles[1].mapToStorage(colStore);
-    // recipe.handles[2].mapToStorage(bigStore);
+    recipe.handles[1].mapToStorage(colStore);
+    recipe.handles[2].mapToStorage(bigStore);
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
     const serialization = await arc.serialize();
-    console.log('>>>>>>> ', serialization);
     arc.dispose();
 
     // Grab a snapshot of the current state from each store, then clear them.
     const varData = JSON.parse(JSON.stringify(await varStore.toLiteral()));
-    // const colData = JSON.parse(JSON.stringify(await colStore.toLiteral()));
-    // const bigData = JSON.parse(JSON.stringify(await bigStore.toLiteral()));
+    const colData = JSON.parse(JSON.stringify(await colStore.toLiteral()));
+    const bigData = JSON.parse(JSON.stringify(await bigStore.toLiteral()));
 
     await varStore.clear();
 
     // TODO better casting...
-    // colStore['clearItemsForTesting']();
-    // bigStore['clearItemsForTesting']();
+    colStore['clearItemsForTesting']();
+    bigStore['clearItemsForTesting']();
 
     // Deserialize into a new arc.
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
-    console.log('----------------', await arc2.serialize());
-    console.log('----------------');
     const varStore2 = arc2.findStoreById(varStore.id) as SingletonStorageProvider;
-    // const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
-    // const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
+    const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
+    const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
 
     // New storage providers should have been created.
     assert.notStrictEqual(varStore2, varStore);
-    // assert.notStrictEqual(colStore2, colStore);
-    // assert.notStrictEqual(bigStore2, bigStore);
+    assert.notStrictEqual(colStore2, colStore);
+    assert.notStrictEqual(bigStore2, bigStore);
 
     // The old ones should still be cleared.
     assert.isNull(await varStore.get());
-    // assert.isEmpty(await colStore.toList());
-    // assert.isEmpty((await bigStore.toLiteral()).model);
+    assert.isEmpty(await colStore.toList());
+    assert.isEmpty((await bigStore.toLiteral()).model);
 
     // The new ones should be populated from the serialized data.
-    console.log('=====================');
-    console.log('varData: ', JSON.stringify(varData));
-    console.log('=====================');
-    console.log('varStore2: ', JSON.stringify(await varStore2.toLiteral()));
-    console.log('=====================');
     assert.deepEqual(await varStore2.toLiteral(), varData);
-    // assert.deepEqual(await colStore2.toLiteral(), colData);
-    // assert.deepEqual(await bigStore2.toLiteral(), bigData);
+    assert.deepEqual(await colStore2.toLiteral(), colData);
+    assert.deepEqual(await bigStore2.toLiteral(), bigData);
   });
 
   it('serializes immediate value handles correctly', async () => {

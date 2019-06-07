@@ -51,17 +51,6 @@ export class ManifestError extends Error {
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
 // deflated rather than requiring this stub.
 export class StorageStub {
-  // type: Type;
-  // id: string;
-  // name: string;
-  // storageKey: string;
-  // storageProviderFactory: StorageProviderFactory;
-  // referenceMode = false;
-  // originalId: string;
-  // description: string;
-  // version: number;
-  // model: {}[];
-
   constructor(public readonly type: Type, 
               public readonly id: string,
               public readonly name: string,
@@ -74,81 +63,28 @@ export class StorageStub {
               public readonly version?: number,
               public readonly source?: string,
               public readonly referenceMode: boolean = false,
-              public readonly model?: {}[]) {
-    // this.type = type;
-    // this.id = id;
-    // this.name = name;
-    // this.storageKey = storageKey;
-    // this.storageProviderFactory = storageProviderFactory;
-    // this.originalId = originalId;
-    // this.description = description;
-    // this.version = version;
-    // this.model = model;
-    assert(this.source || this.storageKey);
-    // assert(!this.source || !this.storageKey);
-  }
+              public readonly model?: {}[]) {}
 
-  // get version(): number {
-  //   return undefined; // Fake to match StorageProviderBase.
-  // }
-
-  // get description(): string {
-  //   return undefined; // Fake to match StorageProviderBase;
-  // }
-
-  async inflate() { //storageKey?: string) {
-    // if (this.source) {
-    //   debugger;
-    // }
-    //const manifestId = '!manifest::';
+  async inflate() {
     assert(this.storageKey);
     let store: StorageProviderBase = null;
     if (this.source) {
-      // console.log('>>> try constructing: ', this.storageKey);
       store = await this.storageProviderFactory.construct(this.id, this.type, this.storageKey);
     }
     if (!store) {
-      // console.log('>>> try connecting: ', this.storageKey);
       store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
     }
-    // console.log('>>> try connecting: ', this.storageKey);
-    // let store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
-    // if (!store && this.source) {
-    //   console.log('>>> try constructing: ', this.storageKey);
-    //   store = await this.storageProviderFactory.construct(this.id, this.type, this.storageKey); 
-    // }
-    // const store = await (this.source//(this.version !== undefined && this.model)
-    //   ? await this.storageProviderFactory.construct(this.id, this.type, storageKey || this.storageKey) //`volatile://${manifestId}`)//this.storageKey)
-    //   : await this.storageProviderFactory.connect(this.id, this.type, this.storageKey));
     
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
     store.originalId = this.originalId;
-
-    ///
     store.referenceMode = this.referenceMode;
     store.name = this.name;
     store.source = this.source;
     store.description = this.description;
-    ///
     if (this.version !== undefined && this.model) {
       await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
     }
-
     return store;
-
-    // const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
-    // assert(store.version !== null);
-    // store.name = name;
-    // this.storeManifestUrls.set(store.id, this.fileName);
-    // return this._addStore(store, tags);
-
-    // const store = await manifest.createStore(type, name, id, tags);
-    // store.source = item.source;
-    // store.description = item.description;
-    // store.originalId = originalId;
-    // return store;
-    // // await store.fromLiteral({version, model});
-
   }
 
   toLiteral() {
@@ -1292,11 +1228,14 @@ ${e.message}
       unitType = type.bigCollectionType;
     } else {
       if (entities.length === 0) {
+<<<<<<< HEAD
       // if (entities.length === 0) {
       //   manifest.storeManifestUrls.set(id, manifest.fileName);
       //   const stub = manifest.newStorageStub(type, name, id, /*item.source*/storageKey, tags, originalId, claims, item.description, version, item.source);
       //   // await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
       //   return stub; // TODO: unify with the last return.
+=======
+>>>>>>> cleanup
         referenceMode = false;
       } else {
         entities = entities.slice(entities.length - 1);
@@ -1326,8 +1265,11 @@ ${e.message}
       }
     }
 
+<<<<<<< HEAD
     // const store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
 
+=======
+>>>>>>> cleanup
     // While the referenceMode hack exists, we need to look at the entities being stored to
     // determine whether this store should be in referenceMode or not.
     // TODO(shans): Eventually the actual type will need to be part of the determination too.
@@ -1338,7 +1280,6 @@ ${e.message}
       storageKey = manifest.findStoreByName(storageKey).storageKey;
       entities = entities.map(({id, rawData}) => ({id, storageKey}));
     } else if (entities.length > 0) {
-      //store.referenceMode = false;
       referenceMode = false;
     }
 
@@ -1356,36 +1297,21 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-    // await store.fromLiteral({version, model});
-    // const stub = manifest.newStorageStub(
-    //     type, name, id, /*item.source*/ storageKey, tags, originalId, item.description, version, item.source);
     const version = item.version || 0;
 
     // TODO: FIX HERE - there should be a method for creating this key!
     // debugger;
     const keyFragment = `volatile://${manifest.id}^^`;
-    const volatileKey = new VolatileKey(keyFragment); //.childKeyForHandle('');  //${manifest.id}`);
-    // volatileKey.arcId = undefined;
-    // if (!this['localIDBase']) this['localIDBase'] = 0;
-    volatileKey.location = 'volatile-' + //this['localIDBase']++; //0'; // + this.localIDBase++;
+    const volatileKey = new VolatileKey(keyFragment);
+    volatileKey.location = 'volatile-' +
         (manifest.storageProviderFactory._storageForKey(keyFragment) as VolatileStorage).localIDBase++;
-              //(manifest.storageProviderFactory._storageForKey(`volatile://${manifest.id}`) as VolatileStorage).localIDBase++;
     const storageKey = volatileKey.toString();
-    // const version = item.version || 0;
 
     const stub = manifest.newStorageStub(
-        type, name, id, /*item.source*/ storageKey /*null*/, tags, originalId, claims, item.description, version, item.source, referenceMode, model);
+        type, name, id, storageKey, tags, originalId, claims, item.description, version, item.source, referenceMode, model);
     manifest.storeManifestUrls.set(id, manifest.fileName);
     return stub;
   }
-
-  // private static async _createStore(manifest, type: Type, name: string, id: string, tags: string[], item, originalId: string) {
-  //   const store = await manifest.createStore(type, name, id, tags);
-  //   store.source = item.source;
-  //   store.description = item.description;
-  //   store.originalId = originalId;
-  //   return store;
-  // }
 
   private _newRecipe(name: string): Recipe {
     const recipe = new Recipe(name);

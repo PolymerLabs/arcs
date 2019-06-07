@@ -89,14 +89,11 @@ export class VolatileStorage extends StorageBase {
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<VolatileStorageProvider> {
-    // if (id.startsWith('!manifest:./src/runtime/test/artifacts/Demo/Browse.manifest')) {
-    //   debugger;
-    // }
-    // if (keyFragment === 'volatile://!manifest:./src/runtime/test/artifacts/Demo/Browse.manifest:^^volatile-1') {
-    //   debugger;
-    // }
     const provider = await this._construct(id, type, keyFragment);
     if (!provider) {
+      // NOTE: This happens with 'map'-ed stores, because speculative execution
+      // happens in parallel and volatile storage-stubs with the same
+      // storage-key are being inflates.
       return null;
     }
     if (type instanceof ReferenceType || type instanceof BigCollectionType) {
@@ -104,11 +101,6 @@ export class VolatileStorage extends StorageBase {
     }
     if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
       return provider;
-    }
-    if (!provider) {
-      debugger;
-      const debug = await this.connect(id, type, keyFragment);
-      console.log('???? no provider ', debug ? 'BUT CONNECTED' : 'and not connected');
     }
     provider.enableReferenceMode();
     return provider;
@@ -127,11 +119,8 @@ export class VolatileStorage extends StorageBase {
     // TODO(shanestephens): should pass in factory, not 'this' here.
     const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined) {
-      // console.log('>>>>> FOUND UNEXPECTED: ', key.toString());
-      // debugger; /// store already exists!
       return null;
     }
-    // console.log('>>>>> SETTING : ', key.toString());
     this._memoryMap[key.toString()] = provider;
     return provider;
   }

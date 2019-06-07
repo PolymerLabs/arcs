@@ -23,7 +23,6 @@ class TestSuggestionComposer extends SuggestionComposer {
   }
 }
 
-// TODO: UNSKIP
 describe('suggestion composer', () => {
   it('singleton suggestion slots', async () => {
     const slotComposer = new MockSlotComposer({

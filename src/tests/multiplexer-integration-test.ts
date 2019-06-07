@@ -30,7 +30,6 @@ describe('Multiplexer', () => {
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
-    // const postsStore = context.stores[0];
     const postsStore = (await (context.stores[0] as StorageStub).inflate()) as CollectionStorageProvider;
     helper.arc._registerStore(postsStore);
     const recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;

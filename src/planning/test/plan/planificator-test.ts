@@ -40,7 +40,7 @@ describe('planificator', () => {
   });
 });
 
-describe.skip('remote planificator', () => {
+describe('remote planificator', () => {
   const userid = 'test-user';
   // TODO: support arc storage key be in PouchDB as well.
   const storageKey = 'volatile://!123:demo^^abcdef';
