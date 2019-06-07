@@ -10,13 +10,20 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Manifest} from '../runtime/manifest.js';
+import {Runtime} from '../runtime/runtime.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
-import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 
 describe('Arc integration', () => {
   it('copies store tags', async () => {
-    const helper = await PlanningTestHelper.createAndPlan({
-      manifestString: `
+    const loader = new StubLoader({
+      'p.js': `defineParticle(({Particle}) => class P extends Particle {
+        async setHandles(handles) {
+        }
+      });`
+    });
+    const manifest = await Manifest.parse(`
       schema Thing
         Text name
       particle P in 'p.js'
@@ -31,23 +38,20 @@ describe('Arc integration', () => {
           {"name": "mything"}
         ]
       store ThingStore of Thing 'mything' #best in ThingResource
-      `,
-      loader: new StubLoader({
-        'p.js': `defineParticle(({Particle}) => class P extends Particle {
-          async setHandles(handles) {
-          }
-        });`
-      }),
-      expectedNumPlans: 1
-    });
+    `, loader);
 
-    assert.isEmpty(helper.arc.storesById);
-    assert.isEmpty(helper.arc.storeTags);
+    const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+    const arc = runtime.newArc('demo', 'volatile://');
+    assert.lengthOf(arc._stores, 0);
+    assert.isEmpty(arc.storeTags);
 
-    await helper.acceptSuggestion({particles: ['P']});
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    await arc.instantiate(recipe);
+    await arc.idle;
 
-    assert.equal(1, helper.arc.storesById.size);
-    assert.equal(1, helper.arc.storeTags.size);
-    assert.deepEqual(['best'], [...helper.arc.storeTags.get([...helper.arc.storesById.values()][0])]);
+    assert.lengthOf(arc._stores, 1);
+    assert.equal(1, arc.storeTags.size);
+    assert.deepEqual(['best'], [...arc.storeTags.get(arc._stores[0])]);
   });
 });
