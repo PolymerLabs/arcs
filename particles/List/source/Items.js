@@ -62,8 +62,8 @@ defineParticle(({DomParticle, html, log}) => {
       return Boolean(list);
     }
     getId(entity) {
-      // TODO(sjmiles): ensure we get the entity.id even if the rawData has it's own id,
-      // discuss with Runtime folks (either we disallow `id` collision or have a more obvious way to get this)
+      // TODO(sjmiles): ensure we get the entity.id even if the rawData has it's own id
+      // see https://github.com/PolymerLabs/arcs/issues/3147
       return Object.getOwnPropertyDescriptor(entity.__proto__.__proto__, 'id').get.apply(entity);
     }
     render({list, selected}) {
