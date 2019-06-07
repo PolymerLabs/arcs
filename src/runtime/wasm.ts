@@ -238,7 +238,7 @@ export class WasmParticle extends Particle {
   private memory: WebAssembly.Memory;
   private heapU8: Uint8Array;
   private heap32: Int32Array;
-  private wasm: WebAssembly.ResultObject;
+  private wasm: WebAssembly.Instance;
   // tslint:disable-next-line: no-any
   private exports: any;
 
@@ -305,21 +305,8 @@ export class WasmParticle extends Particle {
     };
     const global = {'NaN': NaN, 'Infinity': Infinity};
 
-    // The size of the function pointer table is specified by the wasm binary but there doesn't
-    // seem to be a simple way to get it, so we'll just extract it from the error :-/
-    try {
-      this.wasm = await WebAssembly.instantiate(buffer, {env, global});
-    } catch (err) {
-      const match = err.message.match(/table import .* initial ([0-9]+)/);
-      if (!match) {
-        throw err;
-      }
-      const n = Number(match[1]);
-      env.table = new WebAssembly.Table({initial: n, maximum: n, element: 'anyfunc'});
-      this.wasm = await WebAssembly.instantiate(buffer, {env, global});
-    }
-
-    this.exports = this.wasm.instance.exports;
+    this.wasm = await WebAssembly.instantiate(module, {env, global});
+    this.exports = this.wasm.exports;
     this.innerParticle = this.exports[`_new${this.spec.name}`]();
   }
 
