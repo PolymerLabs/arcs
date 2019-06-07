@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export const test = async bus => {
+export const smokeTest = async bus => {
   //
   const captureData = () => {
     // capture some data for later
