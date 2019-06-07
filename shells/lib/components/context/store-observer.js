@@ -14,7 +14,26 @@ import {forEachEntity, listenToStore} from './context-utils.js';
 // sanity check
 let observers = 0;
 
+// idle monitoring
+let idlePromise;
+let idleResolve;
+let idleTimeout;
+const idleDebounce = 500;
+
 export class StoreObserver {
+  static get idle() {
+    return idlePromise;
+  }
+  static working() {
+    clearTimeout(idleTimeout);
+    if (!idlePromise) {
+      idlePromise = new Promise(resolve => idleResolve = resolve);
+    }
+    idleTimeout = setTimeout(() => {
+      idleResolve();
+      idlePromise = null;
+    }, idleDebounce);
+  }
   constructor(store, listener, owner) {
     observers++;
     this.store = store;
@@ -51,6 +70,7 @@ export class StoreObserver {
     await forEachEntity(this.store, value => this.remove(value));
   }
   async onChange(change) {
+    StoreObserver.working();
     this.log('onChange', change);
     const {add, remove, data} = change;
     if (data) {
@@ -80,7 +100,6 @@ export const simulateInitialChanges = async (store, onchange) => {
     const data = await store.toList();
     const add = data.filter(value => Boolean(value)).map(value => ({value}));
     await onchange({add});
-    //data.forEach(value => value && onchange(value));
   } else {
     const data = await store.get();
     await onchange({data});
