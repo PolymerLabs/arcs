@@ -9,15 +9,14 @@
  */
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
-import {Service, Services} from '../runtime/services.js';
+import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
-
-// TODO(sjmiles): figure out a way to make the next two imports into one.
-
 // for types only, elided by TSC (make sure not to use Tf as a value!)
 import * as Tf from '@tensorflow/tfjs';
 // for actual code
 import {requireTf} from '../platform/tf-web.js';
+
+// TODO(sjmiles): figure out a way to make the next two imports into one.
 
 const log = logFactory('tfjs-service');
 
@@ -28,117 +27,95 @@ export interface ClassificationPrediction {
   probability: number;
 }
 
-abstract class TfModel implements Service {
 
-  public abstract async load({modelUrl, options}): Promise<Reference>;
+/**
+ * Load a graph model given a URL to the model definition.
+ *
+ * @param {Reference} modelUrl the url that loads the model.
+ * @param {Tf.io.LoadOptions} options Options for the HTTP request, which allows to send credentials
+ *  and custom headers.
+ * @return {Reference} A reference to the in-memory model.
+ */
+const loadGraphModel = async ({modelUrl, options}): Promise<Reference> => {
+  const tf = await requireTf();
 
-  /**
-   * Execute inference for the input tensors.
-   *
-   * @param {Reference} model An inference model
-   * @param {Reference} inputs The input tensor
-   * @param {tf.ModelPredictConfig} config Control verbosity and batchSize.
-   */
-  public async predict({model, inputs, config}): Promise<Reference> {
-    log('Referencing model and input...');
-    const model_  = rmgr.deref(model) as Tf.InferenceModel;
-    const inputs_ = rmgr.deref(inputs) as TfTensor;
-    log('Predicting...');
-    const yHat = await model_.predict(inputs_, config) as TfTensor;
-    log('Predicted.');
-    return rmgr.ref(yHat);
-  }
+  log('Loading model...');
+  const model = await tf.loadGraphModel(modelUrl, options);
 
-  /**
-   * Load the model weights eagerly, so subsequent calls to `predict` will be fast.
-   *
-   * @param {Reference} model An inference model
-   * @see https://www.tensorflow.org/js/guide/platform_environment#shader_compilation_texture_uploads
-   */
-  public async warmUp({model}): Promise<void> {
+  log('Model loaded.');
+  return rmgr.ref(model);
+};
 
-    log('Warming up model...');
-    const model_  = rmgr.deref(model) as Tf.InferenceModel;
+/**
+ * Load a layers model given a URL to the model definition.
+ *
+ * @param {Reference} modelUrl the url that loads the model.
+ * @param {Tf.io.LoadOptions} options Options for the HTTP request, which allows to send credentials
+ *  and custom headers.
+ * @return {Reference} A reference to the in-memory model.
+ */
+const loadLayersModel = async ({modelUrl, options}): Promise<Reference> => {
+  const tf = await requireTf();
 
-    const tf = await requireTf();
-    const zeros = model_.inputs
-      .map(i => i.shape ? i.shape : [])
-      .map((sh) => sh.map(x => Math.abs(x)))
-      .map((sh) => tf.zeros(sh || [1]));
+  log('Loading model...');
+  const model = await tf.loadLayersModel(modelUrl, options);
 
-    const zeroInput = zeros.length === 1 ? zeros[0] : zeros;
+  log('Model loaded.');
+  return rmgr.ref(model);
+};
 
-    const result = await model_.predict(zeroInput, {}) as Tf.Tensor;
-    result.dispose();
+/**
+ * Execute inference for the input tensors.
+ *
+ * @param {Reference} model An inference model
+ * @param {Reference} inputs The input tensor
+ * @param {Tf.ModelPredictConfig} config Control verbosity and batchSize.
+ */
+const predict = async ({model, inputs, config}): Promise<Reference> => {
+  log('Referencing model and input...');
+  const model_ = rmgr.deref(model) as Tf.InferenceModel;
+  const inputs_ = rmgr.deref(inputs) as TfTensor;
+  log('Predicting...');
+  const yHat = await model_.predict(inputs_, config) as TfTensor;
+  log('Predicted.');
+  return rmgr.ref(yHat);
+};
 
-    log('Model warm.');
-  }
+/**
+ * Load the model weights eagerly, so subsequent calls to `predict` will be fast.
+ *
+ * @param {Reference} model An inference model
+ * @see https://www.tensorflow.org/js/guide/platform_environment#shader_compilation_texture_uploads
+ */
+const warmUp = async ({model}): Promise<void> => {
 
-  /** Clean up resources */
-  public dispose({reference}): void {
-    rmgr.dispose(reference);
-  }
-}
+  log('Warming up model...');
+  const model_ = rmgr.deref(model) as Tf.InferenceModel;
 
+  const tf = await requireTf();
+  const zeros = model_.inputs
+    .map(i => i.shape ? i.shape : [])
+    .map((sh) => sh.map(x => Math.abs(x)))
+    .map((sh) => tf.zeros(sh || [1]));
 
-class GraphModel extends TfModel {
-  /**
-   * Load a graph model given a URL to the model definition.
-   *
-   * @param {Reference} modelUrl the url that loads the model.
-   * @param {tf.io.LoadOptions} options Options for the HTTP request, which allows to send credentials
-   *  and custom headers.
-   * @return {Reference} A reference to the in-memory model.
-   */
-  public async load({modelUrl, options}): Promise<Reference> {
-    const tf = await requireTf();
+  const zeroInput = zeros.length === 1 ? zeros[0] : zeros;
 
-    log('Loading model...');
-    const model = await tf.loadGraphModel(modelUrl, options);
+  const result = await model_.predict(zeroInput, {}) as Tf.Tensor;
+  result.dispose();
 
-    log('Model loaded.');
-    return rmgr.ref(model);
-  }
+  log('Model warm.');
+};
 
-  /**
-   * Properly clean up the resource used for the graph model.
-   *
-   * @param {Reference} reference to a graph model.
-   */
-  public dispose({reference}): void {
-    const model_ = rmgr.deref(reference) as Tf.GraphModel;
-    model_.dispose();
-    super.dispose(reference);
-  }
+/** Clean up resources */
+const dispose = ({reference}): void => rmgr.dispose(reference);
 
-}
-
-class LayersModel extends TfModel {
-  /**
-   * Load a layers model given a URL to the model definition.
-   *
-   * @param {Reference} modelUrl the url that loads the model.
-   * @param {tf.io.LoadOptions} options Options for the HTTP request, which allows to send credentials
-   *  and custom headers.
-   * @return {Reference} A reference to the in-memory model.
-   */
-  async load({modelUrl, options}): Promise<Reference> {
-    const tf = await requireTf();
-
-    log('Loading model...');
-    const model = await tf.loadLayersModel(modelUrl, options);
-
-    log('Model loaded.');
-    return rmgr.ref(model);
-  }
-}
 
 /**
  * Converts a URL of an image into a 3D tensor.
  *
  * @param {string} imageUrl image to convert
  * @return {Reference} The tf.Tensor3D representation of the image.
- * @see {tf.browser.fromPixels()}
+ * @see {Tf.browser.fromPixels()}
  */
 const imageToTensor = async ({imageUrl}): Promise<Reference> => {
   log('Converting image to tensor...');
@@ -159,7 +136,7 @@ const imageToTensor = async ({imageUrl}): Promise<Reference> => {
  * @param {[number, number]} range [hi, low] tuple. Default: [0, 255].
  * @return {Reference} A new tensor with values normalized.
  */
-const normalize = async ({input, range=[0, 255]}): Promise<Reference> => {
+const normalize = async ({input, range = [0, 255]}): Promise<Reference> => {
   log('Normalizing...');
   const input_ = rmgr.deref(input) as Tf.Tensor;
 
@@ -247,7 +224,7 @@ const resizeBilinear = async ({images, size, alignCorners}): Promise<Reference> 
  * @param {number} topK The total number of labels to return
  * @return {ClassificationPrediction[]} A list of predictions, complete with `className` and `probability`.
  */
-const getTopKClasses = async ({input, y, yHat, labels, topK=3}): Promise<ClassificationPrediction[]> => {
+const getTopKClasses = async ({input, y, yHat, labels, topK = 3}): Promise<ClassificationPrediction[]> => {
   log('Getting top K classes...');
   const input_ = rmgr.deref(input || y || yHat) as Tf.Tensor2D;
 
@@ -280,23 +257,17 @@ const getTopKClasses = async ({input, y, yHat, labels, topK=3}): Promise<Classif
   return topClassesAndProbs;
 };
 
-
-Services.register('graph-model', new GraphModel());
-Services.register('layer-model', new LayersModel());
-
-Services.register('preprocess', {
+Services.register('tf', {
+  loadLayersModel,
+  loadGraphModel,
+  warmUp,
+  predict,
+  dispose,
   normalize,
   reshape,
   expandDims,
-});
-
-Services.register('postprocess', {
   getTopKClasses,
-});
-
-Services.register('tf-image', {
   resizeBilinear,
   imageToTensor,
 });
-
 
