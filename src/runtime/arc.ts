@@ -392,11 +392,9 @@ ${this.activeRecipe.toString()}`;
       context,
       inspectorFactory
     });
-    await Promise.all(manifest.stores.map(async store => {
-      const tags = manifest.storeTags.get(store);
-      if (store instanceof StorageStub) {
-        store = await store.inflate();
-      }
+    await Promise.all(manifest.stores.map(async storeStub => {
+      const tags = manifest.storeTags.get(storeStub);
+      const store = await storeStub.inflate();
       arc._registerStore(store, tags);
     }));
     const recipe = manifest.activeRecipe.clone();
@@ -569,7 +567,7 @@ ${this.activeRecipe.toString()}`;
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
-          this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
+          this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef as StorageStub));
           const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
@@ -762,11 +760,11 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  findStoreTags(store: StorageProviderBase): Set<string> {
-    if (this.storeTags.has(store)) {
-      return this.storeTags.get(store);
+  findStoreTags(store: StorageProviderBase | StorageStub): Set<string> {
+    if (this.storeTags.has(store as StorageProviderBase)) {
+      return this.storeTags.get(store as StorageProviderBase);
     }
-    return this._context.findStoreTags(store);
+    return this._context.findStoreTags(store as StorageStub);
   }
 
   getStoreDescription(store: StorageProviderBase): string {
