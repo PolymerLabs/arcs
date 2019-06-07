@@ -11,12 +11,12 @@ import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
+// TODO(sjmiles): figure out a way to make the next two imports into one.
 // for types only, elided by TSC (make sure not to use Tf as a value!)
 import * as Tf from '@tensorflow/tfjs';
 // for actual code
 import {requireTf} from '../platform/tf-web.js';
 
-// TODO(sjmiles): figure out a way to make the next two imports into one.
 
 const log = logFactory('tfjs-service');
 
