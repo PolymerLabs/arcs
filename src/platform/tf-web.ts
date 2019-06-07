@@ -14,7 +14,6 @@ const TF_VERSION = '1.1.2';
 
 /** Dynamically loads and returns the `tfjs` module. */
 export const requireTf = async () => {
-  // Assume tf.data is not required for most dependencies
   if (!window['tf']) {
     await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js`);
   }
