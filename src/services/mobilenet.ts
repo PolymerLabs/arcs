@@ -7,15 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {dynamicScript} from '../platform/dynamic-script-web.js';
 
-import {dynamicScript} from './dynamic-script-web.js';
+const modelUrl = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0';
 
-const TF_VERSION = '1.1.2';
-
-/** Dynamically loads and returns the `tfjs` module. */
-export const requireTf = async () => {
-  if (!window['tf']) {
-    await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js`);
+export const requireMobilenet = async () => {
+  if (!window['mobilenet']) {
+    await dynamicScript(modelUrl);
   }
-  return window['tf'];
+  return window['mobilenet'];
 };

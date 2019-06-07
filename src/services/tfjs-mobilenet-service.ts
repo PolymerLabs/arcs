@@ -8,17 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {dynamicScript} from '../platform/dynamic-script-web.js';
 import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
+import {ClassificationPrediction} from './tfjs-service.js';
+import {requireMobilenet} from './mobilenet.js';
+
+// TODO(sjmiles): figure out a way to make the next two imports into one
+
+// for types only, elided by TSC (make sure not to use Tf as a value!)
+import * as Tf from '@tensorflow/tfjs';
+// for actual code
 import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-mobilenet-service');
-
-const modelUrl = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0';
-
 
 /**
  * A tuple that determines the type and structure of MobileNet
@@ -34,17 +38,12 @@ interface MobilenetParams {
 }
 
 /** @see https://github.com/tensorflow/tfjs-models/tree/master/mobilenet#making-a-classification */
-type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement; // | tf.Tensor3D;
+type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | Tf.Tensor3D;
 
 interface ImageInferenceParams {
   model: Reference;
   image?: MobilenetImageInput;
   imageUrl?: string;
-}
-
-interface ClassificationPrediction {
-  className: string;
-  probability: number;
 }
 
 interface Classifier {
@@ -75,11 +74,12 @@ interface MobilenetEmbedding extends MobilenetParams {
  */
 const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Reference> => {
   log('Loading tfjs...');
-  const tf = await requireTf();
+  await requireTf();
   log('Loading MobileNet...');
-  await dynamicScript(modelUrl);
-  const model = await window['mobilenet'].load(version, alpha);
-  log('MobileNet Loaded.');
+  const mobilenet = await requireMobilenet();
+  log('Loading model...');
+  const model = await mobilenet.load(version, alpha);
+  log('Model loaded.');
   model.version = version;
   model.alpha = alpha;
   return ResourceManager.ref(model);
@@ -95,21 +95,14 @@ const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Refere
  * @return A list (or single item) of `ClassificationPrediction`s, which are "label, confidence" tuples.
  */
 const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams & {topK: number}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
-  log('Loading tfjs...');
-  const tf = await requireTf();
-
   const model_: Classifier = ResourceManager.deref(model) as Classifier;
-
   const img = await getImage(image, imageUrl);
-
   log('classifying...');
   const predictions = await model_.classify(img, topK);
   log('classified.');
-
   if (topK === 1) {
     return predictions.shift();
   }
-
   return predictions;
 };
 
@@ -123,9 +116,6 @@ const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams
  * @see MobilenetEmbedding
  */
 const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams): Promise<MobilenetEmbedding> => {
-  log('Loading tfjs...');
-  const tf = await requireTf();
-
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
   const img = await getImage(image, imageUrl);
 
@@ -135,7 +125,6 @@ const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams)
 
   return {version: model_.version, alpha: model_.alpha, feature: inference};
 };
-
 
 /** Clean up model resources. */
 const dispose = ({reference}) => ResourceManager.dispose(reference);
