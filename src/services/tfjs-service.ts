@@ -10,13 +10,18 @@
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Service, Services} from '../runtime/services.js';
-import {requireTf} from '../platform/tf-web.js';
 import {loadImage} from '../platform/image-web.js';
-import {tf} from '../platform/tf-web.js';
+
+// TODO(sjmiles): figure out a way to make the next two imports into one.
+
+// for types only, elided by TSC (make sure not to use Tf as a value!)
+import * as Tf from '@tensorflow/tfjs';
+// for actual code
+import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
 
-type TfTensor = tf.Tensor | tf.Tensor[] | tf.NamedTensorMap;
+type TfTensor = Tf.Tensor | Tf.Tensor[] | Tf.NamedTensorMap;
 
 export interface ClassificationPrediction {
   className: string;
@@ -35,15 +40,11 @@ abstract class TfModel implements Service {
    * @param {tf.ModelPredictConfig} config Control verbosity and batchSize.
    */
   public async predict({model, inputs, config}): Promise<Reference> {
-    const tf = await requireTf();
-
     log('Referencing model and input...');
-    const model_  = rmgr.deref(model) as tf.InferenceModel;
+    const model_  = rmgr.deref(model) as Tf.InferenceModel;
     const inputs_ = rmgr.deref(inputs) as TfTensor;
-
     log('Predicting...');
     const yHat = await model_.predict(inputs_, config) as TfTensor;
-
     log('Predicted.');
     return rmgr.ref(yHat);
   }
@@ -55,11 +56,11 @@ abstract class TfModel implements Service {
    * @see https://www.tensorflow.org/js/guide/platform_environment#shader_compilation_texture_uploads
    */
   public async warmUp({model}): Promise<void> {
-    const tf = await requireTf();
 
     log('Warming up model...');
-    const model_  = rmgr.deref(model) as tf.InferenceModel;
+    const model_  = rmgr.deref(model) as Tf.InferenceModel;
 
+    const tf = await requireTf();
     const zeros = model_.inputs
       .map(i => i.shape ? i.shape : [])
       .map((sh) => sh.map(x => Math.abs(x)))
@@ -67,7 +68,7 @@ abstract class TfModel implements Service {
 
     const zeroInput = zeros.length === 1 ? zeros[0] : zeros;
 
-    const result = await model_.predict(zeroInput, {}) as tf.Tensor;
+    const result = await model_.predict(zeroInput, {}) as Tf.Tensor;
     result.dispose();
 
     log('Model warm.');
@@ -105,7 +106,7 @@ class GraphModel extends TfModel {
    * @param {Reference} reference to a graph model.
    */
   public dispose({reference}): void {
-    const model_ = rmgr.deref(reference) as tf.GraphModel;
+    const model_ = rmgr.deref(reference) as Tf.GraphModel;
     model_.dispose();
     super.dispose(reference);
   }
@@ -140,11 +141,11 @@ class LayersModel extends TfModel {
  * @see {tf.browser.fromPixels()}
  */
 const imageToTensor = async ({imageUrl}): Promise<Reference> => {
-  const tf = await requireTf();
-
   log('Converting image to tensor...');
   const imgElem = await loadImage(imageUrl);
-  const imgTensor = await tf.browser.fromPixels(imgElem, 3) as tf.Tensor3D;
+
+  const tf = await requireTf();
+  const imgTensor = await tf.browser.fromPixels(imgElem, 3) as Tf.Tensor3D;
 
   log('Image converted.');
   return rmgr.ref(imgTensor);
@@ -159,20 +160,19 @@ const imageToTensor = async ({imageUrl}): Promise<Reference> => {
  * @return {Reference} A new tensor with values normalized.
  */
 const normalize = async ({input, range=[0, 255]}): Promise<Reference> => {
-  const tf = await requireTf();
-
   log('Normalizing...');
-  const input_ = rmgr.deref(input) as tf.Tensor;
+  const input_ = rmgr.deref(input) as Tf.Tensor;
 
   const max_ = Math.max(...range);
   const min_ = Math.min(...range);
   const mid = (max_ - min_) / 2 + min_;
 
+  const tf = await requireTf();
   const normOffset = tf.scalar(mid);
 
   const normalized = input_.toFloat()
     .sub(normOffset)
-    .div(normOffset) as tf.Tensor3D;
+    .div(normOffset) as Tf.Tensor3D;
 
   log('Normalized.');
   return rmgr.ref(normalized);
@@ -187,10 +187,10 @@ const normalize = async ({input, range=[0, 255]}): Promise<Reference> => {
  * @return {Reference} The reshaped tensor.
  */
 const reshape = async ({input, newShape, shape}): Promise<Reference> => {
-  const tf = await requireTf();
+  const input_ = rmgr.deref(input);
 
   log('Reshaping...');
-  const input_ = rmgr.deref(input);
+  const tf = await requireTf();
   const resized = await tf.reshape(input_, newShape || shape);
 
   log('Reshaped.');
@@ -249,7 +249,7 @@ const resizeBilinear = async ({images, size, alignCorners}): Promise<Reference> 
  */
 const getTopKClasses = async ({input, y, yHat, labels, topK=3}): Promise<ClassificationPrediction[]> => {
   log('Getting top K classes...');
-  const input_ = rmgr.deref(input || y || yHat) as tf.Tensor2D;
+  const input_ = rmgr.deref(input || y || yHat) as Tf.Tensor2D;
 
   const softmax = input_.softmax();
   const values = await softmax.data();
