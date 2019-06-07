@@ -13,20 +13,20 @@ store DataStore of Data in DataResource
 
 
 schema Info
-  Text for
+  Text str
   Number val
 
 resource InfoResource
   start
   [
-    {"for": "xx", "val": -5.8},
+    {"str": "xx", "val": -5.8},
     {"val": 107},
-    {"for": "yy"}
+    {"str": "yy"}
   ]
 store InfoStore of [Info] in InfoResource
 
 
-particle TestParticle in 'cpp/output.wasm'
+particle TestParticle in 'output.wasm'
   consume root
   in Data data
   out Data res
