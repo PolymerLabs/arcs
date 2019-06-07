@@ -2,7 +2,9 @@
 # target
 mkdir dist
 # sources
-cp -fR source/serve.sh dist/
+cp -fR source/index.html dist/
+# worker build
+cp -fR ../../../lib/build/worker.js dist/
 # particles
 mkdir dist/particles
 #
