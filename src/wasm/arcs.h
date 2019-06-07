@@ -1,6 +1,7 @@
 #ifndef _ARCS_H
 #define _ARCS_H
 
+#include <emscripten.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -15,8 +16,8 @@ class Handle;
 
 namespace internal {
 
-// Logging: console() and error() use printf-style formatting.
-// File and line info is added automatically.
+// --- Logging and error handling ---
+// console() and error() use printf-style formatting. File and line info is added automatically.
 EM_JS(void, setLogInfo, (const char* file, int line), {})
 
 #define console(...) do {                           \
@@ -28,6 +29,80 @@ EM_JS(void, setLogInfo, (const char* file, int line), {})
     arcs::internal::setLogInfo(__FILE__, __LINE__); \
     fprintf(stderr, __VA_ARGS__);                   \
   } while (0)
+
+
+// Wrap various extern functions that trigger errors with a single call point.
+EM_JS(void, systemError, (const char* msg), {})
+
+extern "C" {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-noreturn"
+
+EMSCRIPTEN_KEEPALIVE
+void exit(int status) {
+  std::string msg = "exit(" + std::to_string(status) +")";
+  systemError(msg.c_str());
+}
+
+EMSCRIPTEN_KEEPALIVE
+void abort() {
+  systemError("abort");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void llvm_trap() {
+  systemError("llvm_trap");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __cxa_pure_virtual() {
+  systemError("__cxa_pure_virtual");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __setErrNo(int value) {
+  std::string msg = "__setErrNo(" + std::to_string(value) +")";
+  systemError(msg.c_str());
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __assert_fail(const char* condition, const char* filename, int line, const char* func) {
+  std::string msg = std::string("Assertion failed: '") + condition  + "' at " + filename +
+                    ":" + std::to_string(line) + ", function '" + func + "'";
+  systemError(msg.c_str());
+}
+
+EMSCRIPTEN_KEEPALIVE
+void* __cxa_allocate_exception(size_t size) {
+  return malloc(size);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __cxa_free_exception(void* ptr) {
+  free(ptr);
+}
+
+// No idea how to get at the exception contents (including any error message included).
+// Even emscripten doesn't seem to implement this in a useful way.
+EMSCRIPTEN_KEEPALIVE
+void __cxa_throw(void* thrown_exception, std::type_info* info, void (*dtor)(void*)) {
+  std::string msg = std::string("Exception: ") + info->name();
+  systemError(msg.c_str());
+}
+
+// Not sure what to do with this...
+EMSCRIPTEN_KEEPALIVE
+bool __cxa_uncaught_exception() {
+  return false;
+}
+
+// System calls "needed" for printf support.
+EMSCRIPTEN_KEEPALIVE int __syscall140(int, int) { return 0; }  // sys_lseek
+EMSCRIPTEN_KEEPALIVE int __syscall6(int, int) { return 0; }    // sys_close
+EMSCRIPTEN_KEEPALIVE int __syscall54(int, int) { return 0; }   // sys_ioctl
+
+#pragma clang diagnostic pop
+}
 
 
 // --- Packaging classes ---
@@ -43,7 +118,6 @@ std::string num_to_str(double num) {
   s.erase((s[i] == '.') ? i : i + 1);
   return s;
 }
-
 
 // TODO: error handling
 class StringDecoder {
@@ -114,7 +188,6 @@ void StringDecoder::decode(bool& flag) {
   flag = (chomp(1)[0] == '1');
 }
 
-
 class StringEncoder {
 public:
   StringEncoder() = default;
@@ -154,7 +227,6 @@ template<>
 void StringEncoder::encode(const char* prefix, const bool& flag) {
   str_ += prefix + std::to_string(flag) + "|";
 }
-
 
 // --- Utilities ---
 
@@ -257,7 +329,6 @@ private:
   std::string name_ = nullptr;
 };
 
-
 template<typename T>
 class Singleton : public Handle {
 public:
@@ -287,7 +358,6 @@ public:
 private:
   T entity_;
 };
-
 
 // Minimal iterator for Collections; allows iterating directly over const T& values.
 template<typename T>
