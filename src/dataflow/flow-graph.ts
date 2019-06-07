@@ -26,7 +26,9 @@ export class FlowGraph {
   readonly particleMap: Map<string, ParticleNode>;
 
   constructor(recipe: Recipe) {
-    assert(recipe.isResolved(), 'Recipe must be resolved.');
+    if (!recipe.isResolved()) {
+      throw new Error('Recipe must be resolved.');
+    }
 
     // Create the nodes of the graph.
     const particleNodes = createParticleNodes(recipe.particles);
@@ -123,6 +125,10 @@ export class BackwardsPath {
   private constructor(
       /** Nodes in the path. */
       readonly nodes: readonly Node[],
+      /**
+       * Optional open edge at the end of the path. If the path is closed, this will be null, and the end of the path is given by the last node
+       * in the nodes list.
+       */
       readonly openEdge: Edge|null = null) {}
 
   /** Constructs a new path from the given edge with an open end. */
@@ -145,7 +151,10 @@ export class BackwardsPath {
 
     assert(!this.openEdge, 'Path already ends with an open edge.');
     assert(startNode === this.end, 'Edge must connect to end of path.');
-    assert(!this.nodes.includes(endNode), 'Path must not include cycles.');
+
+    if (this.nodes.includes(endNode)) {
+      throw new Error('Graph must not include cycles.');
+    }
 
     return new BackwardsPath(this.nodes, edge);
   }

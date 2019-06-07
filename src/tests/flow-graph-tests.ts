@@ -362,7 +362,7 @@ describe('BackwardsPath', () => {
 
   it('forbids cycles', () => {
     const path = BackwardsPath.newPathWithClosedEdge(edgeBToC).withNewClosedEdge(edgeAToB);
-    assert.throws(() => path.withNewOpenEdge(edgeCToA), 'Path must not include cycles');
+    assert.throws(() => path.withNewOpenEdge(edgeCToA), 'Graph must not include cycles');
   });
 
   it('only allows adding to the end of the path', () => {
