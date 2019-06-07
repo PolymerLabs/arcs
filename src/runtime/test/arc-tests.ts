@@ -519,7 +519,6 @@ describe('Arc ' + storageKeyPrefix, () => {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
     }
-    // Runtime.clearRuntimeForTesting();
 
     const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as SingletonStorageProvider;
@@ -547,7 +546,6 @@ describe('Arc ' + storageKeyPrefix, () => {
   });
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
-    // Runtime.clearRuntimeForTesting();
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
@@ -564,6 +562,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     `, {loader, fileName: ''});
 
     const recipe = manifest.recipes[0];
+
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;

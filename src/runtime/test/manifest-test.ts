@@ -12,7 +12,7 @@ import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
-import {Manifest, StorageStub} from '../manifest.js';
+import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
@@ -1011,8 +1011,7 @@ ${particleStr1}
       'entities.json': entitySource,
     });
     const manifest = await Manifest.load('the.manifest', loader);
-    // TODO: No need to convert to StorageStub, should ONLY return StorageStubs!
-    const storageStub = manifest.findStoreByName('Store0') as StorageStub;
+    const storageStub = manifest.findStoreByName('Store0');
     assert(storageStub);
     const store = await storageStub.inflate() as CollectionStorageProvider;
     assert(store);
@@ -1059,7 +1058,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    const store = (await (manifest.findStoreByName('Store0') as StorageStub).inflate()) as CollectionStorageProvider;
+    const store = (await manifest.findStoreByName('Store0').inflate()) as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;

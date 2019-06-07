@@ -15,6 +15,7 @@ import {Id} from '../id.js';
 import {Type} from '../type.js';
 import {KeyBase} from './key-base.js';
 import {Dictionary} from '../hot.js';
+import {Mutex} from '../mutex.js';
 
 // TODO(sjmiles): StorageProviderFactory.register can be used
 // to install additional providers, as long as it's invoked
@@ -31,6 +32,8 @@ export class StorageProviderFactory {
   }
 
   private _storageInstances: Dictionary<{storage: StorageBase, isPersistent: boolean}>;
+
+  private readonly mutexMap: Map<string, Mutex> = new Map<string, Mutex>();
 
   constructor(private readonly arcId: Id) {
     this._storageInstances = {};
@@ -69,13 +72,25 @@ export class StorageProviderFactory {
     return await this._storageForKey(key).connect(id, type, key);
   }
 
+  private async _acquireMutexForKey(key: string) {
+    if (!this.mutexMap.has(key)) {
+      this.mutexMap.set(key, new Mutex());
+    }
+    return this.mutexMap.get(key).acquire();
+  }
+
   async connectOrConstruct(id: string, type: Type, key: string) : Promise<StorageProviderBase> {
     const storage = this._storageForKey(key);
-    let result = await storage.connect(id, type, key);
-    if (result == null) {
-      result = await storage.construct(id, type, key);
+    const release = await this._acquireMutexForKey(key);
+    try {
+      let result = await storage.connect(id, type, key);
+      if (result == null) {
+        result = await storage.construct(id, type, key);
+      }
+      return result;
+    } finally {
+      release();
     }
-    return result;
   }
 
   async baseStorageFor(type: Type, keyString: string) : Promise<StorageProviderBase> {

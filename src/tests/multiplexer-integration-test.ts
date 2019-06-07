@@ -17,7 +17,6 @@ import {CollectionStorageProvider} from '../runtime/storage/storage-provider-bas
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
 import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
-import {StorageStub} from '../runtime/manifest.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
@@ -30,7 +29,7 @@ describe('Multiplexer', () => {
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
-    const postsStore = (await (context.stores[0] as StorageStub).inflate()) as CollectionStorageProvider;
+    const postsStore = (await context.stores[0].inflate()) as CollectionStorageProvider;
     helper.arc._registerStore(postsStore);
     const recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;
     const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowTwo\n    post <- v1\n    consume item as s1`;

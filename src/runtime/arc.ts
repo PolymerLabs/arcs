@@ -33,7 +33,6 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
-import {VolatileStorage, VolatileKey} from './storage/volatile-storage.js';
 
 export type ArcOptions = Readonly<{
   id: Id;

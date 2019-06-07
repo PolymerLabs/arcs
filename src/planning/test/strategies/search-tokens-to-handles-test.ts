@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../runtime/loader.js';
-import {Manifest, StorageStub} from '../../../runtime/manifest.js';
+import {Manifest} from '../../../runtime/manifest.js';
 import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
 
 import {StrategyTestHelper} from './strategy-test-helper.js';
@@ -35,7 +35,7 @@ describe('SearchTokensToHandles', () => {
     `));
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    arc._registerStore((await (arc.context.stores[0] as StorageStub).inflate()) as StorageProviderBase, ['mything']);
+    arc._registerStore((await arc.context.stores[0].inflate()) as StorageProviderBase, ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

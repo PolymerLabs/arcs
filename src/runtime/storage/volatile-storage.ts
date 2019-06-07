@@ -24,7 +24,7 @@ export function resetVolatileStorageForTesting() {
   }
 }
 
-export class VolatileKey extends KeyBase {
+class VolatileKey extends KeyBase {
   _arcId: string;
 
   constructor(key: string) {
@@ -90,12 +90,6 @@ export class VolatileStorage extends StorageBase {
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<VolatileStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
-    if (!provider) {
-      // NOTE: This happens with 'map'-ed stores, because speculative execution
-      // happens in parallel and volatile storage-stubs with the same
-      // storage-key are being inflates.
-      return null;
-    }
     if (type instanceof ReferenceType || type instanceof BigCollectionType) {
       return provider;
     }
@@ -107,7 +101,17 @@ export class VolatileStorage extends StorageBase {
   }
 
   async _construct(id, type, keyFragment) {
-    ////// This should be a method!
+    const key = this.constructKey(keyFragment);
+    // TODO(shanestephens): should pass in factory, not 'this' here.
+    const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key);
+    if (this._memoryMap[key] !== undefined) {
+      return null;
+    }
+    this._memoryMap[key] = provider;
+    return provider;
+  }
+
+  constructKey(keyFragment: string): string {
     const key = new VolatileKey(keyFragment);
     if (key.arcId === undefined) {
       key.arcId = this.arcId.toString();
@@ -115,14 +119,7 @@ export class VolatileStorage extends StorageBase {
     if (key.location === undefined) {
       key.location = 'volatile-' + this.localIDBase++;
     }
-    //////
-    // TODO(shanestephens): should pass in factory, not 'this' here.
-    const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key.toString());
-    if (this._memoryMap[key.toString()] !== undefined) {
-      return null;
-    }
-    this._memoryMap[key.toString()] = provider;
-    return provider;
+    return key.toString();
   }
 
   async connect(id: string, type: Type, key: string) : Promise<VolatileStorageProvider> {

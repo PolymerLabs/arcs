@@ -37,7 +37,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
-import {VolatileStorageProvider, VolatileKey, VolatileStorage} from './storage/volatile-storage.js';
+import {VolatileStorageProvider, VolatileStorage} from './storage/volatile-storage.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -66,15 +66,7 @@ export class StorageStub {
               public readonly model?: {}[]) {}
 
   async inflate() {
-    assert(this.storageKey);
-    let store: StorageProviderBase = null;
-    if (this.source) {
-      store = await this.storageProviderFactory.construct(this.id, this.type, this.storageKey);
-    }
-    if (!store) {
-      store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
-    }
-    
+    const store = await this.storageProviderFactory.connectOrConstruct(this.id, this.type, this.storageKey);
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
     store.originalId = this.originalId;
     store.referenceMode = this.referenceMode;
@@ -1283,15 +1275,7 @@ ${e.message}
       model = entities.map(value => ({id: value.id, value}));
     }
     const version = item.version || 0;
-
-    // TODO: FIX HERE - there should be a method for creating this key!
-    // debugger;
-    const keyFragment = `volatile://${manifest.id}^^`;
-    const volatileKey = new VolatileKey(keyFragment);
-    volatileKey.location = 'volatile-' +
-        (manifest.storageProviderFactory._storageForKey(keyFragment) as VolatileStorage).localIDBase++;
-    const storageKey = volatileKey.toString();
-
+    const storageKey = (manifest.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
     return manifest.newStorageStub(
         type, name, id, storageKey, tags, originalId, claims, item.description, version, item.source, referenceMode, model);
   }
