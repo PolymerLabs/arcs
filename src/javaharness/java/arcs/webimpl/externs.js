@@ -1,4 +1,6 @@
-
+/**
+ * @fileoverview Externs provided by Pipes-Shell.
+ */
 /** @constructor */
 var ShellApi = function() {};
 
