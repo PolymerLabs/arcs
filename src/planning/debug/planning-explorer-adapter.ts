@@ -10,10 +10,13 @@
 import {DevtoolsConnection} from '../../devtools-connector/devtools-connection.js';
 import {Trigger} from '../plan/plan-producer.js';
 import {Planificator} from '../plan/planificator.js';
-import {Suggestion} from '../plan/suggestion';
+import {PlanningResult} from '../plan/planning-result.js';
+import {Suggestion} from '../plan/suggestion.js';
+import {VisibilityOptions} from '../plan/plan-consumer.js';
+import {ArcDevtoolsChannel} from '../../devtools-connector/abstract-devtools-channel.js';
 
  export class PlanningExplorerAdapter {
-  static updatePlanningResults(result, metadata, devtoolsChannel) {
+  static updatePlanningResults(result: PlanningResult, metadata, devtoolsChannel: ArcDevtoolsChannel) {
     if (devtoolsChannel) {
       devtoolsChannel.send({
         messageType: 'suggestions-changed',
@@ -25,18 +28,23 @@ import {Suggestion} from '../plan/suggestion';
       });
     }
   }
-  static updateVisibleSuggestions(visibleSuggestions, devtoolsChannel) {
+  static updateVisibleSuggestions(visibleSuggestions: Suggestion[],
+                                  options: VisibilityOptions,
+                                  devtoolsChannel: ArcDevtoolsChannel) {
     if (devtoolsChannel) {
       devtoolsChannel.send({
         messageType: 'visible-suggestions-changed',
         messageBody: {
-          visibleSuggestionHashes: visibleSuggestions.map(s => s.hash)
+          visibleSuggestionHashes: visibleSuggestions.map(s => s.hash),
+          visibilityReasons: options ? [...options.reasons.entries()].map(e => ({hash: e[0], ...e[1]})) : undefined
         }
       });
     }
   }
 
-  static updatePlanningAttempt(suggestions: Suggestion[], metadata: {}, devtoolsChannel) {
+  static updatePlanningAttempt(suggestions: Suggestion[],
+                               metadata: {},
+                               devtoolsChannel: ArcDevtoolsChannel) {
     if (devtoolsChannel) {
       devtoolsChannel.send({
         messageType: 'planning-attempt',

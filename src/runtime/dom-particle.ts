@@ -148,7 +148,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   }
 
   async onHandleUpdate({name}: Handle, {data, added, removed}): Promise<void> {
-    if (data) {
+    if (data !== undefined) {
       //console.log('update.data:', JSON.stringify(data, null, '  '));
       this._setProps({[name]: data});
     }

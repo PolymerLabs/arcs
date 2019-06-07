@@ -47,7 +47,6 @@ defineParticle(({DomParticle}) => {
         `${photoService}?maxwidth=400&photoreference=${p.photos[0].photo_reference}`
         : p.icon;
       return {
-        id: p.id,
         reference: p.reference,
         name: p.name,
         icon: p.icon,

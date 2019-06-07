@@ -187,20 +187,28 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
           this.lastPlanning = {
             updated: msg.messageBody.lastUpdated,
             formattedUpdated: formatTime(msg.messageBody.lastUpdated, 3),
-            suggestions: msg.messageBody.suggestions.map(s => Object.assign(s, {
-              particleNames: this._planParticleNamesToString(s),
-              descriptionText: this._formatDescriptionText(s.descriptionByModality.text),
-              isVisible: s.isVisible
-            })),
+            suggestions: msg.messageBody.suggestions.map(s => {
+              const last = this.lastPlanning.suggestions.find(ls => ls.hash === s.hash);
+              return Object.assign(s, {
+                particleNames: this._planParticleNamesToString(s),
+                descriptionText: this._formatDescriptionText(s.descriptionByModality.text),
+                isVisible: last ? last.isVisible : false,
+                visibilityReasons: last ? last.visibilityReasons : ''
+              });
+            }),
             metadata: msg.messageBody.metadata || {}
           };
           break;
         case 'visible-suggestions-changed':
           for (const index in this.lastPlanning.suggestions) {
+            const currentHash = this.lastPlanning.suggestions[index].hash;
             this.set(`lastPlanning.suggestions.${index}.isVisible`,
-                msg.messageBody.visibleSuggestionHashes.some(
-                    hash => hash === this.lastPlanning.suggestions[index].hash));
+                msg.messageBody.visibleSuggestionHashes.some(hash => hash === currentHash));
+            const visibility = msg.messageBody.visibilityReasons.find(v => v.hash === currentHash);
+            this.set(`lastPlanning.suggestions.${index}.visibilityReasons`,
+                visibility ? visibility.reasons.join('; ') : '');
           }
+          this.lastPlanning = Object.assign({}, this.lastPlanning);
           break;
         case 'planning-attempt': {
           const updated = new Date().getTime();
@@ -226,6 +234,9 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
   }
 
   _formatDescriptionText(text) {
+    if (!text) {
+      return `n/a`;
+    }
     if (text.length <= 30) {
       return text;
     }
