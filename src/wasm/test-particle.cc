@@ -11,8 +11,8 @@ public:
     registerHandle("info", info_);
   }
 
-  void onHandleSync(arcs::Handle* handle) override {
-    if (to_sync_ && handle->name() != "res" && --to_sync_ == 0) {
+  void onHandleSync(arcs::Handle* handle, bool allSynced) override {
+    if (allSynced) {
       requestRender("root");
     }
   }
@@ -43,7 +43,7 @@ public:
     } else if (handler == "remove") {
       auto it = info_.begin();
       if (it != info_.end()) {
-        info_.remove(*it->second);
+        info_.remove(*it);
       }
     } else if (handler == "cclear") {
       info_.clear();
@@ -53,14 +53,14 @@ public:
 
   void requestRender(const std::string& slotName) override {
     std::string data_col = (updated_ == 1) ? "color: blue;" : "";
-    std::string data_str = arcs::entity_to_str(data_.get(), "<br>");
+    std::string data_str = arcs::entity_to_str(data_.get(), "\n");
 
     std::string info_col = (updated_ == 2) ? "color: blue;" : "";
-    std::string info_str;
-    if (info_.size() > 0) {
+    std::string info_str = "Size: " + std::to_string(info_.size()) + "\n";
+    if (!info_.empty()) {
       int i = 0;
-      for (auto it = info_.begin(); it != info_.end(); ++it) {
-        info_str += std::to_string(++i) + ". " + arcs::entity_to_str(*it->second, " | ") + "<br>";
+      for (const arcs::Info& info : info_) {
+        info_str += std::to_string(++i) + ". " + arcs::entity_to_str(info, " | ") + "\n";
       }
     } else {
       info_str = "<i>(empty)</i>";
@@ -106,7 +106,6 @@ public:
   arcs::Singleton<arcs::Data> data_;
   arcs::Singleton<arcs::Data> res_;
   arcs::Collection<arcs::Info> info_;
-  int to_sync_ = 2;  // TODO: automatic handling of this
   int updated_ = 0;
   int store_count_ = 0;
 };
