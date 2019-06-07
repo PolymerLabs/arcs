@@ -35,7 +35,7 @@ const suggestionsCallbackFactory = (arc, callback) => {
   return async suggestions => {
     // TODO(sjmiles): hack
     arc._pipe_suggestions = suggestions;
-    log('got suggestions', suggestions);
+    //log('got suggestions', suggestions);
     callback(suggestions);
   };
 };
