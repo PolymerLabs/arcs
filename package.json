@@ -85,8 +85,6 @@
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
-    "@bazel/bazel": "^0.26.0",
-    "@bazel/ibazel": "^0.10.3",
     "@tensorflow/tfjs-node": "^1.1.2",
     "assert": "^1.4.1",
     "ecstatic": "^3.2.1",
