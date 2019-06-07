@@ -21,7 +21,7 @@ defineParticle(({DomParticle, log}) => {
 
     async load(model) {
       const model_ = await this.service({
-        call: 'graph-model.load',
+        call: 'tf.loadGraphModel',
         modelUrl: model.location,
         options: model.options,
       });
@@ -31,7 +31,7 @@ defineParticle(({DomParticle, log}) => {
       this.updateSingleton(handleName, {ref: model_});
 
       try {
-        this.service({call: 'graph-model.warmUp', model_});
+        this.service({call: 'tf.warmUp', model_});
       } catch {
         log('Warm up failed');
       }

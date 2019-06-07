@@ -24,7 +24,7 @@ defineParticle(({DomParticle, log}) => {
     async convert(yHat, labels, topK) {
       log(`Converting tensor output to top ${topK} labels...`);
 
-      const predictions = await this.service({call: 'postprocess.getTopKClasses', yHat, labels, topk});
+      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topk});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
       log(results);
 
