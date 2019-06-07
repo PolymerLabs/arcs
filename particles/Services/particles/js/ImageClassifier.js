@@ -33,12 +33,6 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       return template_;
     }
 
-    update({}, state) {
-      // TODO(sjmiles): update() is called during SpecEx, while
-      // render() is not. We'll put our processing code in render()
-      // to avoid being expensive at SpecEx time.
-    }
-
     render({}, state) {
       // formerly update
       if (!state.loaded) {
