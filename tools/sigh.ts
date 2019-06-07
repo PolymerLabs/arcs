@@ -101,7 +101,7 @@ function* findProjectFiles(dir: string, exclude: RegExp|null, predicate: (path: 
     if (entry.startsWith('.') || (exclude && exclude.test(entry))) {
       continue;
     }
-    if (entry.indexOf('bazel-') != -1) {
+    if (entry.indexOf('bazel-') !== -1) {
       continue;
     }
 
