@@ -228,10 +228,6 @@ function readEmscriptenMetadata(module: WebAssembly.Module) {
 }
 
 
-function errFunc(label: string) {
-  return err => { throw new Error(label + ': ' + err); };
-}
-
 type WasmAddress = number;
 
 export class WasmParticle extends Particle {
@@ -248,6 +244,7 @@ export class WasmParticle extends Particle {
   private converters = new Map<Handle, EntityPackager>();
   private logInfo: [string, number] = null;
 
+  // TODO: errors in this call (e.g. missing import or failure in particle ctor) generate two console outputs
   async initialize(buffer: ArrayBuffer) {
     assert(this.spec.name.length > 0);
 
@@ -276,17 +273,15 @@ export class WasmParticle extends Particle {
       _emscripten_memcpy_big: (dst, src, num) => this.heapU8.set(this.heapU8.subarray(src, src + num), dst),
 
       // Error handling
-      abort: errFunc('abort'),
-      _abort: errFunc('_abort'),
-      ___assert_fail: errFunc('assert_fail'),
-      ___setErrNo: errFunc('setErrNo'),
-      abortOnCannotGrowMemory: errFunc('abortOnCannotGrowMemory'),
+      _systemError: msg => { throw new Error(this.read(msg)); },
 
-      ___cxa_allocate_exception: size => 0,  // TODO
-      ___cxa_throw: (ptr, type, dtor) => { throw new Error('cxa_throw: ' + [ptr, type, dtor]); },
-      ___cxa_uncaught_exception: errFunc('cxa_uncaught_exception'),
-      ___cxa_pure_virtual: errFunc('cxa_pure_virtual'),
-      _llvm_trap: errFunc('llvm_trap'),
+      // TODO: can't seem to embed these in the C++ code
+      abort: () => { throw new Error('abort'); },
+      abortOnCannotGrowMemory: size  => { throw new Error(`abortOnCannotGrowMemory(${size})`); },
+
+      // Logging
+      _setLogInfo: (file, line) => this.logInfo = [this.read(file), line],
+      ___syscall146: (which, varargs) => this.sysWritev(which, varargs),
 
       // Inner particle API
       _singletonSet: async (handle, encoded) => this.singletonSet(handle, encoded),
@@ -295,13 +290,6 @@ export class WasmParticle extends Particle {
       _collectionRemove: async (handle, encoded) => this.collectionRemove(handle, encoded),
       _collectionClear: async (handle) => this.collectionClear(handle),
       _render: (slotName, content) => this.renderImpl(slotName, content),
-
-      // Logging
-      _setLogInfo: (file, line) => this.logInfo = [this.read(file), line],
-      ___syscall146: (which, varargs) => this.sysWritev(which, varargs),
-      ___syscall140: () => 0,  // llseek
-      ___syscall6: () => 0,    // close
-      ___syscall54: () => 0,   // ioctl
     };
     const global = {'NaN': NaN, 'Infinity': Infinity};
 
