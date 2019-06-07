@@ -61,8 +61,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     }
 
     async classify(imageUrl) {
-      log(this.state.model);
-      if (!this.state.model && this.state.model !== 0) {
+      if (this.state.model === undefined || this.state.model === null) {
         log('Model needs to be loaded!');
         return;
       }
