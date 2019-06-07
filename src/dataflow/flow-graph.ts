@@ -26,9 +26,7 @@ export class FlowGraph {
   readonly particleMap: Map<string, ParticleNode>;
 
   constructor(recipe: Recipe) {
-    if (!recipe.isResolved()) {
-      throw new Error('Recipe must be resolved.');
-    }
+    assert(recipe.isResolved(), 'Recipe must be resolved.');
 
     // Create the nodes of the graph.
     const particleNodes = createParticleNodes(recipe.particles);
