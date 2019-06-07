@@ -210,7 +210,7 @@ function readEmscriptenMetadata(module: WebAssembly.Module) {
   // The specifics of the section are not published anywhere official (yet). The values here
   // correspond to emscripten version 1.38.34:
   //   https://github.com/emscripten-core/emscripten/blob/1.38.34/tools/shared.py#L3065
- 
+
   // TODO: use real errors (and handle them gracefully upstream)
   assert(metadata.length === 10);
   assert(metadata[0] === EMSCRIPTEN_METADATA_MAJOR);

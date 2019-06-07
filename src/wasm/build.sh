@@ -9,7 +9,7 @@ if [[ $1 = -g ]]; then
   # Generate the glue code (useful as a development reference).
   invoke glue.js
   rm glue.wasm
-  which js-beautify >/dev/null && js-beautify -r glue.js 
+  which js-beautify >/dev/null && js-beautify -r glue.js
   exit
 fi
 
