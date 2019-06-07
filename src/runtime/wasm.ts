@@ -13,7 +13,6 @@ import {Schema} from './schema.js';
 import {EntityInterface, EntityRawData} from './entity.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
-import {WasmConfig} from './wasm-config.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -177,6 +176,58 @@ class StringDecoder {
 }
 
 
+// Wasm modules built by emscripten require some external memory configuration by the caller,
+// which is usually built into the glue code generated alongside the module. We're not using
+// the glue code, but if we set the EMIT_EMSCRIPTEN_METADATA flag when building, emscripten
+// will provide a custom section in the module itself with the required values.
+const EMSCRIPTEN_METADATA_MAJOR = 0;
+const EMSCRIPTEN_METADATA_MINOR = 1;
+const EMSCRIPTEN_ABI_MAJOR = 0;
+const EMSCRIPTEN_ABI_MINOR = 3;
+
+// TODO: reconcile with Kotlin-based particles
+function readEmscriptenMetadata(module: WebAssembly.Module) {
+  const customSections = WebAssembly.Module.customSections(module, 'emscripten_metadata');
+  assert(customSections.length === 1, 'wasm particles must be built with EMIT_EMSCRIPTEN_METADATA');
+
+  const buffer = new Uint8Array(customSections[0]);
+  const metadata = [];
+  let offset = 0;
+  while (offset < buffer.byteLength) {
+    let result = 0;
+    let shift = 0;
+    while (1) {
+      const byte = buffer[offset++];
+      result |= (byte & 0x7f) << shift;
+      if (!(byte & 0x80)) {
+        break;
+      }
+      shift += 7;
+    }
+    metadata.push(result);
+  }
+
+  // The specifics of the section are not published anywhere official (yet). The values here
+  // correspond to emscripten version 1.38.34:
+  //   https://github.com/emscripten-core/emscripten/blob/1.38.34/tools/shared.py#L3065
+ 
+  // TODO: use real errors (and handle them gracefully upstream)
+  assert(metadata.length === 10);
+  assert(metadata[0] === EMSCRIPTEN_METADATA_MAJOR);
+  assert(metadata[1] === EMSCRIPTEN_METADATA_MINOR);
+  assert(metadata[2] === EMSCRIPTEN_ABI_MAJOR);
+  assert(metadata[3] === EMSCRIPTEN_ABI_MINOR);
+  return {
+    memSize: metadata[4],
+    tableSize: metadata[5],
+    globalBase: metadata[6],
+    dynamicBase: metadata[7],
+    dynamictopPtr: metadata[8],
+    tempdoublePtr: metadata[9],  // unused; appears to be related to pthreads
+  };
+}
+
+
 function errFunc(label: string) {
   return err => { throw new Error(label + ': ' + err); };
 }
@@ -185,7 +236,8 @@ type WasmAddress = number;
 
 export class WasmParticle extends Particle {
   private memory: WebAssembly.Memory;
-  private heap: Uint8Array;
+  private heapU8: Uint8Array;
+  private heap32: Int32Array;
   private wasm: WebAssembly.ResultObject;
   // tslint:disable-next-line: no-any
   private exports: any;
@@ -199,26 +251,29 @@ export class WasmParticle extends Particle {
   async initialize(buffer: ArrayBuffer) {
     assert(this.spec.name.length > 0);
 
-    // TODO: detect errors when this memory size doesn't match up with the wasm's declared values?
-    this.memory = new WebAssembly.Memory({initial: 256, maximum: 256});
-    this.heap = new Uint8Array(this.memory.buffer);
+    // TODO: vet the imports/exports on 'module'
+    const module = await WebAssembly.compile(buffer);
+    const emc = readEmscriptenMetadata(module);
 
-    // TODO: find out how to calculate these values
-    const heap32 = new Int32Array(this.memory.buffer);
-    heap32[WasmConfig.DYNAMICTOP_PTR >> 2] = WasmConfig.DYNAMIC_BASE;
+    this.memory = new WebAssembly.Memory({initial: emc.memSize, maximum: emc.memSize});
+    this.heapU8 = new Uint8Array(this.memory.buffer);
+    this.heap32 = new Int32Array(this.memory.buffer);
+
+    // We need to poke the address of the heap base into the memory buffer prior to instantiating.
+    this.heap32[emc.dynamictopPtr >> 2] = emc.dynamicBase;
 
     const env = {
       // Memory setup
       memory: this.memory,
-      __memory_base: WasmConfig.MEMORY_BASE,
-      table: new WebAssembly.Table({initial: 1, maximum: 1, element: 'anyfunc'}),
+      __memory_base: emc.globalBase,
+      table: new WebAssembly.Table({initial: emc.tableSize, maximum: emc.tableSize, element: 'anyfunc'}),
       __table_base: 0,
-      DYNAMICTOP_PTR: WasmConfig.DYNAMICTOP_PTR,
+      DYNAMICTOP_PTR: emc.dynamictopPtr,
 
       // Heap management
-      _emscripten_get_heap_size: () => this.heap.length,  // Matches emscripten glue js
+      _emscripten_get_heap_size: () => this.heapU8.length,  // Matches emscripten glue js
       _emscripten_resize_heap: size => false,  // TODO
-      _emscripten_memcpy_big: (dst, src, num) => this.heap.set(this.heap.subarray(src, src + num), dst),
+      _emscripten_memcpy_big: (dst, src, num) => this.heapU8.set(this.heapU8.subarray(src, src + num), dst),
 
       // Error handling
       abort: errFunc('abort'),
@@ -394,27 +449,26 @@ export class WasmParticle extends Particle {
   private store(str: string): WasmAddress {
     const p = this.exports._malloc(str.length + 1);
     for (let i = 0; i < str.length; i++) {
-      this.heap[p + i] = str.charCodeAt(i);
+      this.heapU8[p + i] = str.charCodeAt(i);
     }
-    this.heap[p + str.length] = 0;
+    this.heapU8[p + str.length] = 0;
     return p;
   }
 
   // Currently only supports ASCII. TODO: unicode
   private read(idx: WasmAddress): string {
     let str = '';
-    while (idx < this.heap.length && this.heap[idx] !== 0) {
-      str += String.fromCharCode(this.heap[idx++]);
+    while (idx < this.heapU8.length && this.heapU8[idx] !== 0) {
+      str += String.fromCharCode(this.heapU8[idx++]);
     }
     return str;
   }
 
   // printf support cribbed from emscripten glue js - currently only supports ASCII
   private sysWritev(which, varargs) {
-    const heap32 = new Int32Array(this.memory.buffer);
     const get = () => {
       varargs += 4;
-      return heap32[(((varargs)-(4))>>2)];
+      return this.heap32[(((varargs)-(4))>>2)];
     };
 
     const output = (get() === 1) ? console.log : console.error;
@@ -425,10 +479,10 @@ export class WasmParticle extends Particle {
     let str = this.logInfo ? `[${this.spec.name}|${this.logInfo[0]}:${this.logInfo[1]}] ` : '';
     let ret = 0;
     for (let i = 0; i < iovcnt; i++) {
-      const ptr = heap32[(((iov)+(i*8))>>2)];
-      const len = heap32[(((iov)+(i*8 + 4))>>2)];
+      const ptr = this.heap32[(((iov)+(i*8))>>2)];
+      const len = this.heap32[(((iov)+(i*8 + 4))>>2)];
       for (let j = 0; j < len; j++) {
-        const curr = this.heap[ptr+j];
+        const curr = this.heapU8[ptr+j];
         if (curr === 0 || curr === 10) {  // NUL or \n
           output(str);
           str = '';
