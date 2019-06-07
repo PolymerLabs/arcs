@@ -9,7 +9,7 @@
  */
 import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
-import {FlowGraph} from '../dataflow/flow-graph.js';
+import {FlowGraph, Node, Edge, CheckResult, BackwardsPath} from '../dataflow/flow-graph.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -103,5 +103,145 @@ describe('FlowGraph', () => {
     `);
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
+  });
+
+  it('copies particle claims to particle nodes and out-edges', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        out Foo {} foo
+        claim foo is trusted
+      recipe R
+        P
+          foo -> h
+    `);
+    const node = graph.particleMap.get('P');
+    assert.equal(node.claims.size, 1);
+    assert.equal(node.claims.get('foo'), 'trusted');
+    assert.isEmpty(node.checks);
+
+    assert.lengthOf(graph.edges, 1);
+    assert.equal(graph.edges[0].claim, 'trusted');
+  });
+
+  it('copies particle checks to particle nodes and in-edges', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        in Foo {} foo
+        check foo is trusted
+      recipe R
+        P
+          foo <- h
+    `);
+    const node = graph.particleMap.get('P');
+    assert.equal(node.checks.size, 1);
+    assert.equal(node.checks.get('foo'), 'trusted');
+    assert.isEmpty(node.claims);
+
+    assert.lengthOf(graph.edges, 1);
+    assert.equal(graph.edges[0].check, 'trusted');
+  });
+});
+
+describe('FlowGraph validation', () => {
+  it('succeeds when there are no checks', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        out Foo {} foo
+        claim foo is trusted
+      recipe R
+        P
+          foo -> h
+    `);
+    assert.isTrue(graph.validateGraph());
+  });
+
+  it('succeeds when a check is satisfied directly', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    assert.isTrue(graph.validateGraph());
+  });
+
+  it('fails when a different tag is claimed', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is notTrusted
+      particle P2
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    assert.isFalse(graph.validateGraph());
+  });
+
+  // TODO: Add tests for for more complex graphs, and for other kinds of failures.
+});
+
+class TestNode extends Node {
+  readonly inEdges: TestEdge[] = [];
+  readonly outEdges: TestEdge[] = [];
+}
+
+class TestEdge implements Edge {
+  constructor(
+      readonly start: TestNode,
+      readonly end: TestNode,
+      readonly label: string) {}
+  
+  isCheckSatisfied(check: string): CheckResult {
+    return CheckResult.Success;
+  }
+}
+
+describe('BackwardsPath', () => {
+  // Construct directed graph: A -> B -> C.
+  const nodeA = new TestNode();
+  const nodeB = new TestNode();
+  const nodeC = new TestNode();
+  const edgeAToB = new TestEdge(nodeA, nodeB, 'A -> B');
+  const edgeBToC = new TestEdge(nodeB, nodeC, 'B -> C');
+  const edgeCToA = new TestEdge(nodeC, nodeA, 'C -> A');
+
+  it('starts with a single edge', () => {
+    const path = BackwardsPath.fromEdge(edgeAToB);
+
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
+    assert.equal(path.startNode, nodeB);
+    assert.equal(path.endNode, nodeA);
+  });
+
+  it('can add another edge to the end of the path', () => {
+    let path = BackwardsPath.fromEdge(edgeBToC);
+    path = path.newPathWithEdge(edgeAToB);
+
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB, nodeA]);
+    assert.equal(path.startNode, nodeC);
+    assert.equal(path.endNode, nodeA);
+  });
+
+  it('forbids cycles', () => {
+    let path = BackwardsPath.fromEdge(edgeBToC);
+    path = path.newPathWithEdge(edgeAToB);
+    assert.throws(() => path.newPathWithEdge(edgeCToA), 'Path must not include cycles');
+  });
+
+  it('only allows adding to the end of the path', () => {
+    const path = BackwardsPath.fromEdge(edgeBToC);
+    assert.throws(() => path.newPathWithEdge(edgeCToA), 'Edge must connect to end of path');
   });
 });
