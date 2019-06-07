@@ -16,7 +16,6 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 <div>
   <h2>Classification with a generic image classifier</h2>
   <img style="max-width: 240px;" src="{{imageUrl}}" alt="Image to classify"><br>
-  <div id="progress-bar">{{progress}}</div>
   <div>
     <div>Label: </span><span>{{label}}</div>
     <div>Confidence: </span><span>{{probability}}</div>
@@ -49,11 +48,6 @@ defineParticle(({DomParticle, log, html, resolver}) => {
         probability: response.probability,
         imageUrl: url
       };
-    }
-
-    onLoadProgress(fraction) {
-      const prog = fraction < 1.0 ? fraction * 100.0 : fraction;
-      this.setState({progress: prog});
     }
 
     async loadModel(modelUrl, options) {
