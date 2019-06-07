@@ -1,2 +1,2 @@
 import 'MapsAutofill.recipes'
-// import 'PeopleAutofill.recipes'
+import 'PeopleAutofill.recipes'
