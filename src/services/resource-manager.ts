@@ -52,6 +52,11 @@ export class ResourceManager {
    * @param r An identifier or reference to the value to be cleaned up.
    */
   static dispose(r: Reference): void {
+    const obj = this.references[r];
+
+    if (obj['dispose']) {
+      obj.dispose();
+    }
     delete this.references[r];
   }
 }

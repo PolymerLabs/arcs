@@ -8,15 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+const params = (new URL(document.location)).searchParams;
+
+export const manifest = (params.has('solo')) ? `import '${params.get('solo')}'` : null;
+export const test = ('test' in params);
+
 export {paths} from './paths.js';
 
-export let manifest;
-const params = (new URL(document.location)).searchParams;
-if (params.has('solo')) {
-  manifest = `import '${params.get('solo')}'`;
-}
-
-//export const storage = `volatile`;
 export const storage = `volatile://`;
 //export const storage = `pouchdb://local/arcs/`;
-export const version = `version: may-31`;
+export const version = `version: jun-7`;

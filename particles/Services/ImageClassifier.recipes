@@ -1,0 +1,5 @@
+import 'particles/ImageClassifier.particle'
+recipe ImageClassifier
+  ImageClassifier
+  description `image classification using modular model`
+

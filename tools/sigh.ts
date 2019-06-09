@@ -416,7 +416,8 @@ function lint(args: string[]): boolean {
   });
 
   const jsSources = [...findProjectFiles(process.cwd(), srcExclude, fullPath => {
-    if (/build[/\\]/.test(fullPath) || /gen[/\\]/.test(fullPath) || /dist[/\\]/.test(fullPath)) {
+    if (/build[/\\]/.test(fullPath) || /gen[/\\]/.test(fullPath) || /dist[/\\]/.test(fullPath)
+      || /particles[/\\]Native/.test(fullPath)) {
       return false;
     }
     return /\.[jt]s$/.test(fullPath);

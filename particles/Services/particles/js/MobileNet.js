@@ -45,7 +45,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       response = response || {label: '<working>', probability: '<working>'};
       return {
         label: response.className,
-        probability: response.probability.toFixed(4),
+        probability: response.probability,
         imageUrl: url
       };
     }

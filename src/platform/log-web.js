@@ -7,18 +7,24 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-const _factory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color || 'gray'}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+const _factory = (preamble, color, log = 'log') =>
+  console[log].bind(
+    console,
+    `%c${preamble}`,
+    `background: ${color || 'gray'}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`
+  );
 
-// when punting, use full logging
-let logLevel = 2;
-// TODO(sjmiles): worker.js uses log-web, but has no Window; we need to plumb the
-// global configuration into the worker.
-// there should always be `window`, we are log-web; if not, use punt value above
+// don't spam the console for workers
 if (typeof window !== 'undefined') {
-  // use specified logLevel otherwise 0
-  logLevel = ('logLevel' in window) ? window.logLevel : 0;
-  console.log(`log-web: binding logFactory to level [${logLevel}]`);
+  console.log(`log-web: binding logFactory to level [${window.logLevel}]`);
 }
 
-const factory = logLevel > 0 ? _factory : () => () => {};
-export const logFactory = (...args) => factory(...args);
+export const logFactory = (...args) => {
+  // could be running in worker
+  const g = (typeof window !== 'undefined') ? window : global;
+  // use specified logLevel otherwise 0
+  const logLevel = ('logLevel' in g) ? g['logLevel'] : 0;
+  // modulate factory based on logLevel
+  const factory = logLevel > 0 ? _factory : () => () => {};
+  return factory(...args);
+};

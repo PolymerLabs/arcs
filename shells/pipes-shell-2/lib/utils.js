@@ -48,7 +48,7 @@ export const createPlanificator = async arc => {
   //   await planificator.loadSuggestions();
   // }, 300);
   //
-  console.log('planificator:', planificator);
+  //console.log('planificator:', planificator);
   return planificator;
 };
 

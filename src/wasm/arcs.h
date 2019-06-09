@@ -1,9 +1,11 @@
 #ifndef _ARCS_H
 #define _ARCS_H
 
+#include <emscripten.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 
 namespace arcs {
@@ -14,8 +16,8 @@ class Handle;
 
 namespace internal {
 
-// Logging: console() and error() use printf-style formatting.
-// File and line info is added automatically.
+// --- Logging and error handling ---
+// console() and error() use printf-style formatting. File and line info is added automatically.
 EM_JS(void, setLogInfo, (const char* file, int line), {})
 
 #define console(...) do {                           \
@@ -27,6 +29,80 @@ EM_JS(void, setLogInfo, (const char* file, int line), {})
     arcs::internal::setLogInfo(__FILE__, __LINE__); \
     fprintf(stderr, __VA_ARGS__);                   \
   } while (0)
+
+
+// Wrap various extern functions that trigger errors with a single call point.
+EM_JS(void, systemError, (const char* msg), {})
+
+extern "C" {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-noreturn"
+
+EMSCRIPTEN_KEEPALIVE
+void exit(int status) {
+  std::string msg = "exit(" + std::to_string(status) +")";
+  systemError(msg.c_str());
+}
+
+EMSCRIPTEN_KEEPALIVE
+void abort() {
+  systemError("abort");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void llvm_trap() {
+  systemError("llvm_trap");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __cxa_pure_virtual() {
+  systemError("__cxa_pure_virtual");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __setErrNo(int value) {
+  std::string msg = "__setErrNo(" + std::to_string(value) +")";
+  systemError(msg.c_str());
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __assert_fail(const char* condition, const char* filename, int line, const char* func) {
+  std::string msg = std::string("Assertion failed: '") + condition  + "' at " + filename +
+                    ":" + std::to_string(line) + ", function '" + func + "'";
+  systemError(msg.c_str());
+}
+
+EMSCRIPTEN_KEEPALIVE
+void* __cxa_allocate_exception(size_t size) {
+  return malloc(size);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void __cxa_free_exception(void* ptr) {
+  free(ptr);
+}
+
+// No idea how to get at the exception contents (including any error message included).
+// Even emscripten doesn't seem to implement this in a useful way.
+EMSCRIPTEN_KEEPALIVE
+void __cxa_throw(void* thrown_exception, std::type_info* info, void (*dtor)(void*)) {
+  std::string msg = std::string("Exception: ") + info->name();
+  systemError(msg.c_str());
+}
+
+// Not sure what to do with this...
+EMSCRIPTEN_KEEPALIVE
+bool __cxa_uncaught_exception() {
+  return false;
+}
+
+// System calls "needed" for printf support.
+EMSCRIPTEN_KEEPALIVE int __syscall140(int, int) { return 0; }  // sys_lseek
+EMSCRIPTEN_KEEPALIVE int __syscall6(int, int) { return 0; }    // sys_close
+EMSCRIPTEN_KEEPALIVE int __syscall54(int, int) { return 0; }   // sys_ioctl
+
+#pragma clang diagnostic pop
+}
 
 
 // --- Packaging classes ---
@@ -42,7 +118,6 @@ std::string num_to_str(double num) {
   s.erase((s[i] == '.') ? i : i + 1);
   return s;
 }
-
 
 // TODO: error handling
 class StringDecoder {
@@ -113,7 +188,6 @@ void StringDecoder::decode(bool& flag) {
   flag = (chomp(1)[0] == '1');
 }
 
-
 class StringEncoder {
 public:
   StringEncoder() = default;
@@ -153,7 +227,6 @@ template<>
 void StringEncoder::encode(const char* prefix, const bool& flag) {
   str_ += prefix + std::to_string(flag) + "|";
 }
-
 
 // --- Utilities ---
 
@@ -256,18 +329,15 @@ private:
   std::string name_ = nullptr;
 };
 
-
 template<typename T>
 class Singleton : public Handle {
 public:
   void sync(const char* encoded) override {
-    console("sync V '%s' [%s]\n", name().c_str(), encoded);
     entity_ = T();
     decode_entity(&entity_, encoded);
   }
 
   void update(const char* encoded, const char* ignored) override {
-    console("update V '%s' [%s]\n", name().c_str(), encoded);
     entity_ = T();
     decode_entity(&entity_, encoded);
   }
@@ -289,23 +359,40 @@ private:
   T entity_;
 };
 
+// Minimal iterator for Collections; allows iterating directly over const T& values.
+template<typename T>
+class WrappedIter {
+  using Iterator = typename std::unordered_map<std::string, std::unique_ptr<T>>::const_iterator;
+
+public:
+  WrappedIter(Iterator it) : it_(std::move(it)) {}
+
+  const T& operator*() { return *it_->second; }
+  const T* operator->() { return it_->second.get(); }
+
+  WrappedIter& operator++() { ++it_; return *this; }
+  WrappedIter operator++(int) { return WrappedIter(it_++); }
+
+  friend bool operator==(const WrappedIter& a, const WrappedIter& b) { return a.it_ == b.it_; }
+  friend bool operator!=(const WrappedIter& a, const WrappedIter& b) { return a.it_ != b.it_; }
+
+private:
+  Iterator it_;
+};
 
 template<typename T>
 class Collection : public Handle {
-public:
   using Map = std::unordered_map<std::string, std::unique_ptr<T>>;
 
+public:
   void sync(const char* encoded) override {
-    console("sync C '%s' [%s]\n", name().c_str(), encoded);
     entities_.clear();
     add(encoded);
   }
 
   void update(const char* added, const char* removed) override {
-    console("sync C '%s' [%s] [%s]\n", name().c_str(), added, removed);
     add(added);
-
-    internal::StringDecoder decoder(added);
+    internal::StringDecoder decoder(removed);
     int num = decoder.getInt(':');
     while (num--) {
       int len = decoder.getInt(':');
@@ -318,15 +405,9 @@ public:
   }
 
   size_t size() { return entities_.size(); }
-
-  // TODO: better API
-  typename Map::const_iterator begin() const {
-    return entities_.cbegin();
-  }
-
-  typename Map::const_iterator end() const {
-    return entities_.cend();
-  }
+  bool empty() { return entities_.empty(); }
+  WrappedIter<T> begin() const { return WrappedIter<T>(entities_.cbegin()); }
+  WrappedIter<T> end() const { return WrappedIter<T>(entities_.cend()); }
 
   void store(const T& entity) {
     entities_.emplace(entity._internal_id, new T(entity));
@@ -357,6 +438,7 @@ private:
       std::string chunk = decoder.chomp(len);
       std::unique_ptr<T> eptr(new T());
       decode_entity(eptr.get(), chunk.c_str());
+      entities_.erase(eptr->_internal_id);  // emplace doesn't overwrite
       entities_.emplace(eptr->_internal_id, std::move(eptr));
     }
   }
@@ -380,9 +462,20 @@ public:
   }
 
   // Called by the runtime to associate the inner handle instance with the outer object.
-  Handle* connectHandle(const char* name) {
+  Handle* connectHandle(const char* name, bool willSync) {
     auto pair = handles_.find(name);
-    return (pair != handles_.end()) ? pair->second : nullptr;
+    if (pair != handles_.end()) {
+      if (willSync) {
+        toSync_.insert(pair->second);
+      }
+      return pair->second;
+    }
+    return nullptr;
+  }
+
+  void sync(Handle* handle) {
+    toSync_.erase(handle);
+    onHandleSync(handle, toSync_.empty());
   }
 
   // Called by sub-classes to render into a slot.
@@ -390,13 +483,14 @@ public:
     internal::render(slotName.c_str(), content.c_str());
   }
 
-  virtual void onHandleSync(Handle* handle) {}
+  virtual void onHandleSync(Handle* handle, bool allSynced) {}
   virtual void onHandleUpdate(Handle* handle) {}
   virtual void fireEvent(const std::string& slotName, const std::string& handler) {}
   virtual void requestRender(const std::string& slotName) {}
 
 private:
   std::unordered_map<std::string, Handle*> handles_;
+  std::unordered_set<Handle*> toSync_;
 };
 
 // Defines an exported function 'newParticleName()' that the runtime will call to create
@@ -415,14 +509,14 @@ private:
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
-Handle* connectHandle(Particle* particle, const char* name) {
-  return particle->connectHandle(name);
+Handle* connectHandle(Particle* particle, const char* name, bool willSync) {
+  return particle->connectHandle(name, willSync);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void syncHandle(Particle* particle, Handle* handle, const char* encoded) {
   handle->sync(encoded);
-  particle->onHandleSync(handle);
+  particle->sync(handle);
 }
 
 EMSCRIPTEN_KEEPALIVE

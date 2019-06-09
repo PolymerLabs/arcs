@@ -10,17 +10,17 @@
 
  // configure
 import '../../lib/platform/loglevel-node.js';
-import {version, paths, storage} from './config.js';
+import {version, paths, storage, test} from './config.js';
 
 // optional
 //import '../../lib/database/pouchdb-support.js';
 //import '../../lib/database/firebase-support.js';
-import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
+//import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
 
 // dependencies
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {initPipe} from '../pipe.js';
-import {test} from '../smoke.js';
+import {smokeTest} from '../smoke.js';
 
 console.log(`${version} -- ${storage}`);
 
@@ -28,13 +28,20 @@ const composerFactory = modality => {
   return new RamSlotComposer();
 };
 
+const client = global.client || {};
+
 (async () => {
   // if remote DevTools are requested, wait for connect
-  await DevtoolsSupport();
+  //await DevtoolsSupport();
   // configure pipes and get a bus
-  const bus = await initPipe(paths, storage, composerFactory);
+  const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   global.ShellApi = bus;
-  // run some examples
-  test(bus);
+  if (test) {
+    // run some examples
+    smokeTest(bus);
+  }
 })();
+
+// keep alive ... forever
+setInterval(() => true, 1000);
