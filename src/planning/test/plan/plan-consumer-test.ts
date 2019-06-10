@@ -21,9 +21,9 @@ import {Suggestion} from '../../plan/suggestion.js';
 import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
 
-async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
+async function createPlanConsumer(arcKey, storageKeyBase, helper) {
   helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
-  const store = await Planificator['_initSuggestStore'](helper.arc, userid, storageKeyBase);
+  const store = await Planificator['_initSuggestStore'](helper.arc, storageKeyBase);
   assert.isNotNull(store);
   return new PlanConsumer(helper.arc, new PlanningResult(helper.envOptions, store));
 }
@@ -61,8 +61,7 @@ recipe
   description \`Test Recipe\`
 `
       });
-      const consumer = await createPlanConsumer(
-          'TestUser', 'volatile://!158405822139616:demo^^volatile-0', storageKeyBase, helper);
+      const consumer = await createPlanConsumer('volatile://!158405822139616:demo^^volatile-0', storageKeyBase, helper);
 
       let suggestionsChangeCount = 0;
       const suggestionsCallback = (suggestions) => ++suggestionsChangeCount;
@@ -147,7 +146,7 @@ describe('plan consumer', () => {
   `});
       assert.lengthOf(helper.arc.context.allRecipes, 4);
       const consumer = await createPlanConsumer(
-          'TestUser', 'volatile://!158405822139616:demo^^volatile-0', 'volatile', helper);
+          'volatile://!158405822139616:demo^^volatile-0', 'volatile', helper);
       assert.isNotNull(consumer);
       await storeResults(consumer, helper.arc.context.allRecipes.map((plan, index) => {
         const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(helper.arc, plan));
