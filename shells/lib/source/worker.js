@@ -14,6 +14,9 @@ import {Id, IdGenerator} from '../../../build/runtime/id.js';
 
 self.onmessage = function(e) {
   self.onmessage = null;
-  const {id, base} = e.data;
+  const {id, base, logLevel} = e.data;
+  // TODO(sjmiles): happens too late for modules that immediately construct loggers, but
+  // soon enough for `log` injected into Particle.
+  global.logLevel = logLevel;
   new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new PlatformLoader(base));
 };

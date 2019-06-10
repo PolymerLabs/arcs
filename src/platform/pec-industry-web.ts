@@ -25,7 +25,7 @@ const pecIndustry = loader => {
     }
     const worker = new Worker(workerBlobUrl || workerUrl);
     const channel = new MessageChannel();
-    worker.postMessage({id: `${id}:inner`, base: remap}, [channel.port1]);
+    worker.postMessage({id: `${id}:inner`, base: remap, logLevel: window['logLevel']}, [channel.port1]);
     return channel.port2;
   };
 };

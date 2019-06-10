@@ -158,6 +158,7 @@ export class FilePane extends HTMLElement {
 
   seedExample(manifest, particle) {
     this.manifest.value = manifest;
+    this.manifest.rows = manifest.match(/\n/g).length + 1;
     this.files.children[0].value = particle;
   }
 }

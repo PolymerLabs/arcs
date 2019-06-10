@@ -19,7 +19,7 @@ const storeTemplate = `
       opacity: 1;
     }
     #header {
-      min-width: 600px;
+      min-width: 540px;
     }
     #store-name {
       display: inline;
@@ -27,21 +27,44 @@ const storeTemplate = `
       font-size: 12px;
       font-family: monospace;
     }
-    #collapse {
+    .buttons {
       cursor: pointer;
-      color: #777;
       float: right;
+    }
+    #schema-btn {
+      color: #555;
+      margin-right: 6px;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 0 2px;
+      border: 1px solid #777;
+    }
+    #collapse-btn {
+      color: #777;
     }
     #spacer {
       margin: 10px 0 16px 0;
     }
-    #data-panel {
+    #container {
+      display: flex;
+    }
+    #contents {
+      flex: 1;
       font-size: 11px;
-      width: 99%;
-      min-width: 594px;
     }
     .fail {
       border: 1px solid red;
+    }
+    #schema {
+      display: none;
+      color: #555;
+      font-size: 11px;
+      margin: 0;
+      padding: 4px 6px;
+      border: 1px solid #a9a9a9;
+    }
+    .active {
+      background: #80d2ff;
     }
     #error {
       color: red;
@@ -59,10 +82,16 @@ const storeTemplate = `
   <div id="header">
     <span id="save">💾</span>
     <span id="store-name"></span>
-    <span id="collapse">⮟</span>
+    <span class="buttons">
+      <span id="schema-btn">S</span>
+      <span id="collapse-btn">⮟</span>
+    </span>
   </div>
   <div id="spacer">
-    <textarea id="data-panel" spellcheck="false" placeholder="<no data>"></textarea>
+    <div id="container">
+      <textarea id="contents" spellcheck="false" placeholder="<no data>"></textarea>
+      <pre id="schema"></pre>
+    </div>
     <pre id="error"></pre>
   </div>`;
 
@@ -74,24 +103,29 @@ export class StorePanel extends HTMLElement {
     this.header = shadowRoot.getElementById('header');
     this.saveBtn = shadowRoot.getElementById('save');
     this.storeName = shadowRoot.getElementById('store-name');
-    this.collapseBtn = shadowRoot.getElementById('collapse');
-    this.dataPanel = shadowRoot.getElementById('data-panel');
+    this.schemaBtn = shadowRoot.getElementById('schema-btn');
+    this.collapseBtn = shadowRoot.getElementById('collapse-btn');
+    this.container = shadowRoot.getElementById('container');
+    this.contents = shadowRoot.getElementById('contents');
+    this.schema = shadowRoot.getElementById('schema');
     this.error = shadowRoot.getElementById('error');
     this.store = null;
     this.updateCallback = null;
     this.data = null;
 
     this.saveBtn.addEventListener('click', this.save.bind(this));
+    this.schemaBtn.addEventListener('click', this.toggleSchema.bind(this));
     this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
     this.header.addEventListener('animationend', () => this.header.classList.remove('flash'));
-    this.dataPanel.addEventListener('animationend', () => this.dataPanel.classList.remove('flash'));
-    this.dataPanel.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
-    this.dataPanel.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
+    this.contents.addEventListener('animationend', () => this.contents.classList.remove('flash'));
+    this.contents.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
+    this.contents.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
   }
 
   async attach(store) {
     this.store = store;
     this.storeName.textContent = store.name || store.id;
+    this.schema.textContent = this.store.backingType().entitySchema.toManifestString();
     await this.update(true);
     this.updateCallback = () => this.update(false);
     store.on('change', this.updateCallback, this);
@@ -104,14 +138,22 @@ export class StorePanel extends HTMLElement {
     }
   }
 
+  toggleSchema() {
+    if (this.schemaBtn.classList.toggle('active')) {
+      this.schema.style.display = 'block';
+    } else {
+      this.schema.style.display = '';
+    }
+  }
+
   toggleCollapsed() {
-    if (this.dataPanel.style.display === 'none') {
+    if (this.container.style.display === 'none') {
       this.collapseBtn.textContent = '⮟';
-      this.dataPanel.style.display = '';
+      this.container.style.display = '';
       this.error.style.display = '';
     } else {
       this.collapseBtn.textContent = '⮝';
-      this.dataPanel.style.display = 'none';
+      this.container.style.display = 'none';
       this.error.style.display = 'none';
     }
   }
@@ -129,19 +171,19 @@ export class StorePanel extends HTMLElement {
       items.forEach(({id, rawData}) => this.data[id] = rawData);
       // Strip enclosing brackets and remove indent before displaying.
       const json = JSON.stringify(this.data, null, 2).slice(4, -1).replace(/\n {2}/g, '\n');
-      this.dataPanel.value = json;
-      this.dataPanel.rows = Math.min(json.match(/\n/g).length + 1, 20);
+      this.contents.value = json;
+      this.contents.rows = Math.min(json.match(/\n/g).length + 1, 20);
     } else {
-      this.dataPanel.value = '';
-      this.dataPanel.rows = 2;
+      this.contents.value = '';
+      this.contents.rows = 2;
     }
     this.error.textContent = '';
-    this.dataPanel.classList.remove('fail');
+    this.contents.classList.remove('fail');
     if (!local) {
-      if (this.dataPanel.style.display === 'none') {
+      if (this.container.style.display === 'none') {
         this.header.classList.add('flash');
       } else {
-        this.dataPanel.classList.add('flash');
+        this.contents.classList.add('flash');
       }
     }
   }
@@ -151,7 +193,7 @@ export class StorePanel extends HTMLElement {
       return;
     }
     this.store.off('change', this.updateCallback);
-    const ok = await this.writeToStore(this.dataPanel.value.trim());
+    const ok = await this.writeToStore(this.contents.value.trim());
     this.store.on('change', this.updateCallback, this);
     if (ok) {
       this.saveBtn.classList.remove('enabled');
@@ -212,7 +254,7 @@ export class StorePanel extends HTMLElement {
         msg = msg.replace(match[0], `in line ${num}`) + `:\n${line}\n${spacer}^`;
       }
       this.error.textContent = msg;
-      this.dataPanel.classList.add('fail');
+      this.contents.classList.add('fail');
       return null;
     }
   }

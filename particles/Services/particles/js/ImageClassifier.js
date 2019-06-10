@@ -15,8 +15,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
   const template_ = html`
 <div>
   <h2>Classification with a generic image classifier</h2>
-  <img style="max-width: 240px;" src="{{imageUrl}}"><br>
-  <div id="progress-bar">{{progress}}</div>
+  <img style="max-width: 240px;" src="{{imageUrl}}" alt="Image to classify"><br>
   <div>
     <div>Label: </span><span>{{label}}</div>
     <div>Confidence: </span><span>{{probability}}</div>
@@ -31,12 +30,6 @@ defineParticle(({DomParticle, log, html, resolver}) => {
   return class extends DomParticle {
     get template() {
       return template_;
-    }
-
-    update({}, state) {
-      // TODO(sjmiles): update() is called during SpecEx, while
-      // render() is not. We'll put our processing code in render()
-      // to avoid being expensive at SpecEx time.
     }
 
     render({}, state) {
@@ -57,15 +50,10 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       };
     }
 
-    onLoadProgress(fraction) {
-      const prog = fraction < 1.0 ? fraction * 100.0 : fraction;
-      this.setState({progress: prog});
-    }
-
     async loadModel(modelUrl, options) {
       log('Loading Model...');
-      const model = await this.service({call: 'graph-model.load', modelUrl, options});
-      await this.service({call: 'graph-model.warmUp', model});
+      const model = await this.service({call: 'tf.loadGraphModel', modelUrl, options});
+      await this.service({call: 'tf.warmUp', model});
       log('Model Loaded');
       this.setState({model});
 
@@ -73,24 +61,23 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     }
 
     async classify(imageUrl) {
-      log(this.state.model);
-      if (!this.state.model && this.state.model !== 0) {
+      if (this.state.model === undefined || this.state.model === null) {
         log('Model needs to be loaded!');
         return;
       }
 
       log('Preprocessing...');
-      const imgReference = await this.service({call: 'tf-image.imageToTensor', imageUrl});
-      const normalized = await this.service({call: 'preprocess.normalize', input: imgReference, range: [0, 255]});
-      const interpolated = await this.service({call: 'tf-image.resizeBilinear', images: normalized, size: [224, 224], alignCorners: true});
-      const resized = await this.service({call: 'preprocess.reshape', input: interpolated, newShape: [-1, 224, 224, 3]});
+      const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl});
+      const normalized = await this.service({call: 'tf.normalize', input: imgReference, range: [0, 255]});
+      const interpolated = await this.service({call: 'tf.resizeBilinear', images: normalized, size: [224, 224], alignCorners: true});
+      const resized = await this.service({call: 'tf.reshape', input: interpolated, newShape: [-1, 224, 224, 3]});
 
       log('Classifying Model...');
-      const yHat = await this.service({call: 'graph-model.predict', model: this.state.model, inputs: resized});
+      const yHat = await this.service({call: 'tf.predict', model: this.state.model, inputs: resized});
 
       log('Classified. Interpreting results...');
       await this.getModelLabels();
-      const predictions = await this.service({call: 'postprocess.getTopKClasses', yHat, labels: this.state.labels, topK: 5});
+      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels: this.state.labels, topK: 5});
       log(predictions);
 
       this.setState({response: predictions[0]});
