@@ -21,7 +21,7 @@ defineParticle(({DomParticle, log}) => {
 
     async inference(model, tensor) {
       log('Classifying...');
-      const yHat = await this.service({call: 'tf.loadGraphModel', model, inputs: tensor});
+      const yHat = await this.service({call: 'tf.predict', model, inputs: tensor});
       log('Classified.');
 
       await this.clearHandle(handleName);
