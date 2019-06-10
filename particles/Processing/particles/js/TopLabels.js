@@ -17,11 +17,11 @@ defineParticle(({DomParticle, log}) => {
       const topK = k || 5;
 
       if (yHat && labels) {
-        this.convert(yHat, labels, topK);
+        this.apply(yHat, labels, topK);
       }
     }
 
-    async convert(yHat, labels, topK) {
+    async apply(yHat, labels, topK) {
       log(`Converting tensor output to top ${topK} labels...`);
 
       const yh = this.getRef(yHat);

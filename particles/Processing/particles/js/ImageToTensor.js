@@ -15,11 +15,11 @@ defineParticle(({DomParticle}) => {
   return class extends DomParticle {
     willReceiveProps({image}, state) {
       if (image) {
-        this.convert(image);
+        this.apply(image);
       }
     }
 
-    async convert(image) {
+    async apply(image) {
       const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl: image});
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: imgReference});

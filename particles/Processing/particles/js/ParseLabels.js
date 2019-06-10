@@ -17,11 +17,11 @@ defineParticle(({DomParticle, log}) => {
     willReceiveProps({url}, state) {
 
       if (url) {
-        this.convert(url);
+        this.apply(url);
       }
     }
 
-    async convert(url) {
+    async apply(url) {
       log('Parsing labels file...');
 
       const doc = await fetch(url).then(d => d.text());

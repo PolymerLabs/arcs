@@ -15,11 +15,11 @@ defineParticle(({DomParticle, log}) => {
   return class extends DomParticle {
     willReceiveProps({model}, state) {
       if (model) {
-        this.load(model);
+        this.apply(model);
       }
     }
 
-    async load(model) {
+    async apply(model) {
       const model_ = await this.service({
         call: 'tf.loadGraphModel',
         modelUrl: model.location,

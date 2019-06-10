@@ -15,11 +15,11 @@ defineParticle(({DomParticle, log}) => {
   return class extends DomParticle {
     willReceiveProps({tensor, model}, state) {
       if (model && tensor) {
-        this.inference(model, tensor);
+        this.apply(model, tensor);
       }
     }
 
-    async inference(model, tensor) {
+    async apply(model, tensor) {
       const m = this.getRef(mode);
       const t = this.getRef(tensor);
 

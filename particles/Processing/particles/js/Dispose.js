@@ -13,11 +13,11 @@ defineParticle(({DomParticle, log}) => {
   return class extends DomParticle {
     willReceiveProps({resource}) {
       if (resource) {
-        this.cleanup(resource);
+        this.apply(resource);
       }
     }
 
-    async cleanup(resource) {
+    async apply(resource) {
       const ref = this.getRef(resource);
       log('Disposing...');
       await this.service({call: 'tf.dispose', reference: ref});
