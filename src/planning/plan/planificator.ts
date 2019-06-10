@@ -20,7 +20,7 @@ import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
 
-const planificator_id = 'plans';
+const planificatorId = 'plans';
 
 export type PlanificatorOptions = {
   storageKeyBase?: string;
@@ -135,13 +135,13 @@ export class Planificator {
   static constructSuggestionKey(arc: Arc, storageKeyBase?: string): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
-    return keybase.childKeyForSuggestions(planificator_id, arcStorageKey.arcId);
+    return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
   }
 
   static constructSearchKey(arc: Arc): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
-    return keybase.childKeyForSearch(planificator_id);
+    return keybase.childKeyForSearch(planificatorId);
 }
 
   private static async _initSuggestStore(arc: Arc, storageKeyBase?: string): Promise<SingletonStorageProvider> {
