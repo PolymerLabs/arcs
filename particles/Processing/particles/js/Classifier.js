@@ -20,12 +20,19 @@ defineParticle(({DomParticle, log}) => {
     }
 
     async inference(model, tensor) {
+      const m = this.getRef(mode);
+      const t = this.getRef(tensor);
+
       log('Classifying...');
-      const yHat = await this.service({call: 'tf.predict', model, inputs: tensor});
+      const yHat = await this.service({call: 'tf.predict', model: m, inputs: t});
       log('Classified.');
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: yHat});
+    }
+
+    getRef(r) {
+      return r.ref ? r.ref : r;
     }
   };
 });

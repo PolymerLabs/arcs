@@ -24,12 +24,18 @@ defineParticle(({DomParticle, log}) => {
     async convert(yHat, labels, topK) {
       log(`Converting tensor output to top ${topK} labels...`);
 
-      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topk});
+      const yh = this.getRef(yHat);
+
+      const predictions = await this.service({call: 'tf.getTopKClasses', yHat: yh, labels, topk});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
       log(results);
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, results);
+    }
+
+    getRef(r) {
+      return r.ref ? r.ref : r;
     }
   };
 });

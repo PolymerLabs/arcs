@@ -18,10 +18,14 @@ defineParticle(({DomParticle, log}) => {
     }
 
     async cleanup(resource) {
-      const ref = typeof resource !== 'number' && resource.ref ? resource.ref : resource;
+      const ref = this.getRef(resource);
       log('Disposing...');
       await this.service({call: 'tf.dispose', reference: ref});
       log('Disposed.');
+    }
+
+    getRef(r) {
+      return r.ref ? r.ref : r;
     }
   };
 });
