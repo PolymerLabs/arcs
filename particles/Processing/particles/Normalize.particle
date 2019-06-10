@@ -1,7 +1,6 @@
 import '../schemas/MlResource.schema'
 
 particle Normalize in './js/Normalize.js'
-  consume root
   in MlResource tensor
   in [Number] range
   out MlResource normTensor

@@ -1,7 +1,6 @@
 import '../schemas/MlResource.schema'
 
 particle Classifier in './js/Classifier.js'
-  consume root
   in MlResource tensor
   in MlResource model
   out MlResource yHat

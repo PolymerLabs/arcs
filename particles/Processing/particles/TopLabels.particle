@@ -3,7 +3,6 @@ import '../schemas/MlModel.schema'
 import '../schemas/Inference.schema'
 
 particle ToLabels in './js/TopLabels.js'
-  consume root
   in MlResource yHat
   in TextLabels labels
   in Number k

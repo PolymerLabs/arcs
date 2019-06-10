@@ -1,7 +1,6 @@
 import '../schemas/MlResource.schema'
 
 particle Reshape in './js/Reshape.js'
-  consume root
   in MlResource tensor
   in [Number] shape
   out MlResource newTensor

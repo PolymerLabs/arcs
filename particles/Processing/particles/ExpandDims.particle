@@ -1,7 +1,6 @@
 import '../schemas/MlResource.schema'
 
 particle ExpandDims in './js/ExpandDims.js'
-  consume root
   in MlResource tensor
   in Number axis
   out MlResource newTensor

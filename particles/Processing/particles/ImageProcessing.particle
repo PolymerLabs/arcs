@@ -1,7 +1,6 @@
 import '../schemas/MlResource.schema'
 
 particle ResizeBilinear in './js/ResizeBilinear.js'
-  consume root
   in MlResource images
   in [Number] size
   in Boolean alignCorners
