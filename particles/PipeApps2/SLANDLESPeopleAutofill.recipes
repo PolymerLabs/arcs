@@ -1,7 +1,7 @@
 import './PipeEntity.schema'
 import './Json.schema'
 
-particle SlandleSuggestPerson in './source/SuggestAddress.js'
+particle SlandleSuggestPerson in './source/SuggestPerson.js'
   in [PipeEntity] recentEntities
   out Json suggestion
   `consume Slot app

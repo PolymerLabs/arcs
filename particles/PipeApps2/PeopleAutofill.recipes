@@ -1,7 +1,7 @@
 import './PipeEntity.schema'
 import './Json.schema'
 
-particle SuggestPerson in './source/SuggestAddress.js'
+particle SuggestPerson in './source/SuggestPerson.js'
   in [PipeEntity] recentEntities
   out Json suggestion
   consume content
