@@ -1,38 +1,46 @@
 import './schemas/ML.schema'
 import './particles/ML.particle'
 
-store MyImageUrl of Image {URL url} 'myImageUrl' in ImgUrl
+store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
 resource ImgUrl
   start
-  {"url": "https://$particles/Services/assets/waltbird.jpg"}
+  [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
 
 store ImageSize of [Shape] 'targetImageSize' in ImgSize
 resource ImgSize
   start
   [{"dim": 224}, {"dim": 224}]
 
+store PixelRange of [Shape] 'imagePixelRange' in NormRange
+resource NormRange
+  start
+  [{"dim": 0}, {"dim": 255}]
+
 store ResizeOptions of ResizeOptions 'resizeOptions' in ResOpts
 resource ResOpts
   start
-  {"alignCorners": true}
+  [{"alignCorners": true}]
 
 recipe ImageClassifier
-  map 'myImageUrl' as imageUrl
-  create as imageTensor
+  map 'myImageUrl' as imgUrl
   map 'targetImageSize' as targetSize
   map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  create as imageTensor
+  create as normTensor
   create as resizedImages
 
   ImageToTensor
-    image <- imageUrl
+    image <- imgUrl
     imageTensor -> imageTensor
+
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
 
   ResizeBilinear
     images <- imageTensor
     size <- targetSize
     options <- resizeOptions
     resizedImages -> resizedImages
-
-
-
-
