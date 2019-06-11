@@ -43,7 +43,7 @@ public class WebHarnessController implements HarnessController {
 
         // make two buttons in the UI
         document.body.appendChild(makeInputElement("Observe Place Entity",
-                val -> environment.observeEntityInArcs("{\"type\": \"address\", \"name\", \"" + val + "\"}")));
+                val -> environment.observeEntityInArcs("{\"type\": \"address\", \"name\": \"" + val + "\"}")));
         Element foundSuggestions = makeFoundSuggestions();
 
         document.body.appendChild(makeInputElement("Receive Map Entity",
