@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'modelReference';
 
   return class extends DomParticle {
-    willReceiveProps({model}, state) {
+    willReceiveProps({model}) {
       if (model) {
         this.apply(model);
       }
