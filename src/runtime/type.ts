@@ -102,8 +102,12 @@ export abstract class Type {
     return true;
   }
 
+  isSlot(): this is SlotType {
+    return this instanceof SlotType;
+  }
+
   // If you want to type-check fully, this is an improvement over just using
-  // this instaneceof CollectionType,
+  // this instanceof CollectionType,
   // because instanceof doesn't propagate generic restrictions.
   isCollectionType<T extends Type>(): this is CollectionType<T> {
     return this instanceof CollectionType;
@@ -445,6 +449,14 @@ export class CollectionType<T extends Type> extends Type {
     return this.collectionType.maybeEnsureResolved();
   }
 
+  get canWriteSuperset(): InterfaceType {
+    return InterfaceType.make(this.tag, [], []);
+  }
+
+  get canReadSubset() {
+    return InterfaceType.make(this.tag, [], []);
+  }
+
   _clone(variableMap) {
     const data = this.collectionType.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
@@ -522,6 +534,14 @@ export class BigCollectionType<T extends Type> extends Type {
 
   maybeEnsureResolved(): boolean {
     return this.bigCollectionType.maybeEnsureResolved();
+  }
+
+  get canWriteSuperset(): InterfaceType {
+    return InterfaceType.make(this.tag, [], []);
+  }
+
+  get canReadSubset() {
+    return InterfaceType.make(this.tag, [], []);
   }
 
   _clone(variableMap) {
@@ -668,10 +688,6 @@ export class SlotType extends Type {
     return new SlotType(new SlotInfo(formFactor, handle));
   }
 
-  get isSlot() {
-    return true;
-  }
-
   get canWriteSuperset(): SlotType {
     return this;
   }
@@ -751,6 +767,11 @@ export class ReferenceType extends Type {
 
   maybeEnsureResolved(): boolean {
     return this.referredType.maybeEnsureResolved();
+  }
+
+  get canWriteSuperset() {
+    // TODO(cypher1): Possibly cannot write to references.
+    return this.referredType.canWriteSuperset;
   }
 
   get canReadSubset() {
