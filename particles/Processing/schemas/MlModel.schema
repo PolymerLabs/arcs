@@ -5,6 +5,7 @@ schema ModelLoadOptions
 
 schema MlModel
   URL location
+  URL labelsUrl
   Reference<ModelLoadOptions> options
 
 
