@@ -14,7 +14,7 @@ defineParticle(({DomParticle, log}) => {
   const delimiter = '\n';
 
   return class extends DomParticle {
-    willReceiveProps({url}, state) {
+    willReceiveProps({url}) {
 
       if (url) {
         this.apply(url);
