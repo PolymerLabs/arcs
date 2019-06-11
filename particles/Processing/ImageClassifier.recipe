@@ -29,7 +29,9 @@ resource BatchShape
 store CurrentModel of MlModel 'currentModel' in CurModel
 resource CurModel
   start
-  [{"location": "https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1", "options": {"fromTFHub": true}}]
+  [{"location": "https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1",
+     "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt",
+     "options": {"fromTFHub": true}}]
 
 recipe ImageClassifier
   map 'myImageUrl' as imgUrl
@@ -73,4 +75,3 @@ recipe ImageClassifier
     tensor <- reshapedImages
     model <- model
     yHat -> yHat
-
