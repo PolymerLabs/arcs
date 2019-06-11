@@ -30,10 +30,18 @@ Description
   process.exit();
 }
 
-// Work in progress; this generates a very simple class definition with encode/decode methods
-// that rely on the code defined in src/wasm/arcs.h. This will be updated in time to have a
-// more proto-like API. Note that when encoding to string from the C++ side, zero/empty fields
-// are considered undefined so there's currently no way to indicate a present-but-zero value.
+const keywords = [
+  'alignas', 'alignof', 'and', 'and_eq', 'asm', 'auto', 'bitand', 'bitor', 'bool', 'break', 'case',
+  'catch', 'char', 'char8_t', 'char16_t', 'char32_t', 'class', 'compl', 'concept', 'const',
+  'consteval', 'constexpr', 'const_cast', 'continue', 'co_await', 'co_return', 'co_yield',
+  'decltype', 'default', 'delete', 'do', 'double', 'dynamic_cast', 'else', 'enum', 'explicit',
+  'export', 'extern', 'false', 'float', 'for', 'friend', 'goto', 'if', 'inline', 'int', 'long',
+  'mutable', 'namespace', 'new', 'noexcept', 'not', 'not_eq', 'nullptr', 'operator', 'or', 'or_eq',
+  'private', 'protected', 'public', 'register', 'reinterpret_cast', 'requires', 'return', 'short',
+  'signed', 'sizeof', 'static', 'static_assert', 'static_cast', 'struct', 'switch', 'template',
+  'this', 'thread_local', 'throw', 'true', 'try', 'typedef', 'typeid', 'typename', 'union',
+  'unsigned', 'using', 'virtual', 'void', 'volatile', 'wchar_t', 'while', 'xor', 'xor_eq'
+];
 
 function typeSummary(field) {
   switch (field.kind) {
@@ -57,12 +65,13 @@ function generate(schemaName, schema) {
 
   const processValue = (name, type, typeChar, passByReference) => {
     const [ref1, ref2] = passByReference ? ['const ', '&'] : ['', ''];
+    const fix = keywords.includes(name) ? '_' : '';
 
     fields.push(`${type} ${name}_ = ${type}();`,
                 `bool ${name}_valid_ = false;`,
                 ``);
 
-    api.push(`${ref1}${type}${ref2} ${name}() const { return ${name}_; }`,
+    api.push(`${ref1}${type}${ref2} ${fix}${name}() const { return ${name}_; }`,
              `void set_${name}(${ref1}${type}${ref2} value) { ${name}_ = value; ${name}_valid_ = true; }`,
              `void clear_${name}() { ${name}_ = ${type}(); ${name}_valid_ = false; }`,
              `bool has_${name}() const { return ${name}_valid_; }`,
@@ -74,10 +83,10 @@ function generate(schemaName, schema) {
                 `  entity->${name}_valid_ = true;`);
 
     encode.push(`if (entity.has_${name}())`,
-                `  encoder.encode("${name}:${typeChar}", entity.${name}());`);
+                `  encoder.encode("${name}:${typeChar}", entity.${fix}${name}());`);
 
     toString.push(`if (entity.has_${name}())`,
-                  `  printer.add("${name}: ", entity.${name}());`);
+                  `  printer.add("${name}: ", entity.${fix}${name}());`);
   };
 
   let fieldCount = 0;
