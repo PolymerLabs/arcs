@@ -1,0 +1,4 @@
+import './Image.schema'
+import './Inference.schema'
+import './MLModel.schema'
+import './MlResource.schema'
