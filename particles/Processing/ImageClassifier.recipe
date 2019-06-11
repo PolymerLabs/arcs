@@ -37,10 +37,16 @@ recipe ImageClassifier
   map 'resizeOptions' as resizeOptions
   map 'imagePixelRange' as range
   map 'batchShape' as batchShape
+  map 'currentModel' as curModel
   create #volatile as imageTensor
   create #volatile as normTensor
   create #volatile as resizedImages
   create #volatile as reshapedImages
+  create #volatile as model
+
+  LoadGraphModel
+    model <- curModel
+    modelReference -> model
 
   ImageToTensor
     image <- imgUrl
