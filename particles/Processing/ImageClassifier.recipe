@@ -26,6 +26,10 @@ resource BatchShape
   start
   [{"dim": -1}, {"dim": 224}, {"dim": 224}, {"dim": 3}]
 
+store CurrentModel of MlModel 'currentModel' in CurModel
+resource CurModel
+  start
+  [{"location": "https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1", "options": {"fromTFHub": true}}]
 
 recipe ImageClassifier
   map 'myImageUrl' as imgUrl
@@ -33,10 +37,10 @@ recipe ImageClassifier
   map 'resizeOptions' as resizeOptions
   map 'imagePixelRange' as range
   map 'batchShape' as batchShape
-  create as imageTensor
-  create as normTensor
-  create as resizedImages
-  create as reshapedImages
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
 
   ImageToTensor
     image <- imgUrl
