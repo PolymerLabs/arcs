@@ -586,7 +586,6 @@ ${this.activeRecipe.toString()}`;
       if (this.storesById.has(recipeHandle.id)) {
         continue;
       }
-
       if (recipeHandle.fate !== '`slot') {
         let storageKey = recipeHandle.storageKey;
         if (!storageKey) {
@@ -598,22 +597,12 @@ ${this.activeRecipe.toString()}`;
         let store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
 
         if (!store && recipeHandle.fate === 'map') {
-          assert(recipeHandle.fate === 'map');
-          const storeRef = this.findStoreById(recipeHandle.id);
-          assert(storeRef instanceof StorageStub);
-          if (storeRef instanceof StorageStub) {
-            store = await storeRef.inflate();
-          }
-          // if (!store) {
-          //   debugger;
-          // }
-          assert(store, `store '${recipeHandle.id}' was not found`);
-          this._registerStore(store, recipeHandle.tags);
+          const storeRef = this.findStoreById(recipeHandle.id) as StorageStub;
+          store = await storeRef.inflate();
         }
+        assert(store, `store '${recipeHandle.id}' was not found`);
+        this._registerStore(store, recipeHandle.tags);
       }
-      assert(store, `store '${recipeHandle.id}' was not found`);
-      this._registerStore(store, recipeHandle.tags);
-    }
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
