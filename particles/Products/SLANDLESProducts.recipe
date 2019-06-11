@@ -45,6 +45,7 @@ recipe SlandleUseWishlist
   create #volatile as recommendations
   use as person
   use as shoplist
+  `slot as actionSlot
   // annotates shoplist
   SlandleChoicesMultiplexer
     // This is probably wrong, but it works now (instead of annotationSlot)

@@ -15,4 +15,4 @@ particle SlandleChoicesMultiplexer in 'source/Multiplexer.js'
   in [~any] list
   in [~anyOther] choices
   host SlandleHostedChoiceInterface hostedParticle
-  `consume [Slot] choice
+  `consume Slot choice

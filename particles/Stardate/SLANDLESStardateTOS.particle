@@ -1,0 +1,4 @@
+particle SlandleStardateTOS in './js/StardateTOS.js'
+  out DestinationPlanet {Text name} destination
+  out ScriptDate {Text date} stardate
+  description `stardate ${stardate.date}, orbiting ${destination.name}`
