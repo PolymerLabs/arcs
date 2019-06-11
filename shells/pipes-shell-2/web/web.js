@@ -40,7 +40,7 @@ const composerFactory = modality => {
   }
 };
 
-const client = window.client || {};
+const client = window.DeviceClient || {};
 
 (async () => {
   // if remote DevTools are requested, wait for connect
@@ -49,7 +49,9 @@ const client = window.client || {};
   const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   window.ShellApi = bus;
-  // run some examples
+  // notify client
+  bus.send({message: 'ready'});
+  // run smokeTest if requested
   if (test) {
     smokeTest(bus);
     // world's dumbest ui

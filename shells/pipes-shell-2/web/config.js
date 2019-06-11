@@ -11,7 +11,7 @@
 const params = (new URL(document.location)).searchParams;
 
 export const manifest = (params.has('solo')) ? `import '${params.get('solo')}'` : null;
-export const test = ('test' in params);
+export const test = params.has('test');
 
 export {paths} from './paths.js';
 
