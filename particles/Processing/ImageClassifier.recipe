@@ -47,6 +47,7 @@ recipe ImageClassifier
   create #volatile as model
   create #volatile as yHat
   create as labels
+  create as predictions
 
   LoadGraphModel
     model <- curModel
@@ -80,3 +81,8 @@ recipe ImageClassifier
     tensor <- reshapedImages
     model <- model
     yHat -> yHat
+
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
