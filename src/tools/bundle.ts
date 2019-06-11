@@ -30,6 +30,10 @@ export type BundleEntry = {
 export async function bundle(entryPoints: string[], bundleName: string, verbose: boolean) {
   const listing = await bundleListing(...entryPoints);
 
+  if (listing.some(file => file.bundlePath === '__bundle_entry.manifest')) {
+    throw new Error('Error: Top-level \'__bundle_entry.manifest\' file found. Please remove it.');
+  }
+
   if (verbose) {
     console.log('Bundled files:');
     listing.forEach(f => console.log(f.filePath));
@@ -48,9 +52,9 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
         // Some unpackers have issues with 0-byte files.
         {createFolders: false});
     }
-    archive.file('bundle-manifest.mf', listing
+    archive.file('__bundle_entry.manifest', listing
         .filter(f => f.entryPoint)
-        .map(f => `entry-point: ${f.bundlePath}\n`)
+        .map(f => `import '${f.bundlePath}'\n`)
         .join(''));
     // Don't use {streamFiles: true}.
     // Java ZipInputStream does not accept the data descriptors that it generates.
