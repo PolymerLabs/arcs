@@ -43,6 +43,7 @@ recipe ImageClassifier
   create #volatile as resizedImages
   create #volatile as reshapedImages
   create #volatile as model
+  create #volatile as yHat
 
   LoadGraphModel
     model <- curModel
@@ -67,3 +68,9 @@ recipe ImageClassifier
     tensor <- resizedImages
     shape <- batchShape
     newTensor -> reshapedImages
+
+  Classifier
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+
