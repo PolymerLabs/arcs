@@ -9,15 +9,16 @@
  */
 
 import {Arc} from '../arc.js';
+import {Action} from './walker.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
-import {Handle} from '../recipe/handle';
-import {Particle} from '../recipe/particle.js';
-import {RecipeUtil} from '../recipe/recipe-util.js';
-import {RecipeWalker} from '../recipe/recipe-walker.js';
-import {Recipe} from '../recipe/recipe.js';
-import {SlotConnection} from '../recipe/slot-connection.js';
-import {SlotUtils} from '../recipe/slot-utils.js';
-import {Action} from '../recipe/walker.js';
+import {Direction} from '../manifest-ast-nodes.js';
+import {Handle} from './handle';
+import {Particle} from './particle.js';
+import {RecipeUtil} from './recipe-util.js';
+import {RecipeWalker} from './recipe-walker.js';
+import {Recipe} from './recipe.js';
+import {SlotConnection} from './slot-connection.js';
+import {SlotUtils} from './slot-utils.js';
 
 export class ResolveWalker extends RecipeWalker {
   private readonly arc: Arc;
@@ -49,6 +50,7 @@ export class ResolveWalker extends RecipeWalker {
           mappable = arc.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
+        case '`slot':
         case '?':
           mappable = [];
           break;
@@ -67,6 +69,7 @@ export class ResolveWalker extends RecipeWalker {
           storeById = arc.context.findStoreById(handle.id);
           break;
         case 'create':
+        case '`slot':
         case '?':
           break;
         default:
@@ -94,7 +97,7 @@ export class ResolveWalker extends RecipeWalker {
     return undefined;
   }
 
-  onSlotConnection(recipe: Recipe, slotConnection: SlotConnection) {
+  onSlotConnection(_recipe: Recipe, slotConnection: SlotConnection) {
     const arc = this.arc;
     if (slotConnection.isConnected()) {
       return undefined;
@@ -118,7 +121,7 @@ export class ResolveWalker extends RecipeWalker {
     };
   }
 
-  onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
+  onPotentialSlotConnection(_recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
     const arc = this.arc;
     const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
     const allSlots = [...local, ...remote];
@@ -129,14 +132,14 @@ export class ResolveWalker extends RecipeWalker {
     }
 
     const selectedSlot = allSlots[0];
-    return (recipe, particle, slotSpec) => {
+    return (_recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) => {
       const newSlotConnection = particle.addSlotConnection(slotSpec.name);
       SlotUtils.connectSlotConnection(newSlotConnection, selectedSlot);
       return 1;
     };
   }
   // TODO(lindner): add typeof checks here and figure out where handle is coming from.
-  onObligation(recipe: Recipe, obligation) {
+  onObligation(recipe: Recipe, obligation: {from, to, direction: Direction}) {
     const fromParticle = obligation.from.instance;
     const toParticle = obligation.to.instance;
     for (const fromConnection of Object.values(fromParticle.connections)) {
