@@ -9,7 +9,7 @@
  */
 import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
-import {FlowGraph, Node, Edge, CheckResult, BackwardsPath} from '../dataflow/flow-graph.js';
+import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath} from '../dataflow/flow-graph.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -189,7 +189,123 @@ describe('FlowGraph validation', () => {
     assert.isFalse(graph.validateGraph());
   });
 
-  // TODO: Add tests for for more complex graphs, and for other kinds of failures.
+  it('fails when no tag is claimed', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+      particle P2
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    assert.isFalse(graph.validateGraph());
+  });
+
+  it('succeeds when handle has multiple inputs with the right tags', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        out Foo {} foo
+        claim foo is trusted
+      particle P3
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          foo -> h
+        P3
+          bar <- h
+    `);
+    assert.isTrue(graph.validateGraph());
+  });
+
+  it('fails when handle has multiple inputs but one is untagged', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        out Foo {} foo
+      particle P3
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          foo -> h
+        P3
+          bar <- h
+    `);
+    assert.isFalse(graph.validateGraph());
+  });
+
+  it('fails when handle has no inputs', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P
+          bar <- h
+    `);
+    assert.isFalse(graph.validateGraph());
+  });
+
+  it('claim propagates through a chain of particles', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        in Foo {} bar
+        out Foo {} foo
+      particle P3
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h1
+        P2
+          bar <- h1
+          foo -> h2
+        P3
+          bar <- h2
+    `);
+    assert.isTrue(graph.validateGraph());
+  });
+
+  it('a claim made later in a chain of particles clobbers claims made earlier', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        in Foo {} bar
+        out Foo {} foo
+        claim foo is someOtherTag
+      particle P3
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h1
+        P2
+          bar <- h1
+          foo -> h2
+        P3
+          bar <- h2
+    `);
+    assert.isFalse(graph.validateGraph());
+  });
 });
 
 class TestNode extends Node {
@@ -203,8 +319,8 @@ class TestEdge implements Edge {
       readonly end: TestNode,
       readonly label: string) {}
   
-  isCheckSatisfied(check: string): CheckResult {
-    return CheckResult.Success;
+  evaluateCheck(check: string, path: BackwardsPath): CheckResult {
+    return {type: CheckResultType.Success};
   }
 }
 
@@ -217,31 +333,50 @@ describe('BackwardsPath', () => {
   const edgeBToC = new TestEdge(nodeB, nodeC, 'B -> C');
   const edgeCToA = new TestEdge(nodeC, nodeA, 'C -> A');
 
-  it('starts with a single edge', () => {
-    const path = BackwardsPath.fromEdge(edgeAToB);
+  it('starts with a single open edge', () => {
+    const path = BackwardsPath.newPathWithOpenEdge(edgeAToB);
 
-    assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeB]);
+    assert.equal(path.openEdge, edgeAToB);
     assert.equal(path.startNode, nodeB);
-    assert.equal(path.endNode, nodeA);
+    assert.equal(path.end, edgeAToB);
   });
 
-  it('can add another edge to the end of the path', () => {
-    let path = BackwardsPath.fromEdge(edgeBToC);
-    path = path.newPathWithEdge(edgeAToB);
+  it('can close an open edge', () => {
+    const path = BackwardsPath.newPathWithOpenEdge(edgeAToB).withClosedEnd();
 
-    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB, nodeA]);
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
+    assert.isNull(path.openEdge);
+    assert.equal(path.startNode, nodeB);
+    assert.equal(path.end, nodeA);
+  });
+
+  it('can add an open edge to the end of a closed path', () => {
+    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC).withNewOpenEdge(edgeAToB);
+
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB]);
+    assert.equal(path.openEdge, edgeAToB);
     assert.equal(path.startNode, nodeC);
-    assert.equal(path.endNode, nodeA);
+    assert.equal(path.end, edgeAToB);
   });
 
   it('forbids cycles', () => {
-    let path = BackwardsPath.fromEdge(edgeBToC);
-    path = path.newPathWithEdge(edgeAToB);
-    assert.throws(() => path.newPathWithEdge(edgeCToA), 'Path must not include cycles');
+    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC).withNewClosedEdge(edgeAToB);
+    assert.throws(() => path.withNewOpenEdge(edgeCToA), 'Graph must not include cycles');
   });
 
   it('only allows adding to the end of the path', () => {
-    const path = BackwardsPath.fromEdge(edgeBToC);
-    assert.throws(() => path.newPathWithEdge(edgeCToA), 'Edge must connect to end of path');
+    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC);
+    assert.throws(() => path.withNewOpenEdge(edgeCToA), 'Edge must connect to end of path');
+  });
+
+  it('forbids adding two open edges', () => {
+    const path = BackwardsPath.newPathWithOpenEdge(edgeBToC);
+    assert.throws(() => path.withNewOpenEdge(edgeAToB), 'Path already ends with an open edge');
+  });
+
+  it('forbids closing an already closed path', () => {
+    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC);
+    assert.throws(() => path.withClosedEnd(), 'Path is already closed');
   });
 });
