@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'predictions';
 
   return class extends DomParticle {
-    willReceiveProps({yHat, labels, k}, state) {
+    willReceiveProps({yHat, labels, k}) {
       const topK = k || 5;
 
       if (yHat && labels) {
@@ -21,12 +21,13 @@ defineParticle(({DomParticle, log}) => {
       }
     }
 
-    async apply(yHat, labels, topK) {
+    async apply(yHat_, labels_, topK) {
       log(`Converting tensor output to top ${topK} labels...`);
 
-      const yh = this.getRef(yHat);
+      const yHat = yHat_.ref;
+      const labels = this.toList(labels_);
 
-      const predictions = await this.service({call: 'tf.getTopKClasses', yHat: yh, labels, topk});
+      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topk});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
       log(results);
 
@@ -34,8 +35,9 @@ defineParticle(({DomParticle, log}) => {
       this.updateSingleton(handleName, results);
     }
 
-    getRef(r) {
-      return r.ref ? r.ref : r;
+    toList(shape) {
+      return shape.map((s) => s.dim);
     }
+
   };
 });

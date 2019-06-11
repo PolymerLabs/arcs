@@ -13,25 +13,27 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'resizedImages';
 
   return class extends DomParticle {
-    willReceiveProps({images, shape, alignCorners}) {
+    willReceiveProps({images, shape, options}) {
       if (images && shape) {
-        this.apply(images, shape, alignCorners);
+        this.apply(images, shape, options);
       }
     }
 
-    async apply(images, size, alignCorners) {
-      const t = this.getRef(images);
+    async apply(images_, size_, options) {
+      const images = images_.ref;
+      const size = this.toList(size_);
+      const alignCorners = options ? options.alignCorners : false;
 
       log('Resizing...');
-      const newTensor = await this.service({call: 'tf.resizeBilinear', images: t, size, alignCorners});
+      const newTensor = await this.service({call: 'tf.resizeBilinear', images, size, alignCorners});
       log('Resized.');
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 
-    getRef(r) {
-      return r.ref ? r.ref : r;
+    toList(shape) {
+      return shape.map((s) => s.dim);
     }
   };
 });

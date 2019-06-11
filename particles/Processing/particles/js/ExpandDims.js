@@ -19,19 +19,17 @@ defineParticle(({DomParticle, log}) => {
       }
     }
 
-    async apply(tensor, axis) {
-      const t = this.getRef(tensor);
+    async apply(tensor_, axis_) {
+      const input = tensor_.ref;
+      const axis = axis_.dim;
 
       log('Expanding Dimensions...');
-      const newTensor = await this.service({call: 'tf.expandDims', input: t, axis});
+      const newTensor = await this.service({call: 'tf.expandDims', input, axis});
       log('Dimensions Expanded.');
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 
-    getRef(r) {
-      return r.ref ? r.ref : r;
-    }
   };
 });

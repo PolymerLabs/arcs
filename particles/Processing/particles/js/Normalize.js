@@ -19,19 +19,21 @@ defineParticle(({DomParticle, log}) => {
       }
     }
 
-    async apply(tensor, range) {
-      const t = this.getRef(tensor);
+    async apply(tensor_, range_) {
+
+      const input = tensor_.ref;
+      const range = this.toList(range_);
 
       log('Normalizing...');
-      const tNorm = await this.service({call: 'tf.normalize', input: t, range});
+      const tNorm = await this.service({call: 'tf.normalize', input, range});
       log('Normalized.');
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: tNorm});
     }
 
-    getRef(r) {
-      return r.ref ? r.ref : r;
+    toList(shape) {
+      return shape.map((s) => s.dim);
     }
   };
 });

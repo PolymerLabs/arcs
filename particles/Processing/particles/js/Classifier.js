@@ -13,26 +13,22 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'yHat';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, model}, state) {
+    willReceiveProps({tensor, model}) {
       if (model && tensor) {
         this.apply(model, tensor);
       }
     }
 
-    async apply(model, tensor) {
-      const m = this.getRef(mode);
-      const t = this.getRef(tensor);
+    async apply(model_, tensor_) {
+      const model = model_.ref;
+      const inputs = tensor_.ref;
 
       log('Classifying...');
-      const yHat = await this.service({call: 'tf.predict', model: m, inputs: t});
+      const yHat = await this.service({call: 'tf.predict', model, inputs});
       log('Classified.');
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: yHat});
-    }
-
-    getRef(r) {
-      return r.ref ? r.ref : r;
     }
   };
 });

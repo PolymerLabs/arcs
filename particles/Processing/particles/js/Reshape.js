@@ -19,19 +19,20 @@ defineParticle(({DomParticle, log}) => {
       }
     }
 
-    async apply(tensor, shape) {
-      const t = this.getRef(tensor);
+    async apply(tensor_, shape_) {
+      const input = tensor_.ref;
+      const shape = this.toList(shape_);
 
       log('Reshaping...');
-      const newTensor = await this.service({call: 'tf.reshape', input: t, shape});
+      const newTensor = await this.service({call: 'tf.reshape', input, shape});
       log('Reshape.');
 
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 
-    getRef(r) {
-      return r.ref ? r.ref : r;
+    toList(shape) {
+      return shape.map((s) => s.dim);
     }
   };
 });

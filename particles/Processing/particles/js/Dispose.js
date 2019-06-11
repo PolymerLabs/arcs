@@ -17,15 +17,11 @@ defineParticle(({DomParticle, log}) => {
       }
     }
 
-    async apply(resource) {
-      const ref = this.getRef(resource);
+    async apply(resource_) {
+      const reference = resource_.ref;
       log('Disposing...');
-      await this.service({call: 'tf.dispose', reference: ref});
+      await this.service({call: 'tf.dispose', reference});
       log('Disposed.');
-    }
-
-    getRef(r) {
-      return r.ref ? r.ref : r;
     }
   };
 });
