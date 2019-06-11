@@ -153,7 +153,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it(`instantiates recipes only if fate is correct ` + storageKeyPrefix, async function () {
+  it(`instantiates recipes only if fate is correct ` + storageKeyPrefix, async function() {
     if (!storageKeyPrefix.startsWith('volatile')) {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
