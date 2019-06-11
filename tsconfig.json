@@ -6,6 +6,8 @@
   "compilerOptions": {
     "outDir": "build",
     "declaration": true,
+    // temporary turned on to deal with https://github.com/microsoft/TypeScript/issues/31717
+    "skipLibCheck": true,
     "experimentalDecorators": true,
     "incremental": true
   },

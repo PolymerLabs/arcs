@@ -133,7 +133,7 @@ export class MockSlotComposer extends FakeSlotComposer {
   /**
    * Returns promise to completion of all expectations.
    */
-  expectationsCompleted() {
+  async expectationsCompleted() {
     if (this.expectQueue.length === 0 || this.expectQueue.every(e => e.isOptional)) {
       return Promise.resolve();
     }
@@ -145,7 +145,7 @@ export class MockSlotComposer extends FakeSlotComposer {
       return true;
     }
     assert(false, `${this.debugMessagesToString()}\nremaining expectations:\n ${this.expectQueue.map(expect => `  ${expect.toString()}`).join('\n')}`);
-   return undefined;
+    return undefined;
   }
 
   /**
