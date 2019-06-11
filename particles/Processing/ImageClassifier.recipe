@@ -21,14 +21,22 @@ resource ResOpts
   start
   [{"alignCorners": true}]
 
+store TensorShape of [Shape] 'batchShape' in BatchShape
+resource BatchShape
+  start
+  [{"dim": -1}, {"dim": 224}, {"dim": 224}, {"dim": 3}]
+
+
 recipe ImageClassifier
   map 'myImageUrl' as imgUrl
   map 'targetImageSize' as targetSize
   map 'resizeOptions' as resizeOptions
   map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
   create as imageTensor
   create as normTensor
   create as resizedImages
+  create as reshapedImages
 
   ImageToTensor
     image <- imgUrl
@@ -44,3 +52,8 @@ recipe ImageClassifier
     size <- targetSize
     options <- resizeOptions
     resizedImages -> resizedImages
+
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
