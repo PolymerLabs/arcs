@@ -3,6 +3,6 @@ import '../schemas/MlResource.schema'
 
 particle ImageToTensor in './js/ImageToTensor.js'
   consume root
-  in Image {Text url} image
+  in Image {(Text or URL) url} image
   out MlResource imageTensor
   description `Converts an Image URL to a Tensor3D`

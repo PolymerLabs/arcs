@@ -1,5 +1,6 @@
 import './schemas/ML.schema'
 import './particles/ML.particle'
+import './particles/ImageSelector.particle'
 
 store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
 resource ImgUrl
@@ -34,12 +35,12 @@ resource CurModel
     "options": {"fromTFHub": true}}]
 
 recipe ImageClassifier
-  map 'myImageUrl' as imgUrl
   map 'targetImageSize' as targetSize
   map 'resizeOptions' as resizeOptions
   map 'imagePixelRange' as range
   map 'batchShape' as batchShape
   map 'currentModel' as curModel
+  create #volatile as imgUrl
   create #volatile as imageTensor
   create #volatile as normTensor
   create #volatile as resizedImages
@@ -48,6 +49,11 @@ recipe ImageClassifier
   create #volatile as yHat
   create as labels
   create as predictions
+
+  ImageSelector
+    image -> imgUrl
+    consume root
+      provide imageView as viewSlot
 
   LoadGraphModel
     model <- curModel
