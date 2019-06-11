@@ -8,19 +8,22 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, log}) => {
 
   const handleName = 'imageTensor';
 
   return class extends DomParticle {
-    willReceiveProps({image}, state) {
+    willReceiveProps({image}) {
       if (image) {
         this.apply(image);
       }
     }
 
     async apply(image) {
+      log('Converting image URL to Tensor...');
       const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl: image});
+      log('Converted image URL to Tensor.');
+
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: imgReference});
     }
