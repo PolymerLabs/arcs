@@ -1,0 +1,38 @@
+import './schemas/ML.schema'
+import './particles/ML.particle'
+
+store MyImageUrl of Image {URL url} 'myImageUrl' in ImgUrl
+resource ImgUrl
+  start
+  {"url": "https://$particles/Services/assets/waltbird.jpg"}
+
+store ImageSize of [Shape] 'targetImageSize' in ImgSize
+resource ImgSize
+  start
+  [{"dim": 224}, {"dim": 224}]
+
+store ResizeOptions of ResizeOptions 'resizeOptions' in ResOpts
+resource ResOpts
+  start
+  {"alignCorners": true}
+
+recipe ImageClassifier
+  map 'myImageUrl' as imageUrl
+  create as imageTensor
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  create as resizedImages
+
+  ImageToTensor
+    image <- imageUrl
+    imageTensor -> imageTensor
+
+  ResizeBilinear
+    images <- imageTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+
+
+
+
