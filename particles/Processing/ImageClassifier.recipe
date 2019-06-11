@@ -30,8 +30,8 @@ store CurrentModel of MlModel 'currentModel' in CurModel
 resource CurModel
   start
   [{"location": "https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1",
-     "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt",
-     "options": {"fromTFHub": true}}]
+    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt",
+    "options": {"fromTFHub": true}}]
 
 recipe ImageClassifier
   map 'myImageUrl' as imgUrl
@@ -46,10 +46,15 @@ recipe ImageClassifier
   create #volatile as reshapedImages
   create #volatile as model
   create #volatile as yHat
+  create as labels
 
   LoadGraphModel
     model <- curModel
     modelReference -> model
+
+  ParseLabels
+    url <- curModel
+    labels -> labels
 
   ImageToTensor
     image <- imgUrl
