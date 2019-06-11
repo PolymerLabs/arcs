@@ -4,5 +4,5 @@ import '../schemas/Inference.schema'
 
 particle ParseLabels in './js/ParseLabels.js'
   in URL url
-  out TextLabels labels
+  out [Label] labels
   description `Parse a URL to a text file into a list of labels`

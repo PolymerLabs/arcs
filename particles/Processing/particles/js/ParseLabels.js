@@ -26,9 +26,10 @@ defineParticle(({DomParticle, log}) => {
 
       const doc = await fetch(url).then(d => d.text());
       const labels = doc.split(delimiter);
+      const labelsSchema = labels.map((l) => ({'label': l}));
 
       await this.clearHandle(handleName);
-      this.updateSingleton(handleName, labels);
+      this.updateSingleton(handleName, labelsSchema);
     }
   };
 });
