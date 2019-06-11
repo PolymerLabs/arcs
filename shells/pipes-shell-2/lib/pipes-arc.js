@@ -13,7 +13,7 @@ import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {ArcHost} from '../../lib/components/arc-host.js';
 
 const id = 'pipes-arc';
-const manifest = `import 'https://$particles/PipeApps/BackgroundPipes.recipes'`;
+const manifest = `import 'https://$particles/PipeApps2/BackgroundPipes.recipes'`;
 
 const log = logFactory('pipes-arc');
 
