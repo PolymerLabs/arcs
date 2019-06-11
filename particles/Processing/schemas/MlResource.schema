@@ -1,2 +1,5 @@
 schema MlResource
   Number ref
+
+schema Shape
+  Number dim

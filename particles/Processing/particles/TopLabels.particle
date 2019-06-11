@@ -4,7 +4,7 @@ import '../schemas/Inference.schema'
 
 particle ToLabels in './js/TopLabels.js'
   in MlResource yHat
-  in TextLabels labels
-  in Number k
+  in [Label] labels
+  in Shape k
   out [Classification] predictions
   description `Convert raw inference into the top k labels (with confidence).`

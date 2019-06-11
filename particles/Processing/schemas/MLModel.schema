@@ -8,3 +8,5 @@ schema MlModel
   Reference<ModelLoadOptions> options
 
 
+schema Label
+  Text label

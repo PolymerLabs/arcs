@@ -2,7 +2,7 @@ import '../schemas/MlResource.schema'
 
 particle Reshape in './js/Reshape.js'
   in MlResource tensor
-  in [Number] shape
+  in [Shape] shape
   out MlResource newTensor
   description `Transforms the shape of the input tensor to the target, preserving number of elements.`
 
