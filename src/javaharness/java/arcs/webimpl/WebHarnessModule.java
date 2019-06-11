@@ -39,8 +39,5 @@ public abstract class WebHarnessModule {
   public abstract PECInnerPort providesPECInnerPort(PECInnerPortImpl impl);
 
   @Binds
-  public abstract StorageProxyFactory providesStorageProxyFactory(StorageProxyFactoryImpl impl);
-
-  @Binds
   public abstract HandleFactory providesHandleFactory(HandleFactoryImpl impl);
 }

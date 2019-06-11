@@ -1,5 +1,7 @@
 package arcs.api;
 
+import java.util.Optional;
+
 public class Thing<T> {
     public final T thing;
 
@@ -17,5 +19,13 @@ public class Thing<T> {
     @Override
     public int hashCode() {
         return get().hashCode();
+    }
+
+    public NativeParticle getParticle() {
+        return this.thing instanceof NativeParticle ? Optional.of((NativeParticle)this.thing).orElse(null) : null;
+    }
+
+    public StorageProxy getStorageProxy() {
+        return this.thing instanceof StorageProxy ? Optional.of((StorageProxy)this.thing).orElse(null) : null;
     }
 }
