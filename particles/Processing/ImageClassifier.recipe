@@ -69,7 +69,7 @@ recipe ImageClassifier
     shape <- batchShape
     newTensor -> reshapedImages
 
-  Classifier
+  Classify
     tensor <- reshapedImages
     model <- model
     yHat -> yHat
