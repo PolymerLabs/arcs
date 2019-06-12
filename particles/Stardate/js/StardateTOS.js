@@ -21,12 +21,14 @@ defineParticle(({DomParticle, html, log}) => {
   ];
 
   return class extends DomParticle {
-    update() {
-      const {stardate, destination} = this.computeStardate();
-      this.updateSingleton('stardate', {date: stardate});
-      this.updateSingleton('destination', {name: destination});
+    update({}, state) {
+      this.computeStardate().then(({stardate, destination}) => {
+        this.updateSingleton('stardate', {date: stardate});
+        this.updateSingleton('destination', {name: destination});
+      });
     }
-    computeStardate() {
+
+    async computeStardate() {
       // Aims to follow logic per https://en.wikipedia.org/wiki/Stardate#The_Original_Series_era
 
       // TODO(wkorman): Intent was to keep track of the "last stardate" within
@@ -36,7 +38,8 @@ defineParticle(({DomParticle, html, log}) => {
 
       const prefix = MIN_STARDATE;
       const remainder = MAX_STARDATE - prefix;
-      const stardate = prefix + Math.floor(Math.random() * remainder);
+      const randomValue = await this.service({call: 'random.next'});
+      const stardate = prefix + Math.floor(randomValue * remainder);
       const intraday = Math.trunc((new Date().getHours() / 24) * 10);
       const destination = PLANETS[Math.floor(Math.random() * (PLANETS.length - 1))];
       return {
