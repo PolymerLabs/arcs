@@ -381,9 +381,15 @@ describe('FlowGraph validation', () => {
 class TestNode extends Node {
   readonly inEdges: TestEdge[] = [];
   readonly outEdges: TestEdge[] = [];
+  
+  evaluateCheck(check: string, edge: Edge): CheckResult {
+    return {type: CheckResultType.Success};
+  }
 }
 
 class TestEdge implements Edge {
+  readonly handleName = 'handleName';
+
   constructor(
       readonly start: TestNode,
       readonly end: TestNode,
@@ -403,50 +409,33 @@ describe('BackwardsPath', () => {
   const edgeBToC = new TestEdge(nodeB, nodeC, 'B -> C');
   const edgeCToA = new TestEdge(nodeC, nodeA, 'C -> A');
 
-  it('starts with a single open edge', () => {
-    const path = BackwardsPath.newPathWithOpenEdge(edgeAToB);
-
-    assert.sameOrderedMembers(path.nodes as Node[], [nodeB]);
-    assert.equal(path.openEdge, edgeAToB);
-    assert.equal(path.startNode, nodeB);
-    assert.equal(path.end, edgeAToB);
-  });
-
-  it('can close an open edge', () => {
-    const path = BackwardsPath.newPathWithOpenEdge(edgeAToB).withClosedEnd();
+  it('starts with a single edge', () => {
+    const path = BackwardsPath.fromEdge(edgeAToB);
 
     assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
-    assert.isNull(path.openEdge);
     assert.equal(path.startNode, nodeB);
-    assert.equal(path.end, nodeA);
+    assert.equal(path.endNode, nodeA);
+    assert.equal(path.endEdge, edgeAToB);
   });
 
-  it('can add an open edge to the end of a closed path', () => {
-    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC).withNewOpenEdge(edgeAToB);
+  it('can add another edge to the end of the path', () => {
+    let path = BackwardsPath.fromEdge(edgeBToC);
+    path = path.withNewEdge(edgeAToB);
 
-    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB]);
-    assert.equal(path.openEdge, edgeAToB);
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB, nodeA]);
     assert.equal(path.startNode, nodeC);
-    assert.equal(path.end, edgeAToB);
+    assert.equal(path.endNode, nodeA);
+    assert.equal(path.endEdge, edgeAToB);
   });
 
   it('forbids cycles', () => {
-    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC).withNewClosedEdge(edgeAToB);
-    assert.throws(() => path.withNewOpenEdge(edgeCToA), 'Graph must not include cycles');
+    let path = BackwardsPath.fromEdge(edgeBToC);
+    path = path.withNewEdge(edgeAToB);
+    assert.throws(() => path.withNewEdge(edgeCToA), 'Graph must not include cycles');
   });
 
   it('only allows adding to the end of the path', () => {
-    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC);
-    assert.throws(() => path.withNewOpenEdge(edgeCToA), 'Edge must connect to end of path');
-  });
-
-  it('forbids adding two open edges', () => {
-    const path = BackwardsPath.newPathWithOpenEdge(edgeBToC);
-    assert.throws(() => path.withNewOpenEdge(edgeAToB), 'Path already ends with an open edge');
-  });
-
-  it('forbids closing an already closed path', () => {
-    const path = BackwardsPath.newPathWithClosedEdge(edgeBToC);
-    assert.throws(() => path.withClosedEnd(), 'Path is already closed');
+    const path = BackwardsPath.fromEdge(edgeBToC);
+    assert.throws(() => path.withNewEdge(edgeCToA), 'Edge must connect to end of path');
   });
 });
