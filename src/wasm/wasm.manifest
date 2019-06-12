@@ -13,15 +13,15 @@ store DataStore of Data in DataResource
 
 
 schema Info
-  Text str
+  Text for
   Number val
 
 resource InfoResource
   start
   [
-    {"str": "xx", "val": -5.8},
+    {"for": "xx", "val": -5.8},
     {"val": 107},
-    {"str": "yy"}
+    {"for": "yy"}
   ]
 store InfoStore of [Info] in InfoResource
 
