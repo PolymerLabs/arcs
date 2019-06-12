@@ -20,8 +20,10 @@ defineParticle(({DomParticle, log}) => {
     }
 
     async apply(image) {
+      const imageUrl = image.url;
+
       log('Converting image URL to Tensor...');
-      const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl: image});
+      const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl});
       log('Converted image URL to Tensor.');
 
       await this.clearHandle(handleName);
