@@ -36,7 +36,7 @@ defineParticle(({DomParticle, log}) => {
     }
 
     toList(shape) {
-      return shape.map((s) => s.dim);
+      return shape.map((s) => s.label);
     }
 
   };
