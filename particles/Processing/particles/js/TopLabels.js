@@ -27,7 +27,7 @@ defineParticle(({DomParticle, log}) => {
       const yHat = yHat_.ref;
       const labels = this.toList(labels_);
 
-      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topk});
+      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topK});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
       log(results);
 
