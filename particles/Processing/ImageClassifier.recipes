@@ -96,3 +96,5 @@ recipe ImageClassifier
 
   PresentLabel
     predictions <- predictions
+
+  description `Image classification using particle oriented model`
