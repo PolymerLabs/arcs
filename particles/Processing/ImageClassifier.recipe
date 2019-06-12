@@ -33,7 +33,7 @@ resource CurModel
   start
   [{"location": "https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1",
     "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt",
-    "options": {"fromTFHub": true}}]
+    "fromTFHub": true}]
 
 recipe ImageClassifier
   map 'targetImageSize' as targetSize
