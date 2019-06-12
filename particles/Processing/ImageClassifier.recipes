@@ -31,9 +31,8 @@ resource BatchShape
 store CurrentModel of MlModel 'currentModel' in CurModel
 resource CurModel
   start
-  [{"location": "https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1",
-    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt",
-    "fromTFHub": true}]
+  [{"location": "https://$particles/Services/assets/MobileNet_v1_100_224.json",
+    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt"}]
 
 recipe ImageClassifier
   map 'targetImageSize' as targetSize
