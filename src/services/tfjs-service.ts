@@ -227,17 +227,22 @@ const getTopKClasses = async ({input, y, yHat, labels, topK = 3}): Promise<Class
   log('Getting top K classes...');
   const input_ = rmgr.deref(input || y || yHat) as Tf.Tensor2D;
 
+  log('Applying softmax...');
   const softmax = input_.softmax();
   const values = await softmax.data();
   softmax.dispose();
 
+  log('Mapping values to indices...');
   const valuesAndIndices = [];
   for (let i = 0; i < values.length; i++) {
     valuesAndIndices.push({value: values[i], index: i});
   }
+  log('Sorting value : index map by value...');
   valuesAndIndices.sort((a, b) => {
     return b.value - a.value;
   });
+
+  log('Getting top K (value: index) pairs...');
   const topkValues = new Float32Array(topK);
   const topkIndices = new Int32Array(topK);
   for (let i = 0; i < topK; i++) {
