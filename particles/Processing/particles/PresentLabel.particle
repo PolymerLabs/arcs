@@ -1,4 +1,5 @@
 import '../schemas/Inference.schema'
+import '../schemas/MlResource.schema'
 
 particle PresentLabel in './js/PresentLabel.js'
   in [Classification] predictions

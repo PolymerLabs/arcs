@@ -1,6 +1,7 @@
 import './schemas/ML.schema'
 import './particles/ML.particle'
 import './particles/ImageSelector.particle'
+import './particles/PresentLabel.particle'
 
 store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
 resource ImgUrl
@@ -92,3 +93,6 @@ recipe ImageClassifier
     yHat <- yHat
     labels <- labels
     predictions -> predictions
+
+  PresentLabel
+    predictions <- predictions
