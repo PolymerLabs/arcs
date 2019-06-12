@@ -645,11 +645,11 @@ ${particleStr1}
     assert.isEmpty(recipe.handles);
   });
   it('multiple consumed slots', async () => {
-    const parseRecipe = async (isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean) => {
+    const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
-          ${isRequiredSlotA ? 'must ' : ''}consume slotA
-          ${isRequiredSlotB ? 'must ' : ''}consume slotB
+          ${arg.isRequiredSlotA ? 'must ' : ''}consume slotA
+          ${arg.isRequiredSlotB ? 'must ' : ''}consume slotB
 
         recipe
           slot 'slota-0' as s0
@@ -657,19 +657,20 @@ ${particleStr1}
             consume slotA as s0
       `)).recipes[0];
       recipe.normalize();
-      assert.equal(recipe.isResolved(), expectedIsResolved);
+      const options = {errors: new Map(), details: '', showUnresolved: true};
+      assert.equal(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
-    await parseRecipe(false, false, true);
-    await parseRecipe(true, false, true);
-    await parseRecipe(false, true, false);
-    await parseRecipe(true, true, false);
+    await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
+    await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
   it('SLANDLES multiple consumed slots', async () => {
-    const parseRecipe = async (label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean) => {
+    const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
-          \`consume${isRequiredSlotA ? '' : '?'} Slot slotA
-          \`consume${isRequiredSlotB ? '' : '?'} Slot slotB
+          \`consume${arg.isRequiredSlotA ? '' : '?'} Slot slotA
+          \`consume${arg.isRequiredSlotB ? '' : '?'} Slot slotB
 
         recipe
           \`slot 'slota-0' as s0
@@ -679,12 +680,12 @@ ${particleStr1}
       const options = {errors: new Map(), details: '', showUnresolved: true};
       recipe.normalize(options);
       console.log(recipe.obligations);
-      assert.equal(recipe.isResolved(options), expectedIsResolved, `${label}: Expected recipe to be ${expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
+      assert.equal(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
-    await parseRecipe('1', false, false, true);
-    await parseRecipe('2', true, false, true);
-    await parseRecipe('3', false, true, false);
-    await parseRecipe('4', true, true, false);
+    await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
+    await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
   it('recipe slots with tags', async () => {
     const manifest = await Manifest.parse(`
