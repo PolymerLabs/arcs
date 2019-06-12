@@ -58,22 +58,22 @@ export class FlowGraph {
   }
 
   /** Returns true if all checks in the graph pass. */
-  validateGraph(): boolean {
+  validateGraph(): ValidationResult {
+    const finalResult = new ValidationResult();
     for (const edge of this.edges) {
       if (edge.check) {
-        const success = this.validateSingleEdge(edge);
-        if (!success) {
-          return false;
-        }
+        const result = this.validateSingleEdge(edge);
+        result.failures.forEach(f => finalResult.failures.push(f));
       }
     }
-    return true;
+    return finalResult;
   }
 
   /** Validates a single check (on the given edge). Returns true if the check passes. */
-  private validateSingleEdge(edgeToCheck: Edge): boolean {
+  private validateSingleEdge(edgeToCheck: Edge): ValidationResult {
     assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
+    const finalResult = new ValidationResult();
     const check = edgeToCheck.check;
     const startPath = BackwardsPath.newPathWithOpenEdge(edgeToCheck);
 
@@ -89,18 +89,28 @@ export class FlowGraph {
           // Check was met. Continue checking other paths.
           continue;
         case CheckResultType.Failure:
-          // Check failed. Stop.
-          return false;
+          // Check failed. Add failure and continue checking other paths.
+          finalResult.failures.push(result.reason);
+          continue;
         case CheckResultType.KeepGoing:
           // Check has not failed yet for this path yet. Add more paths to the stack and keep going.
           assert(result.checkNext.length > 0, 'Result was KeepGoing, but gave nothing else to check.');
           result.checkNext.forEach(p => pathStack.push(p));
           continue;
         default:
-          throw new Error(`Unknown check result: ${result}`);
+          assert(false, `Unknown check result: ${result}`);
       }
     }
-    return true;
+    return finalResult;
+  }
+}
+
+/** Result from validating an entire graph. */
+class ValidationResult {
+  failures: string[] = [];
+  
+  get isValid() {
+    return this.failures.length === 0;
   }
 }
 
@@ -112,7 +122,7 @@ export enum CheckResultType {
 
 export type CheckResult =
     {type: CheckResultType.Success} |
-    {type: CheckResultType.Failure} |
+    {type: CheckResultType.Failure, reason: string} |
     {type: CheckResultType.KeepGoing, checkNext: BackwardsPath[]};
 
 /**
@@ -233,7 +243,8 @@ export abstract class Node implements CheckEvaluator {
   evaluateCheck(check: string, path: BackwardsPath): CheckResult {
     if (this.inEdges.length === 0) {
       // Nodes without inputs are untagged, and so cannot satisfy checks.
-      return {type: CheckResultType.Failure};
+      // TODO: Improve error message by including the name of the untagged node (the problem is not all nodes actually have names...)
+      return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found untagged node.`};
     }
     // Nodes can't have claims themselves (yet). Keep going, and check the in-edges next.
     const checkNext = this.inEdges.map(e => path.withNewOpenEdge(e));
@@ -320,7 +331,7 @@ class ParticleOutput implements Edge {
     }
     // The claim on this edge "clobbers" any claims that might have been made upstream. We won't check though, and will fail the check
     // completely.
-    return {type: CheckResultType.Failure};
+    return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found claim '${this.claim}' on '${this.label}' instead.`};
   }
 }
 

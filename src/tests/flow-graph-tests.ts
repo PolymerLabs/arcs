@@ -152,7 +152,7 @@ describe('FlowGraph validation', () => {
         P
           foo -> h
     `);
-    assert.isTrue(graph.validateGraph());
+    assert.isTrue(graph.validateGraph().isValid);
   });
 
   it('succeeds when a check is satisfied directly', async () => {
@@ -169,7 +169,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph());
+    assert.isTrue(graph.validateGraph().isValid);
   });
 
   it('fails when a different tag is claimed', async () => {
@@ -186,7 +186,9 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isFalse(graph.validateGraph());
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`Check 'trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`]);
   });
 
   it('fails when no tag is claimed', async () => {
@@ -202,7 +204,9 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isFalse(graph.validateGraph());
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`Check 'trusted' failed: found untagged node.`]);
   });
 
   it('succeeds when handle has multiple inputs with the right tags', async () => {
@@ -224,7 +228,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph());
+    assert.isTrue(graph.validateGraph().isValid);
   });
 
   it('fails when handle has multiple inputs but one is untagged', async () => {
@@ -245,7 +249,9 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h
     `);
-    assert.isFalse(graph.validateGraph());
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`Check 'trusted' failed: found untagged node.`]);
   });
 
   it('fails when handle has no inputs', async () => {
@@ -257,7 +263,9 @@ describe('FlowGraph validation', () => {
         P
           bar <- h
     `);
-    assert.isFalse(graph.validateGraph());
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`Check 'trusted' failed: found untagged node.`]);
   });
 
   it('claim propagates through a chain of particles', async () => {
@@ -280,7 +288,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h2
     `);
-    assert.isTrue(graph.validateGraph());
+    assert.isTrue(graph.validateGraph().isValid);
   });
 
   it('a claim made later in a chain of particles clobbers claims made earlier', async () => {
@@ -304,7 +312,69 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h2
     `);
-    assert.isFalse(graph.validateGraph());
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`Check 'trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
+  });
+
+  it('can detect more than one failure for the same check', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is notTrusted
+      particle P2
+        out Foo {} foo
+        claim foo is someOtherTag
+      particle P3
+        out Foo {} foo
+      particle P4
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          foo -> h
+        P3
+          foo -> h
+        P4
+          bar <- h
+    `);
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [
+      `Check 'trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`,
+      `Check 'trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`,
+      `Check 'trusted' failed: found untagged node.`,
+    ]);
+  });
+
+  it('can detect failures for different checks', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo1
+        out Foo {} foo2
+        claim foo1 is notTrusted
+        claim foo2 is trusted
+      particle P2
+        in Foo {} bar1
+        in Foo {} bar2
+        check bar1 is trusted
+        check bar2 is extraTrusted
+      recipe R
+        P1
+          foo1 -> h1
+          foo2 -> h2
+        P2
+          bar1 <- h1
+          bar2 <- h2
+    `);
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [
+      `Check 'trusted' failed: found claim 'notTrusted' on 'P1.foo1' instead.`,
+      `Check 'extraTrusted' failed: found claim 'trusted' on 'P1.foo2' instead.`,
+    ]);
   });
 });
 
