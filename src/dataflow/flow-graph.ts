@@ -98,7 +98,7 @@ export class FlowGraph {
           result.checkNext.forEach(p => pathStack.push(p));
           continue;
         default:
-          throw new Error(`Unknown check result: ${result}`);
+          assert(false, `Unknown check result: ${result}`);
       }
     }
     return finalResult;
