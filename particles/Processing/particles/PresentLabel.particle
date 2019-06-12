@@ -1,0 +1,7 @@
+import '../schemas/Inference.schema'
+
+particle PresentLabel in './js/PresentLabel.js'
+  in [Classification] predictions
+  in? Shape k
+  consume imageView
+  description `Show the top k labels (with their confidence values) to the user. Default: k=1`
