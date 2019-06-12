@@ -25,7 +25,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     </div>
   `;
 
-  const defaultImage = resolver(`ImageSelector/../../assets/waltbird.jpg`);
+  const defaultImage = resolver(`ImageSelector/../../../Services/assets/waltbird.jpg`);
 
   return class extends DomParticle {
     get template() {
