@@ -21,15 +21,20 @@ defineParticle(({DomParticle, log}) => {
       }
     }
 
-    async apply(url) {
+    async apply(urlEntity) {
       log('Parsing labels file...');
+
+      const url = urlEntity.labelsUrl;
 
       const doc = await fetch(url).then(d => d.text());
       const labels = doc.split(delimiter);
-      const labelsSchema = labels.map((l) => ({'label': l}));
 
       await this.clearHandle(handleName);
-      this.updateSingleton(handleName, labelsSchema);
+      const ctor  = this.handles.get(handleName).entityClass;
+
+      for(const label of labels) {
+        this.updateCollection(handleName, new ctor({label}));
+      }
     }
   };
 });
