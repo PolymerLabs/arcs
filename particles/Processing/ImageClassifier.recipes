@@ -73,7 +73,7 @@ recipe ImageClassifier
     normTensor -> normTensor
 
   ResizeBilinear
-    images <- imageTensor
+    images <- normTensor
     size <- targetSize
     options <- resizeOptions
     resizedImages -> resizedImages

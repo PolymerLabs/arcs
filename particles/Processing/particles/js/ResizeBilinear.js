@@ -13,9 +13,9 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'resizedImages';
 
   return class extends DomParticle {
-    willReceiveProps({images, shape, options}) {
-      if (images && shape) {
-        this.apply(images, shape, options);
+    willReceiveProps({images, size, options}) {
+      if (images && size) {
+        this.apply(images, size, options);
       }
     }
 
