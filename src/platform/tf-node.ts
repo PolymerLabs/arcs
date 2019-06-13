@@ -10,5 +10,4 @@
 
 import * as tf from '@tensorflow/tfjs-node';
 export const requireTf = async () => tf;
-export {tf};
 
