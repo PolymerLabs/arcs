@@ -31,7 +31,7 @@ resource BatchShape
 store CurrentModel of MlModel 'currentModel' in CurModel
 resource CurModel
   start
-  [{"location": "http://localhost:8786/particles/Services/assets/MobileNet_v1_100_224.json",
+  [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV1/MobileNet_v1_100_224.json",
     "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
 
 recipe ImageClassifier
