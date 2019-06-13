@@ -16,7 +16,9 @@ defineParticle(({DomParticle, html, resolver}) => {
   <div style="padding: 16px;">
     <h3>Select Model</h3>
     <h4>Input the path/to/model.json</h4>
-    <input style="width: 80%; padding: 8px;" value="{{inputModelUrl}}" on-change="onChange">
+    <input style="width: 80%; padding: 8px;" value="{{inputModelUrl}}" on-change="onModelChange">
+    <h4>Input the path/to/labels.txt</h4>
+    <input style="width: 80%; padding: 8px;" value="{{inputLabelsUrl}}" on-change="onLabelsChange">
     <button on-click="onSubmit">Submit</button>
   </div>
   `;
@@ -29,16 +31,26 @@ defineParticle(({DomParticle, html, resolver}) => {
       if (!state.inputModelUrl) {
         state.inputModelUrl = 'https://$particles/Services/assets/MobileNetV1/MobileNet_v1_100_224.json';
       }
+
+      if (!state.inputLabelsUrl) {
+        state.inputLabelsUrl = 'https://$particles/Services/assets/ImageNetLabels.txt';
+      }
       return {
-        inputModelUrl: state.inputModelUrl
+        inputModelUrl: state.inputModelUrl,
+        inputLabelsUrl: state.inputLabelsUrl
       };
     }
-    onChange({data: {value}}) {
+    onModelChange({data: {value}}) {
       this.setState({inputModelUrl: value});
+    }
+    onLabelsChange({data: {value}}) {
+      this.setState({inputLabelsUrl: value});
     }
     onSubmit() {
       const url = resolver(this.state.inputModelUrl);
-      this.updateSingleton('model', {url});
+      const labelsUrl = resolver(this.state.inputLabelsUrl);
+      this.updateSingleton('model', {url, labelsUrl});
+
     }
   };
 });
