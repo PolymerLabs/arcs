@@ -13,12 +13,22 @@
 defineParticle(({DomParticle, html}) => {
 
   const template_ = html`
+
+    <style>
+       td {
+        padding: 0 5px 0 5px;
+      }
+    </style>
+
+
     <div style="padding: 16px;">
-      <h3>Top <b>{{k}}</b> Labels</h3>
+      <h3>Top <span>{{k}}</span> Labels</h3>
       <div>{{things}}</div>
-    </div>
     <template thing>
-      <b>{{label}}</b>, <i>{{confidence}}</i>
+      <tr>
+       <td><b>{{label}}</b></td>
+       <td>{{confidence}}</td>
+      <tr/>
     </template>
   `;
 
@@ -27,11 +37,12 @@ defineParticle(({DomParticle, html}) => {
       return template_;
     }
     render({predictions, k}) {
-      const topK = k || 1;
       const preds = predictions || [];
+      const topK = k || preds.length;
+      const models = preds.map((p) => ({label: p.label, confidence: p.confidence.toFixed(4)}));
 
       return {
-        things: {$template: 'thing', models: preds},
+        things: {$template: 'thing', models},
         k: topK
       };
     }
