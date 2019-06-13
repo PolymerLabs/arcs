@@ -1,4 +1,4 @@
-import './Classify.particle'
+import './Infer.particle'
 import './Dispose.particle'
 import './ExpandDims.particle'
 import './ImageConverter.particle'
