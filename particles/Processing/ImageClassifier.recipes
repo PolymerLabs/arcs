@@ -41,7 +41,7 @@ resource BatchShape
 store MobileNetV1 of MlModel 'MobileNetV1' in MobNetV1
 resource MobNetV1
   start
-  [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV1/MobileNet_v1_100_224.json",
+  [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV1/model.json",
     "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
 
 recipe MobileNetV1ImageClassifier

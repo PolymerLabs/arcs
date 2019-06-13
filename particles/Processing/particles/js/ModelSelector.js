@@ -31,7 +31,7 @@ defineParticle(({DomParticle, html, resolver}) => {
     }
     render({}, state) {
       if (!state.inputModelUrl) {
-        state.inputModelUrl = 'https://$particles/Services/assets/MobileNetV1/MobileNet_v1_100_224.json';
+        state.inputModelUrl = 'https://$particles/Services/assets/MobileNetV1/model.json';
       }
 
       if (!state.inputLabelsUrl) {
