@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'normTensor';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, range}) {
+    update({tensor, range}) {
       if (tensor && range) {
         this.apply(tensor, range);
       }
@@ -28,7 +28,6 @@ defineParticle(({DomParticle, log}) => {
       const tNorm = await this.service({call: 'tf.normalize', input, range});
       log('Normalized.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: tNorm});
     }
 

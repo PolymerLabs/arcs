@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'modelReference';
 
   return class extends DomParticle {
-    willReceiveProps({model}) {
+    update({model}) {
       if (model) {
         this.apply(model);
       }
@@ -27,7 +27,6 @@ defineParticle(({DomParticle, log}) => {
       });
 
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: model_});
 
       try {

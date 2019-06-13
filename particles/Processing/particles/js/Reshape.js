@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'newTensor';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, shape}) {
+    update({tensor, shape}) {
       if (tensor && shape) {
         this.apply(tensor, shape);
       }
@@ -27,7 +27,6 @@ defineParticle(({DomParticle, log}) => {
       const newTensor = await this.service({call: 'tf.reshape', input, shape});
       log('Reshape.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 

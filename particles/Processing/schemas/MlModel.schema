@@ -5,6 +5,5 @@ schema MlModel
   Text weightPathPrefix
   Boolean fromTFHub
 
-
 schema Label
   Text label

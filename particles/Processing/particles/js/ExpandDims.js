@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'newTensor';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, axis}) {
+    update({tensor, axis}) {
       if (tensor && axis) {
         this.apply(tensor, axis);
       }
@@ -27,7 +27,6 @@ defineParticle(({DomParticle, log}) => {
       const newTensor = await this.service({call: 'tf.expandDims', input, axis});
       log('Dimensions Expanded.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 

@@ -11,7 +11,7 @@
 defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
-    willReceiveProps({resource}) {
+    update({resource}) {
       if (resource) {
         this.apply(resource);
       }

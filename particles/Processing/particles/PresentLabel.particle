@@ -3,5 +3,5 @@ import '../schemas/MlResource.schema'
 
 particle PresentLabel in './js/PresentLabel.js'
   in [Classification] predictions
-  description `Show the top k labels (with their confidence values) to the user.`
   consume imageView
+  description `Show the top k labels (with their confidence values) to the user.`

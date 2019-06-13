@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'predictions';
 
   return class extends DomParticle {
-    willReceiveProps({yHat, labels, k}) {
+    update({yHat, labels, k}) {
       const topK = k || 5;
 
       if (yHat && labels) {
@@ -30,7 +30,6 @@ defineParticle(({DomParticle, log}) => {
       const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topK});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
 
-      await this.clearHandle(handleName);
       this.appendRawDataToHandle(handleName, results);
 
       log(results);

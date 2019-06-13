@@ -14,8 +14,7 @@ defineParticle(({DomParticle, log}) => {
   const delimiter = '\n';
 
   return class extends DomParticle {
-    willReceiveProps({url}) {
-
+    update({url}) {
       if (url) {
         this.apply(url);
       }
@@ -30,7 +29,6 @@ defineParticle(({DomParticle, log}) => {
       const labels = doc.split(delimiter);
       const labelsSchema = labels.map((label) => ({label}));
 
-      await this.clearHandle(handleName);
       this.appendRawDataToHandle(handleName, labelsSchema);
     }
   };
