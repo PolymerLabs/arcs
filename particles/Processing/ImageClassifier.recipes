@@ -47,8 +47,8 @@ recipe ImageClassifier
   create #volatile as reshapedImages
   create #volatile as model
   create #volatile as yHat
-  create as labels
-  create as predictions
+  create #volatile as labels
+  create #volatile as predictions
 
   ImageSelector
     image -> imgUrl
