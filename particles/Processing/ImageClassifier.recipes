@@ -101,7 +101,7 @@ recipe MobileNetV1ImageClassifier
   PresentLabel
     predictions <- predictions
 
-  description `Image classification by with a MobileNet v1 particle`
+  description `Image classification with a MobileNet v1 particle`
 
 recipe GeneralImageClassifier
   use as imgUrl
