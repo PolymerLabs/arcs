@@ -17,7 +17,6 @@ import * as Tf from '@tensorflow/tfjs';
 // for actual code
 import {requireTf} from '../platform/tf-web.js';
 
-
 const log = logFactory('tfjs-service');
 
 type TfTensor = Tf.Tensor | Tf.Tensor[] | Tf.NamedTensorMap;

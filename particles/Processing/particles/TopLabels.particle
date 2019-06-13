@@ -1,0 +1,10 @@
+import '../schemas/MlResource.schema'
+import '../schemas/MlModel.schema'
+import '../schemas/Inference.schema'
+
+particle TopLabels in './js/TopLabels.js'
+  in MlResource yHat
+  in [Label] labels
+  in? Shape k
+  out [Classification] predictions
+  description `Convert raw inference into the top k labels (with confidence).`

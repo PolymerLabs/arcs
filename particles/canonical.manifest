@@ -20,3 +20,5 @@ import 'Arcs/ArcMeta.schema'
 import 'TicTacToe/TicTacToe.recipes'
 // Uncomment to enable native particle recipes
 import 'Native/native.recipes'
+
+import 'Processing/ImageClassifier.recipes'

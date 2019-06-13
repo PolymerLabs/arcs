@@ -1,0 +1,5 @@
+import '../schemas/MlResource.schema'
+
+particle Dispose in './js/Dispose.js'
+  in MlResource resource
+  description `Clean up resources.`

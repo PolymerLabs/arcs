@@ -1,0 +1,9 @@
+import '../schemas/MlResource.schema'
+
+particle Normalize in './js/Normalize.js'
+  in MlResource tensor
+  in [Shape] range
+  out MlResource normTensor
+  description `Normalizes all the input values to values between [-1, 1].`
+
+

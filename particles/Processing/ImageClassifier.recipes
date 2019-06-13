@@ -1,0 +1,108 @@
+import './schemas/ML.schema'
+import './particles/ML.particle'
+import './particles/ImageSelector.particle'
+import './particles/PresentLabel.particle'
+
+store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
+resource ImgUrl
+  start
+  [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
+
+recipe ImageCapture
+  create #volatile as imgUrl
+  ImageSelector
+    image -> imgUrl
+    consume root
+      provide imageView as viewSlot
+  description `Load an image from a URL.`
+
+
+store ImageSize of [Shape] 'targetImageSize' in ImgSize
+resource ImgSize
+  start
+  [{"dim": 224}, {"dim": 224}]
+
+store PixelRange of [Shape] 'imagePixelRange' in NormRange
+resource NormRange
+  start
+  [{"dim": 0}, {"dim": 255}]
+
+store ResizeOptions of ResizeOptions 'resizeOptions' in ResOpts
+resource ResOpts
+  start
+  [{"alignCorners": true}]
+
+store TensorShape of [Shape] 'batchShape' in BatchShape
+resource BatchShape
+  start
+  [{"dim": -1}, {"dim": 224}, {"dim": 224}, {"dim": 3}]
+
+store CurrentModel of MlModel 'currentModel' in CurModel
+resource CurModel
+  start
+  [{"location": "http://localhost:8786/particles/Services/assets/MobileNet_v1_100_224.json",
+    "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
+
+recipe ImageClassifier
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
+  map 'currentModel' as curModel
+  create #volatile as imgUrl
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
+  create #volatile as model
+  create #volatile as yHat
+  create #volatile as labels
+  create #volatile as predictions
+
+  ImageSelector
+    image -> imgUrl
+    consume root
+      provide imageView as viewSlot
+
+  LoadGraphModel
+    model <- curModel
+    modelReference -> model
+
+  ParseLabels
+    url <- curModel
+    labels -> labels
+
+  ImageToTensor
+    image <- imgUrl
+    imageTensor -> imageTensor
+
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
+
+  ResizeBilinear
+    images <- normTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
+
+  Infer
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
+
+  PresentLabel
+    predictions <- predictions
+
+  description `Image classification using particle oriented model`

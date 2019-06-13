@@ -1,0 +1,7 @@
+import '../schemas/Inference.schema'
+import '../schemas/MlResource.schema'
+
+particle PresentLabel in './js/PresentLabel.js'
+  in [Classification] predictions
+  consume imageView
+  description `Show the top k labels (with their confidence values) to the user.`

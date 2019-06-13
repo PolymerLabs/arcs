@@ -1,0 +1,9 @@
+schema MlModel
+  URL location
+  URL labelsUrl
+  Boolean strict
+  Text weightPathPrefix
+  Boolean fromTFHub
+
+schema Label
+  Text label

@@ -1,0 +1,13 @@
+import '../schemas/MlResource.schema'
+
+schema ResizeOptions
+  Boolean alignCorners
+
+particle ResizeBilinear in './js/ResizeBilinear.js'
+  in MlResource images
+  in [Shape] size
+  in ResizeOptions options
+  out MlResource resizedImages
+  description `Use bilinear-interpolation to resize a batch of images.`
+
+
