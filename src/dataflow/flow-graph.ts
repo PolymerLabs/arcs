@@ -11,6 +11,7 @@ import {Recipe} from '../runtime/recipe/recipe';
 import {Particle} from '../runtime/recipe/particle';
 import {Handle} from '../runtime/recipe/handle';
 import {HandleConnection} from '../runtime/recipe/handle-connection';
+import {assert} from '../platform/assert-web';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -57,84 +58,103 @@ export class FlowGraph {
   }
 
   /** Returns true if all checks in the graph pass. */
-  validateGraph(): boolean {
+  validateGraph(): ValidationResult {
+    const finalResult = new ValidationResult();
     for (const edge of this.edges) {
       if (edge.check) {
-        const success = this.validateSingleEdge(edge);
-        if (!success) {
-          return false;
-        }
+        const result = this.validateSingleEdge(edge);
+        result.failures.forEach(f => finalResult.failures.push(f));
       }
     }
-    return true;
+    return finalResult;
   }
 
   /** Validates a single check (on the given edge). Returns true if the check passes. */
-  private validateSingleEdge(edge: Edge): boolean {
-    if (!edge.check) {
-      throw new Error('Edge does not have any check conditions.');
-    }
+  private validateSingleEdge(edgeToCheck: Edge): ValidationResult {
+    assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
-    const check = edge.check;
-    const startPath = BackwardsPath.fromEdge(edge);
-    const stack: BackwardsPath[] = [startPath];
+    const finalResult = new ValidationResult();
+    const check = edgeToCheck.check;
+    const startPath = BackwardsPath.fromEdge(edgeToCheck);
 
-    while (stack.length) {
-      const path = stack.pop();
-      const nodeToCheck = path.endNode;
-      // TODO: Check the node itself too. The node might be untagged (e.g. if it has no input edges), so it could fail a check.
-      const edgesToCheck = nodeToCheck.inEdges;
-      for (const edge of edgesToCheck) {
-        const result = edge.isCheckSatisfied(check);
-        switch (result) {
-          case CheckResult.Success:
-            // Check was met. Continue checking other paths.
-            continue;
-          case CheckResult.Failure:
-            // Check failed.
-            return false;
-          case CheckResult.KeepGoing:
-            // Check has not failed yet for this path yet. Add it to the stack and keep going.
-            stack.push(path.newPathWithEdge(edge));
-            continue;
-          default:
-            throw new Error(`Unknown check result: ${result}`);
-        }
+    // Stack of paths that need to be checked (via DFS). Other paths will be added here to be checked as we explore the graph.
+    const pathStack: BackwardsPath[] = [startPath];
+
+    while (pathStack.length) {
+      const path = pathStack.pop();
+      const node = path.endNode;
+      // See if the end of the path satisfies the check condition.
+      const result = node.evaluateCheck(check, path.endEdge, path);
+      switch (result.type) {
+        case CheckResultType.Success:
+          // Check was met. Continue checking other paths.
+          continue;
+        case CheckResultType.Failure:
+          // Check failed. Add failure and continue checking other paths.
+          finalResult.failures.push(result.reason);
+          continue;
+        case CheckResultType.KeepGoing:
+          // Check has not failed yet for this path yet. Add more paths to the stack and keep going.
+          assert(result.checkNext.length > 0, 'Result was KeepGoing, but gave nothing else to check.');
+          result.checkNext.forEach(p => pathStack.push(p));
+          continue;
+        default:
+          assert(false, `Unknown check result: ${result}`);
       }
     }
-    return true;
+    return finalResult;
   }
 }
 
-export enum CheckResult {
+/** Result from validating an entire graph. */
+class ValidationResult {
+  failures: string[] = [];
+  
+  get isValid() {
+    return this.failures.length === 0;
+  }
+}
+
+export enum CheckResultType {
   Success,
   Failure,
   KeepGoing,
 }
+
+export type CheckResult =
+    {type: CheckResultType.Success} |
+    {type: CheckResultType.Failure, reason: string} |
+    {type: CheckResultType.KeepGoing, checkNext: BackwardsPath[]};
 
 /**
  * A path that walks backwards through the graph, i.e. it walks along the directed edges in the reverse direction. The path is described by the
  * nodes in the path. Class is immutable.
  */
 export class BackwardsPath {
-  private constructor(readonly nodes: readonly Node[]) {}
+  private constructor(
+      /** Nodes in the path. */
+      readonly nodes: readonly Node[],
+      /** Edges in the path. */
+      readonly edges: readonly Edge[]) {}
 
+  /** Constructs a new path from the given edge. */
   static fromEdge(edge: Edge) {
-    return new BackwardsPath([edge.end, edge.start]);
+    return new BackwardsPath([edge.end, edge.start], [edge]);
   }
 
-  newPathWithEdge(edge: Edge): BackwardsPath {
+  /** Returns a copy of the current path, with an edge added to the end of it. */
+  withNewEdge(edge: Edge): BackwardsPath {
     // Flip the edge around.
-    const edgeStart = edge.end;
-    const edgeEnd = edge.start;
+    const startNode = edge.end;
+    const endNode = edge.start;
 
-    if (edgeStart !== this.endNode) {
-      throw new Error('Edge must connect to end of path.');
+    assert(startNode === this.endNode, 'Edge must connect to end of path.');
+
+    if (this.nodes.includes(endNode)) {
+      throw new Error('Graph must not include cycles.');
     }
-    if (this.nodes.includes(edgeEnd)) {
-      throw new Error('Path must not include cycles.');
-    }
-    return new BackwardsPath([...this.nodes, edgeEnd]);
+
+    return new BackwardsPath([...this.nodes, endNode], [...this.edges, edge]);
   }
 
   get startNode(): Node {
@@ -143,6 +163,10 @@ export class BackwardsPath {
 
   get endNode(): Node {
     return this.nodes[this.nodes.length - 1];
+  }
+
+  get endEdge(): Edge {
+    return this.edges[this.edges.length - 1];
   }
 }
 
@@ -186,9 +210,32 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
+/** Represents a check condition on an edge. */
+export class Check {
+  constructor(
+      /** A list of acceptable tags. The check will fail if a different claim is found that doesn't match any tag in this list. */
+      readonly acceptedTags: readonly string[]) {}
+
+  /** Returns true if the given claim satisfies the check condition. */
+  checkAgainstClaim(claim: string): boolean {
+    for (const tag of this.acceptedTags) {
+      if (tag === claim) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  toString(): string {
+    return this.acceptedTags.join('|');
+  }
+}
+
 export abstract class Node {
   abstract readonly inEdges: Edge[];
   abstract readonly outEdges: Edge[];
+
+  abstract evaluateCheck(check: Check, edgeToCheck: Edge, path: BackwardsPath): CheckResult;
 
   get inNodes(): Node[] {
     return this.inEdges.map(e => e.start);
@@ -202,12 +249,15 @@ export abstract class Node {
 export interface Edge {
   readonly start: Node;
   readonly end: Node;
+  
+  /** The name of the handle this edge represents, e.g. "output1". */
+  readonly handleName: string;
+  
+  /** The qualified name of the handle this edge represents, e.g. "MyParticle.output1". */
   readonly label: string;
-  readonly claim?: string;
-  readonly check?: string;
 
-  /** Returns true if this edge has a claim that satisfies the given check condition. */
-  isCheckSatisfied(check: string): CheckResult;
+  readonly claim?: string;
+  readonly check?: Check;
 }
 
 class ParticleNode extends Node {
@@ -217,13 +267,38 @@ class ParticleNode extends Node {
 
   // Maps from handle names to tags.
   readonly claims: Map<string, string>;
-  readonly checks: Map<string, string>;
+  readonly checks: Map<string, Check> = new Map();
 
   constructor(particle: Particle) {
     super();
     this.name = particle.name;
     this.claims = particle.spec.trustClaims;
-    this.checks = particle.spec.trustChecks;
+    
+    particle.spec.trustChecks.forEach((tags, handle) => {
+      this.checks.set(handle, new Check(tags));
+    });
+  }
+
+  evaluateCheck(check: Check, edgeToCheck: ParticleOutput, path: BackwardsPath): CheckResult {
+    assert(this.outEdges.includes(edgeToCheck), 'Particles can only check their own out-edges.');
+    
+    // First check if this particle makes an explicit claim on this out-edge.
+    const claim = this.claims.get(edgeToCheck.handleName);
+    if (claim) {
+      if (check.checkAgainstClaim(claim)) {
+        return {type: CheckResultType.Success};
+      } else {
+        return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found claim '${claim}' on '${edgeToCheck.label}' instead.`};
+      }
+    }
+
+    // Next check the node's in-edges.
+    if (this.inEdges.length) {
+      const checkNext = this.inEdges.map(e => path.withNewEdge(e));
+      return {type: CheckResultType.KeepGoing, checkNext};
+    } else {
+      return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found untagged node.`};
+    }
   }
 }
 
@@ -231,20 +306,17 @@ class ParticleInput implements Edge {
   readonly start: Node;
   readonly end: ParticleNode;
   readonly label: string;
+  readonly handleName: string;
 
   /* Optional check on this input. */
-  readonly check?: string;
+  readonly check?: Check;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, inputName: string) {
     this.start = otherEnd;
     this.end = particleNode;
     this.label = `${particleNode.name}.${inputName}`;
+    this.handleName = inputName;
     this.check = particleNode.checks.get(inputName);
-  }
-
-  isCheckSatisfied(check: string): CheckResult {
-    // In-edges don't have claims. Keep checking.
-    return CheckResult.KeepGoing;
   }
 }
 
@@ -252,6 +324,7 @@ class ParticleOutput implements Edge {
   readonly start: ParticleNode;
   readonly end: Node;
   readonly label: string;
+  readonly handleName: string;
 
   /* Optional claim on this output. */
   readonly claim?: string;
@@ -260,20 +333,8 @@ class ParticleOutput implements Edge {
     this.start = particleNode;
     this.end = otherEnd;
     this.label = `${particleNode.name}.${outputName}`;
+    this.handleName = outputName;
     this.claim = particleNode.claims.get(outputName);
-  }
-
-  isCheckSatisfied(check: string): CheckResult {
-    if (!this.claim) {
-      // This out-edge has no claims. Keep checking.
-      return CheckResult.KeepGoing;
-    }
-    if (this.claim === check) {
-      return CheckResult.Success;
-    }
-    // The claim on this edge "clobbers" any claims that might have been made upstream. We won't check though, and will fail the check
-    // completely.
-    return CheckResult.Failure;
   }
 }
 
@@ -294,5 +355,17 @@ class HandleNode extends Node {
       });
     });
     return connections;
+  }
+
+  evaluateCheck(check: Check, edgeToCheck: ParticleInput, path: BackwardsPath): CheckResult {
+    assert(this.outEdges.includes(edgeToCheck), 'Handles can only check their own out-edges.');
+
+    // Handles can't make claims of their own (yet). Check whether this handle is untagged.
+    if (this.inEdges.length) {
+      const checkNext = this.inEdges.map(e => path.withNewEdge(e));
+      return {type: CheckResultType.KeepGoing, checkNext};
+    } else {
+      return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found untagged node.`};
+    }
   }
 }

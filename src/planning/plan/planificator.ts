@@ -11,7 +11,6 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {KeyBase} from '../../runtime/storage/key-base.js';
 import {StorageProviderBase, SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EntityType} from '../../runtime/type.js';
@@ -21,31 +20,28 @@ import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
 
+const planificatorId = 'plans';
+
 export type PlanificatorOptions = {
-  userid: string;
   storageKeyBase?: string;
   debug?: boolean;
   onlyConsumer?: boolean;
 };
 
 export class Planificator {
-  static async create(arc: Arc, {userid, storageKeyBase, onlyConsumer, debug = false}: PlanificatorOptions) {
-    assert(arc, 'Arc cannot be null.');
-    assert(userid, 'User id cannot be null.');
-
+  static async create(arc: Arc, {storageKeyBase, onlyConsumer, debug = false}: PlanificatorOptions) {
     debug = debug || (storageKeyBase && storageKeyBase.startsWith('volatile'));
-    const store = await Planificator._initSuggestStore(arc, userid, storageKeyBase) as SingletonStorageProvider;
-    const searchStore = await Planificator._initSearchStore(arc, userid);
+    const store = await Planificator._initSuggestStore(arc, storageKeyBase) as SingletonStorageProvider;
+    const searchStore = await Planificator._initSearchStore(arc);
     const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
     await result.load();
-    const planificator = new Planificator(arc, userid, result, searchStore, onlyConsumer, debug);
+    const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug);
     await planificator._storeSearch(); // Reset search value for the current arc.
     planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
 
   arc: Arc;
-  userid: string;
   result: PlanningResult;
   consumer: PlanConsumer;
   producer?: PlanProducer;
@@ -54,9 +50,8 @@ export class Planificator {
   search: string|null = null;
   searchStore: SingletonStorageProvider;
 
-  constructor(arc: Arc, userid: string, result: PlanningResult, searchStore: SingletonStorageProvider, onlyConsumer: boolean = false, debug: boolean = false) {
+  constructor(arc: Arc, result: PlanningResult, searchStore: SingletonStorageProvider, onlyConsumer: boolean = false, debug: boolean = false) {
     this.arc = arc;
-    this.userid = userid;
     this.searchStore = searchStore;
     assert(result, 'Result cannot be null.');
     this.result = result;
@@ -137,26 +132,26 @@ export class Planificator {
     });
   }
 
-  static constructSuggestionKey(arc: Arc, userid: string, storageKeyBase?: string): KeyBase {
+  static constructSuggestionKey(arc: Arc, storageKeyBase?: string): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
-    return keybase.childKeyForSuggestions(userid, arcStorageKey.arcId);
+    return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
   }
 
-  static constructSearchKey(arc: Arc, userid: string): KeyBase {
+  static constructSearchKey(arc: Arc): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
-    return keybase.childKeyForSearch(userid);
+    return keybase.childKeyForSearch(planificatorId);
 }
 
-  private static async _initSuggestStore(arc: Arc, userid: string, storageKeyBase?: string): Promise<SingletonStorageProvider> {
-    const storageKey = Planificator.constructSuggestionKey(arc, userid, storageKeyBase);
+  private static async _initSuggestStore(arc: Arc, storageKeyBase?: string): Promise<SingletonStorageProvider> {
+    const storageKey = Planificator.constructSuggestionKey(arc, storageKeyBase);
     return Planificator._initStore(
         arc, 'suggestions-id', EntityType.make(['Suggestions'], {current: 'Object'}), storageKey);
   }
 
-  private static async _initSearchStore(arc: Arc, userid: string): Promise<SingletonStorageProvider> {
-    const storageKey = Planificator.constructSearchKey(arc, userid);
+  private static async _initSearchStore(arc: Arc): Promise<SingletonStorageProvider> {
+    const storageKey = Planificator.constructSearchKey(arc);
     return Planificator._initStore(
         arc, 'search-id', EntityType.make(['Search'], {current: 'Object'}), storageKey);
   }

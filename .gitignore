@@ -38,3 +38,12 @@ user-test/
 test-output
 # large files in node_modules that cause failure to deploy to github pages
 node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow.so 
+node_modules/.cache/
+server/node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow.so
+server/node_modules/.cache/
+bazel-bin
+bazel-genfiles
+bazel-javaharness
+bazel-out
+bazel-testlogs
+.ijwb

@@ -7,10 +7,10 @@ namespace arcs {
 
 class Info {
 public:
-  const std::string& str() const { return str_; }
-  void set_str(const std::string& value) { str_ = value; str_valid_ = true; }
-  void clear_str() { str_ = std::string(); str_valid_ = false; }
-  bool has_str() const { return str_valid_; }
+  const std::string& _for() const { return for_; }
+  void set_for(const std::string& value) { for_ = value; for_valid_ = true; }
+  void clear_for() { for_ = std::string(); for_valid_ = false; }
+  bool has_for() const { return for_valid_; }
 
   double val() const { return val_; }
   void set_val(double value) { val_ = value; val_valid_ = true; }
@@ -20,8 +20,8 @@ public:
   std::string _internal_id;  // TODO
 
 private:
-  std::string str_ = std::string();
-  bool str_valid_ = false;
+  std::string for_ = std::string();
+  bool for_valid_ = false;
 
   double val_ = double();
   bool val_valid_ = false;
@@ -39,10 +39,10 @@ void decode_entity(Info* entity, const char* str) {
   for (int i = 0; !decoder.done() && i < Info::FIELD_COUNT; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
-    } else if (name == "str") {
+    } else if (name == "for") {
       decoder.validate("T");
-      decoder.decode(entity->str_);
-      entity->str_valid_ = true;
+      decoder.decode(entity->for_);
+      entity->for_valid_ = true;
     } else if (name == "val") {
       decoder.validate("N");
       decoder.decode(entity->val_);
@@ -56,8 +56,8 @@ template<>
 std::string encode_entity(const Info& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id);
-  if (entity.has_str())
-    encoder.encode("str:T", entity.str());
+  if (entity.has_for())
+    encoder.encode("for:T", entity._for());
   if (entity.has_val())
     encoder.encode("val:N", entity.val());
   return std::move(encoder.result());
@@ -67,8 +67,8 @@ template<>
 std::string entity_to_str(const Info& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id);
-  if (entity.has_str())
-    printer.add("str: ", entity.str());
+  if (entity.has_for())
+    printer.add("for: ", entity._for());
   if (entity.has_val())
     printer.add("val: ", entity.val());
   return std::move(printer.result(join));
