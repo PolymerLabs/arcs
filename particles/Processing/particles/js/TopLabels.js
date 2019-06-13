@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'predictions';
 
   return class extends DomParticle {
-    willReceiveProps({yHat, labels, k}) {
+    update({yHat, labels, k}) {
       const topK = k || 5;
 
       if (yHat && labels) {

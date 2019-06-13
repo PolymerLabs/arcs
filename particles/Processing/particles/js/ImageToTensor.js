@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'imageTensor';
 
   return class extends DomParticle {
-    willReceiveProps({image}) {
+    update({image}) {
       if (image) {
         this.apply(image);
       }

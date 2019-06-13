@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'newTensor';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, axis}) {
+    update({tensor, axis}) {
       if (tensor && axis) {
         this.apply(tensor, axis);
       }

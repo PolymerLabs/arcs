@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'yHat';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, model}) {
+    update({tensor, model}) {
       if (model && tensor) {
         this.apply(model, tensor);
       }

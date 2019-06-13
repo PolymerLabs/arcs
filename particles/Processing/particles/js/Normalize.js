@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'normTensor';
 
   return class extends DomParticle {
-    willReceiveProps({tensor, range}) {
+    update({tensor, range}) {
       if (tensor && range) {
         this.apply(tensor, range);
       }
