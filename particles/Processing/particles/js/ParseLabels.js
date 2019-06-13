@@ -28,13 +28,10 @@ defineParticle(({DomParticle, log}) => {
 
       const doc = await fetch(url).then(d => d.text());
       const labels = doc.split(delimiter);
+      const labelsSchema = labels.map((label) => ({label}));
 
       await this.clearHandle(handleName);
-      const ctor  = this.handles.get(handleName).entityClass;
-
-      for(const label of labels) {
-        this.updateCollection(handleName, new ctor({label}));
-      }
+      this.appendRawDataToHandle(handleName, labelsSchema);
     }
   };
 });

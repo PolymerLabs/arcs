@@ -28,14 +28,12 @@ defineParticle(({DomParticle, log}) => {
       const labels = this.toList(labels_);
 
       const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topK});
+      const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
 
       await this.clearHandle(handleName);
+      this.appendRawDataToHandle(handleName, results);
 
-      const ctor = this.handles.get(handleName).entityClass;
-
-      for (const pred in predictions) {
-        this.updateCollection(handleName, new ctor({confidence: pred.probability, label: pred.className}));
-      }
+      log(results);
     }
 
     toList(shape) {
