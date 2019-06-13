@@ -183,7 +183,7 @@ export interface ParticleTrustClaim extends BaseNode {
 export interface ParticleTrustCheck extends BaseNode {
   kind: 'particle-trust-check';
   handle: string;
-  trustTag: string;
+  trustTags: string[];
 }
 
 export interface ParticleModality extends BaseNode {

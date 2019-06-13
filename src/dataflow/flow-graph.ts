@@ -210,11 +210,32 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
+/** Represents a check condition on an edge. */
+export class Check {
+  constructor(
+      /** A list of acceptable tags. The check will fail if a different claim is found that doesn't match any tag in this list. */
+      readonly acceptedTags: readonly string[]) {}
+
+  /** Returns true if the given claim satisfies the check condition. */
+  checkAgainstClaim(claim: string): boolean {
+    for (const tag of this.acceptedTags) {
+      if (tag === claim) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  toString(): string {
+    return this.acceptedTags.join('|');
+  }
+}
+
 export abstract class Node {
   abstract readonly inEdges: Edge[];
   abstract readonly outEdges: Edge[];
 
-  abstract evaluateCheck(check: string, edgeToCheck: Edge, path: BackwardsPath): CheckResult;
+  abstract evaluateCheck(check: Check, edgeToCheck: Edge, path: BackwardsPath): CheckResult;
 
   get inNodes(): Node[] {
     return this.inEdges.map(e => e.start);
@@ -236,7 +257,7 @@ export interface Edge {
   readonly label: string;
 
   readonly claim?: string;
-  readonly check?: string;
+  readonly check?: Check;
 }
 
 class ParticleNode extends Node {
@@ -246,22 +267,25 @@ class ParticleNode extends Node {
 
   // Maps from handle names to tags.
   readonly claims: Map<string, string>;
-  readonly checks: Map<string, string>;
+  readonly checks: Map<string, Check> = new Map();
 
   constructor(particle: Particle) {
     super();
     this.name = particle.name;
     this.claims = particle.spec.trustClaims;
-    this.checks = particle.spec.trustChecks;
+    
+    particle.spec.trustChecks.forEach((tags, handle) => {
+      this.checks.set(handle, new Check(tags));
+    });
   }
 
-  evaluateCheck(check: string, edgeToCheck: ParticleOutput, path: BackwardsPath): CheckResult {
+  evaluateCheck(check: Check, edgeToCheck: ParticleOutput, path: BackwardsPath): CheckResult {
     assert(this.outEdges.includes(edgeToCheck), 'Particles can only check their own out-edges.');
     
     // First check if this particle makes an explicit claim on this out-edge.
     const claim = this.claims.get(edgeToCheck.handleName);
     if (claim) {
-      if (claim === check) {
+      if (check.checkAgainstClaim(claim)) {
         return {type: CheckResultType.Success};
       } else {
         return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found claim '${claim}' on '${edgeToCheck.label}' instead.`};
@@ -285,7 +309,7 @@ class ParticleInput implements Edge {
   readonly handleName: string;
 
   /* Optional check on this input. */
-  readonly check?: string;
+  readonly check?: Check;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, inputName: string) {
     this.start = otherEnd;
@@ -333,7 +357,7 @@ class HandleNode extends Node {
     return connections;
   }
 
-  evaluateCheck(check: string, edgeToCheck: ParticleInput, path: BackwardsPath): CheckResult {
+  evaluateCheck(check: Check, edgeToCheck: ParticleInput, path: BackwardsPath): CheckResult {
     assert(this.outEdges.includes(edgeToCheck), 'Handles can only check their own out-edges.');
 
     // Handles can't make claims of their own (yet). Check whether this handle is untagged.
