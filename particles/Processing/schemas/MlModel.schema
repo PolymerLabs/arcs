@@ -1,8 +1,3 @@
-schema ModelLoadOptions
-  Boolean strict
-  Text weightPathPrefix
-  Boolean fromTFHub
-
 schema MlModel
   URL location
   URL labelsUrl
