@@ -2,11 +2,21 @@ import './schemas/ML.schema'
 import './particles/ML.particle'
 import './particles/ImageSelector.particle'
 import './particles/PresentLabel.particle'
+import './particles/ModelSelector.particle'
 
 store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
 resource ImgUrl
   start
   [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
+
+recipe ImageCapture
+  create #volatile as imgUrl
+  ImageSelector
+    image -> imgUrl
+    consume root
+      provide imageView as viewSlot
+  description `Load an image from a URL.`
+
 
 store ImageSize of [Shape] 'targetImageSize' in ImgSize
 resource ImgSize
@@ -83,7 +93,7 @@ recipe ImageClassifier
     shape <- batchShape
     newTensor -> reshapedImages
 
-  Classify
+  Infer
     tensor <- reshapedImages
     model <- model
     yHat -> yHat
