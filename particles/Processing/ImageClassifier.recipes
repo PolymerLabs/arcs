@@ -2,7 +2,6 @@ import './schemas/ML.schema'
 import './particles/ML.particle'
 import './particles/ImageSelector.particle'
 import './particles/PresentLabel.particle'
-import './particles/ModelSelector.particle'
 
 store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
 resource ImgUrl
