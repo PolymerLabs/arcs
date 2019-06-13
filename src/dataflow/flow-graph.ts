@@ -264,7 +264,7 @@ class ParticleNode extends Node {
       if (claim === check) {
         return {type: CheckResultType.Success};
       } else {
-        return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found claim '${claim}' on '${edge.label}' instead.`};
+        return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found claim '${claim}' on '${edgeToCheck.label}' instead.`};
       }
     }
 
