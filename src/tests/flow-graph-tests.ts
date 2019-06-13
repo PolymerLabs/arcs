@@ -9,7 +9,7 @@
  */
 import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
-import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath} from '../dataflow/flow-graph.js';
+import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath, Check} from '../dataflow/flow-graph.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -134,11 +134,11 @@ describe('FlowGraph', () => {
     `);
     const node = graph.particleMap.get('P');
     assert.equal(node.checks.size, 1);
-    assert.equal(node.checks.get('foo'), 'trusted');
+    assert.deepEqual(node.checks.get('foo'), new Check(['trusted']));
     assert.isEmpty(node.claims);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].check, 'trusted');
+    assert.deepEqual(graph.edges[0].check, new Check(['trusted']));
   });
 });
 
@@ -317,6 +317,53 @@ describe('FlowGraph validation', () => {
     assert.sameMembers(result.failures, [`Check 'trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
   });
 
+  it('succeeds when a check includes multiple tags', async () => {
+    const graph = await buildFlowGraph(`
+    particle P1
+      out Foo {} foo
+      claim foo is tag1
+    particle P2
+      out Foo {} foo
+      claim foo is tag2
+    particle P3
+      in Foo {} bar
+      check bar is tag1 or is tag2
+    recipe R
+      P1
+        foo -> h
+      P2
+        foo -> h
+      P3
+        bar <- h
+    `);
+    const result = graph.validateGraph();
+    assert.isTrue(result.isValid);
+  });
+
+  it(`fails when a check including multiple tags isn't met`, async () => {
+    const graph = await buildFlowGraph(`
+    particle P1
+      out Foo {} foo
+      claim foo is tag1
+    particle P2
+      out Foo {} foo
+      claim foo is someOtherTag
+    particle P3
+      in Foo {} bar
+      check bar is tag1 or is tag2
+    recipe R
+      P1
+        foo -> h
+      P2
+        foo -> h
+      P3
+        bar <- h
+    `);
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`Check 'tag1|tag2' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
+  });
+
   it('can detect more than one failure for the same check', async () => {
     const graph = await buildFlowGraph(`
       particle P1
@@ -382,7 +429,7 @@ class TestNode extends Node {
   readonly inEdges: TestEdge[] = [];
   readonly outEdges: TestEdge[] = [];
   
-  evaluateCheck(check: string, edge: Edge): CheckResult {
+  evaluateCheck(check: Check, edge: Edge): CheckResult {
     return {type: CheckResultType.Success};
   }
 }
@@ -395,7 +442,7 @@ class TestEdge implements Edge {
       readonly end: TestNode,
       readonly label: string) {}
   
-  evaluateCheck(check: string, path: BackwardsPath): CheckResult {
+  evaluateCheck(check: Check, path: BackwardsPath): CheckResult {
     return {type: CheckResultType.Success};
   }
 }

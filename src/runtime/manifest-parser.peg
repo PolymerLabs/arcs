@@ -308,14 +308,21 @@ ParticleTrustClaim
   }
 
 ParticleTrustCheck
-  = 'check' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleTrustCheckCondition rest:('or' whiteSpace ParticleTrustCheckCondition)* eolWhiteSpace
   {
+    const trustTags: string[] = [first, ...rest.map(item => item[2])];
     return {
       kind: 'particle-trust-check',
       location: location(),
       handle,
-      trustTag,
+      trustTags,
     } as AstNode.ParticleTrustCheck;
+  }
+
+ParticleTrustCheckCondition
+  = 'is' whiteSpace trustTag:lowerIdent whiteSpace?
+  {
+    return trustTag;
   }
 
 ParticleHandle

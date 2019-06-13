@@ -1990,8 +1990,21 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.equal(particle.trustChecks.size, 2);
-      assert.equal(particle.trustChecks.get('input1'), 'property1');
-      assert.equal(particle.trustChecks.get('input2'), 'property2');
+      assert.sameMembers(particle.trustChecks.get('input1'), ['property1']);
+      assert.sameMembers(particle.trustChecks.get('input2'), ['property2']);
+      assert.isEmpty(particle.trustClaims);
+    });
+
+    it('supports checks with multiple tags', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input
+          check input is property1 or is property2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.equal(particle.trustChecks.size, 1);
+      assert.sameMembers(particle.trustChecks.get('input'), ['property1', 'property2']);
       assert.isEmpty(particle.trustClaims);
     });
 

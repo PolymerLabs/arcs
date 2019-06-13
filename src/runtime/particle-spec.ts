@@ -131,7 +131,7 @@ export interface SerializedParticleTrustClaimSpec extends Literal {
 
 export interface SerializedParticleTrustCheckSpec extends Literal {
   handle: string;
-  trustTag: string;
+  trustTags: string[];
 }
 
 export interface SerializedParticleSpec extends Literal {
@@ -161,7 +161,7 @@ export class ParticleSpec {
 
   // Trust claims/checks: maps from handle name to a "trust tag".
   trustClaims: Map<string, string>;
-  trustChecks: Map<string, string>;
+  trustChecks: Map<string, string[]>;
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -380,14 +380,14 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks?: SerializedParticleTrustCheckSpec[]): Map<string, string> {
-    const results: Map<string, string> = new Map();
+  private validateTrustChecks(checks?: SerializedParticleTrustCheckSpec[]): Map<string, string[]> {
+    const results: Map<string, string[]> = new Map();
     if (checks) {
       checks.forEach(check => {
         assert(this.handleConnectionMap.has(check.handle), `Can't make a check on unknown handle ${check.handle}.`);
         const handle = this.handleConnectionMap.get(check.handle);
         assert(handle.isInput, `Can't make a check on handle ${check.handle} (not an input handle).`);
-        results.set(check.handle, check.trustTag);
+        results.set(check.handle, check.trustTags);
       });
     }
     return results;
