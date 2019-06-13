@@ -1,0 +1,6 @@
+import '../schemas/MlModel.schema'
+
+particle ModelSelector in './js/ModelSelector.js'
+  out MlModel model
+  consume imageView
+    provide resultsView

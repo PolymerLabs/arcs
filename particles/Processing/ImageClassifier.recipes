@@ -2,6 +2,7 @@ import './schemas/ML.schema'
 import './particles/ML.particle'
 import './particles/ImageSelector.particle'
 import './particles/PresentLabel.particle'
+import './particles/ModelSelector.particle'
 
 store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
 resource ImgUrl
@@ -37,19 +38,25 @@ resource BatchShape
   start
   [{"dim": -1}, {"dim": 224}, {"dim": 224}, {"dim": 3}]
 
-store CurrentModel of MlModel 'currentModel' in CurModel
-resource CurModel
+store MobileNetV1 of MlModel 'MobileNetV1' in MobNetV1
+resource MobNetV1
   start
-  [{"location": "http://localhost:8786/particles/Services/assets/MobileNet_v1_100_224.json",
+  [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV1/model.json",
     "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
 
-recipe ImageClassifier
+store MobileNetV1 of MlModel 'MobileNetV2' in MobNetV2
+resource MobNetV2
+  start
+  [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV2/model.json",
+    "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
+
+recipe MobileNetV1ImageClassifier
+  use as imgUrl
   map 'targetImageSize' as targetSize
   map 'resizeOptions' as resizeOptions
   map 'imagePixelRange' as range
   map 'batchShape' as batchShape
-  map 'currentModel' as curModel
-  create #volatile as imgUrl
+  map 'MobileNetV1' as curModel
   create #volatile as imageTensor
   create #volatile as normTensor
   create #volatile as resizedImages
@@ -58,11 +65,6 @@ recipe ImageClassifier
   create #volatile as yHat
   create #volatile as labels
   create #volatile as predictions
-
-  ImageSelector
-    image -> imgUrl
-    consume root
-      provide imageView as viewSlot
 
   LoadGraphModel
     model <- curModel
@@ -105,4 +107,128 @@ recipe ImageClassifier
   PresentLabel
     predictions <- predictions
 
-  description `Image classification using particle oriented model`
+  description `Image classification with a MobileNet v1 particle`
+
+recipe MobileNetV2ImageClassifier
+  use as imgUrl
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
+  map 'MobileNetV2' as curModel
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
+  create #volatile as model
+  create #volatile as yHat
+  create #volatile as labels
+  create #volatile as predictions
+
+  LoadGraphModel
+    model <- curModel
+    modelReference -> model
+
+  ParseLabels
+    url <- curModel
+    labels -> labels
+
+  ImageToTensor
+    image <- imgUrl
+    imageTensor -> imageTensor
+
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
+
+  ResizeBilinear
+    images <- normTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
+
+  Infer
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
+
+  PresentLabel
+    predictions <- predictions
+
+  description `Image classification with a MobileNet v2 particle`
+
+recipe GeneralImageClassifier
+  use as imgUrl
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
+  create #volatile as curModel
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
+  create #volatile as model
+  create #volatile as yHat
+  create #volatile as labels
+  create #volatile as predictions
+
+  ModelSelector
+    model -> curModel
+    consume imageView
+      provide resultsView as resultsView
+
+  LoadGraphModel
+    model <- curModel
+    modelReference -> model
+
+  ParseLabels
+    url <- curModel
+    labels -> labels
+
+  ImageToTensor
+    image <- imgUrl
+    imageTensor -> imageTensor
+
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
+
+  ResizeBilinear
+    images <- normTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
+
+  Infer
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
+
+  PresentLabel
+    predictions <- predictions
+
+  description `Image classification by choosing your own model`
+

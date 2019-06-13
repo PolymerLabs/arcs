@@ -15,8 +15,8 @@ defineParticle(({DomParticle, html}) => {
   const template_ = html`
 
     <style>
-       td {
-        padding: 0 5px 0 5px;
+      td {
+       padding: 0 5px 0 5px;
       }
     </style>
 
