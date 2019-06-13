@@ -27,7 +27,6 @@ defineParticle(({DomParticle, log}) => {
       const newTensor = await this.service({call: 'tf.reshape', input, shape});
       log('Reshape.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 

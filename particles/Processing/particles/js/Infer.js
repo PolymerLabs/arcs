@@ -27,7 +27,6 @@ defineParticle(({DomParticle, log}) => {
       const yHat = await this.service({call: 'tf.predict', model, inputs});
       log('Classified.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: yHat});
     }
   };

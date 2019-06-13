@@ -26,7 +26,6 @@ defineParticle(({DomParticle, log}) => {
       const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl});
       log('Converted image URL to Tensor.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: imgReference});
     }
 

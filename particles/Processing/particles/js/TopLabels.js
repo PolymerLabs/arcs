@@ -30,7 +30,6 @@ defineParticle(({DomParticle, log}) => {
       const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topK});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
 
-      await this.clearHandle(handleName);
       this.appendRawDataToHandle(handleName, results);
 
       log(results);

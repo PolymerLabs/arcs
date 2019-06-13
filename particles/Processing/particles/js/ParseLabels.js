@@ -29,7 +29,6 @@ defineParticle(({DomParticle, log}) => {
       const labels = doc.split(delimiter);
       const labelsSchema = labels.map((label) => ({label}));
 
-      await this.clearHandle(handleName);
       this.appendRawDataToHandle(handleName, labelsSchema);
     }
   };

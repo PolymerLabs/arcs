@@ -27,7 +27,6 @@ defineParticle(({DomParticle, log}) => {
       });
 
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: model_});
 
       try {

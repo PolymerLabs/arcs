@@ -28,7 +28,6 @@ defineParticle(({DomParticle, log}) => {
       const tNorm = await this.service({call: 'tf.normalize', input, range});
       log('Normalized.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: tNorm});
     }
 

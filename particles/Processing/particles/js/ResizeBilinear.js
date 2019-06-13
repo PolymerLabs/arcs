@@ -28,7 +28,6 @@ defineParticle(({DomParticle, log}) => {
       const newTensor = await this.service({call: 'tf.resizeBilinear', images, size, alignCorners});
       log('Resized.');
 
-      await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: newTensor});
     }
 
