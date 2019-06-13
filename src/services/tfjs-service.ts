@@ -238,7 +238,6 @@ const getTopKClasses = async ({input, y, yHat, labels, topK = 3}): Promise<Class
   valuesAndIndices.sort((a, b) => {
     return b.value - a.value;
   });
-
   const topkValues = new Float32Array(topK);
   const topkIndices = new Int32Array(topK);
   for (let i = 0; i < topK; i++) {
