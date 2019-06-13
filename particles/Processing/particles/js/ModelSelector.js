@@ -47,9 +47,9 @@ defineParticle(({DomParticle, html, resolver}) => {
       this.setState({inputLabelsUrl: value});
     }
     onSubmit() {
-      const url = resolver(this.state.inputModelUrl);
+      const location = resolver(this.state.inputModelUrl);
       const labelsUrl = resolver(this.state.inputLabelsUrl);
-      this.updateSingleton('model', {url, labelsUrl});
+      this.updateSingleton('model', {location, labelsUrl});
 
     }
   };
