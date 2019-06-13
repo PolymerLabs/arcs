@@ -100,7 +100,6 @@ recipe MobileNetV1ImageClassifier
 
   PresentLabel
     predictions <- predictions
-    consume root
 
   description `Image classification by with a MobileNet v1 particle`
 
@@ -122,7 +121,7 @@ recipe GeneralImageClassifier
 
   ModelSelector
     model -> curModel
-    consume root
+    consume imageView
       provide resultsView as resultsView
 
   LoadGraphModel
