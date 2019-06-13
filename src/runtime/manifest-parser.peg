@@ -41,7 +41,7 @@
       return;
     }
     if (result === undefined) {
-      throw new SyntaxError(`result was undefined`, [], "", location());
+      error(`result was undefined`);
     }
     if (Array.isArray(result)) {
       for (const item of result) {
@@ -50,13 +50,13 @@
       return;
     }
     if (result.model) {
-      throw new SyntaxError(`unexpected 'model' in ${JSON.stringify(result)}`, [], "", location());
+      error(`unexpected 'model' in ${JSON.stringify(result)}`);
     }
     if (!result.location) {
-      throw new SyntaxError(`no 'location' in ${JSON.stringify(result)}`, [], "", location());
+      error(`no 'location' in ${JSON.stringify(result)}`);
     }
     if (!result.kind) {
-      throw new SyntaxError(`no 'kind' in ${JSON.stringify(result)}`, [], "", location());
+      error(`no 'kind' in ${JSON.stringify(result)}`);
     }
     for (const key of Object.keys(result)) {
       if (['location', 'kind'].includes(key)) {
@@ -308,14 +308,21 @@ ParticleTrustClaim
   }
 
 ParticleTrustCheck
-  = 'check' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleTrustCheckCondition rest:('or' whiteSpace ParticleTrustCheckCondition)* eolWhiteSpace
   {
+    const trustTags: string[] = [first, ...rest.map(item => item[2])];
     return {
       kind: 'particle-trust-check',
       location: location(),
       handle,
-      trustTag,
+      trustTags,
     } as AstNode.ParticleTrustCheck;
+  }
+
+ParticleTrustCheckCondition
+  = 'is' whiteSpace trustTag:lowerIdent whiteSpace?
+  {
+    return trustTag;
   }
 
 ParticleHandle
@@ -608,7 +615,7 @@ RecipeItem
   / Description
 
 LocalName
-  = 'as' whiteSpace name:lowerIdent
+  = 'as' whiteSpace name:(lowerIdent / [a-zA-Z0-9]* { expected(`lower identifier`); })
   {
     return name;
   }
@@ -1128,7 +1135,7 @@ ReservedWord
   / 'handle'
   ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
-  throw new SyntaxError(`Expected identifier but keyword, '${keyword}' found.`, [], "", location());
+  expected(`identifier`);
 }
 
 backquotedString "a `backquoted string`"

@@ -28,7 +28,7 @@ const composerFactory = modality => {
   return new RamSlotComposer();
 };
 
-const client = global.client || {};
+const client = global.DeviceClient || {};
 
 (async () => {
   // if remote DevTools are requested, wait for connect
@@ -37,8 +37,10 @@ const client = global.client || {};
   const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   global.ShellApi = bus;
+  // notify client
+  bus.send({message: 'ready'});
+  // run smokeTest if requested
   if (test) {
-    // run some examples
     smokeTest(bus);
   }
 })();
