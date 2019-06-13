@@ -44,6 +44,12 @@ resource MobNetV1
   [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV1/model.json",
     "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
 
+store MobileNetV1 of MlModel 'MobileNetV2' in MobNetV2
+resource MobNetV2
+  start
+  [{"location": "http://localhost:8786/particles/Services/assets/MobileNetV2/model.json",
+    "labelsUrl": "http://localhost:8786/particles/Services/assets/ImageNetLabels.txt"}]
+
 recipe MobileNetV1ImageClassifier
   use as imgUrl
   map 'targetImageSize' as targetSize
@@ -102,6 +108,65 @@ recipe MobileNetV1ImageClassifier
     predictions <- predictions
 
   description `Image classification with a MobileNet v1 particle`
+
+recipe MobileNetV2ImageClassifier
+  use as imgUrl
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
+  map 'MobileNetV2' as curModel
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
+  create #volatile as model
+  create #volatile as yHat
+  create #volatile as labels
+  create #volatile as predictions
+
+  LoadGraphModel
+    model <- curModel
+    modelReference -> model
+
+  ParseLabels
+    url <- curModel
+    labels -> labels
+
+  ImageToTensor
+    image <- imgUrl
+    imageTensor -> imageTensor
+
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
+
+  ResizeBilinear
+    images <- normTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
+
+  Classify
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
+
+  PresentLabel
+    predictions <- predictions
+
+  description `Image classification with a MobileNet v2 particle`
 
 recipe GeneralImageClassifier
   use as imgUrl
