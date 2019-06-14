@@ -51,15 +51,13 @@ export class FirebaseAppCache {
     return this.appCache.get(keyAsString);
   }
 
-  stopAllApps() {
-    this.appCache.forEach(app => {
-      app.delete();
-    });
+  async stopAllApps() {
+    await Promise.all([...this.appCache.values()].map(app => app.delete()));
     this.appCache.clear();
   }
 
-  static stop() {
-    new FirebaseAppCache(Runtime.getRuntime()).stopAllApps();
+  static async stop() {
+    await new FirebaseAppCache(Runtime.getRuntime()).stopAllApps();
   }
 }
 

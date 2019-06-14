@@ -188,7 +188,7 @@ abstract class VolatileStorageProvider extends StorageProviderBase {
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType());
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.backingType(), key);
-      this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
+      await this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
     return this.pendingBackingStore;
   }
@@ -209,9 +209,9 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return this.type.getContainedType();
   }
 
-  clone() {
+  async clone() {
     const handle = new VolatileCollection(this.type, this.storageEngine, this.name, this.id, null);
-    handle.cloneFrom(this);
+    await handle.cloneFrom(this);
     return handle;
   }
 
@@ -333,7 +333,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     });
     this.version++;
 
-    this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
   }
 
   async remove(id, keys:string[] = [], originatorId=null) {
@@ -367,9 +367,9 @@ class VolatileSingleton extends VolatileStorageProvider implements SingletonStor
     return this.type;
   }
 
-  clone() {
+  async clone() {
     const singleton = new VolatileSingleton(this.type, this.storageEngine, this.name, this.id, null);
-    singleton.cloneFrom(this);
+    await singleton.cloneFrom(this);
     return singleton;
   }
 

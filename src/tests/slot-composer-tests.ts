@@ -43,7 +43,9 @@ async function initSlotComposer(recipeStr) {
   return {arc, slotComposer, plan, startRenderParticles};
 }
 
-describe('slot composer', () => {
+describe('slot composer', function() {
+  this.timeout(4000);
+
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'

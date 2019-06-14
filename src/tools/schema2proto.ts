@@ -39,7 +39,7 @@ Examples [Must be run from Arcs repository root]
 }
 
 // Converts schema definitions specifies in Manifest files to proto2 specifications.
-(async () => {
+void (async () => {
   Utils.init('../..');
 
   async function processFiles(paths, destDir) {
@@ -48,7 +48,7 @@ Examples [Must be run from Arcs repository root]
     for (const path of paths) {
       try {
         const manifest = await Utils.parse('import \'' + path + '\'');
-        processManifest(manifest, visited, destDir);
+        await processManifest(manifest, visited, destDir);
       } catch (err) {
         console.error(`Error reading '${path}':`);
         console.log('Is your manifest resource not relative to the Arcs repo root?');
@@ -71,7 +71,7 @@ Examples [Must be run from Arcs repository root]
      }
     }
     for (const imp of manifest.imports) {
-      processManifest(imp, visited, destDir);
+      await processManifest(imp, visited, destDir);
     }
   }
 

@@ -101,7 +101,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
         });
       }
 
-      this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
+      await this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
     }
   }
 
@@ -277,7 +277,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
   /**
    * Triggered when the storage key has been modified or deleted.
    */
-  onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<SingletonStorage>): void {
+  async onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<SingletonStorage>) {
     // TODO(lindner): reimplement as simple fires when we have replication working again
     // TODO(lindner): consider using doc._deleted to special case.
     const value = doc.value;
@@ -287,18 +287,18 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
 
     // Skip if value == null, which is what happens when docs are deleted..
     if (value) {
-      this.ensureBackingStore().then(async store => {
+      await this.ensureBackingStore().then(async store => {
         const data = await store.get(value.id);
         if (!data) {
           // TODO(lindner): data referred to by this data is missing.
           console.log('PouchDbSingleton.onRemoteSynced: possible race condition for id=' + value.id);
           return;
         }
-        this._fire('change', new ChangeEvent({data, version: this.version}));
+        await this._fire('change', new ChangeEvent({data, version: this.version}));
       });
     } else {
       if (value != null) {
-        this._fire('change', new ChangeEvent({data: value, version: this.version}));
+        await this._fire('change', new ChangeEvent({data: value, version: this.version}));
       }
     }
   }

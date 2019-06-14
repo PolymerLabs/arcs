@@ -215,7 +215,7 @@ particle ShowProduct in 'show-product.js'
     await restaurantsPlanificator.setSearch('*');
     // result is NOT contextual, so re-planning is not automatically triggered.
     assert.isFalse(restaurantsPlanificator.producer.isPlanning);
-    restaurantsPlanificator.requestPlanning();
+    await restaurantsPlanificator.requestPlanning();
     await verifyReplanning(restaurantsPlanificator, 5, [
       showProductsDescription,
       'Extract person\'s location.',

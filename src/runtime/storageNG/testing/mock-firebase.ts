@@ -125,8 +125,7 @@ class MockFirebaseReference implements firebase.database.Reference {
       const snapshot = await this.once('value');
       this.callbacks.forEach(callback => callback(snapshot));
     }
-    this.database.propagateUpdate(this.key, this);
-    await 0;
+    await this.database.propagateUpdate(this.key, this);
     this.value.value = clone(backingResult);
     await 0;
 
@@ -222,12 +221,12 @@ class MockFirebaseDatabase implements firebase.database.Database {
     this.app = app;
   }
 
-  propagateUpdate(path: string, fromReference: MockFirebaseReference) {
+  async propagateUpdate(path: string, fromReference: MockFirebaseReference) {
     for (const reference of this.refs[path]) {
       if (reference === fromReference) {
         continue;
       }
-      reference.remoteStateChanged();
+      await reference.remoteStateChanged();
     }
   }
 

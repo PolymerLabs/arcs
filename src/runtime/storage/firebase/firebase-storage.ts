@@ -30,11 +30,11 @@ export async function resetStorageForTesting(key) {
   });
 
   const reference = firebase.database(app).ref(key.location);
-  await new Promise(resolve => {
-    reference.remove(resolve);
+  await new Promise(async resolve => {
+    await reference.remove(resolve);
   });
 
-  app.delete();
+  await app.delete();
 }
 
 class FirebaseKey extends KeyBase {
@@ -142,7 +142,7 @@ export class FirebaseStorage extends StorageBase {
   async shutdown() {
     for (const entry of Object.values(this.apps)) {
       if (entry.owned) {
-        entry.app.delete();
+        await entry.app.delete();
         entry.owned = false;
       }
     }
@@ -281,7 +281,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType(), this.storageKey);
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
-      this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
+      await this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
     return this.pendingBackingStore;
   }
@@ -419,7 +419,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     return this.type;
   }
 
-  remoteStateChanged(dataSnapshot: firebase.database.DataSnapshot) {
+  async remoteStateChanged(dataSnapshot: firebase.database.DataSnapshot) {
     if (this.localModified) {
       return;
     }
@@ -441,12 +441,12 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     // require empty variables to store 'null'.
     if (this.referenceMode && this.value) {
       const version = this.version;
-      this.ensureBackingStore().then(async store => {
+      await this.ensureBackingStore().then(async store => {
         const data = await store.get(this.value.id);
-        this._fire('change', new ChangeEvent({data, version}));
+        await this._fire('change', new ChangeEvent({data, version}));
       });
     } else {
-      this._fire('change', new ChangeEvent({data: data.value || null, version: this.version}));
+      await this._fire('change', new ChangeEvent({data: data.value || null, version: this.version}));
     }
   }
 
@@ -550,7 +550,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
 
     await this._persistChanges();
 
-    this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
+    await this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
   }
 
   async clear(originatorId:string = null, barrier: string = null) {
@@ -571,7 +571,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     this.localModified = true;
     this.resolveInitialized();
     // TODO: do we need to fire an event here?
-    this._fire('change', new ChangeEvent({data: this.referenceMode ? data : this.value, version: this.version}));
+    await this._fire('change', new ChangeEvent({data: this.referenceMode ? data : this.value, version: this.version}));
     await this._persistChanges();
   }
 
@@ -705,7 +705,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     return this.type.getContainedType();
   }
 
-  remoteStateChanged(dataSnapshot) {
+  async remoteStateChanged(dataSnapshot) {
     const newRemoteState = dataSnapshot.val();
     if (!newRemoteState.items) {
       // This is the inital remote state, where we have only {version: 0}
@@ -814,17 +814,17 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
     if (this.referenceMode) {
       const ids = add.map(({value}) => value.id).concat(remove.map(({value}) => value.id));
-      this.ensureBackingStore().then(async backingStore => {
+      await this.ensureBackingStore().then(async backingStore => {
         const values = await backingStore.getMultiple(ids);
         const valueMap = {};
         values.forEach(value => valueMap[value.id] = value);
         const addPrimitives = add.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
         const removePrimitives = remove.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
-        this._fire('change', new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this.version}));
+        await this._fire('change', new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this.version}));
       });
 
     } else {
-      this._fire('change', new ChangeEvent({add, remove, version: this.version}));
+      await this._fire('change', new ChangeEvent({add, remove, version: this.version}));
     }
   }
 
@@ -868,7 +868,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
     // 2. Notify listeners.
     items = items.filter(item => item.value);
-    this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     items.forEach(item => {
@@ -903,7 +903,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     this.version++;
 
     // 2. Notify listeners.
-    this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
+    await this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -936,7 +936,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     }
 
     // 2. Notify listeners.
-    this._fire('change', new ChangeEvent({add: [{value, keys, effective}], version: this.version, originatorId}));
+    await this._fire('change', new ChangeEvent({add: [{value, keys, effective}], version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {

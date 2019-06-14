@@ -47,19 +47,19 @@ describe('TicTacToe MoveApplier tests', () => {
 
     await stateStore.set({id: 'startGame', rawData: {state: 0}});
 
-    boardStore.set({id: 'startBoard', rawData: {
+    await boardStore.set({id: 'startBoard', rawData: {
       p00: 0, p01: 0, p02: 0,
       p10: 0, p11: 0, p12: 0,
       p20: 0, p21: 0, p22: 0}});
 
     await nextMoveStore.set({id: 'id0', rawData: {x: 1, y: 1, player: 1}});
 
-    util.assertSingletonWillChangeTo(
+    await util.assertSingletonWillChangeTo(
       arc,
       boardResultStore,
       'p11',
       1);
-    util.assertSingletonWillChangeTo(
+      await util.assertSingletonWillChangeTo(
       arc,
       messageResultStore,
       'msg',
@@ -93,19 +93,19 @@ describe('TicTacToe MoveApplier tests', () => {
 
     await stateStore.set({id: 'startGame', rawData: {state: 1}});
 
-    boardStore.set({id: 'startBoard', rawData: {
+    await boardStore.set({id: 'startBoard', rawData: {
       p00: 0, p01: 0, p02: 0,
       p10: 0, p11: 0, p12: 0,
       p20: 0, p21: 0, p22: 0}});
 
     await nextMoveStore.set({id: 'id0', rawData: {x: 1, y: 1, player: 1}});
 
-    util.assertSingletonWillChangeTo(
+    await util.assertSingletonWillChangeTo(
       arc,
       boardResultStore,
       'p11',
       '(null)');
-    util.assertSingletonWillChangeTo(
+    await util.assertSingletonWillChangeTo(
       arc,
       messageResultStore,
       'msg',

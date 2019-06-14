@@ -56,7 +56,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return this.crdt.getParticleView()!;
   }
 
-  onMessage(message: ProxyMessage<T>): boolean {
+  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
     assert(message.id === this.id);
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
@@ -67,14 +67,14 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         for (const op of message.operations) {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
-            this.synchronizeModel();
+            await this.synchronizeModel();
             // TODO do we need to notify that we are desynced? and return?
-          }          
+          }
         }
         this.notifyUpdate(message.operations);
         break;
       case ProxyMessageType.SyncRequest:
-        this.store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: this.crdt.getData(), id: this.id});
+        await this.store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: this.crdt.getData(), id: this.id});
         break;
       default:
         throw new CRDTError(

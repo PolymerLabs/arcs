@@ -50,7 +50,7 @@ describe('Volatile Driver', async () => {
     const volatile2 = new VolatileDriver(volatileKey, Exists.MayExist);
   });
 
-  it('transmits a write to a connected driver', () => {
+  it('transmits a write to a connected driver', async () => {
     const volatileKey = new VolatileStorageKey('unique');
     const volatile1 = new VolatileDriver<number>(volatileKey, Exists.ShouldCreate);
     const recvQueue1: {model: number, version: number}[] = [];
@@ -59,7 +59,7 @@ describe('Volatile Driver', async () => {
     const recvQueue2: {model: number, version: number}[] = [];
     volatile2.registerReceiver((model: number, version: number) => recvQueue2.push({model, version}));
 
-    volatile1.send(3, 1);
+    await volatile1.send(3, 1);
     assert.equal(recvQueue1.length, 0);
     assert.deepEqual(recvQueue2, [{model: 3, version: 1}]);
   });

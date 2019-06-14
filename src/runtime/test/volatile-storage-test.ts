@@ -141,7 +141,7 @@ describe('volatile', () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
-      collection1.store({id: 'id1', value: 'value'}, ['key1']);
+      await collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
       await synchronized(collection1, collection2);
       assert.deepEqual(await collection1.toList(), await collection2.toList());
@@ -156,10 +156,10 @@ describe('volatile', () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
-      collection1.store({id: 'id1', value: 'value'}, ['key1']);
-      collection2.store({id: 'id1', value: 'value'}, ['key2']);
-      collection1.remove('id1', ['key1']);
-      collection2.remove('id1', ['key2']);
+      await collection1.store({id: 'id1', value: 'value'}, ['key1']);
+      await collection2.store({id: 'id1', value: 'value'}, ['key2']);
+      await collection1.remove('id1', ['key1']);
+      await collection2.remove('id1', ['key2']);
       await synchronized(collection1, collection2);
       assert.isEmpty(await collection1.toList());
       assert.isEmpty(await collection2.toList());

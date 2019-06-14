@@ -22,8 +22,8 @@ export class MessagePort {
   }
 
   // TODO appears to be {messageType, messageBody}
-  postMessage(message) {
-    this._channel._post(this._other, message);
+  async postMessage(message) {
+    await this._channel._post(this._other, message);
   }
 
   set onmessage(f: (e: MessageEvent) => void) {
@@ -31,7 +31,7 @@ export class MessagePort {
   }
 
   close() {
-    this.postMessage = () => {};
+    this.postMessage = async () => {};
   }
 }
 

@@ -17,14 +17,14 @@ import {promisify} from 'util';
 
 describe('JsonldToManifest', () => {
 
-  const isValidManifest = (manifestStr: string): boolean => {
+  async function isValidManifest(manifestStr: string): Promise<boolean> {
     try {
-      Manifest.parse(manifestStr);
+      await Manifest.parse(manifestStr);
       return true;
     } catch (error) {
       return false;
     }
-  };
+  }
 
   const getSchema = async (schema: string = 'Product'): Promise<string> => {
     const readFileAsync = promisify(fs.readFile);
@@ -52,19 +52,19 @@ describe('JsonldToManifest', () => {
     it('works on objects without @graph', async () => {
       const schema = await getSchema();
       const valids = JSON.parse(schema)['@graph'];
-
-      valids.map(obj => JSON.stringify(obj))
-        .map((s: string) => JsonldToManifest.convert(s, {'@id': 'schema:Thing'}))
-        .forEach((manifest: string) => {
-          assert.isTrue(isValidManifest(manifest));
-        });
+      
+      for (const obj of valids) {
+        const str = JSON.stringify(obj);
+        const manifest = JsonldToManifest.convert(str, {'@id': 'schema:Thing'});
+        assert.isTrue(await isValidManifest(manifest));
+      }
     });
 
     it('should work on a real schema.org json linked-data file', async () => {
       //TODO(alxr): Parameterize these tests to work on a variety of schemas.
       const schema = await getSchema();
       const converted = JsonldToManifest.convert(schema, {'@id': 'schema:Thing'});
-      assert.isTrue(isValidManifest(converted));
+      assert.isTrue(await isValidManifest(converted));
     });
 
     it('should add schema.org imports given superclasses', async () => {
@@ -87,7 +87,7 @@ describe('JsonldToManifest', () => {
       const testSchema = JSON.stringify(json);
       const converted =  JsonldToManifest.convert(testSchema, {'@id': 'schema:LocalBusiness'});
 
-      assert.isTrue(isValidManifest(converted));
+      assert.isTrue(await isValidManifest(converted));
     });
 
     // TODO(alxr) get test to pass
@@ -114,7 +114,7 @@ describe('JsonldToManifest', () => {
 
       const converted = JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'});
 
-      assert.isTrue(isValidManifest(converted));
+      assert.isTrue(await isValidManifest(converted));
     });
   });
 });
