@@ -35,7 +35,7 @@ export class PlanConsumer {
   private visibleSuggestionsChangeCallbacks: Callback[] = [];
   suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
-  devtoolsChannel: ArcDevtoolsChannel = null;
+  devtoolsChannel?: ArcDevtoolsChannel;
 
   constructor(arc: Arc, result: PlanningResult) {
     assert(arc, 'arc cannot be null');
@@ -75,9 +75,9 @@ export class PlanConsumer {
 
   getCurrentSuggestions(options?: VisibilityOptions): Suggestion[] {
     return this.result.suggestions.filter(suggestion => {
-      const suggestOption: SuggestionVisibilityOptions = options && options.reasons ? {reasons: []} : undefined;
+      const suggestOption: SuggestionVisibilityOptions|undefined = options && options.reasons ? {reasons: []} : undefined;
       const isVisible = suggestion.isVisible(this.arc, this.suggestFilter, suggestOption);
-      if (!isVisible && suggestOption) {
+      if (!isVisible && suggestOption && options) {
         options.reasons.set(suggestion.hash, suggestOption);
       }
       return isVisible;
@@ -98,7 +98,7 @@ export class PlanConsumer {
   }
 
   _onMaybeSuggestionsChanged() {
-    const options: VisibilityOptions = this.devtoolsChannel ? {reasons: new Map<string, SuggestionVisibilityOptions>()} : undefined;
+    const options: VisibilityOptions|undefined = this.devtoolsChannel ? {reasons: new Map<string, SuggestionVisibilityOptions>()} : undefined;
     const suggestions = this.getCurrentSuggestions(options);
     if (!PlanningResult.isEquivalent(this.currentSuggestions, suggestions)) {
       this.visibleSuggestionsChangeCallbacks.forEach(callback => callback(suggestions));

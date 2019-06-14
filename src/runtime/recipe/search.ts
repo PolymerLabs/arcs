@@ -87,10 +87,10 @@ export class Search {
   }
 
   toString(options): string {
-    const result = [];
+    const result: string[] = [];
     result.push(`search \`${this.phrase}\``);
 
-    const tokenStr = [];
+    const tokenStr: string[] = [];
     tokenStr.push('  tokens');
     if (this.unresolvedTokens.length > 0) {
       tokenStr.push(this.unresolvedTokens.map(t => `\`${t}\``).join(' '));

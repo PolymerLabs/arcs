@@ -257,7 +257,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
 
       const ids = items.map(item => item.value.id);
       const results = await this.backingStore.getMultiple(ids);
-      const output = [];
+      const output: SerializedModelEntry[] = [];
       for (let i = 0; i < results.length; i++) {
         output.push({id: ids[i], value: results[i], keys: items[i].keys});
       }

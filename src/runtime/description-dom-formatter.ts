@@ -85,7 +85,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     const model = {};
     const tokens = this._initTokens(particleDesc.pattern, particleDesc);
 
-    tokens.forEach((token, i) => {
+    tokens.forEach((token, i: number) => {
       if (token.text) {
         template = template.concat(
             `${(index === 0 && i === 0 && !options.skipFormatting) ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);

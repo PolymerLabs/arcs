@@ -85,7 +85,7 @@ export class ResultInspector {
     }
     this._store.clearItemsForTesting();
 
-    const errors = [];
+    const errors: string[] = [];
     if (expectations.length) {
       errors.push(`Expected, not received: ${expectations.join(', ')}`);
     }

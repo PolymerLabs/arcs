@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {checkDefined} from './preconditions.js';
 
 // tslint:disable: no-any
 
@@ -187,7 +188,7 @@ export class SequenceTest<T> {
    * to replace:
    * sequenceTest.registerOutput('foo.bar', {type: Void}, SequenceOutput.Replace);
    */
-  registerOutput(name: string, response: OutputResponseObject, behavior: SequenceOutput, variable: string = null) {
+  registerOutput(name: string, response: OutputResponseObject, behavior: SequenceOutput, variable: string|null = null) {
     if (behavior !== SequenceOutput.Register) {
       assert.equal(variable, null);
     }
@@ -394,7 +395,7 @@ export class SequenceTest<T> {
    * etc..
    */
   private* interleavings_raw(length: number, amounts: number[]) {
-    const currentChoice = [];
+    const currentChoice: number[] = [];
     for (let i = 0; i < length; i++) {
       currentChoice.push(0);
     }
@@ -487,7 +488,7 @@ export class SequenceTest<T> {
    */
   private* interleavings() {
     let length = 0;
-    const amounts = [];
+    const amounts: number[] = [];
     for (const input of this.inputs.keys()) {
       length += this.changes[input].length;
       amounts.push(this.changes[input].length);
@@ -588,7 +589,7 @@ export class SequenceTest<T> {
           continue;
         }
 
-        const input = this.inputs.get(item.change.id);
+        const input = checkDefined(this.inputs.get(item.change.id));
 
         this.interleavingLog.push(input.name);
 

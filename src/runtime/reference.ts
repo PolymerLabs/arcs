@@ -14,7 +14,7 @@ import {handleFor, Storable} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
 import {Entity} from './entity.js';
-import {SerializedEntity} from './storage-proxy.js';
+import {SerializedEntity, StorageProxy} from './storage-proxy.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -25,7 +25,7 @@ export class Reference implements Storable {
   protected readonly id: string;
   private storageKey: string;
   private readonly context: ParticleExecutionContext;
-  private storageProxy = null;
+  private storageProxy: StorageProxy = null;
   protected handle = null;
 
   constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) {

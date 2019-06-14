@@ -74,15 +74,15 @@ export class Arc {
   private readonly storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
   private storageKeys: Dictionary<string> = {};
-  public readonly storageKey: string;
+  public readonly storageKey?: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
   public readonly storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
   private readonly storeDescriptions = new Map<StorageProviderBase, string>();
   private waitForIdlePromise: Promise<void> | null;
-  private readonly inspectorFactory: ArcInspectorFactory;
-  public readonly inspector: ArcInspector;
+  private readonly inspectorFactory?: ArcInspectorFactory;
+  public readonly inspector?: ArcInspector;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly instantiateMutex = new Mutex();
 
@@ -166,15 +166,17 @@ export class Arc {
   }
 
   get idle(): Promise<void> {
-    if (!this.waitForIdlePromise) {
-      // Store one active completion promise for use by any subsequent callers.
-      // We explicitly want to avoid, for example, multiple simultaneous
-      // attempts to identify idle state each sending their own `AwaitIdle`
-      // message and expecting settlement that will never arrive.
-      this.waitForIdlePromise =
-          this._waitForIdle().then(() => this.waitForIdlePromise = null);
+    if (this.waitForIdlePromise) {
+      return this.waitForIdlePromise;
     }
-    return this.waitForIdlePromise;
+    // Store one active completion promise for use by any subsequent callers.
+    // We explicitly want to avoid, for example, multiple simultaneous
+    // attempts to identify idle state each sending their own `AwaitIdle`
+    // message and expecting settlement that will never arrive.
+    const promise = 
+      this._waitForIdle().then(() => this.waitForIdlePromise = null);
+    this.waitForIdlePromise = promise;
+    return promise;
   }
 
   findInnerArcs(particle: Particle): Arc[] {
@@ -608,7 +610,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey: string = undefined): Promise<StorageProviderBase> {
+  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string): Promise<StorageProviderBase> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type instanceof RelationType) {

@@ -532,9 +532,9 @@ ${e.message}
 
         switch (node.kind) {
         case 'schema-inline': {
-          const schemas = [];
-          const aliases = [];
-          const names = [];
+          const schemas: Schema[] = [];
+          const aliases: Schema[] = [];
+          const names: string[] = [];
           for (const name of node.names) {
             const resolved = manifest.resolveTypeName(name);
             if (resolved && resolved.schema && resolved.schema.isAlias) {

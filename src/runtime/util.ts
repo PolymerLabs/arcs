@@ -14,7 +14,7 @@ import {assert} from '../platform/assert-web.js';
  * Returns the set delta between two lists based on direct object comparison.
  */
 export function setDiff<T>(from: T[], to: T[]): {add: T[], remove: T[]} {
-  const result = {add: [], remove: []};
+  const result: {add: T[], remove: T[]} = {add: [], remove: []};
   const items = new Set([...from, ...to]);
   const fromSet = new Set(from);
   const toSet = new Set(to);
@@ -37,10 +37,10 @@ export function setDiff<T>(from: T[], to: T[]): {add: T[], remove: T[]} {
  * `keyFn` takes type T and returns the value by which items should be compared.
  */
 export function setDiffCustom<T, U>(from: T[], to: T[], keyFn: (T) => U): {add: T[], remove: T[]} {
-  const result = {add: [], remove: []};
-  const items = new Map();
-  const fromSet = new Map();
-  const toSet = new Map();
+  const result: {add: T[], remove: T[]} = {add: [], remove: []};
+  const items: Map<U, T> = new Map();
+  const fromSet: Map<U, T> = new Map();
+  const toSet: Map<U, T> = new Map();
 
   for (const item of from) {
     const key = keyFn(item);

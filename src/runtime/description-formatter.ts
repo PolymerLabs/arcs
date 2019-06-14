@@ -126,7 +126,7 @@ export class DescriptionFormatter {
     return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9()' >\]]/i) ? '.' : ''}`;
   }
 
-  patternToSuggestion(pattern, particleDescription) {
+  patternToSuggestion(pattern: string, particleDescription) {
     const tokens = this._initTokens(pattern, particleDescription);
     const tokenResults = tokens.map(token => this.tokenToString(token));
     if (tokenResults.filter(res => res == undefined).length === 0) {
@@ -135,7 +135,7 @@ export class DescriptionFormatter {
     return undefined;
   }
 
-  _initTokens(pattern, particleDescription) {
+  _initTokens(pattern: string, particleDescription) {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
     while (pattern.length > 0) {

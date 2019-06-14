@@ -32,7 +32,7 @@ async function initSlotComposer(recipeStr) {
     slotComposer,
     loader
   });
-  const startRenderParticles = [];
+  const startRenderParticles: string[] = [];
   arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};

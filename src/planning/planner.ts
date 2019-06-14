@@ -64,7 +64,7 @@ export class Planner {
   private _arc: Arc;
   // public for debug tools
   strategizer: Strategizer;
-  speculator: Speculator;
+  speculator: Speculator|null;
   blockDevtools: boolean;
 
   // TODO: Use context.arc instead of arc
@@ -203,13 +203,13 @@ export class Planner {
     suggestionByHash().clear();
   }
 
-  private async retriveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion> {
+  private async retriveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
     const cachedSuggestion = suggestionByHash().get(hash);
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;
     }
-    let relevance = null;
-    let description = null;
+    let relevance: Relevance|null = null;
+    let description: Description|null = null;
     if (this.speculator) {
       const result = await this.speculator.speculate(this._arc, plan, hash);
       if (!result) {

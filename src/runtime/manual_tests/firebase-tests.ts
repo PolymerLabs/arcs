@@ -51,7 +51,7 @@ describe('firebase', function() {
     await resetStorageForTesting(backingStoreUrl);
   });
 
-  let storageInstances = [];
+  let storageInstances: StorageProviderFactory[] = [];
 
   function createStorage(id: Id): StorageProviderFactory {
     const storage = new StorageProviderFactory(id);

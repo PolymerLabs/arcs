@@ -56,12 +56,12 @@ function typeSummary(field) {
   }
 }
 
-function generate(schemaName, schema) {
-  const fields = [];
-  const api = [];
-  const decode = [];
-  const encode = [];
-  const toString = [];
+function generate(schemaName: string, schema) {
+  const fields: string[] = [];
+  const api: string[] = [];
+  const decode: string[] = [];
+  const encode: string[] = [];
+  const toString: string[] = [];
 
   const processValue = (name, type, typeChar, passByReference) => {
     const [ref1, ref2] = passByReference ? ['const ', '&'] : ['', ''];

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Tracing} from '../trace.js';
+import {TraceEvent, Tracing} from '../trace.js';
 
 /**
  * For an explainer of event types and exact format google 'Trace Event Format',
@@ -272,7 +272,7 @@ describe('Tracing', () => {
   });
 
   it('allows streaming events', async () => {
-    const events = [];
+    const events: TraceEvent[] = [];
     Tracing.stream(event => events.push(event));
 
     assert.isEmpty(events);
@@ -293,7 +293,7 @@ describe('Tracing', () => {
   });
 
   it('allows filtering while streaming', async () => {
-    const events = [];
+    const events: TraceEvent[] = [];
     Tracing.stream(event => events.push(event), event => event.name === 'I\'m Special');
 
     assert.isEmpty(events);
