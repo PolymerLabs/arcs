@@ -41,7 +41,7 @@ describe('Mutex', () => {
 
   it('correctly executes many concurrent tasks', async () => {
     const mutex = new Mutex();
-    const results = [];
+    const results: string[] = [];
     
     const runTask = async (name: string, startDelay: number, critDelay: number) => {
       results.push(name + ' begin');

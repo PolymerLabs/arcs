@@ -34,7 +34,7 @@ function createReader(id:number, inS, outS, options, logger: Logger) {
 }
 
 export function serve(options: AmlServiceOptions) {
-  let logger: Logger = null;
+  let logger: Logger;
   switch (options.log) {
     case 'console':
       logger = console;

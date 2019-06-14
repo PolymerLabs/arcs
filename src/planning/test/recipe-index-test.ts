@@ -13,6 +13,7 @@ import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
+import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
@@ -187,7 +188,8 @@ describe('RecipeIndex', () => {
           thing = thing
     `);
 
-    const recipe = index.recipes.find(r => r.name === 'C');
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'C'), 'missing recipe C');
+    
     const handle = recipe.handles[0];
 
     assert.deepEqual(['A'], index.findHandleMatch(handle, ['map']).map(h => h.recipe.name));
@@ -219,7 +221,7 @@ describe('RecipeIndex', () => {
         ProducerOtherThing
     `);
 
-    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'Selector'), 'missing Selector');
     const handle = recipe.handles[0];
 
     assert.deepEqual(
@@ -257,7 +259,7 @@ describe('RecipeIndex', () => {
         Consumer
     `);
 
-    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'Selector'), 'missing Selector');
     const handle = recipe.handles[0];
 
     assert.deepEqual(
@@ -287,7 +289,7 @@ describe('RecipeIndex', () => {
         Consumer
     `);
 
-    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'Selector'), 'Missing Selector');
     const handle = recipe.handles[0];
 
     assert.deepEqual(
@@ -325,7 +327,7 @@ describe('RecipeIndex', () => {
         ProducerConsumer
     `);
 
-    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'Selector'), 'Missing Selector');
     const handle = recipe.handles[0];
 
     assert.deepEqual(
@@ -363,7 +365,7 @@ describe('RecipeIndex', () => {
         ProducerConsumer
     `);
 
-    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'Selector'), 'missing Selector');
     const handle = recipe.handles[0];
 
     assert.deepEqual(

@@ -100,6 +100,9 @@ function dirPrefixForSortedPaths(paths: string[]): number {
 }
 
 function collectDependencies(manifest: Manifest, dependencies: Set<string>) {
+  if (!manifest.fileName) {
+    throw new Error('Missing filename');
+  }
   dependencies.add(manifest.fileName);
   for (const particle of manifest.particles) {
     dependencies.add(particle.implFile);

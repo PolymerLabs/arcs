@@ -279,7 +279,7 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   get handleConnections(): HandleConnection[] {
-    const handleConnections = [];
+    const handleConnections: HandleConnection[] = [];
     this._particles.forEach(particle => {
       handleConnections.push(...Object.values(particle.connections));
       handleConnections.push(...particle._unnamedConnections);
@@ -588,7 +588,7 @@ export class Recipe implements Cloneable<Recipe> {
   // use { showUnresolved: true } in options to see why a recipe can't resolve.
   toString(options: ToStringOptions = undefined): string {
     const nameMap = this._makeLocalNameMap();
-    const result = [];
+    const result: string[] = [];
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
     result.push(`recipe${this.name ? ` ${this.name}` : ''}${verbs}`);
     if (options && options.showUnresolved) {
@@ -697,7 +697,7 @@ export class RequireSection extends Recipe {
     if (nameMap == undefined) {
       nameMap = this._makeLocalNameMap();
     }
-    const result = [];
+    const result: string[] = [];
     result.push(`require`);
     if (options && options.showUnresolved) {
       if (this.search) {

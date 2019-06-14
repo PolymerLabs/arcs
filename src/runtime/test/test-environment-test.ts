@@ -7,9 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {registerSystemExceptionHandler} from '../arc-exceptions.js';
+import {registerSystemExceptionHandler, PropagatedException} from '../arc-exceptions.js';
 
-let exceptions = [];
+let exceptions: PropagatedException[] = [];
 
 beforeEach(() => registerSystemExceptionHandler((exception) => exceptions.push(exception)));
 

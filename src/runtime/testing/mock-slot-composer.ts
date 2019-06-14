@@ -55,7 +55,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options.strict != undefined ? options.strict : true;
-    this.logging = options.logging;
+    this.logging = Boolean(options.logging);
     this.debugMessages = [];
 
     // Clear all cached templates
@@ -304,7 +304,7 @@ export class MockSlotComposer extends FakeSlotComposer {
   }
 
   debugMessagesToString(): string {
-    const result = [];
+    const result: string[] = [];
     result.push('--------------------------------------------');
     this.debugMessages.forEach(debug => {
       result.push(`${debug.name} : `);

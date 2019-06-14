@@ -762,7 +762,7 @@ describe('particle-api', () => {
 
     const dataClass = arc.context.findSchemaByName('Data').entityClass();
     const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0') as BigCollectionStorageProvider;
-    const promises = [];
+    const promises: Promise<void>[] = [];
     for (let i = 1; i <= 5; i++) {
       promises.push(bigStore.store({id: 'i' + i, rawData: {value: 'v' + i}}, ['k' + i]));
     }

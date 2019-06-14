@@ -85,7 +85,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   private reference: firebase.database.Reference;
   private seenVersion = 0;
   private seenTag = 0;
-  private nextTag = null;
+  private nextTag: number = null;
   private pendingModel: Data = null;
   private pendingVersion: number;
 

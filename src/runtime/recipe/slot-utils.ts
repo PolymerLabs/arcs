@@ -111,7 +111,7 @@ export class SlotUtils {
   }
 
   static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn: SlotConnection = undefined, provideSlot: Slot = undefined) {
-    const consumeTags = [].concat(
+    const consumeTags: string[] = [].concat(
       consumeSlotSpec.tags || [], 
       consumeSlotConn ? consumeSlotConn.tags : [], 
       consumeSlotConn && consumeSlotConn.targetSlot ? consumeSlotConn.targetSlot.tags : []

@@ -13,6 +13,7 @@ import {Arc} from '../arc.js';
 import {Id, ArcId} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
+import {checkDefined} from '../testing/preconditions.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 
@@ -33,7 +34,7 @@ describe('Multiplexer', () => {
 
     const recipe = manifest.recipes[0];
 
-    const barType = manifest.findTypeByName('Bar');
+    const barType = checkDefined(manifest.findTypeByName('Bar'));
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 

@@ -15,6 +15,7 @@ import {HostedSlotContext} from '../runtime/slot-context.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
+import {checkDefined} from '../runtime/testing/preconditions.js';
 import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 describe('Multiplexer', () => {
@@ -57,8 +58,7 @@ describe('Multiplexer', () => {
     await helper.idle();
     assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
     assert.lengthOf(helper.slotComposer.consumers, 6);
-    const itemSlot = helper.slotComposer.consumers.find(s => s.consumeConn.name === 'item');
-    assert(itemSlot);
+    const itemSlot = checkDefined(helper.slotComposer.consumers.find(s => s.consumeConn.name === 'item'));
     const items = itemSlot.renderings.map(([subId, item]) => item);
 
     // verify model

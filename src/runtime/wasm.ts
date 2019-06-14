@@ -191,7 +191,7 @@ function readEmscriptenMetadata(module: WebAssembly.Module) {
   assert(customSections.length === 1, 'wasm particles must be built with EMIT_EMSCRIPTEN_METADATA');
 
   const buffer = new Uint8Array(customSections[0]);
-  const metadata = [];
+  const metadata: number[] = [];
   let offset = 0;
   while (offset < buffer.byteLength) {
     let result = 0;
@@ -242,7 +242,7 @@ export class WasmParticle extends Particle {
   private handleMap = new Map<Handle, WasmAddress>();
   private revHandleMap = new Map<WasmAddress, Handle>();
   private converters = new Map<Handle, EntityPackager>();
-  private logInfo: [string, number] = null;
+  private logInfo: [string, number]|null = null;
 
   // TODO: errors in this call (e.g. missing import or failure in particle ctor) generate two console outputs
   async initialize(buffer: ArrayBuffer) {
@@ -324,6 +324,9 @@ export class WasmParticle extends Particle {
       return;
     }
     const converter = this.converters.get(handle);
+    if (!converter) {
+      throw new Error('cannot find handle ' + handle.name);
+    }
     let encoded;
     if (handle instanceof Singleton) {
       encoded = converter.encodeSingleton(model);
@@ -342,6 +345,10 @@ export class WasmParticle extends Particle {
     }
     const wasmHandle = this.handleMap.get(handle);
     const converter = this.converters.get(handle);
+    if (!converter) {
+      throw new Error('cannot find handle ' + handle.name);
+    }
+
     let p1 = 0;
     let p2 = 0;
     if (handle instanceof Singleton) {

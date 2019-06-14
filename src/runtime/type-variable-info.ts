@@ -21,9 +21,9 @@ interface TypeVariableInfoLiteral {
 
 export class TypeVariableInfo {
   name: string;
-  _canWriteSuperset?: Type;
-  _canReadSubset?: Type;
-  _resolution?: Type;
+  _canWriteSuperset?: Type|null;
+  _canReadSubset?: Type|null;
+  _resolution?: Type|null;
 
   constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
     this.name = name;
@@ -116,7 +116,7 @@ export class TypeVariableInfo {
     return type.getEntitySchema().isMoreSpecificThan(constraint.getEntitySchema());
   }
 
-  get resolution() {
+  get resolution(): Type|null {
     if (this._resolution) {
       return this._resolution.resolvedType();
     }
@@ -164,7 +164,7 @@ export class TypeVariableInfo {
     return this._canWriteSuperset;
   }
 
-  set canWriteSuperset(value: Type) {
+  set canWriteSuperset(value: Type|null) {
     assert(!this._resolution);
     this._canWriteSuperset = value;
   }
@@ -180,7 +180,7 @@ export class TypeVariableInfo {
     return this._canReadSubset;
   }
 
-  set canReadSubset(value: Type) {
+  set canReadSubset(value: Type|null) {
     assert(!this._resolution);
     this._canReadSubset = value;
   }

@@ -27,10 +27,10 @@ export type PlanningResultOptions = {
 
 export class PlanningResult {
   suggestions: Suggestion[] = [];
-  lastUpdated: Date = new Date(null);
+  lastUpdated: Date = new Date();
   generations: {population: {}[], record: {}}[] = [];
   contextual = true;
-  store: SingletonStorageProvider;
+  store?: SingletonStorageProvider;
   private storeCallback: ({}) => void;
   private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;

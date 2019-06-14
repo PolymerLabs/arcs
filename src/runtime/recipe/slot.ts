@@ -54,7 +54,7 @@ export class Slot {
   }
 
   get handles(): Handle[] {
-    const handles = [];
+    const handles: Handle[] = [];
     if (this.sourceConnection && this.sourceConnection.getSlotSpec()) {
       for (const handleName of this.sourceConnection.particle.getSlotSpecByName(this.name).handles) {
         const handleConn = this.sourceConnection.particle.connections[handleName];
@@ -157,7 +157,7 @@ export class Slot {
   }
 
   toString(nameMap, options): string {
-    const result = [];
+    const result: string[] = [];
     result.push('slot');
     if (this.id) {
       result.push(`'${this.id}'`);

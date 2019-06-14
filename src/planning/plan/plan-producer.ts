@@ -48,7 +48,7 @@ export class PlanProducer {
   searchStore?: SingletonStorageProvider;
   searchStoreCallback: ({}) => void;
   debug: boolean;
-  devtoolsChannel: ArcDevtoolsChannel = null;
+  devtoolsChannel?: ArcDevtoolsChannel;
 
   constructor(arc: Arc, result: PlanningResult, searchStore?: SingletonStorageProvider, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
@@ -127,7 +127,9 @@ export class PlanProducer {
   }
 
   dispose() {
-    this.searchStore.off('change', this.searchStoreCallback);
+    if (this.searchStore) {
+      this.searchStore.off('change', this.searchStoreCallback);
+    }
   }
 
   async produceSuggestions(options = {}) {
@@ -180,7 +182,7 @@ export class PlanProducer {
   }
 
   async runPlanner(options, generations): Promise<Suggestion[]> {
-    let suggestions = [];
+    let suggestions: Suggestion[] = [];
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
     this.planner.init(this.arc, {

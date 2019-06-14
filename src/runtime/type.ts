@@ -137,7 +137,7 @@ export abstract class Type {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
-  getContainedType(): Type {
+  getContainedType(): Type|null {
     return null;
   }
 
@@ -690,7 +690,7 @@ export class SlotType extends Type {
   }
 
   toString(options = undefined): string {
-    const fields = [];
+    const fields: string[] = [];
     for (const key of Object.keys(this.slot)) {
       if (this.slot[key] !== undefined) {
         fields.push(`${key}:${this.slot[key]}`);
@@ -704,7 +704,7 @@ export class SlotType extends Type {
   }
 
   toPrettyString(): string {
-    const fields = [];
+    const fields: string[] = [];
     for (const key of Object.keys(this.slot)) {
       if (this.slot[key] !== undefined) {
         fields.push(`${key}:${this.slot[key]}`);

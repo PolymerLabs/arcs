@@ -237,7 +237,7 @@ export class HandleConnection {
   }
 
   toString(nameMap, options): string {
-    const result = [];
+    const result: string[] = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.
     result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '=', '`consume': '<-', '`provide': '->'}[this.direction] || this.direction || '=');

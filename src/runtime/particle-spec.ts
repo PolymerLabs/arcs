@@ -45,7 +45,7 @@ export class HandleConnectionSpec {
   isOptional: boolean;
   tags: string[];
   dependentConnections: HandleConnectionSpec[];
-  pattern: string;
+  pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
@@ -230,7 +230,7 @@ export class ParticleSpec {
     return connection && connection.isOutput;
   }
 
-  getConnectionByName(name: string): HandleConnectionSpec {
+  getConnectionByName(name: string): HandleConnectionSpec|undefined {
     return this.handleConnectionMap.get(name);
   }
 
@@ -299,7 +299,7 @@ export class ParticleSpec {
   }
 
   toString(): string {
-    const results = [];
+    const results: string[] = [];
     let verbs = '';
     if (this.verbs.length > 0) {
       verbs = ' ' + this.verbs.map(verb => `&${verb}`).join(' ');
@@ -323,7 +323,7 @@ export class ParticleSpec {
 
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
-      const tokens = [];
+      const tokens: string[] = [];
       if (s.isRequired) {
         tokens.push('must');
       }

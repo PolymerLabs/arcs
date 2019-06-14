@@ -10,6 +10,8 @@
 
 import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Runnable} from '../runtime/hot.js';
+import {Manifest} from '../runtime/manifest.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {ArcInspector, ArcInspectorFactory} from '../runtime/arc-inspector.js';
 import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
@@ -36,8 +38,8 @@ class DevtoolsInspector implements ArcInspector {
 
   private arcDevtoolsChannel: DevtoolsChannel = null;
 
-  private onceActiveResolve: () => void = null;
-  public onceActive: Promise<void> = null;
+  private onceActiveResolve: Runnable|null = null;
+  public onceActive: Promise<void>|null = null;
   
   constructor(arc: Arc) {
     if (arc.isStub) return;
@@ -173,9 +175,9 @@ class DevtoolsInspector implements ArcInspector {
   }
 
   private sendEnvironmentMessage(arc: Arc) {
-    const allManifests = [];
+    const allManifests: Manifest[] = [];
 
-    (function traverse(manifest) {
+    (function traverse(manifest: Manifest) {
       allManifests.push(manifest);
       manifest.imports.forEach(traverse);
     })(arc.context);

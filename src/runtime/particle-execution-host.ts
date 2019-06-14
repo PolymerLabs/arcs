@@ -194,7 +194,7 @@ export class ParticleExecutionHost {
               }
             }
           }
-          const missingHandles = [];
+          const missingHandles: Handle[] = [];
           for (const handle of recipe0.handles) {
             const fromHandle = pec.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
             if (!fromHandle) {

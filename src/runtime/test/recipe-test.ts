@@ -669,7 +669,7 @@ describe('recipe', () => {
           outThing = handle1
     `)).recipes[0];
     const verifyRecipe = (recipe, errorPrefix) => {
-      const errors = [];
+      const errors: string[] = [];
       const resolvedType = recipe.handleConnections[0].type.resolvedType();
       if (resolvedType !== recipe.handleConnections[1].type.getContainedType().resolvedType()) {
         errors.push(`${errorPrefix}: handle connection types mismatch`);

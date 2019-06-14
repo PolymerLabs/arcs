@@ -88,7 +88,7 @@ export class PlanningTestHelper extends TestHelper {
         const suggestions = this.suggestions.map(s => s.descriptionText);
         const missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
         const unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
-        const errors = [];
+        const errors: string[] = [];
         if (missingSuggestions.length > 0) {
           errors.push(`Missing suggestions:\n\t ${missingSuggestions.join('\n\t')}`);
         }

@@ -26,7 +26,7 @@ describe('loader', () => {
     assert.equal(loader.join('a/foo', 'https://b'), 'https://b');
   });
   it('can load a particle from a particle spec', async () => {
-    const files = [];
+    const files: string[] = [];
     const testLoader = new class extends Loader {
       async requireParticle(fileName): Promise<typeof Particle> {
         files.push(fileName);

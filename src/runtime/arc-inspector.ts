@@ -24,7 +24,7 @@ export interface ArcInspector {
   // and deserialization.
 
   isActive(): boolean;
-  onceActive: Promise<void>;
+  onceActive: Promise<void>|null;
 
   // -------------------------------
 

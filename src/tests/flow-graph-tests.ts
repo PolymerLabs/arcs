@@ -9,6 +9,7 @@
  */
 import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
+import {checkDefined} from '../runtime/testing/preconditions.js';
 import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath, Check} from '../dataflow/flow-graph.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
@@ -37,7 +38,7 @@ describe('FlowGraph', () => {
     `);
     assert.isEmpty(graph.handles);
     assert.hasAllKeys(graph.particleMap, ['P']);
-    const node = graph.particleMap.get('P');
+    const node = checkDefined(graph.particleMap.get('P'));
     assert.isEmpty(node.inEdges);
     assert.isEmpty(node.outEdges);
   });
@@ -57,8 +58,8 @@ describe('FlowGraph', () => {
     assert.lengthOf(graph.particles, 2);
     assert.lengthOf(graph.handles, 1);
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2']);
-    const P1 = graph.particleMap.get('P1');
-    const P2 = graph.particleMap.get('P2');
+    const P1 = checkDefined(graph.particleMap.get('P1'));
+    const P2 = checkDefined(graph.particleMap.get('P2'));
     assert.isEmpty(P1.inEdges);
     assert.isEmpty(P2.outEdges);
     assert.equal(P1.outNodes[0], P2.inNodes[0], 'handle node is different');
@@ -114,7 +115,7 @@ describe('FlowGraph', () => {
         P
           foo -> h
     `);
-    const node = graph.particleMap.get('P');
+    const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.claims.size, 1);
     assert.equal(node.claims.get('foo'), 'trusted');
     assert.isEmpty(node.checks);
@@ -132,7 +133,7 @@ describe('FlowGraph', () => {
         P
           foo <- h
     `);
-    const node = graph.particleMap.get('P');
+    const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.checks.size, 1);
     assert.deepEqual(node.checks.get('foo'), new Check(['trusted']));
     assert.isEmpty(node.claims);

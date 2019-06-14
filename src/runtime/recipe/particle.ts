@@ -350,7 +350,7 @@ export class Particle {
   }
 
   toString(nameMap, options): string {
-    let result = [];
+    let result: string[] = [];
     // TODO: we need at least name or verb(s)
     if (this.name) {
       result.push(this.name);
