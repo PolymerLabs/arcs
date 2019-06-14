@@ -187,6 +187,5 @@ async function processFile(file) {
 }
 
 for (const file of argv._) {
-  // tslint:disable-next-line: no-floating-promises
-  processFile(file);
+  void processFile(file);
 }

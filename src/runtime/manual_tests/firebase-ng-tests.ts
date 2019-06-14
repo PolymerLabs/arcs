@@ -22,8 +22,7 @@ async function resetStorageKeyForTesting(key: FirebaseStorageKey) {
 
   const reference = firebase.database(app).ref(key.location);
   await new Promise(resolve => {
-    // tslint:disable-next-line: no-floating-promises
-    reference.remove(resolve);
+    void reference.remove(resolve);
   });
 
   await app.delete();

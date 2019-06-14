@@ -39,8 +39,7 @@ Examples [Must be run from Arcs repository root]
 }
 
 // Converts schema definitions specifies in Manifest files to proto2 specifications.
-// tslint:disable-next-line: no-floating-promises
-(async () => {
+void (async () => {
   Utils.init('../..');
 
   async function processFiles(paths, destDir) {
