@@ -134,11 +134,11 @@ describe('Store', async () => {
     let sentSyncRequest = false;
 
     return new Promise(async (resolve, reject) => {
-      const id = activeStore.on(proxyMessage => {
+      const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.isFalse(sentSyncRequest);
           sentSyncRequest = true;
-          activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
+          await activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
           return true;
         }
         assert.isTrue(sentSyncRequest);
@@ -162,7 +162,7 @@ describe('Store', async () => {
     
     return new Promise(async (resolve, reject) => {
       // requesting store
-      const id1 = activeStore.on(proxyMessage => {
+      const id1 = activeStore.on(async proxyMessage => {
         assert.equal(proxyMessage.type, ProxyMessageType.ModelUpdate);
         resolve(true);
         return true;
@@ -187,7 +187,7 @@ describe('Store', async () => {
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
     return new Promise(async (resolve, reject) => {
-      const id = activeStore.on(proxyMessage => {
+      const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.equal(proxyMessage.operations.length, 1);
           assert.equal(proxyMessage.id, id);

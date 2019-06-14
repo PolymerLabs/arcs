@@ -37,7 +37,7 @@ export class Planificator {
     await result.load();
     const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug);
     await planificator._storeSearch(); // Reset search value for the current arc.
-    planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
+    await planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
 
@@ -115,7 +115,7 @@ export class Planificator {
     if (this.producer) {
       await this.producer.result.clear();
     }
-    this.setSearch(null);
+    await this.setSearch(null);
   }
 
   private _listenToArcStores() {

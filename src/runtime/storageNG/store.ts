@@ -21,7 +21,7 @@ export type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.Syn
   {type: ProxyMessageType.ModelUpdate, model: T['data'], id: number} |
   {type: ProxyMessageType.Operations, operations: T['operation'][], id: number}; 
 
-export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => boolean;
+export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => Promise<boolean>;
 
 // A representation of a store. Note that initially a constructed store will be
 // inactive - it will not connect to a driver, will not accept connections from 
@@ -134,7 +134,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> { 
     switch (message.type) {
       case ProxyMessageType.SyncRequest:
-        this.callbacks.get(message.id)({type: ProxyMessageType.ModelUpdate, model: this.localModel.getData(), id: message.id});
+        await this.callbacks.get(message.id)({type: ProxyMessageType.ModelUpdate, model: this.localModel.getData(), id: message.id});
         return true;
       case ProxyMessageType.Operations:
         for (const operation of message.operations) {

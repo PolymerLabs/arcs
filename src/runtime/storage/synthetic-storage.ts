@@ -146,14 +146,13 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     super(type, undefined, id, key);
     this.targetStore = targetStore;
     this.storageFactory = storageFactory;
-    let resolveInitialized;
-    this.initialized = new Promise(resolve => resolveInitialized = resolve);
-    const process = async data => {
-      await this.process(data, false);
-      resolveInitialized();
-      targetStore.on('change', details => this.process(details.data, true), this);
-    };
-    targetStore.get().then(data => process(data));
+
+    const me = this;
+    this.initialized = (async () => {
+      const data = await targetStore.get();
+      await me.process(data, false);
+      targetStore.on('change', details => me.process(details.data, true), me);
+    })();
   }
 
   private async process(data, fireEvent) {

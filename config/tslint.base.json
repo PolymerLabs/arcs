@@ -38,6 +38,7 @@
     "no-switch-case-fallthrough": true,
     "no-unsafe-finally": true,
     "no-unused-expression": true,
+    "no-floating-promises": true,
     "no-var-keyword": true,
     "object-literal-shorthand": true,
     "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
