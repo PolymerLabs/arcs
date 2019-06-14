@@ -10,8 +10,9 @@
 import {Manifest} from '../../../runtime/manifest.js';
 import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath, Check} from '../flow-graph.js';
-import {ClaimType} from '../../../runtime/particle-claim.js';
+import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath} from '../flow-graph.js';
+import {ClaimIsTag} from '../../../runtime/particle-claim.js';
+import {Check} from '../../../runtime/particle-check.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -118,12 +119,13 @@ describe('FlowGraph', () => {
     `);
     const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.claims.size, 1);
-    const expectedClaim = {claimType: ClaimType.IsTag, handle: 'foo', tag: 'trusted'};
-    assert.deepNestedInclude(node.claims.get('foo'), expectedClaim);
+    const claim = node.claims.get('foo') as ClaimIsTag;
+    assert.equal(claim.handle.name, 'foo');
+    assert.equal(claim.tag, 'trusted');
     assert.isEmpty(node.checks);
 
     assert.lengthOf(graph.edges, 1);
-    assert.deepNestedInclude(graph.edges[0].claim, expectedClaim);
+    assert.equal(graph.edges[0].claim, claim);
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {
@@ -137,11 +139,11 @@ describe('FlowGraph', () => {
     `);
     const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.checks.size, 1);
-    assert.deepEqual(node.checks.get('foo'), new Check(['trusted']));
+    assert.deepEqual(node.checks.get('foo').acceptedTags, ['trusted']);
     assert.isEmpty(node.claims);
 
     assert.lengthOf(graph.edges, 1);
-    assert.deepEqual(graph.edges[0].check, new Check(['trusted']));
+    assert.deepEqual(graph.edges[0].check.acceptedTags, ['trusted']);
   });
 });
 

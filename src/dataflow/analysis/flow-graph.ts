@@ -12,8 +12,8 @@ import {Particle} from '../../runtime/recipe/particle';
 import {Handle} from '../../runtime/recipe/handle';
 import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
-import {ParticleClaimStatement, ParticleClaimIsTag} from '../../runtime/manifest-ast-nodes';
-import {ClaimType} from '../../runtime/particle-claim';
+import {ClaimType, ClaimIsTag, Claim} from '../../runtime/particle-claim';
+import {Check} from '../../runtime/particle-check';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -212,25 +212,14 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
-/** Represents a check condition on an edge. */
-export class Check {
-  constructor(
-      /** A list of acceptable tags. The check will fail if a different claim is found that doesn't match any tag in this list. */
-      readonly acceptedTags: readonly string[]) {}
-
-  /** Returns true if the given claim satisfies the check condition. */
-  checkAgainstClaim(claim: ParticleClaimIsTag): boolean {
-    for (const tag of this.acceptedTags) {
-      if (tag === claim.tag) {
-        return true;
-      }
+/** Returns true if the given claim satisfies the check condition. */
+function checkAgainstClaim(check: Check, claim: ClaimIsTag): boolean {
+  for (const tag of check.acceptedTags) {
+    if (tag === claim.tag) {
+      return true;
     }
-    return false;
   }
-
-  toString(): string {
-    return this.acceptedTags.join('|');
-  }
+  return false;
 }
 
 export abstract class Node {
@@ -261,7 +250,7 @@ export interface Edge {
   /** The qualified name of the handle this edge represents, e.g. "MyParticle.output1". */
   readonly label: string;
 
-  readonly claim?: ParticleClaimStatement;
+  readonly claim?: Claim;
   readonly check?: Check;
 }
 
@@ -272,17 +261,14 @@ class ParticleNode extends Node {
   readonly name: string;
 
   // Maps from handle names to tags.
-  readonly claims: Map<string, ParticleClaimStatement>;
-  readonly checks: Map<string, Check> = new Map();
+  readonly claims: Map<string, Claim>;
+  readonly checks: Map<string, Check>;
 
   constructor(particle: Particle) {
     super();
     this.name = particle.name;
     this.claims = particle.spec.trustClaims;
-    
-    particle.spec.trustChecks.forEach((tags, handle) => {
-      this.checks.set(handle, new Check(tags));
-    });
+    this.checks = particle.spec.trustChecks;
   }
     
   addInEdge(edge: ParticleInput) {
@@ -307,15 +293,15 @@ class ParticleNode extends Node {
     // First check if this particle makes an explicit claim on this out-edge.
     const claim = this.claims.get(edgeToCheck.handleName);
     if (claim) {
-      switch (claim.claimType) {
+      switch (claim.type) {
         case ClaimType.IsTag: {
           // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise fail.
-          if (check.checkAgainstClaim(claim)) {
+          if (checkAgainstClaim(check, claim)) {
             return {type: CheckResultType.Success};
           } else {
             return {
               type: CheckResultType.Failure,
-              reason: `Check '${check}' failed: found claim '${claim.tag}' on '${edgeToCheck.label}' instead.`,
+              reason: `Check '${check.toShortString()}' failed: found claim '${claim.tag}' on '${edgeToCheck.label}' instead.`,
             };
           }
         }
@@ -323,13 +309,14 @@ class ParticleNode extends Node {
           // The particle's output derives from some of its inputs. Continue searching the graph from those inputs.
           const checkNext: BackwardsPath[] = [];
           for (const handle of claim.parentHandles) {
-            const edge = this.inEdgesByName.get(handle);
+            const edge = this.inEdgesByName.get(handle.name);
             assert(!!edge, `Claim derives from unknown handle: ${handle}.`);
             checkNext.push(path.withNewEdge(edge));
           }
           return {type: CheckResultType.KeepGoing, checkNext};
         }
         default:
+          console.log(claim);
           assert(false, 'Unknown claim type.');
       }
     }
@@ -339,7 +326,7 @@ class ParticleNode extends Node {
       const checkNext = this.inEdges.map(e => path.withNewEdge(e));
       return {type: CheckResultType.KeepGoing, checkNext};
     } else {
-      return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found untagged node.`};
+      return {type: CheckResultType.Failure, reason: `Check '${check.toShortString()}' failed: found untagged node.`};
     }
   }
 }
@@ -369,7 +356,7 @@ class ParticleOutput implements Edge {
   readonly handleName: string;
 
   /* Optional claim on this output. */
-  readonly claim?: ParticleClaimStatement;
+  readonly claim?: Claim;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, outputName: string) {
     this.start = particleNode;
@@ -415,7 +402,7 @@ class HandleNode extends Node {
       const checkNext = this.inEdges.map(e => path.withNewEdge(e));
       return {type: CheckResultType.KeepGoing, checkNext};
     } else {
-      return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found untagged node.`};
+      return {type: CheckResultType.Failure, reason: `Check '${check.toShortString()}' failed: found untagged node.`};
     }
   }
 }
