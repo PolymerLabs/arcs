@@ -23,7 +23,7 @@ import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
-import {ignorePromiseHack} from './util.js';
+import {floatingPromiseToAudit} from './util.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -88,12 +88,12 @@ export class ParticleExecutionHost {
 
       onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
         // TODO: Awaiting this promise causes tests to fail...
-        ignorePromiseHack((handle as SingletonStorageProvider).set(data, particleId, barrier));
+        floatingPromiseToAudit((handle as SingletonStorageProvider).set(data, particleId, barrier));
       }
 
       onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
         // TODO: Awaiting this promise causes tests to fail...
-        ignorePromiseHack((handle as SingletonStorageProvider).clear(particleId, barrier));
+        floatingPromiseToAudit((handle as SingletonStorageProvider).clear(particleId, barrier));
       }
 
       async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
@@ -234,7 +234,7 @@ export class ParticleExecutionHost {
                   }
                 });
                 // TODO: Awaiting this promise causes tests to fail...
-                ignorePromiseHack(arc.instantiate(recipe0));
+                floatingPromiseToAudit(arc.instantiate(recipe0));
               } else {
                 error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;
               }

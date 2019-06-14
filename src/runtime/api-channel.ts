@@ -23,7 +23,7 @@ import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Literal, Literalizable} from './hot.js';
-import {ignorePromiseHack} from './util.js';
+import {floatingPromiseToAudit} from './util.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -160,7 +160,7 @@ class ThingMapper {
     }
     assert(!this._idMap.has(id), `${requestedId ? 'requestedId' : (thing.apiChannelMappingId ? 'apiChannelMappingId' : 'newIdentifier()')} ${id} already in use`);
     // TODO: Awaiting this promise causes tests to fail...
-    ignorePromiseHack(this.establishThingMapping(id, thing));
+    floatingPromiseToAudit(this.establishThingMapping(id, thing));
     return id;
   }
 
