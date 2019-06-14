@@ -99,7 +99,7 @@ export class SuggestionComposer {
         }
         this._suggestConsumers.splice(index, 1);
 
-        suggestion.instantiate(this.arc);
+        suggestion.instantiate(this.arc).catch(e => console.error(e));
       }
     });
     context.addSlotConsumer(suggestConsumer);

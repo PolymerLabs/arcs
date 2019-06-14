@@ -685,7 +685,7 @@ function watch(args: string[]): boolean {
 
 function health(args: string[]): boolean {
   const options = minimist(args, {
-    boolean: ['migration', 'types', 'tests', 'nullChecks', 'floatingPromises'],
+    boolean: ['migration', 'types', 'tests', 'nullChecks'],
   });
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
@@ -716,12 +716,6 @@ function health(args: string[]): boolean {
     return tslintOutput.split('\n').filter(line => line.match(lineMatch));
   }
 
-  function runNoFloatingPromisesCheck() {
-    return runTsLintWithModifiedConfig(
-        config => config.rules['no-floating-promises'] = true,
-        'Promises must be handled appropriately');
-  }
-
   const migrationFiles = () => [...findProjectFiles(
       'src', null, fullPath => fullPath.endsWith('.js')
           && !fullPath.includes('/artifacts/')
@@ -745,11 +739,6 @@ function health(args: string[]): boolean {
   if (options.tests) {
     runSteps('test', ['--coverage']);
     return saneSpawn('node_modules/.bin/c8', ['report'], {stdio: 'inherit'});
-  }
-
-  if (options.floatingPromises) {
-    console.log(runNoFloatingPromisesCheck().join('\n'));
-    return true;
   }
 
   // Generating coverage report from tests.
@@ -789,14 +778,10 @@ function health(args: string[]): boolean {
   const nullChecksPoints = (nullChecksErrors / 10);
   show('Null Errors', nullChecksErrors, nullChecksPoints.toFixed(1), 'health --nullChecks');
 
-  const floatingPromisesCount = runNoFloatingPromisesCheck().length;
-  const floatingPromisesPoints = floatingPromisesCount / 10;
-  show('Floating Promises', floatingPromisesCount, floatingPromisesPoints, 'health --floatingPromises');
-
   line();
 
   // For go/arcs-paydown, team tech-debt paydown exercise.
-  const points = jsLocPoints + testCovPoints + typeCovPoints + nullChecksPoints + floatingPromisesPoints;
+  const points = jsLocPoints + testCovPoints + typeCovPoints + nullChecksPoints;
   show('Points available', '', points.toFixed(1), 'go/arcs-paydown');
 
   line();

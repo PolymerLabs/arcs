@@ -66,3 +66,11 @@ export function setDiffCustom<T, U>(from: T[], to: T[], keyFn: (T) => U): {add: 
   }
   return result;
 }
+
+/**
+ * A hack to ignore a floating promise and bypass the linter. Promises should *not* be ignored. They should always be awaited or returned. See
+ * https://tsetse.info/must-use-promises.html for details.
+ *
+ * TODO: Remove all usages of this function and then delete it.
+ */
+export function ignorePromiseHack<T>(promise: Promise<T>) {}
