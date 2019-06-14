@@ -1,0 +1,2 @@
+schema Thing
+  Text name

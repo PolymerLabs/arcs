@@ -88,6 +88,14 @@ describe('Bundle Tool', () => {
           done();
         });
   });
+  it('fails for a top-level __bundle_entry.manifest file', done => {
+    bundle(['src/tools/tests/test-data/invalid/__bundle_entry.manifest'], 'test-output/bundle/nope.zip', false)
+        .then(_ => assert.fail('should have failed'))
+        .catch(e => {
+          assert.include(e.message, `Top-level '__bundle_entry.manifest' file found`);
+          done();
+        });
+  });
   it('bundles Products demo', async () => {
     await bundle(['src/runtime/test/artifacts/Products/Products.recipes'], 'test-output/bundle/products.zip', false);
     const data = fs.readFileSync('test-output/bundle/products.zip');
@@ -122,7 +130,7 @@ describe('Bundle Tool', () => {
       'Products/source/Recommend.js',
       'Products/source/ShowProduct.js',
       'Things/Thing.schema',
-      'bundle-manifest.mf'
+      '__bundle_entry.manifest'
     ]);
 
     // Sanity check.
@@ -132,7 +140,7 @@ describe('Bundle Tool', () => {
     );
 
     assert.equal(
-        await zip.file('bundle-manifest.mf').async('text'),
-        'entry-point: Products/Products.recipes\n');
+        await zip.file('__bundle_entry.manifest').async('text'),
+        `import 'Products/Products.recipes'\n`);
   });
 });
