@@ -55,7 +55,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType(), this.storageKey);
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
-      this.pendingBackingStore.then(backingStore => (this.backingStore = backingStore));
+      await this.pendingBackingStore.then(backingStore => (this.backingStore = backingStore));
     }
     return this.pendingBackingStore;
   }

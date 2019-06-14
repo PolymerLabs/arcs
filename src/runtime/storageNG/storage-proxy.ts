@@ -69,7 +69,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
             // If we cannot cleanly apply ops, sync the whole model.
             this.synchronizeModel();
             // TODO do we need to notify that we are desynced? and return?
-          }          
+          }
         }
         this.notifyUpdate(message.operations);
         break;

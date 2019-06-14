@@ -156,14 +156,14 @@ export class DomParticleBase extends Particle {
     }
   }
 
-  setParticleDescription(pattern: string | {template, model: {}}): boolean | undefined {
+  async setParticleDescription(pattern: string | {template, model: {}}): Promise<boolean | undefined> {
     if (typeof pattern === 'string') {
       return super.setParticleDescription(pattern);
     }
 
     if (pattern.template && pattern.model) {
-      super.setDescriptionPattern('_template_', pattern.template);
-      super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
+      await super.setDescriptionPattern('_template_', pattern.template);
+      await super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
       return undefined;
     } else {
       throw new Error('Description pattern must either be string or have template and model');
@@ -176,7 +176,7 @@ export class DomParticleBase extends Particle {
   async clearHandle(handleName: string): Promise<void> {
     const handle = this.handles.get(handleName);
     if (handle instanceof Singleton || handle instanceof Collection) {
-      handle.clear();
+      await handle.clear();
     } else {
       throw new Error('Singleton/Collection required');
     }
@@ -193,7 +193,7 @@ export class DomParticleBase extends Particle {
       handleEntities.forEach(entity => idMap[entity.id] = entity);
       for (const entity of entities) {
         if (!idMap[entity.id]) {
-          handle.store(entity);
+          await handle.store(entity);
         }
       }
     } else {
@@ -208,7 +208,7 @@ export class DomParticleBase extends Particle {
     const handle = this.handles.get(handleName);
     if (handle) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
-        Promise.all(entities.map(entity => handle.store(entity)));
+        await Promise.all(entities.map(entity => handle.store(entity)));
       } else {
         throw new Error('Collection required');
       }
@@ -223,7 +223,7 @@ export class DomParticleBase extends Particle {
     if (handle && handle.entityClass) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
         const entityClass = handle.entityClass;
-        Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
+        await Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
       } else {
         throw new Error('Collection required');
       }
@@ -234,13 +234,13 @@ export class DomParticleBase extends Particle {
    * Modify value of named handle. A new entity is created
    * from `rawData` (`new [EntityClass](rawData)`).
    */
-  updateSingleton(handleName: string, rawData) {
+  async updateSingleton(handleName: string, rawData) {
     const handle = this.handles.get(handleName);
     if (handle && handle.entityClass) {
       if (handle instanceof Singleton) {
         const entityClass = handle.entityClass;
         const entity = new entityClass(rawData);
-        handle.set(entity);
+        await handle.set(entity);
         return entity;
       } else {
         throw new Error('Singleton required');

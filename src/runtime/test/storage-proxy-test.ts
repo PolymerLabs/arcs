@@ -581,13 +581,13 @@ describe('storage-proxy', () => {
     await engine.verify();
 
     // All write calls go through to the backing store.
-    fooHandle.set(engine.newEntity('abc'));
-    fooHandle.clear();
+    await fooHandle.set(engine.newEntity('abc'));
+    await fooHandle.clear();
     await engine.verify('HandleSet:foo:abc', 'HandleClear:foo');
 
     const entity = engine.newEntity('def');
-    barHandle.store(entity);
-    barHandle.remove(entity);
+    await barHandle.store(entity);
+    await barHandle.remove(entity);
     await engine.verify('HandleStore:bar:def', 'HandleRemove:bar:' + entity.id);
   });
 
@@ -610,8 +610,8 @@ describe('storage-proxy', () => {
                         'onHandleSync:P1:foo:(null)', 'onHandleSync:P1:bar:[]');
 
     // Reading should return the local copy and not call the backing store.
-    fooHandle.get();
-    barHandle.toList();
+    await fooHandle.get();
+    await barHandle.toList();
     await engine.verify(); // no HandleGet or HandleToList
   });
 
@@ -702,17 +702,17 @@ describe('storage-proxy', () => {
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:start');
   
     // Reading the inner-pec handle should return the local copy and not call the backing store.
-    fooHandle.get();
+    await fooHandle.get();
     await engine.verify();
   
     // Write to handle modifies the model directly, dispatches update and store write.
     const changed = engine.newEntity('changed');
-    fooHandle.set(changed);
+    await fooHandle.set(changed);
     await engine.verifySubsequence('onHandleUpdate:P1:foo:changed:(was:start)');
     await engine.verify('HandleSet:foo:changed');
 
     // Read the handle again; the read should still be able to complete locally.
-    fooHandle.get();
+    await fooHandle.get();
     await engine.verify();
 
     // Update the backing store with a concurrent write. This should not surface 
@@ -845,14 +845,14 @@ describe('storage-proxy', () => {
                         'onHandleSync:P1:bar:[]', 'onHandleSync:P2:bar:[]');
 
     const v1 = engine.newEntity('v1');
-    barHandle1.store(v1);
+    await barHandle1.store(v1);
 
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v1](originator)');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v1]');
     await engine.verify('HandleStore:bar:v1');
 
     const v2 = engine.newEntity('v2');
-    barHandle2.store(v2);
+    await barHandle2.store(v2);
 
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v2]');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v2](originator)');

@@ -178,7 +178,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
       const diff = setDiffCustom(oldModel, this.model, JSON.stringify);
       const add = diff.add.map(arcHandle => ({value: arcHandle}));
       const remove = diff.remove.map(arcHandle => ({value: arcHandle}));
-      this._fire('change', new ChangeEvent({add, remove}));
+      await this._fire('change', new ChangeEvent({add, remove}));
     }
   }
 

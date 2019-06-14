@@ -69,7 +69,7 @@ export class Particle {
   }
 
   async callSetHandles(handles: ReadonlyMap<string, Handle>, onException: Consumer<Error>) {
-    this.invokeSafely(async p => p.setHandles(handles), onException);
+    await this.invokeSafely(async p => p.setHandles(handles), onException);
   }
 
   /**
@@ -84,7 +84,7 @@ export class Particle {
   }
 
   async callOnHandleSync(handle: Handle, model, onException: Consumer<Error>) {
-    this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
+    await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
   }
 
   /**
@@ -101,7 +101,7 @@ export class Particle {
 
   // tslint:disable-next-line: no-any
   async callOnHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}, onException: Consumer<Error>) {
-    this.invokeSafely(async p => p.onHandleUpdate(handle, update), onException);
+    await this.invokeSafely(async p => p.onHandleUpdate(handle, update), onException);
   }
 
   /**
@@ -122,7 +122,7 @@ export class Particle {
   }
 
   async callOnHandleDesync(handle: Handle, onException: Consumer<Error>) {
-    this.invokeSafely(async p => p.onHandleDesync(handle), onException);
+    await this.invokeSafely(async p => p.onHandleDesync(handle), onException);
   }
 
   /**
@@ -232,16 +232,16 @@ export class Particle {
     return output.join('');
   }
 
-  setParticleDescription(pattern): boolean {
+  async setParticleDescription(pattern): Promise<boolean> {
     return this.setDescriptionPattern('pattern', pattern);
   }
 
-  setDescriptionPattern(connectionName: string, pattern): boolean {
+  async setDescriptionPattern(connectionName: string, pattern): Promise<boolean> {
     const descriptions = this.handles.get('descriptions');
     if (descriptions) {
       const entityClass = descriptions.entityClass;
       if (descriptions instanceof Collection || descriptions instanceof BigCollection) {
-        descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
+        await descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       }
       return true;
     }

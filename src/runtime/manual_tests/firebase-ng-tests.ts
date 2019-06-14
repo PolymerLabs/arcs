@@ -22,10 +22,11 @@ async function resetStorageKeyForTesting(key: FirebaseStorageKey) {
 
   const reference = firebase.database(app).ref(key.location);
   await new Promise(resolve => {
+    // tslint:disable-next-line: no-floating-promises
     reference.remove(resolve);
   });
 
-  app.delete();
+  await app.delete();
 }
 
 describe('firebase-ng-driver', function() {
@@ -42,13 +43,11 @@ describe('firebase-ng-driver', function() {
     const output = new FirebaseDriver<number>(storageKey, Exists.ShouldExist);
     await output.init();
 
-
     return new Promise((resolve, reject) => {
       output.registerReceiver((model: number, version: number) => {
         assert.equal(model, 24);
         assert.equal(version, 1);
-        FirebaseAppCache.stop();
-        resolve();
+        FirebaseAppCache.stop().then(() => resolve).catch(reject);
       });
     });
   });
@@ -73,6 +72,6 @@ describe('firebase-ng-driver', function() {
     const result = await Promise.all([driver1.send(13, 1), driver2.send(18, 1), receivedData]);
     assert.isTrue(result[0]);
     assert.isFalse(result[1]);
-    FirebaseAppCache.stop(); 
+    await FirebaseAppCache.stop();
   });
  });
