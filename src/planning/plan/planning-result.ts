@@ -25,10 +25,15 @@ export type PlanningResultOptions = {
   contextual?: boolean;
 };
 
+export type SerializableGeneration = {
+  population: {}[];
+  record: {};
+};
+
 export class PlanningResult {
   suggestions: Suggestion[] = [];
   lastUpdated: Date = new Date();
-  generations: {population: {}[], record: {}}[] = [];
+  generations: SerializableGeneration[] = [];
   contextual = true;
   store?: SingletonStorageProvider;
   private storeCallback: ({}) => void;
@@ -85,7 +90,7 @@ export class PlanningResult {
     this.store.dispose();
   }
   
-  static formatSerializableGenerations(generations) {
+  static formatSerializableGenerations(generations): SerializableGeneration[] {
     // Make a copy of everything and assign IDs to recipes.
     const idMap = new Map(); // Recipe -> ID
     let lastID = 0;

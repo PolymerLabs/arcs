@@ -12,18 +12,15 @@ import {assert} from '../../platform/assert-web.js';
 import {now} from '../../platform/date-web.js';
 import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {ArcDevtoolsChannel} from '../../devtools-connector/abstract-devtools-channel.js';
-import {DevtoolsConnection} from '../../devtools-connector/devtools-connection.js';
 import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
-import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
-import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
-import {Planner} from '../planner.js';
+import {Planner, Generation} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
 import {InitSearch} from '../strategies/init-search.js';
 import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
+import {PlannerInspector} from '../planner-inspector.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -48,9 +45,9 @@ export class PlanProducer {
   searchStore?: SingletonStorageProvider;
   searchStoreCallback: ({}) => void;
   debug: boolean;
-  devtoolsChannel?: ArcDevtoolsChannel;
+  inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: SingletonStorageProvider, {debug = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore?: SingletonStorageProvider, inspector?: PlannerInspector, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
     assert(arc, 'arc cannot be null');
     this.arc = arc;
@@ -58,14 +55,12 @@ export class PlanProducer {
     this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator();
     this.searchStore = searchStore;
+    this.inspector = inspector;
     if (this.searchStore) {
       this.searchStoreCallback = () => this.onSearchChanged();
       this.searchStore.on('change', this.searchStoreCallback, this);
     }
     this.debug = debug;
-    if (DevtoolsConnection.isConnected) {
-      this.devtoolsChannel = DevtoolsConnection.get().forArc(this.arc);
-    }
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -147,7 +142,7 @@ export class PlanProducer {
     const time = now();
 
     let suggestions: Suggestion[] = [];
-    let generations = [];
+    let generations: Generation[] = [];
     while (this.needReplan) {
       this.needReplan = false;
       generations = [];
@@ -166,22 +161,22 @@ export class PlanProducer {
           contextual: this.replanOptions['contextual']}, this.arc)) {
         // Store suggestions to store.
         await this.result.flush();
-        PlanningExplorerAdapter.updatePlanningResults(this.result, options['metadata'], this.devtoolsChannel);
+        
+        if (this.inspector) this.inspector.updatePlanningResults(this.result, options['metadata']);
       } else {
         // Add skipped result to devtools.
-        PlanningExplorerAdapter.updatePlanningAttempt(suggestions, options['metadata'], this.devtoolsChannel);
-        if (this.debug) {
-          StrategyExplorerAdapter.processGenerations(
-              serializedGenerations, this.devtoolsChannel, {label: 'Plan Producer', keep: true});
+        if (this.inspector) {
+          this.inspector.updatePlanningAttempt(suggestions, options['metadata']);
+          if (this.debug) this.inspector.strategizingRecord(serializedGenerations, {label: 'Plan Producer', keep: true});
         }
       }
     } else {  // Suggestions are null, if planning was cancelled.
       // Add cancelled attempt to devtools.
-      PlanningExplorerAdapter.updatePlanningAttempt(null, options['metadata'], this.devtoolsChannel);
+      if (this.inspector) this.inspector.updatePlanningAttempt(null, options['metadata']);
     }
   }
 
-  async runPlanner(options, generations): Promise<Suggestion[]> {
+  async runPlanner(options, generations: Generation[]): Promise<Suggestion[]> {
     let suggestions: Suggestion[] = [];
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
@@ -193,7 +188,6 @@ export class PlanProducer {
         recipeIndex: this.recipeIndex
       },
       speculator: this.speculator,
-      blockDevtools: true // Devtools communication is handled by PlanConsumer in Producer+Consumer setup.
     });
 
     suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations);

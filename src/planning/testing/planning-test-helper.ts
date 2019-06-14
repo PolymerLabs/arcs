@@ -13,13 +13,10 @@ import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../../runtime/arc.js';
-import {HeadlessSlotDomConsumer} from '../../runtime/headless-slot-dom-consumer.js';
-import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {InterfaceType} from '../../runtime/type.js';
 import {TestHelperOptions, TestHelper} from '../../runtime/testing/test-helper.js';
+import {devtoolsPlannerInspectorFactory} from '../../devtools-connector/devtools-planner-inspector.js';
 
 type TestHelperPlanOptions = TestHelperOptions & {
   expectedNumPlans?: number;
@@ -71,7 +68,11 @@ export class PlanningTestHelper extends TestHelper {
    */
   async makePlans(options?: TestHelperPlanOptions): Promise<PlanningTestHelper> {
     const planner = new Planner();
-    planner.init(this.arc, {strategyArgs: {recipeIndex: this.recipeIndex}, speculator: new Speculator()});
+    planner.init(this.arc, {
+      strategyArgs: {recipeIndex: this.recipeIndex},
+      speculator: new Speculator(),
+      inspectorFactory: devtoolsPlannerInspectorFactory
+    });
     this.suggestions = await planner.suggest();
     if (options && options.includeInnerArcs) {
       for (const innerArc of this.arc.innerArcs) {

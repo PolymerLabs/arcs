@@ -12,11 +12,9 @@ import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {Arc} from '../runtime/arc.js';
-import {DevtoolsConnection} from '../devtools-connector/devtools-connection.js';
 import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
 import {Tracing} from '../tracelib/trace.js';
 
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Suggestion} from './plan/suggestion.js';
 import {Speculator} from './speculator.js';
@@ -40,12 +38,13 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
-import {Strategizer, StrategyDerived, GenerationRecord} from './strategizer.js';
+import {Strategizer, StrategyDerived, GenerationRecord, Ruleset} from './strategizer.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Description} from '../runtime/description.js';
-import {Relevance} from '../runtime/relevance.js';
 import {Runtime} from '../runtime/runtime.js';
+import {Relevance} from '../runtime/relevance.js';
+import {PlannerInspector, PlannerInspectorFactory, InspectablePlanner} from './planner-inspector.js';
 
 interface AnnotatedDescendant extends Descendant<Recipe> {
   active?: boolean;
@@ -53,28 +52,38 @@ interface AnnotatedDescendant extends Descendant<Recipe> {
   description?: string;
 }
 
-interface Generation {
+export interface Generation {
   generated: AnnotatedDescendant[];
   record: GenerationRecord;
 }
 
 const suggestionByHash = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
 
-export class Planner {
-  private _arc: Arc;
+export interface PlannerInitOptions {
+  strategies?: StrategyDerived[];
+  ruleset?: Ruleset;
+  strategyArgs?: {};
+  speculator?: Speculator;
+  inspectorFactory?: PlannerInspectorFactory;
+}
+
+export class Planner implements InspectablePlanner {
+  public arc: Arc;
   // public for debug tools
   strategizer: Strategizer;
   speculator: Speculator|null;
-  blockDevtools: boolean;
+  inspector?: PlannerInspector;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = null, blockDevtools = false} = {}) {
+  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = null, inspectorFactory = null}: PlannerInitOptions) {
     strategyArgs = Object.freeze({...strategyArgs});
-    this._arc = arc;
+    this.arc = arc;
     const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
     this.strategizer = new Strategizer(strategyImpls, [], ruleset);
-    this.blockDevtools = blockDevtools;
     this.speculator = speculator;
+    if (inspectorFactory) {
+      this.inspector = inspectorFactory.create(this);
+    }
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -107,10 +116,10 @@ export class Planner {
     } while (this.strategizer.generated.length + this.strategizer.terminal.length > 0);
     trace.end();
 
-    if (generations.length && !this.blockDevtools && DevtoolsConnection.isConnected) {
-      StrategyExplorerAdapter.processGenerations(
-        PlanningResult.formatSerializableGenerations(generations),
-        DevtoolsConnection.get().forArc(this._arc), {label: 'Planner', keep: true});
+    if (generations.length && this.inspector) {
+      this.inspector.strategizingRecord(
+          PlanningResult.formatSerializableGenerations(generations),
+          {label: 'Planner', keep: true});
     }
     return allResolved;
   }
@@ -168,7 +177,7 @@ export class Planner {
       for (const plan of group) {
         const hash = ((hash) => hash.substring(hash.length - 4))(await plan.digest());
 
-        if (RecipeUtil.matchesRecipe(this._arc.activeRecipe, plan)) {
+        if (RecipeUtil.matchesRecipe(this.arc.activeRecipe, plan)) {
           this._updateGeneration(generations, hash, (g) => g.active = true);
           continue;
         }
@@ -180,7 +189,7 @@ export class Planner {
           args: {groupIndex}
         });
 
-        const suggestion = await this.retriveOrCreateSuggestion(hash, plan, this._arc);
+        const suggestion = await this.retriveOrCreateSuggestion(hash, plan, this.arc);
         if (!suggestion) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', args: {hash, groupIndex}});
@@ -211,7 +220,7 @@ export class Planner {
     let relevance: Relevance|null = null;
     let description: Description|null = null;
     if (this.speculator) {
-      const result = await this.speculator.speculate(this._arc, plan, hash);
+      const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
       }
@@ -224,8 +233,8 @@ export class Planner {
     const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(
         description,
-        this._arc.modality,
-        this._arc.pec.slotComposer ? this._arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
+        this.arc.modality,
+        this.arc.pec.slotComposer ? this.arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
     suggestionByHash().set(hash, suggestion);
     return suggestion;
   }

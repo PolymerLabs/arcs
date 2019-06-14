@@ -12,6 +12,7 @@ import {Type} from '../../../build/runtime/type.js';
 import {Planificator} from '../../../build/planning/plan/planificator.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {Schemas} from '../schemas.js';
+import {devtoolsPlannerInspectorFactory} from '../../../build/devtools-connector/devtools-planner-inspector.js';
 
 export const conformType = type => {
   return (type || 'com.music.spotify').replace(/\./g, '_');
@@ -38,7 +39,8 @@ export const createPlanificator = async arc => {
     userid: 'user',
     storageKeyBase: 'volatile',
     onlyConsumer: false,
-    debug: true
+    debug: true,
+    inspectorFactory: devtoolsPlannerInspectorFactory
   };
   const planificator = await Planificator.create(arc, options);
   //

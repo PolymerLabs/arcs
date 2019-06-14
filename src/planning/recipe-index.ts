@@ -11,7 +11,6 @@
 import {Strategizer, Strategy} from '../planning/strategizer.js';
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
-import {DevtoolsConnection} from '../devtools-connector/devtools-connection.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/particle-spec.js';
@@ -20,15 +19,12 @@ import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
-import {SlotConnection} from '../runtime/recipe/slot-connection.js';
 import {SlotUtils} from '../runtime/recipe/slot-utils.js';
 import {Slot} from '../runtime/recipe/slot.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
 
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
-import {PlanningResult} from './plan/planning-result.js';
 import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
@@ -36,7 +32,7 @@ import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
-import {Id, ArcId, IdGenerator} from '../runtime/id.js';
+import {IdGenerator} from '../runtime/id.js';
 
 type ConsumeSlotConnectionMatch = {
   recipeParticle: Particle,
@@ -96,7 +92,7 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
-  constructor(arc: Arc, {reportGenerations = false} = {}) {
+  constructor(arc: Arc) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const idGenerator = IdGenerator.newSession();
     const arcStub = new Arc({
@@ -125,12 +121,6 @@ export class RecipeIndex {
         generations.push({record, generated: strategizer.generated});
       } while (strategizer.generated.length + strategizer.terminal.length > 0);
 
-      if (reportGenerations && DevtoolsConnection.isConnected) {
-        StrategyExplorerAdapter.processGenerations(
-            PlanningResult.formatSerializableGenerations(generations),
-            DevtoolsConnection.get().forArc(arc), {label: 'Index', keep: true});
-      }
-
       const population = strategizer.population;
       const candidates = new Set(population);
       for (const result of population) {
@@ -144,8 +134,8 @@ export class RecipeIndex {
     }));
   }
 
-  static create(arc: Arc, options = {}): RecipeIndex {
-    return new RecipeIndex(arc, options);
+  static create(arc: Arc): RecipeIndex {
+    return new RecipeIndex(arc);
   }
 
   get recipes(): Recipe[] {

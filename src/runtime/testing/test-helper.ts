@@ -15,7 +15,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {Id} from '../id.js';
-import {devtoolsInspectorFactory} from '../../devtools-connector/devtools-inspector.js';
+import {devtoolsArcInspectorFactory} from '../../devtools-connector/devtools-arc-inspector.js';
 
 export type TestHelperOptions = {
   slotComposerStrict?: boolean,
@@ -58,7 +58,7 @@ export class TestHelper {
       loader: helper.loader,
       context: options.context,
       storageKey: options.storageKey,
-      inspectorFactory: devtoolsInspectorFactory
+      inspectorFactory: devtoolsArcInspectorFactory
     });
     helper.slotComposer.pec = helper.arc.pec;
     helper.logging = options.logging;
