@@ -1,6 +1,7 @@
 package arcs.webimpl;
 
 import arcs.api.PortableJson;
+import java.util.function.Consumer;
 import jsinterop.base.Any;
 
 public class PortableJsonJsImpl implements PortableJson {
@@ -64,6 +65,11 @@ public class PortableJsonJsImpl implements PortableJson {
     @Override
     public PortableJson getObject(String key) {
         return new PortableJsonJsImpl(jsonObj.asPropertyMap().getAsAny(key));
+    }
+
+    @Override
+    public void forEach(Consumer<String> callback) {
+        jsonObj.asPropertyMap().forEach(str -> callback.accept(str));
     }
 
     @Override

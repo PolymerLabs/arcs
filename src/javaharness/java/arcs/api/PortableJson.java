@@ -1,5 +1,7 @@
 package arcs.api;
 
+import java.util.function.Consumer;
+
 /**
  * Portable representation of JSON structure.
  */
@@ -18,6 +20,9 @@ public interface PortableJson {
     double getNumber(String key);
     boolean getBool(String key);
     PortableJson getObject(String key);
+
+    // Iterator methods.
+    void forEach(Consumer<String> callback);
 
     // Object setters
     PortableJson put(String key, int num);
