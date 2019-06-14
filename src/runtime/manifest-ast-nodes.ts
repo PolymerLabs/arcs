@@ -174,11 +174,26 @@ export interface Particle extends BaseNode {
   slotConnections?: RecipeParticleSlotConnection[];
 }
 
-export interface ParticleTrustClaim extends BaseNode {
-  kind: 'particle-trust-claim';
-  handle: string;
-  trustTag: string;
+export enum ParticleTrustClaimType {
+  Tag = 'is',
+  DerivesFrom = 'derives from',
 }
+
+export interface ParticleTrustClaimTag {
+  claimType: ParticleTrustClaimType.Tag;
+  handle: string;
+  tag: string;
+}
+
+export interface ParticleTrustClaimDerivesFrom {
+  claimType: ParticleTrustClaimType.DerivesFrom;
+  handle: string;
+  parentHandles: string[];
+}
+
+export type ParticleTrustClaim = ParticleTrustClaimTag | ParticleTrustClaimDerivesFrom;
+
+export type ParticleTrustClaimNode = ParticleTrustClaim & BaseNode & {kind: 'particle-trust-claim'};
 
 export interface ParticleTrustCheck extends BaseNode {
   kind: 'particle-trust-check';

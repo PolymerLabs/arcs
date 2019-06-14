@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Modality} from './modality.js';
-import {Direction} from './manifest-ast-nodes.js';
+import {Direction, ParticleTrustClaim, ParticleTrustCheck, ParticleTrustClaimType} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
@@ -124,16 +124,6 @@ export class ConsumeSlotConnectionSpec {
 
 export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {}
 
-export interface SerializedParticleTrustClaimSpec extends Literal {
-  handle: string;
-  trustTag: string;
-}
-
-export interface SerializedParticleTrustCheckSpec extends Literal {
-  handle: string;
-  trustTags: string[];
-}
-
 export interface SerializedParticleSpec extends Literal {
   name: string;
   id?: string;
@@ -144,8 +134,8 @@ export interface SerializedParticleSpec extends Literal {
   implBlobUrl: string | null;
   modality: string[];
   slotConnections: SerializedSlotConnectionSpec[];
-  trustClaims?: SerializedParticleTrustClaimSpec[];
-  trustChecks?: SerializedParticleTrustCheckSpec[];
+  trustClaims?: ParticleTrustClaim[];
+  trustChecks?: ParticleTrustCheck[];
 }
 
 export class ParticleSpec {
@@ -160,7 +150,7 @@ export class ParticleSpec {
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
 
   // Trust claims/checks: maps from handle name to a "trust tag".
-  trustClaims: Map<string, string>;
+  trustClaims: Map<string, ParticleTrustClaim>;
   trustChecks: Map<string, string[]>;
 
   constructor(model: SerializedParticleSpec) {
@@ -367,23 +357,25 @@ export class ParticleSpec {
     return this.toString();
   }
 
-  private validateTrustClaims(claims: SerializedParticleTrustClaimSpec[]): Map<string, string> {
-    const results: Map<string, string> = new Map();
+  private validateTrustClaims(claims: ParticleTrustClaim[]): Map<string, ParticleTrustClaim> {
+    const results: Map<string, ParticleTrustClaim> = new Map();
     if (claims) {
       claims.forEach(claim => {
+        assert(!results.has(claim.handle), `Can't make multiple claims on the same output (${claim.handle}).`);
         assert(this.handleConnectionMap.has(claim.handle), `Can't make a claim on unknown handle ${claim.handle}.`);
         const handle = this.handleConnectionMap.get(claim.handle);
         assert(handle.isOutput, `Can't make a claim on handle ${claim.handle} (not an output handle).`);
-        results.set(claim.handle, claim.trustTag);
+        results.set(claim.handle, claim);
       });
     }
     return results;
   }
 
-  private validateTrustChecks(checks?: SerializedParticleTrustCheckSpec[]): Map<string, string[]> {
+  private validateTrustChecks(checks?: ParticleTrustCheck[]): Map<string, string[]> {
     const results: Map<string, string[]> = new Map();
     if (checks) {
       checks.forEach(check => {
+        assert(!results.has(check.handle), `Can't make multiple checks on the same input (${check.handle}).`);
         assert(this.handleConnectionMap.has(check.handle), `Can't make a check on unknown handle ${check.handle}.`);
         const handle = this.handleConnectionMap.get(check.handle);
         assert(handle.isInput, `Can't make a check on handle ${check.handle} (not an input handle).`);
