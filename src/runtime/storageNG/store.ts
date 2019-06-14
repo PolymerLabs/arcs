@@ -59,6 +59,11 @@ export class Store<T extends CRDTTypeRecord> {
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
 export abstract class ActiveStore<T extends CRDTTypeRecord> extends Store<T> {
+  
+  async awaitFlushed() {
+    return Promise.resolve();
+  }
+
   abstract on(callback: ProxyCallback<T>): number;
   abstract off(callback: number): void;
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
@@ -71,12 +76,41 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   inSync = true;
   private nextCallbackID = 1;
   private version = 0;
+  private pendingException: Error | null = null;
+  private sendsInFlight = 0;
+  private pendingResolves: Function[] = [];
+  private pendingRejects: Function[] = [];
+  private pendingSends = [];
+
 
   /* 
    * This class should only ever be constructed via the static construct method
    */
   private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     super(storageKey, exists, type, mode, modelConstructor);
+  }
+
+  async awaitFlushed() {
+    console.log('awaitFlushed!!!', this.exists ? 'L' : 'R', this.pendingException, this.sendsInFlight, this.inSync);
+    if (this.pendingException) {
+      return Promise.reject(this.pendingException);
+    }
+    if (this.sendsInFlight === 0 && this.inSync) {
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve, reject) => {
+      this.pendingResolves.push(resolve);
+      this.pendingRejects.push(reject);
+    });
+  }
+
+  private notifyIdle() {
+    if (this.pendingException) {
+      this.pendingRejects.forEach(reject => reject(this.pendingException));
+    } else {
+      this.pendingResolves.forEach(resolve => resolve());
+      this.pendingResolves = [];
+    }
   }
 
   static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
@@ -91,11 +125,17 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
   // The driver will invoke this method when it has an updated remote model
   async onReceive(model: T['data'], version: number): Promise<void> {
-    const {modelChange, otherChange} = this.localModel.merge(model);
-    await this.processModelChange(modelChange, otherChange, version, true);
+    try {
+      const {modelChange, otherChange} = this.localModel.merge(model);
+      await this.processModelChange(modelChange, otherChange, version, true);
+    } catch (e) {
+      this.pendingException = e;
+      this.notifyIdle();
+    }
   }
   
   private async processModelChange(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number, messageFromDriver: boolean) {
+    console.log('processModelChange', this.exists ? 'L' : 'R', thisChange, otherChange, 'derived from:', version, messageFromDriver ? 'from driver' : 'from proxy');
     if (thisChange.changeType === ChangeType.Operations && thisChange.operations.length > 0) {
       this.callbacks.forEach((cb, id) => cb({type: ProxyMessageType.Operations, operations: thisChange.operations, id}));
     } else if (thisChange.changeType === ChangeType.Model) {
@@ -103,14 +143,49 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     }
        
     // Don't send to the driver if we're already in sync and there are no driver-side changes.
-    if (this.inSync && this.noDriverSideChanges(thisChange, otherChange, messageFromDriver)) {
+    if (this.noDriverSideChanges(thisChange, otherChange, messageFromDriver)) {
       // Need to record the driver version so that we can continue to send.
       this.version = version;
       return;
     }
 
     this.version = version + 1;
-    this.inSync = await this.driver.send(this.localModel.getData(), this.version);
+    this.inSync = false;
+    const theVersion = this.version;
+    console.log('->', this.exists ? 'L' : 'R', 'version:', theVersion);
+    this.sendsInFlight++;
+    this.inSync = await this.enqueueSend(this.localModel.getData(), this.version);
+    this.sendsInFlight--;
+    console.log('amIFlushed?', this.exists ? 'L' : 'R', this.sendsInFlight, this.inSync);
+    if (this.sendsInFlight === 0 && this.inSync) {
+      this.notifyIdle();
+    }
+    console.log('<-', this.exists ? 'L' : 'R', 'version:', theVersion, this.inSync);
+  }
+
+  private async enqueueSend(data: T["data"], version: number) {
+    let resolver: Function;
+    const deferredSend = new Promise((resolve, reject) => {
+      resolver = resolve;
+    }).then(async () => {
+      return await this.driver.send(data, version);
+    });
+    this.pendingSends.push({resolver, promise: deferredSend});
+    if (this.pendingSends.length === 1) {
+      this.startSending();
+    }
+    return deferredSend;
+  }
+
+  private async startSending() {
+    console.log('startSending scheduling 1 send');
+    this.pendingSends[0].resolver(false);
+    await this.pendingSends[0].promise;
+    console.log('startSending one send achieved');
+    this.pendingSends = this.pendingSends.slice(1);
+    if (this.pendingSends.length > 0) {
+      this.startSending();
+    }
   }
 
   // Note that driver-side changes are stored in 'otherChange' when the merged operations/model is sent
@@ -131,7 +206,10 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // result in an up-to-date model being sent back to that StorageProxy.
   // a return value of true implies that the message was accepted, a
   // return value of false requires that the proxy send a model sync 
-  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> { 
+  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+    if (this.pendingException) {
+      throw this.pendingException;
+    }
     switch (message.type) {
       case ProxyMessageType.SyncRequest:
         await this.callbacks.get(message.id)({type: ProxyMessageType.ModelUpdate, model: this.localModel.getData(), id: message.id});

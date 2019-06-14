@@ -79,8 +79,11 @@ describe('Volatile + Store Integration', async () => {
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
     assert.equal(results.filter(a => !a).length, 0);
     
+    await activeStore1.awaitFlushed();
+    await activeStore2.awaitFlushed();
+
     const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
-    assert.equal(volatileEntry.version, 5);
+    assert.equal(volatileEntry.version, 4);
   });
 });

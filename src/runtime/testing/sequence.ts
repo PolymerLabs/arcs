@@ -307,10 +307,15 @@ export class SequenceTest<T> {
   }
 
   private objAndName(obj, name: string) {
+    const initialObj = obj;
     const parts = name.split('.');
     for (let i = 0; i < parts.length - 1; i++) {
       obj = obj[parts[i]];
+      if (obj === undefined) {
+        throw new Error(`name ${name} invalid for ${initialObj}`);
+      }
     }
+    
     return {object: obj, name: parts[parts.length - 1]};
   }
 
@@ -647,7 +652,7 @@ export class SequenceTest<T> {
         for (const test of sensor.endInvariants) {
           try {
             const {object: theObject, name} = this.objAndName(obj, sensor.name);
-            test(theObject[name]);
+            await test(theObject[name]);
           } catch (e) {
             console.log(...this.interleavingLog);
             throw e;

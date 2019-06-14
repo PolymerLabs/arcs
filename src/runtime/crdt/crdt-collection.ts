@@ -8,12 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
+import {Dictionary} from '../hot.js';
 
 type RawCollection<T> = Set<T>;
 
-type CollectionData<T> = {
-  values: Map<T, VersionMap>,
+export interface Referenceable {
+  id: string;
+}
+
+type CollectionData<T extends Referenceable> = {
+  values: Dictionary<{value: T, version: VersionMap}>,
   version: VersionMap
 };
 
@@ -33,18 +38,18 @@ export type CollectionOperation<T> = {
   clock: VersionMap
 };
 
-export interface CRDTCollectionTypeRecord<T> extends CRDTTypeRecord {
+export interface CRDTCollectionTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
   data: CollectionData<T>;
   operation: CollectionOperation<T>;
   consumerType: RawCollection<T>;
 }
 
-type CollectionChange<T> = CRDTChange<CRDTCollectionTypeRecord<T>>;
+type CollectionChange<T extends Referenceable> = CRDTChange<CRDTCollectionTypeRecord<T>>;
 
-type CollectionModel<T> = CRDTModel<CRDTCollectionTypeRecord<T>>;
+type CollectionModel<T extends Referenceable> = CRDTModel<CRDTCollectionTypeRecord<T>>;
 
-export class CRDTCollection<T> implements CollectionModel<T> {
-  private model: CollectionData<T> = {values: new Map(), version: new Map()};
+export class CRDTCollection<T extends Referenceable> implements CollectionModel<T> {
+  private model: CollectionData<T> = {values: {}, version: {}};
 
   merge(other: CollectionData<T>):
       {modelChange: CollectionChange<T>, otherChange: CollectionChange<T>} {
@@ -73,53 +78,53 @@ export class CRDTCollection<T> implements CollectionModel<T> {
     return this.model;
   }
   getParticleView(): RawCollection<T> {
-    return new Set([...this.model.values.keys()]);
+    return new Set(Object.values(this.model.values).map(entry => entry.value));
   }
 
   private add(value: T, key: string, version: VersionMap): boolean {
     // Only accept an add if it is immediately consecutive to the clock for that actor.
-    const expectedClockValue = (this.model.version.get(key) || 0) + 1;
-    if (!(expectedClockValue === version.get(key) || 0)) {
+    const expectedClockValue = (this.model.version[key] || 0) + 1;
+    if (!(expectedClockValue === version[key] || 0)) {
       return false;
     }
-    this.model.version.set(key, version.get(key));
-    this.model.values.set(value, mergeVersions(version, this.model.values.get(value) || new Map()));
+    this.model.version[key] = version[key];
+    const previousVersion = this.model.values[value.id] ? this.model.values[value.id].version : {};
+    this.model.values[value.id] = {value, version: mergeVersions(version, previousVersion)};
     return true;
   }
 
   private remove(value: T, key: string, version: VersionMap): boolean {
-    if (!this.model.values.has(value)) {
+    if (!this.model.values[value.id]) {
       return false;
     }
-    const clockValue = (version.get(key) || 0);
+    const clockValue = (version[key] || 0);
     // Removes do not increment the clock.
-    const expectedClockValue = (this.model.version.get(key) || 0);
+    const expectedClockValue = (this.model.version[key] || 0);
     if (!(expectedClockValue === clockValue)) {
       return false;
     }
     // Cannot remove an element unless version is higher for all other actors as
     // well.
-    if (!dominates(version, this.model.values.get(value))) {
+    if (!dominates(version, this.model.values[value.id].version)) {
       return false;
     }
-    this.model.version.set(key, clockValue);
-    this.model.values.delete(value);
+    this.model.version[key] = clockValue;
+    delete this.model.values[value.id];
     return true;
   }
 
-  private mergeItems(data1: CollectionData<T>, data2: CollectionData<T>): Map<T, VersionMap> {
-    const merged = new Map();
-    for (const [value, version2] of data2.values) {
-      const version1 = data1.values.get(value);
-      if (version1) {
-        merged.set(value, mergeVersions(version1, version2));
+  private mergeItems(data1: CollectionData<T>, data2: CollectionData<T>): Dictionary<{value: T, version: VersionMap}> {
+    const merged: Dictionary<{value: T, version: VersionMap}> = {};
+    for (const {value, version: version2} of Object.values(data2.values)) {
+      if (this.model.values[value.id]) {
+        merged[value.id] = {value, version: mergeVersions(this.model.values[value.id].version, version2)};
       } else if (!dominates(data1.version, version2)) {
-        merged.set(value, version2);
+        merged[value.id] = {value, version: version2};
       }
     }
-    for (const [value, version1] of data1.values) {
-      if (!data2.values.get(value) && !dominates(data2.version, version1)) {
-        merged.set(value, version1);
+    for (const {value, version: version1} of Object.values(data1.values)) {
+      if (!data2.values[value.id] && !dominates(data2.version, version1)) {
+        merged[value.id] = {value, version: version1};
       }
     }
     return merged;
@@ -127,16 +132,19 @@ export class CRDTCollection<T> implements CollectionModel<T> {
 }
 
 function mergeVersions(version1: VersionMap, version2: VersionMap): VersionMap {
-  const merged = new Map(version1);
-  for (const [k, v] of version2) {
-    merged.set(k, Math.max(v, version1.get(k) || 0));
+  const merged = {};
+  for (const [k, v] of Object.entries(version1)) {
+    merged[k] = v;
+  }
+  for (const [k, v] of Object.entries(version2)) {
+    merged[k] = Math.max(v, version1[k] || 0);
   }
   return merged;
 }
 
 function dominates(map1: VersionMap, map2: VersionMap): boolean {
-  for (const [k, v] of map2) {
-    if ((map1.get(k) || 0) < v) {
+  for (const [k, v] of Object.entries(map2)) {
+    if ((map1[k] || 0) < v) {
       return false;
     }
   }

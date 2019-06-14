@@ -8,14 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection} from './crdt-collection';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection, Referenceable} from './crdt-collection.js';
+import {Dictionary} from '../hot.js';
 
 type RawSingleton<T> = T;
 
-type SingletonData<T> = {
-  values: Map<T, VersionMap>,
-  version: VersionMap,
+type SingletonData<T extends Referenceable> = {
+  values: Dictionary<{value: T, version: VersionMap}>,
+  version: VersionMap
 };
 
 export enum SingletonOpTypes {
@@ -34,17 +35,17 @@ export type SingletonOperation<T> = {
   clock: VersionMap,
 };
 
-export interface CRDTSingletonTypeRecord<T> extends CRDTTypeRecord {
+export interface CRDTSingletonTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
   data: SingletonData<T>;
   operation: SingletonOperation<T>;
   consumerType: RawSingleton<T>;
 }
 
-type SingletonChange<T> = CRDTChange<CRDTSingletonTypeRecord<T>>;
+type SingletonChange<T extends Referenceable> = CRDTChange<CRDTSingletonTypeRecord<T>>;
 
-type SingletonModel<T> = CRDTModel<CRDTSingletonTypeRecord<T>>;
+type SingletonModel<T extends Referenceable> = CRDTModel<CRDTSingletonTypeRecord<T>>;
 
-export class CRDTSingleton<T> implements SingletonModel<T> {
+export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T> {
   private collection = new CRDTCollection<T>();
 
   merge(other: SingletonData<T>):
@@ -65,8 +66,11 @@ export class CRDTSingleton<T> implements SingletonModel<T> {
     if (op.type === SingletonOpTypes.Set) {
       // Remove does not require an increment, but the caller of this method will have incremented
       // its version, so we hack a version with t-1 for this actor.
-      const removeClock =
-          (new Map(op.clock)).set(op.actor, op.clock.get(op.actor) - 1);
+      const removeClock = {};
+      for (const [k, v] of Object.entries(op.clock)) {
+        removeClock[k] = v;
+      }
+      removeClock[op.actor] = op.clock[op.actor] - 1;
       if (!this.clear(op.actor, removeClock)) {
         return false;
       }
@@ -94,10 +98,10 @@ export class CRDTSingleton<T> implements SingletonModel<T> {
 
   private clear(actor: string, clock: VersionMap): boolean {
     // Clear all existing values if our clock allows it.
-    for (const value of this.collection.getData().values.keys()) {
+    for (const value of Object.values(this.collection.getData().values)) {
       const removeOp: CollectionOperation<T> = {
         type: CollectionOpTypes.Remove,
-        removed: value,
+        removed: value.value,
         actor,
         clock,
       };

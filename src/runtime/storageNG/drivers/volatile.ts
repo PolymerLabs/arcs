@@ -83,6 +83,10 @@ export class VolatileDriver<Data> extends Driver<Data> {
   }
   
   async send(model: Data, version: number): Promise<boolean> {
+    // This needs to contain an "empty" await, otherwise there's
+    // a synchronous send / onReceive loop that can be established
+    // between multiple Stores/Drivers writing to the same location.
+    await 0;
     if (this.data.version !== version - 1) {
       return false;
     }

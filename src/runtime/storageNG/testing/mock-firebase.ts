@@ -230,6 +230,10 @@ class MockFirebaseDatabase implements firebase.database.Database {
     }
   }
 
+  getValueForTesting(path: string) {
+    return this.values[path].value;
+  }
+    
   goOffline() {
     throw new Error('Method not implemented.');
   }
@@ -258,7 +262,7 @@ class MockFirebaseDatabase implements firebase.database.Database {
 class MockFirebaseApp implements firebase.app.App {
   name: string;
   options: {};
-  databases: {[index: string]: firebase.database.Database} = {};
+  databases: {[index: string]: MockFirebaseDatabase} = {};
 
   constructor(key: FirebaseStorageKey) {
     this.options = key;
@@ -278,6 +282,11 @@ class MockFirebaseApp implements firebase.app.App {
     }
     return this.databases[url];
   }
+
+  getValueForTesting(url: string, path: string) {
+    return this.databases[url].getValueForTesting(path);
+  }
+
   async delete() {
     throw new Error('Method not implemented.');
   }
@@ -312,13 +321,13 @@ class MockFirebaseAppCache extends FirebaseAppCache {
   }
 }
 
-export class FakeFirebaseStorageDriverProvider extends FirebaseStorageDriverProvider {
+export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProvider {
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
     
-    return FakeFirebaseStorageDriverProvider.newDriverForTesting<Data>(storageKey, exists);
+    return MockFirebaseStorageDriverProvider.newDriverForTesting<Data>(storageKey, exists);
   }
 
   static async newDriverForTesting<Data>(storageKey: StorageKey, exists: Exists) {
@@ -329,7 +338,20 @@ export class FakeFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
   }
 
   static register() {
-    DriverFactory.register(new FakeFirebaseStorageDriverProvider());
+    DriverFactory.register(new MockFirebaseStorageDriverProvider());
+  }
+
+  static getValueForTesting(storageKey: MockFirebaseStorageKey) {
+    const appCache = new MockFirebaseAppCache(Runtime.getRuntime());
+    const app = (appCache.getApp(storageKey) as MockFirebaseApp);
+    return app.getValueForTesting('', storageKey.location);
   }
 }
+
+export class MockFirebaseStorageKey extends FirebaseStorageKey {
+  constructor(location) {
+    super('test-project', 'test.domain', 'testKey', location);
+  }
+}
+
 

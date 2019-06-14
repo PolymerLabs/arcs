@@ -14,138 +14,135 @@ import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton';
 
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {
-    const singleton = new CRDTSingleton<string>();
+    const singleton = new CRDTSingleton<{id: string}>();
     assert.equal(singleton.getParticleView(), null);
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '1',
+      value: {id: '1'},
       actor: 'A',
-      clock: new Map([['A', 1]]),
+      clock: {A: 1},
     });
-    assert.equal(singleton.getParticleView(), '1');
+    assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '2',
+      value: {id: '2'},
       actor: 'A',
-      clock: new Map([['A', 2]]),
+      clock: {A: 2},
     });
-    assert.equal(singleton.getParticleView(), '2');
+    assert.deepEqual(singleton.getParticleView(), {id: '2'});
 
     // Set requires version increment, so this fails.
     assert.isFalse(singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '3',
+      value: {id: '3'},
       actor: 'A',
-      clock: new Map([['A', 2]]),
+      clock: {A: 2},
     }));
-    assert.equal(singleton.getParticleView(), '2');
+    assert.deepEqual(singleton.getParticleView(), {id: '2'});
   });
 
   it('can clear values', () => {
-    const singleton = new CRDTSingleton<string>();
+    const singleton = new CRDTSingleton<{id: string}>();
     assert.equal(singleton.getParticleView(), null);
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '1',
+      value: {id: '1'},
       actor: 'A',
-      clock: new Map([['A', 1]]),
+      clock: {A: 1},
     });
-    assert.equal(singleton.getParticleView(), '1');
+    assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Clear requires the same version number, so this does not really clear it.
     singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: new Map([['A', 0]]),
+      clock: {A: 0},
     });
-    assert.equal(singleton.getParticleView(), '1');
+    assert.deepEqual(singleton.getParticleView(), {id: '1'});
     singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: new Map([['A', 2]]),
+      clock: {A: 2},
     });
-    assert.equal(singleton.getParticleView(), '1');
+    assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Up-to-date version number, does clear it.
     singleton.applyOperation(
-      {type: SingletonOpTypes.Clear, actor: 'A', clock: new Map([['A', 1]])});
+      {type: SingletonOpTypes.Clear, actor: 'A', clock: {A: 1}});
     assert.equal(singleton.getParticleView(), null);
   });
 
   it('can add and clear from multiple actors', () => {
-    const singleton = new CRDTSingleton<string>();
+    const singleton = new CRDTSingleton<{id: string}>();
     assert.equal(singleton.getParticleView(), null);
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '1',
+      value: {id: '1'},
       actor: 'A',
-      clock: new Map([['A', 1]]),
+      clock: {A: 1},
     });
     assert.deepEqual(
-      singleton.getData().values, new Map([['1', new Map([['A', 1]])]]));
-    assert.equal(singleton.getParticleView(), '1');
+      singleton.getData().values, {'1': {value: {id: '1'}, version: {A: 1}}}); 
+    assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Another actor concurrently setting a value, both values will be kept.
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '2',
+      value: {id: '2'},
       actor: 'B',
-      clock: new Map([['B', 1]]),
+      clock: {B: 1},
     });
     assert.deepEqual(
       singleton.getData().values,
-      new Map([['1', new Map([['A', 1]])], ['2', new Map([['B', 1]])]]));
-    assert.equal(singleton.getParticleView(), '1');
+      {'1': {value: {id: '1'}, version: {A: 1}}, '2': {value: {id: '2'}, version: {B: 1}}});
+    assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Actor B setting a new value after also seeing A's value, old value is
     // removed.
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '2',
+      value: {id: '2'},
       actor: 'B',
-      clock: new Map([['A', 1], ['B', 2]]),
+      clock: {A: 1, B: 2},
     });
     assert.deepEqual(
       singleton.getData().values,
-      new Map([['2', new Map([['A', 1], ['B', 2]])]]));
-    assert.equal(singleton.getParticleView(), '2');
+      {'2': {value: {id: '2'}, version: {A: 1, B: 2}}});
+    assert.deepEqual(singleton.getParticleView(), {id: '2'});
 
     singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: new Map([['A', 1], ['B', 2]])
+      clock: {A: 1, B: 2}
     });
-    assert.deepEqual(singleton.getData().values, new Map());
+    assert.deepEqual(singleton.getData().values, {});
     assert.equal(singleton.getParticleView(), null);
   });
 
   it('can merge two singletons', () => {
-    const singletonA = new CRDTSingleton<string>();
+    const singletonA = new CRDTSingleton<{id: string}>();
     singletonA.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '1',
+      value: {id: '1'},
       actor: 'A',
-      clock: new Map([['A', 1]]),
+      clock: {A: 1},
     });
 
-    const singletonB = new CRDTSingleton<string>();
+    const singletonB = new CRDTSingleton<{id: string}>();
     singletonB.applyOperation({
       type: SingletonOpTypes.Set,
-      value: '2',
+      value: {id: '2'},
       actor: 'B',
-      clock: new Map([['B', 1]]),
+      clock: {B: 1},
     });
 
     const {modelChange, otherChange} = singletonA.merge(singletonB.getData());
-    const newValues = new Map([
-      ['1', new Map([['A', 1]])],
-      ['2', new Map([['B', 1]])],
-    ]);
-    const newVersion = new Map([['A', 1], ['B', 1]]);
+    const newValues = {'1': {value: {id: '1'}, version: {A: 1}}, '2': {value: {id: '2'}, version: {B: 1}}};
+    const newVersion = {A: 1, B: 1};
     if (modelChange.changeType === ChangeType.Model) {
       assert.deepEqual(
         modelChange.modelPostChange,
@@ -156,7 +153,7 @@ describe('CRDTSingleton', () => {
     assert.deepEqual(modelChange, otherChange);
     // '2' is also in the set now ('1' is returned because of lexicographical
     // sorting)
-    assert.equal(singletonA.getParticleView(), '1');
+    assert.deepEqual(singletonA.getParticleView(), {id: '1'});
 
     // A can now clear the new model.
     assert.isTrue(singletonA.applyOperation({
