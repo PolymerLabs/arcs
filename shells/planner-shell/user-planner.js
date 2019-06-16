@@ -10,6 +10,7 @@
 
 import {logFactory} from '../../build/platform/log-web.js';
 import {Planificator} from '../../build/planning/arcs-planning.js';
+import {devtoolsPlannerInspectorFactory} from '../../build/devtools-connector/devtools-planner-inspector.js';
 
 const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');
@@ -65,7 +66,8 @@ export class UserPlanner {
       storageKeyBase: this.options.plannerStorage,
       //onlyConsumer: config.plannerOnlyConsumer,
       debug: this.options.debug,
-      userid
+      userid,
+      inspectorFactory: devtoolsPlannerInspectorFactory
     };
     const planificator = await Planificator.create(arc, options);
     planificator.setSearch('*');

@@ -10,6 +10,7 @@
 
 import {Xen} from '../../lib/components/xen.js';
 import {Planificator} from '../../../build/planning/arcs-planning.js';
+import {devtoolsPlannerInspectorFactory} from '../../../build/devtools-connector/devtools-planner-inspector.js';
 
 const log = Xen.logFactory('WebPlanner', '#104a91');
 //const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
@@ -45,7 +46,8 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       userid: 'user',
       storageKeyBase: config.plannerStorage,
       onlyConsumer: config.plannerOnlyConsumer,
-      debug: config.plannerDebug
+      debug: config.plannerDebug,
+      inspectorFactory: devtoolsPlannerInspectorFactory
     };
     const planificator = await Planificator.create(arc, options);
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(planificator, suggestions));

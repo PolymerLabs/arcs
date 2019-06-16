@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {DevtoolsForTests} from '../../../devtools-connector/devtools-connection.js';
-import {devtoolsInspectorFactory} from '../../../devtools-connector/devtools-inspector.js';
+import {devtoolsArcInspectorFactory} from '../../../devtools-connector/devtools-arc-inspector.js';
 import {MockSlotComposer} from '../../testing/mock-slot-composer.js';
 import {StubLoader} from '../../testing/stub-loader.js';
 import {Arc} from '../../arc.js';
@@ -39,7 +39,7 @@ describe('OuterPortAttachment', () => {
         P
           foo = foo`, loader);
     const runtime = new Runtime(loader, MockSlotComposer, context);
-    const arc = runtime.newArc('demo', 'volatile://', {inspectorFactory: devtoolsInspectorFactory});
+    const arc = runtime.newArc('demo', 'volatile://', {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = arc.context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');

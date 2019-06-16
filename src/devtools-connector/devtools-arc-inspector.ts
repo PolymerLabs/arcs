@@ -28,13 +28,13 @@ void DevtoolsConnection.onceConnected.then(devtoolsChannel => {
   enableTracingAdapter(devtoolsChannel);
 });
 
-export const devtoolsInspectorFactory: ArcInspectorFactory = {
+export const devtoolsArcInspectorFactory: ArcInspectorFactory = {
   create(arc: Arc): ArcInspector {
-    return new DevtoolsInspector(arc);
+    return new DevtoolsArcInspector(arc);
   }
 };
 
-class DevtoolsInspector implements ArcInspector {
+class DevtoolsArcInspector implements ArcInspector {
 
   private arcDevtoolsChannel: DevtoolsChannel = null;
 

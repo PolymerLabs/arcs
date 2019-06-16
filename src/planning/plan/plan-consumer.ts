@@ -10,16 +10,12 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {ArcDevtoolsChannel} from '../../devtools-connector/abstract-devtools-channel.js';
-import {DevtoolsConnection} from '../../devtools-connector/devtools-connection.js';
-import {Modality} from '../../runtime/modality.js';
-import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
-import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 
 import {PlanningResult} from './planning-result.js';
 import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
 import {SuggestFilter} from './suggest-filter.js';
+import {PlannerInspector} from '../planner-inspector.js';
 
 type Callback = ({}) => void;
 
@@ -35,23 +31,18 @@ export class PlanConsumer {
   private visibleSuggestionsChangeCallbacks: Callback[] = [];
   suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
-  devtoolsChannel?: ArcDevtoolsChannel;
+  inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult) {
+  constructor(arc: Arc, result: PlanningResult, inspector?: PlannerInspector) {
     assert(arc, 'arc cannot be null');
     assert(result, 'result cannot be null');
     this.arc = arc;
     this.result = result;
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
-
+    this.inspector = inspector;
     this._initSuggestionComposer();
-
     this.result.registerChangeCallback(() => this.onSuggestionsChanged());
-
-    if (DevtoolsConnection.isConnected) {
-      this.devtoolsChannel = DevtoolsConnection.get().forArc(this.arc);
-    }
     this._maybeUpdateStrategyExplorer();
   }
 
@@ -94,17 +85,18 @@ export class PlanConsumer {
 
   _onSuggestionsChanged() {
     this.suggestionsChangeCallbacks.forEach(callback => callback({suggestions: this.result.suggestions}));
-    PlanningExplorerAdapter.updatePlanningResults(this.result, {}, this.devtoolsChannel);
+    if (this.inspector) this.inspector.updatePlanningResults(this.result, {});
   }
 
   _onMaybeSuggestionsChanged() {
-    const options: VisibilityOptions|undefined = this.devtoolsChannel ? {reasons: new Map<string, SuggestionVisibilityOptions>()} : undefined;
+    const options: VisibilityOptions|undefined = this.inspector ? {reasons: new Map<string, SuggestionVisibilityOptions>()} : undefined;
     const suggestions = this.getCurrentSuggestions(options);
     if (!PlanningResult.isEquivalent(this.currentSuggestions, suggestions)) {
       this.visibleSuggestionsChangeCallbacks.forEach(callback => callback(suggestions));
       this.currentSuggestions = suggestions;
-      PlanningExplorerAdapter.updateVisibleSuggestions(
-          this.currentSuggestions, options, this.devtoolsChannel);
+      if (this.inspector) {
+        this.inspector.updateVisibleSuggestions(this.currentSuggestions, options);
+      }
     }
   }
 
@@ -118,9 +110,8 @@ export class PlanConsumer {
   }
 
   _maybeUpdateStrategyExplorer() {
-    if (this.result.generations.length) {
-      StrategyExplorerAdapter.processGenerations(
-          this.result.generations, this.devtoolsChannel, {label: 'Plan Consumer', keep: true});
+    if (this.result.generations.length && this.inspector) {
+      this.inspector.strategizingRecord(this.result.generations, {label: 'Plan Consumer', keep: true});
     }
   }
 }
