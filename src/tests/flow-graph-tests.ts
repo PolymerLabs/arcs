@@ -118,7 +118,7 @@ describe('FlowGraph', () => {
     `);
     const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.claims.size, 1);
-    const expectedClaim: ParticleTrustClaim = {claimType: ParticleTrustClaimType.Tag, handle: 'foo', tag: 'trusted'};
+    const expectedClaim = {claimType: ParticleTrustClaimType.IsTag, handle: 'foo', tag: 'trusted'};
     assert.deepNestedInclude(node.claims.get('foo'), expectedClaim);
     assert.isEmpty(node.checks);
 

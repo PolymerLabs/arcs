@@ -12,7 +12,7 @@ import {Particle} from '../runtime/recipe/particle';
 import {Handle} from '../runtime/recipe/handle';
 import {HandleConnection} from '../runtime/recipe/handle-connection';
 import {assert} from '../platform/assert-web';
-import {ParticleTrustClaim, ParticleTrustClaimType, ParticleTrustClaimTag} from '../runtime/manifest-ast-nodes';
+import {ParticleTrustClaim, ParticleTrustClaimType, ParticleTrustClaimIsTag} from '../runtime/manifest-ast-nodes';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -218,7 +218,7 @@ export class Check {
       readonly acceptedTags: readonly string[]) {}
 
   /** Returns true if the given claim satisfies the check condition. */
-  checkAgainstClaim(claim: ParticleTrustClaimTag): boolean {
+  checkAgainstClaim(claim: ParticleTrustClaimIsTag): boolean {
     for (const tag of this.acceptedTags) {
       if (tag === claim.tag) {
         return true;
@@ -307,7 +307,8 @@ class ParticleNode extends Node {
     const claim = this.claims.get(edgeToCheck.handleName);
     if (claim) {
       switch (claim.claimType) {
-        case ParticleTrustClaimType.Tag:
+        case ParticleTrustClaimType.IsTag: {
+          // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise fail.
           if (check.checkAgainstClaim(claim)) {
             return {type: CheckResultType.Success};
           } else {
@@ -316,7 +317,9 @@ class ParticleNode extends Node {
               reason: `Check '${check}' failed: found claim '${claim.tag}' on '${edgeToCheck.label}' instead.`,
             };
           }
-        case ParticleTrustClaimType.DerivesFrom:
+        }
+        case ParticleTrustClaimType.DerivesFrom: {
+          // The particle's output derives from some of its inputs. Continue searching the graph from those inputs.
           const checkNext: BackwardsPath[] = [];
           for (const handle of claim.parentHandles) {
             const edge = this.inEdgesByName.get(handle);
@@ -324,6 +327,7 @@ class ParticleNode extends Node {
             checkNext.push(path.withNewEdge(edge));
           }
           return {type: CheckResultType.KeepGoing, checkNext};
+        }
         default:
           assert(false, 'Unknown claim type.');
       }

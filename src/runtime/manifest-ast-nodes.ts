@@ -174,26 +174,33 @@ export interface Particle extends BaseNode {
   slotConnections?: RecipeParticleSlotConnection[];
 }
 
+/** The different types of trust claims that particles can make. */
 export enum ParticleTrustClaimType {
-  Tag = 'is',
-  DerivesFrom = 'derives from',
+  IsTag,
+  DerivesFrom,
 }
 
-export interface ParticleTrustClaimTag {
-  claimType: ParticleTrustClaimType.Tag;
+/** A claim made by a particle, saying that one of its outputs has a particular trust tag (e.g. "claim output is foo"). */
+export interface ParticleTrustClaimIsTag extends BaseNode {
+  kind: 'particle-trust-claim-is-tag';
+  claimType: ParticleTrustClaimType.IsTag;
   handle: string;
   tag: string;
 }
 
-export interface ParticleTrustClaimDerivesFrom {
+/**
+ * A claim made by a particle, saying that one of its outputs derives from one/some of its inputs (e.g. "claim output derives from input1 and
+ * input2").
+ */
+export interface ParticleTrustClaimDerivesFrom extends BaseNode {
+  kind: 'particle-trust-claim-derives-from';
   claimType: ParticleTrustClaimType.DerivesFrom;
   handle: string;
   parentHandles: string[];
 }
 
-export type ParticleTrustClaim = ParticleTrustClaimTag | ParticleTrustClaimDerivesFrom;
-
-export type ParticleTrustClaimNode = ParticleTrustClaim & BaseNode & {kind: 'particle-trust-claim'};
+/** A trust claim made by a particle. */
+export type ParticleTrustClaim = ParticleTrustClaimIsTag | ParticleTrustClaimDerivesFrom;
 
 export interface ParticleTrustCheck extends BaseNode {
   kind: 'particle-trust-check';

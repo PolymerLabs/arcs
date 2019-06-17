@@ -19,7 +19,7 @@ import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
-import {ParticleTrustClaimType, ParticleTrustClaimTag, ParticleTrustClaim} from '../manifest-ast-nodes.js';
+import {ParticleTrustClaimType} from '../manifest-ast-nodes.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -1974,10 +1974,16 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.equal(particle.trustClaims.size, 2);
-      const expectedClaim1: ParticleTrustClaim = {claimType: ParticleTrustClaimType.Tag, handle: 'output1', tag: 'property1'};
-      assert.deepNestedInclude(particle.trustClaims.get('output1'), expectedClaim1);
-      const expectedClaim2: ParticleTrustClaim = {claimType: ParticleTrustClaimType.Tag, handle: 'output2', tag: 'property2'};
-      assert.deepNestedInclude(particle.trustClaims.get('output2'), expectedClaim2);
+      assert.deepNestedInclude(particle.trustClaims.get('output1'), {
+        claimType: ParticleTrustClaimType.IsTag,
+        handle: 'output1',
+        tag: 'property1',
+      });
+      assert.deepNestedInclude(particle.trustClaims.get('output2'), {
+        claimType: ParticleTrustClaimType.IsTag,
+        handle: 'output2',
+        tag: 'property2',
+      });
       assert.isEmpty(particle.trustChecks);
     });
 
@@ -1992,12 +1998,11 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.equal(particle.trustClaims.size, 1);
-      const expectedClaim: ParticleTrustClaim = {
+      assert.deepNestedInclude(particle.trustClaims.get('output'), {
         claimType: ParticleTrustClaimType.DerivesFrom,
         handle: 'output',
         parentHandles: ['input1', 'input2'],
-      };
-      assert.deepNestedInclude(particle.trustClaims.get('output'), expectedClaim);
+      });
       assert.isEmpty(particle.trustChecks);
     });
 
