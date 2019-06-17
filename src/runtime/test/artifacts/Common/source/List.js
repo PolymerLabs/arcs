@@ -72,20 +72,20 @@ defineParticle(({DomParticle, resolver, html}) => {
       return Boolean(props.items);
     }
     render({items, selected}) {
-      const selectedId = selected && selected.id;
+      const selectedId = selected && this.idFor(selected);
       return {
         hasItems: items.length > 0,
         items: {
           $template: 'items',
           models: items.map(item => ({
-            id: item.id,
-            selected: selectedId === item.id
+            id: this.idFor(item),
+            selected: selectedId === this.idFor(item)
           }))
         }
       };
     }
     _onSelect(e) {
-      const item = this._props.items.find(i => i.id === e.data.key);
+      const item = this._props.items.find(i => this.idFor(i) === e.data.key);
       const selected = this.handles.get('selected');
       if (item && selected) {
         selected.set(item);

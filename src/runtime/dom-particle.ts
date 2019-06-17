@@ -165,7 +165,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       if (Array.isArray(prop)) {
         removed.forEach(removed => {
           // TODO(sjmiles): linear search is inefficient
-          const index = prop.findIndex(entry => entry.id === removed.id);
+          const index = prop.findIndex(entry => this.idFor(entry) === this.idFor(removed));
           if (index >= 0) {
             prop.splice(index, 1);
           } else {

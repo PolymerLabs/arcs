@@ -67,7 +67,7 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(playlist);
     }
     render({playlist}) {
-      return playlist.dataClone();
+      return this.dataClone(playlist);
     }
   };
 });

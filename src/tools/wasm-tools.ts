@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from '../runtime/schema.js';
-import {EntityInterface} from '../runtime/entity.js';
+import {Entity} from '../runtime/entity.js';
 import proto_target from 'protobufjs/cli/targets/proto.js';
 import protobufjs from 'protobufjs';
 
@@ -79,10 +79,10 @@ class EntityProtoConverter {
     this.message = protoRoot.lookupType(schema.name);
   }
 
-  encode(entity: EntityInterface): Uint8Array {
+  encode(entity: Entity): Uint8Array {
     const proto = this.message.create();
     const scalar = (field, value) => (field.type === 'URL') ? {href: value} : value;
-    for (const [name, value] of Object.entries(entity.toLiteral())) {
+    for (const [name, value] of Object.entries(entity)) {
       const field = this.schema.fields[name];
       if (field.kind === 'schema-collection') {
         // tslint:disable-next-line: no-any
@@ -94,7 +94,7 @@ class EntityProtoConverter {
     return this.message.encode(proto).finish();
   }
 
-  decode(buffer: Uint8Array): EntityInterface {
+  decode(buffer: Uint8Array): Entity {
     const proto = this.message.decode(buffer);
     const scalar = (field, value) => (field.type === 'URL') ? value.href : value;
     const data = {};

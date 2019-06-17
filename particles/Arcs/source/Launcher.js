@@ -136,7 +136,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       // bit nasty because of the asynchrony. We should reframe this particle to generate render models
       // as state, and manipulate them as state (which is the standard Xen answer!).
       const derefPromises = shares.map(async share =>
-        Object.assign(share.dataClone(), {entity: (await share.ref.dereference()).dataClone()}));
+        Object.assign(this.dataClone(share), {entity: this.dataClone(await share.ref.dereference())}));
       const avatars = await Promise.all(derefPromises);
       this.setState({avatars});
     }
@@ -240,7 +240,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const tips = ['Arc is private', 'Arc is part of my Profile', 'Arc is shared with my Friends'];
       // populate a render model
       return {
-        arcId: arc.id,
+        arcId: this.idFor(arc),
         key: arc.key,
         href: arc.href,
         blurb,
@@ -254,7 +254,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       };
     }
     findArc(id) {
-      const arc = this._props.arcs.find(a => a.id === id);
+      const arc = this._props.arcs.find(a => this.idFor(a) === id);
       if (!arc) {
         log(`Couldn't find arc[${id}].`);
       }
@@ -285,9 +285,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     mutateEntity(handleName, entity, mutator) {
       const handle = this.handles.get(handleName);
       handle.remove(entity);
-      entity.mutate(mutator);
+      this.mutate(entity, mutator);
       handle.store(entity);
-      log(`mutated entity [${entity.id}]`);
+      log(`mutated entity [${this.idFor(entity)}]`);
     }
   };
 

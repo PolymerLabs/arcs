@@ -18,10 +18,14 @@ import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceT
 import {EntityClass, Entity} from './entity.js';
 import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './store.js';
 import {IdGenerator, Id} from './id.js';
+import {SYMBOL_INTERNALS} from './symbols.js';
 
-/** An interface representing anything storable in a Handle. Concretely, this is the {@link Entity} and {@link ClientReference} classes. */
+/**
+ * An interface representing anything storable in a Handle. Concretely, this is the {@link Entity}
+ * and {@link ClientReference} classes.
+ */
 export interface Storable {
-  serialize(): SerializedEntity;
+  [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 }
 
 // TODO: This won't be needed once runtime is transferred between contexts.
@@ -35,7 +39,7 @@ function restore(entry: SerializedEntity, entityClass: EntityClass) {
   const {id, rawData} = entry;
   const entity = new entityClass(cloneData(rawData));
   if (entry.id) {
-    entity.identify(entry.id);
+    Entity.identify(entity, entry.id);
   }
 
   // TODO some relation magic, somewhere, at some point.
@@ -106,13 +110,13 @@ export abstract class Handle {
   }
 
   _serialize(entity: Storable) {
-    assert(entity, 'can\'t serialize a null entity');
+    assert(entity, `can't serialize a null entity`);
     if (entity instanceof Entity) {
-      if (!entity.isIdentified()) {
-        entity.createIdentity(Id.fromString(this._id), this.idGenerator);
+      if (!Entity.isIdentified(entity)) {
+        Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
       }
     }
-    return entity.serialize();
+    return entity[SYMBOL_INTERNALS].serialize();
   }
 
   get type() {

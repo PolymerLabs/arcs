@@ -190,7 +190,7 @@ ${styles}
       return template;
     }
     update(props, state) {
-      const event = Object.assign({}, props.event && props.event.rawData || {});
+      const event = Object.assign({}, props.event || {});
       this._event = event;
       this._savedStartDate = event.startDate || (new Date()).toJSON().slice(0, 16);
       if (!event.startDate) {

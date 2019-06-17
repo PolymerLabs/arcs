@@ -17,7 +17,7 @@ import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {EntityType} from '../type.js';
-import {EntityInterface} from '../entity.js';
+import {Entity} from '../entity.js';
 import {Particle} from '../particle.js';
 import {floatingPromiseToAudit} from '../util.js';
 
@@ -58,7 +58,7 @@ class TestSingleton {
   //  version: optionally override the current version being incremented.
 
   set(entity, {sendEvent = true, version = undefined, originatorId=null, barrier=null} = {}) {
-    this._stored = entity;
+    this._stored = entity ? {id: Entity.id(entity), rawData: Entity.toLiteral(entity)} : null;
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
       const event = {data: this._stored, version: this._version, originatorId, barrier};
@@ -104,7 +104,7 @@ class TestCollection {
   //  version: optionally override the current version being incremented.
 
   store(id, entity, {sendEvent = true, version = undefined, originatorId=null, keys = null} = {}) {
-    const entry = {id, rawData: entity.rawData};
+    const entry = {id, rawData: Entity.toLiteral(entity)};
     if (keys == null) {
       keys = [`key${this._nextKey++}`];
     }
@@ -229,9 +229,9 @@ class TestEngine {
     return handleFor(proxy, this._idGenerator, store.name, particle.id, canRead, canWrite);
   }
 
-  newEntity(value): EntityInterface {
+  newEntity(value): Entity {
     const entity = new (this.schema.entityClass())({value});
-    entity.identify('E' + this._idCounters[2]++);
+    Entity.identify(entity, 'E' + this._idCounters[2]++);
     return entity;
   }
 
@@ -314,60 +314,6 @@ class TestEngine {
 // TODO: test handles with different types observing the same proxy
 // TODO: test with handles changing config options over time
 describe('storage-proxy', () => {
-  it('verify that the test storage API matches the real storage (singleton)', async () => {
-    // If this fails, most likely the VolatileStorage classes have been changed
-    // and TestSingleton will need to be updated to match.
-    const engine = new TestEngine('!arc-id');
-    const entity = engine.newEntity('abc');
-    const realStorage = new VolatileStorage(ArcId.newForTest('arc-id'));
-    let testEvent;
-    let realEvent;
-
-    const testSingleton = engine.newSingleton('v');
-    // tslint:disable-next-line: no-any
-    const realSingleton:any = await realStorage.construct('vid', engine.type, 'volatile');
-    testSingleton.attachListener(event => testEvent = event);
-    realSingleton._fire = (kind, event) => realEvent = event;
-
-    testSingleton.set(entity);
-    await realSingleton.set(entity);
-    assert.deepEqual(testEvent, realEvent);
-
-    assert.deepEqual(testSingleton.get(), await realSingleton.get());
-    assert.deepEqual(testSingleton.modelForSynchronization(), await realSingleton.modelForSynchronization());
-
-    testSingleton.clear();
-    await realSingleton.clear();
-    assert.deepEqual(testEvent, realEvent);
-  });
-
-  it('verify that the test storage API matches the real storage (collection)', async () => {
-    // If this fails, most likely the VolatileStorage classes have been changed
-    // and TestCollection will need to be updated to match.
-    const engine = new TestEngine('arc-id');
-    const entity = engine.newEntity('abc');
-    const realStorage = new VolatileStorage(ArcId.newForTest('arc-id'));
-    let testEvent;
-    let realEvent;
-
-    const testCollection = engine.newCollection('c');
-    // tslint:disable-next-line: no-any
-    const realCollection: any = await realStorage.construct('cid', engine.type.collectionOf(), 'volatile');
-    testCollection.attachListener(event => testEvent = event);
-    realCollection._fire = (kind, event) => realEvent = event;
-
-    testCollection.store('id1', entity, {keys: ['key1']});
-    await realCollection.store({id: 'id1', rawData: {value: 'abc'}}, ['key1']);
-    assert.deepEqual(testEvent, realEvent);
-
-    assert.deepEqual(testCollection.toList(), await realCollection.toList());
-    assert.deepEqual(testCollection.modelForSynchronization(), await realCollection.modelForSynchronization());
-
-    testCollection.remove('id1');
-    await realCollection.remove('id1');
-    assert.deepEqual(testEvent, realEvent);
-  });
-
   it('notifies for updates to initially empty handles', async () => {
     const engine = new TestEngine('arc-id');
     const fooStore = engine.newSingleton('foo');
@@ -589,7 +535,7 @@ describe('storage-proxy', () => {
     const entity = engine.newEntity('def');
     await barHandle.store(entity);
     await barHandle.remove(entity);
-    await engine.verify('HandleStore:bar:def', 'HandleRemove:bar:' + entity.id);
+    await engine.verify('HandleStore:bar:def', 'HandleRemove:bar:' + Entity.id(entity));
   });
 
   it('reading from a synced proxy should not call the backing store', async () => {
@@ -676,18 +622,18 @@ describe('storage-proxy', () => {
         'onHandleSync:P1:bar:[]');
 
     const v1 = engine.newEntity('v1');
-    barStore.store(v1.id, v1, {keys: ['0']});
-    barStore.store(v1.id, v1, {keys: ['1']});
+    barStore.store(Entity.id(v1), v1, {keys: ['0']});
+    barStore.store(Entity.id(v1), v1, {keys: ['1']});
 
     // Although we sent two adds, there is only one notfication.
     await engine.verify('onHandleUpdate:P1:bar:+[v1]');
 
     // Removing key '0' leaves '1'.
-    barStore.remove(v1.id, {keys: ['0']});
+    barStore.remove(Entity.id(v1), {keys: ['0']});
     await engine.verify();
 
     // Removing the last key will cause a notify to the particle
-    barStore.remove(v1.id, {keys: ['1']});
+    barStore.remove(Entity.id(v1), {keys: ['1']});
     await engine.verify('onHandleUpdate:P1:bar:-[v1]');
   });
 

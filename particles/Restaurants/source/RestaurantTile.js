@@ -144,7 +144,7 @@ defineParticle(({DomParticle, html}) => {
       return Object.assign({
         imgUrl: restaurant.photo,
         starStyle: !restaurant.rating ? `visibility: hidden` : `width: ${Math.round(restaurant.rating / 5 * 100)}%`
-      }, restaurant.rawData);
+      }, restaurant);
     }
   };
 

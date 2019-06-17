@@ -156,7 +156,7 @@ defineParticle(({DomParticle, html}) => {
     }
     willReceiveProps({restaurant}) {
       if (restaurant) {
-        if (restaurant && restaurant.id) {
+        if (restaurant && this.idFor(restaurant)) {
           this._fetchDetail(restaurant.reference);
         }
         this._setState({restaurant});

@@ -82,9 +82,6 @@ describe('references', () => {
                 this.output.set(update.data.entity);
               }
             }
-
-            onHandleDesync(handle) {
-            }
           }
         });
       `
@@ -141,9 +138,6 @@ describe('references', () => {
                 await this.output.set(reference);
               }
             }
-
-            onHandleDesync(handle) {
-            }
           }
         });
       `
@@ -199,9 +193,6 @@ describe('references', () => {
                 await result.dereference();
                 this.output.set(result.entity);
               }
-            }
-
-            onHandleDesync(handle) {
             }
           }
         });
@@ -294,9 +285,7 @@ describe('references', () => {
                     if (foo.shortForm === model.value[model.value.length - 1]) {
                       let ref = new Reference(model);
                       await ref.stored;
-                      foo.mutate(f => {
-                        f.result = ref;
-                      });
+                      this.mutate(foo, {result: ref});
                       this.output.store(foo);
                     }
                   }
@@ -377,9 +366,6 @@ describe('references', () => {
                 }
               }
             }
-
-            onHandleDesync(handle) {
-            }
           }
         });
       `
@@ -459,9 +445,6 @@ describe('references', () => {
                 this.results = [];
                 this.output.set(new this.output.entityClass(data));
               }
-            }
-
-            onHandleDesync(handle) {
             }
           }
         });

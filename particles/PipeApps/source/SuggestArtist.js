@@ -14,7 +14,7 @@ defineParticle(({DomParticle}) => {
   return class extends DomParticle {
     update({artist}) {
       if (artist) {
-        const json = JSON.stringify(artist.rawData);
+        const json = JSON.stringify(artist);
         this.updateSingleton('suggestion', {json});
       }
     }

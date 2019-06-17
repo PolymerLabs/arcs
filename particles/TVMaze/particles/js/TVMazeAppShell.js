@@ -115,11 +115,12 @@ defineParticle(({DomParticle, html, log}) => {
         //
         const watchers = [];
         friends.forEach(friend => {
-          const friendShows = this.boxQuery(boxedShows, friend.id);
+          const friendId = this.idFor(friend);
+          const friendShows = this.boxQuery(boxedShows, friendId);
           if (friendShows.find(friendShow => friendShow.showid === show.showid)) {
             watchers.push({
-              id: friend.id,
-              name: getUserName(friend.id)
+              id: friendId,
+              name: getUserName(friendId)
             });
           }
         });
