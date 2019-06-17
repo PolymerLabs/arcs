@@ -63,12 +63,12 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
   }]
 };
 
-const build = () => buildPath('.');
-const webpack = () => webpackPkg('webpack');
-const webpackTools = () => webpackPkg('webpack-tools');
+const build = buildPath('.');
+const webpack = webpackPkg('webpack');
+const webpackTools = webpackPkg('webpack-tools');
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
-  languageServer: [peg, build, () => buildPath('./src/tools/aml-language-server', ['vscode-jsonrpc', 'vscode-languageserver']), () => webpackPkg('webpack-languageserver'), languageServer],
+  languageServer: [peg, build, buildPath('./src/tools/aml-language-server', ['vscode-jsonrpc', 'vscode-languageserver']), webpackPkg('webpack-languageserver'), languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
@@ -330,21 +330,23 @@ function railroad(): boolean {
   return true;
 }
 
-function buildPath(path: string, deps?: string[]): boolean {
-  if (!tsc(path)) {
-    console.log('build::tsc failed');
-    if (deps && deps.length > 0) {
-      console.log(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
+function buildPath(path: string, deps?: string[]): () => boolean {
+  return () => {
+    if (!tsc(path)) {
+      console.log('build::tsc failed');
+      if (deps && deps.length > 0) {
+        console.log(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
+      }
+      return false;
     }
-    return false;
-  }
 
-  if (!link(findProjectFiles('src', null, fullPath => /\.js$/.test(fullPath)))) {
-    console.log('build::link failed');
-    return false;
-  }
+    if (!link(findProjectFiles('src', null, fullPath => /\.js$/.test(fullPath)))) {
+      console.log('build::link failed');
+      return false;
+    }
 
-  return true;
+    return true;
+  };
 }
 
 function tsc(path: string): boolean {
@@ -459,12 +461,14 @@ function licenses(): boolean {
   return result.success;
 }
 
-function webpackPkg(pkg: string): boolean {
-  const result = saneSpawnWithOutput('npm', ['run', `build:${pkg}`]);
-  if (result.stdout) {
-    console.log(result.stdout);
-  }
-  return result.success;
+function webpackPkg(pkg: string): () => boolean {
+  return () => {
+    const result = saneSpawnWithOutput('npm', ['run', `build:${pkg}`]);
+    if (result.stdout) {
+      console.log(result.stdout);
+    }
+    return result.success;
+  };
 }
 
 type SpawnOptions = {
