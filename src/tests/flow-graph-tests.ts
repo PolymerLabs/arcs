@@ -11,6 +11,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
 import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath, Check} from '../dataflow/flow-graph.js';
+import {ParticleTrustClaimType, ParticleTrustClaim} from '../runtime/manifest-ast-nodes.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -117,11 +118,12 @@ describe('FlowGraph', () => {
     `);
     const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.claims.size, 1);
-    assert.equal(node.claims.get('foo'), 'trusted');
+    const expectedClaim = {claimType: ParticleTrustClaimType.IsTag, handle: 'foo', tag: 'trusted'};
+    assert.deepNestedInclude(node.claims.get('foo'), expectedClaim);
     assert.isEmpty(node.checks);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].claim, 'trusted');
+    assert.deepNestedInclude(graph.edges[0].claim, expectedClaim);
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {
@@ -430,8 +432,16 @@ class TestNode extends Node {
   readonly inEdges: TestEdge[] = [];
   readonly outEdges: TestEdge[] = [];
   
+  addInEdge() {
+    throw new Error('Unimplemented.');
+  }
+
+  addOutEdge() {
+    throw new Error('Unimplemented.');
+  }
+
   evaluateCheck(check: Check, edge: Edge): CheckResult {
-    return {type: CheckResultType.Success};
+    throw new Error('Unimplemented.');
   }
 }
 

@@ -19,6 +19,7 @@ import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
+import {ParticleTrustClaimType} from '../manifest-ast-nodes.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -1977,8 +1978,35 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.equal(particle.trustClaims.size, 2);
-      assert.equal(particle.trustClaims.get('output1'), 'property1');
-      assert.equal(particle.trustClaims.get('output2'), 'property2');
+      assert.deepNestedInclude(particle.trustClaims.get('output1'), {
+        claimType: ParticleTrustClaimType.IsTag,
+        handle: 'output1',
+        tag: 'property1',
+      });
+      assert.deepNestedInclude(particle.trustClaims.get('output2'), {
+        claimType: ParticleTrustClaimType.IsTag,
+        handle: 'output2',
+        tag: 'property2',
+      });
+      assert.isEmpty(particle.trustChecks);
+    });
+
+    it('supports "derives from" claims with multiple parents', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          out T {} output
+          claim output derives from input1 and input2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.equal(particle.trustClaims.size, 1);
+      assert.deepNestedInclude(particle.trustClaims.get('output'), {
+        claimType: ParticleTrustClaimType.DerivesFrom,
+        handle: 'output',
+        parentHandles: ['input1', 'input2'],
+      });
       assert.isEmpty(particle.trustChecks);
     });
 
@@ -2039,6 +2067,32 @@ resource SomeName
           out T {} foo
           check foo is trusted
       `), `Can't make a check on handle foo (not an input handle)`);
+    });
+
+    it(`doesn't allow multiple different claims for the same output`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          out T {} foo
+          claim foo is trusted
+          claim foo is trusted
+      `), `Can't make multiple claims on the same output (foo)`);
+    });
+
+    it(`doesn't allow multiple different checks for the same input`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          in T {} foo
+          check foo is trusted
+          check foo is trusted
+      `), `Can't make multiple checks on the same input (foo)`);
+    });
+
+    it(`doesn't allow claims to specify more than one tag`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          out T {} output
+          claim output is tag1 and tag2
+      `, 'asgfasedfgasf'));
     });
   });
 });

@@ -257,7 +257,7 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
-      } else if (item.kind === 'particle-trust-claim') {
+      } else if (item.kind === 'particle-trust-claim-is-tag' || item.kind === 'particle-trust-claim-derives-from') {
         trustClaims.push(item);
       } else if (item.kind === 'particle-trust-check') {
         trustChecks.push(item);
@@ -297,14 +297,32 @@ ParticleItem "a particle item"
   / ParticleTrustCheck
 
 ParticleTrustClaim
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  = ParticleTrustClaimIsTag
+  / ParticleTrustClaimDerivesFrom
+
+ParticleTrustClaimIsTag
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace tag:lowerIdent eolWhiteSpace
   {
     return {
-      kind: 'particle-trust-claim',
+      kind: 'particle-trust-claim-is-tag',
+      claimType: AstNode.ParticleTrustClaimType.IsTag,
       location: location(),
       handle,
-      trustTag,
-    } as AstNode.ParticleTrustClaim;
+      tag,
+    } as AstNode.ParticleTrustClaimIsTag;
+  }
+
+ParticleTrustClaimDerivesFrom
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and' whiteSpace lowerIdent)* eolWhiteSpace
+  {
+    const parentHandles: string[] = [first, ...rest.map(item => item[3])];
+    return {
+      kind: 'particle-trust-claim-derives-from',
+      claimType: AstNode.ParticleTrustClaimType.DerivesFrom,
+      location: location(),
+      handle,
+      parentHandles,
+    } as AstNode.ParticleTrustClaimDerivesFrom;
   }
 
 ParticleTrustCheck

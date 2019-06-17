@@ -12,6 +12,7 @@ import {Particle} from '../runtime/recipe/particle';
 import {Handle} from '../runtime/recipe/handle';
 import {HandleConnection} from '../runtime/recipe/handle-connection';
 import {assert} from '../platform/assert-web';
+import {ParticleTrustClaim, ParticleTrustClaimType, ParticleTrustClaimIsTag} from '../runtime/manifest-ast-nodes';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -193,14 +194,14 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   switch (connection.direction) {
     case 'in': {
       const edge = new ParticleInput(particleNode, handleNode, connection.name);
-      particleNode.inEdges.push(edge);
-      handleNode.outEdges.push(edge);
+      particleNode.addInEdge(edge);
+      handleNode.addOutEdge(edge);
       return edge;
     }
     case 'out': {
       const edge = new ParticleOutput(particleNode, handleNode, connection.name);
-      particleNode.outEdges.push(edge);
-      handleNode.inEdges.push(edge);
+      particleNode.addOutEdge(edge);
+      handleNode.addInEdge(edge);
       return edge;
     }
     case 'inout': // TODO: Handle inout directions.
@@ -217,9 +218,9 @@ export class Check {
       readonly acceptedTags: readonly string[]) {}
 
   /** Returns true if the given claim satisfies the check condition. */
-  checkAgainstClaim(claim: string): boolean {
+  checkAgainstClaim(claim: ParticleTrustClaimIsTag): boolean {
     for (const tag of this.acceptedTags) {
-      if (tag === claim) {
+      if (tag === claim.tag) {
         return true;
       }
     }
@@ -232,8 +233,11 @@ export class Check {
 }
 
 export abstract class Node {
-  abstract readonly inEdges: Edge[];
-  abstract readonly outEdges: Edge[];
+  abstract readonly inEdges: readonly Edge[];
+  abstract readonly outEdges: readonly Edge[];
+
+  abstract addInEdge(edge: Edge): void;
+  abstract addOutEdge(edge: Edge): void;
 
   abstract evaluateCheck(check: Check, edgeToCheck: Edge, path: BackwardsPath): CheckResult;
 
@@ -256,17 +260,18 @@ export interface Edge {
   /** The qualified name of the handle this edge represents, e.g. "MyParticle.output1". */
   readonly label: string;
 
-  readonly claim?: string;
+  readonly claim?: ParticleTrustClaim;
   readonly check?: Check;
 }
 
 class ParticleNode extends Node {
-  readonly inEdges: ParticleInput[] = [];
-  readonly outEdges: ParticleOutput[] = [];
+  readonly inEdgesByName: Map<string, ParticleInput> = new Map();
+  readonly outEdgesByName: Map<string, ParticleOutput> = new Map();
+
   readonly name: string;
 
   // Maps from handle names to tags.
-  readonly claims: Map<string, string>;
+  readonly claims: Map<string, ParticleTrustClaim>;
   readonly checks: Map<string, Check> = new Map();
 
   constructor(particle: Particle) {
@@ -278,6 +283,22 @@ class ParticleNode extends Node {
       this.checks.set(handle, new Check(tags));
     });
   }
+    
+  addInEdge(edge: ParticleInput) {
+    this.inEdgesByName.set(edge.handleName, edge);
+  }
+  
+  addOutEdge(edge: ParticleOutput) {
+    this.outEdgesByName.set(edge.handleName, edge);
+  }
+  
+  get inEdges(): readonly Edge[] {
+    return [...this.inEdgesByName.values()];
+  }
+
+  get outEdges(): readonly Edge[] {
+    return [...this.outEdgesByName.values()];
+  }
 
   evaluateCheck(check: Check, edgeToCheck: ParticleOutput, path: BackwardsPath): CheckResult {
     assert(this.outEdges.includes(edgeToCheck), 'Particles can only check their own out-edges.');
@@ -285,10 +306,30 @@ class ParticleNode extends Node {
     // First check if this particle makes an explicit claim on this out-edge.
     const claim = this.claims.get(edgeToCheck.handleName);
     if (claim) {
-      if (check.checkAgainstClaim(claim)) {
-        return {type: CheckResultType.Success};
-      } else {
-        return {type: CheckResultType.Failure, reason: `Check '${check}' failed: found claim '${claim}' on '${edgeToCheck.label}' instead.`};
+      switch (claim.claimType) {
+        case ParticleTrustClaimType.IsTag: {
+          // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise fail.
+          if (check.checkAgainstClaim(claim)) {
+            return {type: CheckResultType.Success};
+          } else {
+            return {
+              type: CheckResultType.Failure,
+              reason: `Check '${check}' failed: found claim '${claim.tag}' on '${edgeToCheck.label}' instead.`,
+            };
+          }
+        }
+        case ParticleTrustClaimType.DerivesFrom: {
+          // The particle's output derives from some of its inputs. Continue searching the graph from those inputs.
+          const checkNext: BackwardsPath[] = [];
+          for (const handle of claim.parentHandles) {
+            const edge = this.inEdgesByName.get(handle);
+            assert(!!edge, `Claim derives from unknown handle: ${handle}.`);
+            checkNext.push(path.withNewEdge(edge));
+          }
+          return {type: CheckResultType.KeepGoing, checkNext};
+        }
+        default:
+          assert(false, 'Unknown claim type.');
       }
     }
 
@@ -327,7 +368,7 @@ class ParticleOutput implements Edge {
   readonly handleName: string;
 
   /* Optional claim on this output. */
-  readonly claim?: string;
+  readonly claim?: ParticleTrustClaim;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, outputName: string) {
     this.start = particleNode;
@@ -355,6 +396,14 @@ class HandleNode extends Node {
       });
     });
     return connections;
+  }
+
+  addInEdge(edge: ParticleOutput) {
+    this.inEdges.push(edge);
+  }
+
+  addOutEdge(edge: ParticleInput) {
+    this.outEdges.push(edge);
   }
 
   evaluateCheck(check: Check, edgeToCheck: ParticleInput, path: BackwardsPath): CheckResult {
