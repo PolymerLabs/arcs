@@ -10,7 +10,7 @@
 const path = require('path');
 const webpack = require('webpack');
 
-const buildDir = '../../../build/aml-language-server';
+const buildDir = './build/tools/aml-language-server';
 
 // Package Tools CLIs into self contained .js files to be used with plain node.
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, `../../../dist/tools`)
+    path: path.resolve(__dirname, `../../../dist/tools/aml-language-server`)
   },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
