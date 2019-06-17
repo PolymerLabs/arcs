@@ -1,17 +1,38 @@
 package arcs.api;
 
 public class Type {
-    public final String tag;
-    // TODO: add more fields.
+    enum Tag {
+        UNKNOWN, ENTITY, COLLECTION;
+        public boolean isCollection() {
+            return this == COLLECTION;
+        }
+        public boolean isEntity() {
+            return this == ENTITY;
+        }
+        static Tag fromString(String tag) {
+            switch (tag) {
+                case "Collection": return Tag.COLLECTION;
+                case "Entity": return Tag.ENTITY;
+                default: return UNKNOWN;
+            }
+        }
+    }
 
-    public Type(String tag) {
+    public final Tag tag;
+
+    public Type(Tag tag) {
         this.tag = tag;
     }
 
     public boolean isCollection() {
-        return this.tag == "Collection";
+        return this.tag.isCollection();
     }
+
+    public boolean isEntity() {
+        return this.tag.isEntity();
+    }
+
     public static Type fromJson(PortableJson json) {
-        return new Type(json.getString("tag"));
+        return new Type(Tag.fromString(json.getString("tag")));
     }
 }

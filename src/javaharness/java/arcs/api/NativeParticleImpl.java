@@ -1,13 +1,11 @@
 package arcs.api;
 
-import arcs.api.NativeParticle;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class NativeParticleImpl implements NativeParticle {
   public ParticleSpec spec;
-  public Map<String, PortableJson> handles;
+  public Map<String, Handle> handles;
 
   public NativeParticleImpl() {
     this.handles = new HashMap();

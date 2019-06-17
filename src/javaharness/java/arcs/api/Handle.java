@@ -1,7 +1,5 @@
 package arcs.api;
 
-import arcs.api.NativeParticle;
-
 public abstract class Handle {
   public StorageProxy storage;
   public String name;
