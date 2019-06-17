@@ -12,13 +12,13 @@ import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
-import {Type} from '../type.js';
+import {Type, SlotType} from '../type.js';
+import {SlotInfo} from '../slot-info.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Fate} from '../manifest-ast-nodes.js';
 
 export class Handle {
@@ -97,7 +97,23 @@ export class Handle {
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
-    // TODO: type?
+    const resolvedType = this.type.resolvedType();
+    if (resolvedType.canWriteSuperset && resolvedType.canWriteSuperset.tag === 'Slot') {
+      this._fate = this._fate === '?' ? '`slot' : this._fate;
+    }
+
+    if (resolvedType.canReadSubset && resolvedType.canReadSubset.tag === 'Slot') {
+      this._fate = this._fate === '?' ? '`slot' : this._fate;
+    }
+
+    const collectionType = resolvedType && resolvedType.isCollectionType() && resolvedType.collectionType;
+    if (collectionType && collectionType.canWriteSuperset && collectionType.canWriteSuperset.tag === 'Slot') {
+      this._fate = this._fate === '?' ? '`slot' : this._fate;
+    }
+
+    if (collectionType && collectionType.canReadSubset && collectionType.canReadSubset.tag === 'Slot') {
+      this._fate = this._fate === '?' ? '`slot' : this._fate;
+    }
   }
 
   _finishNormalize() {
@@ -177,7 +193,7 @@ export class Handle {
     return TypeChecker.processTypeList(handleType, typeSet);
   }
 
-  _isValid(options: IsValidOptions) {
+  _isValid(options: IsValidOptions): boolean {
     const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
@@ -189,18 +205,22 @@ export class Handle {
       }
       connection.tags.forEach(tag => tags.add(tag));
     }
+    if (!this.mappedType && this.fate === '`slot') {
+      this._mappedType = new SlotType(new SlotInfo(undefined, undefined));
+    }
     const type = Handle.resolveEffectiveType(this._mappedType, this._connections);
-    if (type) {
-      this._type = type;
-      this._tags.forEach(tag => tags.add(tag));
-      this._tags = [...tags];
-      return true;
+    if (!type) {
+      if (options && options.errors) {
+        // TODO: pass options to TypeChecker.processTypeList for better error.
+        options.errors.set(this, `Type validations failed for handle '${this}' with type ${this._mappedType} and fate ${this.fate}`);
+      }
+      return false;
     }
-    if (options && options.errors) {
-      // TODO: pass options to TypeChecker.processTypeList for better error.
-      options.errors.set(this, `Type validations failed for handle '${this}'`);
-    }
-    return false;
+
+    this._type = type;
+    this._tags.forEach(tag => tags.add(tag));
+    this._tags = [...tags];
+    return true;
   }
 
   isResolved(options = undefined): boolean {
@@ -268,7 +288,10 @@ export class Handle {
       result.push(`'${this.id}'`);
     }
     result.push(...this.tags.map(a => `#${a}`));
-    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    const name = (nameMap && nameMap.get(this)) || this.localName;
+    if (name) {
+      result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    }
     if (this.type) {
       result.push('//');
       if (this.type.isResolved()) {

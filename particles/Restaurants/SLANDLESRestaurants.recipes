@@ -31,4 +31,4 @@ recipe SlandleRestaurants
     selected = selected
   SlandleRestaurantDetail
     restaurant = selected
-  description `find restaurants near ${RestaurantFind.location}`
+  description `find restaurants near ${RestaurantFind.location} using SLANDLES`

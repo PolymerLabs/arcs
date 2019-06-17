@@ -91,7 +91,7 @@ export class TypeChecker {
     return getResolution(candidate);
   }
 
-  static _tryMergeTypeVariable(base: Type, onto: Type) {
+  static _tryMergeTypeVariable(base: Type, onto: Type): Type {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
     if (primitiveBase instanceof TypeVariable) {

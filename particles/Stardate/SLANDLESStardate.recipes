@@ -1,0 +1,13 @@
+import '../Common/Description.schema'
+import './SLANDLESStardateTOS.particle'
+import './SLANDLESStardateDisplay.particle'
+
+recipe SlandleStardateTOS
+  create as stardate
+  create as destination
+  SlandleStardateTOS
+    stardate = stardate
+    destination = destination
+  SlandleStardateDisplay
+    stardate = stardate
+    destination = destination

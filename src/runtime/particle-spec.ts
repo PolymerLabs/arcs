@@ -238,6 +238,10 @@ export class ParticleSpec {
     return this.slotConnections.get(slotName);
   }
 
+  get slotConnectionNames(): string[] {
+    return [...this.slotConnections.keys()];
+  }
+
   get primaryVerb(): string|undefined {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }

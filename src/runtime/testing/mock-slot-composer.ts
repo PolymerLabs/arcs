@@ -211,7 +211,6 @@ export class MockSlotComposer extends FakeSlotComposer {
              ((names) => names.length === 1 && names[0] === e.hostedParticle)(this._getHostedParticleNames(particle)));
     });
     if (index < 0) {
-      console.log('\tno match');
       return false;
     }
     const expectation = this.expectQueue[index];
