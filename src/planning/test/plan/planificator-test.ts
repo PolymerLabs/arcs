@@ -14,6 +14,7 @@ import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
+import {floatingPromiseToAudit} from '../../../runtime/util.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
@@ -115,7 +116,8 @@ describe('remote planificator', () => {
         await createConsumePlanificator(plannerStorageKeyBase, manifestFilename);
     const producePlanificator = await createProducePlanificator(plannerStorageKeyBase,
         manifestFilename, consumePlanificator.consumer.result.store, consumePlanificator.searchStore);
-    producePlanificator.requestPlanning({contextual: true});
+    // TODO: Awaiting this promise causes tests to fail...
+    floatingPromiseToAudit(producePlanificator.requestPlanning({contextual: true}));
     return {consumePlanificator, producePlanificator};
   }
 

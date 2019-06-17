@@ -23,6 +23,7 @@ import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Literal, Literalizable} from './hot.js';
+import {floatingPromiseToAudit} from './util.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -158,7 +159,8 @@ class ThingMapper {
       id = this._newIdentifier();
     }
     assert(!this._idMap.has(id), `${requestedId ? 'requestedId' : (thing.apiChannelMappingId ? 'apiChannelMappingId' : 'newIdentifier()')} ${id} already in use`);
-    this.establishThingMapping(id, thing);
+    // TODO: Awaiting this promise causes tests to fail...
+    floatingPromiseToAudit(this.establishThingMapping(id, thing));
     return id;
   }
 
@@ -427,7 +429,7 @@ export abstract class PECOuterPort extends APIPort {
     super(messagePort, 'o');
     this.inspector = arc.inspector;
     if (this.inspector) {
-      this.inspector.onceActive.then(() => this.DevToolsConnected());
+      this.inspector.onceActive.then(() => this.DevToolsConnected(), e => console.error(e));
     }
   }
 

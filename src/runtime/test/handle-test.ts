@@ -20,6 +20,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
+import {floatingPromiseToAudit} from '../util.js';
 
 describe('Handle', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -123,8 +124,9 @@ describe('Handle', () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), loader: new Loader(), context: undefined});
     const barStore = await arc.createStore(Bar.type.collectionOf()) as CollectionStorageProvider;
     const bar = new Bar({id: 0, value: 'a Bar'});
-    barStore.store(bar, ['key1']);
-    barStore.remove(bar.id, ['key1']);
+    // TODO: Awaiting these promises causes the test to fail...
+    floatingPromiseToAudit(barStore.store(bar, ['key1']));
+    floatingPromiseToAudit(barStore.remove(bar.id, ['key1']));
     assert.isEmpty((await barStore.toList()));
   });
 

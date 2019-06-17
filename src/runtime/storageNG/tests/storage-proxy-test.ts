@@ -95,7 +95,7 @@ describe('StorageProxy', async () => {
     mockStore.onProxyMessage = async message => { 
       mockStore.lastCapturedMessage = message;
       const crdtData = {values: new Map([['1', new Map([['A', 1]])]]), version: new Map([['A', 1]])};
-      storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1}); 
+      await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1}); 
       return true; 
     };
 

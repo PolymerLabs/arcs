@@ -19,6 +19,7 @@ import {VolatileStorage} from '../storage/volatile-storage.js';
 import {EntityType} from '../type.js';
 import {EntityInterface} from '../entity.js';
 import {Particle} from '../particle.js';
+import {floatingPromiseToAudit} from '../util.js';
 
 const CAN_READ = true;
 const CAN_WRITE = true;
@@ -632,8 +633,9 @@ describe('storage-proxy', () => {
                         'InitializeProxy:bar', 'SynchronizeProxy:bar');
 
     // Reading should call through to the backing store.
-    fooHandle.get();
-    barHandle.toList();
+    // TODO: Awaiting this promise causes tests to fail...
+    floatingPromiseToAudit(fooHandle.get());
+    floatingPromiseToAudit(barHandle.toList());
     await engine.verify('HandleGet:foo', 'HandleToList:bar');
   });
 
@@ -654,8 +656,9 @@ describe('storage-proxy', () => {
     await engine.verify('InitializeProxy:foo', 'InitializeProxy:bar');
 
     // Reading should call through to the backing store.
-    fooHandle.get();
-    barHandle.toList();
+    // TODO: Awaiting this promise causes tests to fail...
+    floatingPromiseToAudit(fooHandle.get());
+    floatingPromiseToAudit(barHandle.toList());
     await engine.verify('HandleGet:foo', 'HandleToList:bar');
   });
 

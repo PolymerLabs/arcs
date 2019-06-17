@@ -23,6 +23,7 @@ import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
+import {floatingPromiseToAudit} from './util.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -86,11 +87,13 @@ export class ParticleExecutionHost {
       }
 
       onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
-        (handle as SingletonStorageProvider).set(data, particleId, barrier);
+        // TODO: Awaiting this promise causes tests to fail...
+        floatingPromiseToAudit((handle as SingletonStorageProvider).set(data, particleId, barrier));
       }
 
       onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
-        (handle as SingletonStorageProvider).clear(particleId, barrier);
+        // TODO: Awaiting this promise causes tests to fail...
+        floatingPromiseToAudit((handle as SingletonStorageProvider).clear(particleId, barrier));
       }
 
       async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
@@ -230,7 +233,8 @@ export class ParticleExecutionHost {
                     pec.arc._registerStore(store, []);
                   }
                 });
-                arc.instantiate(recipe0);
+                // TODO: Awaiting this promise causes tests to fail...
+                floatingPromiseToAudit(arc.instantiate(recipe0));
               } else {
                 error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;
               }
