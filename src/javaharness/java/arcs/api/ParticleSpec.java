@@ -18,12 +18,10 @@ public class ParticleSpec {
     }
 
     public boolean isInput(String name) {
-        HandleConnectionSpec connection = this.handleConnectionMap.get(name);
-        return connection.direction == "in" || connection.direction == "inout";
+        return this.handleConnectionMap.get(name).isInput();
     }
     public boolean isOutput(String name) {
-        HandleConnectionSpec connection = this.handleConnectionMap.get(name);
-        return connection.direction == "out" || connection.direction == "inout";
+        return this.handleConnectionMap.get(name).isOutput();
     }
 
     class HandleConnectionSpec {
@@ -35,8 +33,8 @@ public class ParticleSpec {
             this.direction = direction;
         }
 
-        boolean isInput() { return this.direction == "in" || this.direction == "inout"; }
-        boolean isOutput() { return this.direction == "out" || this.direction == "inout"; }
+        boolean isInput() { return this.direction.equals("in") || this.direction.equals("inout"); }
+        boolean isOutput() { return this.direction.equals("out") || this.direction.equals("inout"); }
     }
 
     public static ParticleSpec fromJson(PortableJson json) {
