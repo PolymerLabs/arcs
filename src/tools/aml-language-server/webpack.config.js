@@ -24,7 +24,7 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, `../dist/tools`)
+    path: path.resolve(__dirname, `../../../dist/tools`)
   },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
