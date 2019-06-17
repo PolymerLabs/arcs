@@ -1,6 +1,6 @@
 package arcs.api;
 
-public class Thing<T>  {
+public class Thing<T> {
     public final T thing;
 
     Thing(T thing) {
@@ -8,4 +8,14 @@ public class Thing<T>  {
     }
 
     public T get() { return this.thing; }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof Thing && get() == ((Thing)other).get();
+    }
+
+    @Override
+    public int hashCode() {
+        return get().hashCode();
+    }
 }
