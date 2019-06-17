@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
 import {Modality} from './modality.js';
 import {Direction, ParticleTrustClaim, ParticleTrustCheck, ParticleTrustClaimType} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -361,10 +360,16 @@ export class ParticleSpec {
     const results: Map<string, ParticleTrustClaim> = new Map();
     if (claims) {
       claims.forEach(claim => {
-        assert(!results.has(claim.handle), `Can't make multiple claims on the same output (${claim.handle}).`);
-        assert(this.handleConnectionMap.has(claim.handle), `Can't make a claim on unknown handle ${claim.handle}.`);
+        if (results.has(claim.handle)) {
+          throw new Error(`Can't make multiple claims on the same output (${claim.handle}).`);
+        }
+        if (!this.handleConnectionMap.has(claim.handle)) {
+          throw new Error(`Can't make a claim on unknown handle ${claim.handle}.`);
+        }
         const handle = this.handleConnectionMap.get(claim.handle);
-        assert(handle.isOutput, `Can't make a claim on handle ${claim.handle} (not an output handle).`);
+        if (!handle.isOutput) {
+          throw new Error(`Can't make a claim on handle ${claim.handle} (not an output handle).`);
+        }
         results.set(claim.handle, claim);
       });
     }
@@ -375,10 +380,16 @@ export class ParticleSpec {
     const results: Map<string, string[]> = new Map();
     if (checks) {
       checks.forEach(check => {
-        assert(!results.has(check.handle), `Can't make multiple checks on the same input (${check.handle}).`);
-        assert(this.handleConnectionMap.has(check.handle), `Can't make a check on unknown handle ${check.handle}.`);
+        if (results.has(check.handle)) {
+          throw new Error(`Can't make multiple checks on the same input (${check.handle}).`);
+        }
+        if (!this.handleConnectionMap.has(check.handle)) {
+          throw new Error(`Can't make a check on unknown handle ${check.handle}.`);
+        }
         const handle = this.handleConnectionMap.get(check.handle);
-        assert(handle.isInput, `Can't make a check on handle ${check.handle} (not an input handle).`);
+        if (!handle.isInput) {
+          throw new Error(`Can't make a check on handle ${check.handle} (not an input handle).`);
+        }
         results.set(check.handle, check.trustTags);
       });
     }
