@@ -63,8 +63,12 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
   }]
 };
 
+const build = () => buildPath('.');
+const webpack = () => webpackPkg('webpack');
+const webpackTools = () => webpackPkg('webpack-tools');
+
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
-  languageServer: [peg, build, webpackTools, languageServer],
+  languageServer: [peg, build, () => buildPath('./src/tools/aml-language-server', ['vscode-jsonrpc', 'vscode-languageserver']), () => webpackPkg('webpack-languageserver'), languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
@@ -326,9 +330,12 @@ function railroad(): boolean {
   return true;
 }
 
-function build(): boolean {
-  if (!tsc()) {
+function buildPath(path: string, deps?: string[]): boolean {
+  if (!tsc(path)) {
     console.log('build::tsc failed');
+    if (deps && deps.length > 0) {
+      console.log(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
+    }
     return false;
   }
 
@@ -340,8 +347,8 @@ function build(): boolean {
   return true;
 }
 
-function tsc(): boolean {
-  const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics']);
+function tsc(path: string): boolean {
+  const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics', '-p', path]);
   if (result.success) {
     console.log(result.stdout);
   }
@@ -452,16 +459,12 @@ function licenses(): boolean {
   return result.success;
 }
 
-function webpack(): boolean {
-  const result = saneSpawnWithOutput('npm', ['run', 'build:webpack']);
+function webpackPkg(pkg: string): boolean {
+  const result = saneSpawnWithOutput('npm', ['run', `build:${pkg}`]);
   if (result.stdout) {
     console.log(result.stdout);
   }
   return result.success;
-}
-
-function webpackTools() {
-  return saneSpawn('npm', ['run', 'build:webpack-tools'], {stdio: 'inherit'});
 }
 
 type SpawnOptions = {
