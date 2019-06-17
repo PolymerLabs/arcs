@@ -1,8 +1,11 @@
 #!/bin/bash
 
+set -e
+
 invoke() {
   # export EMCC_DEBUG=1 for debug info
-  em++ -s EMIT_EMSCRIPTEN_METADATA -std=c++17 -O3 test-particle.cc -o $1
+  em++ -s "EXPORTED_FUNCTIONS=['_malloc', '_free']" -s EMIT_EMSCRIPTEN_METADATA \
+       -std=c++17 -O3 test-particle.cc -o $1
 }
 
 if [[ $1 = -g ]]; then
