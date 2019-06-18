@@ -1,12 +1,13 @@
 /**
  * @license
- * Copyright (c) 2019 Google Inc. All rights reserved.
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {ClaimType} from './particle-claim';
 
 /**
  * Complete set of tokens used by `manifest-parser.peg`. To use this you
@@ -165,8 +166,8 @@ export interface Particle extends BaseNode {
   slots?: ParticleSlot[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
   hasParticleArgument?: boolean;  // not used in RecipeParticle
-  trustChecks?: ParticleTrustCheck[];
-  trustClaims?: ParticleTrustClaim[];
+  trustChecks?: ParticleCheckStatement[];
+  trustClaims?: ParticleClaimStatement[];
 
   // fields in RecipeParticle only
   ref?: ParticleRef | '*';
@@ -174,16 +175,10 @@ export interface Particle extends BaseNode {
   slotConnections?: RecipeParticleSlotConnection[];
 }
 
-/** The different types of trust claims that particles can make. */
-export enum ParticleTrustClaimType {
-  IsTag,
-  DerivesFrom,
-}
-
 /** A claim made by a particle, saying that one of its outputs has a particular trust tag (e.g. "claim output is foo"). */
-export interface ParticleTrustClaimIsTag extends BaseNode {
+export interface ParticleClaimIsTag extends BaseNode {
   kind: 'particle-trust-claim-is-tag';
-  claimType: ParticleTrustClaimType.IsTag;
+  claimType: ClaimType.IsTag;
   handle: string;
   tag: string;
 }
@@ -192,17 +187,17 @@ export interface ParticleTrustClaimIsTag extends BaseNode {
  * A claim made by a particle, saying that one of its outputs derives from one/some of its inputs (e.g. "claim output derives from input1 and
  * input2").
  */
-export interface ParticleTrustClaimDerivesFrom extends BaseNode {
+export interface ParticleClaimDerivesFrom extends BaseNode {
   kind: 'particle-trust-claim-derives-from';
-  claimType: ParticleTrustClaimType.DerivesFrom;
+  claimType: ClaimType.DerivesFrom;
   handle: string;
   parentHandles: string[];
 }
 
 /** A trust claim made by a particle. */
-export type ParticleTrustClaim = ParticleTrustClaimIsTag | ParticleTrustClaimDerivesFrom;
+export type ParticleClaimStatement = ParticleClaimIsTag | ParticleClaimDerivesFrom;
 
-export interface ParticleTrustCheck extends BaseNode {
+export interface ParticleCheckStatement extends BaseNode {
   kind: 'particle-trust-check';
   handle: string;
   trustTags: string[];

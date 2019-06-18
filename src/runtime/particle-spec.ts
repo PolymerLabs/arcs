@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {Direction, ParticleTrustClaim, ParticleTrustCheck, ParticleTrustClaimType} from './manifest-ast-nodes.js';
+import {Direction, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
@@ -133,8 +133,8 @@ export interface SerializedParticleSpec extends Literal {
   implBlobUrl: string | null;
   modality: string[];
   slotConnections: SerializedSlotConnectionSpec[];
-  trustClaims?: ParticleTrustClaim[];
-  trustChecks?: ParticleTrustCheck[];
+  trustClaims?: ParticleClaimStatement[];
+  trustChecks?: ParticleCheckStatement[];
 }
 
 export class ParticleSpec {
@@ -149,7 +149,7 @@ export class ParticleSpec {
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
 
   // Trust claims/checks: maps from handle name to a "trust tag".
-  trustClaims: Map<string, ParticleTrustClaim>;
+  trustClaims: Map<string, ParticleClaimStatement>;
   trustChecks: Map<string, string[]>;
 
   constructor(model: SerializedParticleSpec) {
@@ -360,8 +360,8 @@ export class ParticleSpec {
     return this.toString();
   }
 
-  private validateTrustClaims(claims: ParticleTrustClaim[]): Map<string, ParticleTrustClaim> {
-    const results: Map<string, ParticleTrustClaim> = new Map();
+  private validateTrustClaims(claims: ParticleClaimStatement[]): Map<string, ParticleClaimStatement> {
+    const results: Map<string, ParticleClaimStatement> = new Map();
     if (claims) {
       claims.forEach(claim => {
         if (results.has(claim.handle)) {
@@ -380,7 +380,7 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks?: ParticleTrustCheck[]): Map<string, string[]> {
+  private validateTrustChecks(checks?: ParticleCheckStatement[]): Map<string, string[]> {
     const results: Map<string, string[]> = new Map();
     if (checks) {
       checks.forEach(check => {

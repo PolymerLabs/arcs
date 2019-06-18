@@ -12,7 +12,8 @@ import {Particle} from '../../runtime/recipe/particle';
 import {Handle} from '../../runtime/recipe/handle';
 import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
-import {ParticleTrustClaim, ParticleTrustClaimType, ParticleTrustClaimIsTag} from '../../runtime/manifest-ast-nodes';
+import {ParticleClaimStatement, ParticleClaimIsTag} from '../../runtime/manifest-ast-nodes';
+import {ClaimType} from '../../runtime/particle-claim';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -218,7 +219,7 @@ export class Check {
       readonly acceptedTags: readonly string[]) {}
 
   /** Returns true if the given claim satisfies the check condition. */
-  checkAgainstClaim(claim: ParticleTrustClaimIsTag): boolean {
+  checkAgainstClaim(claim: ParticleClaimIsTag): boolean {
     for (const tag of this.acceptedTags) {
       if (tag === claim.tag) {
         return true;
@@ -260,7 +261,7 @@ export interface Edge {
   /** The qualified name of the handle this edge represents, e.g. "MyParticle.output1". */
   readonly label: string;
 
-  readonly claim?: ParticleTrustClaim;
+  readonly claim?: ParticleClaimStatement;
   readonly check?: Check;
 }
 
@@ -271,7 +272,7 @@ class ParticleNode extends Node {
   readonly name: string;
 
   // Maps from handle names to tags.
-  readonly claims: Map<string, ParticleTrustClaim>;
+  readonly claims: Map<string, ParticleClaimStatement>;
   readonly checks: Map<string, Check> = new Map();
 
   constructor(particle: Particle) {
@@ -307,7 +308,7 @@ class ParticleNode extends Node {
     const claim = this.claims.get(edgeToCheck.handleName);
     if (claim) {
       switch (claim.claimType) {
-        case ParticleTrustClaimType.IsTag: {
+        case ClaimType.IsTag: {
           // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise fail.
           if (check.checkAgainstClaim(claim)) {
             return {type: CheckResultType.Success};
@@ -318,7 +319,7 @@ class ParticleNode extends Node {
             };
           }
         }
-        case ParticleTrustClaimType.DerivesFrom: {
+        case ClaimType.DerivesFrom: {
           // The particle's output derives from some of its inputs. Continue searching the graph from those inputs.
           const checkNext: BackwardsPath[] = [];
           for (const handle of claim.parentHandles) {
@@ -368,7 +369,7 @@ class ParticleOutput implements Edge {
   readonly handleName: string;
 
   /* Optional claim on this output. */
-  readonly claim?: ParticleTrustClaim;
+  readonly claim?: ParticleClaimStatement;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, outputName: string) {
     this.start = particleNode;
