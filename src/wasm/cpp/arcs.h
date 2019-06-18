@@ -453,8 +453,6 @@ class Particle {
 public:
   virtual ~Particle() {}
 
-  // TODO: ensure a full match between registered and connected handles
-
   // Called by sub-class constructors to map names to their handle fields.
   void registerHandle(std::string name, Handle& handle) {
     handle.name_ = std::move(name);
@@ -462,11 +460,11 @@ public:
   }
 
   // Called by the runtime to associate the inner handle instance with the outer object.
-  Handle* connectHandle(const char* name, bool willSync) {
+  Handle* connectHandle(const char* name, bool will_sync) {
     auto pair = handles_.find(name);
     if (pair != handles_.end()) {
-      if (willSync) {
-        toSync_.insert(pair->second);
+      if (will_sync) {
+        to_sync_.insert(pair->second);
       }
       return pair->second;
     }
@@ -474,23 +472,23 @@ public:
   }
 
   void sync(Handle* handle) {
-    toSync_.erase(handle);
-    onHandleSync(handle, toSync_.empty());
+    to_sync_.erase(handle);
+    onHandleSync(handle, to_sync_.empty());
   }
 
   // Called by sub-classes to render into a slot.
-  void renderSlot(const std::string& slotName, const std::string& content) {
-    internal::render(slotName.c_str(), content.c_str());
+  void renderSlot(const std::string& slot_name, const std::string& content) {
+    internal::render(slot_name.c_str(), content.c_str());
   }
 
-  virtual void onHandleSync(Handle* handle, bool allSynced) {}
+  virtual void onHandleSync(Handle* handle, bool all_synced) {}
   virtual void onHandleUpdate(Handle* handle) {}
-  virtual void fireEvent(const std::string& slotName, const std::string& handler) {}
-  virtual void requestRender(const std::string& slotName) {}
+  virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}
+  virtual void requestRender(const std::string& slot_name) {}
 
 private:
   std::unordered_map<std::string, Handle*> handles_;
-  std::unordered_set<Handle*> toSync_;
+  std::unordered_set<Handle*> to_sync_;
 };
 
 // Defines an exported function 'newParticleName()' that the runtime will call to create
@@ -509,8 +507,8 @@ private:
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
-Handle* connectHandle(Particle* particle, const char* name, bool willSync) {
-  return particle->connectHandle(name, willSync);
+Handle* connectHandle(Particle* particle, const char* name, bool will_sync) {
+  return particle->connectHandle(name, will_sync);
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -526,13 +524,13 @@ void updateHandle(Particle* particle, Handle* handle, const char* encoded1, cons
 }
 
 EMSCRIPTEN_KEEPALIVE
-void requestRender(Particle* particle, const char* slotName) {
-  particle->requestRender(slotName);
+void requestRender(Particle* particle, const char* slot_name) {
+  particle->requestRender(slot_name);
 }
 
 EMSCRIPTEN_KEEPALIVE
-void fireEvent(Particle* particle, const char* slotName, const char* handler) {
-  particle->fireEvent(slotName, handler);
+void fireEvent(Particle* particle, const char* slot_name, const char* handler) {
+  particle->fireEvent(slot_name, handler);
 }
 
 }  // extern "C"

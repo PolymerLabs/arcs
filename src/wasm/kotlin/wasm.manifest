@@ -26,7 +26,7 @@ resource InfoResource
 store InfoStore of [Info] in InfoResource
 
 
-particle TestParticle in 'kotlin/build/bin/wasm32/mainDebugExecutable/main.wasm'
+particle TestParticle in 'build/bin/wasm32/mainDebugExecutable/main.wasm'
   consume root
   in Data data
   out Data res
