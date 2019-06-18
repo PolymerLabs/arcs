@@ -7,13 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Recipe} from '../runtime/recipe/recipe';
-import {Particle} from '../runtime/recipe/particle';
-import {Handle} from '../runtime/recipe/handle';
-import {HandleConnection} from '../runtime/recipe/handle-connection';
-import {assert} from '../platform/assert-web';
-import {ParticleClaimStatement, ParticleClaimIsTag} from '../runtime/manifest-ast-nodes';
-import {ClaimType} from '../runtime/particle-claim';
+import {Recipe} from '../../runtime/recipe/recipe';
+import {Particle} from '../../runtime/recipe/particle';
+import {Handle} from '../../runtime/recipe/handle';
+import {HandleConnection} from '../../runtime/recipe/handle-connection';
+import {assert} from '../../platform/assert-web';
+import {ParticleClaimStatement, ParticleClaimIsTag} from '../../runtime/manifest-ast-nodes';
+import {ClaimType} from '../../runtime/particle-claim';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
