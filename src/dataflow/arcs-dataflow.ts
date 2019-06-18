@@ -8,12 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowConfig} from './analysis/flow-config.js';
-import {FlowChecker} from './analysis/flow-checker.js';
-import {FlowAssertResult} from './analysis/flow-assertion.js';
+import {FlowGraph, ValidationResult} from './analysis/flow-graph.js';
 
 export {
-  FlowConfig,
-  FlowChecker,
-  FlowAssertResult
+  FlowGraph,
+  ValidationResult
 };

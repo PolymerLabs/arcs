@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowConfig, FlowChecker} from '../arcs-dataflow.js';
+import {FlowGraph, ValidationResult} from '../arcs-dataflow.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {fs} from '../../platform/fs-web.js';
@@ -17,37 +17,30 @@ import {fs} from '../../platform/fs-web.js';
 
 void (async () => {
 
-  const configFile = process.argv[1];
-  const manifestFile = process.argv[2];
-  if (configFile === undefined || manifestFile === undefined) {
-    console.error('Usage: flowcheck <config file> <manifest file>');
-    process.exit(1);
-  }
-  
-  if (!fs.existsSync(configFile)) {
-    console.error('Configuration file ' + configFile + ' not found.');
+  const manifestFile = process.argv[1];
+  if (manifestFile === undefined) {
+    console.error('Usage: flowcheck <manifest file>');
     process.exit(1);
   }
   
   let manifest : Manifest;
-  let config : FlowConfig;
   
   try {
-    config = new FlowConfig(fs.readFileSync(configFile, 'utf8'));
     manifest = await Manifest.load(manifestFile, new Loader());
   } catch (e) {
     console.error(e);
     process.exit(1);
-    // Make the compiler happy that config is always initialized.
+    // Make the compiler happy. It doesn't recognize exit as a return.
+    // TODO: Is there a compiler flag for this that we could put here?
     return;
   }
 
-  const flowchecker = new FlowChecker(config);
   manifest.allRecipes.forEach(recipe => {
+    const flowgraph = new FlowGraph(recipe);
     console.log('Checking recipe ' + recipe.name);
-    const res = flowchecker.flowcheck(recipe);
-    if (!res.result) {
-      console.error('Data-flow check failed. Reason: ' + res.reason);
+    const res = flowgraph.validateGraph();
+    if (!res.isValid) {
+      console.error('Data-flow check failed. Reasons: ' + res.failures);
       process.exit(1);
     } else {
       console.log('Data-flow check passed');
