@@ -34,8 +34,7 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
     async marshalProcessArc(msg, tid, bus) {
       const composer = composerFactory(msg.modality);
       const arc = await marshalArc(tid, composer, context, storage, bus);
-      const callback = await ingestAndObserve(msg, tid, bus, arc);
-      installPlanner(tid, bus, arc, callback);
+      await ingestAndObserve(msg, tid, bus, arc);
       //log('marshalProcessArc:', arc);
       return arc;
     },
@@ -83,14 +82,19 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
 };
 
 const ingestAndObserve = async (msg, tid, bus, arc) => {
+  let onSuggestions;
   if (msg.entity) {
     await ingestEntity(arc, msg.entity);
-    return consumeOneSuggestionCallbackFactory(tid, bus, arc);
-  } else if (msg.recipe) {
+    onSuggestions = consumeOneSuggestionCallbackFactory(tid, bus, arc);
+  }
+  else if (msg.recipe) {
     await ingestRecipe(arc, msg.recipe);
     // create a handle to use as an output slot, forward handle changes to the bus
     observeOutput(tid, bus, arc);
-    return suggestionCallbackFactory(tid, bus);
+    onSuggestions = suggestionCallbackFactory(tid, bus);
+  }
+  if (onSuggestions) {
+    await installPlanner(tid, bus, arc, onSuggestions);
   }
 };
 

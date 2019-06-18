@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Utils} from '../../lib/runtime/utils.js';
@@ -29,6 +28,13 @@ export const installPlanner = async (tid, bus, arc, suggestionsCallback) => {
   const callback = suggestionsCallbackFactory(arc, suggestionsCallback);
   planr.registerVisibleSuggestionsChangedCallback(callback);
   log(`[${arc.id.idTreeAsString()}] waiting for planner to suggest something ... might be never!`);
+  // TODO(sjmiles): planr may have generated suggestions during it's creation,
+  // to soon for callback to see them. Hack in a fix:
+  const suggestions = planr.consumer.getCurrentSuggestions();
+  if (suggestions) {
+    callback(suggestions);
+  }
+  return planr;
 };
 
 const suggestionsCallbackFactory = (arc, callback) => {

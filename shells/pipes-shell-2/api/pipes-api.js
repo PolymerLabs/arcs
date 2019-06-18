@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {storeByTag} from '../lib/utils.js';
 import {requirePipesArc} from '../lib/pipes-arc.js';
