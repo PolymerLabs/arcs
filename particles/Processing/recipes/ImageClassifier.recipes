@@ -101,8 +101,6 @@ recipe MobileNetV1ImageClassifier &mobileNetV1
   ParseLabels
     url <- modelSpec
     labels -> labels
-  PresentLabel
-    predictions <- predictions
   description `MobileNet V1`
 
 recipe MobileNetV2ImageClassifier &mobileNetV1
@@ -115,7 +113,5 @@ recipe MobileNetV2ImageClassifier &mobileNetV1
   ParseLabels
     url <- modelSpec
     labels -> labels
-  PresentLabel
-    predictions <- predictions
   description `MobileNet V2`
 
