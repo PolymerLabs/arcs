@@ -16,6 +16,8 @@ import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
+import {Check} from './particle-check.js';
+import {Claim, createClaim} from './particle-claim.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -25,7 +27,8 @@ type SerializedHandleConnectionSpec = {
   type: Type | TypeLiteral,
   isOptional: boolean,
   tags?: string[],
-  dependentConnections: SerializedHandleConnectionSpec[]
+  dependentConnections: SerializedHandleConnectionSpec[],
+  check?: string,
 };
 
 function asType(t: Type | TypeLiteral) : Type {
@@ -46,6 +49,8 @@ export class HandleConnectionSpec {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
+  claim?: Claim;
+  check?: Check;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.rawData = rawData;
@@ -147,10 +152,8 @@ export class ParticleSpec {
   implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
-
-  // Trust claims/checks: maps from handle name to a "trust tag".
-  trustClaims: Map<string, ParticleClaimStatement>;
-  trustChecks: Map<string, string[]>;
+  trustClaims: Map<string, Claim>;
+  trustChecks: Map<string, Check>;
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -360,41 +363,43 @@ export class ParticleSpec {
     return this.toString();
   }
 
-  private validateTrustClaims(claims: ParticleClaimStatement[]): Map<string, ParticleClaimStatement> {
-    const results: Map<string, ParticleClaimStatement> = new Map();
+  private validateTrustClaims(claims: ParticleClaimStatement[]): Map<string, Claim> {
+    const results: Map<string, Claim> = new Map();
     if (claims) {
       claims.forEach(claim => {
-        if (results.has(claim.handle)) {
-          throw new Error(`Can't make multiple claims on the same output (${claim.handle}).`);
-        }
-        if (!this.handleConnectionMap.has(claim.handle)) {
+        const handle = this.handleConnectionMap.get(claim.handle);
+        if (!handle) {
           throw new Error(`Can't make a claim on unknown handle ${claim.handle}.`);
         }
-        const handle = this.handleConnectionMap.get(claim.handle);
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${claim.handle} (not an output handle).`);
         }
-        results.set(claim.handle, claim);
+        if (handle.claim) {
+          throw new Error(`Can't make multiple claims on the same output (${claim.handle}).`);
+        }
+        handle.claim = createClaim(handle, claim, this.handleConnectionMap);
+        results.set(claim.handle, handle.claim);
       });
     }
     return results;
   }
 
-  private validateTrustChecks(checks?: ParticleCheckStatement[]): Map<string, string[]> {
-    const results: Map<string, string[]> = new Map();
+  private validateTrustChecks(checks?: ParticleCheckStatement[]): Map<string, Check> {
+    const results: Map<string, Check> = new Map();
     if (checks) {
       checks.forEach(check => {
-        if (results.has(check.handle)) {
-          throw new Error(`Can't make multiple checks on the same input (${check.handle}).`);
-        }
-        if (!this.handleConnectionMap.has(check.handle)) {
+        const handle = this.handleConnectionMap.get(check.handle);
+        if (!handle) {
           throw new Error(`Can't make a check on unknown handle ${check.handle}.`);
         }
-        const handle = this.handleConnectionMap.get(check.handle);
         if (!handle.isInput) {
           throw new Error(`Can't make a check on handle ${check.handle} (not an input handle).`);
         }
-        results.set(check.handle, check.trustTags);
+        if (handle.check) {
+          throw new Error(`Can't make multiple checks on the same input (${check.handle}).`); 
+        }
+        handle.check = Check.fromASTNode(handle, check);
+        results.set(check.handle, handle.check);
       });
     }
     return results;
