@@ -6,10 +6,12 @@ import java.util.Set;
 
 public class ParticleExecutionContextImpl implements ParticleExecutionContext {
     private NativeParticleLoader particleLoader;
+    private ThingMapper mapper;
 
     @Inject
     public ParticleExecutionContextImpl(NativeParticleLoader particleLoader) {
         this.particleLoader = particleLoader;
+        this.mapper = new ThingMapper("j");
     }
 
     @Override
