@@ -10,10 +10,10 @@ public class Type {
             return this == ENTITY;
         }
         static Tag fromString(String tag) {
-            switch (tag) {
-                case "Collection": return Tag.COLLECTION;
-                case "Entity": return Tag.ENTITY;
-                default: return UNKNOWN;
+            try {
+                return Tag.valueOf(tag.toUpperCase());
+            } catch(Exception e) {
+                return UNKNOWN;
             }
         }
     }
