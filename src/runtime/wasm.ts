@@ -181,11 +181,6 @@ class StringDecoder {
  */
 interface WasmDriver {
   /**
-   * Try to determine if this particular driver is needed for this module.
-   */
-  shouldRun(module: WebAssembly.Module):boolean;
-
-  /**
    * Adds required import functions into env for a given language runtime. Also initalizes
    * any fields needed on wasmParticle, such as memory, tables, etc.
    */
@@ -200,15 +195,7 @@ interface WasmDriver {
 }
 
 class EmscriptenWasmDriver implements WasmDriver {
-  shouldRun(module: WebAssembly.Module):boolean {
-      const customSections = WebAssembly.Module.customSections(module, 'emscripten_metadata');
-      if (customSections.length === 1) {
-          return true;
-      }
-      return false;
-  }
-
-  readEmscriptenMetadata(module: WebAssembly.Module) {
+   readEmscriptenMetadata(module: WebAssembly.Module) {
     // Wasm modules built by emscripten require some external memory configuration by the caller,
     // which is usually built into the glue code generated alongside the module. We're not using
     // the glue code, but if we set the EMIT_EMSCRIPTEN_METADATA flag when building, emscripten
@@ -301,15 +288,6 @@ class EmscriptenWasmDriver implements WasmDriver {
 }
 
 class KotlinWasmDriver implements WasmDriver {
-
-    shouldRun(module: WebAssembly.Module): boolean {
-        const customSections = WebAssembly.Module.customSections(module, 'emscripten_metadata');
-        if (customSections.length !== 1) {
-            return true;
-        }
-        return false;
-    }
-
   configureEnvironment(module: WebAssembly.Module, wasmParticle: WasmParticle, env: {}) {
     Object.assign(env, {
       // These two are used by launcher.cpp
@@ -379,6 +357,14 @@ export class WasmParticle extends Particle {
   private converters = new Map<Handle, EntityPackager>();
   logInfo: [string, number]|null = null;
 
+  driverForModule(module: WebAssembly.Module):WasmDriver {
+    const customSections = WebAssembly.Module.customSections(module, 'emscripten_metadata');
+    if (customSections.length === 1) {
+      return new EmscriptenWasmDriver();
+    }
+    return new KotlinWasmDriver();
+  }
+
   private wasmDrivers: WasmDriver[] = [new EmscriptenWasmDriver(), new KotlinWasmDriver()];
 
   // TODO: errors in this call (e.g. missing import or failure in particle ctor) generate two console outputs
@@ -387,6 +373,8 @@ export class WasmParticle extends Particle {
 
     // TODO: vet the imports/exports on 'module'
     const module = await WebAssembly.compile(buffer);
+
+    const driver = this.driverForModule(module);
 
     // Shared ENV between Emscripten and Kotlin
     const env = {
@@ -402,14 +390,13 @@ export class WasmParticle extends Particle {
       _render: (slotName, content) => this.renderImpl(slotName, content),
     };
 
-    const driversToRun = this.wasmDrivers.filter(driver => driver.shouldRun(module));
-    driversToRun.forEach(driver => driver.configureEnvironment(module, this, env));
+    driver.configureEnvironment(module, this, env);
 
     const global = {'NaN': NaN, 'Infinity': Infinity};
 
     this.wasm = await WebAssembly.instantiate(module, {env, global});
     this.exports = this.wasm.exports;
-    driversToRun.forEach(driver => driver.initializeInstance(this, this.wasm));
+    driver.initializeInstance(this, this.wasm);
     this.innerParticle = this.exports[`_new${this.spec.name}`]();
   }
 
