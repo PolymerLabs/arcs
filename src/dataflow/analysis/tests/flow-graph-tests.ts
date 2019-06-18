@@ -7,11 +7,11 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Manifest} from '../runtime/manifest.js';
-import {assert} from '../platform/chai-web.js';
-import {checkDefined} from '../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath, Check} from '../dataflow/flow-graph.js';
-import {ParticleTrustClaimType, ParticleTrustClaim} from '../runtime/manifest-ast-nodes.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {assert} from '../../../platform/chai-web.js';
+import {checkDefined} from '../../../runtime/testing/preconditions.js';
+import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath, Check} from '../flow-graph.js';
+import {ParticleTrustClaimType, ParticleTrustClaim} from '../../../runtime/manifest-ast-nodes.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
