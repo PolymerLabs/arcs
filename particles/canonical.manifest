@@ -10,6 +10,7 @@ import 'Words/Words.recipes'
 import 'Services/Services.recipes'
 import 'Stardate/Stardate.recipes'
 import 'Demo/Demo.recipes'
+import 'Processing/recipes/ImageClassifier.recipes'
 
 // for ArcMetaShare
 import 'Arcs/ArcMeta.schema'
@@ -21,4 +22,3 @@ import 'TicTacToe/TicTacToe.recipes'
 // Uncomment to enable native particle recipes
 import 'Native/native.recipes'
 
-import 'Processing/ImageClassifier.recipes'

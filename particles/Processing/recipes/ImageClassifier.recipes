@@ -1,0 +1,121 @@
+import '../schemas/ML.schema'
+import '../ML.particle'
+import '../ImageSelector.particle'
+import '../PresentLabel.particle'
+import '../ModelSelector.particle'
+
+store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
+resource ImgUrl
+  start
+  [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
+
+recipe ImageCapture &image
+  create #volatile as imgUrl
+  ImageSelector
+    image -> imgUrl
+    consume root
+      provide imageView as viewSlot
+  //description `load an image from a URL`
+
+store ImageSize of [Shape] 'targetImageSize' in ImgSize
+resource ImgSize
+  start
+  [{"dim": 224}, {"dim": 224}]
+
+store PixelRange of [Shape] 'imagePixelRange' in NormRange
+resource NormRange
+  start
+  [{"dim": 0}, {"dim": 255}]
+
+store ResizeOptions of ResizeOptions 'resizeOptions' in ResOpts
+resource ResOpts
+  start
+  [{"alignCorners": true}]
+
+store TensorShape of [Shape] 'batchShape' in BatchShape
+resource BatchShape
+  start
+  [{"dim": -1}, {"dim": 224}, {"dim": 224}, {"dim": 3}]
+
+store MobileNetV1 of MlModel 'MobileNetV1' in MobNetV1
+resource MobNetV1
+  start
+  [{"location": "https://$particles/Services/assets/MobileNetV1/model.json",
+    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt"}]
+
+store MobileNetV1 of MlModel 'MobileNetV2' in MobNetV2
+resource MobNetV2
+  start
+  [{"location": "https://$particles/Services/assets/MobileNetV2/model.json",
+    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt"}]
+
+recipe MobileNetImageClassifier &mobileNetClassifier
+  use as imgUrl
+  use as model
+  use as labels
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
+  create #volatile as yHat
+  create #volatile as predictions
+  ImageToTensor
+    image <- imgUrl
+    imageTensor -> imageTensor
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
+  ResizeBilinear
+    images <- normTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
+  Infer
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
+  //PresentLabel
+  //  predictions <- predictions
+  description `image classification`
+
+recipe MobileNetV1ImageClassifier &mobileNetV1
+  map 'MobileNetV1' as modelSpec
+  create #volatile as model
+  create #volatile as labels
+  LoadGraphModel
+    model <- modelSpec
+    modelReference -> model
+  ParseLabels
+    url <- modelSpec
+    labels -> labels
+  PresentLabel
+    predictions <- predictions
+  description `MobileNet V1`
+
+recipe MobileNetV2ImageClassifier &mobileNetV1
+  map 'MobileNetV2' as modelSpec
+  create #volatile as model
+  create #volatile as labels
+  LoadGraphModel
+    model <- modelSpec
+    modelReference -> model
+  ParseLabels
+    url <- modelSpec
+    labels -> labels
+  PresentLabel
+    predictions <- predictions
+  description `MobileNet V2`
+

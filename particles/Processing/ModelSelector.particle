@@ -1,4 +1,4 @@
-import '../schemas/MlModel.schema'
+import './schemas/MlModel.schema'
 
 particle ModelSelector in './js/ModelSelector.js'
   out MlModel model

@@ -1,5 +1,5 @@
-import '../schemas/Image.schema'
-import '../schemas/MlResource.schema'
+import './schemas/Image.schema'
+import './schemas/MlResource.schema'
 
 particle ImageToTensor in './js/ImageToTensor.js'
   in Image {(Text or URL) url} image

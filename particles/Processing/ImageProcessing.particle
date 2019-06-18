@@ -1,4 +1,4 @@
-import '../schemas/MlResource.schema'
+import './schemas/MlResource.schema'
 
 schema ResizeOptions
   Boolean alignCorners

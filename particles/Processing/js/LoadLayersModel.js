@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, log, resolver}) => {
 
   const handleName = 'modelReference';
 
@@ -22,10 +22,9 @@ defineParticle(({DomParticle, log}) => {
     async apply(model) {
       const model_ = await this.service({
         call: 'tf.loadLayersModel',
-        modelUrl: model.location,
+        modelUrl: resolver(model.location),
         options: model.options,
       });
-
 
       this.updateSingleton(handleName, {ref: model_});
 
@@ -36,4 +35,5 @@ defineParticle(({DomParticle, log}) => {
       }
     }
   };
+  
 });

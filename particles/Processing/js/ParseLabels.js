@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, log, resolver}) => {
 
   const handleName = 'labels';
   const delimiter = '\n';
@@ -23,13 +23,12 @@ defineParticle(({DomParticle, log}) => {
     async apply(urlEntity) {
       log('Parsing labels file...');
 
-      const url = urlEntity.labelsUrl;
+      const url = resolver(urlEntity.labelsUrl);
+      const text = await (await fetch(url)).text();
+      const labels = text.split(delimiter).map(label => ({label}));
 
-      const doc = await fetch(url).then(d => d.text());
-      const labels = doc.split(delimiter);
-      const labelsSchema = labels.map((label) => ({label}));
-
-      this.appendRawDataToHandle(handleName, labelsSchema);
+      this.clearHandle(handleName);
+      this.appendRawDataToHandle(handleName, labels);
     }
   };
 });

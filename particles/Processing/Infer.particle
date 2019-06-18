@@ -1,4 +1,4 @@
-import '../schemas/MlResource.schema'
+import './schemas/MlResource.schema'
 
 particle Infer in './js/Infer.js'
   in MlResource tensor

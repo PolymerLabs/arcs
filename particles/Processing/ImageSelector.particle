@@ -1,4 +1,4 @@
-import '../schemas/Image.schema'
+import './schemas/Image.schema'
 
 particle ImageSelector in './js/ImageSelector.js'
   out Image {(Text or URL) url} image

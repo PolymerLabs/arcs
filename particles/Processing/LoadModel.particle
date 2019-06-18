@@ -1,5 +1,5 @@
-import '../schemas/MlResource.schema'
-import '../schemas/MlModel.schema'
+import './schemas/MlResource.schema'
+import './schemas/MlModel.schema'
 
 particle LoadGraphModel in './js/LoadGraphModel.js'
   in MlModel model
