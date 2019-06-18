@@ -1,6 +1,6 @@
 package arcs.api;
 
-public class Type {
+public abstract class Type {
     enum Tag {
         UNKNOWN, ENTITY, COLLECTION;
         public boolean isCollection() {
@@ -9,7 +9,7 @@ public class Type {
         public boolean isEntity() {
             return this == ENTITY;
         }
-        static Tag fromString(String tag) {
+        public static Tag fromString(String tag) {
             try {
                 return Tag.valueOf(tag.toUpperCase());
             } catch(Exception e) {
@@ -32,7 +32,5 @@ public class Type {
         return this.tag.isEntity();
     }
 
-    public static Type fromJson(PortableJson json) {
-        return new Type(Tag.fromString(json.getString("tag")));
-    }
+    public abstract Schema getEntitySchema();
 }

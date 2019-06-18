@@ -13,10 +13,6 @@ public class ParticleSpec {
         this.implFile = implFile;
     }
 
-    private void addHandleConnection(String name, String direction) {
-        this.handleConnectionMap.put(name, new HandleConnectionSpec(name, direction));
-    }
-
     public boolean isInput(String name) {
         return this.handleConnectionMap.get(name).isInput();
     }
@@ -24,25 +20,40 @@ public class ParticleSpec {
         return this.handleConnectionMap.get(name).isOutput();
     }
 
-    class HandleConnectionSpec {
-        String name;
-        String direction;
-        // TODO: add type, isOptional and more.
-        HandleConnectionSpec(String name, String direction) {
+    public HandleConnectionSpec getConnectionByName(String name) {
+        return this.handleConnectionMap.get(name);
+    }
+
+    public static class HandleConnectionSpec {
+        public final String name;
+        public final String direction;
+        public final Type type;
+        public final boolean isOptional;
+
+        HandleConnectionSpec(String name, String direction, Type type, boolean isOptional) {
             this.name = name;
             this.direction = direction;
+            this.type = type;
+            this.isOptional = isOptional;
         }
 
         boolean isInput() { return this.direction.equals("in") || this.direction.equals("inout"); }
         boolean isOutput() { return this.direction.equals("out") || this.direction.equals("inout"); }
+
+        static HandleConnectionSpec fromJson(PortableJson json) {
+            return new HandleConnectionSpec(json.getString("name"),
+                                            json.getString("direction"),
+                                            TypeFactory.typeFromJson(json.getObject("type")),
+                                            json.getBool("isOptional"));
+        }
     }
 
     public static ParticleSpec fromJson(PortableJson json) {
         ParticleSpec spec = new ParticleSpec(json.getString("name"), json.getString("implFile"));
         PortableJson args = json.getObject("args");
         for (int i = 0; i < args.getLength(); ++i) {
-            PortableJson arg = args.getObject(i);
-            spec.addHandleConnection(arg.getString("name"), arg.getString("direction"));
+            HandleConnectionSpec handleSpec = HandleConnectionSpec.fromJson(args.getObject(i));
+            spec.handleConnectionMap.put(handleSpec.name, handleSpec);
         }
         return spec;
     }
