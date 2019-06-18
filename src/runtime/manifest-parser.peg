@@ -233,8 +233,8 @@ Particle
     let args: AstNode.ParticleArgument[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
-    const trustClaims: AstNode.ParticleTrustClaim[] = [];
-    const trustChecks: AstNode.ParticleTrustCheck[] = [];
+    const trustClaims: AstNode.ParticleClaimStatement[] = [];
+    const trustChecks: AstNode.ParticleCheckStatement[] = [];
     let description: AstNode.Description | null = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -293,40 +293,40 @@ ParticleItem "a particle item"
   / ParticleSlot
   / Description
   / ParticleHandle
-  / ParticleTrustClaim
-  / ParticleTrustCheck
+  / ParticleClaimStatement
+  / ParticleCheckStatement
 
-ParticleTrustClaim
-  = ParticleTrustClaimIsTag
-  / ParticleTrustClaimDerivesFrom
+ParticleClaimStatement
+  = ParticleClaimIsTag
+  / ParticleClaimDerivesFrom
 
-ParticleTrustClaimIsTag
+ParticleClaimIsTag
   = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace tag:lowerIdent eolWhiteSpace
   {
     return {
       kind: 'particle-trust-claim-is-tag',
-      claimType: AstNode.ParticleTrustClaimType.IsTag,
+      claimType: 'is-tag',
       location: location(),
       handle,
       tag,
-    } as AstNode.ParticleTrustClaimIsTag;
+    } as AstNode.ParticleClaimIsTag;
   }
 
-ParticleTrustClaimDerivesFrom
+ParticleClaimDerivesFrom
   = 'claim' whiteSpace handle:lowerIdent whiteSpace 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and' whiteSpace lowerIdent)* eolWhiteSpace
   {
     const parentHandles: string[] = [first, ...rest.map(item => item[3])];
     return {
       kind: 'particle-trust-claim-derives-from',
-      claimType: AstNode.ParticleTrustClaimType.DerivesFrom,
+      claimType: 'derives-from',
       location: location(),
       handle,
       parentHandles,
-    } as AstNode.ParticleTrustClaimDerivesFrom;
+    } as AstNode.ParticleClaimDerivesFrom;
   }
 
-ParticleTrustCheck
-  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleTrustCheckCondition rest:('or' whiteSpace ParticleTrustCheckCondition)* eolWhiteSpace
+ParticleCheckStatement
+  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleCheckCondition rest:('or' whiteSpace ParticleCheckCondition)* eolWhiteSpace
   {
     const trustTags: string[] = [first, ...rest.map(item => item[2])];
     return {
@@ -334,10 +334,10 @@ ParticleTrustCheck
       location: location(),
       handle,
       trustTags,
-    } as AstNode.ParticleTrustCheck;
+    } as AstNode.ParticleCheckStatement;
   }
 
-ParticleTrustCheckCondition
+ParticleCheckCondition
   = 'is' whiteSpace trustTag:lowerIdent whiteSpace?
   {
     return trustTag;
