@@ -12,7 +12,6 @@
 /* global defineParticle */
 
 defineParticle(({DomParticle, html, log}) => {
-
   const MIN_STARDATE = 1000;
   const MAX_STARDATE = 9999;
   // Via https://nasa.tumblr.com/post/150044040289/top-10-star-trek-planets-chosen-by-our-scientists
@@ -21,22 +20,13 @@ defineParticle(({DomParticle, html, log}) => {
     'Wolf 359', 'Eminar VII', 'Remus', 'Janus VI', 'Earth'
   ];
 
-  const arand = async () => Promise.resolve(Math.random());
-
   return class extends DomParticle {
-    update(props, state) {
-      if (!state.computed) {
-        state.computed = true;
-        this.computeStardate();
-      }
-      if (state.stardate) {
-        this.updateSingleton('stardate', {date: state.stardate});
-      }
-      if (state.destination) {
-        this.updateSingleton('destination', {name: state.destination});
-      }
+    update() {
+      const {stardate, destination} = this.computeStardate();
+      this.updateSingleton('stardate', {date: stardate});
+      this.updateSingleton('destination', {name: destination});
     }
-    async computeStardate() {
+    computeStardate() {
       // Aims to follow logic per https://en.wikipedia.org/wiki/Stardate#The_Original_Series_era
 
       // TODO(wkorman): Intent was to keep track of the "last stardate" within
@@ -46,10 +36,10 @@ defineParticle(({DomParticle, html, log}) => {
 
       const prefix = MIN_STARDATE;
       const remainder = MAX_STARDATE - prefix;
-      const stardate = prefix + Math.floor((await arand()) * remainder);
+      const stardate = prefix + Math.floor(Math.random() * remainder);
       const intraday = Math.trunc((new Date().getHours() / 24) * 10);
-      const destination = PLANETS[Math.floor((await arand()) * (PLANETS.length - 1))];
-      this.state = {
+      const destination = PLANETS[Math.floor(Math.random() * (PLANETS.length - 1))];
+      return {
         stardate: `${stardate}.${intraday}`,
         destination
       };
