@@ -16,7 +16,7 @@ import {Handle} from './handle';
 import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';
 import {RecipeWalker} from './recipe-walker.js';
-import {Recipe} from './recipe.js';
+import {Recipe, IsValidOptions} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {SlotUtils} from './slot-utils.js';
 
@@ -175,9 +175,8 @@ export class RecipeResolver {
   // Attempts to run basic resolution on the given recipe. Returns a new
   // instance of the recipe normalized and resolved if possible. Returns null if
   // normalization or attempting to resolve slot connection fails.
-  async resolve(recipe) {
+  async resolve(recipe, options?: IsValidOptions) {
     recipe = recipe.clone();
-    const options = {errors: new Map()};
     if (!recipe.normalize(options)) {
       console.warn(`could not normalize a recipe: ${
               [...options.errors.values()].join('\n')}.\n${recipe.toString()}`);
