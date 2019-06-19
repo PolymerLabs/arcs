@@ -20,8 +20,6 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       <button on-click="onSubmit">Submit</button>
       <br><br>
       <img src="{{url}}">
-      <br><br>
-      <div slotid="imageView"></div>
     </div>
   `;
 

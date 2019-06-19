@@ -4,18 +4,10 @@ import '../ImageSelector.particle'
 import '../PresentLabel.particle'
 import '../ModelSelector.particle'
 
-store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
-resource ImgUrl
-  start
-  [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
-
-recipe ImageCapture &image
-  create #volatile as imgUrl
-  ImageSelector
-    image -> imgUrl
-    consume root
-      provide imageView as viewSlot
-  //description `load an image from a URL`
+//store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
+//resource ImgUrl
+//  start
+//  [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
 
 store ImageSize of [Shape] 'targetImageSize' in ImgSize
 resource ImgSize
@@ -49,7 +41,7 @@ resource MobNetV2
   [{"location": "https://$particles/Services/assets/MobileNetV2/model.json",
     "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt"}]
 
-recipe MobileNetImageClassifier &mobileNetClassifier
+recipe MobileNetImageClassifier
   use as imgUrl
   use as model
   use as labels
@@ -63,6 +55,7 @@ recipe MobileNetImageClassifier &mobileNetClassifier
   create #volatile as reshapedImages
   create #volatile as yHat
   create #volatile as predictions
+  //use as predictions
   ImageToTensor
     image <- imgUrl
     imageTensor -> imageTensor
@@ -87,11 +80,9 @@ recipe MobileNetImageClassifier &mobileNetClassifier
     yHat <- yHat
     labels <- labels
     predictions -> predictions
-  //PresentLabel
-  //  predictions <- predictions
   description `image classification`
 
-recipe MobileNetV1ImageClassifier &mobileNetV1
+recipe MobileNetV1ImageClassifier
   map 'MobileNetV1' as modelSpec
   create #volatile as model
   create #volatile as labels
@@ -103,7 +94,7 @@ recipe MobileNetV1ImageClassifier &mobileNetV1
     labels -> labels
   description `MobileNet V1`
 
-recipe MobileNetV2ImageClassifier &mobileNetV1
+recipe MobileNetV2ImageClassifier
   map 'MobileNetV2' as modelSpec
   create #volatile as model
   create #volatile as labels
@@ -114,4 +105,24 @@ recipe MobileNetV2ImageClassifier &mobileNetV1
     url <- modelSpec
     labels -> labels
   description `MobileNet V2`
+
+recipe ImageCapture &image
+  create #volatile as imgUrl
+  ImageSelector
+    image -> imgUrl
+
+recipe ShowClassifierLabels
+  use as predictions
+  PresentLabel
+    predictions <- predictions
+  description `show the top k labels (and confidence values)`
+
+//recipe ImageClassfierUI
+//  create #volatile as imgUrl
+//  use as predictions
+//  ImageSelector
+//    image -> imgUrl
+//  PresentLabel
+//    predictions <- predictions
+//  description `show the top k labels (and confidence values)`
 
