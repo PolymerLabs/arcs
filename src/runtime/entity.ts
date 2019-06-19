@@ -45,8 +45,13 @@ export interface EntityStaticInterface {
 
 export type EntityClass = (new (data, userIDComponent?: string) => Entity) & EntityStaticInterface;
 
+// This class holds extra entity-related fields used by the runtime. Instances of this are stored
+// in their parent Entity via a Symbol-based key. This allows Entities to hold whatever field names
+// their Schemas describe without any possibility of names clashing. For example, an Entity can have
+// an 'id' field that is distinct (in both value and type) from the id field here. Access to this
+// class should be via the static helpers in Entity.
 class EntityInternals {
-  private readonly parent: Entity;
+  private readonly entity: Entity;
   private readonly entityClass: EntityClass;
   private readonly schema: Schema;
   private readonly context: ParticleExecutionContext;
@@ -57,9 +62,9 @@ class EntityInternals {
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
   private mutable = true;
 
-  constructor(parent: Entity, entityClass: EntityClass, schema: Schema,
+  constructor(entity: Entity, entityClass: EntityClass, schema: Schema,
               context: ParticleExecutionContext, userIDComponent?: string) {
-    this.parent = parent;
+    this.entity = entity;
     this.entityClass = entityClass;
     this.schema = schema;
     this.context = context;
@@ -133,32 +138,32 @@ class EntityInternals {
     }
 
     // Note that this does *not* trigger the error in the Entity's Proxy 'set' trap, because we're
-    // applying the field updates directly to the original Entity instance (this.parent), not the
+    // applying the field updates directly to the original Entity instance (this.entity), not the
     // Proxied version returned by the Entity constructor. Not confusing at all!
-    sanitizeAndApply(this.parent, newData, this.schema, this.context);
+    sanitizeAndApply(this.entity, newData, this.schema, this.context);
 
     // TODO: Send mutations to data store.
   }
 
   toLiteral(): EntityRawData {
-    return JSON.parse(JSON.stringify(this.parent));
+    return JSON.parse(JSON.stringify(this.entity));
   }
 
   dataClone(): EntityRawData {
     const clone = {};
     const fieldTypes = this.schema.fields;
     for (const name of Object.keys(fieldTypes)) {
-      if (this.parent[name] !== undefined) {
+      if (this.entity[name] !== undefined) {
         if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
-          if (this.parent[name]) {
-            clone[name] = this.parent[name].dataClone();
+          if (this.entity[name]) {
+            clone[name] = this.entity[name].dataClone();
           }
         } else if (fieldTypes[name] && fieldTypes[name].kind === 'schema-collection') {
-          if (this.parent[name]) {
-            clone[name] = [...this.parent[name]].map(a => a.dataClone());
+          if (this.entity[name]) {
+            clone[name] = [...this.entity[name]].map(a => a.dataClone());
           }
         } else {
-          clone[name] = this.parent[name];
+          clone[name] = this.entity[name];
         }
       }
     }
@@ -175,6 +180,8 @@ export abstract class Entity implements Storable {
   // tslint:disable-next-line: no-any
   [index: string]: any;
 
+  // Runtime-specific entity fields are held in a separate object accessed by a Symbol-based key
+  // to avoid name clashes with the Entity's Schema-based fields.
   [SYMBOL_INTERNALS]: EntityInternals;
 
   toString() {
