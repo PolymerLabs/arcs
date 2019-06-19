@@ -49,8 +49,8 @@ recipe ImageClassifierRoutine
   create #volatile as imgUrl
 
   LoadGraphModel
-    model <- modelSpec
-    modelReference -> model
+    modelSpec <- modelSpec
+    model -> model
 
   ParseLabels
     url <- modelSpec

@@ -8,20 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  return class extends DomParticle {
-    update({resource}) {
+  importScripts(resolver(`$here/tf.js`));
+
+  return class extends self.TfMixin(DomParticle) {
+    async update({resource}) {
       if (resource) {
-        this.apply(resource);
+        log('Disposing...');
+        await this.tf.dispose(resource);
+        log('Disposed.');
       }
-    }
-
-    async apply(resource_) {
-      const reference = resource_.ref;
-      log('Disposing...');
-      await this.service({call: 'tf.dispose', reference});
-      log('Disposed.');
     }
   };
 });

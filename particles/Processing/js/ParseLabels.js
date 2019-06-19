@@ -10,25 +10,21 @@
 
 defineParticle(({DomParticle, log, resolver}) => {
 
-  const handleName = 'labels';
-  const delimiter = '\n';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({url}) {
+  return class extends self.TfMixin(DomParticle) {
+    async update({url}) {
       if (url) {
-        this.apply(url);
+        log('Parsing labels file...');
+        const resolvedUrl = resolver(url.labelsUrl);
+        const response = await fetch(resolvedUrl);
+        const text = await response.text();
+        const labels = text.split('\n').map(label => ({label}));
+        await this.set('labels', labels);
+        log('Parsed.');
+
       }
     }
-
-    async apply(urlEntity) {
-      log('Parsing labels file...');
-
-      const url = resolver(urlEntity.labelsUrl);
-      const text = await (await fetch(url)).text();
-      const labels = text.split(delimiter).map(label => ({label}));
-
-      this.clearHandle(handleName);
-      this.appendRawDataToHandle(handleName, labels);
-    }
   };
+
 });

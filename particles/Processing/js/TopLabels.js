@@ -8,36 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'predictions';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({yHat, labels, k}) {
-      const topK = k || 5;
-
+  return class extends self.TfMixin(DomParticle) {
+    async update({yHat, labels, k}) {
       if (yHat && labels) {
-        this.apply(yHat, labels, topK);
+        const topK = k || 5;
+        log(`Converting tensor output to top ${topK} labels...`);
+        const predictions = await this.tf.getTopKClasses(yHat, labels, topK);
+        const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
+        this.set('predictions', results);
+        log(results);
       }
     }
-
-    async apply(yHat_, labels_, topK) {
-      log(`Converting tensor output to top ${topK} labels...`);
-
-      const yHat = yHat_.ref;
-      const labels = this.toList(labels_);
-
-      const predictions = await this.service({call: 'tf.getTopKClasses', yHat, labels, topK});
-      const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
-
-      this.appendRawDataToHandle(handleName, results);
-
-      log(results);
-    }
-
-    toList(shape) {
-      return shape.map((s) => s.label);
-    }
-
   };
+
 });

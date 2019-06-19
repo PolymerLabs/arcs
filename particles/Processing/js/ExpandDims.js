@@ -8,27 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'newTensor';
+  importScripts(resolver(`$here/tf.js`));
 
   return class extends DomParticle {
-    update({tensor, axis}) {
+    async update({tensor, axis}) {
       if (tensor && axis) {
-        this.apply(tensor, axis);
+        log('Expanding Dimensions...');
+        await this.set('newTensor', await this.tf.expandDims(tensor, axis));
+        log('Dimensions Expanded.');
       }
     }
-
-    async apply(tensor_, axis_) {
-      const input = tensor_.ref;
-      const axis = axis_.dim;
-
-      log('Expanding Dimensions...');
-      const newTensor = await this.service({call: 'tf.expandDims', input, axis});
-      log('Dimensions Expanded.');
-
-      this.updateSingleton(handleName, {ref: newTensor});
-    }
-
   };
+
 });

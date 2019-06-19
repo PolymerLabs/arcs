@@ -8,30 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'newTensor';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({tensor, shape}) {
+  return class extends self.TfMixin(DomParticle) {
+    async update({tensor, shape}) {
       if (tensor && shape) {
-        this.apply(tensor, shape);
+        log('Reshaping...');
+        await this.set('newTensor', await this.tf.reshape(tensor, shape));
+        log('Reshaped.');
       }
     }
-
-    async apply(tensor_, shape_) {
-      const input = tensor_.ref;
-      const shape = this.toList(shape_);
-
-      log('Reshaping...');
-      const newTensor = await this.service({call: 'tf.reshape', input, shape});
-      log('Reshape.');
-
-      this.updateSingleton(handleName, {ref: newTensor});
-    }
-
-    toList(shape) {
-      return shape.map((s) => s.dim);
-    }
   };
+
 });

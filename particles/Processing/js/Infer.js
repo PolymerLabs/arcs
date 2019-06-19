@@ -8,26 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'yHat';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({tensor, model}) {
+  return class extends self.TfMixin(DomParticle) {
+    async update({tensor, model}) {
       if (model && tensor) {
-        this.apply(model, tensor);
+        log('Classifying...');
+        await this.set('yHat', await this.tf.predict(model, tensor));
+        log('Classified.');
       }
-    }
-
-    async apply(model_, tensor_) {
-      const model = model_.ref;
-      const inputs = tensor_.ref;
-
-      log('Classifying...');
-      const yHat = await this.service({call: 'tf.predict', model, inputs});
-      log('Classified.');
-
-      this.updateSingleton(handleName, {ref: yHat});
     }
   };
 });

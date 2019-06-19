@@ -14,20 +14,63 @@ self.Tf = class {
   constructor(scope) {
     this.scope = scope;
   }
-  async imageToTensor({url}) {
-    return await this.scope.service({call: 'tf.imageToTensor', imageUrl: url});
+  async call(...args) {
+    return this.scope.service(...args);
   }
-  async resizeBilinear(images, size, options) {
-   return await this.scope.service({
+  async dispose({ref}) {
+    await this.call({call: 'tf.dispose', ref});
+  }
+  async loadGraphModel(modelUrl, options) {
+    return {
+      ref: await this.call({call: 'tf.loadGraphModel', modelUrl,  options})
+    };
+  }
+  async loadLayersModel(modelUrl, options) {
+    return {
+      ref: await this.call({call: 'tf.loadLayersModel', modelUrl,  options})
+    };
+  }
+  async warmUp({ref: model}) {
+    await this.call({call: 'tf.warmUp', model});
+  }
+  async predict({ref: model}, {ref: inputs}) {
+    return {
+      ref: await this.call({call: 'tf.predict', model, inputs})
+    };
+  }
+  async imageToTensor({url}) {
+    return {
+      ref: await this.call({call: 'tf.imageToTensor', imageUrl: url})
+    };
+  }
+  async resizeBilinear({ref: images}, size, options) {
+   const ref = await this.call({
      call: 'tf.resizeBilinear',
-     images: images.ref,
+     images,
      size: size.map(s => s.dim),
      alignCorners: options ? options.alignCorners : false
     });
+    return {ref};
   }
-  async dispose(reference) {
-    await this.scope.service({call: 'tf.dispose', reference});
+  async expandDims({ref: input}, {ref: axis}) {
+    return {
+      ref: await this.call({call: 'tf.expandDims', input, axis})
+    };
   }
+  async normalize({ref: input}, range) {
+    return {
+       ref: await this.call({call: 'tf.normalize', input, range: range.map(r => r.dim)})
+    };
+  }
+  async reshape({ref: input}, shape) {
+    return {
+       ref: await this.call({call: 'tf.reshape', input, shape: shape.map(s => s.dim)})
+    };
+  }
+  async getTopKClasses({ref: yHat}, labels, topK) {
+    return await this.call({call: 'tf.getTopKClasses', yHat, labels: labels.map(l => l.label), topK});
+  }
+
 };
 
 self.TfMixin = Base => class extends Base {
@@ -35,16 +78,22 @@ self.TfMixin = Base => class extends Base {
     super();
     this.tf = new self.Tf(this);
   }
-  // TODO(sjmiles): move this bit to dom-particle if it's successful
+  // TODO(sjmiles): experimental: move this bit to dom-particle-base if it's successful
   async set(name, value) {
     const handle = this.handles.get(name);
     if (handle) {
       // TODO(sjmiles): cannot test class of `handle` because I have no
       // references to those classes, i.e. `handle is Singleton`, throws
       // because Singleton is undefined.
-      const entity = value.entityClass ? value : new (handle.entityClass)(value);
       if (handle.type.isEntity) {
+        const entity = value.entityClass ? value : new (handle.entityClass)(value);
         return await handle.set(entity);
+      }
+      else if (handle.type.isCollection) {
+        if (Array.isArray(value)) {
+          await this.clearHandle(name);
+          await this.appendRawDataToHandle(name, value);
+        }
       }
     }
   }

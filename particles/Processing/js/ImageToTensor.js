@@ -16,8 +16,7 @@ defineParticle(({DomParticle, resolver, log}) => {
     async update({image}) {
       if (image) {
         log('Converting image URL to Tensor...', image);
-        const tensor = await this.tf.imageToTensor(image);
-        this.updateSingleton('imageTensor', {ref: tensor});
+        await this.set('imageTensor', await this.tf.imageToTensor(image));
         log('Converted image URL to Tensor.');
       }
     }

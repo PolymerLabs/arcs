@@ -10,30 +10,20 @@
 
 defineParticle(({DomParticle, log, resolver}) => {
 
-  const handleName = 'modelReference';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({model}) {
-      if (model) {
-        this.apply(model);
-      }
-    }
-
-    async apply(model) {
-      const model_ = await this.service({
-        call: 'tf.loadLayersModel',
-        modelUrl: resolver(model.location),
-        options: model.options,
-      });
-
-      this.updateSingleton(handleName, {ref: model_});
-
-      try {
-        this.service({call: 'tf.warmUp', model: model_});
-      } catch {
-        log('Warm up failed');
+  return class extends self.TfMixin(DomParticle) {
+    async update({modelSpec}) {
+      if (modelSpec) {
+        const model = await this.tf.loadLayersModel(modelSpec.location, modelSpec.options);
+        await this.set('model', model);
+        try {
+          await this.tf.warmUp(model);
+        } catch {
+          log('Warm up failed');
+        }
       }
     }
   };
-  
+
 });

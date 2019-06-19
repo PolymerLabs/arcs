@@ -14,22 +14,24 @@ defineParticle(({DomParticle, html}) => {
 
   const template_ = html`
 
-    <style>
-      td {
-       padding: 0 5px 0 5px;
-      }
-    </style>
+<div style="padding: 16px;">
+  <style>
+    td {
+      padding: 0 5px 0 5px;
+    }
+  </style>
 
+  <h3>Top <span>{{k}}</span> Labels</h3>
+  <div>{{things}}</div>
+  
+  <template thing>
+    <tr>
+      <td><b>{{label}}</b></td>
+      <td>{{confidence}}</td>
+    </tr>
+  </template>
+</div>
 
-    <div style="padding: 16px;">
-      <h3>Top <span>{{k}}</span> Labels</h3>
-      <div>{{things}}</div>
-    <template thing>
-      <tr>
-       <td><b>{{label}}</b></td>
-       <td>{{confidence}}</td>
-      <tr/>
-    </template>
   `;
 
   return class extends DomParticle {
@@ -40,7 +42,6 @@ defineParticle(({DomParticle, html}) => {
       const preds = predictions || [];
       const topK = k || preds.length;
       const models = preds.map((p) => ({label: p.label, confidence: p.confidence.toFixed(4)}));
-
       return {
         things: {$template: 'thing', models},
         k: topK

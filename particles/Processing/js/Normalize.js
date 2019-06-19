@@ -8,31 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'normTensor';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({tensor, range}) {
+  return class extends self.TfMixin(DomParticle) {
+    async update({tensor, range}) {
       if (tensor && range) {
-        this.apply(tensor, range);
+        log('Normalizing...');
+        await this.set('normTensor', await this.tf.normalize(tensor, range));
+        log('Normalized.');
       }
     }
-
-    async apply(tensor_, range_) {
-
-      const input = tensor_.ref;
-      const range = this.toList(range_);
-
-      log('Normalizing...');
-      const tNorm = await this.service({call: 'tf.normalize', input, range});
-      log('Normalized.');
-
-      this.updateSingleton(handleName, {ref: tNorm});
-    }
-
-    toList(shape) {
-      return shape.map((s) => s.dim);
-    }
   };
+
 });
