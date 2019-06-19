@@ -73,9 +73,12 @@ async function wrappedExecute() {
     arcPanel.attachArc(arc);
 
     const resolver = new RecipeResolver(arc);
-    const resolvedRecipe = await resolver.resolve(recipe);
+    const options = {errors: new Map()};
+    const resolvedRecipe = await resolver.resolve(recipe, options);
     if (!resolvedRecipe) {
-      arcPanel.showError('Error in RecipeResolver');
+      arcPanel.showError('Error in RecipeResolver', `${
+        [...options.errors.entries()].join('\n')
+      }.\n${recipe.toString()}`);
       continue;
     }
 
@@ -94,7 +97,6 @@ function execute() {
 }
 
 function init() {
-  let manifest;
   const params = new URLSearchParams(window.location.search);
   const manifestParam = params.get('m') || params.get('manifest');
   if (manifestParam) {
