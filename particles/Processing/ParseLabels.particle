@@ -5,4 +5,4 @@ import './schemas/Inference.schema'
 particle ParseLabels in './js/ParseLabels.js'
   in MlModel {URL labelsUrl} url
   out [Label] labels
-  description `Parse a URL to a text file into a list of labels`
+  //description `Parse a URL to a text file into a list of labels`

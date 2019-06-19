@@ -7,4 +7,4 @@ particle TopLabels in './js/TopLabels.js'
   in [Label] labels
   in? Shape k
   out [Classification] predictions
-  description `Convert raw inference into the top k labels (with confidence).`
+  //description `Convert raw inference into the top k labels (with confidence).`
