@@ -4,20 +4,20 @@ import 'Avatar.schema'
 
 particle SlandleUserNameForm in 'source/UserNameForm.js'
   inout UserName userName
-  `consume Slot userName
+  `consume Slot userNameForm
 
 particle SlandleFriendsPicker in 'source/FriendsPicker.js'
   inout [Friend] friends
   in [Avatar] avatars
   in [UserName] userNames
-  `consume Slot friends
+  `consume Slot friendsSlot
   description `select friends`
 
 particle SlandleBasicProfile in 'source/BasicProfile.js'
   inout Avatar avatar
   `consume Slot root
-    `provide Slot userName
-    `provide Slot friends
+    `provide Slot userNameForm
+    `provide Slot friendsSlot
 
 recipe SlandleBasicProfile
   create #avatar as avatar
