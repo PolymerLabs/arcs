@@ -14,20 +14,21 @@ self.Tf = class {
   constructor(scope) {
     this.scope = scope;
   }
-  async call(...args) {
-    return this.scope.service(...args);
+  async call(name, args) {
+    args.call = name;
+    return this.scope.service(args);
   }
   async dispose({ref}) {
-    await this.call({call: 'tf.dispose', ref});
+    await this.call('tf.dispose', {ref});
   }
   async loadGraphModel(modelUrl, options) {
     return {
-      ref: await this.call({call: 'tf.loadGraphModel', modelUrl,  options})
+      ref: await this.call('tf.loadGraphModel', {modelUrl,  options})
     };
   }
   async loadLayersModel(modelUrl, options) {
     return {
-      ref: await this.call({call: 'tf.loadLayersModel', modelUrl,  options})
+      ref: await this.call('tf.loadLayersModel', {modelUrl,  options})
     };
   }
   async warmUp({ref: model}) {
@@ -35,17 +36,16 @@ self.Tf = class {
   }
   async predict({ref: model}, {ref: inputs}) {
     return {
-      ref: await this.call({call: 'tf.predict', model, inputs})
+      ref: await this.call('tf.predict', {model, inputs})
     };
   }
   async imageToTensor({url}) {
     return {
-      ref: await this.call({call: 'tf.imageToTensor', imageUrl: url})
+      ref: await this.call('tf.imageToTensor', {imageUrl: url})
     };
   }
   async resizeBilinear({ref: images}, size, options) {
-   const ref = await this.call({
-     call: 'tf.resizeBilinear',
+   const ref = await this.call('tf.resizeBilinear', {
      images,
      size: size.map(s => s.dim),
      alignCorners: options ? options.alignCorners : false
@@ -54,23 +54,22 @@ self.Tf = class {
   }
   async expandDims({ref: input}, {ref: axis}) {
     return {
-      ref: await this.call({call: 'tf.expandDims', input, axis})
+      ref: await this.call('tf.expandDims', {input, axis})
     };
   }
   async normalize({ref: input}, range) {
     return {
-       ref: await this.call({call: 'tf.normalize', input, range: range.map(r => r.dim)})
+       ref: await this.call('tf.normalize', {input, range: range.map(r => r.dim)})
     };
   }
   async reshape({ref: input}, shape) {
     return {
-       ref: await this.call({call: 'tf.reshape', input, shape: shape.map(s => s.dim)})
+       ref: await this.call('tf.reshape', {input, shape: shape.map(s => s.dim)})
     };
   }
   async getTopKClasses({ref: yHat}, labels, topK) {
-    return await this.call({call: 'tf.getTopKClasses', yHat, labels: labels.map(l => l.label), topK});
+    return await this.call('tf.getTopKClasses', {yHat, labels: labels.map(l => l.label), topK});
   }
-
 };
 
 self.TfMixin = Base => class extends Base {
