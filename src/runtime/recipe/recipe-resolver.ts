@@ -175,7 +175,7 @@ export class RecipeResolver {
   // Attempts to run basic resolution on the given recipe. Returns a new
   // instance of the recipe normalized and resolved if possible. Returns null if
   // normalization or attempting to resolve slot connection fails.
-  async resolve(recipe, options?: IsValidOptions) {
+  async resolve(recipe: Recipe, options?: IsValidOptions) {
     recipe = recipe.clone();
     if (!recipe.normalize(options)) {
       console.warn(`could not normalize a recipe: ${
@@ -185,6 +185,12 @@ export class RecipeResolver {
 
     const result = await this.resolver.generate(
         {generated: [{result: recipe, score: 1}], terminal: []});
-    return (result.length === 0) ? null : result[0].result;
+    if (result.length === 0) {
+      if (options && options.errors) {
+        options.errors.set(recipe, 'Resolver generated 0 recipes');
+      }
+      return null;
+    }
+    return result[0].result;
   }
 }

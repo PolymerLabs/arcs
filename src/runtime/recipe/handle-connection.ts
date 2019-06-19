@@ -184,9 +184,15 @@ export class HandleConnection {
     let parent;
     if (this.spec && this.spec.parentConnection) {
       parent = this.particle.connections[this.spec.parentConnection.name];
-      if (!parent || !parent.handle) {
+      if (!parent) {
         if (options) {
-          options.details = 'parent connection missing handle';
+          options.details = `parent connection '${this.spec.parentConnection.name}' missing`;
+        }
+        return false;
+      }
+      if (!parent.handle) {
+        if (options) {
+          options.details = `parent connection '${this.spec.parentConnection.name}' missing handle`;
         }
         return false;
       }

@@ -516,9 +516,11 @@ export class Recipe implements Cloneable<Recipe> {
     };
   }
 
-  _copyInto(recipe: Recipe, cloneMap): void {
+  // tslint:disable-next-line: no-any
+  _copyInto(recipe: Recipe, cloneMap: Map<any, any>): void {
     const variableMap = new Map();
-    function cloneTheThing(ob: {_copyInto}) {
+    // tslint:disable-next-line: no-any
+    function cloneTheThing<T extends {_copyInto:(recipe: Recipe, cloneMap: Map<any, any>, variableMap: Map<any, any>)=>T}>(ob: T): void {
       const clonedObject = ob._copyInto(recipe, cloneMap, variableMap);
       cloneMap.set(ob, clonedObject);
     }

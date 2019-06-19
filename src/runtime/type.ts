@@ -688,6 +688,10 @@ export class SlotType extends Type {
     return new SlotType(new SlotInfo(formFactor, handle));
   }
 
+  getSlot(): SlotInfo {
+    return this.slot;
+  }
+
   get canWriteSuperset(): SlotType {
     return this;
   }

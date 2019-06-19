@@ -247,7 +247,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       recipe.normalize();
       await arc.instantiate(recipe);
     },
-    /.*unresolved handle-connection: parent connection missing handle/);
+    /.*unresolved handle-connection: parent connection 'c' missing/);
   });
 
   it('required provided handles cannot resolve without parent', async () =>
@@ -293,7 +293,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       recipe.normalize();
       await arc.instantiate(recipe);
     },
-    /.*unresolved handle-connection: parent connection missing handle/)
+    /.*unresolved handle-connection: parent connection 'c' missing/)
     );
 
   it('optional provided handles are not required to resolve with dependencies', async function() {

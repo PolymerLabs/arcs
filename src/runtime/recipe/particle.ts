@@ -15,7 +15,7 @@ import {TypeVariableInfo} from '../type-variable-info.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {Recipe, RequireSection} from './recipe.js';
+import {Recipe, RequireSection, IsValidOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
@@ -152,7 +152,7 @@ export class Particle {
     return true;
   }
 
-  _isValid(options) {
+  _isValid(options: IsValidOptions) {
     if (!this.spec) {
       return true;
     }
@@ -183,7 +183,7 @@ export class Particle {
       const fulfilledSlotConnections = Object.values(this.consumedSlotConnections).filter(connection => connection.targetSlot !== undefined);
       if (fulfilledSlotConnections.length === 0) {
         if (options && options.showUnresolved) {
-          options.details = 'unfullfilled slot connections';
+          options.details = `unfullfilled slot connections ${JSON.stringify([...this.spec.slotConnections])}`;
         }
         return false;
       }
@@ -251,20 +251,22 @@ export class Particle {
     return Object.values(this._connections).concat(this._unnamedConnections);
   }
 
-  ensureConnectionName(name) {
+  ensureConnectionName(name: string) {
     return this._connections[name] || this.addConnectionName(name);
   }
 
-  getConnectionByName(name) {
+  getConnectionByName(name: string) {
     return this._connections[name];
   }
 
-  nameConnection(connection, name) {
+  nameConnection(connection: HandleConnection, name: string) {
     assert(!this._connections[name], `Connection "${name}" already has a handle`);
 
     const idx = this._unnamedConnections.indexOf(connection);
     assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
-    connection._name = name;
+    // TODO: FIX: The following is accessing a readonly field illegally.
+    // tslint:disable-next-line: no-any
+    (connection as any)._name = name;
 
     const connectionSpec = this.spec.getConnectionByName(name);
     connection.type = connectionSpec.type;
@@ -288,7 +290,10 @@ export class Particle {
 
   addSlotConnection(name: string) : SlotConnection {
     assert(!(name in this.consumedSlotConnections), 'slot connection already exists');
-    assert(!this.spec || this.spec.slotConnections.has(name), 'slot connection not in particle spec');
+    const slandle = this.spec && this.spec.connections.find(conn => conn.name === name);
+    const isSlandle = slandle && slandle.type.isSlot();
+    const isSetSlandle = slandle && slandle.type.isCollectionType() && slandle.type.getContainedType().isSlot();
+    assert(!this.spec || this.spec.slotConnections.has(name) || isSlandle || isSetSlandle, `slot connection '${name}' is not in particle spec`);
     const slotConn = this.addSlotConnectionAsCopy(name);
     const slotSpec = this.getSlotSpecByName(name);
     if (slotSpec) {
