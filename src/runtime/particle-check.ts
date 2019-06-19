@@ -59,7 +59,6 @@ export class CheckIsFromHandle {
   }
 }
 
-
 export function createCheck(
     handle: HandleConnectionSpec,
     astNode: ParticleCheckStatement,
@@ -71,7 +70,7 @@ export function createCheck(
       case CheckType.IsFromHandle:
         return CheckIsFromHandle.fromASTNode(condition, handleConnectionMap);
       default:
-        throw new Error('Unknown claim type.');
+        throw new Error('Unknown check type.');
     }
   });
   return new Check(handle, conditions);
