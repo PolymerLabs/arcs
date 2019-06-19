@@ -191,6 +191,9 @@ export class ParticleSpec {
 
   createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>): HandleConnectionSpec {
     const connection = new HandleConnectionSpec(arg, typeVarMap);
+    if (this.handleConnectionMap.get(connection.name)) {
+      throw new Error(`Particle Spec ${this.name} already has a handle connection named "${connection.name}".`);
+    }
     this.handleConnectionMap.set(connection.name, connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
