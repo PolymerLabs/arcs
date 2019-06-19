@@ -326,21 +326,41 @@ ParticleClaimDerivesFrom
   }
 
 ParticleCheckStatement
-  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleCheckCondition rest:('or' whiteSpace ParticleCheckCondition)* eolWhiteSpace
+  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleCheckCondition rest:(whiteSpace 'or' whiteSpace ParticleCheckCondition)* eolWhiteSpace
   {
-    const trustTags: string[] = [first, ...rest.map(item => item[2])];
+    const conditions: AstNode.ParticleCheckCondition[] = [first, ...rest.map(item => item[3])];
     return {
       kind: 'particle-trust-check',
       location: location(),
       handle,
-      trustTags,
+      conditions,
     } as AstNode.ParticleCheckStatement;
   }
 
 ParticleCheckCondition
-  = 'is' whiteSpace trustTag:lowerIdent whiteSpace?
+  = ParticleCheckIsFromHandle
+  / ParticleCheckHasTag
+
+ParticleCheckHasTag
+  = 'is' whiteSpace tag:lowerIdent
   {
-    return trustTag;
+    return {
+      kind: 'particle-trust-check-has-tag',
+      checkType: 'has-tag',
+      location: location(),
+      tag,
+    } as AstNode.ParticleCheckHasTag;
+  }
+
+ParticleCheckIsFromHandle
+  = 'is from handle' whiteSpace parentHandle:lowerIdent
+  {
+    return {
+      kind: 'particle-trust-check-is-from-handle',
+      checkType: 'is-from-handle',
+      location: location(),
+      parentHandle,
+    } as AstNode.ParticleCheckIsFromHandle;
   }
 
 ParticleHandle

@@ -16,7 +16,7 @@ import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
-import {Check} from './particle-check.js';
+import {Check, createCheck} from './particle-check.js';
 import {Claim, createClaim} from './particle-claim.js';
 
 // TODO: clean up the real vs. literal separation in this file
@@ -398,7 +398,7 @@ export class ParticleSpec {
         if (handle.check) {
           throw new Error(`Can't make multiple checks on the same input (${check.handle}).`); 
         }
-        handle.check = Check.fromASTNode(handle, check);
+        handle.check = createCheck(handle, check, this.handleConnectionMap);
         results.set(check.handle, handle.check);
       });
     }

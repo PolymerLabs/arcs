@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
 import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath} from '../flow-graph.js';
 import {ClaimIsTag} from '../../../runtime/particle-claim.js';
-import {Check} from '../../../runtime/particle-check.js';
+import {Check, CheckHasTag} from '../../../runtime/particle-check.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -139,11 +139,14 @@ describe('FlowGraph', () => {
     `);
     const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.checks.size, 1);
-    assert.deepEqual(node.checks.get('foo').acceptedTags, ['trusted']);
+    const check = node.checks.get('foo');
+    assert.equal(check.handle.name, 'foo');
+    assert.lengthOf(check.conditions, 1);
+    assert.equal((check.conditions[0] as CheckHasTag).tag, 'trusted');
     assert.isEmpty(node.claims);
 
     assert.lengthOf(graph.edges, 1);
-    assert.deepEqual(graph.edges[0].check.acceptedTags, ['trusted']);
+    assert.equal(graph.edges[0].check, check);
   });
 });
 
@@ -193,7 +196,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`Check 'trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`]);
   });
 
   it('fails when no tag is claimed', async () => {
@@ -211,7 +214,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`Check 'trusted' failed: found untagged node.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found untagged node.`]);
   });
 
   it('succeeds when handle has multiple inputs with the right tags', async () => {
@@ -256,7 +259,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`Check 'trusted' failed: found untagged node.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found untagged node.`]);
   });
 
   it('fails when handle has no inputs', async () => {
@@ -270,7 +273,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`Check 'trusted' failed: found untagged node.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found untagged node.`]);
   });
 
   it('claim propagates through a chain of particles', async () => {
@@ -319,7 +322,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`Check 'trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
   });
 
   it('succeeds when a check includes multiple tags', async () => {
@@ -366,7 +369,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`Check 'tag1|tag2' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
+    assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
   });
 
   it('can detect more than one failure for the same check', async () => {
@@ -395,9 +398,9 @@ describe('FlowGraph validation', () => {
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
-      `Check 'trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`,
-      `Check 'trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`,
-      `Check 'trusted' failed: found untagged node.`,
+      `'check bar is trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`,
+      `'check bar is trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`,
+      `'check bar is trusted' failed: found untagged node.`,
     ]);
   });
 
@@ -424,8 +427,8 @@ describe('FlowGraph validation', () => {
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
-      `Check 'trusted' failed: found claim 'notTrusted' on 'P1.foo1' instead.`,
-      `Check 'extraTrusted' failed: found claim 'trusted' on 'P1.foo2' instead.`,
+      `'check bar1 is trusted' failed: found claim 'notTrusted' on 'P1.foo1' instead.`,
+      `'check bar2 is extraTrusted' failed: found claim 'trusted' on 'P1.foo2' instead.`,
     ]);
   });
 });
