@@ -197,8 +197,8 @@ export class Suggestion {
     const manifest = await Manifest.parse(plan, {loader, context, fileName: ''});
     assert(manifest.recipes.length === 1);
     const recipe = manifest.recipes[0];
-    assert(recipe.normalize({}), `can't normalize deserialized suggestion: ${plan}`);
-
+    const options = {errors: new Map()};
+    assert(recipe.normalize(options), `can't normalize deserialized suggestion: ${plan} ${JSON.stringify([...options.errors])}`);
     const suggestion = new Suggestion(recipe, hash, rank, JSON.parse(versionByStore || '{}'));
     suggestion.searchGroups = searchGroups || [];
     suggestion.descriptionByModality = descriptionByModality;
