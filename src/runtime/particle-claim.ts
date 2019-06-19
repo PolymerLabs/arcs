@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- import {HandleConnectionSpec} from './particle-spec';
+import {HandleConnectionSpec} from './particle-spec';
 import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement} from './manifest-ast-nodes';
 
 /** The different types of trust claims that particles can make. */
