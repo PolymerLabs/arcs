@@ -63,7 +63,7 @@ defineParticle(({DomParticle, html, log}) => {
     render({restaurant}, {foods, name}) {
       foods.forEach(food => food.owner = name);
       return {
-        subId: restaurant.id,
+        subId: this.idFor(restaurant),
         items: {
           $template: 'have-favorite-food',
           models: foods
@@ -85,7 +85,7 @@ defineParticle(({DomParticle, html, log}) => {
         // select only foods matching this restaurant
         .filter(food => this.hasFood(restaurant.name, food.food))
         // extract POJO
-        .map(food => food.dataClone())
+        .map(food => this.dataClone(food))
         ;
       this.state = {foods};
 

@@ -128,9 +128,9 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     }
     _dataToModels(data) {
       return data.map((entity, index) =>
-        Object.assign(entity.dataClone(), {
-          subId: entity.id,
-          id: entity.id,
+        Object.assign(this.dataClone(entity), {
+          subId: this.idFor(entity),
+          id: this.idFor(entity),
           image: resolver ? resolver(entity.image) : entity.image,
           index
         })

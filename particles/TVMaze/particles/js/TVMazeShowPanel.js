@@ -94,7 +94,7 @@ defineParticle(({DomParticle, html, log}) => {
         network: show.network || '',
         day: show.day ? `${show.day}s` : '',
         time: show.time || '',
-        id: show.id
+        id: this.idFor(show)
       };
     }
   };

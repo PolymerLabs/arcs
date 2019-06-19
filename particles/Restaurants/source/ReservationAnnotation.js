@@ -54,7 +54,7 @@ defineParticle(({DomParticle, html, log}) => {
     update({restaurant, event, descriptions}) {
       let currentEvent = null;
       if (event && event.startDate && event.participants) {
-        currentEvent = event.dataClone();
+        currentEvent = this.dataClone(event);
         if (this.handles.get('descriptions')) {
           this.setParticleDescription(this.getDescription(restaurant, currentEvent));
         }
@@ -72,7 +72,7 @@ defineParticle(({DomParticle, html, log}) => {
       }
     }
     renderSingle(restaurant, date, partySize) {
-      const restaurantId = restaurant.id || '';
+      const restaurantId = this.idFor(restaurant) || '';
       const times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       return {
         subId: restaurantId,
@@ -89,7 +89,7 @@ defineParticle(({DomParticle, html, log}) => {
       return 'make reservations';
     }
     createDescription(restaurant, participants, startDate) {
-      const times = this.makeUpReservationTimes(restaurant.id, participants, startDate, 5);
+      const times = this.makeUpReservationTimes(this.idFor(restaurant), participants, startDate, 5);
       let closest = null;
       times.map(({time, notAvailable}, i) => {
         if (!notAvailable) {

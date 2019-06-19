@@ -51,7 +51,7 @@ defineParticle(({DomParticle, html}) => {
           state.favorite = show.favorite;
         }
         return {
-          showid: show.id,
+          showid: this.idFor(show),
           favorite: state.favorite ? `favorite` : `favorite_border`
         };
       }

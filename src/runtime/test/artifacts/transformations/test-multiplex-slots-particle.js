@@ -36,12 +36,12 @@ defineParticle(({TransformationDomParticle}) => {
       const hostedParticle = this._state.hostedParticle;
       const type = this._state.type;
       for (const [index, foo] of foos.entries()) {
-        if (this._handleIds.has(foo.id)) {
+        if (this._handleIds.has(this.idFor(foo))) {
           // The element already exists.
           continue;
         }
         const fooHandle = await arc.createHandle(type.getContainedType(), 'foo' + index);
-        this._handleIds.add(foo.id);
+        this._handleIds.add(this.idFor(foo));
         const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
         const slotName = [...this.spec.slotConnections.values()][0].name;
         const slotId = await arc.createSlot(this, slotName);

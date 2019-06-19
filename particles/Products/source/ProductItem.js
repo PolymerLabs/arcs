@@ -107,7 +107,7 @@ defineParticle(({DomParticle, resolver, html}) => {
             resolvedImage,
             styleBackground: `background-image:url(${resolvedImage})`
           },
-          product.rawData
+          product
         );
       }
     }

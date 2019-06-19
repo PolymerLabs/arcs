@@ -352,7 +352,7 @@ defineParticle(({SimpleParticle, html, resolver, log}) => {
     }
     processSubmittedMove(props, state, tileBoard) {
       const {move, person, stats} = props;
-      let moveData = move ? move.dataClone() : {coordinates: ''};
+      let moveData = move ? this.dataClone(move) : {coordinates: ''};
       let moveTiles = this.moveToTiles(tileBoard, move);
       let score = 0;
       if (state.dictionary && state.moveSubmitted /*&& !state.renderParticleSpec*/) {

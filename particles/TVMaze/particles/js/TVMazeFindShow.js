@@ -51,7 +51,7 @@ defineParticle(({DomParticle, log, html}) => {
       log(`found`, show);
       if (show.image && show.image.medium) {
         const entityData = {
-          showid: String(show.id),
+          showid: String(this.idFor(show)),
           name: show.name,
           description: show.summary,
           image: show.image && show.image.medium.replace('http:', 'https:') || '',

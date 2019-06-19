@@ -98,11 +98,11 @@ defineParticle(({DomParticle, html}) => {
     }
     update({event, restaurant}, state) {
       // prepare currentEvent
-      const currentEvent = !event || !event.startDate ? this.initializeEvent() : Object.assign({}, event.rawData);
+      const currentEvent = !event || !event.startDate ? this.initializeEvent() : {...event};
       // record it
       this.setState({currentEvent});
       // persist it, if needed
-      if (!event || JSON.stringify(state.currentEvent) !== JSON.stringify(event.rawData)) {
+      if (!event || JSON.stringify(state.currentEvent) !== JSON.stringify(event)) {
         this.storeNewEvent(state.currentEvent);
       }
       // Default description
@@ -116,7 +116,7 @@ defineParticle(({DomParticle, html}) => {
       return this.renderSingle(restaurant, currentEvent.startDate, partySize);
     }
     renderSingle(restaurant, date, partySize) {
-      const restaurantId = (restaurant && restaurant.id) || '';
+      const restaurantId = (restaurant && this.idFor(restaurant)) || '';
       const timePicker = {date};
       for (let i = 1; i <= 21; ++i) {
         timePicker[`selected${i}`] = Boolean(partySize == i);
@@ -161,7 +161,7 @@ defineParticle(({DomParticle, html}) => {
     }
     // getDescription(restaurant, currentEvent) {
     //   if (restaurant) {
-    //     return this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate);
+    //     return this.createDescription(this.idFor(restaurant), currentEvent.participants, currentEvent.startDate);
     //   }
     //   return '';
     // }

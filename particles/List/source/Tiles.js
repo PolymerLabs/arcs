@@ -51,15 +51,10 @@ defineParticle(({DomParticle, html, log}) => {
     shouldRender({list}) {
       return Boolean(list);
     }
-    getId(entity) {
-      // TODO(sjmiles): ensure we get the entity.id even if the rawData has it's own id
-      // see https://github.com/PolymerLabs/arcs/issues/3147
-      return Object.getOwnPropertyDescriptor(entity.__proto__.__proto__, 'id').get.apply(entity);
-    }
     render({list, selected}) {
-      const selectedId = selected && selected.id;
+      const selectedId = selected && this.idFor(selected);
       const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
-      const models = sorted.map(item => this.renderItem(item, selectedId === this.getId(item)));
+      const models = sorted.map(item => this.renderItem(item, selectedId === this.idFor(item)));
       return {
         haveItems: models.length > 0,
         items: {
@@ -70,12 +65,12 @@ defineParticle(({DomParticle, html, log}) => {
     }
     renderItem(entity, selected) {
       return {
-        id: this.getId(entity),
+        id: this.idFor(entity),
         selected
       };
     }
     onSelect(e) {
-      const item = this._props.list.find(i => this.getId(i) === e.data.key);
+      const item = this._props.list.find(i => this.idFor(i) === e.data.key);
       this.handles.get('selected').set(item);
     }
   };

@@ -107,7 +107,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     //}
     render({selected}, state) {
       let hide = true;
-      const open = Boolean(selected && (selected.name || selected.id));
+      const open = Boolean(selected && (selected.name || this.idFor(selected)));
       if (open || state.open) {
         // we are or were open, so don't hide right away
         hide = false;

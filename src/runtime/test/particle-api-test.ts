@@ -747,7 +747,7 @@ describe('particle-api', () => {
                   this.addResult('done');
                   return;
                 }
-                this.addResult(value.map(item => item.rawData.value).join(','));
+                this.addResult(value.map(item => item.value).join(','));
               }
               this.addResult('error - cursor did not terminate correctly');
             }

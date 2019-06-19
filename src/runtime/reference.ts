@@ -9,12 +9,12 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
 import {handleFor, Storable} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
 import {Entity} from './entity.js';
 import {SerializedEntity, StorageProxy} from './storage-proxy.js';
+import {SYMBOL_INTERNALS} from './symbols.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -28,11 +28,16 @@ export class Reference implements Storable {
   private storageProxy: StorageProxy = null;
   protected handle = null;
 
+  [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
+
   constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) {
     this.id = data.id;
     this.storageKey = data.storageKey;
     this.context = context;
     this.type = type;
+    this[SYMBOL_INTERNALS] = {
+      serialize: () => ({id: this.id, rawData: this.dataClone()})
+    };
   }
 
   protected async ensureStorageProxy(): Promise<void> {
@@ -63,13 +68,6 @@ export class Reference implements Storable {
   dataClone(): {storageKey: string, id: string} {
     return {storageKey: this.storageKey, id: this.id};
   }
-
-  serialize(): SerializedEntity {
-    return {
-      id: this.id,
-      rawData: this.dataClone(),
-    };
-  }
 }
 
 /** A subclass of Reference that clients can create. */
@@ -80,7 +78,8 @@ export abstract class ClientReference extends Reference {
   /** Use the newClientReference factory method instead. */
   protected constructor(entity: Entity, context: ParticleExecutionContext) {
     // TODO(shans): start carrying storageKey information around on Entity objects
-    super({id: entity.id, storageKey: null}, new ReferenceType(entity.entityClass.type), context);
+    super({id: Entity.id(entity), storageKey: null},
+          new ReferenceType(Entity.entityClass(entity).type), context);
 
     this.entity = entity;
     this.stored = new Promise(async (resolve, reject) => {
@@ -103,7 +102,7 @@ export abstract class ClientReference extends Reference {
   }
 
   isIdentified(): boolean {
-    return this.entity.isIdentified();
+    return Entity.isIdentified(this.entity);
   }
 
   static newClientReference(context: ParticleExecutionContext): typeof ClientReference {

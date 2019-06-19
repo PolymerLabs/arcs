@@ -18,7 +18,7 @@ defineParticle(({DomParticle, log}) => {
     async updateDescription(share, names) {
       let desc = `(no info)`;
       if (share && names) {
-        log(share.dataClone());
+        log(this.dataClone(share));
         const key = share.fromKey;
         const name = (await this.boxQuery(names, key))[0];
         if (name) {

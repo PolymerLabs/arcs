@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
-import {EntityInterface, EntityRawData} from './entity.js';
+import {Entity, EntityRawData} from './entity.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
 
@@ -39,32 +39,33 @@ export class EntityPackager {
     this.schema = schema;
   }
 
-  encodeSingleton(entity: EntityInterface): string {
+  encodeSingleton(entity: Entity): string {
     return this.encoder.encodeSingleton(this.schema, entity);
   }
 
-  encodeCollection(entities: EntityInterface[]): string {
+  encodeCollection(entities: Entity[]): string {
     return this.encoder.encodeCollection(this.schema, entities);
   }
 
-  decodeSingleton(str: string): EntityInterface {
+  decodeSingleton(str: string): Entity {
     const {id, data} = this.decoder.decodeSingleton(str);
     const entity = new (this.schema.entityClass())(data);
-    entity.identify(id);
+    Entity.identify(entity, id);
     return entity;
   }
 }
 
 class StringEncoder {
-  encodeSingleton(schema: Schema, entity: EntityInterface): string {
-    let encoded = entity.id.length + ':' + entity.id + '|';
-    for (const [name, value] of Object.entries(entity.toLiteral())) {
+  encodeSingleton(schema: Schema, entity: Entity): string {
+    const id = Entity.id(entity);
+    let encoded = id.length + ':' + id + '|';
+    for (const [name, value] of Object.entries(entity)) {
       encoded += this.encodeField(schema.fields[name], name, value);
     }
     return encoded;
   }
 
-  encodeCollection(schema: Schema, entities: EntityInterface[]): string {
+  encodeCollection(schema: Schema, entities: Entity[]): string {
     let encoded = entities.length + ':';
     for (const entity of entities) {
       const str = this.encodeSingleton(schema, entity);
@@ -487,7 +488,7 @@ export class WasmParticle extends Particle {
     return handle;
   }
 
-  private decodeEntity(handle: Handle, encoded: WasmAddress): EntityInterface {
+  private decodeEntity(handle: Handle, encoded: WasmAddress): Entity {
     const converter = this.converters.get(handle);
     return converter.decodeSingleton(this.read(encoded));
   }

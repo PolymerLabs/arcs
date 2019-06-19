@@ -17,6 +17,7 @@ import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
 import {UserException} from './arc-exceptions.js';
+import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 
 /**
  * A basic particle. For particles that provide UI, you may like to
@@ -246,6 +247,19 @@ export class Particle {
       return true;
     }
     throw new Error('A particle needs a description handle to set a decription pattern');
+  }
+
+  // Entity functions.
+  idFor(entity: Entity): string {
+    return Entity.id(entity);
+  }
+
+  dataClone(entity: Entity): EntityRawData {
+    return Entity.dataClone(entity);
+  }
+
+  mutate(entity: Entity, mutation: Consumer<MutableEntityData> | {}): void {
+    Entity.mutate(entity, mutation);
   }
 
   // abstract

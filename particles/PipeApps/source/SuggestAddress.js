@@ -22,10 +22,10 @@ defineParticle(({DomParticle, html, log}) => {
       }
     }
     query(entities) {
-      const addresses = entities.filter(entity => entity.rawData.type === 'address');
-      const sorted = addresses.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
+      const addresses = entities.filter(entity => entity.type === 'address');
+      const sorted = addresses.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       const result = sorted[0] || Object;
-      return JSON.stringify(result.rawData);
+      return JSON.stringify(result);
     }
   };
 });

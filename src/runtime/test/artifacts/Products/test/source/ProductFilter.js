@@ -31,13 +31,13 @@ defineParticle(({Particle}) => {
       }
 
       for (const [index, product] of this._products.entries()) {
-        if (this._handleIds.has(product.id)) {
+        if (this._handleIds.has(this.idFor(product))) {
           continue;
         }
 
         const productHandle = await this._arc.createHandle(this._productType, 'product' + index);
         const resultHandle = await this._arc.createHandle(this._productType, 'result' + index, this);
-        this._handleIds.add(product.id);
+        this._handleIds.add(this.idFor(product));
 
         const recipe = Particle.buildManifest`
           ${this._hostedParticle}

@@ -113,7 +113,7 @@ ${styles}
           resolvedImage,
           styleBackground: `background-image:url(${resolvedImage})`
         },
-        product.rawData);
+        product);
       }
     }
   };
