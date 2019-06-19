@@ -10,5 +10,5 @@
 
 // TypeScript seems to lose the necessary type info if this symbol is wrapped in an object and then
 // used as an interface key (e.g. 'interface Foo { [Symbols.internals]: {...} }'), so we just have
-// to export it as a standard variable.
+// to export it as a standard variable. See the EntityInternals class for the usage of this symbol.
 export const SYMBOL_INTERNALS = Symbol('internals');
