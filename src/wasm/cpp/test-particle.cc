@@ -88,7 +88,7 @@ public:
 
   void fireEvent(const std::string& slot_name, const std::string& handler) override {
     if (handler == "set") {
-      arcs::Data res = data_.get();
+      arcs::Data res = arcs::clone_entity(data_.get());
       res.set_num(res.num() * 2);
       res.set_txt(res.txt() + "!!!!!!");
       res.clear_lnk();
@@ -97,8 +97,8 @@ public:
       res_.clear();
     } else if (handler == "store") {
       arcs::Info info;
-      info._internal_id = "wasm" + std::to_string(++store_count_);
-      info.set_val(info_.size() + store_count_);
+      info.set_for("v" + std::to_string(info_.size() + store_count_++));
+      info.set_internal_id(2 * info._for().size());
       info_.store(info);
     } else if (handler == "remove") {
       auto it = info_.begin();

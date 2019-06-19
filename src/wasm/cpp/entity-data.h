@@ -7,6 +7,12 @@ namespace arcs {
 
 class Data {
 public:
+  // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
+  // Move operations are ok (and will include the internal id).
+  Data() = default;
+  Data(Data&&) = default;
+  Data& operator=(Data&&) = default;
+
   double num() const { return num_; }
   void set_num(double value) { num_ = value; num_valid_ = true; }
   void clear_num() { num_ = double(); num_valid_ = false; }
@@ -27,9 +33,11 @@ public:
   void clear_flg() { flg_ = bool(); flg_valid_ = false; }
   bool has_flg() const { return flg_valid_; }
 
-  std::string _internal_id;  // TODO
-
 private:
+  // Allow private copying for use in Handles.
+  Data(const Data&) = default;
+  Data& operator=(const Data&) = default;
+
   double num_ = double();
   bool num_valid_ = false;
 
@@ -42,9 +50,30 @@ private:
   bool flg_ = bool();
   bool flg_valid_ = false;
 
+  std::string _internal_id;
   static const int FIELD_COUNT = 4;
+
+  friend class Singleton<Data>;
+  friend class Collection<Data>;
+  friend Data clone_entity<Data>(const Data& entity);
   friend void decode_entity<Data>(Data* entity, const char* str);
+  friend std::string encode_entity<Data>(const Data& entity);
+  friend std::string entity_to_str<Data>(const Data& entity, const char* join);
 };
+
+template<>
+Data clone_entity(const Data& entity) {
+  Data clone;
+  clone.num_ = entity.num_;
+  clone.num_valid_ = entity.num_valid_;
+  clone.txt_ = entity.txt_;
+  clone.txt_valid_ = entity.txt_valid_;
+  clone.lnk_ = entity.lnk_;
+  clone.lnk_valid_ = entity.lnk_valid_;
+  clone.flg_ = entity.flg_;
+  clone.flg_valid_ = entity.flg_valid_;
+  return std::move(clone);
+}
 
 template<>
 void decode_entity(Data* entity, const char* str) {

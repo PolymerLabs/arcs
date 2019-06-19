@@ -13,14 +13,16 @@ store DataStore of Data in DataResource
 
 
 schema Info
+  // Test that C++ keywords can be field names
   Text for
-  Number val
+  // Test that this doesn't conflict with the real internal id
+  Number internal_id
 
 resource InfoResource
   start
   [
-    {"for": "xx", "val": -5.8},
-    {"val": 107},
+    {"for": "xx", "internal_id": -5.8},
+    {"internal_id": 107},
     {"for": "yy"}
   ]
 store InfoStore of [Info] in InfoResource
