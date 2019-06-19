@@ -117,6 +117,35 @@ describe('Entity', () => {
     assert.isFalse(Entity.isMutable(e));
   });
 
+  it(`Entity.logForTests doesn't affect the original entity`, async () => {
+    const manifest = await Manifest.parse(`
+      schema EntityDebugLogging
+        Text txt
+        URL lnk
+        Number num
+        Boolean flg
+        Bytes buf
+        Object obj
+        (Text or Number) union
+        (Text, Number) tuple
+    `);
+    const entityClass = manifest.schemas.EntityDebugLogging.entityClass();
+    const e = new entityClass({
+      txt: 'abc',
+      lnk: 'http://wut',
+      num: 3.7,
+      flg: true,
+      buf: new Uint8Array([2]),
+      obj: {x: 1},
+      union: 'def',
+      tuple: ['ghi', 12]
+    });
+    Entity.identify(e, '!test:uid:u0');
+    const original = JSON.stringify(e);
+    Entity.logForTests(e);
+    assert.equal(JSON.stringify(e), original);
+  });
+
   it('is mutable by default', () => {
     const e = new entityClass({txt: 'abc'});
     assert.isTrue(Entity.isMutable(e));

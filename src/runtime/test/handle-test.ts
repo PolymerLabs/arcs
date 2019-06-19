@@ -16,7 +16,6 @@ import {Schema} from '../schema.js';
 import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
-import {floatingPromiseToAudit} from '../util.js';
 
 describe('Handle', () => {
 

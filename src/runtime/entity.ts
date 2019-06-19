@@ -173,6 +173,34 @@ class EntityInternals {
   serialize(): SerializedEntity {
     return {id: this.id, rawData: this.dataClone()};
   }
+
+  logForTests() {
+    // Here be dragons! Create a copy of the entity class but with an enumerable version of this
+    // internals object so it will appear in the log output, with a few tweaks for better display.
+    const entity = this.entity;
+
+    // Strip the noisy-and-not-very-useful 'location' field from the schema.
+    const schema = JSON.parse(JSON.stringify(this.schema, (k, v) => (k !== 'location') ? v : undefined));
+
+    const copy = new EntityInternals(null, this.entityClass, schema, this.context, this.userIDComponent);
+    copy.id = this.id;
+
+    // Force 'entity' to show as '[Circular]'. The 'any' is required because 'entity' is readonly.
+    // tslint:disable-next-line: no-any
+    (copy as any).entity = copy;
+
+    // Set up a class that looks the same as the real entity, copy the schema fields in, add an
+    // enumerable version of the copied internals, and use console.dir to show the full object.
+    const clazz = class extends Entity {
+      constructor() {
+        super();
+        Object.assign(this, entity);
+        this[SYMBOL_INTERNALS] = copy;
+      }
+    };
+    Object.defineProperty(clazz, 'name', {value: entity.constructor.name});
+    console.dir(new clazz(), {depth: null});
+  }
 }
 
 export abstract class Entity implements Storable {
@@ -183,10 +211,6 @@ export abstract class Entity implements Storable {
   // Runtime-specific entity fields are held in a separate object accessed by a Symbol-based key
   // to avoid name clashes with the Entity's Schema-based fields.
   [SYMBOL_INTERNALS]: EntityInternals;
-
-  toString() {
-    return this.constructor.name + JSON.stringify(this);
-  }
 
   // TODO: remove ASAP, once we're satisfied there are no lingering direct accesses on these fields
   // Note that this breaks any schemas that have an 'id' field (or rawData/dataClone).
@@ -290,6 +314,13 @@ export abstract class Entity implements Storable {
 
   static serialize(entity: Entity): SerializedEntity {
     return getInternals(entity).serialize();
+  }
+
+  // Because the internals object is non-enumerable, console.log(entity) in Node only shows the
+  // schema-based fields; use this function to log a more complete record of the entity in tests.
+  // Chrome's console.log already shows the internals object, so that can be used directly.
+  static logForTests(entity: Entity) {
+    getInternals(entity).logForTests();
   }
 }
 
