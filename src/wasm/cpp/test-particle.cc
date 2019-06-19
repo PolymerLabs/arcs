@@ -10,8 +10,8 @@ public:
     registerHandle("info", info_);
   }
 
-  void onHandleSync(arcs::Handle* handle, bool allSynced) override {
-    if (allSynced) {
+  void onHandleSync(arcs::Handle* handle, bool all_synced) override {
+    if (all_synced) {
       console("All handles synced\n");
       requestRender("root");
     }
@@ -26,7 +26,7 @@ public:
     requestRender("root");
   }
 
-  void requestRender(const std::string& slotName) override {
+  void requestRender(const std::string& slot_name) override {
     std::string data_col = (updated_ == 1) ? "color: blue;" : "";
     std::string data_str = arcs::entity_to_str(data_.get(), "\n");
 
@@ -83,10 +83,10 @@ public:
         </tr>
       </table>)";
 
-    renderSlot(slotName.c_str(), content.c_str());
+    renderSlot(slot_name.c_str(), content.c_str());
   }
 
-  void fireEvent(const std::string& slotName, const std::string& handler) override {
+  void fireEvent(const std::string& slot_name, const std::string& handler) override {
     if (handler == "set") {
       arcs::Data res = data_.get();
       res.set_num(res.num() * 2);
