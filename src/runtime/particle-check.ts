@@ -55,7 +55,7 @@ export class CheckIsFromHandle {
   }
 
   toManifestString() {
-    return `is from handle ${this.parentHandle}`;
+    return `is from handle ${this.parentHandle.name}`;
   }
 }
 

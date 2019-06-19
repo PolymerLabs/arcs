@@ -317,6 +317,9 @@ export class ParticleSpec {
       writeConnection(connection, indent);
     }
 
+    this.trustClaims.forEach(claim => results.push(`  ${claim.toManifestString()}`));
+    this.trustChecks.forEach(check => results.push(`  ${check.toManifestString()}`));
+
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
       const tokens: string[] = [];
