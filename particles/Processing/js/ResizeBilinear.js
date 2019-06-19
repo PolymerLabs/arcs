@@ -8,31 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'resizedImages';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({images, size, options}) {
+  return class extends self.TfMixin(DomParticle) {
+    async update({images, size, options}) {
       if (images && size) {
-        this.apply(images, size, options);
+        log('Resizing...');
+        const ref = await this.tf.resizeBilinear(images, size, options);
+        this.set('resizedImages', {ref});
+        log('Resized.');
       }
     }
-
-    async apply(images_, size_, options) {
-      const images = images_.ref;
-      const size = this.toList(size_);
-      const alignCorners = options ? options.alignCorners : false;
-
-      log('Resizing...');
-      const newTensor = await this.service({call: 'tf.resizeBilinear', images, size, alignCorners});
-      log('Resized.');
-
-      this.updateSingleton(handleName, {ref: newTensor});
-    }
-
-    toList(shape) {
-      return shape.map((s) => s.dim);
-    }
   };
+
 });

@@ -1,128 +1,90 @@
-import '../schemas/ML.schema'
-import '../ML.particle'
+import '../Infer.particle'
+import '../Dispose.particle'
+import '../ExpandDims.particle'
+import '../ImageToTensor.particle'
+import '../ResizeBilinear.particle'
+import '../LoadModel.particle'
+import '../Normalize.particle'
+import '../ParseLabels.particle'
+import '../Reshape.particle'
+import '../TopLabels.particle'
 import '../ImageSelector.particle'
 import '../PresentLabel.particle'
 import '../ModelSelector.particle'
 
-//store MyImageUrl of Image {Text url} 'myImageUrl' in ImgUrl
-//resource ImgUrl
-//  start
-//  [{"url": "https://$particles/Services/assets/waltbird.jpg"}]
+import './ClassifierStatics.manifest'
 
-store ImageSize of [Shape] 'targetImageSize' in ImgSize
-resource ImgSize
-  start
-  [{"dim": 224}, {"dim": 224}]
-
-store PixelRange of [Shape] 'imagePixelRange' in NormRange
-resource NormRange
-  start
-  [{"dim": 0}, {"dim": 255}]
-
-store ResizeOptions of ResizeOptions 'resizeOptions' in ResOpts
-resource ResOpts
-  start
-  [{"alignCorners": true}]
-
-store TensorShape of [Shape] 'batchShape' in BatchShape
-resource BatchShape
-  start
-  [{"dim": -1}, {"dim": 224}, {"dim": 224}, {"dim": 3}]
-
-store MobileNetV1 of MlModel 'MobileNetV1' in MobNetV1
-resource MobNetV1
-  start
-  [{"location": "https://$particles/Services/assets/MobileNetV1/model.json",
-    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt"}]
-
-store MobileNetV1 of MlModel 'MobileNetV2' in MobNetV2
-resource MobNetV2
-  start
-  [{"location": "https://$particles/Services/assets/MobileNetV2/model.json",
-    "labelsUrl": "https://$particles/Services/assets/ImageNetLabels.txt"}]
-
-recipe MobileNetImageClassifier
+recipe ImageClassifierUI
+  // since we `use`, this recipe is incomplete and coalescer is triggered
   use as imgUrl
-  use as model
-  use as labels
+  use as predictions
+
+  ImageSelector
+    image -> imgUrl
+
+  PresentLabel
+    predictions <- predictions
+
+  description `image classification`
+
+recipe ImageClassifierRoutine
+  // find a model specification
+  map as modelSpec
+
+  // static values from ClassifierStatics.manifest
   map 'targetImageSize' as targetSize
   map 'resizeOptions' as resizeOptions
   map 'imagePixelRange' as range
   map 'batchShape' as batchShape
+
+  // working handles
+  create #volatile as model
   create #volatile as imageTensor
   create #volatile as normTensor
   create #volatile as resizedImages
   create #volatile as reshapedImages
   create #volatile as yHat
   create #volatile as predictions
-  //use as predictions
+  create #volatile as labels
+  create #volatile as imgUrl
+
+  LoadGraphModel
+    model <- modelSpec
+    modelReference -> model
+
+  ParseLabels
+    url <- modelSpec
+    labels -> labels
+
   ImageToTensor
     image <- imgUrl
     imageTensor -> imageTensor
+
   Normalize
     tensor <- imageTensor
     range <- range
     normTensor -> normTensor
+
   ResizeBilinear
     images <- normTensor
     size <- targetSize
     options <- resizeOptions
     resizedImages -> resizedImages
+
   Reshape
     tensor <- resizedImages
     shape <- batchShape
     newTensor -> reshapedImages
+
   Infer
     tensor <- reshapedImages
     model <- model
     yHat -> yHat
+
   TopLabels
     yHat <- yHat
     labels <- labels
     predictions -> predictions
-  description `image classification`
 
-recipe MobileNetV1ImageClassifier
-  map 'MobileNetV1' as modelSpec
-  create #volatile as model
-  create #volatile as labels
-  LoadGraphModel
-    model <- modelSpec
-    modelReference -> model
-  ParseLabels
-    url <- modelSpec
-    labels -> labels
-  description `MobileNet V1`
-
-recipe MobileNetV2ImageClassifier
-  map 'MobileNetV2' as modelSpec
-  create #volatile as model
-  create #volatile as labels
-  LoadGraphModel
-    model <- modelSpec
-    modelReference -> model
-  ParseLabels
-    url <- modelSpec
-    labels -> labels
-  description `MobileNet V2`
-
-recipe ImageCapture &image
-  create #volatile as imgUrl
-  ImageSelector
-    image -> imgUrl
-
-recipe ShowClassifierLabels
-  use as predictions
-  PresentLabel
-    predictions <- predictions
-  description `show the top k labels (and confidence values)`
-
-//recipe ImageClassfierUI
-//  create #volatile as imgUrl
-//  use as predictions
-//  ImageSelector
-//    image -> imgUrl
-//  PresentLabel
-//    predictions <- predictions
-//  description `show the top k labels (and confidence values)`
+  description `${LoadGraphModel.model}`
 

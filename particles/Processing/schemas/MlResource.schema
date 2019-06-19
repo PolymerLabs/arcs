@@ -1,5 +1,17 @@
 schema MlResource
   Number ref
 
+schema TfTensor
+  Number ref
+
+schema TfModel
+  Number ref
+
+schema TfYHat
+  Number ref
+
 schema Shape
   Number dim
+
+schema ResizeOptions
+  Boolean alignCorners

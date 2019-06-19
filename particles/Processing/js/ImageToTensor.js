@@ -8,26 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, resolver, log}) => {
 
-  const handleName = 'imageTensor';
+  importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
-    update({image}) {
+  return class extends self.TfMixin(DomParticle) {
+    async update({image}) {
       if (image) {
-        this.apply(image);
+        log('Converting image URL to Tensor...', image);
+        const tensor = await this.tf.imageToTensor(image);
+        this.updateSingleton('imageTensor', {ref: tensor});
+        log('Converted image URL to Tensor.');
       }
     }
-
-    async apply(image) {
-      const imageUrl = image.url;
-
-      log('Converting image URL to Tensor...');
-      const imgReference = await this.service({call: 'tf.imageToTensor', imageUrl});
-      log('Converted image URL to Tensor.');
-
-      this.updateSingleton(handleName, {ref: imgReference});
-    }
-
   };
 });

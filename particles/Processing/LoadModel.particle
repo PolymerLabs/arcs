@@ -3,10 +3,10 @@ import './schemas/MlModel.schema'
 
 particle LoadGraphModel in './js/LoadGraphModel.js'
   in MlModel model
-  out MlResource modelReference
+  out TfModel modelReference
   description `Load a Graph Tensorflow model into memory.`
 
 particle LoadLayersModel in './js/LoadLayersModel.js'
   in MlModel model
-  out MlResource modelReference
+  out TfModel modelReference
   description `Load a Layers Tensorflow model into memory.`

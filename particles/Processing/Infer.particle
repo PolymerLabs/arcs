@@ -1,7 +1,7 @@
 import './schemas/MlResource.schema'
 
 particle Infer in './js/Infer.js'
-  in MlResource tensor
-  in MlResource model
-  out MlResource yHat
+  in TfTensor tensor
+  in TfModel model
+  out TfYHat yHat
   description `Perform inference on an input tensor given a model.`

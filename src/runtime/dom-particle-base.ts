@@ -238,8 +238,7 @@ export class DomParticleBase extends Particle {
     const handle = this.handles.get(handleName);
     if (handle && handle.entityClass) {
       if (handle instanceof Singleton) {
-        const entityClass = handle.entityClass;
-        const entity = new entityClass(rawData);
+        const entity = new handle.entityClass(rawData);
         await handle.set(entity);
         return entity;
       } else {
