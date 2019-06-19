@@ -212,6 +212,10 @@ export abstract class Entity implements Storable {
   // to avoid name clashes with the Entity's Schema-based fields.
   [SYMBOL_INTERNALS]: EntityInternals;
 
+  toString() {
+    return this.constructor.name + JSON.stringify(this);
+  }
+
   // TODO: remove ASAP, once we're satisfied there are no lingering direct accesses on these fields
   // Note that this breaks any schemas that have an 'id' field (or rawData/dataClone).
   get id() { throw new Error('entity.id is no longer valid; use Entity.id() or Particle.idFor()'); }
