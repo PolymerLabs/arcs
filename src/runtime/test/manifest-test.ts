@@ -2053,6 +2053,22 @@ resource SomeName
       assert.equal((check.conditions[1] as CheckHasTag).tag, 'property2');
     });
 
+    it('can round-trip checks and claims', async () => {
+      const manifestString = `particle TestParticle in 'a.js'
+  in T {} input1
+  in T {} input2
+  out T {} output1
+  out T {} output2
+  claim output1 is trusted
+  claim output2 derives from input2
+  check input1 is trusted or is from handle input2
+  check input2 is extraTrusted
+  modality dom`;
+    
+      const manifest = await Manifest.parse(manifestString);
+      assert.equal(manifestString, manifest.toString());
+    });
+
     it('fails for unknown handle names', async () => {
       assertThrowsAsync(async () => await Manifest.parse(`
         particle A
