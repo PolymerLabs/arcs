@@ -13,6 +13,7 @@ import {Schema} from '../schema.js';
 import {Entity, EntityClass} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
 import {EntityType} from '../type.js';
+import {SYMBOL_INTERNALS} from '../symbols.js';
 
 describe('Entity', () => {
 
@@ -47,8 +48,8 @@ describe('Entity', () => {
     assert.throws(() => { e.notInSchema = 3; }, `Tried to modify entity field 'notInSchema'`);
 
     assert.equal(JSON.stringify(e), '{"txt":"abc","num":56}');
-    assert.equal(e.toString(), 'Foo{"txt":"abc","num":56}');
-    assert.equal(`${e}`, 'Foo{"txt":"abc","num":56}');
+    assert.equal(e.toString(), 'Foo { txt: "abc", num: 56 }');
+    assert.equal(`${e}`, 'Foo { txt: "abc", num: 56 }');
 
     assert.deepEqual(Object.entries(e), [['txt', 'abc'], ['num', 56]]);
     assert.deepEqual(Object.keys(e), ['txt', 'num']);
@@ -117,9 +118,9 @@ describe('Entity', () => {
     assert.isFalse(Entity.isMutable(e));
   });
 
-  it(`Entity.logForTests doesn't affect the original entity`, async () => {
+  it(`Entity.debugLog doesn't affect the original entity`, async () => {
     const manifest = await Manifest.parse(`
-      schema EntityDebugLogging
+      schema EntityDebugLog
         Text txt
         URL lnk
         Number num
@@ -129,7 +130,7 @@ describe('Entity', () => {
         (Text or Number) union
         (Text, Number) tuple
     `);
-    const entityClass = manifest.schemas.EntityDebugLogging.entityClass();
+    const entityClass = manifest.schemas.EntityDebugLog.entityClass();
     const e = new entityClass({
       txt: 'abc',
       lnk: 'http://wut',
@@ -141,9 +142,11 @@ describe('Entity', () => {
       tuple: ['ghi', 12]
     });
     Entity.identify(e, '!test:uid:u0');
-    const original = JSON.stringify(e);
-    Entity.logForTests(e);
-    assert.equal(JSON.stringify(e), original);
+    const fields = JSON.stringify(e);
+    const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
+    Entity.debugLog(e);
+    assert.equal(JSON.stringify(e), fields);
+    assert.equal(JSON.stringify(e[SYMBOL_INTERNALS]), internals);
   });
 
   it('is mutable by default', () => {

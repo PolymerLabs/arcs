@@ -174,10 +174,10 @@ class EntityInternals {
     return {id: this.id, rawData: this.dataClone()};
   }
 
-  logForTests() {
+  debugLog() {
     // Here be dragons! Create a copy of the entity class but with an enumerable version of this
     // internals object so it will appear in the log output, with a few tweaks for better display.
-    const entity = this.entity;
+    const original = this.entity;
 
     // Strip the noisy-and-not-very-useful 'location' field from the schema.
     const schema = JSON.parse(JSON.stringify(this.schema, (k, v) => (k !== 'location') ? v : undefined));
@@ -191,15 +191,17 @@ class EntityInternals {
 
     // Set up a class that looks the same as the real entity, copy the schema fields in, add an
     // enumerable version of the copied internals, and use console.dir to show the full object.
-    const clazz = class extends Entity {
+    // Node displays the name set up with defineProperty below, but Chrome uses the name of the
+    // class variable defined here, so we'll call that entity.
+    const entity = class extends Entity {
       constructor() {
         super();
-        Object.assign(this, entity);
+        Object.assign(this, original);
         this[SYMBOL_INTERNALS] = copy;
       }
     };
-    Object.defineProperty(clazz, 'name', {value: entity.constructor.name});
-    console.dir(new clazz(), {depth: null});
+    Object.defineProperty(entity, 'name', {value: original.constructor.name});
+    console.dir(new entity(), {depth: null});
   }
 }
 
@@ -213,7 +215,8 @@ export abstract class Entity implements Storable {
   [SYMBOL_INTERNALS]: EntityInternals;
 
   toString() {
-    return this.constructor.name + JSON.stringify(this);
+    const fields = Object.entries(this).map(([name, value]) => `${name}: ${JSON.stringify(value)}`);
+    return `${this.constructor.name} { ${fields.join(', ')} }`;
   }
 
   // TODO: remove ASAP, once we're satisfied there are no lingering direct accesses on these fields
@@ -322,13 +325,15 @@ export abstract class Entity implements Storable {
 
   // Because the internals object is non-enumerable, console.log(entity) in Node only shows the
   // schema-based fields; use this function to log a more complete record of the entity in tests.
-  // Chrome's console.log already shows the internals object, so that can be used directly.
-  static logForTests(entity: Entity) {
-    getInternals(entity).logForTests();
+  // Chrome's console.log already shows the internals object so that's usually sufficient for
+  // debugging, but this function can still be useful for logging a snapshot of an entity that
+  // is later modified.
+  static debugLog(entity: Entity | Storable) {
+    getInternals(entity).debugLog();
   }
 }
 
-function getInternals(entity: Entity): EntityInternals {
+function getInternals(entity): EntityInternals {
   const internals = entity[SYMBOL_INTERNALS];
   assert(internals !== undefined, 'SYMBOL_INTERNALS lookup on non-entity');
   return internals;
