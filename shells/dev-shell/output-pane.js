@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorePanel} from './store-panel.js';
+import './store-panel.js';
 
 const mainTemplate = `
   <style>
@@ -70,9 +70,32 @@ const arcTemplate = `
       float: right;
       margin-right: 8px;
     }
-    .slots {
+    #slots:not([fullscreen]) {
       margin: 4px 0 12px 0;
       border: 1px solid;
+      position: relative;
+    }
+    #slots[fullscreen] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      min-height: 100vh;
+      z-index: 1;
+    }
+    #slots #expand {
+      top: 0;
+      right: 2px;
+      font-size: 12px;
+      position: absolute;
+      cursor: pointer;
+    }
+    #slots #expand::before {
+      content: '↗';
+    }
+    #slots[fullscreen] #expand::before {
+      content: '↙';
     }
     #arc-modal {
       position: fixed;
@@ -112,10 +135,11 @@ const arcTemplate = `
     <span id="arc-label"></span>
     <span id="kill">✘</span>
   </div>
-  <div class="slots">
+  <div id="slots">
     <div id="arc-toproot"></div>
     <div id="arc-root"></div>
     <div id="arc-modal"></div>
+    <div id="expand"/></div>
   </div>
   <span id="stores-control" class="control">🗄</span>
   <span id="serial-control" class="control">📄</span>
@@ -142,6 +166,15 @@ class ArcPanel extends HTMLElement {
     shadowRoot.getElementById('kill').addEventListener('click', this.kill.bind(this));
     this.storesControl.addEventListener('click', this.toggleStores.bind(this));
     this.serialControl.addEventListener('click', this.toggleSerial.bind(this));
+
+    const slots = shadowRoot.getElementById('slots');
+    shadowRoot.getElementById('expand').addEventListener('click', () => {
+      if (slots.hasAttribute('fullscreen')) {
+        slots.removeAttribute('fullscreen');
+      } else {
+        slots.setAttribute('fullscreen', '');
+      }
+    });
   }
 
   init(host, arcId) {
