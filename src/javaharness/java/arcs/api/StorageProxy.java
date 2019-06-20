@@ -2,6 +2,7 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public abstract class StorageProxy implements Store {
   public final String id;
@@ -28,10 +29,13 @@ public abstract class StorageProxy implements Store {
     observers.put(handle, particle);
 
     if (!listenerAttached) {
-      port.InitializeProxy(this); // TODO: pass `onSynchronize` callback to the port.
+      port.InitializeProxy(this, new Function<PortableJson, Void>() {
+          @Override public Void apply(PortableJson json) {
+              onSynchronize(json); return null;
+          }
+      });
       listenerAttached = true;
     }
-
     // TODO: finish implementation.
   }
 
