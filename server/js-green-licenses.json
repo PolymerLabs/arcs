@@ -3,18 +3,6 @@
     /* ourselves */
     "arcs@file:../",
     /* no license */
-    "jison",
-    /* no license */
-    "JSONSelect",
-    /* no license */
-    "jison-lex",
-    /* no license */
-    "nomnom",
-    /* no license */
-    "underscore",
-    /* no license */
-    "colors",
-    /* no license */
     "base62",
     /* License in LICENSE.md: W3C 3-clause BSD License */
     "abab",
@@ -29,7 +17,7 @@
     /* WTFPL */
     "argsarray",
     /* WTFPL */
-    "expand-template",
+   "expand-template",
     /* WTFPL */
     "spark-md5",
     /* Apache 2.0, but not discoverable */

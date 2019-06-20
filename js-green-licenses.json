@@ -5,8 +5,6 @@
     /** WTFPL license via PouchDB **/
     "argsarray",
     /** WTFPL license via PouchDB **/
-    "expand-template",
-    /** WTFPL license via PouchDB **/
     "spark-md5"
   ]
 }
