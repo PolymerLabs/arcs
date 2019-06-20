@@ -10,7 +10,7 @@
 
 import {logFactory} from '../platform/log-web.js';
 
-const log = logFactory('resource-mgr');
+const log = logFactory('reference-mgr');
 
 export type Reference = number;
 
@@ -20,11 +20,12 @@ export type Reference = number;
  * Allows developer to reference + use resource without passing them between the `Services` bus.
  * @see src/service.ts
  */
-export class ResourceManager {
+export class ReferenceManager {
 
   /** Collection of a mixture of types, associated with an identifier (references) */
+  // initialized with a sentinel value so we have 1-based indexing
   // tslint:disable-next-line:no-any
-  static references: any[] = [];
+  static references: any[] = [null];
 
   /**
    * Cache the value for later use.
@@ -53,7 +54,6 @@ export class ResourceManager {
    */
   static dispose(r: Reference): void {
     const obj = this.references[r];
-
     if (obj['dispose']) {
       obj.dispose();
     }

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Reference, ResourceManager} from './resource-manager.js';
+import {Reference, ReferenceManager} from './reference-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
@@ -70,7 +70,7 @@ interface MobilenetEmbedding extends MobilenetParams {
  *
  * @param version Model version. Choose between 1 or 2. Default: 2
  * @param alpha Model fidelity ratio. Choose between performant (~0) or highly accurate (~1). Default: 1
- * @return a reference number to the model, maintained by the `ResourceManager`.
+ * @return a reference number to the model, maintained by the `ReferenceManager`.
  */
 const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Reference> => {
   log('Loading tfjs...');
@@ -82,7 +82,7 @@ const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Refere
   log('Model loaded.');
   model.version = version;
   model.alpha = alpha;
-  return ResourceManager.ref(model);
+  return ReferenceManager.ref(model);
 };
 
 /**
@@ -95,7 +95,7 @@ const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Refere
  * @return A list (or single item) of `ClassificationPrediction`s, which are "label, confidence" tuples.
  */
 const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams & {topK: number}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
-  const model_: Classifier = ResourceManager.deref(model) as Classifier;
+  const model_: Classifier = ReferenceManager.deref(model) as Classifier;
   const img = await getImage(image, imageUrl);
   log('classifying...');
   const predictions = await model_.classify(img, topK);
@@ -116,7 +116,7 @@ const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams
  * @see MobilenetEmbedding
  */
 const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams): Promise<MobilenetEmbedding> => {
-  const model_ = ResourceManager.deref(model) as MobilenetClassifier;
+  const model_ = ReferenceManager.deref(model) as MobilenetClassifier;
   const img = await getImage(image, imageUrl);
 
   log('inferring...');
@@ -127,7 +127,7 @@ const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams)
 };
 
 /** Clean up model resources. */
-const dispose = ({reference}) => ResourceManager.dispose(reference);
+const dispose = ({reference}) => ReferenceManager.dispose(reference);
 
 /**
  * Helper method that uses a DOM image element or loads the image from a URL.
