@@ -14,7 +14,7 @@ defineParticle(({DomParticle, resolver, log}) => {
 
   return class extends self.TfMixin(DomParticle) {
     async update({images, size, options}) {
-      if (images && images.ref && size) {
+      if (images && size) {
         log('Resizing...');
         await this.set('resizedImages', await this.tf.resizeBilinear(images, size, options));
         log('Resized.');
