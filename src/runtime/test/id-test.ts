@@ -18,13 +18,15 @@ const createId = Id._newIdInternal;
 describe('IdGenerator', () => {
   describe('#newSession', () => {
     it('should generate a random session ID', () => {
-      const oldRandom = Random;
-      Random.next = () => 123;
+      const randomValue = 0.5;
+      const oldRandomNext = Random.next;
+      Random.next = () => randomValue;
   
       const idGenerator = IdGenerator.newSession();
   
-      const sessionId = 123 * 2 ** 50 + '';
+      const sessionId = randomValue * 2 ** 50 + '';
       assert.equal(idGenerator.currentSessionIdForTesting, sessionId);
+      Random.next = oldRandomNext;
     });
   });
 
