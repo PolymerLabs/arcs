@@ -6,6 +6,9 @@ public class Thing<T> {
     public final T thing;
 
     Thing(T thing) {
+        if (thing == null) {
+            throw new AssertionError("Cannot create a null Thing");
+        }
         this.thing = thing;
     }
 
@@ -22,10 +25,16 @@ public class Thing<T> {
     }
 
     public NativeParticle getParticle() {
-        return this.thing instanceof NativeParticle ? Optional.of((NativeParticle)this.thing).orElse(null) : null;
+        if (!(thing instanceof NativeParticle)) {
+            throw new AssertionError("Thing is not a particle");
+        }
+        return (NativeParticle) thing;
     }
 
     public StorageProxy getStorageProxy() {
-        return this.thing instanceof StorageProxy ? Optional.of((StorageProxy)this.thing).orElse(null) : null;
+        if (!(thing instanceof StorageProxy)) {
+            throw new AssertionError("Thing is not a storage proxy");
+        }
+        return (StorageProxy) thing;
     }
 }
