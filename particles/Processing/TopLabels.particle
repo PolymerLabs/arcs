@@ -3,7 +3,7 @@ import './schemas/MlModel.schema'
 import './schemas/Inference.schema'
 
 particle TopLabels in './js/TopLabels.js'
-  in TfYHat yHat
+  in TfTensor yHat
   in [Label] labels
   in? Shape k
   out [Classification] predictions

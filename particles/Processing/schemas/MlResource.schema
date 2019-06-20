@@ -7,9 +7,6 @@ schema TfTensor
 schema TfModel
   Number ref
 
-schema TfYHat
-  Number ref
-
 schema Shape
   Number dim
 
