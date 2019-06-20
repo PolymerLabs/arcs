@@ -58,7 +58,11 @@ async function wrappedExecute() {
     const slotComposer = new SlotComposer({
       modalityName: Modality.Name.Dom,
       modalityHandler: ModalityHandler.domHandler,
-      rootContainer: arcPanel.arcRoot
+      containers: {
+        toproot: arcPanel.arcToproot,
+        root: arcPanel.arcRoot,
+        modal: arcPanel.arcModal,
+      }
     });
     const storage = new StorageProviderFactory(id);
     const arc = new Arc({
