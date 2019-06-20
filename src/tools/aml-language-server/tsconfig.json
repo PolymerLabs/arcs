@@ -1,0 +1,16 @@
+{
+  "extends": "../../../config/tsconfig.base.json",
+  "include": [
+    "../../**/*.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "../../../build",
+    "declaration": true,
+    "experimentalDecorators": true,
+    "incremental": true
+  },
+  "exclude": [
+    "../../../build/**/*",
+    "../../../server/**/*"
+  ]
+}

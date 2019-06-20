@@ -10,34 +10,33 @@
 
 import {createServer} from 'net';
 import {
-    ErrorCodes,
-    Message,
-    StreamMessageReader as VSCodeStreamMessageReader,
-    StreamMessageWriter as VSCodeStreamMessageWriter,
+    StreamMessageReader,
+    StreamMessageWriter,
 } from 'vscode-jsonrpc';
 
 import {AmlService} from './aml-service.js';
 import {Logger, DevNullLogger, AmlServiceOptions} from './util.js';
 
-function createReader(id:number, inS, outS, options, logger: Logger) {
-  const reader = new VSCodeStreamMessageReader(inS);
-  const writer = new VSCodeStreamMessageWriter(outS);
+
+// tslint:disable-next-line: no-any
+function createReader(id:number, inS: any, outS: any, options: AmlServiceOptions, logger: Logger) {
+  const reader = new StreamMessageReader(inS);
+  const writer = new StreamMessageWriter(outS);
 
   // The service should have no control over the closing of the connection.
-  reader.onClose(err => {
+  reader.onClose(_err => {
     inS.end();
     inS.destroy();
-    options.logger.log(`Connection ${id} closed (exit notification)`);
+    logger && logger.log(`Connection ${id} closed (exit notification)`);
   });
 
-  const service = new AmlService(reader, writer, options, logger);
+  new AmlService(reader, writer, options, logger);
 }
 
 export function serve(options: AmlServiceOptions) {
-  let logger: Logger;
+  let logger: Logger = console;
   switch (options.log) {
     case 'console':
-      logger = console;
       break;
     case 'null':
       logger = new DevNullLogger();
