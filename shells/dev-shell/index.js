@@ -7,8 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {FilePane} from './file-pane.js';
-import {OutputPane} from './output-pane.js';
+import './file-pane.js';
+import './output-pane.js';
+import '../configuration/whitelisted.js';
 import {DevShellLoader} from './loader.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';

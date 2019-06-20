@@ -9,6 +9,7 @@
  */
 
 import Xen from '../xen/xen.js';
+import '../xen/xen-async.js';
 
 let template = Xen.html`
   <div id="player"></div>
