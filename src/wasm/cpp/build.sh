@@ -29,7 +29,7 @@ if [[ $1 = --debug ]]; then
   WWCMD=$(which wasm2wat)
   if [[ $WWCMD = "" ]]; then
     # wabt tools should be part of the emsdk installation
-    WWCMD="$EMSDK"/fastcomp/bin/wasm2watX
+    WWCMD="$EMSDK"/fastcomp/bin/wasm2wat
     [[ -x $WWCMD ]] || WWCMD=""
   fi
   if [[ $WWCMD != "" ]]; then
