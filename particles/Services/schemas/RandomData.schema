@@ -1,0 +1,5 @@
+// Wrapper around a random number so that we can input this into
+// Recipes
+
+schema RandomData
+  Number next

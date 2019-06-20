@@ -13,6 +13,9 @@
  * Random Service
  * 
  * Implements the Arcs Random number service.
+ * 
+ * Supported methods
+ * - random.next : returns a Random number between 0 and 1.
  */
 
 import {Services} from '../runtime/services.js';
