@@ -98,7 +98,7 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public PortableJson put(String key, PortableJson obj) {
-        jsonObj.asPropertyMap().set(key, obj);
+        jsonObj.asPropertyMap().set(key, ((PortableJsonJsImpl) obj).getRawObj());
         return this;
     }
 
@@ -130,5 +130,9 @@ public class PortableJsonJsImpl implements PortableJson {
     public PortableJson put(int index, PortableJson obj) {
         jsonObj.asArrayLike().setAt(index, obj);
         return this;
+    }
+
+    Any getRawObj() {
+        return jsonObj;
     }
 }

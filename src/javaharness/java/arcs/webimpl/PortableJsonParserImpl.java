@@ -26,6 +26,6 @@ public class PortableJsonParserImpl implements PortableJsonParser {
 
     @Override
     public String stringify(PortableJson json) {
-        return JSON.stringify(Js.asAny(json));
+        return JSON.stringify(((PortableJsonJsImpl) json).getRawObj());
     }
 }
