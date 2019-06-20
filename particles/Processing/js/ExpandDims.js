@@ -12,7 +12,7 @@ defineParticle(({DomParticle, resolver, log}) => {
 
   importScripts(resolver(`$here/tf.js`));
 
-  return class extends DomParticle {
+  return class extends self.TfMixin(DomParticle) {
     async update({tensor, axis}) {
       if (tensor && axis) {
         log('Expanding Dimensions...');
