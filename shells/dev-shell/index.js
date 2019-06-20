@@ -76,15 +76,22 @@ async function wrappedExecute() {
     });
     arcPanel.attachArc(arc);
 
-    const resolver = new RecipeResolver(arc);
-    const options = {errors: new Map()};
-    const resolvedRecipe = await resolver.resolve(recipe, options);
-    if (!resolvedRecipe) {
-      arcPanel.showError('Error in RecipeResolver', `${
-        [...options.errors.entries()].join('\n')
-      }.\n${recipe.toString()}`);
-      continue;
-    }
+    recipe.normalize();
+
+    let resolvedRecipe = null;
+    if (recipe.isResolved()) {
+      resolvedRecipe = recipe;
+    } else {
+      const resolver = new RecipeResolver(arc);
+      const options = {errors: new Map()};
+      resolvedRecipe = await resolver.resolve(recipe, options);
+      if (!resolvedRecipe) {
+        arcPanel.showError('Error in RecipeResolver', `${
+          [...options.errors.entries()].join('\n')
+        }.\n${recipe.toString()}`);
+        continue;
+      }
+    }  
 
     try {
       await arc.instantiate(resolvedRecipe);
