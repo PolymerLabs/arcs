@@ -22,7 +22,6 @@ defineParticle(({DomParticle, log, resolver}) => {
         const labels = text.split('\n').map(label => ({label}));
         await this.set('labels', labels);
         log('Parsed.');
-
       }
     }
   };
