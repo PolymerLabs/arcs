@@ -19,9 +19,13 @@ import {database} from '../../shells/lib/database/firebase.js';
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
     super();
-    this.remoteExploreKey = new URLSearchParams(window.location.search).get('remote-explore-key');
-    if (this.remoteExploreKey) {
-      this._connectViaWebRtc(this.remoteExploreKey);
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('explore-proxy')) {
+      this.remoteExplore = true;
+      this._connectViaWebSocket(params.get('explore-proxy'));
+    } else if (params.has('remote-explore-key')) {
+      this.remoteExplore = true;
+      this._connectViaWebRtc(params.get('remote-explore-key'));
     } else {
       document.addEventListener('arcs-debug-in', e => this._handleMessage(e.detail));
     }
@@ -42,18 +46,10 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
     channel.onopen = e => {
       console.log('WebRTC channel opened');
     };
-    channel.onmessage = ({data}) => {
-      if (data === 'init') {
-        this.webRtcChannel = channel;
-        DevtoolsBroker.markConnected();
-        this._sendHeartbeat();
-      } else {
-        this._handleMessage(JSON.parse(data));
-      }
-    };
+    channel.onmessage = msg => this._onChannelMessage(msg, channel);
     channel.onclose = e => {
       console.warn('WebRTC channel closed');
-      this.webRtcChannel = null;
+      this.channel = null;
     };
     connection.onicecandidate = e => {
       // Last invocation has null candidate and
@@ -73,16 +69,41 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
     });
   }
 
+  _connectViaWebSocket(proxyPort) {
+    const ws = new WebSocket(`ws://localhost:${proxyPort || window.location.port || '8786'}`);
+    ws.onopen = _ => {
+      console.log(`WebSocket channel opened.`);
+      ws.onmessage = msg => this._onChannelMessage(msg, ws);
+    };
+    ws.onerror = _ => {
+      console.log(`No WebSocket connection found.`);
+    };
+    ws.onclose = _ => {
+      console.warn('WebSocket channel closed');
+      this.channel = null;
+    };
+  }
+
+  _onChannelMessage({data}, channel) {
+    if (data === 'init') {
+      this.channel = channel;
+      DevtoolsBroker.markConnected();
+      this._sendHeartbeat();
+    } else {
+      this._handleMessage(JSON.parse(data));
+    }
+  }
+
   _sendHeartbeat() {
-    if (!this.webRtcChannel) return;
-    this.webRtcChannel.send('heartbeat');
+    if (!this.channel) return;
+    this.send({messageType: 'connection-status-heartbeat'});
     setTimeout(() => this._sendHeartbeat(), 1000);
   }
 
   _flush(messages) {
-    if (this.remoteExploreKey) {
-      if (this.webRtcChannel) {
-        this.webRtcChannel.send(JSON.stringify(messages));
+    if (this.remoteExplore) {
+      if (this.channel) {
+        this.channel.send(JSON.stringify(messages));
       } else {
         console.warn('Connection to DevTools is closed. Message not sent.');
       }
