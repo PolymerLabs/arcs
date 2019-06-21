@@ -263,13 +263,13 @@ describe('Store', async () => {
     let lastModel = null;
     driver.send = async model => {lastModel = model; return true;};
 
-    activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}
     ]});
-    activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 1, to: 2}}
     ]});
-    activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 2, to: 3}}
     ]});
     driver.receiver({values: {me: 1, them: 1}, version: {me: 1, them: 1}}, 1);

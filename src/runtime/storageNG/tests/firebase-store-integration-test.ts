@@ -98,17 +98,17 @@ describe('Firebase + Store Integration', async () => {
     const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
     const activeStore2 = await store2.activate();
 
-    activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}
     ]});
-    activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}}
     ]});
 
     await 0;
     await 0;
 
-    activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'other', version: {from: 0, to: 1}}
     ]});
 
@@ -119,14 +119,12 @@ describe('Firebase + Store Integration', async () => {
     await 0;
     await 0;
 
-    activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'other', version: {from: 1, to: 2}}
     ]});
 
     await activeStore1.idle();
     await activeStore2.idle();
-
-    console.log('all flushed');
 
     assert.deepEqual(activeStore1['localModel'], activeStore2['localModel']);
   });
@@ -140,13 +138,13 @@ describe('Firebase + Store Integration', async () => {
     const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
     const activeStore2 = await store2.activate();
 
-    activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}
     ]});
-    activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}}
     ]});
-    activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'other', version: {from: 0, to: 1}}
     ]});
 
@@ -162,7 +160,7 @@ describe('Firebase + Store Integration', async () => {
     await 0;
     await 0;
 
-    activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    void activeStore2.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CountOpTypes.Increment, actor: 'other', version: {from: 1, to: 2}}
     ]});
 
