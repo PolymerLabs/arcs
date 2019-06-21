@@ -316,7 +316,7 @@ export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | 
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
-  dir: string;
+  dir: DirectionArrow;
   target: ParticleConnectionTargetComponents;
 }
 
@@ -355,7 +355,7 @@ export interface RecipeSlotConnectionRef extends BaseNode {
 
 export interface RecipeConnection extends BaseNode {
   kind: 'connection';
-  direction: Direction;
+  direction: DirectionArrow;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }
@@ -547,7 +547,6 @@ export type Manifest = ManifestItem[];
 export type ManifestStorageItem = string;
 export type ManifestStorageDescription = string;
 export type Modality = string;
-export type ParticleArgumentDirection = string;
 export type ReservedWord = string;
 export type ResourceStart = string;
 export type ResourceBody = string;
@@ -572,7 +571,9 @@ export type eolWhiteSpace = string;
 export type eol = string;
 
 // String-based enums.
-export type Direction = 'in' | 'out' | 'inout' | 'host';
+export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide';
+export type DirectionArrow = '<-' | '->' | '=' | 'consume' | 'provide';
+
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 

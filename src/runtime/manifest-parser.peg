@@ -180,7 +180,7 @@ InterfaceItem
   / InterfaceArgument
 
 InterfaceArgument
-  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
+  = direction:(Direction whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
     direction = optional(direction, dir => dir[0], null);
     if (direction === 'host') {
@@ -371,7 +371,7 @@ ParticleHandle
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection isOptional:'?'? whiteSpace type:ParticleArgumentType whiteSpace nametag:NameAndTagList
+  = direction:Direction isOptional:'?'? whiteSpace type:ParticleArgumentType whiteSpace nametag:NameAndTagList
   {
     return {
       kind: 'particle-argument',
@@ -385,10 +385,23 @@ ParticleArgument
     } as AstNode.ParticleArgument;
   }
 
-ParticleArgumentDirection "a direction (e.g. inout, in, out, host, `consume, `provide)"
+Direction "a direction (e.g. inout, in, out, host, `consume, `provide)"
   = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
-    return text() as AstNode.Direction;
+    const dir = text() as AstNode.Direction;
+    if(dir === null) {
+      expected('a direction');
+    }
+    return dir;
+  }
+
+DirectionArrow "a direction arrow (e.g. <-, ->, =, consume, provide)"
+  = 'in' / 'out' / '<-' / '->' / '=' / 'consume' / 'provide' {
+    const dir = text() as AstNode.DirectionArrow;
+    if(dir === null) {
+      expected('a direction arrow');
+    }
+    return dir;
   }
 
 ParticleArgumentType
@@ -692,7 +705,7 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return {
       kind: 'handle-connection',
@@ -756,7 +769,7 @@ SlotDirection
   = 'provide' / 'consume'
 
 RecipeConnection
-  = from:ConnectionTarget whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTarget whiteSpace direction:DirectionArrow whiteSpace to:ConnectionTarget eolWhiteSpace
   {
     return {
       kind: 'connection',
@@ -778,9 +791,6 @@ RecipeSearch
       tokens: optional(tokens, tokens => tokens[1][2].map(t => t[1]), null)
     } as AstNode.RecipeSearch;
   }
-
-Direction
-  = dir:('<-' / '->' / '=' / 'consume' / 'provide')
 
 ConnectionTarget
   = VerbConnectionTarget / TagConnectionTarget / ParticleConnectionTarget / NameConnectionTarget
@@ -1161,8 +1171,8 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 
 // Should only be used as a negative match.
 ReservedWord
-  = keyword:(Direction
-  / ParticleArgumentDirection
+  = keyword:(DirectionArrow
+  / Direction
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
