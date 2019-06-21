@@ -1,4 +1,6 @@
 import './Json.schema'
+import '../Services/schemas/RandomData.schema'
+import '../Services/particles/Random.particle'
 
 schema Artist
   Text type
@@ -6,6 +8,7 @@ schema Artist
   Text source
 
 particle SlandleRandomArtist in './source/RandomArtist.js'
+  in RandomData randomArtist
   out Artist artist
 
 particle SlandleSuggestArtist in './source/SuggestArtist.js'
@@ -16,7 +19,10 @@ particle SlandleSuggestArtist in './source/SuggestArtist.js'
 recipe SlandleCom_spotify_music &autofill
   create as artist
   create as suggestion
+  RandomParticle
+    randomData -> randomArtist
   SlandleRandomArtist
+    randomArtist <- randomArtist
     artist = artist
   SlandleSuggestArtist
     artist = artist

@@ -21,14 +21,29 @@ defineParticle(({DomParticle, html, log}) => {
   ];
 
   return class extends DomParticle {
-    update() {
-      const {stardate, destination} = this.computeStardate();
-      this.updateSingleton('stardate', {date: stardate});
-      this.updateSingleton('destination', {name: destination});
-    }
-    computeStardate() {
-      // Aims to follow logic per https://en.wikipedia.org/wiki/Stardate#The_Original_Series_era
 
+    /**
+     * @inheritDoc
+     * Given a random value compute the Stardate and Destination.
+     */
+    update({randomTime, randomPlanet}) {
+      if (randomTime && randomPlanet) {
+        const {stardate, destination} = this._computeStardate(randomTime.next, randomPlanet.next);
+
+        this.updateSingleton('stardate', {date: stardate});
+        this.updateSingleton('destination', {name: destination});
+      }
+    }
+
+    /**
+     * @private
+     * Aims to follow logic per https://en.wikipedia.org/wiki/Stardate#The_Original_Series_era
+     * Calculates a random date/time to allow for speculative execution
+     *
+     * @param {Number} randomTime value between 0 and 1 used to randomize the date..
+     * @param {Number} randomPlanet value between 0 and 1 used to randomize the planet.
+     */
+    _computeStardate(randomTime, randomPlanet) {
       // TODO(wkorman): Intent was to keep track of the "last stardate" within
       // an arc and use that as the initial prefix. However, we need to find
       // a way to do this that doesn't break with SpecEx, so for now it's a
@@ -36,9 +51,10 @@ defineParticle(({DomParticle, html, log}) => {
 
       const prefix = MIN_STARDATE;
       const remainder = MAX_STARDATE - prefix;
-      const stardate = prefix + Math.floor(Math.random() * remainder);
+
+      const stardate = prefix + Math.floor(randomTime * remainder);
       const intraday = Math.trunc((new Date().getHours() / 24) * 10);
-      const destination = PLANETS[Math.floor(Math.random() * (PLANETS.length - 1))];
+      const destination = PLANETS[Math.floor(randomPlanet * (PLANETS.length - 1))];
       return {
         stardate: `${stardate}.${intraday}`,
         destination

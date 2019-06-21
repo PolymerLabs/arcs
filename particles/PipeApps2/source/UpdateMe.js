@@ -21,6 +21,7 @@ defineParticle(({DomParticle, html, log}) => {
         state.count = 10;
       }
       if (!state.async && state.count--) {
+        // TODO(lindner): Convert to use Random service
         const dur = Math.floor(Math.random()*10);
         log(`will update in ${dur}s`);
         state.async = setTimeout(() => {

@@ -116,6 +116,7 @@ defineParticle(({DomParticle, html, log}) => {
       const result = [];
       while (n--) {
         // This seems somewhat balanced
+        // TODO(lindner): convert to use random service
         const notAvailable = Math.random() < 0.3; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
         result.push({
           time: `${hour}:${minute}`,

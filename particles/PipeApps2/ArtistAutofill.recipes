@@ -1,5 +1,8 @@
 import './Json.schema'
 import './PipeEntity.schema'
+import '../Services/schemas/RandomData.schema'
+import '../Services/particles/Random.particle'
+
 
 schema Artist
   Text type
@@ -7,6 +10,7 @@ schema Artist
   Text source
 
 particle RandomArtist in './source/RandomArtist.js'
+  in RandomData randomArtist
   out Artist artist
 
 particle SuggestArtist in './source/SuggestArtist.js'
@@ -23,7 +27,10 @@ recipe AutofillSpotifyMusic &autofill
   use #autofill_com_spotify_music as query
   RequireQuery
     query = query
+  RandomParticle
+    randomData -> randomArtist
   RandomArtist
+    randomArtist <- randomArtist
     artist = artist
   SuggestArtist
     artist = artist

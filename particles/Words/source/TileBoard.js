@@ -186,6 +186,7 @@ class TileBoard {
       const currentTile = tilesForCompression[t];
       for (let y = currentTile.y; y >= 0; y--) {
         if (!this._rows[y][currentTile.x]) {
+          // TODO(lindner): convert to use Random service
           const rnd = Math.random();
           const isFire = rnd < this._chanceOfFire;
           // TileBoard.info(`Generating tile [rnd=${rnd}, chanceOfFire=${this._chanceOfFire}, isFire=${isFire}].`);
@@ -207,6 +208,7 @@ class TileBoard {
     // Fisher-Yates shuffle per https://bost.ocks.org/mike/shuffle/
     let m = TILE_COUNT;
     while (m) {
+      // TODO(lindner): convert to use Random service
       const i = Math.floor(Math.random() * m--);
       const tx = TileBoard.indexToX(i);
       const ty = TileBoard.indexToY(i);
@@ -231,6 +233,7 @@ class TileBoard {
     }
     // Unique id generation is a hack swiped from ArcsUtils. We could perhaps
     // use the Board entity id, or a more legitimate id generator if needed.
+    // TODO(lindner): convert to use Random service
     const gameId = Date.now().toString(36).substr(2) +
         Math.random().toString(36).substr(2);
     return {
@@ -241,6 +244,7 @@ class TileBoard {
     };
   }
   static pickCharWithFrequencies() {
+    // TODO(lindner): convert to use Random service
     const pick = Math.random() * 100;
     let accumulator = 0;
     for (let i = 0; i < CHAR_FREQUENCIES.length; i++) {
