@@ -219,22 +219,26 @@ export class Planner implements InspectablePlanner {
     }
     let relevance: Relevance|null = null;
     let description: Description|null = null;
-    if (this.speculator) {
-      const result = await this.speculator.speculate(this.arc, plan, hash);
-      if (!result) {
-        return undefined;
-      }
-      const speculativeArc = result.speculativeArc;
-      relevance = result.relevance;
-      description = await Description.create(speculativeArc, relevance);
-    } else {
-      description = await Description.createForPlan(plan);
-    }
+    // if (this.speculator) {
+    //   const result = await this.speculator.speculate(this.arc, plan, hash);
+    //   if (!result) {
+    //     return undefined;
+    //   }
+    //   const speculativeArc = result.speculativeArc;
+    //   relevance = result.relevance;
+    //   description = await Description.create(speculativeArc, relevance);
+    // } else {
+    //   description = await Description.createForPlan(arc, plan);
+    // }
+    description = await Description.createForPlan(arc, plan);
     const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(
         description,
         this.arc.modality,
-        this.arc.pec.slotComposer ? this.arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
+        this.arc.pec.slotComposer ?
+          this.arc.pec.slotComposer.modalityHandler.descriptionFormatter
+          : undefined
+    );
     suggestionByHash().set(hash, suggestion);
     return suggestion;
   }
