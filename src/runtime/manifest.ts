@@ -8,21 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {parse, SyntaxError} from '../gen/runtime/manifest-parser.js';
+import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
-import {Id, IdGenerator, ArcId} from './id.js';
+import {Id, IdGenerator} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Runnable} from './hot.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
-import {compareComparables, compareNumbers, compareStrings} from './recipe/comparable.js';
+import {compareComparables, compareStrings} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
-import {HandleConnection} from './recipe/handle-connection.js';
+import {RecipeUtil, arrowToDirection} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -753,6 +752,16 @@ ${e.message}
     this._buildRecipe(manifest, recipe, recipeItem.items);
   }
 
+  private static _directionsMatch(subdirection: AstNode.Direction, direction: AstNode.Direction): boolean {
+    if (subdirection === direction) return true; // Match
+    if (direction === 'inout') return true; // Matches any
+    // One of the 'safe' subsetting matches.
+    if (subdirection === 'host' && direction === 'in') return true;
+    if (subdirection === '`consume' && direction === 'in') return true;
+    if (subdirection === '`provide' && direction === 'out') return true;
+    return false;
+  }
+
   private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
@@ -983,14 +992,9 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        const direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
+        const direction = arrowToDirection(connectionItem.dir);
         if (connection.direction) {
-          if (connection.direction !== direction &&
-              direction !== 'inout' &&
-              !(connection.direction === 'host' && direction === 'in') &&
-              !(connection.direction === '`consume' && direction === 'in') &&
-              !(connection.direction === '`provide' && direction === 'out')
-            ) {
+          if (!Manifest._directionsMatch(connection.direction, direction)) {
             throw new ManifestError(
                 connectionItem.location,
                 `'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
