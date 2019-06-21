@@ -79,8 +79,53 @@ describe('Volatile + Store Integration', async () => {
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
     assert.equal(results.filter(a => !a).length, 0);
     
-    await activeStore1.awaitFlushed();
-    await activeStore2.awaitFlushed();
+    await activeStore1.idle();
+    await activeStore2.idle();
+
+    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
+    assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
+    assert.equal(volatileEntry.version, 3);
+  });
+
+  it('will store operation updates from multiple sources with some timing delays', async () => {
+    // store1.onProxyMessage, DELAY, DELAY, DELAY, store1.onProxyMessage, store2.onProxyMessage, DELAY, DELAY, DELAY, store2.onProxyMessage, DELAY, DELAY, DELAY, DELAY, DELAY
+    const runtime = new Runtime();
+    const storageKey = new VolatileStorageKey('unique');
+    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const activeStore1 = await store1.activate();
+
+    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+    const activeStore2 = await store2.activate();
+
+    const opReply1 = activeStore1.onProxyMessage({type: ProxyMessageType.Operations, operations: [
+      {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}
+    ], id: 1});
+
+    await 0;
+    await 0;
+    await 0;
+
+    const opReply2 = activeStore1.onProxyMessage({type: ProxyMessageType.Operations, operations: [
+      {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}},
+    ], id: 1});
+
+    const opReply3 = activeStore2.onProxyMessage({type: ProxyMessageType.Operations, operations: [
+      {type: CountOpTypes.Increment, actor: 'other', version: {from: 0, to: 1}},
+    ], id: 1});
+
+    await 0;
+    await 0;
+    await 0;
+
+    const opReply4 = activeStore2.onProxyMessage({type: ProxyMessageType.Operations, operations: [
+      {type: CountOpTypes.Increment, actor: 'other', version: {from: 1, to: 2}},
+    ], id: 1});
+
+    const results = await Promise.all([opReply1, opReply2, opReply3, opReply4]);
+    assert.equal(results.filter(a => !a).length, 0);
+    
+    await activeStore1.idle();
+    await activeStore2.idle();
 
     const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());

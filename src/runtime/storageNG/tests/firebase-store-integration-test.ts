@@ -43,12 +43,13 @@ describe('Firebase + Store Integration', async () => {
       {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}}
     ], id: 1});
 
+    await activeStore.idle();
     const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(storageKey);
     assert.deepEqual(firebaseEntry.model, activeStore['localModel'].getData());
-    assert.equal(firebaseEntry.version, 3);
+    assert.equal(firebaseEntry.version, 2);
   });
 
-  it.only('will store operation updates from multiple sources', async () => {
+  it('will store operation updates from multiple sources', async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
     const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
@@ -77,18 +78,18 @@ describe('Firebase + Store Integration', async () => {
       {type: CountOpTypes.MultiIncrement, actor: 'me', value: 74, version: {from: 28, to: 33}},
     ], id: 1});
 
-    await activeStore1.awaitFlushed();
-    await activeStore2.awaitFlushed();
+    await activeStore1.idle();
+    await activeStore2.idle();
 
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
     assert.equal(results.filter(a => !a).length, 0);
 
     const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(storageKey);
     assert.deepEqual(firebaseEntry.model, activeStore1['localModel'].getData());
-    assert.equal(firebaseEntry.version, 4);
+    assert.equal(firebaseEntry.version, 3);
   });
 
-  it.only('will store operation updates from multiple sources with some delays', async () => {
+  it('will store operation updates from multiple sources with some delays', async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
     const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
@@ -122,8 +123,8 @@ describe('Firebase + Store Integration', async () => {
       {type: CountOpTypes.Increment, actor: 'other', version: {from: 1, to: 2}}
     ]});
 
-    await activeStore1.awaitFlushed();
-    await activeStore2.awaitFlushed();
+    await activeStore1.idle();
+    await activeStore2.idle();
 
     console.log('all flushed');
 
@@ -185,8 +186,8 @@ describe('Firebase + Store Integration', async () => {
     await 0;
     await 0;
 
-    await activeStore1.awaitFlushed();
-    await activeStore2.awaitFlushed();
+    await activeStore1.idle();
+    await activeStore2.idle();
 
     assert.deepEqual(activeStore1['localModel'], activeStore2['localModel']);
   });

@@ -131,7 +131,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
     // re-entrant.
     const nextTag = this.nextTag;
     const seenTag = this.seenTag;
-    console.log('\ttransaction', model, nextTag, version);
+//console.log('\ttransaction', model, nextTag, version);
     const result = await this.reference.transaction(data => {
       if (data) {
         if (data.version !== version - 1) {
@@ -143,7 +143,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
       }
       return {version, model, tag: nextTag};
     }, (err: Error, complete: boolean) => {
-      console.log('\tdone', nextTag, complete);
+//console.log('\tdone', nextTag, complete);
       if (complete) {
         this.seenTag = nextTag;
       }

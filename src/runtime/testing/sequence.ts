@@ -122,6 +122,7 @@ export class SequenceTest<T> {
   private outputs: Map<string, Output> = new Map();
 
   private interleavingLog: string[];
+  private currentTestObject: T | null = null;
 
   /**
    * Set a function that constructs a fresh instance of the object under test for each ordering.
@@ -273,6 +274,10 @@ export class SequenceTest<T> {
    */
   setEndInvariant(id: string, test: (t: any) => void) {
     this.sensors.get(id).endInvariants.push(test);
+  }
+
+  testObject() {
+    return this.currentTestObject;
   }
 
   private resetVariables() {
@@ -565,6 +570,7 @@ export class SequenceTest<T> {
       }
 
       permutationCount++;
+
       const interleaving = next.value;
 
       const description = interleaving.map(a => {
@@ -584,6 +590,7 @@ export class SequenceTest<T> {
         obj = await obj;
       }
       this.setupOutputs(obj);
+      this.currentTestObject = obj;
 
       this.interleavingLog = ['--', description, '\n'];
       for (const item of interleaving) {

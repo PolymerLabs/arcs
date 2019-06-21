@@ -149,7 +149,7 @@ describe('Store Sequence', async () => {
   // Tests 3 operation updates happening synchronously with 2 model updates from the driver
   it.skip('applies 3 operations and 2 models simultaneously', async function() {    
 
-    this.timeout(10000);
+    this.timeout(20000);
 
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(async () => {
@@ -161,7 +161,7 @@ describe('Store Sequence', async () => {
       return activeStore;
     });
 
-    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, {type: ExpectedResponse.Constant, response: true});
+    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: true});
     const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
 
     const meCount = sequenceTest.registerVariable(0);
@@ -178,7 +178,6 @@ describe('Store Sequence', async () => {
       }, SequenceOutput.Replace);
 
     const model = sequenceTest.registerSensor('localModel');
-    const inSync = sequenceTest.registerSensor('inSync');
 
     const storageProxyChanges = [{input: [incOp('me', 0)]}, {input: [incOp('me', 1)]}, {input: [incOp('me', 2)]}];
 
@@ -193,17 +192,17 @@ describe('Store Sequence', async () => {
     sequenceTest.setChanges(onProxyMessage, storageProxyChanges);
     sequenceTest.setChanges(onReceive, driverChanges);
 
-    sequenceTest.setEndInvariant(model, modelValue => {
+    sequenceTest.setEndInvariant(model, async modelValue => {
+      await sequenceTest.testObject().idle();
       assert.deepEqual(modelValue, {model: makeSimpleModel(3, 2, 3, 2)});
     });
-    sequenceTest.setEndInvariant(inSync, assert.isTrue);
 
     await sequenceTest.test();
 
   });
 
   it('applies operations to two stores connected by a volatile driver', async () => {
-    const sequenceTest = new SequenceTest();
+    const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       DriverFactory.clearRegistrationsForTesting();
@@ -236,7 +235,9 @@ describe('Store Sequence', async () => {
     sequenceTest.setChanges(store1in, store1changes);
     sequenceTest.setChanges(store2in, store2changes);
 
-    sequenceTest.setEndInvariant(store1Model, model => {
+    sequenceTest.setEndInvariant(store1Model, async model => {
+      await sequenceTest.testObject().store1.idle();
+      await sequenceTest.testObject().store2.idle();
       assert.deepEqual(model.getData(), makeModel({'me': 1, 'them': 1, 'other': 2}, {'me': 1, 'them': 1, 'other': 2}));
     });
 
@@ -252,7 +253,7 @@ describe('Store Sequence', async () => {
   });
 
   it('applies operations to two stores connected by a firebase driver', async function() {
-    this.timeout(5000);
+    this.timeout(40000);
 
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
@@ -292,8 +293,8 @@ describe('Store Sequence', async () => {
     sequenceTest.setChanges(store2in, store2changes);
 
     sequenceTest.setEndInvariant(store1Model, async model => {
-      await sequenceTest.getVariable(store1V).awaitFlushed();
-      await sequenceTest.getVariable(store2V).awaitFlushed();
+      await sequenceTest.getVariable(store1V).idle();
+      await sequenceTest.getVariable(store2V).idle();
       assert.deepEqual(model.getData(), makeModel({'me': 1, 'them': 1, 'other': 2}, {'me': 1, 'them': 1, 'other': 2}));
     });
 
