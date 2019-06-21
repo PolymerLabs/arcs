@@ -15,6 +15,7 @@ import {Type} from '../type.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
+import {directionToArrow} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 
@@ -240,7 +241,7 @@ export class HandleConnection {
     const result: string[] = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.
-    result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '=', '`consume': '<-', '`provide': '->'}[this.direction] || this.direction || '=');
+    result.push((this.direction && directionToArrow(this.direction)) || '*');
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);

@@ -13,12 +13,13 @@ import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
-import {Direction} from '../../runtime/manifest-ast-nodes.js';
+import {reverseArrow} from '../../runtime/recipe/recipe-util.js';
+import {DirectionArrow} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Dictionary} from '../../runtime/hot.js';
 
-type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
+type Obligation = {from: EndPoint, to: EndPoint, direction: DirectionArrow};
 
 export class ConvertConstraintsToConnections extends Strategy {
   async generate(inputParams: {generated: Descendant<Recipe>[]}): Promise<Descendant<Recipe>[]> {
@@ -72,8 +73,6 @@ export class ConvertConstraintsToConnections extends Strategy {
             return undefined;
           }
 
-          const reverse = {'->': '<-', '=': '=', '<-': '->'};
-
           // Set up initial mappings & input to RecipeUtil.
           let handle: HandleRepr;
           let handleIsConcrete = false;
@@ -93,7 +92,7 @@ export class ConvertConstraintsToConnections extends Strategy {
             }
           }
           if (from instanceof HandleEndPoint) {
-            handle = {handle: nameForHandle(from.handle, handleNames), direction: reverse[constraint.direction], localName: from.handle.localName};
+            handle = {handle: nameForHandle(from.handle, handleNames), direction: reverseArrow(constraint.direction), localName: from.handle.localName};
             handles.add(handle.handle);
           }
           if (to instanceof ParticleEndPoint) {
@@ -164,7 +163,7 @@ export class ConvertConstraintsToConnections extends Strategy {
             }
           }
 
-          direction = reverse[constraint.direction];
+          direction = reverseArrow(constraint.direction);
           if (to instanceof ParticleEndPoint) {
             const connection = to.connection;
             if (connection) {

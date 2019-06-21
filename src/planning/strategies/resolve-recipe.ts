@@ -8,12 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Recipe} from '../../runtime/recipe/recipe.js';
 import {ResolveWalker} from '../../runtime/recipe/recipe-resolver.js';
+import {Descendant} from '../../runtime/recipe/walker.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class ResolveRecipe extends Strategy {
 
-  async generate(inputParams) {
+  async generate(inputParams:{generated: Descendant<Recipe>[]}) {
     return StrategizerWalker.over(this.getResults(inputParams),
       new ResolveWalker(ResolveWalker.Permuted, this.arc), this);
   }

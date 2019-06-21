@@ -180,7 +180,7 @@ InterfaceItem
   / InterfaceArgument
 
 InterfaceArgument
-  = direction:(Direction whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
+  = direction:(Direction whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:('*' / lowerIdent) eolWhiteSpace
   {
     direction = optional(direction, dir => dir[0], null);
     if (direction === 'host') {
@@ -386,7 +386,7 @@ ParticleArgument
   }
 
 Direction "a direction (e.g. inout, in, out, host, `consume, `provide)"
-  = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
+  = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / '*'
   {
     const dir = text() as AstNode.Direction;
     if(dir === null) {
@@ -396,7 +396,7 @@ Direction "a direction (e.g. inout, in, out, host, `consume, `provide)"
   }
 
 DirectionArrow "a direction arrow (e.g. <-, ->, =, consume, provide)"
-  = 'in' / 'out' / '<-' / '->' / '=' / 'consume' / 'provide' {
+  = 'in' / 'out' / '<-' / '->' / '=' / 'consume' / 'provide' / '*' {
     const dir = text() as AstNode.DirectionArrow;
     if(dir === null) {
       expected('a direction arrow');
@@ -678,7 +678,7 @@ TopLevelAlias
   }
 
 RecipeParticle
-  = ref:(ParticleRef / '*') name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
+  = ref:('*' / ParticleRef) name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
     const handleConnections: AstNode.RecipeParticleConnection[]  = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
@@ -705,7 +705,7 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:('*' / lowerIdent) whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return {
       kind: 'handle-connection',
@@ -1006,7 +1006,7 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace)+ '{' fields:(SchemaInlineField (',' whiteSpace SchemaInlineField)*)? '}'
+  = names:(('*' / upperIdent) whiteSpace)+ '{' fields:(SchemaInlineField (',' whiteSpace SchemaInlineField)*)? '}'
   {
     return {
       kind: 'schema-inline',

@@ -46,12 +46,12 @@ export interface Cloneable<T> {
 export interface Descendant<T extends Cloneable<T>> {
   result: T;
   score: number;
-  derivation: {
+  derivation?: {
     parent?: Descendant<T>;
     strategy: Action<T>
   }[];
-  hash: Promise<string> | string;
-  valid: boolean;
+  hash?: Promise<string> | string;
+  valid?: boolean;
   errors?;
   normalized?;
 }
@@ -73,7 +73,7 @@ export abstract class Action<T extends Cloneable<T>> {
     return this._arc;
   }
 
-  getResults(inputParams: {generated: Descendant<T>[]}) {
+  getResults(inputParams: {generated: Descendant<T>[]}): Descendant<T>[] {
     return inputParams.generated;
   }
 

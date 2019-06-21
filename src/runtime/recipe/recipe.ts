@@ -15,7 +15,7 @@ import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction, DirectionArrow} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -67,13 +67,13 @@ export class Recipe implements Cloneable<Recipe> {
     this._name = name;
   }
 
-  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
+  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: DirectionArrow): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'constraint');
     this._connectionConstraints.push(result);
     return result;
   }
 
-  newObligation(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
+  newObligation(from: EndPoint, to: EndPoint, direction: DirectionArrow): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'obligation');
     this._obligations.push(result);
     return result;
@@ -667,6 +667,8 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   getFreeConnections(type?: Type): {particle: Particle, connSpec: HandleConnectionSpec}[] {
+    // TODO(jopra): Check that this works for required connections that are
+    // dependent on optional connections.
     return this.allSpecifiedConnections.filter(
         ({particle, connSpec}) => !connSpec.isOptional &&
                                   connSpec.name !== 'descriptions' &&
