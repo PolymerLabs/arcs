@@ -268,18 +268,19 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       case ProxyMessageType.SyncRequest:
         await this.callbacks.get(message.id)({type: ProxyMessageType.ModelUpdate, model: this.localModel.getData(), id: message.id});
         return true;
-      case ProxyMessageType.Operations:
+      case ProxyMessageType.Operations: {
         for (const operation of message.operations) {
           if (!this.localModel.applyOperation(operation)) {
             return false;
           }
         }
         const change: CRDTChange<T> = {changeType: ChangeType.Operations, operations: message.operations};
-        this.processModelChange(change, null, this.version, false);
+        void this.processModelChange(change, null, this.version, false);
         return true;
+      }
       case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
-        this.processModelChange(modelChange, otherChange, this.version, false);
+        void this.processModelChange(modelChange, otherChange, this.version, false);
         return true;
       }
       default:

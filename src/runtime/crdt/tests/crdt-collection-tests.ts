@@ -211,7 +211,7 @@ describe('CRDTCollection', () => {
     const expectedValues2 = {
       two: {value: {id: 'two'}, version: {me: 2}},
       three: {value: {id: 'three'}, version: {you: 1}}
-    }
+    };
     if (modelChange2.changeType === ChangeType.Model) {
       assert.deepEqual(
           modelChange2.modelPostChange,

@@ -60,7 +60,7 @@ describe('CollectionHandle', () => {
   it('can add multiple entities', async () => {
     const handle = getCollectionHandle();
     await handle.addMultiple([{id: 'A'}, {id: 'B'}]);
-    assert.sameDeepMembers(await handle.toList(), [{id: 'A'} , {id: 'B'}]);
+    assert.sameDeepMembers(await handle.toList(), [{id: 'A'}, {id: 'B'}]);
   });
 });
 
