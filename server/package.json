@@ -41,6 +41,7 @@
     "morgan": "^1.9.1",
     "node-fetch": "^2.3.0",
     "pouchdb": "^7.1.1",
+    "pouchdb-debug": "^7.1.1",
     "pouchdb-adapter-memory": "^7.1.1",
     "source-map-support": "^0.5.12"
   },
