@@ -4,41 +4,62 @@ schema Data
   URL lnk
   Boolean flg
 
-resource DataResource
-  start
-  [
-    {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}
-  ]
-store DataStore of Data in DataResource
-
-
 schema Info
   // Test that C++ keywords can be field names
   Text for
   // Test that this doesn't conflict with the real internal id
   Number internal_id
 
-resource InfoResource
+resource DataResource1
   start
-  [
-    {"for": "xx", "internal_id": -5.8},
-    {"internal_id": 107},
-    {"for": "yy"}
-  ]
-store InfoStore of [Info] in InfoResource
+  [{"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}]
+store InSingletonStore of Data in DataResource1
 
+resource DataResource2
+  start
+  [{"num": 50, "txt": "def"}]
+store OutSingletonStore of Data in DataResource2
+
+resource DataResource3
+  start
+  [{"lnk": "http://qrs", "flg": false}]
+store InOutSingletonStore of Data in DataResource3
+
+resource DataResource4
+  start
+  [{"num": 50}, {"txt": "ghi"}]
+store InCollectionStore of [Data] in DataResource4
+
+resource DataResource5
+  start
+  [{"flg": true}, {"lnk": "http://uvw"}]
+store OutCollectionStore of [Data] in DataResource5
+
+resource DataResource6
+  start
+  [{"num": 8.5, "flg": false}, {"txt": "jkl"}, {"flg": true}]
+store InOutCollectionStore of [Data] in DataResource6
 
 particle TestParticle in 'output.wasm'
   consume root
-  in Data data
-  out Data res
-  inout [Info] info
+  in Data in_sng
+  out Data ot_sng
+  inout Data io_sng
+  in [Data] in_col
+  out [Data] ot_col
+  inout [Data] io_col
 
 recipe
-  use DataStore as h1
-  create as h2
-  use InfoStore as h3
+  use InSingletonStore as h1
+  use OutSingletonStore as h2
+  use InOutSingletonStore as h3
+  use InCollectionStore as h4
+  use OutCollectionStore as h5
+  use InOutCollectionStore as h6
   TestParticle
-    data <- h1
-    res -> h2
-    info = h3
+    in_sng <- h1
+    ot_sng -> h2
+    io_sng = h3
+    in_col <- h4
+    ot_col -> h5
+    io_col = h6

@@ -322,7 +322,7 @@ std::string entity_to_str(const T& entity, const char* join = ", ") {
 
 // --- Storage classes ---
 
-// TODO: enforce read/write restrictions on 'in' and 'out' handles.
+enum Direction { Unconnected, In, Out, InOut };
 
 class Handle {
 public:
@@ -332,39 +332,65 @@ public:
 
   const std::string& name() const { return name_; }
 
-private:
+protected:
+  bool failForDirection(Direction bad_dir) const {
+    if (dir_ == bad_dir) {
+      std::string action = (bad_dir == In) ? "write to" : "read from";
+      std::string type = (bad_dir == In) ? "in" : "out";
+      std::string msg = "Cannot " + action + " '" + type + "' handle '" + name() + "'";
+      internal::systemError(msg.c_str());
+      return true;
+    }
+    return false;
+  }
+
+  // These are initialized by the Particle class.
+  std::string name_;
+  Direction dir_ = Unconnected;
+
   friend class Particle;
-  std::string name_ = nullptr;
 };
 
 template<typename T>
 class Singleton : public Handle {
 public:
   void sync(const char* encoded) override {
+    failForDirection(Out);
     entity_ = T();
     decode_entity(&entity_, encoded);
   }
 
   void update(const char* encoded, const char* ignored) override {
-    entity_ = T();
-    decode_entity(&entity_, encoded);
+    sync(encoded);
   }
 
-  const T& get() const { return entity_; }
+  const T& get() const {
+    failForDirection(Out);
+    return entity_;
+  }
 
-  void set(const T& entity) {
-    std::string encoded = encode_entity(entity);
+  // For new entities created by a particle, this method will generate a new internal ID and update
+  // the given entity with it. The data fields will not be modified.
+  void set(T* entity) {
+    failForDirection(In);
+    std::string encoded = encode_entity(*entity);
     const char* id = internal::singletonSet(this, encoded.c_str());
-    entity_ = entity;
     if (id != nullptr) {
-      entity_._internal_id = id;
+      entity->_internal_id = id;
       free((void*)id);
+    }
+    // Write-only handles do not keep entity data locally.
+    if (dir_ == InOut) {
+      entity_ = *entity;
     }
   }
 
   void clear() {
-    entity_ = T();
+    failForDirection(In);
     internal::singletonClear(this);
+    if (dir_ == InOut) {
+      entity_ = T();
+    }
   }
 
 private:
@@ -416,38 +442,62 @@ public:
     }
   }
 
-  size_t size() const { return entities_.size(); }
-  bool empty() const { return entities_.empty(); }
-  WrappedIter<T> begin() const { return WrappedIter<T>(entities_.cbegin()); }
-  WrappedIter<T> end() const { return WrappedIter<T>(entities_.cend()); }
+  size_t size() const {
+    failForDirection(Out);
+    return entities_.size();
+  }
 
-  void store(const T& entity) {
-    std::string encoded = encode_entity(entity);
+  bool empty() const {
+    failForDirection(Out);
+    return entities_.empty();
+  }
+
+  WrappedIter<T> begin() const {
+    failForDirection(Out);
+    return WrappedIter<T>(entities_.cbegin());
+  }
+
+  WrappedIter<T> end() const {
+    failForDirection(Out);
+    return WrappedIter<T>(entities_.cend());
+  }
+
+  // For new entities created by a particle, this method will generate a new internal ID and update
+  // the given entity with it. The data fields will not be modified.
+  void store(T* entity) {
+    failForDirection(In);
+    std::string encoded = encode_entity(*entity);
     const char* id = internal::collectionStore(this, encoded.c_str());
-    std::unique_ptr<T> eptr(new T(entity));
     if (id != nullptr) {
-      eptr->_internal_id = id;
+      entity->_internal_id = id;
       free((void*)id);
     }
-    entities_.emplace(eptr->_internal_id, std::move(eptr));
+    // Write-only handles do not keep entity data locally.
+    if (dir_ == InOut) {
+      entities_.emplace(entity->_internal_id, new T(*entity));
+    }
   }
 
   void remove(const T& entity) {
-    auto it = entities_.find(entity._internal_id);
-    if (it != entities_.end()) {
-      std::string encoded = encode_entity(*it->second);
-      entities_.erase(it);
-      internal::collectionRemove(this, encoded.c_str());
+    failForDirection(In);
+    std::string encoded = encode_entity(entity);
+    internal::collectionRemove(this, encoded.c_str());
+    if (dir_ == InOut) {
+      entities_.erase(entity._internal_id);
     }
   }
 
   void clear() {
-    entities_.clear();
+    failForDirection(In);
     internal::collectionClear(this);
+    if (dir_ == InOut) {
+      entities_.clear();
+    }
   }
 
 private:
   void add(const char* added) {
+    failForDirection(Out);
     internal::StringDecoder decoder(added);
     int num = decoder.getInt(':');
     while (num--) {
@@ -477,15 +527,19 @@ public:
   }
 
   // Called by the runtime to associate the inner handle instance with the outer object.
-  Handle* connectHandle(const char* name, bool will_sync) {
+  Handle* connectHandle(const char* name, bool can_read, bool can_write) {
     auto pair = handles_.find(name);
-    if (pair != handles_.end()) {
-      if (will_sync) {
-        to_sync_.insert(pair->second);
-      }
-      return pair->second;
+    if (pair == handles_.end()) {
+      return nullptr;
     }
-    return nullptr;
+    Handle* handle = pair->second;
+    if (can_read) {
+      to_sync_.insert(handle);
+      handle->dir_ = can_write ? InOut : In;
+    } else {
+      handle->dir_ = Out;
+    }
+    return handle;
   }
 
   void sync(Handle* handle) {
@@ -496,6 +550,11 @@ public:
   // Called by sub-classes to render into a slot.
   void renderSlot(const std::string& slot_name, const std::string& content) const {
     internal::render(slot_name.c_str(), content.c_str());
+  }
+
+  Handle* getHandle(const std::string& name) {
+    auto it = handles_.find(name);
+    return (it != handles_.end()) ? it->second : nullptr;
   }
 
   virtual void onHandleSync(Handle* handle, bool all_synced) {}
@@ -524,8 +583,8 @@ private:
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
-Handle* connectHandle(Particle* particle, const char* name, bool will_sync) {
-  return particle->connectHandle(name, will_sync);
+Handle* connectHandle(Particle* particle, const char* name, bool can_read, bool can_write) {
+  return particle->connectHandle(name, can_read, can_write);
 }
 
 EMSCRIPTEN_KEEPALIVE
