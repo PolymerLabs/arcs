@@ -118,7 +118,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         models
       };
     }
-    onClick() {
+    async onClick() {
       const {grid} = this.state;
       const live = grid.tiles.filter(tile => !tile.removed);
       switch (live.length) {
@@ -130,22 +130,26 @@ defineParticle(({DomParticle, html, log, resolver}) => {
           break;
         case 6: {
           // add random tile
-          const t = Math.floor(Math.random()*3);
+          let randomValue = await this.service({call: 'random.next'});
+          const t = Math.floor(randomValue * 3);
           const row = grid.grid[t];
-          const l = Math.floor(Math.random()*(row ? row.length : 0));
+          randomValue = await this.service({call: 'random.next'});
+          const l = Math.floor(randomValue * (row ? row.length : 0));
           this.setState({insert: {name: `Golf (${grid.key+1})`, t, l}});
         } break;
         case 7: {
           // remove random tile
-          const tile = live[Math.floor(Math.random()*live.length)];
+          const randomValue = await this.service({call: 'random.next'});
+          const tile = live[Math.floor(randomValue * live.length)];
           this.setState({remove: tile});
         } break;
       }
     }
-    onTileClick(e) {
+    async onTileClick(e) {
       log('TileClick', e.data);
       const tile = this.state.grid.tiles.find(tile => tile.key === e.data.key);
-      tile.color = ['red', 'lightblue', 'lightgreen', 'goldenrod'][Math.floor(Math.random()*4)];
+      const randomValue = await this.service({call: 'random.next'});
+      tile.color = ['red', 'lightblue', 'lightgreen', 'goldenrod'][Math.floor(randomValue * 4)];
       this.onClick(e);
     }
   };

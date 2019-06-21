@@ -12,7 +12,7 @@
 
 defineParticle(({DomParticle, log, html, resolver}) => {
   const handleName = 'randomData';
-  
+
   return class extends DomParticle {
     /**
      * Sets the 'randomData' handle to a RandomData schema object
