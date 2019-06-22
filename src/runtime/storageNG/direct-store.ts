@@ -12,58 +12,9 @@ import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../c
 import {Type} from '../type.js';
 import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
-import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback} from './store-interface';
-import {DirectStore} from './direct-store.js';
-import {BackingStore} from './backing-store.js';
+import {ActiveStore, ProxyCallback, StorageMode, ProxyMessageType, ProxyMessage} from './store-interface.js';
 
-export {StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback};
-
-type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>): Promise<ActiveStore<T>>;
-};
-
-// A representation of a store. Note that initially a constructed store will be
-// inactive - it will not connect to a driver, will not accept connections from 
-// StorageProxy objects, and no data will be read or written.
-//
-// Calling 'activate() will generate an interactive store and return it. 
-export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
-  readonly storageKey: StorageKey;
-  exists: Exists;
-  readonly type: Type;
-  readonly mode: StorageMode;
-  modelConstructor: new () => CRDTModel<T>;
-
-  static readonly constructors = new Map<StorageMode, StoreConstructor>([
-    [StorageMode.Direct, DirectStore],
-    [StorageMode.Backing, BackingStore],
-    [StorageMode.ReferenceMode, null]
-  ]);
-
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
-    this.storageKey = storageKey;
-    this.exists = exists;
-    this.type = type;
-    this.mode = mode;
-    this.modelConstructor = modelConstructor;
-  }
-
-  async activate(): Promise<ActiveStore<T>> {
-    if (Store.constructors.get(this.mode) == null) {
-      throw new Error(`StorageMode ${this.mode} not yet implemented`);
-    }
-    const constructor = Store.constructors.get(this.mode);
-    if (constructor == null) {
-      throw new Error(`No constructor registered for mode ${this.mode}`);
-    }
-    const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode, this.modelConstructor);
-    this.exists = Exists.ShouldExist;
-    return activeStore;
-  }
-}
-
-
-enum DirectStoreState {Idle = 'Idle', AwaitingResponse = 'AwaitingResponse', AwaitingResponseDirty = 'AwaitingResponseDirty', AwaitingDriverModel = 'AwaitingDriverModel'}
+export enum DirectStoreState {Idle = 'Idle', AwaitingResponse = 'AwaitingResponse', AwaitingResponseDirty = 'AwaitingResponseDirty', AwaitingDriverModel = 'AwaitingDriverModel'}
 
 export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   localModel: CRDTModel<T>;
@@ -74,17 +25,17 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private pendingException: Error | null = null;
   private pendingResolves: Function[] = [];
   private pendingRejects: Function[] = [];
-  private pendingDriverModels: {model: T['data'], version: number}[] = [];
+  private pendingDriverModels: {
+    model: T['data'];
+    version: number;
+  }[] = [];
   private state: DirectStoreState = DirectStoreState.Idle;
-
-
-  /* 
+  /*
    * This class should only ever be constructed via the static construct method
    */
   private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     super(storageKey, exists, type, mode, modelConstructor);
   }
-
   async idle() {
     if (this.pendingException) {
       return Promise.reject(this.pendingException);
@@ -97,25 +48,21 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       this.pendingRejects.push(reject);
     });
   }
-
   private setState(state: DirectStoreState) {
     this.state = state;
     if (state === DirectStoreState.Idle) {
-      // If we are already idle, this won't notify external parties.
       this.notifyIdle();
     }
   }
-
   private notifyIdle() {
     if (this.pendingException) {
-      // this is termination.
       this.pendingRejects.forEach(reject => reject(this.pendingException));
-    } else {
+    }
+    else {
       this.pendingResolves.forEach(resolve => resolve());
       this.pendingResolves = [];
     }
   }
-
   static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     const me = new DirectStore<T>(storageKey, exists, type, mode, modelConstructor);
     me.localModel = new modelConstructor();
@@ -134,27 +81,24 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     }
     this.applyPendingDriverModels();
   }
-  
   private deliverCallbacks(thisChange: CRDTChange<T>) {
     if (thisChange.changeType === ChangeType.Operations && thisChange.operations.length > 0) {
       this.callbacks.forEach((cb, id) => cb({type: ProxyMessageType.Operations, operations: thisChange.operations, id}));
-    } else if (thisChange.changeType === ChangeType.Model) {
+    }
+    else if (thisChange.changeType === ChangeType.Model) {
       this.callbacks.forEach((cb, id) => cb({type: ProxyMessageType.ModelUpdate, model: thisChange.modelPostChange, id}));
     }
   }
-
-  private async processModelChange(modelChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number) {
+  private async processModelChange(modelChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number, fromDriver: boolean) {
     this.deliverCallbacks(modelChange);
-    await this.updateStateAndAct(this.noDriverSideChanges(modelChange, otherChange, false), version, false);
+    await this.updateStateAndAct(this.noDriverSideChanges(modelChange, otherChange, fromDriver), version, fromDriver);
   }
-
   // This function implements a state machine that controls when data is sent to the driver.
   // You can see the state machine in all its glory at the following URL:
   //
   // https://github.com/PolymerLabs/arcs/wiki/Store-object-State-Machine
   //
   private async updateStateAndAct(noDriverSideChanges: boolean, version: number, messageFromDriver: boolean) {
-      
     // Don't send to the driver if we're already in sync and there are no driver-side changes.
     if (noDriverSideChanges) {
       // Need to record the driver version so that we can continue to send.
@@ -162,60 +106,59 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       this.version = version;
       return;
     }
-
     switch (this.state) {
-    case DirectStoreState.AwaitingDriverModel:
-      if (!messageFromDriver) {
-        return;
-      }
+      case DirectStoreState.AwaitingDriverModel:
+        if (!messageFromDriver) {
+          return;
+        }
       /* falls through */
-    case DirectStoreState.Idle:
-      // This loop implements sending -> AwaitingResponse -> AwaitingResponseDirty -> sending.
-      // Breakouts happen if:
-      //  (1) a response arrives while still AwaitingResponse. This returns the store to Idle.
-      //  (2) a negative response arrives. This means we're now waiting for driver models
-      //      (AwaitingDriverModel). Note that in this case we are likely to end up back in
-      //      this loop when a driver model arrives.
-      while (true) {
-        this.setState(DirectStoreState.AwaitingResponse);
-        // Work around a typescript compiler bug. Apparently typescript won't guarantee that
-        // a Map key you've just set will exist, but is happy to assure you that a private
-        // member variable couldn't possibly change in any function outside the local scope
-        // when within a switch statement. 
-        this.state = DirectStoreState.AwaitingResponse;
-        version += 1;
-        this.version = version;
-        const response = await this.driver.send(this.localModel.getData(), version);
-        if (response) {
-          if (this.state === DirectStoreState.AwaitingResponse) {
-            this.setState(DirectStoreState.Idle);
+      case DirectStoreState.Idle:
+        // This loop implements sending -> AwaitingResponse -> AwaitingResponseDirty -> sending.
+        // Breakouts happen if:
+        //  (1) a response arrives while still AwaitingResponse. This returns the store to Idle.
+        //  (2) a negative response arrives. This means we're now waiting for driver models
+        //      (AwaitingDriverModel). Note that in this case we are likely to end up back in
+        //      this loop when a driver model arrives.
+        while (true) {
+          this.setState(DirectStoreState.AwaitingResponse);
+          // Work around a typescript compiler bug. Apparently typescript won't guarantee that
+          // a Map key you've just set will exist, but is happy to assure you that a private
+          // member variable couldn't possibly change in any function outside the local scope
+          // when within a switch statement. 
+          this.state = DirectStoreState.AwaitingResponse;
+          version += 1;
+          this.version = version;
+          const response = await this.driver.send(this.localModel.getData(), version);
+          if (response) {
+            if (this.state === DirectStoreState.AwaitingResponse) {
+              this.setState(DirectStoreState.Idle);
+              this.applyPendingDriverModels();
+              break;
+            }
+            if (this.state !== DirectStoreState.AwaitingResponseDirty) {
+              // This shouldn't be possible as only a 'nack' should put us into
+              // AwaitingDriverModel, and only the above code should put us back
+              // into Idle.
+              throw new Error('reached impossible state in store state machine');
+            }
+            // fallthrough to re-execute the loop.
+          }
+          else {
+            this.setState(DirectStoreState.AwaitingDriverModel);
             this.applyPendingDriverModels();
             break;
           }
-          if (this.state !== DirectStoreState.AwaitingResponseDirty) {
-            // This shouldn't be possible as only a 'nack' should put us into
-            // AwaitingDriverModel, and only the above code should put us back
-            // into Idle.
-            throw new Error('reached impossible state in store state machine');
-          }
-          // fallthrough to re-execute the loop.
-        } else {
-          this.setState(DirectStoreState.AwaitingDriverModel);
-          this.applyPendingDriverModels();
-          break;
         }
-      }
-      return;
-    case DirectStoreState.AwaitingResponse:
-      this.setState(DirectStoreState.AwaitingResponseDirty);
-      return;
-    case DirectStoreState.AwaitingResponseDirty:
-      return;
-    default:
-      throw new Error('reached impossible default state in switch statement');
+        return;
+      case DirectStoreState.AwaitingResponse:
+        this.setState(DirectStoreState.AwaitingResponseDirty);
+        return;
+      case DirectStoreState.AwaitingResponseDirty:
+        return;
+      default:
+        throw new Error('reached impossible default state in switch statement');
     }
   }
-
   private applyPendingDriverModels() {
     if (this.pendingDriverModels.length > 0) {
       const models = this.pendingDriverModels;
@@ -227,8 +170,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           const {modelChange, otherChange} = this.localModel.merge(model);
           this.deliverCallbacks(modelChange);
           noDriverSideChanges = noDriverSideChanges && this.noDriverSideChanges(modelChange, otherChange, true);
-          theVersion = version; 
-        } catch (e) {
+          theVersion = version;
+        }
+        catch (e) {
           this.pendingException = e;
           this.notifyIdle();
           return;
@@ -237,7 +181,6 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       void this.updateStateAndAct(noDriverSideChanges, theVersion, true);
     }
   }
-
   // Note that driver-side changes are stored in 'otherChange' when the merged operations/model is sent
   // from the driver, and 'thisChange' when the merged operations/model is sent from a storageProxy.
   // In the former case, we want to look at what has changed between what the driver sent us and what
@@ -246,11 +189,11 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private noDriverSideChanges(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, messageFromDriver: boolean) {
     if (messageFromDriver) {
       return otherChange.changeType === ChangeType.Operations && otherChange.operations.length === 0;
-    } else {
+    }
+    else {
       return thisChange.changeType === ChangeType.Operations && thisChange.operations.length === 0;
     }
   }
-
   // Operation or model updates from connected StorageProxies will arrive here.
   // Additionally, StorageProxy objects may request a SyncRequest, which will
   // result in an up-to-date model being sent back to that StorageProxy.
@@ -271,25 +214,23 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           }
         }
         const change: CRDTChange<T> = {changeType: ChangeType.Operations, operations: message.operations};
-        void this.processModelChange(change, null, this.version);
+        void this.processModelChange(change, null, this.version, false);
         return true;
       }
       case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
-        void this.processModelChange(modelChange, otherChange, this.version);
+        void this.processModelChange(modelChange, otherChange, this.version, false);
         return true;
       }
       default:
         throw new CRDTError('Invalid operation provided to onProxyMessage');
     }
   }
-
   on(callback: ProxyCallback<T>) {
     const id = this.nextCallbackID++;
     this.callbacks.set(id, callback);
     return id;
   }
-
   off(callback: number) {
     this.callbacks.delete(callback);
   }
