@@ -43,80 +43,84 @@ const keywords = [
   'unsigned', 'using', 'virtual', 'void', 'volatile', 'wchar_t', 'while', 'xor', 'xor_eq'
 ];
 
-function typeSummary(field) {
-  switch (field.kind) {
+function typeSummary(descriptor) {
+  switch (descriptor.kind) {
     case 'schema-primitive':
-      return `schema-primitive:${field.type}`;
+      return `schema-primitive:${descriptor.type}`;
 
     case 'schema-collection':
-      return `schema-collection:${field.schema.type}`;
+      return `schema-collection:${descriptor.schema.type}`;
 
     default:
-      return field.kind;
+      return descriptor.kind;
   }
 }
 
-function generate(schemaName: string, schema) {
+function generate(name: string, schema) {
   const fields: string[] = [];
   const api: string[] = [];
+  const clone: string[] = [];
   const decode: string[] = [];
   const encode: string[] = [];
   const toString: string[] = [];
 
-  const processValue = (name, type, typeChar, passByReference) => {
+  const processValue = (field, type, typeChar, passByReference) => {
     const [ref1, ref2] = passByReference ? ['const ', '&'] : ['', ''];
-    const fix = keywords.includes(name) ? '_' : '';
+    const fix = keywords.includes(field) ? '_' : '';
 
-    fields.push(`${type} ${name}_ = ${type}();`,
-                `bool ${name}_valid_ = false;`,
+    fields.push(`${type} ${field}_ = ${type}();`,
+                `bool ${field}_valid_ = false;`,
                 ``);
 
-    api.push(`${ref1}${type}${ref2} ${fix}${name}() const { return ${name}_; }`,
-             `void set_${name}(${ref1}${type}${ref2} value) { ${name}_ = value; ${name}_valid_ = true; }`,
-             `void clear_${name}() { ${name}_ = ${type}(); ${name}_valid_ = false; }`,
-             `bool has_${name}() const { return ${name}_valid_; }`,
+    api.push(`${ref1}${type}${ref2} ${fix}${field}() const { return ${field}_; }`,
+             `void set_${field}(${ref1}${type}${ref2} value) { ${field}_ = value; ${field}_valid_ = true; }`,
+             `void clear_${field}() { ${field}_ = ${type}(); ${field}_valid_ = false; }`,
+             `bool has_${field}() const { return ${field}_valid_; }`,
              ``);
 
-    decode.push(`} else if (name == "${name}") {`,
+    clone.push(`clone.${field}_ = entity.${field}_;`,
+               `clone.${field}_valid_ = entity.${field}_valid_;`);
+  
+    decode.push(`} else if (name == "${field}") {`,
                 `  decoder.validate("${typeChar}");`,
-                `  decoder.decode(entity->${name}_);`,
-                `  entity->${name}_valid_ = true;`);
+                `  decoder.decode(entity->${field}_);`,
+                `  entity->${field}_valid_ = true;`);
 
-    encode.push(`if (entity.has_${name}())`,
-                `  encoder.encode("${name}:${typeChar}", entity.${fix}${name}());`);
+    encode.push(`if (entity.has_${field}())`,
+                `  encoder.encode("${field}:${typeChar}", entity.${fix}${field}());`);
 
-    toString.push(`if (entity.has_${name}())`,
-                  `  printer.add("${name}: ", entity.${fix}${name}());`);
+    toString.push(`if (entity.has_${field}())`,
+                  `  printer.add("${field}: ", entity.${fix}${field}());`);
   };
 
   let fieldCount = 0;
-  for (const [name, field] of Object.entries(schema.fields)) {
+  for (const [field, descriptor] of Object.entries(schema.fields)) {
     fieldCount++;
-    switch (typeSummary(field)) {
+    switch (typeSummary(descriptor)) {
       case 'schema-primitive:Text':
-        processValue(name, 'std::string', 'T', true);
+        processValue(field, 'std::string', 'T', true);
         break;
 
       case 'schema-primitive:URL':
-        processValue(name, 'URL', 'U', true);
+        processValue(field, 'URL', 'U', true);
         break;
 
       case 'schema-primitive:Number':
-        processValue(name, 'double', 'N', false);
+        processValue(field, 'double', 'N', false);
         break;
 
       case 'schema-primitive:Boolean':
-        processValue(name, 'bool', 'B', false);
+        processValue(field, 'bool', 'B', false);
         break;
 
       default:
-        console.error(`Schema type for field '${name}' is not yet supported:`);
-        console.dir(field, {depth: null});
+        console.error(`Schema type for field '${field}' is not yet supported:`);
+        console.dir(descriptor, {depth: null});
         process.exit(1);
     }
   }
 
-  const headerGuard = `_ARCS_ENTITY_${schemaName.toUpperCase()}_H`;
+  const headerGuard = `_ARCS_ENTITY_${name.toUpperCase()}_H`;
   const content = `\
 #ifndef ${headerGuard}
 #define ${headerGuard}
@@ -125,24 +129,46 @@ function generate(schemaName: string, schema) {
 
 namespace arcs {
 
-class ${schemaName} {
+class ${name} {
 public:
-  ${api.join('\n  ')}
-  std::string _internal_id;  // TODO
+  // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
+  // Move operations are ok (and will include the internal id).
+  ${name}() = default;
+  ${name}(${name}&&) = default;
+  ${name}& operator=(${name}&&) = default;
 
+  ${api.join('\n  ')}
 private:
+  // Allow private copying for use in Handles.
+  ${name}(const ${name}&) = default;
+  ${name}& operator=(const ${name}&) = default;
+
   ${fields.join('\n  ')}
+  std::string _internal_id;
   static const int FIELD_COUNT = ${fieldCount};
-  friend void decode_entity<${schemaName}>(${schemaName}* entity, const char* str);
+
+  friend class Singleton<${name}>;
+  friend class Collection<${name}>;
+  friend ${name} clone_entity<${name}>(const ${name}& entity);
+  friend void decode_entity<${name}>(${name}* entity, const char* str);
+  friend std::string encode_entity<${name}>(const ${name}& entity);
+  friend std::string entity_to_str<${name}>(const ${name}& entity, const char* join);
 };
 
 template<>
-void decode_entity(${schemaName}* entity, const char* str) {
+${name} clone_entity(const ${name}& entity) {
+  ${name} clone;
+  ${clone.join('\n  ')}
+  return std::move(clone);
+}
+
+template<>
+void decode_entity(${name}* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id);
   decoder.validate("|");
-  for (int i = 0; !decoder.done() && i < ${schemaName}::FIELD_COUNT; i++) {
+  for (int i = 0; !decoder.done() && i < ${name}::FIELD_COUNT; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
     ${decode.join('\n    ')}
@@ -152,7 +178,7 @@ void decode_entity(${schemaName}* entity, const char* str) {
 }
 
 template<>
-std::string encode_entity(const ${schemaName}& entity) {
+std::string encode_entity(const ${name}& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id);
   ${encode.join('\n  ')}
@@ -160,7 +186,7 @@ std::string encode_entity(const ${schemaName}& entity) {
 }
 
 template<>
-std::string entity_to_str(const ${schemaName}& entity, const char* join) {
+std::string entity_to_str(const ${name}& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id);
   ${toString.join('\n  ')}

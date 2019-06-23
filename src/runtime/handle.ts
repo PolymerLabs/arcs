@@ -113,10 +113,14 @@ export abstract class Handle {
     assert(entity, `can't serialize a null entity`);
     if (entity instanceof Entity) {
       if (!Entity.isIdentified(entity)) {
-        Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+        this.createIdentityFor(entity);
       }
     }
     return entity[SYMBOL_INTERNALS].serialize();
+  }
+
+  createIdentityFor(entity: Entity) {
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
   }
 
   get type() {

@@ -50,7 +50,9 @@ export class EntityPackager {
   decodeSingleton(str: string): Entity {
     const {id, data} = this.decoder.decodeSingleton(str);
     const entity = new (this.schema.entityClass())(data);
-    Entity.identify(entity, id);
+    if (id !== '') {
+      Entity.identify(entity, id);
+    }
     return entity;
   }
 }
@@ -270,12 +272,12 @@ class EmscriptenWasmDriver implements WasmDriver {
 
       // Heap management
       _emscripten_get_heap_size: () => particle.heapU8.length,  // Matches emscripten glue js
-      _emscripten_resize_heap: size => false,  // TODO
+      _emscripten_resize_heap: (size) => false,  // TODO
       _emscripten_memcpy_big: (dst, src, num) => particle.heapU8.set(particle.heapU8.subarray(src, src + num), dst),
 
       // Error handling
-      _systemError: msg => { throw new Error(particle.read(msg)); },
-      abortOnCannotGrowMemory: size  => { throw new Error(`abortOnCannotGrowMemory(${size})`); },
+      _systemError: (msg) => { throw new Error(particle.read(msg)); },
+      abortOnCannotGrowMemory: (size)  => { throw new Error(`abortOnCannotGrowMemory(${size})`); },
 
       // Logging
       _setLogInfo: (file, line) => particle.logInfo = [particle.read(file), line],
@@ -371,11 +373,11 @@ export class WasmParticle extends Particle {
       abort: () => { throw new Error('Abort!'); },
 
       // Inner particle API
-      _singletonSet: async (handle, encoded) => this.singletonSet(handle, encoded),
-      _singletonClear: async (handle) => this.singletonClear(handle),
-      _collectionStore: async (handle, encoded) => this.collectionStore(handle, encoded),
-      _collectionRemove: async (handle, encoded) => this.collectionRemove(handle, encoded),
-      _collectionClear: async (handle) => this.collectionClear(handle),
+      _singletonSet: (handle, encoded) => this.singletonSet(handle, encoded),
+      _singletonClear: (handle) => this.singletonClear(handle),
+      _collectionStore: (handle, encoded) => this.collectionStore(handle, encoded),
+      _collectionRemove: (handle, encoded) => this.collectionRemove(handle, encoded),
+      _collectionClear: (handle) => this.collectionClear(handle),
       _render: (slotName, content) => this.renderImpl(slotName, content),
     };
 
@@ -459,29 +461,48 @@ export class WasmParticle extends Particle {
   async onHandleDesync(handle: Handle) {}
 
   // Store API.
-  async singletonSet(wasmHandle: WasmAddress, encoded: WasmAddress) {
+  //
+  // Each of these calls an async storage method, but we don't want to await them because returning
+  // a Promise to wasm doesn't work, and control (surprisingly) returns to the calling wasm function
+  // at the first await point anyway. However, our CRDTs make it safe to fire-and-forget the storage
+  // updates, and the wasm handles already have the updated version of the stored data, so it's safe
+  // to leave the promises floating.
+
+  // If the given entity doesn't have an id, this will create one for it and return the new id
+  // in allocated memory that the wasm particle must free. If the entity already has an id this
+  // returns 0 (nulltpr).
+  singletonSet(wasmHandle: WasmAddress, encoded: WasmAddress): WasmAddress {
     const singleton = this.getHandle(wasmHandle) as Singleton;
-    await singleton.set(this.decodeEntity(singleton, encoded));
+    const entity = this.decodeEntity(singleton, encoded);
+    const p = this.ensureIdentified(entity, singleton);
+    void singleton.set(entity);
+    return p;
   }
 
-  async singletonClear(wasmHandle: WasmAddress) {
+  singletonClear(wasmHandle: WasmAddress) {
     const singleton = this.getHandle(wasmHandle) as Singleton;
-    await singleton.clear();
+    void singleton.clear();
   }
 
-  async collectionStore(wasmHandle: WasmAddress, encoded: WasmAddress) {
+  // If the given entity doesn't have an id, this will create one for it and return the new id
+  // in allocated memory that the wasm particle must free. If the entity already has an id this
+  // returns 0 (nulltpr).
+  collectionStore(wasmHandle: WasmAddress, encoded: WasmAddress): WasmAddress {
     const collection = this.getHandle(wasmHandle) as Collection;
-    await collection.store(this.decodeEntity(collection, encoded));
+    const entity = this.decodeEntity(collection, encoded);
+    const p = this.ensureIdentified(entity, collection);
+    void collection.store(entity);
+    return p;
   }
 
-  async collectionRemove(wasmHandle: WasmAddress, encoded: WasmAddress) {
+  collectionRemove(wasmHandle: WasmAddress, encoded: WasmAddress) {
     const collection = this.getHandle(wasmHandle) as Collection;
-    await collection.remove(this.decodeEntity(collection, encoded));
+    void collection.remove(this.decodeEntity(collection, encoded));
   }
 
-  async collectionClear(wasmHandle: WasmAddress) {
+  collectionClear(wasmHandle: WasmAddress) {
     const collection = this.getHandle(wasmHandle) as Collection;
-    await collection.clear();
+    void collection.clear();
   }
 
   private getHandle(wasmHandle: WasmAddress) {
@@ -495,6 +516,15 @@ export class WasmParticle extends Particle {
   private decodeEntity(handle: Handle, encoded: WasmAddress): Entity {
     const converter = this.converters.get(handle);
     return converter.decodeSingleton(this.read(encoded));
+  }
+
+  private ensureIdentified(entity: Entity, handle: Handle): WasmAddress {
+    let p = 0;
+    if (!Entity.isIdentified(entity)) {
+      handle.createIdentityFor(entity);
+      p = this.store(Entity.id(entity));
+    }
+    return p;
   }
 
   // Called by the shell to initiate rendering; the particle will call env._render in response.

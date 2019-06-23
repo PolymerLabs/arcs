@@ -127,9 +127,9 @@ public:
   StringDecoder(StringDecoder&) = delete;
   StringDecoder(const StringDecoder&) = delete;
   StringDecoder& operator=(StringDecoder&) = delete;
-  StringDecoder& operator=(const StringDecoder&) const = delete;
+  StringDecoder& operator=(const StringDecoder&) = delete;
 
-  bool done() {
+  bool done() const {
     return str_ == nullptr || *str_ == 0;
   }
 
@@ -195,7 +195,7 @@ public:
   StringEncoder(StringEncoder&) = delete;
   StringEncoder(const StringEncoder&) = delete;
   StringEncoder& operator=(StringEncoder&) = delete;
-  StringEncoder& operator=(const StringEncoder&) const = delete;
+  StringEncoder& operator=(const StringEncoder&) = delete;
 
   template<typename T>
   void encode(const char* prefix, const T& val) {
@@ -238,7 +238,7 @@ public:
   StringPrinter(StringPrinter&) = delete;
   StringPrinter(const StringPrinter&) = delete;
   StringPrinter& operator=(StringPrinter&) = delete;
-  StringPrinter& operator=(const StringPrinter&) const = delete;
+  StringPrinter& operator=(const StringPrinter&) = delete;
 
   void addId(const std::string& id) {
     parts_.push_back("{" + id + "}");
@@ -286,9 +286,12 @@ void StringPrinter::add(const char* prefix, const bool& flag) {
 
 // --- Wasm-to-JS API ---
 
-EM_JS(void, singletonSet, (Handle* handle, const char* encoded), {})
+// singletonSet and collectionStore will create ids for entities if required, and will return
+// the new ids in allocated memory that we must free.
+
+EM_JS(const char*, singletonSet, (Handle* handle, const char* encoded), {})
 EM_JS(void, singletonClear, (Handle* handle), {})
-EM_JS(void, collectionStore, (Handle* handle, const char* encoded), {})
+EM_JS(const char*, collectionStore, (Handle* handle, const char* encoded), {})
 EM_JS(void, collectionRemove, (Handle* handle, const char* encoded), {})
 EM_JS(void, collectionClear, (Handle* handle), {})
 EM_JS(void, render, (const char* slotName, const char* content), {})
@@ -297,6 +300,9 @@ EM_JS(void, render, (const char* slotName, const char* content), {})
 
 
 // Schema-specific implementations will be generated for the following:
+
+template<typename T>
+T clone_entity(const T& entity);
 
 template<typename T>
 void decode_entity(T* entity, const char* str) {
@@ -309,12 +315,14 @@ std::string encode_entity(const T& entity) {
 }
 
 template<typename T>
-std::string entity_to_str(const T& entity, const char* join = "") {
+std::string entity_to_str(const T& entity, const char* join = ", ") {
   return entity._force_compiler_error();
 }
 
 
 // --- Storage classes ---
+
+// TODO: enforce read/write restrictions on 'in' and 'out' handles.
 
 class Handle {
 public:
@@ -322,7 +330,7 @@ public:
   virtual void sync(const char* encoded) = 0;
   virtual void update(const char* encoded1, const char* encoded2) = 0;
 
-  const std::string& name() { return name_; }
+  const std::string& name() const { return name_; }
 
 private:
   friend class Particle;
@@ -345,9 +353,13 @@ public:
   const T& get() const { return entity_; }
 
   void set(const T& entity) {
+    std::string encoded = encode_entity(entity);
+    const char* id = internal::singletonSet(this, encoded.c_str());
     entity_ = entity;
-    std::string encoded = encode_entity(entity_);
-    internal::singletonSet(this, encoded.c_str());
+    if (id != nullptr) {
+      entity_._internal_id = id;
+      free((void*)id);
+    }
   }
 
   void clear() {
@@ -367,8 +379,8 @@ class WrappedIter {
 public:
   WrappedIter(Iterator it) : it_(std::move(it)) {}
 
-  const T& operator*() { return *it_->second; }
-  const T* operator->() { return it_->second.get(); }
+  const T& operator*() const { return *it_->second; }
+  const T* operator->() const { return it_->second.get(); }
 
   WrappedIter& operator++() { ++it_; return *this; }
   WrappedIter operator++(int) { return WrappedIter(it_++); }
@@ -404,15 +416,20 @@ public:
     }
   }
 
-  size_t size() { return entities_.size(); }
-  bool empty() { return entities_.empty(); }
+  size_t size() const { return entities_.size(); }
+  bool empty() const { return entities_.empty(); }
   WrappedIter<T> begin() const { return WrappedIter<T>(entities_.cbegin()); }
   WrappedIter<T> end() const { return WrappedIter<T>(entities_.cend()); }
 
   void store(const T& entity) {
-    entities_.emplace(entity._internal_id, new T(entity));
     std::string encoded = encode_entity(entity);
-    internal::collectionStore(this, encoded.c_str());
+    const char* id = internal::collectionStore(this, encoded.c_str());
+    std::unique_ptr<T> eptr(new T(entity));
+    if (id != nullptr) {
+      eptr->_internal_id = id;
+      free((void*)id);
+    }
+    entities_.emplace(eptr->_internal_id, std::move(eptr));
   }
 
   void remove(const T& entity) {
@@ -477,7 +494,7 @@ public:
   }
 
   // Called by sub-classes to render into a slot.
-  void renderSlot(const std::string& slot_name, const std::string& content) {
+  void renderSlot(const std::string& slot_name, const std::string& content) const {
     internal::render(slot_name.c_str(), content.c_str());
   }
 
