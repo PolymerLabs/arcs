@@ -84,7 +84,7 @@ const storeTemplate = `
     <span id="store-name"></span>
     <span class="buttons">
       <span id="schema-btn">S</span>
-      <span id="collapse-btn">⮟</span>
+      <span id="collapse-btn">⮝</span>
     </span>
   </div>
   <div id="spacer">
@@ -115,7 +115,7 @@ export class StorePanel extends HTMLElement {
 
     this.saveBtn.addEventListener('click', this.save.bind(this));
     this.schemaBtn.addEventListener('click', this.toggleSchema.bind(this));
-    this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
+    this.collapseBtn.addEventListener('click', () => this.collapse('toggle'));
     this.header.addEventListener('animationend', () => this.header.classList.remove('flash'));
     this.contents.addEventListener('animationend', () => this.contents.classList.remove('flash'));
     this.contents.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
@@ -146,13 +146,16 @@ export class StorePanel extends HTMLElement {
     }
   }
 
-  toggleCollapsed() {
-    if (this.container.style.display === 'none') {
-      this.collapseBtn.textContent = '⮟';
+  collapse(action) {
+    if (action === 'toggle') {
+      action = (this.collapseBtn.textContent === '⮟') ? 'show' : 'hide';
+    }
+    if (action === 'show') {
+      this.collapseBtn.textContent = '⮝';
       this.container.style.display = '';
       this.error.style.display = '';
     } else {
-      this.collapseBtn.textContent = '⮝';
+      this.collapseBtn.textContent = '⮟';
       this.container.style.display = 'none';
       this.error.style.display = 'none';
     }
