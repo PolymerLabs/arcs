@@ -142,7 +142,8 @@ export class HandleConnection {
   }
 
   _isValid(options): boolean {
-    if (this.direction && !['in', 'out', 'inout', 'host', '`consume', '`provide'].includes(this.direction)) {
+    // Note: The following casts are necessary to catch invalid values that typescript does not manage to check).
+    if (this.direction as Direction === null || this.direction as Direction === undefined) {
       if (options && options.errors) {
         options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
       }

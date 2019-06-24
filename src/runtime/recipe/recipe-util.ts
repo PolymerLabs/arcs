@@ -133,7 +133,7 @@ type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
 type Match = {forward: Map<RecipeComponent, RecipeUtilComponent>, reverse: Map<RecipeUtilComponent, RecipeComponent>, score: number};
 
 export class RecipeUtil {
-  static makeShape(particles: string[], handles: string[], map: Dictionary<Dictionary<HandleRepr>>, recipe?: Recipe) {
+  static makeShape(particles: string[], handles: string[], map: Dictionary<Dictionary<HandleRepr>>, recipe?: Recipe): Shape {
     recipe = recipe || new Recipe();
     const pMap: Dictionary<Particle> = {};
     const hMap: Map<string, Handle> = new Map();
@@ -142,28 +142,20 @@ export class RecipeUtil {
     handles.forEach(handle => hMap.set(handle, recipe.newHandle()));
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
-        const handle = map[key][name];
-        // NOTE: for now, '=' on the shape means "accept anything". This is going
-        // to change when we redo capabilities; for now it's modeled by mapping '=' to
-        // '=' rather than to 'inout'.
-        let direction: Direction | '=' = '=';
-        if (handle.direction) {
-          direction = {'->': 'out', '<-': 'in', '=': '='}[handle.direction];
-        }
+        const handle: HandleRepr = map[key][name];
         const tags: string[] = handle.tags || [];
-        if (handle['localName']) {
+        if (handle.localName) {
           hMap.get(handle.handle).localName = handle.localName;
         }
 
         const connection = pMap[key].addConnectionName(name);
 
-        // NOTE: for now, '=' on the shape means "accept anything". This is going
-        // to change when we redo capabilities; for now it's modeled by mapping '=' to
-        // '=' rather than to 'inout'.
+        // NOTE: for now, undefined on the shape means 'accept anything'.
         const direction: DirectionArrow = handle.direction;
 
-        // TODO(shans): work out a cleaner way to encode "accept anything"
+        // TODO(shans): work out a cleaner way to encode 'accept anything'
         // this is an abuse of the type system.
+        // TODO(cypher1): Check for conflicting directions (i.e. connection.direction != undefined)
         connection.direction = arrowToDirection(direction);
         hMap.get(handle.handle).tags = tags;
         connection.connectToHandle(hMap.get(handle.handle));
@@ -406,7 +398,7 @@ export class RecipeUtil {
     return newMatches;
   }
 
-  static find(recipe: Recipe, shape: Shape) {
+  static find(recipe: Recipe, shape: Shape): {match: Dict<RecipeUtilComponent>, score: number}[] {
     // Particles and Handles are initially stored by a forward map from
     // shape component to recipe component.
     // Handle connections, particles and handles are also stored by a reverse map
@@ -453,10 +445,10 @@ export class RecipeUtil {
       matches = newMatches;
     }
 
-    return matches.map(({forward, score}) => {
-      const match = {};
-      forward.forEach((value, key) => match[shape.reverse.get(key)] = value);
-      return {match, score};
+    return matches.map((match: {forward: Map<RecipeComponent, RecipeUtilComponent>, score: number}) => {
+      const result: Dict<RecipeUtilComponent> = {};
+      match.forward.forEach((value: RecipeUtilComponent, key: RecipeComponent) => result[shape.reverse.get(key)] = value);
+      return {match: result, score: match.score};
     });
   }
 
