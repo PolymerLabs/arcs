@@ -201,7 +201,7 @@ class ArcPanel extends HTMLElement {
     this.linkedArc = arc;
   }
 
-  async display(description) {
+  async arcInstantiated(description) {
     if (description) {
       this.arcLabel.textContent += ` - "${description.trim()}"`;
     }

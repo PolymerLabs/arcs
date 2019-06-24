@@ -101,7 +101,7 @@ async function wrappedExecute() {
       continue;
     }
     const description = await Runtime.getArcDescription(arc);
-    await arcPanel.display(description);
+    await arcPanel.arcInstantiated(description);
   }
 }
 
