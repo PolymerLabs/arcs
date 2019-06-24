@@ -107,7 +107,7 @@ const arcTemplate = `
       pointer-events: none;
     }
     .controls-container {
-      display:inline-block;
+      display: inline-block;
       vertical-align: top;
     }
     .control {
