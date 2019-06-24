@@ -87,7 +87,7 @@ const arcTemplate = `
     #slots #expand {
       top: 0;
       right: 2px;
-      font-size: 12px;
+      font-size: 16px;
       position: absolute;
       cursor: pointer;
     }
@@ -106,13 +106,22 @@ const arcTemplate = `
       box-sizing: border-box;
       pointer-events: none;
     }
+    .controls-container {
+      display: inline-block;
+      vertical-align: top;
+    }
     .control {
       display: none;
       cursor: pointer;
       font-size: 18px;
-      vertical-align: top;
       padding: 4px 2px;
       border-radius: 8px;
+    }
+    #stores-collapse-all {
+      color: #777;
+      font-size: 14px;
+      letter-spacing: -3px;
+      margin-left: 1px;
     }
     .active {
       background: #80d2ff;
@@ -141,8 +150,12 @@ const arcTemplate = `
     <div id="arc-modal"></div>
     <div id="expand"/></div>
   </div>
-  <span id="stores-control" class="control">🗄</span>
-  <span id="serial-control" class="control">📄</span>
+  <span class="controls-container">
+    <span id="stores-control" class="control">🗄</span>
+    <span id="serial-control" class="control">📄</span>
+    <br>
+    <span id="stores-collapse-all" class="control">⮝⮝</span>
+  </span>
   <div id="stores" class="control-panel"></div>
   <div id="serial" class="control-panel">
     <pre></pre>
@@ -158,6 +171,7 @@ class ArcPanel extends HTMLElement {
     this.arcRoot = shadowRoot.getElementById('arc-root');
     this.arcModal = shadowRoot.getElementById('arc-modal');
     this.storesControl = shadowRoot.getElementById('stores-control');
+    this.storesCollapseAll = shadowRoot.getElementById('stores-collapse-all');
     this.serialControl = shadowRoot.getElementById('serial-control');
     this.stores = shadowRoot.getElementById('stores');
     this.serial = shadowRoot.getElementById('serial');
@@ -165,6 +179,7 @@ class ArcPanel extends HTMLElement {
 
     shadowRoot.getElementById('kill').addEventListener('click', this.kill.bind(this));
     this.storesControl.addEventListener('click', this.toggleStores.bind(this));
+    this.storesCollapseAll.addEventListener('click', this.toggleAllCollapsed.bind(this));
     this.serialControl.addEventListener('click', this.toggleSerial.bind(this));
 
     const slots = shadowRoot.getElementById('slots');
@@ -186,23 +201,13 @@ class ArcPanel extends HTMLElement {
     this.linkedArc = arc;
   }
 
-  display(description) {
-    this.serialControl.style.display = 'inline-block';
-    if (this.linkedArc._stores.length > 0) {
-      this.storesControl.style.display = 'inline-block';
-    }
+  async arcInstantiated(description) {
     if (description) {
       this.arcLabel.textContent += ` - "${description.trim()}"`;
     }
-  }
-
-  async toggleStores() {
-    while (this.stores.firstChild) {
-      this.stores.firstChild.dispose();
-      this.stores.removeChild(this.stores.firstChild);
-    }
-
-    if (this.storesControl.classList.toggle('active')) {
+    this.serialControl.style.display = 'inline-block';
+    if (this.linkedArc._stores.length > 0) {
+      this.storesControl.style.display = 'inline-block';
       for (const store of this.linkedArc._stores) {
         if (store.stream) {
           console.warn(`BigCollection stores not supported: '${store.id}'`);
@@ -212,12 +217,34 @@ class ArcPanel extends HTMLElement {
         this.stores.appendChild(storePanel);
         await storePanel.attach(store);
       }
+      this.storesCollapseAll.enabled = (this.linkedArc._stores.length > 1);
+    }
+  }
 
+  toggleStores() {
+    if (this.storesControl.classList.toggle('active')) {
       this.stores.style.display = 'inline-block';
       this.serial.style.display = 'none';
       this.serialControl.classList.remove('active');
     } else {
       this.stores.style.display = 'none';
+    }
+    if (this.storesCollapseAll.enabled) {
+      this.storesCollapseAll.style.display = this.stores.style.display;
+    }
+  }
+
+  toggleAllCollapsed() {
+    let action;
+    if (this.storesCollapseAll.textContent === '⮝⮝') {
+      this.storesCollapseAll.textContent = '⮟⮟';
+      action = 'hide';
+    } else {
+      this.storesCollapseAll.textContent = '⮝⮝';
+      action = 'show';
+    }
+    for (const store of this.stores.children) {
+      store.collapse(action);
     }
   }
 
@@ -232,6 +259,9 @@ class ArcPanel extends HTMLElement {
       this.storesControl.classList.remove('active');
     } else {
       this.serial.style.display = 'none';
+    }
+    if (this.storesCollapseAll.enabled) {
+      this.storesCollapseAll.style.display = this.stores.style.display;
     }
   }
 

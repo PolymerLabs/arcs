@@ -92,7 +92,7 @@ async function wrappedExecute() {
         }.\n${recipe.toString()}`);
         continue;
       }
-    }  
+    }
 
     try {
       await arc.instantiate(resolvedRecipe);
@@ -100,7 +100,8 @@ async function wrappedExecute() {
       arcPanel.showError('Error in arc.instantiate', e);
       continue;
     }
-    arcPanel.display(await Runtime.getArcDescription(arc));
+    const description = await Runtime.getArcDescription(arc);
+    await arcPanel.arcInstantiated(description);
   }
 }
 
@@ -130,7 +131,7 @@ store DataStore of Data in DataResource
 
 particle P in 'a.js'
   consume root
-  in Data data 
+  in Data data
 
 recipe
   use DataStore as h0
