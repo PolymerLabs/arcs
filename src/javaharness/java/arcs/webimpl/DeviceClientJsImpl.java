@@ -4,6 +4,8 @@ import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
+import arcs.api.PECInnerPort;
+import arcs.api.NativeParticle;
 import jsinterop.annotations.JsType;
 
 import javax.inject.Inject;
@@ -18,12 +20,15 @@ public class DeviceClientJsImpl implements DeviceClient {
 
     private PortableJsonParser jsonParser;
     private Map<String, ArcsEnvironment.SuggestionListener> inProgress;
+    private PECInnerPort port;
 
     @Inject
     public DeviceClientJsImpl(PortableJsonParser jsonParser,
-                              Map<String, ArcsEnvironment.SuggestionListener> inProgress) {
+                              Map<String, ArcsEnvironment.SuggestionListener> inProgress,
+                              PECInnerPort port) {
         this.jsonParser = jsonParser;
         this.inProgress = inProgress;
+        this.port = port;
     }
 
     public void foundSuggestions(String transactionId, String content) {
@@ -64,6 +69,6 @@ public class DeviceClientJsImpl implements DeviceClient {
     }
 
     public void postMessage(String msg) {
-        // TODO: decode api-channel mappings and invoke PEC functions
+        port.handleMessage(jsonParser.parse(msg));
     }
 }

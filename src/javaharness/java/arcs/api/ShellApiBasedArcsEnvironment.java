@@ -11,14 +11,11 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
 
   private final Map<String, SuggestionListener> inProgress;
   private ShellApi shellApi;
-  private ParticleExecutionContext pec;
 
   @Inject
-  public ShellApiBasedArcsEnvironment(Map<String, SuggestionListener> inProgress, ShellApi shellApi,
-                                      ParticleExecutionContext pec) {
+  public ShellApiBasedArcsEnvironment(Map<String, SuggestionListener> inProgress, ShellApi shellApi) {
     this.inProgress = inProgress;
     this.shellApi = shellApi;
-    this.pec = pec;
   }
 
   @Override

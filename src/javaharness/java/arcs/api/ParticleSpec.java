@@ -14,10 +14,14 @@ public class ParticleSpec {
     }
 
     public boolean isInput(String name) {
-        return this.handleConnectionMap.get(name).isInput();
+        return handleConnectionMap.get(name).isInput();
     }
     public boolean isOutput(String name) {
-        return this.handleConnectionMap.get(name).isOutput();
+        return handleConnectionMap.get(name).isOutput();
+    }
+
+    public String getFileName() {
+        return implFile.substring(implFile.lastIndexOf('/') + 1, implFile.lastIndexOf('.'));
     }
 
     public HandleConnectionSpec getConnectionByName(String name) {

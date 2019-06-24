@@ -1,8 +1,7 @@
 package arcs.api;
 
+import java.util.Map;
+
 public interface ParticleExecutionContext {
-    /*
-     * Example method: instantiateParticle("EchoParticle")
-     */
-    NativeParticle instantiateParticle(String name);
+    NativeParticle instantiateParticle(ParticleSpec spec, Map<String, StorageProxy> proxies);
 }
