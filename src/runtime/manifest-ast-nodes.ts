@@ -571,8 +571,8 @@ export type eolWhiteSpace = string;
 export type eol = string;
 
 // String-based enums.
-export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | '*';
-export type DirectionArrow = '<-' | '->' | '=' | 'consume' | 'provide' | '*';
+export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide';
+export type DirectionArrow = '<-' | '->' | '=' | 'consume' | 'provide';
 
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';

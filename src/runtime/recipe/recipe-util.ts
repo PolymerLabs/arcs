@@ -35,8 +35,8 @@ export function directionToArrow(direction: Direction): DirectionArrow {
       return 'provide';
     case 'host':
       return '='; // TODO(cypher1): Check this
-    case '*':
-      return '*';
+    case undefined:
+      return undefined;
     default:
       throw new Error(`Bad direction ${direction}`);
   }
@@ -55,8 +55,8 @@ export function arrowToDirection(arrow: DirectionArrow): Direction {
       return '`consume';
     case 'provide':
       return '`provide';
-    case '*':
-      return '*';
+    case undefined:
+      return undefined;
     default:
       throw new Error(`Bad arrow ${arrow}`);
   }
@@ -74,22 +74,19 @@ export function reverseArrow(arrow: DirectionArrow): DirectionArrow {
       return 'provide';
     case 'provide':
       return 'consume';
-    case '*':
-      return '*';
+    case undefined:
+      return undefined;
     default:
       throw new Error(`Bad arrow ${arrow}`);
   }
 }
 
-// TODO(jopra): remove '=' as the <any> direction, it's surprising.
-export function acceptedDirections(direction: Direction | '='): Direction[] {
+export function acceptedDirections(direction: Direction | undefined): Direction[] {
   switch (direction) {
     case 'in':
       return ['in', 'inout'];
     case 'out':
       return ['out', 'inout'];
-    case '=':
-      return ['in', 'out', 'inout'];
     case 'inout':
       return ['inout'];
     case 'host':
@@ -98,8 +95,8 @@ export function acceptedDirections(direction: Direction | '='): Direction[] {
       return ['`consume'];
     case '`provide':
       return ['`provide'];
-    case '*':
-      return ['in', 'inout', 'out', '`consume', '`provide', '*'];
+    case undefined:
+      return ['in', 'out', 'inout'];
     default:
       throw new Error(`Bad direction ${direction}`);
   }
@@ -159,9 +156,15 @@ export class RecipeUtil {
         }
 
         const connection = pMap[key].addConnectionName(name);
-        // TODO(shans): work out a cleaner way to encode "accept anything" - 
-        // this is an abuse of the type system. 
-        connection.direction = direction as Direction;
+
+        // NOTE: for now, '=' on the shape means "accept anything". This is going
+        // to change when we redo capabilities; for now it's modeled by mapping '=' to
+        // '=' rather than to 'inout'.
+        const direction: DirectionArrow = handle.direction;
+
+        // TODO(shans): work out a cleaner way to encode "accept anything"
+        // this is an abuse of the type system.
+        connection.direction = arrowToDirection(direction);
         hMap.get(handle.handle).tags = tags;
         connection.connectToHandle(hMap.get(handle.handle));
         hcMap[key + ':' + name] = pMap[key].connections[name];
@@ -208,7 +211,6 @@ export class RecipeUtil {
         const dirChoices = acceptedDirections(shapeHC.direction);
         assert(dirChoices, `${shapeHC.direction} is not an accepted direction`);
         if (!dirChoices.includes(recipeConnSpec.direction)) {
-          console.log(shapeHC.direction, recipeConnSpec.direction, dirChoices);
           continue;
         }
       }

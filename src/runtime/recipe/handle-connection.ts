@@ -93,7 +93,7 @@ export class HandleConnection {
       return this.resolvedType;
     }
     const spec = this.spec;
-    return spec ? spec.type : null;
+    return spec ? spec.type : undefined;
   }
 
   get direction(): Direction|undefined { // in/out/inout/host/consume/provide
@@ -101,7 +101,7 @@ export class HandleConnection {
       return this._direction;
     }
     const spec = this.spec;
-    return spec ? spec.direction : null;
+    return spec ? spec.direction : undefined;
   }
 
   get isInput(): boolean {
@@ -119,7 +119,10 @@ export class HandleConnection {
     this._resetHandleType();
   }
 
-  set direction(direction) {
+  set direction(direction: Direction | undefined) {
+    if (direction !== undefined && direction as Direction == null) {
+      throw new Error(`Invalid direction '${direction}' for handle connection '${this.getQualifiedName()}'`);
+    }
     this._direction = direction;
     this._resetHandleType();
   }
