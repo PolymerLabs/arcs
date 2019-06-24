@@ -27,7 +27,7 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
     public NativeParticle instantiateParticle(ParticleSpec spec, Map<String, StorageProxy> proxies) {
         // TODO: use the full spec.implPath, instead of the filename.
         NativeParticle particle = particleLoader.loadParticle(spec.getFileName()).flatMap(
-            x -> Optional.of(x.createParticle())).orElse(null);
+            x -> Optional.ofNullable(x.createParticle())).orElse(null);
         particle.setSpec(spec);
         this.particles.add(particle);
 
