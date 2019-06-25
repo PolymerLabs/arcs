@@ -19,23 +19,24 @@ export const autofill = async (msg, tid, bus, composerFactory, storage, context)
   if (validateAutofillMsg(msg)) {
     const entity = msg.entity;
     const type = entity.type;
-    // arc
-    const composer = composerFactory(msg.modality);
-    const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
-    // recipe
-    const source = entity.source ? entity.source.replace(/\./g, '_') : '';
-    const tag = `${entity.type}_autofill`;
-    const name = entity.name;
-    const recipe = await marshalPipeRecipe({type, source, name, tag});
-    // instantiate
-    if (await instantiateRecipe(arc, recipe)) {
-      const handler = context.allRecipes.find(r => r.verbs.includes(tag));
-      if (!handler) {
-        // complain
-      }
-      else if (await instantiateRecipe(arc, handler)) {
-        // watch for output, deliver to bus
-        observeOutput(tid, bus, arc);
+    const tag = `${type}_autofill`;
+    const handler = context.allRecipes.find(r => r.verbs.includes(tag));
+    if (!handler) {
+      warn(`found no autofill verbs for type [${type}]`);
+    } else {
+      // arc
+      const composer = composerFactory(msg.modality);
+      const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
+      // recipe
+      const source = entity.source ? entity.source.replace(/\./g, '_') : '';
+      const name = entity.name;
+      const recipe = await marshalPipeRecipe({type, source, name, tag});
+      // instantiate
+      if (await instantiateRecipe(arc, recipe)) {
+        if (await instantiateRecipe(arc, handler)) {
+          // watch for output, deliver to bus
+          observeOutput(tid, bus, arc);
+        }
       }
     }
   }

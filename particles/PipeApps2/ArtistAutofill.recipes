@@ -34,4 +34,4 @@ recipe AutofillSpotifyMusic &artist_autofill
   SuggestArtist
     artist = artist
     suggestion = suggestion
-  description `autofill artist`
+  description `suggest artist`

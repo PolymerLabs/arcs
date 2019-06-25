@@ -9,8 +9,8 @@ particle SuggestAddress in './source/SuggestAddress.js'
 particle RequireQuery in './source/Noop.js'
   in PipeEntity query
 
-recipe AutofillMaps &autofill
-  use #autofill_com_google_android_apps_maps as query
+recipe AutofillMaps &address_autofill
+  use #address_autofill as query
   map 'pipe-entities' as recentEntities
   create as suggestion
   RequireQuery

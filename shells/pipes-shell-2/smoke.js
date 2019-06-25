@@ -30,7 +30,8 @@ export const smokeTest = async bus => {
   //
   const mapsAutofill = () => {
     // request autofill for com.google.android.apps.maps
-    bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.google.android.apps.maps'}});
+    //bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.google.android.apps.maps'}});
+    bus.receive({message: 'autofill', modality: 'dom', entity: {type: 'address'}});
   };
   //
   const tapToCaption = () => {
@@ -79,7 +80,7 @@ export const smokeTest = async bus => {
     captureData,
     //ingestEntity,
     spotifyAutofill,
-    //mapsAutofill,
+    mapsAutofill,
     //tapToCaption,
     //longRunning,
     //customArc
