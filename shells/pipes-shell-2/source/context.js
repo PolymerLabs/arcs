@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Utils} from '../lib/runtime/utils.js';
-import {Stores} from '../lib/runtime/stores.js';
+import {Utils} from '../../lib/runtime/utils.js';
+import {Stores} from '../../lib/runtime/stores.js';
 import {Schemas} from './schemas.js';
 
 const manifest = `

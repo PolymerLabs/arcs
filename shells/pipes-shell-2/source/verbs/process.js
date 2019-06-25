@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {Utils} from '../../lib/runtime/utils.js';
+import {generateId} from '../../../../modalities/dom/components/generate-id.js';
+import {Utils} from '../../../lib/runtime/utils.js';
 import {recipeByName, marshalOutput} from '../lib/utils.js';
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../../build/runtime/log-factory.js';
 
 const {warn} = logsFactory('pipe');
 
