@@ -49,8 +49,6 @@ const client = window.DeviceClient || {};
   const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   window.ShellApi = bus;
-  // notify client
-  bus.send({message: 'ready'});
   // run smokeTest if requested
   if (test) {
     smokeTest(bus);
