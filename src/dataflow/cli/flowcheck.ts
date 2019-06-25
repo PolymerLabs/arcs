@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2019 Google Inc. All rights reserved.
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -15,35 +15,40 @@ import {validateGraph} from '../analysis/analysis.js';
 
 // TODO make this a function and test it; it's big enough now
 
-void (async () => {
-
-  const manifestFile = process.argv[1];
-  if (manifestFile === undefined) {
-    console.error('Usage: flowcheck <manifest file>');
+(async () => {
+  const filenames = process.argv.slice(2);
+  if (filenames.length === 0) {
+    console.error('Usage: flowcheck <manifest files>');
     process.exit(1);
   }
-  
-  let manifest: Manifest;
-  
-  try {
-    manifest = await Manifest.load(manifestFile, new Loader());
-  } catch (e) {
-    console.error(e);
-    process.exit(1);
-    // Make the compiler happy. It doesn't recognize exit as a return.
-    // TODO: Is there a compiler flag for this that we could put here?
-    return;
-  }
 
-  manifest.allRecipes.forEach(recipe => {
-    const graph = new FlowGraph(recipe, manifest);
-    console.log('Checking recipe ' + recipe.name);
-    const result = validateGraph(graph);
-    if (!result.isValid) {
-      console.error('Data-flow check failed. Reasons: ' + result.failures);
-      process.exit(1);
-    } else {
-      console.log('Data-flow check passed');
+  const loader = new Loader();
+  for (const filename of filenames) {
+    console.log('Checking file ' + filename);
+    const manifest = await Manifest.load(filename, loader);
+    for (const recipe of manifest.allRecipes) {
+      console.log('  Checking recipe ' + recipe.name);
+
+      if (!recipe.normalize()) {
+        console.error(`    Failed to normalize recipe ${recipe.name}`);
+        continue;
+      }
+
+      if (!recipe.isResolved()) {
+        console.error(`    Recipe is not resolved: ${recipe.name}`);
+        continue;
+      }
+
+      const graph = new FlowGraph(recipe, manifest);
+      const result = validateGraph(graph);
+
+      if (result.isValid) {
+        console.log('    Data-flow checks passed.');
+      } else {
+        for (const failure of result.failures) {
+          console.error('    ' + failure);
+        }
+      }
     }
-  });
-})();
+  }
+})().catch(e => console.error(e));

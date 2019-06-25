@@ -1,2 +1,0 @@
-#!/bin/sh
-exec node --experimental-modules ./build/dataflow/cli/flowcheck.js "$@"
