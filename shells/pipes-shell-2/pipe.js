@@ -14,10 +14,11 @@ import {Utils} from '../lib/runtime/utils.js';
 import {requireContext} from './context.js';
 import {marshalPipesArc, addPipeEntity} from './api/pipes-api.js';
 import {marshalArc, installPlanner, deliverSuggestions, ingestEntity, ingestRecipe, ingestSuggestion, observeOutput} from './api/spawn-api.js';
-import {autofill} from './api/autofill.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {initPlanner} from './planner.js';
+import {autofill} from './api/autofill.js';
+import {caption} from './api/caption.js';
 
 const {log, warn} = logsFactory('pipe');
 
@@ -46,6 +47,9 @@ const populateDispatcher = (dispatcher, api, composerFactory, storage, context) 
     },
     autofill: async (msg, tid, bus) => {
       return await autofill(msg, tid, bus, composerFactory, storage, context);
+    },
+    caption: async (msg, tid, bus) => {
+      return await caption(msg, tid, bus, composerFactory, storage, context);
     },
     ingest: async (msg, tid, bus) => {
       if (msg.tid) {

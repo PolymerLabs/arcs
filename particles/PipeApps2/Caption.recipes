@@ -6,8 +6,8 @@ particle CaptionThis in './source/CaptionThis.js'
   out Json output
   consume content
 
-recipe CaptionThis &caption
-  use #caption_ as query
+recipe CaptionThis &pipe_caption
+  use #pipe_caption as query
   create as suggestion
   CaptionThis
     query = query
