@@ -15,19 +15,19 @@ import {logsFactory} from '../../../../build/runtime/log-factory.js';
 
 const {warn} = logsFactory('pipe');
 
-export const process = async ({type, tag, source, modality}, tid, bus, composerFactory, storage, context) => {
-  const handler = context.allRecipes.find(r => r.verbs.includes(tag));
-  if (!handler) {
+export const process = async ({type, tag, source, name, modality}, tid, bus, composerFactory, storage, context) => {
+  const action = context.allRecipes.find(r => r.verbs.includes(tag));
+  if (!action) {
     warn(`found no verbs matching [${tag}]`);
   } else {
     // arc
     const composer = composerFactory(modality);
     const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
-    // recipe
-    const recipe = await marshalPipeRecipe({type, source, name, tag});
-    // instantiate
-    if (await instantiateRecipe(arc, recipe)) {
-      if (await instantiateRecipe(arc, handler)) {
+    // construct ingestion recipe
+    const ingest = await marshalPipeRecipe({type, source, name, tag});
+    // instantiate recipes
+    if (await instantiateRecipe(arc, ingest)) {
+      if (await instantiateRecipe(arc, action)) {
         // watch for output, forward to bus
         observeOutput(tid, bus, arc);
       }

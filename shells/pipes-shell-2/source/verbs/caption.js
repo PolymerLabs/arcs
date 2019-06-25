@@ -19,13 +19,10 @@ export const caption = async (msg, tid, bus, composerFactory, storage, context) 
 
 const parseCaptionMsg = msg => {
   if (msg.entity) {
-    const {entity: {type, source, modality}} = msg;
-    return {
-      type,
-      source: source || '',
-      modality,
-      tag: `pipe_caption`
-    };
+    const spec = Object.assign(Object.create(null), msg.entity);
+    spec.tag = `pipe_caption`;
+    spec.source = spec.source || '';
+    return spec;
   }
   // TODO(sjmiles): complain
 };
