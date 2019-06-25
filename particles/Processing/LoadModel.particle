@@ -1,0 +1,12 @@
+import './schemas/MlResource.schema'
+import './schemas/MlModel.schema'
+
+particle LoadGraphModel in './js/LoadGraphModel.js'
+  in MlModel modelSpec
+  out TfModel model
+  //description `Load a Graph Tensorflow model into memory.`
+
+particle LoadLayersModel in './js/LoadLayersModel.js'
+  in MlModel modelSpec
+  out TfModel model
+  //description `Load a Layers Tensorflow model into memory.`

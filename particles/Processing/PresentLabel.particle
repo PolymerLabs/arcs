@@ -1,0 +1,7 @@
+import './schemas/Inference.schema'
+import './schemas/MlResource.schema'
+
+particle PresentLabel in './js/PresentLabel.js'
+  in [Classification] predictions
+  consume root
+  //description `show the top k labels (and confidence values)`

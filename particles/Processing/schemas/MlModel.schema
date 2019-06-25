@@ -1,4 +1,5 @@
 schema MlModel
+  Text name
   URL location
   URL labelsUrl
   Boolean strict

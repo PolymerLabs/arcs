@@ -35,7 +35,11 @@ export class PlatformLoader extends PlatformLoaderBase {
   // Below here invoked from inside Worker
   async loadParticleClass(spec) {
     const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
-    clazz.spec = spec;
+    if (clazz) {
+      clazz.spec = spec;
+    } else {
+      warn(`[spec.implFile]::defineParticle() returned no particle.`);
+    }
     return clazz;
   }
   async requireParticle(unresolvedPath, blobUrl) {

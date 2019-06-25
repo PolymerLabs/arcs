@@ -1,0 +1,10 @@
+import './schemas/MlResource.schema'
+
+particle ResizeBilinear in './js/ResizeBilinear.js'
+  in TfTensor images
+  in [Shape] size
+  in ResizeOptions options
+  out TfTensor resizedImages
+  //description `use bilinear-interpolation to resize a batch of images`
+
+
