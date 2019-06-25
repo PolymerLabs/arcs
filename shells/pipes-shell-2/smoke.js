@@ -36,7 +36,7 @@ export const smokeTest = async bus => {
   //
   const tapToCaption = () => {
     // request tap-to-caption resolution for 'Dogs are awesome'
-    bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
+    bus.receive({message: 'caption', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
   };
   //
   const longRunning = () => {
@@ -72,7 +72,7 @@ export const smokeTest = async bus => {
       // to simulate (more) serial task requests
       // and make it possible to read the console.
       // (should work in parallel also)
-      setTimeout(() => enqueue(tests), delay);
+      setTimeout(() => enqueue(tests, delay), delay);
     }
   };
   //
@@ -81,9 +81,9 @@ export const smokeTest = async bus => {
     //ingestEntity,
     spotifyAutofill,
     mapsAutofill,
-    //tapToCaption,
+    tapToCaption,
     //longRunning,
     //customArc
-  //], 3000);
-  ], 0);
+  ], 500);
+  //], 0);
 };
