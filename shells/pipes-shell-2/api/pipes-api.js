@@ -18,20 +18,29 @@ let pipeStore;
 let contextPipeStore;
 
 export const marshalPipesArc = async (storage, context) => {
+  // canonical arc to hold observed pipes entities
   pipes = await requirePipesArc(storage);
+  // access the pipe store directly
   pipeStore = storeByTag(pipes, 'pipeEntities');
+  // create a context store
   contextPipeStore = await initPipeStore(context);
+  // mirror pipeStore entities into contextPipeStore, emulating
+  // the sharing mechanism implemented in fancier context impls
   mirrorStore(pipeStore, contextPipeStore);
   console.log('mirroring pipeStore into contextPipeStore');
 };
 
-export const addPipeEntity = async (data) => {
+export const addPipeEntity = async data => {
+  // ensure there is a timestamp
   data.timestamp = data.timestamp || Date.now();
+  // ensure there is a source value
   data.source = data.source || 'com.unknown';
+  // construct an Entity
   const entity = {
     id: generateId(),
     rawData: data
   };
+  // add to pipeStore
   console.log('adding pipeEntity', entity);
   await pipeStore.store(entity, [generateId()]);
 };

@@ -14,8 +14,10 @@ import {Utils} from '../lib/runtime/utils.js';
 import {requireContext} from './context.js';
 import {marshalPipesArc, addPipeEntity} from './api/pipes-api.js';
 import {marshalArc, installPlanner, deliverSuggestions, ingestEntity, ingestRecipe, ingestSuggestion, observeOutput} from './api/spawn-api.js';
+import {autofill} from './api/autofill.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
+import {initPlanner} from './planner.js';
 
 const {log, warn} = logsFactory('pipe');
 
@@ -26,32 +28,24 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   const context = await requireContext();
   // marshal pipes-arc (and stores)
   await marshalPipesArc(storage, context);
-  // construct ShellApi
-  const api = {
-    addPipeEntity(entity) {
-      return addPipeEntity(entity);
-    },
-    async marshalProcessArc(msg, tid, bus) {
-      const composer = composerFactory(msg.modality);
-      const arc = await marshalArc(tid, composer, context, storage, bus);
-      await ingestAndObserve(msg, tid, bus, arc);
-      //log('marshalProcessArc:', arc);
-      return arc;
-    },
-    async marshalSpawnArc(msg, tid, bus) {
-      const composer = composerFactory(msg.modality);
-      const arc = await marshalArc(tid, composer, context, storage, bus);
-      installPlanner(tid, bus, arc, suggestions => deliverSuggestions(tid, bus, suggestions));
-      // create a handle to use as an output slot, forward handle changes to the bus
-      observeOutput(tid, bus, arc);
-      //log('marshalSpawnArc:', arc);
-      return arc;
-    }
-  };
+  // marshal planner
+  initPlanner(context);
+  // marshal api
+  const api = constructApi(storage, context, composerFactory);
+  // marshal dispatcher
+  populateDispatcher(dispatcher, api, composerFactory, storage, context);
+  // create bus
+  return new Bus(dispatcher, client);
+};
+
+const populateDispatcher = (dispatcher, api, composerFactory, storage, context) => {
   // populate dispatcher
   Object.assign(dispatcher, {
     capture: async (msg, tid, bus) => {
-      return addPipeEntity(msg.entity);
+      return await addPipeEntity(msg.entity);
+    },
+    autofill: async (msg, tid, bus) => {
+      return await autofill(msg, tid, bus, composerFactory, storage, context);
     },
     ingest: async (msg, tid, bus) => {
       if (msg.tid) {
@@ -77,8 +71,31 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
       return api.marshalSpawnArc(msg, tid, bus);
     }
   });
-  // create bus
-  return new Bus(dispatcher, client);
+  return dispatcher;
+};
+
+const constructApi = (storage, context, composerFactory) => {
+  return {
+    // async addPipeEntity(entity) {
+    //   return await addPipeEntity(entity);
+    // },
+    async marshalProcessArc(msg, tid, bus) {
+      const composer = composerFactory(msg.modality);
+      const arc = await marshalArc(tid, composer, context, storage, bus);
+      await ingestAndObserve(msg, tid, bus, arc);
+      //log('marshalProcessArc:', arc);
+      return arc;
+    },
+    async marshalSpawnArc(msg, tid, bus) {
+      const composer = composerFactory(msg.modality);
+      const arc = await marshalArc(tid, composer, context, storage, bus);
+      installPlanner(tid, bus, arc, suggestions => deliverSuggestions(tid, bus, suggestions));
+      // create a handle to use as an output slot, forward handle changes to the bus
+      observeOutput(tid, bus, arc);
+      //log('marshalSpawnArc:', arc);
+      return arc;
+    }
+  };
 };
 
 const ingestAndObserve = async (msg, tid, bus, arc) => {
