@@ -17,13 +17,14 @@ import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 import {StartRenderOptions, StopRenderOptions} from './particle-execution-host.js';
+import {Dictionary} from './hot.js';
 
 export interface Content {
   templateName?: string | Map<string, string>;
   // tslint:disable-next-line: no-any
-  model?: {models: any, hash: string};
+  model?: Dictionary<any>;
   descriptions?: Map<string, Description>;
-  template?: string | Map<string, string>;
+  template?: string | Dictionary<string>;
 }
 
 export interface Rendering {
@@ -33,7 +34,7 @@ export interface Rendering {
   container?: any;
   // The data to be used in templating.
   // tslint:disable-next-line: no-any
-  model?: any;
+  model?: Dictionary<any>;
   // Specifies a particular template from the set of templates available to the
   // slot.
   templateName?: string;

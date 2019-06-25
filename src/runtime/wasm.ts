@@ -13,6 +13,8 @@ import {Schema} from './schema.js';
 import {Entity, EntityRawData} from './entity.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
+import {Content} from './slot-consumer.js';
+import {Dictionary} from './hot.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -131,6 +133,20 @@ class StringDecoder {
       this.validate('|');
     }
     return {id, data};
+  }
+
+  // Format is <size>:<key-len>:<key><value-len>:<value><key-len>:<key><value-len>:<value>...
+  decodeDictionary(str: string): Dictionary<string> {
+    this.str = str;
+    const dict = {};
+    let num = Number(this.upTo(':'));
+    while (num--) {
+      const klen = Number(this.upTo(':'));
+      const key = this.chomp(klen);
+      const vlen = Number(this.upTo(':'));
+      dict[key] = this.chomp(vlen);
+    }
+    return dict;
   }
 
   private upTo(char) {
@@ -378,7 +394,7 @@ export class WasmParticle extends Particle {
       _collectionStore: (handle, encoded) => this.collectionStore(handle, encoded),
       _collectionRemove: (handle, encoded) => this.collectionRemove(handle, encoded),
       _collectionClear: (handle) => this.collectionClear(handle),
-      _render: (slotName, content) => this.renderImpl(slotName, content),
+      _render: (slotName, template, model) => this.renderImpl(slotName, template, model),
     };
 
     driver.configureEnvironment(module, this, env);
@@ -528,10 +544,11 @@ export class WasmParticle extends Particle {
   }
 
   // Called by the shell to initiate rendering; the particle will call env._render in response.
-  // TODO: handle contentTypes
   renderSlot(slotName: string, contentTypes: string[]) {
     const p = this.store(slotName);
-    this.exports._requestRender(this.innerParticle, p);
+    const sendTemplate = contentTypes.includes('template');
+    const sendModel = contentTypes.includes('model');
+    this.exports._renderSlot(this.innerParticle, p, sendTemplate, sendModel);
     this.exports._free(p);
   }
 
@@ -540,11 +557,20 @@ export class WasmParticle extends Particle {
 
   // Actually renders the slot. May be invoked due to an external request via renderSlot(),
   // or directly from the wasm particle itself (e.g. in response to a data update).
-  renderImpl(slotName: WasmAddress, content: WasmAddress) {
+  // template is a string provided by the particle. model is an encoded key:value dictionary.
+  renderImpl(slotName: WasmAddress, template: WasmAddress, model: WasmAddress) {
     const slot = this.slotProxiesByName.get(this.read(slotName));
     if (slot) {
-      ['template', 'model'].forEach(ct => slot.requestedContentTypes.add(ct));
-      slot.render({template: this.read(content), model: {}, templateName: 'default'});
+      const content: Content = {templateName: 'default'};
+      if (template) {
+        content.template = this.read(template);
+        slot.requestedContentTypes.add('template');
+      }
+      if (model) {
+        content.model = new StringDecoder().decodeDictionary(this.read(model));
+        slot.requestedContentTypes.add('model');
+      }
+      slot.render(content);
     }
   }
 
