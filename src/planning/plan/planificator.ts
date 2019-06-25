@@ -27,16 +27,17 @@ export type PlanificatorOptions = {
   debug?: boolean;
   onlyConsumer?: boolean;
   inspectorFactory?: PlannerInspectorFactory;
+  noSpecEx?: boolean;
 };
 
 export class Planificator {
-  static async create(arc: Arc, {storageKeyBase, onlyConsumer, debug = false, inspectorFactory}: PlanificatorOptions) {
+  static async create(arc: Arc, {storageKeyBase, onlyConsumer, debug = false, inspectorFactory, noSpecEx}: PlanificatorOptions) {
     debug = debug || (Boolean(storageKeyBase) && storageKeyBase.startsWith('volatile'));
     const store = await Planificator._initSuggestStore(arc, storageKeyBase) as SingletonStorageProvider;
     const searchStore = await Planificator._initSearchStore(arc);
     const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
     await result.load();
-    const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug, inspectorFactory);
+    const planificator = new Planificator(arc, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
     await planificator._storeSearch(); // Reset search value for the current arc.
     await planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
@@ -51,17 +52,19 @@ export class Planificator {
   search: string|null = null;
   searchStore: SingletonStorageProvider;
   inspector: PlannerInspector|undefined;
+  noSpecEx: boolean;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore: SingletonStorageProvider, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory) {
+  constructor(arc: Arc, result: PlanningResult, searchStore: SingletonStorageProvider, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
     this.arc = arc;
     this.searchStore = searchStore;
+    this.noSpecEx = noSpecEx;
     if (inspectorFactory) {
       this.inspector = inspectorFactory.create(this);
     }
     assert(result, 'Result cannot be null.');
     this.result = result;
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(this.arc, this.result, searchStore, this.inspector, {debug});
+      this.producer = new PlanProducer(this.arc, this.result, searchStore, this.inspector, {debug, noSpecEx});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();

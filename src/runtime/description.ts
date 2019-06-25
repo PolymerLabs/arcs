@@ -23,10 +23,10 @@ import {Dictionary} from './hot.js';
 
 export class Description {
   private constructor(
-      private readonly storeDescById: Dictionary<string> = {},
-      // TODO(mmandlis): replace Particle[] with serializable json objects.
-      private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
-      private readonly particleDescriptions: ParticleDescription[] = []) {
+    private readonly storeDescById: Dictionary<string> = {},
+    // TODO(mmandlis): replace Particle[] with serializable json objects.
+    private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
+    private readonly particleDescriptions: ParticleDescription[] = []) {
   }
 
   static async XcreateForPlan(plan: Recipe): Promise<Description> {

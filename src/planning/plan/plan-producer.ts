@@ -45,10 +45,11 @@ export class PlanProducer {
   searchStore?: SingletonStorageProvider;
   searchStoreCallback: ({}) => void;
   debug: boolean;
+  noSpecEx: boolean;
   inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: SingletonStorageProvider, inspector?: PlannerInspector, {debug = false} = {}) {
-    assert(result, 'result cannot be null');                
+  constructor(arc: Arc, result: PlanningResult, searchStore?: SingletonStorageProvider, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
+    assert(result, 'result cannot be null');
     assert(arc, 'arc cannot be null');
     this.arc = arc;
     this.result = result;
@@ -61,6 +62,7 @@ export class PlanProducer {
       this.searchStore.on('change', this.searchStoreCallback, this);
     }
     this.debug = debug;
+    this.noSpecEx = noSpecEx;
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -134,6 +136,7 @@ export class PlanProducer {
 
     this.needReplan = true;
     this.replanOptions = options;
+
     if (this.isPlanning) {
       return;
     }
@@ -161,7 +164,7 @@ export class PlanProducer {
           contextual: this.replanOptions['contextual']}, this.arc)) {
         // Store suggestions to store.
         await this.result.flush();
-        
+
         if (this.inspector) this.inspector.updatePlanningResults(this.result, options['metadata']);
       } else {
         // Add skipped result to devtools.
@@ -188,6 +191,7 @@ export class PlanProducer {
         recipeIndex: this.recipeIndex
       },
       speculator: this.speculator,
+      noSpecEx: this.noSpecEx
     });
 
     suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations);
