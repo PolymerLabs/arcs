@@ -36,7 +36,16 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   // marshal dispatcher
   populateDispatcher(dispatcher, api, composerFactory, storage, context);
   // create bus
-  return new Bus(dispatcher, client);
+  const bus = new Bus(dispatcher, client);
+  // send pipe identifiers to client
+  identifyPipe(context, bus);
+  // return bus
+  return bus;
+};
+
+const identifyPipe = async (context, bus) => {
+  const recipes = context.allRecipes.map(r => r.name);
+  bus.send({message: 'ready', recipes});
 };
 
 const populateDispatcher = (dispatcher, api, composerFactory, storage, context) => {
