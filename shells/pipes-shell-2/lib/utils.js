@@ -40,7 +40,8 @@ export const createPlanificator = async arc => {
     storageKeyBase: 'volatile',
     onlyConsumer: false,
     debug: true,
-    inspectorFactory: devtoolsPlannerInspectorFactory
+    inspectorFactory: devtoolsPlannerInspectorFactory,
+    noSpecEx: true
   };
   const planificator = await Planificator.create(arc, options);
   //
@@ -87,7 +88,6 @@ export const marshalOutput = async arc => {
     }
   });
 };
-
 
 export const findContainers = tree => {
   const containers = {};

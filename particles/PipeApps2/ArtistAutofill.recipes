@@ -3,7 +3,6 @@ import './PipeEntity.schema'
 import '../Services/schemas/RandomData.schema'
 import '../Services/particles/Random.particle'
 
-
 schema Artist
   Text type
   Text name
@@ -21,10 +20,10 @@ particle SuggestArtist in './source/SuggestArtist.js'
 particle RequireQuery in './source/Noop.js'
   in PipeEntity query
 
-recipe AutofillSpotifyMusic &autofill
+recipe AutofillSpotifyMusic &artist_autofill
   create as artist
   create as suggestion
-  use #autofill_com_spotify_music as query
+  use #artist_autofill as query
   RequireQuery
     query = query
   RandomParticle
@@ -35,4 +34,4 @@ recipe AutofillSpotifyMusic &autofill
   SuggestArtist
     artist = artist
     suggestion = suggestion
-  description `autofill artist`
+  description `suggest artist`

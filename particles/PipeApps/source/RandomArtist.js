@@ -16,9 +16,9 @@ defineParticle(({DomParticle, html, log}) => {
     update({randomArtist}) {
       if (randomArtist) {
         const entities = [
-          {type: 'artist', name: 'Taylor Swift', source: 'com.weaseldev.fortunecookies'},
-          {type: 'artist', name: 'Stone Sour', source: 'com.weaseldev.fortunecookies'},
-          {type: 'artist', name: 'Metallica', source: 'com.weaseldev.fortunecookies'}
+          {type: 'artist', name: 'Taylor Swift', source: 'com.unknown'},
+          {type: 'artist', name: 'Stone Sour', source: 'com.unknown'},
+          {type: 'artist', name: 'Metallica', source: 'com.unknown'}
         ];
         const artist = entities[Math.floor(randomArtist.next * entities.length)];
         this.updateSingleton('artist', artist);

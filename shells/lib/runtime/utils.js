@@ -48,21 +48,31 @@ const parse = async (content, options) => {
 };
 
 const resolve = async (arc, recipe) =>{
-  if (!recipe.normalize()) {
-    warn('failed to normalize:\n', recipe.toString());
-  } else {
+  if (normalize(recipe)) {
     let plan = recipe;
     if (!plan.isResolved()) {
       const resolver = new RecipeResolver(arc);
       plan = await resolver.resolve(recipe);
       if (!plan || !plan.isResolved()) {
         warn('failed to resolve:\n', (plan || recipe).toString({showUnresolved: true}));
-        log(arc.context, arc, arc.context.storeTags);
+        //log(arc.context, arc, arc.context.storeTags);
         plan = null;
       }
     }
     return plan;
   }
+};
+
+const normalize = async (recipe) =>{
+  if (isNormalized(recipe) || recipe.normalize()) {
+    return true;
+  }
+  warn('failed to normalize:\n', recipe.toString());
+  return false;
+};
+
+const isNormalized = recipe => {
+  return Object.isFrozen(recipe);
 };
 
 const spawn = async ({id, serialization, context, composer, storage}) => {

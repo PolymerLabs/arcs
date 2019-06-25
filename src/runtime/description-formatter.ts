@@ -78,7 +78,7 @@ export class DescriptionFormatter {
 
   // TODO(mmandlis): the override of this function in subclasses also overrides the output. We'll need to unify
   // this into an output type hierarchy before we can assign a useful type to the output of this function.
-  // tslint:disable-next-line: no-any 
+  // tslint:disable-next-line: no-any
   _combineSelectedDescriptions(selectedDescriptions: ParticleDescription[], options: CombinedDescriptionsOptions = {}) {
     const suggestions = [];
     selectedDescriptions.map(particle => {
@@ -99,7 +99,7 @@ export class DescriptionFormatter {
 
   // TODO(mmandlis): the override of this function in subclasses also overrides the output. We'll need to unify
   // this into an output type hierarchy before we can assign a useful type to the output of this function.
-  // tslint:disable-next-line: no-any 
+  // tslint:disable-next-line: no-any
   _joinDescriptions(strings): any {
     const nonEmptyStrings = strings.filter(str => str);
     const count = nonEmptyStrings.length;
@@ -211,7 +211,7 @@ export class DescriptionFormatter {
         extra,
         _handleConn: handleConn,
         value: particleDescription._connections[handleConn.name].value
-      }];  
+      }];
     }
 
     // slot connection
@@ -384,7 +384,7 @@ export class DescriptionFormatter {
 
   // TODO(mmandlis): the override of this function in subclasses also overrides the output. We'll need to unify
   // this into an output type hierarchy before we can assign a useful type to the output of this function.
-  // tslint:disable-next-line: no-any 
+  // tslint:disable-next-line: no-any
   _formatBigCollection(handleName, firstValue): any {
     return `collection of items like ${firstValue.rawData.name}`;
   }
@@ -398,7 +398,7 @@ export class DescriptionFormatter {
         valueDescription = valueDescription.replace(matches[0], entityValue[matches[1]]);
       }
       return valueDescription;
-    } 
+    }
     if (entityValue['name']) {
       return entityValue['name'];
     }
@@ -456,7 +456,10 @@ export class DescriptionFormatter {
       // Choose connections with patterns (manifest-based or dynamic).
       const connectionSpec = connection.spec;
       const particleDescription = this.particleDescriptions.find(desc => desc._particle === connection.particle);
-      return !!connectionSpec.pattern || !!particleDescription._connections[connection.name].pattern;
+      // TODO(sjmiles): added particleDescription null-check for
+      // the moment, but we need to root cause this problem
+      return !!connectionSpec.pattern ||
+        (!!particleDescription && !!particleDescription._connections[connection.name].pattern);
     });
 
     possibleConnections.sort((c1, c2) => {

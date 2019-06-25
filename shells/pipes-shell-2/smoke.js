@@ -24,17 +24,19 @@ export const smokeTest = async bus => {
   //
   const spotifyAutofill = () => {
     // request autofill for com.spotify.music
-    bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.spotify.music'}});
+    //bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.spotify.music'}});
+    bus.receive({message: 'autofill', modality: 'dom', entity: {type: 'artist'}});
   };
   //
   const mapsAutofill = () => {
     // request autofill for com.google.android.apps.maps
-    bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.google.android.apps.maps'}});
+    //bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.google.android.apps.maps'}});
+    bus.receive({message: 'autofill', modality: 'dom', entity: {type: 'address'}});
   };
   //
   const tapToCaption = () => {
     // request tap-to-caption resolution for 'Dogs are awesome'
-    bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
+    bus.receive({message: 'caption', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
   };
   //
   const longRunning = () => {
@@ -62,7 +64,7 @@ export const smokeTest = async bus => {
     };
   };
   //
-  const enqueue = tests => {
+  const enqueue = (tests, delay) => {
     console.warn(`busish: starting new task...(remaining ${tests.length})`);
     (tests.shift())();
     if (tests.length) {
@@ -70,17 +72,18 @@ export const smokeTest = async bus => {
       // to simulate (more) serial task requests
       // and make it possible to read the console.
       // (should work in parallel also)
-      setTimeout(() => enqueue(tests), 3000);
+      setTimeout(() => enqueue(tests, delay), delay);
     }
   };
   //
   enqueue([
     captureData,
-    ingestEntity,
+    //ingestEntity,
     spotifyAutofill,
     mapsAutofill,
     tapToCaption,
-    longRunning,
-    customArc
-  ]);
+    //longRunning,
+    //customArc
+  ], 500);
+  //], 0);
 };

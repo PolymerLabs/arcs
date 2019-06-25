@@ -23,15 +23,29 @@ import {Dictionary} from './hot.js';
 
 export class Description {
   private constructor(
-      private readonly storeDescById: Dictionary<string> = {},
-      // TODO(mmandlis): replace Particle[] with serializable json objects.
-      private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
-      private readonly particleDescriptions: ParticleDescription[] = []) {
+    private readonly storeDescById: Dictionary<string> = {},
+    // TODO(mmandlis): replace Particle[] with serializable json objects.
+    private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
+    private readonly particleDescriptions: ParticleDescription[] = []) {
   }
 
-  static async createForPlan(plan: Recipe): Promise<Description> {
+  static async XcreateForPlan(plan: Recipe): Promise<Description> {
     const particleDescriptions = await Description.initDescriptionHandles(plan.particles);
     return new Description({}, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
+  }
+
+  static async createForPlan(arc: Arc, plan: Recipe): Promise<Description> {
+    const allParticles = plan.particles;
+    const particleDescriptions = await Description.initDescriptionHandles(allParticles, arc);
+    const storeDescById: {[id: string]: string} = {};
+    for (const {id} of plan.handles) {
+      const store = arc.findStoreById(id);
+      if (store && store instanceof StorageProviderBase) {
+        storeDescById[id] = arc.getStoreDescription(store);
+      }
+    }
+    // ... and pass to the private constructor.
+    return new Description(storeDescById, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
   }
 
   /**

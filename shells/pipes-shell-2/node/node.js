@@ -37,8 +37,6 @@ const client = global.DeviceClient || {};
   const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   global.ShellApi = bus;
-  // notify client
-  bus.send({message: 'ready'});
   // run smokeTest if requested
   if (test) {
     smokeTest(bus);

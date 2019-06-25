@@ -65,6 +65,7 @@ export interface PlannerInitOptions {
   strategyArgs?: {};
   speculator?: Speculator;
   inspectorFactory?: PlannerInspectorFactory;
+  noSpecEx?: boolean;
 }
 
 export class Planner implements InspectablePlanner {
@@ -73,9 +74,10 @@ export class Planner implements InspectablePlanner {
   strategizer: Strategizer;
   speculator: Speculator|null;
   inspector?: PlannerInspector;
+  noSpecEx: boolean;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = null, inspectorFactory = null}: PlannerInitOptions) {
+  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = null, inspectorFactory = null, noSpecEx = false}: PlannerInitOptions) {
     strategyArgs = Object.freeze({...strategyArgs});
     this.arc = arc;
     const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
@@ -84,6 +86,7 @@ export class Planner implements InspectablePlanner {
     if (inspectorFactory) {
       this.inspector = inspectorFactory.create(this);
     }
+    this.noSpecEx = noSpecEx;
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -219,7 +222,7 @@ export class Planner implements InspectablePlanner {
     }
     let relevance: Relevance|null = null;
     let description: Description|null = null;
-    if (this.speculator) {
+    if (this.speculator && !this.noSpecEx) {
       const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
@@ -228,13 +231,16 @@ export class Planner implements InspectablePlanner {
       relevance = result.relevance;
       description = await Description.create(speculativeArc, relevance);
     } else {
-      description = await Description.createForPlan(plan);
+      description = await Description.createForPlan(arc, plan);
     }
     const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(
         description,
         this.arc.modality,
-        this.arc.pec.slotComposer ? this.arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
+        this.arc.pec.slotComposer ?
+          this.arc.pec.slotComposer.modalityHandler.descriptionFormatter
+          : undefined
+    );
     suggestionByHash().set(hash, suggestion);
     return suggestion;
   }

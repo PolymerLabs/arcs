@@ -62,6 +62,32 @@ export const observeOutput = async (tid, bus, arc) => {
   }
 };
 
+export const ingestSuggestion = async (arc, suggestionText) => {
+  if (suggestionText) {
+    const suggestion = arc._pipe_suggestions.find(suggestion => suggestion.descriptionText == suggestionText);
+    if (!suggestion) {
+      log(`failed to find suggestion [${suggestionText}]`);
+    } else {
+      // instantiate requested recipe
+      await arc.instantiate(suggestion.plan);
+      log(`instantiated suggestion [${suggestionText}]`);
+    }
+  }
+};
+
+export const ingestRecipe = async (arc, recipeName) => {
+  if (recipeName) {
+    const recipe = recipeByName(arc.context, recipeName);
+    if (!recipe) {
+      log(`failed to find recipe [${recipeName}]`);
+    } else {
+      // instantiate requested recipe
+      await instantiateRecipe(arc, recipe);
+      log(`instantiated recipe [${recipeName}]`);
+    }
+  }
+};
+
 export const ingestEntity = async (arc, entity) => {
   // instantiate bespoke recipe for entity
   const recipe = await marshalPipeRecipe(entity);
@@ -88,28 +114,3 @@ recipe Pipe
     pipe = pipe
 `;
 
-export const ingestSuggestion = async (arc, suggestionText) => {
-  if (suggestionText) {
-    const suggestion = arc._pipe_suggestions.find(suggestion => suggestion.descriptionText == suggestionText);
-    if (!suggestion) {
-      log(`failed to find suggestion [${suggestionText}]`);
-    } else {
-      // instantiate requested recipe
-      await arc.instantiate(suggestion.plan);
-      log(`instantiated suggestion [${suggestionText}]`);
-    }
-  }
-};
-
-export const ingestRecipe = async (arc, recipeName) => {
-  if (recipeName) {
-    const recipe = recipeByName(arc.context, recipeName);
-    if (!recipe) {
-      log(`failed to find recipe [${recipeName}]`);
-    } else {
-      // instantiate requested recipe
-      await instantiateRecipe(arc, recipe);
-      log(`instantiated recipe [${recipeName}]`);
-    }
-  }
-};
