@@ -51,12 +51,15 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
   }]
 };
 
-const build = buildPath('.');
+const build = buildPath('.', cleanObsolete, []);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 
+const buildLS = buildPath('./src/tools/aml-language-server', null, ['vscode-jsonrpc', 'vscode-languageserver']);
+const webpackLS = webpackPkg('webpack-languageserver');
+
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
-  languageServer: [peg, build, buildPath('./src/tools/aml-language-server', ['vscode-jsonrpc', 'vscode-languageserver']), webpackPkg('webpack-languageserver'), languageServer],
+  languageServer: [peg, build, buildLS, webpackLS, languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
@@ -84,11 +87,13 @@ const cleanFiles = ['manifest-railroad.html', eslintCache];
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
-const srcExclude = /\b(node_modules|deps|build|third_party|javaharness|Kotlin)\b/;
+const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|javaharness|Kotlin|particles[/\\]Native)\b/;
+
 // RE pattern to exclude when finding within project built files.
 const buildExclude = /\b(node_modules|deps|src|third_party|javaharness|Kotlin)\b/;
 
-function* findProjectFiles(dir: string, exclude: RegExp|null, predicate: (path: string) => boolean): Iterable<string> {
+function* findProjectFiles(dir: string, exclude: RegExp|null, include: RegExp|((path: string) => boolean)): Iterable<string> {
+  const predicate = (include instanceof RegExp) ? (fullPath => include.test(fullPath)) : include;
   const tests = [];
   for (const entry of fs.readdirSync(dir)) {
     if (entry.startsWith('.') || (exclude && exclude.test(entry))) {
@@ -318,17 +323,39 @@ function railroad(): boolean {
   return true;
 }
 
-function buildPath(path: string, deps?: string[]): () => boolean {
+// Removes .js files in the build dir that don't have a corresponding source file (.js or .ts) in src.
+// Also removes the generated source map and type def files if they exist.
+function cleanObsolete() {
+  const exts = ['js', 'js.map', 'd.ts'];
+  for (const file of [...findProjectFiles('build', /javaharness|sigh\.js/, /\.js$/)]) {
+    const buildBase = file.slice(0, -2);  // drop 'js' extension
+    const srcBase = 'src' + buildBase.slice(5);  // replace leading 'build' with 'src'
+    if (!fs.existsSync(srcBase + 'ts') && !fs.existsSync(srcBase + 'js')) {
+      console.log('Cleaning obsolete build output:', file);
+      exts.forEach(ext => {
+        const target = buildBase + ext;
+        if (fs.existsSync(target)) {
+          fs.unlinkSync(target);
+        }
+      });
+    }
+  }
+}
+
+function buildPath(path: string, preprocess: () => void, deps: string[]): () => boolean {
   return () => {
+    if (preprocess) {
+      preprocess();
+    }
     if (!tsc(path)) {
       console.log('build::tsc failed');
-      if (deps && deps.length > 0) {
+      if (deps.length > 0) {
         console.log(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
       }
       return false;
     }
 
-    if (!link(findProjectFiles('src', null, fullPath => /\.js$/.test(fullPath)))) {
+    if (!link(findProjectFiles('src', null, /\.js$/))) {
       console.log('build::link failed');
       return false;
     }
@@ -415,13 +442,7 @@ function lint(args: string[]): boolean {
     boolean: ['fix'],
   });
 
-  const jsSources = [...findProjectFiles(process.cwd(), srcExclude, fullPath => {
-    if (/build[/\\]/.test(fullPath) || /gen[/\\]/.test(fullPath) || /dist[/\\]/.test(fullPath)
-      || /particles[/\\]Native/.test(fullPath)) {
-      return false;
-    }
-    return /\.[jt]s$/.test(fullPath);
-  })];
+  const jsSources = [...findProjectFiles(process.cwd(), srcExclude, /\.[jt]s$/)];
 
   const cli = new CLIEngine({
     useEsLintRc: false,
@@ -711,12 +732,7 @@ function health(args: string[]): boolean {
     return tslintOutput.split('\n').filter(line => line.match(lineMatch));
   }
 
-  const migrationFiles = () => [...findProjectFiles(
-      'src', null, fullPath => fullPath.endsWith('.js')
-          && !fullPath.includes('/artifacts/')
-          && !fullPath.includes('\\artifacts\\')
-          && !fullPath.includes('\\runtime\\build\\')
-          && !fullPath.includes('/runtime/build/'))];
+  const migrationFiles = () => [...findProjectFiles('src', /\b(artifacts|runtime[/\\]build)\b/, /\.js$/)];
 
   if (options.migration) {
     console.log('JS files to migrate:\n');
