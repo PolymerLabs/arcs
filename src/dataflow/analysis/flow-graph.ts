@@ -13,7 +13,7 @@ import {Handle} from '../../runtime/recipe/handle';
 import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
 import {ClaimType, ClaimIsTag, Claim} from '../../runtime/particle-claim';
-import {Check, CheckType, CheckHasTag} from '../../runtime/particle-check';
+import {Check, CheckType, CheckCondition} from '../../runtime/particle-check';
 import {HandleConnectionSpec} from '../../runtime/particle-spec';
 
 /**
@@ -76,40 +76,61 @@ export class FlowGraph {
   private validateSingleEdge(edgeToCheck: Edge): ValidationResult {
     assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
-    const finalResult = new ValidationResult();
     const check = edgeToCheck.check;
-    const startPath = BackwardsPath.fromEdge(edgeToCheck);
+    const finalResult = new ValidationResult();
 
-    // Stack of paths that need to be checked (via DFS). Other paths will be added here to be checked as we explore the graph.
-    const pathStack: BackwardsPath[] = [startPath];
-
-    while (pathStack.length) {
-      const path = pathStack.pop();
-      const node = path.endNode;
-      // See if the end of the path satisfies the check condition.
-      const result = node.evaluateCheck(check, path.endEdge, path);
-      switch (result.type) {
-        case CheckResultType.Success:
-          // Check was met. Continue checking other paths.
-          continue;
-        case CheckResultType.Failure: {
-          // Check failed. Add failure and continue checking other paths.
-          const edgesInPath = result.path.edges.slice().reverse();
-          const pathString = edgesInPath.map(e => e.label).join(' -> ');
-          finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${pathString}`);
-          continue;
-        }
-        case CheckResultType.KeepGoing:
-          // Check has not failed yet for this path yet. Add more paths to the stack and keep going.
-          assert(result.checkNext.length > 0, 'Result was KeepGoing, but gave nothing else to check.');
-          result.checkNext.forEach(p => pathStack.push(p));
-          continue;
-        default:
-          assert(false, `Unknown check result: ${result}`);
+    // Check every input path into the given edge.
+    // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
+    for (const path of allInputPaths(edgeToCheck)) {
+      if (!evaluateCheckForPath(check, path)) {
+        const edgesInPath = path.edges.slice().reverse();
+        const pathString = edgesInPath.map(e => e.label).join(' -> ');
+        finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${pathString}`);
       }
     }
+
     return finalResult;
   }
+}
+
+/**
+ * Iterates through every path in the graph that lead into the given edge. Each path returned is a BackwardsPath, beginning at the given edge,
+ * and ending at the end of a path in the graph (i.e. a node with no input edges).
+ */
+function* allInputPaths(startEdge: Edge): Iterable<BackwardsPath> {
+  const startPath = BackwardsPath.fromEdge(startEdge);
+  // Stack of partial paths that need to be expanded (via DFS). Other paths will be added here to be expanded as we explore the graph.
+  const pathStack: BackwardsPath[] = [startPath];
+
+  while (pathStack.length) {
+    const path = pathStack.pop();
+    const inEdges = path.endNode.inEdgesFromOutEdge(path.endEdge);
+    if (inEdges.length === 0) {
+      // Path is finished, yield it.
+      yield path;
+    } else {
+      // Path is not finished, continue extending it via all in-edges.
+      for (const nextEdge of inEdges) {
+        pathStack.push(path.withNewEdge(nextEdge));
+      }
+    }
+  }
+}
+
+/** Returns true if the given check passes for the given path. */
+function evaluateCheckForPath(check: Check, path: BackwardsPath): boolean {
+  // Check every condition against the whole path.
+  // NOTE: This is very inefficient. We check every condition against every edge in the path.
+  for (const condition of check.conditions) {
+    for (const edge of path.edges) {
+      const node = edge.start;
+      if (node.evaluateCheckCondition(condition, edge)) {
+        // Only one condition needs to pass, anywhere in the path, so we can return true straight away.
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /** Result from validating an entire graph. */
@@ -120,17 +141,6 @@ export class ValidationResult {
     return this.failures.length === 0;
   }
 }
-
-export enum CheckResultType {
-  Success,
-  Failure,
-  KeepGoing,
-}
-
-export type CheckResult =
-    {type: CheckResultType.Success} |
-    {type: CheckResultType.Failure, path: BackwardsPath} |
-    {type: CheckResultType.KeepGoing, checkNext: BackwardsPath[]};
 
 /**
  * A path that walks backwards through the graph, i.e. it walks along the directed edges in the reverse direction. The path is described by the
@@ -235,7 +245,7 @@ export abstract class Node {
   abstract addInEdge(edge: Edge): void;
   abstract addOutEdge(edge: Edge): void;
 
-  abstract evaluateCheck(check: Check, edgeToCheck: Edge, path: BackwardsPath): CheckResult;
+  abstract evaluateCheckCondition(condition: CheckCondition, edgeToCheck: Edge): boolean;
 
   get inNodes(): Node[] {
     return this.inEdges.map(e => e.start);
@@ -244,6 +254,8 @@ export abstract class Node {
   get outNodes(): Node[] {
     return this.outEdges.map(e => e.end);
   }
+
+  abstract inEdgesFromOutEdge(outEdge: Edge): readonly Edge[];
 }
 
 export interface Edge {
@@ -285,55 +297,45 @@ class ParticleNode extends Node {
     this.outEdgesByName.set(edge.handleName, edge);
   }
   
-  get inEdges(): readonly Edge[] {
+  get inEdges(): readonly ParticleInput[] {
     return [...this.inEdgesByName.values()];
   }
 
-  get outEdges(): readonly Edge[] {
+  get outEdges(): readonly ParticleOutput[] {
     return [...this.outEdgesByName.values()];
   }
 
-  evaluateCheck(check: Check, edgeToCheck: ParticleOutput, path: BackwardsPath): CheckResult {
-    assert(this.outEdges.includes(edgeToCheck), 'Particles can only check their own out-edges.');
-    
-    // First check if this particle makes an explicit claim on this out-edge.
-    const claim = this.claims.get(edgeToCheck.handleName);
-    if (claim) {
-      switch (claim.type) {
-        case ClaimType.IsTag: {
-          // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise keep going.
-          if (checkAgainstTagClaim(check, claim)) {
-            return {type: CheckResultType.Success};
-          }
-          return this.keepGoingWithInEdges(check, path);
-        }
-        case ClaimType.DerivesFrom: {
-          // The particle's output derives from some of its inputs. Continue searching the graph from those inputs.
-          const checkNext: BackwardsPath[] = [];
-          for (const handle of claim.parentHandles) {
-            const edge = this.inEdgesByName.get(handle.name);
-            assert(!!edge, `Claim derives from unknown handle: ${handle}.`);
-            checkNext.push(path.withNewEdge(edge));
-          }
-          return {type: CheckResultType.KeepGoing, checkNext};
-        }
-        default:
-          console.log(claim);
-          assert(false, 'Unknown claim type.');
+  /**
+   * Iterates through all of the relevant in-edges leading into this particle, that flow out into the given out-edge. The out-edge may have a
+   * 'derives from' claim that restricts which edges flow into it.
+   */
+  inEdgesFromOutEdge(outEdge: ParticleOutput): readonly ParticleInput[] {
+    assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
+
+    if (outEdge.claim && outEdge.claim.type === ClaimType.DerivesFrom) {
+      const result: ParticleInput[] = [];
+      for (const parentHandle of outEdge.claim.parentHandles) {
+        const inEdge = this.inEdgesByName.get(parentHandle.name);
+        assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
+        result.push(inEdge);
       }
+      return result;
     }
 
-    // Next check the node's in-edges.
-    return this.keepGoingWithInEdges(check, path);
+    return this.inEdges;
   }
 
-  keepGoingWithInEdges(check: Check, path: BackwardsPath): CheckResult {
-    if (this.inEdges.length) {
-      const checkNext = this.inEdges.map(e => path.withNewEdge(e));
-      return {type: CheckResultType.KeepGoing, checkNext};
-    } else {
-      return {type: CheckResultType.Failure, path};
+  evaluateCheckCondition(condition: CheckCondition, edgeToCheck: ParticleOutput): boolean {
+    assert(this.outEdges.includes(edgeToCheck), 'Particles can only check their own out-edges.');
+
+    // Particles can only evaluate tag check conditions.
+    if (condition.type !== CheckType.HasTag) {
+      return false;
     }
+
+    const claim = edgeToCheck.claim;
+    // Return true if the particle claims the right tag on this edge.
+    return claim && claim.type === ClaimType.IsTag && claim.tag === condition.tag;
   }
 }
 
@@ -406,24 +408,19 @@ class HandleNode extends Node {
     this.outConnectionSpecs.add(edge.connectionSpec);
   }
 
-  evaluateCheck(check: Check, edgeToCheck: ParticleInput, path: BackwardsPath): CheckResult {
+  inEdgesFromOutEdge(outEdge: ParticleInput): readonly ParticleOutput[] {
+    return this.inEdges;
+  }
+
+  evaluateCheckCondition(condition: CheckCondition, edgeToCheck: ParticleInput): boolean {
     assert(this.outEdges.includes(edgeToCheck), 'Handles can only check their own out-edges.');
 
-    for (const condition of check.conditions) {
-      if (condition.type === CheckType.IsFromHandle) {
-        // Check if this handle node has the same connection as the check condition. If so, it must be the same handle, so we should succeed.
-        // If not, don't fail this condition yet; it's possible the right handle might be found further upstream.
-        if (this.outConnectionSpecs.has(condition.parentHandle)) {
-          return {type: CheckResultType.Success};
-        }
-      }
+    // Handles can only validate checks against themselves.
+    if (condition.type !== CheckType.IsFromHandle) {
+      return false;
     }
-
-    if (this.inEdges.length) {
-      const checkNext = this.inEdges.map(e => path.withNewEdge(e));
-      return {type: CheckResultType.KeepGoing, checkNext};
-    } else {
-      return {type: CheckResultType.Failure, path};
-    }
+    
+    // Check if this handle node has the same connection as the check condition. If so, it must be the same handle, so we should succeed.
+    return this.outConnectionSpecs.has(condition.parentHandle);
   }
 }
