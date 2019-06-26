@@ -14,35 +14,13 @@ public class ShellApiImpl implements ShellApi {
     public ShellApiImpl() {
     }
 
-
     @JsType(isNative = true, namespace = "<window>", name = "ShellApi")
     private static class NativeShellApi {
-        public static native void observeEntity(String entityJson);
-
-        public static native String receiveEntity(String entityJson);
-
-        public static native void chooseSuggestion(String suggestion);
-
-        public static native void postMessage(String msgToSendToHost);
+        public static native String receive(String json);
     }
 
     @Override
-    public void observeEntity(String entityJson) {
-        NativeShellApi.observeEntity(entityJson);
-    }
-
-    @Override
-    public String receiveEntity(String entityJson) {
-        return NativeShellApi.receiveEntity(entityJson);
-    }
-
-    @Override
-    public void chooseSuggestion(String suggestion) {
-        NativeShellApi.chooseSuggestion(suggestion);
-    }
-
-    @Override
-    public void postMessage(String msgToSendToHost) {
-        NativeShellApi.postMessage(msgToSendToHost);
+    public String receive(String json) {
+        return NativeShellApi.receive(json);
     }
 }

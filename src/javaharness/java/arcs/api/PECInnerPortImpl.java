@@ -93,7 +93,8 @@ public class PECInnerPortImpl implements PECInnerPort {
     }
 
     private void postMessage(PortableJson message) {
-        message.put(MESSAGE_PEC_ID_FIELD, this.id);
-        shellApi.postMessage(jsonParser.stringify(message));
+        // TODO: add support for PEC messages in pipes-shell-2 bus.
+        // message.put(MESSAGE_PEC_ID_FIELD, this.id);
+        // shellApi.postMessage(jsonParser.stringify(message));
     }
 }
