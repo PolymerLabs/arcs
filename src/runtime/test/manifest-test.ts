@@ -341,15 +341,6 @@ ${particleStr1}
         P1 as p1
           x -> thingHandle
         P2
-          x -> thingHandle`,
-      `particle P1
-      particle P2
-
-      recipe
-        ? #things as thingHandle
-        P1 as p1
-          x -> thingHandle
-        P2 as particle0
           x -> thingHandle`);
     const deserializedManifest = (await Manifest.parse(manifest.toString(), {}));
   });

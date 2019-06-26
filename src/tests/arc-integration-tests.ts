@@ -38,7 +38,7 @@ describe('Arc integration', () => {
           {"name": "mything"}
         ]
       store ThingStore of Thing 'mything' #best in ThingResource
-    `, loader);
+    `);
 
     const runtime = new Runtime(loader, FakeSlotComposer, manifest);
     const arc = runtime.newArc('demo', 'volatile://');

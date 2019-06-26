@@ -37,7 +37,7 @@ describe('OuterPortAttachment', () => {
       recipe
         use as foo
         P
-          foo = foo`, loader);
+          foo = foo`);
     const runtime = new Runtime(loader, MockSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://', {inspectorFactory: devtoolsArcInspectorFactory});
 
