@@ -5,10 +5,12 @@ import arcs.api.DeviceClient;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.PECInnerPort;
+import arcs.api.PECInnerPortFactory;
 import arcs.api.NativeParticle;
 import jsinterop.annotations.JsType;
 
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
@@ -18,17 +20,18 @@ import static elemental2.dom.DomGlobal.window;
 
 public class DeviceClientJsImpl implements DeviceClient {
 
-    private PortableJsonParser jsonParser;
+    private final PortableJsonParser jsonParser;
     private Map<String, ArcsEnvironment.SuggestionListener> inProgress;
-    private PECInnerPort port;
+    private final PECInnerPortFactory portFactory;
+    private final Map<String, PECInnerPort> portById = new HashMap<String, PECInnerPort>();
 
     @Inject
     public DeviceClientJsImpl(PortableJsonParser jsonParser,
                               Map<String, ArcsEnvironment.SuggestionListener> inProgress,
-                              PECInnerPort port) {
+                              PECInnerPortFactory portFactory) {
         this.jsonParser = jsonParser;
         this.inProgress = inProgress;
-        this.port = port;
+        this.portFactory = portFactory;
     }
 
     public void foundSuggestions(String transactionId, String content) {
@@ -69,6 +72,16 @@ public class DeviceClientJsImpl implements DeviceClient {
     }
 
     public void postMessage(String msg) {
-        port.handleMessage(jsonParser.parse(msg));
+        PortableJson msgJson = jsonParser.parse(msg);
+        String id = msgJson.getString("id");
+        PECInnerPort port = getOrCreatePort(id);
+        port.handleMessage(msgJson);
+    }
+
+    private PECInnerPort getOrCreatePort(String id) {
+        if (!this.portById.containsKey(id)) {
+            this.portById.put(id, this.portFactory.createPECInnerPort(id));
+        }
+        return this.portById.get(id);
     }
 }
