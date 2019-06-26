@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {handleFor, Storable} from './handle.js';
+import {handleFor, Collection, Storable} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
 import {Entity} from './entity.js';
@@ -26,7 +26,7 @@ export class Reference implements Storable {
   private storageKey: string;
   private readonly context: ParticleExecutionContext;
   private storageProxy: StorageProxy = null;
-  protected handle = null;
+  protected handle: Collection|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
@@ -43,7 +43,7 @@ export class Reference implements Storable {
   protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referredType);
-      this.handle = handleFor(this.storageProxy, this.context.idGenerator);
+      this.handle = handleFor(this.storageProxy, this.context.idGenerator) as Collection;
       if (this.storageKey) {
         assert(this.storageKey === this.storageProxy.storageKey);
       } else {

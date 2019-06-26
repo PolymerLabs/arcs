@@ -415,7 +415,7 @@ class VolatileSingleton extends VolatileStorageProvider implements SingletonStor
     return {version: this.version, model};
   }
 
-  private fromLiteral({version, model}) {
+  private fromLiteral({version, model}: {version: number, model: SerializedModelEntry[]}) {
     const value = model.length === 0 ? null : model[0].value;
     if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);

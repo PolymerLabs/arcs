@@ -100,7 +100,7 @@ export class ConsumeSlotConnectionSpec {
   isSet: boolean;
   tags: string[];
   formFactor: string;
-  handles?: string[];
+  handles: string[];
   provideSlotConnections: ProvideSlotConnectionSpec[];
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
@@ -226,7 +226,7 @@ export class ParticleSpec {
     return this.handleConnectionMap.get(name);
   }
 
-  getSlotSpec(slotName: string) {
+  getSlotSpec(slotName: string): ConsumeSlotConnectionSpec|undefined {
     return this.slotConnections.get(slotName);
   }
 

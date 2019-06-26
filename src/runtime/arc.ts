@@ -186,7 +186,7 @@ export class Arc {
   // Inner arcs of this arc's transformation particles.
   // Does *not* include inner arcs of this arc's inner arcs.
   get innerArcs(): Arc[] {
-    return [].concat(...this.innerArcsByParticle.values());
+    return ([] as Arc[]).concat( ...this.innerArcsByParticle.values());
   }
 
   // This arc and all its descendants.

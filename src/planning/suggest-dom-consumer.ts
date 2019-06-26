@@ -20,7 +20,7 @@ export class SuggestDomConsumer extends SlotDomConsumer {
   _eventHandler;
 
   constructor(arc: Arc, containerKind: string, suggestion: Suggestion, eventHandler) {
-    super(arc, /* consumeConn= */null, containerKind);
+    super(arc, /* consumeConn= */undefined, containerKind);
     this._suggestion = suggestion;
     this._suggestionContent = SuggestDomConsumer._extractContent(this._suggestion);
     this._eventHandler = eventHandler;

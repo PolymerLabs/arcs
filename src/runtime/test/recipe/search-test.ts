@@ -11,6 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Recipe} from '../../recipe/recipe.js';
 import {Search} from '../../recipe/search.js';
+import {checkNotNull} from '../../testing/preconditions.js';
 
 describe('Recipe Search', () => {
   const createAndVerifyResolved = (search) => {
@@ -47,17 +48,19 @@ describe('Recipe Search', () => {
     const recipe = new Recipe();
     new Search('hello world bye world')._copyInto(recipe);
 
-    assert.equal('hello world bye world', recipe.search.phrase);
-    assert.deepEqual(['hello', 'world', 'bye', 'world'], recipe.search.unresolvedTokens);
-    assert.isEmpty(recipe.search.resolvedTokens);
+    let search = checkNotNull(recipe.search);
+    assert.equal('hello world bye world', search.phrase);
+    assert.deepEqual(['hello', 'world', 'bye', 'world'], search.unresolvedTokens);
+    assert.isEmpty(search.resolvedTokens);
     let cloneRecipe = recipe.clone();
     assert(cloneRecipe.normalize());
     assert.isFalse(cloneRecipe.isResolved());
 
-    new Search('one two three', ['two'])._copyInto(recipe);    
-    assert.equal('hello world bye world one two three', recipe.search.phrase);
-    assert.deepEqual(['hello', 'world', 'bye', 'world', 'two'], recipe.search.unresolvedTokens);
-    assert.deepEqual(['one', 'three'], recipe.search.resolvedTokens);
+    new Search('one two three', ['two'])._copyInto(recipe);
+    search = checkNotNull(recipe.search);
+    assert.equal('hello world bye world one two three', search.phrase);
+    assert.deepEqual(['hello', 'world', 'bye', 'world', 'two'], search.unresolvedTokens);
+    assert.deepEqual(['one', 'three'], search.resolvedTokens);
     cloneRecipe = recipe.clone();
     assert(cloneRecipe.normalize());
     assert.isTrue(cloneRecipe.isResolved());

@@ -68,7 +68,7 @@ export class PlanConsumer {
     return this.result.suggestions.filter(suggestion => {
       const suggestOption: SuggestionVisibilityOptions|undefined = options && options.reasons ? {reasons: []} : undefined;
       const isVisible = suggestion.isVisible(this.arc, this.suggestFilter, suggestOption);
-      if (!isVisible && suggestOption && options) {
+      if (!isVisible && suggestOption && options && options.reasons) {
         options.reasons.set(suggestion.hash, suggestOption);
       }
       return isVisible;

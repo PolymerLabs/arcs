@@ -34,7 +34,7 @@ export class ParticleEndPoint extends EndPoint {
     this.connection = connection;
   }
 
-  _clone(cloneMap: CloneMap = undefined): ParticleEndPoint {
+  _clone(cloneMap?: CloneMap): ParticleEndPoint {
     return new ParticleEndPoint(this.particle, this.connection);
   }
 
@@ -45,7 +45,7 @@ export class ParticleEndPoint extends EndPoint {
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined): string {
+  toString(nameMap?: ReadonlyMap<RecipeComponent, string>): string {
     if (!this.connection) {
       return `${this.particle.name}`;
     }
@@ -167,7 +167,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined, options: ToStringOptions = undefined): string {
+  toString(nameMap?: ReadonlyMap<RecipeComponent, string>, options?: ToStringOptions): string {
     let unresolved = '';
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';

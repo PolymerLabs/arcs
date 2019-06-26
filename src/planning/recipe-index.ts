@@ -8,9 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Strategizer, Strategy} from '../planning/strategizer.js';
+import {Generation} from './planner.js';
+import {Strategizer, Strategy} from './strategizer.js';
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/particle-spec.js';
@@ -34,10 +36,15 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {IdGenerator} from '../runtime/id.js';
 
+type MatchingHandle = {
+  handle?: Handle,
+  matchingConn: HandleConnection
+};
+
 type ConsumeSlotConnectionMatch = {
   recipeParticle: Particle,
   slotSpec: ConsumeSlotConnectionSpec,
-  matchingHandles: {handle:Handle, matchingConn: HandleConnection}[]
+  matchingHandles: MatchingHandle[]
 };
 
 class RelevantContextRecipes extends Strategy {
@@ -114,7 +121,7 @@ export class RecipeIndex {
       Rulesets.Empty
     );
     this.ready = trace.endWith(new Promise(async resolve => {
-      const generations = [];
+      const generations: Generation[] = [];
 
       do {
         const record = await strategizer.generate();
@@ -230,7 +237,7 @@ export class RecipeIndex {
   findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvideSlotConnectionSpec): ConsumeSlotConnectionMatch[] {
     this.ensureReady();
 
-    const consumeConns = [];
+    const consumeConns: ConsumeSlotConnectionMatch[] = [];
     for (const recipe of this._recipes) {
       if (recipe.particles.some(recipeParticle => !recipeParticle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
@@ -244,7 +251,7 @@ export class RecipeIndex {
           if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
           if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)) {
             const slotConn = particle.getSlotConnectionByName(providedSlotSpec.name);
-            let matchingHandles = [];
+            let matchingHandles: MatchingHandle[] = [];
             if (providedSlotSpec.handles.length !== 0 || (slotConn && !SlotUtils.handlesMatch(recipeParticle, slotConn))) {
               matchingHandles = this._getMatchingHandles(recipeParticle, particle, providedSlotSpec);
               if (matchingHandles.length === 0) {
@@ -280,8 +287,8 @@ export class RecipeIndex {
     return providedSlots;
   }
 
-  private _getMatchingHandles(particle: Particle, providingParticle: Particle, providedSlotSpec: ProvideSlotConnectionSpec) {
-    const matchingHandles = [];
+  private _getMatchingHandles(particle: Particle, providingParticle: Particle, providedSlotSpec: ProvideSlotConnectionSpec): MatchingHandle[]  {
+    const matchingHandles: MatchingHandle[] = [];
     for (const slotHandleConnName of providedSlotSpec.handles) {
       const providedHandleConn = providingParticle.getConnectionByName(slotHandleConnName);
       if (!providedHandleConn) continue;
@@ -308,10 +315,16 @@ export class RecipeIndex {
    * - `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
    *    as a potential match to a slot above.
    */
-  private _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn): boolean {
+  private _fatesAndDirectionsMatch(slotHandleConn: HandleConnection, matchingHandleConn: HandleConnection): boolean {
     const matchingHandle = matchingHandleConn.handle;
     const allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
-    const matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction));
+    const matchingDirection: Direction[] = ['out', 'inout'];
+    const matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => conn.direction && matchingDirection.includes(conn.direction));
+
+    if (!slotHandleConn.handle) {
+      throw new Error(`Unexpected empty Handle`);
+    }
+      
     switch (slotHandleConn.handle.fate) {
       case 'create':
         // matching handle not defined or its fate is 'create' or '?'.

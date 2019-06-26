@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Recipe} from '../../../runtime/recipe/recipe.js';
-import {Planner} from '../../planner.js';
+import {AnnotatedDescendant, Generation, Planner} from '../../planner.js';
 import {Ruleset, StrategizerWalker, Strategy} from '../../strategizer.js';
 
 import {StrategyTestHelper} from './strategy-test-helper.js';
@@ -106,14 +106,14 @@ describe('Rulesets', () => {
     const arc = StrategyTestHelper.createTestArc(options.context);
     const planner = new Planner();
     planner.init(arc, options);
-    const generations = [];
+    const generations: Generation[] = [];
     await planner.plan(Infinity, generations);
-    const recipes = [].concat(...generations.map(instance => instance.generated));
+    const recipes = ([] as AnnotatedDescendant[]).concat(...generations.map(instance => instance.generated));
     return {
       total: recipes.length,
-      fateAssigned: recipes.reduce((acc, r) => acc + (r.result.handles.every(h => h.fate !== '?')), 0),
+      fateAssigned: recipes.reduce((acc, r) => acc + Number(r.result.handles.every(h => h.fate !== '?')), 0),
       // Not using recipe.isResolved(), as those recipes are not truly resolved.
-      resolved: recipes.reduce((acc, r) => acc + (r.result.handles.every(h => (h.fate !== '?' && h.id.endsWith('resolved')))), 0),
+      resolved: recipes.reduce((acc, r) => acc + Number(r.result.handles.every(h => (h.fate !== '?' && h.id.endsWith('resolved')))), 0),
       redundantDerivations: recipes.reduce((acc, r) => acc + r.derivation.length - 1, 0)
     };
   };

@@ -19,19 +19,22 @@ import {Slot} from './slot.js';
 export class SlotUtils {
   // Helper methods.
   static getClonedSlot(recipe: Recipe, selectedSlot): Slot {
-    let clonedSlot: Slot = recipe.updateToClone({selectedSlot}).selectedSlot;
-    if (!clonedSlot) {
-      if (selectedSlot.id) {
-        clonedSlot = recipe.findSlotByID(selectedSlot.id);
+    let clonedSlot: Slot|undefined = recipe.updateToClone({selectedSlot}).selectedSlot;
+    if (clonedSlot) {
+      return clonedSlot;
+    }
+    
+    if (selectedSlot.id) {
+      clonedSlot = recipe.findSlotByID(selectedSlot.id);
+    }
+    if (clonedSlot === undefined) {
+      if (recipe instanceof RequireSection) {
+        clonedSlot = recipe.parent.newSlot(selectedSlot.name);
+      } else {
+        clonedSlot = recipe.newSlot(selectedSlot.name);
       }
-      if (clonedSlot == undefined) {
-        if (recipe instanceof RequireSection) {
-          clonedSlot = recipe.parent.newSlot(selectedSlot.name);
-        } else {
-          clonedSlot = recipe.newSlot(selectedSlot.name);
-        }
-        clonedSlot.id = selectedSlot.id;
-      }
+      clonedSlot.id = selectedSlot.id;
+      return clonedSlot;
     }
     return clonedSlot;
   }
@@ -43,7 +46,10 @@ export class SlotUtils {
       const clonedSlot = SlotUtils.getClonedSlot(recipe, selectedSlot);
       slotConnection.connectToSlot(clonedSlot);
     }
-
+    if (!slotConnection.targetSlot) {
+      throw new Error('missing targetSlot');
+    }
+    
     assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id === slotConnection.targetSlot.id),
             `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
     slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
@@ -110,14 +116,14 @@ export class SlotUtils {
     });
   }
 
-  static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn: SlotConnection = undefined, provideSlot: Slot = undefined) {
-    const consumeTags: string[] = [].concat(
+  static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn?: SlotConnection, provideSlot?: Slot) {
+    const consumeTags: string[] = ([] as string[]).concat(
       consumeSlotSpec.tags || [], 
       consumeSlotConn ? consumeSlotConn.tags : [], 
       consumeSlotConn && consumeSlotConn.targetSlot ? consumeSlotConn.targetSlot.tags : []
     );
 
-    const provideTags = [].concat(
+    const provideTags = ([] as string[]).concat(
       provideSlotSpec.tags || [], 
       provideSlot ? provideSlot.tags : [], 
       provideSlot ? provideSlot.name : (provideSlotSpec.name ? provideSlotSpec.name : [])

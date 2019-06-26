@@ -53,7 +53,7 @@ class TestPlanProducer extends PlanProducer {
     this.plannerRunOptions.push(options);
 
     return new Promise<Suggestion[]>((resolve, reject) => {
-      const suggestions: Suggestion[] = this.plannerNextResults.shift();
+      const suggestions: Suggestion[]|undefined = this.plannerNextResults.shift();
 
       if (suggestions) {
         resolve(suggestions);

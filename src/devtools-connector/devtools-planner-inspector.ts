@@ -54,7 +54,7 @@ class DevtoolsPlannerInspector implements PlannerInspector {
     });
   }
 
-  updateVisibleSuggestions(visibleSuggestions: Suggestion[], options: VisibilityOptions) {
+  updateVisibleSuggestions(visibleSuggestions: Suggestion[], options?: VisibilityOptions) {
     if (!this.arcDevtoolsChannel) return;
     this.arcDevtoolsChannel.send({
       messageType: 'visible-suggestions-changed',

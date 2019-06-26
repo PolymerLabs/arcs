@@ -46,7 +46,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Relevance} from '../runtime/relevance.js';
 import {PlannerInspector, PlannerInspectorFactory, InspectablePlanner} from './planner-inspector.js';
 
-interface AnnotatedDescendant extends Descendant<Recipe> {
+export interface AnnotatedDescendant extends Descendant<Recipe> {
   active?: boolean;
   irrelevant?: boolean;
   description?: string;
@@ -72,12 +72,12 @@ export class Planner implements InspectablePlanner {
   public arc: Arc;
   // public for debug tools
   strategizer: Strategizer;
-  speculator: Speculator|null;
+  speculator?: Speculator;
   inspector?: PlannerInspector;
   noSpecEx: boolean;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = null, inspectorFactory = null, noSpecEx = false}: PlannerInitOptions) {
+  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
     strategyArgs = Object.freeze({...strategyArgs});
     this.arc = arc;
     const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
@@ -175,7 +175,7 @@ export class Planner implements InspectablePlanner {
     // efficient work distribution.
     const threadCount = this._speculativeThreadCount();
     const planGroups = this._splitToGroups(plans, threadCount);
-    let results = await trace.wait(Promise.all(planGroups.map(async (group, groupIndex) => {
+    const results = await trace.wait(Promise.all(planGroups.map(async (group, groupIndex) => {
       const results: Suggestion[] = [];
       for (const plan of group) {
         const hash = ((hash) => hash.substring(hash.length - 4))(await plan.digest());
@@ -206,9 +206,9 @@ export class Planner implements InspectablePlanner {
       }
       return results;
     })));
-    results = [].concat(...results);
+    const suggestionResults = ([] as Suggestion[]).concat(...results);
 
-    return trace.endWith(results);
+    return trace.endWith(suggestionResults);
   }
 
   static clearCache() {
@@ -220,7 +220,7 @@ export class Planner implements InspectablePlanner {
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;
     }
-    let relevance: Relevance|null = null;
+    let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
     if (this.speculator && !this.noSpecEx) {
       const result = await this.speculator.speculate(this.arc, plan, hash);

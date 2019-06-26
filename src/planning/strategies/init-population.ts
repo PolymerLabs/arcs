@@ -10,6 +10,7 @@
 
 import {Arc} from '../../runtime/arc.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Handle} from '../../runtime/recipe/handle.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Strategy} from '../strategizer.js';
@@ -61,7 +62,7 @@ export class InitPopulation extends Strategy {
         }
       }
     }
-    for (const handle of [].concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
+    for (const handle of ([] as Handle[]).concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
       results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
     }

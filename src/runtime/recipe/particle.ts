@@ -10,21 +10,19 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec, ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
-import {Schema} from '../schema.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {Recipe, RequireSection} from './recipe.js';
+import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, VariableMap, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
-import {compareArrays, compareComparables, compareStrings} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
 
-export class Particle {
+export class Particle implements Comparable<Particle> {
   private readonly _recipe: Recipe;
   private _id?: Id = undefined;
   private _name: string;
@@ -46,7 +44,7 @@ export class Particle {
     this._name = name;
   }
 
-  _copyInto(recipe: Recipe, cloneMap, variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
+  _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
     const particle = recipe.newParticle(this._name);
     particle._id = this._id;
     particle._verbs = [...this._verbs];
@@ -65,15 +63,16 @@ export class Particle {
       // if recipe is a requireSection, then slot may already exist in recipe.
       if (cloneMap.has(slotConn.targetSlot)) {
         assert(recipe instanceof RequireSection);
-        particle.consumedSlotConnections[key].connectToSlot(cloneMap.get(slotConn.targetSlot));
-        if (particle.recipe.slots.indexOf(cloneMap.get(slotConn.targetSlot)) === -1) {
-          particle.recipe.slots.push(cloneMap.get(slotConn.targetSlot));
+        const targetSlot = cloneMap.get(slotConn.targetSlot) as Slot;
+        particle.consumedSlotConnections[key].connectToSlot(targetSlot);
+        if (particle.recipe.slots.indexOf(targetSlot) === -1) {
+          particle.recipe.slots.push(targetSlot);
         }
       }
       for (const [name, slot] of Object.entries(slotConn.providedSlots)) {
         if (cloneMap.has(slot)) {
           assert(recipe instanceof RequireSection);
-          const clonedSlot = cloneMap.get(slot);
+          const clonedSlot = cloneMap.get(slot) as Slot;
           clonedSlot.sourceConnection = particle.consumedSlotConnections[key];
           particle.consumedSlotConnections[key].providedSlots[name] = clonedSlot;
           if (particle.recipe.slots.indexOf(clonedSlot) === -1) {
@@ -86,7 +85,7 @@ export class Particle {
     return particle;
   }
 
-  _cloneConnectionRawTypes(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
+  _cloneConnectionRawTypes(variableMap: VariableMap) {
     for (const connection of Object.values(this._connections)) {
       connection.cloneTypeWithResolutions(variableMap);
     }
@@ -152,7 +151,7 @@ export class Particle {
     return true;
   }
 
-  _isValid(options) {
+  _isValid(options: IsValidOptions) {
     if (!this.spec) {
       return true;
     }
@@ -231,8 +230,8 @@ export class Particle {
   get unnamedConnections() { return this._unnamedConnections; } // HandleConnection*
   get consumedSlotConnections() { return this._consumedSlotConnections; }
   get primaryVerb() { return (this._verbs.length > 0) ? this._verbs[0] : undefined; }
-  set verbs(verbs) { this._verbs = verbs; }
-  set tags(tags) { this._tags = tags; }
+  set verbs(verbs: string[]) { this._verbs = verbs; }
+  set tags(tags: string[]) { this._tags = tags; }
 
   addUnnamedConnection(): HandleConnection {
     const connection = new HandleConnection(undefined, this);
@@ -251,15 +250,15 @@ export class Particle {
     return Object.values(this._connections).concat(this._unnamedConnections);
   }
 
-  ensureConnectionName(name) {
+  ensureConnectionName(name: string) {
     return this._connections[name] || this.addConnectionName(name);
   }
 
-  getConnectionByName(name) {
+  getConnectionByName(name: string) {
     return this._connections[name];
   }
 
-  nameConnection(connection, name) {
+  nameConnection(connection: HandleConnection, name: string) {
     assert(!this._connections[name], `Connection "${name}" already has a handle`);
 
     const idx = this._unnamedConnections.indexOf(connection);
@@ -329,7 +328,7 @@ export class Particle {
     return Object.values(this.consumedSlotConnections);
   }
 
-  getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec {
+  getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec|undefined {
     if (!this.spec) return undefined;
     const slot = this.spec.slotConnections.get(name);
     if (slot) return slot;
@@ -356,7 +355,7 @@ export class Particle {
     return new Map();
   }
 
-  toString(nameMap, options): string {
+  toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     let result: string[] = [];
     // TODO: we need at least name or verb(s)
     if (this.name) {
@@ -369,7 +368,7 @@ export class Particle {
     } else { // verb must exist, if there is no name.
       result.push(`&${this.primaryVerb}`);
     }
-    if (options && options.showUnresolved) {
+    if (options.showUnresolved) {
       if (!this.isResolved(options)) {
         result.push(`// unresolved particle: ${options.details}`);
       }

@@ -63,7 +63,7 @@ const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
 // TODO(lindner): type should be required, only not used in tests
-interface Handle {
+export interface Handle {
   type?: Type;
   name?: string|TypeVariable;
   direction?: string;
@@ -76,7 +76,7 @@ interface HandleLiteral {
 }
 
 // TODO(lindner) only tests use optional props
-interface Slot {
+export interface Slot {
   name?: string|TypeVariable;
   direction?: string;
   isRequired?: boolean;
@@ -90,7 +90,7 @@ interface SlotLiteral {
   isSet?: boolean;
 }
 
-interface TypeVarReference {
+export interface TypeVarReference {
   object: Handle|Slot;
   field: string;
 }

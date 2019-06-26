@@ -15,12 +15,15 @@ import {digest} from '../platform/digest-web.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Runnable} from './hot.js';
+import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {compareComparables, compareNumbers, compareStrings} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
+import {Particle} from './recipe/particle.js';
+import {Slot} from './recipe/slot.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {HandleConnection} from './recipe/handle-connection.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
@@ -51,6 +54,7 @@ export class StorageStub {
   storageProviderFactory: StorageProviderFactory;
   referenceMode = false;
   originalId: string;
+  description: string; // Fake to match StorageProviderBase;
 
   constructor(type: Type, id: string, name: string, storageKey: string, storageProviderFactory: StorageProviderFactory, originalId: string) {
     this.type = type;
@@ -63,10 +67,6 @@ export class StorageStub {
 
   get version(): number {
     return undefined; // Fake to match StorageProviderBase.
-  }
-
-  get description(): string {
-    return undefined; // Fake to match StorageProviderBase;
   }
 
   async inflate() {
@@ -156,6 +156,18 @@ const globalWarningKeys: Set<string> = new Set();
 
 type ManifestFinder<a> = (manifest: Manifest) => a;
 type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) | ((manifest: Manifest) => a[]);
+
+interface ManifestParseOptions {
+  fileName?: string;
+  loader?: Loader;
+  registry?: Dictionary<Promise<Manifest>>;
+  context?: Manifest;
+  throwImportErrors?: boolean;
+}
+
+interface ManifestLoadOptions {
+  registry?: Dictionary<Promise<Manifest>>;
+}
 
 export class Manifest {
   private _recipes: Recipe[] = [];
@@ -252,7 +264,7 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type: Type, name: string, id: string, tags: string[], storageKey?: string) {
+  async createStore(type: Type, name: string, id: string, tags: string[], storageKey?: string): Promise<StorageProviderBase|StorageStub> {
     const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store.version !== null);
     store.name = name;
@@ -260,13 +272,13 @@ export class Manifest {
     return this._addStore(store, tags);
   }
 
-  _addStore(store: StorageProviderBase | StorageStub, tags: string[]) {
+  _addStore(store: StorageProviderBase | StorageStub, tags: string[]): StorageProviderBase | StorageStub {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
     return store;
   }
 
-  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string) {
+  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string): StorageProviderBase|StorageStub {
     return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId), tags);
   }
 
@@ -364,19 +376,17 @@ export class Manifest {
     return this._idGenerator.newChildId(this.id);
   }
 
-  static async load(fileName: string, loader: {loadResource, path?, join?}, options?): Promise<Manifest> {
-    options = options || {};
-    let {registry, id} = options;
+  static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
+    let {registry} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
       return await registry[fileName];
     }
     registry[fileName] = (async () => {
-      const content = await loader.loadResource(fileName);
+      const content: string = await loader.loadResource(fileName);
       // TODO: When does this happen? The loader should probably throw an exception here.
       assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
       return await Manifest.parse(content, {
-        id,
         fileName,
         loader,
         registry,
@@ -389,10 +399,9 @@ export class Manifest {
     return manifest.errors;
   }
 
-  static async parse(content: string, options?): Promise<Manifest> {
-    options = options || {};
+  static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {session_id, fileName, loader, registry, context, throwImportErrors} = options;
+    let {fileName, loader, registry, context, throwImportErrors} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -412,14 +421,14 @@ export class Manifest {
     }
 
     // tslint:disable-next-line: no-any
-    function processError(e: ManifestError|any, parseError: boolean|undefined = undefined) {
+    function processError(e: ManifestError|any, parseError?: boolean): ManifestError {
       if (!((e instanceof ManifestError) || e.location)) {
         return e;
       }
       return processManifestError(e, parseError);
     }
 
-    function processManifestError(e: ManifestError, parseError: boolean|undefined = undefined) {
+    function processManifestError(e: ManifestError, parseError?: boolean): ManifestError {
       const lines = content.split('\n');
       const line = lines[e.location.start.line - 1];
       // TODO(sjmiles): see https://github.com/PolymerLabs/arcs/issues/2570
@@ -455,7 +464,7 @@ ${e.message}
         err.stack = e.stack;
       }
       return err;
-    }
+    } // end processManifestError
 
     let items: AstNode.All[] = [];
     try {
@@ -475,7 +484,7 @@ ${e.message}
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
       await Promise.all(items.map(async item => {
-        if (item.kind === 'import') {
+        if (item.kind === 'import' && loader) {
           // item is an AstNode.Import
           const path = loader.path(manifest.fileName);
           const target = loader.join(path, item.path);
@@ -496,7 +505,6 @@ ${e.message}
           }
         }
       };
-
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
@@ -508,7 +516,7 @@ ${e.message}
       await processItems('interface', item => this._processInterface(manifest, item));
       await processItems('particle', item => this._processParticle(manifest, item, loader));
       await processItems('store', item => this._processStore(manifest, item, loader));
-      await processItems('recipe', item => this._processRecipe(manifest, item, loader));
+      await processItems('recipe', item => this._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -546,7 +554,8 @@ ${e.message}
               schemas.push(resolved.schema);
             }
           }
-          const fields = {};
+          // tslint:disable-next-line: no-any
+          const fields: Dictionary<any> = {};
           for (let {name, type} of node.fields) {
             for (const schema of schemas) {
               if (!type) {
@@ -682,7 +691,7 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
-  private static _processParticle(manifest: Manifest, particleItem, loader) {
+  private static _processParticle(manifest: Manifest, particleItem, loader?: Loader) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -740,8 +749,7 @@ ${e.message}
     manifest._interfaces.push(ifaceInfo);
   }
 
-  // TODO(cypher): Remove loader dependency.
-  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode, loader) {
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
     if (recipeItem.annotation) {
@@ -757,15 +765,15 @@ ${e.message}
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
-      byHandle: new Map(),
+      byHandle: new Map<Handle, AstNode.RecipeHandle|AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
       requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
-      byRequireHandle: new Map(),
       particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
-      byParticle: new Map(),
+      byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
-      bySlot: new Map(),
-      byName: new Map(),
+      bySlot: new Map<Slot, AstNode.RecipeSlot|AstNode.RecipeParticleSlotConnection>(),
+      // tslint:disable-next-line: no-any
+      byName: new Map<string, any>(),
       connections: recipeItems.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
       search: recipeItems.find(item => item.kind === 'search') as AstNode.RecipeSearch,
       description: recipeItems.find(item => item.kind === 'description') as AstNode.Description
@@ -985,6 +993,7 @@ ${e.message}
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         const direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
         if (connection.direction) {
+          // TODO(lindner): figure out why '`consume' is not in the direction enum..
           if (connection.direction !== direction &&
               direction !== 'inout' &&
               !(connection.direction === 'host' && direction === 'in') &&
@@ -1004,8 +1013,8 @@ ${e.message}
           connection.direction = direction;
         }
 
-        let targetHandle;
-        let targetParticle;
+        let targetHandle: Handle;
+        let targetParticle: Particle;
 
         if (connectionItem.target && connectionItem.target.name) {
           let entry = items.byName.get(connectionItem.target.name);
@@ -1052,11 +1061,13 @@ ${e.message}
         }
 
         if (targetParticle) {
-          let targetConnection;
-          if (connectionItem.target.param) {
-            targetConnection = targetParticle.connections[connectionItem.target.param];
+          let targetConnection: HandleConnection;
+
+          // TODO(lindner): replaced param with name since param is not defined, but name/particle are...
+          if (connectionItem.target.name) {
+            targetConnection = targetParticle.connections[connectionItem.target.name];
             if (!targetConnection) {
-              targetConnection = targetParticle.addConnectionName(connectionItem.target.param);
+              targetConnection = targetParticle.addConnectionName(connectionItem.target.name);
               // TODO: direction?
             }
           } else {
@@ -1133,7 +1144,7 @@ ${e.message}
     return null;
   }
 
-  private static async _processStore(manifest: Manifest, item, loader) {
+  private static async _processStore(manifest: Manifest, item, loader?: Loader) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
@@ -1156,6 +1167,9 @@ ${e.message}
     let json: string;
     let source;
     if (item.origin === 'file') {
+      if (!loader) {
+        throw new ManifestError(item.location, 'No loader available for file');
+      }
       item.source = loader.join(manifest.fileName, item.source);
       // TODO: json5?
       json = await loader.loadResource(item.source);
@@ -1175,7 +1189,7 @@ ${e.message}
     }
 
     // TODO: clean this up
-    let unitType;
+    let unitType: Type;
     if (type instanceof CollectionType) {
       unitType = type.collectionType;
     } else if (type instanceof BigCollectionType) {
@@ -1241,12 +1255,16 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-    await store.fromLiteral({version, model});
+
+    // TODO(lindner): fromLiteral is not declared in the StorageProviderBase/StorageStub interface
+    // tslint:disable-next-line: no-any
+    await (store as any).fromLiteral({version, model});
   }
 
-  private static async _createStore(manifest, type: Type, name: string, id: string, tags: string[], item, originalId: string) {
+  private static async _createStore(manifest: Manifest, type: Type, name: string, id: string, tags: string[], item, originalId: string): Promise<StorageProviderBase | StorageStub> {
     const store = await manifest.createStore(type, name, id, tags);
-    store.source = item.source;
+    // TODO(lindner): Property 'source' does not exist on type 'StorageStub | StorageProviderBase'.
+    store['source'] = item.source;
     store.description = item.description;
     store.originalId = originalId;
     return store;
@@ -1258,9 +1276,8 @@ ${e.message}
     return recipe;
   }
 
-  toString(options?: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean}): string {
+  toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
     // TODO: sort?
-    options = options || {};
     const results: string[] = [];
 
     this._imports.forEach(i => {
