@@ -14,6 +14,7 @@ import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
 import {ClaimType, ClaimIsTag, Claim} from '../../runtime/particle-claim';
 import {Check, CheckType, CheckHasTag} from '../../runtime/particle-check';
+import {HandleConnectionSpec} from '../../runtime/particle-spec';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -197,13 +198,13 @@ function createHandleNodes(handles: Handle[]) {
 function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection): Edge {
   switch (connection.direction) {
     case 'in': {
-      const edge = new ParticleInput(particleNode, handleNode, connection.name);
+      const edge = new ParticleInput(particleNode, handleNode, connection);
       particleNode.addInEdge(edge);
       handleNode.addOutEdge(edge);
       return edge;
     }
     case 'out': {
-      const edge = new ParticleOutput(particleNode, handleNode, connection.name);
+      const edge = new ParticleOutput(particleNode, handleNode, connection);
       particleNode.addOutEdge(edge);
       handleNode.addInEdge(edge);
       return edge;
@@ -215,20 +216,13 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
-/** Returns true if the given claim satisfies the check condition. */
-function checkAgainstClaim(check: Check, claim: ClaimIsTag): boolean {
+/** Returns true if the given claim satisfies the check condition. Only works with 'tag' claims. */
+function checkAgainstTagClaim(check: Check, claim: ClaimIsTag): boolean {
   for (const condition of check.conditions) {
-    switch (condition.type) {
-      case CheckType.HasTag:
-        if (condition.tag === claim.tag) {
-          return true;
-        }
-        break;
-      case CheckType.IsFromHandle:
-        // TODO: Add support for checking IsFromHandle.
-        // Fallthrough.
-      default:
-        assert(false, 'Only HasTag checks are supported (for now...)');
+    if (condition.type === CheckType.HasTag) {
+      if (condition.tag === claim.tag) {
+        return true;
+      }
     }
   }
   return false;
@@ -308,7 +302,7 @@ class ParticleNode extends Node {
       switch (claim.type) {
         case ClaimType.IsTag: {
           // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise keep going.
-          if (checkAgainstClaim(check, claim)) {
+          if (checkAgainstTagClaim(check, claim)) {
             return {type: CheckResultType.Success};
           }
           return this.keepGoingWithInEdges(check, path);
@@ -348,16 +342,18 @@ class ParticleInput implements Edge {
   readonly end: ParticleNode;
   readonly label: string;
   readonly handleName: string;
+  readonly connectionSpec: HandleConnectionSpec;
 
   /* Optional check on this input. */
   readonly check?: Check;
 
-  constructor(particleNode: ParticleNode, otherEnd: Node, inputName: string) {
+  constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = otherEnd;
     this.end = particleNode;
-    this.label = `${particleNode.name}.${inputName}`;
-    this.handleName = inputName;
-    this.check = particleNode.checks.get(inputName);
+    this.handleName = connection.name;
+    this.label = `${particleNode.name}.${this.handleName}`;
+    this.check = particleNode.checks.get(this.handleName);
+    this.connectionSpec = connection.spec;
   }
 }
 
@@ -366,22 +362,25 @@ class ParticleOutput implements Edge {
   readonly end: Node;
   readonly label: string;
   readonly handleName: string;
+  readonly connectionSpec: HandleConnectionSpec;
 
   /* Optional claim on this output. */
   readonly claim?: Claim;
 
-  constructor(particleNode: ParticleNode, otherEnd: Node, outputName: string) {
+  constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = particleNode;
     this.end = otherEnd;
-    this.label = `${particleNode.name}.${outputName}`;
-    this.handleName = outputName;
-    this.claim = particleNode.claims.get(outputName);
+    this.handleName = connection.name;
+    this.label = `${particleNode.name}.${this.handleName}`;
+    this.claim = particleNode.claims.get(this.handleName);
+    this.connectionSpec = connection.spec;
   }
 }
 
 class HandleNode extends Node {
   readonly inEdges: ParticleOutput[] = [];
   readonly outEdges: ParticleInput[] = [];
+  readonly outConnectionSpecs: Set<HandleConnectionSpec> = new Set();
 
   constructor(handle: Handle) {
     super();
@@ -404,12 +403,22 @@ class HandleNode extends Node {
 
   addOutEdge(edge: ParticleInput) {
     this.outEdges.push(edge);
+    this.outConnectionSpecs.add(edge.connectionSpec);
   }
 
   evaluateCheck(check: Check, edgeToCheck: ParticleInput, path: BackwardsPath): CheckResult {
     assert(this.outEdges.includes(edgeToCheck), 'Handles can only check their own out-edges.');
 
-    // Handles can't make claims of their own (yet). Check whether this handle is untagged.
+    for (const condition of check.conditions) {
+      if (condition.type === CheckType.IsFromHandle) {
+        // Check if this handle node has the same connection as the check condition. If so, it must be the same handle, so we should succeed.
+        // If not, don't fail this condition yet; it's possible the right handle might be found further upstream.
+        if (this.outConnectionSpecs.has(condition.parentHandle)) {
+          return {type: CheckResultType.Success};
+        }
+      }
+    }
+
     if (this.inEdges.length) {
       const checkNext = this.inEdges.map(e => path.withNewEdge(e));
       return {type: CheckResultType.KeepGoing, checkNext};
