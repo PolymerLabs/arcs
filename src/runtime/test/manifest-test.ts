@@ -2006,7 +2006,6 @@ resource SomeName
       assert.equal(claim1.handle.name, 'output1');
       assert.equal(claim1.isNot, true);
       assert.equal(claim1.tag, 'property1');
-
      });
 
     it('supports "derives from" claims with multiple parents', async () => {
@@ -2078,8 +2077,10 @@ resource SomeName
   in T {} input2
   out T {} output1
   out T {} output2
+  out T {} output3
   claim output1 is trusted
   claim output2 derives from input2
+  claim output3 is not dangerous
   check input1 is trusted or is from handle input2
   check input2 is extraTrusted
   modality dom`;
