@@ -204,17 +204,35 @@ class ThingMapper {
   }
 }
 
+export abstract class Port {
+  abstract close(): void;
+  abstract postMessage(msg): void;
+  abstract setMessageCallback(callback): void;
+}
+
+export class JsPort extends Port {
+  constructor(public readonly messagePort: MessagePort) { super(); }
+  close(): void {
+    this.messagePort.close();
+  }
+  postMessage(msg): void {
+    this.messagePort.postMessage(msg);
+  }
+  setMessageCallback(callback): void {
+    this.messagePort.onmessage = callback;
+  }
+}
 
 export class APIPort {
-  private _port: MessagePort;
+  private readonly _port: Port;
   _mapper: ThingMapper;
   protected inspector: ArcInspector | null;
   protected attachStack: boolean;
   messageCount: number;
-  constructor(messagePort: MessagePort, prefix: string) {
-    this._port = messagePort;
+  constructor(port: Port, prefix: string) {
+    this._port = port;
     this._mapper = new ThingMapper(prefix);
-    this._port.onmessage = async e => this._processMessage(e);
+    this._port.setMessageCallback(async e => this._processMessage(e));
     this.inspector = null;
     this.attachStack = false;
     this.messageCount = 0;
@@ -228,6 +246,10 @@ export class APIPort {
 
   close(): void {
     this._port.close();
+  }
+
+  postMessage(call) {
+    this._port.postMessage(call);
   }
 
   async _processMessage(e) {
@@ -245,7 +267,7 @@ export class APIPort {
     if (this.inspector) {
       this.inspector.pecMessage(name, args, count, new Error().stack || '');
     }
-    this._port.postMessage(call);
+    this.postMessage(call);
   }
 }
 
@@ -426,8 +448,8 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 }
 
 export abstract class PECOuterPort extends APIPort {
-  constructor(messagePort: MessagePort, arc: Arc) {
-    super(messagePort, 'o');
+  constructor(port: Port, arc: Arc) {
+    super(port, 'o');
     this.inspector = arc.inspector;
     if (this.inspector) {
       this.inspector.onceActive.then(() => this.DevToolsConnected(), e => console.error(e));
@@ -494,7 +516,7 @@ export interface CursorNextValue {
 @AutoConstruct(PECOuterPort)
 export abstract class PECInnerPort extends APIPort {
   constructor(messagePort: MessagePort) {
-    super(messagePort, 'i');
+    super(new JsPort(messagePort), 'i');
   }
 
   abstract onStop();

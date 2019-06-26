@@ -32,6 +32,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
+import {Port} from './api-channel.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -44,7 +45,8 @@ export type ArcOptions = Readonly<{
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean
-  inspectorFactory?: ArcInspectorFactory
+  inspectorFactory?: ArcInspectorFactory,
+  javaPort?: Port
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -91,7 +93,7 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory, javaPort} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -115,7 +117,7 @@ export class Arc {
     this.storageKey = storageKey;
     const pecId = this.generateID();
     const innerPecPort = this.pecFactory(pecId, this.idGenerator);
-    this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
+    this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this, javaPort);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
   }
 
