@@ -323,10 +323,12 @@ function railroad(): boolean {
   return true;
 }
 
+// Removes .js files in the build dir that don't have a corresponding source file (.js or .ts) in src.
+// Also removes the generated source map and type def files if they exist.
 function cleanObsolete() {
   const exts = ['js', 'js.map', 'd.ts'];
   for (const file of [...findProjectFiles('build', /javaharness|sigh\.js/, /\.js$/)]) {
-    const buildBase = file.slice(0, -2);
+    const buildBase = file.slice(0, -2);  // drop 'js' extension
     const srcBase = 'src' + buildBase.slice(5);  // replace leading 'build' with 'src'
     if (!fs.existsSync(srcBase + 'ts') && !fs.existsSync(srcBase + 'js')) {
       console.log('Cleaning obsolete build output:', file);
