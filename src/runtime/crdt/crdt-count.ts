@@ -9,10 +9,11 @@
  */
 
 import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord} from './crdt.js';
+import {Dictionary} from '../hot.js';
 
 type RawCount = number;
 
-export type CountData = {values: Map<string, number>, version: VersionMap};
+export type CountData = {values: Dictionary<number>, version: VersionMap};
 
 type VersionInfo = {from: number, to: number};
 
@@ -30,17 +31,17 @@ type CountModel = CRDTModel<CRDTCountTypeRecord>;
 type CountChange = CRDTChange<CRDTCountTypeRecord>;
 
 export class CRDTCount implements CountModel {
-  private model: CountData = {values: new Map(), version: new Map()};
+  private model: CountData = {values: {}, version: {}};
 
   merge(other: CountData): {modelChange: CountChange, otherChange: CountChange} {
     const otherChanges: CountOperation[] = [];
     const thisChanges: CountOperation[] = [];
 
-    for (const key of other.values.keys()) {
-      const thisValue = this.model.values.get(key) || 0;
-      const otherValue = other.values.get(key) || 0;
-      const thisVersion = this.model.version.get(key) || 0;
-      const otherVersion = other.version.get(key) || 0;
+    for (const key of Object.keys(other.values)) {
+      const thisValue = this.model.values[key] || 0;
+      const otherValue = other.values[key] || 0;
+      const thisVersion = this.model.version[key] || 0;
+      const otherVersion = other.version[key] || 0;
       if (thisValue > otherValue) {
         if (otherVersion >= thisVersion) {
           throw new CRDTError('Divergent versions encountered when merging CRDTCount models');
@@ -53,20 +54,20 @@ export class CRDTCount implements CountModel {
         }
         thisChanges.push({type: CountOpTypes.MultiIncrement, value: otherValue - thisValue, actor: key,
                           version: {from: thisVersion, to: otherVersion}});
-        this.model.values.set(key, otherValue);
-        this.model.version.set(key, otherVersion);
+        this.model.values[key] = otherValue;
+        this.model.version[key] = otherVersion;
       }
     }
 
-    for (const key of this.model.values.keys()) {
-      if (other.values.has(key)) {
+    for (const key of Object.keys(this.model.values)) {
+      if (other.values[key]) {
         continue;
       }
-      if (other.version.has(key)) {
+      if (other.version[key]) {
         throw new CRDTError(`CRDTCount model has version but no value for key ${key}`);
       }
-      otherChanges.push({type: CountOpTypes.MultiIncrement, value: this.model.values.get(key), actor: key,
-                         version: {from: 0, to: this.model.version.get(key)}});
+      otherChanges.push({type: CountOpTypes.MultiIncrement, value: this.model.values[key], actor: key,
+                         version: {from: 0, to: this.model.version[key]}});
     }
 
     return {modelChange: {changeType: ChangeType.Operations, operations: thisChanges}, otherChange: {changeType: ChangeType.Operations, operations: otherChanges}};
@@ -74,7 +75,7 @@ export class CRDTCount implements CountModel {
 
   applyOperation(op: CountOperation) {
     let value: number;
-    if (op.version.from !== (this.model.version.get(op.actor) || 0)) {
+    if (op.version.from !== (this.model.version[op.actor] || 0)) {
       return false;
     }
     if (op.version.to <= op.version.from) {
@@ -84,19 +85,19 @@ export class CRDTCount implements CountModel {
       if (op.value < 0) {
         return false;
       }
-      value = (this.model.values.get(op.actor) || 0) + op.value;
+      value = (this.model.values[op.actor] || 0) + op.value;
     } else {
-      value = (this.model.values.get(op.actor) || 0) + 1;
+      value = (this.model.values[op.actor] || 0) + 1;
     }
 
-    this.model.values.set(op.actor, value);
-    this.model.version.set(op.actor, op.version.to);
+    this.model.values[op.actor] = value;
+    this.model.version[op.actor] = op.version.to;
     return true;
   }
 
-  private cloneMap<K, V>(map: Map<K, V>) {
-    const result = new Map<K, V>();
-    map.forEach((value, key) => result.set(key, value));
+  private cloneMap<V>(map: Dictionary<V>) {
+    const result: Dictionary<V> = {};
+    Object.keys(map).forEach(key => result[key] = map[key]);
     return result;
   }
 
@@ -105,6 +106,6 @@ export class CRDTCount implements CountModel {
   }
 
   getParticleView() {
-    return [...this.model.values.values()].reduce((prev, current) => prev + current, 0);
+    return Object.values(this.model.values).reduce((prev, current) => prev + current, 0);
   }
 }

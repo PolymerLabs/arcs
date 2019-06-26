@@ -127,20 +127,24 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   
   async send(model: Data, version: number) {
     this.nextTag = Math.random();
+    // Locally cache nextTag and seenTag as this function can be
+    // re-entrant.
+    const nextTag = this.nextTag;
+    const seenTag = this.seenTag;
+
     const result = await this.reference.transaction(data => {
       if (data) {
         if (data.version !== version - 1) {
           return undefined;
         }
-        if (data.tag !== this.seenTag) {
+        if (data.tag !== seenTag) {
           return undefined;
         }
       }
-      return {version, model, tag: this.nextTag};
+      return {version, model, tag: nextTag};
     }, (err: Error, complete: boolean) => {
       if (complete) {
-        this.seenTag = this.nextTag;
-        this.nextTag = null;
+        this.seenTag = nextTag;
       }
     }, false);
     return result.committed;

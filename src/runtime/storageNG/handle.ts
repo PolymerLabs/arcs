@@ -9,7 +9,7 @@
  */
 
 import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../crdt/crdt-collection';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton';
 import {Particle} from '../particle';
 
@@ -56,9 +56,9 @@ export abstract class Handle<T extends CRDTTypeRecord> {
  * contain a single version of an Entity for each given ID. Further, no order is
  * implied by the set.
  */
-export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
+export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollectionTypeRecord<T>> {
   async add(entity: T): Promise<boolean> {
-    this.clock.set(this.key, (this.clock.get(this.key) || 0) + 1);
+    this.clock[this.key] = (this.clock[this.key] || 0) + 1; 
     const op: CRDTOperation = {
       type: CollectionOpTypes.Add,
       added: entity,
@@ -128,9 +128,9 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
 /**
  * A handle on a single entity.
  */
-export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<T>> {
+export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSingletonTypeRecord<T>> {
   async set(entity: T): Promise<boolean> {
-    this.clock.set(this.key, (this.clock.get(this.key) || 0) + 1);
+    this.clock[this.key] = (this.clock[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: SingletonOpTypes.Set,
       value: entity,

@@ -122,6 +122,7 @@ export class SequenceTest<T> {
   private outputs: Map<string, Output> = new Map();
 
   private interleavingLog: string[];
+  private currentTestObject: T | null = null;
 
   /**
    * Set a function that constructs a fresh instance of the object under test for each ordering.
@@ -275,6 +276,10 @@ export class SequenceTest<T> {
     this.sensors.get(id).endInvariants.push(test);
   }
 
+  testObject() {
+    return this.currentTestObject;
+  }
+
   private resetVariables() {
     for (const variable of this.variables.values()) {
       if (variable.initialFn) {
@@ -307,10 +312,15 @@ export class SequenceTest<T> {
   }
 
   private objAndName(obj, name: string) {
+    const initialObj = obj;
     const parts = name.split('.');
     for (let i = 0; i < parts.length - 1; i++) {
       obj = obj[parts[i]];
+      if (obj === undefined) {
+        throw new Error(`name ${name} invalid for ${initialObj}`);
+      }
     }
+    
     return {object: obj, name: parts[parts.length - 1]};
   }
 
@@ -560,6 +570,7 @@ export class SequenceTest<T> {
       }
 
       permutationCount++;
+
       const interleaving = next.value;
 
       const description = interleaving.map(a => {
@@ -579,6 +590,7 @@ export class SequenceTest<T> {
         obj = await obj;
       }
       this.setupOutputs(obj);
+      this.currentTestObject = obj;
 
       this.interleavingLog = ['--', description, '\n'];
       for (const item of interleaving) {
@@ -647,7 +659,7 @@ export class SequenceTest<T> {
         for (const test of sensor.endInvariants) {
           try {
             const {object: theObject, name} = this.objAndName(obj, sensor.name);
-            test(theObject[name]);
+            await test(theObject[name]);
           } catch (e) {
             console.log(...this.interleavingLog);
             throw e;

@@ -253,4 +253,30 @@ describe('Store', async () => {
     count.merge(remoteCount.getData());
     assert.deepEqual(capturedModel, count.getData());
   });
+
+  
+  it('resolves a combination of messages from the proxy and the driver', async () => {
+    DriverFactory.register(new MockStorageDriverProvider());
+    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const activeStore = await store.activate();
+    const driver = activeStore['driver'] as MockDriver<CountData>;
+    let lastModel = null;
+    driver.send = async model => {lastModel = model; return true;};
+
+    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+      {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}}
+    ]});
+    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+      {type: CountOpTypes.Increment, actor: 'me', version: {from: 1, to: 2}}
+    ]});
+    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+      {type: CountOpTypes.Increment, actor: 'me', version: {from: 2, to: 3}}
+    ]});
+    driver.receiver({values: {me: 1, them: 1}, version: {me: 1, them: 1}}, 1);
+    driver.receiver({values: {me: 1, them: 2}, version: {me: 1, them: 2}}, 2);
+
+    await activeStore.idle();
+
+    assert.deepEqual(activeStore['localModel'].model, lastModel);
+  });
 });

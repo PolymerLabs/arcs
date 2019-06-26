@@ -8,7 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export type VersionMap = Map<string, number>;
+ import {Dictionary} from '../hot.js';
+
+export type VersionMap = Dictionary<number>;
 
 export class CRDTError extends Error {
 }
