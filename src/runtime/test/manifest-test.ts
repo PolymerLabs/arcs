@@ -1990,6 +1990,24 @@ resource SomeName
       assert.equal(claim2.tag, 'property2');
     });
 
+    it('supports "is not" tag claims', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          out T {} output1
+          out T {} output2
+          claim output1 is not property1
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+      assert.equal(particle.trustClaims.size, 1);
+
+      const claim1 = particle.trustClaims.get('output1') as ClaimIsTag;
+      assert.equal(claim1.handle.name, 'output1');
+      assert.equal(claim1.isNot, true);
+      assert.equal(claim1.tag, 'property1');
+     });
+
     it('supports "derives from" claims with multiple parents', async () => {
       const manifest = await Manifest.parse(`
         particle A
@@ -2059,8 +2077,10 @@ resource SomeName
   in T {} input2
   out T {} output1
   out T {} output2
+  out T {} output3
   claim output1 is trusted
   claim output2 derives from input2
+  claim output3 is not dangerous
   check input1 is trusted or is from handle input2
   check input2 is extraTrusted
   modality dom`;

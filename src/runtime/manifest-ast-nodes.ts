@@ -181,6 +181,7 @@ export interface ParticleClaimIsTag extends BaseNode {
   kind: 'particle-trust-claim-is-tag';
   claimType: ClaimType.IsTag;
   handle: string;
+  isNot: boolean;
   tag: string;
 }
 

@@ -22,14 +22,14 @@ export type Claim = ClaimIsTag | ClaimDerivesFrom;
 export class ClaimIsTag {
   readonly type: ClaimType.IsTag = ClaimType.IsTag;
 
-  constructor(readonly handle: HandleConnectionSpec, readonly tag: string) {}
+  constructor(readonly handle: HandleConnectionSpec, readonly isNot: boolean, readonly tag: string) {}
 
   static fromASTNode(handle: HandleConnectionSpec, astNode: ParticleClaimIsTag) {
-    return new ClaimIsTag(handle, astNode.tag);
+    return new ClaimIsTag(handle, astNode.isNot, astNode.tag);
   }
 
   toManifestString() {
-    return `claim ${this.handle.name} is ${this.tag}`;
+    return `claim ${this.handle.name} is ${this.isNot ? 'not ' : ''}${this.tag}`;
   }
 }
 
