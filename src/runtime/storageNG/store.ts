@@ -107,12 +107,14 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private setState(state: DirectStoreState) {
     this.state = state;
     if (state === DirectStoreState.Idle) {
+      // If we are already idle, this won't notify external parties.
       this.notifyIdle();
     }
   }
 
   private notifyIdle() {
     if (this.pendingException) {
+      // this is termination.
       this.pendingRejects.forEach(reject => reject(this.pendingException));
     } else {
       this.pendingResolves.forEach(resolve => resolve());
