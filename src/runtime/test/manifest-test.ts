@@ -1996,7 +1996,7 @@ resource SomeName
           in T {} input1
           in T {} input2
           out T {} output
-          claim output derives from input1 and input2
+          claim output derives from input1 and derives from input2
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
