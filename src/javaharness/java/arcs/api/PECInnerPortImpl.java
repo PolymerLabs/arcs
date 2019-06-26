@@ -16,9 +16,16 @@ public class PECInnerPortImpl implements PECInnerPort {
     private static final String HANDLE_TYPE_FIELD = "type";
     private static final String HANDLE_NAME_FIELD = "name";
     private static final String SIMPLE_CALLBACK_MSG = "SimpleCallback";
+    private static final String CALLBACK_FIELD = "callback";
+    private static final String DATA_FIELD = "data";
     private static final String INITIALIZE_PROXY_MSG = "InitializeProxy";
+    private static final String SYNCHRONIZE_PROXY_MSG = "SynchronizeProxy";
     private static final String PROXY_HANDLE_ID_FIELD = "handle";
     private static final String PROXY_CALLBACK_FIELD = "callback";
+    private static final String START_RENDER_MSG = "StartRender";
+    private static final String STOP_RENDER_MSG = "StopRender";
+    private static final String STOP_MSG = "Stop";
+    private static final String DEV_TOOLS_CONNECTED_MSG = "DevToolsConnected";
 
     private final String id;
     private final ShellApi shellApi;
@@ -68,7 +75,22 @@ public class PECInnerPortImpl implements PECInnerPort {
                 mapper.establishThingMapping(identifier, new Thing<StorageProxy>(storageProxy));
                 break;
             case SIMPLE_CALLBACK_MSG:
+                String callbackId = messageBody.getString(CALLBACK_FIELD);
+                Consumer<PortableJson> callback = mapper.thingForIdentifier(callbackId).getConsumer();
+                PortableJson data = messageBody.getObject(DATA_FIELD);
+                callback.accept(data);
+                break;
+            case START_RENDER_MSG:
                 // TODO: implement.
+                break;
+            case STOP_RENDER_MSG:
+                // TODO: implement.
+                break;
+            case STOP_MSG:
+                // TODO: not supported yet.
+                break;
+            case DEV_TOOLS_CONNECTED_MSG:
+                // TODO: not supported yet.
                 break;
             default:
                 throw new AssertionError("Unsupported message type: " + messageType);
@@ -89,7 +111,14 @@ public class PECInnerPortImpl implements PECInnerPort {
 
     @Override
     public void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
-        // TODO: Implement.
+        PortableJson message = jsonParser.parse("{}");
+        message.put(MESSAGE_TYPE_FIELD, SYNCHRONIZE_PROXY_MSG);
+        PortableJson body = jsonParser.parse("{}");
+        body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<StorageProxy>(storageProxy)));
+        body.put(PROXY_CALLBACK_FIELD, mapper.createMappingForThing(
+            new Thing<Consumer<PortableJson>>(callback), /* requestedId= */ null));
+        message.put(MESSAGE_BODY_FIELD, body);
+        postMessage(message);
     }
 
     private void postMessage(PortableJson message) {
