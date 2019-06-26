@@ -91,10 +91,13 @@ export class FlowGraph {
         case CheckResultType.Success:
           // Check was met. Continue checking other paths.
           continue;
-        case CheckResultType.Failure:
+        case CheckResultType.Failure: {
           // Check failed. Add failure and continue checking other paths.
-          finalResult.failures.push(result.reason);
+          const edgesInPath = result.path.edges.slice().reverse();
+          const pathString = edgesInPath.map(e => e.label).join(' -> ');
+          finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${pathString}`);
           continue;
+        }
         case CheckResultType.KeepGoing:
           // Check has not failed yet for this path yet. Add more paths to the stack and keep going.
           assert(result.checkNext.length > 0, 'Result was KeepGoing, but gave nothing else to check.');
@@ -125,7 +128,7 @@ export enum CheckResultType {
 
 export type CheckResult =
     {type: CheckResultType.Success} |
-    {type: CheckResultType.Failure, reason: string} |
+    {type: CheckResultType.Failure, path: BackwardsPath} |
     {type: CheckResultType.KeepGoing, checkNext: BackwardsPath[]};
 
 /**
@@ -304,15 +307,11 @@ class ParticleNode extends Node {
     if (claim) {
       switch (claim.type) {
         case ClaimType.IsTag: {
-          // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise fail.
+          // The particle has claimed a specific tag for its output. Check if that tag passes the check, otherwise keep going.
           if (checkAgainstClaim(check, claim)) {
             return {type: CheckResultType.Success};
-          } else {
-            return {
-              type: CheckResultType.Failure,
-              reason: `'${check.toManifestString()}' failed: found claim '${claim.tag}' on '${edgeToCheck.label}' instead.`,
-            };
           }
+          return this.keepGoingWithInEdges(check, path);
         }
         case ClaimType.DerivesFrom: {
           // The particle's output derives from some of its inputs. Continue searching the graph from those inputs.
@@ -331,11 +330,15 @@ class ParticleNode extends Node {
     }
 
     // Next check the node's in-edges.
+    return this.keepGoingWithInEdges(check, path);
+  }
+
+  keepGoingWithInEdges(check: Check, path: BackwardsPath): CheckResult {
     if (this.inEdges.length) {
       const checkNext = this.inEdges.map(e => path.withNewEdge(e));
       return {type: CheckResultType.KeepGoing, checkNext};
     } else {
-      return {type: CheckResultType.Failure, reason: `'${check.toManifestString()}' failed: found untagged node.`};
+      return {type: CheckResultType.Failure, path};
     }
   }
 }
@@ -411,7 +414,7 @@ class HandleNode extends Node {
       const checkNext = this.inEdges.map(e => path.withNewEdge(e));
       return {type: CheckResultType.KeepGoing, checkNext};
     } else {
-      return {type: CheckResultType.Failure, reason: `'${check.toManifestString()}' failed: found untagged node.`};
+      return {type: CheckResultType.Failure, path};
     }
   }
 }

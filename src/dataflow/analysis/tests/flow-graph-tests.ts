@@ -196,7 +196,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
 
   it('fails when no tag is claimed', async () => {
@@ -214,7 +214,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found untagged node.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
 
   it('succeeds when handle has multiple inputs with the right tags', async () => {
@@ -259,7 +259,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found untagged node.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P2.foo -> P3.bar`]);
   });
 
   it('fails when handle has no inputs', async () => {
@@ -273,7 +273,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found untagged node.`]);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P.bar`]);
   });
 
   it('claim propagates through a chain of particles', async () => {
@@ -299,7 +299,7 @@ describe('FlowGraph validation', () => {
     assert.isTrue(graph.validateGraph().isValid);
   });
 
-  it('a claim made later in a chain of particles clobbers claims made earlier', async () => {
+  it('a claim made later in a chain of particles does not override claims made earlier', async () => {
     const graph = await buildFlowGraph(`
       particle P1
         out Foo {} foo
@@ -321,8 +321,7 @@ describe('FlowGraph validation', () => {
           bar <- h2
     `);
     const result = graph.validateGraph();
-    assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`'check bar is trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
+    assert.isTrue(result.isValid);
   });
 
   it('succeeds when a check includes multiple tags', async () => {
@@ -369,7 +368,7 @@ describe('FlowGraph validation', () => {
     `);
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
-    assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed: found claim 'someOtherTag' on 'P2.foo' instead.`]);
+    assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed for path: P2.foo -> P3.bar`]);
   });
 
   it('can detect more than one failure for the same check', async () => {
@@ -398,9 +397,9 @@ describe('FlowGraph validation', () => {
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
-      `'check bar is trusted' failed: found claim 'notTrusted' on 'P1.foo' instead.`,
-      `'check bar is trusted' failed: found claim 'someOtherTag' on 'P2.foo' instead.`,
-      `'check bar is trusted' failed: found untagged node.`,
+      `'check bar is trusted' failed for path: P1.foo -> P4.bar`,
+      `'check bar is trusted' failed for path: P2.foo -> P4.bar`,
+      `'check bar is trusted' failed for path: P3.foo -> P4.bar`,
     ]);
   });
 
@@ -427,8 +426,8 @@ describe('FlowGraph validation', () => {
     const result = graph.validateGraph();
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
-      `'check bar1 is trusted' failed: found claim 'notTrusted' on 'P1.foo1' instead.`,
-      `'check bar2 is extraTrusted' failed: found claim 'trusted' on 'P1.foo2' instead.`,
+      `'check bar1 is trusted' failed for path: P1.foo1 -> P2.bar1`,
+      `'check bar2 is extraTrusted' failed for path: P1.foo2 -> P2.bar2`,
     ]);
   });
 });
