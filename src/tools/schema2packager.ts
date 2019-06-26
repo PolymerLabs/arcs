@@ -83,7 +83,7 @@ function generate(name: string, schema) {
     clone.push(`clone.${field}_ = entity.${field}_;`,
                `clone.${valid} = entity.${valid};`);
 
-    equals.push(`(a.has_${field}() ? (b.has_${field}() && a.${fixed}() == b.${fixed}()) : !b.has_${field}()) &&`);
+    equals.push(`(a.has_${field}() ? (b.has_${field}() && a.${fixed}() == b.${fixed}()) : !b.has_${field}())`);
 
     decode.push(`} else if (name == "${field}") {`,
                 `  decoder.validate("${typeChar}");`,
@@ -176,7 +176,7 @@ ${name} clone_entity(const ${name}& entity) {
 
 template<>
 bool entities_equal(const ${name}& a, const ${name}& b) {
-  return ${equals.join('\n         ')} 1;
+  return ${equals.join(' && \n         ')} && 1;
 }
 
 template<>
