@@ -301,7 +301,7 @@ ParticleClaimStatement
   / ParticleClaimDerivesFrom
 
 ParticleClaimIsTag
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace tag:lowerIdent eolWhiteSpace
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' not:'not'? whiteSpace tag:lowerIdent eolWhiteSpace
   {
     return {
       kind: 'particle-trust-claim-is-tag',

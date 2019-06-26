@@ -2008,6 +2008,25 @@ resource SomeName
       assert.sameMembers(claim.parentHandles.map(h => h.name), ['input1', 'input2']);
     });
 
+    it('supports "is not" tag claims', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          out T {} output1
+          out T {} output2
+          claim output1 is not property1
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+      assert.equal(particle.trustClaims.size, 1);
+
+// How should 'not' differ?
+      const claim1 = particle.trustClaims.get('output1') as ClaimIsTag;
+      assert.equal(claim1.handle.name, 'output1');
+      assert.equal(claim1.tag, 'property1');
+
+     });
+
     it('supports multiple check statements', async () => {
       const manifest = await Manifest.parse(`
         particle A
