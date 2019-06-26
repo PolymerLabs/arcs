@@ -430,6 +430,186 @@ describe('FlowGraph validation', () => {
       `'check bar2 is extraTrusted' failed for path: P1.foo2 -> P2.bar2`,
     ]);
   });
+
+  describe(`'is from handle' check conditions`, () => {
+    it('succeeds when the handle is exactly the same', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input1
+          in Foo {} input2
+          check input2 is from handle input1
+        recipe R
+          P
+            input1 <- h
+            input2 <- h
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('fails when handle is different', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input1
+          in Foo {} input2
+          check input2 is from handle input1
+        recipe R
+          P
+            input1 <- h1
+            input2 <- h2
+      `);
+      const result = graph.validateGraph();
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [`'check input2 is from handle input1' failed for path: P.input2`]);
+    });
+
+    it('succeeds when the handle has inputs', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output1
+          out Foo {} output2
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource
+        recipe R
+          P1
+            output1 -> h
+            output2 -> h
+          P2
+            trustedSource <- h
+            inputToCheck <- h
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('succeeds when the handle is separated by a chain of other particles', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Foo {} input
+          out Foo {} output
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource
+        recipe R
+          P1
+            input <- h
+            output -> h1
+          P2
+            trustedSource <- h
+            inputToCheck <- h1
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('succeeds when the handle is separated by another particle with a claim', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Foo {} input
+          out Foo {} output
+          claim output is somethingElse
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource
+        recipe R
+          P1
+            input <- h
+            output -> h1
+          P2
+            trustedSource <- h
+            inputToCheck <- h1
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('fails when another handle is also found', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Foo {} input1
+          in Foo {} input2
+          out Foo {} output
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource
+        recipe R
+          P1
+            input1 <- h
+            input2 <- h1
+            output -> h2
+          P2
+            trustedSource <- h
+            inputToCheck <- h2
+      `);
+      const result = graph.validateGraph();
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [
+        `'check inputToCheck is from handle trustedSource' failed for path: P1.input2 -> P1.output -> P2.inputToCheck`,
+      ]);
+    });
+  });
+
+  describe(`checks using the 'or' operator`, async () => {
+    it('succeeds when only the handle is present', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource or is trusted
+        recipe R
+          P1
+            output -> h
+          P2
+            trustedSource <- h
+            inputToCheck <- h
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('succeeds when only the tag is present', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+          claim output is trusted
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource or is trusted
+        recipe R
+          P1
+            output -> h2
+          P2
+            trustedSource <- h
+            inputToCheck <- h2
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('fails when neither condition is present', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource or is trusted
+        recipe R
+          P1
+            output -> h2
+          P2
+            trustedSource <- h
+            inputToCheck <- h2
+      `);
+      const result = graph.validateGraph();
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [
+        `'check inputToCheck is from handle trustedSource or is trusted' failed for path: P1.output -> P2.inputToCheck`,
+      ]);
+    });
+  });
 });
 
 class TestNode extends Node {
