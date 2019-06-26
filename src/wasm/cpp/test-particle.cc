@@ -1,6 +1,7 @@
 #include "arcs.h"
 #include "entity-data.h"
 #include "entity-info.h"
+#include <vector>
 
 class TestParticle : public arcs::Particle {
 public:
@@ -151,15 +152,21 @@ public:
       handle->end();
       console("end: succeeded\n");
     } else if (action == "store") {
-      stored_ = arcs::clone_entity(in_sng_.get());
-      stored_.set_num(stored_.num() * 3);
-      stored_.set_txt(stored_.txt() + "???");
-      stored_.clear_flg();
-      handle->store(&stored_);
+      arcs::Data data = arcs::clone_entity(in_sng_.get());
+      data.set_num(data.num() * 3);
+      data.set_txt(data.txt() + "???");
+      data.clear_flg();
+      handle->store(&data);
+      if (handle->name() == "ot_col") {
+        stored_.push_back(std::move(data));
+      }
     } else if (action == "remove") {
       if (handle->name() == "ot_col") {
-        // Can't read from ot_col, so remove the last stored entity.
-        handle->remove(stored_);
+        // Can't read from ot_col; remove previously stored entities.
+        if (!stored_.empty()) {
+          handle->remove(stored_.back());
+          stored_.pop_back();
+        }
       } else {
         handle->remove(*handle->begin());
       }
@@ -176,7 +183,7 @@ public:
   TestCollection ot_col_;
   TestCollection io_col_;
 
-  arcs::Data stored_;
+  std::vector<arcs::Data> stored_;
 };
 
 DEFINE_PARTICLE(TestParticle)

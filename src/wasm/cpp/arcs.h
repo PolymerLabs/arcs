@@ -106,7 +106,7 @@ EMSCRIPTEN_KEEPALIVE int __syscall54(int, int) { return 0; }   // sys_ioctl
 
 
 // --- Packaging classes ---
-// Used by the code generated from Schema definitions to pack and unpack serialised data.
+// Used by the code generated from Schema definitions to pack and unpack serialized data.
 
 // Strips trailing zeros, and the decimal point for integer values.
 std::string num_to_str(double num) {
@@ -164,7 +164,7 @@ public:
 
   template<typename T>
   void decode(T& val) {
-    val._force_compiler_error();
+    static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
   }
 
 private:
@@ -199,7 +199,7 @@ public:
 
   template<typename T>
   void encode(const char* prefix, const T& val) {
-    val._force_compiler_error();
+    static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
   }
 
   // Destructive read; clears the internal buffer.
@@ -246,7 +246,7 @@ public:
 
   template<typename T>
   void add(const char* prefix, const T& val) {
-    val._force_compiler_error();
+    static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
   }
 
   // Destructive read; clears the internal buffer.
@@ -299,25 +299,41 @@ EM_JS(void, render, (const char* slotName, const char* content), {})
 }  // namespace internal
 
 
+// --- Entity helpers ---
 // Schema-specific implementations will be generated for the following:
 
+// Copies the schema-based data fields; does not copy the internal id.
 template<typename T>
-T clone_entity(const T& entity);
+T clone_entity(const T& entity) {
+  static_assert(sizeof(T) == 0, "Only schema-specific implementations of clone_entity can be used");
+}
+
+// Returns whether two entities have the same data fields set (does not compare internal ids).
+template<typename T>
+bool entities_equal(const T& a, const T& b) {
+  static_assert(sizeof(T) == 0, "Only schema-specific implementations of entities_equal can be used");
+}
+
+// Converts an entity to a string. Unset fields are omitted.
+template<typename T>
+std::string entity_to_str(const T& entity, const char* join = ", ") {
+  static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
+}
+
+// Serialization methods for transporting data across the wasm boundary.
+namespace internal {
 
 template<typename T>
 void decode_entity(T* entity, const char* str) {
-  entity->_force_compiler_error();
+  static_assert(sizeof(T) == 0, "Only schema-specific implementations of decode_entity can be used");
 }
 
 template<typename T>
 std::string encode_entity(const T& entity) {
-  return entity._force_compiler_error();
+  static_assert(sizeof(T) == 0, "Only schema-specific implementations of encode_entity can be used");
 }
 
-template<typename T>
-std::string entity_to_str(const T& entity, const char* join = ", ") {
-  return entity._force_compiler_error();
-}
+}  // namespace internal
 
 
 // --- Storage classes ---
@@ -357,7 +373,7 @@ public:
   void sync(const char* encoded) override {
     failForDirection(Out);
     entity_ = T();
-    decode_entity(&entity_, encoded);
+    internal::decode_entity(&entity_, encoded);
   }
 
   void update(const char* encoded, const char* ignored) override {
@@ -373,10 +389,10 @@ public:
   // the given entity with it. The data fields will not be modified.
   void set(T* entity) {
     failForDirection(In);
-    std::string encoded = encode_entity(*entity);
+    std::string encoded = internal::encode_entity(*entity);
     const char* id = internal::singletonSet(this, encoded.c_str());
     if (id != nullptr) {
-      entity->_internal_id = id;
+      entity->_internal_id_ = id;
       free((void*)id);
     }
     // Write-only handles do not keep entity data locally.
@@ -437,8 +453,8 @@ public:
       std::string chunk = decoder.chomp(len);
       // TODO: just get the id, no need to decode the full entity
       T entity;
-      decode_entity(&entity, chunk.c_str());
-      entities_.erase(entity._internal_id);
+      internal::decode_entity(&entity, chunk.c_str());
+      entities_.erase(entity._internal_id_);
     }
   }
 
@@ -466,24 +482,24 @@ public:
   // the given entity with it. The data fields will not be modified.
   void store(T* entity) {
     failForDirection(In);
-    std::string encoded = encode_entity(*entity);
+    std::string encoded = internal::encode_entity(*entity);
     const char* id = internal::collectionStore(this, encoded.c_str());
     if (id != nullptr) {
-      entity->_internal_id = id;
+      entity->_internal_id_ = id;
       free((void*)id);
     }
     // Write-only handles do not keep entity data locally.
     if (dir_ == InOut) {
-      entities_.emplace(entity->_internal_id, new T(*entity));
+      entities_.emplace(entity->_internal_id_, new T(*entity));
     }
   }
 
   void remove(const T& entity) {
     failForDirection(In);
-    std::string encoded = encode_entity(entity);
+    std::string encoded = internal::encode_entity(entity);
     internal::collectionRemove(this, encoded.c_str());
     if (dir_ == InOut) {
-      entities_.erase(entity._internal_id);
+      entities_.erase(entity._internal_id_);
     }
   }
 
@@ -504,9 +520,9 @@ private:
       int len = decoder.getInt(':');
       std::string chunk = decoder.chomp(len);
       std::unique_ptr<T> eptr(new T());
-      decode_entity(eptr.get(), chunk.c_str());
-      entities_.erase(eptr->_internal_id);  // emplace doesn't overwrite
-      entities_.emplace(eptr->_internal_id, std::move(eptr));
+      internal::decode_entity(eptr.get(), chunk.c_str());
+      entities_.erase(eptr->_internal_id_);  // emplace doesn't overwrite
+      entities_.emplace(eptr->_internal_id_, std::move(eptr));
     }
   }
 

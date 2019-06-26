@@ -23,6 +23,16 @@ public:
   void clear_internal_id() { internal_id_ = double(); internal_id_valid_ = false; }
   bool has_internal_id() const { return internal_id_valid_; }
 
+  // Equality is based only on the internal id. Use arcs::entities_equal() to compare fields.
+  bool operator==(const Info& other) const { return _internal_id_ == other._internal_id_; }
+  bool operator!=(const Info& other) const { return _internal_id_ != other._internal_id_; }
+
+  // For STL containers.
+  friend bool operator<(const Info& a, const Info& b) { return a._internal_id_ < b._internal_id_; }
+
+  // For testing and debugging only; do not use this value for any production purpose.
+  const std::string& _internal_id() const { return _internal_id_; }
+
 private:
   // Allow private copying for use in Handles.
   Info(const Info&) = default;
@@ -34,15 +44,13 @@ private:
   double internal_id_ = double();
   bool internal_id_valid_ = false;
 
-  std::string _internal_id;
-  static const int FIELD_COUNT = 2;
+  std::string _internal_id_;
+  static const int _FIELD_COUNT = 2;
 
   friend class Singleton<Info>;
   friend class Collection<Info>;
   friend Info clone_entity<Info>(const Info& entity);
-  friend void decode_entity<Info>(Info* entity, const char* str);
-  friend std::string encode_entity<Info>(const Info& entity);
-  friend std::string entity_to_str<Info>(const Info& entity, const char* join);
+  friend void internal::decode_entity<Info>(Info* entity, const char* str);
 };
 
 template<>
@@ -56,12 +64,29 @@ Info clone_entity(const Info& entity) {
 }
 
 template<>
-void decode_entity(Info* entity, const char* str) {
+bool entities_equal(const Info& a, const Info& b) {
+  return (a.has_for() ? (b.has_for() && a._for() == b._for()) : !b.has_for()) &&
+         (a.has_internal_id() ? (b.has_internal_id() && a.internal_id() == b.internal_id()) : !b.has_internal_id());
+}
+
+template<>
+std::string entity_to_str(const Info& entity, const char* join) {
+  internal::StringPrinter printer;
+  printer.addId(entity._internal_id());
+  if (entity.has_for())
+    printer.add("for: ", entity._for());
+  if (entity.has_internal_id())
+    printer.add("internal_id: ", entity.internal_id());
+  return std::move(printer.result(join));
+}
+
+template<>
+void internal::decode_entity(Info* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
-  decoder.decode(entity->_internal_id);
+  decoder.decode(entity->_internal_id_);
   decoder.validate("|");
-  for (int i = 0; !decoder.done() && i < Info::FIELD_COUNT; i++) {
+  for (int i = 0; !decoder.done() && i < Info::_FIELD_COUNT; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
     } else if (name == "for") {
@@ -78,9 +103,9 @@ void decode_entity(Info* entity, const char* str) {
 }
 
 template<>
-std::string encode_entity(const Info& entity) {
+std::string internal::encode_entity(const Info& entity) {
   internal::StringEncoder encoder;
-  encoder.encode("", entity._internal_id);
+  encoder.encode("", entity._internal_id());
   if (entity.has_for())
     encoder.encode("for:T", entity._for());
   if (entity.has_internal_id())
@@ -88,17 +113,14 @@ std::string encode_entity(const Info& entity) {
   return std::move(encoder.result());
 }
 
-template<>
-std::string entity_to_str(const Info& entity, const char* join) {
-  internal::StringPrinter printer;
-  printer.addId(entity._internal_id);
-  if (entity.has_for())
-    printer.add("for: ", entity._for());
-  if (entity.has_internal_id())
-    printer.add("internal_id: ", entity.internal_id());
-  return std::move(printer.result(join));
-}
-
 }  // namespace arcs
+
+// For STL unordered associative containers. Entities will need to be std::move()-inserted.
+template<>
+struct std::hash<arcs::Info> {
+  size_t operator()(const arcs::Info& entity) const {
+    return std::hash<std::string>()(entity._internal_id());
+  }
+};
 
 #endif

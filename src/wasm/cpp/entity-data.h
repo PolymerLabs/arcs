@@ -33,6 +33,16 @@ public:
   void clear_flg() { flg_ = bool(); flg_valid_ = false; }
   bool has_flg() const { return flg_valid_; }
 
+  // Equality is based only on the internal id. Use arcs::entities_equal() to compare fields.
+  bool operator==(const Data& other) const { return _internal_id_ == other._internal_id_; }
+  bool operator!=(const Data& other) const { return _internal_id_ != other._internal_id_; }
+
+  // For STL containers.
+  friend bool operator<(const Data& a, const Data& b) { return a._internal_id_ < b._internal_id_; }
+
+  // For testing and debugging only; do not use this value for any production purpose.
+  const std::string& _internal_id() const { return _internal_id_; }
+
 private:
   // Allow private copying for use in Handles.
   Data(const Data&) = default;
@@ -50,15 +60,13 @@ private:
   bool flg_ = bool();
   bool flg_valid_ = false;
 
-  std::string _internal_id;
-  static const int FIELD_COUNT = 4;
+  std::string _internal_id_;
+  static const int _FIELD_COUNT = 4;
 
   friend class Singleton<Data>;
   friend class Collection<Data>;
   friend Data clone_entity<Data>(const Data& entity);
-  friend void decode_entity<Data>(Data* entity, const char* str);
-  friend std::string encode_entity<Data>(const Data& entity);
-  friend std::string entity_to_str<Data>(const Data& entity, const char* join);
+  friend void internal::decode_entity<Data>(Data* entity, const char* str);
 };
 
 template<>
@@ -76,12 +84,35 @@ Data clone_entity(const Data& entity) {
 }
 
 template<>
-void decode_entity(Data* entity, const char* str) {
+bool entities_equal(const Data& a, const Data& b) {
+  return (a.has_num() ? (b.has_num() && a.num() == b.num()) : !b.has_num()) &&
+         (a.has_txt() ? (b.has_txt() && a.txt() == b.txt()) : !b.has_txt()) &&
+         (a.has_lnk() ? (b.has_lnk() && a.lnk() == b.lnk()) : !b.has_lnk()) &&
+         (a.has_flg() ? (b.has_flg() && a.flg() == b.flg()) : !b.has_flg());
+}
+
+template<>
+std::string entity_to_str(const Data& entity, const char* join) {
+  internal::StringPrinter printer;
+  printer.addId(entity._internal_id());
+  if (entity.has_num())
+    printer.add("num: ", entity.num());
+  if (entity.has_txt())
+    printer.add("txt: ", entity.txt());
+  if (entity.has_lnk())
+    printer.add("lnk: ", entity.lnk());
+  if (entity.has_flg())
+    printer.add("flg: ", entity.flg());
+  return std::move(printer.result(join));
+}
+
+template<>
+void internal::decode_entity(Data* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
-  decoder.decode(entity->_internal_id);
+  decoder.decode(entity->_internal_id_);
   decoder.validate("|");
-  for (int i = 0; !decoder.done() && i < Data::FIELD_COUNT; i++) {
+  for (int i = 0; !decoder.done() && i < Data::_FIELD_COUNT; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
     } else if (name == "num") {
@@ -106,9 +137,9 @@ void decode_entity(Data* entity, const char* str) {
 }
 
 template<>
-std::string encode_entity(const Data& entity) {
+std::string internal::encode_entity(const Data& entity) {
   internal::StringEncoder encoder;
-  encoder.encode("", entity._internal_id);
+  encoder.encode("", entity._internal_id());
   if (entity.has_num())
     encoder.encode("num:N", entity.num());
   if (entity.has_txt())
@@ -120,21 +151,14 @@ std::string encode_entity(const Data& entity) {
   return std::move(encoder.result());
 }
 
-template<>
-std::string entity_to_str(const Data& entity, const char* join) {
-  internal::StringPrinter printer;
-  printer.addId(entity._internal_id);
-  if (entity.has_num())
-    printer.add("num: ", entity.num());
-  if (entity.has_txt())
-    printer.add("txt: ", entity.txt());
-  if (entity.has_lnk())
-    printer.add("lnk: ", entity.lnk());
-  if (entity.has_flg())
-    printer.add("flg: ", entity.flg());
-  return std::move(printer.result(join));
-}
-
 }  // namespace arcs
+
+// For STL unordered associative containers. Entities will need to be std::move()-inserted.
+template<>
+struct std::hash<arcs::Data> {
+  size_t operator()(const arcs::Data& entity) const {
+    return std::hash<std::string>()(entity._internal_id());
+  }
+};
 
 #endif
