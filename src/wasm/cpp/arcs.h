@@ -13,6 +13,18 @@ namespace arcs {
 using URL = std::string;
 
 class Handle;
+class Particle;
+
+// Strips trailing zeros, and the decimal point for integer values.
+std::string num_to_str(double num) {
+  std::string s = std::to_string(num);
+  auto i = s.size() - 1;
+  while (i > 0 && s[i] == '0') {
+    i--;
+  }
+  s.erase((s[i] == '.') ? i : i + 1);
+  return s;
+}
 
 namespace internal {
 
@@ -107,17 +119,6 @@ EMSCRIPTEN_KEEPALIVE int __syscall54(int, int) { return 0; }   // sys_ioctl
 
 // --- Packaging classes ---
 // Used by the code generated from Schema definitions to pack and unpack serialized data.
-
-// Strips trailing zeros, and the decimal point for integer values.
-std::string num_to_str(double num) {
-  std::string s = std::to_string(num);
-  auto i = s.size() - 1;
-  while (i > 0 && s[i] == '0') {
-    i--;
-  }
-  s.erase((s[i] == '.') ? i : i + 1);
-  return s;
-}
 
 // TODO: error handling
 class StringDecoder {
@@ -300,12 +301,12 @@ void StringPrinter::add(const char* prefix, const bool& flag) {
 // singletonSet and collectionStore will create ids for entities if required, and will return
 // the new ids in allocated memory that we must free.
 
-EM_JS(const char*, singletonSet, (Handle* handle, const char* encoded), {})
-EM_JS(void, singletonClear, (Handle* handle), {})
-EM_JS(const char*, collectionStore, (Handle* handle, const char* encoded), {})
-EM_JS(void, collectionRemove, (Handle* handle, const char* encoded), {})
-EM_JS(void, collectionClear, (Handle* handle), {})
-EM_JS(void, render, (const char* slotName, const char* template_str, const char* model), {})
+EM_JS(const char*, singletonSet, (Particle* p, Handle* h, const char* encoded), {})
+EM_JS(void, singletonClear, (Particle* p, Handle* h), {})
+EM_JS(const char*, collectionStore, (Particle* p, Handle* h, const char* encoded), {})
+EM_JS(void, collectionRemove, (Particle* p, Handle* h, const char* encoded), {})
+EM_JS(void, collectionClear, (Particle* p, Handle* h), {})
+EM_JS(void, render, (Particle* p, const char* slotName, const char* template_str, const char* model), {})
 
 }  // namespace internal
 
@@ -373,6 +374,7 @@ protected:
 
   // These are initialized by the Particle class.
   std::string name_;
+  Particle* particle_;
   Direction dir_ = Unconnected;
 
   friend class Particle;
@@ -401,7 +403,7 @@ public:
   void set(T* entity) {
     failForDirection(In);
     std::string encoded = internal::encode_entity(*entity);
-    const char* id = internal::singletonSet(this, encoded.c_str());
+    const char* id = internal::singletonSet(particle_, this, encoded.c_str());
     if (id != nullptr) {
       entity->_internal_id_ = id;
       free((void*)id);
@@ -414,7 +416,7 @@ public:
 
   void clear() {
     failForDirection(In);
-    internal::singletonClear(this);
+    internal::singletonClear(particle_, this);
     if (dir_ == InOut) {
       entity_ = T();
     }
@@ -490,7 +492,7 @@ public:
   void store(T* entity) {
     failForDirection(In);
     std::string encoded = internal::encode_entity(*entity);
-    const char* id = internal::collectionStore(this, encoded.c_str());
+    const char* id = internal::collectionStore(particle_, this, encoded.c_str());
     if (id != nullptr) {
       entity->_internal_id_ = id;
       free((void*)id);
@@ -504,7 +506,7 @@ public:
   void remove(const T& entity) {
     failForDirection(In);
     std::string encoded = internal::encode_entity(entity);
-    internal::collectionRemove(this, encoded.c_str());
+    internal::collectionRemove(particle_, this, encoded.c_str());
     if (dir_ == InOut) {
       entities_.erase(entity._internal_id_);
     }
@@ -512,7 +514,7 @@ public:
 
   void clear() {
     failForDirection(In);
-    internal::collectionClear(this);
+    internal::collectionClear(particle_, this);
     if (dir_ == InOut) {
       entities_.clear();
     }
@@ -542,6 +544,7 @@ public:
   // Called by sub-class constructors to map names to their handle fields.
   void registerHandle(std::string name, Handle& handle) {
     handle.name_ = std::move(name);
+    handle.particle_ = this;
     handles_[handle.name_] = &handle;
   }
 
@@ -592,7 +595,7 @@ public:
       model_ptr = model.c_str();
     }
 
-    internal::render(slot_name.c_str(), template_ptr, model_ptr);
+    internal::render(this, slot_name.c_str(), template_ptr, model_ptr);
   }
 
   virtual void onHandleSync(Handle* handle, bool all_synced) {}

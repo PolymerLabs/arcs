@@ -199,17 +199,16 @@ class StringDecoder {
  */
 interface WasmDriver {
   /**
-   * Adds required import functions into env for a given language runtime. Also initalizes
-   * any fields needed on wasmParticle, such as memory, tables, etc.
+   * Adds required import functions into env for a given language runtime and initializes
+   * any fields needed on the wasm container, such as memory, tables, etc.
    */
-  configureEnvironment(module: WebAssembly.Module, wasmParticle: WasmParticle, env: {});
+  configureEnvironment(module: WebAssembly.Module, container: WasmContainer, env: {});
 
   /**
    * Initializes the instantiated WebAssembly, runs any startup lifecycle, and if this
-   * runtime manages its own memory initialization, initializes the heap pointers on
-   * WasmParticle.
+   * runtime manages its own memory initialization, initializes the heap pointers.
    */
-  initializeInstance(wasmParticle: WasmParticle, instance: WebAssembly.Instance);
+  initializeInstance(container: WasmContainer, instance: WebAssembly.Instance);
 }
 
 class EmscriptenWasmDriver implements WasmDriver {
@@ -270,44 +269,44 @@ class EmscriptenWasmDriver implements WasmDriver {
     };
   }
 
-  configureEnvironment(module: WebAssembly.Module, particle: WasmParticle, env: {}) {
-    particle.memory = new WebAssembly.Memory({initial: this.cfg.memSize, maximum: this.cfg.memSize});
-    particle.heapU8 = new Uint8Array(particle.memory.buffer);
-    particle.heap32 = new Int32Array(particle.memory.buffer);
+  configureEnvironment(module: WebAssembly.Module, container: WasmContainer, env: {}) {
+    container.memory = new WebAssembly.Memory({initial: this.cfg.memSize, maximum: this.cfg.memSize});
+    container.heapU8 = new Uint8Array(container.memory.buffer);
+    container.heap32 = new Int32Array(container.memory.buffer);
 
     // We need to poke the address of the heap base into the memory buffer prior to instantiating.
-    particle.heap32[this.cfg.dynamictopPtr >> 2] = this.cfg.dynamicBase;
+    container.heap32[this.cfg.dynamictopPtr >> 2] = this.cfg.dynamicBase;
 
     Object.assign(env, {
       // Memory setup
-      memory: particle.memory,
+      memory: container.memory,
       __memory_base: this.cfg.globalBase,
       table: new WebAssembly.Table({initial: this.cfg.tableSize, maximum: this.cfg.tableSize, element: 'anyfunc'}),
       __table_base: 0,
       DYNAMICTOP_PTR: this.cfg.dynamictopPtr,
 
       // Heap management
-      _emscripten_get_heap_size: () => particle.heapU8.length,  // Matches emscripten glue js
+      _emscripten_get_heap_size: () => container.heapU8.length,  // Matches emscripten glue js
       _emscripten_resize_heap: (size) => false,  // TODO
-      _emscripten_memcpy_big: (dst, src, num) => particle.heapU8.set(particle.heapU8.subarray(src, src + num), dst),
+      _emscripten_memcpy_big: (dst, src, num) => container.heapU8.set(container.heapU8.subarray(src, src + num), dst),
 
       // Error handling
-      _systemError: (msg) => { throw new Error(particle.read(msg)); },
+      _systemError: (msg) => { throw new Error(container.read(msg)); },
       abortOnCannotGrowMemory: (size)  => { throw new Error(`abortOnCannotGrowMemory(${size})`); },
 
       // Logging
-      _setLogInfo: (file, line) => particle.logInfo = [particle.read(file), line],
-      ___syscall146: (which, varargs) => particle.sysWritev(which, varargs),
+      _setLogInfo: (file, line) => container.logInfo = [container.read(file), line],
+      ___syscall146: (which, varargs) => container.sysWritev(which, varargs),
     });
   }
 
-  initializeInstance(particle: WasmParticle, instance: WebAssembly.Instance) {
+  initializeInstance(container: WasmContainer, instance: WebAssembly.Instance) {
     // Emscripten doesn't need main() invoked
   }
 }
 
 class KotlinWasmDriver implements WasmDriver {
-  configureEnvironment(module: WebAssembly.Module, particle: WasmParticle, env: {}) {
+  configureEnvironment(module: WebAssembly.Module, container: WasmContainer, env: {}) {
     Object.assign(env, {
       // These two are used by launcher.cpp
       Konan_js_arg_size: (index) => 1,
@@ -318,14 +317,14 @@ class KotlinWasmDriver implements WasmDriver {
       Konan_js_freeArena: (arenaIndex) => {},
 
       // These two are used by logging functions
-      write: (ptr) => console.log(particle.read(ptr)),
+      write: (ptr) => console.log(container.read(ptr)),
       flush: () => {},
 
       // Apparently used by Kotlin Memory management
-      Konan_notify_memory_grow: () => this.updateMemoryViews(particle),
+      Konan_notify_memory_grow: () => this.updateMemoryViews(container),
 
       // Kotlin's own glue for abort and exit
-      Konan_abort: (pointer) => { throw new Error('Konan_abort(' + particle.read(pointer) + ')'); },
+      Konan_abort: (pointer) => { throw new Error('Konan_abort(' + container.read(pointer) + ')'); },
       Konan_exit: (status) => {},
 
       // Needed by some code that tries to get the current time in it's runtime
@@ -333,54 +332,45 @@ class KotlinWasmDriver implements WasmDriver {
         const now = Date.now();
         const high = Math.floor(now / 0xffffffff);
         const low = Math.floor(now % 0xffffffff);
-        particle.heap32[pointer] = low;
-        particle.heap32[pointer + 1] = high;
+        container.heap32[pointer] = low;
+        container.heap32[pointer + 1] = high;
       },
     });
   }
 
   // Kotlin manages its own heap construction, as well as tables.
-  initializeInstance(particle: WasmParticle, instance: WebAssembly.Instance) {
-    this.updateMemoryViews(particle);
+  initializeInstance(container: WasmContainer, instance: WebAssembly.Instance) {
+    this.updateMemoryViews(container);
     // Kotlin main() must be invoked before everything else.
     instance.exports.Konan_js_main(1, 0);
   }
 
-  updateMemoryViews(particle: WasmParticle) {
-    particle.memory = particle.exports.memory;
-    particle.heapU8 = new Uint8Array(particle.memory.buffer);
-    particle.heap32 = new Int32Array(particle.memory.buffer);
+  updateMemoryViews(container: WasmContainer) {
+    container.memory = container.exports.memory;
+    container.heapU8 = new Uint8Array(container.memory.buffer);
+    container.heap32 = new Int32Array(container.memory.buffer);
   }
 }
 
 type WasmAddress = number;
 
-export class WasmParticle extends Particle {
+// Holds an instance of a running wasm module, which may contain multiple particles.
+export class WasmContainer {
   memory: WebAssembly.Memory;
   heapU8: Uint8Array;
   heap32: Int32Array;
   private wasm: WebAssembly.Instance;
   // tslint:disable-next-line: no-any
   exports: any;
+  private particleMap = new Map<WasmAddress, WasmParticle>();
 
-  private innerParticle: WasmAddress;
-  private handleMap = new Map<Handle, WasmAddress>();
-  private revHandleMap = new Map<WasmAddress, Handle>();
-  private converters = new Map<Handle, EntityPackager>();
+  // Records file and line for console logging in C++. This is set by the console/error macros in
+  // arcs.h and used immediately in the following printf call (implemented by sysWritev() below).
   logInfo: [string, number]|null = null;
 
-  driverForModule(module: WebAssembly.Module): WasmDriver {
-    const customSections = WebAssembly.Module.customSections(module, 'emscripten_metadata');
-    if (customSections.length === 1) {
-      return new EmscriptenWasmDriver(customSections[0]);
-    }
-    return new KotlinWasmDriver();
-  }
-
   async initialize(buffer: ArrayBuffer) {
-    assert(this.spec.name.length > 0);
-
     // TODO: vet the imports/exports on 'module'
+    // TODO: use compileStreaming? requires passing the fetch() Response, not its ArrayBuffer
     const module = await WebAssembly.compile(buffer);
     const driver = this.driverForModule(module);
 
@@ -389,12 +379,12 @@ export class WasmParticle extends Particle {
       abort: () => { throw new Error('Abort!'); },
 
       // Inner particle API
-      _singletonSet: (handle, encoded) => this.singletonSet(handle, encoded),
-      _singletonClear: (handle) => this.singletonClear(handle),
-      _collectionStore: (handle, encoded) => this.collectionStore(handle, encoded),
-      _collectionRemove: (handle, encoded) => this.collectionRemove(handle, encoded),
-      _collectionClear: (handle) => this.collectionClear(handle),
-      _render: (slotName, template, model) => this.renderImpl(slotName, template, model),
+      _singletonSet: (p, h, encoded) => this.getParticle(p).singletonSet(h, encoded),
+      _singletonClear: (p, h) => this.getParticle(p).singletonClear(h),
+      _collectionStore: (p, h, encoded) => this.getParticle(p).collectionStore(h, encoded),
+      _collectionRemove: (p, h, encoded) => this.getParticle(p).collectionRemove(h, encoded),
+      _collectionClear: (p, h) => this.getParticle(p).collectionClear(h),
+      _render: (p, slotName, template, model) => this.getParticle(p).renderImpl(slotName, template, model),
     };
 
     driver.configureEnvironment(module, this, env);
@@ -404,8 +394,93 @@ export class WasmParticle extends Particle {
     this.wasm = await WebAssembly.instantiate(module, {env, global});
     this.exports = this.wasm.exports;
     driver.initializeInstance(this, this.wasm);
-    this.innerParticle = this.exports[`_new${this.spec.name}`]();
   }
+
+  private driverForModule(module: WebAssembly.Module): WasmDriver {
+    const customSections = WebAssembly.Module.customSections(module, 'emscripten_metadata');
+    if (customSections.length === 1) {
+      return new EmscriptenWasmDriver(customSections[0]);
+    }
+    return new KotlinWasmDriver();
+  }
+
+  private getParticle(innerParticle: WasmAddress): WasmParticle {
+    return this.particleMap.get(innerParticle);
+  }
+
+  register(particle: WasmParticle, innerParticle: WasmAddress) {
+    this.particleMap.set(innerParticle, particle);
+  }
+
+  // Allocates memory in the wasm container.
+  store(str: string): WasmAddress {
+    const p = this.exports._malloc(str.length + 1);
+    for (let i = 0; i < str.length; i++) {
+      this.heapU8[p + i] = str.charCodeAt(i);
+    }
+    this.heapU8[p + str.length] = 0;
+    return p;
+  }
+
+  // Currently only supports ASCII. TODO: unicode
+  read(idx: WasmAddress): string {
+    let str = '';
+    while (idx < this.heapU8.length && this.heapU8[idx] !== 0) {
+      str += String.fromCharCode(this.heapU8[idx++]);
+    }
+    return str;
+  }
+
+  // C++ printf support cribbed from emscripten glue js - currently only supports ASCII
+  sysWritev(which, varargs) {
+    const get = () => {
+      varargs += 4;
+      return this.heap32[(((varargs)-(4))>>2)];
+    };
+
+    const output = (get() === 1) ? console.log : console.error;
+    const iov = get();
+    const iovcnt = get();
+
+    // TODO: does this need to be persistent across calls? (i.e. due to write buffering)
+    let str = this.logInfo ? `[${this.logInfo[0]}:${this.logInfo[1]}] ` : '';
+    let ret = 0;
+    for (let i = 0; i < iovcnt; i++) {
+      const ptr = this.heap32[(((iov)+(i*8))>>2)];
+      const len = this.heap32[(((iov)+(i*8 + 4))>>2)];
+      for (let j = 0; j < len; j++) {
+        const curr = this.heapU8[ptr+j];
+        if (curr === 0 || curr === 10) {  // NUL or \n
+          output(str);
+          str = '';
+        } else {
+          str += String.fromCharCode(curr);
+        }
+      }
+      ret += len;
+    }
+    this.logInfo = null;
+    return ret;
+  }
+}
+
+// Creates and interfaces to a particle inside a WasmContainer's module.
+export class WasmParticle extends Particle {
+  private container: WasmContainer;
+  // tslint:disable-next-line: no-any
+  private exports: any;
+  private innerParticle: WasmAddress;
+  private handleMap = new Map<Handle, WasmAddress>();
+  private revHandleMap = new Map<WasmAddress, Handle>();
+  private converters = new Map<Handle, EntityPackager>();
+
+  constructor(container: WasmContainer) {
+    super();
+    this.container = container;
+    this.exports = container.exports;
+    this.innerParticle = this.exports[`_new${this.spec.name}`]();
+    container.register(this, this.innerParticle);
+ }
 
   // TODO: for now we set up Handle objects with onDefineHandle and map them into the
   // wasm container through this call, which creates corresponding Handle objects in there.
@@ -414,7 +489,7 @@ export class WasmParticle extends Particle {
   // transfer format. Obviously this can be improved.
   async setHandles(handles: ReadonlyMap<string, Handle>) {
     for (const [name, handle] of handles) {
-      const p = this.store(name);
+      const p = this.container.store(name);
       const wasmHandle = this.exports._connectHandle(this.innerParticle, p, handle.canRead, handle.canWrite);
       this.exports._free(p);
       if (wasmHandle === 0) {
@@ -442,7 +517,7 @@ export class WasmParticle extends Particle {
     } else {
       encoded = converter.encodeCollection(model);
     }
-    const p = this.store(encoded);
+    const p = this.container.store(encoded);
     this.exports._syncHandle(this.innerParticle, wasmHandle, p);
     this.exports._free(p);
   }
@@ -462,11 +537,11 @@ export class WasmParticle extends Particle {
     let p2 = 0;
     if (handle instanceof Singleton) {
       if (update.data) {
-        p1 = this.store(converter.encodeSingleton(update.data));
+        p1 = this.container.store(converter.encodeSingleton(update.data));
       }
     } else {
-      p1 = this.store(converter.encodeCollection(update.added || []));
-      p2 = this.store(converter.encodeCollection(update.removed || []));
+      p1 = this.container.store(converter.encodeCollection(update.added || []));
+      p2 = this.container.store(converter.encodeCollection(update.removed || []));
     }
     this.exports._updateHandle(this.innerParticle, wasmHandle, p1, p2);
     if (p1) this.exports._free(p1);
@@ -531,21 +606,21 @@ export class WasmParticle extends Particle {
 
   private decodeEntity(handle: Handle, encoded: WasmAddress): Entity {
     const converter = this.converters.get(handle);
-    return converter.decodeSingleton(this.read(encoded));
+    return converter.decodeSingleton(this.container.read(encoded));
   }
 
   private ensureIdentified(entity: Entity, handle: Handle): WasmAddress {
     let p = 0;
     if (!Entity.isIdentified(entity)) {
       handle.createIdentityFor(entity);
-      p = this.store(Entity.id(entity));
+      p = this.container.store(Entity.id(entity));
     }
     return p;
   }
 
   // Called by the shell to initiate rendering; the particle will call env._render in response.
   renderSlot(slotName: string, contentTypes: string[]) {
-    const p = this.store(slotName);
+    const p = this.container.store(slotName);
     const sendTemplate = contentTypes.includes('template');
     const sendModel = contentTypes.includes('model');
     this.exports._renderSlot(this.innerParticle, p, sendTemplate, sendModel);
@@ -559,15 +634,15 @@ export class WasmParticle extends Particle {
   // or directly from the wasm particle itself (e.g. in response to a data update).
   // template is a string provided by the particle. model is an encoded key:value dictionary.
   renderImpl(slotName: WasmAddress, template: WasmAddress, model: WasmAddress) {
-    const slot = this.slotProxiesByName.get(this.read(slotName));
+    const slot = this.slotProxiesByName.get(this.container.read(slotName));
     if (slot) {
       const content: Content = {templateName: 'default'};
       if (template) {
-        content.template = this.read(template);
+        content.template = this.container.read(template);
         slot.requestedContentTypes.add('template');
       }
       if (model) {
-        content.model = new StringDecoder().decodeDictionary(this.read(model));
+        content.model = new StringDecoder().decodeDictionary(this.container.read(model));
         slot.requestedContentTypes.add('model');
       }
       slot.render(content);
@@ -575,61 +650,10 @@ export class WasmParticle extends Particle {
   }
 
   fireEvent(slotName: string, event) {
-    const sp = this.store(slotName);
-    const hp = this.store(event.handler);
+    const sp = this.container.store(slotName);
+    const hp = this.container.store(event.handler);
     this.exports._fireEvent(this.innerParticle, sp, hp);
     this.exports._free(sp);
     this.exports._free(hp);
-  }
-
-  // Allocates memory in the wasm container.
-  private store(str: string): WasmAddress {
-    const p = this.exports._malloc(str.length + 1);
-    for (let i = 0; i < str.length; i++) {
-      this.heapU8[p + i] = str.charCodeAt(i);
-    }
-    this.heapU8[p + str.length] = 0;
-    return p;
-  }
-
-  // Currently only supports ASCII. TODO: unicode
-  read(idx: WasmAddress): string {
-    let str = '';
-    while (idx < this.heapU8.length && this.heapU8[idx] !== 0) {
-      str += String.fromCharCode(this.heapU8[idx++]);
-    }
-    return str;
-  }
-
-  // printf support cribbed from emscripten glue js - currently only supports ASCII
-  sysWritev(which, varargs) {
-    const get = () => {
-      varargs += 4;
-      return this.heap32[(((varargs)-(4))>>2)];
-    };
-
-    const output = (get() === 1) ? console.log : console.error;
-    const iov = get();
-    const iovcnt = get();
-
-    // TODO: does this need to be persistent across calls? (i.e. due to write buffering)
-    let str = this.logInfo ? `[${this.spec.name}|${this.logInfo[0]}:${this.logInfo[1]}] ` : '';
-    let ret = 0;
-    for (let i = 0; i < iovcnt; i++) {
-      const ptr = this.heap32[(((iov)+(i*8))>>2)];
-      const len = this.heap32[(((iov)+(i*8 + 4))>>2)];
-      for (let j = 0; j < len; j++) {
-        const curr = this.heapU8[ptr+j];
-        if (curr === 0 || curr === 10) {  // NUL or \n
-          output(str);
-          str = '';
-        } else {
-          str += String.fromCharCode(curr);
-        }
-      }
-      ret += len;
-    }
-    this.logInfo = null;
-    return ret;
   }
 }

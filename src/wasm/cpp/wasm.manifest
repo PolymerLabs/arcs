@@ -63,3 +63,18 @@ recipe
     in_col <- h4
     ot_col -> h5
     io_col = h6
+
+
+resource DataResource7
+  start
+  [{"for": "text", "internal_id": 55}]
+store InfoStore of Info in DataResource7
+
+particle SimpleParticle in 'output.wasm'
+  consume root
+  in Info info
+
+recipe
+  use InfoStore as h1
+  SimpleParticle
+    info <- h1

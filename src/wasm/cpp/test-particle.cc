@@ -182,6 +182,7 @@ public:
     }
   }
 
+private:
   TestSingleton in_sng_;
   TestSingleton ot_sng_;
   TestSingleton io_sng_;
@@ -193,4 +194,45 @@ public:
   std::vector<arcs::Data> stored_;
 };
 
+
+class SimpleParticle : public arcs::Particle {
+public:
+  SimpleParticle() {
+    registerHandle("info", info_);
+  }
+
+  void onHandleSync(arcs::Handle* handle, bool all_synced) override {
+    onHandleUpdate(handle);
+  }
+
+  void onHandleUpdate(arcs::Handle* handle) override {
+    local_ = arcs::clone_entity(info_.get());
+    renderSlot("root", false, true);
+  }
+
+  std::string getTemplate(const std::string& slot_name) override {
+    return R"(<div on-click="click"><i>{{first}}</i> : <b>{{second}}</b></div>)";
+  }
+
+  void populateModel(const std::string& slot_name,
+                     std::function<void(const std::string&, const std::string&)> add) override {
+    add("first", local_._for());
+    add("second", arcs::num_to_str(local_.internal_id()));
+  }
+
+  void fireEvent(const std::string& slot_name, const std::string& handler) override {
+    if (local_.has_for()) {
+      local_.set_for(local_._for() + "*");
+    }
+    if (local_.has_internal_id()) {
+      local_.set_internal_id(local_.internal_id() + 1);
+    }
+    renderSlot("root", false, true);
+  }
+
+  arcs::Singleton<arcs::Info> info_;
+  arcs::Info local_;
+};
+
 DEFINE_PARTICLE(TestParticle)
+DEFINE_PARTICLE(SimpleParticle)

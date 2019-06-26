@@ -21,7 +21,7 @@ import {SlotProxy} from './slot-proxy.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
-import {WasmParticle} from './wasm.js';
+import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
 
@@ -42,6 +42,7 @@ export class ParticleExecutionContext {
   private readonly pendingLoads = <Promise<void>[]>[];
   private readonly scheduler: StorageProxyScheduler = new StorageProxyScheduler();
   private readonly keyedProxies: Dictionary<StorageProxy | Promise<StorageProxy>> = {};
+  private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
   readonly idGenerator: IdGenerator;
 
@@ -246,14 +247,23 @@ export class ParticleExecutionContext {
   }
 
   private async loadWasmParticle(spec: ParticleSpec) {
-    // TODO: use instantiateStreaming? requires passing the fetch() Response, not its ArrayBuffer
-    const buffer = await this.loader.loadBinary(spec.implFile);
-    assert(buffer && buffer.byteLength > 0);
+    assert(spec.name.length > 0);
 
-    // Particle constructor expects spec to be attached to the class object.
+    let container = this.wasmContainers[spec.implFile];
+    if (!container) {
+      const buffer = await this.loader.loadBinary(spec.implFile);
+      if (!buffer || buffer.byteLength === 0) {
+        throw new Error(`Failed to load binary file '${spec.implFile}'`);
+      }
+      container = new WasmContainer();
+      await container.initialize(buffer);
+      this.wasmContainers[spec.implFile] = container;
+    }
+
+    // Particle constructor expects spec to be attached to the class object (and attaches it to
+    // the particle instance at that time).
     WasmParticle.spec = spec;
-    const particle = new WasmParticle();
-    await particle.initialize(buffer);
+    const particle = new WasmParticle(container);
     WasmParticle.spec = null;
     return particle;
   }
