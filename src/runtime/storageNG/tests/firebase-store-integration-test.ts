@@ -129,6 +129,8 @@ describe('Firebase + Store Integration', async () => {
     assert.deepEqual(activeStore1['localModel'], activeStore2['localModel']);
   });
 
+  // This test is derived from a previously failing sequence test run. The number of awaits is important here,
+  // as it allows the specific conditions that were causing deadlock to be established.
   it(`doesn't deadlock given a particular timing pattern`, async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');

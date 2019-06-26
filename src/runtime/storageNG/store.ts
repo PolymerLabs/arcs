@@ -147,9 +147,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     }
   }
 
-  private async processModelChange(modelChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number, fromDriver: boolean) {
+  private async processModelChange(modelChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number) {
     this.deliverCallbacks(modelChange);
-    await this.updateStateAndAct(this.noDriverSideChanges(modelChange, otherChange, fromDriver), version, fromDriver);
+    await this.updateStateAndAct(this.noDriverSideChanges(modelChange, otherChange, false), version, false);
   }
 
   // This function implements a state machine that controls when data is sent to the driver.
@@ -275,12 +275,12 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           }
         }
         const change: CRDTChange<T> = {changeType: ChangeType.Operations, operations: message.operations};
-        void this.processModelChange(change, null, this.version, false);
+        void this.processModelChange(change, null, this.version);
         return true;
       }
       case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
-        void this.processModelChange(modelChange, otherChange, this.version, false);
+        void this.processModelChange(modelChange, otherChange, this.version);
         return true;
       }
       default:
