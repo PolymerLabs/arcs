@@ -10,9 +10,9 @@
 import {Manifest} from '../../../runtime/manifest.js';
 import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge, CheckResult, CheckResultType, BackwardsPath} from '../flow-graph.js';
+import {FlowGraph, Node, Edge, BackwardsPath} from '../flow-graph.js';
 import {ClaimIsTag} from '../../../runtime/particle-claim.js';
-import {Check, CheckHasTag} from '../../../runtime/particle-check.js';
+import {CheckHasTag, CheckCondition} from '../../../runtime/particle-check.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -624,7 +624,11 @@ class TestNode extends Node {
     throw new Error('Unimplemented.');
   }
 
-  evaluateCheck(check: Check, edge: Edge): CheckResult {
+  evaluateCheckCondition(condition: CheckCondition, edge: Edge): boolean {
+    throw new Error('Unimplemented.');
+  }
+
+  inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
     throw new Error('Unimplemented.');
   }
 }
@@ -636,10 +640,6 @@ class TestEdge implements Edge {
       readonly start: TestNode,
       readonly end: TestNode,
       readonly label: string) {}
-  
-  evaluateCheck(check: Check, path: BackwardsPath): CheckResult {
-    return {type: CheckResultType.Success};
-  }
 }
 
 describe('BackwardsPath', () => {
