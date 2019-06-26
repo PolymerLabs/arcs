@@ -11,14 +11,14 @@
 import {MessagePort} from '../../build/runtime/message-channel.js';
 
 class PecPort extends MessagePort {
-  constructor(arcId, bus) {
+  constructor(pecId, bus) {
     super();
-    this.arcId = arcId;
+    this.pecId = pecId;
     this.bus = bus;
   }
   close() {}
   postMessage(msg) {
-    msg['id'] = this.arcId.toString();
+    msg['id'] = this.pecId.toString();
     this.bus.send({message: 'pec', data: msg});
   }
   set onmessage(callback) {
@@ -28,9 +28,9 @@ class PecPort extends MessagePort {
 
 const pecPorts = {};
 
-export const portFactory = (arcId, bus) => {
-  const port = new PecPort(arcId, bus);
-  pecPorts[arcId] = port;
+export const portFactory = (bus, pecId) =>  {
+  const port = new PecPort(pecId, bus);
+  pecPorts[pecId] = port;
   return port;
 };
 

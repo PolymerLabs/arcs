@@ -56,7 +56,7 @@ const populateDispatcher = (dispatcher, api, composerFactory, storage, context) 
       return await addPipeEntity(msg.entity);
     },
     autofill: async (msg, tid, bus) => {
-      return await autofill(msg, tid, bus, composerFactory, storage, context, portFactory);
+      return await autofill(msg, tid, bus, composerFactory, storage, context, [portFactory.bind(null, bus)]);
     },
     caption: async (msg, tid, bus) => {
       return await caption(msg, tid, bus, composerFactory, storage, context);
