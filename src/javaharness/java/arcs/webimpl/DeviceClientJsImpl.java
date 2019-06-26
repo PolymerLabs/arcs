@@ -20,12 +20,13 @@ import static elemental2.dom.DomGlobal.window;
 @JsType(namespace = "arcs")
 
 public class DeviceClientJsImpl implements DeviceClient {
-
     private final String FIELD_MESSAGE = "message";
     private final String MESSAGE_READY = "ready";
     private final String MESSAGE_DATA = "data";
+    private final String MESSAGE_PEC = "pec";
     private final String FIELD_TRANSACTION_ID = "tid";
     private final String FIELD_DATA = "data";
+    private final String FIELD_PEC_ID = "id";
 
     private final PortableJsonParser jsonParser;
     private Map<String, ArcsEnvironment.DataListener> inProgress;
@@ -60,24 +61,23 @@ public class DeviceClientJsImpl implements DeviceClient {
                     inProgress.remove(transactionId);
                 }
                 break;
-            // TODO: handle PEC message.
+            case MESSAGE_PEC:
+                postMessage(content.getObject(FIELD_DATA));
+                break;
             default:
                 throw new AssertionError("Received unsupported message: " + message);
         }
     }
 
-    // TODO: reenable when PEC messages support added to pipes-shell-2
-    // private void postMessage(String msg) {
-    //     PortableJson msgJson = jsonParser.parse(msg);
-    //     String id = msgJson.getString("id");
-    //     PECInnerPort port = getOrCreatePort(id);
-    //     port.handleMessage(msgJson);
-    // }
+    private void postMessage(PortableJson msg) {
+        PECInnerPort port = getOrCreatePort(msg.getString(FIELD_PEC_ID));
+        port.handleMessage(msg);
+    }
 
-    // private PECInnerPort getOrCreatePort(String id) {
-    //     if (!this.portById.containsKey(id)) {
-    //         this.portById.put(id, this.portFactory.createPECInnerPort(id));
-    //     }
-    //     return this.portById.get(id);
-    // }
+    private PECInnerPort getOrCreatePort(String id) {
+        if (!this.portById.containsKey(id)) {
+            this.portById.put(id, this.portFactory.createPECInnerPort(id));
+        }
+        return this.portById.get(id);
+    }
 }

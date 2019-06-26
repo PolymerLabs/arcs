@@ -8,6 +8,7 @@ public abstract class StorageProxy implements Store {
   public final String id;
   public final String name;
   public final Type type;
+  protected Integer version = null;
   protected boolean listenerAttached = false;
   protected boolean keepSynced = false;
   protected Map<Handle, NativeParticle> observers = new HashMap<>();
@@ -31,7 +32,6 @@ public abstract class StorageProxy implements Store {
       port.InitializeProxy(this, json -> onUpdate(json));
       listenerAttached = true;
     }
-
     if (handle.options.keepSynced) {
       if (!this.keepSynced) {
         port.SynchronizeProxy(this, json -> this.onSynchronize(json));
@@ -49,14 +49,47 @@ public abstract class StorageProxy implements Store {
   }
 
   protected void onUpdate(PortableJson data) {
-    throw new AssertionError("[onUpdate]!");
-    // TODO: implement.
+    // Bail if we're not in synchronized mode or this is a stale event.
+    if (!this.keepSynced) {
+      return;
+    }
+
+    int version = data.getInt("version");
+    if (version <= this.version) {
+      throw new AssertionError("StorageProxy " + id + " received a stale update version " +
+          version + "; current is " + this.version);
+    }
+
+    // TODO: implement updates queue.
+    if (!updateModel(version, data)) {
+      return;
+    }
+
+    notify("update", data);
   }
 
-  protected void onSynchronize(PortableJson data) {
+  public void onSynchronize(PortableJson data) {
     int version = data.getInt("version");
+    if (this.version != null && version <= this.version.intValue()) {
+      throw new AssertionError("StorageProxy " + id + " received stale model version " +
+          version + "; current is " + this.version);
+    }
+
     PortableJson model = data.getObject("model");
-    throw new AssertionError("[onSynchronize]!" + version);
-    // TODO: implement.
+    if (!synchronizeModel(version, model)) {
+      return;
+    }
+
+    notify("sync", model);
+    // TODO: finish implementation.
   }
+
+  void notify(String kind, PortableJson details) {
+    for (Map.Entry<Handle, NativeParticle> observer : observers.entrySet()) {
+      observer.getKey().notify(kind, observer.getValue(), details);
+    }
+  }
+
+  protected abstract boolean synchronizeModel(int version, PortableJson model);
+  protected abstract boolean updateModel(int version, PortableJson data);
 }

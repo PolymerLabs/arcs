@@ -5,6 +5,18 @@ public class SingletonProxy extends StorageProxy implements SingletonStore {
     super(id, type, port, name);
   }
 
+  @Override
+  protected boolean synchronizeModel(int version, PortableJson model) {
+    // TODO: implement
+    throw new AssertionError("SingletonProxy::updateModel not implemented");
+  }
+
+  @Override
+  protected boolean updateModel(int version, PortableJson data) {
+    // TODO: implement
+    throw new AssertionError("SingletonProxy::updateModel not implemented");
+  }
+
   // TODO: add parameters and return values, and implement.
   @Override
   public void get() {}

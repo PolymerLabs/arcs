@@ -73,12 +73,17 @@ public class PortableJsonJsImpl implements PortableJson {
     public PortableJson getObject(String key) {
         return new PortableJsonJsImpl(jsonObj.asPropertyMap().getAsAny(key));
     }
+    @Override
+    public boolean hasKey(String key) {
+        return jsonObj.asPropertyMap().has(key);
+    }
 
     @Override
     public void forEach(Consumer<String> callback) {
         jsonObj.asPropertyMap().forEach(str -> callback.accept(str));
     }
 
+    @Override
     public List<String> keys() {
         Set<String> keys = new HashSet<String>();
         forEach(key -> keys.add(key));
