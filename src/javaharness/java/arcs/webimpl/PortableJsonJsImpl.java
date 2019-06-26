@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import jsinterop.base.Any;
+import java.lang.ClassCastException;
 
 public class PortableJsonJsImpl implements PortableJson {
     private Any jsonObj;

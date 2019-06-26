@@ -38,7 +38,6 @@ public class PECInnerPortImpl implements PECInnerPort {
     private static final String MESSAGE_PEC_PEC_VALUE = "pec";
     private static final String MESSAGE_PEC_ENTITY_KEY = "entity";
 
-
     private final String id;
     private ArcsEnvironment environment;
     private final ParticleExecutionContext pec;

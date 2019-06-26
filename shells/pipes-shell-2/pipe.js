@@ -82,6 +82,12 @@ const populateDispatcher = (dispatcher, api, composerFactory, storage, context) 
     },
     spawn: async (msg, tid, bus) => {
       return api.marshalSpawnArc(msg, tid, bus);
+    },
+    pec: async (msg, tid, bus) => {
+      if (!bus.pecPorts[msg.id]) {
+        console.error(`Cannot find port for ${msg.id}`);
+      }
+      bus.pecPorts[msg.id].callback({data: msg.entity});
     }
   });
   return dispatcher;

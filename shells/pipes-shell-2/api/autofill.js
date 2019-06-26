@@ -26,7 +26,7 @@ export const autofill = async (msg, tid, bus, composerFactory, storage, context)
     } else {
       // arc
       const composer = composerFactory(msg.modality);
-      const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
+      const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/, bus});
       // recipe
       const source = entity.source ? entity.source.replace(/\./g, '_') : '';
       const name = entity.name;

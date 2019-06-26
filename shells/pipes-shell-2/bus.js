@@ -17,6 +17,7 @@ export const Bus = class {
     this.transactionIds = [0];
     this.dispatcher = dispatcher;
     this.client = client;
+    this.pecPorts = [];
   }
   receive(msg) {
     const body = this.parse(msg);

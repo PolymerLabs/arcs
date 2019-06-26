@@ -9,8 +9,8 @@ particle SuggestPerson in './source/SuggestPerson.js'
 particle RequireQuery in './source/Noop.js'
   in PipeEntity query
 
-recipe PeopleAutofill &autofill
-  use #autofill_com_google_android_gm as query
+recipe PeopleAutofill &artist_autofill
+  use #artist_autofill as query
   map 'pipe-entities' as recentEntities
   create as suggestion
   RequireQuery
