@@ -20,10 +20,10 @@ import static elemental2.dom.DomGlobal.window;
 
 public class DeviceClientJsImpl implements DeviceClient {
 
-    private PortableJsonParser jsonParser;
+    private final PortableJsonParser jsonParser;
     private Map<String, ArcsEnvironment.SuggestionListener> inProgress;
-    private PECInnerPortFactory portFactory;
-    private Map<String, PECInnerPort> portById = new HashMap<String, PECInnerPort>();
+    private final PECInnerPortFactory portFactory;
+    private final Map<String, PECInnerPort> portById = new HashMap<String, PECInnerPort>();
 
     @Inject
     public DeviceClientJsImpl(PortableJsonParser jsonParser,

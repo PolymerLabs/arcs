@@ -2,15 +2,29 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public class PECInnerPortImpl implements PECInnerPort {
-    private String id;
-    private ShellApi shellApi;
-    private ParticleExecutionContext pec;
-    private ThingMapper mapper;
-    private StorageProxyFactory storageProxyFactory;
-    private PortableJsonParser jsonParser;
+    private static final String MESSAGE_TYPE_FIELD = "messageType";
+    private static final String MESSAGE_BODY_FIELD = "messageBody";
+    private static final String MESSAGE_PEC_ID_FIELD = "id";
+    private static final String INDENTIFIER_FIELD = "identifier";
+    private static final String INSTANTIATE_PARTICLE_MSG = "InstantiateParticle";
+    private static final String PARTICLE_SPEC_FIELD = "spec";
+    private static final String PARTICLE_STORES_FIELD = "stores";
+    private static final String DEFINE_HANDLE_MSG = "DefineHandle";
+    private static final String HANDLE_TYPE_FIELD = "type";
+    private static final String HANDLE_NAME_FIELD = "name";
+    private static final String SIMPLE_CALLBACK_MSG = "SimpleCallback";
+    private static final String INITIALIZE_PROXY_MSG = "InitializeProxy";
+    private static final String PROXY_HANDLE_ID_FIELD = "handle";
+    private static final String PROXY_CALLBACK_FIELD = "callback";
+
+    private final String id;
+    private final ShellApi shellApi;
+    private final ParticleExecutionContext pec;
+    private final ThingMapper mapper;
+    private final PortableJsonParser jsonParser;
 
     public PECInnerPortImpl(String id,
                             ShellApi shellApi,
@@ -25,12 +39,12 @@ public class PECInnerPortImpl implements PECInnerPort {
 
     @Override
     public void handleMessage(PortableJson message) {
-        String messageType = message.getString("messageType");
-        PortableJson messageBody = message.getObject("messageBody");
+        String messageType = message.getString(MESSAGE_TYPE_FIELD);
+        PortableJson messageBody = message.getObject(MESSAGE_BODY_FIELD);
         switch(messageType) {
-            case "InstantiateParticle":
-                ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject("spec"));
-                PortableJson stores = messageBody.getObject("stores");
+            case INSTANTIATE_PARTICLE_MSG:
+                ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject(PARTICLE_SPEC_FIELD));
+                PortableJson stores = messageBody.getObject(PARTICLE_STORES_FIELD);
                 Map<String, StorageProxy> proxies = new HashMap<String, StorageProxy>();
                 stores.forEach(proxyName -> {
                     String proxyId = stores.getString(proxyName);
@@ -42,16 +56,18 @@ public class PECInnerPortImpl implements PECInnerPort {
                     // TODO: improve error handling.
                     throw new AssertionError("Cannot instantiate particle " + spec.name);
                 }
-                mapper.establishThingMapping(messageBody.getString("identifier"), new Thing<NativeParticle>(particle));
+                mapper.establishThingMapping(messageBody.getString(INDENTIFIER_FIELD), new Thing<NativeParticle>(particle));
                 break;
-            case "DefineHandle":
-                String identifier = messageBody.getString("identifier");
+            case DEFINE_HANDLE_MSG:
+                String identifier = messageBody.getString(INDENTIFIER_FIELD);
                 StorageProxy storageProxy = StorageProxyFactory.newProxy(
                     identifier,
-                    TypeFactory.typeFromJson(messageBody.getObject("type")), messageBody.getString("name"), this);
+                    TypeFactory.typeFromJson(messageBody.getObject(HANDLE_TYPE_FIELD)),
+                    messageBody.getString(HANDLE_NAME_FIELD),
+                    this);
                 mapper.establishThingMapping(identifier, new Thing<StorageProxy>(storageProxy));
                 break;
-            case "SimpleCallback":
+            case SIMPLE_CALLBACK_MSG:
                 // TODO: implement.
                 break;
             default:
@@ -60,24 +76,24 @@ public class PECInnerPortImpl implements PECInnerPort {
     }
 
     @Override
-    public void InitializeProxy(StorageProxy storageProxy, Function<PortableJson, Void> callback) {
+    public void InitializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
         PortableJson message = jsonParser.parse("{}");
-        message.put("messageType", "InitializeProxy");
+        message.put(MESSAGE_TYPE_FIELD, INITIALIZE_PROXY_MSG);
         PortableJson body = jsonParser.parse("{}");
-        body.put("handle", mapper.identifierForThing(new Thing<StorageProxy>(storageProxy)));
-        body.put("callback", mapper.createMappingForThing(
-            new Thing<Function<PortableJson, Void>>(callback), /* requestedId= */ null));
-        message.put("messageBody", body);
+        body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<StorageProxy>(storageProxy)));
+        body.put(PROXY_CALLBACK_FIELD, mapper.createMappingForThing(
+            new Thing<Consumer<PortableJson>>(callback), /* requestedId= */ null));
+        message.put(MESSAGE_BODY_FIELD, body);
         postMessage(message);
     }
 
     @Override
-    public void SynchronizeProxy(StorageProxy storageProxy, Function<PortableJson, Void> callback) {
+    public void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
         // TODO: Implement.
     }
 
     private void postMessage(PortableJson message) {
-        message.put("id", this.id);
+        message.put(MESSAGE_PEC_ID_FIELD, this.id);
         shellApi.postMessage(jsonParser.stringify(message));
     }
 }

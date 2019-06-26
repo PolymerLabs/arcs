@@ -29,11 +29,7 @@ public abstract class StorageProxy implements Store {
     observers.put(handle, particle);
 
     if (!listenerAttached) {
-      port.InitializeProxy(this, new Function<PortableJson, Void>() {
-          @Override public Void apply(PortableJson json) {
-              onSynchronize(json); return null;
-          }
-      });
+      port.InitializeProxy(this, json -> onSynchronize(json));
       listenerAttached = true;
     }
     // TODO: finish implementation.
