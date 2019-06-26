@@ -66,7 +66,7 @@ Info clone_entity(const Info& entity) {
 template<>
 bool entities_equal(const Info& a, const Info& b) {
   return (a.has_for() ? (b.has_for() && a._for() == b._for()) : !b.has_for()) &&
-         (a.has_internal_id() ? (b.has_internal_id() && a.internal_id() == b.internal_id()) : !b.has_internal_id()) && 1;
+         (a.has_internal_id() ? (b.has_internal_id() && a.internal_id() == b.internal_id()) : !b.has_internal_id());
 }
 
 template<>

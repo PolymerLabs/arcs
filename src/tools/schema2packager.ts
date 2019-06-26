@@ -176,7 +176,7 @@ ${name} clone_entity(const ${name}& entity) {
 
 template<>
 bool entities_equal(const ${name}& a, const ${name}& b) {
-  return ${equals.join(' && \n         ')} && 1;
+  return ${equals.join(' && \n         ')};
 }
 
 template<>

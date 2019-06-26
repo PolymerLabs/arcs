@@ -88,7 +88,7 @@ bool entities_equal(const Data& a, const Data& b) {
   return (a.has_num() ? (b.has_num() && a.num() == b.num()) : !b.has_num()) &&
          (a.has_txt() ? (b.has_txt() && a.txt() == b.txt()) : !b.has_txt()) &&
          (a.has_lnk() ? (b.has_lnk() && a.lnk() == b.lnk()) : !b.has_lnk()) &&
-         (a.has_flg() ? (b.has_flg() && a.flg() == b.flg()) : !b.has_flg()) && 1;
+         (a.has_flg() ? (b.has_flg() && a.flg() == b.flg()) : !b.has_flg());
 }
 
 template<>
