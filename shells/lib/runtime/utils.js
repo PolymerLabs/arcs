@@ -11,6 +11,7 @@
 import {Manifest} from '../../../build/runtime/manifest.js';
 import {Arc} from '../../../build/runtime/arc.js';
 import {IdGenerator} from '../../../build/runtime/id.js';
+import {Port} from '../../../build/runtime/api-channel.js';
 import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {PlatformLoader} from '../../../build/platform/loader-web.js';
 import {PecIndustry} from '../../../build/platform/pec-industry-web.js';
@@ -75,7 +76,7 @@ const isNormalized = recipe => {
   return Object.isFrozen(recipe);
 };
 
-const spawn = async ({id, serialization, context, composer, storage}) => {
+const spawn = async ({id, serialization, context, composer, storage, deviceClient}) => {
   const arcId = IdGenerator.newSession().newArcId(id);
   const params = {
     id: arcId,
@@ -86,7 +87,19 @@ const spawn = async ({id, serialization, context, composer, storage}) => {
     slotComposer: composer,
     pecFactory: env.pecFactory,
     loader: env.loader,
-    inspectorFactory: devtoolsArcInspectorFactory
+    inspectorFactory: devtoolsArcInspectorFactory,
+    javaPort: new class extends Port {
+      constructor(deviceClient) {
+        super();
+        this.deviceClient = deviceClient;
+      }
+      close() { }
+      postMessage(msg) {
+        this.deviceClient.postMessage(JSON.stringify(msg));
+      }
+      setMessageCallback(callback) {
+      }
+    }(deviceClient)
   };
   Object.assign(params, env.params);
   return serialization ? Arc.deserialize(params) : new Arc(params);

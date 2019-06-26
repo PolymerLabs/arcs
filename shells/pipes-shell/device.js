@@ -96,7 +96,7 @@ const receiveJsonEntity = async json => {
   try {
     testMode = !json;
     if (userContext.pipesArc) {
-      const arc = await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, json);
+      const arc = await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, client, json);
       return String(arc.id);
     }
   } catch (x) {
