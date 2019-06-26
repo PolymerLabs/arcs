@@ -34,13 +34,13 @@ export const Pipe = {
       //dumpStores([store]);
     }
   },
-  async receiveEntity(context, recipes, callback, json) {
+  async receiveEntity(context, recipes, callback, deviceClient, shellApi, json) {
     //log('receiveEntity', json);
     t0 = now();
     const type = extractType(json);
     const recipe = recipeForType(type, recipes);
     if (recipe) {
-      return instantiateAutofillArc(context, type, recipe, callback);
+      return instantiateAutofillArc(context, type, recipe, callback, deviceClient, shellApi);
     } else {
       log(`found no autofill recipe for type [${type}]`);
     }
@@ -64,8 +64,8 @@ const recipeForType = (type, recipes) => {
   return recipes.find(recipe => recipe.name.toLowerCase() === type);
 };
 
-const instantiateAutofillArc = async (context, type, recipe, callback) => {
-  const arc = await Utils.spawn({id: 'piping-arc', composer: new RamSlotComposer(), context});
+const instantiateAutofillArc = async (context, type, recipe, callback, deviceClient, shellApi) => {
+  const arc = await Utils.spawn({id: 'piping-arc', composer: new RamSlotComposer(), context, deviceClient, shellApi});
   log(`arc [${arc.id}]`);
   await instantiatePipeRecipe(arc, type);
   // TODO(sjmiles): `clone()` because recipe cannot `normalize()` twice

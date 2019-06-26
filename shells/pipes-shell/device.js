@@ -72,6 +72,20 @@ const shellApi = {
     log('flushing caches');
     Utils.env.loader.flushCaches();
     marshalRecipeContext();
+  },
+  registerMessageHandler(handler) {
+    this.handlers = this.handlers || [];
+    log(`registered shellApi handler for arcId: ${handler.arcId}`);
+    this.handlers.push(handler);
+  },
+  postMessage(message) {
+    const msg = JSON.parse(message);
+    const handler = this.handlers.find(h => h.arcId.toString() === msg.id);
+    if (handler) {
+      handler.callback({data: msg});
+    } else {
+      warn(`No message handler for arc '${msg.id}' out of ${this.handlers.length} - ${this.handlers.map(h => h.arcId).join(',')}`);
+    }
   }
 };
 
@@ -96,7 +110,7 @@ const receiveJsonEntity = async json => {
   try {
     testMode = !json;
     if (userContext.pipesArc) {
-      const arc = await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, json);
+      const arc = await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, client, shellApi, json);
       return String(arc.id);
     }
   } catch (x) {
@@ -115,4 +129,3 @@ const foundSuggestions = (arc, text) => {
     }
   }
 };
-
