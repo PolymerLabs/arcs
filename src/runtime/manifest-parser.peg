@@ -313,7 +313,7 @@ ParticleClaimIsTag
   }
 
 ParticleClaimDerivesFrom
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and' whiteSpace lowerIdent)* eolWhiteSpace
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and derives from' whiteSpace lowerIdent)* eolWhiteSpace
   {
     const parentHandles: string[] = [first, ...rest.map(item => item[3])];
     return {
