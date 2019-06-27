@@ -243,6 +243,7 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
+
 export abstract class Node {
   abstract readonly inEdges: readonly Edge[];
   abstract readonly outEdges: readonly Edge[];
@@ -339,8 +340,10 @@ class ParticleNode extends Node {
     }
 
     const claim = edgeToCheck.claim;
-    // Return true if the particle claims the right tag on this edge.
-    return claim && claim.type === ClaimType.IsTag && claim.tag === condition.tag;
+    // True if the particle claims the tag on this edge.
+    const claimsTag = claim && claim.type === ClaimType.IsTag && claim.tag === condition.tag;
+    // If the claim has a 'not', we return the boolean inverse.
+    return claim.IsNot ? !claimsTag : claimsTag;
   }
 }
 
