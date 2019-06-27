@@ -20,7 +20,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag} from '../particle-check.js';
+import {CheckHasTag, CheckBooleanExpression} from '../particle-check.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -2033,21 +2033,19 @@ resource SomeName
       const check1 = particle.trustChecks.get('input1');
       assert.equal(check1.toManifestString(), 'check input1 is property1');
       assert.equal(check1.handle.name, 'input1');
-      assert.lengthOf(check1.conditions, 1);
-      assert.equal((check1.conditions[0] as CheckHasTag).tag, 'property1');
+      assert.deepEqual(check1.expression, new CheckHasTag('property1'));
 
       const check2 = particle.trustChecks.get('input2');
       assert.equal(check2.toManifestString(), 'check input2 is property2');
       assert.equal(check2.handle.name, 'input2');
-      assert.lengthOf(check2.conditions, 1);
-      assert.equal((check2.conditions[0] as CheckHasTag).tag, 'property2');
+      assert.deepEqual(check2.expression, new CheckHasTag('property2'));
     });
 
-    it('supports checks with multiple tags', async () => {
+    it(`supports checks with the 'or' operation`, async () => {
       const manifest = await Manifest.parse(`
         particle A
           in T {} input
-          check input is property1 or is property2
+          check input is property1 or is property2 or is property3
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2055,11 +2053,70 @@ resource SomeName
       assert.equal(particle.trustChecks.size, 1);
 
       const check = particle.trustChecks.get('input');
-      assert.equal(check.toManifestString(), 'check input is property1 or is property2');
+      assert.equal(check.toManifestString(), 'check input is property1 or is property2 or is property3');
       assert.equal(check.handle.name, 'input');
-      assert.lengthOf(check.conditions, 2);
-      assert.equal((check.conditions[0] as CheckHasTag).tag, 'property1');
-      assert.equal((check.conditions[1] as CheckHasTag).tag, 'property2');
+      assert.deepEqual(check.expression, new CheckBooleanExpression('or', [
+        new CheckHasTag('property1'),
+        new CheckHasTag('property2'),
+        new CheckHasTag('property3'),
+      ]));
+    });
+
+    it(`supports checks with the 'and' operation`, async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input
+          check input is property1 and is property2 and is property3
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.equal(particle.trustChecks.size, 1);
+
+      const check = particle.trustChecks.get('input');
+      assert.equal(check.toManifestString(), 'check input is property1 and is property2 and is property3');
+      assert.equal(check.handle.name, 'input');
+      assert.deepEqual(check.expression, new CheckBooleanExpression('and', [
+        new CheckHasTag('property1'),
+        new CheckHasTag('property2'),
+        new CheckHasTag('property3'),
+      ]));
+    });
+
+    it(`supports arbitrary nesting of 'and' and 'or' operations and conditions`, async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input
+          check input (is property1 and ((is property2))) or ((is property2) or is property3)
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.equal(particle.trustChecks.size, 1);
+
+      const check = particle.trustChecks.get('input');
+      assert.equal(check.toManifestString(), 'check input (is property1 and is property2) or (is property2 or is property3)');
+      assert.equal(check.handle.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckBooleanExpression('or', [
+          new CheckBooleanExpression('and', [
+            new CheckHasTag('property1'),
+            new CheckHasTag('property2'),
+          ]),
+          new CheckBooleanExpression('or', [
+            new CheckHasTag('property2'),
+            new CheckHasTag('property3'),
+          ]),
+        ]));
+    });
+
+    it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          in T {} input
+          check input is property1 or is property2 and is property3
+      `), `You cannot combine 'and' and 'or' operations in a single check expression.`);
     });
 
     it('can round-trip checks and claims', async () => {

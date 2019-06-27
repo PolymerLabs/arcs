@@ -141,8 +141,7 @@ describe('FlowGraph', () => {
     assert.equal(node.checks.size, 1);
     const check = node.checks.get('foo');
     assert.equal(check.handle.name, 'foo');
-    assert.lengthOf(check.conditions, 1);
-    assert.equal((check.conditions[0] as CheckHasTag).tag, 'trusted');
+    assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     assert.isEmpty(node.claims);
 
     assert.lengthOf(graph.edges, 1);

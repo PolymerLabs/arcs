@@ -202,8 +202,16 @@ export type ParticleClaimStatement = ParticleClaimIsTag | ParticleClaimDerivesFr
 export interface ParticleCheckStatement extends BaseNode {
   kind: 'particle-trust-check';
   handle: string;
-  conditions: ParticleCheckCondition[];
+  expression: ParticleCheckExpression;
 }
+
+export interface ParticleCheckBooleanExpression extends BaseNode {
+  kind: 'particle-trust-check-boolean-expression';
+  operator: 'and' | 'or';
+  children: ParticleCheckExpression[];
+}
+
+export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
 
 export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle;
 

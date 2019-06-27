@@ -119,9 +119,26 @@ function* allInputPaths(startEdge: Edge): Iterable<BackwardsPath> {
 
 /** Returns true if the given check passes for the given path. */
 function evaluateCheckForPath(check: Check, path: BackwardsPath): boolean {
+  // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
+  const conditions: CheckCondition[] = [];
+  switch (check.expression.type) {
+    case 'and':
+      throw new Error(`Boolean expressions with 'and' are not supported yet.`);
+    case 'or':
+      for (const child of check.expression.children) {
+        assert(child.type !== 'or' && child.type !== 'and', 'Nested boolean expressions are not supported yet.');
+        conditions.push(child as CheckCondition);
+      }
+      break;
+    default:
+      // Expression is just a single condition.
+      conditions.push(check.expression);
+      break;
+  }
+  
   // Check every condition against the whole path.
   // NOTE: This is very inefficient. We check every condition against every edge in the path.
-  for (const condition of check.conditions) {
+  for (const condition of conditions) {
     for (const edge of path.edges) {
       const node = edge.start;
       if (node.evaluateCheckCondition(condition, edge)) {
@@ -224,18 +241,6 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
     default:
       throw new Error(`Unsupported connection type: ${connection.direction}`);
   }
-}
-
-/** Returns true if the given claim satisfies the check condition. Only works with 'tag' claims. */
-function checkAgainstTagClaim(check: Check, claim: ClaimIsTag): boolean {
-  for (const condition of check.conditions) {
-    if (condition.type === CheckType.HasTag) {
-      if (condition.tag === claim.tag) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 export abstract class Node {
