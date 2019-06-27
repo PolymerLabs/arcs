@@ -264,16 +264,6 @@ export abstract class Strategy extends Action<Recipe> {
     });
   }
 
-  /*
-  async generateWithPartial(inputParams: Partial<StrategyParams>) {
-    return this.generate({
-      generated: inputParams.generated || [],
-      population: inputParams.population || [],
-      terminal: inputParams.terminal || [],
-      generation: inputParams.generation || 0,
-    });
-  }*/
-
   async activate(strategizer: Strategizer) {
     // Returns estimated ability to generate/evaluate.
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
