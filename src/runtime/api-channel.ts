@@ -208,7 +208,7 @@ class ThingMapper {
 // implemented by any alternative port classes (e.g. JavaPort).
 export abstract class Port {
   abstract close(): void;
-  abstract postMessage(msg): void;
+  abstract postMessage(msg: {}): void;
   abstract set onmessage(callback);
 }
 
