@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {PECOuterPort, APIPort, JsPort, Port} from './api-channel.js';
+import {PECOuterPort, APIPort, Port} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
 import {Runnable} from './hot.js';
@@ -38,7 +38,8 @@ export type StopRenderOptions = {
 };
 
 export class ParticleExecutionHost {
-  private readonly _apiPorts = new Map<string, PECOuterPort>();
+  private readonly _apiPorts: PECOuterPort[];
+  private readonly _portByParticle = new Map<Particle, PECOuterPort>();
   close : Runnable;
   private readonly arc: Arc;
   private nextIdentifier = 0;
@@ -47,9 +48,9 @@ export class ParticleExecutionHost {
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
 
-  constructor(port, slotComposer: SlotComposer, arc: Arc, javaPort: Port) {
+  constructor(slotComposer: SlotComposer, arc: Arc, ports: (MessagePort|Port)[]) {
     this.close = () => {
-      port.close();
+      ports.forEach(port => port.close());
       this._apiPorts.forEach(apiPort => apiPort.close());
     };
 
@@ -58,31 +59,20 @@ export class ParticleExecutionHost {
 
     const pec = this;
 
-    this._apiPorts.set('js', new PECOuterPortImpl(new JsPort(port), arc));
-    if (javaPort) {
-      this._apiPorts.set('java', new class extends PECOuterPortImpl {
-        postMessage(call) {
-          call['id'] = this.arc.id.toString();
-          super.postMessage(call);
-        }
-      
-        Stop() {
-          console.warn(`'Stop()' not supported for Java PEC yet`);
-        }
-      
-        DevToolsConnected() {
-          console.warn(`'DevToolsConnected()' not supported for Java PEC yet`);
-        }      
-      }(javaPort, arc));
-    }
+    this._apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
   }
 
-  get jsApiPort(): PECOuterPort {
-    return this._apiPorts.get('js');
+  private findPortForParticle(particle: Particle): PECOuterPort {
+    assert(!this._portByParticle.has(particle), `port already found for particle '${particle.spec.name}'`);
+    const port = this._apiPorts.find(port => particle.isJavaParticle() === port.supportsJavaParticle());
+    assert(!!port, `No port found for '${particle.spec.name}'`);
+    this._portByParticle.set(particle, port);
+    return this.getPort(particle);
   }
 
-  get javaApiPort(): PECOuterPort {
-    return this._apiPorts.get('java');
+  private getPort(particle: Particle): PECOuterPort {
+    assert(this._portByParticle.has(particle), `Cannot get port for particle '${particle.spec.name}'`);
+    return this._portByParticle.get(particle);
   }
 
   stop() {
@@ -105,11 +95,11 @@ export class ParticleExecutionHost {
   }
 
   sendEvent(particle, slotName, event): void {
-    this._apiPorts.forEach(apiPort => apiPort.UIEvent(particle, slotName, event));
+    this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
   instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
-    const apiPort = particle.isJavaParticle() ? this.javaApiPort : this.jsApiPort;
+    const apiPort = this.findPortForParticle(particle);
 
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name);
@@ -118,18 +108,17 @@ export class ParticleExecutionHost {
   }
 
   startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
-    const apiPort = particle.isJavaParticle() ? this.javaApiPort : this.jsApiPort;
-    apiPort.StartRender(particle, slotName, providedSlots, contentTypes);
+    this.getPort(particle).StartRender(particle, slotName, providedSlots, contentTypes);
   }
 
   stopRender({particle, slotName}: StopRenderOptions): void {
-    const apiPort = particle.isJavaParticle() ? this.javaApiPort : this.jsApiPort;
-    apiPort.StopRender(particle, slotName);
+    this.getPort(particle).StopRender(particle, slotName);
   }
 
   innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
-    // Transformations are not supported in Java PEC.
-    this.jsApiPort.InnerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content);
+    // Note: Transformations are not supported in Java PEC.
+    this.getPort(transformationParticle).InnerArcRender(
+        transformationParticle, transformationSlotName, hostedSlotId, content);
   }
 
   resolveIfIdle(version: number, relevance: Map<Particle, number[]>) {

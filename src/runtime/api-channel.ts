@@ -204,35 +204,24 @@ class ThingMapper {
   }
 }
 
+// This class has an interface compatible with MessagePort and should be
+// implemented by any alternative port classes (e.g. JavaPort).
 export abstract class Port {
   abstract close(): void;
   abstract postMessage(msg): void;
-  abstract setMessageCallback(callback): void;
-}
-
-export class JsPort extends Port {
-  constructor(public readonly messagePort: MessagePort) { super(); }
-  close(): void {
-    this.messagePort.close();
-  }
-  postMessage(msg): void {
-    this.messagePort.postMessage(msg);
-  }
-  setMessageCallback(callback): void {
-    this.messagePort.onmessage = callback;
-  }
+  abstract set onmessage(callback);
 }
 
 export class APIPort {
-  private readonly _port: Port;
+  private readonly _port: MessagePort|Port;
   _mapper: ThingMapper;
   protected inspector: ArcInspector | null;
   protected attachStack: boolean;
   messageCount: number;
-  constructor(port: Port, prefix: string) {
+  constructor(port: MessagePort|Port, prefix: string) {
     this._port = port;
     this._mapper = new ThingMapper(prefix);
-    this._port.setMessageCallback(async e => this._processMessage(e));
+    this._port.onmessage = async e => this._processMessage(e);
     this.inspector = null;
     this.attachStack = false;
     this.messageCount = 0;
@@ -246,10 +235,6 @@ export class APIPort {
 
   close(): void {
     this._port.close();
-  }
-
-  postMessage(call) {
-    this._port.postMessage(call);
   }
 
   async _processMessage(e) {
@@ -267,7 +252,12 @@ export class APIPort {
     if (this.inspector) {
       this.inspector.pecMessage(name, args, count, new Error().stack || '');
     }
-    this.postMessage(call);
+    this._port.postMessage(call);
+  }
+
+  supportsJavaParticle(): boolean {
+    // TODO: improve heuristics.
+    return this._port.constructor.name !== 'MessagePort';
   }
 }
 
@@ -516,7 +506,7 @@ export interface CursorNextValue {
 @AutoConstruct(PECOuterPort)
 export abstract class PECInnerPort extends APIPort {
   constructor(messagePort: MessagePort) {
-    super(new JsPort(messagePort), 'i');
+    super(messagePort, 'i');
   }
 
   abstract onStop();

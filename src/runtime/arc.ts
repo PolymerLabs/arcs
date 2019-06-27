@@ -117,7 +117,7 @@ export class Arc {
     this.storageKey = storageKey;
     const pecId = this.generateID();
     const innerPecPort = this.pecFactory(pecId, this.idGenerator);
-    this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this, javaPort);
+    this.pec = new ParticleExecutionHost(slotComposer, this, [innerPecPort, javaPort].filter(port => !!port));
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
   }
 
