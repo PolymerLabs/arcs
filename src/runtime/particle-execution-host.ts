@@ -228,7 +228,7 @@ class PECOuterPortImpl extends PECOuterPort {
                   } else {
                     pec.arc._registerStore(store, []);
                   }
-                };
+                }
                 // TODO: Awaiting this promise causes tests to fail...
                 floatingPromiseToAudit(arc.instantiate(recipe0));
               } else {

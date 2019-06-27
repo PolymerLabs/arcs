@@ -533,6 +533,7 @@ ${this.activeRecipe.toString()}`;
     // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
     // it should be done at planning stage.
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
+
     for (const recipeHandle of handles) {
       if (['copy', 'create'].includes(recipeHandle.fate)) {
         let type = recipeHandle.type;
@@ -597,12 +598,13 @@ ${this.activeRecipe.toString()}`;
         let store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
 
         if (!store && recipeHandle.fate === 'map') {
-          const storeRef = this.findStoreById(recipeHandle.id) as StorageStub;
+          const storeRef = this.context.findStoreById(recipeHandle.id) as StorageStub;
           store = await storeRef.inflate();
         }
         assert(store, `store '${recipeHandle.id}' was not found`);
         this._registerStore(store, recipeHandle.tags);
       }
+    }
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
