@@ -268,7 +268,11 @@ class ArcPanel extends HTMLElement {
   showError(header, message = '') {
     const error = document.createElement('error-panel');
     this.arcRoot.appendChild(error);
-    error.show(header, message);
+    if (message.stack) {
+      error.show(header, message.stack);
+    } else {
+      error.show(header, message);
+    }
   }
 
   kill() {
