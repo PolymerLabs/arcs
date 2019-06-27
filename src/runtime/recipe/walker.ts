@@ -84,6 +84,15 @@ export abstract class Action<T extends Cloneable<T>> {
     return generated;
   }
 
+  async generateFrom(generated: Descendant<T>[]) {
+    return this.generate({
+      generated,
+      population: [],
+      terminal: [],
+      generation: 0,
+    });
+  }
+
   async abstract generate(inputParams: GenerateParams<T>): Promise<Descendant<T>[]>;
 }
 

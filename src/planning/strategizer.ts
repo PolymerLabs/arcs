@@ -255,15 +255,6 @@ export abstract class Strategy extends Action<Recipe> {
     super(arc, args);
   }
 
-  async generateFrom(generated: Descendant<Recipe>[]) {
-    return this.generate({
-      generated,
-      population: [],
-      terminal: [],
-      generation: 0,
-    });
-  }
-
   async activate(strategizer: Strategizer) {
     // Returns estimated ability to generate/evaluate.
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
