@@ -957,8 +957,7 @@ ${particleStr1}
       join(path: string, file: string): string {
         return `${path} ${file}`;
       }
-    }
-
+    }();
         
     const manifest = await Manifest.load('somewhere/a', loader, {registry});
     assert(registry['somewhere/a path/b']);

@@ -28,7 +28,7 @@ export class StubLoader extends Loader {
   }
 
   // TODO(lindner): this should be async, but adding it causes a test to fail
-  // eslint-disable-next-line
+  // tslint:disable-next-line
   loadResource(path: string): Promise<string> {
     return this._fileMap.hasOwnProperty(path)
         ? this._fileMap[path]
