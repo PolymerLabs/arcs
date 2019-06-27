@@ -132,19 +132,18 @@ ${recipeManifest}
           consume root
         C
     `));
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const generated = [{result: manifest.recipes[0], score: 1}];
     const arc = StrategyTestHelper.createTestArc(manifest);
 
     const strategy = new MapSlots(arc);
-    let results = await strategy.generate(inputParams);
+    let results = await strategy.generateFrom(generated);
     assert.lengthOf(results, 2);
 
-    results = await new ResolveRecipe(arc).generate({
-      generated: results.map(r => ({
+    results = await new ResolveRecipe(arc).generateFrom(
+      results.map(r => ({
         result: r.result,
         score: 1
-      }))
-    });
+      })));
 
     assert.lengthOf(results, 2);
     for (const result of results) {

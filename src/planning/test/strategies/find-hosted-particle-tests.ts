@@ -23,9 +23,9 @@ async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
   const recipes = manifest.recipes;
   recipes.forEach(recipe => recipe.normalize());
-  const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
+  const generated = recipes.map(recipe => ({result: recipe, score: 1}));
   const strategy = new FindHostedParticle(StrategyTestHelper.createTestArc(manifest));
-  return (await strategy.generate(inputParams)).map(r => r.result);
+  return (await strategy.generateFrom(generated)).map(r => r.result);
 }
 
 describe('FindHostedParticle', () => {
@@ -162,7 +162,7 @@ describe('FindHostedParticle', () => {
     const inRecipe = manifest.recipes[0];
     inRecipe.normalize();
 
-    const results = await strategy.generate({generated: [{result: inRecipe}]});
+    const results = await strategy.generateFrom([{result: inRecipe, score: 0}]);
     assert.lengthOf(results, 1);
     const outRecipe = results[0].result;
 

@@ -13,7 +13,7 @@ import {Arc} from '../runtime/arc.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
-import {Action, Descendant} from '../runtime/recipe/walker.js';
+import {Action, GenerateParams, Descendant} from '../runtime/recipe/walker.js';
 import {Dictionary} from '../runtime/hot.js';
 
 export interface GenerationRecord {
@@ -247,11 +247,32 @@ export class StrategizerWalker extends RecipeWalker {
   }
 }
 
+export type StrategyParams = GenerateParams<Recipe>;
+
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy extends Action<Recipe> {
   constructor(arc?: Arc, args?) {
     super(arc, args);
   }
+
+  async generateFrom(generated: Descendant<Recipe>[]) {
+    return this.generate({
+      generated,
+      population: [],
+      terminal: [],
+      generation: 0,
+    });
+  }
+
+  /*
+  async generateWithPartial(inputParams: Partial<StrategyParams>) {
+    return this.generate({
+      generated: inputParams.generated || [],
+      population: inputParams.population || [],
+      terminal: inputParams.terminal || [],
+      generation: inputParams.generation || 0,
+    });
+  }*/
 
   async activate(strategizer: Strategizer) {
     // Returns estimated ability to generate/evaluate.
