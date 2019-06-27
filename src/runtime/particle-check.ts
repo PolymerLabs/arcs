@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ParticleCheckStatement, ParticleCheckHasTag, ParticleCheckIsFromHandle} from './manifest-ast-nodes';
+import {ParticleCheckStatement, ParticleCheckHasTag, ParticleCheckIsFromHandle, ParticleCheckExpression, ParticleCheckCondition} from './manifest-ast-nodes';
 import {HandleConnectionSpec} from './particle-spec';
+import {assert} from '../platform/assert-web';
 
 /** The different types of trust checks that particles can make. */
 export enum CheckType {
@@ -18,15 +19,35 @@ export enum CheckType {
 }
 
 export class Check {
-  constructor(readonly handle: HandleConnectionSpec, readonly conditions: readonly CheckCondition[]) {}
+  constructor(readonly handle: HandleConnectionSpec, readonly expression: CheckExpression) {}
 
   toManifestString() {
-    return `check ${this.handle.name} ${this.conditions.map(c => c.toManifestString()).join(' or ')}`;
+    return `check ${this.handle.name} ${this.expression.toManifestString()}`;
   }
 }
 
+/** A boolean expression inside a trust check. */
+export class CheckBooleanExpression {
+  constructor(readonly type: 'or' | 'and', readonly children: readonly CheckExpression[]) {}
+
+  /**
+   * @inheritdoc
+   * @param requireParens Indicates whether to enclose the expression inside parentheses. All nested boolean expressions must have parentheses,
+   *     but a top-level expression doesn't need to.
+   */
+  toManifestString(requireParens: boolean = false) {
+    const str = this.children.map(child => child.toManifestString(/* requireParens= */ true)).join(` ${this.type} `);
+    return requireParens ? `(${str})` : str;
+  }
+}
+
+/** An expression inside a trust check. Can be either a boolean expression or a single check condition. */
+export type CheckExpression = CheckBooleanExpression | CheckCondition;
+
+/** A single check condition inside a trust check. */
 export type CheckCondition = CheckHasTag | CheckIsFromHandle;
 
+/** A check condition of the form 'check x is <tag>'. */
 export class CheckHasTag {
   readonly type: CheckType.HasTag = CheckType.HasTag;
 
@@ -41,6 +62,7 @@ export class CheckHasTag {
   }
 }
 
+/** A check condition of the form 'check x is from handle <handle>'. */
 export class CheckIsFromHandle {
   readonly type: CheckType.IsFromHandle = CheckType.IsFromHandle;
 
@@ -59,19 +81,33 @@ export class CheckIsFromHandle {
   }
 }
 
+/** Converts the given AST node into a CheckCondition object. */
+function createCheckCondition(astNode: ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpec>): CheckCondition {
+  switch (astNode.checkType) {
+    case CheckType.HasTag:
+      return CheckHasTag.fromASTNode(astNode);
+    case CheckType.IsFromHandle:
+      return CheckIsFromHandle.fromASTNode(astNode, handleConnectionMap);
+    default:
+      throw new Error('Unknown check type.');
+  }
+}
+
+/** Converts the given AST node into a CheckExpression object. */
+function createCheckExpression(astNode: ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpec>): CheckExpression {
+  if (astNode.kind === 'particle-trust-check-boolean-expression') {
+    assert(astNode.children.length >= 2, 'Boolean check expressions must have at least two children.');
+    return new CheckBooleanExpression(astNode.operator, astNode.children.map(child => createCheckExpression(child, handleConnectionMap)));
+  } else {
+    return createCheckCondition(astNode, handleConnectionMap);
+  }
+}
+
+/** Converts the given AST node into a Check object. */
 export function createCheck(
     handle: HandleConnectionSpec,
     astNode: ParticleCheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): Check {
-  const conditions = astNode.conditions.map(condition => {
-    switch (condition.checkType) {
-      case CheckType.HasTag:
-        return CheckHasTag.fromASTNode(condition);
-      case CheckType.IsFromHandle:
-        return CheckIsFromHandle.fromASTNode(condition, handleConnectionMap);
-      default:
-        throw new Error('Unknown check type.');
-    }
-  });
-  return new Check(handle, conditions);
+  const expression = createCheckExpression(astNode.expression, handleConnectionMap);
+  return new Check(handle, expression);
 }

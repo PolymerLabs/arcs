@@ -327,16 +327,40 @@ ParticleClaimDerivesFrom
   }
 
 ParticleCheckStatement
-  = 'check' whiteSpace handle:lowerIdent whiteSpace first:ParticleCheckCondition rest:(whiteSpace 'or' whiteSpace ParticleCheckCondition)* eolWhiteSpace
+  = 'check' whiteSpace handle:lowerIdent whiteSpace expression:ParticleCheckExpressionBody eolWhiteSpace
   {
-    const conditions: AstNode.ParticleCheckCondition[] = [first, ...rest.map(item => item[3])];
     return {
       kind: 'particle-trust-check',
       location: location(),
       handle,
-      conditions,
+      expression,
     } as AstNode.ParticleCheckStatement;
   }
+
+// A series of check conditions using `and`/`or` operations (doesn't need to be surrounded by parentheses).
+ParticleCheckExpressionBody
+  = left:ParticleCheckExpression rest:(whiteSpace ('or'/'and') whiteSpace ParticleCheckExpression)*
+  {
+    if (rest.length === 0) {
+      return left;
+    }
+    const operators: Set<string> = new Set(rest.map(item => item[1]));
+    if (operators.size > 1) {
+      expected(`You cannot combine 'and' and 'or' operations in a single check expression. You must nest them inside parentheses.`);
+    }
+    const operator = rest[0][1];
+    return {
+      kind: 'particle-trust-check-boolean-expression',
+      location: location(),
+      operator,
+      children: [left, ...rest.map(item => item[3])],
+    } as AstNode.ParticleCheckExpression;
+  }
+
+// Can be either a single check condition, or a series of conditions using `and`/`or` operations surrounded by parentheses.
+ParticleCheckExpression
+  = condition:ParticleCheckCondition { return condition; }
+  / '(' whiteSpace? condition:ParticleCheckExpressionBody whiteSpace? ')' { return condition; }
 
 ParticleCheckCondition
   = ParticleCheckIsFromHandle
@@ -354,7 +378,7 @@ ParticleCheckHasTag
   }
 
 ParticleCheckIsFromHandle
-  = 'is from handle' whiteSpace parentHandle:lowerIdent
+  = 'is' whiteSpace 'from' whiteSpace 'handle' whiteSpace parentHandle:lowerIdent
   {
     return {
       kind: 'particle-trust-check-is-from-handle',
