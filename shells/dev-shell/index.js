@@ -115,6 +115,7 @@ function init() {
   if (manifestParam) {
     toggleFiles.click();
     files.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
+    execute();
   } else {
     const exampleManifest = `\
 import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.recipe'
