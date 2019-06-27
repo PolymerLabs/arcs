@@ -340,10 +340,22 @@ class ParticleNode extends Node {
     }
 
     const claim = edgeToCheck.claim;
+    if (!claim) {
+      return false; // This must change to implement not on checks
+    }
+
+    if (claim.type !== ClaimType.IsTag) {
+      return false;
+    }
+
+    const tagClaim = claim as ClaimIsTag;
+    assert(tagClaim, 'Claim has type HasTag but cast to ClaimIsTag failed.');
+
     // True if the particle claims the tag on this edge.
-    const claimsTag = claim && claim.type === ClaimType.IsTag && claim.tag === condition.tag;
+    const tagMatches = (tagClaim.tag === condition.tag);
+
     // If the claim has a 'not', we return the boolean inverse.
-    return claim.IsNot ? !claimsTag : claimsTag;
+    return tagClaim.isNot ? !tagMatches : tagMatches;
   }
 }
 
