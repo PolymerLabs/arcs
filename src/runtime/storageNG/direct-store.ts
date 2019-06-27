@@ -25,10 +25,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private pendingException: Error | null = null;
   private pendingResolves: Function[] = [];
   private pendingRejects: Function[] = [];
-  private pendingDriverModels: {
-    model: T['data'];
-    version: number;
-  }[] = [];
+  private pendingDriverModels: {model: T['data']; version: number;}[] = [];
   private state: DirectStoreState = DirectStoreState.Idle;
   /*
    * This class should only ever be constructed via the static construct method
@@ -36,6 +33,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     super(storageKey, exists, type, mode, modelConstructor);
   }
+
   async idle() {
     if (this.pendingException) {
       return Promise.reject(this.pendingException);
@@ -48,14 +46,18 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       this.pendingRejects.push(reject);
     });
   }
+
   private setState(state: DirectStoreState) {
     this.state = state;
     if (state === DirectStoreState.Idle) {
+      // If we are already idle, this won't notify external parties.
       this.notifyIdle();
     }
   }
+  
   private notifyIdle() {
     if (this.pendingException) {
+      // this is termination.
       this.pendingRejects.forEach(reject => reject(this.pendingException));
     }
     else {
@@ -63,6 +65,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       this.pendingResolves = [];
     }
   }
+
   static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     const me = new DirectStore<T>(storageKey, exists, type, mode, modelConstructor);
     me.localModel = new modelConstructor();
@@ -81,14 +84,15 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     }
     this.applyPendingDriverModels();
   }
+
   private deliverCallbacks(thisChange: CRDTChange<T>) {
     if (thisChange.changeType === ChangeType.Operations && thisChange.operations.length > 0) {
       this.callbacks.forEach((cb, id) => cb({type: ProxyMessageType.Operations, operations: thisChange.operations, id}));
-    }
-    else if (thisChange.changeType === ChangeType.Model) {
+    } else if (thisChange.changeType === ChangeType.Model) {
       this.callbacks.forEach((cb, id) => cb({type: ProxyMessageType.ModelUpdate, model: thisChange.modelPostChange, id}));
     }
   }
+
   private async processModelChange(modelChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number, fromDriver: boolean) {
     this.deliverCallbacks(modelChange);
     await this.updateStateAndAct(this.noDriverSideChanges(modelChange, otherChange, fromDriver), version, fromDriver);
