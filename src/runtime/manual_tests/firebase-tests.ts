@@ -38,7 +38,7 @@ async function synchronized(store1, store2, delay=1) {
 }
 
 describe('firebase', function() {
-  this.timeout(10000);
+  this.timeout(20000);
 
   let lastStoreId = 0;
   function newStoreKey(name) {
@@ -99,8 +99,8 @@ describe('firebase', function() {
       const var1 = await storage.construct('test0', barType, key) as SingletonStorageProvider;
       const var2 = await storage.connect('test0', barType, key) as SingletonStorageProvider;
 
-      await var1.set({id: 'id1', value: 'value1'});
-      await var2.set({id: 'id2', value: 'value2'});
+      void var1.set({id: 'id1', value: 'value1'});
+      void var2.set({id: 'id2', value: 'value2'});
       await synchronized(var1, var2);
       assert.deepEqual(await var1.get(), await var2.get());
     });
@@ -223,7 +223,7 @@ describe('firebase', function() {
       const key = newStoreKey('collection');
       const collection1 = await storage.construct('test1', barType.collectionOf(), key) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), key) as CollectionStorageProvider;
-      await collection1.store({id: 'id1', value: 'value'}, ['key1']);
+      void collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
       await synchronized(collection1, collection2);
       assert.deepEqual(await collection1.toList(), await collection2.toList());
@@ -240,10 +240,10 @@ describe('firebase', function() {
       const key = newStoreKey('collection');
       const collection1 = await storage.construct('test1', barType.collectionOf(), key) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), key) as CollectionStorageProvider;
-      await collection1.store({id: 'id1', value: 'value'}, ['key1']);
-      await collection2.store({id: 'id1', value: 'value'}, ['key2']);
-      await collection1.remove('id1', ['key1']);
-      await collection2.remove('id1', ['key2']);
+      void collection1.store({id: 'id1', value: 'value'}, ['key1']);
+      void collection2.store({id: 'id1', value: 'value'}, ['key2']);
+      void collection1.remove('id1', ['key1']);
+      void collection2.remove('id1', ['key2']);
       await synchronized(collection1, collection2);
       assert.isEmpty(await collection1.toList());
       assert.isEmpty(await collection2.toList());
@@ -432,6 +432,7 @@ describe('firebase', function() {
       assert.include(['xx', 'yy'], (await collection1.get('id3')).data);
 
       assert.isNull(await collection1.get('non-existent'));
+
       await collection1.remove('non-existent');
     });
 
@@ -551,7 +552,7 @@ describe('firebase', function() {
       await checkNext(col, items, cid3, ['i02', 'q04', 'h05']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);
-    }).timeout(20000);
+    }).timeout(40000);
 
     it('supports version-stable streamed reads backwards', async () => {
       const manifest = await Manifest.parse(`
@@ -628,7 +629,7 @@ describe('firebase', function() {
       await checkNext(col, items, cid3, ['m17', 's16', 't15']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);
-    }).timeout(20000);
+    }).timeout(40000);
 
     it('big collection API works from inside the PEC', async () => {
       const fileMap = {
@@ -673,7 +674,7 @@ describe('firebase', function() {
                   if (done) {
                     return items.join('&');
                   }
-                  items.push(...value.map(item => item.rawData.value));
+                  items.push(...value.map(item => item.value));
                 }
                 return 'error - cursor did not terminate correctly';
               }
