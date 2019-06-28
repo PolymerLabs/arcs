@@ -12,8 +12,8 @@ import {Particle} from '../../runtime/recipe/particle';
 import {Handle} from '../../runtime/recipe/handle';
 import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
-import {ClaimType, ClaimIsTag, Claim} from '../../runtime/particle-claim';
-import {Check, CheckType, CheckCondition} from '../../runtime/particle-check';
+import {ClaimType, ClaimIsTag, ClaimDerivesFrom, Claim} from '../../runtime/particle-claim';
+import {Check, CheckType, CheckCondition, CheckHasTag, CheckIsFromHandle} from '../../runtime/particle-check';
 import {HandleConnectionSpec} from '../../runtime/particle-spec';
 
 /**
@@ -72,21 +72,26 @@ export class FlowGraph {
     return finalResult;
   }
 
-  /** Validates a single check (on the given edge). Returns true if the check passes. */
+  /** 
+   * Validates a single check (on the given edge). We define validation as
+   * every path ending at the edge must pass the check on that edge. 
+   * Returns true if the check passes.
+   */
   private validateSingleEdge(edgeToCheck: Edge): ValidationResult {
     assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
     const check = edgeToCheck.check;
+    const conditions = checkToList(check);
+
     const finalResult = new ValidationResult();
 
     // Check every input path into the given edge.
     // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
     for (const path of allInputPaths(edgeToCheck)) {
-      const claimsForPath = computeClaimsInPath(path);
-      if (!evaluateCheckAgainstClaims(check, claimsForPath)) {
-        const edgesInPath = path.edges.slice().reverse();
-        const pathString = edgesInPath.map(e => e.label).join(' -> ');
-        finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${pathString}`);
+      const claimsForPath = computeTagClaimsInPath(path);
+      const handlesInPath = computeHandlesInPath(path);
+      if (!evaluateCheck(conditions, claimsForPath, handlesInPath)) {
+        finalResult.failures.push(path.checkFailureString(`'${check.toManifestString()}'`));
       }
     }
 
@@ -95,8 +100,35 @@ export class FlowGraph {
 }
 
 /**
- * Iterates through every path in the graph that lead into the given edge. Each path returned is a BackwardsPath, beginning at the given edge,
- * and ending at the end of a path in the graph (i.e. a node with no input edges).
+ * Preprocess a check into a list of conditions. This will need to change when
+ * we implement complex boolean expressions.
+ */
+function checkToList(check: Check): CheckCondition[] {
+ // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
+  const conditions: CheckCondition[] = [];
+  switch (check.expression.type) {
+    case 'and':
+      throw new Error(`Boolean expressions with 'and' are not supported yet.`);
+    case 'or':
+      for (const child of check.expression.children) {
+        assert(child.type !== 'or' && child.type !== 'and', 'Nested boolean expressions are not supported yet.');
+        conditions.push(child as CheckCondition);
+      }
+      break;
+    default:
+      // Expression is just a single condition.
+      conditions.push(check.expression);
+      break;
+  }
+  return conditions;
+}
+
+/**
+ * Iterates through every path in the graph that lead into the given edge. Each
+ * path returned is a BackwardsPath, beginning at the given edge, and ending at
+ * the end of a path in the graph (i.e. a node with no input edges). "derives 
+ * from" claims are used to prune paths, but the claims themselves are not
+ * removed from the path edges.
  */
 function* allInputPaths(startEdge: Edge): Iterable<BackwardsPath> {
   const startPath = BackwardsPath.fromEdge(startEdge);
@@ -118,42 +150,15 @@ function* allInputPaths(startEdge: Edge): Iterable<BackwardsPath> {
   }
 }
 
-<<<<<<< HEAD
-/** Returns true if the given check passes for the given path. */
-function evaluateCheckForPath(check: Check, path: BackwardsPath): boolean {
-  // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
-  const conditions: CheckCondition[] = [];
-  switch (check.expression.type) {
-    case 'and':
-      throw new Error(`Boolean expressions with 'and' are not supported yet.`);
-    case 'or':
-      for (const child of check.expression.children) {
-        assert(child.type !== 'or' && child.type !== 'and', 'Nested boolean expressions are not supported yet.');
-        conditions.push(child as CheckCondition);
-      }
-      break;
-    default:
-      // Expression is just a single condition.
-      conditions.push(check.expression);
-      break;
-  }
-  
-  // Check every condition against the whole path.
-  // NOTE: This is very inefficient. We check every condition against every edge in the path.
-  for (const condition of conditions) {
-    for (const edge of path.edges) {
-      const node = edge.start;
-      if (node.evaluateCheckCondition(condition, edge)) {
-        // Only one condition needs to pass, anywhere in the path, so we can return true straight away.
-=======
 /**
- * Collect all the claims along the given path, canceling tag claims that are
+ * Collects all the tag claims along the given path, canceling tag claims that are
  * negated by "not" claims for the same tag downstream in the path, and ignoring
  * "not" claims without corresponding positive claims upstream, as these dangling
- * "not" claims are irrelevant for the given path.
+ * "not" claims are irrelevant for the given path. Note that "derives from" claims
+ * only prune paths, and are dealt with during path generation, so they are ignored.
  */
-function computeClaimsInPath(path: BackwardsPath): Claim[] {
-  const claims: Claim[] = [];
+function computeTagClaimsInPath(path: BackwardsPath): ClaimIsTag[] {
+  const claims: ClaimIsTag[] = [];
   // We traverse the path in the forward direction, so we can cancel correctly.
   const edgesInPath = path.edges.slice().reverse();
   edgesInPath.forEach(e => {
@@ -161,24 +166,24 @@ function computeClaimsInPath(path: BackwardsPath): Claim[] {
       return;
     }
     if (e.claim.type === ClaimType.DerivesFrom) {
-      claims.push(claim);
       return;
-    }
-    const tagClaim = claim as ClaimIsTag;
+    } 
+    const tagClaim = e.claim as ClaimIsTag;
     if (!tagClaim.isNot) {
-      claims.push(claim);
+      claims.push(tagClaim);
       return;          
     }
+    // Our current claim is a "not" tag claim. 
+    // Ignore it if there are no preceding tag claims
     if (claims.length === 0) {
       return;
     }
-    // Our current claim is a "not" tag claim. Find and remove all existing 
-    // positive claims for the tag. There may be > 1.
+    // Find and remove all existing positive claims for the tag. There may be > 1.
     let index = 0;
     while (index < claims.length) {
-      const claim = claims[index];
-      if (claim.type === ClaimType.IsTag && (claim as ClaimIsTag).tag == tagClaim.tag) {
-        array.splice(index, 1);
+      const priorClaim = claims[index];
+      if (priorClaim.tag == tagClaim.tag) {
+        claims.splice(index, 1);
       } else {
         index += 1;
       }
@@ -187,15 +192,48 @@ function computeClaimsInPath(path: BackwardsPath): Claim[] {
   return claims;
 }
 
-/** Returns true if the given check passes against the claims. Only one condition needs to pass. */
-function evaluateCheckAgainstClaims(check: Check, claims: Claim[]): boolean {
-  // Check every condition against the set of Claims
-  for (const condition of check.conditions) {
-    for (const claim of claims) {
-      if (evaluateCheckCondition(condition, claim)) {
-        // Only one condition needs to pass against any claim, so we can return true straight away.
->>>>>>> Temp commit in order to pull
-        return true;
+/**
+ * Collects and returns the names of all the handles in this path. 
+ */
+function computeHandlesInPath(path: BackwardsPath): HandleNode[] {
+  const handles: HandleNode[] = [];
+  for (const node of path.nodes) {
+    if (node instanceof HandleNode) {
+      handles.push(node);
+    }
+  }
+  return handles;
+}
+
+/** 
+ * Returns true if the given check passes against one of the tag claims or one
+ * one of the handles in the path. Only one condition needs to pass.
+ */
+function evaluateCheck(conditions: CheckCondition[], 
+                       claims: ClaimIsTag[],
+                       handles: HandleNode[]): boolean {
+  // Check every condition against the set of tag claims. If it fails, check
+  // against the handles
+  for (const condition of conditions) {
+    if (condition.type === CheckType.HasTag) {
+      for (const claim of claims) {
+        const tagMatches = (claim.tag === (condition as CheckHasTag).tag);
+        // If the claim has a 'not', invert the match, i.e. if the tag
+        // matches, the result is false and if it doesn't the result is true.
+        const result = claim.isNot ? !tagMatches : tagMatches;
+        // Only one condition needs to pass against any claim, so if we pass we 
+        // can return true straight away.
+        if (result === true) {
+          return true;
+        }
+      }
+    } else { // condition type is from handle
+      for (const handle of handles) {
+        // Again, only one condition needs to pass.
+        const checkHandle = (condition as CheckIsFromHandle).parentHandle;
+        if (handle.outConnectionSpecs.has(checkHandle)) {
+          return true;
+        }
       }
     }
   }
@@ -212,7 +250,8 @@ export class ValidationResult {
 }
 
 /**
- * A path that walks backwards through the graph, i.e. it walks along the directed edges in the reverse direction. The path is described by the
+ * A path that walks backwards through the graph, i.e. it walks along the 
+ * directed edges in the reverse direction. The path is described by the
  * nodes in the path. Class is immutable.
  */
 export class BackwardsPath {
@@ -252,6 +291,12 @@ export class BackwardsPath {
 
   get endEdge(): Edge {
     return this.edges[this.edges.length - 1];
+  }
+
+  checkFailureString(check: string) : string {
+    const edgesInPath = this.edges.slice().reverse();
+    const pathString = edgesInPath.map(e => e.label).join(' -> ');
+    return (`${check} failed for path: ${pathString}`);
   }
 }
 
@@ -302,8 +347,6 @@ export abstract class Node {
 
   abstract addInEdge(edge: Edge): void;
   abstract addOutEdge(edge: Edge): void;
-
-  abstract evaluateCheckCondition(condition: CheckCondition, edgeToCheck: Edge): boolean;
 
   get inNodes(): Node[] {
     return this.inEdges.map(e => e.start);
@@ -383,33 +426,6 @@ class ParticleNode extends Node {
     return this.inEdges;
   }
 
-  evaluateCheckCondition(condition: CheckCondition, edgeToCheck: ParticleOutput): boolean {
-    assert(this.outEdges.includes(edgeToCheck), 'Particles can only check their own out-edges.');
-
-    // Particles can only evaluate tag check conditions.
-    if (condition.type !== CheckType.HasTag) {
-      return false;
-    }
-
-    const claim = edgeToCheck.claim;
-    if (!claim) {
-      return false; // This must change to implement "not" on checks
-    }
-
-    if (claim.type !== ClaimType.IsTag) {
-      return false;
-    }
-
-    const tagClaim = claim as ClaimIsTag;
-    assert(tagClaim, 'Claim has type HasTag but cast to ClaimIsTag failed.');
-
-    // True if the particle claims the tag on this edge.
-    const tagMatches = (tagClaim.tag === condition.tag);
-
-    // If the claim has a 'not', we return the boolean inverse, i.e. if the tag
-    // matches, we return false and if it doesn't we return true.
-    return tagClaim.isNot ? !tagMatches : tagMatches;
-  }
 }
 
 class ParticleInput implements Edge {
@@ -483,17 +499,5 @@ class HandleNode extends Node {
 
   inEdgesFromOutEdge(outEdge: ParticleInput): readonly ParticleOutput[] {
     return this.inEdges;
-  }
-
-  evaluateCheckCondition(condition: CheckCondition, edgeToCheck: ParticleInput): boolean {
-    assert(this.outEdges.includes(edgeToCheck), 'Handles can only check their own out-edges.');
-
-    // Handles can only validate checks against themselves.
-    if (condition.type !== CheckType.IsFromHandle) {
-      return false;
-    }
-    
-    // Check if this handle node has the same connection as the check condition. If so, it must be the same handle, so we should succeed.
-    return this.outConnectionSpecs.has(condition.parentHandle);
   }
 }
