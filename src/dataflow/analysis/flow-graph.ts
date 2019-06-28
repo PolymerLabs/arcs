@@ -82,7 +82,8 @@ export class FlowGraph {
     // Check every input path into the given edge.
     // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
     for (const path of allInputPaths(edgeToCheck)) {
-      if (!evaluateCheckForPath(check, path)) {
+      const claimsForPath = computeClaimsInPath(path);
+      if (!evaluateCheckAgainstClaims(check, claimsForPath)) {
         const edgesInPath = path.edges.slice().reverse();
         const pathString = edgesInPath.map(e => e.label).join(' -> ');
         finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${pathString}`);
@@ -117,6 +118,7 @@ function* allInputPaths(startEdge: Edge): Iterable<BackwardsPath> {
   }
 }
 
+<<<<<<< HEAD
 /** Returns true if the given check passes for the given path. */
 function evaluateCheckForPath(check: Check, path: BackwardsPath): boolean {
   // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
@@ -143,6 +145,56 @@ function evaluateCheckForPath(check: Check, path: BackwardsPath): boolean {
       const node = edge.start;
       if (node.evaluateCheckCondition(condition, edge)) {
         // Only one condition needs to pass, anywhere in the path, so we can return true straight away.
+=======
+/**
+ * Collect all the claims along the given path, canceling tag claims that are
+ * negated by "not" claims for the same tag downstream in the path, and ignoring
+ * "not" claims without corresponding positive claims upstream, as these dangling
+ * "not" claims are irrelevant for the given path.
+ */
+function computeClaimsInPath(path: BackwardsPath): Claim[] {
+  const claims: Claim[] = [];
+  // We traverse the path in the forward direction, so we can cancel correctly.
+  const edgesInPath = path.edges.slice().reverse();
+  edgesInPath.forEach(e => {
+    if (!e.claim) {
+      return;
+    }
+    if (e.claim.type === ClaimType.DerivesFrom) {
+      claims.push(claim);
+      return;
+    }
+    const tagClaim = claim as ClaimIsTag;
+    if (!tagClaim.isNot) {
+      claims.push(claim);
+      return;          
+    }
+    if (claims.length === 0) {
+      return;
+    }
+    // Our current claim is a "not" tag claim. Find and remove all existing 
+    // positive claims for the tag. There may be > 1.
+    let index = 0;
+    while (index < claims.length) {
+      const claim = claims[index];
+      if (claim.type === ClaimType.IsTag && (claim as ClaimIsTag).tag == tagClaim.tag) {
+        array.splice(index, 1);
+      } else {
+        index += 1;
+      }
+    }
+  });
+  return claims;
+}
+
+/** Returns true if the given check passes against the claims. Only one condition needs to pass. */
+function evaluateCheckAgainstClaims(check: Check, claims: Claim[]): boolean {
+  // Check every condition against the set of Claims
+  for (const condition of check.conditions) {
+    for (const claim of claims) {
+      if (evaluateCheckCondition(condition, claim)) {
+        // Only one condition needs to pass against any claim, so we can return true straight away.
+>>>>>>> Temp commit in order to pull
         return true;
       }
     }
@@ -341,7 +393,7 @@ class ParticleNode extends Node {
 
     const claim = edgeToCheck.claim;
     if (!claim) {
-      return false; // This must change to implement not on checks
+      return false; // This must change to implement "not" on checks
     }
 
     if (claim.type !== ClaimType.IsTag) {
@@ -354,7 +406,8 @@ class ParticleNode extends Node {
     // True if the particle claims the tag on this edge.
     const tagMatches = (tagClaim.tag === condition.tag);
 
-    // If the claim has a 'not', we return the boolean inverse.
+    // If the claim has a 'not', we return the boolean inverse, i.e. if the tag
+    // matches, we return false and if it doesn't we return true.
     return tagClaim.isNot ? !tagMatches : tagMatches;
   }
 }

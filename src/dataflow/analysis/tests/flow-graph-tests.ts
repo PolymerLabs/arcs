@@ -216,6 +216,41 @@ describe('FlowGraph validation', () => {
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
 
+  it('fails when a "not tag" is claimed and the tag is checked for', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is not trusted
+      particle P2
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    const result = graph.validateGraph();
+    assert.isFalse(result.isValid);
+    assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
+  });
+
+  it('succeeds when a "not tag" is claimed and there are no checks', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is not trusted
+      particle P2
+        in Foo {} bar
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    assert.isTrue(graph.validateGraph().isValid);
+  });
+
   it('succeeds when handle has multiple inputs with the right tags', async () => {
     const graph = await buildFlowGraph(`
       particle P1
