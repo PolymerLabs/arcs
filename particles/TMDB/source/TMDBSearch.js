@@ -10,7 +10,7 @@
 
 'use strict';
 
-/* global defineParticle, importScripts */
+/* global defineParticle */
 defineParticle(({DomParticle, log}) => {
 
   const service = `http://xenonjs.com/services/http/php/tmdb.php`;

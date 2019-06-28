@@ -583,10 +583,10 @@ function lint(args: string[]): boolean {
 
   const options = minimist(args, {
     boolean: ['fix'],
+    string: ['format']
   });
 
   const jsSources = [...findProjectFiles(process.cwd(), srcExclude, /\.[jt]s$/)];
-
   const cli = new CLIEngine({
     useEsLintRc: false,
     configFile: '.eslintrc.json',
@@ -595,7 +595,7 @@ function lint(args: string[]): boolean {
     cache: true
   });
   const report = cli.executeOnFiles(jsSources);
-  const formatter = cli.getFormatter();
+  const formatter = cli.getFormatter(options.format || 'stylish');
   console.log(formatter(report.results));
 
   if (options.fix) {

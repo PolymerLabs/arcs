@@ -192,15 +192,13 @@ export const SingleUserContext = class {
     // TODO(sjmiles): cache and return promises in case of re-entrancy
     let promise = this.pendingStores[id];
     if (!promise) {
-      promise = new Promise(async (resolve) => {
-        const store = await context.findStoreById(id);
-        if (store) {
-          resolve(store);
-        } else {
-          const store = await context.createStore(type, name, id, tags);
-          resolve(store);
+      promise = (async () => {
+        let store = context.findStoreById(id);
+        if (!store) {
+          store = await context.createStore(type, name, id, tags);
         }
-      });
+        return store;
+      })();
       this.pendingStores[id] = promise;
     }
     return promise;

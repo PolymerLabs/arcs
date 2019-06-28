@@ -103,6 +103,7 @@ describe('Store', async () => {
 
     let sentSyncRequest = false;
 
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
@@ -130,6 +131,7 @@ describe('Store', async () => {
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
     const activeStore = await store.activate();
     
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
@@ -156,6 +158,7 @@ describe('Store', async () => {
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {

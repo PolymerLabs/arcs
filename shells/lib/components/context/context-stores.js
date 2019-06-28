@@ -47,13 +47,13 @@ const ContextStoresImpl = class {
     // cache and return promises in case of re-entrancy
     let promise = pendingStores[id];
     if (!promise) {
-      promise = new Promise(async resolve => {
+      promise = (async () => {
         let store = await context.findStoreById(id);
         if (!store) {
           store = await this.createReferenceStore(context, schema, name, id, tags);
         }
-        resolve(store);
-      });
+        return store;
+      })();
       pendingStores[id] = promise;
     }
     return promise;
