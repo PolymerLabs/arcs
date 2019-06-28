@@ -182,7 +182,7 @@ function computeTagClaimsInPath(path: BackwardsPath): ClaimIsTag[] {
     let index = 0;
     while (index < claims.length) {
       const priorClaim = claims[index];
-      if (priorClaim.tag == tagClaim.tag) {
+      if (priorClaim.tag === tagClaim.tag) {
         claims.splice(index, 1);
       } else {
         index += 1;
