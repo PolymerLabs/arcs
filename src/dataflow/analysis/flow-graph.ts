@@ -14,7 +14,9 @@ import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
 import {ClaimType, Claim} from '../../runtime/particle-claim';
 import {Check, CheckType, CheckCondition, CheckIsFromHandle} from '../../runtime/particle-check';
-import {HandleConnectionSpec} from '../../runtime/particle-spec';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec, ProvideSlotConnectionSpec} from '../../runtime/particle-spec';
+import {Slot} from '../../runtime/recipe/slot';
+import {SlotConnection} from '../../runtime/recipe/slot-connection';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -22,6 +24,7 @@ import {HandleConnectionSpec} from '../../runtime/particle-spec';
 export class FlowGraph {
   readonly particles: ParticleNode[];
   readonly handles: HandleNode[];
+  readonly slots: SlotNode[];
   readonly nodes: Node[];
   readonly edges: Edge[] = [];
 
@@ -36,7 +39,7 @@ export class FlowGraph {
     // Create the nodes of the graph.
     const particleNodes = createParticleNodes(recipe.particles);
     const handleNodes = createHandleNodes(recipe.handles);
-    // TODO: Add nodes for slots.
+    const slotNodes = createSlotNodes(recipe.slots);
 
     // Add edges to the nodes.
     recipe.handleConnections.forEach(connection => {
@@ -46,9 +49,27 @@ export class FlowGraph {
       this.edges.push(edge);
     });
 
+    // Add edges from particles to the slots that they consume (one-way only, for now).
+    recipe.slotConnections.forEach(connection => {
+      const particleNode = particleNodes.get(connection.particle);
+      const slotNode = slotNodes.get(connection.targetSlot);
+      const edge = addSlotConnection(particleNode, slotNode, connection);
+      this.edges.push(edge);
+
+      // Copy the Check object from the "provide" connection onto the SlotNode.
+      // (Checks are defined by the particle that provides the slot, but are
+      // applied to the particle that consumes the slot.)
+      for (const providedSlotSpec of connection.getSlotSpec().provideSlotConnections) {
+        const providedSlot = connection.providedSlots[providedSlotSpec.name];
+        const providedSlotNode = slotNodes.get(providedSlot);
+        providedSlotNode.check = providedSlotSpec.check;
+      }
+    });
+
     this.particles = [...particleNodes.values()];
     this.handles = [...handleNodes.values()];
-    this.nodes = [...this.particles, ...this.handles];
+    this.slots = [...slotNodes.values()];
+    this.nodes = [...this.particles, ...this.handles, ...this.slots];
     this.particleMap = new Map(this.particles.map(n => [n.name, n]));
   }
 
@@ -90,7 +111,7 @@ export class FlowGraph {
     // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
     for (const path of allInputPaths(edgeToCheck)) {
       const tagsForPath = computeTagClaimsInPath(path);
-      const handlesInPath = path.nodes.filter(n => n instanceof HandleNode);
+      const handlesInPath = path.nodes.filter(n => n instanceof HandleNode) as HandleNode[];
       if (!evaluateCheck(conditions, tagsForPath, handlesInPath)) {
         finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${path.toString()}`);
       }
@@ -184,7 +205,7 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
  * Returns true if the given check passes against one of the tag claims or one
  * one of the handles in the path. Only one condition needs to pass.
  */
-function evaluateCheck(conditions: CheckCondition[], claimTags: Set<string>, handles: Node[]): boolean {
+function evaluateCheck(conditions: CheckCondition[], claimTags: Set<string>, handles: HandleNode[]): boolean {
   // Check every condition against the set of tag claims. If it fails, check
   // against the handles
   for (const condition of conditions) {
@@ -198,11 +219,11 @@ function evaluateCheck(conditions: CheckCondition[], claimTags: Set<string>, han
         // Do any of the handles in the path contain the condition handle as
         // an output handle?
         for (const handle of handles) {
-          if ((handle as HandleNode).validateIsFromHandleCheck(condition as CheckIsFromHandle)) {
+          if (handle.validateIsFromHandleCheck(condition)) {
             return true;
           }
         }
-      break;
+        break;
       default:
         throw new Error('Unknown condition type.');
     }
@@ -291,6 +312,14 @@ function createHandleNodes(handles: Handle[]) {
   return nodes;
 }
 
+function createSlotNodes(slots: Slot[]) {
+  const nodes: Map<Slot, SlotNode> = new Map();
+  slots.forEach(slot => {
+    nodes.set(slot, new SlotNode(slot));
+  });
+  return nodes;
+}
+
 /** Adds a connection between the given particle and handle nodes. */
 function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection): Edge {
   switch (connection.direction) {
@@ -313,6 +342,13 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
+/** Adds a connection between the given particle and slot nodes, where the particle "consumes" the slot. */
+function addSlotConnection(particleNode: ParticleNode, slotNode: SlotNode, connection: SlotConnection): Edge {
+  const edge = new SlotInput(particleNode, slotNode, connection);
+  particleNode.addOutEdge(edge);
+  slotNode.addInEdge(edge);
+  return edge;
+}
 
 export abstract class Node {
   abstract readonly inEdges: readonly Edge[];
@@ -336,19 +372,19 @@ export interface Edge {
   readonly start: Node;
   readonly end: Node;
   
-  /** The name of the handle this edge represents, e.g. "output1". */
-  readonly handleName: string;
+  /** The name of the handle/slot this edge represents, e.g. "output1". */
+  readonly connectionName: string;
   
-  /** The qualified name of the handle this edge represents, e.g. "MyParticle.output1". */
+  /** The qualified name of the handle/slot this edge represents, e.g. "MyParticle.output1". */
   readonly label: string;
 
   readonly claim?: Claim;
   readonly check?: Check;
 }
 
-class ParticleNode extends Node {
+export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();
-  readonly outEdgesByName: Map<string, ParticleOutput> = new Map();
+  readonly outEdgesByName: Map<string, Edge> = new Map();
 
   readonly name: string;
 
@@ -364,18 +400,18 @@ class ParticleNode extends Node {
   }
     
   addInEdge(edge: ParticleInput) {
-    this.inEdgesByName.set(edge.handleName, edge);
+    this.inEdgesByName.set(edge.connectionName, edge);
   }
   
-  addOutEdge(edge: ParticleOutput) {
-    this.outEdgesByName.set(edge.handleName, edge);
+  addOutEdge(edge: Edge) {
+    this.outEdgesByName.set(edge.connectionName, edge);
   }
   
   get inEdges(): readonly ParticleInput[] {
     return [...this.inEdgesByName.values()];
   }
 
-  get outEdges(): readonly ParticleOutput[] {
+  get outEdges(): readonly Edge[] {
     return [...this.outEdgesByName.values()];
   }
 
@@ -383,7 +419,7 @@ class ParticleNode extends Node {
    * Iterates through all of the relevant in-edges leading into this particle, that flow out into the given out-edge. The out-edge may have a
    * 'derives from' claim that restricts which edges flow into it.
    */
-  inEdgesFromOutEdge(outEdge: ParticleOutput): readonly ParticleInput[] {
+  inEdgesFromOutEdge(outEdge: Edge): readonly ParticleInput[] {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
     if (outEdge.claim && outEdge.claim.type === ClaimType.DerivesFrom) {
@@ -405,7 +441,7 @@ class ParticleInput implements Edge {
   readonly start: Node;
   readonly end: ParticleNode;
   readonly label: string;
-  readonly handleName: string;
+  readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
   /* Optional check on this input. */
@@ -414,8 +450,8 @@ class ParticleInput implements Edge {
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = otherEnd;
     this.end = particleNode;
-    this.handleName = connection.name;
-    this.label = `${particleNode.name}.${this.handleName}`;
+    this.connectionName = connection.name;
+    this.label = `${particleNode.name}.${this.connectionName}`;
     this.check = connection.spec.check;
     this.connectionSpec = connection.spec;
   }
@@ -425,26 +461,43 @@ class ParticleOutput implements Edge {
   readonly start: ParticleNode;
   readonly end: Node;
   readonly label: string;
-  readonly handleName: string;
+  readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  /* Optional claim on this output. */
   readonly claim?: Claim;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = particleNode;
     this.end = otherEnd;
-    this.handleName = connection.name;
-    this.label = `${particleNode.name}.${this.handleName}`;
-    this.claim = particleNode.claims.get(this.handleName);
+    this.connectionName = connection.name;
     this.connectionSpec = connection.spec;
+    this.label = `${particleNode.name}.${this.connectionName}`;
+    this.claim = particleNode.claims.get(this.connectionName);
+  }
+}
+
+class SlotInput implements Edge {
+  readonly start: ParticleNode;
+  readonly end: SlotNode;
+  readonly label: string;
+  readonly connectionName: string;
+
+  constructor(particleNode: ParticleNode, slotNode: SlotNode, connection: SlotConnection) {
+    this.start = particleNode;
+    this.end = slotNode;
+    this.connectionName = connection.name;
+    this.label = `${particleNode.name}.${this.connectionName}`;
+  }
+
+  get check(): Check | undefined {
+    return this.end.check;
   }
 }
 
 class HandleNode extends Node {
   readonly inEdges: ParticleOutput[] = [];
   readonly outEdges: ParticleInput[] = [];
-  readonly outConnectionSpecs: Set<HandleConnectionSpec> = new Set();
+  readonly connectionSpecs: Set<HandleConnectionSpec> = new Set();
 
   constructor(handle: Handle) {
     super();
@@ -463,18 +516,47 @@ class HandleNode extends Node {
 
   addInEdge(edge: ParticleOutput) {
     this.inEdges.push(edge);
+    this.connectionSpecs.add(edge.connectionSpec);
   }
 
   addOutEdge(edge: ParticleInput) {
     this.outEdges.push(edge);
-    this.outConnectionSpecs.add(edge.connectionSpec);
+    this.connectionSpecs.add(edge.connectionSpec);
   }
 
   inEdgesFromOutEdge(outEdge: ParticleInput): readonly ParticleOutput[] {
+    assert(this.outEdges.includes(outEdge), 'Handle does not have the given out-edge.');
     return this.inEdges;
   }
 
   validateIsFromHandleCheck(condition: CheckIsFromHandle): boolean {
-    return this.outConnectionSpecs.has(condition.parentHandle);
+    // Check if this handle node has the desired HandleConnectionSpec. If so, it is the right handle.
+    return this.connectionSpecs.has(condition.parentHandle);
+  }
+}
+
+class SlotNode extends Node {
+  // For now, slots can only have in-edges (from the particles that consume them).
+  // TODO: These should be inout edges, because slots can bubble up user events back to these same particles.
+  readonly inEdges: SlotInput[] = [];
+  readonly outEdges: readonly Edge[] = [];
+  
+  // Optional check on the data entering this slot. The check is defined by the particle which provided this slot.
+  check?: Check;
+
+  constructor(slot: Slot) {
+    super();
+  }
+
+  addInEdge(edge: SlotInput) {
+    this.inEdges.push(edge);
+  }
+
+  addOutEdge(edge: Edge) {
+    throw new Error(`Slots can't have out-edges (yet).`);
+  }
+
+  inEdgesFromOutEdge(outEdge: Edge): never {
+    throw new Error(`Slots can't have out-edges (yet).`);
   }
 }

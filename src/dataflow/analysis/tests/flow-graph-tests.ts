@@ -10,9 +10,10 @@
 import {Manifest} from '../../../runtime/manifest.js';
 import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge, BackwardsPath} from '../flow-graph.js';
+import {FlowGraph, Node, Edge, BackwardsPath, ParticleNode} from '../flow-graph.js';
 import {ClaimIsTag} from '../../../runtime/particle-claim.js';
 import {CheckHasTag, CheckCondition} from '../../../runtime/particle-check.js';
+import {ProvideSlotConnectionSpec} from '../../../runtime/particle-spec.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -146,6 +147,44 @@ describe('FlowGraph', () => {
 
     assert.lengthOf(graph.edges, 1);
     assert.equal(graph.edges[0].check, check);
+  });
+
+  it('supports making checks on slots', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        consume root
+          provide slotToProvide
+        check slotToProvide data is trusted
+      particle P2
+        consume slotToConsume
+      recipe R
+        slot 'rootslotid-root' as root
+        P1
+          consume root as root
+            provide slotToProvide as slot0
+        P2
+          consume slotToConsume as slot0
+    `);
+    assert.lengthOf(graph.slots, 2);
+
+    const slot1 = checkDefined(graph.slots[0]);
+    assert.isEmpty(slot1.outEdges);
+    assert.lengthOf(slot1.inEdges, 1);
+    assert.equal(slot1.inEdges[0].connectionName, 'root');
+    assert.equal((slot1.inEdges[0].start as ParticleNode).name, 'P1');
+    assert.isUndefined(slot1.inEdges[0].check);
+    assert.isUndefined(slot1.check);
+    
+    const slot2 = checkDefined(graph.slots[1]);
+    assert.isEmpty(slot2.outEdges);
+    assert.lengthOf(slot2.inEdges, 1);
+    assert.equal(slot2.inEdges[0].connectionName, 'slotToConsume');
+    assert.equal((slot2.inEdges[0].start as ParticleNode).name, 'P2');
+    const check = slot2.inEdges[0].check;
+    assert.instanceOf(check.target, ProvideSlotConnectionSpec);
+    assert.equal(check.target.name, 'slotToProvide');
+    assert.deepEqual(check.expression, new CheckHasTag('trusted'));
+    assert.equal(check, slot2.check);
   });
 });
 
@@ -699,6 +738,101 @@ describe('FlowGraph validation', () => {
       ]);
     });
   });
+
+  describe('checks on slots', () => {
+    it('succeeds for tag checks when the slot consumer has the right tag', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          consume root
+            provide slotToProvide
+          check slotToProvide data is trusted
+        particle P2
+          out Foo {} foo
+          claim foo is trusted
+        particle P3
+          in Foo {} bar
+          consume slotToConsume
+        recipe R
+          slot 'rootslotid-root' as root
+          P1
+            consume root as root
+              provide slotToProvide as slot0
+          P2
+            foo -> h
+          P3
+            bar <- h
+            consume slotToConsume as slot0
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('fails for tag checks when the tag is missing', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          consume root
+            provide slotToProvide
+          check slotToProvide data is trusted
+        particle P2
+          consume slotToConsume
+        recipe R
+          slot 'rootslotid-root' as root
+          P1
+            consume root as root
+              provide slotToProvide as slot0
+          P2
+            consume slotToConsume as slot0
+      `);
+      const result = graph.validateGraph();
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [`'check slotToProvide data is trusted' failed for path: P2.slotToConsume`]);
+    });
+
+    it('succeeds for handle checks when the slot consumer derives from the right handle', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} foo
+          consume root
+            provide slotToProvide
+          check slotToProvide data is from handle foo
+        particle P2
+          in Foo {} bar
+          consume slotToConsume
+        recipe R
+          slot 'rootslotid-root' as root
+          P1
+            foo -> h
+            consume root as root
+              provide slotToProvide as slot0
+          P2
+            bar <- h
+            consume slotToConsume as slot0
+      `);
+      assert.isTrue(graph.validateGraph().isValid);
+    });
+
+    it('fails for handle checks when the handle is not present', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} foo
+          consume root
+            provide slotToProvide
+          check slotToProvide data is from handle foo
+        particle P2
+          consume slotToConsume
+        recipe R
+          slot 'rootslotid-root' as root
+          P1
+            foo -> h
+            consume root as root
+              provide slotToProvide as slot0
+          P2
+            consume slotToConsume as slot0
+      `);
+      const result = graph.validateGraph();
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [`'check slotToProvide data is from handle foo' failed for path: P2.slotToConsume`]);
+    });
+  });
 });
 
 class TestNode extends Node {
@@ -723,7 +857,7 @@ class TestNode extends Node {
 }
 
 class TestEdge implements Edge {
-  readonly handleName = 'handleName';
+  readonly connectionName = 'connectionName';
 
   constructor(
       readonly start: TestNode,
