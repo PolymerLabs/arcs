@@ -11,17 +11,18 @@
 import {assert} from '../../platform/assert-web.js';
 
 import {Particle} from './particle.js';
-import {Recipe, RequireSection} from './recipe.js';
+import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, ToStringOptions} from './recipe.js';
 import {Slot} from './slot.js';
-import {compareComparables, compareStrings} from './comparable.js';
+import {compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Dictionary} from '../hot.js';
+import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 
-export class SlotConnection {
+export class SlotConnection implements Comparable<SlotConnection> {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;
   private readonly _name: string;
   private _targetSlot?: Slot = undefined;
-  private _providedSlots: Dictionary<Slot> = {};
+  public _providedSlots: Dictionary<Slot> = {}; // TODO(lindner): make private, used in slot.ts
   private _tags = <string[]>[];
 
   constructor(name: string, particle: Particle) {
@@ -42,14 +43,14 @@ export class SlotConnection {
   get particle(): Particle  { return this._particle; }
   get name(): string { return this._name; }
   getQualifiedName(): string { return `${this.particle.name}::${this.name}`; }
-  get targetSlot(): Slot { return this._targetSlot; }
+  get targetSlot(): Slot|undefined { return this._targetSlot; }
   set targetSlot(targetSlot: Slot | undefined) { this._targetSlot = targetSlot; }
 
   get providedSlots(): Dictionary<Slot> { return this._providedSlots; }
   get tags(): string[] { return this._tags; }
   set tags(tags: string[]) { this._tags = tags; }
 
-  getSlotSpec() {
+  getSlotSpec(): ConsumeSlotConnectionSpec|undefined {
     return this.particle.spec && this.particle.spec.getSlotSpec(this.name);
   }
 
@@ -69,9 +70,9 @@ export class SlotConnection {
     }
   }
 
-  _clone(particle: Particle, cloneMap): SlotConnection {
+  _clone(particle: Particle, cloneMap: CloneMap): SlotConnection {
     if (cloneMap.has(this)) {
-      return cloneMap.get(this);
+      return cloneMap.get(this) as SlotConnection;
     }
 
     const slotConnection = particle.addSlotConnectionAsCopy(this.name);
@@ -98,7 +99,7 @@ export class SlotConnection {
     return 0;
   }
 
-  _isValid(options): boolean {
+  _isValid(options: IsValidOptions): boolean {
     if (this._targetSlot && this._targetSlot.sourceConnection &&
         this._targetSlot !== this._targetSlot.sourceConnection.providedSlots[this._targetSlot.name]) {
       if (options && options.errors) {
@@ -127,7 +128,9 @@ export class SlotConnection {
       return false;
     }
 
-    if (this.getSlotSpec() == undefined || this.getSlotSpec().isRequired) {
+    const slotSpec = this.getSlotSpec();
+    
+    if (slotSpec === undefined || slotSpec.isRequired) {
       if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
         // The required connection has no target slot
         // or its target slot it not resolved (has no ID or source connection).
@@ -144,7 +147,7 @@ export class SlotConnection {
     if (this.getSlotSpec() == undefined) return true;
 
     return this.getSlotSpec().provideSlotConnections.every(providedSlot => {
-      if (providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {
+      if (providedSlot && providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {
         if (options) {
           options.details = 'missing consuming slot';
         }
@@ -165,7 +168,7 @@ export class SlotConnection {
     return this.isConnectedToInternalSlot() || this.isConnectedToRemoteSlot();
   }
 
-  toString(nameMap, options): string {
+  toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const consumeRes: string[] = [];
     consumeRes.push('consume');
     consumeRes.push(`${this.name}`);

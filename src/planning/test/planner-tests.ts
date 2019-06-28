@@ -43,6 +43,18 @@ const assertRecipeResolved = recipe => {
   assert.isTrue(recipe.isResolved());
 };
 
+class NullLoader extends StubLoader {
+  constructor() {
+    super({});
+  }
+  join(prefix: string) {
+    return '';
+  }
+  async loadResource(path: string): Promise<string> {
+    return '[]';
+  }
+}
+
 class MyLoader extends StubLoader {
   private manifest;
 
@@ -349,10 +361,7 @@ ${recipeManifest}
 
 describe('Type variable resolution', () => {
   const loadAndPlan = async (manifestStr) => {
-    const loader = {
-      join: (() => ''),
-      loadResource: (() => '[]')
-    };
+    const loader = new NullLoader();
     const manifest = (await Manifest.parse(manifestStr, {loader}));
     const arc = StrategyTestHelper.createTestArc(manifest);
     const planner = new Planner();

@@ -54,7 +54,7 @@ export class Description {
    */
   static async create(arc: Arc, relevance?: Relevance): Promise<Description> {
     // Execute async related code here
-    const allParticles = [].concat(...arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
+    const allParticles = ([] as Particle[]).concat(...arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
     const particleDescriptions = await Description.initDescriptionHandles(allParticles, arc, relevance);
 
     const storeDescById: {[id: string]: string} = {};
@@ -70,8 +70,8 @@ export class Description {
   }
 
   getArcDescription(formatterClass = DescriptionFormatter): string|undefined {
-    const patterns: string[] = [].concat(...this.arcRecipes.map(recipe => recipe.patterns));
-    const particles: Particle[] = [].concat(...this.arcRecipes.map(recipe => recipe.particles));
+    const patterns: string[] = ([] as string[]).concat(...this.arcRecipes.map(recipe => recipe.patterns));
+    const particles: Particle[] = ([] as Particle[]).concat(...this.arcRecipes.map(recipe => recipe.particles));
 
     const desc = new (formatterClass)(this.particleDescriptions, this.storeDescById).getDescription({
       patterns,

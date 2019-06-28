@@ -12,11 +12,11 @@ import {assert} from '../../platform/assert-web.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
-import {Recipe} from './recipe.js';
+import {CloneMap, IsResolvedOptions, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
-import {compareArrays, compareComparables, compareStrings} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
-export class Slot {
+export class Slot implements Comparable<Slot> {
   private readonly _recipe: Recipe;
   private _id?: string = undefined;
   private _localName?: string = undefined;
@@ -66,10 +66,10 @@ export class Slot {
     return handles;
   }
 
-  _copyInto(recipe: Recipe, cloneMap) {
-    let slot = undefined;
+  _copyInto(recipe: Recipe, cloneMap: CloneMap): Slot {
+    let slot: Slot = undefined;
     if (cloneMap.has(this)) {
-      return cloneMap.get(this);
+      return cloneMap.get(this) as Slot;
     }
     if (!this.sourceConnection && this.id) {
       slot = recipe.findSlot(this.id);
@@ -81,14 +81,16 @@ export class Slot {
       slot._localName = this._localName;
       slot._tags = [...this._tags];
       // the connections are re-established when Particles clone their attached SlotConnection objects.
-      slot._sourceConnection = cloneMap.get(this._sourceConnection);
+      slot._sourceConnection = cloneMap.get(this._sourceConnection) as SlotConnection;
       if (slot.sourceConnection) {
         slot.sourceConnection._providedSlots[slot.name] = slot;
       }
     }
     this._consumeConnections.forEach(connection => {
-      if (cloneMap.get(connection) && cloneMap.get(connection).targetSlot == undefined) {
-        cloneMap.get(connection).connectToSlot(slot);
+      const clonedConnection = cloneMap.get(connection);
+      
+      if (clonedConnection && clonedConnection instanceof SlotConnection && clonedConnection.targetSlot == undefined) {
+        clonedConnection.connectToSlot(slot);
       }
     });
     return slot;
@@ -117,11 +119,11 @@ export class Slot {
     return 0;
   }
 
-  findHandleByID(id) {
+  findHandleByID(id: string) {
     return this.handles.find(handle => handle.id === id);
   }
 
-  removeConsumeConnection(slotConnection) {
+  removeConsumeConnection(slotConnection: SlotConnection) {
     const idx = this._consumeConnections.indexOf(slotConnection);
     assert(idx > -1);
     this._consumeConnections.splice(idx, 1);
@@ -134,7 +136,7 @@ export class Slot {
     this._recipe.removeSlot(this);
   }
 
-  isResolved(options = undefined) : boolean {
+  isResolved(options?: IsResolvedOptions) : boolean {
     assert(Object.isFrozen(this));
 
     if (options && options.showUnresolved) {
@@ -145,18 +147,17 @@ export class Slot {
       if (!this.id) {
         options.details.push('missing id');
       }
-      options.details = options.details.join('; ');
     }
 
     return Boolean(this._sourceConnection || this.id);
   }
 
-  _isValid(options): boolean {
+  _isValid(options: IsValidOptions): boolean {
     // TODO: implement
     return true;
   }
 
-  toString(nameMap, options): string {
+  toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     const result: string[] = [];
     result.push('slot');
     if (this.id) {
@@ -166,7 +167,7 @@ export class Slot {
       result.push(this.tags.map(tag => `#${tag}`).join(' '));
     }
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
-    const includeUnresolved = options && options.showUnresolved && !this.isResolved(options);
+    const includeUnresolved = options.showUnresolved && !this.isResolved(options);
     if (includeUnresolved) {
       result.push(`// unresolved slot: ${options.details}`);
     }

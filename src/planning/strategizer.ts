@@ -94,7 +94,7 @@ export class Strategizer {
       record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generatedResults[i].length;
     }
 
-    let generated: Descendant<Recipe>[] = [].concat(...generatedResults);
+    let generated: Descendant<Recipe>[] = ([] as Descendant<Recipe>[]).concat(...generatedResults);
 
     // TODO: get rid of this additional asynchrony
     generated = await Promise.all(generated.map(async result => {

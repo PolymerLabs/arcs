@@ -119,7 +119,7 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
   originalId: string|null;
   name: string;
   readonly source: string|null;
-  readonly description: string;
+  description: string;
 
   protected constructor(type: Type, name: string, id: string, key: string) {
     assert(id, 'id must be provided when constructing StorageProviders');

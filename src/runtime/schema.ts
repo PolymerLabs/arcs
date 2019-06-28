@@ -110,7 +110,7 @@ export class Schema {
     }
   }
 
-  static union(schema1: Schema, schema2: Schema): Schema {
+  static union(schema1: Schema, schema2: Schema): Schema|null {
     const names = [...new Set([...schema1.names, ...schema2.names])];
     const fields = {};
 
@@ -174,7 +174,7 @@ export class Schema {
     return new EntityType(this);
   }
 
-  entityClass(context: ParticleExecutionContext = null): EntityClass {
+  entityClass(context: ParticleExecutionContext|null = null): EntityClass {
     return Entity.createEntityClass(this, context);
   }
 

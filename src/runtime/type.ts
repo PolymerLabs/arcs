@@ -9,7 +9,7 @@
  */
   
 import {Id} from './id.js';
-import {InterfaceInfo} from './interface-info.js';
+import {InterfaceInfo, Handle, Slot} from './interface-info.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
@@ -73,16 +73,16 @@ export abstract class Type {
   }
 
   /** Tests whether two types' constraints are compatible with each other. */
-  static canMergeConstraints(type1, type2) {
+  static canMergeConstraints(type1: Type, type2: Type): boolean {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
-  static _canMergeCanReadSubset(type1, type2): boolean {
+  static _canMergeCanReadSubset(type1: Type, type2: Type): boolean {
     if (type1.canReadSubset && type2.canReadSubset) {
       if (type1.canReadSubset.tag !== type2.canReadSubset.tag) {
         return false;
       }
-      if (type1.canReadSubset instanceof EntityType) {
+      if (type1.canReadSubset instanceof EntityType && type2.canReadSubset instanceof EntityType) {
         return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
       }
       throw new Error(`_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
@@ -90,12 +90,12 @@ export abstract class Type {
     return true;
   }
 
-  static _canMergeCanWriteSuperset(type1, type2): boolean {
+  static _canMergeCanWriteSuperset(type1: Type, type2: Type): boolean {
     if (type1.canWriteSuperset && type2.canWriteSuperset) {
       if (type1.canWriteSuperset.tag !== type2.canWriteSuperset.tag) {
         return false;
       }
-      if (type1.canWriteSuperset instanceof EntityType) {
+      if (type1.canWriteSuperset instanceof EntityType && type2.canWriteSuperset instanceof EntityType) {
         return Schema.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
       }
     }
@@ -129,11 +129,11 @@ export abstract class Type {
     return this;
   }
 
-  _applyExistenceTypeTest(test: Predicate<Type>) {
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
     return test(this);
   }
 
-  get hasVariable() {
+  get hasVariable(): boolean {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable);
   }
 
@@ -185,7 +185,7 @@ export abstract class Type {
     return this.tag === type.tag && this._isMoreSpecificThan(type);
   }
 
-  protected _isMoreSpecificThan(type): boolean {
+  protected _isMoreSpecificThan(type: Type): boolean {
     throw new Error(`isMoreSpecificThan not implemented for ${this}`);
   }
 
@@ -199,7 +199,7 @@ export abstract class Type {
     return this.resolvedType()._clone(variableMap);
   }
 
-  protected _clone(variableMap) {
+  protected _clone(variableMap: Map<string, Type>) {
     return Type.fromLiteral(this.toLiteral());
   }
 
@@ -209,7 +209,7 @@ export abstract class Type {
    * information to be maintained correctly, an entire context root needs to be
    * cloned.
    */
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap): Type {
     return Type.fromLiteral(this.toLiteral());
   }
 
@@ -261,7 +261,7 @@ export class EntityType extends Type {
     return this;
   }
 
-  _isMoreSpecificThan(type): boolean {
+  _isMoreSpecificThan(type: EntityType): boolean {
     return this.entitySchema.isMoreSpecificThan(type.entitySchema);
   }
 
@@ -277,7 +277,7 @@ export class EntityType extends Type {
     return this.entitySchema;
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap): EntityType {
     if (variableMap.has(this.entitySchema)) {
       return variableMap.get(this.entitySchema);
     }
@@ -286,7 +286,7 @@ export class EntityType extends Type {
     return clonedEntityType;
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     if (this.entitySchema.description.pattern) {
       return this.entitySchema.description.pattern;
     }
@@ -367,7 +367,7 @@ export class TypeVariable extends Type {
     }
   }
   
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): TypeVariable {
     if (variableMap.has(this.variable)) {
       return new TypeVariable(variableMap.get(this.variable) as TypeVariableInfo);
     } else {
@@ -457,12 +457,12 @@ export class CollectionType<T extends Type> extends Type {
     return InterfaceType.make(this.tag, [], []);
   }
 
-  _clone(variableMap) {
+  _clone(variableMap: Map<string, Type>) {
     const data = this.collectionType.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): CollectionType<Type> {
     return new CollectionType(this.collectionType._cloneWithResolutions(variableMap));
   }
 
@@ -544,12 +544,12 @@ export class BigCollectionType<T extends Type> extends Type {
     return InterfaceType.make(this.tag, [], []);
   }
 
-  _clone(variableMap) {
+  _clone(variableMap: Map<string, Type>) {
     const data = this.bigCollectionType.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): BigCollectionType<Type> {
     return new BigCollectionType(this.bigCollectionType._cloneWithResolutions(variableMap));
   }
 
@@ -609,12 +609,11 @@ export class InterfaceType extends Type {
     this.interfaceInfo = iface;
   }
 
-  // TODO: export InterfaceInfo's Handle and Slot interfaces to type check here?
-  static make(name: string, handles, slots) {
+  static make(name: string, handles: Handle[], slots: Slot[]) {
     return new InterfaceType(new InterfaceInfo(name, handles, slots));
   }
 
-  get isInterface() {
+  get isInterface(): boolean {
     return true;
   }
 
@@ -649,16 +648,16 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo.canReadSubset);
   }
 
-  _isMoreSpecificThan(type) {
+  _isMoreSpecificThan(type: InterfaceType) {
     return this.interfaceInfo.isMoreSpecificThan(type.interfaceInfo);
   }
 
-  _clone(variableMap) {
+  _clone(variableMap: Map<string, Type>) {
     const data = this.interfaceInfo.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap): InterfaceType {
     return new InterfaceType(this.interfaceInfo._cloneWithResolutions(variableMap));
   }
 
@@ -696,7 +695,7 @@ export class SlotType extends Type {
     return this;
   }
 
-  _isMoreSpecificThan(type) {
+  _isMoreSpecificThan(type: SlotType) {
     // TODO: formFactor checking, etc.
     return true;
   }
@@ -778,12 +777,12 @@ export class ReferenceType extends Type {
     return this.referredType.canReadSubset;
   }
 
-  _clone(variableMap) {
+  _clone(variableMap: Map<string, Type>) {
     const data = this.referredType.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType {
     return new ReferenceType(this.referredType._cloneWithResolutions(variableMap));
   }
 

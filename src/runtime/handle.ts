@@ -435,7 +435,7 @@ export class BigCollection extends Handle {
    * @throws {Error} if this Singleton is not configured as a readable handle (i.e. 'in' or 'inout')
    * in the particle's manifest.
    */
-  async stream({pageSize, forward = true}) {
+  async stream({pageSize, forward = true}: {pageSize: number, forward: boolean}) {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }

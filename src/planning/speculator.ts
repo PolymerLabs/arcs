@@ -31,7 +31,7 @@ export class Speculator {
     return {speculativeArc, relevance};
   }
 
-  private async awaitCompletion(relevance: Relevance, speculativeArc: Arc) {
+  private async awaitCompletion(relevance: Relevance, speculativeArc: Arc): Promise<Relevance> {
     const messageCount = speculativeArc.pec.messageCount;
     relevance.apply(await speculativeArc.pec.idle);
 

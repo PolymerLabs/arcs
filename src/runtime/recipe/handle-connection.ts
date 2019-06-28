@@ -14,20 +14,20 @@ import {Type} from '../type.js';
 
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import {Recipe} from './recipe.js';
+import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
 import {Direction} from '../manifest-ast-nodes.js';
 
-export class HandleConnection {
+export class HandleConnection implements Comparable<HandleConnection> {
   private readonly _recipe: Recipe;
-  private readonly _name: string;
+  public _name: string; // TODO(lindner): make private, used in particle.ts
   private _tags: string[] = [];
-  private resolvedType: Type | undefined = undefined;
-  private _direction: Direction | undefined = undefined;
+  private resolvedType?: Type = undefined;
+  private _direction?: Direction|null = undefined;
   private _particle: Particle;
-  _handle: Handle | undefined = undefined;
+  _handle?: Handle = undefined;
 
   constructor(name: string, particle: Particle) {
     assert(particle);
@@ -37,9 +37,9 @@ export class HandleConnection {
     this._particle = particle;
   }
 
-  _clone(particle: Particle, cloneMap) {
+  _clone(particle: Particle, cloneMap: CloneMap): HandleConnection {
     if (cloneMap.has(this)) {
-      return cloneMap.get(this);
+      return cloneMap.get(this) as HandleConnection;
     }
     const handleConnection = new HandleConnection(this._name, particle);
     handleConnection._tags = [...this._tags];
@@ -49,7 +49,7 @@ export class HandleConnection {
     handleConnection.resolvedType = this.resolvedType;
     handleConnection._direction = this._direction;
     if (this._handle != undefined) {
-      handleConnection._handle = cloneMap.get(this._handle);
+      handleConnection._handle = cloneMap.get(this._handle) as Handle;
       assert(handleConnection._handle !== undefined);
       handleConnection._handle.connections.push(handleConnection);
     }
@@ -58,7 +58,7 @@ export class HandleConnection {
   }
 
   // Note: don't call this method directly, only called from particle cloning.
-  cloneTypeWithResolutions(variableMap): void {
+  cloneTypeWithResolutions(variableMap: VariableMap): void {
     if (this.resolvedType) {
       this.resolvedType = this.resolvedType._cloneWithResolutions(variableMap);
     }
@@ -71,7 +71,7 @@ export class HandleConnection {
   }
 
   _compareTo(other: HandleConnection): number {
-    let cmp;
+    let cmp: number;
     if ((cmp = compareComparables(this._particle, other._particle)) !== 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
@@ -87,7 +87,7 @@ export class HandleConnection {
   getQualifiedName(): string { return `${this.particle.name}::${this.name}`; }
   get tags(): string[] { return this._tags; }
 
-  get type() {
+  get type(): Type|undefined|null {
     if (this.resolvedType) {
       return this.resolvedType;
     }
@@ -95,7 +95,7 @@ export class HandleConnection {
     return spec ? spec.type : null;
   }
 
-  get direction(): Direction|undefined { // in/out/inout/host/consume/provide
+  get direction(): Direction|undefined|null { // in/out/inout/host/consume/provide
     if (this._direction) {
       return this._direction;
     }
@@ -113,12 +113,12 @@ export class HandleConnection {
   get particle() { return this._particle; } // never null
 
   set tags(tags: string[]) { this._tags = tags; }
-  set type(type: Type) {
+  set type(type: Type|undefined|null) {
     this.resolvedType = type;
     this._resetHandleType();
   }
 
-  set direction(direction) {
+  set direction(direction: Direction|undefined|null) {
     this._direction = direction;
     this._resetHandleType();
   }
@@ -137,7 +137,7 @@ export class HandleConnection {
     return this.spec.isOptional;
   }
 
-  _isValid(options): boolean {
+  _isValid(options: IsValidOptions): boolean {
     if (this.direction && !['in', 'out', 'inout', 'host', '`consume', '`provide'].includes(this.direction)) {
       if (options && options.errors) {
         options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
@@ -176,7 +176,7 @@ export class HandleConnection {
   isResolved(options?): boolean {
     assert(Object.isFrozen(this));
 
-    let parent;
+    let parent: HandleConnection;
     if (this.spec && this.spec.parentConnection) {
       parent = this.particle.connections[this.spec.parentConnection.name];
       if (!parent || !parent.handle) {
@@ -236,7 +236,7 @@ export class HandleConnection {
     this._handle = undefined;
   }
 
-  toString(nameMap, options): string {
+  toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.

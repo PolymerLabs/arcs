@@ -52,8 +52,8 @@ export interface Descendant<T extends Cloneable<T>> {
   }[];
   hash?: Promise<string> | string;
   valid?: boolean;
-  errors?;
-  normalized?;
+  errors?: string[];
+  normalized?: boolean;
 }
 
 export interface GenerateParams<T extends Cloneable<T>> {
@@ -116,11 +116,11 @@ export abstract class Walker<T extends Cloneable<T>> {
   // tslint:disable-next-line: variable-name
   static Independent: WalkerTactic = WalkerTactic.Independent;
   descendants: Descendant<T>[];
-  currentAction: Action<T>;
-  currentResult: Descendant<T>;
+  currentAction?: Action<T>;
+  currentResult?: Descendant<T>;
   tactic: WalkerTactic;
 
-  private updateList: Update<T, object[]>[];
+  private updateList?: Update<T, object[]>[];
 
   constructor(tactic: WalkerTactic) {
     this.descendants = [];

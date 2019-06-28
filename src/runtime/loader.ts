@@ -48,7 +48,7 @@ export class Loader {
   }
 
   // convert `././foo/bar/../baz` to `./foo/baz`
-  normalizeDots(path: string): string {
+  private normalizeDots(path: string): string {
     // only unix slashes
     path = path.replace(/\\/g, '/');
     // remove './'
@@ -72,7 +72,7 @@ export class Loader {
     if (/^https?:\/\//.test(file)) {
       return fetch(file).then(res => res.arrayBuffer());
     } else {
-      return this.loadFile(file, null) as Promise<ArrayBuffer>;
+      return this.loadFile(file) as Promise<ArrayBuffer>;
     }
   }
 

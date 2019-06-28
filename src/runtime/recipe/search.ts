@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Recipe, ToStringOptions} from './recipe.js';
 import {assert} from '../../platform/assert-web.js';
 
 export class Search {
   _phrase: string;
   _unresolvedTokens: string[];
   _resolvedTokens: string[];
-  constructor(phrase: string, unresolvedTokens: string[] = undefined) {
+  constructor(phrase: string, unresolvedTokens?: string[]) {
     assert(phrase);
     this._phrase = phrase;
 
@@ -34,7 +35,7 @@ export class Search {
     assert(tokens.length === this.unresolvedTokens.length + this.resolvedTokens.length);
   }
 
-  _append(phrase: string, unresolvedTokens, resolvedTokens) {
+  _append(phrase: string, unresolvedTokens: string[], resolvedTokens: string[]) {
     // concat phrase
     if (this._phrase.length > 0) {
       this._phrase = this.phrase.concat(' ');
@@ -48,7 +49,7 @@ export class Search {
   get unresolvedTokens() { return this._unresolvedTokens; }
   get resolvedTokens() { return this._resolvedTokens; }
 
-  resolveToken(token) {
+  resolveToken(token: string) {
     const index = this.unresolvedTokens.indexOf(token.toLowerCase());
     assert(index >= 0, `Cannot resolved nonexistent token ${token}`);
     this._unresolvedTokens.splice(index, 1);
@@ -73,7 +74,7 @@ export class Search {
     Object.freeze(this);
   }
 
-  _copyInto(recipe) {
+  _copyInto(recipe: Recipe) {
     if (recipe.search) {
       recipe.search._append(this.phrase, this.unresolvedTokens, this.resolvedTokens);
     } else {
@@ -86,7 +87,7 @@ export class Search {
     return recipe.search;
   }
 
-  toString(options): string {
+  toString(options?: ToStringOptions): string {
     const result: string[] = [];
     result.push(`search \`${this.phrase}\``);
 

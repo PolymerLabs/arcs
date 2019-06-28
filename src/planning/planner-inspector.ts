@@ -30,7 +30,7 @@ export interface InspectablePlanner {
  */
 export interface PlannerInspector {
   updatePlanningResults(result: PlanningResult, metadata): void;
-  updateVisibleSuggestions(visibleSuggestions: Suggestion[], options: VisibilityOptions): void;
+  updateVisibleSuggestions(visibleSuggestions: Suggestion[], options?: VisibilityOptions): void;
   updatePlanningAttempt(suggestions: Suggestion[], metadata: {}): void;
   strategizingRecord(generations: SerializableGeneration[], options: {}): void;
 }

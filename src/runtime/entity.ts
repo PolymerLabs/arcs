@@ -72,7 +72,9 @@ class EntityInternals {
   }
 
   getId(): string {
-    assert(this.isIdentified(), 'getId() called on unidentified entity');
+    if (this.id === undefined) {
+      throw new Error('no id');
+    }
     return this.id;
   }
 

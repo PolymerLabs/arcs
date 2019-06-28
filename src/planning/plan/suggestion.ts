@@ -55,7 +55,7 @@ export class Suggestion {
   // List of search resolved token groups, this suggestion corresponds to.
   searchGroups: string[][] = [];
 
-  static create(plan: Recipe, hash: string, relevance: Relevance): Suggestion {
+  static create(plan: Recipe, hash: string, relevance?: Relevance): Suggestion {
     assert(plan, `plan cannot be null`);
     assert(hash, `hash cannot be null`);
     const suggestion = new Suggestion(

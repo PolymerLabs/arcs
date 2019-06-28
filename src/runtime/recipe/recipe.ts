@@ -26,12 +26,16 @@ import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
+import {Schema} from '../schema.js';
+import {TypeVariableInfo} from '../type-variable-info.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
+export type VariableMap = Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>;
 
+export type IsResolvedOptions = {showUnresolved?: boolean, details?: string[]}; // TODO(lindner): standardize details
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};
-export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean};
+export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean, details?: string[]};
 
 export class Recipe implements Cloneable<Recipe> {
   private readonly _requires: RequireSection[] = [];
@@ -156,7 +160,7 @@ export class Recipe implements Cloneable<Recipe> {
     }
   }
 
-  isResolved(options=undefined): boolean {
+  isResolved(options?): boolean {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
     const checkThat = (check: boolean, label: string) => {
       if (!check && options && options.errors) {
@@ -233,7 +237,7 @@ export class Recipe implements Cloneable<Recipe> {
     return true;
   }
 
-  _findDuplicate(items, options: IsValidOptions) {
+  private _findDuplicate(items, options: IsValidOptions) {
     const seenHandles = new Set();
     const duplicateHandle = items.find(handle => {
       if (handle.id) {
@@ -503,7 +507,7 @@ export class Recipe implements Cloneable<Recipe> {
 
   // tslint:disable-next-line: no-any
   mergeInto(recipe: Recipe): {handles: Handle[], particles: Particle[], slots: Slot[], cloneMap: Map<any, any>}   {
-    const cloneMap = new Map();
+    const cloneMap = new Map<RecipeComponent, RecipeComponent>();
     const numHandles = recipe._handles.length;
     const numParticles = recipe._particles.length;
     const numSlots = recipe._slots.length;
@@ -516,12 +520,13 @@ export class Recipe implements Cloneable<Recipe> {
     };
   }
 
-  _copyInto(recipe: Recipe, cloneMap): void {
-    const variableMap = new Map();
-    function cloneTheThing(ob: {_copyInto}) {
+  _copyInto(recipe: Recipe, cloneMap: CloneMap): void {
+    const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
+
+    const cloneTheThing = (ob) => {
       const clonedObject = ob._copyInto(recipe, cloneMap, variableMap);
       cloneMap.set(ob, clonedObject);
-    }
+    };
 
     recipe._name = this.name;
     recipe._verbs = recipe._verbs.concat(...this._verbs);
@@ -550,7 +555,7 @@ export class Recipe implements Cloneable<Recipe> {
     return result;
   }
 
-  _makeLocalNameMap() {
+  _makeLocalNameMap(): Map<RecipeComponent, string> {
     const names = new Set<string>();
     for (const particle of this.particles) {
       names.add(particle.localName);
@@ -562,7 +567,7 @@ export class Recipe implements Cloneable<Recipe> {
       names.add(slot.localName);
     }
 
-    const nameMap = new Map();
+    const nameMap = new Map<RecipeComponent, string>();
     let i = 0;
     for (const particle of this.particles) {
       let localName = particle.localName;
@@ -603,7 +608,7 @@ export class Recipe implements Cloneable<Recipe> {
   //       lists into a normal ordering.
   //
   // use { showUnresolved: true } in options to see why a recipe can't resolve.
-  toString(options: ToStringOptions = undefined): string {
+  toString(options?: ToStringOptions): string {
     const nameMap = this._makeLocalNameMap();
     const result: string[] = [];
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
@@ -621,20 +626,20 @@ export class Recipe implements Cloneable<Recipe> {
       result.push(constraintStr);
     }
     result.push(...this.handles
-        .map(h => h.toString(nameMap, options))
+        .map(h => h.toString(options, nameMap))
         .filter(strValue => strValue)
         .map(strValue => strValue.replace(/^|(\n)/g, '$1  ')));
     for (const slot of this.slots) {
-      const slotString = slot.toString(nameMap, options);
+      const slotString = slot.toString(options, nameMap);
       if (slotString) {
         result.push(slotString.replace(/^|(\n)/g, '$1  '));
       }
     }
     for (const require of this.requires) {
-      if (!require.isEmpty()) result.push(require.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+      if (!require.isEmpty()) result.push(require.toString(options, nameMap).replace(/^|(\n)/g, '$1  '));
     }
     for (const particle of this.particles) {
-      result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+      result.push(particle.toString(options, nameMap).replace(/^|(\n)/g, '$1  '));
     }
     if (this.patterns.length > 0 || this.handles.find(h => h.pattern !== undefined)) {
       result.push(`  description \`${this.patterns[0]}\``);
@@ -650,7 +655,7 @@ export class Recipe implements Cloneable<Recipe> {
     if (this._obligations.length > 0) {
       result.push('  obligations');
       for (const obligation of this._obligations) {
-        const obligationStr = obligation.toString(nameMap, options).replace(/^|(\n)/g, '$1    ');
+        const obligationStr = obligation.toString(nameMap).replace(/^|(\n)/g, '$1    ');
         result.push(obligationStr);
       }
     }
@@ -662,8 +667,9 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   get allSpecifiedConnections(): {particle: Particle, connSpec: HandleConnectionSpec}[] {
-    return [].concat(...this.particles.filter(p => p.spec && p.spec.connections).map(
-      particle => particle.spec.connections.map(connSpec => ({particle, connSpec}))));
+    return ([] as {particle: Particle, connSpec: HandleConnectionSpec}[]).concat(
+      ...this.particles.filter(p => p.spec && p.spec.connections).map(
+        particle => particle.spec.connections.map(connSpec => ({particle, connSpec}))));
   }
 
   getFreeConnections(type?: Type): {particle: Particle, connSpec: HandleConnectionSpec}[] {
@@ -675,11 +681,11 @@ export class Recipe implements Cloneable<Recipe> {
                                   (!type || TypeChecker.compareTypes({type}, {type: connSpec.type})));
   }
 
-  findHandleByID(id): Handle {
+  findHandleByID(id: string): Handle|undefined {
     return this.handles.find(handle => handle.id === id);
   }
 
-  getUnnamedUntypedConnections() {
+  getUnnamedUntypedConnections(): HandleConnection|undefined {
     return this.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional);
   }
 
@@ -687,16 +693,13 @@ export class Recipe implements Cloneable<Recipe> {
     return this.particles.filter(particle => particle.spec && files.has(particle.spec.implFile));
   }
 
-  findSlotByID(id: string): Slot {
+  // overridded by RequireSection
+  findSlotByID(id: string): Slot|undefined {
     let slot = this.slots.find(s => s.id === id);
-    if (slot == undefined) {
-      if (this instanceof RequireSection) {
-        slot = this.parent.slots.find(s => s.id === id);
-      } else {
-        for (const require of this.requires) {
-          slot = require.slots.find(s => s.id === id);
-          if (slot !== undefined) break;
-        }
+    if (slot === undefined) {
+      for (const require of this.requires) {
+        slot = require.slots.find(s => s.id === id);
+        if (slot !== undefined) break;
       }
     }
     return slot;
@@ -705,41 +708,50 @@ export class Recipe implements Cloneable<Recipe> {
 
 export class RequireSection extends Recipe {
   public readonly parent: Recipe;
-  constructor(parent: Recipe = undefined, name: string = undefined) {
+  
+  constructor(parent: Recipe, name?: string) {
     super(name);
     this.parent = parent;
   }
 
-  toString(nameMap = undefined, options = undefined): string {
+  findSlotByID(id: string): Slot|undefined {
+    let slot = this.slots.find(s => s.id === id);
+    if (slot === undefined) {
+      slot = this.parent.slots.find(s => s.id === id);
+    }
+    return slot;
+  }
+  
+  toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     if (nameMap == undefined) {
       nameMap = this._makeLocalNameMap();
     }
     const result: string[] = [];
     result.push(`require`);
-    if (options && options.showUnresolved) {
+    if (options.showUnresolved) {
       if (this.search) {
         result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
       }
     }
     for (const constraint of this.connectionConstraints) {
       let constraintStr = constraint.toString().replace(/^|(\n)/g, '$1  ');
-      if (options && options.showUnresolved) {
+      if (options.showUnresolved) {
         constraintStr = constraintStr.concat(' // unresolved connection-constraint');
       }
       result.push(constraintStr);
     }
     result.push(...this.handles
-        .map(h => h.toString(nameMap, options))
+        .map(h => h.toString(options, nameMap))
         .filter(strValue => strValue)
         .map(strValue => strValue.replace(/^|(\n)/g, '$1  ')));
     for (const slot of this.slots) {
-      const slotString = slot.toString(nameMap, options);
+      const slotString = slot.toString(options, nameMap);
       if (slotString) {
         result.push(slotString.replace(/^|(\n)/g, '$1  '));
       }
     }
     for (const particle of this.particles) {
-      result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+      result.push(particle.toString(options, nameMap).replace(/^|(\n)/g, '$1  '));
     }
     if (this.patterns.length > 0 || this.handles.find(h => h.pattern !== undefined)) {
       result.push(`  description \`${this.patterns[0]}\``);
@@ -755,7 +767,7 @@ export class RequireSection extends Recipe {
     if (this.obligations.length > 0) {
       result.push('  obligations');
       for (const obligation of this.obligations) {
-        const obligationStr = obligation.toString(nameMap, options).replace(/^|(\n)/g, '$1    ');
+        const obligationStr = obligation.toString(nameMap).replace(/^|(\n)/g, '$1    ');
         result.push(obligationStr);
       }
     }

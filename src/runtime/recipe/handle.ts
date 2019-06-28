@@ -16,12 +16,12 @@ import {Type, SlotType} from '../type.js';
 import {SlotInfo} from '../slot-info.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe.js';
+import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate} from '../manifest-ast-nodes.js';
 
-export class Handle {
+export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
   private _id: string | null = null;
   private _localName: string | undefined = undefined;
@@ -45,7 +45,7 @@ export class Handle {
     this._recipe = recipe;
   }
 
-  _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
+  _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
     let handle: Handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);
@@ -180,8 +180,8 @@ export class Handle {
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
 
-  static effectiveType(handleType: Type, connections: {type: Type, direction: string}[]) {
-    const variableMap = new Map();
+  static effectiveType(handleType: Type, connections: {type: Type|null|undefined, direction: string|undefined|null}[]) {
+    const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
     const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
@@ -223,7 +223,7 @@ export class Handle {
     return true;
   }
 
-  isResolved(options = undefined): boolean {
+  isResolved(options?: IsResolvedOptions): boolean {
     assert(Object.isFrozen(this));
     let resolved = true;
     if (this.type) {
@@ -274,13 +274,12 @@ export class Handle {
     return resolved;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string>, options: ToStringOptions): string {
+  toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     if (this._immediateValue) {
       // Immediate Value handles are only rendered inline with particle connections.
       // E.g. hostedParticle = ShowProduct
       return undefined;
     }
-    options = options || {};
     // TODO: type? maybe output in a comment
     const result: string[] = [];
     result.push(this.fate);
@@ -290,7 +289,7 @@ export class Handle {
     result.push(...this.tags.map(a => `#${a}`));
     const name = (nameMap && nameMap.get(this)) || this.localName;
     if (name) {
-      result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+      result.push(`as ${name}`);
     }
     if (this.type) {
       result.push('//');
@@ -317,7 +316,7 @@ export class Handle {
     return result.join(' ');
   }
 
-  findConnectionByDirection(dir: string): HandleConnection {
+  findConnectionByDirection(dir: string): HandleConnection|undefined {
     return this._connections.find(conn => conn.direction === dir);
   }
 }
