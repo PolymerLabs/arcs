@@ -36,9 +36,9 @@ describe('ConvertConstraintsToConnections', () => {
 
       recipe
         A.b -> C.d`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
@@ -60,9 +60,9 @@ describe('ConvertConstraintsToConnections', () => {
 
       recipe
         A.b -> C.d`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.isEmpty(results);
   });
 
@@ -77,9 +77,9 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         map as handle0
         A.b = C.d`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
   });
 
@@ -98,9 +98,9 @@ describe('ConvertConstraintsToConnections', () => {
         ${constraint2}`);
     const verify = async (constraint1, constraint2) => {
       const manifest = await parseManifest(constraint1, constraint2);
-      const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+      const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
       const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-      const results = await cctc.generate(inputParams);
+      const results = await cctc.generateFrom(generated);
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
     };
     // Test for all possible combination of connection constraints with 3 particles.
@@ -128,9 +128,9 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         A.b -> C.d
         C`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
@@ -153,9 +153,9 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         A.b -> C.d
         A`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
@@ -180,9 +180,9 @@ describe('ConvertConstraintsToConnections', () => {
         A.b -> C.d
         C
         A`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
@@ -208,9 +208,9 @@ describe('ConvertConstraintsToConnections', () => {
         C
           d = handle1
         A`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
@@ -236,9 +236,9 @@ describe('ConvertConstraintsToConnections', () => {
         C
         A
           b = handle1`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
@@ -265,9 +265,9 @@ describe('ConvertConstraintsToConnections', () => {
           d = handle1
         A
           b = handle1`);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
@@ -298,14 +298,14 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         A.b -> E.f
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(new Arc({
       id: ArcId.newForTest('test-plan-arc'),
       slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
       context: manifest,
       loader: new Loader()
     }));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
   });
@@ -321,9 +321,9 @@ describe('ConvertConstraintsToConnections', () => {
         A.o -> h
         h -> B.i
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
@@ -346,9 +346,9 @@ describe('ConvertConstraintsToConnections', () => {
         A
         B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
@@ -372,9 +372,9 @@ describe('ConvertConstraintsToConnections', () => {
           o -> h
         B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
@@ -399,9 +399,9 @@ describe('ConvertConstraintsToConnections', () => {
           o -> j
         B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // ~
@@ -425,9 +425,9 @@ describe('ConvertConstraintsToConnections', () => {
       A.o -> #hashtag
       #trashbag <- B.i
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // ~
@@ -451,9 +451,9 @@ describe('ConvertConstraintsToConnections', () => {
       A
       B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // ~
@@ -479,9 +479,9 @@ describe('ConvertConstraintsToConnections', () => {
       B
         i -> handle0
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // ~
@@ -500,9 +500,9 @@ describe('ConvertConstraintsToConnections', () => {
     recipe
       A -> B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
@@ -522,9 +522,9 @@ describe('ConvertConstraintsToConnections', () => {
     recipe
       A -> B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
@@ -544,9 +544,9 @@ describe('ConvertConstraintsToConnections', () => {
     recipe
       A = B
     `);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}]};
+    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
-    const results = await cctc.generate(inputParams);
+    const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);

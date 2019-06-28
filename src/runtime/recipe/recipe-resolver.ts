@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../arc.js';
-import {Action} from './walker.js';
+import {Action, GenerateParams} from './walker.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Direction} from '../manifest-ast-nodes.js';
 import {Handle} from './handle';
@@ -159,7 +159,7 @@ export class ResolveWalker extends RecipeWalker {
 
 export class ResolveRecipeAction extends Action<Recipe> {
 
-  async generate(inputParams) {
+  async generate(inputParams: GenerateParams<Recipe>) {
     return ResolveWalker.walk(this.getResults(inputParams),
       new ResolveWalker(ResolveWalker.Permuted, this.arc), this);
   }
@@ -183,8 +183,13 @@ export class RecipeResolver {
       return null;
     }
 
-    const result = await this.resolver.generate(
-        {generated: [{result: recipe, score: 1}], terminal: []});
-    return (result.length === 0) ? null : result[0].result;
+    const result = await this.resolver.generateFrom([{result: recipe, score: 1}]);
+    if (result.length === 0) {
+      if (options && options.errors) {
+        options.errors.set(recipe, 'Resolver generated 0 recipes');
+      }
+      return null;
+    }
+    return result[0].result;
   }
 }

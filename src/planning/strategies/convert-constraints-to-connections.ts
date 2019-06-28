@@ -11,7 +11,7 @@
 import {HandleEndPoint, InstanceEndPoint, ParticleEndPoint, TagEndPoint, EndPoint} from '../../runtime/recipe/connection-constraint.js';
 import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
-import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
 import {Direction} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
@@ -21,7 +21,7 @@ import {Dictionary} from '../../runtime/hot.js';
 type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
 
 export class ConvertConstraintsToConnections extends Strategy {
-  async generate(inputParams: {generated: Descendant<Recipe>[]}): Promise<Descendant<Recipe>[]> {
+  async generate(inputParams: StrategyParams): Promise<Descendant<Recipe>[]> {
     const arcModality = this.arc.modality;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onRecipe(recipe: Recipe) {
