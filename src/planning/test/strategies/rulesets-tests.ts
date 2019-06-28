@@ -13,7 +13,7 @@ import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Recipe} from '../../../runtime/recipe/recipe.js';
 import {AnnotatedDescendant, Generation, Planner} from '../../planner.js';
-import {Ruleset, StrategizerWalker, Strategy} from '../../strategizer.js';
+import {Ruleset, StrategizerWalker, Strategy, StrategyParams} from '../../strategizer.js';
 
 import {StrategyTestHelper} from './strategy-test-helper.js';
 
@@ -25,7 +25,7 @@ class InitPopulation extends Strategy {
     this._context = arc.context;
   }
 
-  async generate({generation}) {
+  async generate({generation}: StrategyParams) {
     if (generation !== 0) return [];
 
     const recipe = this._context.recipes[0];
@@ -48,7 +48,7 @@ class FateAssigner extends Strategy {
     this.fate = fate;
   }
 
-  async generate(inputParams) {
+  async generate(inputParams: StrategyParams) {
     const self = this;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onHandle(recipe, handle) {
@@ -69,7 +69,7 @@ class AssignFateB extends FateAssigner {constructor() {super('map');}}
 class AssignFateC extends FateAssigner {constructor() {super('use');}}
 
 class Resolve extends Strategy {
-  async generate(inputParams) {
+  async generate(inputParams: StrategyParams) {
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onHandle(recipe, handle) {
         if (handle.fate !== '?' && !handle.id.endsWith('resolved')) {

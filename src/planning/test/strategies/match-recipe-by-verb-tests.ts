@@ -38,9 +38,9 @@ describe('MatchRecipeByVerb', () => {
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const generated = [{result: manifest.recipes[0], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    const results = await mrv.generate(inputParams);
+    const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.isEmpty(results[0].result.particles);
     assert.deepEqual(results[0].result.toString(), 'recipe &jump\n  JumpingBoots.e <- NuclearReactor.e\n  JumpingBoots.f <- FootFactory.f');
@@ -62,12 +62,12 @@ describe('MatchRecipeByVerb', () => {
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const generated = [{result: manifest.recipes[0], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const cctc = new ConvertConstraintsToConnections(arc);
-    results = await cctc.generate({generated: results});
+    results = await cctc.generateFrom(results);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(),
 `recipe &a
@@ -106,9 +106,9 @@ describe('MatchRecipeByVerb', () => {
 ${basicHandlesContraintsManifest}
 ${recipesManifest}`);
     const arc = StrategyTestHelper.createTestArc(manifest);
-    const inputParams = {generated: [{result: manifest.recipes[manifest.recipes.length-1], score: 1}]};
+    const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    return await mrv.generate(inputParams);
+    return await mrv.generateFrom(generated);
   };
 
   it('listens to handle constraints - all recipes', async () => {
@@ -196,20 +196,20 @@ ${recipesManifest}`);
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    let inputParams = {generated: [{result: manifest.recipes[3], score: 1}]};
+    let generated = [{result: manifest.recipes[3], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 3);
 
-    inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
-    results = await mrv.generate(inputParams);
+    generated = [{result: manifest.recipes[4], score: 1}];
+    results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
     assert.equal(results[0].result.particles[0].name, 'Q');
     assert.lengthOf(results[1].result.particles, 2);
 
-    inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
-    results = await mrv.generate(inputParams);
+    generated = [{result: manifest.recipes[5], score: 1}];
+    results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
     assert.equal(results[0].result.particles[0].name, 'P');
@@ -236,9 +236,9 @@ ${recipesManifest}`);
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    const generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    const results = await mrv.generate(inputParams);
+    const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
@@ -266,9 +266,9 @@ ${recipesManifest}`);
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    const generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    const results = await mrv.generate(inputParams);
+    const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
@@ -303,9 +303,9 @@ ${recipesManifest}`);
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    const generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    const results = await mrv.generate(inputParams);
+    const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
     const particleP = recipe.particles.find(p => p.name === 'P');
@@ -343,17 +343,17 @@ ${recipesManifest}`);
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    let generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
     assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
     assert.equal(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
     
-    inputParams = {generated: [{result: manifest.recipes[2], score: 1}]};
-    results = await mrv.generate(inputParams);
+    generated = [{result: manifest.recipes[2], score: 1}];
+    results = await mrv.generateFrom(generated);
     recipe = results[0].result;
     assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
     const slotFoo = recipe.slots.find(s => s.name === 'foo');
@@ -398,9 +398,9 @@ ${recipesManifest}`);
   `);
 
   const arc = StrategyTestHelper.createTestArc(manifest);
-  let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+  let generated = [{result: manifest.recipes[1], score: 1}];
   const mrv = new MatchRecipeByVerb(arc);
-  let results = await mrv.generate(inputParams);
+  let results = await mrv.generateFrom(generated);
   assert.lengthOf(results, 1);
   let recipe = results[0].result;
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
@@ -409,8 +409,8 @@ ${recipesManifest}`);
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[2].consumedSlotConnections.bar.targetSlot);
   assert.equal(recipe.slots[0].consumeConnections[1], recipe.particles[2].consumedSlotConnections.bar);
   
-  inputParams = {generated: [{result: manifest.recipes[2], score: 1}]};
-  results = await mrv.generate(inputParams);
+  generated = [{result: manifest.recipes[2], score: 1}];
+  results = await mrv.generateFrom(generated);
   recipe = results[0].result;
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
   const slotFoo = recipe.slots.find(s => s.name === 'foo');

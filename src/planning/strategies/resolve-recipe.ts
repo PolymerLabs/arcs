@@ -9,11 +9,11 @@
  */
 
 import {ResolveWalker} from '../../runtime/recipe/recipe-resolver.js';
-import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 
 export class ResolveRecipe extends Strategy {
 
-  async generate(inputParams) {
+  async generate(inputParams: StrategyParams) {
     return StrategizerWalker.over(this.getResults(inputParams),
       new ResolveWalker(ResolveWalker.Permuted, this.arc), this);
   }

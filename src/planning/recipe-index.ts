@@ -9,7 +9,7 @@
  */
 
 import {Generation} from './planner.js';
-import {Strategizer, Strategy} from './strategizer.js';
+import {Strategizer, Strategy, StrategyParams} from '../planning/strategizer.js';
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
@@ -67,7 +67,7 @@ class RelevantContextRecipes extends Strategy {
     }
   }
 
-  async generate({generation}: {generation: number}): Promise<Descendant<Recipe>[]> {
+  async generate({generation}: StrategyParams): Promise<Descendant<Recipe>[]> {
     if (generation !== 0) {
       return [];
     }

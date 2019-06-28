@@ -15,10 +15,11 @@ import {Particle} from '../../runtime/recipe/particle';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {InterfaceType, Type} from '../../runtime/type.js';
-import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
+import {Descendant} from '../../runtime/recipe/walker.js';
 
 export class FindHostedParticle extends Strategy {
-  async generate(inputParams) {
+  async generate(inputParams: StrategyParams) {
     const arc = this.arc;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec) {

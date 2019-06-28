@@ -13,7 +13,7 @@ import {Arc} from '../runtime/arc.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
-import {Action, Descendant} from '../runtime/recipe/walker.js';
+import {Action, GenerateParams, Descendant} from '../runtime/recipe/walker.js';
 import {Dictionary} from '../runtime/hot.js';
 
 export interface GenerationRecord {
@@ -246,6 +246,8 @@ export class StrategizerWalker extends RecipeWalker {
     return super.walk(results, walker, strategy);
   }
 }
+
+export type StrategyParams = GenerateParams<Recipe>;
 
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy extends Action<Recipe> {
