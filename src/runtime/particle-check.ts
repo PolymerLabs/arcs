@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ParticleCheckStatement, ParticleCheckHasTag, ParticleCheckIsFromHandle, ParticleCheckExpression, ParticleCheckCondition} from './manifest-ast-nodes';
-import {HandleConnectionSpec} from './particle-spec';
-import {assert} from '../platform/assert-web';
+import {ParticleCheckStatement, ParticleCheckHasTag, ParticleCheckIsFromHandle, ParticleCheckExpression, ParticleCheckCondition} from './manifest-ast-nodes.js';
+import {HandleConnectionSpec} from './particle-spec.js';
+import {assert} from '../platform/assert-web.js';
 
 /** The different types of trust checks that particles can make. */
 export enum CheckType {
