@@ -484,7 +484,10 @@ ${e.message}
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
       await Promise.all(items.map(async item => {
-        if (item.kind === 'import' && loader) {
+        if (item.kind === 'import') {
+          if (!loader) {
+            throw new Error('loader required to parse import statements');
+          }
           // item is an AstNode.Import
           const path = loader.path(manifest.fileName);
           const target = loader.join(path, item.path);

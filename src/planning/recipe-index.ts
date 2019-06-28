@@ -318,8 +318,7 @@ export class RecipeIndex {
   private _fatesAndDirectionsMatch(slotHandleConn: HandleConnection, matchingHandleConn: HandleConnection): boolean {
     const matchingHandle = matchingHandleConn.handle;
     const allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
-    const matchingDirection: Direction[] = ['out', 'inout'];
-    const matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => conn.direction && matchingDirection.includes(conn.direction));
+    const matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => conn.isOutput);
 
     if (!slotHandleConn.handle) {
       throw new Error(`Unexpected empty Handle`);

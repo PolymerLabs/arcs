@@ -160,7 +160,7 @@ export class Recipe implements Cloneable<Recipe> {
     }
   }
 
-  isResolved(options=undefined): boolean {
+  isResolved(options?): boolean {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
     const checkThat = (check: boolean, label: string) => {
       if (!check && options && options.errors) {
