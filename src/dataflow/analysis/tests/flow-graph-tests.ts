@@ -251,6 +251,61 @@ describe('FlowGraph validation', () => {
     assert.isTrue(graph.validateGraph().isValid);
   });
 
+  it('fails when a "not tag" cancels a tag', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        in Foo {} bar
+        out Foo {} baz
+        claim baz is not trusted
+      particle P3
+        in Foo {} bye
+        check bye is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+          baz -> h1
+        P3
+          bye <- h1
+    `);
+    assert.isFalse(graph.validateGraph().isValid);
+  });
+
+  it('succeeds when a "not tag" cancels a tag that is reclaimed downstream', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        in Foo {} bar
+        out Foo {} baz
+        claim baz is not trusted
+      particle P3
+        in Foo {} bye
+        out Foo {} boy
+        claim boy is trusted
+      particle P4
+        in Foo {} bit
+        check bit is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+          baz -> h1
+        P3
+          bye <- h1
+          boy -> h2
+        P4
+          bit <- h2
+    `);
+    assert.isTrue(graph.validateGraph().isValid);
+  });
+
   it('succeeds when handle has multiple inputs with the right tags', async () => {
     const graph = await buildFlowGraph(`
       particle P1

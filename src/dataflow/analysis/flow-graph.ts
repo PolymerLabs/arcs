@@ -81,17 +81,17 @@ export class FlowGraph {
     assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
     const check = edgeToCheck.check;
-    const conditions = checkToList(check);
+    const conditions = checkToConditionList(check);
 
     const finalResult = new ValidationResult();
 
     // Check every input path into the given edge.
     // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
     for (const path of allInputPaths(edgeToCheck)) {
-      const claimsForPath = computeTagClaimsInPath(path);
-      const handlesInPath = computeHandlesInPath(path);
-      if (!evaluateCheck(conditions, claimsForPath, handlesInPath)) {
-        finalResult.failures.push(path.checkFailureString(`'${check.toManifestString()}'`));
+      const tagsForPath = computeTagClaimsInPath(path);
+      const handlesInPath = path.nodes.filter(n => n instanceof HandleNode);
+      if (!evaluateCheck(conditions, tagsForPath, handlesInPath)) {
+        finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${path.toString()}`);
       }
     }
 
@@ -103,7 +103,7 @@ export class FlowGraph {
  * Preprocess a check into a list of conditions. This will need to change when
  * we implement complex boolean expressions.
  */
-function checkToList(check: Check): CheckCondition[] {
+function checkToConditionList(check: Check): CheckCondition[] {
  // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
   const conditions: CheckCondition[] = [];
   switch (check.expression.type) {
@@ -151,90 +151,59 @@ function* allInputPaths(startEdge: Edge): Iterable<BackwardsPath> {
 }
 
 /**
- * Collects all the tag claims along the given path, canceling tag claims that are
+ * Collects all the tags claimed along the given path, canceling tag claims that are
  * negated by "not" claims for the same tag downstream in the path, and ignoring
  * "not" claims without corresponding positive claims upstream, as these dangling
  * "not" claims are irrelevant for the given path. Note that "derives from" claims
  * only prune paths, and are dealt with during path generation, so they are ignored.
  */
-function computeTagClaimsInPath(path: BackwardsPath): ClaimIsTag[] {
-  const claims: ClaimIsTag[] = [];
+function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
+  const tags: Set<string> = new Set<string>();
   // We traverse the path in the forward direction, so we can cancel correctly.
-  const edgesInPath = path.edges.slice().reverse();
+  const edgesInPath = path.edgesInForwardDirection();
   edgesInPath.forEach(e => {
-    if (!e.claim) {
-      return;
-    }
-    if (e.claim.type === ClaimType.DerivesFrom) {
+    if (!e.claim || e.claim.type !== ClaimType.IsTag) {
       return;
     } 
-    const tagClaim = e.claim as ClaimIsTag;
-    if (!tagClaim.isNot) {
-      claims.push(tagClaim);
+    if (!e.claim.isNot) {
+      tags.add(e.claim.tag);
       return;          
     }
     // Our current claim is a "not" tag claim. 
     // Ignore it if there are no preceding tag claims
-    if (claims.length === 0) {
+    if (tags.size === 0) {
       return;
     }
-    // Find and remove all existing positive claims for the tag. There may be > 1.
-    let index = 0;
-    while (index < claims.length) {
-      const priorClaim = claims[index];
-      if (priorClaim.tag === tagClaim.tag) {
-        claims.splice(index, 1);
-      } else {
-        index += 1;
-      }
-    }
+    tags.delete(e.claim.tag);
   });
-  return claims;
-}
-
-/**
- * Collects and returns the names of all the handles in this path. 
- */
-function computeHandlesInPath(path: BackwardsPath): HandleNode[] {
-  const handles: HandleNode[] = [];
-  for (const node of path.nodes) {
-    if (node instanceof HandleNode) {
-      handles.push(node);
-    }
-  }
-  return handles;
+  return tags;
 }
 
 /** 
  * Returns true if the given check passes against one of the tag claims or one
  * one of the handles in the path. Only one condition needs to pass.
  */
-function evaluateCheck(conditions: CheckCondition[], 
-                       claims: ClaimIsTag[],
-                       handles: HandleNode[]): boolean {
+function evaluateCheck(conditions: CheckCondition[], claimTags: Set<string>, handles: Node[]): boolean {
   // Check every condition against the set of tag claims. If it fails, check
   // against the handles
   for (const condition of conditions) {
-    if (condition.type === CheckType.HasTag) {
-      for (const claim of claims) {
-        const tagMatches = (claim.tag === (condition as CheckHasTag).tag);
-        // If the claim has a 'not', invert the match, i.e. if the tag
-        // matches, the result is false and if it doesn't the result is true.
-        const result = claim.isNot ? !tagMatches : tagMatches;
-        // Only one condition needs to pass against any claim, so if we pass we 
-        // can return true straight away.
-        if (result === true) {
+    switch (condition.type) {
+      case CheckType.HasTag:
+        if (claimTags.has(condition.tag)) {
           return true;
         }
-      }
-    } else { // condition type is from handle
-      for (const handle of handles) {
-        // Again, only one condition needs to pass.
-        const checkHandle = (condition as CheckIsFromHandle).parentHandle;
-        if (handle.outConnectionSpecs.has(checkHandle)) {
-          return true;
+        break;
+      case CheckType.IsFromHandle:
+        // Do any of the handles in the path contain the condition handle as
+        // an output handle?
+        for (const handle of handles) {
+          if ((handle as HandleNode).validateIsFromHandleCheck(condition as CheckIsFromHandle)) {
+            return true;
+          }
         }
-      }
+      break;
+      default:
+        throw new Error('Unknown condition type.');
     }
   }
   return false;
@@ -293,10 +262,13 @@ export class BackwardsPath {
     return this.edges[this.edges.length - 1];
   }
 
-  checkFailureString(check: string) : string {
-    const edgesInPath = this.edges.slice().reverse();
-    const pathString = edgesInPath.map(e => e.label).join(' -> ');
-    return (`${check} failed for path: ${pathString}`);
+  edgesInForwardDirection(): Edge[] {
+    return this.edges.slice().reverse();
+  }
+
+  toString() : string {
+    const edgesInPath = this.edgesInForwardDirection();
+    return edgesInPath.map(e => e.label).join(' -> ');
   }
 }
 
@@ -499,5 +471,9 @@ class HandleNode extends Node {
 
   inEdgesFromOutEdge(outEdge: ParticleInput): readonly ParticleOutput[] {
     return this.inEdges;
+  }
+
+  validateIsFromHandleCheck(condition: CheckIsFromHandle): boolean {
+    return this.outConnectionSpecs.has(condition.parentHandle);
   }
 }
