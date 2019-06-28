@@ -72,7 +72,7 @@ export class Loader {
     if (/^https?:\/\//.test(file)) {
       return fetch(file).then(res => res.arrayBuffer());
     } else {
-      return this.loadFile(file, null) as Promise<ArrayBuffer>;
+      return this.loadFile(file) as Promise<ArrayBuffer>;
     }
   }
 

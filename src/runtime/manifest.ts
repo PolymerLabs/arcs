@@ -14,6 +14,8 @@ import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator, ArcId} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
+import {Handle as InterfaceInfoHandle} from './interface-info.js';
+import {Slot as InterfaceInfoSlot} from './interface-info.js';
 import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
@@ -483,7 +485,7 @@ ${e.message}
     try {
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
-      await Promise.all(items.map(async item => {
+      await Promise.all(items.map(async (item: AstNode.All) => {
         if (item.kind === 'import') {
           if (!loader) {
             throw new Error('loader required to parse import statements');
@@ -531,7 +533,7 @@ ${e.message}
     return manifest;
   }
 
-  private static _augmentAstWithTypes(manifest: Manifest, items) {
+  private static _augmentAstWithTypes(manifest: Manifest, items: AstNode.All): void {
     const visitor = new class extends ManifestVisitor {
       constructor() {
         super();
@@ -690,7 +692,7 @@ ${e.message}
     manifest._schemas[name] = schema;
   }
 
-  private static _processResource(manifest: Manifest, schemaItem) {
+  private static _processResource(manifest: Manifest, schemaItem: AstNode.Resource) {
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
@@ -727,7 +729,7 @@ ${e.message}
 
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
   private static _processInterface(manifest: Manifest, interfaceItem) {
-    const handles = [];
+    const handles: InterfaceInfoHandle[] = [];
     for (const arg of interfaceItem.args) {
       const handle = {name: undefined, type: undefined, direction: arg.direction};
       if (arg.name !== '*') {
@@ -738,7 +740,7 @@ ${e.message}
       }
       handles.push(handle);
     }
-    const slots = [];
+    const slots: InterfaceInfoSlot[] = [];
     for (const slotItem of interfaceItem.slots) {
       slots.push({
         direction: slotItem.direction,
@@ -1135,6 +1137,7 @@ ${e.message}
       }
     }
   }
+
   resolveTypeName(name: string): {schema?: Schema, iface?: InterfaceInfo}|null {
     const schema = this.findSchemaByName(name);
     if (schema) {
