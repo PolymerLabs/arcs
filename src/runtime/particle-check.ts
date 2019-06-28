@@ -9,7 +9,7 @@
  */
 
 import {ParticleCheckStatement, ParticleCheckHasTag, ParticleCheckIsFromHandle, ParticleCheckExpression, ParticleCheckCondition} from './manifest-ast-nodes.js';
-import {HandleConnectionSpec} from './particle-spec.js';
+import {HandleConnectionSpec, ProvideSlotConnectionSpec} from './particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 
 /** The different types of trust checks that particles can make. */
@@ -18,11 +18,19 @@ export enum CheckType {
   IsFromHandle = 'is-from-handle',
 }
 
+export type CheckTarget = HandleConnectionSpec | ProvideSlotConnectionSpec;
+
 export class Check {
-  constructor(readonly handle: HandleConnectionSpec, readonly expression: CheckExpression) {}
+  constructor(readonly target: CheckTarget, readonly expression: CheckExpression) {}
 
   toManifestString() {
-    return `check ${this.handle.name} ${this.expression.toManifestString()}`;
+    let targetString: string;
+    if (this.target instanceof HandleConnectionSpec) {
+      targetString = this.target.name;
+    } else {
+      targetString = `${this.target.name} data`;
+    }
+    return `check ${targetString} ${this.expression.toManifestString()}`;
   }
 }
 
@@ -105,9 +113,9 @@ function createCheckExpression(astNode: ParticleCheckExpression, handleConnectio
 
 /** Converts the given AST node into a Check object. */
 export function createCheck(
-    handle: HandleConnectionSpec,
+    checkTarget: CheckTarget,
     astNode: ParticleCheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
-  return new Check(handle, expression);
+  return new Check(checkTarget, expression);
 }

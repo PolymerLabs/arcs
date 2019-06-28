@@ -12,8 +12,8 @@ import {Particle} from '../../runtime/recipe/particle';
 import {Handle} from '../../runtime/recipe/handle';
 import {HandleConnection} from '../../runtime/recipe/handle-connection';
 import {assert} from '../../platform/assert-web';
-import {ClaimType, ClaimIsTag, ClaimDerivesFrom, Claim} from '../../runtime/particle-claim';
-import {Check, CheckType, CheckCondition, CheckHasTag, CheckIsFromHandle} from '../../runtime/particle-check';
+import {ClaimType, Claim} from '../../runtime/particle-claim';
+import {Check, CheckType, CheckCondition, CheckIsFromHandle} from '../../runtime/particle-check';
 import {HandleConnectionSpec} from '../../runtime/particle-spec';
 
 /**
@@ -36,6 +36,7 @@ export class FlowGraph {
     // Create the nodes of the graph.
     const particleNodes = createParticleNodes(recipe.particles);
     const handleNodes = createHandleNodes(recipe.handles);
+    // TODO: Add nodes for slots.
 
     // Add edges to the nodes.
     recipe.handleConnections.forEach(connection => {
@@ -353,7 +354,7 @@ class ParticleNode extends Node {
 
   // Maps from handle names to tags.
   readonly claims: Map<string, Claim>;
-  readonly checks: Map<string, Check>;
+  readonly checks: Check[];
 
   constructor(particle: Particle) {
     super();
@@ -415,7 +416,7 @@ class ParticleInput implements Edge {
     this.end = particleNode;
     this.handleName = connection.name;
     this.label = `${particleNode.name}.${this.handleName}`;
-    this.check = particleNode.checks.get(this.handleName);
+    this.check = connection.spec.check;
     this.connectionSpec = connection.spec;
   }
 }

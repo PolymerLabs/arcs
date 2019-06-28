@@ -327,14 +327,25 @@ ParticleClaimDerivesFrom
   }
 
 ParticleCheckStatement
-  = 'check' whiteSpace handle:lowerIdent whiteSpace expression:ParticleCheckExpressionBody eolWhiteSpace
+  = 'check' whiteSpace target:ParticleCheckTarget whiteSpace expression:ParticleCheckExpressionBody eolWhiteSpace
   {
     return {
       kind: 'particle-trust-check',
       location: location(),
-      handle,
+      target,
       expression,
     } as AstNode.ParticleCheckStatement;
+  }
+
+ParticleCheckTarget
+  = name:lowerIdent isSlot:(whiteSpace 'data')?
+  {
+    return {
+      kind: 'particle-check-target',
+      location: location(),
+      targetType: isSlot ? 'slot' : 'handle',
+      name,
+    } as AstNode.ParticleCheckTarget;
   }
 
 // A series of check conditions using `and`/`or` operations (doesn't need to be surrounded by parentheses).

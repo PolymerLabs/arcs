@@ -90,8 +90,9 @@ type SerializedSlotConnectionSpec = {
   isSet?: boolean,
   tags?: string[],
   formFactor?: string,
-  handles?: string[]
-  provideSlotConnections?: SerializedSlotConnectionSpec[]
+  handles?: string[],
+  provideSlotConnections?: SerializedSlotConnectionSpec[],
+  check?: Check,
 };
 
 export class ConsumeSlotConnectionSpec {
@@ -126,7 +127,14 @@ export class ConsumeSlotConnectionSpec {
   get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
 
-export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {}
+export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {
+  check?: Check;
+
+  constructor(slotModel: SerializedSlotConnectionSpec) {
+    super(slotModel);
+    this.check = slotModel.check;
+  }
+}
 
 export interface SerializedParticleSpec extends Literal {
   name: string;
@@ -153,7 +161,7 @@ export class ParticleSpec {
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
   trustClaims: Map<string, Claim>;
-  trustChecks: Map<string, Check>;
+  trustChecks: Check[];
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -387,24 +395,61 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks?: ParticleCheckStatement[]): Map<string, Check> {
-    const results: Map<string, Check> = new Map();
+  private validateTrustChecks(checks?: ParticleCheckStatement[]): Check[] {
+    const results: Check[] = [];
     if (checks) {
+      const providedSlotNames = this.getProvidedSlotsByName();
       checks.forEach(check => {
-        const handle = this.handleConnectionMap.get(check.handle);
-        if (!handle) {
-          throw new Error(`Can't make a check on unknown handle ${check.handle}.`);
+        switch (check.target.targetType) {
+          case 'handle': {
+            const handleName = check.target.name;
+            const handle = this.handleConnectionMap.get(handleName);
+            if (!handle) {
+              throw new Error(`Can't make a check on unknown handle ${handleName}.`);
+            }
+            if (!handle.isInput) {
+              throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
+            }
+            if (handle.check) {
+              throw new Error(`Can't make multiple checks on the same input (${handleName}).`); 
+            }
+            handle.check = createCheck(handle, check, this.handleConnectionMap);
+            results.push(handle.check);
+            break;
+          }
+          case 'slot': {
+            const slotName = check.target.name;
+            const slotSpec = providedSlotNames.get(slotName);
+            if (!slotSpec) {
+              if (this.slotConnectionNames.includes(slotName)) {
+                throw new Error(`Slot ${slotName} is a consumed slot. Can only make checks on provided slots.`);
+              } else {
+                throw new Error(`Can't make a check on unknown slot ${slotName}.`);
+              }
+            }
+            slotSpec.check = createCheck(slotSpec, check, this.handleConnectionMap);
+            results.push(slotSpec.check);
+            break;
+          }
+          default:
+            throw new Error('Unknown check target type.');
         }
-        if (!handle.isInput) {
-          throw new Error(`Can't make a check on handle ${check.handle} (not an input handle).`);
-        }
-        if (handle.check) {
-          throw new Error(`Can't make multiple checks on the same input (${check.handle}).`); 
-        }
-        handle.check = createCheck(handle, check, this.handleConnectionMap);
-        results.set(check.handle, handle.check);
       });
     }
     return results;
+  }
+
+  private getProvidedSlotsByName(): ReadonlyMap<string, ProvideSlotConnectionSpec> {
+    const result: Map<string, ProvideSlotConnectionSpec> = new Map();
+    for (const consumeConnection of this.slotConnections.values()) {
+      for (const provideConnection of consumeConnection.provideSlotConnections) {
+        const name = provideConnection.name;
+        if (result.has(name)) {
+          throw new Error(`Another slot with name '${name}' has already been provided by this particle.`);
+        }
+        result.set(name, provideConnection);
+      }
+    }
+    return result;
   }
 }
