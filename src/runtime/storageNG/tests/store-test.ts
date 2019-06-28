@@ -9,10 +9,11 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Store, StorageMode, DirectStore, ProxyMessageType} from '../store.js';
+import {Store, StorageMode, ProxyMessageType} from '../store.js';
 import {Exists, DriverFactory, StorageDriverProvider, Driver, ReceiveMethod} from '../drivers/driver-factory.js';
 import {CRDTCount, CountOpTypes, CountData, CountOperation} from '../../crdt/crdt-count.js';
 import {StorageKey} from '../storage-key.js';
+import {DirectStore} from '../direct-store.js';
 
 class MockDriver<Data> extends Driver<Data> {
   receiver: ReceiveMethod<Data>;
