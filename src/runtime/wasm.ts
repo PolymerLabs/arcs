@@ -628,7 +628,9 @@ export class WasmParticle extends Particle {
   }
 
   // TODO
-  renderHostedSlot(slotName: string, hostedSlotId: string, content: string) {}
+  renderHostedSlot(slotName: string, hostedSlotId: string, content: Content) {
+    throw new Error('renderHostedSlot not implemented for wasm particles');
+  }
 
   // Actually renders the slot. May be invoked due to an external request via renderSlot(),
   // or directly from the wasm particle itself (e.g. in response to a data update).
