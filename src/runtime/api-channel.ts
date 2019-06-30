@@ -18,6 +18,7 @@ import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
+import {Content} from './slot-consumer.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
@@ -443,7 +444,7 @@ export abstract class PECOuterPort extends APIPort {
   StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: Map<string, string>, @List(MappingType.Direct) contentTypes: string[]) {}
   StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
 
-  abstract onRender(particle: recipeParticle.Particle, slotName: string, content: string);
+  abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
   abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
   abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
   abstract onHandleGet(handle: StorageProviderBase, callback: number);
@@ -506,7 +507,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]);
   abstract onStopRender(particle: Particle, slotName: string);
 
-  Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: string) {}
+  Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: Content) {}
   InitializeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {version: number}) => void) {}
   SynchronizeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {version: number, model: SerializedModelEntry[]}) => void) {}
   HandleGet(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {id: string}) => void) {}

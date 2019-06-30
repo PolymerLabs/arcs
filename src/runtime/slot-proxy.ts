@@ -10,6 +10,7 @@
 
 import {Particle} from './particle';
 import {PECInnerPort} from './api-channel';
+import {Content} from './slot-consumer.js';
 
 /**
  * A representation of a consumed slot. Retrieved from a particle using
@@ -39,7 +40,7 @@ export class SlotProxy {
   /**
    * renders content to the slot.
    */
-  render(content): void {
+  render(content: Content): void {
     this.apiPort.Render(this.particle, this.slotName, content);
 
     Object.keys(content).forEach(key => { this.requestedContentTypes.delete(key); });

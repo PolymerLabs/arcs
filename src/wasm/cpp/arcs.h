@@ -162,6 +162,17 @@ public:
     }
   }
 
+  // Format is <size>:<length>:<value><length>:<value>...
+  static void decodeList(const char* str, std::function<void(const std::string&)> callback) {
+    StringDecoder decoder(str);
+    int num = decoder.getInt(':');
+    while (num--) {
+      int len = decoder.getInt(':');
+      std::string chunk = decoder.chomp(len);
+      callback(std::move(chunk));
+    }
+  }
+
   template<typename T>
   void decode(T& val) {
     static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
@@ -294,7 +305,7 @@ EM_JS(void, singletonClear, (Handle* handle), {})
 EM_JS(const char*, collectionStore, (Handle* handle, const char* encoded), {})
 EM_JS(void, collectionRemove, (Handle* handle, const char* encoded), {})
 EM_JS(void, collectionClear, (Handle* handle), {})
-EM_JS(void, render, (const char* slotName, const char* content), {})
+EM_JS(void, render, (const char* slotName, const char* template_str, const char* model), {})
 
 }  // namespace internal
 
@@ -446,16 +457,12 @@ public:
 
   void update(const char* added, const char* removed) override {
     add(added);
-    internal::StringDecoder decoder(removed);
-    int num = decoder.getInt(':');
-    while (num--) {
-      int len = decoder.getInt(':');
-      std::string chunk = decoder.chomp(len);
+    internal::StringDecoder::decodeList(removed, [this](const std::string& str) {
       // TODO: just get the id, no need to decode the full entity
       T entity;
-      internal::decode_entity(&entity, chunk.c_str());
+      internal::decode_entity(&entity, str.c_str());
       entities_.erase(entity._internal_id_);
-    }
+    });
   }
 
   size_t size() const {
@@ -514,16 +521,12 @@ public:
 private:
   void add(const char* added) {
     failForDirection(Out);
-    internal::StringDecoder decoder(added);
-    int num = decoder.getInt(':');
-    while (num--) {
-      int len = decoder.getInt(':');
-      std::string chunk = decoder.chomp(len);
+    internal::StringDecoder::decodeList(added, [this](const std::string& str) {
       std::unique_ptr<T> eptr(new T());
-      internal::decode_entity(eptr.get(), chunk.c_str());
+      internal::decode_entity(eptr.get(), str.c_str());
       entities_.erase(eptr->_internal_id_);  // emplace doesn't overwrite
       entities_.emplace(eptr->_internal_id_, std::move(eptr));
-    }
+    });
   }
 
   Map entities_;
@@ -563,20 +566,43 @@ public:
     onHandleSync(handle, to_sync_.empty());
   }
 
-  // Called by sub-classes to render into a slot.
-  void renderSlot(const std::string& slot_name, const std::string& content) const {
-    internal::render(slot_name.c_str(), content.c_str());
-  }
-
-  Handle* getHandle(const std::string& name) {
+  Handle* getHandle(const std::string& name) const {
     auto it = handles_.find(name);
     return (it != handles_.end()) ? it->second : nullptr;
+  }
+
+  void renderSlot(const std::string& slot_name, bool send_template, bool send_model) {
+    const char* template_ptr = nullptr;
+    std::string template_str;
+    if (send_template) {
+      template_str = getTemplate(slot_name);
+      template_ptr = template_str.c_str();
+    }
+
+    const char* model_ptr = nullptr;
+    std::string model;
+    if (send_model) {
+      int num = 0;
+      populateModel(slot_name, [&model, &num](const std::string& key, const std::string& value) {
+        model += std::to_string(key.size()) + ":" + key;
+        model += std::to_string(value.size()) + ":" + value;
+        num++;
+      });
+      model = std::to_string(num) + ":" + model;
+      model_ptr = model.c_str();
+    }
+
+    internal::render(slot_name.c_str(), template_ptr, model_ptr);
   }
 
   virtual void onHandleSync(Handle* handle, bool all_synced) {}
   virtual void onHandleUpdate(Handle* handle) {}
   virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}
-  virtual void requestRender(const std::string& slot_name) {}
+
+  // Override to provide a template string and key:value model for rendering into a slot.
+  virtual std::string getTemplate(const std::string& slot_name) { return ""; }
+  virtual void populateModel(const std::string& slot_name,
+                             std::function<void(const std::string&, const std::string&)> add) {}
 
 private:
   std::unordered_map<std::string, Handle*> handles_;
@@ -616,8 +642,8 @@ void updateHandle(Particle* particle, Handle* handle, const char* encoded1, cons
 }
 
 EMSCRIPTEN_KEEPALIVE
-void requestRender(Particle* particle, const char* slot_name) {
-  particle->requestRender(slot_name);
+void renderSlot(Particle* particle, const char* slot_name, bool send_template, bool send_model) {
+  particle->renderSlot(slot_name, send_template, send_model);
 }
 
 EMSCRIPTEN_KEEPALIVE

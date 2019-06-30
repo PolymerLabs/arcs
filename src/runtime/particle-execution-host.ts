@@ -60,7 +60,7 @@ export class ParticleExecutionHost {
 
     this._apiPort = new class extends PECOuterPort {
 
-      onRender(particle: Particle, slotName: string, content: string) {
+      onRender(particle: Particle, slotName: string, content: Content) {
         if (pec.slotComposer) {
           pec.slotComposer.renderSlot(particle, slotName, content);
         }

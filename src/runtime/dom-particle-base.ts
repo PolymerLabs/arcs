@@ -12,6 +12,7 @@ import {Entity} from './entity.js';
 import {BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
+import {Content} from './slot-consumer.js';
 
 export type RenderModel = object;
 
@@ -72,7 +73,7 @@ export class DomParticleBase extends Particle {
     contentTypes.forEach(ct => slot.requestedContentTypes.add(ct));
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
-      const content: {templateName?, template?, model?} = {};
+      const content: Content = {};
       if (slot.requestedContentTypes.has('template')) {
         content.template = this.getTemplate(slot.slotName);
       }
