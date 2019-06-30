@@ -18,6 +18,11 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       :host {
         display: block;
         padding: 0;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
       }
       #graphContainer {
         position: relative;
@@ -26,9 +31,11 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         position: absolute;
         border: solid var(--mid-gray);
         border-width: 1px 0 0 1px;
+        background: white;
         padding: 5px;
         bottom: 0;
         right: 0;
+        z-index: 1;
       }
       .legend span[node] {
         width: 9px;

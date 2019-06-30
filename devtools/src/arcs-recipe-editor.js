@@ -18,10 +18,19 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
     return html`
     <style include="shared-styles">
       :host {
-        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        flex-grow: 0;
       }
       vaadin-split-layout {
-        height: calc(100vh - 54px)
+        flex-grow: 1;
       }
       [mode] {
         padding: 0 8px;
@@ -58,7 +67,6 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
         background-color: var(--highlight-blue);
       }
       [editor] {
-        height: calc(100vh - 54px);
         position: relative;
         overflow: scroll;
       }
@@ -72,14 +80,17 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
         font-family: Menlo, monospace;
       }
       iron-autogrow-textarea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;        
         width: 100%;
         border: 0;
         padding: 0;
         margin: 0;
         box-sizing: border-box;
         --iron-autogrow-textarea: {
-          width: 100%;
-          min-height: calc(100vh - 57px);
           box-sizing: border-box;
           resize: none;
           border: 0;
@@ -203,11 +214,9 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
       <div section status>[[responseStatus(results)]]</div>
     </header>
     <vaadin-split-layout>
-      <div style="flex: .5">
-        <div editor>
-          <div id="underline"></div>
-          <iron-autogrow-textarea value="{{manifest}}" spellcheck="false"></iron-autogrow-textarea>
-        </div>
+      <div style="flex: .5" editor>
+        <div id="underline"></div>
+        <iron-autogrow-textarea value="{{manifest}}" spellcheck="false"></iron-autogrow-textarea>
       </div>
       <aside style="flex: .5">
         <template is="dom-if" if="[[!results.length]]">

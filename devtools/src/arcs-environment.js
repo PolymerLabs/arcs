@@ -27,6 +27,20 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
     <style include="shared-styles">
       :host {
         line-height: 24px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        flex-grow: 0;
+      }
+      [main] {
+        flex-grow: 1;
+        overflow-y: scroll;
       }
       [name] {
         color: var(--devtools-blue);
@@ -50,31 +64,33 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         <filter-input filter="{{searchParams}}"></filter-input>
       </div>
     </header>
-    <div title>Active Recipe</div>
-    <div content>
-      <object-explorer object=[[activeRecipe]]></object-explorer>
-    </div>
-    <div title>Context Recipes</div>
-    <div content>
-      <template is="dom-repeat" items="{{recipes}}">
-        <object-explorer object="{{item}}">
-          <span name>[[item.name]]</span>
-        </object-explorer>
-      </template>
-      <template is="dom-if" if="{{!recipes.length}}">
-        <div class="empty-label">No recipes</div>
-      </template>
-    </div>
-    <div title>Context Particles</div>
-    <div content>
-      <template is="dom-repeat" items="{{particles}}">
-        <object-explorer object="{{item}}">
-          <span name>[[item.name]]</span>
-        </object-explorer>
-      </template>
-      <template is="dom-if" if="{{!particles.length}}">
-        <div class="empty-label">No particles</div>
-      </template>
+    <div main>
+      <div title>Active Recipe</div>
+      <div content>
+        <object-explorer object=[[activeRecipe]]></object-explorer>
+      </div>
+      <div title>Context Recipes</div>
+      <div content>
+        <template is="dom-repeat" items="{{recipes}}">
+          <object-explorer object="{{item}}">
+            <span name>[[item.name]]</span>
+          </object-explorer>
+        </template>
+        <template is="dom-if" if="{{!recipes.length}}">
+          <div class="empty-label">No recipes</div>
+        </template>
+      </div>
+      <div title>Context Particles</div>
+      <div content>
+        <template is="dom-repeat" items="{{particles}}">
+          <object-explorer object="{{item}}">
+            <span name>[[item.name]]</span>
+          </object-explorer>
+        </template>
+        <template is="dom-if" if="{{!particles.length}}">
+          <div class="empty-label">No particles</div>
+        </template>
+      </div>
     </div>`;
   }
 
