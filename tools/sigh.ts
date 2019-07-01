@@ -747,7 +747,7 @@ function health(args: string[]): boolean {
     return tslintOutput.split('\n').filter(line => line.match(lineMatch));
   }
 
-  const migrationFiles = () => [...findProjectFiles('src', /\b(artifacts|runtime[/\\]build)\b/, /\.js$/)];
+  const migrationFiles = () => [...findProjectFiles('src', /\b(artifacts|runtime[/\\]build)\b|webpack\.config\.js/, /\.js$/)];
 
   if (options.migration) {
     console.log('JS files to migrate:\n');
