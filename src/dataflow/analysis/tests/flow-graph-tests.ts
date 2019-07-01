@@ -138,9 +138,9 @@ describe('FlowGraph', () => {
           foo <- h
     `);
     const node = checkDefined(graph.particleMap.get('P'));
-    assert.equal(node.checks.size, 1);
-    const check = node.checks.get('foo');
-    assert.equal(check.handle.name, 'foo');
+    assert.lengthOf(node.checks, 1);
+    const check = node.checks[0];
+    assert.equal(check.target.name, 'foo');
     assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     assert.isEmpty(node.claims);
 

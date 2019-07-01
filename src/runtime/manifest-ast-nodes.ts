@@ -201,8 +201,14 @@ export type ParticleClaimStatement = ParticleClaimIsTag | ParticleClaimDerivesFr
 
 export interface ParticleCheckStatement extends BaseNode {
   kind: 'particle-trust-check';
-  handle: string;
+  target: ParticleCheckTarget;
   expression: ParticleCheckExpression;
+}
+
+export interface ParticleCheckTarget extends BaseNode {
+  kind: 'particle-check-target';
+  targetType: 'handle' | 'slot';
+  name: string;
 }
 
 export interface ParticleCheckBooleanExpression extends BaseNode {

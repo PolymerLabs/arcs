@@ -21,6 +21,7 @@ import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
 import {CheckHasTag, CheckBooleanExpression} from '../particle-check.js';
+import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -2033,17 +2034,36 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
-      assert.equal(particle.trustChecks.size, 2);
+      assert.lengthOf(particle.trustChecks, 2);
       
-      const check1 = checkDefined(particle.trustChecks.get('input1'));
+      const check1 = checkDefined(particle.trustChecks[0]);
       assert.equal(check1.toManifestString(), 'check input1 is property1');
-      assert.equal(check1.handle.name, 'input1');
+      assert.equal(check1.target.name, 'input1');
       assert.deepEqual(check1.expression, new CheckHasTag('property1'));
 
-      const check2 = checkDefined(particle.trustChecks.get('input2'));
+      const check2 = checkDefined(particle.trustChecks[1]);
       assert.equal(check2.toManifestString(), 'check input2 is property2');
-      assert.equal(check2.handle.name, 'input2');
+      assert.equal(check2.target.name, 'input2');
       assert.deepEqual(check2.expression, new CheckHasTag('property2'));
+    });
+
+    it('supports checks on provided slots', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          consume root
+            provide mySlot
+          check mySlot data is trusted
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+      
+      const check = particle.trustChecks[0];
+      assert.equal(check.toManifestString(), 'check mySlot data is trusted');
+      assert.isTrue(check.target instanceof ProvideSlotConnectionSpec);
+      assert.equal(check.target.name, 'mySlot');
+      assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     });
 
     it(`supports checks with the 'or' operation`, async () => {
@@ -2055,11 +2075,11 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
-      assert.equal(particle.trustChecks.size, 1);
+      assert.lengthOf(particle.trustChecks, 1);
 
-      const check = checkDefined(particle.trustChecks.get('input'));
+      const check = checkDefined(particle.trustChecks[0]);
       assert.equal(check.toManifestString(), 'check input is property1 or is property2 or is property3');
-      assert.equal(check.handle.name, 'input');
+      assert.equal(check.target.name, 'input');
       assert.deepEqual(check.expression, new CheckBooleanExpression('or', [
         new CheckHasTag('property1'),
         new CheckHasTag('property2'),
@@ -2076,11 +2096,11 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
-      assert.equal(particle.trustChecks.size, 1);
+      assert.lengthOf(particle.trustChecks, 1);
 
-      const check = particle.trustChecks.get('input');
+      const check = particle.trustChecks[0];
       assert.equal(check.toManifestString(), 'check input is property1 and is property2 and is property3');
-      assert.equal(check.handle.name, 'input');
+      assert.equal(check.target.name, 'input');
       assert.deepEqual(check.expression, new CheckBooleanExpression('and', [
         new CheckHasTag('property1'),
         new CheckHasTag('property2'),
@@ -2097,11 +2117,11 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
-      assert.equal(particle.trustChecks.size, 1);
+      assert.lengthOf(particle.trustChecks, 1);
 
-      const check = particle.trustChecks.get('input');
+      const check = particle.trustChecks[0];
       assert.equal(check.toManifestString(), 'check input (is property1 and is property2) or (is property2 or is property3)');
-      assert.equal(check.handle.name, 'input');
+      assert.equal(check.target.name, 'input');
       assert.deepEqual(
         check.expression,
         new CheckBooleanExpression('or', [
@@ -2136,7 +2156,10 @@ resource SomeName
   claim output3 is not dangerous
   check input1 is trusted or is from handle input2
   check input2 is extraTrusted
-  modality dom`;
+  check childSlot data is somewhatTrusted
+  modality dom
+  consume parentSlot
+    provide childSlot`;
     
       const manifest = await Manifest.parse(manifestString);
       assert.equal(manifestString, manifest.toString());
@@ -2190,12 +2213,32 @@ resource SomeName
       `), `Can't make multiple checks on the same input (foo)`);
     });
 
-    it(`doesn't allow claims to specify more than one tag`, async () => {
+    it(`doesn't allow checks on consumed slots`, async () => {
       assertThrowsAsync(async () => await Manifest.parse(`
         particle A
-          out T {} output
-          claim output is tag1 and tag2
-      `));
+          consume someOtherSlot
+            provide mySlot
+          check someOtherSlot data is trusted
+      `), `Slot someOtherSlot is a consumed slot. Can only make checks on provided slots`);
+    });
+
+    it(`doesn't allow checks on unknown slots`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          consume someOtherSlot
+            provide mySlot
+          check missingSlot data is trusted
+      `), `Can't make a check on unknown slot missingSlot`);
+    });
+
+    it(`doesn't allow multiple provided slots with the same name`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          consume firstSlot
+            provide mySlot
+          consume secondSlot
+            provide mySlot
+      `), `Another slot with name 'mySlot' has already been provided by this particle`);
     });
   });
 });
