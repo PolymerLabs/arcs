@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Claim} from '../../runtime/particle-claim';
-import {Check} from '../../runtime/particle-check';
+import {Claim} from '../../runtime/particle-claim.js';
+import {Check} from '../../runtime/particle-check.js';
 
 export abstract class Node {
   abstract readonly inEdges: readonly Edge[];

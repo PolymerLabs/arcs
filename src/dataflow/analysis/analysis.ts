@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowGraph} from './flow-graph';
-import {assert} from '../../platform/assert-web';
-import {HandleNode} from './handle-node';
-import {Check, CheckCondition, CheckType} from '../../runtime/particle-check';
-import {BackwardsPath, allInputPaths} from './graph-traversal';
-import {ClaimType} from '../../runtime/particle-claim';
-import {Edge} from './graph-internals';
+import {FlowGraph} from './flow-graph.js';
+import {assert} from '../../platform/assert-web.js';
+import {HandleNode} from './handle-node.js';
+import {Check, CheckCondition, CheckType} from '../../runtime/particle-check.js';
+import {BackwardsPath, allInputPaths} from './graph-traversal.js';
+import {ClaimType} from '../../runtime/particle-claim.js';
+import {Edge} from './graph-internals.js';
 
 /** Result from validating an entire graph. */
 export class ValidationResult {

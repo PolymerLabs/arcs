@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals';
-import {Check} from '../../runtime/particle-check';
-import {Slot} from '../../runtime/interface-info';
-import {ParticleNode} from './particle-node';
-import {SlotConnection} from '../../runtime/recipe/slot-connection';
+import {Node, Edge} from './graph-internals.js';
+import {Check} from '../../runtime/particle-check.js';
+import {Slot} from '../../runtime/interface-info.js';
+import {ParticleNode} from './particle-node.js';
+import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
 
 export class SlotNode extends Node {
   // For now, slots can only have in-edges (from the particles that consume them).

@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe} from '../../runtime/recipe/recipe';
-import {ParticleNode, createParticleNodes} from './particle-node';
-import {HandleNode, createHandleNodes, addHandleConnection} from './handle-node';
-import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node';
-import {Node, Edge} from './graph-internals';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {ParticleNode, createParticleNodes} from './particle-node.js';
+import {HandleNode, createHandleNodes, addHandleConnection} from './handle-node.js';
+import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';
+import {Node, Edge} from './graph-internals.js';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.

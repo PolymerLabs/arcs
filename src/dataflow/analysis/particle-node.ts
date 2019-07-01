@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals';
-import {Claim, ClaimType} from '../../runtime/particle-claim';
-import {Check} from '../../runtime/particle-check';
-import {Particle} from '../../runtime/recipe/particle';
-import {assert} from '../../platform/assert-web';
-import {HandleConnectionSpec} from '../../runtime/particle-spec';
-import {HandleConnection} from '../../runtime/recipe/handle-connection';
+import {Node, Edge} from './graph-internals.js';
+import {Claim, ClaimType} from '../../runtime/particle-claim.js';
+import {Check} from '../../runtime/particle-check.js';
+import {Particle} from '../../runtime/recipe/particle.js';
+import {assert} from '../../platform/assert-web.js';
+import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 
 export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();

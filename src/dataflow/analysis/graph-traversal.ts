@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals';
-import {assert} from '../../platform/assert-web';
+import {Node, Edge} from './graph-internals.js';
+import {assert} from '../../platform/assert-web.js';
 
 /**
  * A path that walks backwards through the graph, i.e. it walks along the 
@@ -18,10 +18,10 @@ import {assert} from '../../platform/assert-web';
  */
 export class BackwardsPath {
   private constructor(
-      /** Nodes in the path. */
-      readonly nodes: readonly Node[],
-      /** Edges in the path. */
-      readonly edges: readonly Edge[]) {}
+    /** Nodes in the path. */
+    readonly nodes: readonly Node[],
+    /** Edges in the path. */
+    readonly edges: readonly Edge[]) {}
 
   /** Constructs a new path from the given edge. */
   static fromEdge(edge: Edge) {
@@ -59,7 +59,7 @@ export class BackwardsPath {
     return this.edges.slice().reverse();
   }
 
-  toString() : string {
+  toString(): string {
     const edgesInPath = this.edgesInForwardDirection();
     return edgesInPath.map(e => e.label).join(' -> ');
   }

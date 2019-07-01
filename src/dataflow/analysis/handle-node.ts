@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals';
-import {ParticleOutput, ParticleInput, ParticleNode} from './particle-node';
-import {HandleConnectionSpec} from '../../runtime/particle-spec';
-import {Handle} from '../../runtime/interface-info';
-import {CheckIsFromHandle} from '../../runtime/particle-check';
-import {HandleConnection} from '../../runtime/recipe/handle-connection';
-import {assert} from '../../platform/assert-web';
+import {Node, Edge} from './graph-internals.js';
+import {ParticleOutput, ParticleInput, ParticleNode} from './particle-node.js';
+import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
+import {Handle} from '../../runtime/interface-info.js';
+import {CheckIsFromHandle} from '../../runtime/particle-check.js';
+import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class HandleNode extends Node {
   readonly inEdges: ParticleOutput[] = [];
