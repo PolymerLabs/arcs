@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowGraph, ValidationResult} from '../arcs-dataflow.js';
+import {FlowGraph} from '../arcs-dataflow.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {fs} from '../../platform/fs-web.js';
+import {validateGraph} from '../analysis/analysis.js';
 
 // TODO make this a function and test it; it's big enough now
 
@@ -23,7 +23,7 @@ void (async () => {
     process.exit(1);
   }
   
-  let manifest : Manifest;
+  let manifest: Manifest;
   
   try {
     manifest = await Manifest.load(manifestFile, new Loader());
@@ -36,11 +36,11 @@ void (async () => {
   }
 
   manifest.allRecipes.forEach(recipe => {
-    const flowgraph = new FlowGraph(recipe);
+    const graph = new FlowGraph(recipe);
     console.log('Checking recipe ' + recipe.name);
-    const res = flowgraph.validateGraph();
-    if (!res.isValid) {
-      console.error('Data-flow check failed. Reasons: ' + res.failures);
+    const result = validateGraph(graph);
+    if (!result.isValid) {
+      console.error('Data-flow check failed. Reasons: ' + result.failures);
       process.exit(1);
     } else {
       console.log('Data-flow check passed');

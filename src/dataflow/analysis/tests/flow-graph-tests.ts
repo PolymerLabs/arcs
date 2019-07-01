@@ -7,13 +7,17 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
 import {Manifest} from '../../../runtime/manifest.js';
 import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge, BackwardsPath, ParticleNode} from '../flow-graph.js';
+import {FlowGraph, Node, Edge} from '../flow-graph.js';
 import {ClaimIsTag} from '../../../runtime/particle-claim.js';
 import {CheckHasTag, CheckCondition} from '../../../runtime/particle-check.js';
 import {ProvideSlotConnectionSpec} from '../../../runtime/particle-spec.js';
+import {ParticleNode} from '../particle-node.js';
+import {validateGraph} from '../analysis.js';
+import {BackwardsPath} from '../graph-traversal.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -198,7 +202,7 @@ describe('FlowGraph validation', () => {
         P
           foo -> h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('succeeds when a check is satisfied directly', async () => {
@@ -215,7 +219,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('fails when a different tag is claimed', async () => {
@@ -232,7 +236,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
@@ -250,7 +254,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
@@ -269,7 +273,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
@@ -287,7 +291,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('fails when a "not tag" cancels a tag', async () => {
@@ -311,7 +315,7 @@ describe('FlowGraph validation', () => {
         P3
           bye <- h1
     `);
-    assert.isFalse(graph.validateGraph().isValid);
+    assert.isFalse(validateGraph(graph).isValid);
   });
 
   it('succeeds when a "not tag" cancels a tag that is reclaimed downstream', async () => {
@@ -342,7 +346,7 @@ describe('FlowGraph validation', () => {
         P4
           bit <- h2
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('succeeds when handle has multiple inputs with the right tags', async () => {
@@ -364,7 +368,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('fails when handle has multiple inputs but one is untagged', async () => {
@@ -385,7 +389,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P2.foo -> P3.bar`]);
   });
@@ -399,7 +403,7 @@ describe('FlowGraph validation', () => {
         P
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P.bar`]);
   });
@@ -424,7 +428,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h2
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('a claim made later in a chain of particles does not override claims made earlier', async () => {
@@ -448,7 +452,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h2
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isTrue(result.isValid);
   });
 
@@ -471,7 +475,7 @@ describe('FlowGraph validation', () => {
       P3
         bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isTrue(result.isValid);
   });
 
@@ -494,7 +498,7 @@ describe('FlowGraph validation', () => {
       P3
         bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed for path: P2.foo -> P3.bar`]);
   });
@@ -522,7 +526,7 @@ describe('FlowGraph validation', () => {
         P4
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
       `'check bar is trusted' failed for path: P1.foo -> P4.bar`,
@@ -551,7 +555,7 @@ describe('FlowGraph validation', () => {
           bar1 <- h1
           bar2 <- h2
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
       `'check bar1 is trusted' failed for path: P1.foo1 -> P2.bar1`,
@@ -571,7 +575,7 @@ describe('FlowGraph validation', () => {
             input1 <- h
             input2 <- h
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails when handle is different', async () => {
@@ -585,7 +589,7 @@ describe('FlowGraph validation', () => {
             input1 <- h1
             input2 <- h2
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [`'check input2 is from handle input1' failed for path: P.input2`]);
     });
@@ -607,7 +611,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when the handle is separated by a chain of other particles', async () => {
@@ -627,7 +631,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h1
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when the handle is separated by another particle with a claim', async () => {
@@ -648,7 +652,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h1
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails when another handle is also found', async () => {
@@ -670,7 +674,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h2
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [
         `'check inputToCheck is from handle trustedSource' failed for path: P1.input2 -> P1.output -> P2.inputToCheck`,
@@ -694,7 +698,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when only the tag is present', async () => {
@@ -713,7 +717,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h2
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails when neither condition is present', async () => {
@@ -731,7 +735,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h2
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [
         `'check inputToCheck is from handle trustedSource or is trusted' failed for path: P1.output -> P2.inputToCheck`,
@@ -763,7 +767,7 @@ describe('FlowGraph validation', () => {
             bar <- h
             consume slotToConsume as slot0
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails for tag checks when the tag is missing', async () => {
@@ -782,7 +786,7 @@ describe('FlowGraph validation', () => {
           P2
             consume slotToConsume as slot0
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [`'check slotToProvide data is trusted' failed for path: P2.slotToConsume`]);
     });
@@ -807,7 +811,7 @@ describe('FlowGraph validation', () => {
             bar <- h
             consume slotToConsume as slot0
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails for handle checks when the handle is not present', async () => {
@@ -828,7 +832,7 @@ describe('FlowGraph validation', () => {
           P2
             consume slotToConsume as slot0
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [`'check slotToProvide data is from handle foo' failed for path: P2.slotToConsume`]);
     });

@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowGraph, ValidationResult} from './analysis/flow-graph.js';
+import {FlowGraph} from './analysis/flow-graph.js';
+import {ValidationResult} from './analysis/analysis.js';
 
 export {
   FlowGraph,
