@@ -873,7 +873,7 @@ function schema2pkg(args: string[]) {
 }
 
 function devServer(args: string[]) {
-  return spawnTool('build/tools/dev-server/dev-server.js', args);
+  return spawnTool('build/tools/dev_server/dev-server.js', args);
 }
 
 // Looks up the steps for `command` and runs each with `args`.
