@@ -4,10 +4,64 @@
   <title>Arcs Developer Shell</title>
   <link rel="shortcut icon" href="../configuration/logo_64.png">
   <link rel="stylesheet" href="../configuration/icons.css">
+  <meta charset=utf-8>
   <style>
     .command {
       padding: 8px 10px;
       margin-right: 18px;
+    }
+    #popup {
+      display: none;
+    }
+    .screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: grey;
+      opacity: 0.5;
+    }
+    .content {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-height: 100vh;
+      overflow: auto;
+      font-family: Arial;
+      border: 2px solid #777;
+      padding: 0 12px;
+      opacity: 1;
+      background: white;
+    }
+    .code {
+      font-family: monospace;
+      background: #eaeaea;
+    }
+    .import {
+      width: fit-content;
+      margin: 10px 0 14px 30px;
+    }
+    .url {
+      width: 700px;
+      overflow: auto;
+      margin-left: 30px;
+    }
+    .schema {
+      color: #555;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 0 2px;
+      border: 1px solid #777;
+    }
+    .collapse {
+      color: #777;
+    }
+    .collapse-all {
+      color: #777;
+      letter-spacing: -3px;
+      margin-right: 3px;
     }
   </style>
 </head>
@@ -18,9 +72,68 @@
 
   <button id="execute" class="command">Execute</button>
   <button id="toggle-files" class="command">Hide files</button>
-  <button id="export" class="command">Export</button>
-  <a href="https://github.com/PolymerLabs/arcs/blob/master/shells/dev-shell/README.md" class="command" target="_blank">View readme</a>
+  <button id="export-files" class="command">Export</button>
+  <button id="help" class="command">Help</button>
 
   <output-pane id="output-pane"></output-pane>
+
+  <div id="popup">
+    <div class="screen"></div>
+    <div class="content">
+      <h3>Developer Shell</h3>
+
+      <p>A harness for directly executing arcs.</p>
+
+      <h4><i>Files</i></h4>
+      <p>The top-most text panel provides the manifest to use. This can import other files
+      (typically on disk) and/or provide an inline manifest definition.</p>
+
+      <p>The second panel provides a number of in-browser "files" that can be used to furnish
+      particle implementations. They should be referenced in the manifest using the single-letter
+      filename shown in the tab row.</p>
+
+      <p>On-disk files can be specified as URLs using the following macros:<p>
+      <ul>
+        <li>
+          Relative to the arcs serving root:
+          <div class="code import">import 'https://$arcs/SomeTopLevel.recipe'</div>
+        </li>
+        <li>
+          Relative to the particles directory:
+          <div class="code import">import 'https://$particles/Tutorial/3_JsonStore/JsonStore.recipe'</div>
+        </li>
+      </ul>
+
+      <p>You can also seed the manifest file with one or more imports using the URL query parameter 
+      <span class="code">m</span> or <span class="code">manifest</span>:</p>
+
+      <div class="code url">http://localhost:8786/shells/dev-shell/?m=https://$particles/Profile/FavoriteFood.recipes;https://$particles/Stardate/Stardate.recipes</div>
+
+      <p><button>Export</button> will save the in-browser files as a combined text file.</p>
+
+      <h4><i>Execution</i></h4>
+      <p>Every recipe found will be executed in a separate arc. Repeated executions are independent.
+      Changes to any of the input files (in-browser or on disk) will be picked up on each execution.
+      </p>
+
+      <p>The ability to select specific recipes for execution is planned.</p>
+
+      <p>Pressing <span class="code">ctrl-enter</span> in the manifest or file panels is a shortcut for clicking
+      <button>Execute</button>.</p>
+
+      <h4><i>Interaction</i></h4>
+
+      <p>The stores created by an arc can be viewed and updated using the 🗄 icon. The store data
+      can be updated by simply editing the JSON and clicking 💾. Changes instigated by the arc will
+      be reflected in the output panel in real time.</p>
+
+      <p><span class="schema">S</span> shows or hides the schema for a store.
+      <span class="collapse">⮝</span> toggles the visibility of the entire store.
+      <span class="collapse-all">⮝⮝</span> toggles the visibility of all stores for the arc.</p>
+
+      <p>The serialization for an arc can be displayed by with 📄. This does not update in real time
+      and needs to be closed and re-opened to refresh.</p>
+    </div>
+  </div>
 </body>
 </html>

@@ -29,7 +29,62 @@ import '../../build/services/random-service.js';
 
 const files = document.getElementById('file-pane');
 const output = document.getElementById('output-pane');
-const toggleFiles = document.getElementById('toggle-files');
+const popup = document.getElementById('popup');
+init();
+
+function init() {
+  files.init(execute, document.getElementById('toggle-files'), document.getElementById('export-files'));
+  document.getElementById('execute').addEventListener('click', execute);
+  document.getElementById('help').addEventListener('click', showHelp);
+  popup.addEventListener('click', () => popup.style.display = 'none');
+
+  const params = new URLSearchParams(window.location.search);
+  const manifestParam = params.get('m') || params.get('manifest');
+  if (manifestParam) {
+    files.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
+    execute();
+  } else {
+    const exampleManifest = `\
+import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.recipe'
+
+schema Data
+  Number num
+  Text txt
+
+resource DataResource
+  start
+  [{"num": 73, "txt": "xyz"}]
+
+store DataStore of Data in DataResource
+
+particle P in 'a.js'
+  consume root
+  in Data data
+
+recipe
+  map DataStore as h0
+  P
+    data <- h0`;
+
+    const exampleParticle = `\
+defineParticle(({DomParticle, html}) => {
+  return class extends DomParticle {
+    get template() {
+      return html\`<span>{{num}}</span> : <span>{{str}}</span>\`;
+    }
+    render({data}) {
+      return data ? {num: data.num, str: data.txt} : {};
+    }
+  };
+});`;
+
+    files.seedExample(exampleManifest, exampleParticle);
+  }
+}
+
+function execute() {
+  wrappedExecute().catch(e => output.showError('Unhandled exception', e.stack));
+}
 
 async function wrappedExecute() {
   SlotDomConsumer.clearCache();  // prevent caching of template strings
@@ -112,58 +167,13 @@ async function wrappedExecute() {
   }
 }
 
-function execute() {
-  wrappedExecute().catch(e => output.showError('Unhandled exception', e.stack));
+function showHelp() {
+  popup.style.display = 'block';
+  document.addEventListener('keydown', hideHelp);
 }
 
-function init() {
-  const params = new URLSearchParams(window.location.search);
-  const manifestParam = params.get('m') || params.get('manifest');
-  if (manifestParam) {
-    toggleFiles.click();
-    files.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
-    execute();
-  } else {
-    const exampleManifest = `\
-import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.recipe'
-
-schema Data
-  Number num
-  Text txt
-
-resource DataResource
-  start
-  [{"num": 73, "txt": "xyz"}]
-
-store DataStore of Data in DataResource
-
-particle P in 'a.js'
-  consume root
-  in Data data
-
-recipe
-  use DataStore as h0
-  P
-    data <- h0`;
-
-    const exampleParticle = `\
-defineParticle(({DomParticle, html}) => {
-  return class extends DomParticle {
-    get template() {
-      return html\`<span>{{num}}</span> : <span>{{str}}</span>\`;
-    }
-    render({data}) {
-      return data ? {num: data.num, str: data.txt} : {};
-    }
-  };
-});`;
-
-    files.seedExample(exampleManifest, exampleParticle);
-  }
+function hideHelp(e) {
+  popup.style.display = 'none';
+  e.preventDefault();
+  document.removeEventListener('keydown', hideHelp);
 }
-
-document.getElementById('execute').addEventListener('click', execute);
-document.getElementById('export').addEventListener('click', files.exportFiles.bind(files));
-toggleFiles.addEventListener('click', files.toggleFiles.bind(files));
-files.setExecuteCallback(execute);
-init();
