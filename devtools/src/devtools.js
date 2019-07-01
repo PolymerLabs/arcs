@@ -18,16 +18,16 @@
   let windowForEvents = undefined;
 
   const sendMessage = (function chooseConnection() {
-    const remoteExploreKey = new URLSearchParams(window.location.search).get('remote-explore-key');
-    if (remoteExploreKey) {
-      return connectViaWebRtc(remoteExploreKey);
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('remote-explore-key')) {
+      return connectViaWebRtc(params.get('remote-explore-key'));
     } else if (chrome.devtools && chrome.devtools.inspectedWindow.tabId) {
       // Use the extension API if we're in devtools and having a window to inspect.
       return connectViaExtensionApi();
     } else {
       // Otherwise use WebSocket. We may still be in devtools, but inspecting Node.js.
       // In such case, there's no window to inspect.
-      return connectViaWebSocket();
+      return connectViaWebSocket(params.get('explore-proxy') || 8787);
     }
   })();
 
@@ -84,22 +84,21 @@
     };
   }
 
-  function connectViaWebSocket() {
-    let ws;
+  function connectViaWebSocket(port) {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    ws.onopen = _ => {
+      console.log(`WebSocket connection established.`);
+      ws.onmessage = receiveMessage;
+      ws.send('init');
+    };
+    ws.onerror = _ => {
+      queueOrFire([{
+        messageType: 'connection-status-broken',
+        messageBody: `Unable to connect to port ${port}. Is your server running?`,
+      }]);
+      console.log(`No WebSocket connection found.`);
+    };
 
-    let retriesLeft = 10;
-    (function createWebSocket() {
-      ws = new WebSocket('ws://localhost:8787');
-      ws.onopen = e => {
-        console.log(`WebSocket connection established.`);
-        ws.onmessage = msg => queueOrFire(JSON.parse(msg.data));
-        ws.send('init');
-      };
-      ws.onerror = e => {
-        console.log(`No WebSocket connection found, ${retriesLeft} retries left.`);
-        if (retriesLeft--) setTimeout(createWebSocket, 500);
-      };
-    })();
     return msg => ws.send(JSON.stringify(msg));
   }
 
@@ -107,6 +106,7 @@
     console.log(`Attempting a connection with Remote WebShell.`);
 
     const connection = new RTCPeerConnection();
+    queueOrFire([{messageType: 'connection-status-waiting'}]);
     listenForWebRtcSignal(
       firebase.initializeApp({databaseURL: 'https://arcs-storage.firebaseio.com'}).database(),
       remoteExploreKey,
@@ -118,35 +118,15 @@
         }));
 
     let channel = null;
-    let heartbeatTimeout = null;
     connection.ondatachannel = event => {
       channel = event.channel;
-      channel.onmessage = ({data}) => {
-        // Heartbeat allows notifying when Shell got reloaded.
-        // E.g. due to the lifycycle of the component owning it.
-        if (data === 'heartbeat') {
-          clearTimeout(heartbeatTimeout);
-          heartbeatTimeout = setTimeout(() => {
-            if (window.confirm('Arcs WebShell appears disconnected. Reload and attempt reconnecting?')) {
-              window.location.reload();
-            }
-          }, 5000);
-          return;
-        }
-        let m = null;
-        try {
-          m = JSON.parse(data);
-        } catch (e) {
-          console.error('Issues with parsing messages:', e);
-          return;
-        }
-        queueOrFire(m);
-      };
-      channel.onopen = e => {
+      channel.onmessage = receiveMessage;
+      channel.onopen = _ => {
         console.log('WebRTC channel opened.');
         channel.send('init');
+        queueOrFire([{messageType: 'connection-status-connected'}]);
       };
-      channel.onclose = e => {
+      channel.onclose = _ => {
         console.log('WebRTC channel closed');
         channel = null;
       };
@@ -159,6 +139,19 @@
         channel.send(JSON.stringify(msg));
       }
     };
+  }
+
+  function receiveMessage({data}) {
+    let m = null;
+    try {
+      m = JSON.parse(data);
+    } catch (e) {
+      // Can happen with WebRTC due to message slicing.
+      // We need to solve this properly by avoiding sending messages above certain size limit.
+      console.error('Issues with parsing messages:', e);
+      return;
+    }
+    queueOrFire(m);
   }
 
   function queueOrFire(msg) {

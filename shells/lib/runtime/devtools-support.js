@@ -12,7 +12,7 @@ import {DevtoolsConnection} from '../../../build/devtools-connector/devtools-con
 
 export const DevtoolsSupport = async () => {
   const params = (new URL(document.location)).searchParams;
-  if (params.has('remote-explore-key')) {
+  if (params.has('remote-explore-key') || params.has('explore-proxy')) {
     // Wait for the remote Arcs Explorer to connect before starting the Shell.
     DevtoolsConnection.ensure();
     await DevtoolsConnection.onceConnected;

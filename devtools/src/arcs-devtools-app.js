@@ -29,6 +29,7 @@ import './arcs-pec-log.js';
 import './arcs-selector.js';
 import './strategy-explorer/strategy-explorer.js';
 import './arcs-recipe-editor.js';
+import './arcs-connection-status.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
@@ -123,6 +124,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       </app-location>
       <app-route route="{{route}}" pattern=":page" data="{{routeData}}" tail="{{tail}}">
       </app-route>
+      <arcs-connection-status></arcs-connection-status>
       <header class="header">
         <div section>
           <arcs-notifications></arcs-notifications><div divider></div>
