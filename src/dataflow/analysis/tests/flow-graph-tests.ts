@@ -11,7 +11,8 @@
 import {Manifest} from '../../../runtime/manifest.js';
 import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge} from '../flow-graph.js';
+import {FlowGraph} from '../flow-graph.js';
+import {Node, Edge} from '../graph-internals';
 import {ClaimIsTag} from '../../../runtime/particle-claim.js';
 import {CheckHasTag, CheckCondition} from '../../../runtime/particle-check.js';
 import {ProvideSlotConnectionSpec} from '../../../runtime/particle-spec.js';
@@ -178,7 +179,7 @@ describe('FlowGraph', () => {
     assert.equal((slot1.inEdges[0].start as ParticleNode).name, 'P1');
     assert.isUndefined(slot1.inEdges[0].check);
     assert.isUndefined(slot1.check);
-    
+
     const slot2 = checkDefined(graph.slots[1]);
     assert.isEmpty(slot2.outEdges);
     assert.lengthOf(slot2.inEdges, 1);
@@ -842,7 +843,7 @@ describe('FlowGraph validation', () => {
 class TestNode extends Node {
   readonly inEdges: TestEdge[] = [];
   readonly outEdges: TestEdge[] = [];
-  
+
   addInEdge() {
     throw new Error('Unimplemented.');
   }
@@ -864,9 +865,9 @@ class TestEdge implements Edge {
   readonly connectionName = 'connectionName';
 
   constructor(
-      readonly start: TestNode,
-      readonly end: TestNode,
-      readonly label: string) {}
+    readonly start: TestNode,
+    readonly end: TestNode,
+    readonly label: string) {}
 }
 
 describe('BackwardsPath', () => {

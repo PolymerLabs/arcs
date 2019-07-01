@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './flow-graph';
+import {Node, Edge} from './graph-internals';
 import {Check} from '../../runtime/particle-check';
 import {Slot} from '../../runtime/interface-info';
 import {ParticleNode} from './particle-node';
@@ -19,7 +19,7 @@ export class SlotNode extends Node {
   // TODO: These should be inout edges, because slots can bubble up user events back to these same particles.
   readonly inEdges: SlotInput[] = [];
   readonly outEdges: readonly Edge[] = [];
-  
+
   // Optional check on the data entering this slot. The check is defined by the particle which provided this slot.
   check?: Check;
 

@@ -8,17 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowGraph, Edge} from './flow-graph';
+import {FlowGraph} from './flow-graph';
 import {assert} from '../../platform/assert-web';
 import {HandleNode} from './handle-node';
 import {Check, CheckCondition, CheckType} from '../../runtime/particle-check';
 import {BackwardsPath, allInputPaths} from './graph-traversal';
 import {ClaimType} from '../../runtime/particle-claim';
+import {Edge} from './graph-internals';
 
 /** Result from validating an entire graph. */
 export class ValidationResult {
   failures: string[] = [];
-  
+
   get isValid() {
     return this.failures.length === 0;
   }
@@ -68,24 +69,24 @@ function validateSingleEdge(edgeToCheck: Edge): ValidationResult {
  */
 function checkToConditionList(check: Check): CheckCondition[] {
   // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
-   const conditions: CheckCondition[] = [];
-   switch (check.expression.type) {
-     case 'and':
-       throw new Error(`Boolean expressions with 'and' are not supported yet.`);
-     case 'or':
-       for (const child of check.expression.children) {
-         assert(child.type !== 'or' && child.type !== 'and', 'Nested boolean expressions are not supported yet.');
-         conditions.push(child as CheckCondition);
-       }
-       break;
-     default:
-       // Expression is just a single condition.
-       conditions.push(check.expression);
-       break;
-   }
-   return conditions;
- }
- 
+  const conditions: CheckCondition[] = [];
+  switch (check.expression.type) {
+    case 'and':
+      throw new Error(`Boolean expressions with 'and' are not supported yet.`);
+    case 'or':
+      for (const child of check.expression.children) {
+        assert(child.type !== 'or' && child.type !== 'and', 'Nested boolean expressions are not supported yet.');
+        conditions.push(child as CheckCondition);
+      }
+      break;
+    default:
+      // Expression is just a single condition.
+      conditions.push(check.expression);
+      break;
+  }
+  return conditions;
+}
+
 
 /**
  * Collects all the tags claimed along the given path, canceling tag claims that are
@@ -101,10 +102,10 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
   edgesInPath.forEach(e => {
     if (!e.claim || e.claim.type !== ClaimType.IsTag) {
       return;
-    } 
+    }
     if (!e.claim.isNot) {
       tags.add(e.claim.tag);
-      return;          
+      return;
     }
     // Our current claim is a "not" tag claim. 
     // Ignore it if there are no preceding tag claims

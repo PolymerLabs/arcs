@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './flow-graph';
+import {Node, Edge} from './graph-internals';
 import {Claim, ClaimType} from '../../runtime/particle-claim';
 import {Check} from '../../runtime/particle-check';
 import {Particle} from '../../runtime/recipe/particle';
@@ -32,15 +32,15 @@ export class ParticleNode extends Node {
     this.claims = particle.spec.trustClaims;
     this.checks = particle.spec.trustChecks;
   }
-    
+
   addInEdge(edge: ParticleInput) {
     this.inEdgesByName.set(edge.connectionName, edge);
   }
-  
+
   addOutEdge(edge: Edge) {
     this.outEdgesByName.set(edge.connectionName, edge);
   }
-  
+
   get inEdges(): readonly ParticleInput[] {
     return [...this.inEdgesByName.values()];
   }

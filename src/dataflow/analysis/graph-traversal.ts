@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './flow-graph';
+import {Node, Edge} from './graph-internals';
 import {assert} from '../../platform/assert-web';
 
 /**

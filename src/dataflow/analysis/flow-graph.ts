@@ -9,11 +9,10 @@
  */
 
 import {Recipe} from '../../runtime/recipe/recipe';
-import {Claim} from '../../runtime/particle-claim';
-import {Check} from '../../runtime/particle-check';
 import {ParticleNode, createParticleNodes} from './particle-node';
 import {HandleNode, createHandleNodes, addHandleConnection} from './handle-node';
 import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node';
+import {Node, Edge} from './graph-internals';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -78,36 +77,4 @@ export class FlowGraph {
     }
     return connections;
   }
-}
-
-export abstract class Node {
-  abstract readonly inEdges: readonly Edge[];
-  abstract readonly outEdges: readonly Edge[];
-
-  abstract addInEdge(edge: Edge): void;
-  abstract addOutEdge(edge: Edge): void;
-
-  get inNodes(): Node[] {
-    return this.inEdges.map(e => e.start);
-  }
-
-  get outNodes(): Node[] {
-    return this.outEdges.map(e => e.end);
-  }
-
-  abstract inEdgesFromOutEdge(outEdge: Edge): readonly Edge[];
-}
-
-export interface Edge {
-  readonly start: Node;
-  readonly end: Node;
-  
-  /** The name of the handle/slot this edge represents, e.g. "output1". */
-  readonly connectionName: string;
-  
-  /** The qualified name of the handle/slot this edge represents, e.g. "MyParticle.output1". */
-  readonly label: string;
-
-  readonly claim?: Claim;
-  readonly check?: Check;
 }

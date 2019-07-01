@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './flow-graph';
+import {Node, Edge} from './graph-internals';
 import {ParticleOutput, ParticleInput, ParticleNode} from './particle-node';
 import {HandleConnectionSpec} from '../../runtime/particle-spec';
 import {Handle} from '../../runtime/interface-info';
