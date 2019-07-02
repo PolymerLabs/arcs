@@ -13,7 +13,7 @@
  * media data.
  */
 
-import {decode} from './keymgmt/base64.js';
+import {decode} from '../common/io/base64.js';
 
 /**
  * A wrapper around a set of Bytes that roughly mimics the browser
