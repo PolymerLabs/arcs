@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../common/hot.js';
+import {Runnable} from '../../common/base/runnable.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EnvOptions, Suggestion} from './suggestion.js';

@@ -17,7 +17,7 @@ import {InterfaceInfo} from './interface-info.js';
 import {Handle as InterfaceInfoHandle} from './interface-info.js';
 import {Slot as InterfaceInfoSlot} from './interface-info.js';
 import {Dictionary} from '../common/collect/dictionary.js';
-import {Runnable} from '../common/hot.js';
+import {Runnable} from '../common/base/runnable.js';
 import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';

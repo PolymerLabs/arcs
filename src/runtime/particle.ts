@@ -11,7 +11,7 @@
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';
-import {Runnable} from '../common/hot.js';
+import {Runnable} from '../common/base/runnable.js';
 import {Consumer} from '../common/base/consumer.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';

@@ -13,7 +13,7 @@ import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {firebase} from '../../../platform/firebase-web.js';
 import {Id} from '../../id.js';
-import {Runnable} from '../../../common/hot.js';
+import {Runnable} from '../../../common/base/runnable.js';
 import {Dictionary} from '../../../common/collect/dictionary.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';

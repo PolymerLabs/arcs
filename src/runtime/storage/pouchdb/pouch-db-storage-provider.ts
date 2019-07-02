@@ -10,7 +10,7 @@
 
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {ReferenceType, Type} from '../../type.js';
-import {Runnable} from '../../../common/hot.js';
+import {Runnable} from '../../../common/base/runnable.js';
 import {StorageProviderBase} from '../storage-provider-base.js';
 import {PouchDbCollection} from './pouch-db-collection.js';
 import {PouchDbKey} from './pouch-db-key.js';

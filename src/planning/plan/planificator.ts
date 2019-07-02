@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../common/hot.js';
+import {Runnable} from '../../common/base/runnable.js';
 import {KeyBase} from '../../runtime/storage/key-base.js';
 import {StorageProviderBase, SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EntityType} from '../../runtime/type.js';

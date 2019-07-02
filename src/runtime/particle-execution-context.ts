@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {Handle, handleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
-import {Runnable} from '../common/hot.js';
+import {Runnable} from '../common/base/runnable.js';
 import {Dictionary} from '../common/collect/dictionary.js';
 import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';

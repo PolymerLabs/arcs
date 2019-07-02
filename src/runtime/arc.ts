@@ -14,7 +14,7 @@ import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
-import {Runnable} from '../common/hot.js';
+import {Runnable} from '../common/base/runnable.js';
 import {Dictionary} from '../common/collect/dictionary.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
