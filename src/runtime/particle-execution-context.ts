@@ -16,7 +16,7 @@ import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';
-import {Particle} from './particle.js';
+import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
@@ -192,17 +192,21 @@ export class ParticleExecutionContext {
     return this.keyedProxies[storageKey];
   }
 
-  defaultCapabilitySet() {
-    return {
-      constructInnerArc: async particle => {
-        return new Promise<InnerArcHandle>((resolve, reject) =>
-          this.apiPort.ConstructInnerArc(arcId => resolve(this.innerArcHandle(arcId, particle.id)), particle));
-      },
+  capabilities(hasInnerArcs: boolean): Capabilities {
+    const cap: Capabilities = {
       // TODO(sjmiles): experimental `services` impl
       serviceRequest: (particle, args, callback) => {
         this.apiPort.ServiceRequest(particle, args, callback);
       }
     };
+    if (hasInnerArcs) {
+      // TODO: Particle doesn't have an id field; not sure if it needs one or innerArcHandle shouldn't have that arg.
+      cap.constructInnerArc = async particle => {
+        return new Promise<InnerArcHandle>((resolve, reject) =>
+          this.apiPort.ConstructInnerArc(arcId => resolve(this.innerArcHandle(arcId, undefined)), particle));
+      };
+    }
+    return cap;
   }
 
   // tslint:disable-next-line: no-any
@@ -214,11 +218,11 @@ export class ParticleExecutionContext {
     let particle: Particle;
     if (spec.implFile && spec.implFile.endsWith('.wasm')) {
       particle = await this.loadWasmParticle(spec);
-      particle.setCapabilities({});
+      particle.setCapabilities(this.capabilities(false));
     } else {
       const clazz = await this.loader.loadParticleClass(spec);
       particle = new clazz();
-      particle.setCapabilities(this.defaultCapabilitySet());
+      particle.setCapabilities(this.capabilities(true));
     }
     this.particles.push(particle);
 
