@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Services} from '../../build/runtime/services.js';
 import {logsFactory} from '../../build/runtime/log-factory.js';
 const {log} = logsFactory('BUS', '#d32e1b');
 
@@ -31,6 +32,10 @@ export const Bus = class {
     if (this.client && this.client.receive) {
       this.client.receive(json);
     }
+  }
+  registerService(name, service) {
+    console.log(`register (${name})`);
+    Services.register(name, service);
   }
   parse(msg) {
     if (typeof msg === 'string') {
