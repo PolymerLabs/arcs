@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {checkDefined} from './preconditions.js';
+import {checkDefined} from '../../common/base/preconditions.js';
 
 // tslint:disable: no-any
 

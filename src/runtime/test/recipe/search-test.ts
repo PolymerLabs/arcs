@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Recipe} from '../../recipe/recipe.js';
 import {Search} from '../../recipe/search.js';
-import {checkNotNull} from '../../testing/preconditions.js';
+import {checkNotNull} from '../../../common/base/preconditions.js';
 
 describe('Recipe Search', () => {
   const createAndVerifyResolved = (search) => {

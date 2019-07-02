@@ -15,7 +15,7 @@ import {HostedSlotContext} from '../runtime/slot-context.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
-import {checkDefined} from '../runtime/testing/preconditions.js';
+import {checkDefined} from '../common/base/preconditions.js';
 import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 describe('Multiplexer', () => {

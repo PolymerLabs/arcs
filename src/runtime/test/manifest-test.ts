@@ -15,7 +15,7 @@ import {path} from '../../platform/path-web.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
-import {checkDefined, checkNotNull} from '../testing/preconditions.js';
+import {checkDefined, checkNotNull} from '../../common/base/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';

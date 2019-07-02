@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Id, ArcId} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
-import {checkDefined} from '../testing/preconditions.js';
+import {checkDefined} from '../../common/base/preconditions.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 

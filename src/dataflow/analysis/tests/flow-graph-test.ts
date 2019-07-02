@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {checkDefined} from '../../../runtime/testing/preconditions.js';
+import {checkDefined} from '../../../common/base/preconditions.js';
 import {ClaimIsTag, ClaimType} from '../../../runtime/particle-claim.js';
 import {CheckHasTag} from '../../../runtime/particle-check.js';
 import {ProvideSlotConnectionSpec} from '../../../runtime/particle-spec.js';

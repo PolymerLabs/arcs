@@ -9,8 +9,7 @@
  */
 
 /**
- * @fileoverview
- * Preconditions
+ * @fileoverview Preconditions
  *
  * Convenience functions that check whether values are as expected and
  * also help make Typescript code less nullable/undefined.
