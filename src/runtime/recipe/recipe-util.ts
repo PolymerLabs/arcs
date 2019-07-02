@@ -18,7 +18,7 @@ import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
 import {Id} from '../id.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 export function directionToArrow(direction: Direction): DirectionArrow {
   // Use switch for totality checking.

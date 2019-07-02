@@ -10,7 +10,7 @@
 
 import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, Referenceable} from './crdt-collection.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 type RawSingleton<T> = T;
 

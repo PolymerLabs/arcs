@@ -14,7 +14,7 @@ import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from './storage-provider-base.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 import {Runtime} from '../runtime.js';
 
 export function resetVolatileStorageForTesting() {

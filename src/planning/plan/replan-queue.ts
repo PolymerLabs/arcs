@@ -12,7 +12,7 @@
 import {now} from '../../platform/date-web.js';
 
 import {PlanProducer, Trigger} from './plan-producer.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 const defaultReplanDelayMs = 300;
 

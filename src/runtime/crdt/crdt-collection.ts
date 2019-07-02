@@ -9,7 +9,7 @@
  */
 
 import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 type RawCollection<T> = Set<T>;
 

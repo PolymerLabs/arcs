@@ -17,7 +17,8 @@ import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {Dictionary, Consumer} from '../../common/hot.js';
+import {Consumer} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 import {ClaimIsTag} from '../particle-claim.js';
 
 enum EventKind {

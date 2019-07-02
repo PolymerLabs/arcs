@@ -14,7 +14,7 @@ import {SyntheticStorage} from './synthetic-storage.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 import {KeyBase} from './key-base.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 // TODO(sjmiles): StorageProviderFactory.register can be used
 // to install additional providers, as long as it's invoked

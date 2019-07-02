@@ -17,7 +17,7 @@ import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {checkDefined, checkNotNull} from '../../common/base/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
 import {CheckHasTag, CheckBooleanExpression} from '../particle-check.js';

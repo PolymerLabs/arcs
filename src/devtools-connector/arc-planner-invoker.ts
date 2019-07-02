@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../runtime/arc.js';
-import {Predicate} from '../common/hot.js';
+import {Predicate} from '../common/base/predicate.js';
 import {ArcDevtoolsChannel, DevtoolsMessage} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Recipe} from '../runtime/recipe/recipe.js';

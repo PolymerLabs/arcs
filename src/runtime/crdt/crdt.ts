@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 export type VersionMap = Dictionary<number>;
 

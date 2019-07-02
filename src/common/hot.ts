@@ -23,9 +23,6 @@ export type Consumer<T> = (input: T) => void;
 /** A function that just runs; it takes no values and returns nothing. */
 export type Runnable = () => void;
 
-/** A function that converts some input into a boolean, often use for calls like `filter`. */
-export type Predicate<T> = (input: T) => boolean;
-
 /** A function that maps an input to an output. */
 export type Mapper<I, O> = (input: I) => O;
 
@@ -57,9 +54,3 @@ export interface Literalizable<T, Lit extends Literal> {
   /** @return the original type from a Literal, statically */
   fromLiteral(literal: Lit): T;
 }
-
-/** A light-weight, parameterized key-value store Type */
-export interface Dictionary<T> {
-  [key: string]: T;
-}
-

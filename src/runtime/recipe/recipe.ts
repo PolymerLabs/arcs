@@ -25,7 +25,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from '../../common/base/comparable.js';
 import {Cloneable} from './walker.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 

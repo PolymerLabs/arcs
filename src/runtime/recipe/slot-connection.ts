@@ -14,7 +14,7 @@ import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, ToStringOptions} from './recipe.js';
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings, Comparable} from '../../common/base/comparable.js';
-import {Dictionary} from '../../common/hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 
 export class SlotConnection implements Comparable<SlotConnection> {

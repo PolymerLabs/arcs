@@ -16,7 +16,7 @@ import {DriverFactory, Driver, ReceiveMethod, StorageDriverProvider, Exists} fro
 import {StorageKey} from '../storage-key.js';
 import {Runtime} from '../../runtime.js';
 import {VolatileStorageKey, VolatileStorageDriverProvider} from '../drivers/volatile.js';
-import {Dictionary} from '../../../common/hot.js';
+import {Dictionary} from '../../../common/collect/dictionary.js';
 import {MockFirebaseStorageDriverProvider} from '../testing/mock-firebase.js';
 import {FirebaseStorageKey} from '../drivers/firebase.js';
 

@@ -15,7 +15,8 @@ import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {Predicate, Literal} from '../common/hot.js';
+import {Literal} from '../common/hot.js';
+import {Predicate} from '../common/base/predicate.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;

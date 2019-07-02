@@ -14,7 +14,7 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
 import {Action, GenerateParams, Descendant} from '../runtime/recipe/walker.js';
-import {Dictionary} from '../common/hot.js';
+import {Dictionary} from '../common/collect/dictionary.js';
 
 export interface GenerationRecord {
   generation: number;

@@ -9,7 +9,8 @@
  */
 
 
-import {Dictionary} from '../hot.js';
+// TODO(lindner): move the utility code outside, break dep on Dictionary
+import {Dictionary} from '../collect/dictionary.js';
 import {checkDefined} from './preconditions.js';
 
 /**
@@ -24,7 +25,6 @@ export interface Comparable<T> {
 }
 
 
-// TODO(lindner): move the utility code outside, break dep on Dictionary
 
 export function compareNulls<T>(o1: T | null, o2: T | null): number {
   if (o1 === o2) return 0;
@@ -55,19 +55,6 @@ export function compareArrays<T>(arr1: T[]|null, arr2: T[]|null, compare: (first
   for (let i = 0; i < a1.length; i++) {
     let result: number;
     if ((result = compare(a1[i], a2[i])) !== 0) return result;
-  }
-  return 0;
-}
-
-export function compareObjects<a>(o1: Dictionary<a> | null, o2: Dictionary<a> | null, compare: (first: a, second: a) => number): number {
-  if (o1 === null || o2 === null) {
-    return compareNulls(o1, o2);
-  }
-  const keys = Object.keys(o1);
-  let result: number;
-  if ((result = compareNumbers(keys.length, Object.keys(o2).length)) !== 0) return result;
-  for (const key of keys) {
-    if ((result = compare(o1[key], o2[key])) !== 0) return result;
   }
   return 0;
 }

@@ -11,7 +11,8 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
-import {Dictionary, Predicate} from '../common/hot.js';
+import {Predicate} from '../common/base/predicate.js';
+import {Dictionary} from '../common/collect/dictionary.js';
 import {Description} from './description.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
@@ -86,7 +87,7 @@ export class SlotConsumer {
     return this.generateProvidedContexts(predicate).next().value;
   }
 
-  private* generateProvidedContexts(predicate: Predicate<ProvidedSlotContext> = (_: ProvidedSlotContext) => true): IterableIterator<ProvidedSlotContext> {
+  private* generateProvidedContexts(predicate: Predicate<ProvidedSlotContext> = Predicate.alwaysTrue): IterableIterator<ProvidedSlotContext> {
     for (const context of this.directlyProvidedSlotContexts) {
       if (predicate(context)) yield context;
     }

@@ -19,7 +19,7 @@ import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProv
 import {StorageStub} from './manifest.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
-import {Dictionary} from '../common/hot.js';
+import {Dictionary} from '../common/collect/dictionary.js';
 
 export class Description {
   private constructor(
