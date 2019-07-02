@@ -7,186 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Manifest} from '../../../runtime/manifest.js';
 import {assert} from '../../../platform/chai-web.js';
-import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {FlowGraph, Node, Edge, BackwardsPath, ParticleNode} from '../flow-graph.js';
-import {ClaimIsTag} from '../../../runtime/particle-claim.js';
-import {CheckHasTag, CheckCondition} from '../../../runtime/particle-check.js';
-import {ProvideSlotConnectionSpec} from '../../../runtime/particle-spec.js';
-
-async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
-  const manifest = await Manifest.parse(manifestContent);
-  assert.lengthOf(manifest.recipes, 1);
-  const recipe = manifest.recipes[0];
-  assert(recipe.normalize(), 'Failed to normalize recipe.');
-  assert(recipe.isResolved(), 'Recipe is not resolved.');
-  return new FlowGraph(recipe);
-}
-
-describe('FlowGraph', () => {
-  it('works with empty recipe', async () => {
-    const graph = await buildFlowGraph(`
-      recipe R
-    `);
-    assert.isEmpty(graph.particleMap);
-    assert.isEmpty(graph.handles);
-  });
-
-  it('works with single particle', async () => {
-    const graph = await buildFlowGraph(`
-      particle P
-      recipe R
-        P
-    `);
-    assert.isEmpty(graph.handles);
-    assert.hasAllKeys(graph.particleMap, ['P']);
-    const node = checkDefined(graph.particleMap.get('P'));
-    assert.isEmpty(node.inEdges);
-    assert.isEmpty(node.outEdges);
-  });
-
-  it('works with two particles', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        out Foo {} foo
-      particle P2
-        in Foo {} bar
-      recipe R
-        P1
-          foo -> h
-        P2
-          bar <- h
-    `);
-    assert.lengthOf(graph.particles, 2);
-    assert.lengthOf(graph.handles, 1);
-    assert.hasAllKeys(graph.particleMap, ['P1', 'P2']);
-    const P1 = checkDefined(graph.particleMap.get('P1'));
-    const P2 = checkDefined(graph.particleMap.get('P2'));
-    assert.isEmpty(P1.inEdges);
-    assert.isEmpty(P2.outEdges);
-    assert.equal(P1.outNodes[0], P2.inNodes[0], 'handle node is different');
-    assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar']);
-  });
-
-  it('works with handles with multiple inputs', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        out Foo {} foo
-      particle P2
-        out Foo {} bar
-      particle P3
-        in Foo {} baz
-      recipe R
-        P1
-          foo -> h
-        P2
-          bar -> h
-        P3
-          baz <- h
-    `);
-    assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
-    assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P3.baz', 'P2.bar -> P3.baz']);
-  });
-
-  it('works with handles with multiple outputs', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        out Foo {} foo
-      particle P2
-        in Foo {} bar
-      particle P3
-        in Foo {} baz
-      recipe R
-        P1
-          foo -> h
-        P2
-          bar <- h
-        P3
-          baz <- h
-    `);
-    assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
-    assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
-  });
-
-  it('copies particle claims to particle nodes and out-edges', async () => {
-    const graph = await buildFlowGraph(`
-      particle P
-        out Foo {} foo
-        claim foo is trusted
-      recipe R
-        P
-          foo -> h
-    `);
-    const node = checkDefined(graph.particleMap.get('P'));
-    assert.equal(node.claims.size, 1);
-    const claim = node.claims.get('foo') as ClaimIsTag;
-    assert.equal(claim.handle.name, 'foo');
-    assert.equal(claim.tag, 'trusted');
-    assert.isEmpty(node.checks);
-
-    assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].claim, claim);
-  });
-
-  it('copies particle checks to particle nodes and in-edges', async () => {
-    const graph = await buildFlowGraph(`
-      particle P
-        in Foo {} foo
-        check foo is trusted
-      recipe R
-        P
-          foo <- h
-    `);
-    const node = checkDefined(graph.particleMap.get('P'));
-    assert.lengthOf(node.checks, 1);
-    const check = node.checks[0];
-    assert.equal(check.target.name, 'foo');
-    assert.deepEqual(check.expression, new CheckHasTag('trusted'));
-    assert.isEmpty(node.claims);
-
-    assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].check, check);
-  });
-
-  it('supports making checks on slots', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        consume root
-          provide slotToProvide
-        check slotToProvide data is trusted
-      particle P2
-        consume slotToConsume
-      recipe R
-        slot 'rootslotid-root' as root
-        P1
-          consume root as root
-            provide slotToProvide as slot0
-        P2
-          consume slotToConsume as slot0
-    `);
-    assert.lengthOf(graph.slots, 2);
-
-    const slot1 = checkDefined(graph.slots[0]);
-    assert.isEmpty(slot1.outEdges);
-    assert.lengthOf(slot1.inEdges, 1);
-    assert.equal(slot1.inEdges[0].connectionName, 'root');
-    assert.equal((slot1.inEdges[0].start as ParticleNode).name, 'P1');
-    assert.isUndefined(slot1.inEdges[0].check);
-    assert.isUndefined(slot1.check);
-    
-    const slot2 = checkDefined(graph.slots[1]);
-    assert.isEmpty(slot2.outEdges);
-    assert.lengthOf(slot2.inEdges, 1);
-    assert.equal(slot2.inEdges[0].connectionName, 'slotToConsume');
-    assert.equal((slot2.inEdges[0].start as ParticleNode).name, 'P2');
-    const check = slot2.inEdges[0].check;
-    assert.instanceOf(check.target, ProvideSlotConnectionSpec);
-    assert.equal(check.target.name, 'slotToProvide');
-    assert.deepEqual(check.expression, new CheckHasTag('trusted'));
-    assert.equal(check, slot2.check);
-  });
-});
+import {validateGraph} from '../analysis.js';
+import {buildFlowGraph} from '../testing/flow-graph-testing.js';
 
 describe('FlowGraph validation', () => {
   it('succeeds when there are no checks', async () => {
@@ -198,7 +21,7 @@ describe('FlowGraph validation', () => {
         P
           foo -> h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('succeeds when a check is satisfied directly', async () => {
@@ -215,7 +38,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('fails when a different tag is claimed', async () => {
@@ -232,7 +55,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
@@ -250,7 +73,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
@@ -269,7 +92,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
@@ -287,7 +110,7 @@ describe('FlowGraph validation', () => {
         P2
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('fails when a "not tag" cancels a tag', async () => {
@@ -311,7 +134,7 @@ describe('FlowGraph validation', () => {
         P3
           bye <- h1
     `);
-    assert.isFalse(graph.validateGraph().isValid);
+    assert.isFalse(validateGraph(graph).isValid);
   });
 
   it('succeeds when a "not tag" cancels a tag that is reclaimed downstream', async () => {
@@ -342,7 +165,7 @@ describe('FlowGraph validation', () => {
         P4
           bit <- h2
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('succeeds when handle has multiple inputs with the right tags', async () => {
@@ -364,7 +187,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('fails when handle has multiple inputs but one is untagged', async () => {
@@ -385,7 +208,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P2.foo -> P3.bar`]);
   });
@@ -399,7 +222,7 @@ describe('FlowGraph validation', () => {
         P
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is trusted' failed for path: P.bar`]);
   });
@@ -424,7 +247,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h2
     `);
-    assert.isTrue(graph.validateGraph().isValid);
+    assert.isTrue(validateGraph(graph).isValid);
   });
 
   it('a claim made later in a chain of particles does not override claims made earlier', async () => {
@@ -448,7 +271,7 @@ describe('FlowGraph validation', () => {
         P3
           bar <- h2
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isTrue(result.isValid);
   });
 
@@ -471,7 +294,7 @@ describe('FlowGraph validation', () => {
       P3
         bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isTrue(result.isValid);
   });
 
@@ -494,7 +317,7 @@ describe('FlowGraph validation', () => {
       P3
         bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed for path: P2.foo -> P3.bar`]);
   });
@@ -522,7 +345,7 @@ describe('FlowGraph validation', () => {
         P4
           bar <- h
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
       `'check bar is trusted' failed for path: P1.foo -> P4.bar`,
@@ -551,7 +374,7 @@ describe('FlowGraph validation', () => {
           bar1 <- h1
           bar2 <- h2
     `);
-    const result = graph.validateGraph();
+    const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [
       `'check bar1 is trusted' failed for path: P1.foo1 -> P2.bar1`,
@@ -571,7 +394,7 @@ describe('FlowGraph validation', () => {
             input1 <- h
             input2 <- h
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails when handle is different', async () => {
@@ -585,7 +408,7 @@ describe('FlowGraph validation', () => {
             input1 <- h1
             input2 <- h2
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [`'check input2 is from handle input1' failed for path: P.input2`]);
     });
@@ -607,7 +430,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when the handle is separated by a chain of other particles', async () => {
@@ -627,7 +450,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h1
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when the handle is separated by another particle with a claim', async () => {
@@ -648,7 +471,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h1
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails when another handle is also found', async () => {
@@ -670,7 +493,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h2
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [
         `'check inputToCheck is from handle trustedSource' failed for path: P1.input2 -> P1.output -> P2.inputToCheck`,
@@ -694,7 +517,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when only the tag is present', async () => {
@@ -713,7 +536,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h2
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails when neither condition is present', async () => {
@@ -731,7 +554,7 @@ describe('FlowGraph validation', () => {
             trustedSource <- h
             inputToCheck <- h2
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [
         `'check inputToCheck is from handle trustedSource or is trusted' failed for path: P1.output -> P2.inputToCheck`,
@@ -763,7 +586,7 @@ describe('FlowGraph validation', () => {
             bar <- h
             consume slotToConsume as slot0
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails for tag checks when the tag is missing', async () => {
@@ -782,7 +605,7 @@ describe('FlowGraph validation', () => {
           P2
             consume slotToConsume as slot0
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [`'check slotToProvide data is trusted' failed for path: P2.slotToConsume`]);
     });
@@ -807,7 +630,7 @@ describe('FlowGraph validation', () => {
             bar <- h
             consume slotToConsume as slot0
       `);
-      assert.isTrue(graph.validateGraph().isValid);
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('fails for handle checks when the handle is not present', async () => {
@@ -828,79 +651,9 @@ describe('FlowGraph validation', () => {
           P2
             consume slotToConsume as slot0
       `);
-      const result = graph.validateGraph();
+      const result = validateGraph(graph);
       assert.isFalse(result.isValid);
       assert.sameMembers(result.failures, [`'check slotToProvide data is from handle foo' failed for path: P2.slotToConsume`]);
     });
-  });
-});
-
-class TestNode extends Node {
-  readonly inEdges: TestEdge[] = [];
-  readonly outEdges: TestEdge[] = [];
-  
-  addInEdge() {
-    throw new Error('Unimplemented.');
-  }
-
-  addOutEdge() {
-    throw new Error('Unimplemented.');
-  }
-
-  evaluateCheckCondition(condition: CheckCondition, edge: Edge): boolean {
-    throw new Error('Unimplemented.');
-  }
-
-  inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
-    throw new Error('Unimplemented.');
-  }
-}
-
-class TestEdge implements Edge {
-  readonly connectionName = 'connectionName';
-
-  constructor(
-      readonly start: TestNode,
-      readonly end: TestNode,
-      readonly label: string) {}
-}
-
-describe('BackwardsPath', () => {
-  // Construct directed graph: A -> B -> C.
-  const nodeA = new TestNode();
-  const nodeB = new TestNode();
-  const nodeC = new TestNode();
-  const edgeAToB = new TestEdge(nodeA, nodeB, 'A -> B');
-  const edgeBToC = new TestEdge(nodeB, nodeC, 'B -> C');
-  const edgeCToA = new TestEdge(nodeC, nodeA, 'C -> A');
-
-  it('starts with a single edge', () => {
-    const path = BackwardsPath.fromEdge(edgeAToB);
-
-    assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
-    assert.equal(path.startNode, nodeB);
-    assert.equal(path.endNode, nodeA);
-    assert.equal(path.endEdge, edgeAToB);
-  });
-
-  it('can add another edge to the end of the path', () => {
-    let path = BackwardsPath.fromEdge(edgeBToC);
-    path = path.withNewEdge(edgeAToB);
-
-    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB, nodeA]);
-    assert.equal(path.startNode, nodeC);
-    assert.equal(path.endNode, nodeA);
-    assert.equal(path.endEdge, edgeAToB);
-  });
-
-  it('forbids cycles', () => {
-    let path = BackwardsPath.fromEdge(edgeBToC);
-    path = path.withNewEdge(edgeAToB);
-    assert.throws(() => path.withNewEdge(edgeCToA), 'Graph must not include cycles');
-  });
-
-  it('only allows adding to the end of the path', () => {
-    const path = BackwardsPath.fromEdge(edgeBToC);
-    assert.throws(() => path.withNewEdge(edgeCToA), 'Edge must connect to end of path');
   });
 });
