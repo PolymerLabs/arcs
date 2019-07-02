@@ -25,7 +25,6 @@ export interface Comparable<T> {
 }
 
 
-
 export function compareNulls<T>(o1: T | null, o2: T | null): number {
   if (o1 === o2) return 0;
   if (o1 === null) return -1;
