@@ -18,7 +18,7 @@ import {Storable} from './handle.js';
 import {SerializedEntity} from './storage-proxy.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary} from '../common/collect/dictionary.js';
-import {Consumer} from '../common/hot.js';
+import {Consumer} from '../common/base/consumer.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 
 export type EntityRawData = {};

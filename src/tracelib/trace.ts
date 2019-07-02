@@ -9,7 +9,7 @@
  */
 
 import {Predicate} from '../common/base/predicate.js';
-import {Producer} from '../common/hot.js';
+import {Producer} from '../common/base/producer.js';
 import {Dictionary} from '../common/collect/dictionary.js';
 
 // tslint:disable: no-any
