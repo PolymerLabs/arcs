@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {Type, TypeLiteral} from '../../type.js';
-import {Mutex} from '../../mutex.js';
+import {Mutex} from '../../../common/async/mutex.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from '../crdt-collection-model.js';
 import {ChangeEvent, CollectionStorageProvider} from '../storage-provider-base.js';
 import {UpsertDoc, UpsertMutatorFn, upsert} from './pouch-db-upsert.js';

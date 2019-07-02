@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 import {Mutex} from '../mutex.js';
 
 describe('Mutex', () => {

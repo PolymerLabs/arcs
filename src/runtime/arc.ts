@@ -30,7 +30,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
-import {Mutex} from './mutex.js';
+import {Mutex} from '../common/async/mutex.js';
 import {Dictionary} from './hot.js';
 
 export type ArcOptions = Readonly<{
