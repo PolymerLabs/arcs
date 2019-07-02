@@ -37,7 +37,7 @@ default.profraw
 user-test/
 test-output
 # large files in node_modules that cause failure to deploy to github pages
-node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow.so 
+node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow*
 node_modules/.cache/
 server/node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow.so
 server/node_modules/.cache/
