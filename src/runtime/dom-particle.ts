@@ -11,7 +11,7 @@
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase, RenderModel} from './dom-particle-base.js';
 import {Handle, Collection, Singleton} from './handle.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../common/hot.js';
 
 export interface StatefulDomParticle extends DomParticleBase {
   // add type info for XenState members here

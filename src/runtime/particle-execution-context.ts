@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {Handle, handleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
-import {Runnable} from './hot.js';
+import {Dictionary, Runnable} from '../common//hot.js';
 import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
@@ -23,7 +23,6 @@ import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
-import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;

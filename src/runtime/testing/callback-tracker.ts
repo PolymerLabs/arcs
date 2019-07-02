@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../common/hot.js';
 
 /**
  * Simple class to verify callbacks used in the Arcs storage APIs.

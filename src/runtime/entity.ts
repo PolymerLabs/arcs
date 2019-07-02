@@ -17,7 +17,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Storable} from './handle.js';
 import {SerializedEntity} from './storage-proxy.js';
 import {Id, IdGenerator} from './id.js';
-import {Dictionary, Consumer} from './hot.js';
+import {Dictionary, Consumer} from '../common/hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 
 export type EntityRawData = {};

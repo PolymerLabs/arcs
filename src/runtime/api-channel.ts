@@ -23,7 +23,7 @@ import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Literal, Literalizable} from './hot.js';
+import {Literal, Literalizable} from '../common/hot.js';
 import {floatingPromiseToAudit} from './util.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}

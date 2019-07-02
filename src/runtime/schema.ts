@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {EntityType, Type} from './type.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../common/hot.js';
 
 export class Schema {
   readonly names: string[];

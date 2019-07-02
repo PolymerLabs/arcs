@@ -13,13 +13,12 @@ import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {firebase} from '../../../platform/firebase-web.js';
 import {Id} from '../../id.js';
-import {Runnable} from '../../hot.js';
+import {Dictionary, Runnable} from '../../../common/hot.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
 import {KeyBase} from '../key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from '../storage-provider-base.js';
-import {Dictionary} from '../../hot.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Dictionary, Producer, Predicate} from '../runtime/hot.js';
+import {Dictionary, Producer, Predicate} from '../common/hot.js';
 // tslint:disable: no-any
 
 export type TraceInfo = {

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Loader} from '../loader.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../common/hot.js';
 
 /**
  * A Loader initialized with a per-path canned responses.

@@ -11,13 +11,12 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
-import {Predicate} from './hot.js';
+import {Dictionary, Predicate} from '../common/hot.js';
 import {Description} from './description.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 import {StartRenderOptions, StopRenderOptions} from './particle-execution-host.js';
-import {Dictionary} from './hot.js';
 
 export interface Content {
   templateName?: string | Map<string, string>;

@@ -17,7 +17,7 @@ import {reverseArrow} from '../../runtime/recipe/recipe-util.js';
 import {DirectionArrow} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
-import {Dictionary} from '../../runtime/hot.js';
+import {Dictionary} from '../../common/hot.js';
 
 type Obligation = {from: EndPoint, to: EndPoint, direction: DirectionArrow};
 

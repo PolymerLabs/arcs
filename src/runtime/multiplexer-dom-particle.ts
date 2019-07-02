@@ -15,7 +15,7 @@ import {Handle} from './handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
 import {Content} from './slot-consumer.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../common/hot.js';
 import {Entity} from './entity.js';
 
 export class MultiplexerDomParticle extends TransformationDomParticle {

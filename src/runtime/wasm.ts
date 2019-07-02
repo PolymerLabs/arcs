@@ -14,7 +14,7 @@ import {Entity, EntityRawData} from './entity.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
 import {Content} from './slot-consumer.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../common/hot.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.

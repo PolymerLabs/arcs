@@ -13,7 +13,7 @@ import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 import {CursorNextValue, PECInnerPort} from './api-channel.js';
 import {PropagatedException, SystemException} from './arc-exceptions.js';
 import {Handle, HandleOptions} from './handle.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../common/hot.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from './storage/crdt-collection-model.js';

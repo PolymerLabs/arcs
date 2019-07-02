@@ -16,7 +16,7 @@ import {Id, IdGenerator} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Handle as InterfaceInfoHandle} from './interface-info.js';
 import {Slot as InterfaceInfoSlot} from './interface-info.js';
-import {Runnable} from './hot.js';
+import {Dictionary, Runnable} from '../common/hot.js';
 import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
@@ -35,7 +35,6 @@ import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
-import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 
 export class ManifestError extends Error {

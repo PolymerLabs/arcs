@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Particle} from './particle';
-import {Literal} from './hot.js';
+import {Literal} from '../common/hot.js';
 
 /**
  * @license

@@ -9,7 +9,7 @@
  */
 
 
-import {Dictionary} from '../../runtime/hot.js';
+import {Dictionary} from '../hot.js';
 import {checkDefined} from './preconditions.js';
 
 /**

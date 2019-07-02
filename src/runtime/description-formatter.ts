@@ -16,7 +16,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
 import {ModelValue} from './storage/crdt-collection-model.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../common/hot.js';
 
 export type ParticleDescription = {
   _particle: Particle,

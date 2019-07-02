@@ -11,7 +11,7 @@
 import {NotificationMessage} from 'vscode-jsonrpc/lib/messages';
 import {Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, PublishDiagnosticsParams, Range, TextDocumentSyncKind} from 'vscode-languageserver';
 
-import {Dictionary} from '../../runtime/hot.js';
+import {Dictionary} from '../../common/hot.js';
 import {Manifest, ManifestError} from '../../runtime/manifest.js';
 import {SourcePosition} from '../../runtime/manifest-ast-nodes.js';
 

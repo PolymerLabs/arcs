@@ -15,7 +15,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
-import {Literal} from './hot.js';
+import {Literal} from '../common/hot.js';
 import {Check, createCheck} from './particle-check.js';
 import {Claim, createClaim} from './particle-claim.js';
 

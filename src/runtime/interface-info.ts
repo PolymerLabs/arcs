@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {Predicate} from '../runtime/hot.js';
+import {Predicate} from '../common/hot.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral} from './type.js';
 import {ParticleSpec} from './particle-spec.js';

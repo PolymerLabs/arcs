@@ -14,7 +14,7 @@ import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
-import {Runnable} from './hot.js';
+import {Dictionary, Runnable} from '../common/hot.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
@@ -31,7 +31,6 @@ import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, 
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from '../common/async/mutex.js';
-import {Dictionary} from './hot.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
