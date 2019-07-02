@@ -11,7 +11,7 @@
 import {FlowGraph} from './flow-graph.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleNode} from './handle-node.js';
-import {Check, CheckCondition, CheckType} from '../../runtime/particle-check.js';
+import {CheckType, CheckExpression} from '../../runtime/particle-check.js';
 import {BackwardsPath, allInputPaths} from './graph-traversal.js';
 import {ClaimType} from '../../runtime/particle-claim.js';
 import {Edge} from './graph-internals.js';
@@ -46,7 +46,6 @@ function validateSingleEdge(edgeToCheck: Edge): ValidationResult {
   assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
   const check = edgeToCheck.check;
-  const conditions = checkToConditionList(check);
 
   const finalResult = new ValidationResult();
 
@@ -55,38 +54,13 @@ function validateSingleEdge(edgeToCheck: Edge): ValidationResult {
   for (const path of allInputPaths(edgeToCheck)) {
     const tagsForPath = computeTagClaimsInPath(path);
     const handlesInPath = path.nodes.filter(n => n instanceof HandleNode) as HandleNode[];
-    if (!evaluateCheck(conditions, tagsForPath, handlesInPath)) {
+    if (!evaluateCheck(check.expression, tagsForPath, handlesInPath)) {
       finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${path.toString()}`);
     }
   }
 
   return finalResult;
 }
-
-/**
- * Preprocess a check into a list of conditions. This will need to change when
- * we implement complex boolean expressions.
- */
-function checkToConditionList(check: Check): CheckCondition[] {
-  // TODO: Support boolean expression trees properly! Currently we only deal with a single string of OR'd conditions.
-  const conditions: CheckCondition[] = [];
-  switch (check.expression.type) {
-    case 'and':
-      throw new Error(`Boolean expressions with 'and' are not supported yet.`);
-    case 'or':
-      for (const child of check.expression.children) {
-        assert(child.type !== 'or' && child.type !== 'and', 'Nested boolean expressions are not supported yet.');
-        conditions.push(child as CheckCondition);
-      }
-      break;
-    default:
-      // Expression is just a single condition.
-      conditions.push(check.expression);
-      break;
-  }
-  return conditions;
-}
-
 
 /**
  * Collects all the tags claimed along the given path, canceling tag claims that are
@@ -119,30 +93,22 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
 
 /** 
  * Returns true if the given check passes against one of the tag claims or one
- * one of the handles in the path. Only one condition needs to pass.
+ * one of the handles in the path. Operates recursively on boolean condition
+ * trees.
  */
-function evaluateCheck(conditions: CheckCondition[], claimTags: Set<string>, handles: HandleNode[]): boolean {
-  // Check every condition against the set of tag claims. If it fails, check
-  // against the handles
-  for (const condition of conditions) {
-    switch (condition.type) {
-      case CheckType.HasTag:
-        if (claimTags.has(condition.tag)) {
-          return true;
-        }
-        break;
-      case CheckType.IsFromHandle:
-        // Do any of the handles in the path contain the condition handle as
-        // an output handle?
-        for (const handle of handles) {
-          if (handle.validateIsFromHandleCheck(condition)) {
-            return true;
-          }
-        }
-        break;
-      default:
-        throw new Error('Unknown condition type.');
-    }
+function evaluateCheck(checkExpression: CheckExpression, claimTags: Set<string>, handles: HandleNode[]): boolean {
+  switch (checkExpression.type) {
+    case 'or':
+      // Only one child expression needs to pass.
+      return checkExpression.children.some(childExpr => evaluateCheck(childExpr, claimTags, handles));
+    case 'and':
+      // Every child expression needs to pass.
+      return checkExpression.children.every(childExpr => evaluateCheck(childExpr, claimTags, handles));
+    case CheckType.HasTag:
+      return claimTags.has(checkExpression.tag);
+    case CheckType.IsFromHandle:
+      return handles.some(handle => handle.validateIsFromHandleCheck(checkExpression));
+    default:
+      throw new Error('Unknown condition type.');
   }
-  return false;
 }
