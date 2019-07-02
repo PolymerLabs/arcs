@@ -19,13 +19,23 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     return html`
     <style include="shared-styles">
       :host {
-        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        flex-grow: 0;
+      }
+      iron-list {
+        flex-grow: 1;
+        overflow-y: scroll;
       }
       #download {
         height: 20px;
-      }
-      iron-list {
-        height: calc(100vh - 54px);
       }
       [noPointer] {
         cursor: default;

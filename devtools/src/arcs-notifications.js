@@ -38,7 +38,7 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
         width: 300px;
         border: 1px solid var(--mid-gray);
         background: #fffae0;
-        z-index: 1;
+        z-index: 5;
         border-radius: 8px;
         box-shadow: 2px 2px 2px rgba(0,0,0,.2);
       }

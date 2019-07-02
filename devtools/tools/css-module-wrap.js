@@ -12,16 +12,18 @@ const fs = require('fs');
 const path = require('path');
 
 for (const inputPath of process.argv.slice(2)) {
-  if (!inputPath.includes('/node_modules/' || !inputPath.endsWith('.css'))) {
+  if (!inputPath.includes('/node_modules/') || !inputPath.endsWith('.css')) {
     console.warn('Input path for css-module-wrap should be a css file in node_modules');
     process.exit(1);
   }
 
   const fileName = inputPath.substring(inputPath.lastIndexOf('/') + 1);
-  const outputPath = inputPath.replace('/node_modules/', '/deps/').slice(0, -4) + '.js';
+  const outputPath = inputPath.replace('/node_modules/', '/deps/') + '.js';
   ensureDirectoryExists(outputPath);
   const readStream = fs.createReadStream(inputPath);
   const writeStream = fs.createWriteStream(outputPath);
+
+  console.log(`Creating CSS module for "${fileName}"`);
 
   writeStream.write(
 `const $_documentContainer = document.createElement('template');
