@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Services} from '../../runtime/services.js';
-import '../random.js';
+import '../random-service.js';
 
 
 describe('services: random', () => {
