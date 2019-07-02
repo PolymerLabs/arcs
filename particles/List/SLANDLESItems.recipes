@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedItemInterface
-  in ~any *
+  in ~anyType *
   // TODO(sjmiles): using slot-type for form-factor
   // all Interfaces are the same in List/* except for the slot
   `consume Slot item
@@ -15,8 +15,8 @@ interface SlandleHostedItemInterface
 particle SlandleItemMultiplexer in 'source/Multiplexer.js'
   // TODO(sjmiles): redundancies:
   // 1. slot is declared in HostedItemInterface and as `consume [Slot]  here
-  // 2. ~any is declared in HostedItemInterface and as `[~any]` here
-  in [~any] list
+  // 2. ~anyType is declared in HostedItemInterface and as `[~anyType]` here
+  in [~anyType] list
   host SlandleHostedItemInterface hostedParticle
   `consume [Slot] item
 
@@ -30,7 +30,7 @@ particle SlandleItemMultiplexer in 'source/Multiplexer.js'
 //    list = list
 
 //particle SlandleList in 'source/List.js'
-//  in [~any] list
+//  in [~anyType] list
 //  `consume Slot root #items
 //    `provide? [Slot {handle: items}] item
 //  description `show ${list}`
@@ -43,7 +43,7 @@ particle SlandleItemMultiplexer in 'source/Multiplexer.js'
 //    list = items
 
 particle SlandleItems in 'source/Items.js'
-  in [~any] list
+  in [~anyType] list
   `consume Slot root #items
     `provide? Slot preamble
     `provide? [Slot {handle: list}] item
@@ -53,8 +53,8 @@ particle SlandleItems in 'source/Items.js'
   description `display ${list}`
 
 particle SlandleSelectableItems in 'source/Items.js'
-  in [~any] list
-  inout? ~any selected
+  in [~anyType] list
+  inout? ~anyType selected
   `consume Slot root #items
     `provide? Slot preamble
     `provide [Slot {handle: list}] item

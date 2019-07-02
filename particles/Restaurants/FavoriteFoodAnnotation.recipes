@@ -17,13 +17,13 @@ particle SharesFrom in 'source/SharesFrom.js'
   out [Description] descriptions
 
 interface AnnotationInterfaceThree
-  in ~any *
+  in ~anyType *
   in [~otherOne] *
   in [~otherTwo] names
   consume annotation
 
 particle AnnotationMultiplexerThree in '../List/source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   in [~otherOne] choices
   in [~otherTwo] names
   host AnnotationInterfaceThree hostedParticle

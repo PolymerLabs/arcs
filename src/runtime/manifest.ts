@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {parse, SyntaxError} from '../gen/runtime/manifest-parser.js';
+import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
-import {Id, IdGenerator, ArcId} from './id.js';
+import {Id, IdGenerator} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Handle as InterfaceInfoHandle} from './interface-info.js';
 import {Slot as InterfaceInfoSlot} from './interface-info.js';
@@ -21,13 +21,13 @@ import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
-import {compareComparables, compareNumbers, compareStrings} from './recipe/comparable.js';
+import {compareComparables, compareStrings} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {Slot} from './recipe/slot.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
 import {HandleConnection} from './recipe/handle-connection.js';
+import {RecipeUtil, arrowToDirection, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -996,18 +996,12 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        const direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
-        if (connection.direction) {
-          // TODO(lindner): figure out why '`consume' is not in the direction enum..
-          if (connection.direction !== direction &&
-              direction !== 'inout' &&
-              !(connection.direction === 'host' && direction === 'in') &&
-              !(connection.direction === '`consume' && direction === 'in') &&
-              !(connection.direction === '`provide' && direction === 'out')
-            ) {
+        const direction = arrowToDirection(connectionItem.dir);
+        if (connection.direction !== 'any') {
+          if (!connectionMatchesHandleDirection(direction, connection.direction)) {
             throw new ManifestError(
                 connectionItem.location,
-                `'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
+                `'${connectionItem.dir}' (${direction}) not compatible with '${connection.direction}' param of '${particle.name}'`);
           }
         } else {
           if (connectionItem.param !== '*' && particle.spec !== undefined) {

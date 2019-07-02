@@ -17,6 +17,7 @@ import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';
 import {RecipeWalker} from './recipe-walker.js';
 import {Recipe, IsValidOptions} from './recipe.js';
+import {ConnectionConstraint, InstanceEndPoint} from './connection-constraint.js';
 import {SlotConnection} from './slot-connection.js';
 import {SlotUtils} from './slot-utils.js';
 
@@ -139,12 +140,11 @@ export class ResolveWalker extends RecipeWalker {
     };
   }
   // TODO(lindner): add typeof checks here and figure out where handle is coming from.
-  onObligation(recipe: Recipe, obligation: {from, to, direction: Direction}) {
-    const fromParticle = obligation.from.instance;
-    const toParticle = obligation.to.instance;
+  onObligation(recipe: Recipe, obligation: ConnectionConstraint) {
+    const fromParticle: Particle = (obligation.from as InstanceEndPoint).instance;
+    const toParticle: Particle = (obligation.to as InstanceEndPoint).instance;
     for (const fromConnection of Object.values(fromParticle.connections)) {
       for (const toConnection of Object.values(toParticle.connections)) {
-        // @ts-ignore
         if (fromConnection.handle && fromConnection.handle === toConnection.handle) {
           return (recipe, obligation) => {
             recipe.removeObligation(obligation);

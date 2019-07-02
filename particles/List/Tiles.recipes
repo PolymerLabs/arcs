@@ -1,9 +1,9 @@
 interface HostedTileInterface
-  in ~any *
+  in ~anyType *
   consume tile
 
 particle TileMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   host HostedTileInterface hostedParticle
   consume set of tile
 
@@ -13,8 +13,8 @@ particle TileMultiplexer in 'source/Multiplexer.js'
 //    list = list
 
 particle SelectableTiles in 'source/Tiles.js'
-  in [~any] list
-  inout ~any selected
+  in [~anyType] list
+  inout ~anyType selected
   consume root #tiles
     must provide set of tile
     provide set of annotation

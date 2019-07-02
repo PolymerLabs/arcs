@@ -45,9 +45,9 @@ describe('ConvertConstraintsToConnections', () => {
 `recipe
   create as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
   it('does not cause an input only handle to be created', async () => {
@@ -137,9 +137,9 @@ describe('ConvertConstraintsToConnections', () => {
 `recipe
   create as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
   it('fills out a constraint, reusing a single particle (2)', async () => {
@@ -162,9 +162,9 @@ describe('ConvertConstraintsToConnections', () => {
 `recipe
   create as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
 
@@ -189,9 +189,9 @@ describe('ConvertConstraintsToConnections', () => {
 `recipe
   create as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
   it('fills out a constraint, reusing two particles and a handle', async () => {
@@ -206,7 +206,7 @@ describe('ConvertConstraintsToConnections', () => {
         A.b -> C.d
         use as handle1
         C
-          d = handle1
+          d <-> handle1
         A`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
@@ -217,9 +217,9 @@ describe('ConvertConstraintsToConnections', () => {
 `recipe
   use as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
   it('fills out a constraint, reusing two particles and a handle (2)', async () => {
@@ -245,9 +245,9 @@ describe('ConvertConstraintsToConnections', () => {
 `recipe
   use as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
   it('removes an already fulfilled constraint', async () => {
@@ -262,9 +262,9 @@ describe('ConvertConstraintsToConnections', () => {
         A.b -> C.d
         use as handle1
         C
-          d = handle1
+          d <-> handle1
         A
-          b = handle1`);
+          b <-> handle1`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
     const results = await cctc.generateFrom(generated);
@@ -273,9 +273,9 @@ describe('ConvertConstraintsToConnections', () => {
     assert.deepEqual(result.toString(), `recipe
   use as handle0 // S {}
   A as particle0
-    b = handle0
+    b <-> handle0
   C as particle1
-    d = handle0`);
+    d <-> handle0`);
   });
 
   it('verifies modality', async () => {
@@ -542,7 +542,7 @@ describe('ConvertConstraintsToConnections', () => {
       in S {} i
       out T {} o
     recipe
-      A = B
+      A <-> B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));

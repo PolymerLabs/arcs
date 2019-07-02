@@ -41,7 +41,7 @@ export class AssignHandles extends Strategy {
         // Once validation of recipes generates type information on the handle
         // we should switch to using that instead.
         const counts = RecipeUtil.directionCounts(handle);
-        if (counts.unknown > 0) {
+        if (counts['any'] > 0) { // Number of unknown handle directions.
           return undefined;
         }
 

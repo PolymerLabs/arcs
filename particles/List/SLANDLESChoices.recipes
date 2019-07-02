@@ -7,12 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedChoiceInterface
-  in ~any *
+  in ~anyType *
   in [~anyOther] *
   `consume Slot choice
 
 particle SlandleChoicesMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   in [~anyOther] choices
   host SlandleHostedChoiceInterface hostedParticle
   `consume Slot choice
