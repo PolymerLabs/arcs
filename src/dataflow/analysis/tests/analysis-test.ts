@@ -501,7 +501,7 @@ describe('FlowGraph validation', () => {
     });
   });
 
-  describe(`checks using the 'or' operator`, async () => {
+  describe(`checks using the 'or' operator`, () => {
     it('succeeds when only the handle is present', async () => {
       const graph = await buildFlowGraph(`
         particle P1
@@ -559,6 +559,85 @@ describe('FlowGraph validation', () => {
       assert.sameMembers(result.failures, [
         `'check inputToCheck is from handle trustedSource or is trusted' failed for path: P1.output -> P2.inputToCheck`,
       ]);
+    });
+  });
+
+  describe(`checks using the 'and' operator`, () => {
+    it('succeeds when both conditions are met', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+          claim output is trusted
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource and is trusted
+        recipe R
+          P1
+            output -> h
+          P2
+            trustedSource <- h
+            inputToCheck <- h
+      `);
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('fails when only one condition is met', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+          claim output is onlyKindaTrusted
+        particle P2
+          in Foo {} trustedSource
+          in Foo {} inputToCheck
+          check inputToCheck is from handle trustedSource and is trusted
+        recipe R
+          P1
+            output -> h
+          P2
+            trustedSource <- h
+            inputToCheck <- h
+      `);
+      const result = validateGraph(graph);
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [
+        `'check inputToCheck is from handle trustedSource and is trusted' failed for path: P1.output -> P2.inputToCheck`,
+      ]);
+    });
+
+    it(`handles nesting of boolean conditions`, async () => {
+      const validateCondition = async (checkCondition: string) => {
+        const graph = await buildFlowGraph(`
+          particle P1
+            out Foo {} output
+            claim output is trusted
+          particle P2
+            in Foo {} trustedSource
+            in Foo {} inputToCheck
+            check inputToCheck ${checkCondition}
+          recipe R
+            P1
+              output -> h
+            P2
+              trustedSource <- h
+              inputToCheck <- h
+        `);
+        return validateGraph(graph).isValid;
+      };
+
+      assert.isTrue(await validateCondition('is trusted'));
+      assert.isTrue(await validateCondition('is from handle trustedSource'));
+      assert.isTrue(await validateCondition('is from handle trustedSource and is trusted'));
+      assert.isTrue(await validateCondition('is from handle trustedSource or is trusted'));
+      assert.isTrue(await validateCondition('is from handle trustedSource or is somethingElse'));
+      assert.isTrue(await validateCondition('is trusted or is somethingElse'));
+      assert.isTrue(await validateCondition('is trusted or (is somethingElse or is someOtherThing)'));
+      assert.isTrue(await validateCondition('(is trusted or is somethingElse) and (is trusted or is someOtherThing)'));
+
+      assert.isFalse(await validateCondition('is from handle trustedSource and is somethingElse'));
+      assert.isFalse(await validateCondition('is trusted and is somethingElse'));
+      assert.isFalse(await validateCondition('is trusted and (is somethingElse or is someOtherThing)'));
+      assert.isFalse(await validateCondition('(is trusted and is somethingElse) or (is trusted and is someOtherThing)'));
     });
   });
 
