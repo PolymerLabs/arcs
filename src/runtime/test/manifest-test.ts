@@ -1116,7 +1116,8 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
-      assert.match(e.message, /'->' not compatible with 'in' param of 'TestParticle'/);
+      console.error(e.message);
+      assert.match(e.message, /'->' \(out\) not compatible with 'in' param of 'TestParticle'/);
     }
   });
 
@@ -1134,6 +1135,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
+      console.error(e.message);
       assert.match(e.message, /param 'b' is not defined by 'TestParticle'/);
     }
   });

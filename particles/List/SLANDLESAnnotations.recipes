@@ -7,32 +7,32 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedAnnotationInterface
-  in ~any *
+  in ~anyType *
   inout ~anyOther *
   `consume Slot annotation
 
 particle SlandleAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   inout ~anyOther annotation
   host SlandleHostedAnnotationInterface hostedParticle
   `consume [Slot] annotation
 
 interface SlandleHostedSimpleAnnotationInterface
-  in ~any *
+  in ~anyType *
   `consume Slot annotation
 
 particle SlandleSimpleAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   host SlandleHostedSimpleAnnotationInterface hostedParticle
   `consume [Slot] annotation
 
 interface SlandleHostedCombinedAnnotationInterface
-  in ~any *
+  in ~anyType *
   in [~anyOther] *
   `consume Slot annotation
 
 particle SlandleCombinedAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   in [~anyOther] choices
   host SlandleHostedCombinedAnnotationInterface hostedParticle
   `consume [Slot] annotation

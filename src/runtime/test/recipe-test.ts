@@ -394,13 +394,13 @@ describe('recipe', () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
-        in ~a any
+        in ~a anyA
       particle Specific
         in Thing thing
       recipe
         map as thingHandle
         Generic
-          any <- thingHandle
+          anyA <- thingHandle
         Specific
           thing <- thingHandle
       store MyThings of Thing 'my-things' in ThingsJson
@@ -416,13 +416,13 @@ describe('recipe', () => {
     assert.equal(`recipe
   map 'my-things' as handle0 // ~
   Generic as particle0
-    any <- handle0
+    anyA <- handle0
   Specific as particle1
     thing <- handle0`, recipe.toString());
     assert.equal(`recipe
   map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
   Generic as particle0
-    any <- handle0
+    anyA <- handle0
   Specific as particle1
     thing <- handle0`, recipe.toString({showUnresolved: true}));
     const hash = await recipe.digest();
@@ -439,7 +439,7 @@ describe('recipe', () => {
     assert.equal(`recipe
   map 'my-things' as handle0 // Thing {}
   Generic as particle0
-    any <- handle0
+    anyA <- handle0
   Specific as particle1
     thing <- handle0`, recipeClone.toString());
     assert.equal(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));

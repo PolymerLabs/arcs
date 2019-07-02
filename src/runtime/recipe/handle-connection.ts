@@ -15,6 +15,7 @@ import {Type} from '../type.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
+import {directionToArrow, acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
@@ -25,7 +26,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
   public _name: string; // TODO(lindner): make private, used in particle.ts
   private _tags: string[] = [];
   private resolvedType?: Type = undefined;
-  private _direction?: Direction|null = undefined;
+  private _direction: Direction = 'any';
   private _particle: Particle;
   _handle?: Handle = undefined;
 
@@ -95,12 +96,12 @@ export class HandleConnection implements Comparable<HandleConnection> {
     return spec ? spec.type : null;
   }
 
-  get direction(): Direction|undefined|null { // in/out/inout/host/consume/provide
-    if (this._direction) {
+  get direction(): Direction { // in/out/inout/host/consume/provide
+    if (this._direction !== 'any') {
       return this._direction;
     }
     const spec = this.spec;
-    return spec ? spec.direction : null;
+    return spec ? spec.direction : 'any';
   }
 
   get isInput(): boolean {
@@ -118,7 +119,10 @@ export class HandleConnection implements Comparable<HandleConnection> {
     this._resetHandleType();
   }
 
-  set direction(direction: Direction|undefined|null) {
+  set direction(direction: Direction) {
+    if (direction as Direction === null) {
+      throw new Error(`Invalid direction '${direction}' for handle connection '${this.getQualifiedName()}'`);
+    }
     this._direction = direction;
     this._resetHandleType();
   }
@@ -138,7 +142,8 @@ export class HandleConnection implements Comparable<HandleConnection> {
   }
 
   _isValid(options: IsValidOptions): boolean {
-    if (this.direction && !['in', 'out', 'inout', 'host', '`consume', '`provide'].includes(this.direction)) {
+    // Note: The following casts are necessary to catch invalid values that typescript does not manage to check).
+    if (this.direction as Direction === null || this.direction as Direction === undefined) {
       if (options && options.errors) {
         options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
       }
@@ -152,8 +157,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
         }
         return false;
       }
-      if (this.direction !== connectionSpec.direction &&
-          !(['in', 'out'].includes(this.direction) && connectionSpec.direction === 'inout')) {
+      if (!acceptedDirections(this.direction).includes(connectionSpec.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.getQualifiedName()}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
         }
@@ -239,8 +243,8 @@ export class HandleConnection implements Comparable<HandleConnection> {
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
     result.push(this.name || '*');
-    // TODO: better deal with unspecified direction.
-    result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '=', '`consume': '<-', '`provide': '->'}[this.direction] || this.direction || '=');
+    // '=' is the 'any' direction (note: inout => '<->')
+    result.push((this.direction && directionToArrow(this.direction)) || '=');
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);

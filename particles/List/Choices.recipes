@@ -7,12 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface HostedChoiceInterface
-  in ~any *
+  in ~anyType *
   in [~anyOther] *
   consume choice
 
 particle ChoicesMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   in [~anyOther] choices
   host HostedChoiceInterface hostedParticle
   consume set of choice

@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction, DirectionArrow} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
@@ -19,7 +19,7 @@ import {Particle} from './particle.js';
 
 export abstract class EndPoint implements Comparable<EndPoint> {
   abstract _compareTo(other: EndPoint): number;
-  abstract _clone(cloneMap?: CloneMap);
+  abstract _clone(cloneMap?: CloneMap): EndPoint;
   abstract toString(nameMap?: ReadonlyMap<RecipeComponent, string>): string;
 }
 
@@ -123,6 +123,7 @@ export class TagEndPoint extends EndPoint {
     return 0;
   }
 
+  // TODO: nameMap is not used. Remove it?
   toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined): string {
     return this.tags.map(a => `#${a}`).join(' ');
   }
@@ -133,10 +134,10 @@ export class TagEndPoint extends EndPoint {
 export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
   from: EndPoint;
   to: EndPoint;
-  direction: Direction;
+  direction: DirectionArrow;
   type: 'constraint' | 'obligation';
 
-  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, type: 'constraint' | 'obligation') {
+  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: DirectionArrow, type: 'constraint' | 'obligation') {
     assert(direction);
     assert(type);
     this.from = fromConnection;
@@ -149,7 +150,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
   _copyInto(recipe: Recipe, cloneMap: CloneMap) {
     if (this.type === 'constraint') {
       if (this.from instanceof InstanceEndPoint || this.to instanceof InstanceEndPoint) {
-        assert(!`Can't have connection constraints of type constraint with InstanceEndPoints`);
+        assert(false, `Can't have connection constraints of type constraint with InstanceEndPoints`);
       } else {
         return recipe.newConnectionConstraint(
             this.from._clone(), this.to._clone(), this.direction);

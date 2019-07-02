@@ -7,11 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedTileInterface
-  in ~any *
+  in ~anyType *
   `consume Slot tile
 
 particle SlandleTileMultiplexer in 'source/Multiplexer.js'
-  in [~any] list
+  in [~anyType] list
   host SlandleHostedTileInterface hostedParticle
   `consume [Slot] tile
 
@@ -21,8 +21,8 @@ particle SlandleTileMultiplexer in 'source/Multiplexer.js'
 //    list = list
 
 particle SlandleSelectableTiles in 'source/Tiles.js'
-  in [~any] list
-  inout ~any selected
+  in [~anyType] list
+  inout ~anyType selected
   `consume Slot root #tiles
     `provide [Slot] tile
     `provide? [Slot] annotation
