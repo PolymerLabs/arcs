@@ -18,6 +18,7 @@ import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
+import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
@@ -74,7 +75,7 @@ export class ParticleExecutionContext {
         return [hostedSlotId, () => callback(hostedSlotId)];
       }
 
-      onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: string) {
+      onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content) {
         transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
       }
 

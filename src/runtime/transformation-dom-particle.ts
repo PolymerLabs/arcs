@@ -10,6 +10,7 @@
 
 import {DomParticle} from './dom-particle.js';
 import {Entity} from './entity.js';
+import {Content} from './slot-consumer.js';
 
 // Regex to separate style and template.
 const re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
@@ -37,16 +38,16 @@ export class TransformationDomParticle extends DomParticle {
     return Boolean((state.template || state.templateName) && state.renderModel);
   }
 
-  renderHostedSlot(slotName, hostedSlotId, content): void {
+  renderHostedSlot(slotName: string, hostedSlotId: string, content: Content): void {
     this.combineHostedTemplate(slotName, hostedSlotId, content);
     this.combineHostedModel(slotName, hostedSlotId, content);
   }
 
   // abstract
-  combineHostedTemplate(slotName: string, hostedSlotId, content): void {
+  combineHostedTemplate(slotName: string, hostedSlotId: string, content: Content): void {
   }
 
-  combineHostedModel(slotName, hostedSlotId, content): void {
+  combineHostedModel(slotName: string, hostedSlotId: string, content: Content): void {
   }
 
   // Helper methods that may be reused in transformation particles to combine hosted content.

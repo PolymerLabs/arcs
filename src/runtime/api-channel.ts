@@ -473,7 +473,7 @@ export abstract class PECOuterPort extends APIPort {
 
   abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: recipeParticle.Particle, transformationSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
-  InnerArcRender(@Mapped transformationParticle: recipeParticle.Particle, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: {}) {}
+  InnerArcRender(@Mapped transformationParticle: recipeParticle.Particle, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: Content) {}
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
@@ -539,7 +539,7 @@ export abstract class PECInnerPort extends APIPort {
 
   ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);
-  abstract onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotID: string, content: string);
+  abstract onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotID: string, content: Content);
 
   ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: (data: {error?: string}) => void) {}
 

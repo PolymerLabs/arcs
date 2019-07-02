@@ -16,6 +16,7 @@ import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
+import {Content} from './slot-consumer.js';
 import {UserException} from './arc-exceptions.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 
@@ -264,6 +265,6 @@ export class Particle {
 
   // abstract
   renderSlot(slotName: string, contentTypes: string[]): void {}
-  renderHostedSlot(slotName: string, hostedSlotId: string, content: string): void {}
+  renderHostedSlot(slotName: string, hostedSlotId: string, content: Content): void {}
   fireEvent(slotName: string, event: {}): void {}
 }
