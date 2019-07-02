@@ -15,16 +15,7 @@ public:
     registerHandle("in_col", in_col_);
     registerHandle("ot_col", ot_col_);
     registerHandle("io_col", io_col_);
-  }
-
-  void onHandleSync(arcs::Handle* handle, bool all_synced) override {
-    if (all_synced) {
-      renderSlot("root", false, true);
-    }
-  }
-
-  void onHandleUpdate(arcs::Handle* handle) override {
-    renderSlot("root", false, true);
+    autoRender();
   }
 
   std::string getTemplate(const std::string& slot_name) override {
@@ -101,7 +92,7 @@ public:
 
   std::string collectionToStr(const TestCollection& col) {
     if (col.empty()) {
-      return "<i>(empty)</i>";
+      return "(empty)";
     }
     std::string str = "Size: " + std::to_string(col.size()) + "\n";
     int i = 0;

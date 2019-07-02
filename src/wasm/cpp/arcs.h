@@ -541,11 +541,19 @@ class Particle {
 public:
   virtual ~Particle() {}
 
+  // TODO: port sync tracking and auto-render to the JS particle.
+
   // Called by sub-class constructors to map names to their handle fields.
   void registerHandle(std::string name, Handle& handle) {
     handle.name_ = std::move(name);
     handle.particle_ = this;
     handles_[handle.name_] = &handle;
+  }
+
+  // Optionally called by sub-class constructors to indicate that we should automatically call
+  // renderSlot() with the given slot name once all handles are synced, and whenever one is updated.
+  void autoRender(const std::string& slot_name = "root") {
+    auto_render_slot_ = slot_name;
   }
 
   // Called by the runtime to associate the inner handle instance with the outer object.
@@ -567,6 +575,16 @@ public:
   void sync(Handle* handle) {
     to_sync_.erase(handle);
     onHandleSync(handle, to_sync_.empty());
+    if (to_sync_.empty() && !auto_render_slot_.empty()) {
+      renderSlot(auto_render_slot_, true, true);
+    }
+  }
+
+  void update(Handle* handle) {
+    onHandleUpdate(handle);
+    if (!auto_render_slot_.empty()) {
+      renderSlot(auto_render_slot_, true, true);
+    }
   }
 
   Handle* getHandle(const std::string& name) const {
@@ -610,6 +628,7 @@ public:
 private:
   std::unordered_map<std::string, Handle*> handles_;
   std::unordered_set<Handle*> to_sync_;
+  std::string auto_render_slot_;
 };
 
 // Defines an exported function 'newParticleName()' that the runtime will call to create
@@ -641,7 +660,7 @@ void syncHandle(Particle* particle, Handle* handle, const char* encoded) {
 EMSCRIPTEN_KEEPALIVE
 void updateHandle(Particle* particle, Handle* handle, const char* encoded1, const char* encoded2) {
   handle->update(encoded1, encoded2);
-  particle->onHandleUpdate(handle);
+  particle->update(handle);
 }
 
 EMSCRIPTEN_KEEPALIVE
