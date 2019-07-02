@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
 import {KeyBase} from '../../runtime/storage/key-base.js';
@@ -61,8 +62,7 @@ export class Planificator {
     if (inspectorFactory) {
       this.inspector = inspectorFactory.create(this);
     }
-    assert(result, 'Result cannot be null.');
-    this.result = result;
+    this.result = checkDefined(result, 'Result cannot be null');
     if (!onlyConsumer) {
       this.producer = new PlanProducer(this.arc, this.result, searchStore, this.inspector, {debug, noSpecEx});
       this.replanQueue = new ReplanQueue(this.producer);

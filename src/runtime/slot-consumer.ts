@@ -11,13 +11,12 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
-import {Predicate} from './hot.js';
+import {Consumer, Dictionary, Predicate} from './hot.js';
 import {Description} from './description.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 import {StartRenderOptions, StopRenderOptions} from './particle-execution-host.js';
-import {Dictionary} from './hot.js';
 
 export interface Content {
   templateName?: string | Map<string, string>;
@@ -45,9 +44,9 @@ export class SlotConsumer {
   slotContext: SlotContext;
   readonly directlyProvidedSlotContexts: ProvidedSlotContext[] = [];
   readonly hostedSlotContexts: HostedSlotContext[] = [];
-  startRenderCallback: (options: StartRenderOptions) => void;
-  stopRenderCallback: (options: StopRenderOptions) => void;
-  eventHandler: ({}) => void;
+  startRenderCallback: Consumer<StartRenderOptions>;
+  stopRenderCallback: Consumer<StopRenderOptions>;
+  eventHandler: Consumer<{}>;
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
