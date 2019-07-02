@@ -17,7 +17,7 @@ import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../common/base/comparable.js';
 import {Fate} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, ClaimExpression} from '../particle-claim.js';
 

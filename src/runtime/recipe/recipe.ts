@@ -23,7 +23,7 @@ import {TypeChecker} from './type-checker.js';
 import {Search} from './search.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {compareComparables} from './comparable.js';
+import {compareComparables} from '../../common/base/comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
 import {Schema} from '../schema.js';

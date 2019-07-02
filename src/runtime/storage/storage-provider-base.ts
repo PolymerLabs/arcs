@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
-import {Comparable, compareNumbers, compareStrings} from '../recipe/comparable.js';
+import {Comparable, compareNumbers, compareStrings} from '../../common/base/comparable.js';
 import {Type} from '../type.js';
 import {StorageStub} from '../manifest.js';
 import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';

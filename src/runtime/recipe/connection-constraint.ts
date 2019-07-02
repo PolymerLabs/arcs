@@ -13,7 +13,7 @@ import {ParticleSpec} from '../particle-spec.js';
 
 import {Direction, DirectionArrow} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
-import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
+import {Comparable, compareArrays, compareComparables, compareStrings} from '../../common/base/comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
 import {Particle} from './particle.js';
 

@@ -13,7 +13,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, ToStringOptions} from './recipe.js';
 import {Slot} from './slot.js';
-import {compareComparables, compareStrings, Comparable} from './comparable.js';
+import {compareComparables, compareStrings, Comparable} from '../../common/base/comparable.js';
 import {Dictionary} from '../hot.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 

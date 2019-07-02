@@ -14,7 +14,7 @@ import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {CloneMap, IsResolvedOptions, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../common/base/comparable.js';
 
 export class Slot implements Comparable<Slot> {
   private readonly _recipe: Recipe;

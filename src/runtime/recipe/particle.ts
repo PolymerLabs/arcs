@@ -18,7 +18,7 @@ import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../common/base/comparable.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
 

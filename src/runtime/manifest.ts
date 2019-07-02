@@ -21,7 +21,7 @@ import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
-import {compareComparables, compareStrings} from './recipe/comparable.js';
+import {compareComparables, compareStrings} from '../common/base/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';

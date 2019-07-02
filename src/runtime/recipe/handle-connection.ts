@@ -17,7 +17,7 @@ import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
 import {directionToArrow, acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, Comparable} from '../../common/base/comparable.js';
 
 import {Direction} from '../manifest-ast-nodes.js';
 
