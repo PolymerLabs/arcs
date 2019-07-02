@@ -59,7 +59,10 @@ export function compareArrays<T>(arr1: T[]|null, arr2: T[]|null, compare: (first
 }
 
 export function compareComparables<T>(o1: Comparable<T> | null, o2: Comparable<T> | null): number {
-  if (o1 === null || o2 === null) return compareNulls(o1, o2);
+  // TODO(lindner): convert to triple-equals once we know why this is being called with undefined
+  // values
+  if (o1 == null || o2 == null) return compareNulls(o1, o2);
+
   return o1._compareTo(o2);
 }
 
