@@ -8,9 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+/**
+ * @fileoverview
+ * FlowGraph internals
+ *
+ * This file contains the data structures that are meant to be internal to the
+ * FlowGraph class. They have been moved into a separate file to break circular
+ * dependencies between FlowGraph, Node/Edge, and the concrete implementations
+ * of Node/Edge like ParticleNode, etc.
+ */
+
 import {Claim} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 
+/** Represents a node in a FlowGraph. Can be a particle, handle, etc. */
 export abstract class Node {
   abstract readonly inEdges: readonly Edge[];
   abstract readonly outEdges: readonly Edge[];
@@ -29,6 +40,10 @@ export abstract class Node {
   abstract inEdgesFromOutEdge(outEdge: Edge): readonly Edge[];
 }
 
+/**
+ * Represents an edge in a FlowGraph, i.e. a connection between particles,
+ * handles, etc.
+ */
 export interface Edge {
   readonly start: Node;
   readonly end: Node;
@@ -36,7 +51,10 @@ export interface Edge {
   /** The name of the handle/slot this edge represents, e.g. "output1". */
   readonly connectionName: string;
 
-  /** The qualified name of the handle/slot this edge represents, e.g. "MyParticle.output1". */
+  /**
+   * The qualified name of the handle/slot this edge represents,
+   * e.g. "MyParticle.output1".
+   */
   readonly label: string;
 
   readonly claim?: Claim;
