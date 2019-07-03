@@ -257,7 +257,7 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
-      } else if (item.kind === 'particle-trust-claim' || item.kind === 'particle-trust-claim') {
+      } else if (item.kind === 'particle-trust-claim') {
         trustClaims.push(item);
       } else if (item.kind === 'particle-trust-check') {
         trustChecks.push(item);

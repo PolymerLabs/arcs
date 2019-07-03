@@ -10,7 +10,6 @@
 
 import {HandleConnectionSpec} from './particle-spec';
 import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement} from './manifest-ast-nodes';
-import {browserLocalStorage} from '@tensorflow/tfjs-core/dist/io/local_storage';
 
 /** The different types of trust claims that particles can make. */
 export enum ClaimType {
