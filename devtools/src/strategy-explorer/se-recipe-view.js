@@ -134,8 +134,8 @@ Polymer({
 
   diffHtml: function(left, right) {
     let diff = this.over.strategyMap.has(this.to)
-        ? JsDiff.diffWords(right, left)
-        : JsDiff.diffWords(left, right);
+        ? Diff.diffWords(right, left)
+        : Diff.diffWords(left, right);
     diff = diff.map(entry => {
       if (entry.added) {
         return `<span added>${entry.value}</span>`;
