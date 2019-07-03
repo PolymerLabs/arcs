@@ -19,15 +19,15 @@ export class PlatformLoader extends PlatformLoaderBase {
   flushCaches() {
     // punt object urls?
   }
-  async loadResource(url) {
+  async loadResource(url: string) {
     // subclass impl differentiates paths and URLs,
     // for browser env we can feed both kinds into _loadURL
     return super._loadURL(this._resolve(url));
   }
-  async loadBinary(url) {
+  async loadBinary(url: string) {
     return super.loadBinary(this._resolve(url));
   }
-  async provisionObjectUrl(fileName) {
+  async provisionObjectUrl(fileName: string) {
     const raw = await this.loadResource(fileName);
     const code = `${raw}\n//# sourceURL=${fileName}`;
     return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
@@ -42,7 +42,7 @@ export class PlatformLoader extends PlatformLoaderBase {
     }
     return clazz;
   }
-  async requireParticle(unresolvedPath, blobUrl) {
+  async requireParticle(unresolvedPath: string, blobUrl?) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(unresolvedPath);
@@ -56,7 +56,7 @@ export class PlatformLoader extends PlatformLoaderBase {
       return this.unwrapParticle(particle, logger);
     }
   }
-  provisionLogger(fileName) {
+  provisionLogger(fileName: string) {
     return logFactory(fileName.split('/').pop(), '#1faa00');
   }
   loadWrappedParticle(url) {
@@ -64,7 +64,7 @@ export class PlatformLoader extends PlatformLoaderBase {
     // MUST be synchronous from here until deletion
     // of self.defineParticle because we share this
     // scope with other particles
-    self.defineParticle = function(particleWrapper) {
+    self['defineParticle'] = (particleWrapper) => {
       if (result) {
         warn('multiple particles not supported, last particle wins');
       }
@@ -78,7 +78,7 @@ export class PlatformLoader extends PlatformLoaderBase {
       error(x);
     }
     // clean up
-    delete self.defineParticle;
+    delete self['defineParticle'];
     return result;
   }
 }

@@ -10,7 +10,7 @@
 
 import crypto from 'crypto';
 
-export async function digest(str) {
+export async function digest(str: string) {
   const sha = crypto.createHash('sha1');
   sha.update(str);
   return Promise.resolve().then(() => sha.digest('hex'));

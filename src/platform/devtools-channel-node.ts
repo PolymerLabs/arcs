@@ -7,19 +7,21 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
+
 
 import {AbstractDevtoolsChannel} from '../devtools-connector/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
 import WebSocket from 'ws';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
+  server: WebSocket.Server;
+  socket: WebSocket;
   constructor() {
     super();
     this.server = new WebSocket.Server({port: 8787});
-    this.server.on('connection', ws => {
+    this.server.on('connection', (ws: WebSocket) => {
       this.socket = ws;
-      this.socket.on('message', msg => {
+      this.socket.on('message', (msg: string) => {
         if (msg === 'init') {
           DevtoolsBroker.markConnected();
         } else {
