@@ -10,11 +10,12 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {PECOuterPort, APIPort, Port} from './api-channel.js';
+import {PECOuterPort, APIPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
 import {Runnable} from './hot.js';
 import {Manifest, StorageStub} from './manifest.js';
+import {MessagePort} from './message-channel.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
@@ -48,7 +49,7 @@ export class ParticleExecutionHost {
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
 
-  constructor(slotComposer: SlotComposer, arc: Arc, ports: (MessagePort|Port)[]) {
+  constructor(slotComposer: SlotComposer, arc: Arc, ports: MessagePort[]) {
     this.close = () => {
       ports.forEach(port => port.close());
       this._apiPorts.forEach(apiPort => apiPort.close());
@@ -62,7 +63,7 @@ export class ParticleExecutionHost {
     this._apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
   }
 
-  private findPortForParticle(particle: Particle): PECOuterPort {
+  private choosePortForParticle(particle: Particle): PECOuterPort {
     assert(!this._portByParticle.has(particle), `port already found for particle '${particle.spec.name}'`);
     const port = this._apiPorts.find(port => particle.isJavaParticle() === port.supportsJavaParticle());
     assert(!!port, `No port found for '${particle.spec.name}'`);
@@ -99,7 +100,7 @@ export class ParticleExecutionHost {
   }
 
   instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
-    const apiPort = this.findPortForParticle(particle);
+    const apiPort = this.choosePortForParticle(particle);
 
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name);

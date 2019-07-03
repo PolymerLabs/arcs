@@ -204,22 +204,14 @@ class ThingMapper {
   }
 }
 
-// This class has an interface compatible with MessagePort and should be
-// implemented by any alternative port classes (e.g. JavaPort).
-export abstract class Port {
-  abstract close(): void;
-  abstract postMessage(msg: {}): void;
-  abstract set onmessage(callback);
-}
-
 export class APIPort {
-  private readonly _port: MessagePort|Port;
+  private readonly _port: MessagePort;
   _mapper: ThingMapper;
   protected inspector: ArcInspector | null;
   protected attachStack: boolean;
   messageCount: number;
-  constructor(port: MessagePort|Port, prefix: string) {
-    this._port = port;
+  constructor(messagePort: MessagePort, prefix: string) {
+    this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._port.onmessage = async e => this._processMessage(e);
     this.inspector = null;
@@ -257,7 +249,7 @@ export class APIPort {
 
   supportsJavaParticle(): boolean {
     // TODO: improve heuristics.
-    return this._port.constructor.name !== 'MessagePort';
+    return Object.getPrototypeOf(this._port.constructor).name === 'MessagePort';
   }
 }
 
@@ -438,8 +430,8 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 }
 
 export abstract class PECOuterPort extends APIPort {
-  constructor(port: Port, arc: Arc) {
-    super(port, 'o');
+  constructor(messagePort: MessagePort, arc: Arc) {
+    super(messagePort, 'o');
     this.inspector = arc.inspector;
     if (this.inspector) {
       this.inspector.onceActive.then(() => this.DevToolsConnected(), e => console.error(e));

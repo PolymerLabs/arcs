@@ -16,6 +16,7 @@ import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
 import {Runnable} from './hot.js';
 import {Manifest, StorageStub} from './manifest.js';
+import {MessagePort} from './message-channel.js';
 import {Modality} from './modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -32,7 +33,6 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
-import {Port} from './api-channel.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -46,7 +46,7 @@ export type ArcOptions = Readonly<{
   innerArc?: boolean;
   stub?: boolean
   inspectorFactory?: ArcInspectorFactory,
-  javaPort?: Port
+  ports?: MessagePort[]
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -93,7 +93,7 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory, javaPort} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory, ports} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -117,7 +117,7 @@ export class Arc {
     this.storageKey = storageKey;
     const pecId = this.generateID();
     const innerPecPort = this.pecFactory(pecId, this.idGenerator);
-    this.pec = new ParticleExecutionHost(slotComposer, this, [innerPecPort, javaPort].filter(port => !!port));
+    this.pec = new ParticleExecutionHost(slotComposer, this, [innerPecPort].concat(ports || []));
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
   }
 
