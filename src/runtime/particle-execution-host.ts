@@ -136,7 +136,7 @@ class PECOuterPortImpl extends PECOuterPort {
     this.arc = arc;
   }
 
-  onRender(particle: Particle, slotName: string, content: string) {
+  onRender(particle: Particle, slotName: string, content: Content) {
     if (this.arc.pec.slotComposer) {
       this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
     }
