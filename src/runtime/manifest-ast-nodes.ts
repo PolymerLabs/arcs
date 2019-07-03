@@ -111,7 +111,7 @@ export interface Import extends BaseNode {
 export interface ManifestStorage extends BaseNode {
   kind: 'store';
   name: string;
-  type: string;
+  type: ManifestStorageType;
   id: string|null;
   originalId: string|null;
   version: number;
@@ -119,6 +119,14 @@ export interface ManifestStorage extends BaseNode {
   source: string;
   origin: string;
   description: string|null;
+  claim: ManifestStorageClaim;
+}
+
+export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
+
+export interface ManifestStorageClaim extends BaseNode {
+  kind: 'manifest-storage-claim';
+  tags: string[];
 }
 
 export interface ManifestStorageSource {
@@ -563,7 +571,6 @@ export type Annotation = string;
 export type Indent = number;
 export type LocalName = string;
 export type Manifest = ManifestItem[];
-export type ManifestStorageItem = string;
 export type ManifestStorageDescription = string;
 export type Modality = string;
 export type ReservedWord = string;

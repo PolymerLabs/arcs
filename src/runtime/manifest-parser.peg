@@ -117,6 +117,25 @@ ManifestStorage
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
     items = optional(items, extractIndented, []);
+    let description: string | null = null;
+    let claim: AstNode.ManifestStorageClaim | null = null;
+
+    for (const item of items) {
+      if (item[0] === 'description') {
+        if (description) {
+          error('You cannot provide more than one description.');
+        }
+        description = item[2];
+      } else if (item['kind'] === 'manifest-storage-claim') {
+        if (claim) {
+          error('You cannot provide more than one claim.');
+        }
+        claim = item;
+      } else {
+        error(`Unknown ManifestStorageItem: ${item}`);
+      }
+    }
+
     return {
       kind: 'store',
       location: location(),
@@ -128,7 +147,8 @@ ManifestStorage
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
       origin: source.origin,
-      description: items.length > 0 ? items[0][2] : null
+      description,
+      claim,
     } as AstNode.ManifestStorage;
   }
 
@@ -149,9 +169,20 @@ ManifestStorageStorageSource
 
 ManifestStorageItem
   = ManifestStorageDescription
+  / ManifestStorageClaim
 
 ManifestStorageDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
+
+ManifestStorageClaim
+  = 'claim' whiteSpace 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
+  {
+    return {
+      kind: 'manifest-storage-claim',
+      location: location(),
+      tags: [tag, ...rest.map(item => item[5])],
+    } as AstNode.ManifestStorageClaim;
+  }
 
 Import
   = 'import' whiteSpace path:id eolWhiteSpace
