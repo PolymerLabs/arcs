@@ -140,7 +140,7 @@ describe('particle interface loading with slots', () => {
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
-    inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
+    await inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
