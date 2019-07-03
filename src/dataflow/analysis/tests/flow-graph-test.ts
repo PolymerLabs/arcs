@@ -118,7 +118,7 @@ describe('FlowGraph', () => {
     assert.isEmpty(node.checks);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].claim, claim);
+    assert.equal(graph.edges[0].claim, claim.expression);
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {

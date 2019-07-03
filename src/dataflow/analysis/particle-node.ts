@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge} from './graph-internals.js';
-import {Claim, ClaimType} from '../../runtime/particle-claim.js';
+import {Claim, ClaimType, ClaimExpression} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
@@ -56,9 +56,9 @@ export class ParticleNode extends Node {
   inEdgesFromOutEdge(outEdge: Edge): readonly ParticleInput[] {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
-    if (outEdge.claim && outEdge.claim.expression.type === ClaimType.DerivesFrom) {
+    if (outEdge.claim && outEdge.claim.type === ClaimType.DerivesFrom) {
       const result: ParticleInput[] = [];
-      for (const parentHandle of outEdge.claim.expression.parentHandles) {
+      for (const parentHandle of outEdge.claim.parentHandles) {
         const inEdge = this.inEdgesByName.get(parentHandle.name);
         assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
         result.push(inEdge);
@@ -97,7 +97,7 @@ export class ParticleOutput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  readonly claim?: Claim;
+  readonly claim?: ClaimExpression;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = particleNode;
@@ -105,7 +105,9 @@ export class ParticleOutput implements Edge {
     this.connectionName = connection.name;
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
-    this.claim = particleNode.claims.get(this.connectionName);
+    
+    const claim = particleNode.claims.get(this.connectionName);
+    this.claim = claim ? claim.expression : null;
   }
 }
 

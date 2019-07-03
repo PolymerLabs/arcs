@@ -74,12 +74,12 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
   // We traverse the path in the forward direction, so we can cancel correctly.
   const edgesInPath = path.edgesInForwardDirection();
   edgesInPath.forEach(edge => {
-    if (!edge.claim || edge.claim.expression.type !== ClaimType.IsTag) {
+    const claim = edge.claim;
+    if (!claim || claim.type !== ClaimType.IsTag) {
       return;
     }
-    const expression = edge.claim.expression;
-    if (!expression.isNot) {
-      tags.add(expression.tag);
+    if (!claim.isNot) {
+      tags.add(claim.tag);
       return;
     }
     // Our current claim is a "not" tag claim. 
@@ -87,7 +87,7 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
     if (tags.size === 0) {
       return;
     }
-    tags.delete(expression.tag);
+    tags.delete(claim.tag);
   });
   return tags;
 }
