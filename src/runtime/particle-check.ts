@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ParticleCheckStatement, ParticleCheckHasTag, ParticleCheckIsFromHandle, ParticleCheckExpression, ParticleCheckCondition} from './manifest-ast-nodes.js';
+import * as AstNode from './manifest-ast-nodes.js';
 import {HandleConnectionSpec, ProvideSlotConnectionSpec} from './particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 
@@ -16,6 +16,7 @@ import {assert} from '../platform/assert-web.js';
 export enum CheckType {
   HasTag = 'has-tag',
   IsFromHandle = 'is-from-handle',
+  IsFromStore = 'is-from-store',
 }
 
 export type CheckTarget = HandleConnectionSpec | ProvideSlotConnectionSpec;
@@ -53,7 +54,7 @@ export class CheckBooleanExpression {
 export type CheckExpression = CheckBooleanExpression | CheckCondition;
 
 /** A single check condition inside a trust check. */
-export type CheckCondition = CheckHasTag | CheckIsFromHandle;
+export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromStore;
 
 /** A check condition of the form 'check x is <tag>'. */
 export class CheckHasTag {
@@ -61,7 +62,7 @@ export class CheckHasTag {
 
   constructor(readonly tag: string) {}
 
-  static fromASTNode(astNode: ParticleCheckHasTag) {
+  static fromASTNode(astNode: AstNode.ParticleCheckHasTag) {
     return new CheckHasTag(astNode.tag);
   }
 
@@ -76,7 +77,7 @@ export class CheckIsFromHandle {
 
   constructor(readonly parentHandle: HandleConnectionSpec) {}
 
-  static fromASTNode(astNode: ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpec>) {
+  static fromASTNode(astNode: AstNode.ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpec>) {
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
     if (!parentHandle) {
       throw new Error(`Unknown "check is from handle" handle name: ${parentHandle}.`);
@@ -89,20 +90,48 @@ export class CheckIsFromHandle {
   }
 }
 
+/** A reference to a data store. Can be either the name of the store, or its ID. */
+export type StoreReference = {type: 'id' | 'name', store: string};
+
+/** A check condition of the form 'check x is from store <store reference>'. */
+export class CheckIsFromStore {
+  readonly type: CheckType.IsFromStore = CheckType.IsFromStore;
+
+  constructor(readonly storeRef: StoreReference) {}
+
+  static fromASTNode(astNode: AstNode.ParticleCheckIsFromStore) {
+    return new CheckIsFromStore({
+      type: astNode.storeRef.type,
+      store: astNode.storeRef.store,
+    });
+  }
+
+  toManifestString() {
+    let store = this.storeRef.store;
+    if (this.storeRef.type === 'id') {
+      // Put the ID inside single-quotes.
+      store = `'${store}'`;
+    }
+    return `is from store ${store}`;
+  }
+}
+
 /** Converts the given AST node into a CheckCondition object. */
-function createCheckCondition(astNode: ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpec>): CheckCondition {
+function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpec>): CheckCondition {
   switch (astNode.checkType) {
     case CheckType.HasTag:
       return CheckHasTag.fromASTNode(astNode);
     case CheckType.IsFromHandle:
       return CheckIsFromHandle.fromASTNode(astNode, handleConnectionMap);
+    case CheckType.IsFromStore:
+      return CheckIsFromStore.fromASTNode(astNode);
     default:
       throw new Error('Unknown check type.');
   }
 }
 
 /** Converts the given AST node into a CheckExpression object. */
-function createCheckExpression(astNode: ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpec>): CheckExpression {
+function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpec>): CheckExpression {
   if (astNode.kind === 'particle-trust-check-boolean-expression') {
     assert(astNode.children.length >= 2, 'Boolean check expressions must have at least two children.');
     return new CheckBooleanExpression(astNode.operator, astNode.children.map(child => createCheckExpression(child, handleConnectionMap)));
@@ -114,7 +143,7 @@ function createCheckExpression(astNode: ParticleCheckExpression, handleConnectio
 /** Converts the given AST node into a Check object. */
 export function createCheck(
     checkTarget: CheckTarget,
-    astNode: ParticleCheckStatement,
+    astNode: AstNode.ParticleCheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
   return new Check(checkTarget, expression);

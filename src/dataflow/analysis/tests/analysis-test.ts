@@ -521,6 +521,93 @@ describe('FlowGraph validation', () => {
     });
   });
 
+  describe(`'is from store' check conditions`, () => {
+    it('succeeds when the data store identified by name is present', async () => {
+      const graph = await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity in MyResource
+        particle P
+          in MyEntity input
+          check input is from store MyStore
+        recipe R
+          use MyStore as s
+          P
+            input <- s
+      `);
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('succeeds when the data store identified by ID is present', async () => {
+      const graph = await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity 'my-store-id' in MyResource
+        particle P
+          in MyEntity input
+          check input is from store 'my-store-id'
+        recipe R
+          use MyStore as s
+          P
+            input <- s
+      `);
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('fails when the data store identified by name is missing', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input
+          check input is from store MyStore
+        recipe R
+          P
+            input <- h
+      `);
+      assert.throws(() => validateGraph(graph), 'Store with name MyStore not found.');
+    });
+
+    it('fails when the data store identified by ID is missing', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input
+          check input is from store 'my-store-id'
+        recipe R
+          P
+            input <- h
+      `);
+      assert.throws(() => validateGraph(graph), `Store with id 'my-store-id' not found.`);
+    });
+
+
+    it('fails when the wrong data store is present', async () => {
+      const graph = await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity in MyResource
+        store SomeOtherStore of MyEntity in MyResource
+        particle P
+          in MyEntity input
+          check input is from store MyStore
+        recipe R
+          use SomeOtherStore as s
+          P
+            input <- s
+      `);
+      const result = validateGraph(graph);
+      assert.isFalse(result.isValid);
+      assert.sameMembers(result.failures, [`'check input is from store MyStore' failed for path: P.input`]);
+    });
+  });
+
   describe(`checks using the 'or' operator`, () => {
     it('succeeds when only the handle is present', async () => {
       const graph = await buildFlowGraph(`

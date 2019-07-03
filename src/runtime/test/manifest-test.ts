@@ -20,7 +20,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression} from '../particle-check.js';
+import {CheckHasTag, CheckBooleanExpression, CheckIsFromStore} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
@@ -2049,6 +2049,30 @@ resource SomeName
       assert.deepEqual(check2.expression, new CheckHasTag('property2'));
     });
 
+    it(`supports 'is from store' checks`, async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          check input1 is from store MyStore
+          check input2 is from store 'my-store-id'
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 2);
+      
+      const check1 = checkDefined(particle.trustChecks[0]);
+      assert.equal(check1.toManifestString(), 'check input1 is from store MyStore');
+      assert.equal(check1.target.name, 'input1');
+      assert.deepEqual(check1.expression, new CheckIsFromStore({type: 'name', store: 'MyStore'}));
+
+      const check2 = checkDefined(particle.trustChecks[1]);
+      assert.equal(check2.toManifestString(), `check input2 is from store 'my-store-id'`);
+      assert.equal(check2.target.name, 'input2');
+      assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}));
+    });
+
     it('supports checks on provided slots', async () => {
       const manifest = await Manifest.parse(`
         particle A
@@ -2167,6 +2191,8 @@ resource SomeName
       const manifestString = `particle TestParticle in 'a.js'
   in T {} input1
   in T {} input2
+  in T {} input3
+  in T {} input4
   out T {} output1
   out T {} output2
   out T {} output3
@@ -2175,6 +2201,8 @@ resource SomeName
   claim output3 is not dangerous
   check input1 is trusted or is from handle input2
   check input2 is extraTrusted
+  check input3 is from store MyStore
+  check input4 is from store 'my-store-id'
   check childSlot data is somewhatTrusted
   modality dom
   consume parentSlot
