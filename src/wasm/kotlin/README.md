@@ -1,8 +1,8 @@
 # Kotlin --> WASM particles
 
 ## Build & Test
-1. [`npm install && ./tools/sign webpack`](#install)
+1. [`npm install && ./tools/sign webpack`](README.md#install)
 1. `cd src/wasm/kotlin`
 1. `./gradlew`
 1. `npm start`
-1. Visit [[http://localhost:8786/shells/dev-shell/?m=https://$arcs/src/wasm/kotlin/wasm.manifest]]
+1. Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/src/wasm/kotlin/wasm.manifest](http://localhost:8786/shells/dev-shell/?m=https://$arcs/src/wasm/kotlin/wasm.manifest)
