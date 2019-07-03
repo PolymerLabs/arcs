@@ -282,7 +282,7 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   async createStore(type: Type, name: string, id: string, tags: string[], claims?: ClaimIsTag[], storageKey?: string) : Promise<StorageProviderBase | StorageStub> {
-    return this.newStorageStub(type, name, id, storageKey, tags, claims, null);
+    return this.newStorageStub(type, name, id, storageKey, tags, null, claims);
   }
 
   _addStore(store: StorageStub, tags: string[]) {
