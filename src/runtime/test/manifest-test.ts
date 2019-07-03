@@ -1980,13 +1980,13 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.size, 2);
       
-      const claim1 = particle.trustClaims.get('output1') as ClaimIsTag;
+      const claim1 = particle.trustClaims.get('output1');
       assert.equal(claim1.handle.name, 'output1');
-      assert.equal(claim1.tag, 'property1');
+      assert.equal((claim1.expression as ClaimIsTag).tag, 'property1');
 
-      const claim2 = particle.trustClaims.get('output2') as ClaimIsTag;
+      const claim2 = particle.trustClaims.get('output2');
       assert.equal(claim2.handle.name, 'output2');
-      assert.equal(claim2.tag, 'property2');
+      assert.equal((claim2.expression as ClaimIsTag).tag, 'property2');
     });
 
     it('supports "is not" tag claims', async () => {
@@ -2001,10 +2001,10 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.size, 1);
 
-      const claim1 = particle.trustClaims.get('output1') as ClaimIsTag;
+      const claim1 = particle.trustClaims.get('output1');
       assert.equal(claim1.handle.name, 'output1');
-      assert.equal(claim1.isNot, true);
-      assert.equal(claim1.tag, 'property1');
+      assert.equal((claim1.expression as ClaimIsTag).isNot, true);
+      assert.equal((claim1.expression as ClaimIsTag).tag, 'property1');
      });
 
     it('supports "derives from" claims with multiple parents', async () => {
@@ -2020,9 +2020,9 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.size, 1);
       
-      const claim = particle.trustClaims.get('output') as ClaimDerivesFrom;
+      const claim = particle.trustClaims.get('output');
       assert.equal(claim.handle.name, 'output');
-      assert.sameMembers(claim.parentHandles.map(h => h.name), ['input1', 'input2']);
+      assert.sameMembers((claim.expression as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);
     });
 
     it('supports multiple check statements', async () => {
