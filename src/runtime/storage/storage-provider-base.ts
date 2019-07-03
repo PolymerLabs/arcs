@@ -18,6 +18,7 @@ import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
+import {ClaimIsTag} from '../particle-claim.js';
 
 enum EventKind {
   change = 'Change'
@@ -120,6 +121,8 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
   name: string;
   readonly source: string|null;
   description: string;
+  /** Trust tags claimed by this data store. */
+  claims: ClaimIsTag[];
 
   protected constructor(type: Type, name: string, id: string, key: string) {
     assert(id, 'id must be provided when constructing StorageProviders');
@@ -225,6 +228,9 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
       handleStr.push(`in '${this.source}'`);
     }
     results.push(handleStr.join(' '));
+    if (this.claims && this.claims.length > 0) {
+      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
+    }
     if (this.description) {
       results.push(`  description \`${this.description}\``);
     }

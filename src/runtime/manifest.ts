@@ -36,6 +36,7 @@ import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
+import {ClaimIsTag} from './particle-claim.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -57,14 +58,17 @@ export class StorageStub {
   referenceMode = false;
   originalId: string;
   description: string; // Fake to match StorageProviderBase;
+  /** Trust tags claimed by this data store. */
+  claims: ClaimIsTag[];
 
-  constructor(type: Type, id: string, name: string, storageKey: string, storageProviderFactory: StorageProviderFactory, originalId: string) {
+  constructor(type: Type, id: string, name: string, storageKey: string, storageProviderFactory: StorageProviderFactory, originalId: string, claims: ClaimIsTag[]) {
     this.type = type;
     this.id = id;
     this.name = name;
     this.storageKey = storageKey;
     this.storageProviderFactory = storageProviderFactory;
     this.originalId = originalId;
+    this.claims = claims;
   }
 
   get version(): number {
@@ -99,13 +103,16 @@ export class StorageStub {
     // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
     // serialized here too - could it ever be part of StorageStub?
     results.push(handleStr.join(' '));
+    if (this.claims.length > 0) {
+      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
+    }
     if (this.description) {
       results.push(`  description \`${this.description}\``);
     }
     return results.join('\n');
   }
 
-  _compareTo(other: StorageProviderBase) : number {
+  _compareTo(other: StorageProviderBase): number {
     let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
@@ -177,20 +184,20 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores: (StorageProviderBase|StorageStub)[] = [];
+  private _stores: (StorageProviderBase | StorageStub)[] = [];
   private _interfaces = <InterfaceInfo[]>[];
-  storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
-  private _fileName: string|null = null;
+  storeTags: Map<StorageProviderBase | StorageStub, string[]> = new Map();
+  private _fileName: string | null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   private readonly _idGenerator: IdGenerator = IdGenerator.newSession();
-  private _storageProviderFactory: StorageProviderFactory|undefined = undefined;
+  private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
   private errors: ManifestError[] = [];
 
-  constructor({id}: {id: Id|string}) {
+  constructor({id}: {id: Id | string}) {
     // TODO: Cleanup usage of strings as Ids.
     assert(id instanceof Id || typeof id === 'string');
     if (id instanceof Id) {
@@ -256,20 +263,21 @@ export class Manifest {
   get resources() {
     return this._resources;
   }
-  applyMeta(section: { name: string }&{key: string, value:string}[]) {
+  applyMeta(section: {name: string} & {key: string, value: string}[]) {
     if (this._storageProviderFactory !== undefined) {
       assert(
-          section.name === this._meta.name || section.name == undefined,
-          `can't change manifest ID after storage is constructed`);
+        section.name === this._meta.name || section.name == undefined,
+        `can't change manifest ID after storage is constructed`);
     }
     this._meta.apply(section);
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type: Type, name: string, id: string, tags: string[], storageKey?: string): Promise<StorageProviderBase|StorageStub> {
+  async createStore(type: Type, name: string, id: string, tags: string[], claims?: ClaimIsTag[], storageKey?: string): Promise<StorageProviderBase | StorageStub> {
     const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store.version !== null);
     store.name = name;
+    store.claims = claims || [];
     this.storeManifestUrls.set(store.id, this.fileName);
     return this._addStore(store, tags);
   }
@@ -280,11 +288,11 @@ export class Manifest {
     return store;
   }
 
-  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string): StorageProviderBase|StorageStub {
-    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId), tags);
+  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string, claims: ClaimIsTag[]): StorageProviderBase | StorageStub {
+    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId, claims), tags);
   }
 
-  _find<a>(manifestFinder : ManifestFinder<a>) : a {
+  _find<a>(manifestFinder: ManifestFinder<a>): a {
     let result = manifestFinder(this);
     if (!result) {
       for (const importedManifest of this._imports) {
@@ -296,7 +304,7 @@ export class Manifest {
     }
     return result;
   }
-  * _findAll<a>(manifestFinder : ManifestFinderGenerator<a>) : IterableIterator<a> {
+  * _findAll<a>(manifestFinder: ManifestFinderGenerator<a>): IterableIterator<a> {
     yield* manifestFinder(this);
     for (const importedManifest of this._imports) {
       yield* importedManifest._findAll(manifestFinder);
@@ -329,7 +337,7 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store: StorageProviderBase | StorageStub ) {
+  findStoreTags(store: StorageProviderBase | StorageStub) {
     return this._find(manifest => manifest.storeTags.get(store));
   }
   findManifestUrlForHandleId(id: string) {
@@ -342,7 +350,7 @@ export class Manifest {
       const resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
         return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
-               (type instanceof BigCollectionType) === (store.type instanceof BigCollectionType);
+          (type instanceof BigCollectionType) === (store.type instanceof BigCollectionType);
       }
 
       if (subtype) {
@@ -423,7 +431,7 @@ export class Manifest {
     }
 
     // tslint:disable-next-line: no-any
-    function processError(e: ManifestError|any, parseError?: boolean): ManifestError {
+    function processError(e: ManifestError | any, parseError?: boolean): ManifestError {
       if (!((e instanceof ManifestError) || e.location)) {
         return e;
       }
@@ -544,92 +552,92 @@ ${e.message}
         visitChildren();
 
         switch (node.kind) {
-        case 'schema-inline': {
-          const schemas: Schema[] = [];
-          const aliases: Schema[] = [];
-          const names: string[] = [];
-          for (const name of node.names) {
-            const resolved = manifest.resolveTypeName(name);
-            if (resolved && resolved.schema && resolved.schema.isAlias) {
-              aliases.push(resolved.schema);
-            } else {
-              names.push(name);
-            }
-            if (resolved && resolved.schema) {
-              schemas.push(resolved.schema);
-            }
-          }
-          // tslint:disable-next-line: no-any
-          const fields: Dictionary<any> = {};
-          for (let {name, type} of node.fields) {
-            for (const schema of schemas) {
-              if (!type) {
-                // If we don't have a type, try to infer one from the schema.
-                type = schema.fields[name];
+          case 'schema-inline': {
+            const schemas: Schema[] = [];
+            const aliases: Schema[] = [];
+            const names: string[] = [];
+            for (const name of node.names) {
+              const resolved = manifest.resolveTypeName(name);
+              if (resolved && resolved.schema && resolved.schema.isAlias) {
+                aliases.push(resolved.schema);
               } else {
-                // Validate that the specified or inferred type matches the schema.
-                const externalType = schema.fields[name];
-                if (externalType && !Schema.typesEqual(externalType, type)) {
-                  throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
-                }
+                names.push(name);
+              }
+              if (resolved && resolved.schema) {
+                schemas.push(resolved.schema);
               }
             }
-            if (!type) {
-              throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
+            // tslint:disable-next-line: no-any
+            const fields: Dictionary<any> = {};
+            for (let {name, type} of node.fields) {
+              for (const schema of schemas) {
+                if (!type) {
+                  // If we don't have a type, try to infer one from the schema.
+                  type = schema.fields[name];
+                } else {
+                  // Validate that the specified or inferred type matches the schema.
+                  const externalType = schema.fields[name];
+                  if (externalType && !Schema.typesEqual(externalType, type)) {
+                    throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
+                  }
+                }
+              }
+              if (!type) {
+                throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
+              }
+              fields[name] = type;
             }
-            fields[name] = type;
-          }
-          let schema = new Schema(names, fields);
-          for (const alias of aliases) {
-            schema = Schema.union(alias, schema);
-            if (!schema) {
-              throw new ManifestError(node.location, `Could not merge schema aliases`);
+            let schema = new Schema(names, fields);
+            for (const alias of aliases) {
+              schema = Schema.union(alias, schema);
+              if (!schema) {
+                throw new ManifestError(node.location, `Could not merge schema aliases`);
+              }
             }
+            node.model = new EntityType(schema);
+            return;
           }
-          node.model = new EntityType(schema);
-          return;
-        }
-        case 'variable-type': {
-          const constraint = node.constraint && node.constraint.model;
-          node.model = TypeVariable.make(node.name, constraint, null);
-          return;
-        }
-        case 'slot-type': {
-          const fields = {};
-          for (const fieldIndex of Object.keys(node.fields)) {
-            const field = node.fields[fieldIndex];
-            fields[field.name] = field.value;
+          case 'variable-type': {
+            const constraint = node.constraint && node.constraint.model;
+            node.model = TypeVariable.make(node.name, constraint, null);
+            return;
           }
-          node.model = SlotType.make(fields['formFactor'], fields['handle']);
-          return;
-        }
-        case 'type-name': {
-          const resolved = manifest.resolveTypeName(node.name);
-          if (!resolved) {
-            throw new ManifestError(
+          case 'slot-type': {
+            const fields = {};
+            for (const fieldIndex of Object.keys(node.fields)) {
+              const field = node.fields[fieldIndex];
+              fields[field.name] = field.value;
+            }
+            node.model = SlotType.make(fields['formFactor'], fields['handle']);
+            return;
+          }
+          case 'type-name': {
+            const resolved = manifest.resolveTypeName(node.name);
+            if (!resolved) {
+              throw new ManifestError(
                 node.location,
                 `Could not resolve type reference to type name '${node.name}'`);
+            }
+            if (resolved.schema) {
+              node.model = new EntityType(resolved.schema);
+            } else if (resolved.iface) {
+              node.model = new InterfaceType(resolved.iface);
+            } else {
+              throw new ManifestError(node.location, 'Expected {iface} or {schema}');
+            }
+            return;
           }
-          if (resolved.schema) {
-            node.model = new EntityType(resolved.schema);
-          } else if (resolved.iface) {
-            node.model = new InterfaceType(resolved.iface);
-          } else {
-            throw new ManifestError(node.location, 'Expected {iface} or {schema}');
-          }
-          return;
-        }
-        case 'collection-type':
-          node.model = new CollectionType(node.type.model);
-          return;
-        case 'big-collection-type':
-          node.model = new BigCollectionType(node.type.model);
-          return;
-        case 'reference-type':
-          node.model = new ReferenceType(node.type.model);
-          return;
-        default:
-          return;
+          case 'collection-type':
+            node.model = new CollectionType(node.type.model);
+            return;
+          case 'big-collection-type':
+            node.model = new BigCollectionType(node.type.model);
+            return;
+          case 'reference-type':
+            node.model = new ReferenceType(node.type.model);
+            return;
+          default:
+            return;
         }
       }
     }();
@@ -666,13 +674,13 @@ ${e.message}
       const result = manifest.findSchemaByName(parent);
       if (!result) {
         throw new ManifestError(
-            schemaItem.location,
-            `Could not find parent schema '${parent}'`);
+          schemaItem.location,
+          `Could not find parent schema '${parent}'`);
       }
       for (const [name, type] of Object.entries(result.fields)) {
         if (fields[name] && !Schema.typesEqual(fields[name], type)) {
           throw new ManifestError(schemaItem.location,
-              `'${parent}' defines incompatible type for field '${name}'`);
+            `'${parent}' defines incompatible type for field '${name}'`);
         }
       }
       Object.assign(fields, result.fields);
@@ -682,8 +690,8 @@ ${e.message}
     const name = schemaItem.alias || names[0];
     if (!name) {
       throw new ManifestError(
-          schemaItem.location,
-          `Schema defined without name or alias`);
+        schemaItem.location,
+        `Schema defined without name or alias`);
     }
     const schema = new Schema(names, fields, description);
     if (schemaItem.alias) {
@@ -770,13 +778,13 @@ ${e.message}
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
-      byHandle: new Map<Handle, AstNode.RecipeHandle|AstNode.RequireHandleSection>(),
+      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
       requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
-      bySlot: new Map<Slot, AstNode.RecipeSlot|AstNode.RecipeParticleSlotConnection>(),
+      bySlot: new Map<Slot, AstNode.RecipeSlot | AstNode.RecipeParticleSlotConnection>(),
       // tslint:disable-next-line: no-any
       byName: new Map<string, any>(),
       connections: recipeItems.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
@@ -819,24 +827,24 @@ ${e.message}
           const particle = manifest.findParticleByName(info.particle);
           if (!particle) {
             throw new ManifestError(
-                connection.location,
-                `could not find particle '${info.particle}'`);
+              connection.location,
+              `could not find particle '${info.particle}'`);
           }
           if (info.param !== null && !particle.handleConnectionMap.has(info.param)) {
             throw new ManifestError(
-                connection.location,
-                `param '${info.param}' is not defined by '${info.particle}'`);
+              connection.location,
+              `param '${info.param}' is not defined by '${info.particle}'`);
           }
           return new ParticleEndPoint(particle, info.param);
         }
         case 'localName': {
           if (!items.byName.has(info.name)) {
             throw new ManifestError(
-                connection.location,
-                `local name '${info.name}' does not exist in recipe`);
+              connection.location,
+              `local name '${info.name}' does not exist in recipe`);
           }
           if (info.param == null && info.tags.length === 0 &&
-              items.byName.get(info.name).handle) {
+            items.byName.get(info.name).handle) {
             return new HandleEndPoint(items.byName.get(info.name).handle);
           }
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
@@ -911,14 +919,14 @@ ${e.message}
             // Validate consumed and provided slots names are according to spec.
             if (!particle.spec.slotConnections.has(slotConnectionItem.param)) {
               throw new ManifestError(
-                  slotConnectionItem.location,
-                  `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
+                slotConnectionItem.location,
+                `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
             }
             slotConnectionItem.dependentSlotConnections.forEach(ps => {
               if (!particle.getSlotSpecByName(ps.param)) {
                 throw new ManifestError(
-                    ps.location,
-                    `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
+                  ps.location,
+                  `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
               }
             });
           }
@@ -1006,8 +1014,8 @@ ${e.message}
         } else {
           if (connectionItem.param !== '*' && particle.spec !== undefined) {
             throw new ManifestError(
-                connectionItem.location,
-                `param '${connectionItem.param}' is not defined by '${particle.name}'`);
+              connectionItem.location,
+              `param '${connectionItem.param}' is not defined by '${particle.name}'`);
           }
           connection.direction = direction;
         }
@@ -1045,8 +1053,8 @@ ${e.message}
           const hostedParticle = manifest.findParticleByName(connectionItem.target.particle);
           if (!hostedParticle) {
             throw new ManifestError(
-                connectionItem.target.location,
-                `Could not find hosted particle '${connectionItem.target.particle}'`);
+              connectionItem.target.location,
+              `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
 
           targetHandle = RecipeUtil.constructImmediateValueHandle(
@@ -1054,8 +1062,8 @@ ${e.message}
 
           if (!targetHandle) {
             throw new ManifestError(
-                connectionItem.target.location,
-                `Hosted particle '${hostedParticle.name}' does not match interface '${connection.name}'`);
+              connectionItem.target.location,
+              `Hosted particle '${hostedParticle.name}' does not match interface '${connection.name}'`);
           }
         }
 
@@ -1095,7 +1103,7 @@ ${e.message}
             targetSlot.name = slotConnectionItem.param;
           }
           assert(targetSlot === items.byName.get(slotConnectionItem.name),
-                 `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
+            `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
         } else if (slotConnectionItem.name) {
           // if this is a require section, check if slot exists in recipe.
           if (recipe instanceof RequireSection) {
@@ -1132,7 +1140,7 @@ ${e.message}
     }
   }
 
-  resolveTypeName(name: string): {schema?: Schema, iface?: InterfaceInfo}|null {
+  resolveTypeName(name: string): {schema?: Schema, iface?: InterfaceInfo} | null {
     const schema = this.findSchemaByName(name);
     if (schema) {
       return {schema};
@@ -1144,11 +1152,11 @@ ${e.message}
     return null;
   }
 
-  private static async _processStore(manifest: Manifest, item, loader?: Loader) {
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
-    const type = item.type.model;
+    const type = item.type['model'];  // Model added in _augmentAstWithTypes.
     if (id == null) {
       id = `${manifest._id}store${manifest._stores.length}`;
     }
@@ -1157,10 +1165,15 @@ ${e.message}
       tags = [];
     }
 
+    const claims: ClaimIsTag[] = [];
+    if (item.claim) {
+      item.claim.tags.forEach(tag => claims.push(new ClaimIsTag(/* isNot= */ false, tag)));
+    }
+
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
-      manifest.newStorageStub(type, name, id, item.source, tags, originalId);
+      manifest.newStorageStub(type, name, id, item.source, tags, originalId, claims);
       return;
     }
 
@@ -1196,7 +1209,7 @@ ${e.message}
       unitType = type.bigCollectionType;
     } else {
       if (entities.length === 0) {
-        await Manifest._createStore(manifest, type, name, id, tags, item, originalId);
+        await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
         return;
       }
       entities = entities.slice(entities.length - 1);
@@ -1226,7 +1239,7 @@ ${e.message}
     }
 
     const version = item.version || 0;
-    const store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId);
+    const store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
 
     // While the referenceMode hack exists, we need to look at the entities being stored to
     // determine whether this store should be in referenceMode or not.
@@ -1261,8 +1274,16 @@ ${e.message}
     await (store as any).fromLiteral({version, model});
   }
 
-  private static async _createStore(manifest: Manifest, type: Type, name: string, id: string, tags: string[], item, originalId: string): Promise<StorageProviderBase | StorageStub> {
-    const store = await manifest.createStore(type, name, id, tags);
+  private static async _createStore(
+      manifest: Manifest,
+      type: Type,
+      name: string,
+      id: string,
+      tags: string[],
+      item,
+      originalId: string,
+      claims: ClaimIsTag[]): Promise<StorageProviderBase | StorageStub> {
+    const store = await manifest.createStore(type, name, id, tags, claims);
     // TODO(lindner): Property 'source' does not exist on type 'StorageStub | StorageProviderBase'.
     store['source'] = item.source;
     store.description = item.description;
