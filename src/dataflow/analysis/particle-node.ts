@@ -77,16 +77,17 @@ export class ParticleInput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  /* Optional check on this input. */
   readonly check?: Check;
+  readonly claim?: ClaimExpression;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = otherEnd;
     this.end = particleNode;
     this.connectionName = connection.name;
     this.label = `${particleNode.name}.${this.connectionName}`;
-    this.check = connection.spec.check;
     this.connectionSpec = connection.spec;
+    this.check = connection.spec.check;
+    this.claim = connection.handle.claim;
   }
 }
 
