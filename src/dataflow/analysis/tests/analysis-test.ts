@@ -382,6 +382,26 @@ describe('FlowGraph validation', () => {
     ]);
   });
 
+  it('supports datastore tag claims', async () => {
+    const graph = await buildFlowGraph(`
+      schema MyEntity
+        Text text
+      resource MyResource
+        start
+        [{"text": "asdf"}]
+      store MyStore of MyEntity in MyResource
+        claim is trusted
+      particle P
+        in MyEntity input
+        check input is trusted
+      recipe R
+        use MyStore as s
+        P
+          input <- s
+    `);
+    assert.isTrue(validateGraph(graph).isValid);
+  });
+
   describe(`'is from handle' check conditions`, () => {
     it('succeeds when the handle is exactly the same', async () => {
       const graph = await buildFlowGraph(`
