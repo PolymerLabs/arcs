@@ -53,7 +53,7 @@ describe('API channel', function() {
       this.registerRedundantInitializer = this.registerInitializer;
     };
 
-    const port = {};
+    const port = {setMessageCallback: () => {}};
     const arc = {id: ''}; // OuterPortAttachment constructor needs the id.
 
     // PECOuterPort can call DevToolsConnected during setup, so we need to stub that.
