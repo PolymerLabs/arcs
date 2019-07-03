@@ -24,10 +24,10 @@ export class PlatformLoaderBase extends Loader {
     this._urlMap = urlMap || [];
   }
   async loadResource(name: string): Promise<string> {
-    const path = this._resolve(name);
+    const path = this.resolve(name);
     return super.loadResource(path);
   }
-  _resolve(path: string) {
+  resolve(path: string) {
     let url = this._urlMap[path];
     if (!url && path) {
       // TODO(sjmiles): inefficient!
@@ -46,16 +46,18 @@ export class PlatformLoaderBase extends Loader {
     const parts = path.split('/');
     const suffix = parts.pop();
     const folder = parts.join('/');
-    const name = suffix.split('.').shift();
-    const resolved = this._resolve(folder);
-    this._urlMap[name] = resolved;
+    const resolved = this.resolve(folder);
+    if (!suffix.endsWith('.wasm')) {
+      const name = suffix.split('.').shift();
+      this._urlMap[name] = resolved;
+    }
     this._urlMap['$here'] = resolved;
   }
   unwrapParticle(particleWrapper, log?) {
     // TODO(sjmiles): regarding `resolver`:
-    //  _resolve method allows particles to request remapping of assets paths
+    //  resolve method allows particles to request remapping of assets paths
     //  for use in DOM
-    const resolver = this._resolve.bind(this);
+    const resolver = this.resolve.bind(this);
     return particleWrapper({
       Particle,
       DomParticle,
