@@ -364,7 +364,7 @@ function buildPath(path: string, preprocess: () => void, deps: string[]): () => 
     return true;
   };
   // Using a lambda breaks the display of func.name in the main execution loop.
-  Object.defineProperty(fn, 'name', {value: 'build'});
+  Object.defineProperty(fn, 'name', {value: `build ${path.slice(2)}`});
   return fn;
 }
 
@@ -483,7 +483,7 @@ function webpackPkg(pkg: string): () => boolean {
     return result.success;
   };
   // Using a lambda breaks the display of func.name in the main execution loop.
-  Object.defineProperty(fn, 'name', {value: 'webpack'});
+  Object.defineProperty(fn, 'name', {value: pkg});
   return fn;
 }
 
