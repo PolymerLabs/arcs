@@ -18,6 +18,7 @@ import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
 
+import {assertThrowsAsync} from '../../runtime/testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
@@ -134,6 +135,46 @@ describe('Planner', () => {
         slot 'slot-id0' as s0
         P1
           consume one as s0
+    `);
+    assert.lengthOf(results, 1);
+  });
+
+  it('can resolve multiple consumed SLANDLES', async () => {
+    const results = await planFromManifest(`
+      particle P1 in './some-particle.js'
+        \`consume Slot one
+        \`consume Slot two
+      recipe
+        \`slot 'slot-id0' as s0
+        P1
+          one consume s0
+    `);
+    assert.lengthOf(results, 1);
+  });
+
+  it('cannot resolve multiple consumed SLANDLES with incorrect directions', async () => {
+    assertThrowsAsync(async () => {
+      await planFromManifest(`
+        particle P1 in './some-particle.js'
+          \`consume Slot one
+          \`consume Slot two
+        recipe
+          \`slot 'slot-id0' as s0
+          P1
+            one provide s0
+      `);
+    }, 'not compatible with \'`consume\'');
+  });
+
+  it('can resolve multiple consumed SLANDLES with arrows', async () => {
+    const results = await planFromManifest(`
+      particle P1 in './some-particle.js'
+        \`consume Slot one
+        \`consume Slot two
+      recipe
+        \`slot 'slot-id0' as s0
+        P1
+          one <- s0
     `);
     assert.lengthOf(results, 1);
   });
