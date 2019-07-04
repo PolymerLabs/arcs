@@ -318,7 +318,7 @@ describe('particle-api', () => {
                      out Result b
 
                    recipe
-                     map NobId as nobId
+                     use NobId as nobId
                      use '\${inHandle._id}' as handle1
                      use '\${outHandle._id}' as handle2
                      PassThrough

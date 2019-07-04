@@ -65,15 +65,18 @@ export class StorageStub {
               public readonly referenceMode: boolean = false,
               public readonly model?: {}[]) {}
 
-  async inflate() {
-    const store = await this.storageProviderFactory.connectOrConstruct(this.id, this.type, this.storageKey);
+  async inflate(storageProviderFactory?: StorageProviderFactory) {
+    const factory = storageProviderFactory || this.storageProviderFactory;
+    const store = this.isStatic()
+        ? await factory.construct(this.id, this.type, this.storageKey)
+        : await factory.connect(this.id, this.type, this.storageKey);
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
     store.originalId = this.originalId;
     store.referenceMode = this.referenceMode;
     store.name = this.name;
     store.source = this.source;
     store.description = this.description;
-    if (this.version !== undefined && this.model) {
+    if (this.isStatic()) {
       await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
     }
     return store;
@@ -81,6 +84,10 @@ export class StorageStub {
 
   toLiteral() {
     return undefined; // Fake to match StorageProviderBase;
+  }
+
+  isStatic(): boolean {
+    return (this.version !== undefined && !!this.model);
   }
 
   toString(handleTags: string[]): string {

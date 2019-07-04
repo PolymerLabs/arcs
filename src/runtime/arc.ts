@@ -535,7 +535,8 @@ ${this.activeRecipe.toString()}`;
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
 
     for (const recipeHandle of handles) {
-      if (['copy', 'create'].includes(recipeHandle.fate)) {
+      if (['copy', 'create'].includes(recipeHandle.fate) ||
+          ((recipeHandle.fate === 'map') && (this.context.findStoreById(recipeHandle.id) as StorageStub).isStatic())) {
         let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
@@ -556,14 +557,9 @@ ${this.activeRecipe.toString()}`;
           // TODO(shans): clean this up when we have interfaces for Singleton, Collection, etc.
           // tslint:disable-next-line: no-any
           await (newStore as any).set(particleClone);
-        } else if (recipeHandle.fate === 'copy') {
-          const copiedStoreRef = this.findStoreById(recipeHandle.id);
-          let copiedStore: StorageProviderBase;
-          if (copiedStoreRef instanceof StorageStub) {
-            copiedStore = await copiedStoreRef.inflate();
-          } else {
-            copiedStore = copiedStoreRef;
-          }
+        } else if (['copy', 'map'].includes(recipeHandle.fate)) {
+          const copiedStoreRef = this.context.findStoreById(recipeHandle.id) as StorageStub;
+          const copiedStore = await copiedStoreRef.inflate(this.storageProviderFactory);
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
@@ -595,13 +591,8 @@ ${this.activeRecipe.toString()}`;
         assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
         const type = recipeHandle.type.resolvedType();
         assert(type.isResolved());
-        let store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
-
-        if (!store && recipeHandle.fate === 'map') {
-          const storeRef = this.context.findStoreById(recipeHandle.id) as StorageStub;
-          store = await storeRef.inflate();
-        }
-        assert(store, `store '${recipeHandle.id}' was not found`);
+        const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+        assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
         this._registerStore(store, recipeHandle.tags);
       }
     }

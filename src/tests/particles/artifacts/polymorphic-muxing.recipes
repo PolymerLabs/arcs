@@ -19,7 +19,7 @@ particle ShowTwo in 'source/ShowPostTwo.js'
   consume item
 
 recipe
-  map #recipes as h0
+  copy #recipes as h0
   List
     items = h0
   PostMuxer
@@ -30,4 +30,4 @@ resource MuxedRecipes
   [
   ]
 
-store TheRecipes of [Post] #recipes in MuxedRecipes
+store TheRecipes of [Post] @12 #recipes in MuxedRecipes
