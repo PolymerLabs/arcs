@@ -1,4 +1,8 @@
+import '../Services/schemas/RandomData.schema'
+
 particle SlandleStardateTOS in './js/StardateTOS.js'
   out DestinationPlanet {Text name} destination
   out ScriptDate {Text date} stardate
-  description `stardate ${stardate.date}, orbiting ${destination.name}`
+  in RandomData randomTime
+  in RandomData randomPlanet
+  description `slandle stardate ${stardate.date}, orbiting ${destination.name}`
