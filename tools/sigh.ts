@@ -62,10 +62,11 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS, languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, runTests],
+  test: [peg, railroad, build, wasm, runTests],
   webpack: [peg, railroad, build, webpack],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
+  wasm: [peg, build, wasm],
   watch: [watch],
   lint: [peg, build, lint, tslint],
   tslint: [peg, build, tslint],
@@ -78,7 +79,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   schema2kotlin: [peg, build, schema2kotlin],
   devServer: [peg, build, devServer],
   licenses: [build],
-  default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
+  default: [check, peg, railroad, build, wasm, runTests, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -92,6 +93,12 @@ const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|javaharness|
 
 // RE pattern to exclude when finding within project built files.
 const buildExclude = /\b(node_modules|deps|src|third_party|javaharness|Kotlin)\b/;
+
+// Standard flags for invoking node.
+const nodeFlags = [
+  '--experimental-modules',
+  '--loader', fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs'))
+];
 
 function* findProjectFiles(dir: string, exclude: RegExp|null, include: RegExp|((path: string) => boolean)): Iterable<string> {
   const predicate = (include instanceof RegExp) ? (fullPath => include.test(fullPath)) : include;
@@ -125,7 +132,7 @@ function fixPathForWindows(path: string): string {
   return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 }
 
-function targetIsUpToDate(relativeTarget: string, relativeDeps: string[]): boolean {
+function targetIsUpToDate(relativeTarget: string, relativeDeps: string[], quiet = false): boolean {
   const target = path.resolve(projectRoot, relativeTarget);
   if (!fs.existsSync(target)) {
     return false;
@@ -138,7 +145,9 @@ function targetIsUpToDate(relativeTarget: string, relativeDeps: string[]): boole
     }
   }
 
-  console.log(`Skipping step; '${relativeTarget}' is up-to-date`);
+  if (!quiet) {
+    console.log(`Skipping step; '${relativeTarget}' is up-to-date`);
+  }
   return true;
 }
 
@@ -146,15 +155,24 @@ function targetIsUpToDate(relativeTarget: string, relativeDeps: string[]): boole
 function check(): boolean {
   const nodeRequiredVersion = require('../package.json').engines.node;
   const npmRequiredVersion = require('../package.json').engines.npm;
+  const emsdkRequiredVersion = require('../package.json').engines.emsdk;
 
   if (!semver.satisfies(process.version, nodeRequiredVersion)) {
     throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
   }
 
-  const npmCmd = saneSpawnWithOutput('npm', ['-v']);
-  const npmVersion = String(npmCmd.stdout);
+  const npmVersion = saneSpawnWithOutput('npm', ['-v']).stdout;
   if (!semver.satisfies(npmVersion, npmRequiredVersion)) {
     throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
+  }
+
+  const emsdkVersion = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']).stdout;
+  const match = emsdkVersion.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
+  if (match === null) {
+    throw new Error(`failed to extract emsdk version`);
+  }
+  if (!semver.satisfies(match[1], emsdkRequiredVersion)) {
+    throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${match[1]}`);
   }
 
   return true;
@@ -233,7 +251,7 @@ function linkUnit(dummySrc: string, dummyDest: string): boolean {
 function languageServer(): boolean {
   keepProcessAlive = true; // Tell the runner to not exit.
   // Opens a language server on port 2089
-  return saneSpawn(`tools/aml-language-server`, [], {stdio: 'inherit'});
+  return saneSpawn('tools/aml-language-server', []);
 }
 
 function peg(): boolean {
@@ -349,15 +367,15 @@ function buildPath(path: string, preprocess: () => void, deps: string[]): () => 
       preprocess();
     }
     if (!tsc(path)) {
-      console.log('build::tsc failed');
+      console.error('build::tsc failed');
       if (deps.length > 0) {
-        console.log(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
+        console.error(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
       }
       return false;
     }
 
     if (!link(findProjectFiles('src', null, /\.js$/))) {
-      console.log('build::link failed');
+      console.error('build::link failed');
       return false;
     }
 
@@ -418,6 +436,94 @@ function link(srcFiles: Iterable<string>): boolean {
         success = false;
       }
     }
+  }
+  return success;
+}
+
+// Config for building wasm modules. Keys are the target filename for the module.
+type WasmConfig = {
+  [key: string]: {
+    manifest: string,
+    src: string[]
+  }
+};
+
+// TODO: detect old headers/wasm modules/manifests in cleanObsolete()
+function buildWasmModule(configFile: string): boolean {
+  const srcDir = path.dirname(configFile);
+  const buildDir = srcDir.replace(/^src\//, 'build/');
+  const json = JSON.parse(fs.readFileSync(configFile, 'utf-8')) as WasmConfig;
+  let success = true;
+  for (const [name, cfg] of Object.entries(json)) {
+    // TODO: fix arcs.h so more than one source file can be compiled into a module
+    if (cfg.src.length !== 1) {
+      throw new Error(`wasm modules must specify exactly one source file (${configFile})`);
+    }
+
+    const manifestPath = path.join(srcDir, cfg.manifest);
+    const srcPath = path.join(srcDir, cfg.src[0]);
+    const wasmPath = path.join(buildDir, name);
+
+    // Generate the entity class header file from the manifest. The '--update' option
+    // means the header will only be re-generated if the manifest has been updated.
+    let result = saneSpawnWithOutput('node', [
+        ...nodeFlags,
+        '--no-warnings',
+        'build/tools/schema2packager.js',
+        '--update',
+        '-o', buildDir,
+        manifestPath
+      ]);
+    if (!result.success) {
+      console.error(result.stderr);
+      success = false;
+      continue;
+    }
+
+    const headerPath = result.stdout.trim();
+    if (targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, srcPath], true)) {
+      continue;
+    }
+
+    // TODO: contribute to emsdk/emsdk-npm to improve this API?
+    result = saneSpawnWithOutput('npx', [
+        'emsdk-run', 'em++', '-std=c++17', '-O3',
+        '-s', `EXPORTED_FUNCTIONS=['_malloc','_free']`,
+        '-s', 'EMIT_EMSCRIPTEN_METADATA',
+        '-I', 'src/wasm/cpp',
+        '-I', buildDir,
+        '-o', wasmPath,
+        srcPath
+      ]);
+
+    // npx/emsdk-run doesn't propagate the em++ status return. stdout only has noise from
+    // the emsdk environment setup. stderr should be empty on success, so we can check that.
+    if (result.stderr !== '') {
+      success = false;
+      console.error('\n------------------------------------------------------------------------');
+      console.error(`Compilation failed for ${name} in ${configFile}\n`);
+      console.error(result.stderr);
+      console.error('------------------------------------------------------------------------\n');
+      continue;
+    }
+
+    // Link the manifest into the build dir so particles can simply declare "in 'module.wasm"
+    // without worrying about the file's location. The unit tests themselves will need to load
+    // the manifest from within build.
+    if (!link([manifestPath])) {
+      console.error(`wasm::link failed (${configFile})`);
+      return false;
+    }
+
+  }
+  return success;
+}
+
+// Finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
+function wasm(): boolean {
+  let success = true;
+  for (const configFile of findProjectFiles('src', null, /[/\\]wasm\.json$/)) {
+    success = success && buildWasmModule(configFile);
   }
   return success;
 }
@@ -524,8 +630,7 @@ function spawnWasSuccessful(result: RawSpawnResult, opts: SpawnOptions = {}): bo
 // make spawn work more or less the same way cross-platform
 function saneSpawn(cmd: string, args: string[], opts?: SpawnOptions): boolean {
   cmd = path.normalize(cmd);
-  opts = opts || {};
-  opts.shell = true;
+  opts = {stdio: 'inherit', ...opts, shell: true};
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   return spawnWasSuccessful(result, opts);
@@ -534,8 +639,7 @@ function saneSpawn(cmd: string, args: string[], opts?: SpawnOptions): boolean {
 // make spawn work more or less the same way cross-platform
 function saneSpawnWithOutput(cmd: string, args: string[], opts?: SpawnOptions): SpawnResult {
   cmd = path.normalize(cmd);
-  opts = opts || {};
-  opts.shell = true;
+  opts = {...opts, shell: true};
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   return {success: spawnWasSuccessful(result, opts), stdout: result.stdout.toString(), stderr: result.stderr.toString()};
@@ -656,21 +760,15 @@ function runTests(args: string[]): boolean {
       process.env.NODE_V8_COVERAGE=coverageDir;
     }
     const coveragePrefix = options.coverage ? ` node_modules/.bin/c8 -r html` : '';
-    const testResult = saneSpawn(
-        `${coveragePrefix} node`,
-        [
-          '--experimental-modules',
-          '--trace-warnings',
-          '--no-deprecation',
-          ...extraFlags,
-          '--loader',
-          fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
-          '-r',
-          'source-map-support/register.js',
-          runner
-        ],
-        {stdio: 'inherit'});
-    if (testResult === false) {
+    const testResult = saneSpawn(`${coveragePrefix} node`, [
+        ...nodeFlags,
+        '--trace-warnings',
+        '--no-deprecation',
+        ...extraFlags,
+        '-r', 'source-map-support/register.js',
+        runner
+      ]);
+    if (!testResult) {
       failedRuns.push(i);
     }
     testResults.push(testResult);
@@ -758,20 +856,20 @@ function health(args: string[]): boolean {
 
   if (options.migration) {
     console.log('JS files to migrate:\n');
-    return saneSpawn('node_modules/.bin/sloc', ['-details', '--keys source', ...migrationFiles()], {stdio: 'inherit'});
+    return saneSpawn('node_modules/.bin/sloc', ['-details', '--keys source', ...migrationFiles()]);
   }
 
   if (options.nullChecks) {
-    return saneSpawn('node_modules/.bin/tsc', ['--strictNullChecks'], {stdio: 'inherit'});
+    return saneSpawn('node_modules/.bin/tsc', ['--strictNullChecks']);
   }
 
   if (options.types) {
-    return saneSpawn('node_modules/.bin/type-coverage', ['--strict', '--detail'], {stdio: 'inherit'});
+    return saneSpawn('node_modules/.bin/type-coverage', ['--strict', '--detail']);
   }
 
   if (options.tests) {
     runSteps('test', ['--coverage']);
-    return saneSpawn('node_modules/.bin/c8', ['report'], {stdio: 'inherit'});
+    return saneSpawn('node_modules/.bin/c8', ['report']);
   }
 
   // Generating coverage report from tests.
@@ -853,14 +951,7 @@ function uploadCodeHealthStats(data: string[]) {
 }
 
 function spawnTool(toolPath: string, args: string[]) {
-  return saneSpawn(`node`, [
-      '--experimental-modules',
-      '--loader',
-      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
-      toolPath,
-      ...args
-    ],
-    {stdio: 'inherit'});
+  return saneSpawn('node', [...nodeFlags, '--no-warnings', toolPath, ...args]);
 }
 
 // E.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes

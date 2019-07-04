@@ -1,0 +1,6 @@
+{
+  "test-module.wasm": {
+    "manifest": "test.manifest",
+    "src": ["particles.cc"]
+  }
+}

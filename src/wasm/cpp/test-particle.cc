@@ -1,6 +1,5 @@
 #include "arcs.h"
-#include "entity-data.h"
-#include "entity-info.h"
+#include "wasm-manifest.h"
 #include <vector>
 
 class TestParticle : public arcs::Particle {

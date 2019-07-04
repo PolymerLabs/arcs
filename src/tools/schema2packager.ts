@@ -7,10 +7,62 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import fs from 'fs';
+import path from 'path';
+import minimist from 'minimist';
+import {Manifest} from '../runtime/manifest.js';
+import {Schema} from '../runtime/schema.js';
+import {Dictionary} from '../runtime/hot.js';
+
+const opts = minimist(process.argv.slice(2), {
+  string: ['outdir'],
+  boolean: ['update', 'help'],
+  alias: {o: 'outdir', u: 'update'},
+  default: {
+    outdir: '.',
+    update: false
+  }
+});
+
+if (opts.help || opts._.length === 0 || opts.outdir === '') {
+  console.log(`
+Usage
+  $ tools/sigh schema2pkg [options] [file ...]
+
+Description
+  Generates C++ code from Schemas for use in wasm particles.
+
+Options
+  --outdir, -o   output directory; defaults to '.'
+  --update, -u   only generate if the source file is newer than the destination
+  --help         usage info
+
+`);
+  process.exit();
+}
+
+
 
 import {Schema2Base, typeSummary} from './schema2base.js';
 
 const description = 'Generates C++ code from Schemas for use in wasm particles.';
+
+// TODO: options: output dir, filter specific schema(s)
+const argv = minimist(process.argv.slice(2), {
+  boolean: ['help'],
+});
+
+if (argv.help || argv._.length === 0) {
+  console.log(`
+Usage
+  $ tools/sigh schema2packager [file ...]
+
+Description
+  Generates C++ code from Schemas for use in wasm particles.
+`);
+  process.exit();
+}
+
 
 
 const keywords = [
@@ -27,7 +79,7 @@ const keywords = [
 ];
 
 
-function generate(name: string, schema) {
+function generate(name: string, schema: Schema): string {
   const fields: string[] = [];
   const api: string[] = [];
   const clone: string[] = [];
@@ -95,12 +147,7 @@ function generate(name: string, schema) {
     }
   }
 
-  const headerGuard = `_ARCS_ENTITY_${name.toUpperCase()}_H`;
   const content = `\
-#ifndef ${headerGuard}
-#define ${headerGuard}
-
-// GENERATED CODE - DO NOT EDIT
 
 namespace arcs {
 
@@ -190,12 +237,62 @@ struct std::hash<arcs::${name}> {
     return std::hash<std::string>()(entity._internal_id());
   }
 };
-
-#endif
 `;
   return content.replace(/ +\n/g, '\n');
 }
 
+// TODO: schemas with multiple names and schemas with parents
+// TODO: schemas with no fields
+// TODO: schemas with no names?  i.e. inline '* {Text s}'
+async function processFile(src) {
+  const outName = path.basename(src).toLowerCase().replace(/\./g, '-') + '.h';
+  const outPath = path.join(opts.outdir, outName);
+  console.log(outPath);
+  if (opts.update && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > fs.statSync(src).mtimeMs) {
+    return;
+  }
 
-const schema2cpp = new Schema2Base(description, (schemaName => `entity-${schemaName}.h`), generate);
-schema2cpp.call();
+  const contents = fs.readFileSync(src, 'utf-8');
+  const manifest = await Manifest.parse(contents);
+
+  // Collect declared schemas along with any inlined in particle connections.
+  const schemas: Dictionary<Schema> = {...manifest.schemas};
+  for (const particle of manifest.particles) {
+    for (const connection of particle.connections) {
+      const schema = connection.type.getEntitySchema();
+      const name = schema && schema.names && schema.names[0];
+      if (name && !(name in schemas)) {
+        schemas[name] = schema;
+      }
+    }
+  }
+
+  if (Object.keys(schemas).length === 0) {
+    console.warn('No schemas found in ' + src);
+    return;
+  }
+
+  const outFile = fs.openSync(outPath, 'w');
+  const headerGuard = `_ARCS_${outName.toUpperCase().replace(/[-.]/g, '_')}`;
+  fs.writeSync(outFile, `\
+#ifndef ${headerGuard}
+#define ${headerGuard}
+
+// GENERATED CODE - DO NOT EDIT
+`);
+
+  for (const [name, schema] of Object.entries(schemas)) {
+    fs.writeSync(outFile, generate(name, schema));
+  }
+  fs.writeSync(outFile, '\n#endif\n');
+  fs.closeSync(outFile);
+}
+
+fs.mkdirSync(opts.outdir, {recursive: true});
+for (const file of opts._) {
+  void processFile(file);
+}
+
+
+// const schema2cpp = new Schema2Base(description, (schemaName => `entity-${schemaName}.h`), generate);
+// schema2cpp.call();
