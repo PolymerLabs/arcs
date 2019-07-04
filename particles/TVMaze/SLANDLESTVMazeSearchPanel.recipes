@@ -11,6 +11,7 @@ recipe SlandleTVMazeSearchBar
   create #volatile as query
   SlandleTVMazeSearchBar
     query = query
+  description `use TVMaze(tm) to search for TV shows with Slandles`
 
 recipe SlandleTVMazeSearchShows
   use as query
@@ -18,7 +19,7 @@ recipe SlandleTVMazeSearchShows
   SlandleTVMazeSearchShows
     query = query
     shows = shows
-  description `use TVMaze(tm) to search for TV shows`
+  description `use TVMaze(tm) to search for TV shows with Slandles`
 
 recipe SlandleTVMazeShowTiles
   use as shows

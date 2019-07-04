@@ -39,7 +39,7 @@ particle SlandleCombinedAnnotationMultiplexer in 'source/Multiplexer.js'
 
 //recipe SlandleAnnotationMultiplexer
 //  use #items as list
-//  use #annotation as annotation
+//  use #annotationInfo as annotationInfo
 //  SlandleAnnotationMultiplexer
 //    list = list
-//    annotation = annotation
+//    annotationInfo = annotationInfo

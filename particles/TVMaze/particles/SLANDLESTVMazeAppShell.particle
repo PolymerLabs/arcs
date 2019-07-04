@@ -22,4 +22,4 @@ particle SlandleTVMazeAppShell in './js/TVMazeAppShell.js'
     `provide Slot search
   // TODO: add better description,
   // or fix recipe description to  not crash if one is missing.
-  description `manage my TV shows (using TVMaze)`
+  description `manage my TV shows (using TVMaze) with Slandles`

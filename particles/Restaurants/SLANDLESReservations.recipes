@@ -20,9 +20,9 @@ particle SlandleReservationForm in 'source/ReservationForm.js'
 // TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
 // so fork the particle
 particle SlandleDetailReservationForm in 'source/ReservationForm.js'
-  inout Event event
   in Restaurant restaurant
-  `consume Slot detailAction
+  inout Event event
+  `consume? Slot detailAction
     `provide? Slot annotation
 
 particle SlandleReservationAnnotation in 'source/ReservationAnnotation.js'
@@ -35,7 +35,7 @@ particle SlandleReservationAnnotation in 'source/ReservationAnnotation.js'
 // rather than having every instance generate descriptions
 particle SlandleReservationMultiAnnotation in 'source/ReservationAnnotation.js'
   in Restaurant restaurant
-  inout Event event
+  inout Event annotationInfo
   `consume? Slot annotation
 
 recipe SlandleMakeReservations
@@ -56,7 +56,7 @@ recipe SlandleMakeReservations
   // per-restaurant tile scheduler
   SlandleAnnotationMultiplexer
     list = restaurants
-    annotation = event
+    annotationInfo = event
     hostedParticle = SlandleReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   SlandleDetailReservationForm

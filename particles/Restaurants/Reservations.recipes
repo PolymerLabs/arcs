@@ -26,8 +26,8 @@ particle DetailReservationForm in 'source/ReservationForm.js'
     provide annotation
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
-  in Restaurant restaurant
   inout Event event
+  in Restaurant restaurant
   out [Description] descriptions
   consume annotation
 
