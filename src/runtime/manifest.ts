@@ -1005,13 +1005,11 @@ ${e.message}
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         const direction = arrowToDirection(connectionItem.dir);
-        if (connection.direction !== 'any') {
-          if (!connectionMatchesHandleDirection(direction, connection.direction)) {
-            throw new ManifestError(
-                connectionItem.location,
-                `'${connectionItem.dir}' (${direction}) not compatible with '${connection.direction}' param of '${particle.name}'`);
-          }
-        } else {
+        if (!connectionMatchesHandleDirection(direction, connection.direction)) {
+          throw new ManifestError(
+              connectionItem.location,
+              `'${connectionItem.dir}' (${direction}) not compatible with '${connection.direction}' param of '${particle.name}'`);
+        } else if (connection.direction === 'any') {
           if (connectionItem.param !== '*' && particle.spec !== undefined) {
             throw new ManifestError(
               connectionItem.location,

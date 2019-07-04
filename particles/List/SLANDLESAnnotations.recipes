@@ -13,7 +13,7 @@ interface SlandleHostedAnnotationInterface
 
 particle SlandleAnnotationMultiplexer in 'source/Multiplexer.js'
   in [~anyType] list
-  inout ~anyOther annotation
+  inout ~anyOther annotationInfo
   host SlandleHostedAnnotationInterface hostedParticle
   `consume [Slot] annotation
 

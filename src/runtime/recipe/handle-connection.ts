@@ -243,8 +243,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
     result.push(this.name || '*');
-    // '=' is the 'any' direction (note: inout => '<->')
-    result.push((this.direction && directionToArrow(this.direction)) || '=');
+    result.push(directionToArrow(this.direction));
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);
