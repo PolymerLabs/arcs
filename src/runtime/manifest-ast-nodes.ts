@@ -231,20 +231,30 @@ export interface ParticleCheckBooleanExpression extends BaseNode {
 
 export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
 
-export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle;
+export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromStore;
 
 export interface ParticleCheckHasTag extends BaseNode {
   kind: 'particle-trust-check-has-tag';
   checkType: CheckType.HasTag;
-  handle: string;
   tag: string;
 }
 
 export interface ParticleCheckIsFromHandle extends BaseNode {
   kind: 'particle-trust-check-is-from-handle';
   checkType: CheckType.IsFromHandle;
-  handle: string;
   parentHandle: string;
+}
+
+export interface ParticleCheckIsFromStore extends BaseNode {
+  kind: 'particle-trust-check-is-from-store';
+  checkType: CheckType.IsFromStore;
+  storeRef: StoreReference;
+}
+
+export interface StoreReference extends BaseNode {
+  kind: 'store-reference';
+  type: 'name' | 'id';
+  store: string;
 }
 
 export interface ParticleModality extends BaseNode {
