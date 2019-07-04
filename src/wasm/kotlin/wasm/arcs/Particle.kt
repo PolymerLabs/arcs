@@ -49,8 +49,21 @@ abstract class Particle : WasmObject() {
         onHandleSync(handle, toSync.isEmpty())
     }
 
-    fun renderSlot(slotName: String, content: String) {
-        render(this.toWasmAddress(), slotName.toWasmString(), content.toWasmString())
+    fun renderSlot(slotName: String, content: String, shouldSendTemplate: Boolean = true, shouldSendModel: Boolean = true) {
+        val template = if(shouldSendModel) getTemplate(slotName) else ""
+        var model: String = "";
+        if(shouldSendModel) {
+            val sb = StringBuilder()
+            var i = 0
+            populateModel(slotName) { key: String, value: String ->
+              sb.append(key.length).append(":").append(key)
+              sb.append(value.length).append(":").append(value)
+              i++
+            }
+            model = "$i:$sb"
+        }
+
+        render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
     }
 
     abstract fun onHandleUpdate(handle: Handle)
@@ -61,6 +74,9 @@ abstract class Particle : WasmObject() {
         eventHandlers[eventName]?.invoke()
         requestRender(slotName)
     }
+
+    open fun getTemplate(slotName: String): String = ""
+    open fun populateModel(slotName: String, accumulateModel: (String, String) -> Unit): String = ""
 }
 
 abstract class Handle : WasmObject() {
