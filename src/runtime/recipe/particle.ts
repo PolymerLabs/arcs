@@ -9,15 +9,14 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
-import {InterfaceType, Type} from '../type.js';
+import {ParticleSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
+import {Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, VariableMap, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {SlotInfo} from '../slot-info.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
@@ -182,7 +181,7 @@ export class Particle implements Comparable<Particle> {
       const fulfilledSlotConnections = Object.values(this.consumedSlotConnections).filter(connection => connection.targetSlot !== undefined);
       if (fulfilledSlotConnections.length === 0) {
         if (options && options.showUnresolved) {
-          options.details = 'unfullfilled slot connections';
+          options.details = `unfullfilled slot connections ${JSON.stringify([...this.spec.slotConnections])}`;
         }
         return false;
       }
@@ -263,7 +262,9 @@ export class Particle implements Comparable<Particle> {
 
     const idx = this._unnamedConnections.indexOf(connection);
     assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
-    connection._name = name;
+    // TODO: FIX: The following is accessing a readonly field illegally.
+    // tslint:disable-next-line: no-any
+    (connection as any)._name = name;
 
     const connectionSpec = this.spec.getConnectionByName(name);
     connection.type = connectionSpec.type;
@@ -287,7 +288,10 @@ export class Particle implements Comparable<Particle> {
 
   addSlotConnection(name: string) : SlotConnection {
     assert(!(name in this.consumedSlotConnections), 'slot connection already exists');
-    assert(!this.spec || this.spec.slotConnections.has(name), 'slot connection not in particle spec');
+    const slandle = this.spec && this.spec.connections.find(conn => conn.name === name);
+    const isSlandle = slandle && slandle.type.isSlot();
+    const isSetSlandle = slandle && slandle.type.isCollectionType() && slandle.type.getContainedType().isSlot();
+    assert(!this.spec || this.spec.slotConnections.has(name) || isSlandle || isSetSlandle, `slot connection '${name}' is not in particle spec`);
     const slotConn = this.addSlotConnectionAsCopy(name);
     const slotSpec = this.getSlotSpecByName(name);
     if (slotSpec) {

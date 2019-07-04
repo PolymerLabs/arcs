@@ -120,6 +120,10 @@ export class ConsumeSlotConnectionSpec {
     });
   }
 
+  isRoot(): boolean {
+    return this.name === 'root' || this.tags.includes('root');
+  }
+
   // Getters to 'fake' being a Handle.
   get isOptional(): boolean { return !this.isRequired; }
   get direction(): string { return '`consume'; }
