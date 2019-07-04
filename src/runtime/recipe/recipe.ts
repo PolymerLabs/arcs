@@ -227,6 +227,8 @@ export class Recipe implements Cloneable<Recipe> {
           }
         }
       }
+
+      // TODO: Remove check for slots in SLANDLESv2
       if (!usesSlandles && !atLeastOneSlotConnection) {
         if (options && options.errors) {
           options.errors.set(`?`, `no slot connections`);

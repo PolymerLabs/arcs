@@ -93,10 +93,13 @@ export class HandleConnection implements Comparable<HandleConnection> {
       return this.resolvedType;
     }
     const spec = this.spec;
-    return spec ? spec.type : null;
+    // TODO: We need a global way to generate variables so that everything can
+    // have proper type bounds.
+    return spec ? spec.type : undefined;
   }
 
-  get direction(): Direction { // in/out/inout/host/consume/provide
+  get direction(): Direction {
+    // TODO: Should take the most strict of the direction and the spec direction.
     if (this._direction !== 'any') {
       return this._direction;
     }
