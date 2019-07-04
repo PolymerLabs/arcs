@@ -344,7 +344,7 @@ function cleanObsolete() {
 }
 
 function buildPath(path: string, preprocess: () => void, deps: string[]): () => boolean {
-  return () => {
+  const fn = () => {
     if (preprocess) {
       preprocess();
     }
@@ -363,6 +363,9 @@ function buildPath(path: string, preprocess: () => void, deps: string[]): () => 
 
     return true;
   };
+  // Using a lambda breaks the display of func.name in the main execution loop.
+  Object.defineProperty(fn, 'name', {value: `build ${path.slice(2)}`});
+  return fn;
 }
 
 function tsc(path: string): boolean {
@@ -472,13 +475,16 @@ function licenses(): boolean {
 }
 
 function webpackPkg(pkg: string): () => boolean {
-  return () => {
+  const fn = () => {
     const result = saneSpawnWithOutput('npm', ['run', `build:${pkg}`]);
     if (result.stdout) {
       console.log(result.stdout);
     }
     return result.success;
   };
+  // Using a lambda breaks the display of func.name in the main execution loop.
+  Object.defineProperty(fn, 'name', {value: pkg});
+  return fn;
 }
 
 type SpawnOptions = {
