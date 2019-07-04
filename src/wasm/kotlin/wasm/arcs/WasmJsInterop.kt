@@ -153,7 +153,7 @@ external fun collectionRemove(particlePtr: WasmAddress, handlePtr: WasmAddress, 
 external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
 
 @SymbolName("_render")
-external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, contentPtr: WasmString)
+external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, templatePtr: WasmString, modelPtr: WasmString)
 
 @SymbolName("write")
 external fun write(msg: WasmString)
