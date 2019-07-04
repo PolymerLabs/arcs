@@ -2201,7 +2201,7 @@ resource SomeName
   out T {} output2
   out T {} output3
   claim output1 is trusted
-  claim output2 derives from input2
+  claim output2 derives from input2 and derives from input2
   claim output3 is not dangerous
   check input1 is trusted or is from handle input2
   check input2 is extraTrusted

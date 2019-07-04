@@ -17,7 +17,7 @@ import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
-import {Claim, createClaim} from './particle-claim.js';
+import {ClaimList, createClaimList} from './particle-claim.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -49,7 +49,7 @@ export class HandleConnectionSpec {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  claim?: Claim;
+  claims?: ClaimList;
   check?: Check;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
@@ -208,7 +208,7 @@ export class ParticleSpec {
   implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
-  trustClaims: Map<string, Claim>;
+  trustClaims: Map<string, ClaimList>;
   trustChecks: Check[];
 
   constructor(model: SerializedParticleSpec) {
@@ -425,22 +425,22 @@ export class ParticleSpec {
     return this.toString();
   }
 
-  private validateTrustClaims(claims: ParticleClaimStatement[]): Map<string, Claim> {
-    const results: Map<string, Claim> = new Map();
-    if (claims) {
-      claims.forEach(claim => {
-        const handle = this.handleConnectionMap.get(claim.handle);
+  private validateTrustClaims(statements: ParticleClaimStatement[]): Map<string, ClaimList> {
+    const results: Map<string, ClaimList> = new Map();
+    if (statements) {
+      statements.forEach(statement => {
+        const handle = this.handleConnectionMap.get(statement.handle);
         if (!handle) {
-          throw new Error(`Can't make a claim on unknown handle ${claim.handle}.`);
+          throw new Error(`Can't make a claim on unknown handle ${statement.handle}.`);
         }
         if (!handle.isOutput) {
-          throw new Error(`Can't make a claim on handle ${claim.handle} (not an output handle).`);
+          throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        if (handle.claim) {
-          throw new Error(`Can't make multiple claims on the same output (${claim.handle}).`);
+        if (handle.claims) {
+          throw new Error(`Can't make multiple claims on the same output (${statement.handle}).`);
         }
-        handle.claim = createClaim(handle, claim, this.handleConnectionMap);
-        results.set(claim.handle, handle.claim);
+        handle.claims = createClaimList(handle, statement, this.handleConnectionMap);
+        results.set(statement.handle, handle.claims);
       });
     }
     return results;

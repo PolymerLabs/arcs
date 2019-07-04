@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge} from './graph-internals.js';
-import {Claim, ClaimType, ClaimExpression} from '../../runtime/particle-claim.js';
+import {ParticleClaim, ClaimType, Claim} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
@@ -23,7 +23,7 @@ export class ParticleNode extends Node {
   readonly name: string;
 
   // Maps from handle names to tags.
-  readonly claims: Map<string, Claim>;
+  readonly claims: Map<string, ClaimList>;
   readonly checks: Check[];
 
   constructor(particle: Particle) {
@@ -56,13 +56,17 @@ export class ParticleNode extends Node {
   inEdgesFromOutEdge(outEdge: Edge): readonly ParticleInput[] {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
-    if (outEdge.claim && outEdge.claim.type === ClaimType.DerivesFrom) {
+    if (outEdge.claims) {
       const result: ParticleInput[] = [];
-      for (const parentHandle of outEdge.claim.parentHandles) {
-        const inEdge = this.inEdgesByName.get(parentHandle.name);
-        assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
-        result.push(inEdge);
-      }
+      outEdge.claims.foreach(claim => {
+        if (claim.type === ClaimType.DerivesFrom) {
+          for (const parentHandle of claim.parentHandles) {
+            const inEdge = this.inEdgesByName.get(parentHandle.name);
+            assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
+            result.push(inEdge);
+          }
+        }
+      });
       return result;
     }
 
@@ -78,7 +82,7 @@ export class ParticleInput implements Edge {
   readonly connectionSpec: HandleConnectionSpec;
 
   readonly check?: Check;
-  readonly claim?: ClaimExpression;
+  readonly claims?: ClaimList;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = otherEnd;
@@ -87,7 +91,7 @@ export class ParticleInput implements Edge {
     this.label = `${particleNode.name}.${this.connectionName}`;
     this.connectionSpec = connection.spec;
     this.check = connection.spec.check;
-    this.claim = connection.handle.claim;
+    this.claims = connection.handle.claims;
   }
 }
 
@@ -98,7 +102,7 @@ export class ParticleOutput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  readonly claim?: ClaimExpression;
+  readonly claims?: ClaimList;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = particleNode;
@@ -107,8 +111,8 @@ export class ParticleOutput implements Edge {
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
     
-    const claim = particleNode.claims.get(this.connectionName);
-    this.claim = claim ? claim.expression : null;
+    const claims = particleNode.claims.get(this.connectionName);
+    this.claims = claims ? claims : null;
   }
 }
 

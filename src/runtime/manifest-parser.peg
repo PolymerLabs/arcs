@@ -339,6 +339,13 @@ ParticleClaimStatement
   }
 
 ParticleClaimExpression
+  = whiteSpace first:ParticleClaim rest:(whiteSpace 'and' whiteSpace ParticleClaim)*
+  {
+    const claims: AstNode.ParticleClaim[] = [first, ...rest.map(item => item[3])];
+    return claims as AstNode.ParticleClaimExpression;
+  } 
+
+ParticleClaim
   = ParticleClaimIsTag
   / ParticleClaimDerivesFrom
 
