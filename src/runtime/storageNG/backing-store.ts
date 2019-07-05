@@ -1,4 +1,4 @@
-import {CRDTTypeRecord} from "../crdt/crdt";
+import {CRDTTypeRecord, CRDTModel} from "../crdt/crdt";
 import {ActiveStore, StorageMode} from "./store";
 import {StorageKey} from "./storage-key";
 import {Exists} from "./drivers/driver-factory";
