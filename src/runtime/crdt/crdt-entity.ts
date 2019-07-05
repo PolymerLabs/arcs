@@ -11,7 +11,7 @@
 import {ChangeType, CRDTChange, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
 import {Referenceable, CRDTCollectionTypeRecord, CRDTCollection, CollectionOpTypes} from './crdt-collection.js';
 import {CRDTSingletonTypeRecord, CRDTSingleton, SingletonOpTypes} from './crdt-singleton.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../common/collect/dictionary.js';
 
 // Identified extends the concept of Referenceable to a Dictionary
 type Identified = Dictionary<Referenceable>;
