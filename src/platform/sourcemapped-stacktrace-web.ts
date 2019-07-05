@@ -13,5 +13,5 @@
 //export const mapStackTrace = smst.mapStackTrace;
 
 // TODO(sjmiles): no 'require' on web, rely on global otherwise-loaded
-export const mapStackTrace = window.sourceMappedStackTrace && window.sourceMappedStackTrace.mapStackTrace;
+export const mapStackTrace = window['sourceMappedStackTrace'] && window['sourceMappedStackTrace'].mapStackTrace;
 

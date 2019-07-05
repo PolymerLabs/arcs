@@ -9,5 +9,7 @@
  */
 
 import chai from 'chai';
+
+// tslint:disable-next-line: no-default-export
 export default chai;
 export const assert = chai.assert;

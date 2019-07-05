@@ -7,21 +7,27 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../../platform/chai-web.js';
+import {Arc} from '../arc.js';
 import {APIPort, PECOuterPort, PECInnerPort} from '../api-channel.js';
 
 class Registrar {
+  // tslint:disable-next-line: no-any
+  calls: Map<string, any> = new Map();
+  // tslint:disable-next-line: no-any
+  handlers: Map<string, any> = new Map();
+  // tslint:disable-next-line: no-any
+  initializers: Map<string, any> = new Map();
+  // tslint:disable-next-line: no-any
+  initializerHandlers: Map<string, any> = new Map();
+
   constructor() {
-    this.calls = new Map();
-    this.handlers = new Map();
-    this.initializers = new Map();
-    this.initializerHandlers = new Map();
   }
 }
 
 // TODO(shans): Make this test work with the new API channel
+// tslint:disable-next-line: only-arrow-functions
 describe('API channel', function() {
   let outer;
   let inner;
@@ -29,46 +35,92 @@ describe('API channel', function() {
   before(() => {
     APIPort.prototype._testingHook = function() {
       // Change the argumentType mapping objects/functions to generate string identifiers.
-      this.Direct = 'Direct';
-      this.LocalMapped = 'LocalMapped';
-      this.Mapped = 'Mapped';
-      this.Map = (keyprimitive, valueprimitive) => `Map(${keyprimitive},${valueprimitive})`;
-      this.List = (primitive) => `List(${primitive})`;
-      this.ByLiteral = (clazz) => `ByLiteral(${clazz.name})`;
+      // TODO update quoted usage and/or find a better way of implementing _testingHook
+      this['Direct'] = 'Direct';
+      this['LocalMapped'] = 'LocalMapped';
+      this['Mapped'] = 'Mapped';
+      this['Map'] = (keyprimitive, valueprimitive) => `Map(${keyprimitive},${valueprimitive})`;
+      this['List'] = (primitive) => `List(${primitive})`;
+      this['ByLiteral'] = (clazz) => `ByLiteral(${clazz.name})`;
 
       // Override the registration functions to just capture the names and args in a Registrar.
-      this._reg_ = new Registrar();
-      this.registerCall = function(name, argumentTypes) {
-        this._reg_.calls.set(name, argumentTypes);
+      const reg = new Registrar();
+      this['_reg_'] = reg;
+      this['registerCall'] = (name, argumentTypes) => {
+        reg.calls.set(name, argumentTypes);
       };
-      this.registerHandler = function(name, argumentTypes) {
-        this._reg_.handlers.set(name, argumentTypes);
+      this['registerHandler'] = (name, argumentTypes) => {
+        reg.handlers.set(name, argumentTypes);
       };
-      this.registerInitializer = function(name, argumentTypes) {
-        this._reg_.initializers.set(name, argumentTypes);
+      this['registerInitializer'] = (name, argumentTypes) => {
+        reg.initializers.set(name, argumentTypes);
       };
-      this.registerInitializerHandler = function(name, argumentTypes) {
-        this._reg_.initializerHandlers.set(name, argumentTypes);
+      this['registerInitializerHandler'] = (name, argumentTypes) => {
+        reg.initializerHandlers.set(name, argumentTypes);
       };
-      this.registerRedundantInitializer = this.registerInitializer;
+      this['registerRedundantInitializer'] = this['registerInitializer'];
     };
 
-    const port = {setMessageCallback: () => {}};
-    const arc = {id: ''}; // OuterPortAttachment constructor needs the id.
+    // tslint:disable-next-line: no-any
+    const port: any = {setMessageCallback: () => {}};
+    // tslint:disable-next-line: no-any
+    const arc: any = {id: ''}; // OuterPortAttachment constructor needs the id.
 
     // PECOuterPort can call DevToolsConnected during setup, so we need to stub that.
     const outerPort = new class extends PECOuterPort {
       DevToolsConnected() {}
+      onArcLoadRecipe() {}
+      onArcCreateHandle() {}
+      onArcCreateSlot() {}
+      onArcMapHandle() {}
+      onConstructInnerArc() {}
+      onGetBackingStore() {}
+      onHandleClear() {}
+      onHandleGet() {}
+      onHandleRemove() {}
+      onHandleRemoveMultiple() {}
+      onHandleSet() {}
+      onHandleStore() {}
+      onHandleStream() {}
+      onHandleToList() {}
+      onIdle() {}
+      onIntializeProxy() {}
+      onRender() {}
+      onReportExceptionInHost() {}
+      onServiceRequest() {}
+      onStreamCursorClose() {}
+      onStreamCursorNext() {}
+      onSynchronizeProxy() {}
+      onInitializeProxy() {}
     }(port, arc);
     
 
-    outer = outerPort._reg_;
-    inner = (new PECInnerPort(port))._reg_;
+    outer = outerPort['_reg_'];
+    inner = new class extends PECInnerPort {
+      onAwaitIdle() {}
+      onConstructArcCallback() {}
+      onCreateHandleCallback() {}
+      onCreateSlotCallback() {}
+      onDefineHandle() {}
+      onGetBackingStoreCallback() {}
+      onInnerArcRender() {}
+      onInstantiateParticle() {}
+      onMapHandleCallback() {}
+      onSimpleCallback() {}
+      onStartRender() {}
+      onStop() {}
+      onStopRender() {}
+      onUIEvent() {}
+      
+      constructor() {
+        super(port);
+      }
+    }()['_reg_'];
   });
 
   after(() => {
     // Restore the normal APIPort constructor behaviour.
-    APIPort.prototype._testingHook = function() {};
+    APIPort.prototype._testingHook = () => {};
   });
 
   // Verifies that message functions are correctly defined between the two sides of the API channel:
@@ -83,7 +135,7 @@ describe('API channel', function() {
   //
   // Note that this modifies handlerMap, which is ok because every map in the two Registrar objects
   // is only used once in the four tests below.
-  function verify(callerMap, callerLabel, handlerMap, handlerLabel) {
+  function verify(callerMap, callerLabel: string, handlerMap, handlerLabel: string) {
     for (const [name, callerArgs] of callerMap) {
       const handlerArgs = handlerMap.get(name);
       assert.isDefined(handlerArgs, `${callerLabel} '${name}': missing ${handlerLabel}`);

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export async function digest(str) {
+export async function digest(str: string) {
     const buffer = new TextEncoder().encode(str);
     const digest = await crypto.subtle.digest('SHA-1', buffer);
     return Array.from(new Uint8Array(digest)).map(x => ('00' + x.toString(16)).slice(-2)).join('');
