@@ -395,7 +395,7 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks?: ParticleCheckStatement[]): Check[] {
+  private validateTrustChecks(checks: ParticleCheckStatement[]): Check[] {
     const results: Check[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();
@@ -413,6 +413,7 @@ export class ParticleSpec {
             if (handle.check) {
               throw new Error(`Can't make multiple checks on the same input (${handleName}).`); 
             }
+            
             handle.check = createCheck(handle, check, this.handleConnectionMap);
             results.push(handle.check);
             break;

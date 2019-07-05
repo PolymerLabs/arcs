@@ -204,9 +204,8 @@ class ThingMapper {
   }
 }
 
-
 export class APIPort {
-  private _port: MessagePort;
+  private readonly _port: MessagePort;
   _mapper: ThingMapper;
   protected inspector: ArcInspector | null;
   protected attachStack: boolean;
@@ -246,6 +245,11 @@ export class APIPort {
       this.inspector.pecMessage(name, args, count, new Error().stack || '');
     }
     this._port.postMessage(call);
+  }
+
+  supportsJavaParticle(): boolean {
+    // TODO: improve heuristics.
+    return Object.getPrototypeOf(this._port.constructor).name === 'MessagePort';
   }
 }
 

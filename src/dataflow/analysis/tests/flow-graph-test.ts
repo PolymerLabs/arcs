@@ -200,4 +200,28 @@ describe('FlowGraph', () => {
     assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     assert.equal(check, slot2.check);
   });
+
+  it('resolves data store names and IDs', async () => {
+    const graph = await buildFlowGraph(`
+      schema MyEntity
+        Text text
+      resource MyResource
+        start
+        [{"text": "asdf"}]
+      store MyStore of MyEntity 'my-store-id' in MyResource
+      particle P
+        in MyEntity input
+      recipe R
+        use MyStore as s
+        P
+          input <- s
+    `);
+    assert.lengthOf(graph.handles, 1);
+    const storeId = graph.handles[0].storeId;
+
+    assert.equal(graph.resolveStoreRefToID({type: 'id', store: 'my-store-id'}), 'my-store-id');
+    assert.equal(graph.resolveStoreRefToID({type: 'name', store: 'MyStore'}), storeId);
+    assert.throws(() => graph.resolveStoreRefToID({type: 'name', store: 'UnknownName'}), 'Store with name UnknownName not found.');
+    assert.throws(() => graph.resolveStoreRefToID({type: 'id', store: 'unknown-id'}), `Store with id 'unknown-id' not found.`);
+  });
 });

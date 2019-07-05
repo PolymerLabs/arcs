@@ -355,6 +355,10 @@ export class Particle implements Comparable<Particle> {
     return new Map();
   }
 
+  isJavaParticle(): boolean {
+    return this.spec && (this.spec.implFile || '').endsWith('java');
+  }
+
   toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     let result: string[] = [];
     // TODO: we need at least name or verb(s)
