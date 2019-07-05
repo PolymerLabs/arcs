@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export function assert(test, message?) {
+// tslint:disable-next-line: no-any
+export function assert(test: any, message?: string) {
   if (!test) {
     if (typeof window !== 'object') {
       // tslint:disable-next-line: no-debugger
