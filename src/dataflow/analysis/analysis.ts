@@ -30,7 +30,7 @@ export function validateGraph(graph: FlowGraph): ValidationResult {
   const finalResult = new ValidationResult();
   for (const edge of graph.edges) {
     if (edge.check) {
-      const result = validateSingleEdge(edge);
+      const result = validateSingleEdge(edge, graph);
       result.failures.forEach(f => finalResult.failures.push(f));
     }
   }
@@ -42,7 +42,7 @@ export function validateGraph(graph: FlowGraph): ValidationResult {
  * every path ending at the edge must pass the check on that edge. 
  * Returns true if the check passes.
  */
-function validateSingleEdge(edgeToCheck: Edge): ValidationResult {
+function validateSingleEdge(edgeToCheck: Edge, graph: FlowGraph): ValidationResult {
   assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
   const check = edgeToCheck.check;
@@ -54,7 +54,7 @@ function validateSingleEdge(edgeToCheck: Edge): ValidationResult {
   for (const path of allInputPaths(edgeToCheck)) {
     const tagsForPath = computeTagClaimsInPath(path);
     const handlesInPath = path.nodes.filter(n => n instanceof HandleNode) as HandleNode[];
-    if (!evaluateCheck(check.expression, tagsForPath, handlesInPath)) {
+    if (!evaluateCheck(check.expression, tagsForPath, handlesInPath, graph)) {
       finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${path.toString()}`);
     }
   }
@@ -97,18 +97,22 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
  * one of the handles in the path. Operates recursively on boolean condition
  * trees.
  */
-function evaluateCheck(checkExpression: CheckExpression, claimTags: Set<string>, handles: HandleNode[]): boolean {
+function evaluateCheck(checkExpression: CheckExpression, claimTags: Set<string>, handles: HandleNode[], graph: FlowGraph): boolean {
   switch (checkExpression.type) {
     case 'or':
       // Only one child expression needs to pass.
-      return checkExpression.children.some(childExpr => evaluateCheck(childExpr, claimTags, handles));
+      return checkExpression.children.some(childExpr => evaluateCheck(childExpr, claimTags, handles, graph));
     case 'and':
       // Every child expression needs to pass.
-      return checkExpression.children.every(childExpr => evaluateCheck(childExpr, claimTags, handles));
+      return checkExpression.children.every(childExpr => evaluateCheck(childExpr, claimTags, handles, graph));
     case CheckType.HasTag:
       return claimTags.has(checkExpression.tag);
     case CheckType.IsFromHandle:
       return handles.some(handle => handle.validateIsFromHandleCheck(checkExpression));
+    case CheckType.IsFromStore: {
+      const storeId = graph.resolveStoreRefToID(checkExpression.storeRef);
+      return !!handles.find(handle => handle.storeId === storeId);
+    }
     default:
       throw new Error('Unknown condition type.');
   }

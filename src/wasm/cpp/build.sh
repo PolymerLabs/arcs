@@ -7,8 +7,8 @@ fail() {
 
 which em++ >/dev/null || fail "em++ not found; do you need to source emsdk_env.sh?"
 
-# Version check
-read A B C <<<$(em++ --version | head -1 | sed 's/^[^0-9]*\([0-9.]\+\).*/\1/' | tr '.' ' ')
+# Version check (n.b. the double 'sed' is because Mac OSX sed can't do capture groups)
+read A B C <<<$(em++ --version | head -1 | sed 's/^[^0-9.]*//' | sed 's/ .*//' | tr '.' ' ')
 V=$(( A * 10**8 + B * 10**4 + C ))
 (( V >= 100380034 )) || fail "emscripten must be at least version 1.38.34"
 

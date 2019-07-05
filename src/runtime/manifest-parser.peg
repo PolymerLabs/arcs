@@ -415,6 +415,7 @@ ParticleCheckExpression
 
 ParticleCheckCondition
   = ParticleCheckIsFromHandle
+  / ParticleCheckIsFromStore
   / ParticleCheckHasTag
 
 ParticleCheckHasTag
@@ -438,6 +439,21 @@ ParticleCheckIsFromHandle
       parentHandle,
     } as AstNode.ParticleCheckIsFromHandle;
   }
+
+ParticleCheckIsFromStore
+  = 'is' whiteSpace 'from' whiteSpace 'store' whiteSpace storeRef:StoreReference
+  {
+    return {
+      kind: 'particle-trust-check-is-from-store',
+      checkType: 'is-from-store',
+      location: location(),
+      storeRef,
+    } as AstNode.ParticleCheckIsFromStore;
+  }
+
+StoreReference
+  = name:upperIdent { return {kind: 'store-reference', location: location(), type: 'name', store: name} as AstNode.StoreReference; }
+  / id:id { return {kind: 'store-reference', location: location(), type: 'id', store: id} as AstNode.StoreReference; }
 
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?

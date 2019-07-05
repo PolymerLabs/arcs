@@ -13,6 +13,9 @@ import {ParticleNode, createParticleNodes} from './particle-node.js';
 import {HandleNode, createHandleNodes, addHandleConnection} from './handle-node.js';
 import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';
 import {Node, Edge} from './graph-internals.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {assert} from '../../platform/assert-web.js';
+import {StoreReference} from '../../runtime/particle-check.js';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -27,7 +30,9 @@ export class FlowGraph {
   /** Maps from particle name to node. */
   readonly particleMap: Map<string, ParticleNode>;
 
-  constructor(recipe: Recipe) {
+  private readonly manifest: Manifest;
+
+  constructor(recipe: Recipe, manifest: Manifest) {
     if (!recipe.isResolved()) {
       throw new Error('Recipe must be resolved.');
     }
@@ -67,6 +72,7 @@ export class FlowGraph {
     this.slots = [...slotNodes.values()];
     this.nodes = [...this.particles, ...this.handles, ...this.slots];
     this.particleMap = new Map(this.particles.map(n => [n.name, n]));
+    this.manifest = manifest;
   }
 
   /** Returns a list of all pairwise particle connections, in string form: 'P1.foo -> P2.bar'. */
@@ -76,5 +82,17 @@ export class FlowGraph {
       handleNode.connectionsAsStrings.forEach(c => connections.push(c));
     }
     return connections;
+  }
+
+  resolveStoreRefToID(storeRef: StoreReference): string {
+    if (storeRef.type === 'id') {
+      const store = this.manifest.findStoreById(storeRef.store);
+      assert(store, `Store with id '${storeRef.store}' not found.`);
+      return store.id;
+    } else {
+      const store = this.manifest.findStoreByName(storeRef.store);
+      assert(store, `Store with name ${storeRef.store} not found.`);
+      return store.id;
+    }
   }
 }
