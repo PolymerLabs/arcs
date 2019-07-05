@@ -10,7 +10,7 @@ public abstract class StorageProxy implements Store {
   public final Type type;
   protected boolean listenerAttached = false;
   protected boolean keepSynced = false;
-  protected Map<Handle, NativeParticle> observers = new HashMap<Handle, NativeParticle>();
+  protected Map<Handle, NativeParticle> observers = new HashMap<>();
   PECInnerPort port;
 
   protected StorageProxy(String id, Type type, PECInnerPort port, String name) {

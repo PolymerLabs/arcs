@@ -1,8 +1,6 @@
 package arcs.api;
 
 public class CollectionProxy extends StorageProxy implements CollectionStore {
-  private CrdtCollectionModel model;
-
   public CollectionProxy(String id, Type type, PECInnerPort port, String name) {
     super(id, type, port, name);
   }
