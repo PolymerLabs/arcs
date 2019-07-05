@@ -10,21 +10,22 @@
 
 import {PlatformLoaderBase} from './loader-platform.js';
 import {logFactory} from '../platform/log-web.js';
+import {ParticleSpec} from '../runtime/particle-spec.js';
 
 const log = logFactory('loader-web', 'green');
 const warn = logFactory('loader-web', 'green', 'warn');
 const error = logFactory('loader-web', 'green', 'error');
 
 export class PlatformLoader extends PlatformLoaderBase {
-  flushCaches() {
+  flushCaches(): void {
     // punt object urls?
   }
-  async loadResource(url: string) {
+  async loadResource(url: string): Promise<string> {
     // subclass impl differentiates paths and URLs,
     // for browser env we can feed both kinds into _loadURL
     return super._loadURL(this._resolve(url));
   }
-  async loadBinary(url: string) {
+  async loadBinary(url: string): Promise<ArrayBuffer> {
     return super.loadBinary(this._resolve(url));
   }
   async provisionObjectUrl(fileName: string) {
@@ -33,7 +34,7 @@ export class PlatformLoader extends PlatformLoaderBase {
     return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
   }
   // Below here invoked from inside Worker
-  async loadParticleClass(spec) {
+  async loadParticleClass(spec: ParticleSpec) {
     const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
     if (clazz) {
       clazz.spec = spec;
@@ -59,11 +60,12 @@ export class PlatformLoader extends PlatformLoaderBase {
   provisionLogger(fileName: string) {
     return logFactory(fileName.split('/').pop(), '#1faa00');
   }
-  loadWrappedParticle(url) {
+  loadWrappedParticle(url: string) {
     let result;
     // MUST be synchronous from here until deletion
     // of self.defineParticle because we share this
     // scope with other particles
+    // TODO fix usage of quoted property
     self['defineParticle'] = (particleWrapper) => {
       if (result) {
         warn('multiple particles not supported, last particle wins');

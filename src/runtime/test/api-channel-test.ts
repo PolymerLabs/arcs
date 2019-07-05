@@ -35,6 +35,7 @@ describe('API channel', function() {
   before(() => {
     APIPort.prototype._testingHook = function() {
       // Change the argumentType mapping objects/functions to generate string identifiers.
+      // TODO update quoted usage and/or find a better way of implementing _testingHook
       this['Direct'] = 'Direct';
       this['LocalMapped'] = 'LocalMapped';
       this['Mapped'] = 'Mapped';
