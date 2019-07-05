@@ -525,10 +525,10 @@ export class Recipe implements Cloneable<Recipe> {
   _copyInto(recipe: Recipe, cloneMap: CloneMap): void {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
 
-    function cloneTheThing(ob): void {
+    const cloneTheThing = (ob) => {
       const clonedObject = ob._copyInto(recipe, cloneMap, variableMap);
       cloneMap.set(ob, clonedObject);
-    }
+    };
 
     recipe._name = this.name;
     recipe._verbs = recipe._verbs.concat(...this._verbs);
