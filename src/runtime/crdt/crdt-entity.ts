@@ -13,20 +13,28 @@ import {Referenceable, CRDTCollectionTypeRecord, CRDTCollection, CollectionOpTyp
 import {CRDTSingletonTypeRecord, CRDTSingleton, SingletonOpTypes} from './crdt-singleton.js';
 import {Dictionary} from '../hot.js';
 
+// Identified extends the concept of Referenceable to a Dictionary
 type Identified = Dictionary<Referenceable>;
 
+// All Entity CRDT types are based around a dictionary of singleton fields and a dictionary of collection fields.
+// The CRDT is composed of CRDTSingleton and CRDTCollection objects, one for each field.
+// The raw view contains the single value from each CRDTSingleton (or null) and a set of the values from each
+// CRDTCollection. 
 type RawEntity<S extends Identified, C extends Identified> = 
 {
   singletons: S,
   collections: {[P in keyof C]: Set<C[P]>}
 };
 
+// These extend singleton/collection "data" views across an entity structure.
 type SingletonEntityData<S extends Identified> = {[P in keyof S]: CRDTSingletonTypeRecord<S[P]>['data']};
 type CollectionEntityData<S extends Identified> = {[P in keyof S]: CRDTCollectionTypeRecord<S[P]>['data']};
 
+// These extend actual CRDT objects across an entity structure.
 type SingletonEntityModel<S extends Identified> = {[P in keyof S]: CRDTSingleton<S[P]>};
 type CollectionEntityModel<S extends Identified> = {[P in keyof S]: CRDTCollection<S[P]>};
 
+// The data view of an entity.
 export type EntityData<S extends Identified, C extends Identified> = 
   {
     singletons: SingletonEntityData<S>,
@@ -34,6 +42,7 @@ export type EntityData<S extends Identified, C extends Identified> =
     version: VersionMap
   };
 
+// The internal model of an entity.
 export type EntityInternalModel<S extends Identified, C extends Identified> = 
   {
     singletons: SingletonEntityModel<S>,
@@ -43,9 +52,9 @@ export type EntityInternalModel<S extends Identified, C extends Identified> =
 
 export enum EntityOpTypes {Set, Clear, Add, Remove}
 
-type SetOp<S, F extends keyof S> = {type: EntityOpTypes.Set, field: F, value: S[F], actor: string, clock: VersionMap};
-type AddOp<C, F extends keyof C> = {type: EntityOpTypes.Add, field: F, value: C[F], actor: string, clock: VersionMap};
-type RemoveOp<C, F extends keyof C> = {type: EntityOpTypes.Remove, field: F, value: C[F], actor: string, clock: VersionMap};
+type SetOp<Singleton, Field extends keyof Singleton> = {type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, clock: VersionMap};
+type AddOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Add, field: Field, value: Collection[Field], actor: string, clock: VersionMap};
+type RemoveOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Remove, field: Field, value: Collection[Field], actor: string, clock: VersionMap};
 export type EntityOperation<S, C> = 
   SetOp<S, keyof S> |
   {type: EntityOpTypes.Clear, field: keyof S, actor: string, clock: VersionMap} |
@@ -91,7 +100,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
       const otherOps = [];
       for (const singleton of Object.keys(singletonChanges)) {
         for (const operation of singletonChanges[singleton].modelChange.operations) {
-          let op;
+          let op: EntityOperation<S, C>;
           if (operation.type as SingletonOpTypes === SingletonOpTypes.Set) {
             op = {type: EntityOpTypes.Set, value: operation.value, actor: operation.actor, clock: operation.clock, field: singleton};
           } else {
@@ -100,7 +109,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
           modelOps.push(op);
         }
         for (const operation of singletonChanges[singleton].otherChange.operations) {
-          let op;
+          let op: EntityOperation<S, C>;
           if (operation.type as SingletonOpTypes === SingletonOpTypes.Set) {
             op = {type: EntityOpTypes.Set, value: operation.value, actor: operation.actor, clock: operation.clock, field: singleton};
           } else {
@@ -111,20 +120,20 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
       }
       for (const collection of Object.keys(collectionChanges)) {
         for (const operation of collectionChanges[collection].modelChange.operations) {
-          let op;
+          let op: EntityOperation<S, C>;
           if (operation.type as CollectionOpTypes === CollectionOpTypes.Add) {
-            op = {type: EntityOpTypes.Add, added: operation.value, actor: operation.actor, clock: operation.clock, field: collection};
+            op = {type: EntityOpTypes.Add, value: operation.added, actor: operation.actor, clock: operation.clock, field: collection};
           } else {
-            op = {type: EntityOpTypes.Remove, removed: operation.value, actor: operation.actor, clock: operation.clock, field: collection};
+            op = {type: EntityOpTypes.Remove, value: operation.removed, actor: operation.actor, clock: operation.clock, field: collection};
           }
           modelOps.push(op);
         }
         for (const operation of collectionChanges[collection].otherChange.operations) {
-          let op;
+          let op: EntityOperation<S, C>;
           if (operation.type as CollectionOpTypes === CollectionOpTypes.Add) {
-            op = {type: EntityOpTypes.Add, added: operation.value, actor: operation.actor, clock: operation.clock, field: collection};
+            op = {type: EntityOpTypes.Add, value: operation.added, actor: operation.actor, clock: operation.clock, field: collection};
           } else {
-            op = {type: EntityOpTypes.Remove, removed: operation.value, actor: operation.actor, clock: operation.clock, field: collection};
+            op = {type: EntityOpTypes.Remove, value: operation.removed, actor: operation.actor, clock: operation.clock, field: collection};
           }
           otherOps.push(op);
         }     
