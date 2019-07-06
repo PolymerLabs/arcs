@@ -9,8 +9,6 @@
  */
 
 
-// TODO(lindner): move the utility code outside, break dep on Dictionary
-import {Dictionary} from '../collect/dictionary.js';
 import {checkDefined} from './preconditions.js';
 
 /**
@@ -20,6 +18,13 @@ import {checkDefined} from './preconditions.js';
 // TODO(lindner): this needs some work to make it more like the java
 // comparable interface or python __lt__
 
+/**
+ * An interface that implements natural sorting for objects within a
+ * collection.  Objects can implement Comparable by adding a
+ * `_compareTo` method that takes another object and returns -1, 0, 1
+ * depending on whether the supplied object is less than/equal
+ * to/greater than the object.
+ */
 export interface Comparable<T> {
   _compareTo<T>(other: Comparable<T>): number;
 }

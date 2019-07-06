@@ -11,11 +11,11 @@ import {assert} from '../../../platform/chai-web.js';
 import {checkDefined, checkNotNull} from '../preconditions.js';
 
 describe('precondtions', () => {
-  const delay = async (ms: number) => new Promise(r => setTimeout(r, ms));
 
   it('throws when it should', () => {
     const msg = 'custom error message';
     assert.throws(() => checkDefined(undefined, msg), msg);
+    assert.throws(() => checkDefined(null, msg), msg);
     assert.throws(() => checkNotNull(null, msg), msg);
   });
 
@@ -26,5 +26,9 @@ describe('precondtions', () => {
     assert.equal(value, checkDefined(value, msg));
     assert.equal(value, checkNotNull(value, msg));
     assert.isUndefined(checkNotNull(undefined, msg));
+
+    const obj = {a: 'b', c: 99};
+    assert.deepEqual(obj, checkDefined(obj, msg));
+    assert.deepEqual(obj, checkNotNull(obj, msg));
   });
 });

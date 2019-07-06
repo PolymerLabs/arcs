@@ -15,5 +15,8 @@ describe('comparable', () => {
     assert.equal(compareNulls(null, null), 0);
     assert.equal(compareNulls(null, 'cat'), -1);
     assert.equal(compareNulls('cat', null), 1);
+    assert.equal(compareNulls(undefined, undefined), 0);
+    assert.equal(compareNulls(undefined, null), 1);
+    assert.equal(compareNulls(null, undefined), -1);
   });    
 });
