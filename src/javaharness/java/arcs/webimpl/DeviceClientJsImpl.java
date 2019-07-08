@@ -53,7 +53,10 @@ public class DeviceClientJsImpl implements DeviceClient {
             case MESSAGE_DATA:
                 String transactionId = String.valueOf(content.getInt(FIELD_TRANSACTION_ID));
                 if (inProgress.containsKey(transactionId)) {
-                    inProgress.get(transactionId).onData(transactionId, jsonParser.stringify(content.getObject(FIELD_DATA)));
+                    PortableJson dataJson = content.getObject(FIELD_DATA);
+                    if (dataJson != null) {
+                        inProgress.get(transactionId).onData(transactionId, jsonParser.stringify(dataJson));
+                    }
                     inProgress.remove(transactionId);
                 }
                 break;
