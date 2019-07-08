@@ -1,6 +1,5 @@
 package arcs
 
-import java.awt.GraphicsConfigTemplate
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
