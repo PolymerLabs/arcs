@@ -18,6 +18,9 @@ cp -fR ../../../../particles/PipeApps2/* dist/particles/PipeApps2
 mkdir dist/particles/Music
 cp -fR ../../../../particles/Music/* dist/particles/Music
 #
+mkdir dist/particles/Services
+cp -fR ../../../../particles/Services/* dist/particles/Services
+#
 # collate sources
 echo packing...
 npx webpack
