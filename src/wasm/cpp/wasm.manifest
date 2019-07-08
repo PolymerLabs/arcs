@@ -78,3 +78,9 @@ recipe
   use InfoStore as h1
   SimpleParticle
     info <- h1
+
+
+particle ServiceParticle in 'output.wasm'
+  consume root
+recipe ServicesAPI
+  ServiceParticle

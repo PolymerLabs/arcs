@@ -24,6 +24,9 @@ import {SlotDomConsumer} from '../../build/runtime/slot-dom-consumer.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 
+import '../../build/services/ml5-service.js';
+import '../../build/services/random-service.js';
+
 const files = document.getElementById('file-pane');
 const output = document.getElementById('output-pane');
 const toggleFiles = document.getElementById('toggle-files');
