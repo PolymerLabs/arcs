@@ -20,7 +20,7 @@ abstract class Particle : WasmObject() {
 
     fun registerHandle(name: String, handle: Handle) {
         handle.name = name
-        handle.particle_ = this
+        handle.particle = this
         handles[name] = handle
         log("Registering $name")
     }
@@ -79,7 +79,7 @@ abstract class Particle : WasmObject() {
 
 abstract class Handle : WasmObject() {
     var name: String? = null
-    var particle_: Particle? = null
+    var particle: Particle? = null
     abstract fun sync(encoded: String)
     abstract fun update(encoded1: String, encoded2: String)
 }
@@ -103,7 +103,7 @@ open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handl
         this.entity = entity
         val encoded = entity.encodeEntity()
         singletonSet(
-            this.particle_!!.toWasmAddress(),
+            this.particle!!.toWasmAddress(),
             this.toWasmAddress(),
             encoded.toWasmString()
         )
@@ -111,7 +111,7 @@ open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handl
 
     fun clear() {
         entity = entityCtor()
-        singletonClear(this.particle_!!.toWasmAddress(), this.toWasmAddress())
+        singletonClear(this.particle!!.toWasmAddress(), this.toWasmAddress())
     }
 }
 
@@ -152,7 +152,7 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
     fun store(entity: T) {
         entities[entity.internalId] = entity
         val encoded = entities[entity.internalId]!!.encodeEntity()
-        collectionStore(this.particle_!!.toWasmAddress(), this.toWasmAddress(), encoded.toWasmString())
+        collectionStore(this.particle!!.toWasmAddress(), this.toWasmAddress(), encoded.toWasmString())
     }
 
     fun remove(entity: T) {
@@ -160,7 +160,7 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
         if (it != null) {
             val encoded: String = it.encodeEntity()
             entities.remove(entity.internalId)
-            collectionRemove(this.particle_!!.toWasmAddress(), this.toWasmAddress(), encoded.toWasmString())
+            collectionRemove(this.particle!!.toWasmAddress(), this.toWasmAddress(), encoded.toWasmString())
         }
     }
 
@@ -177,7 +177,7 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
 
     fun clear() {
         entities.clear()
-        collectionClear(this.particle_!!.toWasmAddress(), this.toWasmAddress())
+        collectionClear(this.particle!!.toWasmAddress(), this.toWasmAddress())
     }
 }
 
