@@ -18,7 +18,7 @@
  * of Node/Edge like ParticleNode, etc.
  */
 
-import {Claim} from '../../runtime/particle-claim.js';
+import {Claim, ClaimExpression} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 
 /** Represents a node in a FlowGraph. Can be a particle, handle, etc. */
@@ -57,6 +57,6 @@ export interface Edge {
    */
   readonly label: string;
 
-  readonly claim?: Claim;
+  readonly claim?: ClaimExpression;
   readonly check?: Check;
 }

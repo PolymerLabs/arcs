@@ -14,12 +14,12 @@ import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {Type, SlotType} from '../type.js';
 import {SlotInfo} from '../slot-info.js';
-
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate} from '../manifest-ast-nodes.js';
+import {ClaimIsTag, ClaimExpression} from '../particle-claim.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -39,6 +39,7 @@ export class Handle implements Comparable<Handle> {
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
+  claim: ClaimExpression | undefined = undefined;
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -158,7 +159,7 @@ export class Handle implements Comparable<Handle> {
     }
     this._id = id;
   }
-  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string}) {
+  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string, claims?: ClaimIsTag[]}) {
     if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }
@@ -167,6 +168,14 @@ export class Handle implements Comparable<Handle> {
     this._type = undefined;
     this._mappedType = storage.type;
     this._storageKey = storage.storageKey;
+
+    if (storage.claims) {
+      // TODO: Support multiple tag claims.
+      assert(storage.claims.length <= 1, 'Multiple tag claims is not supported yet.');
+      if (storage.claims.length === 1) {
+        this.claim = storage.claims[0];
+      }
+    }
   }
   get localName() { return this._localName; }
   set localName(name: string) { this._localName = name; }

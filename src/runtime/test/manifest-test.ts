@@ -20,7 +20,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression} from '../particle-check.js';
+import {CheckHasTag, CheckBooleanExpression, CheckIsFromStore} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
@@ -1980,13 +1980,13 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.size, 2);
       
-      const claim1 = particle.trustClaims.get('output1') as ClaimIsTag;
+      const claim1 = particle.trustClaims.get('output1');
       assert.equal(claim1.handle.name, 'output1');
-      assert.equal(claim1.tag, 'property1');
+      assert.equal((claim1.expression as ClaimIsTag).tag, 'property1');
 
-      const claim2 = particle.trustClaims.get('output2') as ClaimIsTag;
+      const claim2 = particle.trustClaims.get('output2');
       assert.equal(claim2.handle.name, 'output2');
-      assert.equal(claim2.tag, 'property2');
+      assert.equal((claim2.expression as ClaimIsTag).tag, 'property2');
     });
 
     it('supports "is not" tag claims', async () => {
@@ -2001,10 +2001,10 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.size, 1);
 
-      const claim1 = particle.trustClaims.get('output1') as ClaimIsTag;
+      const claim1 = particle.trustClaims.get('output1');
       assert.equal(claim1.handle.name, 'output1');
-      assert.equal(claim1.isNot, true);
-      assert.equal(claim1.tag, 'property1');
+      assert.equal((claim1.expression as ClaimIsTag).isNot, true);
+      assert.equal((claim1.expression as ClaimIsTag).tag, 'property1');
      });
 
     it('supports "derives from" claims with multiple parents', async () => {
@@ -2020,9 +2020,9 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.size, 1);
       
-      const claim = particle.trustClaims.get('output') as ClaimDerivesFrom;
+      const claim = particle.trustClaims.get('output');
       assert.equal(claim.handle.name, 'output');
-      assert.sameMembers(claim.parentHandles.map(h => h.name), ['input1', 'input2']);
+      assert.sameMembers((claim.expression as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);
     });
 
     it('supports multiple check statements', async () => {
@@ -2047,6 +2047,30 @@ resource SomeName
       assert.equal(check2.toManifestString(), 'check input2 is property2');
       assert.equal(check2.target.name, 'input2');
       assert.deepEqual(check2.expression, new CheckHasTag('property2'));
+    });
+
+    it(`supports 'is from store' checks`, async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          check input1 is from store MyStore
+          check input2 is from store 'my-store-id'
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 2);
+      
+      const check1 = checkDefined(particle.trustChecks[0]);
+      assert.equal(check1.toManifestString(), 'check input1 is from store MyStore');
+      assert.equal(check1.target.name, 'input1');
+      assert.deepEqual(check1.expression, new CheckIsFromStore({type: 'name', store: 'MyStore'}));
+
+      const check2 = checkDefined(particle.trustChecks[1]);
+      assert.equal(check2.toManifestString(), `check input2 is from store 'my-store-id'`);
+      assert.equal(check2.target.name, 'input2');
+      assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}));
     });
 
     it('supports checks on provided slots', async () => {
@@ -2138,6 +2162,23 @@ resource SomeName
         ]));
     });
 
+    it('data stores can make claims', async () => {
+      const manifest = await Manifest.parse(`
+        store NobId of NobIdStore {Text nobId} in NobIdJson
+          claim is property1 and is property2
+        resource NobIdJson
+          start
+          [{"nobId": "12345"}]
+      `);
+      assert.lengthOf(manifest.stores, 1);
+      const store = manifest.stores[0];
+      assert.lengthOf(store.claims, 2);
+      assert.equal(store.claims[0].tag, 'property1');
+      assert.equal(store.claims[1].tag, 'property2');
+
+      assert.include(manifest.toString(), '  claim is property1 and is property2');
+    });
+
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
       assertThrowsAsync(async () => await Manifest.parse(`
         particle A
@@ -2146,10 +2187,12 @@ resource SomeName
       `), `You cannot combine 'and' and 'or' operations in a single check expression.`);
     });
 
-    it('can round-trip checks and claims', async () => {
+    it('can round-trip particles with checks and claims', async () => {
       const manifestString = `particle TestParticle in 'a.js'
   in T {} input1
   in T {} input2
+  in T {} input3
+  in T {} input4
   out T {} output1
   out T {} output2
   out T {} output3
@@ -2158,13 +2201,15 @@ resource SomeName
   claim output3 is not dangerous
   check input1 is trusted or is from handle input2
   check input2 is extraTrusted
+  check input3 is from store MyStore
+  check input4 is from store 'my-store-id'
   check childSlot data is somewhatTrusted
   modality dom
   consume parentSlot
     provide childSlot`;
     
       const manifest = await Manifest.parse(manifestString);
-      assert.equal(manifestString, manifest.toString());
+      assert.equal(manifest.toString(), manifestString);
     });
 
     it('fails for unknown handle names', async () => {

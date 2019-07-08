@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge} from './graph-internals.js';
-import {Claim, ClaimType} from '../../runtime/particle-claim.js';
+import {Claim, ClaimType, ClaimExpression} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
@@ -77,16 +77,17 @@ export class ParticleInput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  /* Optional check on this input. */
   readonly check?: Check;
+  readonly claim?: ClaimExpression;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = otherEnd;
     this.end = particleNode;
     this.connectionName = connection.name;
     this.label = `${particleNode.name}.${this.connectionName}`;
-    this.check = connection.spec.check;
     this.connectionSpec = connection.spec;
+    this.check = connection.spec.check;
+    this.claim = connection.handle.claim;
   }
 }
 
@@ -97,7 +98,7 @@ export class ParticleOutput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  readonly claim?: Claim;
+  readonly claim?: ClaimExpression;
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = particleNode;
@@ -105,7 +106,9 @@ export class ParticleOutput implements Edge {
     this.connectionName = connection.name;
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
-    this.claim = particleNode.claims.get(this.connectionName);
+    
+    const claim = particleNode.claims.get(this.connectionName);
+    this.claim = claim ? claim.expression : null;
   }
 }
 

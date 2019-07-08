@@ -7,16 +7,17 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../../platform/chai-web.js';
 import {SlotConsumer} from '../slot-consumer.js';
 import {ProvidedSlotContext} from '../slot-context.js';
+import {ProvideSlotConnectionSpec} from '../particle-spec.js';
+import {SlotConnection} from '../recipe/slot-connection.js';
 
-describe('slot consumer', function() {
+describe('slot consumer', () => {
   it('setting container', async () => {
-    const spec = {isSet: false};
-    const slot = new SlotConsumer(null /* arc */, {name: 'dummy-consumeConn', slotSpec: {spec}});
+    const spec = new ProvideSlotConnectionSpec({name: 'dummy-slot', isSet: false});
+    const slot = new SlotConsumer(null /* arc */, {name: 'dummy-consumeConn'} as SlotConnection);
     slot.slotContext = new ProvidedSlotContext('dummy-context', 'dummy', [], null, spec, null);
     let startRenderCount = 0;
     let stopRenderCount = 0;
@@ -24,7 +25,7 @@ describe('slot consumer', function() {
     slot.stopRenderCallback = () => { ++stopRenderCount; };
 
     // container was null, set to null: nothing happens.
-    slot.onContainerUpdate(null);
+    slot.onContainerUpdate(null, null);
     assert.equal(startRenderCount, 0);
     assert.equal(stopRenderCount, 0);
 

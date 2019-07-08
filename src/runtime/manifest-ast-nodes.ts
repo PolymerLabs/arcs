@@ -111,7 +111,7 @@ export interface Import extends BaseNode {
 export interface ManifestStorage extends BaseNode {
   kind: 'store';
   name: string;
-  type: string;
+  type: ManifestStorageType;
   id: string|null;
   originalId: string|null;
   version: number;
@@ -119,6 +119,14 @@ export interface ManifestStorage extends BaseNode {
   source: string;
   origin: string;
   description: string|null;
+  claim: ManifestStorageClaim;
+}
+
+export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
+
+export interface ManifestStorageClaim extends BaseNode {
+  kind: 'manifest-storage-claim';
+  tags: string[];
 }
 
 export interface ManifestStorageSource {
@@ -163,7 +171,7 @@ export interface Particle extends BaseNode {
   implFile?: string;          // not used in RecipeParticle
   verbs?: VerbList;           // not used in RecipeParticle
   args?: ParticleArgument[];  // not used in RecipeParticle
-  modality?: string[];      // not used in RecipePartcile
+  modality?: string[];      // not used in RecipeParticle
   slots?: ParticleSlot[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
   hasParticleArgument?: boolean;  // not used in RecipeParticle
@@ -176,11 +184,19 @@ export interface Particle extends BaseNode {
   slotConnections?: RecipeParticleSlotConnection[];
 }
 
+/** A trust claim made by a particle about one of its handles. */
+export interface ParticleClaimStatement extends BaseNode {
+  kind: 'particle-trust-claim';
+  handle: string;
+  expression: ParticleClaimExpression;
+}
+
+export type ParticleClaimExpression = ParticleClaimIsTag | ParticleClaimDerivesFrom;
+
 /** A claim made by a particle, saying that one of its outputs has a particular trust tag (e.g. "claim output is foo"). */
 export interface ParticleClaimIsTag extends BaseNode {
   kind: 'particle-trust-claim-is-tag';
   claimType: ClaimType.IsTag;
-  handle: string;
   isNot: boolean;
   tag: string;
 }
@@ -192,12 +208,8 @@ export interface ParticleClaimIsTag extends BaseNode {
 export interface ParticleClaimDerivesFrom extends BaseNode {
   kind: 'particle-trust-claim-derives-from';
   claimType: ClaimType.DerivesFrom;
-  handle: string;
   parentHandles: string[];
 }
-
-/** A trust claim made by a particle. */
-export type ParticleClaimStatement = ParticleClaimIsTag | ParticleClaimDerivesFrom;
 
 export interface ParticleCheckStatement extends BaseNode {
   kind: 'particle-trust-check';
@@ -219,20 +231,30 @@ export interface ParticleCheckBooleanExpression extends BaseNode {
 
 export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
 
-export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle;
+export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromStore;
 
 export interface ParticleCheckHasTag extends BaseNode {
   kind: 'particle-trust-check-has-tag';
   checkType: CheckType.HasTag;
-  handle: string;
   tag: string;
 }
 
 export interface ParticleCheckIsFromHandle extends BaseNode {
   kind: 'particle-trust-check-is-from-handle';
   checkType: CheckType.IsFromHandle;
-  handle: string;
   parentHandle: string;
+}
+
+export interface ParticleCheckIsFromStore extends BaseNode {
+  kind: 'particle-trust-check-is-from-store';
+  checkType: CheckType.IsFromStore;
+  storeRef: StoreReference;
+}
+
+export interface StoreReference extends BaseNode {
+  kind: 'store-reference';
+  type: 'name' | 'id';
+  store: string;
 }
 
 export interface ParticleModality extends BaseNode {
@@ -559,7 +581,6 @@ export type Annotation = string;
 export type Indent = number;
 export type LocalName = string;
 export type Manifest = ManifestItem[];
-export type ManifestStorageItem = string;
 export type ManifestStorageDescription = string;
 export type Modality = string;
 export type ReservedWord = string;

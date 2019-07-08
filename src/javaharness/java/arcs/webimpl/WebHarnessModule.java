@@ -7,6 +7,7 @@ import dagger.Provides;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Singleton;
 
 @Module
 public abstract class WebHarnessModule {
@@ -14,6 +15,7 @@ public abstract class WebHarnessModule {
   @Binds
   public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(ShellApiBasedArcsEnvironment impl);
 
+  @Singleton
   @Provides
   public static Map<String, ArcsEnvironment.SuggestionListener> provideInProgressListeners() {
     return new HashMap<>();

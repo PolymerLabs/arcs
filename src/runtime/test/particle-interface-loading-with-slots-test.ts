@@ -16,12 +16,16 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {Recipe} from '../recipe/recipe.js';
 
-describe('particle interface loading with slots', function() {
-  async function initializeManifestAndArc(contextContainer) {
+describe('particle interface loading with slots', () => {
+  async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, slotComposer: MockSlotComposer, arc: Arc}> {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
-    slotComposer._contexts[0].spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
+    const slotContext = slotComposer.getAvailableContexts()[0] as ProvidedSlotContext;
+    slotContext.spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
+
     const manifest = await Manifest.parse(`
       import './src/runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
@@ -35,16 +39,17 @@ describe('particle interface loading with slots', function() {
       `, {loader, fileName: ''});
     const recipe = manifest.recipes[0];
 
-    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest});
+    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest, loader});
 
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
     return {manifest, recipe, slotComposer, arc};
   }
-  async function instantiateRecipeAndStore(arc, recipe, manifest) {
+  
+  async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionStorageProvider> {
     await arc.instantiate(recipe);
-    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
+    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as CollectionStorageProvider;
     await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
     await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
     return inStore;
@@ -103,13 +108,13 @@ describe('particle interface loading with slots', function() {
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
     const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc();
-    slotComposer._contexts[0]._container = null;
+    (slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = null;
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
-      const myInterval = setInterval(function() {
-        if (slotComposer.consumers.length == 3) { // last 2 are hosted slots
+      const myInterval = setInterval(() => {
+        if (slotComposer.consumers.length === 3) { // last 2 are hosted slots
           resolve();
           clearInterval(myInterval);
         }
@@ -122,8 +127,9 @@ describe('particle interface loading with slots', function() {
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
 
-    slotComposer._contexts[0].container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'};
-    slotComposer.consumers[0].onContainerUpdate({});
+    // tslint:disable-next-line: no-any
+    (slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'} as any;
+    slotComposer.consumers[0].onContainerUpdate({}, undefined);
 
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
@@ -134,7 +140,7 @@ describe('particle interface loading with slots', function() {
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
-    inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
+    await inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})

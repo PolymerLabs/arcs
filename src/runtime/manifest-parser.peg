@@ -117,6 +117,25 @@ ManifestStorage
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
     items = optional(items, extractIndented, []);
+    let description: string | null = null;
+    let claim: AstNode.ManifestStorageClaim | null = null;
+
+    for (const item of items) {
+      if (item[0] === 'description') {
+        if (description) {
+          error('You cannot provide more than one description.');
+        }
+        description = item[2];
+      } else if (item['kind'] === 'manifest-storage-claim') {
+        if (claim) {
+          error('You cannot provide more than one claim.');
+        }
+        claim = item;
+      } else {
+        error(`Unknown ManifestStorageItem: ${item}`);
+      }
+    }
+
     return {
       kind: 'store',
       location: location(),
@@ -128,7 +147,8 @@ ManifestStorage
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
       origin: source.origin,
-      description: items.length > 0 ? items[0][2] : null
+      description,
+      claim,
     } as AstNode.ManifestStorage;
   }
 
@@ -149,9 +169,20 @@ ManifestStorageStorageSource
 
 ManifestStorageItem
   = ManifestStorageDescription
+  / ManifestStorageClaim
 
 ManifestStorageDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
+
+ManifestStorageClaim
+  = 'claim' whiteSpace 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
+  {
+    return {
+      kind: 'manifest-storage-claim',
+      location: location(),
+      tags: [tag, ...rest.map(item => item[5])],
+    } as AstNode.ManifestStorageClaim;
+  }
 
 Import
   = 'import' whiteSpace path:id eolWhiteSpace
@@ -257,14 +288,14 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
-      } else if (item.kind === 'particle-trust-claim-is-tag' || item.kind === 'particle-trust-claim-derives-from') {
+      } else if (item.kind === 'particle-trust-claim') {
         trustClaims.push(item);
       } else if (item.kind === 'particle-trust-check') {
         trustChecks.push(item);
       } else if (item.modality) {
         modality.push(item.modality);
       } else {
-        error(`Particle ${name} contains an unknown element: ${item.name}`);
+        error(`Particle ${name} contains an unknown element: ${item.name} / ${item.kind}`);
       }
     });
     if (modality.length === 0) {
@@ -297,31 +328,40 @@ ParticleItem "a particle item"
   / ParticleCheckStatement
 
 ParticleClaimStatement
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace expression:ParticleClaimExpression eolWhiteSpace
+  {
+    return {
+      kind: 'particle-trust-claim',
+      location: location(),
+      handle,
+      expression,
+    } as AstNode.ParticleClaimStatement;
+  }
+
+ParticleClaimExpression
   = ParticleClaimIsTag
   / ParticleClaimDerivesFrom
 
 ParticleClaimIsTag
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace not:('not' whiteSpace)? tag:lowerIdent eolWhiteSpace
+  = 'is' whiteSpace not:('not' whiteSpace)? tag:lowerIdent
   {
     return {
       kind: 'particle-trust-claim-is-tag',
       claimType: 'is-tag',
       location: location(),
-      handle,
       isNot: not != null,
       tag,
     } as AstNode.ParticleClaimIsTag;
   }
 
 ParticleClaimDerivesFrom
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and derives from' whiteSpace lowerIdent)* eolWhiteSpace
+  = 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and derives from' whiteSpace lowerIdent)*
   {
     const parentHandles: string[] = [first, ...rest.map(item => item[3])];
     return {
       kind: 'particle-trust-claim-derives-from',
       claimType: 'derives-from',
       location: location(),
-      handle,
       parentHandles,
     } as AstNode.ParticleClaimDerivesFrom;
   }
@@ -375,6 +415,7 @@ ParticleCheckExpression
 
 ParticleCheckCondition
   = ParticleCheckIsFromHandle
+  / ParticleCheckIsFromStore
   / ParticleCheckHasTag
 
 ParticleCheckHasTag
@@ -398,6 +439,21 @@ ParticleCheckIsFromHandle
       parentHandle,
     } as AstNode.ParticleCheckIsFromHandle;
   }
+
+ParticleCheckIsFromStore
+  = 'is' whiteSpace 'from' whiteSpace 'store' whiteSpace storeRef:StoreReference
+  {
+    return {
+      kind: 'particle-trust-check-is-from-store',
+      checkType: 'is-from-store',
+      location: location(),
+      storeRef,
+    } as AstNode.ParticleCheckIsFromStore;
+  }
+
+StoreReference
+  = name:upperIdent { return {kind: 'store-reference', location: location(), type: 'name', store: name} as AstNode.StoreReference; }
+  / id:id { return {kind: 'store-reference', location: location(), type: 'id', store: id} as AstNode.StoreReference; }
 
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?

@@ -17,29 +17,36 @@ export enum ClaimType {
   DerivesFrom = 'derives-from',
 }
 
-export type Claim = ClaimIsTag | ClaimDerivesFrom;
+export class Claim {
+  constructor(readonly handle: HandleConnectionSpec, readonly expression: ClaimExpression) {}
+
+  toManifestString() {
+    return `claim ${this.handle.name} ${this.expression.toManifestString()}`;
+  }
+}
+
+export type ClaimExpression = ClaimIsTag | ClaimDerivesFrom;
 
 export class ClaimIsTag {
   readonly type: ClaimType.IsTag = ClaimType.IsTag;
 
-  constructor(readonly handle: HandleConnectionSpec, readonly isNot: boolean, readonly tag: string) {}
+  constructor(readonly isNot: boolean, readonly tag: string) {}
 
-  static fromASTNode(handle: HandleConnectionSpec, astNode: ParticleClaimIsTag) {
-    return new ClaimIsTag(handle, astNode.isNot, astNode.tag);
+  static fromASTNode(astNode: ParticleClaimIsTag) {
+    return new ClaimIsTag(astNode.isNot, astNode.tag);
   }
 
   toManifestString() {
-    return `claim ${this.handle.name} is ${this.isNot ? 'not ' : ''}${this.tag}`;
+    return `is ${this.isNot ? 'not ' : ''}${this.tag}`;
   }
 }
 
 export class ClaimDerivesFrom {
   readonly type: ClaimType.DerivesFrom = ClaimType.DerivesFrom;
   
-  constructor(readonly handle: HandleConnectionSpec, readonly parentHandles: readonly HandleConnectionSpec[]) {}
+  constructor(readonly parentHandles: readonly HandleConnectionSpec[]) {}
   
   static fromASTNode(
-      handle: HandleConnectionSpec,
       astNode: ParticleClaimDerivesFrom,
       handleConnectionMap: Map<string, HandleConnectionSpec>) {
     
@@ -52,11 +59,11 @@ export class ClaimDerivesFrom {
       return parentHandle;
     });
 
-    return new ClaimDerivesFrom(handle, parentHandles);
+    return new ClaimDerivesFrom(parentHandles);
   }
 
   toManifestString() {
-    return `claim ${this.handle.name} derives from ${this.parentHandles.map(h => h.name).join(' and ')}`;
+    return `derives from ${this.parentHandles.map(h => h.name).join(' and ')}`;
   }
 }
 
@@ -64,12 +71,16 @@ export function createClaim(
     handle: HandleConnectionSpec,
     astNode: ParticleClaimStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): Claim {
-  switch (astNode.claimType) {
+  let expression: ClaimExpression;
+  switch (astNode.expression.claimType) {
     case ClaimType.IsTag:
-      return ClaimIsTag.fromASTNode(handle, astNode);
+      expression = ClaimIsTag.fromASTNode(astNode.expression);
+      break;
     case ClaimType.DerivesFrom:
-      return ClaimDerivesFrom.fromASTNode(handle, astNode, handleConnectionMap);
+      expression = ClaimDerivesFrom.fromASTNode(astNode.expression, handleConnectionMap);
+      break;
     default:
       throw new Error('Unknown claim type.');
   }
+  return new Claim(handle, expression);
 }

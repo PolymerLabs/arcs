@@ -18,8 +18,10 @@ import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
+import {Direction} from '../manifest-ast-nodes.js';
+import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 
-describe('particle interface loading', function() {
+describe('particle interface loading', () => {
 
   it('loads interfaces into particles', async () => {
     const loader = new StubLoader({
@@ -59,9 +61,8 @@ describe('particle interface loading', function() {
             };
           });`});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), loader});
-
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
 
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
@@ -70,18 +71,23 @@ describe('particle interface loading', function() {
 
     const outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',
+      description: {},
+      implBlobUrl: '',
+      modality: ['dom'],
+      slotConnections: [],
+      verbs: [],
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'host', type: ifaceType, name: 'particle0', dependentConnections: []},
-        {direction: 'in', type: fooType, name: 'input', dependentConnections: []},
-        {direction: 'out', type: barType, name: 'output', dependentConnections: []}
+        {direction: 'host' as Direction, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false},
+        {direction: 'in' as Direction, type: fooType, name: 'input', dependentConnections: [], isOptional: false},
+        {direction: 'out' as Direction, type: barType, name: 'output', dependentConnections: [], isOptional: false}
       ],
     });
 
-    const ifaceStore = await arc.createStore(ifaceType);
+    const ifaceStore = await arc.createStore(ifaceType) as SingletonStorageProvider;
     await ifaceStore.set(manifest.particles[0].toLiteral());
     const outStore = await arc.createStore(barType);
-    const inStore = await arc.createStore(fooType);
+    const inStore = await arc.createStore(fooType) as SingletonStorageProvider;
     await inStore.set({id: 'id', rawData: {value: 'a foo'}});
 
     const recipe = new Recipe();
@@ -125,7 +131,7 @@ describe('particle interface loading', function() {
           input <- h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
     const fooType = manifest.findTypeByName('Foo');
     const barType = manifest.findTypeByName('Bar');
@@ -137,7 +143,8 @@ describe('particle interface loading', function() {
 
     await arc.instantiate(recipe);
 
-    await arc.findStoresByType(fooType)[0].set({id: 'id', rawData: {value: 'a foo'}});
+    const store = arc.findStoresByType(fooType)[0] as SingletonStorageProvider;
+    await store.set({id: 'id', rawData: {value: 'a foo'}});
 
     await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
   });
