@@ -33,23 +33,23 @@ j2cl_library(
 )
 
 filegroup(
-    name = "pipes-shell-dist",
+    name = "pipes-shell-2-dist",
     srcs = glob(
-        ["pipes-shell/web/deploy/dist/**/*"],
-        exclude = glob(["pipes-shell/web/deploy/dist/**/*.html"]),
+        ["pipes-shell-2/web/deploy/dist/**/*"],
+        exclude = glob(["pipes-shell-2/web/deploy/dist/**/*.html"]),
     ),
 )
 
 filegroup(
-    name = "particles",
+    name = "particles2",
     srcs = glob(
-        ["particles/PipeApps/**/*"],
+        ["particles/PipeApps2/**/*"],
     ),
 )
 
 j2cl_application(
     name = "javaharness",
     entry_points = ["arcs.harness"],
-    extra_dev_resources = [":pipes-shell-dist", ":particles"],
+    extra_dev_resources = [":pipes-shell-2-dist", ":particles2"],
     deps = ["//java/arcs/webimpl:harness_js"],
 )
