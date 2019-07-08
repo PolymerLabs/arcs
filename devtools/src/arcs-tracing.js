@@ -13,7 +13,7 @@ import '../deps/@polymer/iron-icons/editor-icons.js';
 import '../deps/@polymer/iron-icons/maps-icons.js';
 import '../deps/@polymer/iron-icons/image-icons.js';
 import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
-import '../deps/vis/dist/vis-timeline-graph2d.min.js';
+import '../deps/vis/dist/vis-timeline-graph2d.min.css.js';
 import {formatTime, indentPrint, MessengerMixin} from './arcs-shared.js';
 
 
@@ -25,10 +25,14 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
     <style include="shared-styles vis-timeline-graph2d.min.css">
       :host {
         display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
       }
       #timelineContainer {
         width: 100%;
-        height: 100vh;
       }
       aside > div {
         padding: 5px;

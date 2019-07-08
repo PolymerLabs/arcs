@@ -9,29 +9,21 @@ import java.util.Map;
  */
 public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
 
-  private final Map<String, SuggestionListener> inProgress;
+  private final Map<String, DataListener> inProgress;
   private ShellApi shellApi;
 
   @Inject
-  public ShellApiBasedArcsEnvironment(Map<String, SuggestionListener> inProgress, ShellApi shellApi) {
+  public ShellApiBasedArcsEnvironment(Map<String, DataListener> inProgress, ShellApi shellApi) {
     this.inProgress = inProgress;
     this.shellApi = shellApi;
   }
 
   @Override
-  public void sendEntityToArcs(String entity, SuggestionListener listener) {
-    String transactionId = shellApi.receiveEntity(entity);
-    inProgress.put(transactionId, listener);
-  }
-
-  @Override
-  public void observeEntityInArcs(String entity) {
-    shellApi.observeEntity(entity);
-  }
-
-  @Override
-  public void chooseSuggestion(String suggestion) {
-    shellApi.chooseSuggestion(suggestion);
+  public void sendMessageToArcs(String msg, DataListener listener) {
+    String transactionId = String.valueOf(shellApi.receive(msg));
+    if (listener != null) {
+      inProgress.put(transactionId, listener);
+    }
   }
 
   @Override

@@ -24,18 +24,22 @@ import {ExplorerProxy} from './explorer-proxy';
 // There are many plans for extending this list for various development features.
 
 const options = minimist(process.argv.slice(2), {
-  default: {port: 8786, explorePort: 8787}
+  boolean: ['verbose'],
+  default: {port: 8786, explorePort: 8787, verbose: false}
 });
 
-const port = Number(options.port);
-const explorePort = Number(options.explorePort);
+const port = Number(options['port']);
+const explorePort = Number(options['explorePort']);
 
 const proxy = new ExplorerProxy();
-const server = http.createServer(express()
-    .use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'))
-    .use(status(proxy))
-    .use(express.static('.')));
+const app = express();
+if (options['verbose']) {
+  app.use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'));
+}
+app.use(status(proxy));
+app.use(express.static('.'));
 
+const server = http.createServer(app);
 server.listen(port);
 proxy.listen(server, explorePort);
 

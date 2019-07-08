@@ -17,10 +17,8 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
     return html`
     <style include="shared-styles">
       :host {
-        display: block;
         line-height: 24px;
-        height: calc(100vh - 27px);
-        overflow-y: scroll;
+        display: block;
       }
       .title {
         background-color: var(--light-gray);

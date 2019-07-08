@@ -179,9 +179,6 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
 
   static get properties() {
     return {
-      activePage: {
-        type: String
-      },
       showInner: {
         type: Boolean,
         value: false
@@ -246,11 +243,10 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         }
         case 'arc-transition': {
           const arcName = msg.messageBody;
-          const defaultArcSuffix = (this.activePage === 'planning'
-              || this.activePage === 'strategyExplorer') ? '-null' : '-launcher';
           const item = arcName
               ? this.arcs.find(i => i.name === arcName)
-              : this.arcs.find(i => i.name.endsWith(defaultArcSuffix));
+              // TODO: What about pipes shell?
+              : this.arcs.find(i => i.name.endsWith('-launcher'));
           if (item) this._select(item);
           break;
         }

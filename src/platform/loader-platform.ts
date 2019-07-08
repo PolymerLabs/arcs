@@ -17,19 +17,21 @@ import {TransformationDomParticle} from '../runtime/transformation-dom-particle.
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 export class PlatformLoaderBase extends Loader {
+  _urlMap;
+
   constructor(urlMap) {
     super();
     this._urlMap = urlMap || [];
   }
-  loadResource(name) {
+  async loadResource(name: string): Promise<string> {
     const path = this._resolve(name);
     return super.loadResource(path);
   }
-  _resolve(path) {
+  _resolve(path: string) {
     let url = this._urlMap[path];
     if (!url && path) {
       // TODO(sjmiles): inefficient!
-      const macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) == k);
+      const macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) === k);
       if (macro) {
         url = this._urlMap[macro] + path.slice(macro.length);
       }
@@ -37,7 +39,7 @@ export class PlatformLoaderBase extends Loader {
     url = this.normalizeDots(url || path);
     return url;
   }
-  mapParticleUrl(path) {
+  mapParticleUrl(path: string) {
     const parts = path.split('/');
     const suffix = parts.pop();
     const folder = parts.join('/');
@@ -46,7 +48,7 @@ export class PlatformLoaderBase extends Loader {
     this._urlMap[name] = resolved;
     this._urlMap['$here'] = resolved;
   }
-  unwrapParticle(particleWrapper, log) {
+  unwrapParticle(particleWrapper, log?) {
     // TODO(sjmiles): regarding `resolver`:
     //  _resolve method allows particles to request remapping of assets paths
     //  for use in DOM

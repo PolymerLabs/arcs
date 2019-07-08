@@ -34,7 +34,7 @@ public class WebHarnessController implements HarnessController {
         document.body = (HTMLBodyElement) document.createElement("body");
         // Because we're not loading index.html from within pipes-shell
         HTMLBaseElement base = (HTMLBaseElement) document.createElement("base");
-        base.href = "pipes-shell/web/deploy/dist/";
+        base.href = "pipes-shell-2/web/deploy/dist/";
         document.body.appendChild(base);
 
         shellElement.src = "./shell.js";
@@ -42,15 +42,18 @@ public class WebHarnessController implements HarnessController {
         document.body.appendChild(shellElement);
 
         // make two buttons in the UI
-        document.body.appendChild(makeInputElement("Observe Place Entity",
-                val -> environment.observeEntityInArcs("{\"type\": \"address\", \"name\": \"" + val + "\"}")));
-        Element foundSuggestions = makeFoundSuggestions();
+        document.body.appendChild(makeInputElement("Capture Place Entity",
+                val -> environment.sendMessageToArcs(
+                    "{\"message\": \"capture\", \"entity\":{\"type\": \"address\", \"name\": \"" + val +
+                    "\", \"source\": \"com.google.android.apps.maps\"}}", null)));
 
-        document.body.appendChild(makeInputElement("Receive Map Entity",
-                val -> environment.sendEntityToArcs(
-                        "{\"type\": \"com.google.android.apps.maps\"}",
-                        (id, result) -> foundSuggestions.append("Test: " + result.toString()))));
-        document.body.appendChild(foundSuggestions);
+        Element dataParagraph = makeParagraph();
+
+        document.body.appendChild(makeInputElement("Autofill Address Entity",
+                val -> environment.sendMessageToArcs(
+                        "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
+                        (id, result) -> dataParagraph.append("Test: " + result.toString()))));
+        document.body.appendChild(dataParagraph);
 
         // Null out the current window.onclick test mechanism
         shellElement.onload = (evt) -> window.onclick = null;
@@ -66,7 +69,7 @@ public class WebHarnessController implements HarnessController {
       Goog.exportSymbol("DeviceClient", this.deviceClient);
     }
 
-    private Element makeFoundSuggestions() {
+    private Element makeParagraph() {
         return document.createElement("p");
     }
 

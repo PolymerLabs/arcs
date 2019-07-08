@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {checkDefined} from '../../../runtime/testing/preconditions.js';
-import {ClaimIsTag} from '../../../runtime/particle-claim.js';
+import {ClaimIsTag, ClaimType} from '../../../runtime/particle-claim.js';
 import {CheckHasTag} from '../../../runtime/particle-check.js';
 import {ProvideSlotConnectionSpec} from '../../../runtime/particle-spec.js';
 import {ParticleNode} from '../particle-node.js';
@@ -101,6 +101,28 @@ describe('FlowGraph', () => {
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
   });
 
+  it('works with datastores with tag claims', async () => {
+    const graph = await buildFlowGraph(`
+      schema MyEntity
+        Text text
+      resource MyResource
+        start
+        [{"text": "asdf"}]
+      store MyStore of MyEntity in MyResource
+        claim is trusted
+      particle P
+        in MyEntity input
+      recipe R
+        use MyStore as s
+        P
+          input <- s
+    `);
+    assert.lengthOf(graph.edges, 1);
+    const claim = graph.edges[0].claim;
+    assert.equal(claim.type, ClaimType.IsTag);
+    assert.equal((claim as ClaimIsTag).tag, 'trusted');
+  });
+
   it('copies particle claims to particle nodes and out-edges', async () => {
     const graph = await buildFlowGraph(`
       particle P
@@ -112,13 +134,13 @@ describe('FlowGraph', () => {
     `);
     const node = checkDefined(graph.particleMap.get('P'));
     assert.equal(node.claims.size, 1);
-    const claim = node.claims.get('foo') as ClaimIsTag;
+    const claim = node.claims.get('foo');
     assert.equal(claim.handle.name, 'foo');
-    assert.equal(claim.tag, 'trusted');
+    assert.equal((claim.expression as ClaimIsTag).tag, 'trusted');
     assert.isEmpty(node.checks);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].claim, claim);
+    assert.equal(graph.edges[0].claim, claim.expression);
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {
@@ -177,5 +199,29 @@ describe('FlowGraph', () => {
     assert.equal(check.target.name, 'slotToProvide');
     assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     assert.equal(check, slot2.check);
+  });
+
+  it('resolves data store names and IDs', async () => {
+    const graph = await buildFlowGraph(`
+      schema MyEntity
+        Text text
+      resource MyResource
+        start
+        [{"text": "asdf"}]
+      store MyStore of MyEntity 'my-store-id' in MyResource
+      particle P
+        in MyEntity input
+      recipe R
+        use MyStore as s
+        P
+          input <- s
+    `);
+    assert.lengthOf(graph.handles, 1);
+    const storeId = graph.handles[0].storeId;
+
+    assert.equal(graph.resolveStoreRefToID({type: 'id', store: 'my-store-id'}), 'my-store-id');
+    assert.equal(graph.resolveStoreRefToID({type: 'name', store: 'MyStore'}), storeId);
+    assert.throws(() => graph.resolveStoreRefToID({type: 'name', store: 'UnknownName'}), 'Store with name UnknownName not found.');
+    assert.throws(() => graph.resolveStoreRefToID({type: 'id', store: 'unknown-id'}), `Store with id 'unknown-id' not found.`);
   });
 });

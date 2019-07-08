@@ -36,7 +36,7 @@ void (async () => {
   }
 
   manifest.allRecipes.forEach(recipe => {
-    const graph = new FlowGraph(recipe);
+    const graph = new FlowGraph(recipe, manifest);
     console.log('Checking recipe ' + recipe.name);
     const result = validateGraph(graph);
     if (!result.isValid) {

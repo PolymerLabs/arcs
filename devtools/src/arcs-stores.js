@@ -17,9 +17,20 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
     return html`
     <style include="shared-styles">
       :host {
-        display: block;
         line-height: 24px;
-        height: calc(100vh - 27px);
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        flex-grow: 0;
+      }
+      [main] {
+        flex-grow: 1;
         overflow-y: scroll;
       }
       .title {
@@ -70,22 +81,24 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         <filter-input filter="{{searchParams}}"></filter-input>
       </div>
     </header>
-    <template is="dom-repeat" items="{{storeGroups}}">
-      <div class="title">{{item.label}}</div>
-      <div class="content">
-        <template is="dom-repeat" items="{{item.items}}">
-          <object-explorer object="{{item}}">
-            <span name>[[item.name]]</span>
-            <span tags>[[_tagsString(item.tags)]]</span>
-            <span type>[[_typeString(item.type)]]</span>
-            <span id>[[item.id]]</span>
-          </object-explorer>
-        </template>
-        <template is="dom-if" if="{{!item.items.length}}">
-          <div class="empty-label">No stores</div>
-        </template>
-      </div>
-    </template>`;
+    <div main>
+      <template is="dom-repeat" items="{{storeGroups}}">
+        <div class="title">{{item.label}}</div>
+        <div class="content">
+          <template is="dom-repeat" items="{{item.items}}">
+            <object-explorer object="{{item}}">
+              <span name>[[item.name]]</span>
+              <span tags>[[_tagsString(item.tags)]]</span>
+              <span type>[[_typeString(item.type)]]</span>
+              <span id>[[item.id]]</span>
+            </object-explorer>
+          </template>
+          <template is="dom-if" if="{{!item.items.length}}">
+            <div class="empty-label">No stores</div>
+          </template>
+        </div>
+      </template>
+    </div>`;
   }
 
   static get is() { return 'arcs-stores'; }

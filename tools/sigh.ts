@@ -85,7 +85,7 @@ const eslintCache = '.eslint_sigh_cache';
 const coverageDir = 'coverage';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
 const cleanFiles = ['manifest-railroad.html', eslintCache];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', coverageDir];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', 'user-test', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|javaharness|Kotlin|particles[/\\]Native)\b/;
@@ -344,7 +344,7 @@ function cleanObsolete() {
 }
 
 function buildPath(path: string, preprocess: () => void, deps: string[]): () => boolean {
-  return () => {
+  const fn = () => {
     if (preprocess) {
       preprocess();
     }
@@ -363,6 +363,9 @@ function buildPath(path: string, preprocess: () => void, deps: string[]): () => 
 
     return true;
   };
+  // Using a lambda breaks the display of func.name in the main execution loop.
+  Object.defineProperty(fn, 'name', {value: `build ${path.slice(2)}`});
+  return fn;
 }
 
 function tsc(path: string): boolean {
@@ -472,13 +475,16 @@ function licenses(): boolean {
 }
 
 function webpackPkg(pkg: string): () => boolean {
-  return () => {
+  const fn = () => {
     const result = saneSpawnWithOutput('npm', ['run', `build:${pkg}`]);
     if (result.stdout) {
       console.log(result.stdout);
     }
     return result.success;
   };
+  // Using a lambda breaks the display of func.name in the main execution loop.
+  Object.defineProperty(fn, 'name', {value: pkg});
+  return fn;
 }
 
 type SpawnOptions = {

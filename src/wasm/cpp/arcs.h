@@ -355,7 +355,7 @@ enum Direction { Unconnected, In, Out, InOut };
 class Handle {
 public:
   virtual ~Handle() {}
-  virtual void sync(const char* encoded) = 0;
+  virtual void sync(const char* model) = 0;
   virtual void update(const char* encoded1, const char* encoded2) = 0;
 
   const std::string& name() const { return name_; }
@@ -383,14 +383,14 @@ protected:
 template<typename T>
 class Singleton : public Handle {
 public:
-  void sync(const char* encoded) override {
+  void sync(const char* model) override {
     failForDirection(Out);
     entity_ = T();
-    internal::decode_entity(&entity_, encoded);
+    internal::decode_entity(&entity_, model);
   }
 
-  void update(const char* encoded, const char* ignored) override {
-    sync(encoded);
+  void update(const char* model, const char* ignored) override {
+    sync(model);
   }
 
   const T& get() const {
@@ -452,9 +452,9 @@ class Collection : public Handle {
   using Map = std::unordered_map<std::string, std::unique_ptr<T>>;
 
 public:
-  void sync(const char* encoded) override {
+  void sync(const char* model) override {
     entities_.clear();
-    add(encoded);
+    add(model);
   }
 
   void update(const char* added, const char* removed) override {
@@ -652,8 +652,8 @@ Handle* connectHandle(Particle* particle, const char* name, bool can_read, bool 
 }
 
 EMSCRIPTEN_KEEPALIVE
-void syncHandle(Particle* particle, Handle* handle, const char* encoded) {
-  handle->sync(encoded);
+void syncHandle(Particle* particle, Handle* handle, const char* model) {
+  handle->sync(model);
   particle->sync(handle);
 }
 

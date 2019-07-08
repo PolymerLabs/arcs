@@ -48,7 +48,7 @@ export class Loader {
   }
 
   // convert `././foo/bar/../baz` to `./foo/baz`
-  private normalizeDots(path: string): string {
+  protected normalizeDots(path: string): string {
     // only unix slashes
     path = path.replace(/\\/g, '/');
     // remove './'
