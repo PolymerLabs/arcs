@@ -16,7 +16,6 @@ schema Person extends Thing
   Text active
   Text occasion
   Text date
-  Object location
-  Object arcs
-  Object profiles
-  Object shares
+  // TODO move back to a nested location when schemas support that.
+  Number latitude
+  Number longitude

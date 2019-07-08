@@ -42,7 +42,6 @@ describe('schema', () => {
             Text price
             Number shipDays
             Boolean isReal
-            Object brand
 
           schema Animal extends Thing
             Boolean isReal
@@ -75,7 +74,6 @@ describe('schema', () => {
       url: {kind, type: 'URL'},
       identifier: {kind, type: 'Text'},
       isReal: {kind, type: 'Boolean'},
-      brand: {kind, type: 'Object'},
       name: {kind, type: 'Text'}
     };
     assert.deepEqual(deleteLocations(schema).fields, expected);
@@ -197,7 +195,7 @@ describe('schema', () => {
     const manifest = await Manifest.parse(`
       schema Unions
         (Text or Number) u1
-        (URL or Object or Boolean) u2`);
+        (URL or Number or Boolean) u2`);
     const Unions = manifest.findSchemaByName('Unions').entityClass();
     const unions = new Unions({u1: 'foo', u2: true});
     assert.equal(unions.u1, 'foo');
@@ -209,9 +207,9 @@ describe('schema', () => {
     assert.equal(unions.u1, 45);
     assert.equal(unions.u2, 'http://bar.org');
     Entity.mutate(unions, u => {
-      u.u2 = {a: 12};
+      u.u2 = 12;
     });
-    assert.equal(unions.u2.a, 12);
+    assert.equal(unions.u2, 12);
 
     Entity.mutate(unions, u => {
       u.u1 = null;
@@ -222,9 +220,9 @@ describe('schema', () => {
     assert.doesNotThrow(() => { new Unions({u1: null, u2: undefined}); });
 
     assert.throws(() => { new Unions({u1: false}); }, TypeError, 'Type mismatch setting field u1');
-    assert.throws(() => { new Unions({u2: 25}); }, TypeError, 'Type mismatch setting field u2');
+    assert.throws(() => { new Unions({u2: {a: 12}}); }, TypeError, 'Type mismatch setting field u2');
     assert.throws(() => Entity.mutate(unions, u => u.u1 = {a: 12}), TypeError, 'Type mismatch setting field u1');
-    assert.throws(() => Entity.mutate(unions, u => u.u2 = 25), TypeError, 'Type mismatch setting field u2');
+    assert.throws(() => Entity.mutate(unions, u => u.u2 = {a: 12}), TypeError, 'Type mismatch setting field u2');
   });
 
   it('enforces rules when storing reference types', async () => {
@@ -282,17 +280,17 @@ describe('schema', () => {
     const manifest = await Manifest.parse(`
       schema Tuples
         (Text, Number) t1
-        (URL, Object, Boolean) t2`);
+        (URL, Number, Boolean) t2`);
     const Tuples = manifest.findSchemaByName('Tuples').entityClass();
     const tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
     assert.deepEqual(tuples.t1, ['foo', 55]);
     assert.deepEqual(tuples.t2, [null, undefined, true]);
     Entity.mutate(tuples, t => {
       t.t1 = ['bar', 66];
-      t.t2 = ['http://bar.org', {a: 77}, null];
+      t.t2 = ['http://bar.org', 77, null];
     });
     assert.deepEqual(tuples.t1, ['bar', 66]);
-    assert.deepEqual(tuples.t2, ['http://bar.org', {a: 77}, null]);
+    assert.deepEqual(tuples.t2, ['http://bar.org', 77, null]);
 
     Entity.mutate(tuples, t => {
       t.t1 = null;
