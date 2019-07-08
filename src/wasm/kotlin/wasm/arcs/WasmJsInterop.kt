@@ -122,10 +122,10 @@ fun updateHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded1Ptr: 
 }
 
 @Retain
-@ExportForCppRuntime("_requestRender")
-fun requestRender(particlePtr: WasmAddress, slotNamePtr: WasmString) {
+@ExportForCppRuntime("_renderSlot")
+fun renderSlot(particlePtr: WasmAddress, slotNamePtr: WasmString, sendTemplate: Boolean, sendModel: Boolean) {
     particlePtr.toObject<TestParticle>()
-        .requestRender(slotNamePtr.toKString())
+        .renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
 }
 
 @Retain
