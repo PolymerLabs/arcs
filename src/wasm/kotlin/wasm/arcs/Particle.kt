@@ -1,6 +1,5 @@
 package arcs
 
-import kotlin.collections.HashMap
 import kotlin.collections.set
 
 typealias URL = String
@@ -57,7 +56,7 @@ abstract class Particle : WasmObject() {
       val template = if (sendTemplate) getTemplate(slotName) else ""
       var model = ""
       if (sendModel) {
-        val dict = HashMap<String, String>()
+        val dict = mutableMapOf<String, String>()
         populateModel(slotName, dict)
         model = StringEncoder.encodeDictionary(dict)
       }
@@ -196,7 +195,7 @@ class StringDecoder(private var str: String) {
 
       fun decodeDictionary(str: String): Map<String, String> {
         val decoder = StringDecoder(str)
-        val dict = HashMap<String, String>()
+        val dict = mutableMapOf<String, String>()
 
         var num = decoder.getInt(":")
 
