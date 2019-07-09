@@ -237,7 +237,7 @@ public:
   }
 
   std::string getTemplate(const std::string& slot_name) override {
-    return R"(<h2>Classification with ML5 in WASM</h2>
+    return R"(<h2>Classification with ML5 in WASM via C++</h2>
               <img style="max-width: 240px;" src="{{imageUrl}}"><br>
               <div>Label: <span>{{label}}</span></div>
               <div>Confidence: <span>{{probability}}</span></div>
