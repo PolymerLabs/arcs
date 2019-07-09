@@ -1,11 +1,9 @@
 package arcs.api;
 
+/**
+ * An API for Java to call Javascript (shell).
+ */
 public interface ShellApi {
-    void observeEntity(String entityJson);
-
-    String receiveEntity(String entityJson);
-
-    void chooseSuggestion(String suggestion);
-
-    void postMessage(String msgToSendToHost);
+    // Sends a message to Arcs JS shell.
+    String receive(String json);
 }

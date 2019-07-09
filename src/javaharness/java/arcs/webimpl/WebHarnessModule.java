@@ -17,7 +17,7 @@ public abstract class WebHarnessModule {
 
   @Singleton
   @Provides
-  public static Map<String, ArcsEnvironment.SuggestionListener> provideInProgressListeners() {
+  public static Map<String, ArcsEnvironment.DataListener> provideInProgressListeners() {
     return new HashMap<>();
   }
 
