@@ -82,12 +82,11 @@ public:
       </div>)";
   }
 
-  void populateModel(const std::string& slot_name,
-                     std::function<void(const std::string&, const std::string&)> add) override {
-    add("in_sng", arcs::entity_to_str(in_sng_.get(), "\n"));
-    add("io_sng", arcs::entity_to_str(io_sng_.get(), "\n"));
-    add("in_col", collectionToStr(in_col_));
-    add("io_col", collectionToStr(io_col_));
+  void populateModel(const std::string& slot_name, arcs::Dictionary* model) override {
+    model->emplace("in_sng", arcs::entity_to_str(in_sng_.get(), "\n"));
+    model->emplace("io_sng", arcs::entity_to_str(io_sng_.get(), "\n"));
+    model->emplace("in_col", collectionToStr(in_col_));
+    model->emplace("io_col", collectionToStr(io_col_));
   }
 
   std::string collectionToStr(const TestCollection& col) {
@@ -185,6 +184,8 @@ private:
   std::vector<arcs::Data> stored_;
 };
 
+DEFINE_PARTICLE(TestParticle)
+
 
 class SimpleParticle : public arcs::Particle {
 public:
@@ -205,10 +206,9 @@ public:
     return R"(<div on-click="click"><i>{{first}}</i> : <b>{{second}}</b></div>)";
   }
 
-  void populateModel(const std::string& slot_name,
-                     std::function<void(const std::string&, const std::string&)> add) override {
-    add("first", local_._for());
-    add("second", arcs::num_to_str(local_.internal_id()));
+  void populateModel(const std::string& slot_name, arcs::Dictionary* model) override {
+    model->emplace("first", local_._for());
+    model->emplace("second", arcs::num_to_str(local_.internal_id()));
   }
 
   void fireEvent(const std::string& slot_name, const std::string& handler) override {
@@ -225,5 +225,54 @@ public:
   arcs::Info local_;
 };
 
-DEFINE_PARTICLE(TestParticle)
 DEFINE_PARTICLE(SimpleParticle)
+
+
+class ServiceParticle : public arcs::Particle {
+public:
+  void init() override {
+    serviceRequest("ml5.classifyImage", {{"imageUrl", url_}});
+    serviceRequest("random.next", {}, "first");
+    serviceRequest("random.next", {}, "second");
+  }
+
+  std::string getTemplate(const std::string& slot_name) override {
+    return R"(<h2>Classification with ML5 in WASM</h2>
+              <img style="max-width: 240px;" src="{{imageUrl}}"><br>
+              <div>Label: <span>{{label}}</span></div>
+              <div>Confidence: <span>{{probability}}</span></div>
+              <br>
+              <div>And here's some random numbers:<div>
+              <ul>
+                <li>{{rnd1}}</li>
+                <li>{{rnd2}}</li>
+              </ul>)";
+  }
+
+  void populateModel(const std::string& slot_name, arcs::Dictionary* model) override {
+    model->emplace("imageUrl", url_);
+    model->emplace("label", label_.size() ? label_ : "<working>");
+    model->emplace("probability", probability_.size() ? probability_ : "<working>");
+    model->emplace("rnd1", random_[0].size() ? random_[0] : "<working>");
+    model->emplace("rnd2", random_[1].size() ? random_[1] : "<working>");
+  }
+
+  void serviceResponse(const std::string& call, const arcs::Dictionary& response, const std::string& tag) override {
+    console("service call '%s' (tag '%s') completed\n", call.c_str(), tag.c_str());
+    if (call == "ml5.classifyImage") {
+      label_ = response.at("label");
+      probability_ = response.at("probability");
+    } else {
+      random_[(tag == "first") ? 0 : 1] = response.at("value");
+    }
+    renderSlot("root");
+  }
+
+  // TODO: provide resolver function for wasm particles
+  std::string url_ = "http://localhost:8786/particles/Services/assets/waltbird.jpg";
+  std::string label_;
+  std::string probability_;
+  std::string random_[2];
+};
+
+DEFINE_PARTICLE(ServiceParticle)

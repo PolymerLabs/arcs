@@ -11,6 +11,7 @@
 namespace arcs {
 
 using URL = std::string;
+using Dictionary = std::unordered_map<std::string, std::string>;
 
 class Handle;
 class Particle;
@@ -163,6 +164,20 @@ public:
     }
   }
 
+  static Dictionary decodeDictionary(const char* str) {
+    StringDecoder decoder(str);
+    Dictionary dict;
+    int num = decoder.getInt(':');
+    while (num--) {
+      int klen = decoder.getInt(':');
+      std::string key = decoder.chomp(klen);
+      int vlen = decoder.getInt(':');
+      std::string val = decoder.chomp(vlen);
+      dict.emplace(std::move(key), std::move(val));
+    }
+    return dict;
+  }
+
   // Format is <size>:<length>:<value><length>:<value>...
   static void decodeList(const char* str, std::function<void(const std::string&)> callback) {
     StringDecoder decoder(str);
@@ -212,6 +227,15 @@ public:
   template<typename T>
   void encode(const char* prefix, const T& val) {
     static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
+  }
+
+  static std::string encodeDictionary(const Dictionary& dict) {
+    std::string encoded = std::to_string(dict.size()) + ":";
+    for (const auto pair : dict) {
+      encoded += std::to_string(pair.first.size()) + ":" + pair.first;
+      encoded += std::to_string(pair.second.size()) + ":" + pair.second;
+    }
+    return encoded;
   }
 
   // Destructive read; clears the internal buffer.
@@ -307,6 +331,7 @@ EM_JS(const char*, collectionStore, (Particle* p, Handle* h, const char* encoded
 EM_JS(void, collectionRemove, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionClear, (Particle* p, Handle* h), {})
 EM_JS(void, render, (Particle* p, const char* slotName, const char* template_str, const char* model), {})
+EM_JS(void, serviceRequest, (Particle* p, const char* call, const char* args, const char* tag), {})
 
 }  // namespace internal
 
@@ -572,27 +597,32 @@ public:
     return handle;
   }
 
+  // Called by the runtime to synchronize a handle.
   void sync(Handle* handle) {
     to_sync_.erase(handle);
     onHandleSync(handle, to_sync_.empty());
     if (to_sync_.empty() && !auto_render_slot_.empty()) {
-      renderSlot(auto_render_slot_, true, true);
+      renderSlot(auto_render_slot_);
     }
   }
 
+  // Called by the runtime to update a handle.
   void update(Handle* handle) {
     onHandleUpdate(handle);
     if (!auto_render_slot_.empty()) {
-      renderSlot(auto_render_slot_, true, true);
+      renderSlot(auto_render_slot_);
     }
   }
 
+  // Convenience method for sub-classes to retrieve a handle by name.
   Handle* getHandle(const std::string& name) const {
     auto it = handles_.find(name);
     return (it != handles_.end()) ? it->second : nullptr;
   }
 
-  void renderSlot(const std::string& slot_name, bool send_template, bool send_model) {
+  // Can be called by sub-classes to initiate rendering; also invoked when auto-render is enabled
+  // after all handles have been synchronized.
+  void renderSlot(const std::string& slot_name, bool send_template = true, bool send_model = true) {
     const char* template_ptr = nullptr;
     std::string template_str;
     if (send_template) {
@@ -603,27 +633,38 @@ public:
     const char* model_ptr = nullptr;
     std::string model;
     if (send_model) {
-      int num = 0;
-      populateModel(slot_name, [&model, &num](const std::string& key, const std::string& value) {
-        model += std::to_string(key.size()) + ":" + key;
-        model += std::to_string(value.size()) + ":" + value;
-        num++;
-      });
-      model = std::to_string(num) + ":" + model;
+      Dictionary dict;
+      populateModel(slot_name, &dict);
+      model = internal::StringEncoder::encodeDictionary(dict);
       model_ptr = model.c_str();
     }
 
     internal::render(this, slot_name.c_str(), template_ptr, model_ptr);
   }
 
+  // Called once a particle has been set up. Initial processing and service requests may
+  // be executed here. Handles are *not* guaranteed to be synchronized at this point.
+  virtual void init() {}
+
+  // Override to provide specific handling of handle sync/updates.
   virtual void onHandleSync(Handle* handle, bool all_synced) {}
   virtual void onHandleUpdate(Handle* handle) {}
+
+  // Override to react to UI events triggered by handlers in the template provided below.
   virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}
 
   // Override to provide a template string and key:value model for rendering into a slot.
   virtual std::string getTemplate(const std::string& slot_name) { return ""; }
-  virtual void populateModel(const std::string& slot_name,
-                             std::function<void(const std::string&, const std::string&)> add) {}
+  virtual void populateModel(const std::string& slot_name, Dictionary* model) {}
+
+  // Sub-classes can request a service call using this method and the response will be delivered via
+  // serviceResponse(). The optional tag argument can be used to disambiguate multiple requests.
+  void serviceRequest(const std::string& call, const Dictionary& args, const std::string& tag = "") {
+    std::string encoded = internal::StringEncoder::encodeDictionary(args);
+    internal::serviceRequest(this, call.c_str(), encoded.c_str(), tag.c_str());
+  }
+
+  virtual void serviceResponse(const std::string& call, const Dictionary& response, const std::string& tag) {}
 
 private:
   std::unordered_map<std::string, Handle*> handles_;
@@ -652,6 +693,11 @@ Handle* connectHandle(Particle* particle, const char* name, bool can_read, bool 
 }
 
 EMSCRIPTEN_KEEPALIVE
+void init(Particle* particle) {
+  particle->init();
+}
+
+EMSCRIPTEN_KEEPALIVE
 void syncHandle(Particle* particle, Handle* handle, const char* model) {
   handle->sync(model);
   particle->sync(handle);
@@ -671,6 +717,12 @@ void renderSlot(Particle* particle, const char* slot_name, bool send_template, b
 EMSCRIPTEN_KEEPALIVE
 void fireEvent(Particle* particle, const char* slot_name, const char* handler) {
   particle->fireEvent(slot_name, handler);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void serviceResponse(Particle* particle, const char* call, const char* response, const char* tag) {
+  Dictionary dict = internal::StringDecoder::decodeDictionary(response);
+  particle->serviceResponse(call, dict, tag);
 }
 
 }  // extern "C"

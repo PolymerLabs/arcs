@@ -20,6 +20,11 @@ import {Content} from './slot-consumer.js';
 import {UserException} from './arc-exceptions.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 
+export interface Capabilities {
+  constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;
+  serviceRequest?: (particle: Particle, args, callback) => void;
+}
+
 /**
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
@@ -36,7 +41,7 @@ export class Particle {
   private _busy = 0;
 
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
-  private capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>};
+  private capabilities: Capabilities;
 
   constructor() {
     // Typescript only sees this.constructor as a Function type.
@@ -51,7 +56,7 @@ export class Particle {
    * This sets the capabilities for this particle.  This can only
    * be called once.
    */
-  setCapabilities(capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>}): void {
+  setCapabilities(capabilities: Capabilities): void {
     if (this.capabilities) {
       // Capabilities already set, throw an error.
       throw new Error('capabilities should only be set once');
@@ -197,12 +202,12 @@ export class Particle {
    */
   // TODO(sjmiles): experimental services impl
   async service(request) {
-    if (!this.capabilities['serviceRequest']) {
+    if (!this.capabilities.serviceRequest) {
       console.warn(`${this.spec.name} has no service support.`);
       return null;
     }
     return new Promise(resolve => {
-      this.capabilities['serviceRequest'](this, request, response => resolve(response));
+      this.capabilities.serviceRequest(this, request, response => resolve(response));
     });
   }
 

@@ -17,8 +17,8 @@ const requireMl5 = async () => {
   if (!window.hasOwnProperty('ml5')) {
     // @ts-ignore TS1323 dynamic import
     await import('https://unpkg.com/ml5@0.2.3/dist/ml5.min.js');
-    return window['ml5'];
   }
+  return window['ml5'];
 };
 
 const classifyImage = async ({imageUrl}) => {
