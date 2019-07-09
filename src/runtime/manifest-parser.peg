@@ -1194,7 +1194,7 @@ SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) 
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes' / 'Object')
+  = type:('Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes')
   {
     return {
       kind: 'schema-primitive',

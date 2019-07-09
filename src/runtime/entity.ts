@@ -181,10 +181,7 @@ class EntityInternals {
     // internals object so it will appear in the log output, with a few tweaks for better display.
     const original = this.entity;
 
-    // Strip the noisy-and-not-very-useful 'location' field from the schema.
-    const schema = JSON.parse(JSON.stringify(this.schema, (k, v) => (k !== 'location') ? v : undefined));
-
-    const copy = new EntityInternals(null, this.entityClass, schema, this.context, this.userIDComponent);
+    const copy = new EntityInternals(null, this.entityClass, this.schema, this.context, this.userIDComponent);
     copy.id = this.id;
 
     // Force 'entity' to show as '[Circular]'. The 'any' is required because 'entity' is readonly.
@@ -361,8 +358,6 @@ function convertToJsType(primitiveType, schemaName: string) {
       return 'boolean';
     case 'Bytes':
       return 'Uint8Array';
-    case 'Object':
-      return 'object';
     default:
       throw new Error(`Unknown field type ${primitiveType.type} in schema ${schemaName}`);
   }

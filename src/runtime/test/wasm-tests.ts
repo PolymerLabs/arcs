@@ -96,8 +96,6 @@ describe('wasm', () => {
     const multifest = await Manifest.parse(`
       schema BytesFail
         Bytes foo
-      schema ObjectFail
-        Object foo
       schema UnionFail
         (Text or URL or Number) foo
       schema TupleFail
@@ -116,7 +114,6 @@ describe('wasm', () => {
     const makeRef = entityType => new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(entityType), null);
 
     verify(multifest.schemas.BytesFail, new Uint8Array([2]));
-    verify(multifest.schemas.ObjectFail, {x: 1});
     verify(multifest.schemas.UnionFail, 12);
     verify(multifest.schemas.TupleFail, ['abc', 78]);
     verify(multifest.schemas.NamedRefFail, makeRef(new EntityType(multifest.schemas.BytesFail)));
