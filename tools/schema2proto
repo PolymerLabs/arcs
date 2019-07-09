@@ -1,6 +1,0 @@
-#!/bin/sh
-
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
-DIR=$(dirname $SCRIPTPATH)
-cd $DIR
-exec ./build/cli/schema2proto.js "$@"
