@@ -19,6 +19,7 @@ import {Bus} from './bus.js';
 import {initPlanner} from './planner.js';
 import {autofill} from './api/autofill.js';
 import {caption} from './api/caption.js';
+import {MessagePort} from '../../build/runtime/message-channel.js';
 
 const {log, warn} = logsFactory('pipe');
 
@@ -48,6 +49,30 @@ const identifyPipe = async (context, bus) => {
   bus.send({message: 'ready', recipes});
 };
 
+class PecPort extends MessagePort {
+  constructor(arcId, bus) {
+    super();
+    this.arcId = arcId;
+    this.bus = bus;
+  }
+  close() {}
+  postMessage(msg) {
+    msg['id'] = this.arcId.toString();
+    this.bus.send({message: 'pec', data: msg});
+  }
+  set onmessage(callback) {
+    this.callback = callback;
+  }
+}
+
+const pecPorts = {};
+
+const portFactory = (arcId, bus) => {
+  const port = new PecPort(arcId, bus);
+  pecPorts[arcId] = port;
+  return port;
+};
+
 const populateDispatcher = (dispatcher, api, composerFactory, storage, context) => {
   // populate dispatcher
   Object.assign(dispatcher, {
@@ -55,7 +80,7 @@ const populateDispatcher = (dispatcher, api, composerFactory, storage, context) 
       return await addPipeEntity(msg.entity);
     },
     autofill: async (msg, tid, bus) => {
-      return await autofill(msg, tid, bus, composerFactory, storage, context);
+      return await autofill(msg, tid, bus, composerFactory, storage, context, portFactory);
     },
     caption: async (msg, tid, bus) => {
       return await caption(msg, tid, bus, composerFactory, storage, context);
@@ -84,10 +109,10 @@ const populateDispatcher = (dispatcher, api, composerFactory, storage, context) 
       return api.marshalSpawnArc(msg, tid, bus);
     },
     pec: async (msg, tid, bus) => {
-      if (!bus.pecPorts[msg.id]) {
+      if (!pecPorts[msg.id]) {
         console.error(`Cannot find port for ${msg.id}`);
       }
-      bus.pecPorts[msg.id].callback({data: msg.entity});
+      pecPorts[msg.id].callback({data: msg.entity});
     }
   });
   return dispatcher;

@@ -15,7 +15,6 @@ import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {PlatformLoader} from '../../../build/platform/loader-web.js';
 import {PecIndustry} from '../../../build/platform/pec-industry-web.js';
 import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/devtools-arc-inspector.js';
-import {MessagePort} from '../../../build/runtime/message-channel.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);
@@ -76,27 +75,8 @@ const isNormalized = recipe => {
   return Object.isFrozen(recipe);
 };
 
-const spawn = async ({id, serialization, context, composer, storage, bus}) => {
+const spawn = async ({id, serialization, context, composer, storage, ports}) => {
   const arcId = IdGenerator.newSession().newArcId(id);
-  const ports = [];
-  if (bus) {
-    ports.push(new class extends MessagePort {
-      constructor(arcId, bus) {
-        super();
-        this.arcId = arcId;
-        this.bus = bus;
-        this.bus.pecPorts[this.arcId] = this;
-      }
-      close() {}
-      postMessage(msg) {
-        msg['id'] = this.arcId.toString();
-        this.bus.send({message: 'pec', data: msg});
-      }
-      set onmessage(callback) {
-        this.callback = callback;
-      }
-    }(arcId, bus));
-  }
   const params = {
     id: arcId,
     fileName: './serialized.manifest',
