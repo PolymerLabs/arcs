@@ -16,10 +16,10 @@ import {marshalPipesArc, addPipeEntity} from './api/pipes-api.js';
 import {marshalArc, installPlanner, deliverSuggestions, ingestEntity, ingestRecipe, ingestSuggestion, observeOutput} from './api/spawn-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
+import {pecPorts, portFactory} from './pec-port.js';
 import {initPlanner} from './planner.js';
 import {autofill} from './api/autofill.js';
 import {caption} from './api/caption.js';
-import {MessagePort} from '../../build/runtime/message-channel.js';
 
 const {log, warn} = logsFactory('pipe');
 
@@ -47,30 +47,6 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
 const identifyPipe = async (context, bus) => {
   const recipes = context.allRecipes.map(r => r.name);
   bus.send({message: 'ready', recipes});
-};
-
-class PecPort extends MessagePort {
-  constructor(arcId, bus) {
-    super();
-    this.arcId = arcId;
-    this.bus = bus;
-  }
-  close() {}
-  postMessage(msg) {
-    msg['id'] = this.arcId.toString();
-    this.bus.send({message: 'pec', data: msg});
-  }
-  set onmessage(callback) {
-    this.callback = callback;
-  }
-}
-
-const pecPorts = {};
-
-const portFactory = (arcId, bus) => {
-  const port = new PecPort(arcId, bus);
-  pecPorts[arcId] = port;
-  return port;
 };
 
 const populateDispatcher = (dispatcher, api, composerFactory, storage, context) => {
