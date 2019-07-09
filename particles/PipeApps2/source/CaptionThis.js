@@ -27,6 +27,7 @@ defineParticle(({DomParticle, html, log}) => {
       const rawResponse =
           await this.service({call: 'textclassifier.classifyText', text});
       const response = JSON.parse(rawResponse);
+      // response consists of start and end indice of classified texts.
       const json = JSON.stringify(
           response && response.results &&
           response.results
