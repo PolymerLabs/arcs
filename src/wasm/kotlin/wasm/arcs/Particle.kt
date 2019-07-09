@@ -56,8 +56,7 @@ abstract class Particle : WasmObject() {
       val template = if (sendTemplate) getTemplate(slotName) else ""
       var model = ""
       if (sendModel) {
-        val dict = mutableMapOf<String, String>()
-        populateModel(slotName, dict)
+        val dict = populateModel(slotName)
         model = StringEncoder.encodeDictionary(dict)
       }
 
@@ -79,8 +78,9 @@ abstract class Particle : WasmObject() {
       renderSlot(slotName)
     }
 
+    open fun init() {}
     open fun getTemplate(slotName: String): String = ""
-    open fun populateModel(slotName: String, model: Map<String, String>) {}
+    open fun populateModel(slotName: String, model: Map<String, String> = mapOf()): Map<String, String> = model
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
 
 }

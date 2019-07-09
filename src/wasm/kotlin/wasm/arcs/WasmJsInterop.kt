@@ -101,6 +101,13 @@ fun connectHandle(particlePtr: WasmAddress, handleName: WasmString, willSync: Bo
 }
 
 @Retain
+@ExportForCppRuntime("_init")
+fun init(particlePtr: WasmAddress) {
+  particlePtr.toObject<TestParticle>().init()
+}
+
+
+@Retain
 @ExportForCppRuntime("_syncHandle")
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString) {
     log("Getting handle")
