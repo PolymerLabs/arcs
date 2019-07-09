@@ -390,6 +390,7 @@ export class WasmContainer {
       abort: () => { throw new Error('Abort!'); },
 
       // Inner particle API
+      // TODO: guard against null/empty args from the wasm side
       _singletonSet: (p, handle, entity) => this.getParticle(p).singletonSet(handle, entity),
       _singletonClear: (p, handle) => this.getParticle(p).singletonClear(handle),
       _collectionStore: (p, handle, entity) => this.getParticle(p).collectionStore(handle, entity),
