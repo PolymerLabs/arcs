@@ -1,6 +1,5 @@
 package arcs
 
-import java.util.*
 import kotlin.collections.HashMap
 import kotlin.collections.set
 
@@ -218,7 +217,7 @@ class StringDecoder(private var str: String) {
       fun decodeList(str: String): List<String> {
         val decoder = StringDecoder(str)
 
-        val list = LinkedList<String>()
+        val list = mutableListOf<String>()
 
         var num = decoder.getInt(":")
         // while(num-- > 0)
