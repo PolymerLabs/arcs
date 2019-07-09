@@ -53,6 +53,8 @@ const extendBus = bus => {
     console.log(`register (${name})`);
     Services.register(name, service);
   };
+
+  return bus;
 };
 
 const identifyPipe = async (context, bus) => {
