@@ -11,12 +11,17 @@
 defineParticle(({DomParticle}) => {
   return class ExtractLocation extends DomParticle {
     willReceiveProps(props, state, lastProps) {
-      if (props.person && props.person.name && props.person.location
-          && JSON.stringify(props.person.location) !==
-          JSON.stringify(lastProps.person && lastProps.person.location)) {
-        const {latitude, longitude} = props.person.location;
+      // possibly undefined.
+      const lastLatitude = lastProps.person && lastProps.person.latitude;
+      const lastLongitude = lastProps.person && lastProps.person.longitude;
+
+      if (props.person && props.person.name &&
+          (props.person.latitude !== lastLatitude || props.person.longitude !== lastLongitude)) {
+
         const location = this.handles.get('location');
-        location.set(new location.entityClass({latitude, longitude}));
+        location.set(new location.entityClass({
+          latitude: props.person.latitude,
+          longitude: props.person.longitude}));
       }
     }
   };

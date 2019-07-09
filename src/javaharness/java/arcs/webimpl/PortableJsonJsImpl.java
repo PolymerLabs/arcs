@@ -1,7 +1,14 @@
 package arcs.webimpl;
 
 import arcs.api.PortableJson;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import jsinterop.base.Any;
 
 public class PortableJsonJsImpl implements PortableJson {
@@ -70,6 +77,24 @@ public class PortableJsonJsImpl implements PortableJson {
     @Override
     public void forEach(Consumer<String> callback) {
         jsonObj.asPropertyMap().forEach(str -> callback.accept(str));
+    }
+
+    public List<String> keys() {
+        Set<String> keys = new HashSet<String>();
+        forEach(key -> keys.add(key));
+        return new ArrayList<String>(keys);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof PortableJsonJsImpl && hashCode() == other.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.deepHashCode(keys().toArray()) *
+               Arrays.deepHashCode(keys().stream().map(
+                   key -> jsonObj.asPropertyMap().getAsAny(key)).collect(Collectors.toList()).toArray());
     }
 
     @Override

@@ -21,7 +21,7 @@ describe('CreateHandleGroup', () => {
       schema Human
         Text name
       schema Child extends Human
-        Object toy
+        Text toy
 
       particle Bear
         out ~a with Child infant
@@ -53,7 +53,7 @@ describe('CreateHandleGroup', () => {
       schema Human
         Text name
       schema Child extends Human
-        Object toy
+        Text toy
 
       particle Entertain
         in Child child

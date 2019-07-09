@@ -126,7 +126,6 @@ describe('Entity', () => {
         Number num
         Boolean flg
         Bytes buf
-        Object obj
         (Text or Number) union
         (Text, Number) tuple
     `);
@@ -137,7 +136,6 @@ describe('Entity', () => {
       num: 3.7,
       flg: true,
       buf: new Uint8Array([2]),
-      obj: {x: 1},
       union: 'def',
       tuple: ['ghi', 12]
     });
