@@ -1,5 +1,7 @@
 package arcs
 
+import java.util.*
+import kotlin.collections.HashMap
 import kotlin.collections.set
 
 typealias URL = String
@@ -196,6 +198,45 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
 }
 
 class StringDecoder(private var str: String) {
+
+    companion object {
+
+      fun decodeDictionary(str: String): Map<String, String> {
+        val decoder = StringDecoder(str)
+        val dict = HashMap<String, String>()
+
+        var num = decoder.getInt(":")
+
+        // while(num-- > 0)
+        while(num --> 0){
+          val klen = decoder.getInt(":")
+          val key = decoder.chomp(klen)
+
+          val vlen = decoder.getInt(":")
+          val value = decoder.chomp(vlen)
+
+          dict[key] = value
+        }
+
+        return dict
+      }
+
+      fun decodeList(str: String): List<String> {
+        val decoder = StringDecoder(str)
+
+        val list = LinkedList<String>()
+
+        var num = decoder.getInt(":")
+        // while(num-- > 0)
+        while(num --> 0) {
+          val len = decoder.getInt(":")
+          val chunk = decoder.chomp(len)
+          list.add(chunk)
+        }
+
+        return list
+      }
+    }
 
     fun done():Boolean {
         return str.isEmpty()
