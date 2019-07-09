@@ -853,7 +853,7 @@ RecipeSlotConnectionRef
       kind: 'slot-connection-ref',
       location: location(),
       param,
-      tags,
+      tags: tags || [],
     } as AstNode.RecipeSlotConnectionRef;
   }
 
