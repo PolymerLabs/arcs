@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class Thing<T> {
     public final T thing;
@@ -36,5 +37,12 @@ public class Thing<T> {
             throw new AssertionError("Thing is not a storage proxy");
         }
         return (StorageProxy) thing;
+    }
+
+    public Consumer getConsumer() {
+        if (!(thing instanceof Consumer)) {
+            throw new AssertionError("Thing is not a consumer");
+        }
+        return (Consumer) thing;
     }
 }
