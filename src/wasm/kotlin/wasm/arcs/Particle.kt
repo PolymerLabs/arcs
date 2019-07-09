@@ -58,26 +58,20 @@ abstract class Particle : WasmObject() {
       val template = if (sendTemplate) getTemplate(slotName) else ""
       var model = ""
       if (sendModel) {
-        val sb = StringBuilder()
-        var i = 0
-        populateModel(slotName) { key: String, value: String ->
-          sb.append(key.length).append(":").append(key)
-          sb.append(value.length).append(":").append(value)
-          i++
-        }
-        model = "$i:$sb"
+        val dict = HashMap<String, String>()
+        populateModel(slotName, dict)
+        model = StringEncoder.encodeDictionary(dict)
       }
 
       render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
     }
 
-    fun serviceRequest(call: String, args: Map<String, String>, tag: String="") {
-      val encoder = StringEncoder()
-      encoder.encodeDictionary(args)
+    fun serviceRequest(call: String, args: Map<String, String>, tag: String = "") {
+      val encoded = StringEncoder.encodeDictionary(args)
       serviceRequest(
         this.toWasmAddress(),
         call.toWasmString(),
-        encoder.result().toWasmString(),
+        encoded.toWasmString(),
         tag.toWasmString()
       )
     }
@@ -88,7 +82,7 @@ abstract class Particle : WasmObject() {
     }
 
     open fun getTemplate(slotName: String): String = ""
-    open fun populateModel(slotName: String, accumulateModel: (String, String) -> Unit): String = ""
+    open fun populateModel(slotName: String, model: Map<String, String>) {}
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
 
 }
@@ -287,10 +281,23 @@ class StringDecoder(private var str: String) {
 
 class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
+    companion object {
+      fun encodeDictionary(dict: Map<String, String>): String {
+        val sb = StringBuilder()
+        sb.append(dict.size).append(":")
+
+        for((key, value) in dict) {
+          sb.append(key.length).append(":").append(key)
+          sb.append(value.length).append(":").append(value)
+        }
+        return sb.toString()
+      }
+    }
+
     fun result():String = sb.toString()
 
     fun encode(prefix: String, str: String) {
-        sb.append(prefix + str.length.toString() + ":" + str + "|")
+        sb.append("$prefix${str.length}:$str|")
     }
 
     fun encode(prefix: String, num: Double) {
@@ -299,15 +306,6 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     fun encode(prefix: String, flag: Boolean) {
         sb.append("$prefix${if (flag) "1" else "0"}|")
-    }
-
-    fun encodeDictionary(dict: Map<String, String>) {
-      sb.append(dict.size).append(":")
-
-      for((key, value) in dict) {
-        sb.append(key.length).append(":").append(key)
-        sb.append(value.length).append(":").append(value)
-      }
     }
 }
 
