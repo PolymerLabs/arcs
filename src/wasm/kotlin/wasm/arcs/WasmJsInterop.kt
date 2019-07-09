@@ -155,6 +155,9 @@ external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
 @SymbolName("_render")
 external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, templatePtr: WasmString, modelPtr: WasmString)
 
+@SymbolName("_serviceRequest")
+external fun serviceRequest(particlePtr: WasmAddress, callPtr: WasmString, argsPtr: WasmString, tagPtr: WasmString)
+
 @SymbolName("write")
 external fun write(msg: WasmString)
 

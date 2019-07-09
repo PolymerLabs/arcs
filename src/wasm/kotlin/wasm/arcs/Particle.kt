@@ -51,6 +51,7 @@ abstract class Particle : WasmObject() {
 
     abstract fun onHandleUpdate(handle: Handle)
     abstract fun onHandleSync(handle: Handle, willSync: Boolean)
+
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
       val template = if (sendTemplate) getTemplate(slotName) else ""
       var model = ""
@@ -68,6 +69,17 @@ abstract class Particle : WasmObject() {
       render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
     }
 
+    fun serviceRequest(call: String, args: Map<String, String>, tag: String="") {
+      val encoder = StringEncoder()
+      encoder.encodeDictionary(args)
+      serviceRequest(
+        this.toWasmAddress(),
+        call.toWasmString(),
+        encoder.result().toWasmString(),
+        tag.toWasmString()
+      )
+    }
+
     open fun fireEvent(slotName: String, eventName: String) {
       eventHandlers[eventName]?.invoke()
       renderSlot(slotName)
@@ -75,6 +87,8 @@ abstract class Particle : WasmObject() {
 
     open fun getTemplate(slotName: String): String = ""
     open fun populateModel(slotName: String, accumulateModel: (String, String) -> Unit): String = ""
+    open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
+
 }
 
 abstract class Handle : WasmObject() {
@@ -244,6 +258,15 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     fun encode(prefix: String, flag: Boolean) {
         sb.append("$prefix${if (flag) "1" else "0"}|")
+    }
+
+    fun encodeDictionary(dict: Map<String, String>) {
+      sb.append(dict.size).append(":")
+
+      for((key, value) in dict) {
+        sb.append(key.length).append(":").append(key)
+        sb.append(value.length).append(":").append(value)
+      }
     }
 }
 
