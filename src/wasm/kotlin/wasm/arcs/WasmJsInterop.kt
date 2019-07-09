@@ -122,10 +122,10 @@ fun updateHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded1Ptr: 
 }
 
 @Retain
-@ExportForCppRuntime("_requestRender")
-fun requestRender(particlePtr: WasmAddress, slotNamePtr: WasmString) {
+@ExportForCppRuntime("_renderSlot")
+fun renderSlot(particlePtr: WasmAddress, slotNamePtr: WasmString, sendTemplate: Boolean, sendModel: Boolean) {
     particlePtr.toObject<TestParticle>()
-        .requestRender(slotNamePtr.toKString())
+        .renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
 }
 
 @Retain
@@ -138,22 +138,22 @@ fun fireEvent(particlePtr: WasmAddress, slotNamePtr: WasmString, handlerNamePtr:
 }
 
 @SymbolName("_singletonSet")
-external fun singletonSet(handlePtr: WasmAddress, stringPtr: WasmString)
+external fun singletonSet(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
 
 @SymbolName("_singletonClear")
-external fun singletonClear(handlePtr: WasmAddress)
+external fun singletonClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
 
 @SymbolName("_collectionStore")
-external fun collectionStore(handlePtr: WasmAddress, stringPtr: WasmString)
+external fun collectionStore(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
 
 @SymbolName("_collectionRemove")
-external fun collectionRemove(handlePtr: WasmAddress, stringPtr: WasmString)
+external fun collectionRemove(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
 
 @SymbolName("_collectionClear")
-external fun collectionClear(handlePtr: WasmAddress)
+external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
 
 @SymbolName("_render")
-external fun render(slotNamePtr: WasmString, contentPtr: WasmString)
+external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, templatePtr: WasmString, modelPtr: WasmString)
 
 @SymbolName("write")
 external fun write(msg: WasmString)

@@ -20,6 +20,7 @@ abstract class Particle : WasmObject() {
 
     fun registerHandle(name: String, handle: Handle) {
         handle.name = name
+        handle.particle = this
         handles[name] = handle
         log("Registering $name")
     }
@@ -48,22 +49,37 @@ abstract class Particle : WasmObject() {
         onHandleSync(handle, toSync.isEmpty())
     }
 
-    fun renderSlot(slotName: String, content: String) {
-        render(slotName.toWasmString(), content.toWasmString())
-    }
-
     abstract fun onHandleUpdate(handle: Handle)
     abstract fun onHandleSync(handle: Handle, willSync: Boolean)
-    abstract fun requestRender(slotName: String)
+    fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
+      val template = if (sendTemplate) getTemplate(slotName) else ""
+      var model = ""
+      if (sendModel) {
+        val sb = StringBuilder()
+        var i = 0
+        populateModel(slotName) { key: String, value: String ->
+          sb.append(key.length).append(":").append(key)
+          sb.append(value.length).append(":").append(value)
+          i++
+        }
+        model = "$i:$sb"
+      }
+
+      render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
+    }
 
     open fun fireEvent(slotName: String, eventName: String) {
-        eventHandlers[eventName]?.invoke()
-        requestRender(slotName)
+      eventHandlers[eventName]?.invoke()
+      renderSlot(slotName)
     }
+
+    open fun getTemplate(slotName: String): String = ""
+    open fun populateModel(slotName: String, accumulateModel: (String, String) -> Unit): String = ""
 }
 
 abstract class Handle : WasmObject() {
     var name: String? = null
+    var particle: Particle? = null
     abstract fun sync(encoded: String)
     abstract fun update(encoded1: String, encoded2: String)
 }
@@ -87,6 +103,7 @@ open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handl
         this.entity = entity
         val encoded = entity.encodeEntity()
         singletonSet(
+            this.particle!!.toWasmAddress(),
             this.toWasmAddress(),
             encoded.toWasmString()
         )
@@ -94,7 +111,7 @@ open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handl
 
     fun clear() {
         entity = entityCtor()
-        singletonClear(this.toWasmAddress())
+        singletonClear(this.particle!!.toWasmAddress(), this.toWasmAddress())
     }
 }
 
@@ -135,7 +152,7 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
     fun store(entity: T) {
         entities[entity.internalId] = entity
         val encoded = entities[entity.internalId]!!.encodeEntity()
-        collectionStore(this.toWasmAddress(), encoded.toWasmString())
+        collectionStore(this.particle!!.toWasmAddress(), this.toWasmAddress(), encoded.toWasmString())
     }
 
     fun remove(entity: T) {
@@ -143,7 +160,7 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
         if (it != null) {
             val encoded: String = it.encodeEntity()
             entities.remove(entity.internalId)
-            collectionRemove(this.toWasmAddress(), encoded.toWasmString())
+            collectionRemove(this.particle!!.toWasmAddress(), this.toWasmAddress(), encoded.toWasmString())
         }
     }
 
@@ -160,7 +177,7 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
 
     fun clear() {
         entities.clear()
-        collectionClear(this.toWasmAddress())
+        collectionClear(this.particle!!.toWasmAddress(), this.toWasmAddress())
     }
 }
 

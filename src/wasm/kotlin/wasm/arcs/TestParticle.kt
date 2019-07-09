@@ -13,14 +13,14 @@ class TestParticle : Particle() {
         } else if (handle.name.equals("info")) {
             updated = 2
         }
-        requestRender("root")
+      renderSlot("root")
     }
 
     override fun onHandleSync(handle: Handle, willSync: Boolean) {
         log("onHandleSync called")
         if (willSync) {
             log("All handles synced\n")
-            requestRender("root")
+          renderSlot("root")
         }
     }
 
@@ -28,65 +28,63 @@ class TestParticle : Particle() {
       log(s)
     }
 
-    override fun requestRender(slotName: String) {
-        val dataCol = if (updated == 1) "color: blue;" else ""
-        val dataStr = "${data.get().toString()}\n"
+    override fun getTemplate(slotName: String): String {
+      val dataCol = if (updated == 1) "color: blue;" else ""
+      val dataStr = "${data.get().toString()}\n"
 
-        val infoCol = if (updated == 2) "color: blue;" else ""
+      val infoCol = if (updated == 2) "color: blue;" else ""
         var infoStr = "Size: ${info.size()}\n"
         if (!info.empty()) {
-            var i = 0
-            info.forEach { info ->
-                infoStr += "${(++i)}. $info | \n"
-            }
+          var i = 0
+          info.forEach { info ->
+            infoStr += "${(++i)}. $info | \n"
+          }
         } else {
-            infoStr = "<i>(empty)</i>"
+          infoStr = "<i>(empty)</i>"
         }
 
-        val content = """
-        <style>
-        #data {""" + dataCol + """}
-        #info {""" + infoCol + """}
-        #panel { margin: 10px; }
-        #panel pre { margin-left: 20px; }
-        th,td { padding: 4px 16px; }
-        </style>
-        <div id="panel">
-        <b id="data">[data]</b>
-        <pre>""" + dataStr + """</pre>
-        <b id="info">[info]</b>
-        <pre>""" + infoStr + """</pre>
-        </div>
-        <table>
-        <tr>
-        <th>Singleton</th>
-        <th>Collection</th>
-        <th>Errors</th>
-        </tr>
-        <tr>
-        <td><button on-click="set">Set</button></td>
-        <td><button on-click="store">Store</button></td>
-        <td>
-        <button on-click="throw">Throw</button> &nbsp;
-        <button on-click="abort">Abort</button>
-        </td>
-        </tr>
-        <tr>
-        <td><button on-click="vclear">Clear</button></td>
-        <td><button on-click="remove">Remove</button></td>
-        <td>
-        <button on-click="assert">Assert</button> &nbsp;
-        <button on-click="exit">Exit</button>
-        </td>
-        </tr>
-        <tr>
-        <td></td>
-        <td><button on-click="cclear">Clear</button></td>
-        </tr>
-        </table>"""
-
-        renderSlot(slotName, content)
-    }
+        return """
+            <style>
+            #data {""" + dataCol + """}
+            #info {""" + infoCol + """}
+            #panel { margin: 10px; }
+            #panel pre { margin-left: 20px; }
+            th,td { padding: 4px 16px; }
+            </style>
+            <div id="panel">
+            <b id="data">[data]</b>
+            <pre>""" + dataStr + """</pre>
+            <b id="info">[info]</b>
+            <pre>""" + infoStr + """</pre>
+            </div>
+            <table>
+            <tr>
+            <th>Singleton</th>
+            <th>Collection</th>
+            <th>Errors</th>
+            </tr>
+            <tr>
+            <td><button on-click="set">Set</button></td>
+            <td><button on-click="store">Store</button></td>
+            <td>
+            <button on-click="throw">Throw</button> &nbsp;
+            <button on-click="abort">Abort</button>
+            </td>
+            </tr>
+            <tr>
+            <td><button on-click="vclear">Clear</button></td>
+            <td><button on-click="remove">Remove</button></td>
+            <td>
+            <button on-click="assert">Assert</button> &nbsp;
+            <button on-click="exit">Exit</button>
+            </td>
+            </tr>
+            <tr>
+            <td></td>
+            <td><button on-click="cclear">Clear</button></td>
+            </tr>
+             </table>"""
+      }
 
     private val data = Singleton { Data() }
     private val res = Singleton { Data() }
