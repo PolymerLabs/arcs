@@ -14,7 +14,6 @@ import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Reference} from '../reference.js';
 import {Entity} from '../entity.js';
-import {toProtoFile} from '../../tools/wasm-tools.js';
 
 describe('wasm', () => {
 
@@ -122,26 +121,5 @@ describe('wasm', () => {
     verify(multifest.schemas.TupleFail, ['abc', 78]);
     verify(multifest.schemas.NamedRefFail, makeRef(new EntityType(multifest.schemas.BytesFail)));
     verify(multifest.schemas.InlineRefFail, makeRef(EntityType.make(['Bar'], {val: 'Text'})));
-  });
-
-  it('schema to .proto file conversion supports basic types', async () => {
-    const protoFile = await toProtoFile(manifest.schemas.Foo);
-
-    assert.deepEqual(`syntax = "proto2";
-
-package arcs;
-
-message Foo {
-
-    optional bool flg = 1;
-    optional Url lnk = 2;
-    optional double num = 3;
-    optional string txt = 4;
-}
-
-message Url {
-
-    optional string href = 1;
-}`, protoFile);
   });
 });
