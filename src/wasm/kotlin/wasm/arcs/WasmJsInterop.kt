@@ -144,6 +144,14 @@ fun fireEvent(particlePtr: WasmAddress, slotNamePtr: WasmString, handlerNamePtr:
     )
 }
 
+@Retain
+@ExportForCppRuntime("_serviceResponse")
+fun serviceResponse(particlePtr: WasmAddress, callPtr: WasmString, responsePtr: WasmString, tagPtr: WasmString) {
+  val dict = StringDecoder.decodeDictionary(responsePtr.toKString())
+  particlePtr.toObject<TestParticle>().serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
+
+}
+
 @SymbolName("_singletonSet")
 external fun singletonSet(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
 
