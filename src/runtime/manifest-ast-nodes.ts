@@ -473,11 +473,16 @@ export interface SchemaField extends BaseNode {
 }
 
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
+    SchemaPrimitiveType|SchemaInstantType|SchemaUnionType|SchemaTupleType;
 
 export interface SchemaPrimitiveType extends BaseNode {
   kind: 'schema-primitive';
-  type: 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
+  type: 'Text'|'URL'|'Number'|'Boolean'|'Bytes';
+}
+
+export interface SchemaInstantType extends BaseNode {
+  kind: 'schema-instant';
+  type: 'Instant';
 }
 
 export interface SchemaCollectionType extends BaseNode {

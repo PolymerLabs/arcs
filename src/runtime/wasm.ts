@@ -119,6 +119,7 @@ class StringEncoder {
       case 'Boolean':
         return (value ? '1' : '0');
 
+      case 'Instant':
       case 'Bytes':
       case 'Object':
         throw new Error(`'${type}' not yet supported for entity packaging`);

@@ -5,13 +5,15 @@
     "seller": "gutenburger.com",
     "price": "$14.50",
     "shipDays": 5,
+    "releaseDate": "2018-05-20",
     "image": "assets/products/draw-book.png"
   },
   {
     "name": "Arduino Starter Pack",
     "price": "$49.99",
     "seller": "arduino.cc",
-    "image": "assets/products/arduino.png"
+    "image": "assets/products/arduino.png",
+    "releaseDate": "2018-05-20T11:00"
   },
   {
     "name": "Field Hockey Stick",
@@ -19,6 +21,7 @@
     "seller": "denile.com",
     "price": "$29.00",
     "shipDays": 3,
-    "image": "assets/products/hockeystick.png"
+    "image": "assets/products/hockeystick.png",
+    "releaseDate": "2018-05-20T18:30:01"
   }
 ]

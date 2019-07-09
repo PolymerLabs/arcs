@@ -30,10 +30,16 @@ async function assertRecipeParses(input: string, result: string) : Promise<void>
   assert.deepEqual((await Manifest.parse(input)).recipes[0].toString(), target);
 }
 
-function verifyPrimitiveType(field, type) {
+function verifyPrimitiveType(field, type: string) {
   const copy = {...field};
   delete copy.location;
   assert.deepEqual(copy, {kind: 'schema-primitive', type});
+}
+
+function verifyInstantType(field, type: string) {
+  const copy = {...field};
+  delete copy.location;
+  assert.deepEqual(copy, {kind: 'schema-instant', type});
 }
 
 describe('manifest', () => {
@@ -1699,6 +1705,33 @@ resource SomeName
     const paramSchema = checkNotNull(manifest.findParticleByName('P').inputs[0].type.getEntitySchema());
     assert.sameMembers(paramSchema.names, ['Name1', 'Name2', 'Name3']);
     assert.sameMembers(Object.keys(paramSchema.fields), ['field1', 'field2', 'field3']);
+  });
+
+  it('can process the Instant type', async () => {
+    const manifest = await Manifest.parse(`
+      schema Clock
+        Instant currentTime
+        Instant alarm
+      particle P
+        in * {Instant value} foo
+      particle P2
+        in * {Instant value, Instant value2} foo
+
+      recipe
+        create as h0
+        P
+          foo = h0
+        P2
+          foo = h0
+    `);
+    assert.isNotNull(manifest.findSchemaByName('Clock'));
+    console.log('manifest ', manifest.findSchemaByName('Clock'));
+    const verify = (manifest: Manifest) => verifyInstantType(manifest.schemas.Clock.fields.currentTime, 'Instant');
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString(), {}));
+    const [validRecipe] = manifest.recipes;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
   });
 
   it('fails when expanding conflicting schema aliases', async () => {

@@ -1181,7 +1181,7 @@ SchemaField
   }
 
 SchemaType
-  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
+  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType / SchemaInstantType
 
 SchemaCollectionType = '[' whiteSpace* schema:SchemaReferenceType whiteSpace* ']'
   {
@@ -1209,6 +1209,16 @@ SchemaPrimitiveType
       location: location(),
       type
     } as AstNode.SchemaPrimitiveType;
+  }
+
+SchemaInstantType
+  = type:('Instant')
+  {
+    return {
+      kind: 'schema-instant',
+      location: location(),
+      type
+    } as AstNode.SchemaInstantType;
   }
 
 SchemaUnionType

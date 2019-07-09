@@ -14,6 +14,7 @@ import {Entity, EntityClass} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
 import {EntityType} from '../type.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
+import {Instant} from '../../common/time/instant.js';
 
 describe('Entity', () => {
 
@@ -25,6 +26,7 @@ describe('Entity', () => {
         Text txt
         Number num
         Boolean flg
+        Instant now
     `);
     schema = manifest.schemas.Foo;
     entityClass = schema.entityClass();
@@ -126,6 +128,7 @@ describe('Entity', () => {
         Number num
         Boolean flg
         Bytes buf
+        Instant now
         (Text or Number) union
         (Text, Number) tuple
     `);
@@ -187,5 +190,19 @@ describe('Entity', () => {
 
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
+  });
+
+  it('handles complex Instant fields', () => {
+    const now = Instant.fromString('2019-01-01');
+    const e = new entityClass({txt: 'abc', now});
+
+    assert.throws(() => e.now = Instant.fromString('2018-01-01'), `Tried to modify entity field 'now'`);
+    assert.instanceOf(e.now, Instant);
+    assert.strictEqual(e.now, now);
+
+    // can supply strings
+    const jan1noon = '2019-01-01T12:00'
+    const e2 = new entityClass({txt: 'abc', now: jan1noon });
+    assert.strictEqual(e2.now, jan1noon);
   });
 });

@@ -19,6 +19,7 @@ import {SerializedEntity} from './storage-proxy.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from './hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
+import {Instant} from '../common/time/instant.js';
 
 export type EntityRawData = {};
 
@@ -164,6 +165,7 @@ class EntityInternals {
           if (this.entity[name]) {
             clone[name] = [...this.entity[name]].map(a => a.dataClone());
           }
+          // XXX TODO schema-instant
         } else {
           clone[name] = this.entity[name];
         }
@@ -358,10 +360,13 @@ function convertToJsType(primitiveType, schemaName: string) {
       return 'boolean';
     case 'Bytes':
       return 'Uint8Array';
+    case 'Instant':
+      return 'Instant';
     default:
       throw new Error(`Unknown field type ${primitiveType.type} in schema ${schemaName}`);
   }
 }
+
 
 // tslint:disable-next-line: no-any
 function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: any) {
@@ -376,9 +381,28 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   switch (fieldType.kind) {
     case 'schema-primitive': {
       const valueType = value.constructor.name === 'Uint8Array' ? 'Uint8Array' : typeof(value);
+
+      // Strings can be converted to schema-instant
+      if (valueType === 'string' && fieldType.kind === 'schema-instant') {
+        break;
+      }
+
       if (valueType !== convertToJsType(fieldType, schema.name)) {
         throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.type}); ` +
                             `value '${value}' is type ${typeof(value)}`);
+      }
+      break;
+    }
+
+    case 'schema-instant': {
+      // In this case the Instant is represented by a Javascript Object
+      // instead of a primitive type.
+
+      const valueType = value.constructor.name;
+      if (valueType !== fieldType.type) {
+        // TODO check for object
+        //throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.type}); ` +
+        //                    `value '${value}' is type ${valueType}`);
       }
       break;
     }
@@ -463,6 +487,22 @@ function sanitizeEntry(type, value, name, context: ParticleExecutionContext) {
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }
+  } else if (type.kind === 'schema-instant' && value) {
+    if (typeof(value) === 'string') {
+      // convert to the actual value
+      // TODO have all classes implement Literalizable?
+      switch (type.type) {
+        case 'Instant':
+          return Instant.fromString(value);
+        default:
+          throw new Error('Unknown schema-instant');
+      }
+    } else if (typeof(value) === 'object') {
+      // Already in object form,  check if we can just return it.
+      // TODO check instance here, for now assume value is correct
+      return value;
+    }
+    throw new Error('Unknown/unconvertable schema-instant: ' + typeof(value) + ' for type ' + type.type);
   } else {
     return value;
   }

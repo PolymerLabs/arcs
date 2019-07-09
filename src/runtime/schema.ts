@@ -93,6 +93,7 @@ export class Schema {
   static _typeString(type): string {
     switch (type.kind) {
       case 'schema-primitive':
+      case 'schema-instant':
         return type.type;
       case 'schema-union':
         return `(${type.types.map(t => t.type).join(' or ')})`;
