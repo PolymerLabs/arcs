@@ -3,8 +3,8 @@ package arcs.api;
 public interface CollectionStore extends Store {
   // TODO: add parameters and return values.
   void get();
-  void store();
+  void store(PortableJson add);
   void clear();
   void remove();
-  void toList();
+  PortableJson toList();
 }

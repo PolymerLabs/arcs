@@ -42,7 +42,7 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
             registerMap.put(handle, storageProxy);
         }
 
-        particle.callSetHandles(handleMap);
+        particle.setHandles(handleMap);
         for (Handle handle : registerMap.keySet()) {
             StorageProxy storageProxy = registerMap.get(handle);
             storageProxy.register(particle, handle);

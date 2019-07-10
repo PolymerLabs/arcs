@@ -62,7 +62,7 @@ describe('API channel', function() {
     };
 
     // tslint:disable-next-line: no-any
-    const port: any = {setMessageCallback: () => {}};
+    const port: any = {onmessage: () => {}};
     // tslint:disable-next-line: no-any
     const arc: any = {id: ''}; // OuterPortAttachment constructor needs the id.
 

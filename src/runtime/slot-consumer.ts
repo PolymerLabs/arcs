@@ -101,16 +101,7 @@ export class SlotConsumer {
   onContainerUpdate(newContainer, originalContainer): void {
     assert(this.slotContext instanceof ProvidedSlotContext, 'Container can only be updated in non-hosted context');
     const context = this.slotContext as ProvidedSlotContext;
-
-    if (Boolean(newContainer) !== Boolean(originalContainer)) {
-      if (newContainer) {
-        this.startRender();
-      } else {
-        this.stopRender();
-      }
-    }
-    this.hostedSlotContexts.forEach(ctx => ctx.containerAvailable = Boolean(newContainer));
-
+    
     if (newContainer !== originalContainer) {
       const contextContainerBySubId = new Map();
       if (context && context.spec.isSet) {
@@ -118,7 +109,6 @@ export class SlotConsumer {
       } else {
         contextContainerBySubId.set(undefined, context.container);
       }
-
       for (const [subId, container] of contextContainerBySubId) {
         if (!this._renderingBySubId.has(subId)) {
           this._renderingBySubId.set(subId, {});
@@ -139,6 +129,16 @@ export class SlotConsumer {
         }
       }
     }
+
+    if (Boolean(newContainer) !== Boolean(originalContainer)) {
+      if (newContainer) {
+        this.startRender();
+      } else {
+        this.stopRender();
+      }
+    }
+
+    this.hostedSlotContexts.forEach(ctx => ctx.containerAvailable = Boolean(newContainer));
   }
 
   createProvidedContexts(): SlotContext | ConcatArray<SlotContext> {
