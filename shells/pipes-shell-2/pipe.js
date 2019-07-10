@@ -20,6 +20,7 @@ import {portFactory, handlePecMessage} from './pec-port.js';
 import {initPlanner} from './planner.js';
 import {autofill} from './api/autofill.js';
 import {caption} from './api/caption.js';
+import {Services} from '../../build/runtime/services.js';
 
 const {log, warn} = logsFactory('pipe');
 
@@ -40,7 +41,20 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   const bus = new Bus(dispatcher, client);
   // send pipe identifiers to client
   identifyPipe(context, bus);
-  // return bus
+  // return device-side api object (bus + extras)
+  return extendBus(bus);
+};
+
+const extendBus = bus => {
+  // TODO(sjmiles): IIUC, Java is marshaling JS service objects to provide here.
+  // I think I would have tried to make JS service wrappers that use the
+  // bus to communicate with Java, but it seems a lot simpler for the Java side
+  // to own all of it.
+  bus.registerService = (name, service) => {
+    console.log(`register (${name})`);
+    Services.register(name, service);
+  };
+
   return bus;
 };
 

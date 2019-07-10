@@ -16,14 +16,30 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return `<span>{{json}}</span>`;
     }
-    render({query}) {
+    update({query}, state) {
       if (query) {
-        const text = query.name.split(' ');
-        const json = JSON.stringify(text);
-        this.updateSingleton('output', {json});
-        return {json};
+        this.classify(query.name);
       }
     }
-  };
 
+    async classify(text) {
+      this.startBusy();
+      const rawResponse =
+          await this.service({call: 'textclassifier.classifyText', text});
+      const response = JSON.parse(rawResponse);
+      // response consists of start and end indice of classified texts.
+      const json = JSON.stringify(
+          response && response.results &&
+          response.results
+          .map(
+              x => (x && x.entities && x.entities.length
+                && (text.substring(x.startIndex, x.endIndex) + ':' +
+                  x.entities.join(','))) || '')
+          .join(' ') ||
+          '');
+      this.updateSingleton('output', {json});
+      this.doneBusy();
+    }
+  };
 });
+

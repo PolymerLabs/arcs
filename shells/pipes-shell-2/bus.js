@@ -9,6 +9,7 @@
  */
 
 import {logsFactory} from '../../build/runtime/log-factory.js';
+
 const {log} = logsFactory('BUS', '#d32e1b');
 
 export const Bus = class {
@@ -53,7 +54,6 @@ export const Bus = class {
   async mapAsyncValue(id, asyncFunction) {
     // when `asyncFunction` completes, it's return value is mapped against id
     this.transactionIds[id].resolve(await asyncFunction());
-    //this.transactionIds[id] = await asyncFunction();
   }
   async recoverTransactionId(forValue) {
     // return tid whose async value matches forValue
@@ -64,10 +64,6 @@ export const Bus = class {
       }
     }
   }
-  // _recoverTransactionId(filter) {
-  //   // return tid whose value makes filter(value) true
-  //   return this.transactionIds.findIndex(value => filter(value));
-  // }
   async getAsyncValue(transactionId) {
     return await this.transactionIds[transactionId];
   }
