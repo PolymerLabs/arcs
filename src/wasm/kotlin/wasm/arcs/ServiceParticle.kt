@@ -1,5 +1,7 @@
 package arcs
 
+import kotlin.native.internal.ExportForCppRuntime
+
 class ServiceParticle : Particle() {
 
   private val url = "http://localhost:8786/particles/Services/assets/waltbird.jpg"
@@ -8,13 +10,14 @@ class ServiceParticle : Particle() {
   private var rand = arrayOf("<working>", "<working>")
 
   override fun init() {
+    log("Service Particle initialized")
     serviceRequest("ml5.classifyImage", mapOf("imageUrl" to url))
-    serviceRequest("random.next", mapOf(), "first")
-    serviceRequest("random.next", mapOf(), "second")
+    serviceRequest("random.next",  tag="first")
+    serviceRequest("random.next", tag="second")
   }
 
   override fun getTemplate(slotName: String): String {
-    return """(<h2>Classification with ML5 in WASM via Kotlin</h2>
+    return """<h2>Classification with ML5 in WASM via Kotlin</h2>
               <img style="max-width: 240px;" src="{{imageUrl}}"><br>
               <div>Label: <span>{{label}}</span></div>
               <div>Confidence: <span>{{probability}}</span></div>
@@ -23,7 +26,7 @@ class ServiceParticle : Particle() {
               <ul>
                 <li>{{rnd1}}</li>
                 <li>{{rnd2}}</li>
-              </ul>)"""
+              </ul>"""
   }
 
   override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
@@ -41,21 +44,24 @@ class ServiceParticle : Particle() {
 
     when(call) {
       "ml5.classifyImage" -> {
-        label = response.getOrDefault("label", "<working>")
-        probability = response.getOrDefault("probability", "<working>")
+        label = response["label"] ?: "<working>"
+        probability = response["probability"] ?: "<working>"
       }
-      else -> rand[if(tag == "first") 0 else 1] = response.getOrDefault("value", "<working>")
+      else -> rand[if(tag == "first") 0 else 1] = response["value"]  ?: "<working>"
     }
 
     renderSlot("root")
   }
 
   override fun onHandleUpdate(handle: Handle) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    renderSlot("root")
   }
 
   override fun onHandleSync(handle: Handle, willSync: Boolean) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    if(willSync) {
+      log("All handles synched\n")
+      renderSlot("root")
+    }
   }
 
 

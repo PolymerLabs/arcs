@@ -63,7 +63,7 @@ abstract class Particle : WasmObject() {
       render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
     }
 
-    fun serviceRequest(call: String, args: Map<String, String>, tag: String = "") {
+    fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
       val encoded = StringEncoder.encodeDictionary(args)
       serviceRequest(
         this.toWasmAddress(),
@@ -89,7 +89,7 @@ abstract class Handle : WasmObject() {
     var name: String? = null
     var particle: Particle? = null
     abstract fun sync(encoded: String)
-    abstract fun update(encoded1: String, encoded2: String)
+    abstract fun update(added: String, removed: String)
 }
 
 open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handle() {
@@ -99,8 +99,8 @@ open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handl
         entity = entityCtor.invoke().decodeEntity(encoded)
     }
 
-    override fun update(encoded1: String, encoded2: String) {
-        entity = entityCtor.invoke().decodeEntity(encoded1)
+    override fun update(added: String, removed: String) {
+        entity = entityCtor.invoke().decodeEntity(added)
     }
 
     fun get(): T? {
