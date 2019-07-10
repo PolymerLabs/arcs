@@ -15,6 +15,16 @@ import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {assert} from '../../../platform/chai-web.js';
 
+/**
+ * These classes are intended to mimic firebase behaviour, including asynchrony.
+ * 
+ * It's OK for methods in these classes to throw an Error if they're not implemented
+ * yet; it isn't OK for methods to have different behaviour to the firebase API apart
+ * from this.
+ * 
+ * It's OK to add **simple** getXXXForTesting methods, to allow tests to "peek" at
+ * stored values. It isn't OK to store complex chains of expectations ala gmock. 
+ */
 class MockFirebaseDataSnapshot implements firebase.database.DataSnapshot {
   ref: MockFirebaseReference;
   key: string;

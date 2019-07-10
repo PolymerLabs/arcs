@@ -36,7 +36,6 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
 
   static readonly constructors = new Map<StorageMode, StoreConstructor>([
     [StorageMode.Direct, DirectStore],
-    [StorageMode.Backing, BackingStore],
     [StorageMode.ReferenceMode, null]
   ]);
 

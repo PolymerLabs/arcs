@@ -1,8 +1,10 @@
 import {CRDTTypeRecord, CRDTModel} from "../crdt/crdt";
-import {ActiveStore, StorageMode} from "./store";
+import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback} from "./store";
 import {StorageKey} from "./storage-key";
 import {Exists} from "./drivers/driver-factory";
 import {Type} from "../type";
+import {DirectStore} from "./direct-store";
+import {Dictionary} from "../hot";
 
 /**
  * @license
@@ -14,22 +16,47 @@ import {Type} from "../type";
  * http://polymer.github.io/PATENTS.txt
  */
 
-export class BackingStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
-  on(callback: import("./store-interface").ProxyCallback<T>): number {
-    throw new Error("Method not implemented.");
+export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T> & {mux_id: string}) => Promise<boolean>;
+
+export class BackingStore<T extends CRDTTypeRecord>  {
+  
+  private stores: Dictionary<{store: DirectStore<T>, id: number}> = {};
+  private callbacks = new Map<number, MultiplexedProxyCallback<T>>();
+  private nextCallbackId = 1;
+
+  private constructor(private storageKey: StorageKey, private exists: Exists, private type: Type, private mode: StorageMode, private modelConstructor: new () => CRDTModel<T>) {
+  }
+
+  on(callback: MultiplexedProxyCallback<T>): number {
+    this.callbacks.set(this.nextCallbackId, callback);
+    return this.nextCallbackId++;
   }
   
   off(callback: number): void {
-    throw new Error("Method not implemented.");
+    this.callbacks.delete(callback);
   }
   
-  async onProxyMessage(message: import("./store-interface").ProxyMessage<T>): Promise<boolean> {
-    throw new Error("Method not implemented.");
+  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
+    return Promise.all([...this.callbacks.values()].map(callback => callback({mux_id: muxId, ...message}))).then(a => a.reduce((a, b) => a && b));
+  }
+
+  async onProxyMessage(message: ProxyMessage<T> & {mux_id: string}): Promise<boolean> {
+    if (this.stores[message.mux_id] == null) {
+      const store = await DirectStore.construct(this.storageKey.childWithComponent(message.mux_id), this.exists, this.type, this.mode, this.modelConstructor);
+      const id = store.on(msg => this.processStoreCallback(message.mux_id, msg));
+      this.stores[message.mux_id] = {store, id};
+    }
+    const {store, id} = this.stores[message.mux_id];
+    delete message.mux_id;
+    message.id = id;
+    return store.onProxyMessage(message);
   }
 
   static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
-    const me = new BackingStore<T>(storageKey, exists, type, mode, modelConstructor);
+    return new BackingStore<T>(storageKey, exists, type, mode, modelConstructor);
+  }
 
-    return me;
+  async idle() {
+    await Promise.all(Object.values(this.stores).map(({store}) => store.idle()));
   }
 }

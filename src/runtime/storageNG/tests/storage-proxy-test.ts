@@ -9,53 +9,11 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {Particle} from '../../particle.js';
-import {Exists} from '../drivers/driver-factory.js';
-import {Handle} from '../handle.js';
-import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ActiveStore, StorageMode, ProxyCallback, ProxyMessage, ProxyMessageType} from '../store.js';
-
-export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
-  lastCapturedMessage: ProxyMessage<T> = null;
-  constructor() {
-    super(new MockStorageKey(), Exists.ShouldCreate, null, StorageMode.Direct, CRDTSingleton);
-  }
-  on(callback: ProxyCallback<T>): number {
-    return 1;
-  }
-  off(callback: number) {
-    throw new Error('unimplemented');
-  }
-  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
-    this.lastCapturedMessage = message;
-    return Promise.resolve(true);
-  }
-}
-
-class MockStorageKey extends StorageKey {
-  constructor() {
-    super('testing');
-  }
-
-  toString() {
-    return `${this.protocol}://`;
-  }
-}
-
-class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
-  onSyncCalled = false;
-  lastUpdate: CRDTOperation[] = null;
-  onSync() {
-    this.onSyncCalled = true;
-  }
-  onUpdate(ops: CRDTOperation[]) {
-    this.lastUpdate = ops;
-  }
-
-}
+import {ProxyMessageType} from '../store.js';
+import {MockStore, MockHandle} from '../testing/test-storage.js';
 
 describe('StorageProxy', async () => {
   it('will apply and propagate operation', async () => {

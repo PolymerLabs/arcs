@@ -9,11 +9,11 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection';
-import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton';
-import {CollectionHandle, SingletonHandle} from '../handle';
-import {StorageProxy} from '../storage-proxy';
-import {MockStore} from './storage-proxy-test';
+import {CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton.js';
+import {CollectionHandle, SingletonHandle} from '../handle.js';
+import {StorageProxy} from '../storage-proxy.js';
+import {MockStore} from '../testing/test-storage.js';
 
 function getCollectionHandle(): CollectionHandle<{id: string}> {
   // tslint:disable-next-line: no-any
