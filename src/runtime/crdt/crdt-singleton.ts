@@ -24,16 +24,9 @@ export enum SingletonOpTypes {
   Clear
 }
 
-export type SingletonOperation<T> = {
-  type: SingletonOpTypes.Clear,
-  actor: string,
-  clock: VersionMap,
-}|{
-  type: SingletonOpTypes.Set,
-  value: T,
-  actor: string,
-  clock: VersionMap,
-};
+export type SingletonOperationClear = {type: SingletonOpTypes.Clear, actor: string, clock: VersionMap};
+export type SingletonOperationSet<T> = {type: SingletonOpTypes.Set, value: T, actor: string, clock: VersionMap};
+export type SingletonOperation<T> = SingletonOperationClear | SingletonOperationSet<T>;
 
 export interface CRDTSingletonTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
   data: SingletonData<T>;

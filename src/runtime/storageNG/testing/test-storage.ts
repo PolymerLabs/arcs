@@ -79,6 +79,23 @@ export class MockStorageKey extends StorageKey {
   }
 }
 
+export class MockHierarchicalStorageKey extends StorageKey {
+  value: string;
+
+  constructor(segment = '') {
+    super('testing-hierarchy');
+    this.value = segment;
+  }
+
+  toString() {
+    return `${this.protocol}://${this.value}`;
+  }
+
+  childWithComponent(component: string) {
+    return new MockHierarchicalStorageKey(this.value + component);
+  }
+}
+
 export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSyncCalled = false;
   lastUpdate = null;
