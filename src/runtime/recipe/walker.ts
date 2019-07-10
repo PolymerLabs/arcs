@@ -188,15 +188,16 @@ export abstract class Walker<T extends Cloneable<T>> {
             permutations = newResults;
           });
 
-          for (let permutation of permutations) {
+          for (const permutation of permutations) {
             const cloneMap = new Map<object, object>();
             const newResult = start.clone(cloneMap);
             let score = 0;
-            permutation = permutation.filter(p => p.continuation !== null);
-            if (permutation.length === 0) {
+            const newPermutation = permutation.filter(p => p.continuation !== null);
+            if (newPermutation.length === 0) {
               continue;
             }
-            permutation.forEach(({continuation, context}) => {
+            newPermutation.forEach(({continuation, context}) => {
+              // TODO: Should this only take the last?
               score = continuation(newResult, ...context.map(c => cloneMap.get(c) || c));
             });
 
@@ -209,14 +210,15 @@ export abstract class Walker<T extends Cloneable<T>> {
             if (typeof continuation === 'function') {
               continuation = [continuation];
             }
-            let score = 0;
-            continuation.forEach(f => {
-              if (f == null) {
-                f = () => 0;
-              }
+            continuation.forEach(continuation => {
               const cloneMap = new Map<object, object>();
               const newResult = start.clone(cloneMap);
-              score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
+              let score = 0;
+              if (continuation == null) {
+                score = 0;
+              } else {
+                score = continuation(newResult, ...context.map(c => cloneMap.get(c) || c));
+              }
               updated.push({result: newResult, score});
             });
           });

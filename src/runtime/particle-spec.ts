@@ -70,6 +70,48 @@ export class HandleConnectionSpec {
     }
   }
 
+  toSlotlikeConnection(): ConsumeSlotConnectionSpec {
+    // TODO: Remove in SLANDLESv2
+    const slotType = this.slandleType();
+    if (!slotType) {
+    throw new Error(`toSlotlikeConnection should only be used on Slot and [Slot] typed handles. Handle ${this.name} has type ${this.type}`);
+    }
+
+    const isSet = this.type.isCollectionType();
+    const slotInfo = slotType.getSlot();
+
+    return {
+      name: this.name,
+      isOptional: this.isOptional,
+      direction: this.direction,
+      tags: this.tags,
+      dependentConnections: this.dependentConnections.map(conn => conn.toSlotlikeConnection()),
+      // Fakes
+      isRoot: this.isRoot,
+      isRequired: !this.isOptional, // TODO: Remove duplicated data isRequired vs isOptional (prefer isOptional)
+      isSet,
+      type: slotType,
+      handles: [slotInfo.handle],
+      formFactor: slotInfo.formFactor,
+      provideSlotConnections: [],
+    };
+  }
+
+  slandleType(): SlotType | undefined {
+    if (this.type.isSlot()) {
+      return this.type;
+    }
+    if (this.type.isCollectionType() && this.type.collectionType.isSlot()) {
+      return this.type.collectionType;
+    }
+    return undefined;
+  }
+
+  isRoot(): boolean {
+    // TODO: Remove in SLANDLESv2
+    return this.slandleType() && (this.name === 'root' || this.tags.includes('root'));
+  }
+
   get isInput() {
     // TODO: we probably don't really want host to be here.
     // TODO: do we want to consider any here?
@@ -120,6 +162,10 @@ export class ConsumeSlotConnectionSpec {
     slotModel.provideSlotConnections.forEach(ps => {
       this.provideSlotConnections.push(new ProvideSlotConnectionSpec(ps));
     });
+  }
+
+  isRoot(): boolean {
+    return this.name === 'root' || this.tags.includes('root');
   }
 
   // Getters to 'fake' being a Handle.
@@ -201,6 +247,9 @@ export class ParticleSpec {
 
   createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>): HandleConnectionSpec {
     const connection = new HandleConnectionSpec(arg, typeVarMap);
+    if (this.handleConnectionMap.get(connection.name)) {
+      throw new Error(`Particle Spec ${this.name} already has a handle connection named "${connection.name}".`);
+    }
     this.handleConnectionMap.set(connection.name, connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;

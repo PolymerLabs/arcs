@@ -482,10 +482,9 @@ export class DescriptionFormatter {
   }
 
   static sort(p1: ParticleDescription, p2: ParticleDescription) {
-    const isRoot = (slotSpec) => slotSpec.name === 'root' || slotSpec.tags.includes('root');
     // Root slot comes first.
-    const hasRoot1 = Boolean([...p1._particle.spec.slotConnections.values()].find(slotSpec => isRoot(slotSpec)));
-    const hasRoot2 = Boolean([...p2._particle.spec.slotConnections.values()].find(slotSpec => isRoot(slotSpec)));
+    const hasRoot1 = [...p1._particle.spec.slotConnections.values()].some(slotSpec => slotSpec.isRoot());
+    const hasRoot2 = [...p2._particle.spec.slotConnections.values()].some(slotSpec => slotSpec.isRoot());
     if (hasRoot1 !== hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }

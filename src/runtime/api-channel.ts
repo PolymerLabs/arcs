@@ -25,6 +25,7 @@ import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Literal, Literalizable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
+import {MessagePort} from './message-channel.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -238,13 +239,13 @@ export class APIPort {
     this['before' + e.data.messageType](e.data.messageBody);
   }
 
-  send(name: string, args: {}) {
+  async send(name: string, args: {}) {
     const call = {messageType: name, messageBody: args, stack: this.attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
     if (this.inspector) {
       this.inspector.pecMessage(name, args, count, new Error().stack || '');
     }
-    this._port.postMessage(call);
+    await this._port.postMessage(call);
   }
 
   supportsJavaParticle(): boolean {
@@ -349,7 +350,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         const requestedId = descriptor.findIndex(d => d.identifier || false);
 
         /** @this APIPort */
-        const impl = function(this: APIPort, ...args) {
+        const impl = async function(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
             if (i === initializer) {
@@ -370,7 +371,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             }
           }
 
-          this.send(f, messageBody);
+          await this.send(f, messageBody);
         };
 
 

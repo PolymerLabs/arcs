@@ -47,7 +47,7 @@ export class ParticleExecutionContext {
 
   readonly idGenerator: IdGenerator;
 
-  constructor(port, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
+  constructor(port: MessagePort, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
     const pec = this;
 
     this.apiPort = new class extends PECInnerPort {
@@ -167,7 +167,7 @@ export class ParticleExecutionContext {
           pec.apiPort.ArcCreateSlot(hostedSlotId => resolve(hostedSlotId), arcId, transformationParticle, transformationSlotName, handleId)
         );
       },
-      async loadRecipe(recipe: string) {
+      async loadRecipe(recipe: string): Promise<{error?: string}> {
         // TODO: do we want to return a promise on completion?
         return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe(arcId, recipe, response => {
           if (response.error) {
@@ -221,6 +221,9 @@ export class ParticleExecutionContext {
       particle.setCapabilities(this.capabilities(false));
     } else {
       const clazz = await this.loader.loadParticleClass(spec);
+      if (!clazz) {
+        return Promise.reject(new Error(`Could not load particle ${id} ${spec.name}`));
+      }
       particle = new clazz();
       particle.setCapabilities(this.capabilities(true));
     }

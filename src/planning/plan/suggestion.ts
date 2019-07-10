@@ -197,8 +197,8 @@ export class Suggestion {
     const manifest = await Manifest.parse(plan, {loader, context, fileName: ''});
     assert(manifest.recipes.length === 1);
     const recipe = manifest.recipes[0];
-    assert(recipe.normalize({}), `can't normalize deserialized suggestion: ${plan}`);
-
+    const options = {errors: new Map()};
+    assert(recipe.normalize(options), `can't normalize deserialized suggestion: ${plan} ${JSON.stringify([...options.errors])}`);
     const suggestion = new Suggestion(recipe, hash, rank, JSON.parse(versionByStore || '{}'));
     suggestion.searchGroups = searchGroups || [];
     suggestion.descriptionByModality = descriptionByModality;
@@ -229,22 +229,25 @@ export class Suggestion {
   }
 
   isVisible(arc: Arc, filter: SuggestFilter, options?: SuggestionVisibilityOptions): boolean {
-    if (this.plan.slots.length === 0) {
+    const logReason = (label: string) => {
       if (options && options.reasons) {
-        options.reasons.push(`No slots`);
+        options.reasons.push(label);
       }
+    };
+    const slandles = this.plan.handles.filter(
+      handle => handle.type.isSlot()
+    || handle.type.isCollectionType() && handle.type.collectionType.isSlot()
+    ).length;
+    if (slandles + this.plan.slots.length === 0) {
+      logReason(`No slots`);
       return false;
     }
     if (!this.descriptionText) {
-      if (options && options.reasons) {
-        options.reasons.push(`No description`);
-      }
+      logReason(`No description`);
       return false;
     }
     if (!arc.modality.isCompatible(this.plan.modality.names)) {
-      if (options && options.reasons) {
-        options.reasons.push(`Incompatible modalities ${this.plan.modality.names.join(', ')} with Arc modalities: ${arc.modality.names.join(', ')}`);
-      }
+      logReason(`Incompatible modalities ${this.plan.modality.names.join(', ')} with Arc modalities: ${arc.modality.names.join(', ')}`);
       return false;
     }
     if (filter.showAll) {
@@ -252,15 +255,13 @@ export class Suggestion {
     }
     if (filter.search) {
       if (!this.descriptionText.toLowerCase().includes(filter.search) && !this.hasSearch(filter.search)) {
-        if (options && options.reasons) {
-          options.reasons.push(`Description doesn't match search filter: ${filter.search}`);
-        }
+        logReason(`Description doesn't match search filter: ${filter.search}`);
         return false;
       }
       return true;
     }
 
-    if (!this.plan.slots.find(s => s.name.includes('root') || s.tags.includes('root')) &&
+    if (!this.plan.slots.find(s => s.isRoot()) &&
         !((this.plan.slotConnections || []).find(sc => sc.name === 'root'))) {
       // suggestion uses only non 'root' slots.
       // TODO: should check agains slot-composer's root contexts instead.
@@ -270,22 +271,33 @@ export class Suggestion {
     const usesHandlesFromActiveRecipe = this.plan.handles.some(handle => {
       // TODO(mmandlis): find a generic way to exlude system handles (eg Theme),
       // either by tagging or by exploring connection directions etc.
-      return !!handle.id &&
+      const hasHandle = !!handle.id &&
              !!arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
-    });
-    const usesRemoteNonRootSlots = !!this.plan.slots.some(slot => {
-      return !slot.name.includes('root') && !slot.tags.includes('root') &&
-             slot.id && !slot.id.includes('root') &&
-             Boolean(arc.pec.slotComposer.findContextById(slot.id));
-    });
-    if (options && options.reasons) {
-      if (!usesHandlesFromActiveRecipe) {
-        options.reasons.push(`No active recipe handles`);
+      if (!hasHandle) {
+        logReason(`Has no handles`);
       }
-      if (!usesRemoteNonRootSlots) {
-        options.reasons.push(`No remote non-root slots.`);
-      }
+      return hasHandle;
+    });
+    if (!usesHandlesFromActiveRecipe) {
+      logReason(`No active recipe handles`);
+      return false;
     }
-    return usesHandlesFromActiveRecipe && usesRemoteNonRootSlots;
+    let hasRootSlot = false;
+    const usesRemoteNonRootSlots = this.plan.slots.some(slot => {
+      const isRootSlot = slot.isRoot();
+      if (isRootSlot) {
+        hasRootSlot = true;
+      }
+      const hasNonRootSlot = !isRootSlot && Boolean(arc.pec.slotComposer.findContextById(slot.id));
+      return hasNonRootSlot;
+    });
+    if (!hasRootSlot) {
+      logReason(`Has no root slot`);
+    }
+    if (!usesRemoteNonRootSlots) {
+      logReason(`No remote non-root slots.`);
+      return false;
+    }
+    return true;
   }
 }

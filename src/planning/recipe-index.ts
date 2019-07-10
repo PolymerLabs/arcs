@@ -26,6 +26,8 @@ import {Slot} from '../runtime/recipe/slot.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
+import {SlotType, CollectionType} from '../runtime/type.js';
+import {SlotInfo} from '../runtime/slot-info.js';
 
 import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
@@ -235,6 +237,7 @@ export class RecipeIndex {
    * could be connected to the potential slot.
    */
   findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvideSlotConnectionSpec): ConsumeSlotConnectionMatch[] {
+    // TODO: Construct a set of failure reasons for debugging & feedback to developers.
     this.ensureReady();
 
     const consumeConns: ConsumeSlotConnectionMatch[] = [];
@@ -246,14 +249,16 @@ export class RecipeIndex {
       }
       for (const recipeParticle of recipe.particles) {
         if (!recipeParticle.spec) continue;
+        // Match slot connections
         for (const [name, slotSpec] of recipeParticle.spec.slotConnections) {
           const recipeSlotConn = recipeParticle.getSlotConnectionByName(name);
           if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
           if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)) {
+            // TODO: check slot was retrieved by name, tagsOrNameMatch is always true?
             const slotConn = particle.getSlotConnectionByName(providedSlotSpec.name);
             let matchingHandles: MatchingHandle[] = [];
             if (providedSlotSpec.handles.length !== 0 || (slotConn && !SlotUtils.handlesMatch(recipeParticle, slotConn))) {
-              matchingHandles = this._getMatchingHandles(recipeParticle, particle, providedSlotSpec);
+              matchingHandles = this._getMatchingHandles(recipeParticle, particle, providedSlotSpec.handles);
               if (matchingHandles.length === 0) {
                 continue;
               }
@@ -287,9 +292,9 @@ export class RecipeIndex {
     return providedSlots;
   }
 
-  private _getMatchingHandles(particle: Particle, providingParticle: Particle, providedSlotSpec: ProvideSlotConnectionSpec): MatchingHandle[]  {
+  private _getMatchingHandles(particle: Particle, providingParticle: Particle, handleNames: string[]): MatchingHandle[]  {
     const matchingHandles: MatchingHandle[] = [];
-    for (const slotHandleConnName of providedSlotSpec.handles) {
+    for (const slotHandleConnName of handleNames) {
       const providedHandleConn = providingParticle.getConnectionByName(slotHandleConnName);
       if (!providedHandleConn) continue;
 
@@ -297,12 +302,12 @@ export class RecipeIndex {
         return handleConn.direction !== 'host'
           && (!handleConn.handle || !handleConn.handle.id || handleConn.handle.id === providedHandleConn.handle.id)
           && Handle.effectiveType(providedHandleConn.handle.mappedType, [handleConn]);
-      });  
+      });
       matchingConns.forEach(matchingConn => {
         if (this._fatesAndDirectionsMatch(providedHandleConn, matchingConn)) {
           matchingHandles.push({handle: providedHandleConn.handle, matchingConn});
         }
-      }); 
+      });
     }
     return matchingHandles;
   }

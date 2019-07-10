@@ -27,6 +27,7 @@ describe('Particle definitions', () => {
       it(`parses successfully: ${filename}`, async () => {
         const manifest = await Manifest.load(filename, loader);
         for (const particle of manifest.particles) {
+          assert.isNotNull(particle.implFile, `particle ${particle.name} specified with implementation found in ${particle.implFile}.`);
           assert.isTrue(fs.existsSync(particle.implFile), `${particle.implFile} not found`);
         }
       });

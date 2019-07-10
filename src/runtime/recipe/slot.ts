@@ -33,6 +33,11 @@ export class Slot implements Comparable<Slot> {
     this._name = name;
   }
 
+  isRoot(): boolean {
+    // TODO: Revisit slot naming.
+    return this.name.includes('root') || this.tags.includes('root') || (this.id && this.id.includes('root'));
+  }
+
   get recipe(): Recipe { return this._recipe; }
   get id(): string|undefined { return this._id; }
   set id(id: string) { this._id = id; }

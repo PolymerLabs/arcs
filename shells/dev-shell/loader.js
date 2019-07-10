@@ -21,6 +21,9 @@ export class DevShellLoader extends PlatformLoader {
   }
 
   loadResource(path) {
+    if (!path) {
+      return undefined;
+    }
     return this._fileMap[path] || super.loadResource(path);
   }
 

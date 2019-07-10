@@ -58,6 +58,7 @@ export function arrowToDirection(arrow: DirectionArrow): Direction {
     case '=':
       return 'any';
     default:
+      // Catch nulls and unsafe values from javascript.
       throw new Error(`Bad arrow ${arrow}`);
   }
 }
@@ -204,10 +205,8 @@ export class RecipeUtil {
         continue;
       }
 
-      if (recipeConnSpec.direction) {
-        if (!connectionMatchesHandleDirection(shapeHC.direction, recipeConnSpec.direction)) {
-          continue;
-        }
+      if (!connectionMatchesHandleDirection(shapeHC.direction, recipeConnSpec.direction)) {
+        continue;
       }
 
       const recipeHC = recipeParticle.connections[recipeConnSpec.name];

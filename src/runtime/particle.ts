@@ -17,7 +17,6 @@ import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
-import {UserException} from './arc-exceptions.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 
 export interface Capabilities {
