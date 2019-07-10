@@ -211,7 +211,7 @@ InterfaceItem
   / InterfaceArgument
 
 InterfaceArgument
-  = direction:(Direction whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
+  = direction:(Direction whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
     direction = optional(direction, dir => dir[0], 'any');
     if (direction === 'host') {
@@ -261,13 +261,13 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args: AstNode.ParticleArgument[] = [];
+    let args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
     const trustClaims: AstNode.ParticleClaimStatement[] = [];
     const trustChecks: AstNode.ParticleCheckStatement[] = [];
     let description: AstNode.Description | null = null;
-    let hasParticleArgument = false;
+    let hasParticleHandleConnection = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = optional(items, extractIndented, []);
     items.forEach(item => {
@@ -277,7 +277,7 @@ Particle
         }
         verbs.push(item.verb);
         args = item.args; // TODO(jopra): This should merge, not overwrite;
-        hasParticleArgument = true;
+        hasParticleHandleConnection = true;
       } else if (item.kind === 'particle-argument') {
         args.push(item);
       } else if (item.kind === 'particle-slot') {
@@ -313,7 +313,7 @@ Particle
       modality,
       slotConnections,
       description,
-      hasParticleArgument,
+      hasParticleHandleConnection,
       trustClaims,
       trustChecks,
     } as AstNode.Particle;
@@ -321,9 +321,9 @@ Particle
 
 ParticleItem "a particle item"
   = ParticleModality
-  / ParticleSlot
+  / ParticleSlotConnection
   / Description
-  / ParticleHandle
+  / ParticleHandleConnection
   / ParticleClaimStatement
   / ParticleCheckStatement
 
@@ -455,15 +455,15 @@ StoreReference
   = name:upperIdent { return {kind: 'store-reference', location: location(), type: 'name', store: name} as AstNode.StoreReference; }
   / id:id { return {kind: 'store-reference', location: location(), type: 'id', store: id} as AstNode.StoreReference; }
 
-ParticleHandle
-  = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
+ParticleHandleConnection
+  = arg:ParticleHandleConnectionBody eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandleConnection)*)?
   {
     arg.dependentConnections = optional(dependentConnections, extractIndented, []);
-    return arg as AstNode.ParticleHandle;
+    return arg as AstNode.ParticleHandleConnection;
   }
 
-ParticleArgument
-  = direction:Direction isOptional:'?'? whiteSpace type:ParticleArgumentType whiteSpace nametag:NameAndTagList
+ParticleHandleConnectionBody
+  = direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
   {
     return {
       kind: 'particle-argument',
@@ -471,10 +471,10 @@ ParticleArgument
       direction,
       type: type,
       isOptional: !!isOptional,
-      dependentConnections: [] as AstNode.ParticleHandle[],
+      dependentConnections: [] as AstNode.ParticleHandleConnection[],
       name: nametag.name,
       tags: nametag.tags,
-    } as AstNode.ParticleArgument;
+    } as AstNode.ParticleHandleConnection;
   }
 
 Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
@@ -496,7 +496,7 @@ DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, consume, provide)"
     return dir;
   }
 
-ParticleArgumentType
+ParticleHandleConnectionType
   = TypeVariable
   / CollectionType
   / BigCollectionType
@@ -506,7 +506,7 @@ ParticleArgumentType
   / TypeName
 
 CollectionType
-  = '[' type:ParticleArgumentType ']'
+  = '[' type:ParticleHandleConnectionType ']'
   {
     return {
       kind: 'collection-type',
@@ -516,7 +516,7 @@ CollectionType
   }
 
 BigCollectionType
-  = 'BigCollection<' type:ParticleArgumentType '>'
+  = 'BigCollection<' type:ParticleHandleConnectionType '>'
   {
     return {
       kind: 'big-collection-type',
@@ -526,7 +526,7 @@ BigCollectionType
   }
 
 ReferenceType
-  = 'Reference<' type:ParticleArgumentType '>'
+  = 'Reference<' type:ParticleHandleConnectionType '>'
   {
     return {
       kind: 'reference-type',
@@ -536,7 +536,7 @@ ReferenceType
   }
 
 TypeVariable "a type variable (e.g. ~foo)"
-  = '~' name:lowerIdent constraint:(whiteSpace 'with' whiteSpace type:ParticleArgumentType)?
+  = '~' name:lowerIdent constraint:(whiteSpace 'with' whiteSpace type:ParticleHandleConnectionType)?
   {
     return {
       kind: 'variable-type',
@@ -608,9 +608,9 @@ Modality
   / 'mock-vr'
   / 'mock-voice'
 
-ParticleSlot
+ParticleSlotConnection
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace
-    items:(Indent (SameIndent ParticleSlotItem)*)?
+    items:(Indent (SameIndent ParticleSlotConnectionItem)*)?
   {
     let formFactor: AstNode.SlotFormFactor|null = null;
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
@@ -636,10 +636,10 @@ ParticleSlot
       isSet: !!isSet,
       formFactor,
       provideSlotConnections
-    } as AstNode.ParticleSlot;
+    } as AstNode.ParticleSlotConnection;
   }
 
-ParticleSlotItem
+ParticleSlotConnectionItem
   = SlotFormFactor
   / ParticleProvidedSlot
 

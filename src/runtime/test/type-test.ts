@@ -13,6 +13,7 @@ import {Manifest} from '../manifest.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';
+import {Direction} from '../manifest-ast-nodes.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -126,12 +127,12 @@ describe('types', () => {
       const entity   = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
       const col      = new CollectionType(entity);
-      const iface    = InterfaceType.make('i', [{type: entity}, {type: variable}, {type: col}], [{name: 'x'}]);
+      const iface    = InterfaceType.make('i', [{type: entity, direction: 'any' as Direction}, {type: variable, direction: 'any' as Direction}, {type: col, direction: 'any' as Direction}], [{name: 'x'}]);
       deepEqual(iface.toLiteral(), {
         tag: 'Interface',
         data: {
           name: 'i',
-          handles: [{type: entity.toLiteral()}, {type: variable.toLiteral()}, {type: col.toLiteral()}],
+          handleConnections: [{type: entity.toLiteral(), direction: 'any' as Direction}, {type: variable.toLiteral(), direction: 'any' as Direction}, {type: col.toLiteral(), direction: 'any' as Direction}],
           slots: [{name: 'x'}]
         }
       });
@@ -196,7 +197,7 @@ describe('types', () => {
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a', null, null);
       const arcInfo    = new ArcType();
-      const iface      = InterfaceType.make('i', [{type: entity}, {type: variable}, {type: arcInfo}], []);
+      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any' as Direction}, {type: variable, direction: 'any' as Direction}, {type: arcInfo, direction: 'any' as Direction}], []);
 
       const handleInfo = new HandleType();
 
@@ -301,8 +302,8 @@ describe('types', () => {
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
       assert.equal(iface.interfaceInfo.toString(),
 `interface i
-  Foo {Text value} foo
-  ~a *
+  any Foo {Text value} foo
+  any ~a *
   consume x `);
     });
 
@@ -313,7 +314,7 @@ describe('types', () => {
       const iface = InterfaceType.make('i', [{type: variable}], []);
       assert.equal(iface.interfaceInfo.toString(),
 `interface i
-  ~a *
+  any ~a *
 `);
     });
   });

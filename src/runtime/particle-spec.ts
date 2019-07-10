@@ -72,10 +72,12 @@ export class HandleConnectionSpec {
 
   get isInput() {
     // TODO: we probably don't really want host to be here.
+    // TODO: do we want to consider any here?
     return this.direction === 'in' || this.direction === 'inout' || this.direction === 'host';
   }
 
   get isOutput() {
+    // TODO: do we want to consider any here?
     return this.direction === 'out' || this.direction === 'inout';
   }
 
