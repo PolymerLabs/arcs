@@ -15,7 +15,7 @@ import {logsFactory} from '../../../build/runtime/log-factory.js';
 
 const {warn} = logsFactory('pipe');
 
-export const autofill = async (msg, tid, bus, composerFactory, storage, context) => {
+export const autofill = async (msg, tid, bus, composerFactory, storage, context, portFactory) => {
   if (validateAutofillMsg(msg)) {
     const entity = msg.entity;
     const type = entity.type;
@@ -26,7 +26,8 @@ export const autofill = async (msg, tid, bus, composerFactory, storage, context)
     } else {
       // arc
       const composer = composerFactory(msg.modality);
-      const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
+      const id = generateId();
+      const arc = await Utils.spawn({id, composer, context/*, storage*/, ports: [portFactory(id, bus)]});
       // recipe
       const source = entity.source ? entity.source.replace(/\./g, '_') : '';
       const name = entity.name;
