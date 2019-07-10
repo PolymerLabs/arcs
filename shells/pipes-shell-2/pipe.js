@@ -16,7 +16,7 @@ import {marshalPipesArc, addPipeEntity} from './api/pipes-api.js';
 import {marshalArc, installPlanner, deliverSuggestions, ingestEntity, ingestRecipe, ingestSuggestion, observeOutput} from './api/spawn-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
-import {pecPorts, portFactory, handlePecMessage} from './pec-port.js';
+import {portFactory, handlePecMessage} from './pec-port.js';
 import {initPlanner} from './planner.js';
 import {autofill} from './api/autofill.js';
 import {caption} from './api/caption.js';
