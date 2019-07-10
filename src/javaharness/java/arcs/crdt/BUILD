@@ -7,7 +7,7 @@ package(default_visibility = ["//visibility:public"])
 load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 
 j2cl_library(
-    name = "javaharness_lib-j2cl",
+    name = "crdt-j2cl",
     srcs = glob([
         "*.java",
     ]),
@@ -15,6 +15,5 @@ j2cl_library(
         "//java/arcs:dagger",
         "//java/arcs:dagger_runtime",
         "//java/arcs:javax_inject",
-        "//java/arcs/crdt:crdt-j2cl",
     ],
 )
