@@ -6,8 +6,8 @@ import java.util.Map;
 
 public class NativeParticleImpl implements NativeParticle {
   public ParticleSpec spec;
-  public Map<String, Handle> handles = new HashMap<>();
-  public Map<String, SlotProxy> slotProxiesByName = new HashMap<>();
+  protected Map<String, Handle> handleByName = new HashMap<>();
+  protected Map<String, SlotProxy> slotProxyByName = new HashMap<>();
 
   @Override
   public String getName() {
@@ -23,11 +23,11 @@ public class NativeParticleImpl implements NativeParticle {
   }
 
   @Override
-  public void setHandles(Map<String, Handle> handles) {
+  public void setHandles(Map<String, Handle> handleByName) {
     // TODO: Should be async.
     // TODO: add startBusy & doneBusy support.
     // TODO: Add errors parameter.
-    this.handles = handles;
+    this.handleByName = handleByName;
   }
 
   @Override
@@ -42,21 +42,21 @@ public class NativeParticleImpl implements NativeParticle {
 
   @Override
   public SlotProxy getSlot(String name) {
-    return slotProxiesByName.get(name);
+    return slotProxyByName.get(name);
   }
 
   @Override
   public boolean hasSlotProxy(String name) {
-    return slotProxiesByName.containsKey(name);
+    return slotProxyByName.containsKey(name);
   }
 
   @Override
   public void addSlotProxy(SlotProxy slotProxy) {
-    slotProxiesByName.put(slotProxy.slotName, slotProxy);
+    slotProxyByName.put(slotProxy.slotName, slotProxy);
   }
 
   public void removeSlotProxy(String name) {
-    slotProxiesByName.remove(name);
+    slotProxyByName.remove(name);
   }
 
   @Override

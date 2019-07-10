@@ -11,7 +11,7 @@ public interface NativeParticle {
 
   void setSpec(ParticleSpec spec);
 
-  void setHandles(Map<String, Handle> handles);
+  void setHandles(Map<String, Handle> handleByName);
 
   void onHandleSync(Handle handle, PortableJson model);
   void onHandleUpdate(Handle handle, PortableJson data);
