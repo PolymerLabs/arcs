@@ -34,6 +34,10 @@ public class PECInnerPortImpl implements PECInnerPort {
     private static final String DEV_TOOLS_CONNECTED_MSG = "DevToolsConnected";
     private static final String RENDER_MSG = "Render";
     private static final String CONTENT_FIELD = "content";
+    private static final String MESSAGE_PEC_MESSAGE_KEY = "message";
+    private static final String MESSAGE_PEC_PEC_VALUE = "pec";
+    private static final String MESSAGE_PEC_ENTITY_KEY = "entity";
+
 
     private final String id;
     private ArcsEnvironment environment;
@@ -165,8 +169,10 @@ public class PECInnerPortImpl implements PECInnerPort {
     }
 
     private void postMessage(PortableJson message) {
-        environment.sendMessageToArcs(
-                    "{\"message\": \"pec\", \"id\": \"" + this.id +
-                    "\", \"entity\": " + jsonParser.stringify(message) + "}", null);
+        PortableJson json = jsonParser.parse("{}");
+        json.put(MESSAGE_PEC_MESSAGE_KEY, MESSAGE_PEC_PEC_VALUE);
+        json.put(MESSAGE_PEC_ID_FIELD, this.id);
+        json.put(MESSAGE_PEC_ENTITY_KEY, message);
+        environment.sendMessageToArcs(jsonParser.stringify(json), null);
     }
 }

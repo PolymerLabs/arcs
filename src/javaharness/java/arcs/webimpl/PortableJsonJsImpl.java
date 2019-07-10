@@ -73,6 +73,7 @@ public class PortableJsonJsImpl implements PortableJson {
     public PortableJson getObject(String key) {
         return new PortableJsonJsImpl(jsonObj.asPropertyMap().getAsAny(key));
     }
+
     @Override
     public boolean hasKey(String key) {
         return jsonObj.asPropertyMap().has(key);
