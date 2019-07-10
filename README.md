@@ -24,7 +24,6 @@ Bleeding edge often works and is available on:
 https://live.arcs.dev/
 
 
-
 ## Install
 
 Arcs is developed with a recent version of Node (v10.0.0 at the time of this
@@ -110,8 +109,8 @@ start` will block, so you'll have to run the second command in a new shell):
 $ npm start
 ```
 
-Then open `http://localhost:8786/shells/web-shell` in a web browser
-(or, on MacOS, use `open 'http://localhost:8786/shells/web-shell`).
+Then open `http://localhost:8786/shells/web-shell/` in a web browser
+(or, on MacOS, use `open 'http://localhost:8786/shells/web-shell/`).
 
 ## Subprojects
 Subcomponents have more detailed descriptions. Particularly the extensions
