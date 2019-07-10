@@ -46,12 +46,12 @@ export class BaseNode {
 //  PARTICLE TYPES
 export interface BigCollectionType extends BaseNode {
   kind: 'big-collection-type';
-  type: ParticleArgumentType;
+  type: ParticleHandleConnectionType;
 }
 
 export interface CollectionType extends BaseNode {
   kind: 'collection-type';
-  type: ParticleArgumentType;
+  type: ParticleHandleConnectionType;
 }
 export function isCollectionType(node: BaseNode): node is CollectionType {
   return node.kind === 'collection-type';
@@ -59,13 +59,13 @@ export function isCollectionType(node: BaseNode): node is CollectionType {
 
 export interface ReferenceType extends BaseNode {
   kind: 'reference-type';
-  type: ParticleArgumentType;
+  type: ParticleHandleConnectionType;
 }
 
 export interface TypeVariable extends BaseNode {
   kind: 'variable-type';
   name: string;
-  constraint: ParticleArgument;
+  constraint: ParticleHandleConnection;
 }
 export function isTypeVariable(node: BaseNode): node is TypeVariable {
   return node.kind === 'variable-type';
@@ -79,7 +79,7 @@ export interface SlotType extends BaseNode {
 export function isSlotType(node: BaseNode): node is SlotType {
   return node.kind === 'slot-type';
 }
-export function slandleType(arg: ParticleArgument): SlotType | undefined {
+export function slandleType(arg: ParticleHandleConnection): SlotType | undefined {
   if (isSlotType(arg.type)) {
     return arg.type;
   }
@@ -170,9 +170,9 @@ export interface Particle extends BaseNode {
   name: string;
   implFile?: string;          // not used in RecipeParticle
   verbs?: VerbList;           // not used in RecipeParticle
-  args?: ParticleArgument[];  // not used in RecipeParticle
+  args?: ParticleHandleConnection[];  // not used in RecipeParticle
   modality?: string[];      // not used in RecipeParticle
-  slots?: ParticleSlot[];    // not used in RecipeParticle
+  slots?: ParticleSlotConnection[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
   hasParticleArgument?: boolean;  // not used in RecipeParticle
   trustChecks?: ParticleCheckStatement[];
@@ -262,18 +262,17 @@ export interface ParticleModality extends BaseNode {
   modality: string;
 }
 
-export interface ParticleArgument extends BaseNode {
+export interface ParticleHandleConnection extends BaseNode {
   kind: 'particle-argument';
   direction: Direction;
-  type: ParticleArgumentType;
+  type: ParticleHandleConnectionType;
   isOptional: boolean;
-  dependentConnections: ParticleHandle[];
+  dependentConnections: ParticleHandleConnection[];
   name: string;
   tags: TagList;
 }
 
-export type ParticleHandle = ParticleArgument;
-export type ParticleItem = ParticleModality | ParticleSlot | Description | ParticleHandle;
+export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;
 
 export interface ParticleHandleDescription extends BaseNode {
   kind: 'handle-description';
@@ -284,10 +283,10 @@ export interface ParticleHandleDescription extends BaseNode {
 export interface ParticleInterface extends BaseNode {
   kind: 'interface';
   verb: string;
-  args: ParticleArgument[];
+  args: ParticleHandleConnection[];
 }
 
-export interface ParticleSlot extends BaseNode {
+export interface ParticleSlotConnection extends BaseNode {
   kind: 'particle-slot';
   name: string;
   tags: TagList;
@@ -564,7 +563,7 @@ export interface SlotFormFactor extends BaseNode {
   formFactor: string;
 }
 
-export type ParticleSlotItem = SlotFormFactor | ParticleProvidedSlot;
+export type ParticleSlotConnectionItem = SlotFormFactor | ParticleProvidedSlot;
 
 export interface TypeName extends BaseNode {
   kind: 'type-name';
@@ -614,11 +613,11 @@ export type DirectionArrow = '<-' | '->' | '<->' | 'consume' | 'provide' | '=';
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
-export type ParticleArgumentType = TypeVariable|CollectionType|
+export type ParticleHandleConnectionType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;
 
 // Note that ManifestStorage* are not here, as they do not have 'kind'
-export type All = Import|Meta|MetaName|MetaStorageKey|Particle|ParticleArgument|
+export type All = Import|Meta|MetaName|MetaStorageKey|Particle|ParticleHandleConnection|
     ParticleInterface|RecipeHandle|Resource|Interface|InterfaceArgument|InterfaceInterface|
     InterfaceSlot;
 
