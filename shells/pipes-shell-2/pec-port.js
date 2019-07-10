@@ -33,3 +33,10 @@ export const portFactory = (arcId, bus) => {
   pecPorts[arcId] = port;
   return port;
 };
+
+export const handlePecMessage = (msg) => {
+  if (!pecPorts[msg.id]) {
+    console.error(`Cannot find port for ${msg.id}`);
+  }
+  pecPorts[msg.id].callback({data: msg.entity});
+};
