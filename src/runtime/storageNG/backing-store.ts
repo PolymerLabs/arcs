@@ -1,11 +1,3 @@
-import {CRDTTypeRecord, CRDTModel} from "../crdt/crdt";
-import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback} from "./store";
-import {StorageKey} from "./storage-key";
-import {Exists} from "./drivers/driver-factory";
-import {Type} from "../type";
-import {DirectStore} from "./direct-store";
-import {Dictionary} from "../hot";
-
 /**
  * @license
  * Copyright (c) 2019 Google Inc. All rights reserved.
@@ -15,6 +7,14 @@ import {Dictionary} from "../hot";
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
+import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback} from './store.js';
+import {StorageKey} from './storage-key.js';
+import {Exists} from './drivers/driver-factory.js';
+import {Type} from '../type.js';
+import {DirectStore} from './direct-store.js';
+import {Dictionary} from '../hot.js';
 
 export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T> & {mux_id: string}) => Promise<boolean>;
 
