@@ -198,9 +198,7 @@ class StringDecoder(private var str: String) {
         val dict = mutableMapOf<String, String>()
 
         var num = decoder.getInt(":")
-
-        // while(num-- > 0)
-        while(num --> 0){
+        while(num-- > 0){
           val klen = decoder.getInt(":")
           val key = decoder.chomp(klen)
 
@@ -219,8 +217,7 @@ class StringDecoder(private var str: String) {
         val list = mutableListOf<String>()
 
         var num = decoder.getInt(":")
-        // while(num-- > 0)
-        while(num --> 0) {
+        while(num-- > 0) {
           val len = decoder.getInt(":")
           val chunk = decoder.chomp(len)
           list.add(chunk)
