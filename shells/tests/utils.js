@@ -99,11 +99,11 @@ exports.keys = async function(selector, keys, timeout) {
 
 exports.openNewArc = async function(testTitle, useSolo, storageType) {
   // clean up extra open tabs
-  const openTabs = browser.getTabIds();
-  browser.switchTab(openTabs[0]);
-  openTabs.slice(1).forEach(tabToClose => {
-    browser.close(tabToClose);
-  });
+  //const openTabs = browser.getTabIds();
+  //browser.switchTab(openTabs[0]);
+  //openTabs.slice(1).forEach(tabToClose => {
+  //  browser.close(tabToClose);
+  //});
 
   const storageKey = storageKeyByType[storageType];
   let storage;

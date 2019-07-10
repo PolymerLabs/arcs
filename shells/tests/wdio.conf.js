@@ -24,7 +24,7 @@ const root = `shells`;
 // don't modify after here (in general)
 const process = require('process');
 const fs = require('fs');
-const errorshot = require('wdio-errorshot-reporter');
+//const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
@@ -36,7 +36,7 @@ const chromeArgs = (headless && !debug) ? [HEADLESS_ARG, WHITELISTED_IPS_ARG] : 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
   // wdio-chromedriver-service for more information.
-  port: '9515',
+  port: 9515,
   path: '/',
   //
   // ==================
@@ -165,13 +165,13 @@ exports.config = {
   framework: 'mocha',
   //
   // Test reporter for stdout.
-  reporters: ['spec', errorshot],
-  reporterOptions: {
-    errorshotReporter: {
-      // Template for the screenshot name.
-      template: '%browser%_%timestamp%_%parent%-%title%'
-    }
-  },
+  // reporters: ['spec', errorshot],
+  // reporterOptions: {
+  //   errorshotReporter: {
+  //     // Template for the screenshot name.
+  //     template: '%browser%_%timestamp%_%parent%-%title%'
+  //   }
+  // },
   //
   // Options to be passed to Mocha.
   // See the full list at http://mochajs.org/
