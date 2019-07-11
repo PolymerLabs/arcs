@@ -18,7 +18,7 @@
  */
 
 // modify these config values as needed
-const headless = true;
+const headless = false;
 const root = `shells`;
 
 // don't modify after here (in general)
@@ -101,7 +101,7 @@ exports.config = {
   sync: true,
   //
   // Level of logging verbosity: trace | debug | info | warn | error | silent
-  logLevel: 'error',
+  logLevel: 'warn',
   //
   // Enables colors for log output.
   coloredLogs: true,

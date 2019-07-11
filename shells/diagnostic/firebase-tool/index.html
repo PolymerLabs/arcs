@@ -43,15 +43,23 @@
   }
 </style>
 
+<div>
+  <button onclick="dropAll()">Drop All</button>
+</div>
+
 <img id="busygif" src="./loading.gif">
 
 <script type="module">
   import {Xen} from '../../lib/components/xen.js'
   import '../../lib/build/firebase.js';
   import {database} from '../../lib/database/firebase.js'
-  //
+
   const nodePath = '0_7_0'; ///scott';
-  //
+  const db = database.ref(nodePath);
+
+  // for console work
+  window.db = db;
+
   const itemTemplate = Xen.Template.html`
     <div>
       <div row key="{{key}}" on-click="onClick">
@@ -64,11 +72,9 @@
       <div children></div>
     </div>
   `;
-  //
+
   const snarfAll = async () => {
-    const ref = database.ref(nodePath);
-    // for console work
-    window.db = ref;
+    const ref = db;
     console.log('querying database...');
     ref.once('value', snap => {
       busygif.style.display = 'none';
@@ -107,19 +113,29 @@
           },
           onDelete: event => {
             event.stopPropagation();
-            if (confirm(`Really delete node at location [${path}]?`)) {
+            if (confirmDeleteNode(path)) {
               console.groupCollapsed(`deleting: ${path}`);
               console.log('command to restore node:')
               console.log(`db.child('${path}').set(${JSON.stringify(item)})`);
               console.groupEnd();
-              const ref = database.ref(nodePath).child(path);
-              ref.remove();
               dom.firstElement.setAttribute('deleted', '');
+              db.child(path).remove();
             }
           }
         });
       });
     }
-  }
+  };
+
   snarfAll();
+
+  window.dropAll = () => {
+    if (confirmDeleteNode(nodePath)) {
+      db.remove();
+    }
+  };
+
+  const confirmDeleteNode = path => {
+    return confirm(`Really delete node at location [${path}]?`);
+  };
 </script>

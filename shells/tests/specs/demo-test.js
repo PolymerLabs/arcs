@@ -10,12 +10,20 @@
 
 /* global browser */
 
-const {/*seconds,*/waitFor, click, keys, openNewArc} = require('../utils.js');
+const {seconds, waitFor, click, keys, openNewArc} = require('../utils.js');
 
 const searchFor = text => keys('input[search]', text);
 
-//const receiveEntity = async entity =>
-//  browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
+describe('wait for server', () => {
+  it('is not a test', async function() {
+    //await browser.url(`http://localhost`);
+    //await openNewArc(this.test.fullTitle(), 'firebase');
+    // wait for ALDS to finish init ...
+    console.log('waiting 10s in hopes ALDS spins up...');
+    await browser.pause(seconds(10));
+    console.log('...done');
+  });
+});
 
 ['pouchdb', 'firebase'].forEach(async storage => {
   //describe('pipes ' + storage, () => {
@@ -38,7 +46,7 @@ const searchFor = text => keys('input[search]', text);
 
   describe('demo ' + storage, () => {
     it('restaurants', async function() {
-      await openNewArc(this.test.fullTitle(), undefined, storage);
+      await openNewArc(this.test.fullTitle(), storage);
       const search = `restaurants`;
       const findRestaurants = `[title^="Find restaurants"]`;
       const restaurantItem = `#webtest-title`;
@@ -53,7 +61,7 @@ const searchFor = text => keys('input[search]', text);
       await waitFor(calendarAction);
     });
     it('gifts', async function() {
-      await openNewArc(this.test.fullTitle(), undefined, storage);
+      await openNewArc(this.test.fullTitle(), storage);
       const products = `products`;
       const createList = `[title^="Create shopping list"]`;
       const buyGifts = `[title^="Buy gifts"]`;

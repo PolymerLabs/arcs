@@ -121,7 +121,7 @@ exports.keys = async function(selector, keys, timeout) {
  * @param storage pouchdb or firebase
  */
 
-exports.openNewArc = async function(testTitle, useSolo, storageType) {
+exports.openNewArc = async function(testTitle, storageType, useSolo) {
   // clean up extra open tabs
   //const openTabs = browser.getTabIds();
   //browser.switchTab(openTabs[0]);
@@ -147,11 +147,9 @@ exports.openNewArc = async function(testTitle, useSolo, storageType) {
   }
   console.log(`\n\nrunning test "${testTitle}" [${storage}]\n`);
   const urlParams = [
-    //`testFirebaseKey=${firebaseKey}`,
     //`log`,
     `plannerStorage=volatile`,
-    `storage=${storage}`,
-    'user=selenium'
+    `persona=${storage}`
   ];
   if (useSolo) {
     urlParams.push(`solo=${browser.options.baseUrl}/artifacts/canonical.manifest`);
@@ -164,3 +162,4 @@ exports.openNewArc = async function(testTitle, useSolo, storageType) {
   // only to ensure time for the app to configure itself
   await exports.waitFor('input[search]');
 };
+
