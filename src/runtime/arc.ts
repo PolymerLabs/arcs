@@ -536,7 +536,7 @@ ${this.activeRecipe.toString()}`;
 
     for (const recipeHandle of handles) {
       if (['copy', 'create'].includes(recipeHandle.fate) ||
-          ((recipeHandle.fate === 'map') && (this.context.findStoreById(recipeHandle.id) as StorageStub).isStatic())) {
+          ((recipeHandle.fate === 'map') && (this.context.findStoreById(recipeHandle.id) as StorageStub).isBackedByManifest())) {
         let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);

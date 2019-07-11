@@ -67,7 +67,7 @@ export class StorageStub {
 
   async inflate(storageProviderFactory?: StorageProviderFactory) {
     const factory = storageProviderFactory || this.storageProviderFactory;
-    const store = this.isStatic()
+    const store = this.isBackedByManifest()
         ? await factory.construct(this.id, this.type, this.storageKey)
         : await factory.connect(this.id, this.type, this.storageKey);
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
@@ -76,7 +76,7 @@ export class StorageStub {
     store.name = this.name;
     store.source = this.source;
     store.description = this.description;
-    if (this.isStatic()) {
+    if (this.isBackedByManifest()) {
       await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
     }
     return store;
@@ -86,7 +86,7 @@ export class StorageStub {
     return undefined; // Fake to match StorageProviderBase;
   }
 
-  isStatic(): boolean {
+  isBackedByManifest(): boolean {
     return (this.version !== undefined && !!this.model);
   }
 
