@@ -75,7 +75,7 @@ export function createParticleClaim(
     astNode: ParticleClaimStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): ParticleClaim {
   let claims: Claim[];
-  claims = astNode.claims.map(claimNode => {
+  claims = astNode.expression.map(claimNode => {
   let claim: Claim;
     switch (claimNode.claimType) {
       case ClaimType.IsTag:

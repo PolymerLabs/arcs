@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge} from './graph-internals.js';
-import {ParticleClaim, ClaimType, Claim} from '../../runtime/particle-claim.js';
+import {ClaimType, Claim, ParticleClaim, ClaimDerivesFrom} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
@@ -22,8 +22,7 @@ export class ParticleNode extends Node {
 
   readonly name: string;
 
-  // Maps from handle names to tags.
-  readonly claims: Map<string, ClaimList>;
+  readonly claims: ParticleClaim[];
   readonly checks: Check[];
 
   constructor(particle: Particle) {
@@ -57,17 +56,18 @@ export class ParticleNode extends Node {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
     if (outEdge.claims) {
-      const result: ParticleInput[] = [];
-      outEdge.claims.foreach(claim => {
-        if (claim.type === ClaimType.DerivesFrom) {
-          for (const parentHandle of claim.parentHandles) {
-            const inEdge = this.inEdgesByName.get(parentHandle.name);
-            assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
-            result.push(inEdge);
-          }
+      const derivesClaim : ClaimDerivesFrom = outEdge.claims.find(claim => {
+        return claim.type === ClaimType.DerivesFrom;
+        }) as ClaimDerivesFrom;
+      if (derivesClaim) {
+        const result: ParticleInput[] = [];
+        for (const parentHandle of derivesClaim.parentHandles) {
+          const inEdge = this.inEdgesByName.get(parentHandle.name);
+          assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
+          result.push(inEdge);
         }
-      });
-      return result;
+        return result;
+      }
     }
 
     return this.inEdges;
@@ -82,7 +82,7 @@ export class ParticleInput implements Edge {
   readonly connectionSpec: HandleConnectionSpec;
 
   readonly check?: Check;
-  readonly claims?: ClaimList;
+  readonly claims?: Claim[];
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = otherEnd;
@@ -102,7 +102,7 @@ export class ParticleOutput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  readonly claims?: ClaimList;
+  readonly claims?: Claim[];
 
   constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.start = particleNode;
@@ -111,8 +111,10 @@ export class ParticleOutput implements Edge {
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
     
-    const claims = particleNode.claims.get(this.connectionName);
-    this.claims = claims ? claims : null;
+    const claim = particleNode.claims.find(claim => {
+      return (this.connectionName == claim.handle.name);
+      }, this);
+    this.claims = claim ? claim.claims : null;
   }
 }
 

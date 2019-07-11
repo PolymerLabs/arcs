@@ -19,7 +19,7 @@ import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, To
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate} from '../manifest-ast-nodes.js';
-import {ClaimIsTag, ClaimList} from '../particle-claim.js';
+import {ClaimIsTag, Claim} from '../particle-claim.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -39,7 +39,7 @@ export class Handle implements Comparable<Handle> {
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
-  claims: ClaimList | undefined = undefined;
+  claims: Claim[] | undefined = undefined;
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -170,11 +170,7 @@ export class Handle implements Comparable<Handle> {
     this._storageKey = storage.storageKey;
 
     if (storage.claims) {
-      // TODO: Support multiple tag claims.
-      assert(storage.claims.length <= 1, 'Multiple tag claims is not supported yet.');
-      if (storage.claims.length === 1) {
-        this.claim = storage.claims[0];
-      }
+      this.claims = storage.claims;
     }
   }
   get localName() { return this._localName; }

@@ -1982,15 +1982,19 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
-      assert.equal(particle.trustClaims.size, 2);
+      assert.equal(particle.trustClaims.length, 2);
       
-      const claim1 = particle.trustClaims.get('output1');
-      assert.equal(claim1.handle.name, 'output1');
-      assert.equal((claim1.expression as ClaimIsTag).tag, 'property1');
+      const claim1 = particle.trustClaims.find(claim => {
+        return (claim.handle.name == 'output1');
+        });
+      assert(claim1);
+      assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
 
-      const claim2 = particle.trustClaims.get('output2');
-      assert.equal(claim2.handle.name, 'output2');
-      assert.equal((claim2.expression as ClaimIsTag).tag, 'property2');
+      const claim2 = particle.trustClaims.find(claim => {
+        return (claim.handle.name == 'output2');
+        });
+      assert(claim2);
+      assert.equal((claim2.claims[0] as ClaimIsTag).tag, 'property2');
     });
 
     it('supports "is not" tag claims', async () => {
@@ -2003,12 +2007,14 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
-      assert.equal(particle.trustClaims.size, 1);
+      assert.equal(particle.trustClaims.length, 1);
 
-      const claim1 = particle.trustClaims.get('output1');
-      assert.equal(claim1.handle.name, 'output1');
-      assert.equal((claim1.expression as ClaimIsTag).isNot, true);
-      assert.equal((claim1.expression as ClaimIsTag).tag, 'property1');
+      const claim1 = particle.trustClaims.find(claim => {
+        return (claim.handle.name == 'output1');
+        });
+      assert(claim1);
+      assert.equal((claim1.claims[0] as ClaimIsTag).isNot, true);
+      assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
      });
 
     it('supports "derives from" claims with multiple parents', async () => {
@@ -2022,11 +2028,13 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
-      assert.equal(particle.trustClaims.size, 1);
+      assert.equal(particle.trustClaims.length, 1);
       
-      const claim = particle.trustClaims.get('output');
-      assert.equal(claim.handle.name, 'output');
-      assert.sameMembers((claim.expression as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);
+      const claim = particle.trustClaims.find(claim => {
+        return (claim.handle.name == 'output');
+        });
+      assert(claim);
+      assert.sameMembers((claim.claims[0] as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);
     });
 
     it('supports multiple check statements', async () => {

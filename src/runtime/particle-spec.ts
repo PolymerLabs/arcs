@@ -17,7 +17,7 @@ import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
-import {ClaimList, createClaimList} from './particle-claim.js';
+import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -49,7 +49,7 @@ export class HandleConnectionSpec {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  claims?: ClaimList;
+  claims?: Claim[];
   check?: Check;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
@@ -208,7 +208,7 @@ export class ParticleSpec {
   implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
-  trustClaims: Map<string, ClaimList>;
+  trustClaims: ParticleClaim[];
   trustChecks: Check[];
 
   constructor(model: SerializedParticleSpec) {
@@ -425,8 +425,8 @@ export class ParticleSpec {
     return this.toString();
   }
 
-  private validateTrustClaims(statements: ParticleClaimStatement[]): Map<string, ClaimList> {
-    const results: Map<string, ClaimList> = new Map();
+  private validateTrustClaims(statements: ParticleClaimStatement[]): ParticleClaim[] {
+    const results: ParticleClaim[] = [];
     if (statements) {
       statements.forEach(statement => {
         const handle = this.handleConnectionMap.get(statement.handle);
@@ -439,8 +439,9 @@ export class ParticleSpec {
         if (handle.claims) {
           throw new Error(`Can't make multiple claims on the same output (${statement.handle}).`);
         }
-        handle.claims = createClaimList(handle, statement, this.handleConnectionMap);
-        results.set(statement.handle, handle.claims);
+        const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
+        handle.claims = particleClaim.claims
+        results.push(particleClaim);
       });
     }
     return results;

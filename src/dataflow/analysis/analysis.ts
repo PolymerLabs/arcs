@@ -52,7 +52,7 @@ function validateSingleEdge(edgeToCheck: Edge, graph: FlowGraph): ValidationResu
   // Check every input path into the given edge.
   // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
   for (const path of allInputPaths(edgeToCheck)) {
-    const tagsForPath = computeTagClaimsInPath(path);
+   const tagsForPath = computeTagClaimsInPath(path);
     const handlesInPath = path.nodes.filter(n => n instanceof HandleNode) as HandleNode[];
     if (!evaluateCheck(check.expression, tagsForPath, handlesInPath, graph)) {
       finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${path.toString()}`);
@@ -74,20 +74,23 @@ function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
   // We traverse the path in the forward direction, so we can cancel correctly.
   const edgesInPath = path.edgesInForwardDirection();
   edgesInPath.forEach(edge => {
-    const claim = edge.claim;
-    if (!claim || claim.type !== ClaimType.IsTag) {
-      return;
+    if (edge.claims) {
+      edge.claims.forEach(claim => {
+        if (claim.type !== ClaimType.IsTag) {
+          return;
+        }
+        if (!claim.isNot) {
+          tags.add(claim.tag);
+          return;
+        }
+        // Our current claim is a "not" tag claim. 
+        // Ignore it if there are no preceding tag claims
+        if (tags.size === 0) {
+          return;
+        }
+        tags.delete(claim.tag);
+      });
     }
-    if (!claim.isNot) {
-      tags.add(claim.tag);
-      return;
-    }
-    // Our current claim is a "not" tag claim. 
-    // Ignore it if there are no preceding tag claims
-    if (tags.size === 0) {
-      return;
-    }
-    tags.delete(claim.tag);
   });
   return tags;
 }
