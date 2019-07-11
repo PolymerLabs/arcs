@@ -28,14 +28,14 @@ export function typeSummary(descriptor) {
 }
 
 
-class SchemaGenerator {
+export class Schema2Base {
   private desc: string;
-  private ext: string;
+  private fileNamer: (schemaName: string) => string;
   private generate: (name: string, schema) => string;
 
-  constructor(description: string, extension: string, generator: (name: string, schema) => string) {
+  constructor(description: string, fileNamer: (schemaName: string) => string, generator: (name: string, schema) => string) {
     this.desc = description;
-    this.ext = extension;
+    this.fileNamer = fileNamer;
     this.generate = generator;
   }
 
@@ -46,13 +46,13 @@ class SchemaGenerator {
     const contents = fs.readFileSync(file, 'utf-8');
     const manifest = await Manifest.parse(contents);
     for (const schema of Object.values(manifest.schemas)) {
-      const outFile = `entity-${schema.names[0].toLowerCase()}.${this.ext}`;
+      const outFile = this.fileNamer(schema.names[0]);
       const contents = this.generate(schema.names[0], schema);
       fs.writeFileSync(outputPrefix + outFile, contents);
     }
   }
 
-  private get scriptName() {
+  get scriptName() {
     return path.basename(__filename).split('.')[0];
   }
 
