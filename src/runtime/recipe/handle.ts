@@ -169,9 +169,7 @@ export class Handle implements Comparable<Handle> {
     this._mappedType = storage.type;
     this._storageKey = storage.storageKey;
 
-    if (storage.claims) {
-      this.claims = storage.claims;
-    }
+    this.claims = storage.claims;
   }
   get localName() { return this._localName; }
   set localName(name: string) { this._localName = name; }

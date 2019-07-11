@@ -56,9 +56,8 @@ export class ParticleNode extends Node {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
     if (outEdge.claims) {
-      const derivesClaim : ClaimDerivesFrom = outEdge.claims.find(claim => {
-        return claim.type === ClaimType.DerivesFrom;
-        }) as ClaimDerivesFrom;
+      const derivesClaim: ClaimDerivesFrom = outEdge.claims.find(claim => 
+        claim.type === ClaimType.DerivesFrom) as ClaimDerivesFrom;
       if (derivesClaim) {
         const result: ParticleInput[] = [];
         for (const parentHandle of derivesClaim.parentHandles) {
@@ -111,10 +110,10 @@ export class ParticleOutput implements Edge {
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
     
-    const claim = particleNode.claims.find(claim => {
-      return (this.connectionName === claim.handle.name);
-      }, this);
+
+    const claim = particleNode.claims.find(claim => this.connectionName === claim.handle.name);
     this.claims = claim ? claim.claims : null;
+
   }
 }
 

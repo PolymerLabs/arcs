@@ -1982,18 +1982,14 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
-      assert.equal(particle.trustClaims.length, 2);
+      assert.lengthOf(particle.trustClaims, 2);
       
-      const claim1 = particle.trustClaims.find(claim => {
-        return (claim.handle.name === 'output1');
-        });
-      assert(claim1);
+      const claim1 = particle.trustClaims.find(claim => claim.handle.name === 'output1');
+      assert.isNotNull(claim1);
       assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
 
-      const claim2 = particle.trustClaims.find(claim => {
-        return (claim.handle.name === 'output2');
-        });
-      assert(claim2);
+      const claim2 = particle.trustClaims.find(claim => claim.handle.name === 'output2');
+      assert.isNotNull(claim2);
       assert.equal((claim2.claims[0] as ClaimIsTag).tag, 'property2');
     });
 
@@ -2009,10 +2005,8 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.length, 1);
 
-      const claim1 = particle.trustClaims.find(claim => {
-        return (claim.handle.name === 'output1');
-        });
-      assert(claim1);
+      const claim1 = particle.trustClaims.find(claim => claim.handle.name === 'output1');
+      assert.isNotNull(claim1);
       assert.equal((claim1.claims[0] as ClaimIsTag).isNot, true);
       assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
      });
@@ -2030,10 +2024,8 @@ resource SomeName
       assert.isEmpty(particle.trustChecks);
       assert.equal(particle.trustClaims.length, 1);
       
-      const claim = particle.trustClaims.find(claim => {
-        return (claim.handle.name === 'output');
-        });
-      assert(claim);
+      const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
+      assert.isNotNull(claim);
       assert.sameMembers((claim.claims[0] as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);
     });
 
