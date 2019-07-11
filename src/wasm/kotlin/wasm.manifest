@@ -40,3 +40,10 @@ recipe
     data <- h1
     res -> h2
     info = h3
+
+
+particle ServiceParticle in 'build/bin/wasm32/mainDebugExecutable/main.wasm'
+  consume root
+
+recipe ServicesAPI
+  ServiceParticle

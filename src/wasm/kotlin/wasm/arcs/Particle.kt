@@ -51,21 +51,26 @@ abstract class Particle : WasmObject() {
 
     abstract fun onHandleUpdate(handle: Handle)
     abstract fun onHandleSync(handle: Handle, willSync: Boolean)
+
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
       val template = if (sendTemplate) getTemplate(slotName) else ""
       var model = ""
       if (sendModel) {
-        val sb = StringBuilder()
-        var i = 0
-        populateModel(slotName) { key: String, value: String ->
-          sb.append(key.length).append(":").append(key)
-          sb.append(value.length).append(":").append(value)
-          i++
-        }
-        model = "$i:$sb"
+        val dict = populateModel(slotName)
+        model = StringEncoder.encodeDictionary(dict)
       }
 
       render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
+    }
+
+    fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
+      val encoded = StringEncoder.encodeDictionary(args)
+      serviceRequest(
+        this.toWasmAddress(),
+        call.toWasmString(),
+        encoded.toWasmString(),
+        tag.toWasmString()
+      )
     }
 
     open fun fireEvent(slotName: String, eventName: String) {
@@ -73,15 +78,18 @@ abstract class Particle : WasmObject() {
       renderSlot(slotName)
     }
 
+    open fun init() {}
     open fun getTemplate(slotName: String): String = ""
-    open fun populateModel(slotName: String, accumulateModel: (String, String) -> Unit): String = ""
+    open fun populateModel(slotName: String, model: Map<String, String> = mapOf()): Map<String, String> = model
+    open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
+
 }
 
 abstract class Handle : WasmObject() {
     var name: String? = null
     var particle: Particle? = null
     abstract fun sync(encoded: String)
-    abstract fun update(encoded1: String, encoded2: String)
+    abstract fun update(added: String, removed: String)
 }
 
 open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handle() {
@@ -91,8 +99,8 @@ open class Singleton<T : Entity<T>> constructor(val entityCtor: () -> T) : Handl
         entity = entityCtor.invoke().decodeEntity(encoded)
     }
 
-    override fun update(encoded1: String, encoded2: String) {
-        entity = entityCtor.invoke().decodeEntity(encoded1)
+    override fun update(added: String, removed: String) {
+        entity = entityCtor.invoke().decodeEntity(added)
     }
 
     fun get(): T? {
@@ -183,6 +191,42 @@ class Collection<T : Entity<T>> constructor(private val entityCtor: () -> T) : H
 
 class StringDecoder(private var str: String) {
 
+    companion object {
+
+      fun decodeDictionary(str: String): Map<String, String> {
+        val decoder = StringDecoder(str)
+        val dict = mutableMapOf<String, String>()
+
+        var num = decoder.getInt(":")
+        while(num-- > 0){
+          val klen = decoder.getInt(":")
+          val key = decoder.chomp(klen)
+
+          val vlen = decoder.getInt(":")
+          val value = decoder.chomp(vlen)
+
+          dict[key] = value
+        }
+
+        return dict
+      }
+
+      fun decodeList(str: String): List<String> {
+        val decoder = StringDecoder(str)
+
+        val list = mutableListOf<String>()
+
+        var num = decoder.getInt(":")
+        while(num-- > 0) {
+          val len = decoder.getInt(":")
+          val chunk = decoder.chomp(len)
+          list.add(chunk)
+        }
+
+        return list
+      }
+    }
+
     fun done():Boolean {
         return str.isEmpty()
     }
@@ -232,10 +276,23 @@ class StringDecoder(private var str: String) {
 
 class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
+    companion object {
+      fun encodeDictionary(dict: Map<String, String>): String {
+        val sb = StringBuilder()
+        sb.append(dict.size).append(":")
+
+        for((key, value) in dict) {
+          sb.append(key.length).append(":").append(key)
+          sb.append(value.length).append(":").append(value)
+        }
+        return sb.toString()
+      }
+    }
+
     fun result():String = sb.toString()
 
     fun encode(prefix: String, str: String) {
-        sb.append(prefix + str.length.toString() + ":" + str + "|")
+        sb.append("$prefix${str.length}:$str|")
     }
 
     fun encode(prefix: String, num: Double) {
