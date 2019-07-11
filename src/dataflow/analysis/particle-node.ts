@@ -112,7 +112,7 @@ export class ParticleOutput implements Edge {
     this.label = `${particleNode.name}.${this.connectionName}`;
     
     const claim = particleNode.claims.find(claim => {
-      return (this.connectionName == claim.handle.name);
+      return (this.connectionName === claim.handle.name);
       }, this);
     this.claims = claim ? claim.claims : null;
   }

@@ -1985,13 +1985,13 @@ resource SomeName
       assert.equal(particle.trustClaims.length, 2);
       
       const claim1 = particle.trustClaims.find(claim => {
-        return (claim.handle.name == 'output1');
+        return (claim.handle.name === 'output1');
         });
       assert(claim1);
       assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
 
       const claim2 = particle.trustClaims.find(claim => {
-        return (claim.handle.name == 'output2');
+        return (claim.handle.name === 'output2');
         });
       assert(claim2);
       assert.equal((claim2.claims[0] as ClaimIsTag).tag, 'property2');
@@ -2010,7 +2010,7 @@ resource SomeName
       assert.equal(particle.trustClaims.length, 1);
 
       const claim1 = particle.trustClaims.find(claim => {
-        return (claim.handle.name == 'output1');
+        return (claim.handle.name === 'output1');
         });
       assert(claim1);
       assert.equal((claim1.claims[0] as ClaimIsTag).isNot, true);
@@ -2031,7 +2031,7 @@ resource SomeName
       assert.equal(particle.trustClaims.length, 1);
       
       const claim = particle.trustClaims.find(claim => {
-        return (claim.handle.name == 'output');
+        return (claim.handle.name === 'output');
         });
       assert(claim);
       assert.sameMembers((claim.claims[0] as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);

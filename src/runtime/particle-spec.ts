@@ -440,7 +440,7 @@ export class ParticleSpec {
           throw new Error(`Can't make multiple claims on the same output (${statement.handle}).`);
         }
         const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
-        handle.claims = particleClaim.claims
+        handle.claims = particleClaim.claims;
         results.push(particleClaim);
       });
     }

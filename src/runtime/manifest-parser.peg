@@ -341,7 +341,7 @@ ParticleClaimStatement
 ParticleClaimExpression
   = first:ParticleClaim rest:(whiteSpace 'and' whiteSpace ParticleClaim)*
   {
-    if (rest.length == 0) {
+    if (rest.length === 0) {
       return [first] as AstNode.ParticleClaimExpression;
     }
     const claims: AstNode.ParticleClaim[] = [first, ...rest.map(item => item[3])];
