@@ -1,0 +1,67 @@
+/**
+ * @license
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+import {assert} from '../../../platform/chai-web.js';
+import {StorageMode, ProxyMessageType, ProxyMessage} from '../store.js';
+import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
+import {VolatileStorageKey, VolatileStorageDriverProvider} from '../drivers/volatile.js';
+import {Exists, DriverFactory} from '../drivers/driver-factory.js';
+import {Runtime} from '../../runtime.js';
+import {BackingStore} from '../backing-store.js';
+import {deepEqual} from 'assert';
+
+function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTCount) {
+  if (message.type === ProxyMessageType.ModelUpdate) {
+    assert.deepEqual(message.model, model.getData());
+  } else {
+    assert.fail('message is not a ModelUpdate');
+  }
+}
+
+describe('Volatile + Backing Store Integration', async () => {
+
+  beforeEach(() => {
+    VolatileStorageDriverProvider.register();
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  it('will allow storage of a number of objects', async () => {
+    const runtime = new Runtime();
+    const storageKey = new VolatileStorageKey('unique');
+    const store = await BackingStore.construct<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Backing, CRDTCount);
+
+    const count1 = new CRDTCount();
+    count1.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
+
+    const count2 = new CRDTCount();
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', version: {from: 0, to: 10}, value: 15});
+
+    const id = store.on(async (message, muxId) => true);
+    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count1.getData(), id}, 'thing0'));
+    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count2.getData(), id}, 'thing1'));
+
+    await store.idle();
+    let message: ProxyMessage<CRDTCountTypeRecord>;
+    let muxId: string;
+    const id2 = store.on(async (m, id) => {message = m; muxId = id; return true;});
+    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2}, 'thing0');
+    assertHasModel(message, count1);
+    assert.equal(muxId, 'thing0');
+    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2}, 'thing1');
+    assertHasModel(message, count2);
+    assert.equal(muxId, 'thing1');
+    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2}, 'not-a-thing');
+    assertHasModel(message, new CRDTCount());
+    assert.equal(muxId, 'not-a-thing');
+  });
+});

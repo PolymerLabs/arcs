@@ -12,44 +12,14 @@ import {assert} from '../../../platform/chai-web.js';
 import {Store, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage} from '../store.js';
 import {SequenceTest, ExpectedResponse, SequenceOutput} from '../../testing/sequence.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../crdt/crdt-count.js';
-import {DriverFactory, Driver, ReceiveMethod, StorageDriverProvider, Exists} from '../drivers/driver-factory.js';
+import {DriverFactory, Exists} from '../drivers/driver-factory.js';
 import {StorageKey} from '../storage-key.js';
 import {Runtime} from '../../runtime.js';
 import {VolatileStorageKey, VolatileStorageDriverProvider} from '../drivers/volatile.js';
 import {Dictionary} from '../../hot.js';
 import {MockFirebaseStorageDriverProvider} from '../testing/mock-firebase.js';
 import {FirebaseStorageKey} from '../drivers/firebase.js';
-
-class MockDriver<Data> extends Driver<Data> {
-  receiver: ReceiveMethod<Data>;
-  async read(key: StorageKey) { throw new Error('unimplemented'); }
-  async write(key: StorageKey, value: {}) { throw new Error('unimplemented'); }
-  registerReceiver(receiver: ReceiveMethod<Data>) {
-    this.receiver = receiver;
-  }
-  async send(model: Data): Promise<boolean> {
-    return true;
-  }
-}
-
-class MockStorageDriverProvider implements StorageDriverProvider {
-  willSupport(storageKey: StorageKey) {
-    return true;
-  }
-  async driver<Data>(storageKey: StorageKey, exists: Exists) {
-    return new MockDriver<Data>(storageKey, exists);
-  }
-}
-
-class MockStorageKey extends StorageKey {
-  constructor() {
-    super('testing');
-  }
-
-  toString() {
-    return `${this.protocol}://`;
-  }
-}
+import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 
 let testKey: StorageKey;
 

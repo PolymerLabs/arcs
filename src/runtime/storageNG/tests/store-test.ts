@@ -9,42 +9,12 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Store, StorageMode, DirectStore, ProxyMessageType} from '../store.js';
-import {Exists, DriverFactory, StorageDriverProvider, Driver, ReceiveMethod} from '../drivers/driver-factory.js';
+import {Store, StorageMode, ProxyMessageType} from '../store.js';
+import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {CRDTCount, CountOpTypes, CountData, CountOperation} from '../../crdt/crdt-count.js';
 import {StorageKey} from '../storage-key.js';
-
-class MockDriver<Data> extends Driver<Data> {
-  receiver: ReceiveMethod<Data>;
-  async read(key: StorageKey) { throw new Error('unimplemented'); }
-  async write(key: StorageKey, value: {}) { throw new Error('unimplemented'); }
-  registerReceiver(receiver: ReceiveMethod<Data>) {
-    this.receiver = receiver;
-  }
-  async send(model: Data): Promise<boolean> {
-    throw new Error('send implementation required for testing');
-  }
-}
-
-class MockStorageDriverProvider implements StorageDriverProvider {
-
-  willSupport(storageKey: StorageKey) {
-    return true;
-  }
-  async driver<Data>(storageKey: StorageKey, exists: Exists) {
-    return new MockDriver<Data>(storageKey, exists);
-  }
-}
-
-class MockStorageKey extends StorageKey {
-  constructor() {
-    super('testing');
-  }
-
-  toString() {
-    return `${this.protocol}://`;
-  }
-}
+import {DirectStore} from '../direct-store.js';
+import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/test-storage.js';
 
 let testKey: StorageKey;
 

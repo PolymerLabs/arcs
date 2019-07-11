@@ -16,4 +16,6 @@ export abstract class StorageKey {
   }
 
   abstract toString(): string;
+
+  abstract childWithComponent(component: string): StorageKey; 
 }
