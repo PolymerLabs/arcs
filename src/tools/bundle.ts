@@ -108,7 +108,7 @@ function collectDependencies(manifest: Manifest, dependencies: Set<string>) {
     dependencies.add(particle.implFile);
   }
   for (const store of manifest.stores) {
-    if (store instanceof StorageProviderBase && store.source) {
+    if (store.source) {
       dependencies.add(store.source);
     }
   }

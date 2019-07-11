@@ -37,6 +37,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
+import {VolatileStorageProvider, VolatileStorage} from './storage/volatile-storage.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -50,40 +51,43 @@ export class ManifestError extends Error {
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
 // deflated rather than requiring this stub.
 export class StorageStub {
-  type: Type;
-  id: string;
-  name: string;
-  storageKey: string;
-  storageProviderFactory: StorageProviderFactory;
-  referenceMode = false;
-  originalId: string;
-  description: string; // Fake to match StorageProviderBase;
-  /** Trust tags claimed by this data store. */
-  claims: ClaimIsTag[];
+  constructor(public readonly type: Type, 
+              public readonly id: string,
+              public readonly name: string,
+              public readonly storageKey: string,
+              public readonly storageProviderFactory: StorageProviderFactory,
+              public readonly originalId: string,
+                /** Trust tags claimed by this data store. */
+              public readonly claims: ClaimIsTag[],
+              public readonly description: string,
+              public readonly version?: number,
+              public readonly source?: string,
+              public readonly referenceMode: boolean = false,
+              public readonly model?: {}[]) {}
 
-  constructor(type: Type, id: string, name: string, storageKey: string, storageProviderFactory: StorageProviderFactory, originalId: string, claims: ClaimIsTag[]) {
-    this.type = type;
-    this.id = id;
-    this.name = name;
-    this.storageKey = storageKey;
-    this.storageProviderFactory = storageProviderFactory;
-    this.originalId = originalId;
-    this.claims = claims;
-  }
-
-  get version(): number {
-    return undefined; // Fake to match StorageProviderBase.
-  }
-
-  async inflate() {
-    const store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+  async inflate(storageProviderFactory?: StorageProviderFactory) {
+    const factory = storageProviderFactory || this.storageProviderFactory;
+    const store = this.isBackedByManifest()
+        ? await factory.construct(this.id, this.type, this.storageKey)
+        : await factory.connect(this.id, this.type, this.storageKey);
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
     store.originalId = this.originalId;
+    store.referenceMode = this.referenceMode;
+    store.name = this.name;
+    store.source = this.source;
+    store.description = this.description;
+    if (this.isBackedByManifest()) {
+      await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
+    }
     return store;
   }
 
   toLiteral() {
     return undefined; // Fake to match StorageProviderBase;
+  }
+
+  isBackedByManifest(): boolean {
+    return (this.version !== undefined && !!this.model);
   }
 
   toString(handleTags: string[]): string {
@@ -97,8 +101,19 @@ export class StorageStub {
     if (this.id) {
       handleStr.push(`'${this.id}'`);
     }
+    if (this.originalId) {
+      handleStr.push(`!!${this.originalId}`);
+    }
+    if (this.version !== undefined) {
+      handleStr.push(`@${this.version}`);
+    }
     if (handleTags && handleTags.length) {
       handleStr.push(`${handleTags.join(' ')}`);
+    }
+    if (this.source) {
+      handleStr.push(`in '${this.source}'`);
+    } else if (this.storageKey) {
+      handleStr.push(`at '${this.storageKey}'`);
     }
     // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
     // serialized here too - could it ever be part of StorageStub?
@@ -184,10 +199,10 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores: (StorageProviderBase | StorageStub)[] = [];
+  private _stores: StorageStub[] = [];
   private _interfaces = <InterfaceInfo[]>[];
-  storeTags: Map<StorageProviderBase | StorageStub, string[]> = new Map();
-  private _fileName: string | null = null;
+  storeTags: Map<StorageStub, string[]> = new Map();
+  private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   private readonly _idGenerator: IdGenerator = IdGenerator.newSession();
@@ -248,7 +263,7 @@ export class Manifest {
   get fileName() {
     return this._fileName;
   }
-  get stores() {
+  get stores(): StorageStub[] {
     return this._stores;
   }
   get allStores() {
@@ -273,23 +288,24 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type: Type, name: string, id: string, tags: string[], claims?: ClaimIsTag[], storageKey?: string): Promise<StorageProviderBase | StorageStub> {
-    const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
-    assert(store.version !== null);
-    store.name = name;
-    store.claims = claims || [];
-    this.storeManifestUrls.set(store.id, this.fileName);
-    return this._addStore(store, tags);
+  async createStore(type: Type, name: string, id: string, tags: string[], claims?: ClaimIsTag[], storageKey?: string) : Promise<StorageProviderBase | StorageStub> {
+    return this.newStorageStub(type, name, id, storageKey, tags, null, claims);
   }
 
-  _addStore(store: StorageProviderBase | StorageStub, tags: string[]): StorageProviderBase | StorageStub {
+  _addStore(store: StorageStub, tags: string[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
     return store;
   }
 
-  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string, claims: ClaimIsTag[]): StorageProviderBase | StorageStub {
-    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId, claims), tags);
+  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[],
+                 originalId: string, claims: ClaimIsTag[], description?: string, version?: number,
+                 source?: string, referenceMode?: boolean, model?: {}[]) {
+    if (source) {
+      this.storeManifestUrls.set(id, this.fileName);
+    }
+    return this._addStore(new StorageStub(
+        type, id, name, storageKey, this.storageProviderFactory, originalId, claims, description, version, source, referenceMode, model), tags);
   }
 
   _find<a>(manifestFinder: ManifestFinder<a>): a {
@@ -337,16 +353,16 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store: StorageProviderBase | StorageStub) {
-    return this._find(manifest => manifest.storeTags.get(store));
+  findStoreTags(store: StorageStub) : Set<string> {
+    return new Set(this._find(manifest => manifest.storeTags.get(store)));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
   }
-  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): (StorageProviderBase | StorageStub)[] {
+  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): StorageStub[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store: StorageProviderBase | StorageStub) {
+    function typePredicate(store: StorageStub) {
       const resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
         return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
@@ -363,7 +379,7 @@ export class Manifest {
 
       return TypeChecker.compareTypes({type: store.type}, {type});
     }
-    function tagPredicate(manifest: Manifest, store: StorageProviderBase | StorageStub) {
+    function tagPredicate(manifest: Manifest, store: StorageStub) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
 
@@ -1171,8 +1187,7 @@ ${e.message}
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
-      manifest.newStorageStub(type, name, id, item.source, tags, originalId, claims);
-      return;
+      return manifest.newStorageStub(type, name, id, item.source, tags, originalId, claims, item.description, item.version);
     }
 
     let json: string;
@@ -1200,21 +1215,22 @@ ${e.message}
     }
 
     // TODO: clean this up
-    let unitType: Type;
+    let unitType: Type = null;
+    let referenceMode = true;
     if (type instanceof CollectionType) {
       unitType = type.collectionType;
     } else if (type instanceof BigCollectionType) {
       unitType = type.bigCollectionType;
     } else {
       if (entities.length === 0) {
-        await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
-        return;
+        referenceMode = false;
+      } else {
+        entities = entities.slice(entities.length - 1);
+        unitType = type;
       }
-      entities = entities.slice(entities.length - 1);
-      unitType = type;
     }
 
-    if (unitType instanceof EntityType) {
+    if (unitType && unitType instanceof EntityType) {
       let hasSerializedId = false;
       entities = entities.map(entity => {
         if (entity == null) {
@@ -1236,9 +1252,6 @@ ${e.message}
       }
     }
 
-    const version = item.version || 0;
-    const store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
-
     // While the referenceMode hack exists, we need to look at the entities being stored to
     // determine whether this store should be in referenceMode or not.
     // TODO(shans): Eventually the actual type will need to be part of the determination too.
@@ -1249,7 +1262,7 @@ ${e.message}
       storageKey = manifest.findStoreByName(storageKey).storageKey;
       entities = entities.map(({id, rawData}) => ({id, storageKey}));
     } else if (entities.length > 0) {
-      store.referenceMode = false;
+      referenceMode = false;
     }
 
     // For this store to be able to be treated as a CRDT, each item needs a key.
@@ -1266,27 +1279,10 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-
-    // TODO(lindner): fromLiteral is not declared in the StorageProviderBase/StorageStub interface
-    // tslint:disable-next-line: no-any
-    await (store as any).fromLiteral({version, model});
-  }
-
-  private static async _createStore(
-      manifest: Manifest,
-      type: Type,
-      name: string,
-      id: string,
-      tags: string[],
-      item,
-      originalId: string,
-      claims: ClaimIsTag[]): Promise<StorageProviderBase | StorageStub> {
-    const store = await manifest.createStore(type, name, id, tags, claims);
-    // TODO(lindner): Property 'source' does not exist on type 'StorageStub | StorageProviderBase'.
-    store['source'] = item.source;
-    store.description = item.description;
-    store.originalId = originalId;
-    return store;
+    const version = item.version || 0;
+    const storageKey = (manifest.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
+    return manifest.newStorageStub(
+        type, name, id, storageKey, tags, originalId, claims, item.description, version, item.source, referenceMode, model);
   }
 
   private _newRecipe(name: string): Recipe {

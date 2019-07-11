@@ -29,12 +29,35 @@ describe('Multiplexer', () => {
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
-    const postsStore = context.stores[0];
     const recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;
     const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowTwo\n    post <- v1\n    consume item as s1`;
-    await postsStore.store({id: '1', rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
-    await postsStore.store({id: '2', rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}}, ['key2']);
-    await postsStore.store({id: '3', rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key3']);
+    const postsStub = context.stores[0];
+    postsStub.model.push({
+      id: '1',
+      keys: ['key1'],
+      value: {
+        id: '1',
+        rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}
+      }
+    });
+    postsStub.model.push({
+      id: '2',
+      keys: ['key2'],
+      value: {
+        id: '2',
+        rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}
+      }
+    });
+    postsStub.model.push({
+      id: '3',
+      keys: ['key3'],
+      value: {
+        id: '3',
+        rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}
+      }
+    });
+    postsStub['referenceMode'] = false;
+    postsStub['version'] = '1';
     await helper.makePlans();
 
     // Render 3 posts
@@ -54,6 +77,7 @@ describe('Multiplexer', () => {
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
+    const postsStore = helper.arc.findStoreById(helper.arc.activeRecipe.handles[0].id);
     await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
     await helper.idle();
     assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);

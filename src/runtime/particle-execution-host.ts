@@ -274,11 +274,12 @@ class PECOuterPortImpl extends PECOuterPort {
       const missingHandles: Handle[] = [];
       for (const handle of recipe0.handles) {
         const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
-        if (!fromHandle) {
+        if (fromHandle) {
+          handle.mapToStorage(fromHandle);
+        } else {
           missingHandles.push(handle);
           continue;
         }
-        handle.mapToStorage(fromHandle);
       }
       if (missingHandles.length > 0) {
         let recipeToResolve = recipe0;
@@ -300,13 +301,13 @@ class PECOuterPortImpl extends PECOuterPort {
           if (recipe0.isResolved()) {
             // TODO: pass tags through too, and reconcile with similar logic
             // in Arc.deserialize.
-            manifest.stores.forEach(async store => {
+            for (const store of manifest.stores) {
               if (store instanceof StorageStub) {
                 this.arc._registerStore(await store.inflate(), []);
               } else {
                 this.arc._registerStore(store, []);
               }
-            });
+            }
             // TODO: Awaiting this promise causes tests to fail...
             floatingPromiseToAudit(arc.instantiate(recipe0));
           } else {

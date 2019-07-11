@@ -101,6 +101,17 @@ export class VolatileStorage extends StorageBase {
   }
 
   async _construct(id, type, keyFragment) {
+    const key = this.constructKey(keyFragment);
+    // TODO(shanestephens): should pass in factory, not 'this' here.
+    const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key);
+    if (this._memoryMap[key] !== undefined) {
+      return null;
+    }
+    this._memoryMap[key] = provider;
+    return provider;
+  }
+
+  constructKey(keyFragment: string): string {
     const key = new VolatileKey(keyFragment);
     if (key.arcId === undefined) {
       key.arcId = this.arcId.toString();
@@ -108,13 +119,7 @@ export class VolatileStorage extends StorageBase {
     if (key.location === undefined) {
       key.location = 'volatile-' + this.localIDBase++;
     }
-    // TODO(shanestephens): should pass in factory, not 'this' here.
-    const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key.toString());
-    if (this._memoryMap[key.toString()] !== undefined) {
-      return null;
-    }
-    this._memoryMap[key.toString()] = provider;
-    return provider;
+    return key.toString();
   }
 
   async connect(id: string, type: Type, key: string) : Promise<VolatileStorageProvider> {
@@ -139,7 +144,7 @@ export class VolatileStorage extends StorageBase {
     return key.toString();
   }
 
-  async baseStorageFor(type: Type, key : string) {
+  async baseStorageFor(type: Type, key: string) {
     if (this._typeMap[key]) {
       return this._typeMap[key];
     }
@@ -163,7 +168,7 @@ export class VolatileStorage extends StorageBase {
   }
 }
 
-abstract class VolatileStorageProvider extends StorageProviderBase {
+export abstract class VolatileStorageProvider extends StorageProviderBase {
   backingStore: VolatileCollection|null = null;
   protected storageEngine: VolatileStorage;
   private pendingBackingStore: Promise<VolatileCollection>|null = null;
@@ -194,6 +199,7 @@ abstract class VolatileStorageProvider extends StorageProviderBase {
   }
 
   abstract backingType(): Type;
+  fromLiteral({version, model}) {}
 }
 
 class VolatileCollection extends VolatileStorageProvider implements CollectionStorageProvider {
@@ -237,7 +243,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return {version: this.version, model: this._model.toLiteral()};
   }
 
-  private fromLiteral({version, model}) {
+  fromLiteral({version, model}) {
     this.version = version;
     this._model = new CrdtCollectionModel(model);
   }
@@ -415,7 +421,7 @@ class VolatileSingleton extends VolatileStorageProvider implements SingletonStor
     return {version: this.version, model};
   }
 
-  private fromLiteral({version, model}: {version: number, model: SerializedModelEntry[]}) {
+  fromLiteral({version, model}: {version: number, model: SerializedModelEntry[]}) {
     const value = model.length === 0 ? null : model[0].value;
     if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
@@ -602,7 +608,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
     return {version: this.version, model};
   }
 
-  private fromLiteral({version, model}) {
+  fromLiteral({version, model}) {
     this.version = version;
     this.items.clear();
     for (const {id, index, value, keys} of model) {

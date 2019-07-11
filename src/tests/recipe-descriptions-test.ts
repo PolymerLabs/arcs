@@ -51,8 +51,8 @@ particle DisplayBox in 'test.js'
   consume root
   description \`ignore this description too\`
 recipe
-  ${options.includeAllStore ? `use 'allboxes'` : `create`} as handle0
-  ${options.includeStore ? `use 'mybox'` : `create`} as handle1
+  ${options.includeAllStore ? `copy 'allboxes'` : `create`} as handle0
+  ${options.includeStore ? `copy 'mybox'` : `create`} as handle1
   slot 'root-id' as rootSlot
   ProvideBoxes
     boxes -> handle0

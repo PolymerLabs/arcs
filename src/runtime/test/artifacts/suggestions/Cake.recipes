@@ -18,7 +18,7 @@ recipe
     consume item as rootSlot
 
 recipe
-  map #cake as cakeHandle
+  use #cake as cakeHandle
   LightCandles
     birthdayCake <- cakeHandle
 

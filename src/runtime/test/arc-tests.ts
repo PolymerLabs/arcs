@@ -26,6 +26,7 @@ import {assertThrowsAsync} from '../testing/test-util.js';
 import * as util from '../testing/test-util.js';
 import {ArcType} from '../type.js';
 import {Runtime} from '../runtime.js';
+import {RecipeResolver} from '../recipe/recipe-resolver.js';
 
 async function setup(storageKeyPrefix: string) {
   const loader = new Loader();
@@ -150,6 +151,71 @@ describe('Arc ' + storageKeyPrefix, () => {
     await getSingletonHandle(cStore).set(new thingClass({value: 'from_c'}));
     await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
+  });
+
+  it(`instantiates recipes only if fate is correct ` + storageKeyPrefix, async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+    const manifest = await Manifest.parse(`
+      schema Thing
+      particle A in 'a.js'
+        in Thing thing
+      recipe CopyStoreFromContext // resolved
+        copy 'storeInContext' as h0
+        A
+          thing = h0
+      recipe UseStoreFromContext // unresolved
+        use 'storeInContext' as h0
+        A
+          thing = h0
+      recipe CopyStoreFromArc // unresolved
+        copy 'storeInArc' as h0
+        A
+          thing = h0
+      recipe UseStoreFromArc // resolved
+        use 'storeInArc' as h0
+        A
+          thing = h0
+      resource MyThing
+        start
+        [
+        ]
+      store ThingStore of Thing 'storeInContext' in MyThing
+    `);
+    assert.isTrue(manifest.recipes.every(r => r.normalize()));
+    assert.isTrue(manifest.recipes[0].isResolved());
+    assert.isTrue(manifest.recipes[1].isResolved());
+
+    const loader = new StubLoader({
+      'a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+    const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+
+    // Successfully instantiates a recipe with 'copy' handle for store in a context.
+    await runtime.newArc('test0', storageKeyPrefix).instantiate(manifest.recipes[0]);
+
+    // Fails instantiating a recipe with 'use' handle for store in a context.
+    try {
+      await runtime.newArc('test1', storageKeyPrefix).instantiate(manifest.recipes[1]);
+      assert.fail();
+    } catch (e) {
+      assert.isTrue(e.toString().includes('store \'storeInContext\' was not found'));
+    }
+
+    const arc = await runtime.newArc('test2', storageKeyPrefix);
+    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingStore = await arc.createStore(thingClass.type, 'name', 'storeInArc');
+    const resolver = new RecipeResolver(arc);
+
+    // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).
+    assert.isNull(await resolver.resolve(manifest.recipes[2]));
+    const recipe3 = await resolver.resolve(manifest.recipes[3]);
+    // Successfully instantiates a recipe with 'use' handle for store in an arc.
+    await arc.instantiate(recipe3);
   });
 
   it('required provided handles do not resolve without parent', async function() {

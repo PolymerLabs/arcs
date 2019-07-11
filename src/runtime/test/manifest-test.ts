@@ -1011,7 +1011,9 @@ ${particleStr1}
       'entities.json': entitySource,
     });
     const manifest = await Manifest.load('the.manifest', loader);
-    const store = manifest.findStoreByName('Store0') as CollectionStorageProvider;
+    const storageStub = manifest.findStoreByName('Store0');
+    assert(storageStub);
+    const store = await storageStub.inflate() as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
@@ -1056,7 +1058,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    const store = manifest.findStoreByName('Store0') as CollectionStorageProvider;
+    const store = (await manifest.findStoreByName('Store0').inflate()) as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
@@ -1325,6 +1327,8 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
     };
     verify(manifest);
+    assert.equal(manifest.stores[0].toString([]),
+                 (await Manifest.parse(manifest.stores[0].toString([]), {loader})).toString());
     verify(await Manifest.parse(manifest.toString(), {loader}));
   });
   it('can parse a manifest containing resources', async () => {
@@ -1651,9 +1655,7 @@ resource SomeName
     const [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
-
   });
-
 
   it('can parse a manifest with storage key handle definitions', async () => {
     const manifest = await Manifest.parse(`
@@ -1671,8 +1673,10 @@ resource SomeName
           foo = myHandle
     `);
     const [validRecipe] = manifest.recipes;
-    assert(validRecipe.normalize());
-    assert(validRecipe.isResolved());
+    assert.isTrue(validRecipe.normalize());
+    assert.isTrue(validRecipe.isResolved());
+    assert.equal(manifest.stores[0].toString([]),
+                 (await Manifest.parse(manifest.stores[0].toString([]))).toString());
   });
 
   it('can process a schema alias', async () => {
