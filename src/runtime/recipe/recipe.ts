@@ -15,7 +15,7 @@ import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction, DirectionArrow} from '../manifest-ast-nodes.js';
+import {DirectionArrow} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -115,10 +115,7 @@ export class Recipe implements Cloneable<Recipe> {
     const idx = this._particles.indexOf(particle);
     assert(idx > -1);
     this._particles.splice(idx, 1);
-    for (const slotConnection of Object.values(
-             particle._consumedSlotConnections)) {
-      slotConnection.remove();
-    }
+    particle.getSlotConnections().map(conn => conn.remove());
   }
 
   newHandle(): Handle {
@@ -208,14 +205,14 @@ export class Recipe implements Cloneable<Recipe> {
         }
       }
       for (const [name, slotSpec] of particle.spec.slotConnections) {
-        if (slotSpec.isRequired && !particle.consumedSlotConnections[name]) {
+        if (slotSpec.isRequired && !particle.getSlotConnectionByName(name)) {
           if (options && options.errors) {
             options.errors.set(name, `required slot ${name} has no matching connection`);
           }
           return false;
         }
         // required provided slots are only required when the corresponding consume slot connection is present
-        if (particle.consumedSlotConnections[name]) {
+        if (particle.getSlotConnectionByName(name)) {
           atLeastOneSlotConnection = true;
           for (const providedSlotSpec of slotSpec.provideSlotConnections) {
             if (providedSlotSpec.isRequired && !particle.getProvidedSlotByName(name, providedSlotSpec.name)) {
@@ -294,9 +291,10 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   get slotConnections(): SlotConnection[] {
+    // TODO: Is this the correct api?
     const slotConnections: SlotConnection[] = [];
     this._particles.forEach(particle => {
-      slotConnections.push(...Object.values(particle.consumedSlotConnections));
+      slotConnections.push(...particle.getSlotConnections());
     });
     return slotConnections;
   }

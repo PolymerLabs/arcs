@@ -47,8 +47,8 @@ describe('FindRequiredParticles', () => {
     const arc = StrategyTestHelper.createTestArc(manifest, {loader});
     await arc.instantiate(recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-    const results = await strategy.generate(inputParams);
+    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isTrue(recipe.slots[0].id === arc.activeRecipe.slots[1].id, 'results recipe does not have the correct slot');
     assert.isTrue(recipe.isResolved());
@@ -83,8 +83,8 @@ describe('FindRequiredParticles', () => {
     const arc = StrategyTestHelper.createTestArc(manifest, {loader});
     await arc.instantiate(recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-    const results = await strategy.generate(inputParams);
+    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isTrue(recipe.slots[0].id === arc.activeRecipe.slots[0].id, 'results recipe does not have the correct slot');
     assert.isTrue(recipe.isResolved());
@@ -137,8 +137,8 @@ describe('FindRequiredParticles', () => {
     const arc = StrategyTestHelper.createTestArc(manifest, {loader});
     await arc.instantiate(recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-    const results = await strategy.generate(inputParams);
+    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isTrue(recipe.slots[0].id === arc.activeRecipe.slots[0].id, 'first slot in results recipe is not the correct slot');
     assert.isTrue(recipe.slots[1].id === arc.activeRecipe.slots[1].id, 'second slot in results recipe is not the correct slots');
@@ -192,8 +192,8 @@ describe('FindRequiredParticles', () => {
     const arc = StrategyTestHelper.createTestArc(manifest, {loader});
     await arc.instantiate(recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-    const results = await strategy.generate(inputParams);
+    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isFalse(recipe.isResolved(), 'recipe is resolved when it shouldn\'t be');
   });
@@ -245,8 +245,8 @@ describe('FindRequiredParticles', () => {
     const arc = StrategyTestHelper.createTestArc(manifest, {loader});
     await arc.instantiate(recipes[1]);
     const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-    const results = await strategy.generate(inputParams);
+    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isFalse(recipe.isResolved(), 'recipe is resolved when it shouldn\'t be');
   });

@@ -129,7 +129,7 @@ export class SlotConnection implements Comparable<SlotConnection> {
     }
 
     const slotSpec = this.getSlotSpec();
-    
+
     if (slotSpec === undefined || slotSpec.isRequired) {
       if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
         // The required connection has no target slot

@@ -70,11 +70,11 @@ export class HandleConnectionSpec {
     }
   }
 
-  toSlotlikeConnection(): ConsumeSlotConnectionSpec {
+  toSlotlikeConnectionSpec(): ConsumeSlotConnectionSpec {
     // TODO: Remove in SLANDLESv2
     const slotType = this.slandleType();
     if (!slotType) {
-    throw new Error(`toSlotlikeConnection should only be used on Slot and [Slot] typed handles. Handle ${this.name} has type ${this.type}`);
+    throw new Error(`toSlotlikeConnection should only be used on Slot and [Slot] typed handles. Handle Connection Spec ${this.name} has type ${this.type}`);
     }
 
     const isSet = this.type.isCollectionType();
@@ -85,7 +85,7 @@ export class HandleConnectionSpec {
       isOptional: this.isOptional,
       direction: this.direction,
       tags: this.tags,
-      dependentConnections: this.dependentConnections.map(conn => conn.toSlotlikeConnection()),
+      dependentConnections: this.dependentConnections.map(conn => conn.toSlotlikeConnectionSpec()),
       // Fakes
       isRoot: this.isRoot,
       isRequired: !this.isOptional, // TODO: Remove duplicated data isRequired vs isOptional (prefer isOptional)
