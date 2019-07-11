@@ -38,12 +38,8 @@ class CollectionOperation<T> implements CRDTOperation {
 }
 
 class RawCollection<T> extends HashSet<T> implements CRDTConsumerType {
-  RawCollection() {
-    super();
-  }
-  RawCollection(List<T> list) {
-    super(list);
-  }
+  RawCollection() {}
+  RawCollection(List<T> list) { super(list); }
 }
 
 class CRDTCollectionTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
