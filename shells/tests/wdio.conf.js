@@ -100,7 +100,7 @@ exports.config = {
   // e.g. using promises you can set the sync option to false.
   sync: true,
   //
-  // Level of logging verbosity: silent | verbose | command | data | result | error
+  // Level of logging verbosity: trace | debug | info | warn | error | silent
   logLevel: 'silent',
   //
   // Enables colors for log output.
@@ -165,7 +165,7 @@ exports.config = {
   framework: 'mocha',
   //
   // Test reporter for stdout.
-  // reporters: ['spec', errorshot],
+  reporters: ['spec'/*, errorshot*/],
   // reporterOptions: {
   //   errorshotReporter: {
   //     // Template for the screenshot name.

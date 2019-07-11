@@ -16,7 +16,7 @@ I'm still a newb, but I stumbled on these things:
 1. mode is `sync` in .conf, but seems like everything needs to `await` ... maybe a config problem, maybe
    some kind of automatic switch
 2. wdio `click` commands are performed via position, so transitions and overlays create havok. I'm using a
-   element-based `click` instead.
+   simple element-based `click` instead.
 3. `web JSON object` is completely undocumented, afaict. I had to figure out usage by trial-and-error.
 
 */
@@ -32,60 +32,41 @@ const storageKeyByType = {
   'firebase': `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`
 };
 
-const installUtils = async () => {
-  return browser.execute(() => {
-    const result = {};
-    const find = (element, selector) => {
-      let result;
-      while (element && !result) {
-        result = element.matches(selector) ? element : find(element.firstElementChild, selector);
-        if (!result && element.shadowRoot) {
-          result = find(element.shadowRoot.firstElementChild, selector);
-        }
-        element = element.nextElementSibling;
-      }
-      return result;
-    };
-    const deepQuery = selector => {
-      const element = find(document.body.firstElementChild, selector);
-      result.element = element;
-      return element;
-    };
-    window.wdio = {
-      deepQuery,
-      result
-    };
-  });
+const find = (element, selector) => {
+  let result;
+  while (element && !result) {
+    result = element.matches(selector) ? element : find(element.firstElementChild, selector);
+    if (!result && element.shadowRoot) {
+      result = find(element.shadowRoot.firstElementChild, selector);
+    }
+    element = element.nextElementSibling;
+  }
+  return result;
 };
 
-const deepQuerySelector = async selector => {
-  return browser.execute(selector => {
-    return window.wdio.deepQuery(selector);
-  }, selector);
+const deepQuerySelectorB = selector => {
+  return find(document.body.firstElementChild, selector);
 };
 
-// TODO(sjmiles): not obvious how to use `await` inside of `browser.execute`,
-// so waitFor exists at the wdio level (instead of browser-side, as I would prefer)
-exports.waitFor = async function(selector, timeout) {
-  await installUtils();
-  //
-  timeout = timeout || 20e3;
+const waitForB = async function(selector, timeout) {
+  timeout = timeout || exports.defaultTimeout;
   let fail = false;
   setTimeout(() => fail = true, timeout);
-  //
   let resolve;
   let reject;
   const result = new Promise((res, rej) => {
     resolve = res;
     reject = rej;
   });
-  //
   const tryQuery = () => setTimeout(async () => {
     if (fail) {
+      //console.log(`rejecting "${selector}"`);
       reject(new Error(`timedout [${Math.floor(timeout/1e3)}] waiting for "${selector}"`));
+      //resolve(true);
     } else {
-      const element = await deepQuerySelector(selector);
-      if (element && element.ELEMENT) {
+      const element = await deepQuerySelectorB(selector);
+      console.log(`resolving "${selector}" to `, element);
+      if (element) {
         resolve(element);
       } else {
         tryQuery();
@@ -93,23 +74,64 @@ exports.waitFor = async function(selector, timeout) {
     }
   }, 100);
   tryQuery();
-  //
   return result;
 };
 
 exports.click = async function(selector, timeout) {
-  const element = await exports.waitFor(selector, timeout);
-  if (element) {
-    return browser.execute(async (selector, timeout) => {
-      const element = window.wdio.result.element;
-      //console.log(`click: found element [${element.localName}]`);
-      if (element) {
-        element.click();
-        element.focus();
-      }
-    }, selector, timeout);
-  }
+  return browser.execute(async selector => {
+    const element = await waitForB(selector, timeout);
+    if (element) {
+      element.click();
+      element.focus();
+    }
+  }, selector);
+  //return clickJson(await exports.waitFor(selector, timeout));
 };
+
+function deepQuerySelector(selector) {
+  return browser.execute(deepQuerySelectorB, selector);
+}
+
+exports.waitFor = async function(selector, timeout) {
+  timeout = timeout || exports.defaultTimeout;
+  let fail = false;
+  setTimeout(() => fail = true, timeout);
+  let resolve;
+  let reject;
+  const result = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  const tryQuery = () => setTimeout(async () => {
+    if (fail) {
+      //console.log(`rejecting "${selector}"`);
+      reject(new Error(`timedout [${Math.floor(timeout/1e3)}] waiting for "${selector}"`));
+      //resolve(true);
+    } else {
+      const element = await deepQuerySelector(selector);
+      console.log(`resolving "${selector}" to `, element);
+      if (element && element.ELEMENT) {
+        //console.log(`resolving "${selector}"`);
+        resolve(element.ELEMENT);
+      } else {
+        tryQuery();
+      }
+    }
+  }, 100);
+  tryQuery();
+  return result;
+};
+
+async function clickJson(webJSON) {
+  return browser.execute(function(element) {
+    element.click();
+    element.focus();
+  }, webJSON.value);
+}
+
+// exports.click = async function(selector, timeout) {
+//   return clickJson(await exports.waitFor(selector, timeout));
+// };
 
 exports.keys = async function(selector, keys, timeout) {
   await exports.click(selector, timeout);
@@ -128,24 +150,27 @@ exports.openNewArc = async function(testTitle, useSolo, storageType) {
   //openTabs.slice(1).forEach(tabToClose => {
   //  browser.close(tabToClose);
   //});
+
   const storageKey = storageKeyByType[storageType];
   let storage;
   let suffix;
+
   switch (storageType) {
-    case 'pouchdb':
-      // setup url params
-      suffix = `${Date.now()}-${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
-      storage = `${storageKey}/${suffix}/`;
-      break;
-    case 'firebase':
-      suffix = `${new Date().toISOString()}_${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
-      storage = `${storageKey}/${suffix}`;
-      //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
-      break;
-    default:
-      throw new Error('must specify firebase/pouchdb parameter');
+
+  case 'pouchdb':
+    // setup url params
+    suffix = `${Date.now()}-${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
+    storage = `${storageKey}/${suffix}/`;
+    break;
+  case 'firebase':
+    suffix = `${new Date().toISOString()}_${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
+    storage = `${storageKey}/${suffix}`;
+    //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
+    break;
+  default:
+    throw new Error('must specify firebase/pouchdb parameter');
   }
-  console.log(`\n\nrunning test "${testTitle}" [${storage}]\n`);
+  console.log(`running test "${testTitle}" [${storage}]`);
   const urlParams = [
     //`testFirebaseKey=${firebaseKey}`,
     //`log`,
