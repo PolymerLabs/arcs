@@ -301,6 +301,7 @@ export class Suggestion {
     });
     if (!hasRootSlot) {
       logReason(`Has no root slot`);
+      return false;
     }
     if (!usesRemoteNonRootSlots) {
       logReason(`No remote non-root slots.`);
