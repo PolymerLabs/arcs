@@ -59,8 +59,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     if (this.pendingException) {
       // this is termination.
       this.pendingRejects.forEach(reject => reject(this.pendingException));
-    }
-    else {
+    } else {
       this.pendingResolves.forEach(resolve => resolve());
       this.pendingResolves = [];
     }
@@ -130,8 +129,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           // member variable couldn't possibly change in any function outside the local scope
           // when within a switch statement. 
           this.state = DirectStoreState.AwaitingResponse;
-          version += 1;
-          this.version = version;
+          this.version = ++version;
           const response = await this.driver.send(this.localModel.getData(), version);
           if (response) {
             if (this.state === DirectStoreState.AwaitingResponse) {
@@ -146,8 +144,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
               throw new Error('reached impossible state in store state machine');
             }
             // fallthrough to re-execute the loop.
-          }
-          else {
+          } else {
             this.setState(DirectStoreState.AwaitingDriverModel);
             this.applyPendingDriverModels();
             break;
@@ -175,8 +172,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           this.deliverCallbacks(modelChange);
           noDriverSideChanges = noDriverSideChanges && this.noDriverSideChanges(modelChange, otherChange, true);
           theVersion = version;
-        }
-        catch (e) {
+        } catch (e) {
           this.pendingException = e;
           this.notifyIdle();
           return;
@@ -193,8 +189,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private noDriverSideChanges(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, messageFromDriver: boolean) {
     if (messageFromDriver) {
       return otherChange.changeType === ChangeType.Operations && otherChange.operations.length === 0;
-    }
-    else {
+    } else {
       return thisChange.changeType === ChangeType.Operations && thisChange.operations.length === 0;
     }
   }

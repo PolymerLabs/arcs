@@ -46,18 +46,22 @@ describe('Volatile + Backing Store Integration', async () => {
     const count2 = new CRDTCount();
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', version: {from: 0, to: 10}, value: 15});
 
-    const id = store.on(async message => true);
-    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count1.getData(), id, mux_id: 'thing0'}));
-    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count2.getData(), id, mux_id: 'thing1'}));
+    const id = store.on(async (message, muxId) => true);
+    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count1.getData(), id}, 'thing0'));
+    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count2.getData(), id}, 'thing1'));
 
     await store.idle();
     let message: ProxyMessage<CRDTCountTypeRecord>;
-    const id2 = store.on(async m => {message = m; return true;});
-    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, mux_id: 'thing0'});
+    let muxId: string;
+    const id2 = store.on(async (m, id) => {message = m; muxId = id; return true;});
+    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2}, 'thing0');
     assertHasModel(message, count1);
-    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, mux_id: 'thing1'});
+    assert.equal(muxId, 'thing0');
+    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2}, 'thing1');
     assertHasModel(message, count2);
-    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, mux_id: 'not-a-thing'});
+    assert.equal(muxId, 'thing1');
+    await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2}, 'not-a-thing');
     assertHasModel(message, new CRDTCount());
+    assert.equal(muxId, 'not-a-thing');
   });
 });

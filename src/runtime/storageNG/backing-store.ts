@@ -16,8 +16,11 @@ import {Type} from '../type.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary} from '../hot.js';
 
-export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T> & {mux_id: string}) => Promise<boolean>;
+export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>, muxId: string) => Promise<boolean>;
 
+/**
+ * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
+ */
 export class BackingStore<T extends CRDTTypeRecord>  {
   
   private stores: Dictionary<{store: DirectStore<T>, id: number}> = {};
@@ -37,17 +40,16 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   }
   
   async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
-    return Promise.all([...this.callbacks.values()].map(callback => callback({mux_id: muxId, ...message}))).then(a => a.reduce((a, b) => a && b));
+    return Promise.all([...this.callbacks.values()].map(callback => callback(message, muxId))).then(a => a.reduce((a, b) => a && b));
   }
 
-  async onProxyMessage(message: ProxyMessage<T> & {mux_id: string}): Promise<boolean> {
-    if (this.stores[message.mux_id] == null) {
-      const store = await DirectStore.construct(this.storageKey.childWithComponent(message.mux_id), this.exists, this.type, this.mode, this.modelConstructor);
-      const id = store.on(msg => this.processStoreCallback(message.mux_id, msg));
-      this.stores[message.mux_id] = {store, id};
+  async onProxyMessage(message: ProxyMessage<T>, muxId: string): Promise<boolean> {
+    if (this.stores[muxId] == null) {
+      const store = await DirectStore.construct(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode, this.modelConstructor);
+      const id = store.on(msg => this.processStoreCallback(muxId, msg));
+      this.stores[muxId] = {store, id};
     }
-    const {store, id} = this.stores[message.mux_id];
-    delete message.mux_id;
+    const {store, id} = this.stores[muxId];
     message.id = id;
     return store.onProxyMessage(message);
   }
