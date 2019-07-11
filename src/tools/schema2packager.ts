@@ -197,5 +197,5 @@ struct std::hash<arcs::${name}> {
 }
 
 
-const gen = new Schema2Base(description, (schemaName => `entity-${schemaName}.h`), generate);
-gen.call();
+const schema2cpp = new Schema2Base(description, (schemaName => `entity-${schemaName}.h`), generate);
+schema2cpp.call();
