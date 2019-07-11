@@ -75,18 +75,14 @@ export function createParticleClaim(
     astNode: ParticleClaimStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): ParticleClaim {
   const claims: Claim[] = astNode.expression.map(claimNode => {
-  let claim: Claim;
     switch (claimNode.claimType) {
       case ClaimType.IsTag:
-        claim = ClaimIsTag.fromASTNode(claimNode);
-        break;
+        return ClaimIsTag.fromASTNode(claimNode);
       case ClaimType.DerivesFrom:
-        claim = ClaimDerivesFrom.fromASTNode(claimNode, handleConnectionMap);
-        break;
+        return ClaimDerivesFrom.fromASTNode(claimNode, handleConnectionMap);
       default:
         throw new Error('Unknown claim type.');
     }
-    return claim;
   });
   return new ParticleClaim(handle, claims);
 }
