@@ -90,9 +90,7 @@ function generate(name: string, schema): string {
         break;
 
       default:
-        console.error(
-  `Schema type for field '${field}' is not yet supported:`
-);
+        console.error(`Schema type for field '${field}' is not yet supported:`);
         console.dir(descriptor, {depth: null});
         process.exit(1);
 
