@@ -166,13 +166,17 @@ function check(): boolean {
     throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
   }
 
-  const emsdkVersion = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']).stdout;
-  const match = emsdkVersion.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
+  const emsdkResult = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']);
+  const match = emsdkResult.stdout.match(/\nemcc [^0-9.]+ (X[0-9.]+) /);
   if (match === null) {
-    throw new Error(`failed to extract emsdk version`);
+    console.error('failed to extract emsdk version');
+    console.error(emsdkResult.stdout);
+    console.error(emsdkResult.stderr);
+    throw new Error('failed to extract emsdk version');
   }
-  if (!semver.satisfies(match[1], emsdkRequiredVersion)) {
-    throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${match[1]}`);
+  const emsdkVersion = match[1];
+  if (!semver.satisfies(emsdkVersion, emsdkRequiredVersion)) {
+    throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${emsdkVersion}`);
   }
 
   return true;
