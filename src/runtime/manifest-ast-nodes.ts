@@ -191,7 +191,9 @@ export interface ParticleClaimStatement extends BaseNode {
   expression: ParticleClaimExpression;
 }
 
-export type ParticleClaimExpression = ParticleClaimIsTag | ParticleClaimDerivesFrom;
+export type ParticleClaimExpression = ParticleClaim[]; 
+
+export type ParticleClaim = ParticleClaimIsTag | ParticleClaimDerivesFrom;
 
 /** A claim made by a particle, saying that one of its outputs has a particular trust tag (e.g. "claim output is foo"). */
 export interface ParticleClaimIsTag extends BaseNode {
@@ -208,7 +210,7 @@ export interface ParticleClaimIsTag extends BaseNode {
 export interface ParticleClaimDerivesFrom extends BaseNode {
   kind: 'particle-trust-claim-derives-from';
   claimType: ClaimType.DerivesFrom;
-  parentHandles: string[];
+  parentHandle: string;
 }
 
 export interface ParticleCheckStatement extends BaseNode {

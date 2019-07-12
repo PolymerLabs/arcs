@@ -118,7 +118,8 @@ describe('FlowGraph', () => {
           input <- s
     `);
     assert.lengthOf(graph.edges, 1);
-    const claim = graph.edges[0].claim;
+    assert.lengthOf(graph.edges[0].claims, 1);
+    const claim = graph.edges[0].claims[0];
     assert.equal(claim.type, ClaimType.IsTag);
     assert.equal((claim as ClaimIsTag).tag, 'trusted');
   });
@@ -133,14 +134,14 @@ describe('FlowGraph', () => {
           foo -> h
     `);
     const node = checkDefined(graph.particleMap.get('P'));
-    assert.equal(node.claims.size, 1);
-    const claim = node.claims.get('foo');
-    assert.equal(claim.handle.name, 'foo');
-    assert.equal((claim.expression as ClaimIsTag).tag, 'trusted');
+    assert.equal(node.claims.length, 1);
+    const particleClaim = node.claims.find(pclaim => pclaim.handle.name === 'foo');
+    assert.isNotNull(particleClaim);
+    assert.equal((particleClaim.claims[0] as ClaimIsTag).tag, 'trusted');
     assert.isEmpty(node.checks);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].claim, claim.expression);
+    assert.equal(graph.edges[0].claims[0], particleClaim.claims[0]);
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {

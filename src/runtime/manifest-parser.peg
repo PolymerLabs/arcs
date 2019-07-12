@@ -339,6 +339,12 @@ ParticleClaimStatement
   }
 
 ParticleClaimExpression
+  = first:ParticleClaim rest:(whiteSpace 'and' whiteSpace ParticleClaim)*
+  {
+    return [first, ...rest.map(item => item[3])] as AstNode.ParticleClaimExpression;
+  } 
+
+ParticleClaim
   = ParticleClaimIsTag
   / ParticleClaimDerivesFrom
 
@@ -355,14 +361,13 @@ ParticleClaimIsTag
   }
 
 ParticleClaimDerivesFrom
-  = 'derives from' whiteSpace first:lowerIdent rest:(whiteSpace 'and derives from' whiteSpace lowerIdent)*
+  = 'derives from' whiteSpace handle:lowerIdent
   {
-    const parentHandles: string[] = [first, ...rest.map(item => item[3])];
     return {
       kind: 'particle-trust-claim-derives-from',
       claimType: 'derives-from',
       location: location(),
-      parentHandles,
+      parentHandle: handle,
     } as AstNode.ParticleClaimDerivesFrom;
   }
 
