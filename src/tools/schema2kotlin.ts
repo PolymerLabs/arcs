@@ -24,9 +24,93 @@ const keywords = [
   'suspend', 'tailrec', 'vararg', 'field', 'it'
 ];
 
-function generate(name: string, schema): string  {
-  return '';
+function leftPad(block: string, n: number = 0) {
+  return block.split('\n')
+    .map((line) => `${' '.repeat(n)}${line}`)
+    .join('\n');
 }
 
-const schema2kotlin = new Schema2Base(description, (schemaName => `${schemaName}.kt`), generate);
+function generate(name: string, schema): string  {
+
+  const fields: string[] = [];
+  const encode: string[] = [];
+  const decode: string[] = [];
+
+
+  const privateFields = ['var num_: Double = 0.0', 'var txt_: String = ""', 'var lnk_: URL = ""', 'var flg_: Boolean = false'];
+  const forDecode = [
+`"num" -> {
+     decoder.validate("N")
+     num_ = decoder.decodeNum()
+}`,
+`"txt" -> {
+    decoder.validate("T")
+    txt_ = decoder.decodeText()
+}`,
+`"lnk" -> {
+    decoder.validate("U")
+    lnk_ = decoder.decodeText()
+}`,
+`"flg" -> {
+    decoder.validate("B")
+    flg_ = decoder.decodeBool()
+}`];
+
+  const forEncode = [
+    'encoder.encode("num:N", num_)',
+    'encoder.encode("txt:T", txt_)',
+    'encoder.encode("lnk:U", lnk_)',
+    'encoder.encode("flg:B", flg_)',
+  ];
+
+  const content = `
+package arcs 
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+// Current implementation doesn't support optional field detection
+
+data class ${name}(
+   ${privateFields.join(', ')} 
+) : Entity<${name}>() {
+    override fun decodeEntity(encoded: String): ${name}? {
+        if (encoded.isEmpty()) {
+            return null
+        }
+        val decoder = StringDecoder(encoded)
+        this.internalId = decoder.decodeText()
+        decoder.validate("|")
+        var i = 0
+        while (!decoder.done() && i < ${privateFields.length}) {
+            val name = decoder.upTo(":")
+            when (name) {
+${leftPad(forDecode.join('\n'), 16)}
+            }
+            decoder.validate("|")
+            i++
+        }
+        return this
+    }
+
+    override fun encodeEntity(): String {
+        val encoder = StringEncoder()
+        encoder.encode("", internalId)
+${leftPad(forEncode.join('\n'), 8)}
+        return encoder.result()
+    }
+}`;
+
+  // Post-process whole file
+  return content.replace(/ +\n/g, '\n');
+}
+
+function titleCase(variable: string): string {
+  if (variable === '') {
+    return '';
+  }
+  return variable[0].toUpperCase() + variable.substr(1).toLowerCase();
+}
+
+const schema2kotlin = new Schema2Base(description, (schemaName => `${titleCase(schemaName)}.kt`), generate);
 schema2kotlin.call();
