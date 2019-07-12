@@ -53,6 +53,7 @@ function generate(name: string, schema): string {
     };
     const type = typeMap[typeChar][0];
     const defaultVal = typeMap[typeChar][1];
+    const decodeType = typeMap[typeChar];
 
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
@@ -61,7 +62,7 @@ function generate(name: string, schema): string {
 
     decode.push(`"${fixed}" -> {`,
       `     decoder.validate("${typeChar}")`,
-      `     ${fixed} = decoder.${decodeMap[typeChar]}`,
+      `     ${fixed} = decoder.${decodeType}`,
       `}`,
     );
 
