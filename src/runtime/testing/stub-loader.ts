@@ -17,7 +17,7 @@ import {Dictionary} from '../hot.js';
  */
 export class StubLoader extends Loader {
   _fileMap: Dictionary<string>;
-  _cannedResponse;
+  _cannedResponse: string;
  
   constructor(fileMap: Dictionary<string>) {
     super();
@@ -27,9 +27,7 @@ export class StubLoader extends Loader {
     }
   }
 
-  // TODO(lindner): this should be async, but adding it causes a test to fail
-  // tslint:disable-next-line
-  loadResource(path: string): Promise<string> {
+  async loadResource(path: string): Promise<string> {
     return this._fileMap.hasOwnProperty(path)
         ? this._fileMap[path]
         : (this._cannedResponse || super.loadResource(path));

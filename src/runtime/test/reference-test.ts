@@ -54,7 +54,7 @@ describe('references', () => {
 
   it('exposes a dereference API to particles', async () => {
     const loader = new StubLoader({
-      manifest: `
+      'manifest': `
         schema Result
           Text value
 
@@ -93,6 +93,7 @@ describe('references', () => {
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
+    await arc.idle;
 
     assert.isTrue(arc._stores[0].type instanceof ReferenceType);
 
