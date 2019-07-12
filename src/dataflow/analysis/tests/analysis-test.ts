@@ -277,22 +277,22 @@ describe('FlowGraph validation', () => {
 
   it('succeeds when a check includes multiple tags', async () => {
     const graph = await buildFlowGraph(`
-    particle P1
-      out Foo {} foo
-      claim foo is tag1
-    particle P2
-      out Foo {} foo
-      claim foo is tag2
-    particle P3
-      in Foo {} bar
-      check bar is tag1 or is tag2
-    recipe R
-      P1
-        foo -> h
-      P2
-        foo -> h
-      P3
-        bar <- h
+      particle P1
+        out Foo {} foo
+        claim foo is tag1
+      particle P2
+        out Foo {} foo
+        claim foo is tag2
+      particle P3
+        in Foo {} bar
+        check bar is tag1 or is tag2
+      recipe R
+        P1
+          foo -> h
+        P2
+          foo -> h
+        P3
+          bar <- h
     `);
     const result = validateGraph(graph);
     assert.isTrue(result.isValid);
@@ -300,26 +300,62 @@ describe('FlowGraph validation', () => {
 
   it(`fails when a check including multiple tags isn't met`, async () => {
     const graph = await buildFlowGraph(`
-    particle P1
-      out Foo {} foo
-      claim foo is tag1
-    particle P2
-      out Foo {} foo
-      claim foo is someOtherTag
-    particle P3
-      in Foo {} bar
-      check bar is tag1 or is tag2
-    recipe R
-      P1
-        foo -> h
-      P2
-        foo -> h
-      P3
-        bar <- h
+      particle P1
+        out Foo {} foo
+        claim foo is tag1
+      particle P2
+        out Foo {} foo
+        claim foo is someOtherTag
+      particle P3
+        in Foo {} bar
+        check bar is tag1 or is tag2
+      recipe R
+        P1
+          foo -> h
+        P2
+          foo -> h
+        P3
+          bar <- h
     `);
     const result = validateGraph(graph);
     assert.isFalse(result.isValid);
     assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed for path: P2.foo -> P3.bar`]);
+  });
+
+  it(`succeeds when a check including multiple anded tags is met by a single claim`, async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is tag1 and is tag2
+      particle P2
+        in Foo {} bar
+        check bar is tag1 and is tag2
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    const result = validateGraph(graph);
+    assert.isTrue(result.isValid);
+  });
+
+  it(`succeeds when a check including multiple ored tags is met by a single claim`, async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is tag1 and is tag2
+      particle P2
+        in Foo {} bar
+        check bar is tag1 or is tag2
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    const result = validateGraph(graph);
+    assert.isTrue(result.isValid);
   });
 
   it('can detect more than one failure for the same check', async () => {
