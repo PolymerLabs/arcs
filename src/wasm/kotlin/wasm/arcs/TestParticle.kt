@@ -99,9 +99,9 @@ class TestParticle : Particle() {
 
         eventHandler("set") {
             val res = data.get()!!
-            res.num_ = res.num_ * 2
-            res.txt_ = res.txt_ + "!!!!!!"
-            res.lnk_ = ""
+            res.num = res.num * 2
+            res.txt = res.txt + "!!!!!!"
+            res.lnk = ""
             this.res.set(res)
         }
 
