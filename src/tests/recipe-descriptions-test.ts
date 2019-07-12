@@ -147,7 +147,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   it('generates DOM recipe description (with handle value)', async () => {
     const description = await generateRecipeDescription(
-        {includeSchemaDescription: false, includeStore: true, includeEntityName: false, formatter: DescriptionDomFormatter});
+      {includeSchemaDescription: false, includeStore: true, includeEntityName: false, formatter: DescriptionDomFormatter});
     assert.equal('The winner is: \'box\' of all \'box list\'.', description.template);
     assert.isEmpty(description.model);
   });
@@ -265,7 +265,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     `;
     const description = await generateRecipeDescription({manifestString});
 
-    assert.equal('Do "hello foo"', description);
+    assert.equal('Do "hello foo"', description as string);
     const domDescription = await generateRecipeDescription({manifestString, formatter: DescriptionDomFormatter});
     assert.equal(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
     assert.deepEqual(domDescription.model, {text2: 'Do "', foo1: 'foo', text3: '"'});
