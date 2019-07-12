@@ -47,26 +47,23 @@ export class ClaimIsTag {
 export class ClaimDerivesFrom {
   readonly type: ClaimType.DerivesFrom = ClaimType.DerivesFrom;
   
-  constructor(readonly parentHandles: readonly HandleConnectionSpec[]) {}
+  constructor(readonly parentHandle: HandleConnectionSpec) {}
   
   static fromASTNode(
       astNode: ParticleClaimDerivesFrom,
       handleConnectionMap: Map<string, HandleConnectionSpec>) {
     
     // Convert handle names into HandleConnectionSpec objects.
-    const parentHandles = astNode.parentHandles.map(parentHandleName => {
-      const parentHandle = handleConnectionMap.get(parentHandleName);
-      if (!parentHandle) {
-        throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
-      }
-      return parentHandle;
-    });
+    const parentHandle = handleConnectionMap.get(astNode.parentHandle);
+  if (!parentHandle) {
+    throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
+  }
 
-    return new ClaimDerivesFrom(parentHandles);
+    return new ClaimDerivesFrom(parentHandle);
   }
 
   toManifestString() {
-    return `derives from ${this.parentHandles.map(h => h.name).join(' and derives from ')}`;
+    return `derives from ${this.parentHandle.name}`;
   }
 }
 

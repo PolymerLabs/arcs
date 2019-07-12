@@ -56,13 +56,13 @@ export class ParticleNode extends Node {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
     if (outEdge.claims) {
-      const derivesClaim: ClaimDerivesFrom = outEdge.claims.find(claim => 
-        claim.type === ClaimType.DerivesFrom) as ClaimDerivesFrom;
-      if (derivesClaim) {
+      const derivesClaims: ClaimDerivesFrom[] = outEdge.claims.filter(claim => 
+        claim.type === ClaimType.DerivesFrom) as ClaimDerivesFrom[];
+      if (derivesClaims.length) {
         const result: ParticleInput[] = [];
-        for (const parentHandle of derivesClaim.parentHandles) {
-          const inEdge = this.inEdgesByName.get(parentHandle.name);
-          assert(!!inEdge, `Claim derives from unknown handle: ${parentHandle}.`);
+        for (const claim of derivesClaims) {
+          const inEdge = this.inEdgesByName.get(claim.parentHandle.name);
+          assert(!!inEdge, `Claim derives from unknown handle: ${claim.parentHandle}.`);
           result.push(inEdge);
         }
         return result;

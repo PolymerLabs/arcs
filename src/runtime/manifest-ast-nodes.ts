@@ -210,7 +210,7 @@ export interface ParticleClaimIsTag extends BaseNode {
 export interface ParticleClaimDerivesFrom extends BaseNode {
   kind: 'particle-trust-claim-derives-from';
   claimType: ClaimType.DerivesFrom;
-  parentHandles: string[];
+  parentHandle: string;
 }
 
 export interface ParticleCheckStatement extends BaseNode {

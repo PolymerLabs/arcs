@@ -2026,7 +2026,7 @@ resource SomeName
       
       const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
       assert.isNotNull(claim);
-      assert.sameMembers((claim.claims[0] as ClaimDerivesFrom).parentHandles.map(h => h.name), ['input1', 'input2']);
+      assert.sameMembers((claim.claims as ClaimDerivesFrom[]).map(claim => claim.parentHandle.name), ['input1', 'input2']);
     });
 
     it('supports multiple check statements', async () => {
