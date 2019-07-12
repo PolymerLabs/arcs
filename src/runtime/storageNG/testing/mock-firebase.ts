@@ -322,7 +322,7 @@ class MockFirebaseApp implements firebase.app.App {
 
 class MockFirebaseAppCache extends FirebaseAppCache {
   getApp(key: FirebaseStorageKey) {
-    assert.equal(key.domain, 'test.domain');
+    assert.strictEqual(key.domain, 'test.domain');
     const keyAsString = key.toString();
     if (!this.appCache.has(keyAsString)) {
       this.appCache.set(keyAsString, new MockFirebaseApp(key));

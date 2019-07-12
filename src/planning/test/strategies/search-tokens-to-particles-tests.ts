@@ -62,7 +62,7 @@ describe('SearchTokensToParticles', () => {
     assert.lengthOf(results, 1);
     const result = results[0].result;
     assert.lengthOf(result.particles, 1);
-    assert.equal('GalaxyFlyer', result.particles[0].name);
+    assert.strictEqual('GalaxyFlyer', result.particles[0].name);
     assert.deepEqual(['flyer', 'galaxy'], result.search.resolvedTokens);
     assert.isEmpty(result.search.unresolvedTokens);
   });
@@ -87,7 +87,7 @@ describe('SearchTokensToParticles', () => {
     assert.lengthOf(results, 1);
     const result = results[0].result;
     assert.lengthOf(result.particles, 1);
-    assert.equal('GalaxyRunner', result.particles[0].name);
+    assert.strictEqual('GalaxyRunner', result.particles[0].name);
     assert.deepEqual(['galaxy', 'running'], result.search.resolvedTokens);
     assert.deepEqual(['and', 'more'], result.search.unresolvedTokens);
   });

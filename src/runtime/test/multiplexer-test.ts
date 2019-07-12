@@ -63,7 +63,7 @@ describe('Multiplexer', () => {
 
     await arc.idle;
 
-    assert.equal(slotsCreated, 3);
+    assert.strictEqual(slotsCreated, 3);
   });
 
 });

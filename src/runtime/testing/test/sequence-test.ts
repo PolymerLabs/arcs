@@ -34,13 +34,13 @@ describe('Sequence testing infrastructure', async () => {
     const inputChanges = [{input: [1]}, {input: [2]}];
     flowTest.setChanges(input, inputChanges);
 
-    flowTest.setEndInvariant(total, (value) => assert.equal(value, 3));
+    flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 3));
     
     try {
       await flowTest.test();
       assert.fail();
     } catch (e) {
-      assert.equal(e.message, 'expected undefined to equal true');
+      assert.strictEqual(e.message, 'expected undefined to equal true');
     }
   });
   it('picks up a basic error in an async class', async () => {
@@ -54,13 +54,13 @@ describe('Sequence testing infrastructure', async () => {
     const inputChanges = [{input: [1]}, {input: [2]}];
     flowTest.setChanges(input, inputChanges);
 
-    flowTest.setEndInvariant(total, (value) => assert.equal(value, 3));
+    flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 3));
     
     try {
       await flowTest.test();
       assert.fail();
     } catch (e) {
-      assert.equal(e.message, 'expected 2 to equal 3');
+      assert.strictEqual(e.message, 'expected 2 to equal 3');
     }
   });
   it('picks up a bad count of internal awaits', async () => {
@@ -74,13 +74,13 @@ describe('Sequence testing infrastructure', async () => {
     const inputChanges = [{input: [1]}];
     flowTest.setChanges(input, inputChanges);
 
-    flowTest.setEndInvariant(total, (value) => assert.equal(value, 1));
+    flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 1));
     
     try {
       await flowTest.test();
       assert.fail();
     } catch (e) {
-      assert.equal(e.message, 'Additional async point found!');
+      assert.strictEqual(e.message, 'Additional async point found!');
     }
   });
 });

@@ -44,9 +44,9 @@ describe('InitPopulation', () => {
       return results[0].score;
     }
 
-    assert.equal(await scoreOfInitPopulationOutput(), 1);
+    assert.strictEqual(await scoreOfInitPopulationOutput(), 1);
     await arc.instantiate(recipe);
-    assert.equal(await scoreOfInitPopulationOutput(), 0);
+    assert.strictEqual(await scoreOfInitPopulationOutput(), 0);
   });
 
   it('reads from RecipeIndex', async () => {
@@ -70,7 +70,7 @@ describe('InitPopulation', () => {
     const results = await new InitPopulation(arc, {contextual: false,
         recipeIndex: {recipes: manifest.recipes}}).generate({generation: 0});
     assert.lengthOf(results, 1);
-    assert.equal(results[0].result.toString(), recipe.toString());
+    assert.strictEqual(results[0].result.toString(), recipe.toString());
   });
 
   it('contextual population has recipes matching arc handles and slots', async () => {

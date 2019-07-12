@@ -34,10 +34,10 @@ describe('recipe-util', () => {
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
-    assert.equal(results[0].score, 0);
-    assert.equal((results[0].match['A'] as Particle).name, 'A');
-    assert.equal((results[0].match['B'] as Particle).name, 'B');
-    assert.equal((results[0].match['v'] as Handle).localName, 'handle1');
+    assert.strictEqual(results[0].score, 0);
+    assert.strictEqual((results[0].match['A'] as Particle).name, 'A');
+    assert.strictEqual((results[0].match['B'] as Particle).name, 'B');
+    assert.strictEqual((results[0].match['v'] as Handle).localName, 'handle1');
   });
 
   it('cannot produce a shape match to a non-matching recipe', async () => {
@@ -56,7 +56,7 @@ describe('recipe-util', () => {
     const results = RecipeUtil.find(recipe, shape);
     // TODO: It may be better to not return a result than providing partially
     // resolved results.
-    assert.equal(results[0].match['A'], null);
+    assert.strictEqual(results[0].match['A'], null);
   });
 
   it('can produce multiple partial shape matches to a simple recipe', async () => {
@@ -85,16 +85,16 @@ describe('recipe-util', () => {
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}, 'C': {'c': {handle: 'v'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 2);
-    assert.equal(results[0].score, -1);
-    assert.equal((results[0].match['A'] as Particle).name, 'A');
-    assert.equal((results[0].match['B'] as Particle).name, 'B');
-    assert.equal((results[0].match['C'] as Particle).name, 'C');
-    assert.equal((results[0].match['v'] as Handle).localName, 'handle1');
-    assert.equal(results[1].score, -1);
-    assert.equal((results[1].match['A'] as Particle).name, 'A');
-    assert.equal((results[1].match['B'] as Particle).name, 'B');
-    assert.equal((results[1].match['C'] as Particle).name, 'C');
-    assert.equal((results[1].match['v'] as Handle).localName, 'handle2');
+    assert.strictEqual(results[0].score, -1);
+    assert.strictEqual((results[0].match['A'] as Particle).name, 'A');
+    assert.strictEqual((results[0].match['B'] as Particle).name, 'B');
+    assert.strictEqual((results[0].match['C'] as Particle).name, 'C');
+    assert.strictEqual((results[0].match['v'] as Handle).localName, 'handle1');
+    assert.strictEqual(results[1].score, -1);
+    assert.strictEqual((results[1].match['A'] as Particle).name, 'A');
+    assert.strictEqual((results[1].match['B'] as Particle).name, 'B');
+    assert.strictEqual((results[1].match['C'] as Particle).name, 'C');
+    assert.strictEqual((results[1].match['v'] as Handle).localName, 'handle2');
   });
 
   it('can match a free handle', async () => {
@@ -111,8 +111,8 @@ describe('recipe-util', () => {
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
-    assert.equal(results[0].score, -3);
-    assert.equal((results[0].match['v'] as Handle).localName, 'h1');
+    assert.strictEqual(results[0].score, -3);
+    assert.strictEqual((results[0].match['v'] as Handle).localName, 'h1');
   });
 
   it('can match dangling handle connections', async () => {
@@ -135,10 +135,10 @@ describe('recipe-util', () => {
       {'A': {'a': {handle: 'h'}}, 'B': {'b': {handle: 'h'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
-    assert.equal(results[0].score, -1);
-    assert.equal((results[0].match['h'] as Handle).localName, 'h1');
-    assert.equal((results[0].match['A:a'] as Particle).name, 'a');
-    assert.equal((results[0].match['B:b'] as Particle).name, 'b');
+    assert.strictEqual(results[0].score, -1);
+    assert.strictEqual((results[0].match['h'] as Handle).localName, 'h1');
+    assert.strictEqual((results[0].match['A:a'] as Particle).name, 'a');
+    assert.strictEqual((results[0].match['B:b'] as Particle).name, 'b');
   });
 
   it('matches duplicate particles', async () => {

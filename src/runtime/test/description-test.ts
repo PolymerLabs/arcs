@@ -41,7 +41,7 @@ const tests = [
     name: 'text',
     verifySuggestion: async ({arc, relevance}: VerifySuggestionOptions, expectedSuggestion) => {
       const description = await Description.create(arc, relevance);
-      assert.equal(description.getArcDescription(), expectedSuggestion);
+      assert.strictEqual(description.getArcDescription(), expectedSuggestion);
       return description;
     }
   },
@@ -59,7 +59,7 @@ const tests = [
         result = result.replace(new RegExp(`{{${m}}}`, 'g'), suggestion.model[m]);
         assert.isFalse(result.indexOf(`{{${m}}}`) >= 0);
       });
-      assert.equal(result, expectedSuggestion);
+      assert.strictEqual(result, expectedSuggestion);
       return description;
     }
   },
@@ -130,21 +130,21 @@ ${recipeManifest}
       `));
 
       let description = await test.verifySuggestion({arc}, 'Read from foo and populate foo list.');
-      assert.equal(description.getHandleDescription(ifooHandle), 'foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'foo list');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
       // Add value to a singleton handle.
       await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       description = await test.verifySuggestion({arc}, 'Read from foo-name and populate foo list.');
-      assert.equal(description.getHandleDescription(ifooHandle), 'foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'foo list');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
       // Add values to a collection handle.
       await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
       await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       description = await test.verifySuggestion({arc}, 'Read from foo-name and populate foo list (foo-1, foo-2).');
-      assert.equal(description.getHandleDescription(ifooHandle), 'foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'foo list');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
       // Add more values to the collection handle.
       await foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
@@ -164,8 +164,8 @@ ${recipeManifest}
     `));
 
       let description = await test.verifySuggestion({arc}, 'Read from my-in-foo and populate my-out-foos.');
-      assert.equal(description.getHandleDescription(ifooHandle), 'my-in-foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'my-out-foos');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-out-foos');
 
       // Add value to a singleton handle.
       await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
@@ -180,8 +180,8 @@ ${recipeManifest}
       await foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
       description = await test.verifySuggestion({arc},
           'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).');
-      assert.equal(description.getHandleDescription(ifooHandle), 'my-in-foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'my-out-foos');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-out-foos');
     });
   });
 
@@ -241,16 +241,16 @@ ${recipeManifest}
     `));
 
       let description = await test.verifySuggestion({arc}, 'Read from my-in-foo and populate The Foos from my-in-foo.');
-      assert.equal(description.getHandleDescription(ifooHandle), 'my-in-foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
 
       await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
       await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       description = await test.verifySuggestion({arc},
           'Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).');
-      assert.equal(description.getHandleDescription(ifooHandle), 'my-in-foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
     });
   });
 
@@ -265,16 +265,16 @@ ${recipeManifest}
     `));
 
       let description = await test.verifySuggestion({arc}, 'Read from foo and populate The Foos from foo.');
-      assert.equal(description.getHandleDescription(ifooHandle), 'foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
 
       await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
       await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       description = await test.verifySuggestion({arc},
           'Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).');
-      assert.equal(description.getHandleDescription(ifooHandle), 'foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
     });
   });
 
@@ -296,9 +296,9 @@ ${recipeManifest}
       const description = await test.verifySuggestion({arc},
           'Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].');
 
-      assert.equal(description.getHandleDescription(ifooHandle), '[fooValue: the-FOO]');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), '[fooValue: the-FOO]');
       // Add mode getHandleDescription tests, to verify all are strings!
-      assert.equal(description.getHandleDescription(ofoosHandle), '[A list of foo with values: foo-1, foo-2]');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), '[A list of foo with values: foo-1, foo-2]');
     });
   });
 
@@ -318,18 +318,18 @@ ${recipeManifest}
     `));
 
       let description = await test.verifySuggestion({arc}, 'Read from best-new-foo and populate my-foos.');
-      assert.equal(description.getHandleDescription(ifooHandle), 'best-new-foo');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'best-new-foo');
       const oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'B' && hc.name === 'ofoo').handle;
-      assert.equal(description.getHandleDescription(oBFooHandle), 'best-new-foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'my-foos');
+      assert.strictEqual(description.getHandleDescription(oBFooHandle), 'best-new-foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-foos');
 
       await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
       await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       description = await test.verifySuggestion({arc}, 'Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).');
-      assert.equal(description.getHandleDescription(ifooHandle), 'best-new-foo');
-      assert.equal(description.getHandleDescription(oBFooHandle), 'best-new-foo');
-      assert.equal(description.getHandleDescription(ofoosHandle), 'my-foos');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'best-new-foo');
+      assert.strictEqual(description.getHandleDescription(oBFooHandle), 'best-new-foo');
+      assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-foos');
     });
   });
 
@@ -372,7 +372,7 @@ recipe
 
       let description = await test.verifySuggestion(
           {arc}, 'Display X1-foo, create X1::X1-foo, and create X2::X2-foo.');
-      assert.equal(description.getHandleDescription(aFooHandle), 'X1-foo');
+      assert.strictEqual(description.getHandleDescription(aFooHandle), 'X1-foo');
 
       // Rank X2 higher than X2
       const relevance = Relevance.create(arc, recipe);
@@ -383,7 +383,7 @@ recipe
 
       description = await test.verifySuggestion(
           {arc, relevance}, 'Display X2-foo, create X2::X2-foo, and create X1::X1-foo.');
-      assert.equal(description.getHandleDescription(aFooHandle), 'X2-foo');
+      assert.strictEqual(description.getHandleDescription(aFooHandle), 'X2-foo');
     });
   });
 
@@ -422,22 +422,22 @@ recipe
       const fooStore2 = await arc.createStore(fooType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
 
       let description = await test.verifySuggestion({arc}, 'Write to X-foo and write to X-foo.');
-      assert.equal(description.getHandleDescription(recipe.handles[0]), 'X-foo');
-      assert.equal(description.getHandleDescription(recipe.handles[1]), 'X-foo');
+      assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
+      assert.strictEqual(description.getHandleDescription(recipe.handles[1]), 'X-foo');
 
       // Add values to the second handle.
       await fooStore2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key1']);
       await fooStore2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key2']);
       description = await test.verifySuggestion({arc}, 'Write to X-foo and write to X-foo (foo-1, foo-2).');
-      assert.equal(description.getHandleDescription(recipe.handles[0]), 'X-foo');
-      assert.equal(description.getHandleDescription(recipe.handles[1]), 'X-foo');
+      assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
+      assert.strictEqual(description.getHandleDescription(recipe.handles[1]), 'X-foo');
 
       // Add values to the first handle also.
       await fooStore1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}}, ['key3']);
       await fooStore1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}}, ['key4']);
       description = await test.verifySuggestion({arc}, 'Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).');
-      assert.equal(description.getHandleDescription(recipe.handles[0]), 'X-foo');
-      assert.equal(description.getHandleDescription(recipe.handles[1]), 'X-foo');
+      assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
+      assert.strictEqual(description.getHandleDescription(recipe.handles[1]), 'X-foo');
     });
   });
 
@@ -478,7 +478,7 @@ recipe
       await fooStore2.set({id: 2, rawData: {name: 'another-FOO'}});
       const description = await test.verifySuggestion({arc},
           'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
-      assert.equal(description.getHandleDescription(ifooHandle), 'b-foo');
+      assert.strictEqual(description.getHandleDescription(ifooHandle), 'b-foo');
 
       // Rank B bound to fooStore2 higher than B that is bound to fooHandle1.
       const relevance = Relevance.create(arc, recipe);
@@ -511,7 +511,7 @@ recipe
 
       const description = await test.verifySuggestion({arc}, 'Create &lt;new> &lt;&lt;my-foo>>.');
       const handle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoo').handle;
-      assert.equal(description.getHandleDescription(handle), '&lt;my-foo>');
+      assert.strictEqual(description.getHandleDescription(handle), '&lt;my-foo>');
     });
   });
 
@@ -579,8 +579,8 @@ recipe
         const description = await test.verifySuggestion({arc}, 'Make my best type list from my best type.');
         const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 't').handle;
         const tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 'ts').handle;
-        assert.equal(description.getHandleDescription(tRecipeHandle), 'my best type');
-        assert.equal(description.getHandleDescription(tsRecipeHandle), 'my best type list');
+        assert.strictEqual(description.getHandleDescription(tRecipeHandle), 'my best type');
+        assert.strictEqual(description.getHandleDescription(tsRecipeHandle), 'my best type list');
 
         // Add values to handles.
         await tStore.set({id: 1, rawData: {property: 'value1'}});
@@ -709,7 +709,7 @@ recipe
       const description = await Description.create(arc);
 
       const recipeDescription = description.getRecipeSuggestion();
-      assert.equal(recipeDescription, expectedDescription);
+      assert.strictEqual(recipeDescription, expectedDescription);
       const recipeDescriptionWithFormatter = description.getRecipeSuggestion(DescriptionDomFormatter);
       assert.deepEqual(recipeDescriptionWithFormatter, expectedDescription);
     };
@@ -724,10 +724,10 @@ schema TVShow
 schema MyTVShow
 schema MyTV
 schema GitHubDash`));
-    assert.equal(manifest.findTypeByName('TVShow').toPrettyString(), 'TV Show');
-    assert.equal(manifest.findTypeByName('MyTVShow').toPrettyString(), 'My TV Show');
-    assert.equal(manifest.findTypeByName('MyTV').toPrettyString(), 'My TV');
-    assert.equal(manifest.findTypeByName('GitHubDash').toPrettyString(), 'Git Hub Dash');
+    assert.strictEqual(manifest.findTypeByName('TVShow').toPrettyString(), 'TV Show');
+    assert.strictEqual(manifest.findTypeByName('MyTVShow').toPrettyString(), 'My TV Show');
+    assert.strictEqual(manifest.findTypeByName('MyTV').toPrettyString(), 'My TV');
+    assert.strictEqual(manifest.findTypeByName('GitHubDash').toPrettyString(), 'Git Hub Dash');
   });
 
   it('fails gracefully (no asserts)', async () => {
@@ -739,7 +739,7 @@ schema GitHubDash`));
       assert.isTrue(recipe.isResolved());
       const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
-      assert.equal(description.getArcDescription(), expectedSuggestion);
+      assert.strictEqual(description.getArcDescription(), expectedSuggestion);
     };
 
     await verifyNoAssert(`

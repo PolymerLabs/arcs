@@ -139,7 +139,7 @@ describe('Bundle Tool', () => {
       `particle Recommend in 'source/Recommend.js'`
     );
 
-    assert.equal(
+    assert.strictEqual(
         await zip.file('__bundle_entry.manifest').async('text'),
         `import 'Products/Products.recipes'\n`);
   });

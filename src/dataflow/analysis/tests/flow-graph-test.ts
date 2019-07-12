@@ -57,7 +57,7 @@ describe('FlowGraph', () => {
     const P2 = checkDefined(graph.particleMap.get('P2'));
     assert.isEmpty(P1.inEdges);
     assert.isEmpty(P2.outEdges);
-    assert.equal(P1.outNodes[0], P2.inNodes[0], 'handle node is different');
+    assert.strictEqual(P1.outNodes[0], P2.inNodes[0], 'handle node is different');
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar']);
   });
 
@@ -120,8 +120,8 @@ describe('FlowGraph', () => {
     assert.lengthOf(graph.edges, 1);
     assert.lengthOf(graph.edges[0].claims, 1);
     const claim = graph.edges[0].claims[0];
-    assert.equal(claim.type, ClaimType.IsTag);
-    assert.equal((claim as ClaimIsTag).tag, 'trusted');
+    assert.strictEqual(claim.type, ClaimType.IsTag);
+    assert.strictEqual((claim as ClaimIsTag).tag, 'trusted');
   });
 
   it('copies particle claims to particle nodes and out-edges', async () => {
@@ -134,14 +134,14 @@ describe('FlowGraph', () => {
           foo -> h
     `);
     const node = checkDefined(graph.particleMap.get('P'));
-    assert.equal(node.claims.length, 1);
+    assert.strictEqual(node.claims.length, 1);
     const particleClaim = node.claims.find(pclaim => pclaim.handle.name === 'foo');
     assert.isNotNull(particleClaim);
-    assert.equal((particleClaim.claims[0] as ClaimIsTag).tag, 'trusted');
+    assert.strictEqual((particleClaim.claims[0] as ClaimIsTag).tag, 'trusted');
     assert.isEmpty(node.checks);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].claims[0], particleClaim.claims[0]);
+    assert.strictEqual(graph.edges[0].claims[0], particleClaim.claims[0]);
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {
@@ -156,12 +156,12 @@ describe('FlowGraph', () => {
     const node = checkDefined(graph.particleMap.get('P'));
     assert.lengthOf(node.checks, 1);
     const check = node.checks[0];
-    assert.equal(check.target.name, 'foo');
+    assert.strictEqual(check.target.name, 'foo');
     assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     assert.isEmpty(node.claims);
 
     assert.lengthOf(graph.edges, 1);
-    assert.equal(graph.edges[0].check, check);
+    assert.strictEqual(graph.edges[0].check, check);
   });
 
   it('supports making checks on slots', async () => {
@@ -185,21 +185,21 @@ describe('FlowGraph', () => {
     const slot1 = checkDefined(graph.slots[0]);
     assert.isEmpty(slot1.outEdges);
     assert.lengthOf(slot1.inEdges, 1);
-    assert.equal(slot1.inEdges[0].connectionName, 'root');
-    assert.equal((slot1.inEdges[0].start as ParticleNode).name, 'P1');
+    assert.strictEqual(slot1.inEdges[0].connectionName, 'root');
+    assert.strictEqual((slot1.inEdges[0].start as ParticleNode).name, 'P1');
     assert.isUndefined(slot1.inEdges[0].check);
     assert.isUndefined(slot1.check);
 
     const slot2 = checkDefined(graph.slots[1]);
     assert.isEmpty(slot2.outEdges);
     assert.lengthOf(slot2.inEdges, 1);
-    assert.equal(slot2.inEdges[0].connectionName, 'slotToConsume');
-    assert.equal((slot2.inEdges[0].start as ParticleNode).name, 'P2');
+    assert.strictEqual(slot2.inEdges[0].connectionName, 'slotToConsume');
+    assert.strictEqual((slot2.inEdges[0].start as ParticleNode).name, 'P2');
     const check = slot2.inEdges[0].check;
     assert.instanceOf(check.target, ProvideSlotConnectionSpec);
-    assert.equal(check.target.name, 'slotToProvide');
+    assert.strictEqual(check.target.name, 'slotToProvide');
     assert.deepEqual(check.expression, new CheckHasTag('trusted'));
-    assert.equal(check, slot2.check);
+    assert.strictEqual(check, slot2.check);
   });
 
   it('resolves data store names and IDs', async () => {
@@ -220,8 +220,8 @@ describe('FlowGraph', () => {
     assert.lengthOf(graph.handles, 1);
     const storeId = graph.handles[0].storeId;
 
-    assert.equal(graph.resolveStoreRefToID({type: 'id', store: 'my-store-id'}), 'my-store-id');
-    assert.equal(graph.resolveStoreRefToID({type: 'name', store: 'MyStore'}), storeId);
+    assert.strictEqual(graph.resolveStoreRefToID({type: 'id', store: 'my-store-id'}), 'my-store-id');
+    assert.strictEqual(graph.resolveStoreRefToID({type: 'name', store: 'MyStore'}), storeId);
     assert.throws(() => graph.resolveStoreRefToID({type: 'name', store: 'UnknownName'}), 'Store with name UnknownName not found.');
     assert.throws(() => graph.resolveStoreRefToID({type: 'id', store: 'unknown-id'}), `Store with id 'unknown-id' not found.`);
   });
@@ -252,8 +252,8 @@ describe('FlowGraph', () => {
     assert.lengthOf(allEdgeIds, 4); // 2 handle connections, 2 slot connections.
 
     // Check all values are unique.
-    assert.equal(new Set(allNodeIds).size, 5);
-    assert.equal(new Set(allEdgeIds).size, 4);
+    assert.strictEqual(new Set(allNodeIds).size, 5);
+    assert.strictEqual(new Set(allEdgeIds).size, 4);
 
     assert.sameMembers(allNodeIds, ['P0', 'P1', 'S0', 'S1', 'H0']);
     assert.sameMembers(allEdgeIds, ['E0', 'E1', 'E2', 'E3']);

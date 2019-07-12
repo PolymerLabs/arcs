@@ -42,15 +42,15 @@ describe('Handle', () => {
     const store = await arc.createStore(manifest.schemas.Bar.type) as SingletonStorageProvider;
     let version = 0;
     store.on('change', () => version++, {});
-    assert.equal(version, 0);
+    assert.strictEqual(version, 0);
     const bar1 = {id: 'an id', value: 'a Bar'};
     await store.set(bar1);
-    assert.equal(version, 1);
+    assert.strictEqual(version, 1);
     await store.set(bar1);
     // TODO(shans): fix this test once entity mutation is a thing
-    assert.equal(version, 2);
+    assert.strictEqual(version, 2);
     await store.set({value: 'a Bar'});
-    assert.equal(version, 3);
+    assert.strictEqual(version, 3);
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
@@ -58,16 +58,16 @@ describe('Handle', () => {
     const barStore = await arc.createStore(manifest.schemas.Bar.type.collectionOf()) as CollectionStorageProvider;
     let version = 0;
     barStore.on('change', ({add: [{effective}]}) => {if (effective) version++;}, {});
-    assert.equal(barStore.version, 0);
+    assert.strictEqual(barStore.version, 0);
     const bar1 = {id: 'an id', value: 'a Bar'};
     await barStore.store(bar1, ['key1']);
-    assert.equal(version, 1);
+    assert.strictEqual(version, 1);
     await barStore.store(bar1, ['key2']);
-    assert.equal(version, 1);
+    assert.strictEqual(version, 1);
     await barStore.store({value: 'a Bar'}, ['key3']);
-    assert.equal(version, 2);
+    assert.strictEqual(version, 2);
     await barStore.store(bar1, ['key4']);
-    assert.equal(version, 2);
+    assert.strictEqual(version, 2);
   });
 
   it('dedupes common user-provided ids', async () => {
@@ -93,7 +93,7 @@ describe('Handle', () => {
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
     await fooHandle.store(new Foo({value: '2'}, 'id1'));
     const stored = (await fooHandle.toList())[0];
-    assert.equal(stored.value, '2');
+    assert.strictEqual(stored.value, '2');
   });
 
   it('allows updates with same user-provided ids but different value (singleton)', async () => {
@@ -106,7 +106,7 @@ describe('Handle', () => {
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));
     const stored = await fooHandle.get();
-    assert.equal(stored['value'], '2');
+    assert.strictEqual(stored['value'], '2');
   });
 
   it('remove entry from store', async () => {
@@ -129,7 +129,7 @@ describe('Handle', () => {
 
     const ifaceStore = await arc.createStore(iface) as SingletonStorageProvider;
     await ifaceStore.set(manifest.particles[0]);
-    assert.equal(await ifaceStore.get(), manifest.particles[0]);
+    assert.strictEqual(await ifaceStore.get(), manifest.particles[0]);
   });
 
   it('createHandle only allows valid tags & types in stores', async () => {
@@ -147,6 +147,6 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), storageKey: 'pouchdb://memory/yyy/test',
                          context: manifest, loader});
     const singleton = await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1') as SingletonStorageProvider;
-    assert.equal(singleton.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
+    assert.strictEqual(singleton.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
   });
 });

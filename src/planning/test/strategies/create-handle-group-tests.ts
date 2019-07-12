@@ -44,7 +44,7 @@ describe('CreateHandleGroup', () => {
 
     const result = await StrategyTestHelper.onlyResult(null, CreateHandleGroup, manifest.recipes[0]);
     assert.lengthOf(result.handles, 1);
-    assert.equal(result.handles[0].fate, 'create');
+    assert.strictEqual(result.handles[0].fate, 'create');
     assert.isTrue(result.isResolved());
   });
 
@@ -123,7 +123,7 @@ describe('CreateHandleGroup', () => {
 
     assert.lengthOf(result.handles, 1);
     const handle = result.handles[0];
-    assert.equal(handle.fate, 'create');
+    assert.strictEqual(handle.fate, 'create');
 
     for (const particle of result.particles) {
 
@@ -131,7 +131,7 @@ describe('CreateHandleGroup', () => {
         const connections = Object.values(particle.connections);
         assert.lengthOf(connections, 1);
         const connection = connections[0] as HandleConnection;
-          assert.equal(connection.handle, handle);
+          assert.strictEqual(connection.handle, handle);
       } else {
         assert.isEmpty(Object.values(particle.connections));
       }

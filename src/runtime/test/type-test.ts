@@ -283,7 +283,7 @@ describe('types', () => {
 
       a.maybeMergeCanWriteSuperset(b);
 
-      assert.equal(a.canWriteSuperset, b);
+      assert.strictEqual(a.canWriteSuperset, b);
       assert.notExists(a.canReadSubset);
       assert.notExists(a.resolution);
 
@@ -291,7 +291,7 @@ describe('types', () => {
 
       assert.notExists(a.canWriteSuperset);
       assert.notExists(a.canReadSubset);
-      assert.equal(a.resolution, b);
+      assert.strictEqual(a.resolution, b);
     });
   });
 
@@ -300,7 +300,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
-      assert.equal(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
   any Foo {Text value} foo
   any ~a *
@@ -312,7 +312,7 @@ describe('types', () => {
       const variable = TypeVariable.make('a', null, null);
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
-      assert.equal(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
   any ~a *
 `);
@@ -352,9 +352,9 @@ describe('types', () => {
       const recipe = manifest.recipes[0];
       assert(recipe.normalize());
       assert(recipe.isResolved());
-      assert.equal(recipe.handles.length, 1);
-      assert.equal((recipe.handles[0].type.getContainedType().canReadSubset as EntityType).entitySchema.name, 'Lego');
-      assert.equal((recipe.handles[0].type.getContainedType().canWriteSuperset as EntityType).entitySchema.name, 'Product');
+      assert.strictEqual(recipe.handles.length, 1);
+      assert.strictEqual((recipe.handles[0].type.getContainedType().canReadSubset as EntityType).entitySchema.name, 'Lego');
+      assert.strictEqual((recipe.handles[0].type.getContainedType().canWriteSuperset as EntityType).entitySchema.name, 'Product');
     });
 
     it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
@@ -367,7 +367,7 @@ describe('types', () => {
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
-      assert.equal((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Product');
+      assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Product');
     });
 
     it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
@@ -380,7 +380,7 @@ describe('types', () => {
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
-      assert.equal((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Lego');
+      assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Lego');
     });
   });
 });

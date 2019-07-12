@@ -40,7 +40,7 @@ describe('TileBoard', function() {
 
   describe('#size', function() {
     it('should return the total tile count', function() {
-      assert.equal(createDefaultBoard().size, 49);
+      assert.strictEqual(createDefaultBoard().size, 49);
     });
   });
 
@@ -48,17 +48,17 @@ describe('TileBoard', function() {
     it('should return tiles at specific x/y coordinates', function() {
       const board = createDefaultBoard();
       const tile00 = board.tileAt(0, 0);
-      assert.equal(tile00.x, 0);
-      assert.equal(tile00.y, 0);
-      assert.equal(tile00.letter, 'A');
+      assert.strictEqual(tile00.x, 0);
+      assert.strictEqual(tile00.y, 0);
+      assert.strictEqual(tile00.letter, 'A');
       const tile35 = board.tileAt(3, 5);
-      assert.equal(tile35.x, 3);
-      assert.equal(tile35.y, 5);
-      assert.equal(tile35.letter, 'M');
+      assert.strictEqual(tile35.x, 3);
+      assert.strictEqual(tile35.y, 5);
+      assert.strictEqual(tile35.letter, 'M');
       const tile66 = board.tileAt(6, 6);
-      assert.equal(tile66.x, 6);
-      assert.equal(tile66.y, 6);
-      assert.equal(tile66.letter, 'W');
+      assert.strictEqual(tile66.x, 6);
+      assert.strictEqual(tile66.y, 6);
+      assert.strictEqual(tile66.letter, 'W');
     });
   });
 
@@ -66,17 +66,17 @@ describe('TileBoard', function() {
     it('should return tiles at specific indexes', function() {
       const board = createDefaultBoard();
       const tile0 = board.tileAtIndex(0);
-      assert.equal(tile0.x, 0);
-      assert.equal(tile0.y, 0);
-      assert.equal(tile0.letter, 'A');
+      assert.strictEqual(tile0.x, 0);
+      assert.strictEqual(tile0.y, 0);
+      assert.strictEqual(tile0.letter, 'A');
       const tile38 = board.tileAtIndex(38);
-      assert.equal(tile38.x, 3);
-      assert.equal(tile38.y, 5);
-      assert.equal(tile38.letter, 'M');
+      assert.strictEqual(tile38.x, 3);
+      assert.strictEqual(tile38.y, 5);
+      assert.strictEqual(tile38.letter, 'M');
       const tile48 = board.tileAtIndex(48);
-      assert.equal(tile48.x, 6);
-      assert.equal(tile48.y, 6);
-      assert.equal(tile48.letter, 'W');
+      assert.strictEqual(tile48.x, 6);
+      assert.strictEqual(tile48.y, 6);
+      assert.strictEqual(tile48.letter, 'W');
     });
   });
 
@@ -104,7 +104,7 @@ describe('TileBoard', function() {
              'CDEFGHI' +
              'JKLMNOP' +
              'QRSTUVW');
-         assert.equal(board.toString(), expectedBoard);
+         assert.strictEqual(board.toString(), expectedBoard);
        });
 
     it('should destroy all tiles at top of board correctly', function() {
@@ -127,7 +127,7 @@ describe('TileBoard', function() {
           'CDEFGHI' +
           'JKLMNOP' +
           'QRSTUVW');
-      assert.equal(board.toString(), expectedBoard);
+      assert.strictEqual(board.toString(), expectedBoard);
     });
 
     it('should destroy tiles mid-board correctly', function() {
@@ -142,7 +142,7 @@ describe('TileBoard', function() {
           'CDEFGHI' +
           'JKLMNOP' +
           'QRSTUVW');
-      assert.equal(board.toString(), expectedBoard);
+      assert.strictEqual(board.toString(), expectedBoard);
     });
 
     it('should destroy tiles mid-board multi-row correctly', function() {
@@ -162,7 +162,7 @@ describe('TileBoard', function() {
           'CDEFGHI' +
           'JKLMNOP' +
           'QRSTUVW');
-      assert.equal(board.toString(), expectedBoard);
+      assert.strictEqual(board.toString(), expectedBoard);
     });
 
     it('should destroy tiles mid-board multi-row and looping back correctly',
@@ -185,7 +185,7 @@ describe('TileBoard', function() {
              'CDEFGHI' +
              'JKLMNOP' +
              'QRSTUVW');
-         assert.equal(board.toString(), expectedBoard);
+         assert.strictEqual(board.toString(), expectedBoard);
        });
 
     it('should destroy tiles mid-board multi-row-interspersed and looping back correctly',
@@ -209,7 +209,7 @@ describe('TileBoard', function() {
              'CDEFGHI' +
              'JKLMNOP' +
              'QRSTUVW');
-         assert.equal(board.toString(), expectedBoard);
+         assert.strictEqual(board.toString(), expectedBoard);
        });
 
     it('should destroy tiles at bottom right corner of board correctly',
@@ -226,7 +226,7 @@ describe('TileBoard', function() {
              'CDEFZAB' +
              'JKLMGHI' +
              'QRSTNOP');
-         assert.equal(board.toString(), expectedBoard);
+         assert.strictEqual(board.toString(), expectedBoard);
        });
 
     it('should destroy all tiles at bottom of board correctly', function() {
@@ -249,7 +249,7 @@ describe('TileBoard', function() {
           'VWXYZAB' +
           'CDEFGHI' +
           'JKLMNOP');
-      assert.equal(board.toString(), expectedBoard);
+      assert.strictEqual(board.toString(), expectedBoard);
     });
   });
 
@@ -263,19 +263,19 @@ describe('TileBoard', function() {
 
   describe('#indexToX()', function() {
     it('should compute x for index correctly', function() {
-      assert.equal(TileBoard.indexToX(0), 0);
-      assert.equal(TileBoard.indexToX(6), 6);
-      assert.equal(TileBoard.indexToX(7), 0);
-      assert.equal(TileBoard.indexToX(48), 6);
+      assert.strictEqual(TileBoard.indexToX(0), 0);
+      assert.strictEqual(TileBoard.indexToX(6), 6);
+      assert.strictEqual(TileBoard.indexToX(7), 0);
+      assert.strictEqual(TileBoard.indexToX(48), 6);
     });
   });
 
   describe('#indexToY()', function() {
     it('should compute y for index correctly', function() {
-      assert.equal(TileBoard.indexToY(0), 0);
-      assert.equal(TileBoard.indexToY(6), 0);
-      assert.equal(TileBoard.indexToY(7), 1);
-      assert.equal(TileBoard.indexToY(48), 6);
+      assert.strictEqual(TileBoard.indexToY(0), 0);
+      assert.strictEqual(TileBoard.indexToY(6), 0);
+      assert.strictEqual(TileBoard.indexToY(7), 1);
+      assert.strictEqual(TileBoard.indexToY(48), 6);
     });
   });
 
@@ -283,18 +283,18 @@ describe('TileBoard', function() {
     it('should not shuffle board with no shuffles remaining', function() {
       const board = createDefaultBoard(0);
       const letters = board.toString();
-      assert.equal(board.shuffleAvailableCount, 0);
+      assert.strictEqual(board.shuffleAvailableCount, 0);
       assert.isFalse(board.shuffle());
-      assert.equal(letters, board.toString());
+      assert.strictEqual(letters, board.toString());
     });
 
     it('should shuffle board with a shuffle remaining', function() {
       const board = createDefaultBoard(1);
       const letters = board.toString();
-      assert.equal(board.shuffleAvailableCount, 1);
+      assert.strictEqual(board.shuffleAvailableCount, 1);
       assert.isTrue(board.shuffle());
-      assert.notEqual(letters, board.toString());
-      assert.equal(board.shuffleAvailableCount, 0);
+      assert.notStrictEqual(letters, board.toString());
+      assert.strictEqual(board.shuffleAvailableCount, 0);
     });
   });
 
@@ -304,7 +304,7 @@ describe('TileBoard', function() {
         letters: lettersToBoardString(
             'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVW')
       });
-      assert.equal(
+      assert.strictEqual(
           lettersToBoardString(
               'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVW'),
           board.toString());

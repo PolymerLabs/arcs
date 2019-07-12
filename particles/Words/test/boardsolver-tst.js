@@ -48,7 +48,7 @@ describe('BoardSolver', function() {
       const solver = new BoardSolver(dictionary, board);
       const validWords = solver.getValidWords();
       assert.lengthOf(validWords, 1);
-      assert.equal(validWords[0].text, 'CAT');
+      assert.strictEqual(validWords[0].text, 'CAT');
     });
   });
 

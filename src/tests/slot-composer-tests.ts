@@ -79,8 +79,8 @@ recipe
     const verifyContext = (name: string, expected) => {
       const context = slotComposer.findContextsByName(name)[0];
       assert.exists(context);
-      assert.equal(expected.sourceSlotName, context.sourceSlotConsumer ? context.sourceSlotConsumer.consumeConn.name : undefined);
-      assert.equal(expected.hasContainer, Boolean(context.container));
+      assert.strictEqual(expected.sourceSlotName, context.sourceSlotConsumer ? context.sourceSlotConsumer.consumeConn.name : undefined);
+      assert.strictEqual(expected.hasContainer, Boolean(context.container));
       assert.deepEqual(expected.consumeConnNames || [], context.slotConsumers.map(slot => slot.consumeConn.getQualifiedName()));
     };
     verifyContext('root', {hasContainer: true});
@@ -90,7 +90,7 @@ recipe
     // instantiate the recipe
     plan.normalize();
     assert.isTrue(plan.isResolved());
-    assert.equal(arc.pec.slotComposer, slotComposer);
+    assert.strictEqual(arc.pec.slotComposer, slotComposer);
     await arc.instantiate(plan);
     assert.deepEqual(['A'], startRenderParticles);
     assert.lengthOf(slotComposer.getAvailableContexts(), 3);
@@ -129,9 +129,9 @@ recipe
 
     await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List', 'ProductFilter']});
     assert.lengthOf(slotComposer.consumers, 3);
-    assert.equal(ProvidedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'ItemMultiplexer').slotContext.constructor);
-    assert.equal(ProvidedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'List').slotContext.constructor);
-    assert.equal(HostedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'ShowProduct').slotContext.constructor);
+    assert.strictEqual(ProvidedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'ItemMultiplexer').slotContext.constructor);
+    assert.strictEqual(ProvidedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'List').slotContext.constructor);
+    assert.strictEqual(HostedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'ShowProduct').slotContext.constructor);
     await slotComposer.expectationsCompleted();
   });
 

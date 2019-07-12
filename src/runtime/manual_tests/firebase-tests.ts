@@ -81,10 +81,10 @@ describe('firebase', function() {
 
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
-      assert.equal(result.value, value);
+      assert.strictEqual(result.value, value);
 
-      assert.equal(variable.version, 1);
-      assert.equal(events, 1);
+      assert.strictEqual(variable.version, 1);
+      assert.strictEqual(events, 1);
     });
 
     it('resolves concurrent set', async () => {
@@ -119,7 +119,7 @@ describe('firebase', function() {
       await var1.set({id: 'id1', value: 'underlying'});
 
       const result = await var1.get();
-      assert.equal(result.value, 'underlying');
+      assert.strictEqual(result.value, 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
@@ -142,7 +142,7 @@ describe('firebase', function() {
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
-      assert.equal(result.storageKey, 'underlying');
+      assert.strictEqual(result.storageKey, 'underlying');
 
       assert.isFalse(var1.referenceMode);
       assert.isNull(var1.backingStore);
@@ -204,12 +204,12 @@ describe('firebase', function() {
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
-      assert.equal(result.value, value1);
+      assert.strictEqual(result.value, value1);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
 
-      assert.equal(collection.version, 2);
-      assert.equal(events, 2);
+      assert.strictEqual(collection.version, 2);
+      assert.strictEqual(events, 2);
     });
 
     it('resolves concurrent add of same id', async () => {
@@ -284,9 +284,9 @@ describe('firebase', function() {
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
 
       let result = await collection1.get('id1');
-      assert.equal(result.value, 'value1');
+      assert.strictEqual(result.value, 'value1');
       result = await collection1.get('id2');
-      assert.equal(result.value, 'value2');
+      assert.strictEqual(result.value, 'value2');
 
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
@@ -311,9 +311,9 @@ describe('firebase', function() {
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
 
       let result = await collection1.get('id1');
-      assert.equal(result.storageKey, 'value1');
+      assert.strictEqual(result.storageKey, 'value1');
       result = await collection1.get('id2');
-      assert.equal(result.storageKey, 'value2');
+      assert.strictEqual(result.storageKey, 'value2');
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
@@ -418,8 +418,8 @@ describe('firebase', function() {
         collection1.store({id: 'id1', data: 'ab'}, ['k34']),
         collection2.store({id: 'id2', data: 'cd'}, ['k12'])
       ]);
-      assert.equal((await collection2.get('id1')).data, 'ab');
-      assert.equal((await collection1.get('id2')).data, 'cd');
+      assert.strictEqual((await collection2.get('id1')).data, 'ab');
+      assert.strictEqual((await collection1.get('id2')).data, 'cd');
 
       await collection1.remove('id2');
       assert.isNull(await collection2.get('id2'));
@@ -454,10 +454,10 @@ describe('firebase', function() {
     async function checkNext(col, items, cid, ids) {
       const {value, done} = await col.cursorNext(cid);
       assert.isFalse(done);
-      assert.equal(value.length, ids.length);
+      assert.strictEqual(value.length, ids.length);
       for (let i = 0; i < value.length; i++) {
-        assert.equal(value[i].id, ids[i]);
-        assert.equal(value[i].data, items.get(ids[i]).data);
+        assert.strictEqual(value[i].id, ids[i]);
+        assert.strictEqual(value[i].data, items.get(ids[i]).data);
       }
     }
 
@@ -512,7 +512,7 @@ describe('firebase', function() {
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
       const cid2 = await col.stream(5);
-      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      assert.strictEqual(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await store(col, items, 's16');
 
       // For cursor1: remove one item from the page just returned and two at the edges of the next page:
@@ -589,7 +589,7 @@ describe('firebase', function() {
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
       const cid2 = await col.stream(5, false);
-      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      assert.strictEqual(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await store(col, items, 's16');
 
       // For cursor1: remove one item from the page just returned and two at the edges of the next page.
@@ -765,7 +765,7 @@ describe('firebase', function() {
       assert.notStrictEqual(bigStore2, bigStore);
 
       // The new providers should reflect the updates made to the stores.
-      assert.equal((await varStore2.get()).rawData.value, 'v4');
+      assert.strictEqual((await varStore2.get()).rawData.value, 'v4');
       assert.deepEqual((await colStore2.toList()).map(e => e.rawData.value), ['v2', 'v5']);
 
       const cursorId = await bigStore.stream(5);

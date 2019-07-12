@@ -15,7 +15,7 @@ import {CollectionOpTypes, CRDTCollection} from '../crdt-collection';
 describe('CRDTCollection', () => {
   it('initially is empty', () => {
     const set = new CRDTCollection<{id: string}>();
-    assert.equal(set.getParticleView().size, 0);
+    assert.strictEqual(set.getParticleView().size, 0);
   });
   it('can add two different items from the same actor', () => {
     const set = new CRDTCollection<{id: string}>();
@@ -90,7 +90,7 @@ describe('CRDTCollection', () => {
       clock: {me: 1},
       actor: 'me'
     }));
-    assert.equal(set.getParticleView().size, 0);
+    assert.strictEqual(set.getParticleView().size, 0);
   });
   it('rejects remove operations if version mismatch', () => {
     const set = new CRDTCollection<{id: string}>();

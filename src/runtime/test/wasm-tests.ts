@@ -89,7 +89,7 @@ describe('wasm', () => {
     const encoded = packager.encodeCollection([f1, f2, f3]);
 
     // Decoding of collections hasn't been implemented (yet?).
-    assert.equal(encoded, '3:53:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|10:7:id2|two|29:6:!id:3!|txt:T3:def|num:N-7:|');
+    assert.strictEqual(encoded, '3:53:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|10:7:id2|two|29:6:!id:3!|txt:T3:def|num:N-7:|');
   });
 
   it('entity packaging fails for not-yet-supported types', async () => {

@@ -58,11 +58,11 @@ describe('FindHostedParticle', () => {
     assert.isTrue(recipe.isResolved());
     assert.lengthOf(recipe.handles, 1);
     const handle = recipe.handles[0];
-    assert.equal(handle.fate, 'copy');
+    assert.strictEqual(handle.fate, 'copy');
     assert.isDefined(handle.id);
     assert.isTrue(handle.type instanceof InterfaceType);
     assert.isTrue(handle.type.isResolved());
-    assert.equal((handle.type as InterfaceType).interfaceInfo.name, 'HostedInterface');
+    assert.strictEqual((handle.type as InterfaceType).interfaceInfo.name, 'HostedInterface');
   });
   it(`respects type system constraints`, async () => {
     const results = await runStrategy(`
@@ -167,7 +167,7 @@ describe('FindHostedParticle', () => {
     const outRecipe = results[0].result;
 
     const particleSpecHandle = outRecipe.handles.find(h => h.fate === 'copy');
-    assert.equal('TestParticle', particleSpecHandle.immediateValue.name);
+    assert.strictEqual('TestParticle', particleSpecHandle.immediateValue.name);
     assert(outRecipe.isResolved());
 
     assert.isEmpty(arc._stores);

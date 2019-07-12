@@ -17,7 +17,7 @@ describe('products test', () => {
   const verifyFilteredBook = async (handle) => {
     const list = await handle.toList();
     assert.lengthOf(list, 1);
-    assert.equal('Harry Potter', list[0].rawData.name);
+    assert.strictEqual('Harry Potter', list[0].rawData.name);
   };
 
   it('filters', async () => {
@@ -44,8 +44,8 @@ describe('products test', () => {
               // exists - should await ensureBackingStore() before accessing it.
               const reference = helper.arc._stores[0]._model.getValue(content.model.items.models[0].id);
               const store = helper.arc._stores[0].backingStore;
-              assert.equal(store.storageKey, reference.storageKey);
-              assert.equal('Harry Potter', store._model.getValue(reference.id).rawData.name);
+              assert.strictEqual(store.storageKey, reference.storageKey);
+              assert.strictEqual('Harry Potter', store._model.getValue(reference.id).rawData.name);
             }
             return verified;
           }})

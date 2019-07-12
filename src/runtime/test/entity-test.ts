@@ -33,13 +33,13 @@ describe('Entity', () => {
   it('behaves like a regular object except writing to any field fails', () => {
     const e = new entityClass({txt: 'abc', num: 56});
 
-    assert.equal(e.txt, 'abc');
-    assert.equal(e.num, 56);
+    assert.strictEqual(e.txt, 'abc');
+    assert.strictEqual(e.num, 56);
     assert.isUndefined(e.flg);
     assert.isUndefined(e.notInTheSchema);
 
-    assert.equal(e['txt'], 'abc');
-    assert.equal(e['num'], 56);
+    assert.strictEqual(e['txt'], 'abc');
+    assert.strictEqual(e['num'], 56);
     assert.isUndefined(e['flg']);
     assert.isUndefined(e['notInTheSchema']);
 
@@ -47,9 +47,9 @@ describe('Entity', () => {
     assert.throws(() => { e['num'] = 3; }, `Tried to modify entity field 'num'`);
     assert.throws(() => { e.notInSchema = 3; }, `Tried to modify entity field 'notInSchema'`);
 
-    assert.equal(JSON.stringify(e), '{"txt":"abc","num":56}');
-    assert.equal(e.toString(), 'Foo { txt: "abc", num: 56 }');
-    assert.equal(`${e}`, 'Foo { txt: "abc", num: 56 }');
+    assert.strictEqual(JSON.stringify(e), '{"txt":"abc","num":56}');
+    assert.strictEqual(e.toString(), 'Foo { txt: "abc", num: 56 }');
+    assert.strictEqual(`${e}`, 'Foo { txt: "abc", num: 56 }');
 
     assert.deepEqual(Object.entries(e), [['txt', 'abc'], ['num', 56]]);
     assert.deepEqual(Object.keys(e), ['txt', 'num']);
@@ -62,22 +62,22 @@ describe('Entity', () => {
     assert.isFalse(Entity.isIdentified(e));
     Entity.identify(e, 'id1');
     assert.isTrue(Entity.isIdentified(e));
-    assert.equal(Entity.id(e), 'id1');
+    assert.strictEqual(Entity.id(e), 'id1');
 
     const e2 = new entityClass({txt: 'abc'});
     assert.isFalse(Entity.isIdentified(e2));
     Entity.createIdentity(e2, Id.fromString('id2'), IdGenerator.createWithSessionIdForTesting('s'));
     assert.isTrue(Entity.isIdentified(e2));
-    assert.equal(Entity.id(e2), '!s:id2:0');
+    assert.strictEqual(Entity.id(e2), '!s:id2:0');
 
     assert.deepEqual(Entity.dataClone(e), {txt: 'abc', num: 56});
     assert.deepEqual(Entity.serialize(e), {id: 'id1', rawData: {txt: 'abc', num: 56}});
-    assert.equal(Entity.entityClass(e), entityClass);
+    assert.strictEqual(Entity.entityClass(e), entityClass);
 
     // Static methods
     assert.deepEqual(entityClass.type, new EntityType(schema));
     assert.deepEqual(entityClass.key, {tag: 'entity', schema});
-    assert.equal(entityClass.schema, schema);
+    assert.strictEqual(entityClass.schema, schema);
   });
 
   // TODO: restore this test the temporary id/rawData/dataClone traps are gone
@@ -101,17 +101,17 @@ describe('Entity', () => {
     Entity.identify(e, 'arcs-id');
 
     // Reading the schema fields should match the input data fields.
-    // TODO: [restore] assert.equal(e.id, 'schema-id');
+    // TODO: [restore] assert.strictEqual(e.id, 'schema-id');
     assert.isFalse(e.mutable);
-    assert.equal(e.schema, 'url');
-    assert.equal(e.type, 81);
-    assert.equal(e.toLiteral, 23);
-    assert.equal(e.makeImmutable, 'make');
+    assert.strictEqual(e.schema, 'url');
+    assert.strictEqual(e.type, 81);
+    assert.strictEqual(e.toLiteral, 23);
+    assert.strictEqual(e.makeImmutable, 'make');
 
     // Accessing the internals should be unaffected.
-    assert.equal(Entity.id(e), 'arcs-id');
+    assert.strictEqual(Entity.id(e), 'arcs-id');
     assert.isTrue(Entity.isMutable(e));
-    assert.equal(entityClass.schema, schema);
+    assert.strictEqual(entityClass.schema, schema);
     assert.deepEqual(entityClass.type, new EntityType(schema));
     assert.deepEqual(Entity.toLiteral(e), data);
     Entity.makeImmutable(e);
@@ -143,34 +143,34 @@ describe('Entity', () => {
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
     Entity.debugLog(e);
-    assert.equal(JSON.stringify(e), fields);
-    assert.equal(JSON.stringify(e[SYMBOL_INTERNALS]), internals);
+    assert.strictEqual(JSON.stringify(e), fields);
+    assert.strictEqual(JSON.stringify(e[SYMBOL_INTERNALS]), internals);
   });
 
   it('is mutable by default', () => {
     const e = new entityClass({txt: 'abc'});
     assert.isTrue(Entity.isMutable(e));
-    assert.equal(e.txt, 'abc');
+    assert.strictEqual(e.txt, 'abc');
   });
 
   it('allows mutations via the mutate method with a callback function', () => {
     const e = new entityClass({txt: 'abc', num: 56});
     Entity.mutate(e, e => e.txt = 'xyz');
-    assert.equal(e.txt, 'xyz');
-    assert.equal(e.num, 56);
+    assert.strictEqual(e.txt, 'xyz');
+    assert.strictEqual(e.num, 56);
   });
 
   it('allows mutations via the mutate method with new data', () => {
     const e = new entityClass({txt: 'abc', num: 56});
     Entity.mutate(e, {num: 35});
-    assert.equal(e.txt, 'abc');
-    assert.equal(e.num, 35);
+    assert.strictEqual(e.txt, 'abc');
+    assert.strictEqual(e.num, 35);
   });
 
   it('forbids mutations via setters', () => {
     const e = new entityClass({txt: 'abc'});
     assert.throws(() => e.txt = 'xyz', `Tried to modify entity field 'txt'`);
-    assert.equal(e.txt, 'abc');
+    assert.strictEqual(e.txt, 'abc');
   });
 
   it('rejects mutations when immutable', () => {
@@ -185,7 +185,7 @@ describe('Entity', () => {
       Entity.mutate(e, {txt: 'xyz'});
     }, 'Entity is immutable');
 
-    assert.equal(e.txt, 'abc');
-    assert.equal(e.num, 56);
+    assert.strictEqual(e.txt, 'abc');
+    assert.strictEqual(e.num, 56);
   });
 });

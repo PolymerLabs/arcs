@@ -26,23 +26,23 @@ describe('slot consumer', () => {
 
     // container was null, set to null: nothing happens.
     slot.onContainerUpdate(null, null);
-    assert.equal(startRenderCount, 0);
-    assert.equal(stopRenderCount, 0);
+    assert.strictEqual(startRenderCount, 0);
+    assert.strictEqual(stopRenderCount, 0);
 
     // context was null, set to non-null: startRender is called.
     slot.onContainerUpdate('dummy-container', null);
-    assert.equal(startRenderCount, 1);
-    assert.equal(stopRenderCount, 0);
+    assert.strictEqual(startRenderCount, 1);
+    assert.strictEqual(stopRenderCount, 0);
 
     // context was not null, set to another non-null context: nothing happens.
     assert.isFalse(slot.isSameContainer(slot.getRendering().container, 'other-container'));
     slot.onContainerUpdate('other-container', 'dummy-container');
-    assert.equal(startRenderCount, 1);
-    assert.equal(stopRenderCount, 0);
+    assert.strictEqual(startRenderCount, 1);
+    assert.strictEqual(stopRenderCount, 0);
 
     // context was not null, set to null: stopRender is called.
     slot.onContainerUpdate(null, 'other-container');
-    assert.equal(startRenderCount, 1);
-    assert.equal(stopRenderCount, 1);
+    assert.strictEqual(startRenderCount, 1);
+    assert.strictEqual(stopRenderCount, 1);
   });
 });

@@ -95,9 +95,9 @@ describe('Multiplexer', () => {
     // verify template names
     for (const item of items) {
       if (item.model.subId === '2') {
-        assert.equal('PostMuxer::item::ShowTwo::item::default', item.templateName);
+        assert.strictEqual('PostMuxer::item::ShowTwo::item::default', item.templateName);
       } else {
-        assert.equal('PostMuxer::item::ShowOne::item::default', item.templateName);
+        assert.strictEqual('PostMuxer::item::ShowOne::item::default', item.templateName);
       }
     }
 

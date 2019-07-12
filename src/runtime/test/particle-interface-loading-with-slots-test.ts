@@ -59,10 +59,10 @@ describe('particle interface loading with slots', () => {
 
   function verifyFooItems(slotConsumer, expectedValues) {
     const renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
-    assert.equal(renderings.length, Object.keys(expectedValues).length);
+    assert.strictEqual(renderings.length, Object.keys(expectedValues).length);
     for (const [subId, {model, templateName}] of renderings) {
-      assert.equal(expectedValues[subId], model.value);
-      assert.equal(expectedTemplateName, templateName);
+      assert.strictEqual(expectedValues[subId], model.value);
+      assert.strictEqual(expectedTemplateName, templateName);
       assert.isTrue(!!HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName));
     }
   }

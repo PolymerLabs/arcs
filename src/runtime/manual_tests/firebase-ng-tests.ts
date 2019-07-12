@@ -44,8 +44,8 @@ describe('firebase-ng-driver', function() {
 
     return new Promise((resolve, reject) => {
       output.registerReceiver((model: number, version: number) => {
-        assert.equal(model, 24);
-        assert.equal(version, 1);
+        assert.strictEqual(model, 24);
+        assert.strictEqual(version, 1);
         FirebaseAppCache.stop().then(() => resolve()).catch(reject);
       });
     });
@@ -62,8 +62,8 @@ describe('firebase-ng-driver', function() {
 
     const receivedData = new Promise(async (resolve, reject) => {
       driver2.registerReceiver((model: number, version: number) => {
-        assert.equal(model, 13);
-        assert.equal(version, 1);
+        assert.strictEqual(model, 13);
+        assert.strictEqual(version, 1);
         resolve(); 
       });
     });

@@ -172,8 +172,8 @@ describe('Planner', () => {
     // Make sure the recipes were processed as separate plan groups.
     // TODO(wkorman): When we move to a thread pool we'll revise this to check
     // the thread index instead.
-    assert.equal(plans[0].groupIndex, 0);
-    assert.equal(plans[1].groupIndex, 1);
+    assert.strictEqual(plans[0].groupIndex, 0);
+    assert.strictEqual(plans[1].groupIndex, 1);
   });
 });
 
@@ -294,7 +294,7 @@ ${recipeManifest}
           list <- list
     `, 1);
     assert.lengthOf(plansA[0].handles, 1);
-    assert.equal('map', plansA[0].handles[0].fate);
+    assert.strictEqual('map', plansA[0].handles[0].fate);
 
     const plansB = await testManifest(`
       recipe
@@ -303,7 +303,7 @@ ${recipeManifest}
           list = list
     `, 1);
     assert.lengthOf(plansB[0].handles, 1);
-    assert.equal('copy', plansB[0].handles[0].fate);
+    assert.strictEqual('copy', plansB[0].handles[0].fate);
   });
   it('finds multiple remote handles', async () => {
     // both at once
@@ -581,7 +581,7 @@ describe('Description', () => {
       }
     );
     assert.lengthOf(plans, 1);
-    assert.equal('Make MYTHING.', await plans[0].descriptionText);
+    assert.strictEqual('Make MYTHING.', await plans[0].descriptionText);
     assert.lengthOf(arc._stores, 0);
   });
 });
@@ -627,7 +627,7 @@ describe('Automatic resolution', () => {
         A
         B`);
     assert.lengthOf(recipe.handles, 1);
-    assert.equal('create', recipe.handles[0].fate);
+    assert.strictEqual('create', recipe.handles[0].fate);
 
     // A new handle cannot be introduced if both particles only read.
     await verifyUnresolvedPlan(`
@@ -681,7 +681,7 @@ describe('Automatic resolution', () => {
           location <-> location
 `);
 
-    assert.equal(`recipe
+    assert.strictEqual(`recipe
   create as handle0 // ~
   create as handle1 // ~
   create as handle2 // Location {Number lat, Number lng}
@@ -715,8 +715,8 @@ describe('Automatic resolution', () => {
 
     assert.lengthOf(recipe.handles, 1);
     const [handle] = recipe.handles;
-    assert.equal('use', handle.fate);
-    assert.equal('test:1', handle.id);
+    assert.strictEqual('use', handle.fate);
+    assert.strictEqual('test:1', handle.id);
   });
 
   it('composes recipe rendering a list of items from a recipe', async () => {
@@ -759,8 +759,8 @@ describe('Automatic resolution', () => {
       provide preamble as slot5
   ThingProducer as particle2
     things -> handle0`;
-    assert.equal(composedRecipes[0].toString(), recipeString);
-    assert.equal(composedRecipes[0].toString({showUnresolved: true}), recipeString);
+    assert.strictEqual(composedRecipes[0].toString(), recipeString);
+    assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
   });
   it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
@@ -778,7 +778,7 @@ describe('Automatic resolution', () => {
         });
 
     assert.lengthOf(recipes, 1);
-    assert.equal(recipes[0].toString(), `recipe SelectableUseListRecipe
+    assert.strictEqual(recipes[0].toString(), `recipe SelectableUseListRecipe
   use 'test-store' #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
   slot 'rootslotid-root' #root as slot1

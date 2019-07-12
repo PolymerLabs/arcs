@@ -56,23 +56,23 @@ describe('manifest', () => {
           handle0 \`best handle\``);
     const verify = (manifest: Manifest) => {
       const particle = manifest.particles[0];
-      assert.equal('SomeParticle', particle.name);
+      assert.strictEqual('SomeParticle', particle.name);
       assert.deepEqual(['work'], particle.verbs);
       const recipe = manifest.recipes[0];
       assert(recipe);
-      assert.equal('SomeRecipe', recipe.name);
+      assert.strictEqual('SomeRecipe', recipe.name);
       assert.deepEqual(['someVerb1', 'someVerb2'], recipe.verbs);
       assert.sameMembers(manifest.findRecipesByVerb('someVerb1'), [recipe]);
       assert.sameMembers(manifest.findRecipesByVerb('someVerb2'), [recipe]);
       assert.lengthOf(recipe.particles, 1);
       assert.lengthOf(recipe.handles, 2);
-      assert.equal(recipe.handles[0].fate, 'map');
-      assert.equal(recipe.handles[1].fate, 'create');
+      assert.strictEqual(recipe.handles[0].fate, 'map');
+      assert.strictEqual(recipe.handles[1].fate, 'create');
       assert.lengthOf(recipe.handleConnections, 1);
       assert.sameMembers(recipe.handleConnections[0].tags, ['tag']);
       assert.lengthOf(recipe.patterns, 1);
-      assert.equal(recipe.patterns[0], 'hello world');
-      assert.equal(recipe.handles[1].pattern, 'best handle');
+      assert.strictEqual(recipe.patterns[0], 'hello world');
+      assert.strictEqual(recipe.handles[1].pattern, 'best handle');
       const type = recipe.handleConnections[0]['_resolvedType'];
       assert.lengthOf(Object.keys(manifest.schemas), 1);
       const schema = Object.values(manifest.schemas)[0] as Schema;
@@ -83,8 +83,8 @@ describe('manifest', () => {
     // TODO(dstockwell): The connection between particles and schemas does
     //                   not roundtrip the same way.
     const type = manifest.recipes[0].handleConnections[0].type;
-    assert.equal('one-s', type.toPrettyString());
-    assert.equal('many-ses', type.collectionOf().toPrettyString());
+    assert.strictEqual('one-s', type.toPrettyString());
+    assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('can parse a manifest containing a particle specification', async () => {
@@ -122,8 +122,8 @@ ${particleStr1}
     `);
     const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.particles, 2);
-      assert.equal(particleStr0, manifest.particles[0].toString());
-      assert.equal(particleStr1, manifest.particles[1].toString());
+      assert.strictEqual(particleStr0, manifest.particles[0].toString());
+      assert.strictEqual(particleStr1, manifest.particles[1].toString());
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -159,8 +159,8 @@ ${particleStr1}
     `);
     const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.particles, 2);
-      assert.equal(particleStr0, manifest.particles[0].toString());
-      assert.equal(particleStr1, manifest.particles[1].toString());
+      assert.strictEqual(particleStr0, manifest.particles[0].toString());
+      assert.strictEqual(particleStr1, manifest.particles[1].toString());
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -219,7 +219,7 @@ ${particleStr1}
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('SLANDLES can round-trip particles with dependent handles', async () => {
     const manifestString = `particle TestParticle in 'a.js'
@@ -231,7 +231,7 @@ ${particleStr1}
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('can parse a manifest containing a schema', async () => {
     const manifest = await Manifest.parse(`
@@ -265,7 +265,7 @@ ${particleStr1}
           [{"nobId": "12345"}]
         `, {fileName: 'the.manifest'});
 
-    assert.equal(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
+    assert.strictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('two manifests with stores with the same filename and store name but different data have different ids', async () => {
     const manifestA = await Manifest.parse(`
@@ -282,7 +282,7 @@ ${particleStr1}
            [{"nobId": "67890"}]
           `, {fileName: 'the.manifest'});
 
-    assert.notEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
+    assert.notStrictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('supports recipes with constraints', async () => {
     const manifest = await Manifest.parse(`
@@ -299,10 +299,10 @@ ${particleStr1}
       assert(recipe);
       assert.lengthOf(recipe._connectionConstraints, 1);
       const constraint = recipe._connectionConstraints[0];
-      assert.equal(constraint.from.particle.name, 'A');
-      assert.equal(constraint.from.connection, 'a');
-      assert.equal(constraint.to.particle.name, 'B');
-      assert.equal(constraint.to.connection, 'b');
+      assert.strictEqual(constraint.from.particle.name, 'A');
+      assert.strictEqual(constraint.from.connection, 'a');
+      assert.strictEqual(constraint.to.particle.name, 'B');
+      assert.strictEqual(constraint.to.connection, 'b');
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -320,9 +320,9 @@ ${particleStr1}
       assert(recipe);
       assert.lengthOf(recipe.connectionConstraints, 1);
       const constraint = recipe.connectionConstraints[0];
-      assert.equal(constraint.from.particle.name, 'A');
-      assert.equal(constraint.from.connection, 'a');
-      assert.equal(constraint.to.handle.localName, 'localThing');
+      assert.strictEqual(constraint.from.particle.name, 'A');
+      assert.strictEqual(constraint.from.connection, 'a');
+      assert.strictEqual(constraint.to.handle.localName, 'localThing');
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -365,12 +365,12 @@ ${particleStr1}
           x -> someHandle
         `, {});
     const [recipe1, recipe2] = manifest.recipes;
-    assert.notEqual(recipe1.toString(), recipe2.toString());
-    assert.notEqual(await recipe1.digest(), await recipe2.digest());
+    assert.notStrictEqual(recipe1.toString(), recipe2.toString());
+    assert.notStrictEqual(await recipe1.digest(), await recipe2.digest());
     recipe1.normalize();
     recipe2.normalize();
     assert.deepEqual(recipe1.toString(), recipe2.toString());
-    assert.equal(await recipe1.digest(), await recipe2.digest());
+    assert.strictEqual(await recipe1.digest(), await recipe2.digest());
 
     const deserializedManifest = await Manifest.parse(manifest.toString(), {});
   });
@@ -395,7 +395,7 @@ ${particleStr1}
         P1
           x -> handle1`);
     const [recipe1, recipe2] = manifest.recipes;
-    assert.notEqual(recipe1.toString(), recipe2.toString());
+    assert.notStrictEqual(recipe1.toString(), recipe2.toString());
     recipe1.normalize();
     recipe2.normalize();
     assert.deepEqual(recipe1.toString(), recipe2.toString());
@@ -430,7 +430,7 @@ ${particleStr1}
             bar \`my-bar\``);
       assert(false);
     } catch (e) {
-      assert.equal(e.message, 'Unexpected description for bar');
+      assert.strictEqual(e.message, 'Unexpected description for bar');
     }
   });
   it('can load a manifest via a loader', async () => {
@@ -439,7 +439,7 @@ ${particleStr1}
     const loader = new StubLoader({'*': 'recipe'});
     const manifest = await Manifest.load('some-path', loader, {registry});
     assert(manifest.recipes[0]);
-    assert.equal(manifest, await registry['some-path']);
+    assert.strictEqual(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
@@ -448,8 +448,8 @@ ${particleStr1}
       b: `recipe`,
     });
     const manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(await registry.a, manifest);
-    assert.equal(manifest.imports[0], await registry.b);
+    assert.strictEqual(await registry.a, manifest);
+    assert.strictEqual(manifest.imports[0], await registry.b);
   });
   it('can resolve recipe particles imported from another manifest', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
@@ -501,10 +501,10 @@ ${particleStr1}
         (Number, Number, Boolean) t`);
     const verify = (manifest: Manifest) => {
       const opt = manifest.schemas.Foo.fields;
-      assert.equal(opt.u.kind, 'schema-union');
+      assert.strictEqual(opt.u.kind, 'schema-union');
       verifyPrimitiveType(opt.u.types[0], 'Text');
       verifyPrimitiveType(opt.u.types[1], 'URL');
-      assert.equal(opt.t.kind, 'schema-tuple');
+      assert.strictEqual(opt.t.kind, 'schema-tuple');
       verifyPrimitiveType(opt.t.types[0], 'Number');
       verifyPrimitiveType(opt.t.types[1], 'Number');
       verifyPrimitiveType(opt.t.types[2], 'Boolean');
@@ -557,7 +557,7 @@ ${particleStr1}
       const mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
       assert.isDefined(mySlot.targetSlot);
       assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
-      assert.equal(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+      assert.strictEqual(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
@@ -599,7 +599,7 @@ ${particleStr1}
       assert.lengthOf(recipe.handleConnections, 7);
       const mySlot = checkDefined(recipe.particles[1].connections['mySlot'].handle);
       assert.lengthOf(mySlot.connections, 2);
-      assert.equal(mySlot.connections[0], recipe.particles[0].connections['mySlot']);
+      assert.strictEqual(mySlot.connections[0], recipe.particles[0].connections['mySlot']);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
@@ -652,7 +652,7 @@ ${particleStr1}
       `)).recipes[0];
       recipe.normalize();
       const options = {errors: new Map(), details: '', showUnresolved: true};
-      assert.equal(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
+      assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
     await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
     await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
@@ -674,7 +674,7 @@ ${particleStr1}
       const options = {errors: new Map(), details: '', showUnresolved: true};
       recipe.normalize(options);
       console.log(recipe.obligations);
-      assert.equal(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
+      assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
     await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
     await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
@@ -695,7 +695,7 @@ ${particleStr1}
     // verify particle spec
     assert.lengthOf(manifest.particles, 1);
     const spec = manifest.particles[0];
-    assert.equal(spec.slotConnections.size, 1);
+    assert.strictEqual(spec.slotConnections.size, 1);
     const slotSpec = [...spec.slotConnections.values()][0];
     assert.deepEqual(slotSpec.tags, ['aaa']);
     assert.lengthOf(slotSpec.provideSlotConnections, 1);
@@ -764,7 +764,7 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.slots, 2);
-    assert.equal(checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).consumedSlotConnections['slotB1'].providedSlots['slotB2'],
+    assert.strictEqual(checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).consumedSlotConnections['slotB1'].providedSlots['slotB2'],
                  checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).consumedSlotConnections['slotA'].targetSlot);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
@@ -788,7 +788,7 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handles, 2);
-    assert.equal(
+    assert.strictEqual(
       checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).connections['slotA'].handle,
       checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
 
@@ -810,7 +810,7 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.slots, 1);
-    assert.equal('slotA2', recipe.slots[0].name);
+    assert.strictEqual('slotA2', recipe.slots[0].name);
     assert.isUndefined(recipe.particles[0].consumedSlotConnections['slotA1'].targetSlot);
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
@@ -832,8 +832,8 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     // Check that the parser found the handleConnections
     assert.lengthOf(recipe.handleConnections, 2);
-    assert.equal('slotA1', recipe.handleConnections[0].name);
-    assert.equal('slotA2', recipe.handleConnections[1].name);
+    assert.strictEqual('slotA1', recipe.handleConnections[0].name);
+    assert.strictEqual('slotA2', recipe.handleConnections[1].name);
 
     // Check that the handle connection
     // wasn't resolved to a handle (even though it was parsed).
@@ -869,9 +869,9 @@ ${particleStr1}
 
     assert.lengthOf(recipe.slots, 1);
     const slotB = recipe.slots[0];
-    assert.equal('slotB', slotB.name);
+    assert.strictEqual('slotB', slotB.name);
     assert.lengthOf(slotB.consumeConnections, 1);
-    assert.equal(slotB.sourceConnection, slotConnA);
+    assert.strictEqual(slotB.sourceConnection, slotConnA);
   });
   it('SLANDLES incomplete aliasing', async () => {
     const recipe = (await Manifest.parse(`
@@ -897,8 +897,8 @@ ${particleStr1}
     const slotB = recipe.handles[0];
     assert.lengthOf(slotB.connections, 2);
 
-    assert.equal(slotB.connections[0].name, 'slotB');
-    assert.equal(slotB.connections[1].name, 'slotB');
+    assert.strictEqual(slotB.connections[0].name, 'slotB');
+    assert.strictEqual(slotB.connections[1].name, 'slotB');
 
     const directions = slotB.connections.map(c => c.direction);
     assert.lengthOf(directions, 2);
@@ -1263,7 +1263,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     let recipe = (await Manifest.parse(manifestSource)).recipes[0];
     assert.isNotNull(recipe.search);
     let search = checkNotNull(recipe.search);
-    assert.equal('Hello dear world', search.phrase);
+    assert.strictEqual('Hello dear world', search.phrase);
     assert.deepEqual(['hello', 'dear', 'world'], search.unresolvedTokens);
     assert.deepEqual([], search.resolvedTokens);
     assert.isTrue(search.isValid());
@@ -1271,8 +1271,8 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     search = checkNotNull(recipe.search);
     assert.isFalse(search.isResolved());
     assert.isFalse(recipe.isResolved());
-    assert.equal(recipe.toString(), `recipe`);
-    assert.equal(recipe.toString({showUnresolved: true}), `recipe
+    assert.strictEqual(recipe.toString(), `recipe`);
+    assert.strictEqual(recipe.toString({showUnresolved: true}), `recipe
   search \`Hello dear world\`
     tokens \`dear\` \`hello\` \`world\` // unresolved search tokens`);
 
@@ -1281,24 +1281,24 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     search = checkNotNull(recipe.search);
     search.resolveToken('hello');
     search.resolveToken('world');
-    assert.equal('Hello dear world', search.phrase);
+    assert.strictEqual('Hello dear world', search.phrase);
     assert.deepEqual(['dear'], search.unresolvedTokens);
     assert.deepEqual(['hello', 'world'], search.resolvedTokens);
-    assert.equal(recipe.toString(), `recipe`);
-    assert.equal(recipe.toString({showUnresolved: true}), `recipe
+    assert.strictEqual(recipe.toString(), `recipe`);
+    assert.strictEqual(recipe.toString({showUnresolved: true}), `recipe
   search \`Hello dear world\`
     tokens \`dear\` // \`hello\` \`world\` // unresolved search tokens`);
 
     // resolve all tokens.
     search.resolveToken('dear');
     recipe.normalize();
-    assert.equal('Hello dear world', search.phrase);
+    assert.strictEqual('Hello dear world', search.phrase);
     assert.deepEqual([], search.unresolvedTokens);
     assert.deepEqual(['dear', 'hello', 'world'], search.resolvedTokens);
     assert.isTrue(search.isResolved());
     assert.isTrue(recipe.isResolved());
-    assert.equal(recipe.toString(), `recipe`);
-    assert.equal(recipe.toString({showUnresolved: true}), `recipe
+    assert.strictEqual(recipe.toString(), `recipe`);
+    assert.strictEqual(recipe.toString({showUnresolved: true}), `recipe
   search \`Hello dear world\`
     tokens // \`dear\` \`hello\` \`world\``);
   });
@@ -1312,7 +1312,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
 
     recipe2.mergeInto(recipe1);
     const search = checkNotNull(recipe1.search);
-    assert.equal('Hello world good morning', search.phrase);
+    assert.strictEqual('Hello world good morning', search.phrase);
     assert.deepEqual(['hello', 'world', 'morning'], search.unresolvedTokens);
     assert.deepEqual(['good'], search.resolvedTokens);
   });
@@ -1327,7 +1327,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
     };
     verify(manifest);
-    assert.equal(manifest.stores[0].toString([]),
+    assert.strictEqual(manifest.stores[0].toString([]),
                  (await Manifest.parse(manifest.stores[0].toString([]), {loader})).toString());
     verify(await Manifest.parse(manifest.toString(), {loader}));
   });
@@ -1471,7 +1471,7 @@ resource SomeName
     const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
-    assert.equal(manifest.particles[0].toString(),
+    assert.strictEqual(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
   modality dom`);
@@ -1494,7 +1494,7 @@ resource SomeName
     const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
-    assert.equal(manifest.particles[0].toString(),
+    assert.strictEqual(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
   modality dom`);
@@ -1518,7 +1518,7 @@ resource SomeName
     const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
-    assert.equal(manifest.particles[0].toString(),
+    assert.strictEqual(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {[Reference<Foo {Text far}>] foo} bar
   modality dom`);
@@ -1540,7 +1540,7 @@ resource SomeName
     const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
     verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
-    assert.equal(manifest.particles[0].toString(),
+    assert.strictEqual(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {[Reference<Foo {Text far}>] foo} bar
   modality dom`);
@@ -1675,7 +1675,7 @@ resource SomeName
     const [validRecipe] = manifest.recipes;
     assert.isTrue(validRecipe.normalize());
     assert.isTrue(validRecipe.isResolved());
-    assert.equal(manifest.stores[0].toString([]),
+    assert.strictEqual(manifest.stores[0].toString([]),
                  (await Manifest.parse(manifest.stores[0].toString([]))).toString());
   });
 
@@ -1771,11 +1771,11 @@ resource SomeName
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
 
-    assert.equal(recipe.particles[0].primaryVerb, 'verb');
+    assert.strictEqual(recipe.particles[0].primaryVerb, 'verb');
     assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0]._consumedSlotConnections.consumeSlot;
     assert(slotConnection.providedSlots.provideSlot);
-    assert.equal(slotConnection.providedSlots.provideSlot.sourceConnection, slotConnection);
+    assert.strictEqual(slotConnection.providedSlots.provideSlot.sourceConnection, slotConnection);
   });
 
   it('SLANDLES can parse a recipe with slot constraints on verbs', async () => {
@@ -1788,14 +1788,14 @@ resource SomeName
 
     const recipe = manifest.recipes[0];
 
-    assert.equal(recipe.particles[0].primaryVerb, 'verb');
+    assert.strictEqual(recipe.particles[0].primaryVerb, 'verb');
     assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0].connections.foo;
-    assert.equal(slotConnection.direction, '`consume');
+    assert.strictEqual(slotConnection.direction, '`consume');
 
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0].connections, 1);
-    assert.equal(recipe.handles[0].connections[0], slotConnection);
+    assert.strictEqual(recipe.handles[0].connections[0], slotConnection);
   });
 
   it('can parse particle arguments with tags', async () => {
@@ -1810,20 +1810,20 @@ resource SomeName
         out DogSled dogsled #multidog #winter #sled
     `);
 
-    assert.equal(manifest.particles.length, 1);
-    assert.equal(manifest.particles[0].handleConnections.length, 4);
+    assert.strictEqual(manifest.particles.length, 1);
+    assert.strictEqual(manifest.particles[0].handleConnections.length, 4);
 
     const connections = manifest.particles[0].handleConnections;
-    assert.equal(connections[0].name, 'leader');
+    assert.strictEqual(connections[0].name, 'leader');
     assert.deepEqual(connections[0].tags, ['leader']);
 
-    assert.equal(connections[1].name, 'team');
-    assert.equal(connections[1].tags.length, 0);
+    assert.strictEqual(connections[1].name, 'team');
+    assert.strictEqual(connections[1].tags.length, 0);
 
-    assert.equal(connections[2].name, 'sled');
+    assert.strictEqual(connections[2].name, 'sled');
     assert.deepEqual(connections[2].tags, ['dogsled']);
 
-    assert.equal(connections[3].name, 'dogsled');
+    assert.strictEqual(connections[3].name, 'dogsled');
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
   });
 
@@ -1837,7 +1837,7 @@ resource SomeName
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
 
   it('can round-trip particles with fields', async () => {
@@ -1853,7 +1853,7 @@ resource SomeName
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
 
   it('SLANDLES can round-trip particles with tags', async () => {
@@ -1866,7 +1866,7 @@ resource SomeName
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('SLANDLES can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
@@ -1879,7 +1879,7 @@ resource SomeName
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
 
   it('SLANDLES can round-trip particles with tags', async () => {
@@ -1892,7 +1892,7 @@ resource SomeName
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('SLANDLES can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
@@ -1904,7 +1904,7 @@ resource SomeName
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
-    assert.equal(manifestString, manifest.particles[0].toString());
+    assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
 
   it('can parse recipes with an implicit create handle', async () => {
@@ -1922,7 +1922,7 @@ resource SomeName
     `);
 
     const recipe = manifest.recipes[0];
-    assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
+    assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
   });
   
   it('can parse recipes with a require section', async () => {
@@ -1986,11 +1986,11 @@ resource SomeName
       
       const claim1 = particle.trustClaims.find(claim => claim.handle.name === 'output1');
       assert.isNotNull(claim1);
-      assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
+      assert.strictEqual((claim1.claims[0] as ClaimIsTag).tag, 'property1');
 
       const claim2 = particle.trustClaims.find(claim => claim.handle.name === 'output2');
       assert.isNotNull(claim2);
-      assert.equal((claim2.claims[0] as ClaimIsTag).tag, 'property2');
+      assert.strictEqual((claim2.claims[0] as ClaimIsTag).tag, 'property2');
     });
 
     it('supports claim statement with multiple tags', async () => {
@@ -2019,12 +2019,12 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
-      assert.equal(particle.trustClaims.length, 1);
+      assert.strictEqual(particle.trustClaims.length, 1);
 
       const claim1 = particle.trustClaims.find(claim => claim.handle.name === 'output1');
       assert.isNotNull(claim1);
-      assert.equal((claim1.claims[0] as ClaimIsTag).isNot, true);
-      assert.equal((claim1.claims[0] as ClaimIsTag).tag, 'property1');
+      assert.strictEqual((claim1.claims[0] as ClaimIsTag).isNot, true);
+      assert.strictEqual((claim1.claims[0] as ClaimIsTag).tag, 'property1');
      });
 
     it('supports "derives from" claims with multiple parents', async () => {
@@ -2038,7 +2038,7 @@ resource SomeName
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
-      assert.equal(particle.trustClaims.length, 1);
+      assert.strictEqual(particle.trustClaims.length, 1);
       
       const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
       assert.isNotNull(claim);
@@ -2065,7 +2065,7 @@ resource SomeName
       assert.lengthOf(tagClaims, 3);
       const notClaims = tagClaims.filter(claim => claim.isNot === true);
       assert.lengthOf(notClaims, 1);
-      assert.equal(notClaims[0].tag, 'property3');
+      assert.strictEqual(notClaims[0].tag, 'property3');
       const derivesClaims = claim.claims.filter(claim => claim.type === ClaimType.DerivesFrom) as ClaimDerivesFrom[];
       assert.lengthOf(derivesClaims, 2);
       assert.sameMembers(derivesClaims.map(claim => claim.parentHandle.name), ['input1', 'input2']);
@@ -2085,13 +2085,13 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 2);
       
       const check1 = checkDefined(particle.trustChecks[0]);
-      assert.equal(check1.toManifestString(), 'check input1 is property1');
-      assert.equal(check1.target.name, 'input1');
+      assert.strictEqual(check1.toManifestString(), 'check input1 is property1');
+      assert.strictEqual(check1.target.name, 'input1');
       assert.deepEqual(check1.expression, new CheckHasTag('property1'));
 
       const check2 = checkDefined(particle.trustChecks[1]);
-      assert.equal(check2.toManifestString(), 'check input2 is property2');
-      assert.equal(check2.target.name, 'input2');
+      assert.strictEqual(check2.toManifestString(), 'check input2 is property2');
+      assert.strictEqual(check2.target.name, 'input2');
       assert.deepEqual(check2.expression, new CheckHasTag('property2'));
     });
 
@@ -2109,13 +2109,13 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 2);
       
       const check1 = checkDefined(particle.trustChecks[0]);
-      assert.equal(check1.toManifestString(), 'check input1 is from store MyStore');
-      assert.equal(check1.target.name, 'input1');
+      assert.strictEqual(check1.toManifestString(), 'check input1 is from store MyStore');
+      assert.strictEqual(check1.target.name, 'input1');
       assert.deepEqual(check1.expression, new CheckIsFromStore({type: 'name', store: 'MyStore'}));
 
       const check2 = checkDefined(particle.trustChecks[1]);
-      assert.equal(check2.toManifestString(), `check input2 is from store 'my-store-id'`);
-      assert.equal(check2.target.name, 'input2');
+      assert.strictEqual(check2.toManifestString(), `check input2 is from store 'my-store-id'`);
+      assert.strictEqual(check2.target.name, 'input2');
       assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}));
     });
 
@@ -2132,9 +2132,9 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
       
       const check = particle.trustChecks[0];
-      assert.equal(check.toManifestString(), 'check mySlot data is trusted');
+      assert.strictEqual(check.toManifestString(), 'check mySlot data is trusted');
       assert.isTrue(check.target instanceof ProvideSlotConnectionSpec);
-      assert.equal(check.target.name, 'mySlot');
+      assert.strictEqual(check.target.name, 'mySlot');
       assert.deepEqual(check.expression, new CheckHasTag('trusted'));
     });
 
@@ -2150,8 +2150,8 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
 
       const check = checkDefined(particle.trustChecks[0]);
-      assert.equal(check.toManifestString(), 'check input is property1 or is property2 or is property3');
-      assert.equal(check.target.name, 'input');
+      assert.strictEqual(check.toManifestString(), 'check input is property1 or is property2 or is property3');
+      assert.strictEqual(check.target.name, 'input');
       assert.deepEqual(check.expression, new CheckBooleanExpression('or', [
         new CheckHasTag('property1'),
         new CheckHasTag('property2'),
@@ -2171,8 +2171,8 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
 
       const check = particle.trustChecks[0];
-      assert.equal(check.toManifestString(), 'check input is property1 and is property2 and is property3');
-      assert.equal(check.target.name, 'input');
+      assert.strictEqual(check.toManifestString(), 'check input is property1 and is property2 and is property3');
+      assert.strictEqual(check.target.name, 'input');
       assert.deepEqual(check.expression, new CheckBooleanExpression('and', [
         new CheckHasTag('property1'),
         new CheckHasTag('property2'),
@@ -2192,8 +2192,8 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
 
       const check = particle.trustChecks[0];
-      assert.equal(check.toManifestString(), 'check input (is property1 and is property2) or (is property2 or is property3)');
-      assert.equal(check.target.name, 'input');
+      assert.strictEqual(check.toManifestString(), 'check input (is property1 and is property2) or (is property2 or is property3)');
+      assert.strictEqual(check.target.name, 'input');
       assert.deepEqual(
         check.expression,
         new CheckBooleanExpression('or', [
@@ -2219,8 +2219,8 @@ resource SomeName
       assert.lengthOf(manifest.stores, 1);
       const store = manifest.stores[0];
       assert.lengthOf(store.claims, 2);
-      assert.equal(store.claims[0].tag, 'property1');
-      assert.equal(store.claims[1].tag, 'property2');
+      assert.strictEqual(store.claims[0].tag, 'property1');
+      assert.strictEqual(store.claims[1].tag, 'property2');
 
       assert.include(manifest.toString(), '  claim is property1 and is property2');
     });
@@ -2255,7 +2255,7 @@ resource SomeName
     provide childSlot`;
     
       const manifest = await Manifest.parse(manifestString);
-      assert.equal(manifest.toString(), manifestString);
+      assert.strictEqual(manifest.toString(), manifestString);
     });
 
     it('fails for unknown handle names', async () => {
