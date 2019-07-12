@@ -61,7 +61,7 @@ function generate(name: string, schema): string {
 
     decode.push(`"${fixed}" -> {`,
       `     decoder.validate("${typeChar}")`,
-      `     ${fixed} = decoder.${decodeMap[typeChar]})`,
+      `     ${fixed} = decoder.${decodeMap[typeChar]}`,
       `}`,
     );
 
