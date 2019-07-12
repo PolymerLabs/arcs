@@ -6,12 +6,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../runtime/test/artifacts/Common/List.manifest'
-import '../../../runtime/test/artifacts/Products/test/ProductFilter.manifest'
-import '../../../runtime/test/artifacts/Products/test/ProductIsBook.manifest'
+import '../../../runtime/tests/artifacts/Common/List.manifest'
+import '../../../runtime/tests/artifacts/Products/test/ProductFilter.manifest'
+import '../../../runtime/tests/artifacts/Products/test/ProductIsBook.manifest'
 
-import '../../../runtime/test/artifacts/Products/Product.schema'
-particle ShowProduct in '../../../runtime/test/artifacts/Products/source/ShowProduct.js'
+import '../../../runtime/tests/artifacts/Products/Product.schema'
+particle ShowProduct in '../../../runtime/tests/artifacts/Products/source/ShowProduct.js'
   in Product product
   consume item
 
