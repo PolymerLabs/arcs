@@ -20,13 +20,15 @@ export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();
   readonly outEdgesByName: Map<string, Edge> = new Map();
 
+  readonly nodeId: string;
   readonly name: string;
 
   readonly claims: ParticleClaim[];
   readonly checks: Check[];
 
-  constructor(particle: Particle) {
+  constructor(nodeId: string, particle: Particle) {
     super();
+    this.nodeId = nodeId;
     this.name = particle.name;
     this.claims = particle.spec.trustClaims;
     this.checks = particle.spec.trustChecks;
@@ -74,6 +76,7 @@ export class ParticleNode extends Node {
 }
 
 export class ParticleInput implements Edge {
+  readonly edgeId: string;
   readonly start: Node;
   readonly end: ParticleNode;
   readonly label: string;
@@ -83,7 +86,8 @@ export class ParticleInput implements Edge {
   readonly check?: Check;
   readonly claims?: Claim[];
 
-  constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
+  constructor(edgeId: string, particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
+    this.edgeId = edgeId;
     this.start = otherEnd;
     this.end = particleNode;
     this.connectionName = connection.name;
@@ -95,6 +99,7 @@ export class ParticleInput implements Edge {
 }
 
 export class ParticleOutput implements Edge {
+  readonly edgeId: string;
   readonly start: ParticleNode;
   readonly end: Node;
   readonly label: string;
@@ -103,7 +108,8 @@ export class ParticleOutput implements Edge {
 
   readonly claims?: Claim[];
 
-  constructor(particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
+  constructor(edgeId: string, particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
+    this.edgeId = edgeId;
     this.start = particleNode;
     this.end = otherEnd;
     this.connectionName = connection.name;
@@ -120,8 +126,9 @@ export class ParticleOutput implements Edge {
 /** Creates a new node for every given particle. */
 export function createParticleNodes(particles: Particle[]) {
   const nodes: Map<Particle, ParticleNode> = new Map();
-  particles.forEach(particle => {
-    nodes.set(particle, new ParticleNode(particle));
+  particles.forEach((particle, index) => {
+    const nodeId = 'P' + index;
+    nodes.set(particle, new ParticleNode(nodeId, particle));
   });
   return nodes;
 }
