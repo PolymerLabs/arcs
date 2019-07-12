@@ -18,7 +18,7 @@ import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Fate} from '../manifest-ast-nodes.js';
+import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 
 export class Handle implements Comparable<Handle> {
@@ -46,7 +46,7 @@ export class Handle implements Comparable<Handle> {
     this._recipe = recipe;
   }
 
-  _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
+  _copyInto(recipe: Recipe, _cloneMap: CloneMap, variableMap: VariableMap) {
     let handle: Handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);
@@ -183,7 +183,7 @@ export class Handle implements Comparable<Handle> {
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
 
-  static effectiveType(handleType: Type, connections: {type: Type|null|undefined, direction: string|undefined|null}[]) {
+  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.

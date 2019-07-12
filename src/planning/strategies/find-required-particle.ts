@@ -19,7 +19,7 @@ export class FindRequiredParticle extends Strategy {
   async generate(inputParams: GenerateParams<Recipe>): Promise<Descendant<Recipe>[]> {
     const arc = this.arc;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onRequiredParticle(recipe: Recipe, particle: Particle) {
+      onRequiredParticle(_recipe: Recipe, particle: Particle) {
         // TODO: This strategy only matches particles based on slots, and only slots in the recipe gets modified.
         //       This strategy should do the same for handles as well.
         const particlesMatch: Particle[] = arc.activeRecipe.particles.filter(arcParticle => particle.matches(arcParticle));
