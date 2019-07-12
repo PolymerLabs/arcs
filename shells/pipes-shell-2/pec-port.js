@@ -28,10 +28,12 @@ class PecPort extends MessagePort {
 
 const pecPorts = {};
 
-export const portFactory = (bus, pecId) =>  {
-  const port = new PecPort(pecId, bus);
-  pecPorts[pecId] = port;
-  return port;
+export const portIndustry = (bus) => {
+  return (pecId) => {
+    const port = new PecPort(pecId, bus);
+    pecPorts[pecId] = port;
+    return port;
+  };
 };
 
 export const handlePecMessage = (msg) => {
