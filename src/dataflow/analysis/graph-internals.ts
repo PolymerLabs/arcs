@@ -23,6 +23,9 @@ import {Check} from '../../runtime/particle-check.js';
 
 /** Represents a node in a FlowGraph. Can be a particle, handle, etc. */
 export abstract class Node {
+  /** A unique ID for this node. No other node in this graph can have this ID. */
+  abstract readonly nodeId: string;
+
   abstract readonly inEdges: readonly Edge[];
   abstract readonly outEdges: readonly Edge[];
 
@@ -45,6 +48,9 @@ export abstract class Node {
  * handles, etc.
  */
 export interface Edge {
+  /** A unique ID for this edge. No other edge in this graph can have this ID. */
+  readonly edgeId: string;
+
   readonly start: Node;
   readonly end: Node;
 

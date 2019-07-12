@@ -16,6 +16,10 @@ class TestNode extends Node {
   readonly inEdges: TestEdge[] = [];
   readonly outEdges: TestEdge[] = [];
 
+  constructor(readonly nodeId: string) {
+    super();
+  }
+
   addInEdge() {
     throw new Error('Unimplemented.');
   }
@@ -34,19 +38,19 @@ class TestNode extends Node {
 }
 
 class TestEdge implements Edge {
+  readonly edgeId: string;
   readonly connectionName = 'connectionName';
 
-  constructor(
-    readonly start: TestNode,
-    readonly end: TestNode,
-    readonly label: string) {}
+  constructor(readonly start: TestNode, readonly end: TestNode, readonly label: string) {
+    this.edgeId = label;
+  }
 }
 
 describe('BackwardsPath', () => {
   // Construct directed graph: A -> B -> C.
-  const nodeA = new TestNode();
-  const nodeB = new TestNode();
-  const nodeC = new TestNode();
+  const nodeA = new TestNode('A');
+  const nodeB = new TestNode('B');
+  const nodeC = new TestNode('C');
   const edgeAToB = new TestEdge(nodeA, nodeB, 'A -> B');
   const edgeBToC = new TestEdge(nodeB, nodeC, 'B -> C');
   const edgeCToA = new TestEdge(nodeC, nodeA, 'C -> A');

@@ -17,13 +17,15 @@ import {assert} from '../../platform/assert-web.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 
 export class HandleNode extends Node {
+  readonly nodeId: string;
   readonly inEdges: ParticleOutput[] = [];
   readonly outEdges: ParticleInput[] = [];
   readonly connectionSpecs: Set<HandleConnectionSpec> = new Set();
   readonly storeId: string;
 
-  constructor(handle: Handle) {
+  constructor(nodeId: string, handle: Handle) {
     super();
+    this.nodeId = nodeId;
     this.storeId = handle.id;
   }
 
@@ -62,23 +64,25 @@ export class HandleNode extends Node {
 /** Creates a new node for every given handle. */
 export function createHandleNodes(handles: Handle[]) {
   const nodes: Map<Handle, HandleNode> = new Map();
-  handles.forEach(handle => {
-    nodes.set(handle, new HandleNode(handle));
+  handles.forEach((handle, index) => {
+    const nodeId = 'H' + index;
+    nodes.set(handle, new HandleNode(nodeId, handle));
   });
   return nodes;
 }
 
 /** Adds a connection between the given particle and handle nodes. */
-export function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection): Edge {
+export function addHandleConnection(
+    particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection, edgeId: string): Edge {
   switch (connection.direction) {
     case 'in': {
-      const edge = new ParticleInput(particleNode, handleNode, connection);
+      const edge = new ParticleInput(edgeId, particleNode, handleNode, connection);
       particleNode.addInEdge(edge);
       handleNode.addOutEdge(edge);
       return edge;
     }
     case 'out': {
-      const edge = new ParticleOutput(particleNode, handleNode, connection);
+      const edge = new ParticleOutput(edgeId, particleNode, handleNode, connection);
       particleNode.addOutEdge(edge);
       handleNode.addInEdge(edge);
       return edge;

@@ -19,12 +19,15 @@ export class SlotNode extends Node {
   // TODO: These should be inout edges, because slots can bubble up user events back to these same particles.
   readonly inEdges: SlotInput[] = [];
   readonly outEdges: readonly Edge[] = [];
+  
+  readonly nodeId: string;
 
   // Optional check on the data entering this slot. The check is defined by the particle which provided this slot.
   check?: Check;
 
-  constructor(slot: Slot) {
+  constructor(nodeId: string, slot: Slot) {
     super();
+    this.nodeId = nodeId;
   }
 
   addInEdge(edge: SlotInput) {
@@ -41,12 +44,14 @@ export class SlotNode extends Node {
 }
 
 class SlotInput implements Edge {
+  readonly edgeId: string;
   readonly start: ParticleNode;
   readonly end: SlotNode;
   readonly label: string;
   readonly connectionName: string;
 
-  constructor(particleNode: ParticleNode, slotNode: SlotNode, connection: SlotConnection) {
+  constructor(edgeId: string, particleNode: ParticleNode, slotNode: SlotNode, connection: SlotConnection) {
+    this.edgeId = edgeId;
     this.start = particleNode;
     this.end = slotNode;
     this.connectionName = connection.name;
@@ -60,15 +65,16 @@ class SlotInput implements Edge {
 
 export function createSlotNodes(slots: Slot[]) {
   const nodes: Map<Slot, SlotNode> = new Map();
-  slots.forEach(slot => {
-    nodes.set(slot, new SlotNode(slot));
+  slots.forEach((slot, index) => {
+    const nodeId = 'S' + index;
+    nodes.set(slot, new SlotNode(nodeId, slot));
   });
   return nodes;
 }
 
 /** Adds a connection between the given particle and slot nodes, where the particle "consumes" the slot. */
-export function addSlotConnection(particleNode: ParticleNode, slotNode: SlotNode, connection: SlotConnection): Edge {
-  const edge = new SlotInput(particleNode, slotNode, connection);
+export function addSlotConnection(particleNode: ParticleNode, slotNode: SlotNode, connection: SlotConnection, edgeId: string): Edge {
+  const edge = new SlotInput(edgeId, particleNode, slotNode, connection);
   particleNode.addOutEdge(edge);
   slotNode.addInEdge(edge);
   return edge;

@@ -225,4 +225,37 @@ describe('FlowGraph', () => {
     assert.throws(() => graph.resolveStoreRefToID({type: 'name', store: 'UnknownName'}), 'Store with name UnknownName not found.');
     assert.throws(() => graph.resolveStoreRefToID({type: 'id', store: 'unknown-id'}), `Store with id 'unknown-id' not found.`);
   });
+
+  it('all node and edge IDs are unique', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        consume root
+          provide slotToProvide
+        check slotToProvide data is trusted
+        in Foo {} input
+      particle P2
+        consume slotToConsume
+        out Foo {} output
+      recipe R
+        slot 'rootslotid-root' as root
+        P1
+          consume root as root
+            provide slotToProvide as slot0
+          input <- h
+        P2
+          consume slotToConsume as slot0
+          output -> h
+    `);
+    const allNodeIds = graph.nodes.map(n => n.nodeId);
+    const allEdgeIds = graph.edges.map(e => e.edgeId);
+    assert.lengthOf(allNodeIds, 5); // 2 particles, 2 slots, 1 handle.
+    assert.lengthOf(allEdgeIds, 4); // 2 handle connections, 2 slot connections.
+
+    // Check all values are unique.
+    assert.equal(new Set(allNodeIds).size, 5);
+    assert.equal(new Set(allEdgeIds).size, 4);
+
+    assert.sameMembers(allNodeIds, ['P0', 'P1', 'S0', 'S1', 'H0']);
+    assert.sameMembers(allEdgeIds, ['E0', 'E1', 'E2', 'E3']);
+  });
 });
