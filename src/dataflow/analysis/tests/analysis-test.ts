@@ -322,6 +322,42 @@ describe('FlowGraph validation', () => {
     assert.sameMembers(result.failures, [`'check bar is tag1 or is tag2' failed for path: P2.foo -> P3.bar`]);
   });
 
+  it(`succeeds when a check including multiple anded tags is met by a single claim`, async () => {
+    const graph = await buildFlowGraph(`
+    particle P1
+      out Foo {} foo
+      claim foo is tag1 and is tag2
+    particle P2
+      in Foo {} bar
+      check bar is tag1 and is tag2
+    recipe R
+      P1
+        foo -> h
+      P2
+        bar <- h
+    `);
+    const result = validateGraph(graph);
+    assert.isTrue(result.isValid);
+  });
+
+  it(`succeeds when a check including multiple ored tags is met by a single claim`, async () => {
+    const graph = await buildFlowGraph(`
+    particle P1
+      out Foo {} foo
+      claim foo is tag1 and is tag2
+    particle P2
+      in Foo {} bar
+      check bar is tag1 or is tag2
+    recipe R
+      P1
+        foo -> h
+      P2
+        bar <- h
+    `);
+    const result = validateGraph(graph);
+    assert.isTrue(result.isValid);
+  });
+
   it('can detect more than one failure for the same check', async () => {
     const graph = await buildFlowGraph(`
       particle P1
