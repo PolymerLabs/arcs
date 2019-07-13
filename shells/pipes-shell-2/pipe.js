@@ -16,7 +16,7 @@ import {marshalPipesArc, addPipeEntity} from './api/pipes-api.js';
 import {marshalArc, installPlanner, deliverSuggestions, ingestEntity, ingestRecipe, ingestSuggestion, observeOutput} from './api/spawn-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
-import {portFactory, handlePecMessage} from './pec-port.js';
+import {portIndustry, handlePecMessage} from './pec-port.js';
 import {initPlanner} from './planner.js';
 import {autofill} from './api/autofill.js';
 import {caption} from './api/caption.js';
@@ -70,7 +70,7 @@ const populateDispatcher = (dispatcher, api, composerFactory, storage, context) 
       return await addPipeEntity(msg.entity);
     },
     autofill: async (msg, tid, bus) => {
-      return await autofill(msg, tid, bus, composerFactory, storage, context, portFactory);
+      return await autofill(msg, tid, bus, composerFactory, storage, context, [portIndustry(bus)]);
     },
     caption: async (msg, tid, bus) => {
       return await caption(msg, tid, bus, composerFactory, storage, context);

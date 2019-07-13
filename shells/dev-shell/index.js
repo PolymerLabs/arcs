@@ -72,7 +72,7 @@ async function wrappedExecute() {
     const arc = new Arc({
       id,
       context: manifest,
-      pecFactory,
+      pecFactories: [pecFactory],
       slotComposer,
       loader,
       storageProviderFactory: storage,
