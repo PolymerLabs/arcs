@@ -75,6 +75,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   health: [health],
   bundle: [peg, build, bundle],
   schema2pkg: [peg, build, schema2pkg],
+  schema2kotlin: [peg, build, schema2kotlin],
   devServer: [peg, build, devServer],
   licenses: [build],
   default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
@@ -870,6 +871,11 @@ function bundle(args: string[]) {
 // E.g. $ ./tools/sigh schema2pkg particles/Products/Product.schema
 function schema2pkg(args: string[]) {
   return spawnTool('build/tools/schema2packager.js', args);
+}
+
+// E.g. $ ./tools/sigh schema2kotlin particles/Products/Product.schema
+function schema2kotlin(args: string[]) {
+  return spawnTool('build/tools/schema2kotlin.js', args);
 }
 
 function devServer(args: string[]) {

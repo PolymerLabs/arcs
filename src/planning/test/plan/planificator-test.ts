@@ -75,7 +75,7 @@ describe('remote planificator', () => {
       slotComposer: new FakeSlotComposer(),
       loader: new Loader(),
       fileName: '',
-      pecFactory: undefined,
+      pecFactories: undefined,
       context: consumePlanificator.arc.context});
     producePlanificator = new Planificator(
       deserializedArc,
