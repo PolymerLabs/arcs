@@ -166,6 +166,9 @@ function check(): boolean {
     throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
   }
 
+  // This call generates a bunch of unrelated output (emsdk env setup, plus the version output
+  // itself is quite verbose). The regex extracts the version from a line that looks like:
+  //   emcc (Emscripten gcc/clang-like replacement) 1.38.38 (4965260 Tue Jul 9 13:29:04 2019 ...
   const emsdkResult = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']);
   const match = emsdkResult.stdout.match(/\nemcc [^0-9.]+ (X[0-9.]+) /);
   if (match === null) {
