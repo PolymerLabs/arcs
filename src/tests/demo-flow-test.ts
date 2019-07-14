@@ -15,12 +15,12 @@ import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 describe('demo flow', () => {
   it('can load the recipe manifest', async () => {
-    await Manifest.load('./src/runtime/test/artifacts/Products/Products.recipes', new Loader());
+    await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', new Loader());
   });
 
   it.skip('flows like a demo', async () => {
     const helper = await PlanningTestHelper.createAndPlan({
-      manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
+      manifestFilename: './src/runtime/tests/artifacts/Products/Products.recipes',
       expectedNumPlans: 1,
       verify: plans => {
         const descriptions = plans.map(plan => plan.description.getRecipeSuggestion());
