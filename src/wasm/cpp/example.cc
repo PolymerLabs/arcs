@@ -1,13 +1,13 @@
 #include "arcs.h"
-#include "wasm-manifest.h"
+#include "example-manifest.h"
 #include <vector>
 
-class TestParticle : public arcs::Particle {
+class StorageParticle : public arcs::Particle {
 public:
   using TestSingleton = arcs::Singleton<arcs::Data>;
   using TestCollection = arcs::Collection<arcs::Data>;
 
-  TestParticle() {
+  StorageParticle() {
     registerHandle("in_sng", in_sng_);
     registerHandle("ot_sng", ot_sng_);
     registerHandle("io_sng", io_sng_);
@@ -183,13 +183,13 @@ private:
   std::vector<arcs::Data> stored_;
 };
 
-DEFINE_PARTICLE(TestParticle)
+DEFINE_PARTICLE(StorageParticle)
 
 
-class SimpleParticle : public arcs::Particle {
+class SpecialFieldsParticle : public arcs::Particle {
 public:
-  SimpleParticle() {
-    registerHandle("info", info_);
+  SpecialFieldsParticle() {
+    registerHandle("input", input_);
   }
 
   void onHandleSync(arcs::Handle* handle, bool all_synced) override {
@@ -197,7 +197,7 @@ public:
   }
 
   void onHandleUpdate(arcs::Handle* handle) override {
-    local_ = arcs::clone_entity(info_.get());
+    local_ = arcs::clone_entity(input_.get());
     renderSlot("root", false, true);
   }
 
@@ -220,11 +220,11 @@ public:
     renderSlot("root", false, true);
   }
 
-  arcs::Singleton<arcs::Info> info_;
-  arcs::Info local_;
+  arcs::Singleton<arcs::SpecialFields> input_;
+  arcs::SpecialFields local_;
 };
 
-DEFINE_PARTICLE(SimpleParticle)
+DEFINE_PARTICLE(SpecialFieldsParticle)
 
 
 class ServiceParticle : public arcs::Particle {

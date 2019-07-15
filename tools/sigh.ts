@@ -76,7 +76,6 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   health: [health],
   bundle: [peg, build, bundle],
   schema2pkg: [peg, build, schema2pkg],
-  schema2kotlin: [peg, build, schema2kotlin],
   devServer: [peg, build, devServer],
   licenses: [build],
   default: [check, peg, railroad, build, wasm, runTests, webpack, webpackTools, lint, tslint],
@@ -447,18 +446,19 @@ function link(srcFiles: Iterable<string>): boolean {
   return success;
 }
 
-// Config for building wasm modules. Keys are the target filename for the module.
+// Config for building wasm modules.
 type WasmConfig = {
-  [key: string]: {
-    manifest: string,
-    src: string[]
+  [key: string]: {         // The target filename for the module.
+    manifest: string,      // The manifest to process; should be in the same dir as the json file
+    src: string[],         // The list of source files to compile (currently limited to one)
+    outDir: string,        // The output directory relative to project root; should be under 'build' for tests
+    linkManifest: boolean  // Whether to link the manifest file into outDir; should be true for tests
   }
 };
 
 // TODO: detect old headers/wasm modules/manifests in cleanObsolete()
-function buildWasmModule(configFile: string): boolean {
+function buildWasmModule(configFile: string, logCmd: boolean): boolean {
   const srcDir = path.dirname(configFile);
-  const buildDir = srcDir.replace(/^src\//, 'build/');
   const json = JSON.parse(fs.readFileSync(configFile, 'utf-8')) as WasmConfig;
   let success = true;
   for (const [name, cfg] of Object.entries(json)) {
@@ -469,7 +469,8 @@ function buildWasmModule(configFile: string): boolean {
 
     const manifestPath = path.join(srcDir, cfg.manifest);
     const srcPath = path.join(srcDir, cfg.src[0]);
-    const wasmPath = path.join(buildDir, name);
+    const wasmPath = path.join(cfg.outDir, name);
+    const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
 
     // Generate the entity class header file from the manifest. The '--update' option
     // means the header will only be re-generated if the manifest has been updated.
@@ -478,9 +479,10 @@ function buildWasmModule(configFile: string): boolean {
         '--no-warnings',
         'build/tools/schema2packager.js',
         '--update',
-        '-o', buildDir,
+        target,
+        '-o', cfg.outDir,
         manifestPath
-      ]);
+      ], {logCmd});
     if (!result.success) {
       console.error(result.stderr);
       success = false;
@@ -498,10 +500,10 @@ function buildWasmModule(configFile: string): boolean {
         '-s', `EXPORTED_FUNCTIONS=['_malloc','_free']`,
         '-s', 'EMIT_EMSCRIPTEN_METADATA',
         '-I', 'src/wasm/cpp',
-        '-I', buildDir,
+        '-I', cfg.outDir,
         '-o', wasmPath,
         srcPath
-      ]);
+      ], {logCmd});
 
     // npx/emsdk-run doesn't propagate the em++ status return. stdout only has noise from
     // the emsdk environment setup. stderr should be empty on success, so we can check that.
@@ -514,23 +516,27 @@ function buildWasmModule(configFile: string): boolean {
       continue;
     }
 
-    // Link the manifest into the build dir so particles can simply declare "in 'module.wasm"
-    // without worrying about the file's location. The unit tests themselves will need to load
-    // the manifest from within build.
-    if (!link([manifestPath])) {
-      console.error(`wasm::link failed (${configFile})`);
-      return false;
+    // For tests, link the manifest into the build dir so particles can simply declare
+    // "in 'module.wasm'" without worrying about the file's location. The tests themselves
+    // will need to load the manifest from within build.
+    if (cfg.linkManifest) {
+      if (!link([manifestPath])) {
+        console.error(`wasm::link failed (${configFile})`);
+        return false;
+      }
     }
-
   }
   return success;
 }
 
 // Finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
-function wasm(): boolean {
+function wasm(args: string[]): boolean {
+  const options = minimist(args, {
+    boolean: ['trace'],
+  });
   let success = true;
   for (const configFile of findProjectFiles('src', null, /[/\\]wasm\.json$/)) {
-    success = success && buildWasmModule(configFile);
+    success = success && buildWasmModule(configFile, options.trace);
   }
   return success;
 }
@@ -604,6 +610,7 @@ type SpawnOptions = {
   shell?: boolean;
   stdio?: string;
   dontWarnOnFailure?: boolean;
+  logCmd?: boolean;
 };
 
 type RawSpawnResult = {
@@ -638,6 +645,9 @@ function spawnWasSuccessful(result: RawSpawnResult, opts: SpawnOptions = {}): bo
 function saneSpawn(cmd: string, args: string[], opts?: SpawnOptions): boolean {
   cmd = path.normalize(cmd);
   opts = {stdio: 'inherit', ...opts, shell: true};
+  if (opts.logCmd) {
+    console.log('+', cmd, args.join(' '));
+  }
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   return spawnWasSuccessful(result, opts);
@@ -647,6 +657,9 @@ function saneSpawn(cmd: string, args: string[], opts?: SpawnOptions): boolean {
 function saneSpawnWithOutput(cmd: string, args: string[], opts?: SpawnOptions): SpawnResult {
   cmd = path.normalize(cmd);
   opts = {...opts, shell: true};
+  if (opts.logCmd) {
+    console.log('+', cmd, args.join(' '));
+  }
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   return {success: spawnWasSuccessful(result, opts), stdout: result.stdout.toString(), stderr: result.stderr.toString()};
@@ -966,14 +979,8 @@ function bundle(args: string[]) {
   return spawnTool('build/tools/bundle-cli.js', args);
 }
 
-// E.g. $ ./tools/sigh schema2pkg particles/Products/Product.schema
 function schema2pkg(args: string[]) {
   return spawnTool('build/tools/schema2packager.js', args);
-}
-
-// E.g. $ ./tools/sigh schema2kotlin particles/Products/Product.schema
-function schema2kotlin(args: string[]) {
-  return spawnTool('build/tools/schema2kotlin.js', args);
 }
 
 function devServer(args: string[]) {

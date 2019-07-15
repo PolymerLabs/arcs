@@ -4,12 +4,6 @@ schema Data
   URL lnk
   Boolean flg
 
-schema Info
-  // Test that C++ keywords can be field names
-  Text for
-  // Test that this doesn't conflict with the real internal id
-  Number internal_id
-
 resource DataResource1
   start
   [{"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}]
@@ -40,7 +34,7 @@ resource DataResource6
   [{"num": 8.5, "flg": false}, {"txt": "jkl"}, {"flg": true}]
 store InOutCollectionStore of [Data] in DataResource6
 
-particle TestParticle in 'output.wasm'
+particle StorageParticle in 'output.wasm'
   consume root
   in Data in_sng
   out Data ot_sng
@@ -56,7 +50,7 @@ recipe
   use InCollectionStore as h4
   use OutCollectionStore as h5
   use InOutCollectionStore as h6
-  TestParticle
+  StorageParticle
     in_sng <- h1
     ot_sng -> h2
     io_sng = h3
@@ -65,22 +59,29 @@ recipe
     io_col = h6
 
 
-resource DataResource7
+schema SpecialFields
+  // Test that language keywords can be field names
+  Text for
+  // Test that this doesn't conflict with the real internal id
+  Number internal_id
+
+resource SpecialFieldsResource
   start
   [{"for": "text", "internal_id": 55}]
-store InfoStore of Info in DataResource7
+store SpecialFieldsStore of SpecialFields in SpecialFieldsResource
 
-particle SimpleParticle in 'output.wasm'
+particle SpecialFieldsParticle in 'output.wasm'
   consume root
-  in Info info
+  in SpecialFields input
 
 recipe
-  use InfoStore as h1
-  SimpleParticle
-    info <- h1
+  use SpecialFieldsStore as h1
+  SpecialFieldsParticle
+    input <- h1
 
 
 particle ServiceParticle in 'output.wasm'
   consume root
-recipe ServicesAPI
+
+recipe
   ServiceParticle
