@@ -11,17 +11,21 @@ import {TimeUnit} from './timeunit.js';
 
 /**
  * An Instant represents a specific instance of universal time with a
- * defined precision.
+ * defined precision.  It is loosely based on the same class in the
+ * TC39 temporal specification, with added resolution/precision data.
+ * 
+ * @see https://github.com/tc39/proposal-temporal/blob/master/spec/instant.html
  *
  * TODO implement comparable?
- * TODO implement other utility methods
+ * TODO implement other utility methods.
+ * TODO make sure Instant works with time arithmetic.
  */
 export class Instant {
   private readonly secs: number;
   private readonly nanos: number;
   private readonly resolutionValue: TimeUnit;
   
-  private constructor(secs: number, nanos = 0, resolution: TimeUnit) {
+  private constructor(secs: number, nanos, resolution: TimeUnit) {
     if (nanos > 1000000 || nanos < 0 || secs < 0) {
       throw new Error('input values out of range secs=' + secs + ' nanos=' + nanos);
     }
@@ -74,7 +78,7 @@ export class Instant {
   }
 
   // Provides constants for parsing differnet input lengths
-  // TODO add millisecond and finer resolution
+  // TODO add millis and nanos resolutions
   private static inputLenParseData: ReadonlyMap<number, {timeunit: TimeUnit, suffix: string}> = new Map(
     [[4,  {timeunit: TimeUnit.YEARS, suffix: '-01-01'}],
      [7,  {timeunit: TimeUnit.MONTHS, suffix: '-01'}],
