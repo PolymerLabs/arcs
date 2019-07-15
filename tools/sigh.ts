@@ -169,14 +169,14 @@ function check(): boolean {
   // itself is quite verbose). The regex extracts the version from a line that looks like:
   //   emcc (Emscripten gcc/clang-like replacement) 1.38.38 (4965260 Tue Jul 9 13:29:04 2019 ...
   const emsdkResult = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']);
-  const match = emsdkResult.stdout.match(/\nemcc [^0-9.]+ (X[0-9.]+) /);
+  const match = emsdkResult.stdout.match(/\s[0-9]+.[0-9]+.[0-9]+\s/);
   if (match === null) {
     console.error('failed to extract emsdk version');
     console.error(emsdkResult.stdout);
     console.error(emsdkResult.stderr);
     throw new Error('failed to extract emsdk version');
   }
-  const emsdkVersion = match[1];
+  const emsdkVersion = match[0].trim();
   if (!semver.satisfies(emsdkVersion, emsdkRequiredVersion)) {
     throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${emsdkVersion}`);
   }
