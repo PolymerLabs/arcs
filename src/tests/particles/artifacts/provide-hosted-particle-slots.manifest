@@ -27,18 +27,18 @@ interface FooAnnotationInterface
   in Foo *
   consume
 
-particle Fooxer in '../../../runtime/test/artifacts/Common/source/Multiplexer.js'
+particle Fooxer in '../../../runtime/tests/artifacts/Common/source/Multiplexer.js'
   host FooInterface hostedParticle
   in [Foo] list
   consume set of item
     provide set of annotation
 
-particle FooAnnotationMuxer in '../../../runtime/test/artifacts/Common/source/Multiplexer.js'
+particle FooAnnotationMuxer in '../../../runtime/tests/artifacts/Common/source/Multiplexer.js'
   host FooAnnotationInterface hostedParticle
   in [Foo] list
   consume set of annotation
 
-particle FooList in '../../../runtime/test/artifacts/Common/source/List.js'
+particle FooList in '../../../runtime/tests/artifacts/Common/source/List.js'
   in [Foo] items
   consume root
     provide set of item

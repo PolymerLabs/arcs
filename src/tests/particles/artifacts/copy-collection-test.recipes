@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../runtime/test/artifacts/Common/CopyCollection.manifest'
-import '../../../runtime/test/artifacts/Things/Thing.schema'
+import '../../../runtime/tests/artifacts/Common/CopyCollection.manifest'
+import '../../../runtime/tests/artifacts/Things/Thing.schema'
 
 recipe
   map 'bigthings' as bigthings

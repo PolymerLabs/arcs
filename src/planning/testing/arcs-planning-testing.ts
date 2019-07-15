@@ -9,7 +9,7 @@
  */
 
 import {PlanningTestHelper} from './planning-test-helper.js';
-import {StrategyTestHelper} from '../test/strategies/strategy-test-helper.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 export {
   PlanningTestHelper,

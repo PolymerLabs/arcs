@@ -97,7 +97,7 @@ describe('Bundle Tool', () => {
         });
   });
   it('bundles Products demo', async () => {
-    await bundle(['src/runtime/test/artifacts/Products/Products.recipes'], 'test-output/bundle/products.zip', false);
+    await bundle(['src/runtime/tests/artifacts/Products/Products.recipes'], 'test-output/bundle/products.zip', false);
     const data = fs.readFileSync('test-output/bundle/products.zip');
     const zip = await JSZip.loadAsync(data);
 
