@@ -15,15 +15,15 @@ import {Particle} from '../particle.js';
 
 describe('loader', () => {
   it('can extract a path', () => {
-    assert.equal(new Loader().path('a/foo'), 'a/');
+    assert.strictEqual(new Loader().path('a/foo'), 'a/');
   });
   it('can join paths', () => {
-    assert.equal(new Loader().join('a/foo', 'b'), 'a/b');
+    assert.strictEqual(new Loader().join('a/foo', 'b'), 'a/b');
   });
   it('can join an absolute path', () => {
     const loader = new Loader();
-    assert.equal(loader.join('a/foo', 'http://b'), 'http://b');
-    assert.equal(loader.join('a/foo', 'https://b'), 'https://b');
+    assert.strictEqual(loader.join('a/foo', 'http://b'), 'http://b');
+    assert.strictEqual(loader.join('a/foo', 'https://b'), 'https://b');
   });
   it('can load a particle from a particle spec', async () => {
     const files: string[] = [];
@@ -44,9 +44,9 @@ describe('loader', () => {
           in A a
           out B b`, options);
     const spec = manifest.findParticleByName('Foo');
-    assert.equal(spec.implFile, 'somewhere/foo.js');
+    assert.strictEqual(spec.implFile, 'somewhere/foo.js');
     const clazz = await testLoader.loadParticleClass(spec);
-    assert.equal(clazz.spec, spec);
+    assert.strictEqual(clazz.spec, spec);
     assert.deepEqual(files, ['somewhere/foo.js']);
   });
 });

@@ -16,18 +16,25 @@ particle ShowProduct in '../../../runtime/tests/artifacts/Products/source/ShowPr
   consume item
 
 // Filter books and display them.
-recipe
-  List.items <- ProductFilter.results
-  ItemMultiplexer.list -> List.items
+recipe FilterAndDisplayBooks
   map 'mylist' as mylist
   create as books
+  slot 'rootslotid-root' as rootSlot
   ProductFilter
     products <- mylist
     hostedParticle = ProductIsBook
     results -> books
+  List
+    items = books
+    consume root as rootSlot
+      provide item as itemSlot
+  ItemMultiplexer
+    list = books
+    hostedParticle = ShowProduct
+    consume item as itemSlot
 
 // Filter books
-recipe
+recipe FilterBooks
   map 'mylist' as mylist
   create as books
   ProductFilter

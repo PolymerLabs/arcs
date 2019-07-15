@@ -46,7 +46,7 @@ async function init(options?) {
   const queue = new ReplanQueue(producer, options);
   const expectedCalls = 0;
   assert.isFalse(queue.isReplanningScheduled());
-  assert.equal(producer.produceSuggestionsCalled, 0);
+  assert.strictEqual(producer.produceSuggestionsCalled, 0);
   return {producer, queue};
 }
 
@@ -55,9 +55,9 @@ describe('replan queue', () => {
     const {producer, queue} = await init();
     queue.addChange();
     assert.lengthOf(queue.changes, 1);
-    assert.equal(producer.produceSuggestionsCalled, 0);
+    assert.strictEqual(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 350));
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 
@@ -67,9 +67,9 @@ describe('replan queue', () => {
     queue.addChange();
     queue.addChange();
     assert.lengthOf(queue.changes, 3);
-    assert.equal(producer.produceSuggestionsCalled, 0);
+    assert.strictEqual(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 350));
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 
@@ -79,11 +79,11 @@ describe('replan queue', () => {
     await new Promise(resolve => setTimeout(resolve, 200));
     queue.addChange();
     assert.lengthOf(queue.changes, 2);
-    assert.equal(producer.produceSuggestionsCalled, 0);
+    assert.strictEqual(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 150));
-    assert.equal(producer.produceSuggestionsCalled, 0);
+    assert.strictEqual(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 150));
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 
@@ -93,9 +93,9 @@ describe('replan queue', () => {
     await new Promise(resolve => setTimeout(resolve, 200));
     queue.addChange();
     assert.lengthOf(queue.changes, 2);
-    assert.equal(producer.produceSuggestionsCalled, 0);
+    assert.strictEqual(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 150));
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 });

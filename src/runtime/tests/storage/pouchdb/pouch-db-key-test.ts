@@ -25,41 +25,41 @@ describe('pouch-db-key', () => {
   it('parses a memory url', () => {
     const key = 'pouchdb://memory/user/';
     const pkey = new PouchDbKey(key);
-    assert.equal(pkey.toString(), key);
-    assert.equal(pkey.dbLocation, 'memory');
-    assert.equal(pkey.dbName, 'user');
-    assert.equal(pkey.location, '');
-    assert.equal(pkey.dbCacheKey(), 'memory/user');
+    assert.strictEqual(pkey.toString(), key);
+    assert.strictEqual(pkey.dbLocation, 'memory');
+    assert.strictEqual(pkey.dbName, 'user');
+    assert.strictEqual(pkey.location, '');
+    assert.strictEqual(pkey.dbCacheKey(), 'memory/user');
   });
 
   it('parses a local url', () => {
     const key = 'pouchdb://local/user/';
     const pkey = new PouchDbKey(key);
-    assert.equal(pkey.toString(), key);
-    assert.equal(pkey.dbLocation, 'local');
-    assert.equal(pkey.dbName, 'user');
-    assert.equal(pkey.location, '');
-    assert.equal(pkey.dbCacheKey(), 'local/user');
+    assert.strictEqual(pkey.toString(), key);
+    assert.strictEqual(pkey.dbLocation, 'local');
+    assert.strictEqual(pkey.dbName, 'user');
+    assert.strictEqual(pkey.location, '');
+    assert.strictEqual(pkey.dbCacheKey(), 'local/user');
   });
 
   it('parses a remote url', () => {
     const key = 'pouchdb://localhost:8080/user/';
     const pkey = new PouchDbKey(key);
-    assert.equal(pkey.toString(), key);
-    assert.equal(pkey.dbLocation, 'localhost:8080');
-    assert.equal(pkey.dbName, 'user');
-    assert.equal(pkey.location, '');
-    assert.equal(pkey.dbCacheKey(), 'localhost:8080/user');
+    assert.strictEqual(pkey.toString(), key);
+    assert.strictEqual(pkey.dbLocation, 'localhost:8080');
+    assert.strictEqual(pkey.dbName, 'user');
+    assert.strictEqual(pkey.location, '');
+    assert.strictEqual(pkey.dbCacheKey(), 'localhost:8080/user');
   });
 
   it('parses a remote url with location', () => {
     const key = 'pouchdb://localhost:8080/user/prefix/path';
     const pkey = new PouchDbKey(key);
-    assert.equal(pkey.toString(), key);
-    assert.equal(pkey.location, 'prefix/path');
-    assert.equal(pkey.dbName, 'user');
-    assert.equal(pkey.location, 'prefix/path');
-    assert.equal(pkey.dbCacheKey(), 'localhost:8080/user');
+    assert.strictEqual(pkey.toString(), key);
+    assert.strictEqual(pkey.location, 'prefix/path');
+    assert.strictEqual(pkey.dbName, 'user');
+    assert.strictEqual(pkey.location, 'prefix/path');
+    assert.strictEqual(pkey.dbCacheKey(), 'localhost:8080/user');
   });
 
   describe('child keys', () => {
@@ -76,13 +76,13 @@ describe('pouch-db-key', () => {
 
     it('childKeyForHandle creates a new PouchDbKey with id suffix', () => {
       const childKey = remoteKey.childKeyForHandle('99');
-      assert.equal(childKey.toString(),
+      assert.strictEqual(childKey.toString(),
         'pouchdb://localhost:8080/user/prefix/path/handles/99');
     });
 
     it('childKeyForArcInfo creates a new PouchDbKey with fixed suffix', () => {
       const childKey = remoteKey.childKeyForArcInfo();
-      assert.equal(childKey.toString(),
+      assert.strictEqual(childKey.toString(),
         'pouchdb://localhost:8080/user/prefix/path/arc-info');
     });
   });

@@ -575,9 +575,9 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const serialization = await arc.serialize();
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
-    assert.equal(newArc._stores.length, 0);
-    assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
-    assert.equal(newArc.id.idTreeAsString(), 'test');
+    assert.strictEqual(newArc._stores.length, 0);
+    assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 
   it('deserializing a simple serialized arc produces that arc', async function() {
@@ -597,8 +597,8 @@ describe('Arc ' + storageKeyPrefix, () => {
     recipe.normalize();
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
-    assert.equal(fooStore.version, 1);
-    assert.equal(barStore.version, 1);
+    assert.strictEqual(fooStore.version, 1);
+    assert.strictEqual(barStore.version, 1);
     fooStoreCallbacks.verify();
     const serialization = await arc.serialize();
     arc.dispose();
@@ -606,8 +606,8 @@ describe('Arc ' + storageKeyPrefix, () => {
     const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context: undefined});
     fooStore = newArc.findStoreById(fooStore.id) as SingletonStorageProvider;
     barStore = newArc.findStoreById(barStore.id) as SingletonStorageProvider;
-    assert.equal(fooStore.version, 1);
-    assert.equal(barStore.version, 1);
+    assert.strictEqual(fooStore.version, 1);
+    assert.strictEqual(barStore.version, 1);
     assert.lengthOf(newArc.findStoresByType(Bar.type, {tags: ['tag1']}), 1);
   });
 
@@ -663,7 +663,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     await store.store({id: 'a', rawData: {value: 'one'}}, ['somekey']);
 
     await newArc.idle;
-    assert.equal(slotsCreated, 1);
+    assert.strictEqual(slotsCreated, 1);
   });
 
   it('serialization roundtrip preserves data for volatile stores', async function() {
@@ -801,9 +801,9 @@ describe('Arc ' + storageKeyPrefix, () => {
     const recipeHCs = serialization.recipes[0].handleConnections;
     assert.lengthOf(recipeHCs, 1);
     const [connection] = recipeHCs;
-    assert.equal('hosts', connection.name);
-    assert.equal('A', connection.particle.spec.name);
-    assert.equal('B', connection.handle.immediateValue.name);
+    assert.strictEqual('hosts', connection.name);
+    assert.strictEqual('A', connection.particle.spec.name);
+    assert.strictEqual('B', connection.handle.immediateValue.name);
   });
 
 
@@ -919,7 +919,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const rootSlotConsumer = slotComposer.consumers.find(c => !c.arc.isInnerArc) as HeadlessSlotDomConsumer;
     await rootSlotConsumer.contentAvailable;
-    assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    assert.strictEqual(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 
   it('handles serialization/deserialization of empty arcs handles', async () => {
@@ -969,9 +969,9 @@ describe('Arc ' + storageKeyPrefix, () => {
       const slotComposer = new FakeSlotComposer();
 
       const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
-      assert.equal(newArc._stores.length, 1);
-      assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
-      assert.equal(newArc.id.idTreeAsString(), 'test');
+      assert.strictEqual(newArc._stores.length, 1);
+      assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+      assert.strictEqual(newArc.id.idTreeAsString(), 'test');
     });
 });
 }); // forEach storageKeyPrefix

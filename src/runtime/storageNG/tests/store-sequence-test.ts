@@ -81,7 +81,7 @@ describe('Store Sequence', async () => {
         onOutput: (value: ProxyMessage<CRDTCountTypeRecord>) => {
           const syncRequest = sequenceTest.getVariable(isSyncRequest);
           if (syncRequest) {
-            assert.equal(value.type, ProxyMessageType.ModelUpdate);
+            assert.strictEqual(value.type, ProxyMessageType.ModelUpdate);
             sequenceTest.setVariable(isSyncRequest, false);
           } else {
             if (value.type === ProxyMessageType.Operations) {

@@ -38,7 +38,7 @@ describe('recipe', () => {
 
     recipe.normalize(options);
 
-    assert.equal(4, options.errors.size);
+    assert.strictEqual(4, options.errors.size);
     recipe.handles.forEach(handle => assert.isTrue(options.errors.has(handle)));
     options.errors.has(recipe.slots[1]);
   });
@@ -50,7 +50,7 @@ describe('recipe', () => {
     `);
     const recipe = manifest.recipes[0];
     const clonedRecipe = recipe.clone();
-    assert.equal(recipe.toString(), clonedRecipe.toString());
+    assert.strictEqual(recipe.toString(), clonedRecipe.toString());
   });
   it('clones recipe with require section', async () => {
     const manifest = await Manifest.parse(`
@@ -251,7 +251,7 @@ describe('recipe', () => {
     `;
     const digestA = await getFirstRecipeHash(manifestContent);
     const digestB = await getFirstRecipeHash(manifestContent);
-    assert.equal(digestA, digestB);
+    assert.strictEqual(digestA, digestB);
   });
 
   it('generates the same hash on manifest re-parse for stores', async () => {
@@ -271,7 +271,7 @@ describe('recipe', () => {
     `;
     const digestA = await getFirstRecipeHash(manifestContent);
     const digestB = await getFirstRecipeHash(manifestContent);
-    assert.equal(digestA, digestB);
+    assert.strictEqual(digestA, digestB);
   });
 
   it('generates the same hash on manifest re-parse for stores of collections', async () => {
@@ -291,7 +291,7 @@ describe('recipe', () => {
     `;
     const digestA = await getFirstRecipeHash(manifestContent);
     const digestB = await getFirstRecipeHash(manifestContent);
-    assert.equal(digestA, digestB);
+    assert.strictEqual(digestA, digestB);
   });
   it('generates the same hash on same recipes with and without search', async () => {
     const digestA = await getFirstRecipeHash(`
@@ -305,7 +305,7 @@ describe('recipe', () => {
         search \`A\`
         A
     `);
-    assert.equal(digestA, digestB);
+    assert.strictEqual(digestA, digestB);
   });
   it('verifies required consume and provide slot connections', async () => {
     const manifest = await Manifest.parse(`
@@ -413,13 +413,13 @@ describe('recipe', () => {
     recipe.handles[0].id = 'my-things';
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
-    assert.equal(`recipe
+    assert.strictEqual(`recipe
   map 'my-things' as handle0 // ~
   Generic as particle0
     anyA <- handle0
   Specific as particle1
     thing <- handle0`, recipe.toString());
-    assert.equal(`recipe
+    assert.strictEqual(`recipe
   map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
   Generic as particle0
     anyA <- handle0
@@ -429,21 +429,21 @@ describe('recipe', () => {
 
     const recipeClone = recipe.clone();
     const hashClone = await recipeClone.digest();
-    assert.equal(hash, hashClone);
+    assert.strictEqual(hash, hashClone);
 
     const store = manifest.findStoreByName('MyThings');
     recipeClone.handles[0].mapToStorage(store);
     recipeClone.normalize();
     assert.isTrue(recipeClone.isResolved());
     const hashResolvedClone = await recipeClone.digest();
-    assert.equal(`recipe
+    assert.strictEqual(`recipe
   map 'my-things' as handle0 // Thing {}
   Generic as particle0
     anyA <- handle0
   Specific as particle1
     thing <- handle0`, recipeClone.toString());
-    assert.equal(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
-    assert.notEqual(hash, hashResolvedClone);
+    assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
+    assert.notStrictEqual(hash, hashResolvedClone);
   });
   const isResolved = (recipe) => {
     const recipeClone = recipe.clone();
@@ -687,13 +687,13 @@ describe('recipe', () => {
       return resolvedType;
     };
     assert.isTrue(recipe.normalize());
-    assert.equal(recipe.handleConnections[0].type, recipe.handleConnections[1].type.getContainedType());
+    assert.strictEqual(recipe.handleConnections[0].type, recipe.handleConnections[1].type.getContainedType());
     const recipeResolvedType = verifyRecipe(recipe, 'recipe');
     const type = recipe.handleConnections[0].type;
 
     // Clone the recipe and verify types consistency.
     const recipeClone = recipe.clone();
     const recipeCloneResolvedType = verifyRecipe(recipeClone, 'recipe-clone');
-    assert.notEqual(recipeResolvedType, recipeCloneResolvedType);
+    assert.notStrictEqual(recipeResolvedType, recipeCloneResolvedType);
   });
 });

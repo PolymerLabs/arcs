@@ -12,22 +12,22 @@ describe('Tile', function() {
   describe('#x', function() {
     it('should compute x coordinate correctly', function() {
       const tile00 = new Tile(0, 'A');
-      assert.equal(0, tile00.x);
+      assert.strictEqual(0, tile00.x);
       const tile66 = new Tile(48, 'A');
-      assert.equal(6, tile66.x);
+      assert.strictEqual(6, tile66.x);
       const tile42 = new Tile(30, 'A');
-      assert.equal(2, tile42.x);
+      assert.strictEqual(2, tile42.x);
     });
   });
 
   describe('#y', function() {
     it('should compute y coordinate correctly', function() {
       const tile00 = new Tile(0, 'A');
-      assert.equal(0, tile00.y);
+      assert.strictEqual(0, tile00.y);
       const tile66 = new Tile(48, 'A');
-      assert.equal(6, tile66.y);
+      assert.strictEqual(6, tile66.y);
       const tile42 = new Tile(30, 'A');
-      assert.equal(4, tile42.y);
+      assert.strictEqual(4, tile42.y);
     });
   });
 
@@ -43,7 +43,7 @@ describe('Tile', function() {
   describe('#toString', function() {
     it('should include all member data', function() {
       const tile = new Tile(0, 'A');
-      assert.equal(
+      assert.strictEqual(
           '[charIndex=0, letter=A, style=Symbol(normal), x=0, y=0]',
           tile.toString());
     });

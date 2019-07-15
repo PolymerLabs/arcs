@@ -101,7 +101,7 @@ export class PlanningTestHelper extends TestHelper {
         if (unexpectedSuggestions.length > 0) {
           errors.push(`Unexpected suggestions:\n\t ${unexpectedSuggestions.join('\n\t')}`);
         }
-        assert.equal(0, missingSuggestions.length + unexpectedSuggestions.length, errors.join('\n'));
+        assert.strictEqual(0, missingSuggestions.length + unexpectedSuggestions.length, errors.join('\n'));
       }
       if (options.verify) {
         await options.verify(this.suggestions);

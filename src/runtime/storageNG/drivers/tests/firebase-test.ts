@@ -99,7 +99,7 @@ describe('Firebase Driver', async () => {
 
     const results = await Promise.all([promise1, promise2]);
     assert.deepEqual(results, [true, false]);
-    assert.equal(recvQueue1.length, 0);
+    assert.strictEqual(recvQueue1.length, 0);
     assert.deepEqual(recvQueue2, [{model: 3, version: 1}]);
   });
 });

@@ -191,7 +191,7 @@ export class SequenceTest<T> {
    */
   registerOutput(name: string, response: OutputResponseObject, behavior: SequenceOutput, variable: string|null = null) {
     if (behavior !== SequenceOutput.Register) {
-      assert.equal(variable, null);
+      assert.strictEqual(variable, null);
     }
     const id = name + this.currentID++;
     this.outputs.set(id, {name, response, value: response.default, behavior, variable});
@@ -636,7 +636,7 @@ export class SequenceTest<T> {
       for (const input of this.inputs.values()) {
         if (input.response.type === ExpectedResponse.Constant) {
           for (const result of input.results) {
-            assert.equal(result, input.response.response);
+            assert.strictEqual(result, input.response.response);
           }
         }
         else if (input.response.type === ExpectedResponse.Defer) {

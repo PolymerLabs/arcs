@@ -25,7 +25,7 @@ describe('IdGenerator', () => {
       const idGenerator = IdGenerator.newSession();
   
       const sessionId = randomValue * 2 ** 50 + '';
-      assert.equal(idGenerator.currentSessionIdForTesting, sessionId);
+      assert.strictEqual(idGenerator.currentSessionIdForTesting, sessionId);
       Random.next = oldRandomNext;
     });
   });
@@ -40,7 +40,7 @@ describe('IdGenerator', () => {
     it('creates child IDs using its session ID', () => {
       const parentId = createId('root');
       const childId = idGenerator.newChildId(parentId);
-      assert.equal(childId.root, 'sessionId');
+      assert.strictEqual(childId.root, 'sessionId');
     });
     
     it('appends subcomponents when creating child IDs', () => {
@@ -62,7 +62,7 @@ describe('IdGenerator', () => {
       const idGenerator = IdGenerator.createWithSessionIdForTesting('sessionId');
       const arcId = idGenerator.newArcId('foo');
       assert(arcId instanceof ArcId);
-      assert.equal(arcId.toString(), '!sessionId:foo');
+      assert.strictEqual(arcId.toString(), '!sessionId:foo');
     });
   });
 });
@@ -80,12 +80,12 @@ describe('Id', () => {
   });
 
   it('encodes to a string', () => {
-    assert.equal(createId('root').toString(), '!root:');
-    assert.equal(createId('root', ['x', 'y']).toString(), '!root:x:y');
+    assert.strictEqual(createId('root').toString(), '!root:');
+    assert.strictEqual(createId('root', ['x', 'y']).toString(), '!root:x:y');
   });
 
   it('encodes its ID tree', () => {
-    assert.equal(createId('root').idTreeAsString(), '');
-    assert.equal(createId('root', ['x', 'y']).idTreeAsString(), 'x:y');
+    assert.strictEqual(createId('root').idTreeAsString(), '');
+    assert.strictEqual(createId('root', ['x', 'y']).idTreeAsString(), 'x:y');
   });
 });

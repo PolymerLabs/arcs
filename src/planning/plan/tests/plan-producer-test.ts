@@ -100,9 +100,9 @@ class TestPlanProducer extends PlanProducer {
     producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();
     assert.lengthOf(producer.result.suggestions, 1);
-    assert.equal(producer.produceCalledCount, 1);
-    assert.equal(producer.plannerRunCount, 1);
-    assert.equal(producer.cancelCount, 0);
+    assert.strictEqual(producer.produceCalledCount, 1);
+    assert.strictEqual(producer.plannerRunCount, 1);
+    assert.strictEqual(producer.cancelCount, 0);
   });
 
   it('throttles requests to produce suggestions', async () => {
@@ -116,11 +116,11 @@ class TestPlanProducer extends PlanProducer {
     producer.plannerReturnResults(helper.suggestions);
     producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();
-    assert.equal(producer.produceCalledCount, 10);
-    assert.equal(producer.plannerRunCount, 2);
-    assert.equal(producer.cancelCount, 0);
-    assert.equal(0, producer.plannerRunOptions[0].test);
-    assert.equal(9, producer.plannerRunOptions[1].test);
+    assert.strictEqual(producer.produceCalledCount, 10);
+    assert.strictEqual(producer.plannerRunCount, 2);
+    assert.strictEqual(producer.cancelCount, 0);
+    assert.strictEqual(0, producer.plannerRunOptions[0].test);
+    assert.strictEqual(9, producer.plannerRunOptions[1].test);
   });
 
   it('cancels planning', async () => {
@@ -132,9 +132,9 @@ class TestPlanProducer extends PlanProducer {
 
     producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();
-    assert.equal(producer.produceCalledCount, 2);
-    assert.equal(producer.plannerRunCount, 2);
-    assert.equal(producer.cancelCount, 1);
+    assert.strictEqual(producer.produceCalledCount, 2);
+    assert.strictEqual(producer.plannerRunCount, 2);
+    assert.strictEqual(producer.cancelCount, 1);
   });
 });
 
@@ -170,7 +170,7 @@ describe('plan producer - search', () => {
 
     const producer = new TestSearchPlanProducer(arc, searchStore);
     assert.isUndefined(producer.search);
-    assert.equal(producer.produceSuggestionsCalled, 0);
+    assert.strictEqual(producer.produceSuggestionsCalled, 0);
     return producer;
   }
 
@@ -179,19 +179,19 @@ describe('plan producer - search', () => {
 
     // Search for non-contextual results.
     await producer.setNextSearch('*');
-    assert.equal(producer.search, '*');
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.search, '*');
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
     assert.isFalse(producer.options.contextual);
 
     // Unchanged search term.
     await producer.setNextSearch('*');
-    assert.equal(producer.search, '*');
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.search, '*');
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
 
     // Requires contextual results only, no need to replan.
     await producer.setNextSearch('');
-    assert.equal(producer.search, '');
-    assert.equal(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(producer.search, '');
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
   });
 
   it('searches for term given contextual results', async () => {
@@ -200,9 +200,9 @@ describe('plan producer - search', () => {
     // Search for a given string
     const search = 'foo';
     await producer.setNextSearch(search);
-    assert.equal(search, producer.search);
-    assert.equal(producer.produceSuggestionsCalled, 1);
-    assert.equal(search, producer.options.search);
+    assert.strictEqual(search, producer.search);
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(search, producer.options.search);
     assert.isFalse(producer.options.contextual);
   });
 
@@ -213,9 +213,9 @@ describe('plan producer - search', () => {
     // Search for a given string
     const search = 'foo';
     await producer.setNextSearch(search);
-    assert.equal(search, producer.search);
-    assert.equal(producer.produceSuggestionsCalled, 1);
-    assert.equal(search, producer.options.search);
+    assert.strictEqual(search, producer.search);
+    assert.strictEqual(producer.produceSuggestionsCalled, 1);
+    assert.strictEqual(search, producer.options.search);
     assert.isTrue(producer.options.strategies.map(s => s.name).includes('InitSearch'));
   });
   }); // end describe

@@ -19,9 +19,9 @@ describe('Scoring', function() {
 
   describe('#pointsForLetter()', function() {
     it('should report letter points correctly', function() {
-      assert.equal(Scoring.pointsForLetter('A'), 1);
-      assert.equal(Scoring.pointsForLetter('O'), 1);
-      assert.equal(Scoring.pointsForLetter('Z'), 3);
+      assert.strictEqual(Scoring.pointsForLetter('A'), 1);
+      assert.strictEqual(Scoring.pointsForLetter('O'), 1);
+      assert.strictEqual(Scoring.pointsForLetter('Z'), 3);
     });
   });
 
@@ -34,32 +34,32 @@ describe('Scoring', function() {
       return tiles;
     }
     it('should score a basic word correctly', function() {
-      assert.equal(Scoring.wordScore(tilesForWord('ABC')), 7);
-      assert.equal(Scoring.wordScore(tilesForWord('ABCD')), 18);
+      assert.strictEqual(Scoring.wordScore(tilesForWord('ABC')), 7);
+      assert.strictEqual(Scoring.wordScore(tilesForWord('ABCD')), 18);
     });
     it('should score a word with a multiplier correctly', function() {
-      assert.equal(Scoring.wordScore(tilesForWord('ABCD')), 18);
+      assert.strictEqual(Scoring.wordScore(tilesForWord('ABCD')), 18);
     });
     it('should score a word with exactly the maximum multiplier correctly',
        function() {
-         assert.equal(Scoring.wordScore(tilesForWord('ABCDABCDABCD')), 135);
+         assert.strictEqual(Scoring.wordScore(tilesForWord('ABCDABCDABCD')), 135);
        });
     it('should score a word with more chars than specified by the maximum multiplier correctly',
        function() {
-         assert.equal(Scoring.wordScore(tilesForWord('ABCDABCDABCDABCD')), 180);
+         assert.strictEqual(Scoring.wordScore(tilesForWord('ABCDABCDABCDABCD')), 180);
        });
   });
 
   describe('#longestWordText()', function() {
     it('should report none for empty stats or word', function() {
-      assert.equal(Scoring.longestWordText(undefined), '--');
-      assert.equal(
+      assert.strictEqual(Scoring.longestWordText(undefined), '--');
+      assert.strictEqual(
           Scoring.longestWordText({longestWord: undefined}), '--');
-      assert.equal(Scoring.longestWordText({longestWord: ''}), '--');
+      assert.strictEqual(Scoring.longestWordText({longestWord: ''}), '--');
     });
 
     it('should report formatted text when values present', function() {
-      assert.equal(
+      assert.strictEqual(
           Scoring.longestWordText({longestWord: 'foo', longestWordScore: 42}),
           'foo (42)');
     });
@@ -67,17 +67,17 @@ describe('Scoring', function() {
 
   describe('#highestScoringWordText()', function() {
     it('should report none for empty stats or word', function() {
-      assert.equal(Scoring.highestScoringWordText(undefined), '--');
-      assert.equal(
+      assert.strictEqual(Scoring.highestScoringWordText(undefined), '--');
+      assert.strictEqual(
           Scoring.highestScoringWordText({highestScoringWord: undefined}),
           '--');
-      assert.equal(
+      assert.strictEqual(
           Scoring.highestScoringWordText({highestScoringWord: ''}),
           '--');
     });
 
     it('should report formatted text when values present', function() {
-      assert.equal(
+      assert.strictEqual(
           Scoring.highestScoringWordText(
               {highestScoringWord: 'foo', highestScoringWordScore: 42}),
           'foo (42)');

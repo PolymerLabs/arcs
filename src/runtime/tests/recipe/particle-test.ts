@@ -67,7 +67,7 @@ describe('Recipe Particle', () => {
       const manifest = await Manifest.parse(`${particleManifest}${recipeManifest}`);
       const recipe = manifest.recipes[0];
       assert.isTrue(recipe.normalize());
-      assert.equal(recipe.isResolved(), expectedResolved);
+      assert.strictEqual(recipe.isResolved(), expectedResolved);
     };
     await verifyRecipe(`
       recipe

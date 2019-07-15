@@ -507,8 +507,8 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.equal((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.equal((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
+    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
   });
   
   it(`connects particles together when there's extra things that can't connect`, async () => {
@@ -529,8 +529,8 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.equal((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.equal((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
+    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
   });
 
   it(`connects particles together with multiple connections`, async () => {
@@ -551,7 +551,7 @@ describe('ConvertConstraintsToConnections', () => {
     const recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
     assert.lengthOf(recipe.obligations, 1);
-    assert.equal((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
-    assert.equal((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
+    assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
+    assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
   });
 });

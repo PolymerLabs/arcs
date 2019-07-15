@@ -201,6 +201,6 @@ recipe R4
     result2.suggestions[0].versionByStore['thing-id-0'] = 1;
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
     assert.lengthOf(result1.suggestions, 2);
-    assert.equal(result1.suggestions[0].versionByStore['thing-id-0'], 1);
+    assert.strictEqual(result1.suggestions[0].versionByStore['thing-id-0'], 1);
   });
 });

@@ -163,7 +163,7 @@ describe('remote planificator', () => {
       // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
       await verifyReplanningAndConsuming(3, ['Check shipping', 'Check manufacturer information']);
 
-      assert.notEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
+      assert.notStrictEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
       assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
       producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
       // TODO: GiftList+Arrivinator recipe is not considered active and appears again. Investigate.

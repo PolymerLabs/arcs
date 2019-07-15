@@ -25,6 +25,6 @@ describe('runtime manifest integration', () => {
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     const result = await handle.get();
-    assert.equal(result['value'], 'Hello, world!');
+    assert.strictEqual(result['value'], 'Hello, world!');
   });
 });

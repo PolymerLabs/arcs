@@ -36,10 +36,10 @@ describe('Dictionary', function() {
 
   describe('#size', function() {
     it('should report non-empty size correctly', function() {
-      assert.equal(dictionary.size, 3);
+      assert.strictEqual(dictionary.size, 3);
     });
     it('should report empty size correctly', function() {
-      assert.equal(new Dictionary('').size, 0);
+      assert.strictEqual(new Dictionary('').size, 0);
     });
   });
 });

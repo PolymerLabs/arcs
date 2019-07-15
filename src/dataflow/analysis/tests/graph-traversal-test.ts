@@ -59,9 +59,9 @@ describe('BackwardsPath', () => {
     const path = BackwardsPath.fromEdge(edgeAToB);
 
     assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
-    assert.equal(path.startNode, nodeB);
-    assert.equal(path.endNode, nodeA);
-    assert.equal(path.endEdge, edgeAToB);
+    assert.strictEqual(path.startNode, nodeB);
+    assert.strictEqual(path.endNode, nodeA);
+    assert.strictEqual(path.endEdge, edgeAToB);
   });
 
   it('can add another edge to the end of the path', () => {
@@ -69,9 +69,9 @@ describe('BackwardsPath', () => {
     path = path.withNewEdge(edgeAToB);
 
     assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB, nodeA]);
-    assert.equal(path.startNode, nodeC);
-    assert.equal(path.endNode, nodeA);
-    assert.equal(path.endEdge, edgeAToB);
+    assert.strictEqual(path.startNode, nodeC);
+    assert.strictEqual(path.endNode, nodeA);
+    assert.strictEqual(path.endEdge, edgeAToB);
   });
 
   it('forbids cycles', () => {

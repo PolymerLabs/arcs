@@ -36,7 +36,7 @@ describe('Runtime', () => {
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);
-    assert.equal(expected, actual);
+    assert.strictEqual(expected, actual);
   });
   it('parses a Manifest', async () => {
     const content = `

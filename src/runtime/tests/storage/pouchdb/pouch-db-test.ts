@@ -76,7 +76,7 @@ describe('pouchdb for ' + testUrl, () => {
 
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
-      assert.equal(result['value'], value);
+      assert.strictEqual(result['value'], value);
       callbackTracker.verify();
     });
 
@@ -126,7 +126,7 @@ describe('pouchdb for ' + testUrl, () => {
       await var1.set({id: 'id1', value: 'underlying'});
 
       const result = await var1.get();
-      assert.equal(result['value'], 'underlying');
+      assert.strictEqual(result['value'], 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
@@ -149,7 +149,7 @@ describe('pouchdb for ' + testUrl, () => {
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
-      assert.equal('underlying', result.storageKey);
+      assert.strictEqual('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
       assert.isNull(var1.backingStore);
@@ -172,7 +172,7 @@ describe('pouchdb for ' + testUrl, () => {
       await collection.store({id: 'id1', value: value2}, ['key1']);
 
       let result = await collection.get('id0');
-      assert.equal(result.value, value1);
+      assert.strictEqual(result.value, value1);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
@@ -255,9 +255,9 @@ describe('pouchdb for ' + testUrl, () => {
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
 
       let result = await collection1.get('id1');
-      assert.equal('value1', result.value);
+      assert.strictEqual('value1', result.value);
       result = await collection1.get('id2');
-      assert.equal('value2', result.value);
+      assert.strictEqual('value2', result.value);
 
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
@@ -304,9 +304,9 @@ describe('pouchdb for ' + testUrl, () => {
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
 
       let result = await collection1.get('id1');
-      assert.equal('value1', result.storageKey);
+      assert.strictEqual('value1', result.storageKey);
       result = await collection1.get('id2');
-      assert.equal('value2', result.storageKey);
+      assert.strictEqual('value2', result.storageKey);
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);

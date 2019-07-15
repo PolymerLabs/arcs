@@ -46,10 +46,10 @@ describe('references', () => {
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
-    assert.equal(recipe.handles[0].id, 'reference:1');
+    assert.strictEqual(recipe.handles[0].id, 'reference:1');
     recipe.handles[0].type.maybeEnsureResolved();
     assert.isTrue(recipe.handles[0].type instanceof ReferenceType);
-    assert.equal(((recipe.handles[0].type.resolvedType() as ReferenceType).referredType as EntityType).entitySchema.name, 'Result');
+    assert.strictEqual(((recipe.handles[0].type.resolvedType() as ReferenceType).referredType as EntityType).entitySchema.name, 'Result');
   });
 
   it('exposes a dereference API to particles', async () => {
@@ -213,7 +213,7 @@ describe('references', () => {
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
 
     const refStore = arc._stores[1] as SingletonStorageProvider;
-    assert.equal((refStore.type as EntityType).entitySchema.name, 'Foo');
+    assert.strictEqual((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:2', rawData: {result: {id: 'id:1', storageKey: backingStore.storageKey}}});
 
     await assertSingletonWillChangeTo(arc, arc._stores[0], 'value', 'what a result!');
@@ -306,26 +306,26 @@ describe('references', () => {
     await arc.instantiate(recipe);
 
     const fooStore = arc._stores[0] as SingletonStorageProvider;
-    assert.equal((fooStore.type as EntityType).entitySchema.name, 'Foo');
+    assert.strictEqual((fooStore.type as EntityType).entitySchema.name, 'Foo');
     await fooStore.set({id: 'id:1', rawData: {result: null, shortForm: 'a'}});
 
     const inputStore = arc._stores[1] as CollectionStorageProvider;
-    assert.equal((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    assert.strictEqual((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     await inputStore.store({id: 'id:a', rawData: {value: 'this is an a'}}, ['a']);
     await inputStore.store({id: 'id:b', rawData: {value: 'this is a b'}}, ['a']);
 
     const outputStore = arc._stores[2] as CollectionStorageProvider;
-    assert.equal((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Foo');
+    assert.strictEqual((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Foo');
     await outputStore.store({id: 'id:2', rawData: {result: null, shortForm: 'b'}}, ['a']);
 
     await arc.idle;
     const values = await outputStore.toList();
-    assert.equal(values.length, 2);
+    assert.strictEqual(values.length, 2);
     for (const value of values) {
       if (value.rawData.shortForm === 'a') {
-        assert.equal(value.rawData.result.id, 'id:a');
+        assert.strictEqual(value.rawData.result.id, 'id:a');
       } else if (value.rawData.shortForm === 'b') {
-        assert.equal(value.rawData.result.id, 'id:b');
+        assert.strictEqual(value.rawData.result.id, 'id:b');
       } else {
         assert.isTrue(false);
       }
@@ -386,16 +386,16 @@ describe('references', () => {
     await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
     const refStore = arc._stores[1] as SingletonStorageProvider;
-    assert.equal((refStore.type as EntityType).entitySchema.name, 'Foo');
+    assert.strictEqual((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:a', rawData: {result: [{id: 'id:1', storageKey: backingStore.storageKey}, {id: 'id:2', storageKey: backingStore.storageKey}]}});
 
     await arc.idle;
     const outputStore = arc._stores[0] as CollectionStorageProvider;
-    assert.equal((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    assert.strictEqual((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     const values = await outputStore.toList();
-    assert.equal(values.length, 2);
-    assert.equal(values[0].rawData.value, 'what a result!');
-    assert.equal(values[1].rawData.value, 'what another result!');
+    assert.strictEqual(values.length, 2);
+    assert.strictEqual(values[0].rawData.value, 'what a result!');
+    assert.strictEqual(values[1].rawData.value, 'what another result!');
   });
 
   it('can construct collections of references in schemas', async () => {
@@ -460,16 +460,16 @@ describe('references', () => {
     await arc.instantiate(recipe);
 
     const inputStore = arc._stores[0] as CollectionStorageProvider;
-    assert.equal((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    assert.strictEqual((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     await inputStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await inputStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
     await arc.idle;
     const outputStore = arc._stores[1] as SingletonStorageProvider;
-    assert.equal((outputStore.type as EntityType).entitySchema.name, 'Foo');
+    assert.strictEqual((outputStore.type as EntityType).entitySchema.name, 'Foo');
     const values = await outputStore.get();
     assert(values.rawData.result.length === 2);
-    assert.equal(values.rawData.result[0].id, 'id:1');
-    assert.equal(values.rawData.result[1].id, 'id:2');
+    assert.strictEqual(values.rawData.result[0].id, 'id:1');
+    assert.strictEqual(values.rawData.result[1].id, 'id:2');
   });
 });
