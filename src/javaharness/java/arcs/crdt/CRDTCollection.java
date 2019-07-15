@@ -25,6 +25,7 @@ class VersionedValue<T> {
 
 class CollectionData<T extends Referenceable> extends CRDTData {
    Map<String, VersionedValue<T>> values = new HashMap<>();
+   VersionMap version = new VersionMap();
 }
 
 enum CollectionOpTypes { ADD, REMOVE }
@@ -33,8 +34,24 @@ class CollectionOperation<T> implements CRDTOperation {
   CollectionOpTypes type;
   Optional<T> added;
   Optional<T> removed;
-  String actor;
   VersionMap clock;
+  String actor;
+
+  CollectionOperation(CollectionOpTypes type, T t, VersionMap clock, String actor) {
+    this.type = type;
+    switch (type) {
+      case ADD:
+        this.added = Optional.of(t);
+        break;
+      case REMOVE:
+        this.removed = Optional.of(t);
+        break;
+      default:
+        throw new AssertionError("Unsupported CollectionOpType " + type);
+    }
+    this.clock = clock;
+    this.actor = actor;
+  }
 }
 
 class RawCollection<T> extends HashSet<T> implements CRDTConsumerType {
@@ -60,8 +77,9 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!(other instanceof CollectionData)) {
       throw new AssertionError("Cannot merge `other`");
     }
-    Map<String, VersionedValue<T>> newValues = mergeItems(model, (CollectionData<T>) other);
-    VersionMap newVersion = mergeVersions(model.version, other.version);
+    CollectionData<T> otherModel = (CollectionData<T>) other;
+    Map<String, VersionedValue<T>> newValues = mergeItems(model, otherModel);
+    VersionMap newVersion = mergeVersions(model.version, otherModel.version);
     model.values = newValues;
     model.version = newVersion;
     // For now this is always returning a model change.

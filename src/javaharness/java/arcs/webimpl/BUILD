@@ -15,6 +15,7 @@ j2cl_library(
         "//java/arcs:dagger_runtime",
         "//java/arcs:javax_inject",
         "//java/arcs/api:javaharness_lib-j2cl",
+        "//java/arcs/crdt:crdt-j2cl",
         "//java/arcs/nativeparticles:nativeparticles-j2cl",
         "@com_google_elemental2//:elemental2-core-j2cl",
         "@com_google_elemental2//:elemental2-dom-j2cl",
