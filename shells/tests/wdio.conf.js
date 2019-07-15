@@ -17,14 +17,15 @@
  * activate a sane default set of them documented in the top-level README.md.
  */
 
-
 // don't modify after here (in general)
 const process = require('process');
 
-const debug = process.env.npm_config_wdio_debug
-      || process.argv.includes('--wdio-debug=true')
-      || process.argv.includes('--wdio-debug')
-      || process.env['DEBUG'] === 'true';
+const debug =
+  process.env.npm_config_wdio_debug
+  || process.argv.includes('--wdio-debug=true')
+  || process.argv.includes('--wdio-debug')
+  || process.env['DEBUG'] === 'true'
+  ;
 const chromeArgs = debug ? [] : ['--headless'];
 
 exports.config = {

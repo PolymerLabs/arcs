@@ -19,7 +19,7 @@
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix server run test:licenses",
     "start": "cross-env tools/sigh devServer --port $npm_package_config_port",
-    "test-wdio-shells": "wdio --baseUrl http://localhost:${npm_package_config_port}/ shells/test/wdio.conf.js",
+    "test-wdio-shells": "wdio --baseUrl http://localhost:8786/ shells/test/wdio.conf.js",
     "build:rollup": "rollup -c --sourcemap",
     "watch:rollup": "rollup -c --sourcemap --watch",
     "build:typedoc": "typedoc --ignoreCompilerErrors --mode file --target ES2017 --downLevelIteration -out dist/apidocs",
@@ -85,7 +85,7 @@
     "type-coverage": "^2.0.1",
     "typedoc": "^0.14.2",
     "wdio-chromedriver-service": "^5.0.2",
-    "webdriverio": "^5.10.1",
+    "webdriverio": "^5.11.1",
     "webpack": "^4.32.2",
     "webpack-cli": "^3.2.3"
   },
