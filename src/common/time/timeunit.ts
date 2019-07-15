@@ -11,18 +11,18 @@
 
 
 export class TimeUnit {
-  
+
   private constructor(
     /** a value to return for toString() */
     private readonly name: string,
-    
+
     /** The seconds portion of the duration */
     public readonly durationSec: number,
 
     /** The nanoseconds portion of the duration */
     public readonly durationNS: number,
 
-    /** 
+    /**
      * If the timeunit is approximate.  Note that leap seconds are
      * not used, so this pertains to dates only..
      */

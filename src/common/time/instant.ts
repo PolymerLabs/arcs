@@ -13,7 +13,7 @@ import {TimeUnit} from './timeunit.js';
  * An Instant represents a specific instance of universal time with a
  * defined precision.  It is loosely based on the same class in the
  * TC39 temporal specification, with added resolution/precision data.
- * 
+ *
  * @see https://github.com/tc39/proposal-temporal/blob/master/spec/instant.html
  *
  * TODO implement comparable?
@@ -24,7 +24,7 @@ export class Instant {
   private readonly secs: number;
   private readonly nanos: number;
   private readonly resolutionValue: TimeUnit;
-  
+
   private constructor(secs: number, nanos, resolution: TimeUnit) {
     if (nanos > 1000000 || nanos < 0 || secs < 0) {
       throw new Error('input values out of range secs=' + secs + ' nanos=' + nanos);
@@ -56,7 +56,7 @@ export class Instant {
   get resolution(): TimeUnit {
     return this.resolutionValue;
   }
-  
+
   /**
    * Creates a new Instant from the given milliseconds.  The returned
    * value uses TimeUnit.MILLIS as the resolution.
@@ -68,7 +68,7 @@ export class Instant {
     return new Instant(secs, nanos, TimeUnit.MILLIS);
   }
 
-  
+
   /**
    * Creates a new Instant from the given seconds.  The returned
    * value uses TimeUnit.SECONDS as the resolution.
@@ -95,7 +95,7 @@ export class Instant {
      [TimeUnit.HOURS, 13],
      [TimeUnit.MINUTES, 16],
      [TimeUnit.SECONDS, 19]]);
-  
+
 
   /**
    * Parses a UTC date string in ISO 8601 format and generates an
@@ -111,7 +111,7 @@ export class Instant {
     if (instantToParse.length === 0) {
       throw new Error('requires a string to parse');
     }
-    
+
     // Determine the TimeUnit based on the length of the string
     const inputLen = instantToParse.length;
 
@@ -126,7 +126,7 @@ export class Instant {
       throw new Error('invalid instant');
     }
     const {timeunit, suffix} = result;
-    
+
     // TODO Parse using a more robust implementation
     const epochMillis = Date.parse(instantToParse + suffix);
     const secs = Math.floor(epochMillis/1000);
