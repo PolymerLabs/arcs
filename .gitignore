@@ -40,6 +40,7 @@ test-output
 node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow*
 node_modules/.cache/
 server/node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow.so
+server/node_modules/@tensorflow/tfjs-node/build
 server/node_modules/.cache/
 bazel-bin
 bazel-genfiles
