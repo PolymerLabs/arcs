@@ -14,16 +14,22 @@ import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Relevance} from '../../runtime/relevance.js';
 import {InterfaceType} from '../../runtime/type.js';
 import {TestHelperOptions, TestHelper} from '../../runtime/testing/test-helper.js';
 import {devtoolsPlannerInspectorFactory} from '../../devtools-connector/devtools-planner-inspector.js';
 
 type TestHelperPlanOptions = TestHelperOptions & {
   expectedNumPlans?: number;
-  expectedSuggestions?;
+  expectedSuggestions?: string[];
   includeInnerArcs?: boolean;
   verify?;
 };
+
+export class TestSuggestion extends Suggestion {
+  public relevance?: Relevance;
+}
 
 /**
  * Helper class to recipe instantiation and replanning.
@@ -33,8 +39,7 @@ type TestHelperPlanOptions = TestHelperOptions & {
  *   await helper.verifyData('MyParticle1', 'myHandle1', async (handle) => { ... });
  */
 export class PlanningTestHelper extends TestHelper {
-  // TODO(lindner): adding the type here causes many compilation errors.
-  suggestions;
+  suggestions: TestSuggestion[];
   recipeIndex: RecipeIndex;
 
   static async create(options: TestHelperPlanOptions = {}): Promise<PlanningTestHelper> {
@@ -111,7 +116,7 @@ export class PlanningTestHelper extends TestHelper {
    * suggestion to accept. Otherwise, fallback to a single generated suggestion, if appropriate.
    */
   async acceptSuggestion(options?: {hostedParticles?: string[], particles?: string[], descriptionText?: string}): Promise<void> {
-    let suggestion;
+    let suggestion: Suggestion;
     if (options) {
       if (options.particles) {
         let suggestions = this.findSuggestionByParticleNames(options.particles);
@@ -119,7 +124,7 @@ export class PlanningTestHelper extends TestHelper {
           suggestions = suggestions.filter(p => {
             return options.hostedParticles.every(hosted => {
               const interfaceHandles = p.plan.handles.filter(h => h.type instanceof InterfaceType);
-              return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name === hosted);
+              return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name === hosted) !== undefined;
             });
           });
         }
@@ -137,14 +142,14 @@ export class PlanningTestHelper extends TestHelper {
     await this.instantiateSuggestion(suggestion);
   }
 
-  findSuggestionByParticleNames(particlesNames: string[]) {
+  findSuggestionByParticleNames(particlesNames: string[]): Suggestion[] {
     return this.suggestions.filter(p => {
       const planParticles = p.plan.particles.map(particle => particle.name);
       return planParticles.length === particlesNames.length && planParticles.every(p => particlesNames.includes(p));
     });
   }
 
-  async instantiateSuggestion(suggestion: Suggestion) {
+  async instantiateSuggestion(suggestion: Suggestion): Promise<void> {
     assert(suggestion, `Cannot accept suggestion, no plan could be selected.`);
     await suggestion.instantiate(this.arc);
     await this.idle();
@@ -153,9 +158,8 @@ export class PlanningTestHelper extends TestHelper {
   /**
    * Getter for a single available suggestion plan (fails, if there is more than one).
    */
-  get plan() {
+  get plan(): Recipe {
     assert.lengthOf(this.suggestions, 1);
     return this.suggestions[0].plan;
   }
-
 }

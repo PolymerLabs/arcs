@@ -22,8 +22,8 @@ export class SlotConnection implements Comparable<SlotConnection> {
   private readonly _particle: Particle;
   private readonly _name: string;
   private _targetSlot?: Slot = undefined;
-  public _providedSlots: Dictionary<Slot> = {}; // TODO(lindner): make private, used in slot.ts
-  private _tags = <string[]>[];
+  private _providedSlots: Dictionary<Slot> = {};
+  private _tags: string[] = [];
 
   constructor(name: string, particle: Particle) {
     assert(particle);

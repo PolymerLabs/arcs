@@ -75,7 +75,7 @@ const isNormalized = recipe => {
   return Object.isFrozen(recipe);
 };
 
-const spawn = async ({id, serialization, context, composer, storage, ports}) => {
+const spawn = async ({id, serialization, context, composer, storage, portFactories}) => {
   const arcId = IdGenerator.newSession().newArcId(id);
   const params = {
     id: arcId,
@@ -84,10 +84,9 @@ const spawn = async ({id, serialization, context, composer, storage, ports}) => 
     context,
     storageKey: storage || 'volatile',
     slotComposer: composer,
-    pecFactory: env.pecFactory,
+    pecFactories: [].concat([env.pecFactory], portFactories || []),
     loader: env.loader,
     inspectorFactory: devtoolsArcInspectorFactory,
-    ports
   };
   Object.assign(params, env.params);
   return serialization ? Arc.deserialize(params) : new Arc(params);

@@ -22,7 +22,7 @@ import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {VolatileMemory} from './storageNG/drivers/volatile.js';
 
 export type RuntimeArcOptions = Readonly<{
-  pecFactory?: PecFactory;
+  pecFactories?: PecFactory[];
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
