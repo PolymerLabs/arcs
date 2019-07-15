@@ -60,7 +60,7 @@ describe('schema', () => {
   it('schemas load recursively', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
     const schema = manifest.findSchemaByName('Product');
-    assert.equal(schema.name, 'Product');
+    assert.strictEqual(schema.name, 'Product');
     assert.include(schema.names, 'Thing');
 
     const kind = 'schema-primitive';
@@ -82,17 +82,17 @@ describe('schema', () => {
   it('constructs an appropriate entity subclass', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
     const Product = manifest.findSchemaByName('Product').entityClass();
-    assert.equal(Product.name, 'Product');
+    assert.strictEqual(Product.name, 'Product');
     const product = new Product({name: 'Pickled Chicken Sandwich',
                                description: 'A sandwich with pickles and chicken',
                                image: 'http://www.example.com/pcs.jpg',
                                category: 'Delicious Food', shipDays: 5});
     assert.instanceOf(product, Product);
-    assert.equal(product.name, 'Pickled Chicken Sandwich');
-    assert.equal(product.description, 'A sandwich with pickles and chicken');
-    assert.equal(product.image, 'http://www.example.com/pcs.jpg');
-    assert.equal(product.category, 'Delicious Food');
-    assert.equal(product.shipDays, 5);
+    assert.strictEqual(product.name, 'Pickled Chicken Sandwich');
+    assert.strictEqual(product.description, 'A sandwich with pickles and chicken');
+    assert.strictEqual(product.image, 'http://www.example.com/pcs.jpg');
+    assert.strictEqual(product.category, 'Delicious Food');
+    assert.strictEqual(product.shipDays, 5);
     assert.isUndefined(product.url);
     assert.isUndefined(product.identifier);
     assert.isUndefined(product.seller);
@@ -106,8 +106,8 @@ describe('schema', () => {
     const product = new Product(data);
     data.category = 'whyyyyyy';
     data.description = 'no seriously why';
-    assert.equal(product.name, 'Seafood Ice Cream');
-    assert.equal(product.category, 'Terrible Food');
+    assert.strictEqual(product.name, 'Seafood Ice Cream');
+    assert.strictEqual(product.category, 'Terrible Food');
     assert.isUndefined(product.description);
   });
 
@@ -127,15 +127,15 @@ describe('schema', () => {
       shipDays: 1,
     });
 
-    assert.equal(product.name, 'Deep Fried Pizza');
-    assert.equal(product.description, 'Pizza, but fried, deeply');
-    assert.equal(product.image, 'http://www.example.com/dfp.jpg');
-    assert.equal(product.url, 'http://www.example.com/dfp.html');
-    assert.equal(product.identifier, 'dfp001');
-    assert.equal(product.category, 'Scottish Food');
-    assert.equal(product.seller, 'The chip shop on the corner');
-    assert.equal(product.price, '$3.50');
-    assert.equal(product.shipDays, 1);
+    assert.strictEqual(product.name, 'Deep Fried Pizza');
+    assert.strictEqual(product.description, 'Pizza, but fried, deeply');
+    assert.strictEqual(product.image, 'http://www.example.com/dfp.jpg');
+    assert.strictEqual(product.url, 'http://www.example.com/dfp.html');
+    assert.strictEqual(product.identifier, 'dfp001');
+    assert.strictEqual(product.category, 'Scottish Food');
+    assert.strictEqual(product.seller, 'The chip shop on the corner');
+    assert.strictEqual(product.price, '$3.50');
+    assert.strictEqual(product.shipDays, 1);
   });
 
   it('has setters for schema fields only', async () => {
@@ -198,18 +198,18 @@ describe('schema', () => {
         (URL or Number or Boolean) u2`);
     const Unions = manifest.findSchemaByName('Unions').entityClass();
     const unions = new Unions({u1: 'foo', u2: true});
-    assert.equal(unions.u1, 'foo');
-    assert.equal(unions.u2, true);
+    assert.strictEqual(unions.u1, 'foo');
+    assert.strictEqual(unions.u2, true);
     Entity.mutate(unions, u => {
       u.u1 = 45;
       u.u2 = 'http://bar.org';
     });
-    assert.equal(unions.u1, 45);
-    assert.equal(unions.u2, 'http://bar.org');
+    assert.strictEqual(unions.u1, 45);
+    assert.strictEqual(unions.u2, 'http://bar.org');
     Entity.mutate(unions, u => {
       u.u2 = 12;
     });
-    assert.equal(unions.u2, 12);
+    assert.strictEqual(unions.u2, 12);
 
     Entity.mutate(unions, u => {
       u.u1 = null;
@@ -405,7 +405,7 @@ describe('schema', () => {
     const emptySchema = Schema.fromLiteral(undefined);
     assert.isEmpty(emptySchema.fields);
     assert.isEmpty(emptySchema.names);
-    assert.equal('* {}', emptySchema.toInlineSchemaString());
+    assert.strictEqual('* {}', emptySchema.toInlineSchemaString());
   });
 
   it('handles Bytes fields', async () => {

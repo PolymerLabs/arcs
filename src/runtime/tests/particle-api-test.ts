@@ -195,7 +195,7 @@ describe('particle-api', () => {
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[0];
-    assert.equal(newStore.name, 'hello');
+    assert.strictEqual(newStore.name, 'hello');
     await util.assertSingletonIs(newStore, 'value', 'success');
   });
 
@@ -274,7 +274,7 @@ describe('particle-api', () => {
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
-    assert.equal(newStore.name, 'the-out');
+    assert.strictEqual(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
@@ -365,7 +365,7 @@ describe('particle-api', () => {
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
-    assert.equal(newStore.name, 'the-out');
+    assert.strictEqual(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
@@ -458,7 +458,7 @@ describe('particle-api', () => {
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
-    assert.equal(newStore.name, 'the-out');
+    assert.strictEqual(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
@@ -556,7 +556,7 @@ describe('particle-api', () => {
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
-    assert.equal(newStore.name, 'the-out');
+    assert.strictEqual(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
@@ -662,11 +662,11 @@ describe('particle-api', () => {
     const innerArcStores = innerArc.findStoresByType(result.type);
 
     let newStore = innerArcStores[1];
-    assert.equal(innerArcStores[1].name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
+    assert.strictEqual(innerArcStores[1].name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'HELLO');
 
     newStore = innerArcStores[3];
-    assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
+    assert.strictEqual(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'WORLD');
   });
 
@@ -976,7 +976,7 @@ describe('particle-api', () => {
 
      const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
-    assert.equal(description.getRecipeSuggestion(), 'Out is hi!');
+    assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
    it('particles call startBusy in setHandles with no value and set values in descriptions', async () => {
@@ -1033,7 +1033,7 @@ describe('particle-api', () => {
 
      const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
-    assert.equal(description.getRecipeSuggestion(), 'Out is hi!');
+    assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
   it('loadRecipe returns ids of provided slots', async () => {
@@ -1099,7 +1099,7 @@ describe('particle-api', () => {
     const [innerArc] = arc.findInnerArcs(transformationParticle);
 
     const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
-    assert.equal(innerArc.activeRecipe.toString(), `recipe
+    assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
   slot '!${sessionId}:demo:inner2:1' as slot0
   slot 'slotid-!${sessionId}:demo:inner2:2' as slot1
   A as particle0

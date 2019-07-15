@@ -19,16 +19,16 @@ describe('interface', () => {
   it('finds type variable references in handle connections', () => {
     const iface = new InterfaceInfo('Test', [{type: TypeVariable.make('a')}], []);
     assert.lengthOf(iface.typeVars, 1);
-    assert.equal(iface.typeVars[0].field, 'type');
-    assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
+    assert.strictEqual(iface.typeVars[0].field, 'type');
+    assert.strictEqual(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', () => {
     const iface = new InterfaceInfo('Test', [], [
       {name: TypeVariable.make('a'), direction: 'consume', isRequired: false, isSet: false}]);
     assert.lengthOf(iface.typeVars, 1);
-    assert.equal(iface.typeVars[0].field, 'name');
-    assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
+    assert.strictEqual(iface.typeVars[0].field, 'name');
+    assert.strictEqual(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
   it('upgrades type variable references', () => {
@@ -219,7 +219,7 @@ describe('interface', () => {
       assert.isTrue(resolved.canEnsureResolved());
       const canWriteSuperset = resolved.canWriteSuperset as EntityType;
       assert.isTrue(canWriteSuperset instanceof EntityType);
-      assert.equal(canWriteSuperset.entitySchema.name, 'Burrito');
+      assert.strictEqual(canWriteSuperset.entitySchema.name, 'Burrito');
     }
   });
 

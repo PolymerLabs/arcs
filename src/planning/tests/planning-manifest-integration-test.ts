@@ -17,7 +17,7 @@ describe('planning manifest integration', () => {
     const {arc, recipe} = await manifestTestSetup();
     const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
     const {speculativeArc, relevance} = await new Speculator().speculate(arc, recipe, hash);
-    assert.equal(relevance.calcRelevanceScore(), 1);
+    assert.strictEqual(relevance.calcRelevanceScore(), 1);
     assert.lengthOf(speculativeArc.recipeDeltas, 1);
   });
 });

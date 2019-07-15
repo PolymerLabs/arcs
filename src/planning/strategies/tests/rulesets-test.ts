@@ -138,13 +138,13 @@ describe('Rulesets', () => {
 
     // Regardless of the ruleset, there are 4 results with fates decided:
     // Each handle can be assigned fate A or B.
-    assert.equal(statsNoRules.fateAssigned, 4);
-    assert.equal(statsLinear.fateAssigned, 4);
+    assert.strictEqual(statsNoRules.fateAssigned, 4);
+    assert.strictEqual(statsLinear.fateAssigned, 4);
 
     // Regardless of the ruleset, there are 9 total results:
     // Each handle can have fate ?, A or B.
-    assert.equal(statsNoRules.total, 9);
-    assert.equal(statsLinear.total, 9);
+    assert.strictEqual(statsNoRules.total, 9);
+    assert.strictEqual(statsLinear.total, 9);
 
     // Recipes with both handles assigned to the same fate
     // can be derived in 3 different ways:
@@ -152,12 +152,12 @@ describe('Rulesets', () => {
     // 2) 'id1' assigned in the first run, 'id2' in the second.
     // 3) 'id2' assigned in the first run, 'id1' in the second.
     // 2 of above 3 are redundant, with 2 fates with have 4 redundant derivations.
-    assert.equal(statsLinear.redundantDerivations, 4);
+    assert.strictEqual(statsLinear.redundantDerivations, 4);
     // Without a linear ordering we additionally get 1 redundant derivation for
     // each of 2 recipes with handles having different fates assigned.
     // Each of those can be achieved by running AssignFateA then AssignFateB,
     // or the other way around.
-    assert.equal(statsNoRules.redundantDerivations, 6);
+    assert.strictEqual(statsNoRules.redundantDerivations, 6);
   });
 
   it('respects ordering rules in a big example', async () => {
@@ -190,9 +190,9 @@ describe('Rulesets', () => {
 
     // Regardless of the ruleset, there are 27 resolved results:
     // Each of 3 handles can be assigned fate A, B, C and needs to be resolved.
-    assert.equal(statsNoRules.resolved, 27);
-    assert.equal(statsPhased.resolved, 27);
-    assert.equal(statsLinear.resolved, 27);
+    assert.strictEqual(statsNoRules.resolved, 27);
+    assert.strictEqual(statsPhased.resolved, 27);
+    assert.strictEqual(statsLinear.resolved, 27);
 
     // Considering all intermediate recipes, each handle can be in one of 7 states:
     // [?, A unresolved, B unresolved, C unresolved, A resolved, B resolved, C resolved]
@@ -208,14 +208,14 @@ describe('Rulesets', () => {
     // With the exception of all handles being '?', in which case Resolve couldn't have been involved.
     // 4 ^ 3 - 1 = 63
     // 64 + 63 = 127
-    assert.equal(statsNoRules.total, 343);
-    assert.equal(statsPhased.total, 127);
-    assert.equal(statsLinear.total, 127);
+    assert.strictEqual(statsNoRules.total, 343);
+    assert.strictEqual(statsPhased.total, 127);
+    assert.strictEqual(statsLinear.total, 127);
 
     // Number of redundant derivations is decreased with a linear rule.
     // Explaining these numbers would probably be quite laborious...
-    assert.equal(statsNoRules.redundantDerivations, 444);
-    assert.equal(statsPhased.redundantDerivations, 120);
-    assert.equal(statsLinear.redundantDerivations, 54);
+    assert.strictEqual(statsNoRules.redundantDerivations, 444);
+    assert.strictEqual(statsPhased.redundantDerivations, 120);
+    assert.strictEqual(statsLinear.redundantDerivations, 54);
   });
 });

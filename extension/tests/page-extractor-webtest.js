@@ -26,8 +26,8 @@ describe('PageExtractor', function() {
             results[0]);
         // The web page url contains a machine specific path so just check the
         // file name presence.
-        assert.equal('http://schema.org/WebPage', results[1]['@type']);
-        assert.equal('Arcs Extension Mocha Tests', results[1]['name']);
+        assert.strictEqual('http://schema.org/WebPage', results[1]['@type']);
+        assert.strictEqual('Arcs Extension Mocha Tests', results[1]['name']);
         assert.isOk(results[1]['url'].includes('index.test.html'));
       });
     });

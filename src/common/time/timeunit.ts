@@ -9,7 +9,6 @@
  */
 
 
-
 export class TimeUnit {
 
   private constructor(

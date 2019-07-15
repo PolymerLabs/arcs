@@ -41,7 +41,7 @@ async function doCoalesceRecipes(manifestStr: string, options?) {
       resultsMap.set(r.result.toString(), r.result);
     }
   });
-  assert.equal(1, resultsMap.size);
+  assert.strictEqual(1, resultsMap.size);
   return [...resultsMap.values()][0];
 }
 
@@ -148,7 +148,7 @@ describe('CoalesceRecipes', () => {
 
     // hostedParticle connection should not be affected.
     const p2 = recipe.particles.find(p => p.name === 'P2');
-    assert.equal('hostedParticle', p2.spec.getConnectionByName('hostedParticle').name);
+    assert.strictEqual('hostedParticle', p2.spec.getConnectionByName('hostedParticle').name);
     assert.isUndefined(p2.connections['hostedParticle']);
   });
 

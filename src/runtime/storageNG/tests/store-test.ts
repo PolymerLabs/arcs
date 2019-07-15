@@ -45,7 +45,7 @@ describe('Store', async () => {
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
     const activeStore = await store.activate();
 
-    assert.equal(activeStore.constructor, DirectStore);
+    assert.strictEqual(activeStore.constructor, DirectStore);
   });
 
   it('will propagate model updates from proxies to drivers', async () => {
@@ -133,7 +133,7 @@ describe('Store', async () => {
     return new Promise(async (resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
-        assert.equal(proxyMessage.type, ProxyMessageType.ModelUpdate);
+        assert.strictEqual(proxyMessage.type, ProxyMessageType.ModelUpdate);
         resolve(true);
         return true;
       });
@@ -159,8 +159,8 @@ describe('Store', async () => {
     return new Promise(async (resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
-          assert.equal(proxyMessage.operations.length, 1);
-          assert.equal(proxyMessage.id, id);
+          assert.strictEqual(proxyMessage.operations.length, 1);
+          assert.strictEqual(proxyMessage.id, id);
           assert.deepEqual(proxyMessage.operations[0], {type: CountOpTypes.MultiIncrement, value: 1, actor: 'me', 
             version: {from: 0, to: 1}});
           resolve(true);

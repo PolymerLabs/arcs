@@ -92,7 +92,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
-    assert.equal(expectedDescription, description);
+    assert.strictEqual(expectedDescription, description);
   }
 
   it('generates recipe description', async () => {
@@ -141,21 +141,21 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const description = await generateRecipeDescription(
         {includeSchemaDescription: false, includeStore: false, includeEntityName: false, formatter: DescriptionDomFormatter});
 
-    assert.equal('The winner is: \'box\' of all \'box list\'.', description.template);
+    assert.strictEqual('The winner is: \'box\' of all \'box list\'.', description.template);
     assert.isEmpty(description.model);
   });
 
   it('generates DOM recipe description (with handle value)', async () => {
     const description = await generateRecipeDescription(
       {includeSchemaDescription: false, includeStore: true, includeEntityName: false, formatter: DescriptionDomFormatter});
-    assert.equal('The winner is: \'box\' of all \'box list\'.', description.template);
+    assert.strictEqual('The winner is: \'box\' of all \'box list\'.', description.template);
     assert.isEmpty(description.model);
   });
 
   it('generates DOM recipe description (with handle value and name)', async () => {
     const description = await generateRecipeDescription(
         {includeSchemaDescription: false, includeStore: true, includeEntityName: true, formatter: DescriptionDomFormatter});
-    assert.equal('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
+    assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
         description.template);
     assert.deepEqual({
       'text1': 'The winner is: \'',
@@ -169,14 +169,14 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: false, includeEntityName: false, formatter: DescriptionDomFormatter});
 
-    assert.equal('The winner is: \'booooox\' of all \'boxes\'.', description.template);
+    assert.strictEqual('The winner is: \'booooox\' of all \'boxes\'.', description.template);
     assert.isEmpty(description.model);
   });
 
   it('generates DOM recipe description (with schema description and handle value)', async () => {
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: true, includeEntityName: false, formatter: DescriptionDomFormatter});
-    assert.equal('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
+    assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
                  description.template);
     assert.deepEqual({
       'text1': 'The winner is: \'',
@@ -190,7 +190,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: true, includeEntityName: true, formatter: DescriptionDomFormatter});
 
-    assert.equal('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
+    assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
                  description.template);
     assert.deepEqual({
       'text1': 'The winner is: \'',
@@ -204,7 +204,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: true, includeEntityName: true,
          includeAllDescription: true, formatter: DescriptionDomFormatter});
-    assert.equal('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
+    assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
         description.template);
     assert.deepEqual({
       'text1': 'The winner is: \'',
@@ -218,7 +218,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: true, includeEntityName: true,
          includeAllDescription: true, includeAllStore: true, formatter: DescriptionDomFormatter});
-    assert.equal('<span>{{text3}}</span><b>{{biggestVar}}</b><span>{{text4}}</span><span>{{allDescription2}}</span> (<b>{{all1Length}}</b> items)<span>{{text5}}</span>.',
+    assert.strictEqual('<span>{{text3}}</span><b>{{biggestVar}}</b><span>{{text4}}</span><span>{{allDescription2}}</span> (<b>{{all1Length}}</b> items)<span>{{text5}}</span>.',
                 description.template);
     assert.deepEqual({
       'text3': 'The winner is: \'',
@@ -243,7 +243,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo -> fooHandle
         description \`cannot show duplicate \${ShowFoo.foo}\`
     `, loader}).then(() => assert('expected exception for duplicate particles'))
-      .catch((err) => assert.equal(
+      .catch((err) => assert.strictEqual(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
 
@@ -265,9 +265,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     `;
     const description = await generateRecipeDescription({manifestString});
 
-    assert.equal('Do "hello foo"', description as string);
+    assert.strictEqual('Do "hello foo"', description as string);
     const domDescription = await generateRecipeDescription({manifestString, formatter: DescriptionDomFormatter});
-    assert.equal(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
+    assert.strictEqual(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
     assert.deepEqual(domDescription.model, {text2: 'Do "', foo1: 'foo', text3: '"'});
   });
 
@@ -292,13 +292,13 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`show \${ShowFoo.foo} with dummy\`
     `, loader});
     assert.lengthOf(helper.suggestions, 2);
-    assert.equal('Show foo.', await helper.suggestions[0].descriptionText);
+    assert.strictEqual('Show foo.', await helper.suggestions[0].descriptionText);
 
     await helper.acceptSuggestion({particles: ['ShowFoo']});
     await helper.makePlans();
     assert.lengthOf(helper.suggestions, 1);
 
-    assert.equal('Show foo with dummy.', await helper.suggestions[0].descriptionText);
+    assert.strictEqual('Show foo with dummy.', await helper.suggestions[0].descriptionText);
   });
   it('joins recipe descriptions', async () => {
     const helper = await PlanningTestHelper.createAndPlan({manifestString: `

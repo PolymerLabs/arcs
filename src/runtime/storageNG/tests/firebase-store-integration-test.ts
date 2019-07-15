@@ -46,7 +46,7 @@ describe('Firebase + Store Integration', async () => {
     await activeStore.idle();
     const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(storageKey);
     assert.deepEqual(firebaseEntry.model, activeStore['localModel'].getData());
-    assert.equal(firebaseEntry.version, 2);
+    assert.strictEqual(firebaseEntry.version, 2);
   });
 
   it('will store operation updates from multiple sources', async () => {
@@ -82,11 +82,11 @@ describe('Firebase + Store Integration', async () => {
     await activeStore2.idle();
 
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
-    assert.equal(results.filter(a => !a).length, 0);
+    assert.strictEqual(results.filter(a => !a).length, 0);
 
     const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(storageKey);
     assert.deepEqual(firebaseEntry.model, activeStore1['localModel'].getData());
-    assert.equal(firebaseEntry.version, 3);
+    assert.strictEqual(firebaseEntry.version, 3);
   });
 
   it('will store operation updates from multiple sources with some delays', async () => {

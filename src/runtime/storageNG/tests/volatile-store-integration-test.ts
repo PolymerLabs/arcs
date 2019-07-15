@@ -44,7 +44,7 @@ describe('Volatile + Store Integration', async () => {
 
     const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore['localModel'].getData());
-    assert.equal(volatileEntry.version, 3);
+    assert.strictEqual(volatileEntry.version, 3);
   });
 
   it('will store operation updates from multiple sources', async () => {
@@ -77,14 +77,14 @@ describe('Volatile + Store Integration', async () => {
     ], id: 1});
 
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
-    assert.equal(results.filter(a => !a).length, 0);
+    assert.strictEqual(results.filter(a => !a).length, 0);
     
     await activeStore1.idle();
     await activeStore2.idle();
 
     const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
-    assert.equal(volatileEntry.version, 3);
+    assert.strictEqual(volatileEntry.version, 3);
   });
 
   it('will store operation updates from multiple sources with some timing delays', async () => {
@@ -122,13 +122,13 @@ describe('Volatile + Store Integration', async () => {
     ], id: 1});
 
     const results = await Promise.all([opReply1, opReply2, opReply3, opReply4]);
-    assert.equal(results.filter(a => !a).length, 0);
+    assert.strictEqual(results.filter(a => !a).length, 0);
     
     await activeStore1.idle();
     await activeStore2.idle();
 
     const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
-    assert.equal(volatileEntry.version, 4);
+    assert.strictEqual(volatileEntry.version, 4);
   });
 });

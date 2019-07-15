@@ -51,7 +51,7 @@ describe('Arc integration', () => {
     await arc.idle;
 
     assert.lengthOf(arc._stores, 1);
-    assert.equal(1, arc.storeTags.size);
+    assert.strictEqual(1, arc.storeTags.size);
     assert.deepEqual(['best'], [...arc.storeTags.get(arc._stores[0])]);
   });
 });

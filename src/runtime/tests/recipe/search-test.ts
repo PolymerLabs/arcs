@@ -29,17 +29,17 @@ describe('Recipe Search', () => {
 
   it('constructs new search', () => {
     let search = createAndVerifyUnresolved(new Search('hello world'));
-    assert.equal('hello world', search.phrase);
+    assert.strictEqual('hello world', search.phrase);
     assert.deepEqual(['hello', 'world'], search.unresolvedTokens);
     assert.isEmpty(search.resolvedTokens);
 
     search = createAndVerifyResolved(new Search('hello world', []));
-    assert.equal('hello world', search.phrase);
+    assert.strictEqual('hello world', search.phrase);
     assert.isEmpty(search.unresolvedTokens);
     assert.deepEqual(['hello', 'world'], search.resolvedTokens);
 
     search = createAndVerifyResolved(new Search('hello world bye world', ['hello', 'world']));
-    assert.equal('hello world bye world', search.phrase);
+    assert.strictEqual('hello world bye world', search.phrase);
     assert.deepEqual(['hello', 'world'], search.unresolvedTokens);
     assert.deepEqual(['bye', 'world'], search.resolvedTokens);
   });
@@ -49,7 +49,7 @@ describe('Recipe Search', () => {
     new Search('hello world bye world')._copyInto(recipe);
 
     let search = checkNotNull(recipe.search);
-    assert.equal('hello world bye world', search.phrase);
+    assert.strictEqual('hello world bye world', search.phrase);
     assert.deepEqual(['hello', 'world', 'bye', 'world'], search.unresolvedTokens);
     assert.isEmpty(search.resolvedTokens);
     let cloneRecipe = recipe.clone();
@@ -58,7 +58,7 @@ describe('Recipe Search', () => {
 
     new Search('one two three', ['two'])._copyInto(recipe);
     search = checkNotNull(recipe.search);
-    assert.equal('hello world bye world one two three', search.phrase);
+    assert.strictEqual('hello world bye world one two three', search.phrase);
     assert.deepEqual(['hello', 'world', 'bye', 'world', 'two'], search.unresolvedTokens);
     assert.deepEqual(['one', 'three'], search.resolvedTokens);
     cloneRecipe = recipe.clone();

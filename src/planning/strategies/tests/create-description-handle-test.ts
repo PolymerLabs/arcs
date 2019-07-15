@@ -30,7 +30,7 @@ describe('CreateDescriptionHandle', () => {
     assert.lengthOf(results, 1);
     const plan = results[0].result;
     assert.lengthOf(plan.handles, 1);
-    assert.equal('create', plan.handles[0].fate);
+    assert.strictEqual('create', plan.handles[0].fate);
     assert.isTrue(plan.isResolved());
   });
 });

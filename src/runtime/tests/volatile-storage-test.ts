@@ -51,7 +51,7 @@ describe('volatile', () => {
       const variable = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
-      assert.equal(value, result.value);
+      assert.strictEqual(value, result.value);
     });
 
     it('resolves concurrent set', async () => {
@@ -82,7 +82,7 @@ describe('volatile', () => {
       await var1.set({id: 'id1', value: 'underlying'});
       
       const result = await var1.get();
-      assert.equal('underlying', result.value);
+      assert.strictEqual('underlying', result.value);
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
@@ -104,7 +104,7 @@ describe('volatile', () => {
       await var1.set({id: 'id1', storageKey: 'underlying'});
       
       const result = await var1.get();
-      assert.equal('underlying', result.storageKey);
+      assert.strictEqual('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
       assert.isNull(var1.backingStore);
@@ -127,7 +127,7 @@ describe('volatile', () => {
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
-      assert.equal(value1, result.value);
+      assert.strictEqual(value1, result.value);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
@@ -196,9 +196,9 @@ describe('volatile', () => {
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
-      assert.equal('value1', result.value);
+      assert.strictEqual('value1', result.value);
       result = await collection1.get('id2');
-      assert.equal('value2', result.value);
+      assert.strictEqual('value2', result.value);
 
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
@@ -237,9 +237,9 @@ describe('volatile', () => {
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
-      assert.equal('value1', result.storageKey);
+      assert.strictEqual('value1', result.storageKey);
       result = await collection1.get('id2');
-      assert.equal('value2', result.storageKey);
+      assert.strictEqual('value2', result.storageKey);
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
@@ -263,8 +263,8 @@ describe('volatile', () => {
         collection1.store({id: 'id1', data: 'ab'}, ['k34']),
         collection2.store({id: 'id2', data: 'cd'}, ['k12'])
       ]);
-      assert.equal((await collection2.get('id1')).data, 'ab');
-      assert.equal((await collection1.get('id2')).data, 'cd');
+      assert.strictEqual((await collection2.get('id1')).data, 'ab');
+      assert.strictEqual((await collection1.get('id2')).data, 'cd');
 
       await collection1.remove('id2', ['key2']);
       assert.isNull(await collection2.get('id2'));
@@ -283,10 +283,10 @@ describe('volatile', () => {
     async function checkNext(col, cid, ids) {
       const {value, done} = await col.cursorNext(cid);
       assert.isFalse(done);
-      assert.equal(value.length, ids.length);
+      assert.strictEqual(value.length, ids.length);
       for (let i = 0; i < value.length; i++) {
-        assert.equal(value[i].id, ids[i]);
-        assert.equal(value[i].data, 'v' + ids[i]);
+        assert.strictEqual(value[i].id, ids[i]);
+        assert.strictEqual(value[i].data, 'v' + ids[i]);
       }
     }
 
@@ -325,7 +325,7 @@ describe('volatile', () => {
 
       // Interleave another cursor at a different version.
       const cid2 = await col.stream(20);
-      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      assert.strictEqual(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
       
       await checkNext(col, cid1, ['x09', 'o10', 'p07', 'q04']);
@@ -368,7 +368,7 @@ describe('volatile', () => {
 
       // Interleave another cursor at a different version.
       const cid2 = await col.stream(20, false);
-      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      assert.strictEqual(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['f11', 'q04', 'p07', 'x09', 'g08', 'h05', 'z03', 'i02', 'r01']);
       
       await checkNext(col, cid1, ['h05', 'z03', 'i02', 'r01']);

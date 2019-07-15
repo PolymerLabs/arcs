@@ -125,7 +125,7 @@ ${recipesManifest}`);
           a ->`);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
-    assert.equal(results[0].result.particles[0].name, 'P');
+    assert.strictEqual(results[0].result.particles[0].name, 'P');
     assert.lengthOf(results[1].result.particles, 2);
   });
 
@@ -136,7 +136,7 @@ ${recipesManifest}`);
           a <-`);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[1].result.particles, 1);
-    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.strictEqual(results[1].result.particles[0].name, 'Q');
     assert.lengthOf(results[0].result.particles, 2);
   });
 
@@ -149,7 +149,7 @@ ${recipesManifest}`);
       `);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[1].result.particles, 1);
-    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.strictEqual(results[1].result.particles[0].name, 'Q');
     assert.lengthOf(results[0].result.particles, 2);
   });
   it('listens to handle constraints - handle', async () => {
@@ -205,14 +205,14 @@ ${recipesManifest}`);
     results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
-    assert.equal(results[0].result.particles[0].name, 'Q');
+    assert.strictEqual(results[0].result.particles[0].name, 'Q');
     assert.lengthOf(results[1].result.particles, 2);
 
     generated = [{result: manifest.recipes[5], score: 1}];
     results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
-    assert.equal(results[0].result.particles[0].name, 'P');
+    assert.strictEqual(results[0].result.particles[0].name, 'P');
     assert.lengthOf(results[1].result.particles, 2);
   });
   it('carries handle assignments across verb substitution', async () => {
@@ -241,9 +241,9 @@ ${recipesManifest}`);
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
-    assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
-    assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
-    assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
+    assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
+    assert.strictEqual(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
+    assert.strictEqual(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
   });
   it('carries handle assignments across verb substitution with generic binding', async () => {
     const manifest = await Manifest.parse(`
@@ -271,9 +271,9 @@ ${recipesManifest}`);
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
-    assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
-    assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
-    assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
+    assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
+    assert.strictEqual(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
+    assert.strictEqual(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
   });
   it('selects the appropriate generic binding when handle assignments carry type information', async () => {
     const manifest = await Manifest.parse(`
@@ -310,9 +310,9 @@ ${recipesManifest}`);
     const recipe = results[0].result;
     const particleP = recipe.particles.find(p => p.name === 'P');
     const particleQ = recipe.particles.find(p => p.name === 'Q');
-    assert.equal(particleP.connections.a.handle, particleQ.connections.b.handle);
-    assert.equal(particleP.connections.a.handle.connections[0].particle, particleP);
-    assert.equal(particleQ.connections.b.handle.connections[1].particle, particleQ);
+    assert.strictEqual(particleP.connections.a.handle, particleQ.connections.b.handle);
+    assert.strictEqual(particleP.connections.a.handle.connections[0].particle, particleP);
+    assert.strictEqual(particleQ.connections.b.handle.connections[1].particle, particleQ);
   });
   it('carries slot assignments across verb substitution', async () => {
     const manifest = await Manifest.parse(`
@@ -348,17 +348,17 @@ ${recipesManifest}`);
     let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     let recipe = results[0].result;
-    assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
-    assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
-    assert.equal(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
+    assert.strictEqual(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
+    assert.strictEqual(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
+    assert.strictEqual(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
     
     generated = [{result: manifest.recipes[2], score: 1}];
     results = await mrv.generateFrom(generated);
     recipe = results[0].result;
-    assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
+    assert.strictEqual(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
     const slotFoo = recipe.slots.find(s => s.name === 'foo');
-    assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
-    assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
+    assert.strictEqual(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
+    assert.strictEqual(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   });
 
   it('carries slot assignments across when they\'re assigned elsewhere too', async () => {
@@ -403,20 +403,20 @@ ${recipesManifest}`);
   let results = await mrv.generateFrom(generated);
   assert.lengthOf(results, 1);
   let recipe = results[0].result;
-  assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
-  assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
-  assert.equal(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
-  assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[2].consumedSlotConnections.bar.targetSlot);
-  assert.equal(recipe.slots[0].consumeConnections[1], recipe.particles[2].consumedSlotConnections.bar);
+  assert.strictEqual(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
+  assert.strictEqual(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
+  assert.strictEqual(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
+  assert.strictEqual(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[2].consumedSlotConnections.bar.targetSlot);
+  assert.strictEqual(recipe.slots[0].consumeConnections[1], recipe.particles[2].consumedSlotConnections.bar);
   
   generated = [{result: manifest.recipes[2], score: 1}];
   results = await mrv.generateFrom(generated);
   recipe = results[0].result;
-  assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
+  assert.strictEqual(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
   const slotFoo = recipe.slots.find(s => s.name === 'foo');
-  assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
-  assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
-  assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-  assert.equal(slotFoo.consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
+  assert.strictEqual(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
+  assert.strictEqual(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
+  assert.strictEqual(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
+  assert.strictEqual(slotFoo.consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
   });
 });

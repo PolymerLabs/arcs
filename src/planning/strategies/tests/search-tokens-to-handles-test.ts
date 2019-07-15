@@ -48,7 +48,7 @@ describe('SearchTokensToHandles', () => {
     assert.lengthOf(results, 1);
     const result = results[0].result;
     assert.isTrue(result.isResolved());
-    assert.equal('use', result.handles[0].fate);
+    assert.strictEqual('use', result.handles[0].fate);
   });
 
   it('finds remote handle by tags', async () => {
@@ -88,7 +88,7 @@ recipe
     const result = results[0].result;
     assert.isTrue(result.isResolved());
     assert.lengthOf(result.handles, 2);
-    assert.equal('map', result.handles[0].fate);
-    assert.equal('copy', result.handles[1].fate);
+    assert.strictEqual('map', result.handles[0].fate);
+    assert.strictEqual('copy', result.handles[1].fate);
   });
 });

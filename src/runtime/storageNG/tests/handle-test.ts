@@ -67,12 +67,12 @@ describe('CollectionHandle', () => {
 describe('SingletonHandle', () => {
   it('can set and clear elements', async () => {
     const handle = getSingletonHandle();
-    assert.equal(await handle.get(), null);
+    assert.strictEqual(await handle.get(), null);
     await handle.set({id: 'A'});
     assert.deepEqual(await handle.get(), {id: 'A'});
     await handle.set({id: 'B'});
     assert.deepEqual(await handle.get(), {id: 'B'});
     await handle.clear();
-    assert.equal(await handle.get(), null);
+    assert.strictEqual(await handle.get(), null);
   });
 });

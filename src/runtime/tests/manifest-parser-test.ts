@@ -313,7 +313,7 @@ describe('manifest parser', () => {
       `);
       data = JSON.parse(manifestAst[1].data);
     }, `Unexpected token / in JSON at position 0`);
-    assert.equal(data, undefined);
+    assert.strictEqual(data, undefined);
   });
   it('does not parse comment inside manifest resource', () => {
     let data;
@@ -330,7 +330,7 @@ describe('manifest parser', () => {
       `);
       data = JSON.parse(manifestAst[1].data);
     }, `Unexpected token / in JSON at position 47`);
-    assert.equal(data, undefined);
+    assert.strictEqual(data, undefined);
   });
   it('ignores comments inside manifest resource', () => {
     const manifestAst = parse(`

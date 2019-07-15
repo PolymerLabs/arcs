@@ -28,22 +28,22 @@ describe('loader', function() {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/Product');
     const manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Product'});
-    assert.equal(manifest.schemas.Product.fields.description.type, 'Text');
+    assert.strictEqual(manifest.schemas.Product.fields.description.type, 'Text');
   });
 
   it('can read a schema.org schema that aliases another type', async () => {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/Restaurant');
     const manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Restaurant'});
-    assert.equal(manifest.schemas.Restaurant.fields.servesCuisine.type, 'Text');
+    assert.strictEqual(manifest.schemas.Restaurant.fields.servesCuisine.type, 'Text');
   });
 
   it('can read a schema.org schema with multiple inheritance', async () => {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/LocalBusiness');
     const manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/LocalBusiness'});
-    assert.equal(manifest.schemas.LocalBusiness.fields.duns.type, 'Text');
-    assert.equal(manifest.schemas.LocalBusiness.fields.branchCode.type, 'Text');
+    assert.strictEqual(manifest.schemas.LocalBusiness.fields.duns.type, 'Text');
+    assert.strictEqual(manifest.schemas.LocalBusiness.fields.branchCode.type, 'Text');
   });
 
   it('loads a text file', async () => {
@@ -53,8 +53,8 @@ describe('loader', function() {
 
     const loader = new Loader();
     const text = await loader.loadResource(target);
-    assert.equal(typeof text, 'string');
-    assert.equal(text, data);
+    assert.strictEqual(typeof text, 'string');
+    assert.strictEqual(text, data);
   });
 
   it('loads a binary file', async () => {

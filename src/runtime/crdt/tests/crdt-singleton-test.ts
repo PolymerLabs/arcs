@@ -15,7 +15,7 @@ import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton';
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {
     const singleton = new CRDTSingleton<{id: string}>();
-    assert.equal(singleton.getParticleView(), null);
+    assert.strictEqual(singleton.getParticleView(), null);
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
@@ -45,7 +45,7 @@ describe('CRDTSingleton', () => {
 
   it('can clear values', () => {
     const singleton = new CRDTSingleton<{id: string}>();
-    assert.equal(singleton.getParticleView(), null);
+    assert.strictEqual(singleton.getParticleView(), null);
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
@@ -72,12 +72,12 @@ describe('CRDTSingleton', () => {
     // Up-to-date version number, does clear it.
     singleton.applyOperation(
       {type: SingletonOpTypes.Clear, actor: 'A', clock: {A: 1}});
-    assert.equal(singleton.getParticleView(), null);
+    assert.strictEqual(singleton.getParticleView(), null);
   });
 
   it('can add and clear from multiple actors', () => {
     const singleton = new CRDTSingleton<{id: string}>();
-    assert.equal(singleton.getParticleView(), null);
+    assert.strictEqual(singleton.getParticleView(), null);
 
     singleton.applyOperation({
       type: SingletonOpTypes.Set,
@@ -120,7 +120,7 @@ describe('CRDTSingleton', () => {
       clock: {A: 1, B: 2}
     });
     assert.deepEqual(singleton.getData().values, {});
-    assert.equal(singleton.getParticleView(), null);
+    assert.strictEqual(singleton.getParticleView(), null);
   });
 
   it('can merge two singletons', () => {
@@ -161,6 +161,6 @@ describe('CRDTSingleton', () => {
       actor: 'A',
       clock: newVersion,
     }));
-    assert.equal(singletonA.getParticleView(), null);
+    assert.strictEqual(singletonA.getParticleView(), null);
   });
 });
