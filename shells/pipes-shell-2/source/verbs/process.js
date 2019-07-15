@@ -12,6 +12,8 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
 import {Utils} from '../../../lib/runtime/utils.js';
 import {recipeByName, marshalOutput} from '../lib/utils.js';
 import {logsFactory} from '../../../../build/runtime/log-factory.js';
+import {Stores} from '../../../lib/runtime/stores.js';
+import {Schemas} from '../schemas.js';
 
 const {warn} = logsFactory('pipe');
 
@@ -23,8 +25,10 @@ export const process = async ({type, tag, source, name, modality}, tid, bus, com
     // arc
     const composer = composerFactory(modality);
     const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
+    // install pipe data
+    await constructPipeData(arc, {type, name, source}, tag);
     // construct ingestion recipe
-    const ingest = await marshalPipeRecipe({type, source, name, tag});
+    const ingest = await marshalPipeRecipe({type, source, name}, tag);
     // instantiate recipes
     if (await instantiateRecipe(arc, ingest)) {
       if (await instantiateRecipe(arc, action)) {
@@ -35,33 +39,49 @@ export const process = async ({type, tag, source, name, modality}, tid, bus, com
   }
 };
 
-const instantiateRecipe = async (arc, recipe) => {
-  const plan = await Utils.resolve(arc, recipe);
-  if (!plan) {
-    warn('failed to resolve recipe', recipe);
-    return false;
-  }
-  await arc.instantiate(plan);
-  return true;
+const constructPipeData = async (arc, data, tag) => {
+  // create store
+  const store = await Stores.create(arc, {
+    name: 'LivePipeEntity',
+    id: 'LivePipeEntity',
+    schema: Schemas.PipeEntity,
+    isCollection: false,
+    tags: [`pipe_entity`, tag],
+    storageKey: null
+  });
+  data.id = generateId();
+  store.set(data, [Math.random()]);
 };
 
-const marshalPipeRecipe = async ({type, source, name, tag}) => {
-  const manifestContent = buildEntityManifest({type, source, name}, tag);
-  const manifest = await Utils.parse(manifestContent);
+const marshalPipeRecipe = async ({type, name, source}, tag) => {
+  const manifest = await Utils.parse(buildEntityManifest({type, source, name}, tag));
   return recipeByName(manifest, 'Pipe');
 };
 
 const buildEntityManifest = ({type, source, name}, tag) => `
 import 'https://$particles/PipeApps2/Trigger.recipes'
-resource PipeEntityResource
-  start
-  [{"type": "${type}", "name": "${name}", "source": "${source}"}]
-store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #${tag} in PipeEntityResource
+
 recipe Pipe
-  use 'LivePipeEntity' #pipe_entity #${tag} as pipe
+  //use 'LivePipeEntity' #pipe_entity #${tag} as pipe
+  use as pipe
   Trigger
     pipe = pipe
 `;
+
+//resource PipeEntityResource
+//  start
+//  [{"type": "${type}", "name": "${name}", "source": "${source}"}]
+//store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #${tag} in PipeEntityResource
+
+const instantiateRecipe = async (arc, recipe) => {
+  const plan = await Utils.resolve(arc, recipe);
+  if (!plan) {
+    warn('failed to resolve recipe');
+    return false;
+  }
+  await arc.instantiate(plan);
+  return true;
+};
 
 export const observeOutput = async (tid, bus, arc) => {
   // TODO(sjmiles): need better system than 20-and-out

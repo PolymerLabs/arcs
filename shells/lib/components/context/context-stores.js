@@ -10,6 +10,7 @@
 
 import {crackStorageKey, simpleNameOfType} from './context-utils.js';
 import {Reference} from '../../../../build/runtime/reference.js';
+import {Stores} from '../../runtime/stores.js';
 
 const pendingStores = {};
 
@@ -66,8 +67,9 @@ const ContextStoresImpl = class {
     store.remove(`shared-${entity.id}`);
   }
   async createReferenceStore(context, schema, name, id, tags) {
-    const shareType = schema.type.collectionOf();
-    const store = await context.createStore(shareType, name, `${id}`, tags);
+    const type = schema.type.collectionOf();
+    const store = await Stores.createStore(context, {type, name, id: `{id}`, tags});
+    //const store = await context.createStore(type, name, `${id}`, tags);
     return store;
   }
   async storeEntityReference(store, entity, backingStorageKey, uid) {

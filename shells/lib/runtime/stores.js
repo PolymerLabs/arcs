@@ -19,6 +19,28 @@ export class Stores {
   }
   static async _requireStore(context, type, {name, id, tags, storageKey}) {
     const store = context.findStoreById(id);
-    return store || await context.createStore(type, name, id, tags, storageKey);
+    if (store) {
+      return store;
+    }
+    return await ManifestPatch.createStore.call(context, type, name, id, tags, null, storageKey);
+  }
+  async createStore(context, {type, name, id, tags, claims, storageKey}) {
+    return await ManifestPatch.createStore.call(context, type, name, id, tags, claims, storageKey);
   }
 }
+
+const ManifestPatch = {
+  async createStore(type, name, id, tags, claims, storageKey) {
+    const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
+    //assert(store.version !== null);
+    store.name = name;
+    store.claims = claims || [];
+    //this.storeManifestUrls.set(store.id, this.fileName);
+    return ManifestPatch.addStore.call(this, store, tags);
+  },
+  addStore(store, tags) {
+     this._stores.push(store);
+     this.storeTags.set(store, tags ? tags : []);
+     return store;
+  }
+};
