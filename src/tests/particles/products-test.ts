@@ -21,8 +21,7 @@ describe('products test', () => {
   const manifestFilename = './src/tests/particles/artifacts/products-test.recipes';
 
   const verifyFilteredBook = async (arc) => {
-    const booksHandle = arc.activeRecipe.handles.find(
-        handle => handle.id !== 'mylist' && !handle.type.isInterface);
+    const booksHandle = arc.activeRecipe.handleConnections.find(hc => hc.isOutput).handle;
     const store = arc.findStoreById(booksHandle.id);
     const list = await store.toList();
     assert.lengthOf(list, 1);
@@ -31,12 +30,8 @@ describe('products test', () => {
 
   it('filters', async () => {
     const loader = new Loader();
-    const runtime = new Runtime(loader, FakeSlotComposer);
-    // Note: cannot use `manifest` as Runtime's context, when manifest contains stores.
-    // The cache-service is re-created and original cache is lost, when calling Runtime constructor.
-    const arc = runtime.newArc('demo', 'volatile://', {
-      context: await Manifest.load(manifestFilename, loader)
-    });
+    const runtime = new Runtime(loader, FakeSlotComposer, await Manifest.load(manifestFilename, loader));
+    const arc = runtime.newArc('demo', 'volatile://');
     const recipe = arc.context.recipes.find(r => r.name === 'FilterBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     await arc.instantiate(recipe);
