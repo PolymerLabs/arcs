@@ -37,7 +37,7 @@ import {Dictionary} from './hot.js';
 export type ArcOptions = Readonly<{
   id: Id;
   context: Manifest;
-  pecFactory?: PecFactory;
+  pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
   storageKey?: string;
@@ -51,7 +51,7 @@ export type ArcOptions = Readonly<{
 
 type DeserializeArcOptions = Readonly<{
   serialization: string;
-  pecFactory?: PecFactory;
+  pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
   fileName: string;
@@ -63,7 +63,7 @@ type SerializeContext = {handles: string, resources: string, interfaces: string,
 
 export class Arc {
   private readonly _context: Manifest;
-  private readonly pecFactory: PecFactory;
+  private readonly pecFactories: PecFactory[];
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
@@ -93,11 +93,11 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory, ports} : ArcOptions) {
+constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
-    // TODO: pecFactory should not be optional. update all callers and fix here.
-    this.pecFactory = pecFactory || FakePecFactory(loader).bind(null);
+    // TODO: pecFactories should not be optional. update all callers and fix here.
+    this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
     if (typeof id === 'string') {
       // TODO(csilvestrini): Replace this warning with an exception.
@@ -115,9 +115,8 @@ export class Arc {
     this.inspectorFactory = inspectorFactory;
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
-    const pecId = this.generateID();
-    const innerPecPort = this.pecFactory(pecId, this.idGenerator);
-    this.pec = new ParticleExecutionHost(slotComposer, this, [innerPecPort].concat(ports || []));
+    const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
+    this.pec = new ParticleExecutionHost(slotComposer, this, ports);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
   }
 
@@ -199,7 +198,7 @@ export class Arc {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner');
-    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
+    const innerArc = new Arc({id, pecFactories: this.pecFactories, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -379,13 +378,13 @@ ${this.activeRecipe.toString()}`;
     await store.set(arcInfoType.newInstance(this.id, serialization));
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: Id.fromString(manifest.meta.name),
       storageKey: manifest.meta.storageKey,
       slotComposer,
-      pecFactory,
+      pecFactories,
       loader,
       storageProviderFactory: manifest.storageProviderFactory,
       context,
@@ -460,7 +459,7 @@ ${this.activeRecipe.toString()}`;
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution(): Promise<Arc> {
     const arc = new Arc({id: this.generateID(),
-                         pecFactory: this.pecFactory,
+                         pecFactories: this.pecFactories,
                          context: this.context,
                          loader: this._loader,
                          speculative: true,

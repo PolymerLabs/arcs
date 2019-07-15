@@ -12,6 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
 import {Description} from '../../runtime/description.js';
+import {Dictionary} from '../../runtime/hot.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Modality} from '../../runtime/modality.js';
@@ -22,6 +23,13 @@ import {Search} from '../../runtime/recipe/search.js';
 import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
 
+
+export type DescriptionProperties = {
+  text?: string;
+  template?: string;
+  model?: Dictionary<string|number>;
+};
+
 /**
  * options for the fromLiteral() method.
  */
@@ -31,7 +39,7 @@ export type FromLiteralOptions = {
   rank: number;
   versionByStore?: string;
   searchGroups?: string[][];
-  descriptionByModality?: {};
+  descriptionByModality?: Dictionary<DescriptionProperties>;
 };
 
 // TODO(#2557): This is a temporary workaround until `context` and `loader`
@@ -84,11 +92,11 @@ export class Suggestion {
     }
   }
 
-  get descriptionText() {
+  get descriptionText(): string {
     return this.getDescription('text') as string;
   }
 
-  getDescription(modality: string): string|{} {
+  getDescription(modality: string): DescriptionProperties {
     return this.descriptionByModality[modality];
   }
 
