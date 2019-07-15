@@ -64,10 +64,10 @@ describe('products test', () => {
               // TODO: reaching directly into data objects like this is super dodgy and we should
               // fix. It's particularly bad here as there's no guarantee that the backingStore
               // exists - should await ensureBackingStore() before accessing it.
-              const reference = arc._stores[0]._model.getValue(content.model.items.models[0].id);
+              const reference = arc._stores[0]['_model'].getValue(content.model.items.models[0].id);
               const store = arc._stores[0].backingStore;
               assert.equal(store.storageKey, reference.storageKey);
-              assert.equal('Harry Potter', store._model.getValue(reference.id).rawData.name);
+              assert.equal('Harry Potter', store['_model'].getValue(reference.id).rawData.name);
             }
             return verified;
           }})
