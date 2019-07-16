@@ -135,11 +135,11 @@ export class FlowGraph {
     if (expression.type === 'and' || expression.type === 'or') {
       return {
         originalCheck,
-        expression: expression.type,
+        operator: expression.type,
         children: expression.children.map(child => this.createFlowCheck(originalCheck, child)),
       };
     } else {
-      return {originalCheck, expression: this.createFlowCondition(expression as CheckCondition)};
+      return {...this.createFlowCondition(expression as CheckCondition), originalCheck};
     }
   }
 

@@ -42,14 +42,16 @@ export class Flow {
 
   /** Evaluates the given FlowCheck against the current Flow. */
   evaluateCheck(check: FlowCheck): boolean {
-    if (check.expression === 'or') {
-      // Only one child expression needs to pass.
-      return check.children.some(childExpr => this.evaluateCheck(childExpr));
-    } else if (check.expression === 'and') {
-      // Every child expression needs to pass.
-      return check.children.every(childExpr => this.evaluateCheck(childExpr));
+    if ('operator' in check) {
+      if (check.operator === 'or') {
+        // Only one child expression needs to pass.
+        return check.children.some(childExpr => this.evaluateCheck(childExpr));
+      } else {
+        // 'and' operator. Every child expression needs to pass.
+        return check.children.every(childExpr => this.evaluateCheck(childExpr));
+      }
     } else {
-      return this.checkCondition(check.expression);
+      return this.checkCondition(check);
     }
   }
 
@@ -125,17 +127,11 @@ export type FlowCondition = {
   value: string
 };
 
-/** An equivalent of a particle Check statement, used internally by FlowGraph. */
-export type FlowCheck = {
-  /** Either a boolean operator, or a FlowCondition. */
-  expression: 'and' | 'or' | FlowCondition,
-
-  /** The elements of the boolean expression. Only set if expression is 'and' or 'or. */
-  children?: readonly FlowCheck[],
-
-  /** The original Check object, from which this FlowCheck was created. */
-  originalCheck: Check,
-};
+/** An equivalent of a particle Check statement, used internally by FlowGraph. Either a FlowCondition, or a boolean expression. */
+export type FlowCheck = 
+    (FlowCondition | {operator: 'or' | 'and', children: readonly FlowCheck[]})
+    /** Optional Check object from which this FlowCheck was constructed. */
+    & {originalCheck?: Check};
 
 /** Represents a node in a FlowGraph. Can be a particle, handle, etc. */
 export abstract class Node {

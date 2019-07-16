@@ -149,8 +149,7 @@ describe('FlowGraph', () => {
     `);
     assert.lengthOf(graph.edges, 1);
     const check = graph.edges[0].check;
-    assert.deepEqual(check.expression, {type: 'tag', value: 'trusted'});
-    assert.isUndefined(check.children);
+    assert.deepNestedInclude(check, {type: 'tag', value: 'trusted'});
   });
 
   it('supports making checks on slots', async () => {
@@ -185,7 +184,7 @@ describe('FlowGraph', () => {
     assert.strictEqual(slot2.inEdges[0].connectionName, 'slotToConsume');
     assert.strictEqual((slot2.inEdges[0].start as ParticleNode).name, 'P2');
     const check = slot2.inEdges[0].check;
-    assert.deepEqual(check.expression, {type: 'tag', value: 'trusted'});
+    assert.deepNestedInclude(check, {type: 'tag', value: 'trusted'});
   });
 
   it('resolves data store names and IDs', async () => {
