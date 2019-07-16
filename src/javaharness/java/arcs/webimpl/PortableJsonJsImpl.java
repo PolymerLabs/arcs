@@ -10,55 +10,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import jsinterop.base.Any;
-import jsinterop.base.Js;
-import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsMethod;
 
 public class PortableJsonJsImpl implements PortableJson {
     private Any jsonObj;
-
-    @JsMethod(namespace="<window>", name="eval")
-    private native static Object eval(String js);
-
-    @JsFunction
-    interface Getter {
-      Object get(Object obj, String key);
-    }
-
-    @JsFunction
-    interface HasChecker {
-        boolean has(Object obj, String key);
-    }
-
-    @JsFunction
-    interface Setter {
-      void set(Object obj, String key, Any value);
-    }
-
-    @JsFunction
-    interface Keys {
-        String[] get(Object obj);
-    }
-
-    private <T> T getValue(String key) {
-      Getter getter = (Getter) eval("(obj, key) => { return obj[key]; }");
-      return Js.uncheckedCast(getter.get(jsonObj, key));
-    }
-
-    private boolean hasStringKey(String key) {
-      HasChecker hasChecker = (HasChecker) eval("(obj, key) => { return key in obj; }");
-      return hasChecker.has(jsonObj, key);
-    }
-
-    private <T> void setValue(String key, T value) {
-        Setter setter = (Setter) eval("(obj, key, value) => { obj[key] = value; };");
-        setter.set(jsonObj, key, Js.asAny(value));
-    }
-
-    private List<String> getAllKeys() {
-        Keys keys = (Keys) eval("(obj) => { return Object.keys(obj); }");
-        return Arrays.asList(keys.get(jsonObj));
-    }
 
     public PortableJsonJsImpl(Any jsonObj) {
         this.jsonObj = jsonObj;
@@ -72,6 +28,7 @@ public class PortableJsonJsImpl implements PortableJson {
     @Override
     public int getInt(int index) {
         return jsonObj.asArray()[index].asInt();
+
     }
 
     @Override
@@ -96,45 +53,44 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public String getString(String key) {
-        return getValue(key);
+        return jsonObj.asPropertyMap().getAsAny(key).asString();
     }
 
     @Override
     public int getInt(String key) {
-        return getValue(key);
+        return jsonObj.asPropertyMap().getAsAny(key).asInt();
     }
 
     @Override
     public double getNumber(String key) {
-        return getValue(key);
+        return jsonObj.asPropertyMap().getAsAny(key).asDouble();
     }
 
     @Override
     public boolean getBool(String key) {
-        return getValue(key);
+        return jsonObj.asPropertyMap().getAsAny(key).asBoolean();
     }
 
     @Override
     public PortableJson getObject(String key) {
-        return new PortableJsonJsImpl(getValue(key));
+        return new PortableJsonJsImpl(jsonObj.asPropertyMap().getAsAny(key));
     }
 
     @Override
     public boolean hasKey(String key) {
-        return hasStringKey(key);
+        return jsonObj.asPropertyMap().has(key);
     }
 
     @Override
     public void forEach(Consumer<String> callback) {
-        List<String> keys = keys();
-        for (String key : keys) {
-            callback.accept(key);
-        }
+        jsonObj.asPropertyMap().forEach(str -> callback.accept(str));
     }
 
     @Override
     public List<String> keys() {
-        return getAllKeys();
+        Set<String> keys = new HashSet<String>();
+        forEach(key -> keys.add(key));
+        return new ArrayList<String>(keys);
     }
 
     @Override
@@ -153,45 +109,56 @@ public class PortableJsonJsImpl implements PortableJson {
         return list;
     }
 
+    @JsMethod(namespace="<window>", name="eval")
+    private native static Object eval(String js);
+
+    @JsFunction
+    interface Equator {
+        boolean equals(Object obj, Object other);
+    }
+
+    private boolean isEqual(PortableJsonJsImpl other) {
+        Equator equator = (Equator) eval("(obj, other) => { let compare = (o1, o2) => { return Object.keys(o1).length == Object.keys(o2).length && Object.keys(o1).every(key => (!!o1[key] == !!o2[key]) || ((o1[key] instanceof Object) && (o2[key] instanceof Object) && compare(o1[key]), o2[key])); }; return compare(obj, other); }");
+        return equator.equals(jsonObj, other.jsonObj);
+    }
+
     @Override
     public boolean equals(Object other) {
-        return other instanceof PortableJsonJsImpl && hashCode() == other.hashCode();
+        return other instanceof PortableJsonJsImpl && isEqual((PortableJsonJsImpl) other);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.deepHashCode(keys().toArray()) *
-               Arrays.deepHashCode(keys().stream().map(
-                   key -> jsonObj.asPropertyMap().getAsAny(key)).collect(Collectors.toList()).toArray());
+        throw new AssertionError("TODO: implement hashCode for PortableJsonJsImpl.");
     }
 
     @Override
     public PortableJson put(String key, int num) {
-        setValue(key, num);
+        jsonObj.asPropertyMap().set(key, num);
         return this;
     }
 
     @Override
     public PortableJson put(String key, double num) {
-        setValue(key, num);
+        jsonObj.asPropertyMap().set(key, num);
         return this;
     }
 
     @Override
     public PortableJson put(String key, String value) {
-        setValue(key, value);
+        jsonObj.asPropertyMap().set(key, value);
         return this;
     }
 
     @Override
     public PortableJson put(String key, boolean bool) {
-        setValue(key, bool);
+        jsonObj.asPropertyMap().set(key, bool);
         return this;
     }
 
     @Override
     public PortableJson put(String key, PortableJson obj) {
-        setValue(key, ((PortableJsonJsImpl) obj).getRawObj());
+        jsonObj.asPropertyMap().set(key, ((PortableJsonJsImpl) obj).getRawObj());
         return this;
     }
 
@@ -221,7 +188,7 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public PortableJson put(int index, PortableJson obj) {
-        jsonObj.asArrayLike().setAt(index, obj);
+        jsonObj.asArrayLike().setAt(index, ((PortableJsonJsImpl) obj).getRawObj());
         return this;
     }
 
