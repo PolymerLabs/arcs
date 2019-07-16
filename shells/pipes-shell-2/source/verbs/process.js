@@ -49,8 +49,11 @@ const constructPipeData = async (arc, data, tag) => {
     tags: [`pipe_entity`, tag],
     storageKey: null
   });
-  data.id = generateId();
-  store.set(data, [Math.random()]);
+  const entity = {
+    id: generateId(),
+    rawData: data
+  };
+  store.set(entity, [Math.random()]);
 };
 
 const marshalPipeRecipe = async ({type, name, source}, tag) => {

@@ -10,9 +10,16 @@
 
 import {process} from './process.js';
 
+export const autofill = async (msg, tid, bus, composerFactory, storage, context) => {
+  const spec = parseAutofillMsg(msg);
+  if (spec) {
+    await process(spec, tid, bus, composerFactory, storage, context);
+  }
+};
+
 const parseAutofillMsg = msg => {
   if (msg.entity && msg.entity.type) {
-    const {entity: {type, source, modality}} = msg;
+    const {modality, entity: {type, source}} = msg;
     return {
       type,
       source: source || '',
@@ -23,9 +30,3 @@ const parseAutofillMsg = msg => {
   // TODO(sjmiles): complain
 };
 
-export const autofill = async (msg, tid, bus, composerFactory, storage, context) => {
-  const spec = parseAutofillMsg(msg);
-  if (spec) {
-    await process(spec, tid, bus, composerFactory, storage, context);
-  }
-};

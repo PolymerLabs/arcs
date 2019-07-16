@@ -9,6 +9,7 @@
  */
 
 import {Type} from '../../../build/runtime/type.js';
+import {Arc} from '../../../build/runtime/arc.js';
 
 export class Stores {
   static async create(context, options) {
@@ -17,15 +18,19 @@ export class Stores {
     const store = await this._requireStore(context, typeOf, options);
     return store;
   }
-  static async _requireStore(context, type, {name, id, tags, storageKey}) {
+  static async _requireStore(context, type, {name, id, tags, claims, storageKey}) {
     const store = context.findStoreById(id);
     if (store) {
       return store;
     }
-    return await ManifestPatch.createStore.call(context, type, name, id, tags, null, storageKey);
+    return await this.createStore(context, type, {name, id, tags, claims, storageKey});
   }
-  async createStore(context, {type, name, id, tags, claims, storageKey}) {
-    return await ManifestPatch.createStore.call(context, type, name, id, tags, claims, storageKey);
+  static async createStore(context, type, {name, id, tags, claims, storageKey}) {
+    if (context instanceof Arc) {
+      return await context.createStore(type, name, id, tags, claims, storageKey);
+    } else {
+      return await ManifestPatch.createStore.call(context, type, name, id, tags, claims, storageKey);
+    }
   }
 }
 

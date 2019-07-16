@@ -18,14 +18,9 @@ import 'https://$particles/PipeApps2/PipeApps.recipes'
 
 export const requireContext = async () => {
   if (!requireContext.promise) {
-    requireContext.promise = marshalContext(manifest);
+    requireContext.promise = await Utils.parse(manifest);
   }
   return await requireContext.promise;
-};
-
-const marshalContext = async manifest => {
-  const context = await Utils.parse(manifest);
-  return context;
 };
 
 // TODO(sjmiles): a proper context would construct stores based on the observed types, not

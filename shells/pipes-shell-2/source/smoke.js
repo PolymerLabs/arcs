@@ -78,12 +78,12 @@ export const smokeTest = async bus => {
   //
   enqueue([
     captureData,
-    //ingestEntity,
-    spotifyAutofill,
+      //ingestEntity,
+    //spotifyAutofill,
     mapsAutofill,
-    tapToCaption,
-    //longRunning,
-    //customArc
+    //tapToCaption,
+      //longRunning,
+      //customArc
   ], 500);
   //], 0);
 };
