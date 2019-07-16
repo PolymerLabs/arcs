@@ -18,7 +18,7 @@ import 'https://$particles/PipeApps2/PipeApps.recipes'
 
 export const requireContext = async () => {
   if (!requireContext.promise) {
-    requireContext.promise = await Utils.parse(manifest);
+    requireContext.promise = Utils.parse(manifest);
   }
   return await requireContext.promise;
 };
@@ -61,5 +61,3 @@ const cloneStoreChange = async (store, change) => {
     await Promise.all(change.add.map(async add => store.store(add.value, [Math.random()])));
   }
 };
-
-

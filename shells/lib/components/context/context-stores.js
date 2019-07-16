@@ -48,13 +48,11 @@ const ContextStoresImpl = class {
     let promise = pendingStores[id];
     if (!promise) {
       promise = new Promise(async resolve => {
-        const store = await context.findStoreById(id);
-        if (store) {
-          resolve(store);
-        } else {
-          const store = await this.createReferenceStore(context, schema, name, id, tags);
-          resolve(store);
+        let store = await context.findStoreById(id);
+        if (!store) {
+          store = await this.createReferenceStore(context, schema, name, id, tags);
         }
+        resolve(store);
       });
       pendingStores[id] = promise;
     }
@@ -68,7 +66,7 @@ const ContextStoresImpl = class {
   }
   async createReferenceStore(context, schema, name, id, tags) {
     const type = schema.type.collectionOf();
-    const store = await Stores.createStore(context, {type, name, id: `{id}`, tags});
+    const store = await Stores.createStore(context, type, {name, id: `${id}`, tags});
     //const store = await context.createStore(type, name, `${id}`, tags);
     return store;
   }

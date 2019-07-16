@@ -15,10 +15,10 @@ export class Stores {
   static async create(context, options) {
     const schemaType = Type.fromLiteral(options.schema);
     const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
-    const store = await this._requireStore(context, typeOf, options);
+    const store = await this.requireStore(context, typeOf, options);
     return store;
   }
-  static async _requireStore(context, type, {name, id, tags, claims, storageKey}) {
+  static async requireStore(context, type, {name, id, tags, claims, storageKey}) {
     const store = context.findStoreById(id);
     if (store) {
       return store;
