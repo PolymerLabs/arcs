@@ -101,7 +101,7 @@ public class WebHarnessController implements HarnessController {
         tests.put("testRejectAddsNotInSequence", () -> CollectionDataTest.testRejectAddsNotInSequence());
         tests.put("testRemoveItem", () -> CollectionDataTest.testRemoveItem());
         tests.put("testRejectRemoveIfVersionMismatch", () -> CollectionDataTest.testRejectRemoveIfVersionMismatch());
-        tests.put("testRejectRemoveNonexitent", () -> CollectionDataTest.testRejectRemoveNonexitent());
+        tests.put("testRejectRemoveNonexistent", () -> CollectionDataTest.testRejectRemoveNonexistent());
         tests.put("testRejectRemoveTooOld", () -> CollectionDataTest.testRejectRemoveTooOld());
         tests.put("testMergeModels", () -> CollectionDataTest.testMergeModels());
         

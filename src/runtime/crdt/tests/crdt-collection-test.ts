@@ -223,4 +223,4 @@ describe('CRDTCollection', () => {
   });
 });
 
-// TODO: if/when adding more tests to this file, please, also update CollectionDataTest.java
+// Note: if/when adding more tests to this file, please, also update CollectionDataTest.java

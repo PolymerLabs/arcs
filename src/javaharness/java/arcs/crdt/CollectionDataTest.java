@@ -143,7 +143,7 @@ public class CollectionDataTest {
     ));
   }
 
-  public static void testRejectRemoveNonexitent() {
+  public static void testRejectRemoveNonexistent() {
     // rejects remove value not in collection
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
@@ -290,3 +290,5 @@ public class CollectionDataTest {
                                 (CollectionData<Data>) change2.modelPostChange.get());
   }
 }
+
+// Note: if/when adding more tests to this file, please, also update crdt-collection-test.ts
