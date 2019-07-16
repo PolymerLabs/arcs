@@ -64,7 +64,7 @@ export abstract class Schema2Base {
     fs.closeSync(outFile);
   }
 
-  protected processSchema(schema: Schema, processField): number {
+  protected processSchema(schema: Schema, processField: (field: string, typeChar: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;

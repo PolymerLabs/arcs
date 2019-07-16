@@ -169,14 +169,13 @@ function check(): boolean {
   // itself is quite verbose). The regex extracts the version from a line that looks like:
   //   emcc (Emscripten gcc/clang-like replacement) 1.38.38 (4965260 Tue Jul 9 13:29:04 2019 ...
   const emsdkResult = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']);
-  const match = emsdkResult.stdout.match(/\s[0-9]+.[0-9]+.[0-9]+\s/);
+  const match = emsdkResult.stdout.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
   if (match === null) {
-    console.error('failed to extract emsdk version');
     console.error(emsdkResult.stdout);
     console.error(emsdkResult.stderr);
     throw new Error('failed to extract emsdk version');
   }
-  const emsdkVersion = match[0].trim();
+  const emsdkVersion = match[1];
   if (!semver.satisfies(emsdkVersion, emsdkRequiredVersion)) {
     throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${emsdkVersion}`);
   }
@@ -447,14 +446,14 @@ function link(srcFiles: Iterable<string>): boolean {
 }
 
 // Config for building wasm modules.
-type WasmConfig = {
+interface WasmConfig {
   [key: string]: {         // The target filename for the module.
     manifest: string,      // The manifest to process; should be in the same dir as the json file
     src: string[],         // The list of source files to compile (currently limited to one)
     outDir: string,        // The output directory relative to project root; should be under 'build' for tests
     linkManifest: boolean  // Whether to link the manifest file into outDir; should be true for tests
-  }
-};
+  };
+}
 
 // TODO: detect old headers/wasm modules/manifests in cleanObsolete()
 function buildWasmModule(configFile: string, logCmd: boolean): boolean {
