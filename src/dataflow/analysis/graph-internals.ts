@@ -21,7 +21,10 @@
 import {Claim, ClaimType} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 
-/** Represents the accumulation of tags/nodes/edges that flow along a path in the graph. */
+/**
+ * Represents the set of implicit and explicit claims that flow along a path in
+ * the graph, i.e. tags, node IDs and edge IDs.
+ */
 export class Flow {
   readonly nodeIds: Set<string> = new Set();
   readonly edgeIds: Set<string> = new Set();
