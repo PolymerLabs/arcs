@@ -7,11 +7,12 @@ public class HandleFactoryImpl implements HandleFactory {
     HandleFactoryImpl() {}
 
     @Override
-    public Handle handleFor(StorageProxy storage, String name, boolean isInput, boolean isOutput) {
+    public Handle handleFor(StorageProxy storage, IdGenerator idGenerator, String name,
+            String particleId, boolean isInput, boolean isOutput) {
         if (storage.type.isCollection()) {
-            return new Collection(storage, name, isInput, isOutput);
+            return new Collection(storage, idGenerator, name, particleId, isInput, isOutput);
         } else {
-            return new Singleton(storage, name, isInput, isOutput);
+            return new Singleton(storage, idGenerator, name, particleId, isInput, isOutput);
         }
     }
 }

@@ -8,7 +8,7 @@ Code in arcs/api is platform independent and should have no dependencies on Andr
 
 Code in arcs/webimpl is platform dependent and expected to be reimplemented in arcs/androidimpl
 
-Native particles will reside and be registered in arcs/nativeparticles
+Native particles will reside and be registered in arcs/builtinparticles
 
 Note there are symbolic links between pipes-shell and
 the outer shells/pipes-shell directory, that means the pipes-shell

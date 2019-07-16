@@ -24,11 +24,13 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
     }
 
     @Override
-    public Particle instantiateParticle(ParticleSpec spec, Map<String, StorageProxy> proxies) {
+    public Particle instantiateParticle(String particleId, ParticleSpec spec,
+            Map<String, StorageProxy> proxies, IdGenerator idGenerator) {
         // TODO: use the full spec.implPath, instead of the filename.
         Particle particle = particleLoader.loadParticle(spec.getFileName()).flatMap(
             x -> Optional.ofNullable(x.createParticle())).orElse(null);
         particle.setSpec(spec);
+        particle.setJsonParser(jsonParser);
         this.particles.add(particle);
 
         Map<String, Handle> handleMap = new HashMap();
@@ -37,7 +39,7 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
         for (String proxyName : proxies.keySet()) {
             StorageProxy storageProxy = proxies.get(proxyName);
             Handle handle = this.handleFactory.handleFor(
-                storageProxy, proxyName, spec.isInput(proxyName), spec.isOutput(proxyName));
+                storageProxy, idGenerator, proxyName, particleId, spec.isInput(proxyName), spec.isOutput(proxyName));
             handleMap.put(proxyName, handle);
             registerMap.put(handle, storageProxy);
         }

@@ -14,6 +14,7 @@ public class PECInnerPortImpl implements PECInnerPort {
     private static final String INSTANTIATE_PARTICLE_MSG = "InstantiateParticle";
     private static final String PARTICLE_SPEC_FIELD = "spec";
     private static final String PARTICLE_STORES_FIELD = "stores";
+    private static final String PARTICLE_ID_FIELD = "id";
     private static final String DEFINE_HANDLE_MSG = "DefineHandle";
     private static final String HANDLE_TYPE_FIELD = "type";
     private static final String HANDLE_NAME_FIELD = "name";
@@ -38,26 +39,32 @@ public class PECInnerPortImpl implements PECInnerPort {
     private static final String MESSAGE_PEC_PEC_VALUE = "pec";
     private static final String MESSAGE_PEC_ENTITY_KEY = "entity";
     private static final String HANDLE_STORE_MSG = "HandleStore";
-    private static final String PARTICLE_ID_FIELD = "particleId";
+    private static final String HANDLE_PARTICLE_ID_FIELD = "particleId";
     private static final String HANDLE_TO_LIST_MSG = "HandleToList";
     private static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
     private static final String HANDLE_REMOVE_MSG = "HandleRemove";
 
     private final String id;
-    private ArcsEnvironment environment;
+    private final ArcsEnvironment environment;
     private final ParticleExecutionContext pec;
     private final ThingMapper mapper;
     private final PortableJsonParser jsonParser;
+    private final PortablePromiseFactory promiseFactory;
+    private final IdGenerator idGenerator;
 
     public PECInnerPortImpl(String id,
+                            String sessionId,
                             ArcsEnvironment environment,
                             ParticleExecutionContext pec,
-                            PortableJsonParser jsonParser) {
+                            PortableJsonParser jsonParser,
+                            PortablePromiseFactory promiseFactory) {
         this.id = id;
         this.environment = environment;
         this.pec = pec;
         this.mapper = new ThingMapper("j");
         this.jsonParser = jsonParser;
+        this.promiseFactory = promiseFactory;
+        this.idGenerator = new IdGenerator(sessionId);
     }
 
     @Override
@@ -74,7 +81,8 @@ public class PECInnerPortImpl implements PECInnerPort {
                     proxies.put(proxyName, mapper.thingForIdentifier(proxyId).getStorageProxy());
                 });
 
-                Particle particle = pec.instantiateParticle(spec, proxies);
+                String particleId = messageBody.getString(PARTICLE_ID_FIELD);
+                Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
                 if (particle == null) {
                     // TODO: improve error handling.
                     throw new AssertionError("Cannot instantiate particle " + spec.name);
@@ -88,7 +96,7 @@ public class PECInnerPortImpl implements PECInnerPort {
                     identifier,
                     TypeFactory.typeFromJson(messageBody.getObject(HANDLE_TYPE_FIELD)),
                     messageBody.getString(HANDLE_NAME_FIELD),
-                    this);
+                    this, jsonParser, promiseFactory);
                 mapper.establishThingMapping(identifier, new Thing<StorageProxy>(storageProxy));
                 break;
             case SIMPLE_CALLBACK_MSG:
@@ -208,7 +216,7 @@ public class PECInnerPortImpl implements PECInnerPort {
             body.put(DATA_FIELD, data);
         }
         if (particleId != null) {
-            body.put(PARTICLE_ID_FIELD, particleId);
+            body.put(HANDLE_PARTICLE_ID_FIELD, particleId);
         }
         return message;
     }

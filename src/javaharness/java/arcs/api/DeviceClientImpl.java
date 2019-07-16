@@ -21,6 +21,7 @@ public class DeviceClientImpl implements DeviceClient {
     private final String FIELD_TRANSACTION_ID = "tid";
     private final String FIELD_DATA = "data";
     private final String FIELD_PEC_ID = "id";
+    private final String FIELD_SESSION_ID = "sessionId";
 
     private static final Logger LOGGER = Logger.getLogger(DeviceClient.class.getName());
 
@@ -65,15 +66,13 @@ public class DeviceClientImpl implements DeviceClient {
         }
     }
 
-    private void postMessage(PortableJson msg) {
-        PECInnerPort port = getOrCreatePort(msg.getString(FIELD_PEC_ID));
-        port.handleMessage(msg);
-    }
-
-    private PECInnerPort getOrCreatePort(String id) {
-        if (!this.portById.containsKey(id)) {
-            this.portById.put(id, this.portFactory.createPECInnerPort(id));
+    protected void postMessage(PortableJson msg) {
+        String id = msg.getString(FIELD_PEC_ID);
+        if (msg.hasKey(FIELD_SESSION_ID)) {
+            portById.put(id, portFactory.createPECInnerPort(id, msg.getString(FIELD_SESSION_ID)));
         }
-        return this.portById.get(id);
+
+        PECInnerPort port = portById.get(id);
+        port.handleMessage(msg);
     }
 }
