@@ -30,6 +30,13 @@ const error = logFactory('PlanProducer', '#ff0090', 'error');
 export enum Trigger {
   Init='init', Search='search', PlanInstantiated='plan-instantiated', DataChanged='data-changed', Forced='forced',
 }
+type SuggestionOptions = {
+  cancelOngoingPlanning?: boolean,
+  metadata?: { trigger: Trigger, search?: string},
+  search?: string,
+  strategies?: StrategyDerived[],
+  contextual?: boolean
+};
 
 export class PlanProducer {
   arc: Arc;
@@ -38,7 +45,7 @@ export class PlanProducer {
   recipeIndex: RecipeIndex;
   speculator: Speculator;
   needReplan = false;
-  replanOptions: {};
+  replanOptions: SuggestionOptions = {};
   _isPlanning = false;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
@@ -93,34 +100,24 @@ export class PlanProducer {
       // search string turned empty, no need to replan, going back to contextual suggestions.
       return;
     }
-    const metadata = {trigger: Trigger.Search, search: this.search};
-    if (this.search === '*') { // Search for ALL (including non-contextual) suggestions.
-      if (this.result.contextual) {
-        await this.produceSuggestions({contextual: false, metadata});
-      }
-    } else { // Search by search term.
-      const options: {
-        cancelOngoingPlanning: boolean,
-        search: string,
-        strategies?: StrategyDerived[],
-        contextual?: boolean
-      } = {
-        cancelOngoingPlanning: this.result.suggestions.length > 0,
-        search: this.search
-      };
-      if (this.result.contextual) {
+    const  options: SuggestionOptions = {
         // If we're searching but currently only have contextual suggestions,
         // we need get non-contextual suggestions as well.
-        options.contextual = false;
-      } else {
+        contextual: !this.result.contextual,
+        metadata: {trigger: Trigger.Search, search: this.search}
+      };
+    if (this.search !== '*') { // Search for ALL (including non-contextual) suggestions.
+      // Search by search term.
+      options.cancelOngoingPlanning = this.result.suggestions.length > 0;
+      options.search = this.search;
+      if (options.contextual) {
         // If search changed and we already how all suggestions (i.e. including
         // non-contextual ones) then it's enough to initialize with InitSearch
         // with a new search phrase.
         options.strategies = [InitSearch, ...Planner.ResolutionStrategies];
       }
-
-      await this.produceSuggestions({...options, metadata});
     }
+    await this.produceSuggestions(options);
   }
 
   dispose() {
@@ -129,8 +126,8 @@ export class PlanProducer {
     }
   }
 
-  async produceSuggestions(options = {}) {
-    if (options['cancelOngoingPlanning'] && this.isPlanning) {
+  async produceSuggestions(options: SuggestionOptions = {}) {
+    if (options.cancelOngoingPlanning && this.isPlanning) {
       this._cancelPlanning();
     }
 
@@ -161,21 +158,21 @@ export class PlanProducer {
       if (this.result.merge({
           suggestions,
           generations: serializedGenerations,
-          contextual: this.replanOptions['contextual']}, this.arc)) {
+          contextual: this.replanOptions.contextual}, this.arc)) {
         // Store suggestions to store.
         await this.result.flush();
 
-        if (this.inspector) this.inspector.updatePlanningResults(this.result, options['metadata']);
+        if (this.inspector) this.inspector.updatePlanningResults(this.result, options.metadata);
       } else {
         // Add skipped result to devtools.
         if (this.inspector) {
-          this.inspector.updatePlanningAttempt(suggestions, options['metadata']);
+          this.inspector.updatePlanningAttempt(suggestions, options.metadata);
           if (this.debug) this.inspector.strategizingRecord(serializedGenerations, {label: 'Plan Producer', keep: true});
         }
       }
     } else {  // Suggestions are null, if planning was cancelled.
       // Add cancelled attempt to devtools.
-      if (this.inspector) this.inspector.updatePlanningAttempt(null, options['metadata']);
+      if (this.inspector) this.inspector.updatePlanningAttempt(null, options.metadata);
     }
   }
 
@@ -184,17 +181,17 @@ export class PlanProducer {
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
     this.planner.init(this.arc, {
-      strategies: options['strategies'],
+      strategies: options.strategies,
       strategyArgs: {
-        contextual: options['contextual'],
-        search: options['search'],
+        contextual: options.contextual,
+        search: options.search,
         recipeIndex: this.recipeIndex
       },
       speculator: this.speculator,
       noSpecEx: this.noSpecEx
     });
 
-    suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations);
+    suggestions = await this.planner.suggest(options.timeout || defaultTimeoutMs, generations);
     if (this.planner) {
       this.planner = null;
       return suggestions;
