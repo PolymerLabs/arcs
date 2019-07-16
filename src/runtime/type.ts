@@ -106,6 +106,17 @@ export abstract class Type {
     return this instanceof SlotType;
   }
 
+  slandleType(): SlotType | undefined {
+    if (this.isSlot()) {
+      return this;
+    }
+    if (this.isCollectionType() && this.collectionType.isSlot()) {
+      return this.collectionType;
+    }
+    return undefined;
+  }
+
+
   // If you want to type-check fully, this is an improvement over just using
   // this instanceof CollectionType,
   // because instanceof doesn't propagate generic restrictions.

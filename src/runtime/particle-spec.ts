@@ -70,11 +70,11 @@ export class HandleConnectionSpec {
     }
   }
 
-  toSlotlikeConnectionSpec(): ConsumeSlotConnectionSpec {
+  toSlotConnectionSpec(): ConsumeSlotConnectionSpec {
     // TODO: Remove in SLANDLESv2
-    const slotType = this.slandleType();
+    const slotType = this.type.slandleType();
     if (!slotType) {
-    throw new Error(`toSlotlikeConnection should only be used on Slot and [Slot] typed handles. Handle Connection Spec ${this.name} has type ${this.type}`);
+      return undefined;
     }
 
     const isSet = this.type.isCollectionType();
@@ -85,7 +85,7 @@ export class HandleConnectionSpec {
       isOptional: this.isOptional,
       direction: this.direction,
       tags: this.tags,
-      dependentConnections: this.dependentConnections.map(conn => conn.toSlotlikeConnectionSpec()),
+      dependentConnections: this.dependentConnections.map(conn => conn.toSlotConnectionSpec()),
       // Fakes
       isRoot: this.isRoot,
       isRequired: !this.isOptional, // TODO: Remove duplicated data isRequired vs isOptional (prefer isOptional)
@@ -97,19 +97,9 @@ export class HandleConnectionSpec {
     };
   }
 
-  slandleType(): SlotType | undefined {
-    if (this.type.isSlot()) {
-      return this.type;
-    }
-    if (this.type.isCollectionType() && this.type.collectionType.isSlot()) {
-      return this.type.collectionType;
-    }
-    return undefined;
-  }
-
   isRoot(): boolean {
     // TODO: Remove in SLANDLESv2
-    return this.slandleType() && (this.name === 'root' || this.tags.includes('root'));
+    return this.type.slandleType() && (this.name === 'root' || this.tags.includes('root'));
   }
 
   get isInput() {
@@ -474,7 +464,7 @@ export class ParticleSpec {
             const slotName = check.target.name;
             const slotSpec = providedSlotNames.get(slotName);
             if (!slotSpec) {
-              if (this.slotConnectionNames.includes(slotName)) {
+              if (this.slotConnectionNames().includes(slotName)) {
                 throw new Error(`Slot ${slotName} is a consumed slot. Can only make checks on provided slots.`);
               } else {
                 throw new Error(`Can't make a check on unknown slot ${slotName}.`);

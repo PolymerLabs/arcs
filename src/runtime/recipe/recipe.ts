@@ -174,8 +174,8 @@ export class Recipe implements Cloneable<Recipe> {
     && checkThat(this.modality.isResolved(), 'unresolved modality')
     && checkThat(this.allRequiredSlotsPresent(options), 'unresolved required slot')
     && checkThat(this._slots.every(slot => slot.isResolved()), 'unresolved slots')
-    && checkThat(this.handleConnections.every(connection => connection.isResolved()), 'unresolved handle connections')
-    && checkThat(this.slotConnections.every(slotConnection => slotConnection.isResolved()), 'unresolved slot connections');
+    && checkThat(this.handleConnections.every(connection => connection.isResolved(options)), 'unresolved handle connections')
+    && checkThat(this.slotConnections.every(slotConnection => slotConnection.isResolved(options)), 'unresolved slot connections');
     // TODO: check recipe level resolution requirements, eg there is no slot loops.
   }
 

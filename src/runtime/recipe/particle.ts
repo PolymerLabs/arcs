@@ -227,7 +227,7 @@ export class Particle implements Comparable<Particle> {
   set id(id: Id) { assert(!this._id, 'Particle ID can only be set once.'); this._id = id; }
   get name() { return this._name; }
   set name(name) { this._name = name; }
-  get connections() { return this._connections; } // {parameter -> HandleConnection}
+  get connections(): Dict<HandleConnection> { return this._connections; } // {parameter -> HandleConnection}
   get unnamedConnections() { return this._unnamedConnections; } // HandleConnection*
   get primaryVerb() { return (this._verbs.length > 0) ? this._verbs[0] : undefined; }
   set verbs(verbs: string[]) { this._verbs = verbs; }
@@ -246,7 +246,7 @@ export class Particle implements Comparable<Particle> {
     return this._connections[name];
   }
 
-  allConnections() {
+  allConnections(): HandleConnection[] {
     return Object.values(this._connections).concat(this._unnamedConnections);
   }
 
@@ -254,16 +254,29 @@ export class Particle implements Comparable<Particle> {
     return this._connections[name] || this.addConnectionName(name);
   }
 
-  getSlotConnectionNames() {
+  getSlotConnectionNames(): string[] {
     return Object.keys(this._consumedSlotConnections);
   }
 
-  getSlotConnectionByName(name: string) {
+  getSlandleConnectionByName(name: string): SlotConnection {
+    if (name in this._connections) {
+      const slandle: SlotConnection = this._connections[name].toSlotConnection();
+      return slandle;
+    }
+    return this._consumedSlotConnections[name];
+  }
+
+  getSlotConnectionByName(name: string): SlotConnection {
     return this._consumedSlotConnections[name];
   }
 
   getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection {
     return this.getSlotConnections().find(slotConn => slotConn.getSlotSpec() === spec);
+  }
+
+  getSlandleConnections(): SlotConnection[] {
+    // TODO
+    return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.toSlotConnection()).filter(conn => conn)];
   }
 
   getSlotConnections(): SlotConnection[] {

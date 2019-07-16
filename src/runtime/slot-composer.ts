@@ -128,7 +128,7 @@ export class SlotComposer {
 
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
-      p.getSlotConnections().forEach(cs => {
+      p.getSlandleConnections().forEach(cs => {
         if (!cs.targetSlot) {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;

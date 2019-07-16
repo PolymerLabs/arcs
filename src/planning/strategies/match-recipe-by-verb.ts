@@ -80,7 +80,7 @@ export class MatchRecipeByVerb extends Strategy {
             particleForReplacing.remove();
 
 
-            for (const consumeSlot in slotConstraints) {
+            for (const consumeSlot of Object.keys(slotConstraints)) {
               const constraints = slotConstraints[consumeSlot];
               if (constraints.targetSlot || Object.values(constraints.providedSlots).filter(a => a).length > 0) {
                 let slotMapped = false;
