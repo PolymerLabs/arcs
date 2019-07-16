@@ -24,8 +24,8 @@ defineParticle(({Particle}) => {
     }
 
     async onHandleUpdate(handle, update) {
-      if (handle.name === 'source' && update.add) {
-        this.relevance = await this._copyAll(update.add);
+      if (handle.name === 'source' && update.added) {
+        this.relevance = await this._copyAll(update.added);
       }
     }
 

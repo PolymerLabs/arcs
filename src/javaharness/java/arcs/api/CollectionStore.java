@@ -1,10 +1,9 @@
 package arcs.api;
 
 public interface CollectionStore extends Store {
-  // TODO: add parameters and return values.
-  void get();
-  void store(PortableJson add);
-  void clear();
-  void remove();
-  PortableJson toList();
+  PortablePromise<PortableJson> get(String id);
+  void store(PortableJson value, String keys[], String particleId);
+  void clear(String particleId);
+  void remove(String id, String keys[], String particleId);
+  PortablePromise<PortableJson> toList();
 }
