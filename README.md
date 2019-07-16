@@ -100,6 +100,10 @@ $ git config core.hooksPath tools/hooks
   `npm config set msvs_version 2015` bit, and similar for Python if you
   install that manually per `node-gyp` option 2 instructions.
 
+### Mac Installation Notes
+- When installing, if you run into SSL Cert verification errors, consider certifying Python 3.6 on Mac:
+`/Applications/Python\ 3.6/Install\ Certificates.command` ([source](https://stackoverflow.com/a/42334357))
+
 ## Starting Arcs
 
 After the full build (`npm install && tools/sigh`) run: (note that `npm

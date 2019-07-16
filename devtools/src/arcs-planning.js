@@ -190,8 +190,8 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
               return Object.assign(s, {
                 particleNames: this._planParticleNamesToString(s),
                 descriptionText: this._formatDescriptionText(s.descriptionByModality.text),
-                isVisible: last ? last.isVisible : false,
-                visibilityReasons: last ? last.visibilityReasons : ''
+                isVisible: last && last.isVisible,
+                visibilityReasons: last ? last.visibilityReasons : '<unknown?>'
               });
             }),
             metadata: msg.messageBody.metadata || {}
@@ -204,7 +204,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
                 msg.messageBody.visibleSuggestionHashes.some(hash => hash === currentHash));
             const visibility = msg.messageBody.visibilityReasons.find(v => v.hash === currentHash);
             this.set(`lastPlanning.suggestions.${index}.visibilityReasons`,
-                visibility ? visibility.reasons.join('; ') : '');
+                visibility ? visibility.reasons.join('; ') : '<unknown>');
           }
           this.lastPlanning = Object.assign({}, this.lastPlanning);
           break;

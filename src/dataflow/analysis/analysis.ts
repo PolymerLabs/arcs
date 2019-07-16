@@ -10,11 +10,8 @@
 
 import {FlowGraph} from './flow-graph.js';
 import {assert} from '../../platform/assert-web.js';
-import {HandleNode} from './handle-node.js';
-import {CheckType, CheckExpression} from '../../runtime/particle-check.js';
 import {BackwardsPath, allInputPaths} from './graph-traversal.js';
-import {ClaimType} from '../../runtime/particle-claim.js';
-import {Edge} from './graph-internals.js';
+import {Edge, Flow} from './graph-internals.js';
 
 /** Result from validating an entire graph. */
 export class ValidationResult {
@@ -30,7 +27,7 @@ export function validateGraph(graph: FlowGraph): ValidationResult {
   const finalResult = new ValidationResult();
   for (const edge of graph.edges) {
     if (edge.check) {
-      const result = validateSingleEdge(edge, graph);
+      const result = validateSingleEdge(edge);
       result.failures.forEach(f => finalResult.failures.push(f));
     }
   }
@@ -42,7 +39,7 @@ export function validateGraph(graph: FlowGraph): ValidationResult {
  * every path ending at the edge must pass the check on that edge. 
  * Returns true if the check passes.
  */
-function validateSingleEdge(edgeToCheck: Edge, graph: FlowGraph): ValidationResult {
+function validateSingleEdge(edgeToCheck: Edge): ValidationResult {
   assert(!!edgeToCheck.check, 'Edge does not have any check conditions.');
 
   const check = edgeToCheck.check;
@@ -52,10 +49,9 @@ function validateSingleEdge(edgeToCheck: Edge, graph: FlowGraph): ValidationResu
   // Check every input path into the given edge.
   // NOTE: This is very inefficient. We check every single check condition against every single edge in every single input path.
   for (const path of allInputPaths(edgeToCheck)) {
-    const tagsForPath = computeTagClaimsInPath(path);
-    const handlesInPath = path.nodes.filter(n => n instanceof HandleNode) as HandleNode[];
-    if (!evaluateCheck(check.expression, tagsForPath, handlesInPath, graph)) {
-      finalResult.failures.push(`'${check.toManifestString()}' failed for path: ${path.toString()}`);
+    const flow = computeFlowForPath(path);
+    if (!flow.evaluateCheck(check)) {
+      finalResult.failures.push(`'${check.originalCheck.toManifestString()}' failed for path: ${path.toString()}`);
     }
   }
 
@@ -63,57 +59,18 @@ function validateSingleEdge(edgeToCheck: Edge, graph: FlowGraph): ValidationResu
 }
 
 /**
- * Collects all the tags claimed along the given path, canceling tag claims that are
+ * Collects all the tags, nodes and edges along the given path, canceling tag claims that are
  * negated by "not" claims for the same tag downstream in the path, and ignoring
  * "not" claims without corresponding positive claims upstream, as these dangling
  * "not" claims are irrelevant for the given path. Note that "derives from" claims
  * only prune paths, and are dealt with during path generation, so they are ignored.
  */
-function computeTagClaimsInPath(path: BackwardsPath): Set<string> {
-  const tags: Set<string> = new Set<string>();
-  // We traverse the path in the forward direction, so we can cancel correctly.
-  const edgesInPath = path.edgesInForwardDirection();
-  edgesInPath.forEach(edge => {
-    if (edge.claims) {
-      edge.claims.forEach(claim => {
-        if (claim.type !== ClaimType.IsTag) {
-          return;
-        }
-        if (!claim.isNot) {
-          tags.add(claim.tag);
-          return;
-        }
-        // Our current claim is a "not" tag claim. 
-        // Ignore it if there are no preceding tag claims
-        tags.delete(claim.tag);
-      });
+function computeFlowForPath(path: BackwardsPath): Flow {
+  const flow = new Flow();
+  for (const edge of path.edgesInForwardDirection()) {
+    if (edge.modifier) {
+      flow.modify(edge.modifier);
     }
-  });
-  return tags;
-}
-
-/** 
- * Returns true if the given check passes against one of the tag claims or one
- * one of the handles in the path. Operates recursively on boolean condition
- * trees.
- */
-function evaluateCheck(checkExpression: CheckExpression, claimTags: Set<string>, handles: HandleNode[], graph: FlowGraph): boolean {
-  switch (checkExpression.type) {
-    case 'or':
-      // Only one child expression needs to pass.
-      return checkExpression.children.some(childExpr => evaluateCheck(childExpr, claimTags, handles, graph));
-    case 'and':
-      // Every child expression needs to pass.
-      return checkExpression.children.every(childExpr => evaluateCheck(childExpr, claimTags, handles, graph));
-    case CheckType.HasTag:
-      return claimTags.has(checkExpression.tag);
-    case CheckType.IsFromHandle:
-      return handles.some(handle => handle.validateIsFromHandleCheck(checkExpression));
-    case CheckType.IsFromStore: {
-      const storeId = graph.resolveStoreRefToID(checkExpression.storeRef);
-      return !!handles.find(handle => handle.storeId === storeId);
-    }
-    default:
-      throw new Error('Unknown condition type.');
   }
+  return flow;
 }

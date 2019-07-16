@@ -10,12 +10,12 @@ schema FavoriteFood
 
 particle SlandleFavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
   inout [FavoriteFood] foods
-  `consume Slot root
+  `consume Slot root #root
   description `select favorite foods (slandles)`
     foods `favorite foods`
 
 recipe SlandleFavoriteFood
   create #favoriteFoods as foods
-  `slot 'rootslotid-root' as root
+  `slot 'rootslotid-root' #root as root
   SlandleFavoriteFoodPicker
     foods = foods

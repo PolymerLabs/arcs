@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals.js';
+import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
 import {Check} from '../../runtime/particle-check.js';
 import {Slot} from '../../runtime/interface-info.js';
 import {ParticleNode} from './particle-node.js';
@@ -23,7 +23,7 @@ export class SlotNode extends Node {
   readonly nodeId: string;
 
   // Optional check on the data entering this slot. The check is defined by the particle which provided this slot.
-  check?: Check;
+  check?: FlowCheck;
 
   constructor(nodeId: string, slot: Slot) {
     super();
@@ -58,7 +58,7 @@ class SlotInput implements Edge {
     this.label = `${particleNode.name}.${this.connectionName}`;
   }
 
-  get check(): Check | undefined {
+  get check(): FlowCheck | undefined {
     return this.end.check;
   }
 }

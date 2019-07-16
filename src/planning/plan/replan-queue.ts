@@ -43,7 +43,7 @@ export class ReplanQueue {
     }
   }
 
-  private _onPlanningStateChanged(isPlanning) {
+  private _onPlanningStateChanged(isPlanning: boolean) {
     if (isPlanning) {
       // Cancel scheduled planning.
       this._cancelReplanIfScheduled();
@@ -51,7 +51,7 @@ export class ReplanQueue {
     } else if (this.changes.length > 0) {
       // Schedule delayed planning.
       const timeNow = now();
-      this.changes.forEach((ch, i) => this.changes[i] = timeNow);
+      this.changes.forEach((_ch, i) => this.changes[i] = timeNow);
       this._scheduleReplan(this.options.replanDelayMs);
     }
   }
@@ -60,7 +60,7 @@ export class ReplanQueue {
     return this.replanTimer !== null;
   }
 
-  private _scheduleReplan(intervalMs) {
+  private _scheduleReplan(intervalMs: number) {
     this._cancelReplanIfScheduled();
     this.replanTimer = setTimeout(
         () => this.planProducer.produceSuggestions({
@@ -93,7 +93,7 @@ export class ReplanQueue {
     }
   }
 
-  private _canPostponeReplan(changesInterval) {
+  private _canPostponeReplan(changesInterval: number) {
     return !this.options.maxNoReplanMs || changesInterval < this.options.maxNoReplanMs;
   }
 }

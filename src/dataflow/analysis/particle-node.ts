@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals.js';
+import {Node, Edge, FlowModifier, TagOperation, FlowCheck} from './graph-internals.js';
 import {ClaimType, Claim, ParticleClaim, ClaimDerivesFrom} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {Particle} from '../../runtime/recipe/particle.js';
@@ -23,15 +23,10 @@ export class ParticleNode extends Node {
   readonly nodeId: string;
   readonly name: string;
 
-  readonly claims: ParticleClaim[];
-  readonly checks: Check[];
-
   constructor(nodeId: string, particle: Particle) {
     super();
     this.nodeId = nodeId;
     this.name = particle.name;
-    this.claims = particle.spec.trustClaims;
-    this.checks = particle.spec.trustChecks;
   }
 
   addInEdge(edge: ParticleInput) {
@@ -54,21 +49,11 @@ export class ParticleNode extends Node {
    * Iterates through all of the relevant in-edges leading into this particle, that flow out into the given out-edge. The out-edge may have a
    * 'derives from' claim that restricts which edges flow into it.
    */
-  inEdgesFromOutEdge(outEdge: Edge): readonly ParticleInput[] {
+  inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
-    if (outEdge.claims) {
-      const derivesClaims: ClaimDerivesFrom[] = outEdge.claims.filter(claim => 
-        claim.type === ClaimType.DerivesFrom) as ClaimDerivesFrom[];
-      if (derivesClaims.length) {
-        const result: ParticleInput[] = [];
-        for (const claim of derivesClaims) {
-          const inEdge = this.inEdgesByName.get(claim.parentHandle.name);
-          assert(!!inEdge, `Claim derives from unknown handle: ${claim.parentHandle}.`);
-          result.push(inEdge);
-        }
-        return result;
-      }
+    if (outEdge.derivesFrom && outEdge.derivesFrom.length) {
+      return outEdge.derivesFrom;
     }
 
     return this.inEdges;
@@ -83,8 +68,8 @@ export class ParticleInput implements Edge {
   readonly connectionName: string;
   readonly connectionSpec: HandleConnectionSpec;
 
-  readonly check?: Check;
-  readonly claims?: Claim[];
+  readonly modifier: FlowModifier;
+  readonly check?: FlowCheck;
 
   constructor(edgeId: string, particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.edgeId = edgeId;
@@ -93,8 +78,7 @@ export class ParticleInput implements Edge {
     this.connectionName = connection.name;
     this.label = `${particleNode.name}.${this.connectionName}`;
     this.connectionSpec = connection.spec;
-    this.check = connection.spec.check;
-    this.claims = connection.handle.claims;
+    this.modifier = FlowModifier.fromClaims(this, connection.handle.claims);
   }
 }
 
@@ -104,22 +88,26 @@ export class ParticleOutput implements Edge {
   readonly end: Node;
   readonly label: string;
   readonly connectionName: string;
-  readonly connectionSpec: HandleConnectionSpec;
 
-  readonly claims?: Claim[];
+  readonly modifier: FlowModifier;
+  readonly derivesFrom: ParticleInput[];
 
   constructor(edgeId: string, particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.edgeId = edgeId;
     this.start = particleNode;
     this.end = otherEnd;
     this.connectionName = connection.name;
-    this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
     
-
-    const claim = particleNode.claims.find(claim => this.connectionName === claim.handle.name);
-    this.claims = claim ? claim.claims : null;
-
+    this.modifier = FlowModifier.fromClaims(this, connection.spec.claims);
+    if (connection.spec.claims) {
+      this.derivesFrom = [];
+      for (const claim of connection.spec.claims) {
+        if (claim.type === ClaimType.DerivesFrom) {
+          this.derivesFrom.push(particleNode.inEdgesByName[claim.parentHandle.name]);
+        }
+      }
+    }
   }
 }
 

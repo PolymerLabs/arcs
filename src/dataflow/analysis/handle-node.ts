@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge} from './graph-internals.js';
+import {Node, Edge, FlowCheck} from './graph-internals.js';
 import {ParticleOutput, ParticleInput, ParticleNode} from './particle-node.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 import {CheckIsFromHandle} from '../../runtime/particle-check.js';
@@ -20,7 +20,6 @@ export class HandleNode extends Node {
   readonly nodeId: string;
   readonly inEdges: ParticleOutput[] = [];
   readonly outEdges: ParticleInput[] = [];
-  readonly connectionSpecs: Set<HandleConnectionSpec> = new Set();
   readonly storeId: string;
 
   constructor(nodeId: string, handle: Handle) {
@@ -42,22 +41,15 @@ export class HandleNode extends Node {
 
   addInEdge(edge: ParticleOutput) {
     this.inEdges.push(edge);
-    this.connectionSpecs.add(edge.connectionSpec);
   }
 
   addOutEdge(edge: ParticleInput) {
     this.outEdges.push(edge);
-    this.connectionSpecs.add(edge.connectionSpec);
   }
 
   inEdgesFromOutEdge(outEdge: ParticleInput): readonly ParticleOutput[] {
     assert(this.outEdges.includes(outEdge), 'Handle does not have the given out-edge.');
     return this.inEdges;
-  }
-
-  validateIsFromHandleCheck(condition: CheckIsFromHandle): boolean {
-    // Check if this handle node has the desired HandleConnectionSpec. If so, it is the right handle.
-    return this.connectionSpecs.has(condition.parentHandle);
   }
 }
 
