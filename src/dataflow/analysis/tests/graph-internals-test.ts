@@ -8,11 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Flow, FlowModifier, TagOperation, FlowCheck} from '../graph-internals';
+import {Flow, FlowModifier, TagOperation, FlowCheck, FlowSet} from '../graph-internals';
 import {assert} from '../../../platform/chai-web.js';
 import {TestEdge, TestNode} from '../testing/flow-graph-testing';
-import {ClaimIsTag, ClaimDerivesFrom} from '../../../runtime/particle-claim';
-import {HandleConnectionSpec} from '../../../runtime/particle-spec';
+import {ClaimIsTag} from '../../../runtime/particle-claim';
 
 describe('Flow', () => {
   it('starts empty', () => {
@@ -136,6 +135,49 @@ describe('Flow', () => {
       assert.isFalse(checkWithTags('t2', 't3'));
     });
   });
+
+  it('can create a copy', () => {
+    const original = new Flow();
+    original.nodeIds.add('N1');
+    original.edgeIds.add('E1');
+    original.tags.add('t1');
+
+    const copy = original.copy();
+    assert.deepEqual(original, copy);
+
+    assert.notStrictEqual(original.nodeIds, copy.nodeIds);
+    assert.notStrictEqual(original.edgeIds, copy.edgeIds);
+    assert.notStrictEqual(original.tags, copy.tags);
+  });
+
+  it('can create a modified copy', () => {
+    const modifier = FlowModifier.fromConditions(
+        {type: 'edge', value: 'E1'},
+        {type: 'node', value: 'N1'},
+        {type: 'tag', value: 't1'});
+    const original = new Flow();
+
+    const copy = original.copyAndModify(modifier);
+    
+    assert.hasAllDeepKeys(copy.nodeIds, ['N1']);
+    assert.hasAllDeepKeys(copy.edgeIds, ['E1']);
+    assert.hasAllDeepKeys(copy.tags, ['t1']);
+    assert.isEmpty(original.nodeIds);
+    assert.isEmpty(original.edgeIds);
+    assert.isEmpty(original.tags);
+  });
+
+  it('has a unique string representation', () => {
+    const flow = new Flow();
+    flow.nodeIds.add('N1');
+    flow.nodeIds.add('N2');
+    flow.edgeIds.add('E1');
+    flow.edgeIds.add('E2');
+    flow.tags.add('t1');
+    flow.tags.add('t2');
+    
+    assert.strictEqual(flow.toUniqueString(), '{edge:E1, edge:E2, node:N1, node:N2, tag:t1, tag:t2}');
+  });
 });
 
 describe('FlowModifier', () => {
@@ -180,5 +222,66 @@ describe('FlowModifier', () => {
     assert.hasAllDeepKeys(modifier.edgeIds, ['AB']);
     assert.hasAllDeepKeys(modifier.nodeIds, ['A']);
     assert.deepEqual(modifier.tagOperations, new Map([['t1', TagOperation.Add], ['t2', TagOperation.Remove]]));
+  });
+
+  it('can be converted into a Flow object', () => {
+    const modifier = FlowModifier.fromConditions(
+        {type: 'edge', value: 'E1'},
+        {type: 'node', value: 'N1'},
+        {type: 'tag', value: 't1'});
+    
+    const flow = modifier.toFlow();
+
+    assert.hasAllDeepKeys(flow.edgeIds, ['E1']);
+    assert.hasAllDeepKeys(flow.nodeIds, ['N1']);
+    assert.hasAllDeepKeys(flow.tags, ['t1']);
+  });
+  
+  it('can create a copy', () => {
+    const original = FlowModifier.fromConditions(
+        {type: 'edge', value: 'E1'},
+        {type: 'node', value: 'N1'},
+        {type: 'tag', value: 't1'});
+
+    const copy = original.copy();
+    assert.deepEqual(original, copy);
+
+    assert.notStrictEqual(original.nodeIds, copy.nodeIds);
+    assert.notStrictEqual(original.edgeIds, copy.edgeIds);
+    assert.notStrictEqual(original.tagOperations, copy.tagOperations);
+  });
+
+  it('can create a modified copy', () => {
+    const original = FlowModifier.fromConditions(
+        {type: 'edge', value: 'E1'},
+        {type: 'node', value: 'N1'},
+        {type: 'tag', value: 't1'});
+    const modifier = FlowModifier.fromConditions(
+        {type: 'edge', value: 'E2'},
+        {type: 'node', value: 'N2'},
+        {type: 'tag', value: 't2'});
+
+    const copy = original.copyAndModify(modifier);
+    
+    assert.hasAllDeepKeys(original.nodeIds, ['N1']);
+    assert.hasAllDeepKeys(original.edgeIds, ['E1']);
+    assert.deepEqual(original.tagOperations, new Map([['t1', TagOperation.Add]]));
+
+    assert.hasAllDeepKeys(copy.nodeIds, ['N1', 'N2']);
+    assert.hasAllDeepKeys(copy.edgeIds, ['E1', 'E2']);
+    assert.deepEqual(copy.tagOperations, new Map([['t1', TagOperation.Add], ['t2', TagOperation.Add]]));
+  });
+
+  it('has a unique string representation', () => {
+    const modifier = FlowModifier.fromConditions(
+        {type: 'node', value: 'N1'},
+        {type: 'node', value: 'N2'},
+        {type: 'edge', value: 'E1'},
+        {type: 'edge', value: 'E2'},
+        {type: 'tag', value: 't1'},
+        {type: 'tag', value: 't2'});
+    modifier.tagOperations.set('t2', TagOperation.Remove);
+    
+    assert.strictEqual(modifier.toUniqueString(), '{+edge:E1, +edge:E2, +node:N1, +node:N2, +tag:t1, -tag:t2}');
   });
 });
