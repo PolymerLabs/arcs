@@ -101,7 +101,7 @@ $ git config core.hooksPath tools/hooks
   install that manually per `node-gyp` option 2 instructions.
 
 ### Mac Installation Notes
-- When installing, if you run into SLL Cert verification errors, consider certifying Python 3.6 on Mac:
+- When installing, if you run into SSL Cert verification errors, consider certifying Python 3.6 on Mac:
 `/Applications/Python\ 3.6/Install\ Certificates.command` ([source](https://stackoverflow.com/a/42334357))
 
 ## Starting Arcs
