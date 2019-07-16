@@ -92,6 +92,22 @@ public class PortableJsonJsImpl implements PortableJson {
     }
 
     @Override
+    public List<String> asStringArray() {
+        List<String> list = new ArrayList<>();
+        forEach(str -> list.add(str));
+        return list;
+    }
+
+    @Override
+    public List<PortableJson> asObjectArray() {
+        List<PortableJson> list = new ArrayList<>();
+        for (int i = 0; i < getLength(); ++i) {
+            list.add(getObject(i));
+        }
+        return list;
+    }
+
+    @Override
     public boolean equals(Object other) {
         return other instanceof PortableJsonJsImpl && hashCode() == other.hashCode();
     }

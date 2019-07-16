@@ -16,4 +16,8 @@ public class PortablePromiseFactoryImpl implements PortablePromiseFactory {
   public <T> PortablePromise<T> newPromise(PortablePromise.PortablePromiseExecutor<T> executor) {
     return new PortablePromiseJsImpl(executor);
   }
+  @Override
+  public <T> PortablePromise<T> newPromise(T value) {
+    return new PortablePromiseJsImpl(value);
+  }
 }
