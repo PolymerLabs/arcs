@@ -10,6 +10,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {validateGraph} from '../analysis.js';
 import {buildFlowGraph} from '../testing/flow-graph-testing.js';
+import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
 
 describe('FlowGraph validation', () => {
   it('succeeds when there are no checks', async () => {
@@ -597,29 +598,46 @@ describe('FlowGraph validation', () => {
     });
 
     it('fails when the data store identified by name is missing', async () => {
-      const graph = await buildFlowGraph(`
+      assertThrowsAsync(async () => await buildFlowGraph(`
         particle P
           in Foo {} input
           check input is from store MyStore
         recipe R
           P
             input <- h
-      `);
-      assert.throws(() => validateGraph(graph), 'Store with name MyStore not found.');
+      `), 'Store with name MyStore not found.');
     });
 
     it('fails when the data store identified by ID is missing', async () => {
-      const graph = await buildFlowGraph(`
+      assertThrowsAsync(async () => await buildFlowGraph(`
         particle P
           in Foo {} input
           check input is from store 'my-store-id'
         recipe R
           P
             input <- h
-      `);
-      assert.throws(() => validateGraph(graph), `Store with id 'my-store-id' not found.`);
+      `), `Store with id 'my-store-id' not found.`);
     });
 
+
+    it('fails when the data store is not connected', async () => {
+      assertThrowsAsync(async () => await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity 'my-store-id' in MyResource
+        store SomeOtherStore of MyEntity in MyResource
+        particle P
+          in MyEntity input
+          check input is from store 'my-store-id'
+        recipe R
+          use SomeOtherStore as s
+          P
+            input <- s
+      `), 'Store with id my-store-id is not connected by a handle.');
+    });
 
     it('fails when the wrong data store is present', async () => {
       const graph = await buildFlowGraph(`
@@ -631,16 +649,19 @@ describe('FlowGraph validation', () => {
         store MyStore of MyEntity in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P
-          in MyEntity input
-          check input is from store MyStore
+          in MyEntity input1
+          in MyEntity input2
+          check input1 is from store MyStore
         recipe R
-          use SomeOtherStore as s
+          use SomeOtherStore as s1
+          use MyStore as s2
           P
-            input <- s
+            input1 <- s1
+            input2 <- s2
       `);
       const result = validateGraph(graph);
       assert.isFalse(result.isValid);
-      assert.sameMembers(result.failures, [`'check input is from store MyStore' failed for path: P.input`]);
+      assert.sameMembers(result.failures, [`'check input1 is from store MyStore' failed for path: P.input1`]);
     });
   });
 
