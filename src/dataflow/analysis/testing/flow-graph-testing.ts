@@ -11,6 +11,8 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {FlowGraph} from '../flow-graph.js';
+import {CheckCondition} from '../../../runtime/particle-check.js';
+import {Edge, Node} from '../graph-internals.js';
 
 /** Constructs a FlowGraph from the recipe in the given manifest. */
 export async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
@@ -20,4 +22,38 @@ export async function buildFlowGraph(manifestContent: string): Promise<FlowGraph
   assert(recipe.normalize(), 'Failed to normalize recipe.');
   assert(recipe.isResolved(), 'Recipe is not resolved.');
   return new FlowGraph(recipe, manifest);
+}
+
+export class TestNode extends Node {
+  readonly inEdges: TestEdge[] = [];
+  readonly outEdges: TestEdge[] = [];
+
+  constructor(readonly nodeId: string) {
+    super();
+  }
+
+  addInEdge() {
+    throw new Error('Unimplemented.');
+  }
+
+  addOutEdge() {
+    throw new Error('Unimplemented.');
+  }
+
+  evaluateCheckCondition(condition: CheckCondition, edge: Edge): boolean {
+    throw new Error('Unimplemented.');
+  }
+
+  inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
+    throw new Error('Unimplemented.');
+  }
+}
+
+export class TestEdge implements Edge {
+  readonly edgeId: string;
+  readonly connectionName = 'connectionName';
+
+  constructor(readonly start: TestNode, readonly end: TestNode, readonly label: string) {
+    this.edgeId = label;
+  }
 }

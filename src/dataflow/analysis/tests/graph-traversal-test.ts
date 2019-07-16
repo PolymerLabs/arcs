@@ -8,43 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {CheckCondition} from '../../../runtime/particle-check.js';
-import {Node, Edge} from '../graph-internals.js';
+import {Node} from '../graph-internals.js';
 import {BackwardsPath} from '../graph-traversal.js';
-
-class TestNode extends Node {
-  readonly inEdges: TestEdge[] = [];
-  readonly outEdges: TestEdge[] = [];
-
-  constructor(readonly nodeId: string) {
-    super();
-  }
-
-  addInEdge() {
-    throw new Error('Unimplemented.');
-  }
-
-  addOutEdge() {
-    throw new Error('Unimplemented.');
-  }
-
-  evaluateCheckCondition(condition: CheckCondition, edge: Edge): boolean {
-    throw new Error('Unimplemented.');
-  }
-
-  inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
-    throw new Error('Unimplemented.');
-  }
-}
-
-class TestEdge implements Edge {
-  readonly edgeId: string;
-  readonly connectionName = 'connectionName';
-
-  constructor(readonly start: TestNode, readonly end: TestNode, readonly label: string) {
-    this.edgeId = label;
-  }
-}
+import {TestNode, TestEdge} from '../testing/flow-graph-testing.js';
 
 describe('BackwardsPath', () => {
   // Construct directed graph: A -> B -> C.
