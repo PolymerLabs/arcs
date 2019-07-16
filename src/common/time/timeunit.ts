@@ -10,6 +10,9 @@
 
 export class TimeUnit {
 
+  // A map of the name to the time unit.
+  private static readonly stringToTimeUnit: Map<string, TimeUnit> = new Map();
+
   private constructor(
     /** a value to return for toString() */
     private readonly name: string,
@@ -25,6 +28,8 @@ export class TimeUnit {
      * not used, so this pertains to dates only..
      */
     public readonly estimated = false) {
+    // Map the name to the instance.
+    TimeUnit.stringToTimeUnit[name] = this;
   }
 
   /**  Unit that represents the concept of a nanosecond. */
@@ -57,10 +62,18 @@ export class TimeUnit {
   /** Unit that represents the concept of a year, 365 days, approximate */
   static readonly YEARS: TimeUnit = new TimeUnit('YEARS', 31536000, 0, true);
 
+  // TODO DECADES, CENTURIES, MILLENIA, ERAS
+
   /** An uppercase string matching the name of the constant. ex MILLIS */
   public toString() {
     return this.name;
   }
 
-  // TODO DECADES, CENTURIES, MILLENIA, ERAS
+  public static fromString(value: string): TimeUnit {
+    const result = TimeUnit.stringToTimeUnit[value];
+    if (!result) {
+      throw new Error('invalid timeunit');
+    }
+    return result;
+  }
 }
