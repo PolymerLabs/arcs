@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {MessagePort} from '../../build/runtime/message-channel.js';
+import {MessagePort} from '../../../build/runtime/message-channel.js';
 
 class PecPort extends MessagePort {
   constructor(pecId, bus) {

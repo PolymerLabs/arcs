@@ -14,6 +14,7 @@ import {recipeByName, marshalOutput} from '../lib/utils.js';
 import {logsFactory} from '../../../../build/runtime/log-factory.js';
 import {Stores} from '../../../lib/runtime/stores.js';
 import {Schemas} from '../schemas.js';
+import {portIndustry} from '../pec-port.js';
 
 const {warn} = logsFactory('pipe');
 
@@ -24,7 +25,8 @@ export const process = async ({type, tag, source, name, modality}, tid, bus, com
   } else {
     // arc
     const composer = composerFactory(modality);
-    const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/});
+    const portFactories = [portIndustry(bus)];
+    const arc = await Utils.spawn({id: generateId(), composer, context/*, storage*/, portFactories});
     // install pipe data
     await constructPipeData(arc, {type, name, source}, tag);
     // construct ingestion recipe

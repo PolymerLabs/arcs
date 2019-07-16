@@ -8,17 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+//import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {requireContext} from './context.js';
-import {marshalPipesArc, addPipeEntity} from './pipes-api.js';
+import {marshalPipesArc} from './pipes-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 
+import {capture} from './verbs/capture.js';
 import {autofill} from './verbs/autofill.js';
 import {caption} from './verbs/caption.js';
+import {pec} from './verbs/pec.js';
 
-const {log, warn} = logsFactory('pipe');
+//const {log, warn} = logsFactory('pipe');
 
 export const initPipe = async (client, paths, storage, composerFactory) => {
   // configure arcs environment
@@ -45,8 +47,12 @@ const identifyPipe = async (context, bus) => {
 const populateDispatcher = (dispatcher, composerFactory, storage, context) => {
   Object.assign(dispatcher, {
     capture: async (msg, tid, bus) => {
-      return await addPipeEntity(msg.entity);
+      return await capture(msg);
     },
+    pec: async (msg, tid, bus) => {
+      return await pec(msg, tid, bus);
+    },
+    // TODO(sjmiles): returned tids from verbs below here refer to the created Arcs
     autofill: async (msg, tid, bus) => {
       return await autofill(msg, tid, bus, composerFactory, storage, context);
     },

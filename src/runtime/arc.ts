@@ -174,7 +174,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     // We explicitly want to avoid, for example, multiple simultaneous
     // attempts to identify idle state each sending their own `AwaitIdle`
     // message and expecting settlement that will never arrive.
-    const promise = 
+    const promise =
       this._waitForIdle().then(() => this.waitForIdlePromise = null);
     this.waitForIdlePromise = promise;
     return promise;
@@ -539,8 +539,9 @@ ${this.activeRecipe.toString()}`;
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
 
     for (const recipeHandle of handles) {
+      const store = this.context.findStoreById(recipeHandle.id);
       if (['copy', 'create'].includes(recipeHandle.fate) ||
-          ((recipeHandle.fate === 'map') && (this.context.findStoreById(recipeHandle.id) as StorageStub).isBackedByManifest())) {
+          ((recipeHandle.fate === 'map') && (store instanceof StorageStub) && (store as StorageStub).isBackedByManifest())) {
         let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
