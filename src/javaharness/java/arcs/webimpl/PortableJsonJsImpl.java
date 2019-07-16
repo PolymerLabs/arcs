@@ -25,24 +25,24 @@ public class PortableJsonJsImpl implements PortableJson {
       Object get(Object obj, String key);
     }
 
-    @JsFunction
-    interface HasChecker {
-        boolean has(Object obj, String key);
-    }
-
-    @JsFunction
-    interface Setter {
-      void set(Object obj, String key, Any value);
-    }
-
-    @JsFunction
-    interface Keys {
-        String[] get(Object obj);
-    }
-
     private <T> T getValue(String key) {
       Getter getter = (Getter) eval("(obj, key) => { return obj[key]; }");
       return Js.uncheckedCast(getter.get(jsonObj, key));
+    }
+
+    @JsFunction
+    interface GetterI {
+      Object get(Object obj, int index);
+    }
+
+    private <T> T getValue(int index) {
+      GetterI getter = (GetterI) eval("(obj, index) => { return obj[index]; }");
+      return Js.uncheckedCast(getter.get(jsonObj, index));
+    }
+
+    @JsFunction
+    interface HasChecker {
+        boolean has(Object obj, String key);
     }
 
     private boolean hasStringKey(String key) {
@@ -50,14 +50,50 @@ public class PortableJsonJsImpl implements PortableJson {
       return hasChecker.has(jsonObj, key);
     }
 
+    @JsFunction
+    interface Setter {
+      void set(Object obj, String key, Any value);
+    }
+
     private <T> void setValue(String key, T value) {
         Setter setter = (Setter) eval("(obj, key, value) => { obj[key] = value; };");
         setter.set(jsonObj, key, Js.asAny(value));
     }
 
+    // Define explicit method to avoid conversion of int to Integer.
+    private void setValue(String key, int value) {
+        Setter setter = (Setter) eval("(obj, key, value) => { obj[key] = value; };");
+        setter.set(jsonObj, key, Js.asAny(value));
+    }
+
+    @JsFunction
+    interface SetterI {
+      void set(Object obj, int index, Any value);
+    }
+
+    private <T> void setValue(int index, T value) {
+        SetterI setter = (SetterI) eval("(obj, index, value) => { obj[index] = value; };");
+        setter.set(jsonObj, index, Js.asAny(value));
+    }
+
+    @JsFunction
+    interface Keys {
+        String[] get(Object obj);
+    }
+
     private List<String> getAllKeys() {
         Keys keys = (Keys) eval("(obj) => { return Object.keys(obj); }");
         return Arrays.asList(keys.get(jsonObj));
+    }
+
+    @JsFunction
+    interface Equator {
+        boolean equals(Object obj, Object other);
+    }
+
+    private boolean isEqual(PortableJsonJsImpl other) {
+        Equator equator = (Equator) eval("(obj, other) => { let compare = (o1, o2) => { return Object.keys(o1).length == Object.keys(o2).length && Object.keys(o1).every(key => (!!o1[key] == !!o2[key]) || ((o1[key] instanceof Object) && (o2[key] instanceof Object) && compare(o1[key]), o2[key])); }; return compare(obj, other); }");
+        return equator.equals(jsonObj, other.jsonObj);
     }
 
     public PortableJsonJsImpl(Any jsonObj) {
@@ -66,27 +102,27 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public String getString(int index) {
-        return jsonObj.asArray()[index].asString();
+        return getValue(index);
     }
 
     @Override
     public int getInt(int index) {
-        return jsonObj.asArray()[index].asInt();
+        return getValue(index);
     }
 
     @Override
     public double getNumber(int index) {
-        return jsonObj.asArray()[index].asDouble();
+        return getValue(index);
     }
 
     @Override
     public boolean getBool(int index) {
-        return jsonObj.asArray()[index].asBoolean();
+        return getValue(index);
     }
 
     @Override
     public PortableJson getObject(int index) {
-        return new PortableJsonJsImpl(jsonObj.asArray()[index]);
+        return getValue(index) instanceof PortableJsonJsImpl ? getValue(index) : new PortableJsonJsImpl(getValue(index));
     }
 
     @Override
@@ -101,7 +137,8 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public int getInt(String key) {
-        return getValue(key);
+        double num = getValue(key);
+        return (int) num;
     }
 
     @Override
@@ -155,14 +192,12 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof PortableJsonJsImpl && hashCode() == other.hashCode();
+        return other instanceof PortableJsonJsImpl && isEqual((PortableJsonJsImpl) other);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.deepHashCode(keys().toArray()) *
-               Arrays.deepHashCode(keys().stream().map(
-                   key -> jsonObj.asPropertyMap().getAsAny(key)).collect(Collectors.toList()).toArray());
+        throw new AssertionError("hashCode is not supported for PortableJsonJsImpl.");
     }
 
     @Override
@@ -197,31 +232,31 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @Override
     public PortableJson put(int index, int num) {
-        jsonObj.asArrayLike().setAt(index, num);
+        setValue(index, num);
         return this;
     }
 
     @Override
     public PortableJson put(int index, double num) {
-        jsonObj.asArrayLike().setAt(index, num);
+        setValue(index, num);
         return this;
     }
 
     @Override
     public PortableJson put(int index, String value) {
-        jsonObj.asArrayLike().setAt(index, value);
+        setValue(index, value);
         return this;
     }
 
     @Override
     public PortableJson put(int index, boolean bool) {
-        jsonObj.asArrayLike().setAt(index, bool);
+        setValue(index, bool);
         return this;
     }
 
     @Override
     public PortableJson put(int index, PortableJson obj) {
-        jsonObj.asArrayLike().setAt(index, obj);
+        setValue(index, obj);
         return this;
     }
 
