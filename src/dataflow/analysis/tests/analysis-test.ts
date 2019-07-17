@@ -40,7 +40,7 @@ function createChainOfEdges(...nodeIds: string[]) {
   for (let i = 1; i < nodes.length; i++) {
     const firstNode = nodes[i - 1];
     const secondNode = nodes[i];
-    edges.push(new TestEdge(firstNode, secondNode, firstNode.nodeId + secondNode.nodeId));
+    edges.push(new TestEdge(firstNode, secondNode, firstNode.nodeId + '->' + secondNode.nodeId));
   }
   return edges;
 }
