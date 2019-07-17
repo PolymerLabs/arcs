@@ -10,7 +10,6 @@
   "main": "dist/index.es.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
-    "postinstall": "npx emsdk-checkout && npx emsdk install latest && npx emsdk activate latest",
     "test-with-start": "run-p --print-name --race start test",
     "test": "run-s --print-name --continue-on-error test-no-web test-wdio-shells",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-extension",
@@ -53,7 +52,7 @@
     "chromedriver": "^74.0.0",
     "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
-    "emsdk-npm": "^0.2.2",
+    "emsdk-npm": "github:mykmartin/emsdk-npm#travis-workaround",
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "eslint-plugin-header": "^3.0.0",

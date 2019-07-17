@@ -22,7 +22,7 @@ const keywords = [
   'suspend', 'tailrec', 'vararg', 'field', 'it'
 ];
 
-// type-char to [kotlin-type, default-value, decode-functino]
+// type-char to [kotlin-type, default-value, decode-function]
 const typeMap = {
   'T': ['String', '""', 'decodeText()'],
   'U': ['String', '""', 'decodeText()'],

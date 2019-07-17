@@ -150,11 +150,9 @@ function targetIsUpToDate(relativeTarget: string, relativeDeps: string[], quiet 
   return true;
 }
 
-
 function check(): boolean {
   const nodeRequiredVersion = require('../package.json').engines.node;
   const npmRequiredVersion = require('../package.json').engines.npm;
-  const emsdkRequiredVersion = require('../package.json').engines.emsdk;
 
   if (!semver.satisfies(process.version, nodeRequiredVersion)) {
     throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
@@ -164,6 +162,26 @@ function check(): boolean {
   if (!semver.satisfies(npmVersion, npmRequiredVersion)) {
     throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
   }
+
+  return true;
+}
+
+// emsdk-npm's installation process is not idempotent, so it fails if we put this in the npm
+// postinstall step. This is invoked by the wasm build step and will generally only be required
+// at the same cadence as npm install.
+function installAndCheckEmsdk(): boolean {
+  if (fs.existsSync('node_modules/emsdk-npm/emsdk')) {
+    return true;
+  }
+
+  console.log('-- Installing emsdk --');
+  if (!saneSpawn('npx', ['emsdk-checkout']) ||
+      !saneSpawn('npx', ['emsdk', 'install', 'latest']) ||
+      !saneSpawn('npx', ['emsdk', 'activate', 'latest'])) {
+    return false;
+  }
+
+  const emsdkRequiredVersion = require('../package.json').engines.emsdk;
 
   // This call generates a bunch of unrelated output (emsdk env setup, plus the version output
   // itself is quite verbose). The regex extracts the version from a line that looks like:
@@ -471,13 +489,12 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
     const wasmPath = path.join(cfg.outDir, name);
     const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
 
-    // Generate the entity class header file from the manifest. The '--update' option
-    // means the header will only be re-generated if the manifest has been updated.
+    // Generate the entity class header file from the manifest.
     let result = saneSpawnWithOutput('node', [
         ...nodeFlags,
         '--no-warnings',
         'build/tools/schema2packager.js',
-        '--update',
+        '--update',  // only generate if the manifest has been updated
         target,
         '-o', cfg.outDir,
         manifestPath
@@ -493,25 +510,22 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
       continue;
     }
 
-    // TODO: contribute to emsdk/emsdk-npm to improve this API?
+    // Compile the wasm module.
     result = saneSpawnWithOutput('npx', [
         'emsdk-run', 'em++', '-std=c++17', '-O3',
         '-s', `EXPORTED_FUNCTIONS=['_malloc','_free']`,
         '-s', 'EMIT_EMSCRIPTEN_METADATA',
-        '-I', 'src/wasm/cpp',
+        '-I', 'src/wasm/cpp',  // for arcs.h
         '-I', cfg.outDir,
         '-o', wasmPath,
         srcPath
       ], {logCmd});
-
-    // npx/emsdk-run doesn't propagate the em++ status return. stdout only has noise from
-    // the emsdk environment setup. stderr should be empty on success, so we can check that.
-    if (result.stderr !== '') {
-      success = false;
+    if (!result.success) {
       console.error('\n------------------------------------------------------------------------');
       console.error(`Compilation failed for ${name} in ${configFile}\n`);
       console.error(result.stderr);
       console.error('------------------------------------------------------------------------\n');
+      success = false;
       continue;
     }
 
@@ -530,6 +544,7 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
 
 // Finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
 function wasm(args: string[]): boolean {
+  installAndCheckEmsdk();
   const options = minimist(args, {
     boolean: ['trace'],
   });
