@@ -32,6 +32,11 @@ j2cl_library(
     srcs = ["@javax_inject_source//jar"],
 )
 
+j2cl_library(
+    name = "com_google_guava_guava",
+    srcs = ["@com_google_guava_guava//jar"],
+)
+
 filegroup(
     name = "pipes-shell-2-dist",
     srcs = glob(

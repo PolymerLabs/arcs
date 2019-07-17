@@ -46,6 +46,13 @@ maven_jar(
     artifact = "javax.inject:javax.inject:jar:sources:1"
 )
 
+maven_jar(
+    name = "com_google_guava_guava",
+    artifact = "com.google.guava:guava:18.0",
+    sha1 = "cce0823396aa693798f8882e64213b1772032b09",
+    sha1_src = "ad97fe8faaf01a3d3faacecd58e8fa6e78a973ca",
+)
+
 http_archive(
     name = "com_google_elemental2",
     strip_prefix = "elemental2-20190325",

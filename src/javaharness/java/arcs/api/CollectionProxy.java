@@ -1,5 +1,7 @@
 package arcs.api;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 public class CollectionProxy extends StorageProxy implements CollectionStore {
   PortableJson model;  // TODO: replace with crdt model class.
 
