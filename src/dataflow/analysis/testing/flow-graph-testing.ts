@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {FlowGraph} from '../flow-graph.js';
 import {CheckCondition} from '../../../runtime/particle-check.js';
-import {Edge, Node} from '../graph-internals.js';
+import {Edge, Node, FlowModifier} from '../graph-internals.js';
 
 /** Constructs a FlowGraph from the recipe in the given manifest. */
 export async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
@@ -45,15 +45,18 @@ export class TestNode extends Node {
   }
 
   inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
-    throw new Error('Unimplemented.');
+    return this.inEdges;
   }
 }
 
 export class TestEdge implements Edge {
   readonly edgeId: string;
   readonly connectionName = 'connectionName';
+  modifier?: FlowModifier;
 
   constructor(readonly start: TestNode, readonly end: TestNode, readonly label: string) {
     this.edgeId = label;
+    start.outEdges.push(this);
+    end.inEdges.push(this);
   }
 }
