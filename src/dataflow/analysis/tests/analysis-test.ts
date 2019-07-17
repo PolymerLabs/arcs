@@ -71,7 +71,7 @@ describe('EdgeExpression', () => {
     expectedFlowSet.add(new Flow());
     assert.deepEqual(expression.resolvedFlows, expectedFlowSet);
 
-    assert.equal(expression.toString(), `EdgeExpression(AB) {
+    assert.equal(expression.toString(), `EdgeExpression(A->B) {
   {}
 }`);
   });
@@ -89,7 +89,7 @@ describe('EdgeExpression', () => {
     flow.tags.add('t1');
     assert.deepEqual(expression.resolvedFlows, new FlowSet(flow));
 
-    assert.equal(expression.toString(), `EdgeExpression(AB) {
+    assert.equal(expression.toString(), `EdgeExpression(A->B) {
   {tag:t1}
 }`);
   });
@@ -106,8 +106,8 @@ describe('EdgeExpression', () => {
     assert.deepEqual(expression.unresolvedFlows.get(parentEdge), new FlowModifierSet(addsTagT1));
     assert.sameMembers(expression.parents, [parentEdge]);
 
-    assert.equal(expression.toString(), `EdgeExpression(BC) {
-  EdgeExpression(AB) + {+tag:t1}
+    assert.equal(expression.toString(), `EdgeExpression(B->C) {
+  EdgeExpression(A->B) + {+tag:t1}
 }`);
   });
 
