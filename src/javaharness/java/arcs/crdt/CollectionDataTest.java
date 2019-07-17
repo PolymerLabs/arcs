@@ -37,14 +37,14 @@ public class CollectionDataTest {
     // can add two different items from the same actor
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-        CollectionOpTypes.ADD,
+        CollectionOperation.Type.ADD,
         new Data("one"),
         new VersionMap(){{ put("me", 1); }},
         "me"
     ));
 
     assert set.applyOperation(new CollectionOperation<Data>(
-        CollectionOpTypes.ADD,
+        CollectionOperation.Type.ADD,
         new Data("two"),
         new VersionMap(){{ put("me", 2); }},
         "me"
@@ -57,13 +57,13 @@ public class CollectionDataTest {
     // can add the same value from two actors
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-        CollectionOpTypes.ADD,
+        CollectionOperation.Type.ADD,
         new Data("one"),
         new VersionMap() {{ put("me", 1); }},
         "me"
     ));
     assert set.applyOperation(new CollectionOperation<Data>(
-        CollectionOpTypes.ADD,
+        CollectionOperation.Type.ADD,
         new Data("one"),
         new VersionMap() {{ put("them", 1); }},
         "them"
@@ -76,25 +76,25 @@ public class CollectionDataTest {
     // rejects add operations not in sequence
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("two"),
       new VersionMap() {{ put("me", 0); }},
       "me"
     ));
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("two"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("two"),
       new VersionMap() {{ put("me", 3); }},
       "me"
@@ -105,14 +105,14 @@ public class CollectionDataTest {
     // can remove an item
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     verifySize(set, 1);
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
@@ -124,19 +124,19 @@ public class CollectionDataTest {
     // rejects remove operations if version mismatch
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("one"),
       new VersionMap() {{ put("me", 2); }},
       "me"
     ));
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("one"),
       new VersionMap() {{ put("me", 0); }},
       "me"
@@ -147,13 +147,13 @@ public class CollectionDataTest {
     // rejects remove value not in collection
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("two"),
       new VersionMap() {{ put("me", 1); }},
       "me"
@@ -164,27 +164,27 @@ public class CollectionDataTest {
     // rejects remove version too old
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("two"),
       new VersionMap() {{ put("you", 1); }},
       "you"
     ));
     // This succeeds because the op clock is up to date wrt to the value "one" (whose version is me:1).
     assert set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "them"
     ));
     // This fails because the op clock is not up to date wrt to the actor "you" (whose version is you:1).
     assert !set.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("two"),
       new VersionMap() {{ put("me", 1); }},
       "them"
@@ -195,26 +195,26 @@ public class CollectionDataTest {
     // can merge two models
     CRDTCollection<Data> set1 = new CRDTCollection<>();
     assert set1.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("me", 1); }},
       "me"
     ));
     assert set1.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("two"),
       new VersionMap() {{ put("me", 2); }},
       "me"
     ));
     CRDTCollection<Data> set2 = new CRDTCollection<>();
     assert set2.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("three"),
       new VersionMap() {{ put("you", 1); }},
       "you"
     ));
     assert set2.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.ADD,
+      CollectionOperation.Type.ADD,
       new Data("one"),
       new VersionMap() {{ put("you", 2); }},
       "you"
@@ -239,7 +239,7 @@ public class CollectionDataTest {
 
     // Test removes also work in merge.
     set1.applyOperation(new CollectionOperation<Data>(
-      CollectionOpTypes.REMOVE,
+      CollectionOperation.Type.REMOVE,
       new Data("one"),
       new VersionMap() {{ put("me", 2); put("you", 2); }},
       "me"
