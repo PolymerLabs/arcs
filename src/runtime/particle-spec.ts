@@ -279,7 +279,21 @@ export class ParticleSpec {
     return this.slotConnections.get(slotName);
   }
 
-  get slotConnectionNames(): string[] {
+  getSlandleSpec(slotName: string): ConsumeSlotConnectionSpec|undefined {
+    const slot = this.slotConnections.get(slotName);
+    if (slot) return slot;
+    const handleConn = this.handleConnectionMap.get(slotName);
+    return handleConn.toSlotConnectionSpec();
+  }
+
+  slandleConnectionNames(): string[] {
+    const slandleNames: string[] = this.handleConnections.filter(
+      conn => conn.toSlotConnectionSpec()
+    ).map(conn => conn.name);
+    return [...this.slotConnections.keys(), ...slandleNames];
+  }
+
+  slotConnectionNames(): string[] {
     return [...this.slotConnections.keys()];
   }
 
