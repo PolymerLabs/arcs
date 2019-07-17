@@ -24,13 +24,13 @@ export class ValidationResult {
 /** Returns true if all checks in the graph pass. */
 export function validateGraph(graph: FlowGraph): ValidationResult {
   const solver = new Solver(graph);
-  solver.solve();
+  solver.resolve();
   return solver.validateAllChecks();
 }
 
 /**
  * A flow expression for an edge. When fully resolved, it contains a set of
- * resolved flows into the edge. When unresolved, it contains a reference to a
+ * resolved flows into the edge. When unresolved, it contains references to each
  * parent edge, and a set of modifiers which should be applied to the flow from
  * that edge.
  */
@@ -69,7 +69,12 @@ class EdgeExpression {
     return [...this.unresolvedFlows.keys()];
   }
 
-  /** Replaces an unresolved parent with the parent's own expression. */
+  /**
+   * Replaces an unresolved parent with the parent's own expression. Any
+   * resolved flows into the parent get copied and modified to become resolved
+   * into the child. Unresolved flows into the parent become unresolved flows
+   * into the child (with the child's modifiers added too).
+   */
   expandParent(parentExpr: EdgeExpression) {
     assert(
       this.unresolvedFlows.has(parentExpr.edge),
@@ -130,7 +135,7 @@ class Solver {
   /** Maps from an edge to the set of edges which depends upon it. */
   readonly dependentEdges: Map<Edge, Set<Edge>>;
 
-  private _isSolved = false;
+  private _isResolved = false;
 
   constructor(graph: FlowGraph) {
     this.graph = graph;
@@ -142,12 +147,17 @@ class Solver {
     }
   }
 
-  get isSolved() {
-    return this._isSolved;
+  /** Returns true if every edge in the graph has been fully resolved to a FlowSet. */
+  get isResolved() {
+    return this._isResolved;
   }
 
+  /**
+   * Runs through every check on an edge in the graph, and validates it against
+   * the resolved flows into that edge.
+   */
   validateAllChecks(): ValidationResult {
-    assert(this._isSolved, 'Graph must be solved before checks can be validated.');
+    assert(this._isResolved, 'Graph must be resolved before checks can be validated.');
 
     const finalResult = new ValidationResult();
     for (const edge of this.graph.edges) {
@@ -160,7 +170,7 @@ class Solver {
   }
 
   validateCheckOnEdge(edge: Edge): ValidationResult {
-    assert(this._isSolved, 'Graph must be solved before checks can be validated.');
+    assert(this._isResolved, 'Graph must be resolved before checks can be validated.');
     assert(edge.check, 'Edge does not have any check conditions.');
 
     const check = edge.check;
@@ -179,11 +189,17 @@ class Solver {
     return finalResult;
   }
 
-  solve() {
-    assert(!this._isSolved, 'Graph is already solved.');
+  /**
+   * Fully resolves the graph. All edges will have a fully resolved edge
+   * expression at the end of this function.
+   */
+  resolve() {
+    if (this._isResolved) {
+      return;
+    }
 
     for (const edge of this.graph.edges) {
-      this.solveEdge(edge);
+      this.processEdge(edge);
     }
 
     // Verify that all edges are fully resolved.
@@ -194,16 +210,24 @@ class Solver {
       assert(edgeExpression.isResolved, `Unresolved edge expression: ${edgeExpression.toString()}`);
     }
 
-    this._isSolved = true;
+    this._isResolved = true;
   }
 
-  solveEdge(edge: Edge) {
-    assert(!this.edgeExpressions.has(edge), 'Edge has already been solved.');
+  /**
+   * Constructs a new EdgeExpression for the given edge, and tries to expand as
+   * many of its unresolved parents as is possible. The edge expression might
+   * still not be fully resolved at the end of this function.
+   */
+  processEdge(edge: Edge) {
+    if (this.edgeExpressions.has(edge)) {
+      // Edge has already been processed.
+      return;
+    }
 
     const edgeExpression = new EdgeExpression(edge);
     this.edgeExpressions.set(edge, edgeExpression);
 
-    // Try and expand all of the parents we already know about.
+    // Try to expand all of the parents we already know about.
     for (const parent of edgeExpression.parents) {
       // Indicate that edge depends on parent.
       this.dependentEdges.get(parent).add(edge);
@@ -212,6 +236,10 @@ class Solver {
     }
   }
 
+  /**
+   * Takes an edge expression with an unresolved parent edge, and tries to
+   * expand out that parent edge using the parent edge's own expression.
+   */
   tryExpandParent(expression: EdgeExpression, parentEdge: Edge) {
     if (!expression.unresolvedFlows.has(parentEdge)) {
       return;
