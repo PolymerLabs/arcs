@@ -15,15 +15,15 @@ import {version, paths, storage, test} from './config.js';
 // optional
 //import '../../lib/database/pouchdb-support.js';
 //import '../../lib/database/firebase-support.js';
-import '../../configuration/whitelisted.js';
+//import '../../configuration/whitelisted.js';
 import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
 
 // dependencies
 import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
-import {findContainers} from '../lib/utils.js';
-import {initPipe} from '../pipe.js';
-import {smokeTest} from '../smoke.js';
+import {findContainers} from '../source/lib/utils.js';
+import {initPipe} from '../source/pipe.js';
+import {smokeTest} from '../source/smoke.js';
 
 console.log(`${version} -- ${storage}`);
 

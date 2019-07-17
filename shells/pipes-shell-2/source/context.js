@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Utils} from '../lib/runtime/utils.js';
-import {Stores} from '../lib/runtime/stores.js';
+import {Utils} from '../../lib/runtime/utils.js';
+import {Stores} from '../../lib/runtime/stores.js';
 import {Schemas} from './schemas.js';
 
 const manifest = `
@@ -18,14 +18,9 @@ import 'https://$particles/PipeApps2/PipeApps.recipes'
 
 export const requireContext = async () => {
   if (!requireContext.promise) {
-    requireContext.promise = marshalContext(manifest);
+    requireContext.promise = Utils.parse(manifest);
   }
   return await requireContext.promise;
-};
-
-const marshalContext = async manifest => {
-  const context = await Utils.parse(manifest);
-  return context;
 };
 
 // TODO(sjmiles): a proper context would construct stores based on the observed types, not
@@ -66,5 +61,3 @@ const cloneStoreChange = async (store, change) => {
     await Promise.all(change.add.map(async add => store.store(add.value, [Math.random()])));
   }
 };
-
-

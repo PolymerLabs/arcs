@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../../build/runtime/log-factory.js';
-import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
-import {ArcHost} from '../../lib/components/arc-host.js';
+import {logFactory} from '../../../../build/runtime/log-factory.js';
+import {RamSlotComposer} from '../../../lib/components/ram-slot-composer.js';
+import {ArcHost} from '../../../lib/components/arc-host.js';
 
 const id = 'pipes-arc';
 const manifest = `import 'https://$particles/PipeApps2/BackgroundPipes.recipes'`;

@@ -10,9 +10,10 @@
 
 import {Xen} from '../../lib/components/xen.js';
 import {UserContext} from '../../lib/components/context/user-context.js';
+import {initShares} from '../../lib/sharing/shares.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 
-const log = Xen.logFactory('UserContext', '#4f0433');
-const warn = Xen.logFactory('UserContext', '#4f0433', 'warn');
+const {log} = logsFactory('UserContext', '#4f0433');
 
 class WebContext extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
@@ -25,6 +26,7 @@ class WebContext extends Xen.Debug(Xen.Async, log) {
     }
   }
   async updateContext({context, storage}) {
+    await initShares(context);
     //await this.disposeUserContext(userContext);
     const userContext = new UserContext(context, storage);
     this.state = {userContext};

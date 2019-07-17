@@ -17,20 +17,18 @@ export const smokeTest = async bus => {
     bus.receive({message: 'capture', entity: {type: 'address', name: 'North Pole', source: 'com.google.android.apps.maps'}});
   };
   //
-  const ingestEntity = () => {
-    // ingest entity and instantiate the first suggestion
-    bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'artist', name: 'Taylor Swift'}});
-  };
+  // const ingestEntity = () => {
+  //   // ingest entity and instantiate the first suggestion
+  //   bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'artist', name: 'Taylor Swift'}});
+  // };
   //
   const spotifyAutofill = () => {
     // request autofill for com.spotify.music
-    //bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.spotify.music'}});
     bus.receive({message: 'autofill', modality: 'dom', entity: {type: 'artist'}});
   };
   //
   const mapsAutofill = () => {
     // request autofill for com.google.android.apps.maps
-    //bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'autofill', source: 'com.google.android.apps.maps'}});
     bus.receive({message: 'autofill', modality: 'dom', entity: {type: 'address'}});
   };
   //
@@ -39,10 +37,10 @@ export const smokeTest = async bus => {
     bus.receive({message: 'caption', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
   };
   //
-  const longRunning = () => {
-    // get continual updates from a long-running arc
-    bus.receive({message: 'ingest', modality: 'dom', recipe: 'UpdateMe'});
-  };
+  // const longRunning = () => {
+  //   // get continual updates from a long-running arc
+  //   bus.receive({message: 'ingest', modality: 'dom', recipe: 'UpdateMe'});
+  // };
   //
   // example fancy client (driver)
   bus.client.channels = {};
@@ -53,16 +51,16 @@ export const smokeTest = async bus => {
       channel(msg);
     }
   };
-  const customArc = () => {
-    // custom
-    const tid = bus.receive({message: 'spawn'});
-    bus.receive({tid, message: 'ingest', entity: {type: 'artist', name: 'Taylor Swift'}});
-      bus.client.channels[tid] = (msg) => {
-      if (msg.message === 'suggestions') {
-        // do something
-      }
-    };
-  };
+  // const customArc = () => {
+  //   // custom
+  //   const tid = bus.receive({message: 'spawn'});
+  //   bus.receive({tid, message: 'ingest', entity: {type: 'artist', name: 'Taylor Swift'}});
+  //     bus.client.channels[tid] = (msg) => {
+  //     if (msg.message === 'suggestions') {
+  //       // do something
+  //     }
+  //   };
+  // };
   //
   const enqueue = (tests, delay) => {
     console.warn(`busish: starting new task...(remaining ${tests.length})`);
@@ -78,12 +76,12 @@ export const smokeTest = async bus => {
   //
   enqueue([
     captureData,
-    //ingestEntity,
+      //ingestEntity,
     spotifyAutofill,
     mapsAutofill,
     tapToCaption,
-    //longRunning,
-    //customArc
+      //longRunning,
+      //customArc
   ], 500);
   //], 0);
 };

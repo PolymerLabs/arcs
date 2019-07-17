@@ -25,7 +25,6 @@ import './ui/web-shell-ui.js';
 const manifests = {
   context: `
     import 'https://$particles/canonical.manifest'
-    import 'https://$particles/Profile/Sharing.recipe'
   `,
   launcher: `
     import 'https://$particles/Arcs/Launcher.recipe'

@@ -8,11 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Type} from '../../../build/runtime/type.js';
-import {Planificator} from '../../../build/planning/plan/planificator.js';
-import {Utils} from '../../lib/runtime/utils.js';
+import {Type} from '../../../../build/runtime/type.js';
+import {Utils} from '../../../lib/runtime/utils.js';
 import {Schemas} from '../schemas.js';
-import {devtoolsPlannerInspectorFactory} from '../../../build/devtools-connector/devtools-planner-inspector.js';
 
 export const conformType = type => {
   return (type || 'com.music.spotify').replace(/\./g, '_');
@@ -32,27 +30,6 @@ export const storeByTag = (arc, tag) => {
 
 export const recipeByName = (manifest, name) => {
   return manifest.allRecipes.find(recipe => recipe.name === name);
-};
-
-export const createPlanificator = async arc => {
-  const options = {
-    userid: 'user',
-    storageKeyBase: 'volatile',
-    onlyConsumer: false,
-    debug: true,
-    inspectorFactory: devtoolsPlannerInspectorFactory,
-    noSpecEx: true
-  };
-  const planificator = await Planificator.create(arc, options);
-  //
-  // setTimeout(async () => {
-  //   await planificator.consumer.result.flush();
-  //   await planificator.requestPlanning({metadata: {trigger: 'forced'}});
-  //   await planificator.loadSuggestions();
-  // }, 300);
-  //
-  //console.log('planificator:', planificator);
-  return planificator;
 };
 
 export const instantiateRecipe = async (arc, recipe) => {

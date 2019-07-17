@@ -7,7 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export const initPlanner = (context) => {
-  const names = context.allRecipes.map(r => r.name);
-  console.warn(names);
+import {handlePecMessage} from '../pec-port.js';
+
+export const pec = async (msg, tid, bus) => {
+  return await handlePecMessage(msg, tid, bus);
 };
