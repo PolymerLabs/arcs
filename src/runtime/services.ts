@@ -19,6 +19,9 @@ export interface ServiceRequest {
   service?: string;
   invoke?: string;
   call?: string;
+  // any extra call parameters are passed along here.
+  // tslint:disable-next-line: no-any
+  [key: string]: any;
 }
 
 export class Services {

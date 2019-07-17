@@ -31,12 +31,23 @@ describe('Instant', () => {
     assert.strictEqual(instant.epochMilliseconds, 0);
     assert.strictEqual(instant.resolution, TimeUnit.SECONDS);
 
-    assert.strictEqual(instant.toString(), '1970-01-01T00:00:00');
+    instant = Instant.fromString('1970-01-01T00:00:00.000');
+    assert.strictEqual(instant.epochSeconds, 0);
+    assert.strictEqual(instant.epochMilliseconds, 0);
+    assert.strictEqual(instant.resolution, TimeUnit.MILLIS);
+
+    assert.strictEqual(instant.toString(), '1970-01-01T00:00:00.000');
   });
 
   it('instant parses/passes correct timeunit', () => {
     let instant: Instant;
+    instant = Instant.fromString('2019-10-31T18:45:01.022');
+    assert.strictEqual(instant.epochMilliseconds, 1572547501022);
+    assert.strictEqual(instant.resolution, TimeUnit.MILLIS);
+    assert.strictEqual(instant.toString(), '2019-10-31T18:45:01.022');
+
     instant = Instant.fromString('2019-10-31T18:45:01');
+    assert.strictEqual(instant.epochMilliseconds, 1572547501000);
     assert.strictEqual(instant.resolution, TimeUnit.SECONDS);
     assert.strictEqual(instant.toString(), '2019-10-31T18:45:01');
 
@@ -61,5 +72,5 @@ describe('Instant', () => {
     assert.strictEqual(instant.toString(), '2019');
   });
 
-  // TODO tests for milli/nanosecond precision TBD
+  // TODO tests for nanosecond precision TBD
 });
