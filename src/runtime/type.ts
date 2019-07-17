@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-  
+
 import {Id} from './id.js';
 import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -24,7 +24,7 @@ export interface TypeLiteral extends Literal {
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle';
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Dummy';
 
 export abstract class Type {
   tag: Tag;
@@ -33,7 +33,7 @@ export abstract class Type {
     this.tag = tag;
   }
 
-  static fromLiteral(literal: TypeLiteral) : Type {
+  static fromLiteral(literal: TypeLiteral): Type {
     switch (literal.tag) {
       case 'Entity':
         return new EntityType(Schema.fromLiteral(literal.data));
@@ -55,6 +55,8 @@ export abstract class Type {
         return new ArcType();
       case 'Handle':
         return new HandleType();
+      case 'Dummy':
+        return new DummyType();
       default:
         throw new Error(`fromLiteral: unknown type ${literal}`);
     }
@@ -125,7 +127,7 @@ export abstract class Type {
     return !this.hasUnresolvedVariable;
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) : Type {
+  mergeTypeVariablesByName(variableMap: Map<string, Type>): Type {
     return this;
   }
 
@@ -141,7 +143,7 @@ export abstract class Type {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
-  getContainedType(): Type|null {
+  getContainedType(): Type | null {
     return null;
   }
 
@@ -192,7 +194,7 @@ export abstract class Type {
   /**
    * Clone a type object.
    * When cloning multiple types, variables that were associated with the same name
-   * before cloning should still be associated after cloning. To maintain this 
+   * before cloning should still be associated after cloning. To maintain this
    * property, create a Map() and pass it into all clone calls in the group.
    */
   clone(variableMap: Map<string, Type>) {
@@ -226,11 +228,11 @@ export abstract class Type {
     return this.tag;
   }
 
-  getEntitySchema(): Schema|null {
+  getEntitySchema(): Schema | null {
     return null;
   }
 
-  toPrettyString(): string|null {
+  toPrettyString(): string | null {
     return null;
   }
 }
@@ -294,9 +296,9 @@ export class EntityType extends Type {
     // Spit MyTypeFOO to My Type FOO
     if (this.entitySchema.name) {
       return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, '$1 $2')
-                                   .replace(/([A-Z][^A-Z])/g, ' $1')
-                                   .replace(/[\s]+/g, ' ')
-                                   .trim();
+        .replace(/([A-Z][^A-Z])/g, ' $1')
+        .replace(/[\s]+/g, ' ')
+        .trim();
     }
     return JSON.stringify(this.entitySchema.toLiteral());
   }
@@ -366,8 +368,8 @@ export class TypeVariable extends Type {
       return new TypeVariable(newTypeVariable);
     }
   }
-  
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): TypeVariable {
+
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo | Schema, TypeVariableInfo | Schema>): TypeVariable {
     if (variableMap.has(this.variable)) {
       return new TypeVariable(variableMap.get(this.variable) as TypeVariableInfo);
     } else {
@@ -388,7 +390,7 @@ export class TypeVariable extends Type {
 
   toLiteral(): TypeLiteral {
     return this.variable.resolution ? this.variable.resolution.toLiteral()
-                                    : {tag: this.tag, data: this.variable.toLiteral()};
+      : {tag: this.tag, data: this.variable.toLiteral()};
   }
 
   toString(options = undefined) {
@@ -462,7 +464,7 @@ export class CollectionType<T extends Type> extends Type {
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): CollectionType<Type> {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo | Schema, TypeVariableInfo | Schema>): CollectionType<Type> {
     return new CollectionType(this.collectionType._cloneWithResolutions(variableMap));
   }
 
@@ -549,7 +551,7 @@ export class BigCollectionType<T extends Type> extends Type {
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): BigCollectionType<Type> {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo | Schema, TypeVariableInfo | Schema>): BigCollectionType<Type> {
     return new BigCollectionType(this.bigCollectionType._cloneWithResolutions(variableMap));
   }
 
@@ -786,7 +788,7 @@ export class ReferenceType extends Type {
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType {
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo | Schema, TypeVariableInfo | Schema>): ReferenceType {
     return new ReferenceType(this.referredType._cloneWithResolutions(variableMap));
   }
 
@@ -825,6 +827,20 @@ export class HandleType extends Type {
   }
 
   get isHandle(): boolean {
+    return true;
+  }
+
+  toLiteral(): TypeLiteral {
+    return {tag: this.tag};
+  }
+}
+
+export class DummyType extends Type {
+  constructor() {
+    super('Dummy');
+  }
+
+  get isDummy(): boolean {
     return true;
   }
 

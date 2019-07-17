@@ -25,11 +25,11 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   handleIds: Dictionary<Promise<Handle>>;
 
   async _mapParticleConnections(
-      listHandleName: string,
-      particleHandleName: string,
-      hostedParticle: ParticleSpec,
-      handles: ReadonlyMap<string, Handle>,
-      arc: InnerArcHandle) {
+    listHandleName: string,
+    particleHandleName: string,
+    hostedParticle: ParticleSpec,
+    handles: ReadonlyMap<string, Handle>,
+    arc: InnerArcHandle) {
     const otherMappedHandles: string[] = [];
     const otherConnections: string[] = [];
     let index = 2;
@@ -45,7 +45,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
       // TODO(lindner): type erasure to avoid mismatch of Store vs Handle in arc.mapHandle
       // tslint:disable-next-line: no-any
-      const otherHandleStore = otherHandle.storage as any;
+      const otherHandleStore = otherHandle.getStorage() as any;
       otherMappedHandles.push(`use '${await arc.mapHandle(otherHandleStore)}' as v${index}`);
       const hostedOtherConnection = hostedParticle.handleConnections.find(conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
@@ -74,7 +74,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       hostedParticle = await (particleHandle as any).get();
       if (hostedParticle) {
         [otherMappedHandles, otherConnections] =
-            await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc);
+          await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc);
       }
     }
     this.setState({
@@ -124,13 +124,13 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
           continue;
         }
         resolvedHostedParticle =
-            ParticleSpec.fromLiteral(JSON.parse(item.renderParticleSpec));
+          ParticleSpec.fromLiteral(JSON.parse(item.renderParticleSpec));
         // Re-map compatible handles and compute the connections specific
         // to this item's render particle.
         const listHandleName = 'list';
         const particleHandleName = 'renderParticle';
         [otherMappedHandles, otherConnections] =
-            await this._mapParticleConnections(listHandleName, particleHandleName, resolvedHostedParticle, this.handles, arc);
+          await this._mapParticleConnections(listHandleName, particleHandleName, resolvedHostedParticle, this.handles, arc);
       }
       const hostedSlotName = [...resolvedHostedParticle.slotConnections.keys()][0];
       const slotName = [...this.spec.slotConnections.values()][0].name;
@@ -183,7 +183,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // Replace hosted particle connection in template with the corresponding particle connection names.
       // TODO: make this generic!
       this._connByHostedConn.forEach((conn, hostedConn) => {
-          template = template.replace(new RegExp(`{{${hostedConn}.description}}`, 'g'), `{{${conn}.description}}`);
+        template = template.replace(new RegExp(`{{${hostedConn}.description}}`, 'g'), `{{${conn}.description}}`);
       });
       this.setState({template: {...this._state.template, [content.templateName as string]: template}});
       this.forceRenderTemplate();

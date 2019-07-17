@@ -13,8 +13,8 @@ import {SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
-import {SerializedEntity} from './storage-proxy.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType} from './type.js';
+import {SerializedEntity, StorageProxy} from './storage-proxy.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, Type} from './type.js';
 import {EntityClass, Entity} from './entity.js';
 import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './store.js';
 import {IdGenerator, Id} from './id.js';
@@ -53,19 +53,19 @@ export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notify
  * Base class for Collections and Singletons.
  */
 export abstract class Handle {
-  readonly storage: Store;
+  protected storage: Store;
   private readonly idGenerator: IdGenerator;
   readonly name: string;
   readonly canRead: boolean;
   readonly canWrite: boolean;
-  readonly _particleId: string|null;
+  readonly _particleId: string | null;
   readonly options: HandleOptions;
-  entityClass: EntityClass|null;
+  entityClass: EntityClass | null;
 
   abstract _notify(kind: string, particle: Particle, details: {});
 
   // TODO type particleId, marked as string, but called with number
-  constructor(storage: Store, idGenerator: IdGenerator, name: string, particleId: string|null, canRead: boolean, canWrite: boolean) {
+  constructor(storage: Store, idGenerator: IdGenerator, name: string, particleId: string | null, canRead: boolean, canWrite: boolean) {
     assert(!(storage instanceof Handle));
     this.storage = storage;
     this.idGenerator = idGenerator;
@@ -138,6 +138,17 @@ export abstract class Handle {
   protected generateKey(): string {
     return this.idGenerator.newChildId(Id.fromString(this._id), 'key').toString();
   }
+
+  disable(particle?: Particle, storageProxy?: StorageProxy): void {
+    if (storageProxy != undefined) {
+      storageProxy.deregister(particle, this);
+    }
+    this.storage = StorageProxy.newDummyProxy(Type.fromLiteral({tag: 'Dummy'}));
+  }
+
+  getStorage(): Readonly<Store> {
+    return this.storage;
+  }
 }
 
 /**
@@ -149,7 +160,7 @@ export abstract class Handle {
  */
 export class Collection extends Handle {
   // Called by StorageProxy.
-  readonly storage: CollectionStore;
+  protected storage: CollectionStore;
 
   async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -252,6 +263,10 @@ export class Collection extends Handle {
     const keys = [];
     await this.storage.remove(serialization.id, keys, this._particleId);
   }
+
+  getStorage(): Readonly<CollectionStore> {
+    return this.storage;
+  }
 }
 
 /**
@@ -260,7 +275,7 @@ export class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 export class Singleton extends Handle {
-  readonly storage: SingletonStore;
+  protected storage: SingletonStore;
   // Called by StorageProxy.
   async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -340,6 +355,11 @@ export class Singleton extends Handle {
     }
     return this.storage.clear(this._particleId);
   }
+
+
+  getStorage(): Readonly<SingletonStore> {
+    return this.storage;
+  }
 }
 
 /**
@@ -361,7 +381,7 @@ class Cursor {
    * when the cursor has completed reading the collection.
    */
   async next() {
-    const data = await this._parent.storage.cursorNext(this._cursorId);
+    const data = await this._parent.getStorage().cursorNext(this._cursorId);
     if (!data.done) {
       data.value = data.value.map(a => restore(a as SerializedEntity, this._parent.entityClass));
     }
@@ -373,7 +393,7 @@ class Cursor {
    * yet completed streaming (i.e. next() hasn't returned {done: true}).
    */
   close() {
-    this._parent.storage.cursorClose(this._cursorId);
+    this._parent.getStorage().cursorClose(this._cursorId);
   }
 }
 
@@ -384,7 +404,7 @@ class Cursor {
  * trigger onHandleSync() or onHandleUpdate().
  */
 export class BigCollection extends Handle {
-  readonly storage: BigCollectionStore;
+  protected storage: BigCollectionStore;
 
   configure(options) {
     throw new Error('BigCollections do not support sync/update configuration');
@@ -444,6 +464,10 @@ export class BigCollection extends Handle {
     }
     const cursorId = await this.storage.stream(pageSize, forward);
     return new Cursor(this, cursorId);
+  }
+
+  getStorage(): Readonly<BigCollectionStore> {
+    return this.storage;
   }
 }
 

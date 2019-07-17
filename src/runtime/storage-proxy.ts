@@ -56,6 +56,10 @@ export abstract class StorageProxy implements Store {
     return new SingletonProxy(id, type, port, pec, scheduler, name);
   }
 
+  static newDummyProxy(type: Type) {
+    return new DummyProxy(null, type, null, null, null, 'DummyStorage');
+  }
+
   storageKey: string;
   readonly id: string;
   readonly type: Type;
@@ -132,10 +136,18 @@ export abstract class StorageProxy implements Store {
     }
   }
 
+  /**
+   * Called by Handle to dissociate particle/handle pair associated with this proxy
+   */
+
+  deregister(particleIn: Particle, handleIn: Handle): void {
+    this.observers = this.observers.filter(({particle, handle}) => particle !== particleIn || handle !== handleIn);
+  }
+
   _onSynchronize({version, model}: {version: number, model: SerializedModelEntry[]}): void {
     if (this.version !== undefined && version <= this.version) {
       console.warn(`StorageProxy '${this.id}' received stale model version ${version}; ` +
-                   `current is ${this.version}`);
+        `current is ${this.version}`);
       return;
     }
 
@@ -169,7 +181,7 @@ export abstract class StorageProxy implements Store {
     }
     if (update.version <= this.version) {
       console.warn(`StorageProxy '${this.id}' received stale update version ${update.version}; ` +
-                   `current is ${this.version}`);
+        `current is ${this.version}`);
       return;
     }
 
@@ -180,7 +192,7 @@ export abstract class StorageProxy implements Store {
     this._processUpdates();
   }
 
-  _notify(kind: string, details, predicate=(ignored: HandleOptions) => true) {
+  _notify(kind: string, details, predicate = (ignored: HandleOptions) => true) {
     for (const {handle, particle} of this.observers) {
       if (predicate(handle.options)) {
         this.scheduler.enqueue(particle, handle, [kind, particle, details]);
@@ -273,7 +285,7 @@ export class CollectionProxy extends StorageProxy implements CollectionStore {
     return true;
   }
 
-  _processUpdate(update, apply=true) {
+  _processUpdate(update, apply = true) {
     if (this.synchronized === SyncState.full) {
       // If we're synchronized, then any updates we sent have
       // already been applied/notified.
@@ -417,7 +429,7 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
     return true;
   }
 
-  _processUpdate(update, apply=true) {
+  _processUpdate(update, apply = true) {
     assert('data' in update);
     if (!apply) {
       return update;
@@ -515,11 +527,11 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
     throw new Error('_getModelForSync not implemented for BigCollectionProxy');
   }
 
-  _processUpdate() : {} {
+  _processUpdate(): {} {
     throw new Error('_processUpdate not implemented for BigCollectionProxy');
   }
 
-  _synchronizeModel() : boolean {
+  _synchronizeModel(): boolean {
     throw new Error('_synchronizeModel not implemented for BigCollectionProxy');
   }
   // TODO: surface get()
@@ -550,6 +562,64 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
   async cursorClose(cursorId): Promise<void> {
     this.port.StreamCursorClose(this, cursorId);
     return Promise.resolve();
+  }
+}
+
+export class DummyProxy extends StorageProxy implements CollectionStore, BigCollectionStore, SingletonStore {
+  _getModelForSync(): {id: string;} | ModelValue[] {
+    return null;
+  }
+  _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean {
+    return true;
+  }
+  _processUpdate(update: {version: number;}, apply?: boolean): {} {
+    return null;
+  }
+  reportExceptionInHost(exception: PropagatedException): void {}
+
+  deregister() {}
+
+  register() {}
+
+  _onSynchronize({version, model}: {version: number, model: SerializedModelEntry[]}): void {}
+
+  _onUpdate(update: {version: number}): void {}
+
+  _notify(kind: string, details, predicate = (ignored: HandleOptions) => true) {}
+
+  _processUpdates(): void {}
+
+  protected generateBarrier(): string {
+    return null;
+  }
+  async get(id?: string) {
+    return Promise.resolve();
+  }
+  // tslint:disable-next-line: no-any
+  async store(value: any, keys: string[], particleId?: string): Promise<void> {
+    return Promise.resolve();
+  }
+  async clear(particleId: string): Promise<void> {
+    return Promise.resolve();
+  }
+  async remove(id: string, keys: string[], originatorId?: string): Promise<void> {
+    return Promise.resolve();
+  }
+  async toList(): Promise<ModelValue[]> {
+    return new Promise(resolve => {});
+  }
+  async stream(pageSize: number, forward?: boolean): Promise<number> {
+    return new Promise(resolve => {});
+  }
+  // tslint:disable-next-line: no-any
+  async cursorNext(cursorId: number): Promise<any> {
+    return Promise.resolve();
+  }
+  async cursorClose(cursorId: number): Promise<void> {
+    throw Promise.resolve();
+  }
+  async set(entity: {}, particleId: string): Promise<void> {
+    throw Promise.resolve();
   }
 }
 
@@ -623,7 +693,7 @@ export class StorageProxyScheduler {
             handle._notify(...args);
           } catch (e) {
             console.error('Error dispatching to particle', e);
-            handle.storage.reportExceptionInHost(new SystemException(e, handle._particleId, 'StorageProxyScheduler::_dispatch'));
+            handle.getStorage().reportExceptionInHost(new SystemException(e, handle._particleId, 'StorageProxyScheduler::_dispatch'));
           }
         }
       }
