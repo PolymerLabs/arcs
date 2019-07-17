@@ -33,6 +33,7 @@ interface MappingInfo<T> {
   type: MappingType;
   initializer?: boolean;
   redundant?: boolean;
+  overriding?: boolean;
   value?: MappingInfo<T>;
   key?: MappingInfo<T>;
   converter?: Literalizable<T, Literal>;
@@ -121,6 +122,10 @@ function RedundantInitializer(target: {}, propertyKey: string, parameterIndex: n
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Direct, initializer: true, redundant: true});
 }
 
+function OverridingInitializer(target: {}, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Direct, initializer: true, overriding: true});
+}
+
 function Initializer(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Direct, initializer: true});
 }
@@ -162,6 +167,13 @@ class ThingMapper {
     }
     assert(!this._idMap.has(id), `${requestedId ? 'requestedId' : (thing.apiChannelMappingId ? 'apiChannelMappingId' : 'newIdentifier()')} ${id} already in use`);
     // TODO: Awaiting this promise causes tests to fail...
+    floatingPromiseToAudit(this.establishThingMapping(id, thing));
+    return id;
+  }
+
+  recreateMappingForThing(thing) {
+    assert(this._reverseIdMap.has(thing));
+    const id = this._reverseIdMap.get(thing);
     floatingPromiseToAudit(this.establishThingMapping(id, thing));
     return id;
   }
@@ -366,6 +378,8 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             if (descriptor[initializer].redundant) {
               assert(requestedId === -1);
               messageBody['identifier'] = this._mapper.maybeCreateMappingForThing(args[initializer]);
+            } else if (descriptor[initializer].overriding) {
+              messageBody['identifier'] = this._mapper.recreateMappingForThing(args[initializer]);
             } else {
               messageBody['identifier'] = this._mapper.createMappingForThing(args[initializer], args[requestedId]);
             }
@@ -442,6 +456,7 @@ export abstract class PECOuterPort extends APIPort {
   @NoArgs Stop() {}
   DefineHandle(@RedundantInitializer store: StorageProviderBase, @ByLiteral(Type) type: Type, @Direct name: string) {}
   InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
+  ReloadParticle(@OverridingInitializer particle: recipeParticle.Particle, @Identifier @Direct id: string) {}
 
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
@@ -505,6 +520,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string);
   abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
+  abstract onReloadParticle(id: string);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
   abstract onSimpleCallback(callback: (data: {}) => void, data: {});
