@@ -52,6 +52,7 @@
     "chromedriver": "^74.0.0",
     "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
+    "emsdk-npm": "github:mykmartin/emsdk-npm#travis-workaround",
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "eslint-plugin-header": "^3.0.0",
@@ -117,7 +118,8 @@
   },
   "engines": {
     "node": ">= 10.13.0",
-    "npm": ">= 6.9.0"
+    "npm": ">= 6.9.0",
+    "emsdk": ">= 1.38.34"
   },
   "optionalDependencies": {
     "vscode-jsonrpc": "^4.0.0",

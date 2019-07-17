@@ -7,75 +7,108 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 import fs from 'fs';
-import minimist from 'minimist';
 import path from 'path';
+import minimist from 'minimist';
+import {Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
+import {Dictionary} from '../runtime/hot.js';
 
+export abstract class Schema2Base {
+  constructor(readonly opts: minimist.ParsedArgs) {}
 
-export function typeSummary(descriptor) {
-  switch (descriptor.kind) {
-    case 'schema-primitive':
-      return `schema-primitive:${descriptor.type}`;
-
-    case 'schema-collection':
-      return `schema-collection:${descriptor.schema.type}`;
-
-    default:
-      return descriptor.kind;
-  }
-}
-
-
-export class Schema2Base {
-  private desc: string;
-  private fileNamer: (schemaName: string) => string;
-  private generate: (name: string, schema) => string;
-
-  constructor(description: string, fileNamer: (schemaName: string) => string, generator: (name: string, schema) => string) {
-    this.desc = description;
-    this.fileNamer = fileNamer;
-    this.generate = generator;
+  async call() {
+    fs.mkdirSync(this.opts.outdir, {recursive: true});
+    for (const file of this.opts._) {
+      if (fs.existsSync(file)) {
+        await this.processFile(file);
+      } else {
+        throw new Error(`File not found: ${file}`);
+      }
+    }
   }
 
+  private async processFile(src: string) {
+    const outName = this.outputName(path.basename(src));
+    const outPath = path.join(this.opts.outdir, outName);
+    console.log(outPath);
+    if (this.opts.update && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > fs.statSync(src).mtimeMs) {
+      return;
+    }
 
-  // TODO: handle schemas with multiple names and schemas with parents
-  // TODO: error handling
-  async processFile(file: string, outputPrefix: string = ''): Promise<void> {
-    const contents = fs.readFileSync(file, 'utf-8');
+    const contents = fs.readFileSync(src, 'utf-8');
     const manifest = await Manifest.parse(contents);
-    for (const schema of Object.values(manifest.schemas)) {
-      const outFile = this.fileNamer(schema.names[0]);
-      const contents = this.generate(schema.names[0], schema);
-      fs.writeFileSync(outputPrefix + outFile, contents);
+
+    // Collect declared schemas along with any inlined in particle connections.
+    const schemas: Dictionary<Schema> = {...manifest.schemas};
+    for (const particle of manifest.particles) {
+      for (const connection of particle.connections) {
+        const schema = connection.type.getEntitySchema();
+        const name = schema && schema.names && schema.names[0];
+        if (name && !(name in schemas)) {
+          schemas[name] = schema;
+        }
+      }
+    }
+    if (Object.keys(schemas).length === 0) {
+      console.warn(`No schemas found in '${src}'`);
+      return;
+    }
+
+    const outFile = fs.openSync(outPath, 'w');
+    fs.writeSync(outFile, this.fileHeader(outName));
+    for (const [name, schema] of Object.entries(schemas)) {
+      fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
+    }
+    fs.writeSync(outFile, this.fileFooter());
+    fs.closeSync(outFile);
+  }
+
+  protected processSchema(schema: Schema, processField: (field: string, typeChar: string) => void): number {
+    let fieldCount = 0;
+    for (const [field, descriptor] of Object.entries(schema.fields)) {
+      fieldCount++;
+      switch (this.typeSummary(descriptor)) {
+        case 'schema-primitive:Text':
+          processField(field, 'T');
+          break;
+
+        case 'schema-primitive:URL':
+          processField(field, 'U');
+          break;
+
+        case 'schema-primitive:Number':
+          processField(field, 'N');
+          break;
+
+        case 'schema-primitive:Boolean':
+          processField(field, 'B');
+          break;
+
+        default:
+          console.error(`Schema type for field '${field}' is not yet supported:`);
+          console.dir(descriptor, {depth: null});
+          process.exit(1);
+      }
+    }
+    return fieldCount;
+  }
+
+  private typeSummary(descriptor) {
+    switch (descriptor.kind) {
+      case 'schema-primitive':
+        return `schema-primitive:${descriptor.type}`;
+
+      case 'schema-collection':
+        return `schema-collection:${descriptor.schema.type}`;
+
+      default:
+        return descriptor.kind;
     }
   }
 
-  get scriptName() {
-    return path.basename(__filename).split('.')[0];
-  }
-
-  call() {
-    // TODO: options: output dir, filter specific schema(s)
-    const argv = minimist(process.argv.slice(2), {
-      boolean: ['help'],
-    });
-
-    if (argv.help || argv._.length === 0) {
-      console.log(`
-Usage
-  $ tools/sigh ${this.scriptName} [file ...]
-
-Description
-  ${this.desc} 
-`);
-      process.exit();
-    }
-
-    for (const file of argv._) {
-      void this.processFile(file);
-    }
-  }
+  abstract outputName(baseName: string): string;
+  abstract fileHeader(outName: string): string;
+  abstract fileFooter(): string;
+  abstract entityClass(name: string, schema: Schema): string;
 }
-

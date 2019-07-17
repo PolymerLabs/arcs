@@ -1,0 +1,9 @@
+schema Data
+  Number num
+  Text txt
+  URL lnk
+  Boolean flg
+
+particle PassThrough in 'test-module.wasm'
+  in Data input
+  out Data output
