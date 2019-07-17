@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {validateGraph, ValidationResult} from '../analysis.js';
-import {buildFlowGraph} from '../testing/flow-graph-testing.js';
+import {validateGraph, ValidationResult, Solver, EdgeExpression} from '../analysis.js';
+import {buildFlowGraph, TestEdge, TestNode} from '../testing/flow-graph-testing.js';
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
+import {FlowSet, Flow, FlowModifier, TagOperation, FlowModifierSet} from '../graph-internals.js';
 
 /** Checks that the given ValidationResult failed with the expected failure messages. */
 function assertFailures(result: ValidationResult, expectedFailures: string[]) {
@@ -27,6 +28,245 @@ function assertFailures(result: ValidationResult, expectedFailures: string[]) {
 
   assert.sameMembers([...result.failures], [...expectedFailuresWithoutPaths]);
 }
+
+/**
+ * Creates test nodes and edges in a chain, using the given node IDs. e.g.
+ * createChainOfEdges('A', 'B', 'C') will return an array of two edges: AB, BC.
+ */
+function createChainOfEdges(...nodeIds: string[]) {
+  assert(nodeIds.length >= 2);
+  const nodes = nodeIds.map(nodeId => new TestNode(nodeId));
+  const edges: TestEdge[] = [];
+  for (let i = 1; i < nodes.length; i++) {
+    const firstNode = nodes[i - 1];
+    const secondNode = nodes[i];
+    edges.push(new TestEdge(firstNode, secondNode, firstNode.nodeId + '->' + secondNode.nodeId));
+  }
+  return edges;
+}
+
+// FlowModifier constants.
+const addsTagT1 = new FlowModifier();
+addsTagT1.tagOperations.set('t1', TagOperation.Add);
+
+const addsTagT2 = new FlowModifier();
+addsTagT2.tagOperations.set('t2', TagOperation.Add);
+
+const addsTagsT1AndT2 = addsTagT1.copyAndModify(addsTagT2);
+
+const removesTagT1 = new FlowModifier();
+removesTagT1.tagOperations.set('t1', TagOperation.Remove);
+
+describe('EdgeExpression', () => {
+  it('can construct an edge with no parents and no modifier', () => {
+    const [edge] = createChainOfEdges('A', 'B');
+    const expression = new EdgeExpression(edge);
+
+    assert.strictEqual(expression.edge, edge);
+    assert.isTrue(expression.isResolved);
+    assert.isEmpty(expression.unresolvedFlows);
+    assert.isEmpty(expression.parents);
+
+    const expectedFlowSet = new FlowSet();
+    expectedFlowSet.add(new Flow());
+    assert.deepEqual(expression.resolvedFlows, expectedFlowSet);
+
+    assert.equal(expression.toString(), `EdgeExpression(A->B) {
+  {}
+}`);
+  });
+
+  it('can construct an edge with no parents and a modifier', () => {
+    const [edge] = createChainOfEdges('A', 'B');
+    edge.modifier = addsTagT1;
+    const expression = new EdgeExpression(edge);
+
+    assert.isTrue(expression.isResolved);
+    assert.isEmpty(expression.unresolvedFlows);
+    assert.isEmpty(expression.parents);
+
+    const flow = new Flow();
+    flow.tags.add('t1');
+    assert.deepEqual(expression.resolvedFlows, new FlowSet(flow));
+
+    assert.equal(expression.toString(), `EdgeExpression(A->B) {
+  {tag:t1}
+}`);
+  });
+
+  it('can construct an edge with parent and a modifier', () => {
+    const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+
+    edge.modifier = addsTagT1;
+    const expression = new EdgeExpression(edge);
+
+    assert.isFalse(expression.isResolved);
+    assert.equal(expression.resolvedFlows.size, 0);
+    assert.hasAllKeys(expression.unresolvedFlows, [parentEdge]);
+    assert.deepEqual(expression.unresolvedFlows.get(parentEdge), new FlowModifierSet(addsTagT1));
+    assert.sameMembers(expression.parents, [parentEdge]);
+
+    assert.equal(expression.toString(), `EdgeExpression(B->C) {
+  EdgeExpression(A->B) + {+tag:t1}
+}`);
+  });
+
+  it('can substitute a resolved parent', () => {
+    const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+    parentEdge.modifier = addsTagT1;
+    edge.modifier = addsTagT2;
+    const parentExpression = new EdgeExpression(parentEdge);
+    const expression = new EdgeExpression(edge);
+    
+    expression.expandParent(parentExpression);
+    
+    assert.isTrue(expression.isResolved);
+    assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagsT1AndT2.toFlow()));
+  });
+
+  it('can substitute an unresolved parent', () => {
+    const [grandparentEdge, parentEdge, edge] = createChainOfEdges('A', 'B', 'C', 'D');
+    parentEdge.modifier = addsTagT1;
+    edge.modifier = addsTagT2;
+    const parentExpression = new EdgeExpression(parentEdge);
+    const expression = new EdgeExpression(edge);    
+    
+    expression.expandParent(parentExpression);
+    
+    assert.isFalse(expression.isResolved);
+    assert.hasAllDeepKeys(expression.unresolvedFlows, grandparentEdge);
+    assert.deepEqual(expression.unresolvedFlows.get(grandparentEdge), new FlowModifierSet(addsTagsT1AndT2));
+  });
+
+  it('can depend on a parent with multiple different modifiers', () => {
+    const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+    edge.modifier = addsTagT1;
+    const expression = new EdgeExpression(edge);
+
+    // Add another modifier manually. This could have come from expanding
+    // another parent, for instance.
+    expression.unresolvedFlows.get(parentEdge).add(addsTagT2);
+
+    expression.expandParent(new EdgeExpression(parentEdge));
+    assert.isTrue(expression.isResolved);
+    assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagT1.toFlow(), addsTagT2.toFlow()));
+  });
+  
+  it('can depend on a grandparent with multiple different modifiers', () => {
+    const [grandparentEdge, parentEdge1, edge] = createChainOfEdges('A', 'B', 'C', 'D');
+    const parentEdge2 = new TestEdge(parentEdge1.start, parentEdge1.end, 'BC2');
+    parentEdge1.modifier = addsTagT1;
+    parentEdge2.modifier = addsTagT2;
+
+    const expression = new EdgeExpression(edge);
+    expression.expandParent(new EdgeExpression(parentEdge1));
+    expression.expandParent(new EdgeExpression(parentEdge2));
+
+    assert.hasAllDeepKeys(expression.unresolvedFlows, grandparentEdge);
+    assert.deepEqual(expression.unresolvedFlows.get(grandparentEdge), new FlowModifierSet(addsTagT1, addsTagT2));
+  });
+
+  it('applies child modifier after parent modifier', () => {
+    const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+    parentEdge.modifier = addsTagsT1AndT2;
+    edge.modifier = removesTagT1;
+
+    const expression = new EdgeExpression(edge);
+    expression.expandParent(new EdgeExpression(parentEdge));
+
+    assert.isTrue(expression.isResolved);
+    assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagT2.toFlow()));
+  });
+});
+
+describe('Solver', () => {
+  it('starts with empty edge expressions and dependencies', () => {
+    const edges = createChainOfEdges('A', 'B', 'C');
+    const solver = new Solver(edges);
+
+    assert.isFalse(solver.isResolved);
+    assert.isEmpty(solver.edgeExpressions);
+    assert.hasAllDeepKeys(solver.dependentExpressions, edges);
+    for (const dependencies of solver.dependentExpressions.values()) {
+      assert.isEmpty(dependencies);
+    }
+  });
+
+  describe('processEdge', () => {
+    it('adds edge expression and dependency', () => {
+      const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+      const solver = new Solver([parentEdge, edge]);
+
+      const expression = solver.processEdge(edge);
+
+      assert.strictEqual(solver.edgeExpressions.get(edge), expression);
+      assert.hasAllKeys(solver.edgeExpressions, [edge]);
+      assert.strictEqual(expression.edge, edge);
+      assert.sameMembers(expression.parents, [parentEdge]);
+      assert.isEmpty(solver.dependentExpressions.get(edge));
+      const parentDeps = solver.dependentExpressions.get(parentEdge);
+      assert.hasAllKeys(parentDeps, [expression]);
+    });
+
+    it('expands known resolved parent', () => {
+      const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+      parentEdge.modifier = addsTagT1;
+      edge.modifier = addsTagT2;
+      const solver = new Solver([parentEdge, edge]);
+      
+      const parentExpression = solver.processEdge(parentEdge);
+      assert.isTrue(parentExpression.isResolved);
+      assert.deepEqual(parentExpression.resolvedFlows, new FlowSet(addsTagT1.toFlow()));
+      
+      const expression = solver.processEdge(edge);
+      assert.isTrue(expression.isResolved);
+      assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagsT1AndT2.toFlow()));
+      assert.isEmpty(solver.dependentExpressions.get(parentEdge));
+    });
+
+    it('expands known unresolved parent', () => {
+      const [grandparentEdge, parentEdge, edge] = createChainOfEdges('A', 'B', 'C', 'D');
+      const solver = new Solver([grandparentEdge, parentEdge, edge]);
+      
+      const parentExpression = solver.processEdge(parentEdge);
+      const expression = solver.processEdge(edge);
+
+      assert.sameMembers(expression.parents, [grandparentEdge]);
+      assert.isEmpty(solver.dependentExpressions.get(parentEdge));
+      assert.hasAllKeys(solver.dependentExpressions.get(grandparentEdge), [parentExpression, expression]);
+    });
+
+    it('expands the current edge into its dependent edges', () => {
+      const [edge, childEdge] = createChainOfEdges('A', 'B', 'C');
+      edge.modifier = addsTagT1;
+      childEdge.modifier = addsTagT2;
+      const solver = new Solver([edge, childEdge]);
+
+      const childExpression = solver.processEdge(childEdge);
+      assert.isFalse(childExpression.isResolved);
+      assert.hasAllKeys(solver.dependentExpressions.get(edge), [childExpression]);
+      
+      const expression = solver.processEdge(edge);
+      assert.isEmpty(solver.dependentExpressions.get(edge));
+      assert.isTrue(expression.isResolved);
+      assert.isTrue(childExpression.isResolved);
+    });
+  });
+
+  describe('resolve', () => {
+    it('fully resolves all edges', () => {
+      const edges = createChainOfEdges('A', 'B', 'C', 'D');
+      const solver = new Solver(edges);
+      
+      solver.resolve();
+
+      assert.isTrue(solver.isResolved);
+      for (const expression of solver.edgeExpressions.values()) {
+        assert.isTrue(expression.isResolved);
+      }
+    });
+  });
+});
 
 describe('FlowGraph validation', () => {
   it('succeeds when there are no checks', async () => {
