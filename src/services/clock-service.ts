@@ -26,6 +26,7 @@
  * If any of the data is invalid you will have an undefined value returned.
  */
 
+import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {Instant} from '../common/time/instant.js';
 import {TimeUnit} from '../common/time/timeunit.js';
@@ -33,6 +34,8 @@ import {TimeUnit} from '../common/time/timeunit.js';
 type ClockServiceNowOptions = {
   timeUnit: string;
 };
+
+const log = logFactory('tfjs-service');
 
 Services.register('clock', {
   now: ({timeUnit}: ClockServiceNowOptions) => {
@@ -47,7 +50,7 @@ Services.register('clock', {
 
     } catch (e) {
       // TODO document what happens during failures.
-      console.log('error ', e);
+      log('error ', e);
       return undefined;
     }
   }
