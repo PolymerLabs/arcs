@@ -92,7 +92,7 @@ exports.waitFor = async function(selector, timeout) {
       reject(new Error(`timedout [${Math.floor(timeout/1e3)}] waiting for "${selector}"`));
     } else {
       const result = await deepQuerySelector(selector);
-      console.log(result);
+      //console.log(result);
       if (result) {
         resolve(result);
       } else {
@@ -124,35 +124,35 @@ exports.keys = async function(selector, keys, timeout) {
   await browser.keys(keys);
 };
 
+exports.marshalPersona = function(storageType) {
+  const storageKey = storageKeyByType[storageType];
+  const suffix = `${new Date().toISOString()}`.replace(/\W+/g, '-').replace(/\./g, '_');
+  return `${storageKey}/${suffix}`;
+};
+
+exports.openArc = async function(persona) {
+  // configure url
+  const urlParams = [
+    `plannerStorage=volatile`,
+    `persona=${persona}`,
+    //`log`
+  ];
+  const url = `${exports.shellUrl}/?${urlParams.join('&')}`;
+  // start app
+  await browser.url(url);
+  // wait for the app to render
+  await exports.waitFor('input[search]');
+};
+
 /**
  * Start a new arc in the webdriver environment.
  * @param storage pouchdb or firebase
  */
 
 exports.openNewArc = async function(testTitle, storageType, useSolo) {
-  // clean up extra open tabs
-  //const openTabs = browser.getTabIds();
-  //browser.switchTab(openTabs[0]);
-  //openTabs.slice(1).forEach(tabToClose => {
-  //  browser.close(tabToClose);
-  //});
   const storageKey = storageKeyByType[storageType];
-  let storage;
-  let suffix;
-  switch (storageType) {
-    case 'pouchdb':
-      // setup url params
-      suffix = `${Date.now()}-${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
-      storage = `${storageKey}/${suffix}/`;
-      break;
-    case 'firebase':
-      suffix = `${new Date().toISOString()}_${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
-      storage = `${storageKey}/${suffix}`;
-      //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
-      break;
-    default:
-      throw new Error('must specify firebase/pouchdb parameter');
-  }
+  const suffix = `${new Date().toISOString()}-${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
+  const storage = `${storageKey}/${suffix}/`;
   console.log(`\n\nrunning test "${testTitle}" [${storage}]\n`);
   const urlParams = [
     //`log`,

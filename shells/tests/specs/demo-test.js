@@ -10,7 +10,7 @@
 
 /* global browser */
 
-const {seconds, waitFor, click, keys, openNewArc} = require('../utils.js');
+const {seconds, waitFor, click, keys, openNewArc, marshalPersona, openArc} = require('../utils.js');
 
 const searchFor = text => keys('input[search]', text);
 
@@ -25,35 +25,18 @@ describe('wait for server', () => {
   });
 });
 
-['pouchdb', 'firebase'].forEach(async storage => {
-  //describe('pipes ' + storage, () => {
-  //   it('searches', async function() {
-  //     await openNewArc(this.test.fullTitle(), undefined, storage);
-  //     // TODO(sjmiles): wait for context to prepare, need a signal instead
-  //     await browser.pause(seconds(5));
-  //     await receiveEntity({type: 'search', query: 'restaurants'});
-  //     //await waitFor(findRestaurants);
-  //   });
-  //   it('receives', async function() {
-  //     await openNewArc(this.test.fullTitle(), undefined, storage);
-  //     const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
-  //     // TODO(sjmiles): wait for context to prepare, need a signal instead
-  //     await browser.pause(seconds(5));
-  //     await receiveEntity({type: 'tv_show', name: 'bodyguard'});
-  //     await waitFor(bodyguardIsOn);
-  //   });
-  // });
-
-  describe('demo ' + storage, () => {
+['pouchdb', 'firebase'].forEach(async storageType => {
+  describe('demo ' + storageType, () => {
     it('restaurants', async function() {
-      await openNewArc(this.test.fullTitle(), storage);
+      await openNewArc(this.test.fullTitle(), storageType);
       const search = `restaurants`;
-      const findRestaurants = `[title^="Find restaurants"]`;
-      const restaurantItem = `#webtest-title`;
+      //const findRestaurants = `[title^="Find restaurants"]`;
+      //const restaurantItem = `#webtest-title`;
       const reservation = `[title*="ou are "]`;
       const calendarAction = `[particle-host="Calendar::action"]`;
       await searchFor(search);
-      await click(findRestaurants);
+      //await click(findRestaurants);
+      await chooseSuggestion('Find restaurants');
       // TODO(sjmiles): rendering tiles takes forever to stabilize
       //await browser.pause(seconds(10));
       //await click(restaurantItem);
@@ -61,7 +44,7 @@ describe('wait for server', () => {
       await waitFor(calendarAction);
     });
     it('gifts', async function() {
-      await openNewArc(this.test.fullTitle(), storage);
+      await openNewArc(this.test.fullTitle(), storageType);
       const products = `products`;
       const createList = `[title^="Create shopping list"]`;
       const buyGifts = `[title^="Buy gifts"]`;
@@ -74,4 +57,21 @@ describe('wait for server', () => {
       await click(interests);
     });
   });
+
+  const persona = `${marshalPersona(storageType)}-persistence`;
+  describe('persistence ' + persona, () => {
+    it('persists', async function() {
+      await openArc(persona);
+      await searchFor('profile');
+      await chooseSuggestion('Edit user profile');
+      await browser.pause(seconds(1));
+      await openArc(persona);
+      await browser.pause(seconds(5));
+      await waitFor('div[chip]');
+    });
+  });
 });
+
+const chooseSuggestion = async name => {
+  await click(`[title^="${name}"]`);
+};
