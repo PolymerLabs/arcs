@@ -1,4 +1,4 @@
-# shells/pipes-shell-2
+# shells/pipes-shell
 
 ### Dual Platform
 
