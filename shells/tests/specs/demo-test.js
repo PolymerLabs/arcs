@@ -61,6 +61,7 @@ describe('wait for server', () => {
   const persona = `${marshalPersona(storageType)}-persistence`;
   describe(`persistence (${storageType})`, () => {
     it('persists BasicProfile arc', async function() {
+      console.log(`running "${this.test.fullTitle()}"`);
       await openArc(persona);
       await searchFor('profile');
       await chooseSuggestion('Edit user profile');

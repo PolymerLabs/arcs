@@ -153,7 +153,7 @@ exports.openNewArc = async function(testTitle, storageType, useSolo) {
   const storageKey = storageKeyByType[storageType];
   const suffix = `${new Date().toISOString()}-${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
   const storage = `${storageKey}/${suffix}/`;
-  console.log(`\n\nrunning test "${testTitle}" [${storage}]\n`);
+  console.log(`running "${testTitle}" (${storageType})`);
   const urlParams = [
     //`log`,
     `plannerStorage=volatile`,
