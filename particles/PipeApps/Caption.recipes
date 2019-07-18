@@ -1,5 +1,5 @@
-import './schemas/Json.arcs'
-import './schemas/PipeEntity.arcs'
+import './Json.schema'
+import './PipeEntity.schema'
 
 particle CaptionThis in './source/CaptionThis.js'
   in PipeEntity query

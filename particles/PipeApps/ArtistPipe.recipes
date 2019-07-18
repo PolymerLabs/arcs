@@ -1,5 +1,5 @@
-import './schemas/PipeEntity.arcs'
-import '../Music/Artist.arcs'
+import './PipeEntity.schema'
+import '../Music/Artist.recipes'
 
 particle ArtistPipe in './source/ArtistPipe.js'
   in PipeEntity pipe
