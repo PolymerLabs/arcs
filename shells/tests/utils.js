@@ -38,7 +38,14 @@ const installUtils = async () => {
     const find = (element, selector) => {
       let result;
       while (element && !result) {
-        result = element.matches(selector) ? element : find(element.firstElementChild, selector);
+        if (element.matches(selector)) {
+          result = element;
+        }
+        // if we didn't find it yet, descend into children (ignoring <style>)
+        if (!result && element.localName !== 'style') {
+          result = find(element.firstElementChild, selector);
+        }
+        // if we didn't find it yet, descend into shadowDOM
         if (!result && element.shadowRoot) {
           result = find(element.shadowRoot.firstElementChild, selector);
         }
@@ -84,9 +91,10 @@ exports.waitFor = async function(selector, timeout) {
     if (fail) {
       reject(new Error(`timedout [${Math.floor(timeout/1e3)}] waiting for "${selector}"`));
     } else {
-      const element = await deepQuerySelector(selector);
-      if (element && element.ELEMENT) {
-        resolve(element);
+      const result = await deepQuerySelector(selector);
+      console.log(result);
+      if (result) {
+        resolve(result);
       } else {
         tryQuery();
       }
