@@ -62,7 +62,7 @@ export class StorageStub {
               public readonly description: string,
               public readonly version?: number,
               public readonly source?: string,
-              public readonly referenceMode: boolean = false,
+              public referenceMode: boolean = false,
               public readonly model?: {}[]) {}
 
   async inflate(storageProviderFactory?: StorageProviderFactory) {
@@ -71,8 +71,16 @@ export class StorageStub {
         ? await factory.construct(this.id, this.type, this.storageKey)
         : await factory.connect(this.id, this.type, this.storageKey);
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
+
+    if (this.isBackedByManifest()) {
+      // Constructed store: set the reference mode according to the stub.
+      store.referenceMode = this.referenceMode;
+    } else {
+      // Connected store: sync the stub's reference mode with the store.
+      this.referenceMode = store.referenceMode;
+    }
+
     store.originalId = this.originalId;
-    store.referenceMode = this.referenceMode;
     store.name = this.name;
     store.source = this.source;
     store.description = this.description;
