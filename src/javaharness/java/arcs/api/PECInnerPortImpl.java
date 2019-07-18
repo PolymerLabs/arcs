@@ -37,6 +37,11 @@ public class PECInnerPortImpl implements PECInnerPort {
     private static final String MESSAGE_PEC_MESSAGE_KEY = "message";
     private static final String MESSAGE_PEC_PEC_VALUE = "pec";
     private static final String MESSAGE_PEC_ENTITY_KEY = "entity";
+    private static final String HANDLE_STORE_MSG = "HandleStore";
+    private static final String PARTICLE_ID_FIELD = "particleId";
+    private static final String HANDLE_TO_LIST_MSG = "HandleToList";
+    private static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
+    private static final String HANDLE_REMOVE_MSG = "HandleRemove";
 
     private final String id;
     private ArcsEnvironment environment;
@@ -133,42 +138,83 @@ public class PECInnerPortImpl implements PECInnerPort {
 
     @Override
     public void InitializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
-        PortableJson message = jsonParser.parse("{}");
-        message.put(MESSAGE_TYPE_FIELD, INITIALIZE_PROXY_MSG);
-        PortableJson body = jsonParser.parse("{}");
+        PortableJson message = constructMessage(INITIALIZE_PROXY_MSG);
+        PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
         body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<StorageProxy>(storageProxy)));
         body.put(PROXY_CALLBACK_FIELD, mapper.createMappingForThing(
             new Thing<Consumer<PortableJson>>(callback), /* requestedId= */ null));
-        message.put(MESSAGE_BODY_FIELD, body);
         postMessage(message);
     }
 
     @Override
     public void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
-        PortableJson message = jsonParser.parse("{}");
-        message.put(MESSAGE_TYPE_FIELD, SYNCHRONIZE_PROXY_MSG);
-        PortableJson body = jsonParser.parse("{}");
+        PortableJson message = constructMessage(SYNCHRONIZE_PROXY_MSG);
+        PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
         body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<StorageProxy>(storageProxy)));
         body.put(PROXY_CALLBACK_FIELD, mapper.createMappingForThing(
             new Thing<Consumer<PortableJson>>(callback), /* requestedId= */ null));
-        message.put(MESSAGE_BODY_FIELD, body);
         postMessage(message);
     }
 
     @Override
+    public void HandleStore(StorageProxy storageProxy, Consumer<PortableJson> callback, PortableJson data, String particleId) {
+        postMessage(constructHandleMessage(
+            HANDLE_STORE_MSG, storageProxy, callback, data, particleId));
+    }
+
+    @Override
+    public void HandleToList(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+        postMessage(constructHandleMessage(
+            HANDLE_TO_LIST_MSG, storageProxy, callback, /* data= */ null, /* particleId= */ null));
+    }
+
+    @Override
+    public void HandleRemove(StorageProxy storageProxy, Consumer<PortableJson> callback, PortableJson data, String particleId) {
+        postMessage(constructHandleMessage(
+            HANDLE_REMOVE_MSG, storageProxy, callback, data, particleId));
+    }
+
+    @Override
+    public void HandleRemoveMultiple(StorageProxy storageProxy, Consumer<PortableJson> callback, PortableJson data, String particleId) {
+        postMessage(constructHandleMessage(
+            HANDLE_REMOVE_MULTIPLE_MSG, storageProxy, callback, data, particleId));
+    }
+
+    @Override
     public void Render(NativeParticle particle, String slotName, PortableJson content) {
-        PortableJson message = jsonParser.parse("{}");
-        message.put(MESSAGE_TYPE_FIELD, RENDER_MSG);
-        PortableJson body = jsonParser.parse("{}");
+        PortableJson message = constructMessage(RENDER_MSG);
+        PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
         body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<NativeParticle>(particle)));
         body.put(SLOT_NAME_FIELD, slotName);
         body.put(CONTENT_FIELD, content);
-        message.put(MESSAGE_BODY_FIELD, body);
         postMessage(message);
     }
 
+    private PortableJson constructMessage(String messageType) {
+        PortableJson message = jsonParser.emptyJson();
+        message.put(MESSAGE_TYPE_FIELD, messageType);
+        message.put(MESSAGE_BODY_FIELD, jsonParser.emptyJson());
+        return message;
+    }
+
+    private PortableJson constructHandleMessage(String messageType, StorageProxy storageProxy,
+            Consumer<PortableJson> callback, PortableJson data, String particleId) {
+        PortableJson message = constructMessage(messageType);
+        PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
+        body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<StorageProxy>(storageProxy)));
+        body.put(PROXY_CALLBACK_FIELD, mapper.createMappingForThing(
+            new Thing<Consumer<PortableJson>>(callback), /* requestedId= */ null));
+        if (data != null) {
+            body.put(DATA_FIELD, data);
+        }
+        if (particleId != null) {
+            body.put(PARTICLE_ID_FIELD, particleId);
+        }
+        return message;
+    }
+
     private void postMessage(PortableJson message) {
-        PortableJson json = jsonParser.parse("{}");
+        PortableJson json = jsonParser.emptyJson();
         json.put(MESSAGE_PEC_MESSAGE_KEY, MESSAGE_PEC_PEC_VALUE);
         json.put(MESSAGE_PEC_ID_FIELD, this.id);
         json.put(MESSAGE_PEC_ENTITY_KEY, message);
