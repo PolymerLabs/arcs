@@ -222,7 +222,9 @@ export class Planner implements InspectablePlanner {
     }
     let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
-    if (this.speculator && !this.noSpecEx) {
+    // TODO(sjmiles): for now, restrict SpecEx to recipes that use
+    // Description handles, so we can avoid computations we aren't using atm
+    if (this.speculator && !this.noSpecEx && this._doesPlanUseDescriptions(plan)) {
       const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
@@ -243,6 +245,12 @@ export class Planner implements InspectablePlanner {
     );
     suggestionByHash().set(hash, suggestion);
     return suggestion;
+  }
+
+  _doesPlanUseDescriptions(plan) {
+    return plan.handleConnections.some(
+      ({type}) => type.toString() === `[Description {Text key, Text value}]`
+    );
   }
 
   _updateGeneration(generations: Generation[], hash: string, handler: (_: AnnotatedDescendant) => void) {
