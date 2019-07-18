@@ -17,26 +17,28 @@
  * activate a sane default set of them documented in the top-level README.md.
  */
 
-// modify these config values as needed
-const headless = true;
-const root = `shells`;
-
 // don't modify after here (in general)
 const process = require('process');
-const fs = require('fs');
-const errorshot = require('wdio-errorshot-reporter');
-const request = require('request');
-const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
-// By default use whitelisted-ips, add headless if debug is enabled
-const HEADLESS_ARG = '--headless';
-const WHITELISTED_IPS_ARG = '--whitelisted-ips';
-const chromeArgs = (headless && !debug) ? [HEADLESS_ARG, WHITELISTED_IPS_ARG] : [WHITELISTED_IPS_ARG];
+const debug =
+  process.env.npm_config_wdio_debug
+  || process.argv.includes('--wdio-debug=true')
+  || process.argv.includes('--wdio-debug')
+  || process.env['DEBUG'] === 'true'
+  ;
+const chromeArgs = debug ? [] : ['--headless'];
 
 exports.config = {
-  // This port & path are hardcoded to match chromedriver. See
-  // wdio-chromedriver-service for more information.
-  port: '9515',
+  //
+  // ====================
+  // Runner Configuration
+  // ====================
+  //
+  // WebdriverIO allows it to run your tests in arbitrary locations (e.g. locally or
+  // on a remote machine).
+  runner: 'local',
+  //
+  // Override default path ('/wd/hub') for chromedriver service.
   path: '/',
   //
   // ==================
@@ -47,7 +49,9 @@ exports.config = {
   // NPM script (see https://docs.npmjs.com/cli/run-script) then the current working
   // directory is where your package.json resides, so `wdio` will be called from there.
   //
-  specs: [`./${root}/tests/specs/**/*.js`],
+  specs: [
+    './shells/tests/specs/*.js'
+  ],
   // Patterns to exclude.
   exclude: [
     // 'path/to/excluded/files'
@@ -74,19 +78,22 @@ exports.config = {
   // Sauce Labs platform configurator - a great tool to configure your capabilities:
   // https://docs.saucelabs.com/reference/platforms-configurator
   //
-  capabilities: [
-    {
-      // maxInstances can get overwritten per capability. So if you have an in-house Selenium
-      // grid with only 5 firefox instances available you can make sure that not more than
-      // 5 instances get started at a time.
-      maxInstances: 5,
-      browserName: 'chrome',
-      chromeOptions: {
-        // debug hint: modify at top of file
-        args: chromeArgs
-      }
+  capabilities: [{
+    // maxInstances can get overwritten per capability. So if you have an in-house Selenium
+    // grid with only 5 firefox instances available you can make sure that not more than
+    // 5 instances get started at a time.
+    maxInstances: 1,
+    //
+    browserName: 'chrome',
+    // If outputDir is provided WebdriverIO can capture driver session logs
+    // it is possible to configure which logTypes to include/exclude.
+    // excludeDriverLogs: ['*'], // pass '*' to exclude all driver session logs
+    // excludeDriverLogs: ['bugreport', 'server'],
+    'goog:chromeOptions': {
+      // debug hint: modify at top of file
+      args: chromeArgs
     }
-  ],
+  }],
   // debug hint: uncomment to attach a debugger
   // execArgv: ['--inspect'],
   //
@@ -95,35 +102,34 @@ exports.config = {
   // ===================
   // Define all options that are relevant for the WebdriverIO instance here
   //
-  // By default WebdriverIO commands are executed in a synchronous way using
-  // the wdio-sync package. If you still want to run your tests in an async way
-  // e.g. using promises you can set the sync option to false.
-  sync: true,
+  // Level of logging verbosity: trace | debug | info | warn | error | silent
+  logLevel: 'warn',
   //
-  // Level of logging verbosity: silent | verbose | command | data | result | error
-  logLevel: 'silent',
-  //
-  // Enables colors for log output.
-  coloredLogs: true,
-  //
-  // Warns when a deprecated command is used
-  deprecationWarnings: true,
+  // Set specific log levels per logger
+  // loggers:
+  // - webdriver, webdriverio
+  // - @wdio/applitools-service, @wdio/browserstack-service, @wdio/devtools-service, @wdio/sauce-service
+  // - @wdio/mocha-framework, @wdio/jasmine-framework
+  // - @wdio/local-runner, @wdio/lambda-runner
+  // - @wdio/sumologic-reporter
+  // - @wdio/cli, @wdio/config, @wdio/sync, @wdio/utils
+  // Level of logging verbosity: trace | debug | info | warn | error | silent
+  // logLevels: {
+  // webdriver: 'info',
+  // '@wdio/applitools-service': 'info'
+  // },
   //
   // If you only want to run your tests until a specific amount of tests have failed use
   // bail (default is 0 - don't bail, run all tests).
   bail: 0,
   //
-  // Saves a screenshot to a given path if a command fails.
-  screenshotPath: `./${root}/tests/errorShots/`,
-  //
   // Set a base URL in order to shorten url command calls. If your `url` parameter starts
   // with `/`, the base url gets prepended, not including the path portion of your baseUrl.
   // If your `url` parameter starts without a scheme or `/` (like `some/path`), the base url
   // gets prepended directly.
-  baseUrl: 'http://localhost',
+  baseUrl: 'http://localhost:8786',
   //
   // Default timeout for all waitFor* commands.
-  // debug hint: increase this for debugging
   waitforTimeout: debug ? 1000002 : 10002,
   //
   // Default timeout in milliseconds for request
@@ -133,51 +139,32 @@ exports.config = {
   // Default request retries count
   connectionRetryCount: 3,
   //
-  // Initialize the browser instance with a WebdriverIO plugin. The object should have the
-  // plugin name as key and the desired plugin options as properties. Make sure you have
-  // the plugin installed before running any tests. The following plugins are currently
-  // available:
-  // WebdriverCSS: https://github.com/webdriverio/webdrivercss
-  // WebdriverRTC: https://github.com/webdriverio/webdriverrtc
-  // Browserevent: https://github.com/webdriverio/browserevent
-  // plugins: {
-  //     webdrivercss: {
-  //         screenshotRoot: 'my-shots',
-  //         failedComparisonsRoot: 'diffs',
-  //         misMatchTolerance: 0.05,
-  //         screenWidth: [320,480,640,1024]
-  //     },
-  //     webdriverrtc: {},
-  //     browserevent: {}
-  // },
-  //
   // Test runner services
   // Services take over a specific job you don't want to take care of. They enhance
   // your test setup with almost no effort. Unlike plugins, they don't add new
   // commands. Instead, they hook themselves up into the test process.
   services: ['chromedriver'],
+  //
   // Framework you want to run your specs with.
   // The following are supported: Mocha, Jasmine, and Cucumber
-  // see also: http://webdriver.io/guide/testrunner/frameworks.html
+  // see also: https://webdriver.io/docs/frameworks.html
   //
   // Make sure you have the wdio adapter package for the specific framework installed
   // before running any tests.
   framework: 'mocha',
   //
+  // The number of times to retry the entire specfile when it fails as a whole
+  // specFileRetries: 1,
+  //
   // Test reporter for stdout.
-  reporters: ['spec', errorshot],
-  reporterOptions: {
-    errorshotReporter: {
-      // Template for the screenshot name.
-      template: '%browser%_%timestamp%_%parent%-%title%'
-    }
-  },
+  // see also: https://webdriver.io/docs/dot-reporter.html
+  reporters: ['spec'],
+
   //
   // Options to be passed to Mocha.
   // See the full list at http://mochajs.org/
   mochaOpts: {
     ui: 'bdd',
-    // debug hint: increase this timeout for debugging
     timeout: debug ? 6000006 : 600006
   },
   //
@@ -284,39 +271,20 @@ exports.config = {
   // afterSession: function (config, capabilities, specs) {
   // },
   /**
-   * Gets executed after all workers got shut down and the process is about to exit.
+   * Gets executed after all workers got shut down and the process is about to exit. An error
+   * thrown in the onComplete hook will result in the test run failing.
    * @param {Object} exitCode 0 - success, 1 - fail
    * @param {Object} config wdio configuration object
    * @param {Array.<Object>} capabilities list of capabilities details
+   * @param {<Object>} results object containing test results
    */
-  onComplete: async function(exitCode, config, capabilities) {
-    if (!process.env.CONTINUOUS_INTEGRATION) return;
-    if (!fs.existsSync(exports.config.screenshotPath)) return;
-
-    const uploadEndpoint = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-screenshot/';
-
-    const screenshots = fs.readdirSync(exports.config.screenshotPath);
-    if (screenshots.length) console.log('Uploading screenshots...');
-    await Promise.all(screenshots.map(filename => new Promise((resolve, reject) => {
-      fs.createReadStream(exports.config.screenshotPath + filename)
-          .pipe(request.post(uploadEndpoint + filename, (err, response, body) => {
-            if (err) {
-              console.error(`Error on uploading screenshot ${filename}:\n`, err);
-              reject(new Error());
-            } else {
-              console.log(`View ${filename} at https://drive.google.com/file/d/${body}/view`);
-              resolve();
-            }
-          }));
-    })));
-  }
+  // onComplete: function(exitCode, config, capabilities, results) {
+  // },
+  /**
+   * Gets executed when a refresh happens.
+   * @param {String} oldSessionId session ID of the old session
+   * @param {String} newSessionId session ID of the new session
+   */
+  //onReload: function(oldSessionId, newSessionId) {
+  //}
 };
-
-if (debug) {
-  const capabilities = exports.config.capabilities;
-  if (capabilities.length != 1) {
-    throw new Error(`New capabilities have been introduced; that's a good thing! But this code needs updating to take that into account.`);
-  }
-  const chromeOptions = capabilities[0].chromeOptions;
-  chromeOptions.args = chromeOptions.args.filter(arg => arg != HEADLESS_ARG);
-}

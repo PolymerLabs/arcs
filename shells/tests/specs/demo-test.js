@@ -10,60 +10,68 @@
 
 /* global browser */
 
-const {/*seconds,*/waitFor, click, keys, openNewArc} = require('../utils.js');
+const {seconds, waitFor, click, keys, openNewArc, marshalPersona, openArc} = require('../utils.js');
 
+const sleep = s => browser.pause(seconds(s));
 const searchFor = text => keys('input[search]', text);
+const chooseSuggestion = async name => {
+  await click(`[title*="${name}"]`);
+};
 
-//const receiveEntity = async entity =>
-//  browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
+// TODO(sjmiles): replace this with some WDIO work to
+// poll the server until it's up
+describe('wait for server', () => {
+  it('is not a test', async function() {
+    // wait for ALDS to finish init ...
+    console.log('waiting 10s in hopes ALDS spins up...');
+    await sleep(10);
+    console.log('...done');
+  });
+});
 
-['pouchdb', 'firebase'].forEach(async storage => {
-  //describe('pipes ' + storage, () => {
-  //   it('searches', async function() {
-  //     await openNewArc(this.test.fullTitle(), undefined, storage);
-  //     // TODO(sjmiles): wait for context to prepare, need a signal instead
-  //     await browser.pause(seconds(5));
-  //     await receiveEntity({type: 'search', query: 'restaurants'});
-  //     //await waitFor(findRestaurants);
-  //   });
-  //   it('receives', async function() {
-  //     await openNewArc(this.test.fullTitle(), undefined, storage);
-  //     const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
-  //     // TODO(sjmiles): wait for context to prepare, need a signal instead
-  //     await browser.pause(seconds(5));
-  //     await receiveEntity({type: 'tv_show', name: 'bodyguard'});
-  //     await waitFor(bodyguardIsOn);
-  //   });
-  // });
-
-  describe('demo ' + storage, () => {
+['pouchdb', 'firebase'].forEach(async storageType => {
+  describe('demo ' + storageType, () => {
     it('restaurants', async function() {
-      await openNewArc(this.test.fullTitle(), undefined, storage);
-      const search = `restaurants`;
-      const findRestaurants = `[title^="Find restaurants"]`;
-      const restaurantItem = `#webtest-title`;
-      const reservation = `[title*="ou are "]`;
-      const calendarAction = `[particle-host="Calendar::action"]`;
-      await searchFor(search);
-      await click(findRestaurants);
+      await openNewArc(this.test.fullTitle(), storageType);
+      await searchFor(`restaurants`);
+      await chooseSuggestion('Find restaurants');
+      //
+      // TODO(sjmiles): disabling this bit for now for KISS
       // TODO(sjmiles): rendering tiles takes forever to stabilize
       //await browser.pause(seconds(10));
+      //const restaurantItem = `#webtest-title`;
       //await click(restaurantItem);
-      await click(reservation);
-      await waitFor(calendarAction);
+      //
+      // TODO(sjmiles): bug in description generator means we don't know
+      // if first letter is "Y" or "y"
+      await chooseSuggestion('ou are free');
+      const calendarNode = `[particle-host="Calendar::action"]`;
+      await waitFor(calendarNode);
     });
     it('gifts', async function() {
-      await openNewArc(this.test.fullTitle(), undefined, storage);
-      const products = `products`;
-      const createList = `[title^="Create shopping list"]`;
-      const buyGifts = `[title^="Buy gifts"]`;
-      const checkManufacturer = `[title^="Check manufacturer"]`;
-      const interests = `[title^="Find out"]`;
-      await searchFor(products);
-      await click(createList);
-      await click(buyGifts);
-      await click(checkManufacturer);
-      await click(interests);
+      await openNewArc(this.test.fullTitle(), storageType);
+      await searchFor(`products`);
+      await chooseSuggestion('Create shopping list');
+      await chooseSuggestion('Buy gifts');
+      await chooseSuggestion('Check manufacturer');
+      await chooseSuggestion('Find out');
+    });
+  });
+
+  const persona = `${marshalPersona(storageType)}-persistence`;
+  describe(`persistence (${storageType})`, () => {
+    it('persists BasicProfile arc', async function() {
+      console.log(`running "${this.test.fullTitle()}"`);
+      await openArc(persona);
+      await searchFor('profile');
+      await chooseSuggestion('Edit user profile');
+      // TODO(sjmiles): allowing time to settle, we should prefer explicit signal
+      await sleep(1);
+      await openArc(persona);
+      // TODO(sjmiles): put something more obvious on this node
+      const arcTileNode = 'div[chip]';
+      await waitFor(arcTileNode);
     });
   });
 });
+
