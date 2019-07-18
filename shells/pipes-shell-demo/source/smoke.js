@@ -63,7 +63,7 @@ export const smokeTest = async bus => {
   // };
   //
   const enqueue = (tests, delay) => {
-    console.warn(`busish: starting new task...(remaining ${tests.length})`);
+    console.warn(`busish: starting new task...(${tests.length} remaining)`);
     (tests.shift())();
     if (tests.length) {
       // wait a bit before starting the test,

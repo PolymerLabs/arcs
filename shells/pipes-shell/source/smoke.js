@@ -11,7 +11,7 @@
 export const smokeTest = async bus => {
   const enqueue = (tests, delay) => {
     if (tests.length) {
-      console.warn(`bus(ish): starting new task...(remaining ${tests.length})`);
+      console.warn(`busish: starting new task...(${tests.length} remaining)`);
       (tests.shift())();
       // wait a bit before starting the test,
       // to simulate (more) serial task requests
