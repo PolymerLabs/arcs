@@ -69,6 +69,10 @@ export class DeepSet<T extends UniqueStringable> implements Iterable<T> {
     return this.elementSet.size;
   }
 
+  get isEmpty(): boolean {
+    return this.size === 0;
+  }
+
   /** Unique string representation of this DeepSet. */
   toUniqueString(): string {
     const strings = [...this.stringSet];

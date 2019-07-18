@@ -220,6 +220,12 @@ export abstract class Node {
   /** A unique ID for this node. No other node in this graph can have this ID. */
   abstract readonly nodeId: string;
 
+  /**
+   * Boolean indicating whether this node has direct ingress or not (e.g. from a
+   * external datastore).
+   */
+  ingress: boolean;
+
   abstract readonly inEdges: readonly Edge[];
   abstract readonly outEdges: readonly Edge[];
 
