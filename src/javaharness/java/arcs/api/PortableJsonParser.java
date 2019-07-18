@@ -5,5 +5,6 @@ package arcs.api;
  */
 public interface PortableJsonParser {
     PortableJson parse(String json);
+    PortableJson emptyJson();
     String stringify(PortableJson json);
 }
