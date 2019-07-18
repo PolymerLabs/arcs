@@ -56,7 +56,8 @@ export class EdgeExpression {
       // Indicate that this edge inherits from its parents (and apply 
       // modifiers).
       parentEdges.forEach(e => this.inheritFromEdge(e, modifier));
-    } else {
+    }
+    if (edge.start.ingress) {
       this.resolvedFlows.add(modifier.toFlow());
     }
   }
@@ -178,6 +179,12 @@ export class Solver {
 
     const edgeExpression = this.edgeExpressions.get(edge);
     const flows = edgeExpression.resolvedFlows;
+
+    if (flows.size === 0) {
+      // There is no ingress into this edge, so there's nothing to check.
+      finalResult.failures.add(`'${check.originalCheck.toManifestString()}' failed: no data ingress.`);
+      return finalResult;
+    }
 
     for (const flow of flows) {
       if (!flow.evaluateCheck(check)) {
