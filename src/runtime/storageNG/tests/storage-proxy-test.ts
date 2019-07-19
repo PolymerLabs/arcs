@@ -11,22 +11,29 @@
 import {assert} from '../../../platform/chai-web.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {Particle} from '../../particle.js';
-import {StorageProxy} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
-import {MockStore, MockHandle} from '../testing/test-storage.js';
+import {MockHandle, MockStore} from '../testing/test-storage.js';
+
+interface Entity {
+  id: string;
+}
 
 describe('StorageProxy', async () => {
   it('will apply and propagate operation', async () => {
-    const mockStore = new MockStore<CRDTSingletonTypeRecord<{id: string}>>();
-    const storageProxy = new StorageProxy(new CRDTSingleton<{id: string}>(), mockStore);
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const scheduler =
+        new StorageProxyScheduler<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy =
+        new StorageProxy(new CRDTSingleton<Entity>(), mockStore, scheduler);
 
     // Register a handle to verify updates are sent back.
-    const handle = new MockHandle<CRDTSingletonTypeRecord<{id: string}>>('handle', storageProxy, {} as Particle);
-    storageProxy.registerHandle(handle);
+    const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(
+        'handle', storageProxy, {} as Particle, true, true);
 
-    const op: SingletonOperation<{id: string}> = {
+    const op: SingletonOperation<Entity> = {
       type: SingletonOpTypes.Set,
-      value: {id: '1'},
+      value: {id: 'e1'},
       actor: 'A',
       clock: {A: 1}
     };
@@ -37,31 +44,61 @@ describe('StorageProxy', async () => {
       operations: [op],
       id: 1
     });
-    assert.deepEqual(handle.lastUpdate, [op]);
+    await scheduler.idle;
+    assert.sameDeepMembers(handle.lastUpdate, [op]);
   });
 
   it('will sync before returning the particle view', async () => {
-    const mockStore = new MockStore<CRDTSingletonTypeRecord<{id: string}>>();
-    const storageProxy = new StorageProxy(new CRDTSingleton<{id: string}>(), mockStore);
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const scheduler =
+        new StorageProxyScheduler<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy =
+        new StorageProxy(new CRDTSingleton<Entity>(), mockStore, scheduler);
 
     // Register a handle to verify updates are sent back.
-    const handle = new MockHandle<CRDTSingletonTypeRecord<{id: string}>>('handle', storageProxy, {} as Particle);
-    storageProxy.registerHandle(handle);
+    const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(
+        'handle', storageProxy, {} as Particle, true, true);
 
     // When requested a sync, store will send back a model.
     mockStore.onProxyMessage = async message => { 
       mockStore.lastCapturedMessage = message;
-      const crdtData = {values: {'1': {value: {id: '1'}, version: {A: 1}}}, version: {A: 1}};
+      const crdtData = {values: {'1': {value: {id: 'e1'}, version: {A: 1}}}, version: {A: 1}};
       await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1}); 
       return true; 
     };
 
-    const result: {id: string} = await storageProxy.getParticleView();
-    assert.deepEqual(result, {id: '1'});
-    assert.deepEqual(mockStore.lastCapturedMessage, {type: ProxyMessageType.SyncRequest, id: 1});   
+    const result: Entity = await storageProxy.getParticleView();
+    assert.deepEqual(result, {id: 'e1'});
+    assert.deepEqual(
+        mockStore.lastCapturedMessage,
+        {type: ProxyMessageType.SyncRequest, id: 1});
+    await scheduler.idle;
     assert.isTrue(handle.onSyncCalled);
   });
-  // TODO: Test onMessage
+
+  it('can exchange models with the store', async () => {
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy = new StorageProxy(
+        new CRDTSingleton<Entity>(), mockStore, new StorageProxyScheduler());
+
+    // Registering a handle trigger the proxy to connect to the store and fetch the model.
+    const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(
+        'handle', storageProxy, {} as Particle, true, true);
+    assert.deepEqual(
+        mockStore.lastCapturedMessage,
+        {type: ProxyMessageType.SyncRequest, id: 1});
+
+    const crdtData = {
+      values: {'e1': {value: {id: 'e1'}, version: {A: 1}}},
+      version: {A: 1}
+    };
+    // Send a model to the proxy.
+    await storageProxy.onMessage(
+        {type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1});
+    // Request model from the proxy.
+    await storageProxy.onMessage({type: ProxyMessageType.SyncRequest, id: 1});
+    assert.deepEqual(
+        mockStore.lastCapturedMessage,
+        {type: ProxyMessageType.ModelUpdate, id: 1, model: crdtData});
+  });
 });
-
-
