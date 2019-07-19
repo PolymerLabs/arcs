@@ -222,7 +222,7 @@ export class Planner implements InspectablePlanner {
     }
     let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
-    if (this.speculator && !this.noSpecEx) {
+    if (this.speculator && !this.noSpecEx && this._doesPlanUseDescriptions(plan)) {
       const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
@@ -231,6 +231,7 @@ export class Planner implements InspectablePlanner {
       relevance = result.relevance;
       description = await Description.create(speculativeArc, relevance);
     } else {
+      relevance = Relevance.create(arc, plan);
       description = await Description.createForPlan(arc, plan);
     }
     const suggestion = Suggestion.create(plan, hash, relevance);
@@ -243,6 +244,13 @@ export class Planner implements InspectablePlanner {
     );
     suggestionByHash().set(hash, suggestion);
     return suggestion;
+  }
+
+  _doesPlanUseDescriptions(plan) {
+    return plan.handleConnections.some(
+        ({type}) => type.toString() === `[Description {Text key, Text value}]`) ||
+      plan.patterns.some(p => p.includes('${')) ||
+      plan.particles.some(p => !!p.spec.pattern && p.spec.pattern.includes('${'));
   }
 
   _updateGeneration(generations: Generation[], hash: string, handler: (_: AnnotatedDescendant) => void) {
