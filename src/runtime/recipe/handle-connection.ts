@@ -142,7 +142,6 @@ export class HandleConnection implements Comparable<HandleConnection> {
     // TODO: Remove in SLANDLESv2
     if (!(this.handle && this.handle.type && this.handle.type.slandleType())) {
       return undefined;
-    // throw new Error(`toSlotlikeConnection should only be used on Slot and [Slot] typed handles. Handle Connection ${this.name} has type ${this.type}`);
     }
     const slandle: SlotConnection = new SlotConnection(this.name, this.particle);
     slandle.tags = this.tags;

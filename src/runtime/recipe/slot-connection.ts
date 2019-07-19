@@ -118,7 +118,7 @@ export class SlotConnection implements Comparable<SlotConnection> {
         options.errors.set(this.name, label);
       }
       if (options && options.details) {
-        options.details = label; // TODO use .errors instead.
+        options.details = label; // TODO(jopra): use .errors instead.
       }
     };
     assert(Object.isFrozen(this), `slot connection ${this.name} must be frozen before it is resolved`);

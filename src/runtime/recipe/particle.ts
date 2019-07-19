@@ -275,12 +275,12 @@ export class Particle implements Comparable<Particle> {
   }
 
   getSlandleConnections(): SlotConnection[] {
-    // TODO
+    // TODO(jopra): Revisit when slots are removed.
     return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.toSlotConnection()).filter(conn => conn)];
   }
 
   getSlotConnections(): SlotConnection[] {
-    // TODO
+    // TODO(jopra): Revisit when slots are removed.
     return Object.values(this._consumedSlotConnections);
   }
 

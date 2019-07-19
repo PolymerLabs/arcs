@@ -61,12 +61,12 @@ export class Handle implements Comparable<Handle> {
     slandle.tags = this.tags;
     slandle.id = this.id;
     slandle.formFactor = slotInfo.formFactor;
-    // TODO cannot assign slandle handles as the slots do not actually track their handles but use a source particle connection mapping
+    // TODO(jopra): cannot assign slandle handles as the slots do not actually track their handles but use a source particle connection mapping
     // slandle.handles = [slotInfo.handle];
     return slandle;
   }
 
-  _copyInto(recipe: Recipe, _cloneMap: CloneMap, variableMap: VariableMap) {
+  _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
     let handle: Handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);

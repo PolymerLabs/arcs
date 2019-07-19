@@ -39,7 +39,7 @@ export class MatchRecipeByVerb extends Strategy {
   async generate(inputParams: GenerateParams<Recipe>): Promise<Descendant<Recipe>[]> {
     const arc = this.arc;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onParticle(_recipe: Recipe, particle: Particle) {
+      onParticle(recipe: Recipe, particle: Particle) {
         if (particle.name) {
           // Particle already has explicit name.
           return undefined;

@@ -23,7 +23,7 @@ import {SlotUtils} from './slot-utils.js';
 import {Continuation} from './walker.js';
 
 export class ResolveWalker extends RecipeWalker {
-  options: IsValidOptions;
+  private options: IsValidOptions;
   private readonly arc: Arc;
 
   constructor(tactic, arc, options?) {
@@ -37,7 +37,7 @@ export class ResolveWalker extends RecipeWalker {
       if (this.options && this.options.errors) {
         this.options.errors.set(handle, label);
       }
-      return []; // Avoiding repetition here allows us to change the type.
+      return [];
     };
     const arc = this.arc;
     if (handle.connections.length === 0 ||
@@ -92,7 +92,7 @@ export class ResolveWalker extends RecipeWalker {
     }
 
     if (mappable.length === 0) {
-      return error('No mappable connections');
+      return error('Cannot find a handle matching requested type and tags.');
     }
     mappable = mappable.filter(incomingHandle => {
       for (const existingHandle of recipe.handles) {
@@ -105,7 +105,7 @@ export class ResolveWalker extends RecipeWalker {
     });
 
     if (mappable.length === 0) {
-      return error('No mappable connections (due to filtering)');
+      return error('The only handles matching the requested type and tags are already present in this recipe');
     }
     return mappable.map(store => ((recipe, updateHandle) => {
       updateHandle.mapToStorage(store);
@@ -133,7 +133,7 @@ export class ResolveWalker extends RecipeWalker {
 
      // SlotUtils handles a multi-slot case.
     if (allSlots.length !== 1) {
-      return error('There is not just one slot');
+      return error('There are multiple matching slots (match is ambiguous)');
     }
 
     const selectedSlot = allSlots[0];
@@ -156,7 +156,7 @@ export class ResolveWalker extends RecipeWalker {
 
     // SlotUtils handles a multi-slot case.
     if (allSlots.length !== 1) {
-      return error('There is not just one slot for this slot spec?');
+      return error('There are multiple matching slots for this slot spec (match is ambiguous)');
     }
 
     const selectedSlot = allSlots[0];
@@ -168,7 +168,7 @@ export class ResolveWalker extends RecipeWalker {
   }
   // TODO(lindner): add typeof checks here and figure out where handle is coming from.
   onObligation(recipe: Recipe, obligation: ConnectionConstraint) {
-    // TODO: Log errors from here.
+    // TODO(jopra): Log errors from here.
     const fromParticle: Particle = (obligation.from as InstanceEndPoint).instance;
     const toParticle: Particle = (obligation.to as InstanceEndPoint).instance;
     for (const fromConnection of Object.values(fromParticle.connections)) {
@@ -186,7 +186,10 @@ export class ResolveWalker extends RecipeWalker {
 }
 
 export class ResolveRecipeAction extends Action<Recipe> {
-  options: IsValidOptions;
+  private options: IsValidOptions;
+  withOptions(options: IsValidOptions) {
+    this.options = options;
+  }
   async generate(inputParams: GenerateParams<Recipe>) {
     return ResolveWalker.walk(this.getResults(inputParams),
       new ResolveWalker(ResolveWalker.Permuted, this.arc, this.options), this);
@@ -211,7 +214,7 @@ export class RecipeResolver {
       return null;
     }
 
-    this.resolver.options = options; // Smuggle error data around
+    this.resolver.withOptions(options); // Smuggle error data around
     const result = await this.resolver.generateFrom([{result: recipe, score: 1}]);
     if (result.length === 0) {
       if (options && options.errors) {
