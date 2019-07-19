@@ -32,23 +32,19 @@ const storageKeyByType = {
   'firebase': `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`
 };
 
-exports.waitForServer = async function(timeout) {
-  return browser.execute(async timeout => {
-    let resolve;
-    let reject;
-    const promise = new Promise((...args) => [resolve, reject] = args);
-    const poll = async () => {
-      const response = await fetch('/status');
-      if (response.status === 200) {
-        console.warn(response.status);
-        resolve();
-      } else {
-        setTimeout(poll, 1000);
-      }
-    };
-    poll();
-    return await promise;
-  }, timeout);
+exports.waitForServer = async function() {
+  const statusUrl = `${browser.options.baseUrl}status`;
+  const polls = 40;
+  const interval = 500;
+  // give up after polls*interval (20s)
+  for (let i=0; i<polls; i++) {
+    await browser.url(statusUrl);
+    const title = await browser.getTitle();
+    if (title === 'ALDS') {
+      break;
+    }
+    await browser.pause(interval);
+  }
 };
 
 const installUtils = async () => {

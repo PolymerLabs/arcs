@@ -13,7 +13,7 @@ import {ExplorerProxy} from './explorer-proxy';
 
 /**
  * Handler to the '/status' path showing the state of the server.
- * 
+ *
  * Very simple at the moment, will likely grow as we add features.
  */
 export function status(proxy: ExplorerProxy) {
@@ -22,7 +22,7 @@ export function status(proxy: ExplorerProxy) {
       return next();
     }
 
-    res.send(`<p>Proxy Status:
+    res.send(`<title>ALDS</title><p>Proxy Status:
         <p>Device: ${proxy.deviceConnected ? 'Connected' : 'Disconnected'}
         <p>Explorer: ${proxy.explorerConnected ? 'Connected' : 'Disconnected'}`);
   };

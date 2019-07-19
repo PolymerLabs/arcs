@@ -25,10 +25,7 @@ describe('wait for server', () => {
     // wait for ALDS to finish init ...
     console.log('waiting for ALDS to spin up...');
     await waitForServer();
-    //console.log('waiting 10s in hopes ALDS spins up...');
-    //await sleep(10);
     console.log('...done');
-    await sleep(30);
   });
 });
 
