@@ -122,7 +122,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   readyUpdate({root}, state) {
     // setup environment once we have a root and a user
     if (!state.env && root) {
-      this.updateEnv({root}, state);
+      state.env = this.configureEnv(root);
       this.configureContext();
     }
     // spin up launcher arc
@@ -171,12 +171,12 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
     return [props, state, renderModel];
   }
-  async updateEnv({root}, state) {
+  async configureEnv(root) {
     // capture anchor-clicks for SPA behavior
     linkJack(document, anchor => this.routeLink(anchor));
     // configure arcs environment
     Utils.init(root);
-    state.env = Utils.env;
+    return Utils.env;
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
