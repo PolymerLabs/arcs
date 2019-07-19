@@ -59,14 +59,14 @@ describe('wait for server', () => {
   });
 
   const persona = `${marshalPersona(storageType)}-persistence`;
-  describe(`persistence (${storageType})`, () => {
+  describe(`persistence (${persona})`, () => {
     it('persists BasicProfile arc', async function() {
       console.log(`running "${this.test.fullTitle()}"`);
       await openArc(persona);
       await searchFor('profile');
       await chooseSuggestion('Edit user profile');
       // TODO(sjmiles): allowing time to settle, we should prefer explicit signal
-      await sleep(1);
+      await sleep(5);
       await openArc(persona);
       // TODO(sjmiles): put something more obvious on this node
       const arcTileNode = 'div[chip]';

@@ -13,7 +13,7 @@
     "test-with-start": "run-p --print-name --race start test",
     "test": "run-s --print-name --continue-on-error test-no-web test-wdio-shells",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-extension",
-    "test-shells": "run-p --print-name --race start --continue-on-error test-wdio-shells",
+    "test-shells": "run-p --print-name --race start test-wdio-shells",
     "test-sigh": "cross-env tools/sigh",
     "test-health": "cross-env tools/sigh health",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
