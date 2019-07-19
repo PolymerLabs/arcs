@@ -103,13 +103,12 @@ describe('Store', async () => {
 
     let sentSyncRequest = false;
 
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.isFalse(sentSyncRequest);
           sentSyncRequest = true;
-          await activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
+          const result = activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
           return true;
         }
         assert.isTrue(sentSyncRequest);
@@ -121,7 +120,7 @@ describe('Store', async () => {
         throw new Error();
       });
 
-      await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id});    
+      const result = activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id});    
     });
   });
 
@@ -131,8 +130,7 @@ describe('Store', async () => {
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
     const activeStore = await store.activate();
     
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
         assert.strictEqual(proxyMessage.type, ProxyMessageType.ModelUpdate);
@@ -145,7 +143,7 @@ describe('Store', async () => {
         throw new Error();
       });
 
-      await activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id1});
+      const result = activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id1});
     });
   });
 
@@ -158,8 +156,7 @@ describe('Store', async () => {
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.strictEqual(proxyMessage.operations.length, 1);
@@ -173,7 +170,7 @@ describe('Store', async () => {
       });
   
       const driver = activeStore['driver'] as MockDriver<CountData>;
-      await driver.receiver(count.getData(), 1);
+      driver.receiver(count.getData(), 1);
     });
   });
 
