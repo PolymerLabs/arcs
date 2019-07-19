@@ -222,7 +222,7 @@ export class Planner implements InspectablePlanner {
     }
     let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
-    if (this.speculator && !this.noSpecEx && this._doesPlanUseDescriptions(plan)) {
+    if (this._shouldSpeculate(plan)) {
       const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
@@ -246,11 +246,15 @@ export class Planner implements InspectablePlanner {
     return suggestion;
   }
 
-  _doesPlanUseDescriptions(plan) {
-    return plan.handleConnections.some(
-        ({type}) => type.toString() === `[Description {Text key, Text value}]`) ||
-      plan.patterns.some(p => p.includes('${')) ||
-      plan.particles.some(p => !!p.spec.pattern && p.spec.pattern.includes('${'));
+  _shouldSpeculate(plan) {
+    if (!this.speculator && this.noSpecEx) {
+      return false;
+    }
+    return !plan.name.toLowerCase().includes('nospec');
+    // return plan.handleConnections.some(
+    //     ({type}) => type.toString() === `[Description {Text key, Text value}]`) ||
+    //   plan.patterns.some(p => p.includes('${')) ||
+    //   plan.particles.some(p => !!p.spec.pattern && p.spec.pattern.includes('${'));
   }
 
   _updateGeneration(generations: Generation[], hash: string, handler: (_: AnnotatedDescendant) => void) {

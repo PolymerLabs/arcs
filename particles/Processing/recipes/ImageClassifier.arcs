@@ -14,7 +14,7 @@ import '../ModelSelector.arcs'
 
 import './ClassifierStatics.arcs'
 
-recipe ImageClassifierUI
+recipe ImageClassifierUI-NoSpec
   // since we `use`, this recipe is incomplete and coalescer is triggered
   use as imgUrl
   use as predictions
