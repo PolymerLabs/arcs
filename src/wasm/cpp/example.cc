@@ -230,6 +230,7 @@ DEFINE_PARTICLE(SpecialFieldsParticle)
 class ServiceParticle : public arcs::Particle {
 public:
   void init() override {
+    url_ = resolveUrl("https://$particles/Services/assets/waltbird.jpg");
     serviceRequest("ml5.classifyImage", {{"imageUrl", url_}});
     serviceRequest("random.next", {}, "first");
     serviceRequest("random.next", {}, "second");
@@ -267,8 +268,7 @@ public:
     renderSlot("root");
   }
 
-  // TODO: provide resolver function for wasm particles
-  std::string url_ = "http://localhost:8786/particles/Services/assets/waltbird.jpg";
+  std::string url_ ;
   std::string label_;
   std::string probability_;
   std::string random_[2];
