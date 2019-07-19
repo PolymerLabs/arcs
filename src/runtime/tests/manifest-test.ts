@@ -2077,7 +2077,7 @@ resource SomeName
           in T {} input1
           in T {} input2
           check input1 is property1
-          check input2 is property2
+          check input2 is not property2
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2087,12 +2087,12 @@ resource SomeName
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is property1');
       assert.strictEqual(check1.target.name, 'input1');
-      assert.deepEqual(check1.expression, new CheckHasTag('property1'));
+      assert.deepEqual(check1.expression, new CheckHasTag('property1', /* isNot= */ false));
 
       const check2 = checkDefined(particle.trustChecks[1]);
-      assert.strictEqual(check2.toManifestString(), 'check input2 is property2');
+      assert.strictEqual(check2.toManifestString(), 'check input2 is not property2');
       assert.strictEqual(check2.target.name, 'input2');
-      assert.deepEqual(check2.expression, new CheckHasTag('property2'));
+      assert.deepEqual(check2.expression, new CheckHasTag('property2', /* isNot= */ true));
     });
 
     it(`supports 'is from store' checks`, async () => {
@@ -2101,7 +2101,7 @@ resource SomeName
           in T {} input1
           in T {} input2
           check input1 is from store MyStore
-          check input2 is from store 'my-store-id'
+          check input2 is not from store 'my-store-id'
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2111,12 +2111,12 @@ resource SomeName
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is from store MyStore');
       assert.strictEqual(check1.target.name, 'input1');
-      assert.deepEqual(check1.expression, new CheckIsFromStore({type: 'name', store: 'MyStore'}));
+      assert.deepEqual(check1.expression, new CheckIsFromStore({type: 'name', store: 'MyStore'}, /* isNot= */ false));
 
       const check2 = checkDefined(particle.trustChecks[1]);
-      assert.strictEqual(check2.toManifestString(), `check input2 is from store 'my-store-id'`);
+      assert.strictEqual(check2.toManifestString(), `check input2 is not from store 'my-store-id'`);
       assert.strictEqual(check2.target.name, 'input2');
-      assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}));
+      assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}, /* isNot= */ true));
     });
 
     it('supports checks on provided slots', async () => {
@@ -2124,7 +2124,7 @@ resource SomeName
         particle A
           consume root
             provide mySlot
-          check mySlot data is trusted
+            check mySlot data is trusted
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2135,14 +2135,14 @@ resource SomeName
       assert.strictEqual(check.toManifestString(), 'check mySlot data is trusted');
       assert.isTrue(check.target instanceof ProvideSlotConnectionSpec);
       assert.strictEqual(check.target.name, 'mySlot');
-      assert.deepEqual(check.expression, new CheckHasTag('trusted'));
+      assert.deepEqual(check.expression, new CheckHasTag('trusted', /* isNot= */ false));
     });
 
     it(`supports checks with the 'or' operation`, async () => {
       const manifest = await Manifest.parse(`
         particle A
           in T {} input
-          check input is property1 or is property2 or is property3
+          check input is property1 or is not property2 or is property3
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2150,12 +2150,12 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
 
       const check = checkDefined(particle.trustChecks[0]);
-      assert.strictEqual(check.toManifestString(), 'check input is property1 or is property2 or is property3');
+      assert.strictEqual(check.toManifestString(), 'check input is property1 or is not property2 or is property3');
       assert.strictEqual(check.target.name, 'input');
       assert.deepEqual(check.expression, new CheckBooleanExpression('or', [
-        new CheckHasTag('property1'),
-        new CheckHasTag('property2'),
-        new CheckHasTag('property3'),
+        new CheckHasTag('property1', /* isNot= */ false),
+        new CheckHasTag('property2', /* isNot= */ true),
+        new CheckHasTag('property3', /* isNot= */ false),
       ]));
     });
 
@@ -2163,7 +2163,7 @@ resource SomeName
       const manifest = await Manifest.parse(`
         particle A
           in T {} input
-          check input is property1 and is property2 and is property3
+          check input is property1 and is not property2 and is property3
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2171,12 +2171,12 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
 
       const check = particle.trustChecks[0];
-      assert.strictEqual(check.toManifestString(), 'check input is property1 and is property2 and is property3');
+      assert.strictEqual(check.toManifestString(), 'check input is property1 and is not property2 and is property3');
       assert.strictEqual(check.target.name, 'input');
       assert.deepEqual(check.expression, new CheckBooleanExpression('and', [
-        new CheckHasTag('property1'),
-        new CheckHasTag('property2'),
-        new CheckHasTag('property3'),
+        new CheckHasTag('property1', /* isNot= */ false),
+        new CheckHasTag('property2', /* isNot= */ true),
+        new CheckHasTag('property3', /* isNot= */ false),
       ]));
     });
 
@@ -2184,7 +2184,7 @@ resource SomeName
       const manifest = await Manifest.parse(`
         particle A
           in T {} input
-          check input (is property1 and ((is property2))) or ((is property2) or is property3)
+          check input (is property1 and ((is not property2))) or ((is property2) or is not property3)
       `);
       assert.lengthOf(manifest.particles, 1);
       const particle = manifest.particles[0];
@@ -2192,18 +2192,18 @@ resource SomeName
       assert.lengthOf(particle.trustChecks, 1);
 
       const check = particle.trustChecks[0];
-      assert.strictEqual(check.toManifestString(), 'check input (is property1 and is property2) or (is property2 or is property3)');
+      assert.strictEqual(check.toManifestString(), 'check input (is property1 and is not property2) or (is property2 or is not property3)');
       assert.strictEqual(check.target.name, 'input');
       assert.deepEqual(
         check.expression,
         new CheckBooleanExpression('or', [
           new CheckBooleanExpression('and', [
-            new CheckHasTag('property1'),
-            new CheckHasTag('property2'),
+            new CheckHasTag('property1', /* isNot= */ false),
+            new CheckHasTag('property2', /* isNot= */ true),
           ]),
           new CheckBooleanExpression('or', [
-            new CheckHasTag('property2'),
-            new CheckHasTag('property3'),
+            new CheckHasTag('property2', /* isNot= */ false),
+            new CheckHasTag('property3', /* isNot= */ true),
           ]),
         ]));
     });
@@ -2246,10 +2246,10 @@ resource SomeName
   claim output2 derives from input2 and derives from input2
   claim output3 is not dangerous
   check input1 is trusted or is from handle input2
-  check input2 is extraTrusted
+  check input2 is not extraTrusted
   check input3 is from store MyStore
-  check input4 is from store 'my-store-id'
-  check childSlot data is somewhatTrusted
+  check input4 is not from store 'my-store-id'
+  check childSlot data is not somewhatTrusted
   modality dom
   consume parentSlot
     provide childSlot`;
