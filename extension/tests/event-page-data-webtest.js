@@ -27,7 +27,7 @@ describe('EventPage', function() {
       ]);
       assert.isOk(result);
       assert.isOk(
-        result.hasOwnProperty('urla'),
+          result.hasOwnProperty('urla'),
           `result didn't have a urla key ${result}`);
       assert.deepEqual(
           [{name: 'entitya1'}, {name: 'entityb2'}], result['urla']);
@@ -42,10 +42,10 @@ describe('EventPage', function() {
       ]);
       assert.isOk(result);
       assert.isOk(
-        result.hasOwnProperty('urla'),
+          result.hasOwnProperty('urla'),
           `result didn't have a urla key ${result}`);
       assert.isNotOk(
-        result.hasOwnProperty('urlb'),
+          result.hasOwnProperty('urlb'),
           `result had an 'empty' key (presumably with an empty result list: ${
               result['empty']})`);
     });
