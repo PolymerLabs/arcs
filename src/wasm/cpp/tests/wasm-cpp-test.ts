@@ -15,7 +15,7 @@ import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import * as util from '../../../runtime/testing/test-util.js';
 
-describe('wasm C++ tests', () => {
+describe.skip('wasm C++ tests', () => {
   it('simple entity passthrough', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
