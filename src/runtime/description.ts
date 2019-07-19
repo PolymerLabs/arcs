@@ -147,7 +147,7 @@ export class Description {
   }
 
   private static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue>|undefined {
-    if (!store) {
+    if (!store || (store instanceof StorageStub)) {
       return undefined;
     }
     if (store.type instanceof CollectionType) {
