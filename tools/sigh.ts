@@ -62,7 +62,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS, languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, wasm, runTests],
+  test: [peg, railroad, build, runTests],
   webpack: [peg, railroad, build, webpack],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
@@ -78,7 +78,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   schema2pkg: [peg, build, schema2pkg],
   devServer: [peg, build, devServer],
   licenses: [build],
-  default: [check, peg, railroad, build, wasm, runTests, webpack, webpackTools, lint, tslint],
+  default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
