@@ -104,7 +104,7 @@ export class ParticleOutput implements Edge {
       this.derivesFrom = [];
       for (const claim of connection.spec.claims) {
         if (claim.type === ClaimType.DerivesFrom) {
-          this.derivesFrom.push(particleNode.inEdgesByName[claim.parentHandle.name]);
+          this.derivesFrom.push(particleNode.inEdgesByName.get(claim.parentHandle.name));
         }
       }
     }
