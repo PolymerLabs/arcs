@@ -539,13 +539,14 @@ ${this.activeRecipe.toString()}`;
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
 
     for (const recipeHandle of handles) {
-      const store = this.context.findStoreById(recipeHandle.id);
+      let store: StorageStub|StorageProviderBase = this.context.findStoreById(recipeHandle.id);
+      const isInflatable =
+          (store instanceof StorageStub) && (store as StorageStub).isBackedByManifest();
+
       // TODO(sjmiles): I added `(store instanceof StorageStub)` clause below because the context generators used
       // in shells/* work today by creating and updating inflated stores in the context.
       if (['copy', 'create'].includes(recipeHandle.fate) ||
-          ((recipeHandle.fate === 'map')
-            && (store instanceof StorageStub)
-              && (store as StorageStub).isBackedByManifest())) {
+          (recipeHandle.fate === 'map' && isInflatable)) {
         let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
@@ -583,6 +584,8 @@ ${this.activeRecipe.toString()}`;
         recipeHandle.storageKey = newStore.storageKey;
         continue;
         // TODO: move the call to ParticleExecutionHost's DefineHandle to here
+      } else if (recipeHandle.fate === 'use' && isInflatable) {
+        store = await store.inflate();
       }
 
       // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
