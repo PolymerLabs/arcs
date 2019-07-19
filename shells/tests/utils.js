@@ -142,6 +142,8 @@ exports.openArc = async function(persona) {
   await browser.url(url);
   // wait for the app to render
   await exports.waitFor('input[search]');
+  // TODO(sjmiles): buy time for context, search gets lost if it comes in too early, which is a bug
+  await browser.pause(exports.seconds(15));
 };
 
 /**
@@ -169,5 +171,7 @@ exports.openNewArc = async function(testTitle, storageType, useSolo) {
   await browser.url(`${exports.shellUrl}/?${urlParams.join('&')}`);
   // only to ensure time for the app to configure itself
   await exports.waitFor('input[search]');
+  // TODO(sjmiles): buy time for context, search gets lost if it comes in too early, which is a bug
+  await browser.pause(exports.seconds(15));
 };
 
