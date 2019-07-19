@@ -10,7 +10,7 @@
 
 /* global browser */
 
-const {seconds, waitFor, click, keys, openNewArc, marshalPersona, openArc} = require('../utils.js');
+const {waitForServer, seconds, waitFor, click, keys, openNewArc, marshalPersona, openArc} = require('../utils.js');
 
 const sleep = s => browser.pause(seconds(s));
 const searchFor = text => keys('input[search]', text);
@@ -23,8 +23,8 @@ const chooseSuggestion = async name => {
 describe('wait for server', () => {
   it('is not a test', async function() {
     // wait for ALDS to finish init ...
-    console.log('waiting 10s in hopes ALDS spins up...');
-    await sleep(10);
+    console.log('waiting for ALDS to spin up...');
+    await waitForServer();
     console.log('...done');
   });
 });
