@@ -98,9 +98,9 @@ export class Description {
 
   public static getAllTokens(pattern: string): string[][] {
     const allTokens = [];
-    const tokens = pattern.match(DescriptionFormatter.TokensRegex);
+    const tokens = pattern.match(DescriptionFormatter.tokensRegex);
     for (let i = 0; i < tokens.length; ++i) {
-      allTokens[i] = tokens[i].match(DescriptionFormatter.TokensInnerRegex)[1].split('.');
+      allTokens[i] = tokens[i].match(DescriptionFormatter.tokensInnerRegex)[1].split('.');
     }
     return allTokens;
   }
