@@ -96,6 +96,15 @@ export class Description {
     return formatter.getHandleDescription(recipeHandle);
   }
 
+  public static getAllTokens(pattern: string): string[][] {
+    const allTokens = [];
+    const tokens = pattern.match(DescriptionFormatter.TokensRegex);
+    for (let i = 0; i < tokens.length; ++i) {
+      allTokens[i] = tokens[i].match(DescriptionFormatter.TokensInnerRegex)[1].split('.');
+    }
+    return allTokens;
+  }
+
   private static async initDescriptionHandles(allParticles: Particle[], arc?: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
     return await Promise.all(
       allParticles.map(particle => Description._createParticleDescription(particle, arc, relevance)));
