@@ -36,4 +36,8 @@ or
 * 1 = particles/runtime-logging only
 * 2 = add shell logging
 
+### Verbs
 
+* spawn: spawn an arc using the named recipe
+  * send to shell: {"message":"spawn","recipe":"NotificationTest"}
+  * receive from shell: {"message":"data","tid":1,"data":{...whatever data the recipe produced}}

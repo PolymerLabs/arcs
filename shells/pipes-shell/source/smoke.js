@@ -21,7 +21,12 @@ export const smokeTest = async bus => {
     }
   };
   //
+  const notificationTest = () => {
+    // spawn an arc
+    bus.receive({message: 'spawn', modality: 'dom', recipe: 'NotificationTest'});
+  };
+  //
   enqueue([
-    // nothing to do
+    notificationTest
   ], 500);
 };
