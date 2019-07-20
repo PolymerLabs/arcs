@@ -20,6 +20,8 @@ particle MakeCake in 'source/MakeCake.js'
   description `Make a ${cake} cake`
 
 particle LightCandles in 'source/LightCandles.js'
-  in Cake birthdayCake
+  // Note: birthday cake should is an input connection.
+  // It is only made 'inout' to force speculative execution.
+  inout Cake birthdayCake
   consume candles #special
   description `Light candles on ${birthdayCake} cake`
