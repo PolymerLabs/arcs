@@ -15,6 +15,7 @@ import {marshalPipesArc} from './pipes-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
+import {spawn} from './verbs/spawn.js';
 
 //const {log, warn} = logsFactory('pipe');
 
@@ -44,6 +45,9 @@ const populateDispatcher = (dispatcher, composerFactory, storage, context) => {
   Object.assign(dispatcher, {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
+    },
+    spawn: async (msg, tid, bus) => {
+      return await spawn(msg, tid, bus, composerFactory, storage, context);
     }
   });
   return dispatcher;

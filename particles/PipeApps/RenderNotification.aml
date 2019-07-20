@@ -1,0 +1,10 @@
+import './Json.schema'
+
+particle RenderNotification in './source/RenderNotification.js'
+  out Json output
+  consume root
+
+recipe NotificationTest
+  create as output
+  RenderNotification
+    output = output
