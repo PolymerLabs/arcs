@@ -30,10 +30,7 @@ export async function resetStorageForTesting(key) {
   });
 
   const reference = firebase.database(app).ref(key.location);
-  await new Promise(async resolve => {
-    await reference.remove(resolve);
-  });
-
+  await reference.remove();
   await app.delete();
 }
 

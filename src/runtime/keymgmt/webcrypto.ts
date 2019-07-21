@@ -219,9 +219,9 @@ class WebCryptoSessionKey implements SessionKey, TestableKey {
 
             const rawWrappedKey = crypto.subtle.wrapKey('raw',
                 this.sessionKey,
-                (pkey as WebCryptoPublicKey).cryptoKey(),
-                {   //these are the wrapping key's algorithm options
-                    name: webPkey.algorithm(),
+                (pkey as WebCryptoPublicKey).cryptoKey(), {
+                  //these are the wrapping key's algorithm options
+                  name: webPkey.algorithm(),
                 }
             );
             return rawWrappedKey.then(rawKey => new WebCryptoWrappedKey(new Uint8Array(rawKey), pkey));
