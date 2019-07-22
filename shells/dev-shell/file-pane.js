@@ -74,8 +74,11 @@ export class FilePane extends HTMLElement {
     this.addFile();
   }
 
-  setExecuteCallback(executeCallback) {
+  init(executeCallback, toggleButton, exportButton) {
     this.executeCallback = executeCallback;
+    this.toggleButton = toggleButton;
+    toggleButton.addEventListener('click', this.toggleFiles.bind(this));
+    exportButton.addEventListener('click', this.exportFiles.bind(this));
   }
 
   interceptCtrlEnter(event) {
@@ -128,13 +131,13 @@ export class FilePane extends HTMLElement {
     return fileMap;
   }
 
-  toggleFiles(event) {
+  toggleFiles() {
     if (this.toggle.style.display === 'none') {
       this.toggle.style.display = '';
-      event.target.textContent = 'Hide files';
+      this.toggleButton.textContent = 'Hide files';
     } else {
       this.toggle.style.display = 'none';
-      event.target.textContent = 'Show files';
+      this.toggleButton.textContent = 'Show files';
     }
   }
 
@@ -154,6 +157,7 @@ export class FilePane extends HTMLElement {
   seedManifest(lines) {
     this.manifest.rows = lines.length + 1;
     this.manifest.value = lines.join('\n');
+    this.toggleFiles();
   }
 
   seedExample(manifest, particle) {
