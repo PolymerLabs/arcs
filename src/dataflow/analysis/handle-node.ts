@@ -63,23 +63,16 @@ export function createHandleNodes(handles: Handle[]) {
 
 /** Adds a connection between the given particle and handle nodes. */
 export function addHandleConnection(
-    particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection, edgeId: string): Edge {
-  switch (connection.direction) {
-    case 'in': {
-      const edge = new ParticleInput(edgeId, particleNode, handleNode, connection);
-      particleNode.addInEdge(edge);
-      handleNode.addOutEdge(edge);
-      return edge;
-    }
-    case 'out': {
-      const edge = new ParticleOutput(edgeId, particleNode, handleNode, connection);
-      particleNode.addOutEdge(edge);
-      handleNode.addInEdge(edge);
-      return edge;
-    }
-    case 'inout': // TODO: Handle inout directions.
-    case 'host':
-    default:
-      throw new Error(`Unsupported connection type: ${connection.direction}`);
+    direction: 'in' | 'out', particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection, edgeId: string): Edge {
+  if (direction === 'in') {
+    const edge = new ParticleInput(edgeId, particleNode, handleNode, connection);
+    particleNode.addInEdge(edge);
+    handleNode.addOutEdge(edge);
+    return edge;
+  } else {
+    const edge = new ParticleOutput(edgeId, particleNode, handleNode, connection);
+    particleNode.addOutEdge(edge);
+    handleNode.addInEdge(edge);
+    return edge;
   }
 }
