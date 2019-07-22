@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../platform/assert-web.js';
 import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton';
@@ -30,11 +31,17 @@ export abstract class Handle<T extends CRDTTypeRecord> {
   key: string;
   clock: VersionMap;
   options: HandleOptions;
+  readonly canRead: boolean;
+  readonly canWrite: boolean;
   particle: Particle;
-  constructor(key: string, storageProxy: StorageProxy<T>, particle: Particle) {
+  constructor(
+      key: string,
+      storageProxy: StorageProxy<T>,
+      particle: Particle,
+      canRead: boolean,
+      canWrite: boolean) {
     this.key = key;
     this.storageProxy = storageProxy;
-    this.clock = this.storageProxy.registerHandle(this);
     this.particle = particle;
     this.options = {
       keepSynced: true,
@@ -42,13 +49,19 @@ export abstract class Handle<T extends CRDTTypeRecord> {
       notifyUpdate: true,
       notifyDesync: false,
     };
+    this.canRead = canRead;
+    this.canWrite = canWrite;
+    this.clock = this.storageProxy.registerHandle(this);
   }
   configure(options: HandleOptions): void {
+    assert(this.canRead, 'configure can only be called on readable Handles');
     this.options = options;
   }
   abstract onUpdate(updates: T['operation'][]): void;
   // TODO: this shuld be async and return Promise<void>.
   abstract onSync(): void;
+  onDesync(): void {
+  }
 }
 
 /**
@@ -57,6 +70,11 @@ export abstract class Handle<T extends CRDTTypeRecord> {
  * implied by the set.
  */
 export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollectionTypeRecord<T>> {
+  async get(id: string): Promise<T> {
+    const data = await this.storageProxy.getData();
+    return data.values[id].value;    
+  }
+
   async add(entity: T): Promise<boolean> {
     this.clock[this.key] = (this.clock[this.key] || 0) + 1; 
     const op: CRDTOperation = {
@@ -121,7 +139,7 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
 
   onSync() {
     // TODO: call onHandleSync on the particle, eg:
-    // particle.onHandleSync(this /*handle*/, this.toSet() /*model*/);
+    // particle.onHandleSync(this /*handle*/, this.toList() /*model*/);
   }
 }
 

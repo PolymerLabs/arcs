@@ -10,6 +10,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
+import {Runnable} from '../hot.js';
+import {Particle} from '../particle.js';
+
 import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType} from './store.js';
 
@@ -21,19 +24,48 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private crdt: CRDTModel<T>;
   private id: number;
   private store: ActiveStore<T>;
+  private listenerAttached = false;
+  private keepSynced = false;
+  private synchronized = false;
+  private readonly scheduler: StorageProxyScheduler<T>;
 
-  constructor(crdt: CRDTModel<T>, store: ActiveStore<T>) {
+  constructor(
+      crdt: CRDTModel<T>,
+      store: ActiveStore<T>,
+      scheduler: StorageProxyScheduler<T>) {
     this.crdt = crdt;
-    this.registerWithStore(store);
-  }
-
-  registerWithStore(store: ActiveStore<T>) {
-    this.id = store.on(x => this.onMessage(x));
     this.store = store;
+    this.scheduler = scheduler;
   }
 
-  registerHandle(h: Handle<T>): VersionMap {
-    this.handles.push(h);
+  registerHandle(handle: Handle<T>): VersionMap {
+    this.handles.push(handle);
+
+    // Attach an event listener to the backing store when the first readable handle is registered.
+    if (!this.listenerAttached) {
+      this.id = this.store.on(x => this.onMessage(x));
+      this.listenerAttached = true;
+    }
+
+    // Change to synchronized mode as soon as we get any handle configured with keepSynced and send
+    // a request to get the full model (once).
+    // TODO: drop back to non-sync mode if all handles re-configure to !keepSynced.
+    if (handle.options.keepSynced) {
+      if (!this.keepSynced) {
+        this.synchronizeModel().catch(e => {
+          // TODO: report the exception on the host side.
+          console.error('Error during SyncRequest', e);
+        });
+        this.keepSynced = true;
+      }
+
+      // If a handle configured for sync notifications registers after we've received the full
+      // model, notify it immediately.
+      if (handle.options.notifySync && this.synchronized) {
+        handle.onSync();
+      }
+    }
+
     const version = {};
     for (const [k, v] of Object.entries(this.crdt.getData().version)) {
       version[k] = v;
@@ -60,21 +92,34 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return this.crdt.getParticleView()!;
   }
 
+  async getData(): Promise<T['data']> {
+    await this.synchronizeModel();
+    return this.crdt.getData();
+  }
+
   async onMessage(message: ProxyMessage<T>): Promise<boolean> {
     assert(message.id === this.id);
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
+        this.synchronized = true;
         this.notifySync();
         break;
       case ProxyMessageType.Operations:
+        // Bail if we're not in synchronized mode.
+        if (!this.keepSynced) {
+          return false;
+        }
         for (const op of message.operations) {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
-            await this.synchronizeModel();
-            // TODO do we need to notify that we are desynced? and return?
+            this.synchronized = false;
+            await this.notifyDesync();
+            return this.synchronizeModel();
           }
         }
+        // If we have consumed all operations, we've caught up.
+        this.synchronized = true;
         this.notifyUpdate(message.operations);
         break;
       case ProxyMessageType.SyncRequest:
@@ -87,14 +132,17 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return true;
   }
 
-  // TODO: use a Scheduler to deliver this in batches by particle.
   private notifyUpdate(operations: CRDTOperation[]) {
     for (const handle of this.handles) {
       if (handle.options.notifyUpdate) {
-        handle.onUpdate(operations);
+        this.scheduler.enqueue(
+            handle.particle,
+            handle,
+            {type: HandleMessageType.Update, ops: operations});
       } else if (handle.options.keepSynced) {
         // keepSynced but not notifyUpdate, notify of the new model.
-        handle.onSync();
+        this.scheduler.enqueue(
+            handle.particle, handle, {type: HandleMessageType.Sync});
       }
     }
   }
@@ -102,12 +150,123 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private notifySync() {
     for (const handle of this.handles) {
       if (handle.options.notifySync) {
-        handle.onSync();
+        this.scheduler.enqueue(
+            handle.particle, handle, {type: HandleMessageType.Sync});
+      }
+    }
+  }
+
+  private notifyDesync() {
+    for (const handle of this.handles) {
+      if (handle.options.notifyDesync) {
+        this.scheduler.enqueue(
+            handle.particle, handle, {type: HandleMessageType.Desync});
       }
     }
   }
 
   private async synchronizeModel(): Promise<boolean> {
     return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: this.id});
+  }
+}
+
+enum HandleMessageType {
+  Sync,
+  Desync,
+  Update
+}
+
+type Event = {type: HandleMessageType.Sync} |
+             {type: HandleMessageType.Desync} |
+             {type: HandleMessageType.Update, ops: CRDTOperation[]};
+
+export class StorageProxyScheduler<T extends CRDTTypeRecord> {
+  private _scheduled = false;
+  private _queues = new Map<Particle, Map<Handle<T>, Event[]>>();
+  private _idleResolver: Runnable|null = null;
+  private _idle: Promise<void>|null = null;
+  constructor() {
+    this._scheduled = false;
+    // Particle -> {Handle -> [Queue of events]}
+    this._queues = new Map();
+  }
+
+  enqueue(particle: Particle, handle: Handle<T>, args: Event) {
+    if (!this._queues.has(particle)) {
+      this._queues.set(particle, new Map());
+    }
+    const byHandle = this._queues.get(particle);
+    if (!byHandle.has(handle)) {
+      byHandle.set(handle, []);
+    }
+    const queue = byHandle.get(handle);
+    queue.push(args);
+    this._schedule();
+  }
+
+  get busy(): boolean {
+    return this._queues.size > 0;
+  }
+
+  _updateIdle(): void {
+    if (this._idleResolver && !this.busy) {
+      this._idleResolver();
+      this._idle = null;
+      this._idleResolver = null;
+    }
+  }
+
+  get idle(): Promise<void> {
+    if (!this.busy) {
+      return Promise.resolve();
+    }
+    if (!this._idle) {
+      this._idle = new Promise(resolve => this._idleResolver = resolve);
+    }
+    return this._idle;
+  }
+
+  _schedule(): void {
+    if (this._scheduled) {
+      return;
+    }
+    this._scheduled = true;
+    setTimeout(() => {
+      this._scheduled = false;
+      this._dispatch();
+    }, 0);
+  }
+
+  _dispatch(): void {
+    // TODO: should we process just one particle per task?
+    while (this._queues.size > 0) {
+      const particle = [...this._queues.keys()][0];
+      const byHandle = this._queues.get(particle);
+      this._queues.delete(particle);
+      for (const [handle, queue] of byHandle.entries()) {
+        for (const update of queue) {
+          try {
+            switch (update.type) {
+              case HandleMessageType.Sync:
+                handle.onSync();
+                break;
+              case HandleMessageType.Desync:
+                handle.onDesync();
+                break;
+              case HandleMessageType.Update:
+                handle.onUpdate(update.ops);
+                break;
+              default:
+                console.error('Ignoring unknown update', update);
+            }
+          } catch (e) {
+            // TODO: report the exception on the host side.
+            console.error('Error dispatching to particle', e);
+          }
+        }
+      }
+    }
+
+    this._updateIdle();
   }
 }

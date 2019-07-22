@@ -11,7 +11,7 @@
 
 'use strict';
 
-/* global defineParticle, importScripts */
+/* global defineParticle */
 defineParticle(({DomParticle, log}) => {
 
   /* global service */

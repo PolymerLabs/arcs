@@ -583,10 +583,10 @@ function lint(args: string[]): boolean {
 
   const options = minimist(args, {
     boolean: ['fix'],
+    string: ['format']
   });
 
   const jsSources = [...findProjectFiles(process.cwd(), srcExclude, /\.[jt]s$/)];
-
   const cli = new CLIEngine({
     useEsLintRc: false,
     configFile: '.eslintrc.json',
@@ -595,7 +595,7 @@ function lint(args: string[]): boolean {
     cache: true
   });
   const report = cli.executeOnFiles(jsSources);
-  const formatter = cli.getFormatter();
+  const formatter = cli.getFormatter(options.format || 'stylish');
   console.log(formatter(report.results));
 
   if (options.fix) {
@@ -712,8 +712,8 @@ function runTests(args: string[]): boolean {
     if (!/-tests?.js$/.test(fullPath)) {
       return false;
     }
-    // The 'cron' env check indicates the daily build in Travis.
-    if (options.all || process.env.TRAVIS_EVENT_TYPE === 'cron') {
+
+    if (options.all) {
       return true;
     }
 
@@ -861,7 +861,7 @@ function watch(args: string[]): boolean {
 
 function health(args: string[]): boolean {
   const options = minimist(args, {
-    boolean: ['migration', 'types', 'tests', 'nullChecks'],
+    boolean: ['migration', 'types', 'tests', 'nullChecks', 'uploadCodeHealthStats', 'all'],
   });
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
@@ -907,13 +907,17 @@ function health(args: string[]): boolean {
     return saneSpawn('node_modules/.bin/type-coverage', ['--strict', '--detail']);
   }
 
-  if (options.tests) {
-    runSteps('test', ['--coverage']);
-    return saneSpawn('node_modules/.bin/c8', ['report']);
+  const testOptions = ['--coverage'];
+  if (options.all) {
+    testOptions.push('--all');
   }
 
   // Generating coverage report from tests.
-  runSteps('test', ['--coverage']);
+  runSteps('test', testOptions);
+
+  if (options.tests) {
+    return saneSpawn('node_modules/.bin/c8', ['report']);
+  }
 
   const healthInformation: string[] = [];
 
@@ -957,7 +961,7 @@ function health(args: string[]): boolean {
 
   line();
 
-  if (process.env.CONTINUOUS_INTEGRATION) {
+  if (options.uploadCodeHealthStats) {
     return uploadCodeHealthStats(healthInformation);
   }
   return true;
@@ -1009,6 +1013,12 @@ function devServer(args: string[]) {
 
 // Looks up the steps for `command` and runs each with `args`.
 function runSteps(command: string, args: string[]): boolean {
+  // The 'cron' env check indicates the daily build in Travis.
+  if (process.env.TRAVIS_EVENT_TYPE === 'cron' && command === 'test') {
+    // The cron job should actually run the health command.
+    command = 'health'; // Ideally the test command would handle health info.
+    args.push('--all', '--uploadCodeHealthStats');
+  }
   const funcs = steps[command];
   if (funcs === undefined) {
     console.log(`Unknown command: '${command}'`);

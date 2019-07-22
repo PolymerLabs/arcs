@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Node, Edge, FlowModifier, TagOperation, FlowCheck} from './graph-internals.js';
-import {ClaimType, Claim, ParticleClaim, ClaimDerivesFrom} from '../../runtime/particle-claim.js';
-import {Check} from '../../runtime/particle-check.js';
+import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
+import {ClaimType} from '../../runtime/particle-claim.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
@@ -69,7 +68,7 @@ export class ParticleInput implements Edge {
   readonly connectionSpec: HandleConnectionSpec;
 
   readonly modifier: FlowModifier;
-  readonly check?: FlowCheck;
+  check?: FlowCheck;
 
   constructor(edgeId: string, particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.edgeId = edgeId;

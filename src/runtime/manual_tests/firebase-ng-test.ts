@@ -60,7 +60,7 @@ describe('firebase-ng-driver', function() {
     const driver2 = new FirebaseDriver<number>(storageKey, Exists.ShouldExist);
     await driver2.init();
 
-    const receivedData = new Promise(async (resolve, reject) => {
+    const receivedData = new Promise((resolve, reject) => {
       driver2.registerReceiver((model: number, version: number) => {
         assert.strictEqual(model, 13);
         assert.strictEqual(version, 1);

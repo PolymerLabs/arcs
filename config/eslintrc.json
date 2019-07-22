@@ -44,6 +44,8 @@
     "arrow-parens": "off", // puts parens around single arg arrow functions
     "no-undef": "off", // Particles use importScripts+globals, need to move to JS modules to fix
     "no-empty-pattern": "off", // No {} in patterns, but sometimes we use {} to denote an unused argument?
+    "require-atomic-updates": "off",
+    "no-prototype-builtins": "off",
 
     // eslint-config-google 0.10.0 introduced indent checks
     // most projects are opting for prettier instead, so disable
