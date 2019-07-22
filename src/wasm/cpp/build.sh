@@ -15,7 +15,7 @@ V=$(( A * 10**8 + B * 10**4 + C ))
 invoke() {
   # export EMCC_DEBUG=1 for debug info
   em++ -s "EXPORTED_FUNCTIONS=['_malloc', '_free']" -s EMIT_EMSCRIPTEN_METADATA \
-       -std=c++17 -O3 test-particle.cc -o $1 || fail "em++ failed"
+       -std=c++17 -O3 example.cc -o $1 || fail "em++ failed"
 }
 
 echo "Building output.wasm"
