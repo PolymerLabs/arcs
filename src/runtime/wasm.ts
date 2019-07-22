@@ -15,6 +15,7 @@ import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
 import {Content} from './slot-consumer.js';
 import {Dictionary} from './hot.js';
+import {Loader} from './loader.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -403,13 +404,18 @@ type WasmAddress = number;
 
 // Holds an instance of a running wasm module, which may contain multiple particles.
 export class WasmContainer {
+  loader: Loader;
   memory: WebAssembly.Memory;
   heapU8: Uint8Array;
   heap32: Int32Array;
-  private wasm: WebAssembly.Instance;
+  wasm: WebAssembly.Instance;
   // tslint:disable-next-line: no-any
   exports: any;
-  private particleMap = new Map<WasmAddress, WasmParticle>();
+  particleMap = new Map<WasmAddress, WasmParticle>();
+
+  constructor(loader: Loader) {
+    this.loader = loader;
+  }
 
   async initialize(buffer: ArrayBuffer) {
     // TODO: vet the imports/exports on 'module'
@@ -430,6 +436,7 @@ export class WasmContainer {
       _collectionClear: (p, handle) => this.getParticle(p).collectionClear(handle),
       _render: (p, slotName, template, model) => this.getParticle(p).renderImpl(slotName, template, model),
       _serviceRequest: (p, call, args, tag) => this.getParticle(p).serviceRequest(call, args, tag),
+      _resolveUrl: (url) => this.resolve(url),
     };
 
     driver.configureEnvironment(module, this, env);
@@ -455,6 +462,11 @@ export class WasmContainer {
 
   register(particle: WasmParticle, innerParticle: WasmAddress) {
     this.particleMap.set(innerParticle, particle);
+  }
+
+  // Allocates memory in the wasm container; the calling particle is responsible for freeing.
+  resolve(urlPtr: WasmAddress): WasmAddress {
+    return this.store(this.loader.resolve(this.read(urlPtr)));
   }
 
   // Allocates memory in the wasm container.

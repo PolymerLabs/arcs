@@ -68,12 +68,21 @@ export class Loader {
     return this.loadFile(file, 'utf-8') as Promise<string>;
   }
 
-  async loadBinary(file: string): Promise<ArrayBuffer> {
-    if (/^https?:\/\//.test(file)) {
-      return fetch(file).then(res => res.arrayBuffer());
+  async loadWasmBinary(spec): Promise<ArrayBuffer> {
+    // TODO: use spec.implBlobUrl if present?
+    this.mapParticleUrl(spec.implFile);
+    const target = this.resolve(spec.implFile);
+    if (/^https?:\/\//.test(target)) {
+      return fetch(target).then(res => res.arrayBuffer());
     } else {
-      return this.loadFile(file) as Promise<ArrayBuffer>;
+      return this.loadFile(target) as Promise<ArrayBuffer>;
     }
+  }
+
+  mapParticleUrl(path: string) {}
+
+  resolve(path: string) {
+    return path;
   }
 
   private async loadFile(file: string, encoding?: string): Promise<string | ArrayBuffer> {
