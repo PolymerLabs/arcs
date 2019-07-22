@@ -71,7 +71,8 @@ export abstract class Handle<T extends CRDTTypeRecord> {
  */
 export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollectionTypeRecord<T>> {
   async get(id: string): Promise<T> {
-    return (await this.toList()).find(entity => entity.id === id);
+    const data = await this.storageProxy.getData();
+    return data.values[id].value;    
   }
 
   async add(entity: T): Promise<boolean> {

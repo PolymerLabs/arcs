@@ -16,11 +16,6 @@ import {Particle} from '../particle.js';
 import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType} from './store.js';
 
-enum SyncState {
-  none,
-  full
-}
-
 /**
  * TODO: describe this class.
  */
@@ -31,7 +26,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private store: ActiveStore<T>;
   private listenerAttached = false;
   private keepSynced = false;
-  private synchronized = SyncState.none;
+  private synchronized = false;
   private readonly scheduler: StorageProxyScheduler<T>;
 
   constructor(
@@ -58,6 +53,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     if (handle.options.keepSynced) {
       if (!this.keepSynced) {
         this.synchronizeModel().catch(e => {
+          // TODO: report the exception on the host side.
           console.error('Error during SyncRequest', e);
         });
         this.keepSynced = true;
@@ -65,7 +61,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
-      if (handle.options.notifySync && this.synchronized === SyncState.full) {
+      if (handle.options.notifySync && this.synchronized) {
         handle.onSync();
       }
     }
@@ -96,12 +92,17 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return this.crdt.getParticleView()!;
   }
 
+  async getData(): Promise<T['data']> {
+    await this.synchronizeModel();
+    return this.crdt.getData();
+  }
+
   async onMessage(message: ProxyMessage<T>): Promise<boolean> {
     assert(message.id === this.id);
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
-        this.synchronized = SyncState.full;
+        this.synchronized = true;
         this.notifySync();
         break;
       case ProxyMessageType.Operations:
@@ -112,13 +113,13 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         for (const op of message.operations) {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
-            this.synchronized = SyncState.none;
+            this.synchronized = false;
             await this.notifyDesync();
             return this.synchronizeModel();
           }
         }
         // If we have consumed all operations, we've caught up.
-        this.synchronized = SyncState.full;
+        this.synchronized = true;
         this.notifyUpdate(message.operations);
         break;
       case ProxyMessageType.SyncRequest:
@@ -175,10 +176,9 @@ enum HandleMessageType {
   Update
 }
 
-type Event = {
-  type: HandleMessageType.Sync
-}|{type: HandleMessageType.Desync}|
-    {type: HandleMessageType.Update, ops: CRDTOperation[]};
+type Event = {type: HandleMessageType.Sync} |
+             {type: HandleMessageType.Desync} |
+             {type: HandleMessageType.Update, ops: CRDTOperation[]};
 
 export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   private _scheduled = false;
@@ -260,6 +260,7 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
                 console.error('Ignoring unknown update', update);
             }
           } catch (e) {
+            // TODO: report the exception on the host side.
             console.error('Error dispatching to particle', e);
           }
         }
