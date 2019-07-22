@@ -465,7 +465,7 @@ export class WasmContainer {
   }
 
   // Allocates memory in the wasm container; the calling particle is responsible for freeing.
-  resolve(urlPtr: WasmAddress) {
+  resolve(urlPtr: WasmAddress): WasmAddress {
     return this.store(this.loader.resolve(this.read(urlPtr)));
   }
 
