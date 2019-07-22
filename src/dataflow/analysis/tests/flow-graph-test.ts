@@ -132,10 +132,7 @@ describe('FlowGraph', () => {
     `);
     assert.lengthOf(graph.edges, 1);
     assert.isNotNull(graph.edges[0].modifier);
-    assert.deepEqual(graph.edges[0].modifier, FlowModifier.fromConditions(
-        {type: 'node', value: 'P0'},
-        {type: 'edge', value: 'E0'},
-        {type: 'tag', value: 'trusted'}));
+    assert.deepEqual(graph.edges[0].modifier, FlowModifier.parse('+node:P0', '+edge:E0', '+tag:trusted'));
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {

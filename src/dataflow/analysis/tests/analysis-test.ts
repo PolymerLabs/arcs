@@ -582,6 +582,37 @@ describe('FlowGraph validation', () => {
     assert.isTrue(validateGraph(graph).isValid);
   });
 
+  it('succeeds for a negated tag check when the tag is missing', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        in Foo {} bar
+        check bar is not private
+      recipe R
+        P
+          bar <- h
+    `);
+    markParticleInputsWithIngress(graph, 'P.bar');
+    assert.isTrue(validateGraph(graph).isValid);
+  });
+
+  it('fails for a negated tag check when the tag is present', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is private
+      particle P2
+        in Foo {} bar
+        check bar is not private
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    markParticlesWithIngress(graph, 'P1');
+    assertFailures(validateGraph(graph), [`'check bar is not private' failed for path: P1.foo -> P2.bar`]);
+  });
+
   it('succeeds when handle has multiple inputs with the right tags', async () => {
     const graph = await buildFlowGraph(`
       particle P1
@@ -753,7 +784,7 @@ describe('FlowGraph validation', () => {
     assert.isTrue(validateGraph(graph).isValid);
   });
 
-  it(`succeeds when a check including multiple ored tags is met by a single claim`, async () => {
+  it(`succeeds when a check including multiple 'or'd tags is met by a single claim`, async () => {
     const graph = await buildFlowGraph(`
       particle P1
         out Foo {} foo
@@ -879,6 +910,36 @@ describe('FlowGraph validation', () => {
       `);
       markParticleInputsWithIngress(graph, 'P.input1', 'P.input2');
       assertFailures(validateGraph(graph), [`'check input2 is from handle input1' failed for path: P.input2`]);
+    });
+
+    it('succeeds for a negated handle check when the handle is different', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input1
+          in Foo {} input2
+          check input2 is not from handle input1
+        recipe R
+          P
+            input1 <- h1
+            input2 <- h2
+      `);
+      markParticleInputsWithIngress(graph, 'P.input1', 'P.input2');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('fails for a negated handle check when the handle is the same', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input1
+          in Foo {} input2
+          check input2 is not from handle input1
+        recipe R
+          P
+            input1 <- h
+            input2 <- h
+      `);
+      markParticleInputsWithIngress(graph, 'P.input1');
+      assertFailures(validateGraph(graph), [`'check input2 is not from handle input1' failed for path: P.input2`]);
     });
 
     it('succeeds when the handle has inputs', async () => {
@@ -1012,6 +1073,46 @@ describe('FlowGraph validation', () => {
       assert.isTrue(validateGraph(graph).isValid);
     });
 
+    it('succeeds for a negated store check when the store is different', async () => {
+      const graph = await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity 'my-store-id' in MyResource
+        particle P
+          in MyEntity input
+          check input is not from store 'my-store-id'
+        recipe R
+          use MyStore as s
+          P
+            input <- h
+      `);
+      markParticleInputsWithIngress(graph, 'P.input');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('fails for a negated store check when the store is the same', async () => {
+      const graph = await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity 'my-store-id' in MyResource
+        particle P
+          in MyEntity input
+          check input is not from store 'my-store-id'
+        recipe R
+          use MyStore as s
+          P
+            input <- s
+      `);
+      markParticleInputsWithIngress(graph, 'P.input');
+      assertFailures(validateGraph(graph), [`'check input is not from store 'my-store-id'' failed for path: P.input`]);
+    });
+
     it('fails when the data store identified by name is missing', async () => {
       assertThrowsAsync(async () => await buildFlowGraph(`
         particle P
@@ -1033,7 +1134,6 @@ describe('FlowGraph validation', () => {
             input <- h
       `), `Store with id 'my-store-id' not found.`);
     });
-
 
     it('fails when the data store is not connected', async () => {
       assertThrowsAsync(async () => await buildFlowGraph(`

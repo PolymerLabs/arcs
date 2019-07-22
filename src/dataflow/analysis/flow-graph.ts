@@ -147,11 +147,11 @@ export class FlowGraph {
   private createFlowCondition(condition: CheckCondition): FlowCondition {
     switch (condition.type) {
       case CheckType.HasTag:
-        return {type: 'tag', value: condition.tag};
+        return {type: 'tag', negated: condition.isNot, value: condition.tag};
       case CheckType.IsFromHandle:
-        return {type: 'node', value: this.handleCheckToNodeId(condition)};
+        return {type: 'node', negated: condition.isNot, value: this.handleCheckToNodeId(condition)};
       case CheckType.IsFromStore:
-        return {type: 'node', value: this.storeCheckToNodeId(condition)};
+        return {type: 'node', negated: condition.isNot, value: this.storeCheckToNodeId(condition)};
       default:
         throw new Error('Unknown CheckType');
     }
