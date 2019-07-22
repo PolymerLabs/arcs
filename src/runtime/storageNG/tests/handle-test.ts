@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton.js';
 import {CollectionHandle, SingletonHandle} from '../handle.js';
-import {StorageProxy} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {MockStore} from '../testing/test-storage.js';
 
 function getCollectionHandle(): CollectionHandle<{id: string}> {
@@ -22,8 +22,11 @@ function getCollectionHandle(): CollectionHandle<{id: string}> {
       'me',
       new StorageProxy(
           new CRDTCollection<{id: string}>(),
-          new MockStore<CRDTCollectionTypeRecord<{id: string}>>()),
-      fakeParticle);
+          new MockStore<CRDTCollectionTypeRecord<{id: string}>>(),
+          new StorageProxyScheduler()),
+      fakeParticle,
+      true,
+      true);
 }
 
 function getSingletonHandle(): SingletonHandle<{id: string}> {
@@ -33,8 +36,11 @@ function getSingletonHandle(): SingletonHandle<{id: string}> {
       'me',
       new StorageProxy(
           new CRDTSingleton<{id: string}>(),
-          new MockStore<CRDTSingletonTypeRecord<{id: string}>>()),
-      fakeParticle);
+          new MockStore<CRDTSingletonTypeRecord<{id: string}>>(),
+          new StorageProxyScheduler()),
+      fakeParticle,
+      true,
+      true);
 }
 
 describe('CollectionHandle', () => {
@@ -47,6 +53,13 @@ describe('CollectionHandle', () => {
     assert.sameDeepMembers(await handle.toList(), [{id: 'A'}, {id: 'B'}]);
     await handle.remove({id: 'A'});
     assert.sameDeepMembers(await handle.toList(), [{id: 'B'}]);
+  });
+
+  it('can get an element by ID', async () => {
+    const handle = getCollectionHandle();
+    const entity = {id: 'A', property: 'something'};
+    await handle.add(entity);
+    assert.deepEqual(await handle.get('A'), entity);
   });
 
   it('can clear', async () => {
