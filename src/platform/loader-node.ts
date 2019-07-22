@@ -12,7 +12,7 @@ import {PlatformLoaderBase} from './loader-platform.js';
 
 export class PlatformLoader extends PlatformLoaderBase {
   async requireParticle(fileName: string) {
-    const path = this._resolve(fileName);
+    const path = this.resolve(fileName);
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
     this.mapParticleUrl(path);

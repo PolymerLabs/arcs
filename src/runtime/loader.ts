@@ -68,12 +68,21 @@ export class Loader {
     return this.loadFile(file, 'utf-8') as Promise<string>;
   }
 
-  async loadBinary(file: string): Promise<ArrayBuffer> {
-    if (/^https?:\/\//.test(file)) {
-      return fetch(file).then(res => res.arrayBuffer());
+  async loadWasmBinary(spec): Promise<ArrayBuffer> {
+    // TODO: use spec.implBlobUrl if present?
+    this.mapParticleUrl(spec.implFile);
+    const target = this.resolve(spec.implFile);
+    if (/^https?:\/\//.test(target)) {
+      return fetch(target).then(res => res.arrayBuffer());
     } else {
-      return this.loadFile(file) as Promise<ArrayBuffer>;
+      return this.loadFile(target) as Promise<ArrayBuffer>;
     }
+  }
+
+  mapParticleUrl(path: string) {}
+
+  resolve(path: string) {
+    return path;
   }
 
   private async loadFile(file: string, encoding?: string): Promise<string | ArrayBuffer> {
@@ -89,13 +98,14 @@ export class Loader {
   }
 
   async _loadURL(url: string): Promise<string> {
+    const fetcher = (url: string) => fetch(url).then(async res => res.ok ? res.text() : undefined);
     if (/\/\/schema.org\//.test(url)) {
       if (url.endsWith('/Thing')) {
-        return fetch('https://schema.org/Product.jsonld').then(res => res.text()).then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));
+        return fetcher('https://schema.org/Product.jsonld').then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));
       }
-      return fetch(url + '.jsonld').then(res => res.text()).then(data => JsonldToManifest.convert(data));
+      return fetcher(url + '.jsonld').then(data => JsonldToManifest.convert(data));
     }
-    return fetch(url).then(res => res.text());
+    return fetcher(url);
   }
 
   /**

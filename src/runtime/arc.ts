@@ -274,14 +274,15 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
         }
-
-        context.resources += `resource ${id}Resource\n`;
+        
         const indent = '  ';
-        context.resources += indent + 'start\n';
-
         const data = JSON.stringify(serializedData);
-        context.resources += data.split('\n').map(line => indent + line).join('\n');
-        context.resources += '\n';
+
+        context.resources += `resource ${id}Resource\n`
+          + indent + 'start\n'
+          + data.split('\n').map(line => indent + line).join('\n')
+          + '\n';
+
         context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }

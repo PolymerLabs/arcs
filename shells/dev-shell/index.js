@@ -48,6 +48,10 @@ async function wrappedExecute() {
     return;
   }
 
+  if (manifest.allRecipes.length == 0) {
+    output.showError('No recipes found in Manifest.parse');
+  }
+
   let arcIndex = 1;
   for (const recipe of manifest.allRecipes) {
     const id = IdGenerator.newSession().newArcId('arc' + arcIndex++);

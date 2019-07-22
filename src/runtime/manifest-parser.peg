@@ -424,34 +424,37 @@ ParticleCheckCondition
   / ParticleCheckHasTag
 
 ParticleCheckHasTag
-  = 'is' whiteSpace tag:lowerIdent
+  = 'is' isNot:(whiteSpace 'not')? whiteSpace tag:lowerIdent
   {
     return {
       kind: 'particle-trust-check-has-tag',
       checkType: 'has-tag',
       location: location(),
+      isNot: !!isNot,
       tag,
     } as AstNode.ParticleCheckHasTag;
   }
 
 ParticleCheckIsFromHandle
-  = 'is' whiteSpace 'from' whiteSpace 'handle' whiteSpace parentHandle:lowerIdent
+  = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'handle' whiteSpace parentHandle:lowerIdent
   {
     return {
       kind: 'particle-trust-check-is-from-handle',
       checkType: 'is-from-handle',
       location: location(),
+      isNot: !!isNot,
       parentHandle,
     } as AstNode.ParticleCheckIsFromHandle;
   }
 
 ParticleCheckIsFromStore
-  = 'is' whiteSpace 'from' whiteSpace 'store' whiteSpace storeRef:StoreReference
+  = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'store' whiteSpace storeRef:StoreReference
   {
     return {
       kind: 'particle-trust-check-is-from-store',
       checkType: 'is-from-store',
       location: location(),
+      isNot: !!isNot,
       storeRef,
     } as AstNode.ParticleCheckIsFromStore;
   }

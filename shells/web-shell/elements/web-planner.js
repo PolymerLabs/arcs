@@ -28,9 +28,9 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
   update({config, arc, search}, state) {
     const {planificator} = state;
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
-      planificator.dispose();
       state.planificator = null;
       state.search = null;
+      planificator.dispose();
       log('planificator is disconnected and is disposing');
     }
     if (config && arc && !state.planificator) {

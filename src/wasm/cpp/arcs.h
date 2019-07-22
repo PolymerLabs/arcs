@@ -323,7 +323,7 @@ void StringPrinter::add(const char* prefix, const bool& flag) {
 // --- Wasm-to-JS API ---
 
 // singletonSet and collectionStore will create ids for entities if required, and will return
-// the new ids in allocated memory that we must free.
+// the new ids in allocated memory that the Handle implementations will free.
 
 EM_JS(const char*, singletonSet, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, singletonClear, (Particle* p, Handle* h), {})
@@ -332,6 +332,9 @@ EM_JS(void, collectionRemove, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionClear, (Particle* p, Handle* h), {})
 EM_JS(void, render, (Particle* p, const char* slotName, const char* template_str, const char* model), {})
 EM_JS(void, serviceRequest, (Particle* p, const char* call, const char* args, const char* tag), {})
+
+// Returns allocated memory that the Particle base class will free.
+EM_JS(const char*, resolveUrl, (const char* url), {})
 
 }  // namespace internal
 
@@ -640,6 +643,16 @@ public:
     }
 
     internal::render(this, slot_name.c_str(), template_ptr, model_ptr);
+  }
+
+  // Sub-classes may call this to resolve URLs like 'https://$particles/path/to/assets/pic.jpg'.
+  // The '$here' prefix can be used to map to the location of the wasm binary file (for example:
+  // '$here/path/to/assets/pic.jpg').
+  std::string resolveUrl(const std::string& url) {
+    const char* p = internal::resolveUrl(url.c_str());
+    std::string resolved = p;
+    free((void*)p);
+    return resolved;
   }
 
   // Called once a particle has been set up. Initial processing and service requests may

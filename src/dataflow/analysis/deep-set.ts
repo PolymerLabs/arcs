@@ -73,6 +73,14 @@ export class DeepSet<T extends UniqueStringable> implements Iterable<T> {
     return this.size === 0;
   }
 
+  /**
+   * Returns true if this DeepSet is equal to the other DeepSet (deep equals,
+   * computed via toUniqueString() for each DeepSet).
+   */
+  equals(other: DeepSet<T>): boolean {
+    return this.toUniqueString() === other.toUniqueString();
+  }
+
   /** Unique string representation of this DeepSet. */
   toUniqueString(): string {
     const strings = [...this.stringSet];

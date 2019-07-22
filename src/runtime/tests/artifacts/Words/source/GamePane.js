@@ -9,7 +9,7 @@
  */
 'use strict';
 
-/* global defineParticle, importScripts */
+/* global defineParticle */
 
 defineParticle(({SimpleParticle, html, log, resolver}) => {
   function importLibrary(filename) {

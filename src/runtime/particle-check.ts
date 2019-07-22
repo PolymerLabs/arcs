@@ -60,14 +60,14 @@ export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromStore;
 export class CheckHasTag {
   readonly type: CheckType.HasTag = CheckType.HasTag;
 
-  constructor(readonly tag: string) {}
+  constructor(readonly tag: string, readonly isNot: boolean) {}
 
   static fromASTNode(astNode: AstNode.ParticleCheckHasTag) {
-    return new CheckHasTag(astNode.tag);
+    return new CheckHasTag(astNode.tag, astNode.isNot);
   }
 
   toManifestString() {
-    return `is ${this.tag}`;
+    return `is ${this.isNot ? 'not ' : ''}${this.tag}`;
   }
 }
 
@@ -75,18 +75,18 @@ export class CheckHasTag {
 export class CheckIsFromHandle {
   readonly type: CheckType.IsFromHandle = CheckType.IsFromHandle;
 
-  constructor(readonly parentHandle: HandleConnectionSpec) {}
+  constructor(readonly parentHandle: HandleConnectionSpec, readonly isNot: boolean) {}
 
   static fromASTNode(astNode: AstNode.ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpec>) {
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
     if (!parentHandle) {
       throw new Error(`Unknown "check is from handle" handle name: ${parentHandle}.`);
     }
-    return new CheckIsFromHandle(parentHandle);
+    return new CheckIsFromHandle(parentHandle, astNode.isNot);
   }
 
   toManifestString() {
-    return `is from handle ${this.parentHandle.name}`;
+    return `is ${this.isNot ? 'not ' : ''}from handle ${this.parentHandle.name}`;
   }
 }
 
@@ -97,13 +97,13 @@ export type StoreReference = {type: 'id' | 'name', store: string};
 export class CheckIsFromStore {
   readonly type: CheckType.IsFromStore = CheckType.IsFromStore;
 
-  constructor(readonly storeRef: StoreReference) {}
+  constructor(readonly storeRef: StoreReference, readonly isNot: boolean) {}
 
   static fromASTNode(astNode: AstNode.ParticleCheckIsFromStore) {
     return new CheckIsFromStore({
       type: astNode.storeRef.type,
       store: astNode.storeRef.store,
-    });
+    }, astNode.isNot);
   }
 
   toManifestString() {
@@ -112,7 +112,7 @@ export class CheckIsFromStore {
       // Put the ID inside single-quotes.
       store = `'${store}'`;
     }
-    return `is from store ${store}`;
+    return `is ${this.isNot ? 'not ' : ''}from store ${store}`;
   }
 }
 

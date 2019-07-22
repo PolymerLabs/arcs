@@ -63,7 +63,7 @@ function createChainOfEdges(...nodeIds: string[]) {
 function markParticlesWithIngress(graph: FlowGraph, ...particleNames: string[]) {
   for (const name of particleNames) {
     const node = graph.particleMap.get(name);
-    assert.isDefined(node, `Particle with name '${name}' not found.`);
+    assert.isDefined(node, `Particle with name '${name}' not found`);
     node.ingress = true;
   }
 }
@@ -78,24 +78,29 @@ function markParticlesWithIngress(graph: FlowGraph, ...particleNames: string[]) 
 function markParticleInputsWithIngress(graph: FlowGraph, ...labels: string[]) {
   for (const label of labels) {
     const parts = label.split('.');
-    assert.lengthOf(parts, 2, `Particle input '${label}' is not of the form 'ParticleName.inputName'.`);
+    assert.lengthOf(parts, 2, `Particle input '${label}' is not of the form 'ParticleName.inputName'`);
     const [particleName, inputName] = parts;
     const particleNode = graph.particleMap.get(particleName);
     assert.isDefined(particleNode, `Particle with name '${particleName}' not found.`);
     const inputEdge = particleNode.inEdgesByName.get(inputName);
-    assert.isDefined(inputEdge, `Particle '${particleName}' does not have input '${inputName}'.`);
+    assert.isDefined(inputEdge, `Particle '${particleName}' does not have input '${inputName}'`);
     inputEdge.start.ingress = true;
   }
 }
 
+/** Creates a new FlowModifier that adds the given tags. */
+function addsTag(...tags: string[]): FlowModifier {
+  const modifier = new FlowModifier();
+  for (const tag of tags) {
+    modifier.tagOperations.set(tag, TagOperation.Add);  
+  }
+  return modifier;
+}
+
 // FlowModifier constants.
-const addsTagT1 = new FlowModifier();
-addsTagT1.tagOperations.set('t1', TagOperation.Add);
-
-const addsTagT2 = new FlowModifier();
-addsTagT2.tagOperations.set('t2', TagOperation.Add);
-
-const addsTagsT1AndT2 = addsTagT1.copyAndModify(addsTagT2);
+const addsTagT1 = addsTag('t1');
+const addsTagT2 = addsTag('t2');
+const addsTagsT1AndT2 = addsTag('t1', 't2');
 
 const removesTagT1 = new FlowModifier();
 removesTagT1.tagOperations.set('t1', TagOperation.Remove);
@@ -112,7 +117,7 @@ describe('EdgeExpression', () => {
 
     const expectedFlowSet = new FlowSet();
     expectedFlowSet.add(new Flow());
-    assert.deepEqual(expression.resolvedFlows, expectedFlowSet);
+    assert.isTrue(expression.resolvedFlows.equals(expectedFlowSet));
 
     assert.equal(expression.toString(), `EdgeExpression(A->B) {
   {}
@@ -130,7 +135,7 @@ describe('EdgeExpression', () => {
 
     const flow = new Flow();
     flow.tags.add('t1');
-    assert.deepEqual(expression.resolvedFlows, new FlowSet(flow));
+    assert.isTrue(expression.resolvedFlows.equals(new FlowSet(flow)));
 
     assert.equal(expression.toString(), `EdgeExpression(A->B) {
   {tag:t1}
@@ -146,7 +151,7 @@ describe('EdgeExpression', () => {
     assert.isFalse(expression.isResolved);
     assert.isTrue(expression.resolvedFlows.isEmpty);
     assert.hasAllKeys(expression.unresolvedFlows, [parentEdge]);
-    assert.deepEqual(expression.unresolvedFlows.get(parentEdge), new FlowModifierSet(addsTagT1));
+    assert.isTrue(expression.unresolvedFlows.get(parentEdge).equals(new FlowModifierSet(addsTagT1)));
     assert.sameMembers(expression.parents, [parentEdge]);
 
     assert.equal(expression.toString(), `EdgeExpression(B->C) {
@@ -157,9 +162,9 @@ describe('EdgeExpression', () => {
   it('start nodes with no parents and no ingress produce no flow', () => {
     const [edge] = createChainOfEdges('A', 'B');
     edge.start.ingress = false;
-    
+
     const expression = new EdgeExpression(edge);
-    
+
     assert.isTrue(expression.isResolved);
     assert.isTrue(expression.resolvedFlows.isEmpty);
     assert.isEmpty(expression.unresolvedFlows);
@@ -171,11 +176,11 @@ describe('EdgeExpression', () => {
   it('nodes with parents and with ingress have both resolved and unresolved flow', () => {
     const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
     edge.start.ingress = true;
-    
+
     const expression = new EdgeExpression(edge);
-    
+
     assert.isFalse(expression.isResolved);
-    assert.deepEqual(expression.resolvedFlows, new FlowSet(new Flow()));
+    assert.isTrue(expression.resolvedFlows.equals(new FlowSet(new Flow())));
     assert.hasAllKeys(expression.unresolvedFlows, [parentEdge]);
 
     assert.equal(expression.toString(), `EdgeExpression(B->C) {
@@ -190,11 +195,11 @@ describe('EdgeExpression', () => {
     edge.modifier = addsTagT2;
     const parentExpression = new EdgeExpression(parentEdge);
     const expression = new EdgeExpression(edge);
-    
+
     expression.expandParent(parentExpression);
-    
+
     assert.isTrue(expression.isResolved);
-    assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagsT1AndT2.toFlow()));
+    assert.isTrue(expression.resolvedFlows.equals(new FlowSet(addsTagsT1AndT2.toFlow())));
   });
 
   it('can substitute an unresolved parent', () => {
@@ -202,13 +207,13 @@ describe('EdgeExpression', () => {
     parentEdge.modifier = addsTagT1;
     edge.modifier = addsTagT2;
     const parentExpression = new EdgeExpression(parentEdge);
-    const expression = new EdgeExpression(edge);    
-    
+    const expression = new EdgeExpression(edge);
+
     expression.expandParent(parentExpression);
-    
+
     assert.isFalse(expression.isResolved);
     assert.hasAllDeepKeys(expression.unresolvedFlows, grandparentEdge);
-    assert.deepEqual(expression.unresolvedFlows.get(grandparentEdge), new FlowModifierSet(addsTagsT1AndT2));
+    assert.isTrue(expression.unresolvedFlows.get(grandparentEdge).equals(new FlowModifierSet(addsTagsT1AndT2)));
   });
 
   it('can depend on a parent with multiple different modifiers', () => {
@@ -222,9 +227,9 @@ describe('EdgeExpression', () => {
 
     expression.expandParent(new EdgeExpression(parentEdge));
     assert.isTrue(expression.isResolved);
-    assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagT1.toFlow(), addsTagT2.toFlow()));
+    assert.isTrue(expression.resolvedFlows.equals(new FlowSet(addsTagT1.toFlow(), addsTagT2.toFlow())));
   });
-  
+
   it('can depend on a grandparent with multiple different modifiers', () => {
     const [grandparentEdge, parentEdge1, edge] = createChainOfEdges('A', 'B', 'C', 'D');
     const parentEdge2 = new TestEdge(parentEdge1.start, parentEdge1.end, 'BC2');
@@ -236,7 +241,7 @@ describe('EdgeExpression', () => {
     expression.expandParent(new EdgeExpression(parentEdge2));
 
     assert.hasAllDeepKeys(expression.unresolvedFlows, grandparentEdge);
-    assert.deepEqual(expression.unresolvedFlows.get(grandparentEdge), new FlowModifierSet(addsTagT1, addsTagT2));
+    assert.isTrue(expression.unresolvedFlows.get(grandparentEdge).equals(new FlowModifierSet(addsTagT1, addsTagT2)));
   });
 
   it('applies child modifier after parent modifier', () => {
@@ -248,7 +253,65 @@ describe('EdgeExpression', () => {
     expression.expandParent(new EdgeExpression(parentEdge));
 
     assert.isTrue(expression.isResolved);
-    assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagT2.toFlow()));
+    assert.isTrue(expression.resolvedFlows.equals(new FlowSet(addsTagT2.toFlow())));
+  });
+
+  describe('removeSelfReference', () => {
+    it('does nothing if there is no self-reference', () => {
+      const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+      const expression = new EdgeExpression(edge);
+
+      expression.removeSelfReference();
+
+      assert.hasAllKeys(expression.unresolvedFlows, [parentEdge]);
+    });
+
+    it('combines self-modifiers with parent modifiers pair-wise', () => {
+      const [parentEdge, edge] = createChainOfEdges('A', 'B', 'C');
+      const expression = new EdgeExpression(edge);
+      // Set two different modifiers on the parent flow: 'parent1' and 'parent2'.
+      const parentModifiers = new FlowModifierSet(addsTag('parent1'), addsTag('parent2'));
+      expression.unresolvedFlows.set(parentEdge, parentModifiers);
+      // Set two different self-modifiers: 'self1' and 'self2'.
+      const selfModifiers = new FlowModifierSet(addsTag('self1'), addsTag('self2'));
+      expression.unresolvedFlows.set(edge, selfModifiers);
+
+      expression.removeSelfReference();
+
+      assert.hasAllKeys(expression.unresolvedFlows, [parentEdge]);
+      assert.isTrue(expression.unresolvedFlows.get(parentEdge).equals(
+        new FlowModifierSet(
+          addsTag('parent1'),
+          addsTag('parent1', 'self1'),
+          addsTag('parent1', 'self2'),
+          addsTag('parent2'),
+          addsTag('parent2', 'self1'),
+          addsTag('parent2', 'self2'))));
+    });
+
+    it('combines self-modifiers with resolved flows pair-wise', () => {
+      const [edge] = createChainOfEdges('A', 'B');
+      edge.start.ingress = false;
+      const expression = new EdgeExpression(edge);
+      // Adds two different resolved flows: 'resolved1' and 'resolved2'.
+      expression.resolvedFlows.add(addsTag('resolved1').toFlow());
+      expression.resolvedFlows.add(addsTag('resolved2').toFlow());
+      // Set two different self-modifiers: 'self1' and 'self2'.
+      const selfModifiers = new FlowModifierSet(addsTag('self1'), addsTag('self2'));
+      expression.unresolvedFlows.set(edge, selfModifiers);
+
+      expression.removeSelfReference();
+
+      assert.isEmpty(expression.unresolvedFlows);
+      assert.isTrue(expression.resolvedFlows.equals(
+        new FlowSet(
+          addsTag('resolved1').toFlow(),
+          addsTag('resolved1', 'self1').toFlow(),
+          addsTag('resolved1', 'self2').toFlow(),
+          addsTag('resolved2').toFlow(),
+          addsTag('resolved2', 'self1').toFlow(),
+          addsTag('resolved2', 'self2').toFlow())));
+    });
   });
 });
 
@@ -286,21 +349,21 @@ describe('Solver', () => {
       parentEdge.modifier = addsTagT1;
       edge.modifier = addsTagT2;
       const solver = new Solver([parentEdge, edge]);
-      
+
       const parentExpression = solver.processEdge(parentEdge);
       assert.isTrue(parentExpression.isResolved);
-      assert.deepEqual(parentExpression.resolvedFlows, new FlowSet(addsTagT1.toFlow()));
-      
+      assert.isTrue(parentExpression.resolvedFlows.equals(new FlowSet(addsTagT1.toFlow())));
+
       const expression = solver.processEdge(edge);
       assert.isTrue(expression.isResolved);
-      assert.deepEqual(expression.resolvedFlows, new FlowSet(addsTagsT1AndT2.toFlow()));
+      assert.isTrue(expression.resolvedFlows.equals(new FlowSet(addsTagsT1AndT2.toFlow())));
       assert.isEmpty(solver.dependentExpressions.get(parentEdge));
     });
 
     it('expands known unresolved parent', () => {
       const [grandparentEdge, parentEdge, edge] = createChainOfEdges('A', 'B', 'C', 'D');
       const solver = new Solver([grandparentEdge, parentEdge, edge]);
-      
+
       const parentExpression = solver.processEdge(parentEdge);
       const expression = solver.processEdge(edge);
 
@@ -318,7 +381,7 @@ describe('Solver', () => {
       const childExpression = solver.processEdge(childEdge);
       assert.isFalse(childExpression.isResolved);
       assert.hasAllKeys(solver.dependentExpressions.get(edge), [childExpression]);
-      
+
       const expression = solver.processEdge(edge);
       assert.isEmpty(solver.dependentExpressions.get(edge));
       assert.isTrue(expression.isResolved);
@@ -330,7 +393,7 @@ describe('Solver', () => {
     it('fully resolves all edges', () => {
       const edges = createChainOfEdges('A', 'B', 'C', 'D');
       const solver = new Solver(edges);
-      
+
       solver.resolve();
 
       assert.isTrue(solver.isResolved);
@@ -1250,6 +1313,296 @@ describe('FlowGraph validation', () => {
       `);
       markParticlesWithIngress(graph, 'P2');
       assertFailures(validateGraph(graph), [`'check slotToProvide data is from handle foo' failed for path: P2.slotToConsume`]);
+    });
+  });
+
+  describe('cycles', () => {
+    it('supports tag checks in a single-particle cycle', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input
+          out Foo {} output
+          check input is trusted
+          claim output is trusted
+        recipe R
+          P
+            input <- h
+            output -> h
+      `);
+      markParticlesWithIngress(graph, 'P');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('supports handle checks tags in a single-particle cycle', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input
+          out Foo {} output
+          check input is from handle output
+        recipe R
+          P
+            input <- h
+            output -> h
+      `);
+      markParticlesWithIngress(graph, 'P');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('works with simple two-particle cycles', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Foo {} input
+          out Foo {} output
+          check input is trusted
+          claim output is trusted
+        particle P2
+          in Foo {} input
+          out Foo {} output
+          check input is trusted
+        recipe R
+          P1
+            input <- h1
+            output -> h2
+          P2
+            input <- h2
+            output -> h1
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it(`supports breaking cycles using 'derives from' claims`, async () => {
+      const runWithCheck = async (check: string) => {
+        const graph = await buildFlowGraph(`
+          particle P
+            in Foo {} input1
+            in Foo {} input2
+            out Foo {} output1
+            out Foo {} output2
+            claim output1 derives from input1 and is a
+            claim output2 derives from input2 and is b
+            check input2 ${check}
+          recipe R
+            P
+              input1 <- h1
+              input2 <- h2
+              output1 -> h1
+              output2 -> h2
+        `);
+        markParticlesWithIngress(graph, 'P');
+        return validateGraph(graph).isValid;
+      };
+
+      assert.isFalse(await runWithCheck('is a'));
+      assert.isTrue(await runWithCheck('is b'));
+      assert.isFalse(await runWithCheck('is from handle input1'));
+      assert.isTrue(await runWithCheck('is from handle input2'));
+    });
+
+    it('tags propagate throughout overlapping cycles', async () => {
+      // Two cycles: P1-P2-P3 and P1-P2-P4. One cycle is tagged with a, the
+      // other is tagged with b. All paths should be a or b, but not all paths
+      // are a, and not all paths are b.
+      const runWithCheck = async (check: string) => {
+        const graph = await buildFlowGraph(`
+          particle P1
+            in Foo {} input1
+            in Foo {} input2
+            out Foo {} output1
+            out Foo {} output2
+            check input1 ${check}
+            check input2 ${check}
+            claim output1 is a
+            claim output2 is b
+          particle P2
+            in Foo {} input1
+            in Foo {} input2
+            out Foo {} output1
+            out Foo {} output2
+            check input1 ${check}
+            check input2 ${check}
+          particle P3
+            in Foo {} input
+            out Foo {} output
+            check input ${check}
+          particle P4
+            in Foo {} input
+            out Foo {} output
+            check input ${check}
+          recipe R
+            P1
+              input1 <- h3
+              input2 <- h6
+              output1 -> h1
+              output2 -> h4
+            P2
+              input1 <- h1
+              input2 <- h5
+              output1 -> h2
+              output2 -> h6
+            P3
+              input <- h2
+              output -> h3
+            P4
+              input <- h4
+              output -> h5
+        `);
+        markParticlesWithIngress(graph, 'P1');
+        return validateGraph(graph).isValid;
+      };
+
+      assert.isTrue(await runWithCheck('is a or is b'));
+      assert.isFalse(await runWithCheck('is a'));
+      assert.isFalse(await runWithCheck('is b'));
+    });
+
+    it(`a simple cycle doesn't prevent claims from propagating`, async () => {
+      // This test is a simple chain of particles, where the start of the chain
+      // makes a claim and the end of the chain checks it, but with a cycle in
+      // the middle of it. The cycle shouldn't stop the claim from propagating.
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+          claim output is trusted
+        particle P2
+          in Foo {} input1
+          in Foo {} input2
+          out Foo {} output
+        particle P3
+          in Foo {} input
+          out Foo {} output1
+          out Foo {} output2
+        particle P4
+          in Foo {} input
+          check input is trusted
+        recipe R
+          P1
+            output -> h1
+          P2
+            input1 <- h1
+            input2 <- h4
+            output -> h2
+          P3
+            input <- h2
+            output1 -> h3
+            output2 -> h4
+          P4
+           input <- h3
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('two origin cycles can co-exist happily', async () => {
+      // A graph with two simple loops at the beginning (P2's outputs connected
+      // to P1's inputs), each with ingress. The claim should flow through to
+      // P3.
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Foo {} input1
+          in Foo {} input2
+          out Foo {} output
+          claim output is a
+        particle P2
+          in Foo {} input
+          out Foo {} output1
+          out Foo {} output2
+          out Foo {} output3
+        particle P3
+          in Foo {} input
+          check input is a
+        recipe R
+          P1
+            input1 <- h1
+            input2 <- h2
+            output -> h3
+          P2
+            input <- h3
+            output1 -> h1
+            output2 -> h2
+            output3 -> h4
+          P3
+            input <- h4
+      `);
+      markParticleInputsWithIngress(graph, 'P1.input1', 'P1.input2');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('tags can be removed in a simple cycle ', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Foo {} input
+          out Foo {} output
+          check input is trusted
+          claim output is trusted
+        particle P2
+          in Foo {} input
+          out Foo {} output
+          claim output is not trusted
+        recipe R
+          P1
+            input <- h1
+            output -> h2
+          P2
+            input <- h2
+            output -> h1
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assertFailures(validateGraph(graph), [`'check input is trusted' failed for path: P2.output -> P1.input`]);
+    });
+
+    it('tags can be removed by a cycle along a chain', async () => {
+      // We have a chain of particles P1-P2-P3, through which a tag gets
+      // propagated. However, we also have a small cycle from P2.output ->
+      // P2.input, which removes the tag. A check at P3 should fail.
+      const graph = await buildFlowGraph(`
+        particle P1
+          out Foo {} output
+          claim output is trusted
+        particle P2
+          in Foo {} input1
+          in Foo {} input2
+          out Foo {} output1
+          out Foo {} output2
+          claim output2 is not trusted
+        particle P3
+          in Foo {} input
+          check input is trusted
+        recipe R
+          P1
+            output -> h1
+          P2
+            input1 <- h1
+            input2 <- h3
+            output1 -> h2
+            output2 -> h3
+          P3
+            input <- h2
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assertFailures(validateGraph(graph), [`'check input is trusted' failed for path: P2.output2 -> P2.input2 -> P2.output1 -> P3.input`]);
+    });
+
+    it('overlapping cycles with no ingress fail', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input1
+          in Foo {} input2
+          out Foo {} output1
+          out Foo {} output2
+          claim output1 is trusted
+          claim output2 is trusted
+          check input1 is trusted
+        recipe R
+          P
+            input1 <- h
+            input2 <- h
+            output1 -> h
+            output2 -> h
+      `);
+      const result = validateGraph(graph);
+      assert.isFalse(result.isValid);
+      assert.hasAllKeys(result.failures, [`'check input1 is trusted' failed: no data ingress.`]);
     });
   });
 });

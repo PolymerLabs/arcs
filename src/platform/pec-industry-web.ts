@@ -14,7 +14,7 @@ const pecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
   const remap = _expandUrls(loader._urlMap);
   // get real path from meta path
-  const workerUrl = loader._resolve(WORKER_PATH);
+  const workerUrl = loader.resolve(WORKER_PATH);
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
   let workerBlobUrl;
   loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);

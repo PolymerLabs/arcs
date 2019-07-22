@@ -73,7 +73,7 @@ export class Reference implements Storable {
 /** A subclass of Reference that clients can create. */
 export abstract class ClientReference extends Reference {
   private mode = ReferenceMode.Unstored;
-  public stored: Promise<undefined>;
+  public stored: Promise<void>;
 
   /** Use the newClientReference factory method instead. */
   protected constructor(entity: Entity, context: ParticleExecutionContext) {
@@ -82,13 +82,10 @@ export abstract class ClientReference extends Reference {
           new ReferenceType(Entity.entityClass(entity).type), context);
 
     this.entity = entity;
-    this.stored = new Promise(async (resolve, reject) => {
-      await this.storeReference(entity);
-      resolve();
-    });
+    this.stored = this.storeReference(entity);
   }
 
-  private async storeReference(entity) {
+  private async storeReference(entity): Promise<void> {
     await this.ensureStorageProxy();
     await this.handle.store(entity);
     this.mode = ReferenceMode.Stored;

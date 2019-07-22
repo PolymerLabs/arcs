@@ -122,7 +122,7 @@ export class RecipeIndex {
       [],
       Rulesets.Empty
     );
-    this.ready = trace.endWith(new Promise(async resolve => {
+    this.ready = trace.endWith((async () => {
       const generations: Generation[] = [];
 
       do {
@@ -139,8 +139,7 @@ export class RecipeIndex {
       }
       this._recipes = [...candidates].map(r => r.result);
       this._isReady = true;
-      resolve(true);
-    }));
+    })());
   }
 
   static create(arc: Arc): RecipeIndex {
