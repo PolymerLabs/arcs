@@ -9,7 +9,7 @@
  */
 
 import {Recipe} from '../../runtime/recipe/recipe.js';
-import {ParticleNode, createParticleNodes} from './particle-node.js';
+import {ParticleNode, createParticleNodes, ParticleOutput, ParticleInput} from './particle-node.js';
 import {HandleNode, createHandleNodes, addHandleConnection} from './handle-node.js';
 import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';
 import {Node, Edge, FlowCondition, FlowCheck} from './graph-internals.js';
@@ -31,8 +31,8 @@ export class FlowGraph {
   /** Maps from particle name to node. */
   readonly particleMap: Map<string, ParticleNode>;
 
-  /** Maps from HandleConnectionSpec to edge. */
-  private readonly handleSpecMap: Map<HandleConnectionSpec, Edge> = new Map();
+  /** Maps from HandleConnectionSpec to HandleNode. */
+  private readonly handleSpecMap: Map<HandleConnectionSpec, HandleNode> = new Map();
 
   private readonly manifest: Manifest;
 
@@ -59,10 +59,24 @@ export class FlowGraph {
     recipe.handleConnections.forEach(connection => {
       const particleNode = particleNodes.get(connection.particle);
       const handleNode = handleNodes.get(connection.handle);
-      const edgeId = 'E' + edgeIdCounter++;
-      const edge = addHandleConnection(particleNode, handleNode, connection, edgeId);
-      this.edges.push(edge);
-      this.handleSpecMap.set(connection.spec, edge);
+      this.handleSpecMap.set(connection.spec, handleNode);
+      
+      // Function to construct a new edge in the graph.
+      const addEdgeWithDirection = (direction: 'in' | 'out') => {
+        const edgeId = 'E' + edgeIdCounter++;
+        const edge = addHandleConnection(direction, particleNode, handleNode, connection, edgeId);
+        this.edges.push(edge);
+      };
+
+      if (connection.direction === 'inout') {
+        // An inout handle connection is represented by two edges.
+        addEdgeWithDirection('in');
+        addEdgeWithDirection('out');
+      } else if (connection.direction === 'in' || connection.direction === 'out') {
+        addEdgeWithDirection(connection.direction);
+      } else {
+        throw new Error(`Unsupported handle connection direction: ${connection.direction}`);
+      }
     });
 
     // Add edges from particles to the slots that they consume (one-way only, for now).
@@ -83,12 +97,12 @@ export class FlowGraph {
       }
     });
 
-    // Attach check objects to edges. Must be done in a separate pass after all
-    // edges have been created, since checks can reference other nodes/edges.
-    recipe.handleConnections.forEach(connection => {
-      if (connection.spec.check) {
-        const edge = this.handleSpecMap.get(connection.spec);
-        edge.check = this.createFlowCheck(connection.spec.check);
+    // Attach check objects to particle in-edges. Must be done in a separate
+    // pass after all edges have been created, since checks can reference other
+    // nodes/edges.
+    this.edges.forEach(edge => {
+      if (edge instanceof ParticleInput && edge.connectionSpec.check) {
+        edge.check = this.createFlowCheck(edge.connectionSpec.check);
       }
     });
   }
@@ -104,8 +118,7 @@ export class FlowGraph {
 
   /** Converts an "is from handle" check into the node ID that we need to search for. */
   handleCheckToNodeId(check: CheckIsFromHandle): string {
-    const parentEdge = this.handleSpecMap.get(check.parentHandle);
-    return parentEdge.start.nodeId;
+    return this.handleSpecMap.get(check.parentHandle).nodeId;
   }
 
   /** Converts an "is from store" check into the node ID that we need to search for. */

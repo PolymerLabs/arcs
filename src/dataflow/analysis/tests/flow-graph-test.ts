@@ -59,6 +59,39 @@ describe('FlowGraph', () => {
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar']);
   });
 
+  it('works with inout handle connections', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        inout Foo {} foo
+        check foo is t1
+        claim foo is t2
+      recipe R
+        P
+          foo <-> h
+    `);
+    assert.lengthOf(graph.particles, 1);
+    const particleNode = graph.particles[0];
+    assert.lengthOf(graph.handles, 1);
+    const handleNode = graph.handles[0];
+    assert.lengthOf(graph.edges, 2);
+    const [inEdge, outEdge] = graph.edges;
+
+    assert.strictEqual(particleNode.nodeId, 'P0');
+    assert.strictEqual(handleNode.nodeId, 'H0');
+    assert.strictEqual(inEdge.edgeId, 'E0');
+    assert.strictEqual(outEdge.edgeId, 'E1');
+
+    assert.strictEqual(inEdge.start, handleNode);
+    assert.strictEqual(inEdge.end, particleNode);
+    assert.strictEqual(outEdge.start, particleNode);
+    assert.strictEqual(outEdge.end, handleNode);
+
+    assert.deepEqual(inEdge.modifier, FlowModifier.parse('+node:H0', '+edge:E0'));
+    assert.deepNestedInclude(inEdge.check, {type: 'tag', value: 't1', negated: false});
+    assert.deepEqual(outEdge.modifier, FlowModifier.parse('+node:P0', '+edge:E1', '+tag:t2'));
+    assert.isUndefined(outEdge.check);
+  });
+
   it('works with handles with multiple inputs', async () => {
     const graph = await buildFlowGraph(`
       particle P1

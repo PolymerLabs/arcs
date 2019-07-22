@@ -613,6 +613,34 @@ describe('FlowGraph validation', () => {
     assertFailures(validateGraph(graph), [`'check bar is not private' failed for path: P1.foo -> P2.bar`]);
   });
 
+  it('succeeds when an inout handle claims the same tag it checks', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        inout Foo {} foo
+        check foo is t
+        claim foo is t
+      recipe R
+        P
+          foo <-> h
+    `);
+    markParticlesWithIngress(graph, 'P');
+    assert.isTrue(validateGraph(graph).isValid);
+  });
+
+  it('fails when an inout handle claims a different tag it checks', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        inout Foo {} foo
+        check foo is t1
+        claim foo is t2
+      recipe R
+        P
+          foo <-> h
+    `);
+    markParticlesWithIngress(graph, 'P');
+    assertFailures(validateGraph(graph), [`'check foo is t1' failed for path: P1.foo`]);
+  });
+
   it('succeeds when handle has multiple inputs with the right tags', async () => {
     const graph = await buildFlowGraph(`
       particle P1
@@ -940,6 +968,19 @@ describe('FlowGraph validation', () => {
       `);
       markParticleInputsWithIngress(graph, 'P.input1');
       assertFailures(validateGraph(graph), [`'check input2 is not from handle input1' failed for path: P.input2`]);
+    });
+
+    it('succeeds on an inout handle checking against itself', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          inout Foo {} foo
+          check foo is from handle foo
+        recipe R
+          P
+            foo <-> h
+      `);
+      markParticlesWithIngress(graph, 'P');
+      assert.isTrue(validateGraph(graph).isValid);
     });
 
     it('succeeds when the handle has inputs', async () => {
