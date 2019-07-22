@@ -585,6 +585,8 @@ ${this.activeRecipe.toString()}`;
         continue;
         // TODO: move the call to ParticleExecutionHost's DefineHandle to here
       } else if (recipeHandle.fate === 'use' && isInflatable) {
+        // The new unit test fails with this approach because the storage instance still isn't
+        // plumbed into the arc. Not sure of the correct fix...
         store = await store.inflate();
       }
 

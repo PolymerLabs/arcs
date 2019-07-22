@@ -59,7 +59,7 @@ function getSingletonHandle(store: StorageProviderBase): Singleton {
 //  const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test/arc-1';
 
 ['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
-describe('Arc ' + storageKeyPrefix, () => {
+describe.only('Arc ' + storageKeyPrefix, () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
     const arc = runtime.newArc('test', storageKeyPrefix);
@@ -153,7 +153,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it(`instantiates recipes only if fate is correct ` + storageKeyPrefix, async function() {
+  it('instantiates recipes only if fate is correct ' + storageKeyPrefix, async function() {
     if (!storageKeyPrefix.startsWith('volatile')) {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
@@ -216,6 +216,41 @@ describe('Arc ' + storageKeyPrefix, () => {
     const recipe3 = await resolver.resolve(manifest.recipes[3]);
     // Successfully instantiates a recipe with 'use' handle for store in an arc.
     await arc.instantiate(recipe3);
+  });
+
+  // -- DO NOT SUBMIT -- still debugging
+  it.only(`allows 'use' handles with resources defined in the manifest ` + storageKeyPrefix, async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) this.skip();  //~ remove
+
+    const manifest = await Manifest.parse(`
+      schema Thing
+        Text txt
+
+      resource ThingResource
+        start
+        [{"txt": "abc"}]
+      store ThingStore of Thing in ThingResource
+
+      particle A in 'a.js'
+        in Thing input
+
+      recipe
+        use ThingStore as h1
+        A
+          input <- h1
+    `);
+    assert.isTrue(manifest.recipes[0].normalize());
+
+    const loader = new StubLoader({
+      'a.js': 'defineParticle(({Particle}) => class Noop extends Particle {});'
+    });
+    const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+    const arc = await runtime.newArc('test0', storageKeyPrefix);
+    await arc.instantiate(manifest.recipes[0]);
+    await arc.idle;
+
+    const store = arc._stores[0] as SingletonStorageProvider;
+    assert.deepStrictEqual((await store.get()).rawData, {txt: 'abc'});
   });
 
   it('required provided handles do not resolve without parent', async function() {
