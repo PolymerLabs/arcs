@@ -24,6 +24,12 @@ export class HandleNode extends Node {
     super();
     this.nodeId = nodeId;
     this.storeId = handle.id;
+
+    // Handles with the 'use', 'map' or 'copy' fate can come from sources
+    // external to the recipe, and so should be treated as ingress. 
+    if (handle.fate !== 'create') {
+      this.ingress = true;
+    }
   }
 
   /** Returns a list of all pairs of particles that are connected through this handle, in string form. */

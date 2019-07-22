@@ -251,7 +251,7 @@ export abstract class Node {
    * Boolean indicating whether this node has direct ingress or not (e.g. from a
    * external datastore).
    */
-  ingress: boolean;
+  ingress = false;
 
   abstract readonly inEdges: readonly Edge[];
   abstract readonly outEdges: readonly Edge[];
