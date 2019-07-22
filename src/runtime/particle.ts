@@ -217,6 +217,10 @@ export class Particle {
     return this.slotProxiesByName.get(name);
   }
 
+  getSlotNames(): string[] {
+    return [...this.slotProxiesByName.keys()];
+  }
+
   static buildManifest(strings: string[], ...bits): string {
     const output: string[] = [];
     for (let i = 0; i < bits.length; i++) {
