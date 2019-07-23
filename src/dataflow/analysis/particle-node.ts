@@ -48,7 +48,7 @@ export class ParticleNode extends Node {
    * Iterates through all of the relevant in-edges leading into this particle, that flow out into the given out-edge. The out-edge may have a
    * 'derives from' claim that restricts which edges flow into it.
    */
-  inEdgesFromOutEdge(outEdge: Edge): readonly Edge[] {
+  inEdgesFromOutEdge(outEdge: ParticleOutput): readonly Edge[] {
     assert(this.outEdges.includes(outEdge), 'Particle does not have the given out-edge.');
 
     if (outEdge.derivesFrom && outEdge.derivesFrom.length) {
@@ -87,6 +87,7 @@ export class ParticleOutput implements Edge {
   readonly end: Node;
   readonly label: string;
   readonly connectionName: string;
+  readonly connectionSpec: HandleConnectionSpec;
 
   readonly modifier: FlowModifier;
   readonly derivesFrom: ParticleInput[];
@@ -96,14 +97,22 @@ export class ParticleOutput implements Edge {
     this.start = particleNode;
     this.end = otherEnd;
     this.connectionName = connection.name;
+    this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
     
     this.modifier = FlowModifier.fromClaims(this, connection.spec.claims);
-    if (connection.spec.claims) {
-      this.derivesFrom = [];
-      for (const claim of connection.spec.claims) {
+    this.derivesFrom = [];
+  }
+
+  computeDerivedFromEdges() {
+    assert(this.derivesFrom.length === 0, '"Derived from" edges have already been computed.');
+
+    if (this.connectionSpec.claims) {
+      for (const claim of this.connectionSpec.claims) {
         if (claim.type === ClaimType.DerivesFrom) {
-          this.derivesFrom.push(particleNode.inEdgesByName.get(claim.parentHandle.name));
+          const derivedFromEdge = this.start.inEdgesByName.get(claim.parentHandle.name);
+          assert(derivedFromEdge, `Handle '${claim.parentHandle.name}' is not an in-edge.`);
+          this.derivesFrom.push(derivedFromEdge);
         }
       }
     }
