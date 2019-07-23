@@ -1,0 +1,17 @@
+// Defines some dummy datastores to use for the dataflow examples.
+
+// Define some dummy data to use in the data stores defined below.
+schema Model
+  Text modelData
+resource DummyResource
+  start
+  [{"modelData": "asdf"}]
+
+// Create two data stores, one marked public, the other not (they both just
+// contain the same dummy data).
+store PublicModel of Model 'public-model' in DummyResource
+  claim is public
+store PrivateModel of Model 'private-model' in DummyResource
+
+// A datastore representing data captured from the screen.
+store Screen of Model 'screen' in DummyResource

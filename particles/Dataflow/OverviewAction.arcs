@@ -1,0 +1,71 @@
+// Overview Action Example.
+// From: https://docs.google.com/presentation/d/1i-mTjlyWFSHYxvcJj98fIkUkHSu7ya3COa2wZeiqyi8/edit#slide=id.g5907ddee85_0_75
+
+import './Datastores.arcs'
+
+particle LongPressListener
+  in * {} screen
+  out Coords {} coords
+
+particle OCR
+  in * {} image
+  in Coords {} coords
+  out Text {} result
+
+particle TextClassifier
+  in Text {} text
+  in Model model
+  out Range {} selectedRange
+
+particle SelectionUI
+  in Text {} text
+  inout Range {} selectedRange
+  out Text {} selectedText
+
+  // The text to be selected must have come from the screen.
+  check text is from store 'screen'
+
+  // The output of this particle is a substring of its input text only. This
+  // chops out the selectedRange input from the dataflow analysis.
+  claim selectedText derives from text
+
+particle MatchMaker
+  in Text {} selectedText
+  out Action {} action
+
+particle ActionUX
+  in Action {} action
+
+  // The action we're about to perform must be derived entirely from the screen
+  // data.
+  check action is from store 'screen'
+
+recipe OverviewActionRecipe
+  use Screen as screen
+  use PrivateModel as model
+  create as coords
+  create as ocrText
+  create as selectedRange
+  create as selectedText
+  create as action
+
+  LongPressListener
+    screen <- screen
+    coords -> coords
+  OCR
+    image <- screen
+    coords <- coords
+    result -> ocrText
+  TextClassifier
+    text <- ocrText
+    model <- model
+    selectedRange -> selectedRange
+  SelectionUI
+    text <- ocrText
+    selectedRange <-> selectedRange
+    selectedText -> selectedText
+  MatchMaker
+    selectedText <- selectedText
+    action -> action
+  ActionUX
+    action <- action
