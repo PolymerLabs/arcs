@@ -3,21 +3,21 @@
 
 import './Datastores.arcs'
 
-particle LongPressListener
+particle LongPressListener in 'empty.js'
   in * {} screen
   out Coords {} coords
 
-particle OCR
+particle OCR in 'empty.js'
   in * {} image
   in Coords {} coords
   out Text {} result
 
-particle TextClassifier
+particle TextClassifier in 'empty.js'
   in Text {} text
   in Model model
   out Range {} selectedRange
 
-particle SelectionUI
+particle SelectionUI in 'empty.js'
   in Text {} text
   inout Range {} selectedRange
   out Text {} selectedText
@@ -29,11 +29,11 @@ particle SelectionUI
   // chops out the selectedRange input from the dataflow analysis.
   claim selectedText derives from text
 
-particle MatchMaker
+particle MatchMaker in 'empty.js'
   in Text {} selectedText
   out Action {} action
 
-particle ActionUX
+particle ActionUX in 'empty.js'
   in Action {} action
 
   // The action we're about to perform must be derived entirely from the screen

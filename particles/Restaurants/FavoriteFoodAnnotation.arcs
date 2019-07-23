@@ -1,0 +1,46 @@
+import '../List/List.arcs'
+import '../Profile/FavoriteFood.arcs'
+import '../Profile/schemas/UserName.arcs'
+import '../Common/schemas/Description.arcs'
+import './schemas/Restaurant.arcs'
+
+particle FavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
+  in Restaurant restaurant
+  in [FavoriteFoodShare] foods
+  in [UserNameShare] names
+  consume annotation
+
+particle SharesFrom in 'source/SharesFrom.js'
+  in [~a] shares
+  //in [UserNameShare] names
+  in [~b] names
+  out [Description] descriptions
+
+interface AnnotationInterfaceThree
+  in ~anyType *
+  in [~otherOne] *
+  in [~otherTwo] names
+  consume annotation
+
+particle AnnotationMultiplexerThree in '../List/source/Multiplexer.js'
+  in [~anyType] list
+  in [~otherOne] choices
+  in [~otherTwo] names
+  host AnnotationInterfaceThree hostedParticle
+  consume set of annotation
+
+recipe FavoriteFoodAnnotation
+  use as restaurants
+  map #shared as foods
+  map 'BOXED_userName' as names
+  create as descriptions
+  SharesFrom
+    shares = foods
+    names = names
+    descriptions = descriptions
+  AnnotationMultiplexerThree
+    list = restaurants
+    choices = foods
+    names = names
+    hostedParticle = FavoriteFoodAnnotation
+  description `check restaurants for ${SharesFrom}'s favorite foods`

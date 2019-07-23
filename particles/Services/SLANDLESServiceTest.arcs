@@ -1,0 +1,4 @@
+import 'particles/SLANDLESServiceTest.arcs'
+recipe SlandleServiceTest
+  SlandleServiceTest
+  description `test service infrastructure`

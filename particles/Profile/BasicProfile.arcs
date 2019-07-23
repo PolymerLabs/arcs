@@ -1,0 +1,36 @@
+import 'schemas/Friend.arcs'
+import 'schemas/UserName.arcs'
+import 'schemas/Avatar.arcs'
+
+particle UserNameForm in 'source/UserNameForm.js'
+  inout UserName userName
+  consume userName
+
+particle FriendsPicker in 'source/FriendsPicker.js'
+  inout [Friend] friends
+  in [AvatarShare] avatars
+  in [UserNameShare] userNames
+  consume friends
+  description `select friends`
+
+particle BasicProfile in 'source/BasicProfile.js'
+  inout Avatar avatar
+  consume root
+    provide userName
+    provide friends
+
+recipe BasicProfile
+  create #avatar as avatar
+  create #userName as userName
+  create #friends as friends
+  map 'BOXED_avatar' as avatars
+  map 'BOXED_userName' as userNames
+  BasicProfile
+    avatar = avatar
+  UserNameForm
+    userName = userName
+  FriendsPicker
+    friends = friends
+    avatars = avatars
+    userNames = userNames
+  description `edit user profile (name, avatar, and friends)`

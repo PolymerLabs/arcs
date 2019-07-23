@@ -1,6 +1,0 @@
-schema Friend
-  Text publicKey
-
-import 'Share.schema'
-schema FriendShare extends Share
-  Reference<Friend> ref

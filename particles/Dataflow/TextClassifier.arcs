@@ -12,7 +12,7 @@ particle APIResponse in 'empty.js'
   in Result {} result
   consume responseSlot
 
-particle ExposeAPI
+particle ExposeAPI in 'empty.js'
   out Query {} query
   consume root
     provide replySlot

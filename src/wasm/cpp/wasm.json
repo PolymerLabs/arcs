@@ -1,6 +1,6 @@
 {
   "output.wasm": {
-    "manifest": "example.manifest",
+    "manifest": "example.arcs",
     "src": ["example.cc"],
     "outDir": "src/wasm/cpp",
     "linkManifest": false

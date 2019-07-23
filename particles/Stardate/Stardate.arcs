@@ -1,0 +1,24 @@
+import '../Common/schemas/Description.arcs'
+import './StardateTOS.arcs'
+import './StardateDisplay.arcs'
+import '../Services/particles/Random.arcs'
+
+recipe StardateTOS
+  create as stardate
+  create as destination
+
+  RandomParticle
+    randomData -> randomPlanet
+
+  RandomParticle
+    randomData -> randomTime
+
+  StardateTOS
+    stardate = stardate
+    destination = destination
+    randomTime <- randomTime
+    randomPlanet <- randomPlanet
+
+  StardateDisplay
+    stardate = stardate
+    destination = destination

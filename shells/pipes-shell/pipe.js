@@ -133,7 +133,7 @@ const onChange = (arc, change, callback) => {
 };
 
 const buildEntityManifest = entity => `
-import 'https://$particles/PipeApps/Trigger.recipes'
+import 'https://$particles/PipeApps/Trigger.arcs'
 
 resource PipeEntityResource
   start

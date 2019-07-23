@@ -16,7 +16,7 @@ const log = logFactory('LauncherArc', '#cb23a6');
 
 // const manifests = {
 //   launcher: `
-//     import 'https://$particles/Arcs/Launcher.recipe'
+//     import 'https://$particles/Arcs/Launcher.arcs'
 //   `
 // };
 

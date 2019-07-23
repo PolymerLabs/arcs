@@ -1,0 +1,25 @@
+import '../Common/schemas/Description.arcs'
+import './SLANDLESStardateTOS.arcs'
+import './SLANDLESStardateDisplay.arcs'
+import '../Services/particles/Random.arcs'
+
+recipe SlandleStardateTOS
+  create as stardate
+  create as destination
+  `slot 'rootslotid-root' #root as root
+
+  RandomParticle
+    randomData -> randomPlanet
+
+  RandomParticle
+    randomData -> randomTime
+
+  SlandleStardateTOS
+    stardate -> stardate
+    destination -> destination
+    randomTime <- randomTime
+    randomPlanet <- randomPlanet
+
+  SlandleStardateDisplay
+    stardate <- stardate
+    destination <- destination

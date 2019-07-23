@@ -1,7 +1,7 @@
 # Manifest
 An Arcs Manifest declares collections of Schemas, Particles, Recipes and Stores. It's used as an input to the system from which suggestions can be produced.
 
-By convention a manifest is stored in a file with the `.manifest` extension.
+By convention a manifest is stored in a file with the `.arcs` extension.
 
 ## Schemas
 
@@ -215,9 +215,9 @@ A manifest can be self contained or can import Schemas, Particles, Recipes and S
 
 ```
 # By relative path:
-import '../somewhere/another.manifest'
+import '../somewhere/another.arcs'
 # Or URL
-import 'https://fancy-thing.glitch.io/everything.manifest'
+import 'https://fancy-thing.glitch.io/everything.arcs'
 ```
 
 Everything in the hierarchy of imported manifests is then made available in the manifest scope.

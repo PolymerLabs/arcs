@@ -13,7 +13,7 @@ import {Stores} from '../../lib/runtime/stores.js';
 import {Schemas} from './schemas.js';
 
 const manifest = `
-import 'https://$particles/PipeApps2/PipeApps.recipes'
+import 'https://$particles/PipeApps2/PipeApps.arcs'
 `;
 
 export const requireContext = async () => {

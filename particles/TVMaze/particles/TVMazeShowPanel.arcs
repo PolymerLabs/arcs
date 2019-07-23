@@ -1,0 +1,12 @@
+import '../../Common/schemas/Description.arcs'
+import '../schemas/TVMazeShow.arcs'
+import '../schemas/Text.arcs'
+
+particle TVMazeShowPanel in './js/TVMazeShowPanel.js'
+  in TVMazeShow show
+  in? Text alsoWatch
+  out [Description] descriptions
+  consume content #tv_show_panel
+    provide action
+    provide items
+  description `${show} details`

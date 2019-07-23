@@ -1,0 +1,6 @@
+schema UserName
+  Text userName
+
+import 'Share.arcs'
+schema UserNameShare extends Share
+  Reference<UserName> ref

@@ -35,7 +35,7 @@ const typeMap = {
 };
 
 export class Schema2Cpp extends Schema2Base {
-  // test-CPP.file_name.manifest -> test-cpp-file-name-manifest.h
+  // test-CPP.file_name.arcs -> test-cpp-file-name-manifest.h
   outputName(baseName: string): string {
     return baseName.toLowerCase().replace(/[._]/g, '-') + '.h';
   }

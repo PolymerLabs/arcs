@@ -20,7 +20,7 @@ import {UserContext} from './user-context.js';
 import {UserPlanner} from './user-planner.js';
 
 const contextManifest = `
-  import 'https://$particles/canonical.manifest'
+  import 'https://$particles/canonical.arcs'
   import 'https://$particles/Profile/Sharing.recipe'
 `;
 

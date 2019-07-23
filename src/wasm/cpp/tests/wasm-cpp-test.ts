@@ -19,12 +19,12 @@ describe.skip('wasm C++ tests', () => {
   it('simple entity passthrough', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
-      import 'build/wasm/cpp/tests/test.manifest'
+      import 'build/wasm/cpp/tests/test.arcs'
       recipe
         PassThrough
           input <- h0
           output -> h1
-      `, {loader, fileName: process.cwd() + '/input.manifest'});
+      `, {loader, fileName: process.cwd() + '/input.arcs'});
 
     const runtime = new Runtime(loader, FakeSlotComposer, manifest);
     const arc = runtime.newArc('wasm-test', 'volatile://');

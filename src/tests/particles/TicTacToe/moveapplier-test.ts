@@ -20,7 +20,7 @@ import * as util from '../../../runtime/testing/test-util.js';
 describe('TicTacToe MoveApplier tests', () => {
   it('updates boards with valid next moves', async () => {
     const loader = new Loader();
-    const manifest = await Manifest.load(`particles/TicTacToe/MoveApplierTest.recipe`, loader);
+    const manifest = await Manifest.load(`particles/TicTacToe/MoveApplierTest.arcs`, loader);
 
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -67,7 +67,7 @@ describe('TicTacToe MoveApplier tests', () => {
   });
   it('fails if nextMove and state has player mismatch', async () => {
     const loader = new Loader();
-    const manifest = await Manifest.load(`particles/TicTacToe/MoveApplierTest.recipe`, loader);
+    const manifest = await Manifest.load(`particles/TicTacToe/MoveApplierTest.arcs`, loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved(), recipe.toString({showUnresolved: true}));

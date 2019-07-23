@@ -1,5 +1,0 @@
-import 'schemas/Product.schema'
-
-particle ProductItem in 'source/ProductItem.js'
-  in Product product
-  consume item

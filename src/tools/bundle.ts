@@ -30,8 +30,8 @@ export type BundleEntry = {
 export async function bundle(entryPoints: string[], bundleName: string, verbose: boolean) {
   const listing = await bundleListing(...entryPoints);
 
-  if (listing.some(file => file.bundlePath === '__bundle_entry.manifest')) {
-    throw new Error('Error: Top-level \'__bundle_entry.manifest\' file found. Please remove it.');
+  if (listing.some(file => file.bundlePath === '__bundle_entry.arcs')) {
+    throw new Error('Error: Top-level \'__bundle_entry.arcs\' file found. Please remove it.');
   }
 
   if (verbose) {
@@ -52,7 +52,7 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
         // Some unpackers have issues with 0-byte files.
         {createFolders: false});
     }
-    archive.file('__bundle_entry.manifest', listing
+    archive.file('__bundle_entry.arcs', listing
         .filter(f => f.entryPoint)
         .map(f => `import '${f.bundlePath}'\n`)
         .join(''));

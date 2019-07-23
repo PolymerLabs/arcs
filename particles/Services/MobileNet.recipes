@@ -1,4 +1,0 @@
-import 'particles/MobileNet.particle'
-recipe MobileNet
-  MobileNet
-  description `image classification using MobileNet (service)`

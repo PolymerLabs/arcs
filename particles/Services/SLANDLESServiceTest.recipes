@@ -1,4 +1,0 @@
-import 'particles/SLANDLESServiceTest.particle'
-recipe SlandleServiceTest
-  SlandleServiceTest
-  description `test service infrastructure`

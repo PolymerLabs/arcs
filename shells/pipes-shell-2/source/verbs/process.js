@@ -64,7 +64,7 @@ const marshalPipeRecipe = async ({type, name, source}, tag) => {
 };
 
 const buildEntityManifest = ({type, source, name}, tag) => `
-import 'https://$particles/PipeApps2/Trigger.recipes'
+import 'https://$particles/PipeApps2/Trigger.arcs'
 
 recipe Pipe
   //use 'LivePipeEntity' #pipe_entity #${tag} as pipe

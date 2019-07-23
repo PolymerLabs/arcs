@@ -1,4 +1,0 @@
-import 'particles/ServiceTest.particle'
-recipe ServiceTest
-  ServiceTest
-  description `test service infrastructure`

@@ -1,6 +1,0 @@
-import './schemas/StyleSheet.schema'
-
-particle StyleSheet in './source/StyleSheet.js'
-  //in StyleSheet sheet
-  consume parent
-    provide container

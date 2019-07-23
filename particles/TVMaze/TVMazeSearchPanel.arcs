@@ -1,0 +1,44 @@
+import 'particles/TVMazeSearchBar.arcs'
+import 'particles/TVMazeSearchShows.arcs'
+import 'particles/TVMazeShowTile.arcs'
+import 'particles/TVMazeShowPanel.arcs'
+import 'particles/TVMazeShowActions.arcs'
+
+import '../List/List.arcs'
+import '../Layout/Layout.arcs'
+
+recipe TVMazeSearchBar
+  create #volatile as query
+  TVMazeSearchBar
+    query = query
+
+recipe TVMazeSearchShows
+  use as query
+  create #tiles #shows as shows
+  TVMazeSearchShows
+    query = query
+    shows = shows
+  description `use TVMaze(tm) to search for TV shows`
+
+recipe TVMazeShowTiles
+  use as shows
+  create #selected as selected
+  SelectableTiles
+    consume root
+      provide tile
+      provide annotation as action
+    list = shows
+    selected = selected
+  TileMultiplexer
+    hostedParticle = TVMazeShowTile
+    consume tile
+    list = shows
+  description `show information about ${SelectableTiles.list}`
+
+recipe TVMazeShowPanel
+  use as show
+  create #volatile as descriptions
+  TVMazeShowPanel
+    show = show
+    descriptions = descriptions
+

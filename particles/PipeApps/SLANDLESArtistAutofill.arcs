@@ -1,0 +1,29 @@
+import './schemas/Json.arcs'
+import '../Services/schemas/RandomData.arcs'
+import '../Services/particles/Random.arcs'
+
+schema Artist
+  Text type
+  Text name
+  Text source
+
+particle SlandleRandomArtist in './source/RandomArtist.js'
+  in RandomData randomArtist
+  out Artist artist
+
+particle SlandleSuggestArtist in './source/SuggestArtist.js'
+  in Artist artist
+  out Json suggestion
+  `consume Slot app
+
+recipe SlandleCom_spotify_music &autofill
+  create as artist
+  create as suggestion
+  RandomParticle
+    randomData -> randomArtist
+  SlandleRandomArtist
+    randomArtist <- randomArtist
+    artist = artist
+  SlandleSuggestArtist
+    artist = artist
+    suggestion = suggestion
