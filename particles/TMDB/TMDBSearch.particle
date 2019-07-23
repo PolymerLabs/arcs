@@ -1,4 +1,4 @@
-import '../Common/schema/SearchQuery.schema'
+import '../Common/schemas/SearchQuery.schema'
 import './schemas/TMDBSearchResult.schema'
 
 particle TMDBSearch in './source/TMDBSearch.js'

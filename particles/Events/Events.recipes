@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Event.schema'
-import '../Common/schema/Description.schema'
+import 'schemas/Event.schema'
+import '../Common/schemas/Description.schema'
 
 particle Calendar in 'source/Calendar.js'
   inout Event event

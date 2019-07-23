@@ -1,4 +1,4 @@
-import 'PipeEntity.schema'
+import 'schemas/PipeEntity.schema'
 
 particle BackgroundPipes in './source/Noop.js'
   in [PipeEntity] entities

@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'SLANDLESGamePane.manifest'
-import 'Stats.schema'
+import 'schemas/Stats.schema'
 
 recipe SlandleWords
   //use #user as person

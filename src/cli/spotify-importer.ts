@@ -24,7 +24,7 @@ import '../runtime/storage/pouchdb-provider.js';
 void (async () => {
   const usage = 'Usage: importSpotify [--clear] <json-files>\n' +
               '       importSpotify --list';
-  const schemaFile = 'particles/Music/Playlist.schema';
+  const schemaFile = 'particles/Music/schemas/Playlist.schema';
   const baseUrl = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections';
 
   async function showPlaylists(collection) {

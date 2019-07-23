@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'GamePane.manifest'
-import 'Stats.schema'
+import 'schemas/Stats.schema'
 
 recipe Words
   //use #user as person

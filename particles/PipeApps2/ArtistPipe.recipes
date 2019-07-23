@@ -1,4 +1,4 @@
-import './PipeEntity.schema'
+import './schemas/PipeEntity.schema'
 import '../Music/Artist.recipes'
 
 particle ArtistPipe in './source/ArtistPipe.js'

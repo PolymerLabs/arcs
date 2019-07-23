@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Restaurant.schema'
+import 'schemas/Restaurant.schema'
 
 particle RestaurantTile in 'source/RestaurantTile.js'
   in Restaurant restaurant

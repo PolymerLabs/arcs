@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/List.recipes'
-import './Playlist.schema'
+import './schemas/Playlist.schema'
 
 // has to be baked into context in order to be available
 // as hostedParticle below

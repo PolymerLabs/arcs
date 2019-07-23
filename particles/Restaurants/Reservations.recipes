@@ -8,8 +8,8 @@
 import '../List/List.recipes'
 import '../Layout/Layout.recipes'
 import '../Events/Events.recipes'
-import '../Restaurants/Restaurant.schema'
-import '../Common/schema/Description.schema'
+import '../Restaurants/schemas/Restaurant.schema'
+import '../Common/schemas/Description.schema'
 
 particle ReservationForm in 'source/ReservationForm.js'
   inout Event event

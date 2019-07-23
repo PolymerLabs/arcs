@@ -13,7 +13,7 @@ import 'Demo/Demo.recipes'
 import 'Processing/recipes/ImageClassifier.recipes'
 
 // for ArcMetaShare
-import 'Arcs/ArcMeta.schema'
+import 'Arcs/schemas/ArcMeta.schema'
 
 // Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
 // import 'Tutorial/Tutorial.recipes'

@@ -1,4 +1,4 @@
-import './Geolocation.schema'
+import './schemas/Geolocation.schema'
 
 particle SlandleGeolocate in './source/Geolocate.js'
   `consume Slot root

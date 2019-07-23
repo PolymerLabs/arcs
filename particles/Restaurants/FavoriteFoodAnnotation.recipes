@@ -1,8 +1,8 @@
 import '../List/List.recipes'
 import '../Profile/FavoriteFood.recipes'
-import '../Profile/UserName.schema'
-import '../Common/schema/Description.schema'
-import './Restaurant.schema'
+import '../Profile/schemas/UserName.schema'
+import '../Common/schemas/Description.schema'
+import './schemas/Restaurant.schema'
 
 particle FavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
   in Restaurant restaurant

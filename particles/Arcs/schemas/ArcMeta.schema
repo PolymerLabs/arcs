@@ -13,6 +13,6 @@ schema ArcMeta
   Boolean starred
   URL externalManifest
 
-import '../Profile/Share.schema'
+import '../../Profile/schemas/Share.schema'
 schema ArcMetaShare extends Share
   Reference<ArcMeta> ref

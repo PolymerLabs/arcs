@@ -1,11 +1,11 @@
-import '../Music/Playlist.schema'
+import '../Music/schemas/Playlist.schema'
 store DemoPlaylists of [Playlist] 'demo-playlists' #items in './playlists.json'
 
-import '../Products/Product.schema'
+import '../Products/schemas/Product.schema'
 store PageProducts of [Product] #shoplist in 'products.json'
   description `products from your browsing context`
 
-import '../People/Person.schema'
+import '../People/schemas/Person.schema'
 store ClairesWishlist of [Product] #items #wishlist in 'wishlist.json'
   description `wishlist`
 store Claire of Person #claire in 'Claire.json'

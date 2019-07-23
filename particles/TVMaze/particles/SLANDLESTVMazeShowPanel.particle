@@ -1,4 +1,4 @@
-import '../../Common/schema/Description.schema'
+import '../../Common/schemas/Description.schema'
 import '../schemas/TVMazeShow.schema'
 import '../schemas/Text.schema'
 

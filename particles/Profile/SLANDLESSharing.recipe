@@ -1,5 +1,5 @@
-import 'Avatar.schema'
-import 'UserName.schema'
+import 'schemas/Avatar.schema'
+import 'schemas/UserName.schema'
 
 resource PROFILE_avatarResource
   start

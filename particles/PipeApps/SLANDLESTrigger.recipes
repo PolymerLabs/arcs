@@ -1,4 +1,4 @@
-import './PipeEntity.schema'
+import './schemas/PipeEntity.schema'
 
 particle SlandleTrigger in './source/Noop.js'
   in PipeEntity pipe

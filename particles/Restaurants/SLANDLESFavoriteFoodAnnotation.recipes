@@ -8,8 +8,8 @@
 
 import '../List/SLANDLESList.recipes'
 import '../Profile/SLANDLESFavoriteFood.recipes'
-import './Restaurant.schema'
-import '../Events/Event.schema'
+import './schemas/Restaurant.schema'
+import '../Events/schemas/Event.schema'
 import './SLANDLESReservations.recipes'
 
 particle SlandleFavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
