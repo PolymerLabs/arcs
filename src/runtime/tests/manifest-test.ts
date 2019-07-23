@@ -673,7 +673,6 @@ ${particleStr1}
       `)).recipes[0];
       const options = {errors: new Map(), details: '', showUnresolved: true};
       recipe.normalize(options);
-      console.log(recipe.obligations);
       assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
     await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
