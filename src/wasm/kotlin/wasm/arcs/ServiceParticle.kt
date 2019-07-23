@@ -4,7 +4,7 @@ import kotlin.native.internal.ExportForCppRuntime
 
 class ServiceParticle : Particle() {
 
-  private val url = "http://localhost:8786/particles/Services/assets/waltbird.jpg"
+  private val url = resolveUrl("https://\$particles/Services/assets/waltbird.jpg")
   private var label = "<working>"
   private var probability = "<working>"
   private var rand = arrayOf("<working>", "<working>")

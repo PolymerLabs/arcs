@@ -78,6 +78,22 @@ abstract class Particle : WasmObject() {
       renderSlot(slotName)
     }
 
+    /**
+     * Resolves urls like 'https://$particles/path/to/assets/pic.jpg'.
+     *
+     * The `$here` prefix can be used to refer to the location of the current wasm binary:
+     *   `$here/path/to/assets/pic.jpg`
+     *
+     * @param String URL with $variables
+     * @return absolute URL
+     */
+    fun resolveUrl(url: String): String {
+      val r: WasmString = resolveUrl(url.toWasmString())
+      val resolved = r.toKString()
+      _free(r)
+      return resolved
+    }
+
     open fun init() {}
     open fun getTemplate(slotName: String): String = ""
     open fun populateModel(slotName: String, model: Map<String, String> = mapOf()): Map<String, String> = model

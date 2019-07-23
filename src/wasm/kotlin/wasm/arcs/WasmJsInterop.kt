@@ -173,6 +173,9 @@ external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, templateP
 @SymbolName("_serviceRequest")
 external fun serviceRequest(particlePtr: WasmAddress, callPtr: WasmString, argsPtr: WasmString, tagPtr: WasmString)
 
+@SymbolName("_resolveUrl")
+external fun resolveUrl(urlPtr: WasmString): WasmString
+
 @SymbolName("write")
 external fun write(msg: WasmString)
 
