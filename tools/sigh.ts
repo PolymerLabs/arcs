@@ -77,6 +77,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   bundle: [peg, build, bundle],
   schema2pkg: [peg, build, schema2pkg],
   devServer: [peg, build, devServer],
+  flowcheck: [peg, build, flowcheck],
   licenses: [build],
   default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
 };
@@ -1009,6 +1010,16 @@ function schema2pkg(args: string[]) {
 
 function devServer(args: string[]) {
   return spawnTool('build/tools/dev_server/dev-server.js', args);
+}
+
+/**
+ * Runs the dataflow analyser on the recipes defined in the given manifest
+ * file(s).
+ *
+ * e.g. ./tools/sigh flowcheck particles/Dataflow/Dataflow.recipe
+ */
+function flowcheck(args: string[]) {
+  return spawnTool('build/dataflow/cli/flowcheck.js', args);
 }
 
 // Looks up the steps for `command` and runs each with `args`.
