@@ -97,12 +97,19 @@ export class FlowGraph {
       }
     });
 
-    // Attach check objects to particle in-edges. Must be done in a separate
-    // pass after all edges have been created, since checks can reference other
-    // nodes/edges.
     this.edges.forEach(edge => {
+      // Attach check objects to particle in-edges. Must be done in a separate
+      // pass after all edges have been created, since checks can reference
+      // other nodes/edges.
       if (edge instanceof ParticleInput && edge.connectionSpec.check) {
         edge.check = this.createFlowCheck(edge.connectionSpec.check);
+      }
+      
+      // Compute the list of 'derived from' edges for all out-edges. This must
+      // also be done in a separate pass since we can't guarantee the ordering
+      // in which the edges were created.
+      if (edge instanceof ParticleOutput) {
+        edge.computeDerivedFromEdges();
       }
     });
   }
