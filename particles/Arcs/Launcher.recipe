@@ -4,9 +4,9 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 
-import 'ArcMeta.schema'
-import '../Profile/UserName.schema'
-import '../Profile/Avatar.schema'
+import 'schemas/ArcMeta.schema'
+import '../Profile/schemas/UserName.schema'
+import '../Profile/schemas/Avatar.schema'
 
 particle Launcher in 'source/Launcher.js'
   inout [ArcMeta] arcs

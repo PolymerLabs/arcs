@@ -1,4 +1,4 @@
-import './Geolocation.schema'
+import './schemas/Geolocation.schema'
 
 particle Geolocate in './source/Geolocate.js'
   consume root

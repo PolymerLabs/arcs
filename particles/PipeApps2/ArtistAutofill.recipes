@@ -1,5 +1,5 @@
-import './Json.schema'
-import './PipeEntity.schema'
+import './schemas/Json.schema'
+import './schemas/PipeEntity.schema'
 import '../Services/schemas/RandomData.schema'
 import '../Services/particles/Random.particle'
 

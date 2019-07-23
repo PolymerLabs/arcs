@@ -1,7 +1,7 @@
 schema FavoriteFood
   Text food
 
-import 'Share.schema'
+import 'schemas/Share.schema'
 
 schema FavoriteFoodShare extends Share
   Reference<FavoriteFood> ref

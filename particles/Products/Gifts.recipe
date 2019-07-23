@@ -6,8 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../People/Person.schema'
-import 'Product.schema'
+import '../People/schemas/Person.schema'
+import 'schemas/Product.schema'
 
 particle GiftList in 'source/GiftList.js'
   in Person person

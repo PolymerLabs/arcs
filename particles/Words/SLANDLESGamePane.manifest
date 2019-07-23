@@ -7,11 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/SLANDLESList.recipes'
-import '../People/Person.schema'
-//import '../Social/Post.schema'
-import 'Board.schema'
-import 'Move.schema'
-import 'Stats.schema'
+import '../People/schemas/Person.schema'
+//import '../Social/schemas/Post.schema'
+import 'schemas/Board.schema'
+import 'schemas/Move.schema'
+import 'schemas/Stats.schema'
 
 particle SlandleGamePane in 'source/GamePane.js'
   //host HostedParticleInterface renderParticle

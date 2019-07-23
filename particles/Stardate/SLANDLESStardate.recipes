@@ -1,4 +1,4 @@
-import '../Common/schema/Description.schema'
+import '../Common/schemas/Description.schema'
 import './SLANDLESStardateTOS.particle'
 import './SLANDLESStardateDisplay.particle'
 import '../Services/particles/Random.particle'

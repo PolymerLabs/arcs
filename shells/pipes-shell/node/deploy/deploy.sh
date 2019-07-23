@@ -6,7 +6,7 @@ cp -fR source/serve.sh dist/
 # particles
 mkdir dist/particles
 mkdir dist/particles/Common
-cp -fR ../../../../particles/Common/schema/Description.schema dist/particles/Common
+cp -fR ../../../../particles/Common/schemas/Description.schema dist/particles/Common
 mkdir dist/particles/PipeApps
 cp -fR ../../../../particles/PipeApps/* dist/particles/PipeApps
 # collate sources

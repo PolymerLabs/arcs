@@ -1,5 +1,5 @@
-import './PipeEntity.schema'
-import './Json.schema'
+import './schemas/PipeEntity.schema'
+import './schemas/Json.schema'
 
 particle SlandleSuggestPerson in './source/SuggestPerson.js'
   in [PipeEntity] recentEntities

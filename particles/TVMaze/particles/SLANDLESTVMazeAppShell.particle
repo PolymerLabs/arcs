@@ -1,6 +1,6 @@
-import '../../Profile/User.schema'
-import '../../Profile/UserName.schema'
-import '../../Common/schema/Description.schema'
+import '../../Profile/schemas/User.schema'
+import '../../Profile/schemas/UserName.schema'
+import '../../Common/schemas/Description.schema'
 import '../schemas/TVMazeShow.schema'
 import '../schemas/Text.schema'
 

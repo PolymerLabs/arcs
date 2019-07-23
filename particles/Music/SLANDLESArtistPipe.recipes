@@ -1,4 +1,4 @@
-import '../PipeApps/PipeEntity.schema'
+import '../PipeApps/schemas/PipeEntity.schema'
 import 'SLANDLESArtist.recipes'
 
 particle SlandleArtistPipe in './source/ArtistPipe.js'

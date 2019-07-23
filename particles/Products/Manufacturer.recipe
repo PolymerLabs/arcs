@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/List.recipes'
-import 'Product.schema'
+import 'schemas/Product.schema'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
   in Product product
