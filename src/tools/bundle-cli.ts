@@ -35,8 +35,8 @@ Options
   --help         usage info
 
 Examples
-  $ bundle feature.recipes
-  $ bundle -v -o mybundle.zip recipes/feature.recipes recipes/extra_stuff.manifest`);
+  $ bundle Feature.arcs
+  $ bundle -v -o mybundle.zip recipes/Feature.arcs recipes/ExtraStuff.arcs`);
   process.exit();
 }
 

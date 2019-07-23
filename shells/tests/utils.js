@@ -175,7 +175,7 @@ exports.openNewArc = async function(testTitle, storageType, useSolo) {
     `persona=${storage}`
   ];
   if (useSolo) {
-    urlParams.push(`solo=${browser.options.baseUrl}/artifacts/canonical.manifest`);
+    urlParams.push(`solo=${browser.options.baseUrl}/artifacts/canonical.arcs`);
   }
   // note - baseUrl (currently specified on the command line) must end in a
   // trailing `/`, and this must not begin with a preceding `/`.

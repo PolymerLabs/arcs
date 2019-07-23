@@ -235,7 +235,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
 customElements.define('device-client-pipe', DeviceClientPipe);
 
 const buildEntityManifest = entity => `
-import 'https://$particles/Pipes/Pipes.recipes'
+import 'https://$particles/Pipes/Pipes.arcs'
 
 resource PipeEntityResource
   start

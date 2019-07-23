@@ -1,0 +1,13 @@
+import 'particles/MoveApplier.arcs'
+recipe
+  create as h0
+  create as h1
+  create as h2
+  create as h3
+  create as h4
+  MoveApplier
+    board <- h0
+    nextMove <- h1
+    state <- h2
+    boardResult -> h3
+    messageResult -> h4

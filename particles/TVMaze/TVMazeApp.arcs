@@ -1,0 +1,126 @@
+import 'particles/TVMazeSearchBar.arcs'
+import 'particles/TVMazeSearchShows.arcs'
+import 'particles/TVMazeShowTile.arcs'
+import 'particles/TVMazeShowPanel.arcs'
+import 'particles/TVMazeShowActions.arcs'
+import 'particles/TVMazeDeduplicate.arcs'
+import 'particles/TVMazeAppShell.arcs'
+import '../List/List.arcs'
+import '../Layout/Detail.arcs'
+
+recipe TVMazeApp
+  // all shows shared with me
+  map 'BOXED_shows-tiles' as boxedShows
+  // filter out 'my' shows from boxedShows using user.id
+  map 'SYSTEM_user' as user
+  // why not just use profile instead of above?
+  map 'PROFILE_shows-tiles' as profileShows
+  // all shows I've looked at on my device
+  map 'PROFILE_all_piped-all_tv_shows' as allPipedShows
+  // most recent show(s)
+  //map 'PROFILE_piped-tv_show' as pipedShows
+  create #volatile as pipedShows
+  // selected show (for detail)
+  create #volatile #selected as selected
+  // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
+  create #shows #tiles as myshows
+  // search results
+  create #volatile #found as foundshows
+  // friends ids
+  map 'PROFILE_friends' as friends
+  // all the userNames
+  map 'BOXED_userName' as boxedUserNames
+  // friends also watching selected show
+  create #volatile #watchers as watchers
+  // text about friends watching selected show
+  create #volatile #alsoWatch as alsoWatch
+  // internal description storage
+  create #volatile as descriptions
+  //
+  TVMazeAppShell
+    user = user
+    boxedShows = boxedShows
+    selected = selected
+    recentShows = pipedShows
+    foundShows = foundshows
+    boxedUserNames = boxedUserNames
+    friends = friends
+    watchers = watchers
+    watcherText = alsoWatch
+    descriptions = descriptions
+    consume root as root
+      provide recommended as recommended
+      provide shows as shows
+      provide searchbar as searchbar
+      provide search as search
+  //
+  // slot `shows` holds my primary show list
+  create #volatile #uniqueProfile as uniqueProfileShows
+  TVMazeDeduplicate
+    shows = profileShows
+    uniqueShows = uniqueProfileShows
+  SelectableTiles
+    consume root as shows
+      provide tile as tile1
+      provide annotation as action1
+    list = uniqueProfileShows
+    selected = selected
+  TileMultiplexer
+    list = uniqueProfileShows
+    hostedParticle = TVMazeShowTile
+    consume tile as tile1
+  //
+  // slot `recommended` holds recommendations
+  // which are pulled from `allPipedShows`
+  create #volatile #uniquePiped as uniquePipedShows
+  TVMazeDeduplicate
+    shows = allPipedShows
+    uniqueShows = uniquePipedShows
+  SelectableTiles
+    consume root as recommended
+      provide tile as tile2
+      provide annotation as action2
+    list = uniquePipedShows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile2
+    list = uniquePipedShows
+    hostedParticle = TVMazeShowTile
+  ActionMultiplexer
+    consume action as action2
+    list = uniquePipedShows
+    shows = myshows
+    hostedParticle = TVMazeShowActions
+  //
+  // slot `search` contains search ui
+  create #volatile #query as query
+  TVMazeSearchBar
+    consume toproot as searchbar
+    query = query
+  TVMazeSearchShows
+    query = query
+    shows = foundshows
+  SelectableTiles
+    consume root as search
+      provide tile as tile3
+      provide annotation as action3
+    list = foundshows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile3
+    hostedParticle = TVMazeShowTile
+    list = foundshows
+  ActionMultiplexer
+    consume action as action3
+    hostedParticle = TVMazeShowActions
+    list = foundshows
+    shows = myshows
+  //
+  // standard slot 'modal' holds detail view
+  DetailSlider
+    selected = selected
+  TVMazeShowPanel
+    show = selected
+    alsoWatch = alsoWatch
+  //
+  description `${TVMazeAppShell}`

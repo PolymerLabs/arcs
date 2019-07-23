@@ -1,6 +1,6 @@
 {
   "test-module.wasm": {
-    "manifest": "test.manifest",
+    "manifest": "test.arcs",
     "src": ["particles.cc"],
     "outDir": "build/wasm/cpp/tests",
     "linkManifest": true

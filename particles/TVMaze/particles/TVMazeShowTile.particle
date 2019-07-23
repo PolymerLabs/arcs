@@ -1,6 +1,0 @@
-import '../schemas/TVMazeShow.schema'
-
-particle TVMazeShowTile in './js/TVMazeShowTile.js'
-  in TVMazeShow show
-  consume tile
-    provide set of action

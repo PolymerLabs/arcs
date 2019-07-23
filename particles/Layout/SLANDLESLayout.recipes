@@ -1,5 +1,0 @@
-import 'SLANDLESDetail.recipes'
-import 'SLANDLESTabbedLayout.recipes'
-import 'SLANDLESAnimatedTiles.recipes'
-import 'SLANDLESBottomScrollTest.recipes'
-

@@ -1,6 +1,0 @@
-import '../Common/schemas/SearchQuery.schema'
-import './schemas/TMDBSearchResult.schema'
-
-particle TMDBSearch in './source/TMDBSearch.js'
-  in SearchQuery query
-  out [TMDBSearchResult] results

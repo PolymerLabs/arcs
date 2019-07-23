@@ -1,6 +1,0 @@
-import '../schemas/TVMazeQuery.schema'
-import '../schemas/TVMazeShow.schema'
-
-particle SlandleTVMazeSearchShows in './js/TVMazeSearchShows.js'
-  in TVMazeQuery query
-  inout [TVMazeShow] shows

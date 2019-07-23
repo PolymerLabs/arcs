@@ -1,5 +1,0 @@
-import 'Detail.recipes'
-import 'TabbedLayout.recipes'
-import 'AnimatedTiles.recipes'
-import 'BottomScrollTest.recipes'
-

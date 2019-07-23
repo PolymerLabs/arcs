@@ -1,0 +1,12 @@
+import './schemas/Geolocation.arcs'
+
+particle Geolocate in './source/Geolocate.js'
+  consume root
+  out Geolocation location
+  description `you`
+    location `you`
+
+recipe Geolocate
+  create as location
+  Geolocate
+    location = location

@@ -1,0 +1,6 @@
+import './schemas/PipeEntity.arcs'
+
+particle Trigger in './source/Noop.js'
+  in PipeEntity pipe
+  consume root
+    provide app

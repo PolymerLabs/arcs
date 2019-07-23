@@ -1,9 +1,0 @@
-import './schemas/MlResource.schema'
-
-particle ExpandDims in './js/ExpandDims.js'
-  in TfTensor tensor
-  in Shape axis
-  out TfTensor newTensor
-  //description `Increase the number of dimensions of the tensor by one.`
-
-

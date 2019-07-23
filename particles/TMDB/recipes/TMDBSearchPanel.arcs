@@ -1,0 +1,31 @@
+import '../../List/List.arcs'
+import '../../Layout/Layout.arcs'
+import '../../Common/recipes/SearchBar.arcs'
+import '../TMDBSearch.arcs'
+import '../TMDBTile.arcs'
+
+recipe TMDBSearch
+  use as query
+  create as results
+  TMDBSearch
+    query = query
+    results = results
+  description `search TMDB(tm)`
+
+recipe TMDBShowTiles
+  use as results
+  create #selected as selected
+  slot #root as parent
+  StyleSheet
+    consume parent as parent
+      provide container as container
+  SelectableTiles
+    consume root as container
+      provide tile as tile
+    list = results
+    selected = selected
+  TileMultiplexer
+    hostedParticle = TMDBTile
+    consume tile as tile
+    list = results
+  description `show ${SelectableTiles.list}`

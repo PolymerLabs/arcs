@@ -1,0 +1,10 @@
+import 'particles/DebugShowBoard.arcs'
+import 'particles/DebugMakeBoard.arcs'
+
+recipe TicTacToeShowBoard
+  create as board
+  DebugShowBoard
+    board <- board
+  DebugMakeBoard
+    board -> board
+  description `boardy boardy boardy!`

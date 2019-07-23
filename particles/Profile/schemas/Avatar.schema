@@ -1,6 +1,0 @@
-schema Avatar
-  URL url
-
-import 'Share.schema'
-schema AvatarShare extends Share
-  Reference<Avatar> ref

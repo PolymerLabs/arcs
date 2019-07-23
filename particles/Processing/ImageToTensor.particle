@@ -1,7 +1,0 @@
-import './schemas/Image.schema'
-import './schemas/MlResource.schema'
-
-particle ImageToTensor in './js/ImageToTensor.js'
-  in Image {(Text or URL) url} image
-  out TfTensor imageTensor
-  //description `Converts an Image URL to a Tensor3D`

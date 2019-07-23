@@ -1,0 +1,7 @@
+import './schemas/Inference.arcs'
+import './schemas/MlResource.arcs'
+
+particle PresentLabel in './js/PresentLabel.js'
+  in [Classification] predictions
+  consume root
+  //description `show the top k labels (and confidence values)`

@@ -27,36 +27,36 @@ function relativize(listing: BundleEntry[]): BundleEntry[] {
 
 describe('Bundle Tool', () => {
   it('bundles particle source files', async () => {
-    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/a/a.manifest')), [
+    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/a/a.arcs')), [
+      {filePath: 'src/tools/tests/test-data/a/a.arcs', bundlePath: 'a.arcs', entryPoint: true},
       {filePath: 'src/tools/tests/test-data/a/a.js', bundlePath: 'a.js', entryPoint: false},
-      {filePath: 'src/tools/tests/test-data/a/a.manifest', bundlePath: 'a.manifest', entryPoint: true},
     ]);
   });
   it('bundles store json files', async () => {
-    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/b/b.manifest')), [
+    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/b/b.arcs')), [
+      {filePath: 'src/tools/tests/test-data/b/b.arcs', bundlePath: 'b.arcs', entryPoint: true},
       {filePath: 'src/tools/tests/test-data/b/b.json', bundlePath: 'b.json', entryPoint: false},
-      {filePath: 'src/tools/tests/test-data/b/b.manifest', bundlePath: 'b.manifest', entryPoint: true},
     ]);
   });
   it('handles manifest imports', async () => {
-    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/c/c.manifest')), [
+    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/c/c.arcs')), [
+      {filePath: 'src/tools/tests/test-data/a/a.arcs', bundlePath: 'a/a.arcs', entryPoint: false},
       {filePath: 'src/tools/tests/test-data/a/a.js', bundlePath: 'a/a.js', entryPoint: false},
-      {filePath: 'src/tools/tests/test-data/a/a.manifest', bundlePath: 'a/a.manifest', entryPoint: false},
+      {filePath: 'src/tools/tests/test-data/b/b.arcs', bundlePath: 'b/b.arcs', entryPoint: false},
       {filePath: 'src/tools/tests/test-data/b/b.json', bundlePath: 'b/b.json', entryPoint: false},
-      {filePath: 'src/tools/tests/test-data/b/b.manifest', bundlePath: 'b/b.manifest', entryPoint: false},
-      {filePath: 'src/tools/tests/test-data/c/c.manifest', bundlePath: 'c/c.manifest', entryPoint: true},
+      {filePath: 'src/tools/tests/test-data/c/c.arcs', bundlePath: 'c/c.arcs', entryPoint: true},
     ]);
   });
   it('accepts multiple entry points', async () => {
     assert.deepEqual(
         relativize(await bundleListing(
-            'src/tools/tests/test-data/a/a.manifest',
-            'src/tools/tests/test-data/b/b.manifest')),
+            'src/tools/tests/test-data/a/a.arcs',
+            'src/tools/tests/test-data/b/b.arcs')),
         [
+          {filePath: 'src/tools/tests/test-data/a/a.arcs', bundlePath: 'a/a.arcs', entryPoint: true},
           {filePath: 'src/tools/tests/test-data/a/a.js', bundlePath: 'a/a.js', entryPoint: false},
-          {filePath: 'src/tools/tests/test-data/a/a.manifest', bundlePath: 'a/a.manifest', entryPoint: true},
+          {filePath: 'src/tools/tests/test-data/b/b.arcs', bundlePath: 'b/b.arcs', entryPoint: true},
           {filePath: 'src/tools/tests/test-data/b/b.json', bundlePath: 'b/b.json', entryPoint: false},
-          {filePath: 'src/tools/tests/test-data/b/b.manifest', bundlePath: 'b/b.manifest', entryPoint: true},
         ]
     );
   });
@@ -70,7 +70,7 @@ describe('Bundle Tool', () => {
         });
   });
   it('fails for a syntax error', done => {
-    bundle(['src/tools/tests/test-data/invalid/syntax-problem.manifest'], 'test-output/bundle/nope.zip', false)
+    bundle(['src/tools/tests/test-data/invalid/syntax-problem.arcs'], 'test-output/bundle/nope.zip', false)
         .then(_ => assert.fail('should have failed'))
         .catch(e => {
           assert.include(e.message, 'Parse error');
@@ -80,7 +80,7 @@ describe('Bundle Tool', () => {
         });
   });
   it('fails for a non existent file reference', done => {
-    bundle(['src/tools/tests/test-data/invalid/reference-problem.manifest'], 'test-output/bundle/nope.zip', false)
+    bundle(['src/tools/tests/test-data/invalid/reference-problem.arcs'], 'test-output/bundle/nope.zip', false)
         .then(_ => assert.fail('should have failed'))
         .catch(e => {
           assert.include(e.message, 'no such file');
@@ -88,11 +88,11 @@ describe('Bundle Tool', () => {
           done();
         });
   });
-  it('fails for a top-level __bundle_entry.manifest file', done => {
-    bundle(['src/tools/tests/test-data/invalid/__bundle_entry.manifest'], 'test-output/bundle/nope.zip', false)
+  it('fails for a top-level __bundle_entry.arcs file', done => {
+    bundle(['src/tools/tests/test-data/invalid/__bundle_entry.arcs'], 'test-output/bundle/nope.zip', false)
         .then(_ => assert.fail('should have failed'))
         .catch(e => {
-          assert.include(e.message, `Top-level '__bundle_entry.manifest' file found`);
+          assert.include(e.message, `Top-level '__bundle_entry.arcs' file found`);
           done();
         });
   });
@@ -130,7 +130,7 @@ describe('Bundle Tool', () => {
       'Products/source/Recommend.js',
       'Products/source/ShowProduct.js',
       'Things/Thing.schema',
-      '__bundle_entry.manifest'
+      '__bundle_entry.arcs'
     ]);
 
     // Sanity check.
@@ -140,7 +140,7 @@ describe('Bundle Tool', () => {
     );
 
     assert.strictEqual(
-        await zip.file('__bundle_entry.manifest').async('text'),
+        await zip.file('__bundle_entry.arcs').async('text'),
         `import 'Products/Products.recipes'\n`);
   });
 });

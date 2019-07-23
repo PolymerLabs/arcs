@@ -1,0 +1,14 @@
+import './schemas/PipeEntity.arcs'
+import './schemas/Json.arcs'
+
+particle SuggestAddress in './source/SuggestAddress.js'
+  in [PipeEntity] recentEntities
+  out Json suggestion
+  consume app
+
+recipe Com_google_android_apps_maps &autofill
+  map 'pipe-entities' as recentEntities
+  create as suggestion
+  SuggestAddress
+    recentEntities = recentEntities
+    suggestion = suggestion

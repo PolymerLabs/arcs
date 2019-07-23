@@ -24,13 +24,13 @@ import './ui/web-shell-ui.js';
 
 const manifests = {
   context: `
-    import 'https://$particles/canonical.manifest'
+    import 'https://$particles/canonical.arcs'
   `,
   launcher: `
-    import 'https://$particles/Arcs/Launcher.recipe'
+    import 'https://$particles/Arcs/Launcher.arcs'
   `,
   pipes: `
-    import 'https://$particles/Pipes/BackgroundPipes.recipes'
+    import 'https://$particles/Pipes/BackgroundPipes.arcs'
   `
 };
 

@@ -6,15 +6,15 @@ Other resources to check out are [manifest.md](../../src/runtime/manifest.md), w
 manifest files, and the [Arcs Developer Documentation guide](https://docs.google.com/document/d/1F6Q4u_VbXGlfYUm0y_OSNJOe9nIeSCnrRMZnls8Hkvg),
 which has a similar tutorial, but at time of writing is out of date.
 
-The tutorials are all defined in [Tutorial.recipes](Tutorial.recipes). I'd recommend going through them in order, since each one builds on the
+The tutorials are all defined in [Tutorial.arcs](Tutorial.arcs). I'd recommend going through them in order, since each one builds on the
 ones that come before.
 
 ## Running the tutorials
 
-Edit the [canonical.manifest file](../canonical.manifest) and uncomment the line that says:
+Edit the [canonical.arcs file](../canonical.arcs) and uncomment the line that says:
 
 ```
-import 'Tutorial/Tutorial.recipes'
+import 'Tutorial/Tutorial.arcs'
 ```
 
 Then run:
@@ -46,7 +46,7 @@ When you're writing your own particles, a whole lot of things can go wrong. Here
   You can use `-g` to filter the tests that get run, e.g. `./tools/sigh test -g Tutorial` will test all the tutorial recipes. Run this to check
   for syntax errors after editing a recipe.
 * Open up the Chrome developer console and look for errors (just keep it open).
-* Make sure your file is being imported in `canonical.manifest`.
+* Make sure your file is being imported in `canonical.arcs`.
 * If you edit a recipe/manifest file, reload the Arcs shell. If you had a running Arc and have edited your recipe, you'll need to strip the
   argument that looks like `&arc=z--LanLorQ75nIUb8NlWWD` from the URL before reloading. This will force the runtime to recompute your recipe's
   dependencies.

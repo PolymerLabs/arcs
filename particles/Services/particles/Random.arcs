@@ -1,0 +1,25 @@
+import '../schemas/RandomData.arcs'
+
+// RandomParticle outputs a single Random number in a RandomData
+// schema object.
+//
+// Usage:
+//
+// - Add a RandomData input to your particle
+//
+// ```
+//   particle FooParticle
+//     in RandomData randomFoo
+//    ...
+// ```
+//
+// - Add a RandomParticle to your Recipe
+// ```
+//   recipe FooRecipe
+//     RandomParticle
+//       randomdata -> randomFoo
+//   ...
+// ```
+
+particle RandomParticle in './js/Random.js'
+  out RandomData randomData

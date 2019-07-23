@@ -1,0 +1,90 @@
+import '../Infer.arcs'
+import '../Dispose.arcs'
+import '../ExpandDims.arcs'
+import '../ImageToTensor.arcs'
+import '../ResizeBilinear.arcs'
+import '../LoadModel.arcs'
+import '../Normalize.arcs'
+import '../ParseLabels.arcs'
+import '../Reshape.arcs'
+import '../TopLabels.arcs'
+import '../ImageSelector.arcs'
+import '../PresentLabel.arcs'
+import '../ModelSelector.arcs'
+
+import './ClassifierStatics.arcs'
+
+recipe ImageClassifierUI
+  // since we `use`, this recipe is incomplete and coalescer is triggered
+  use as imgUrl
+  use as predictions
+
+  ImageSelector
+    image -> imgUrl
+
+  PresentLabel
+    predictions <- predictions
+
+  description `image classification`
+
+recipe ImageClassifierRoutine
+  // find a model specification
+  map as modelSpec
+
+  // static values from ClassifierStatics.manifest
+  map 'targetImageSize' as targetSize
+  map 'resizeOptions' as resizeOptions
+  map 'imagePixelRange' as range
+  map 'batchShape' as batchShape
+
+  // working handles
+  create #volatile as model
+  create #volatile as imageTensor
+  create #volatile as normTensor
+  create #volatile as resizedImages
+  create #volatile as reshapedImages
+  create #volatile as yHat
+  create #volatile as predictions
+  create #volatile as labels
+  create #volatile as imgUrl
+
+  LoadGraphModel
+    modelSpec <- modelSpec
+    model -> model
+
+  ParseLabels
+    url <- modelSpec
+    labels -> labels
+
+  ImageToTensor
+    image <- imgUrl
+    imageTensor -> imageTensor
+
+  Normalize
+    tensor <- imageTensor
+    range <- range
+    normTensor -> normTensor
+
+  ResizeBilinear
+    images <- normTensor
+    size <- targetSize
+    options <- resizeOptions
+    resizedImages -> resizedImages
+
+  Reshape
+    tensor <- resizedImages
+    shape <- batchShape
+    newTensor -> reshapedImages
+
+  Infer
+    tensor <- reshapedImages
+    model <- model
+    yHat -> yHat
+
+  TopLabels
+    yHat <- yHat
+    labels <- labels
+    predictions -> predictions
+
+  description `${LoadGraphModel.modelSpec}`
+

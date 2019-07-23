@@ -1,0 +1,24 @@
+import 'List/List.arcs'
+import 'Profile/Profile.arcs'
+import 'Products/Products.arcs'
+import 'Events/Events.arcs'
+import 'Restaurants/Restaurants.arcs'
+import 'Music/Music.arcs'
+import 'TVMaze/TVMaze.arcs'
+import 'TMDB/recipes/TMDB.arcs'
+import 'Words/Words.arcs'
+import 'Services/Services.arcs'
+import 'Stardate/Stardate.arcs'
+import 'Demo/Demo.arcs'
+import 'Processing/recipes/ImageClassifier.arcs'
+
+// for ArcMetaShare
+import 'Arcs/schemas/ArcMeta.arcs'
+
+// Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
+// import 'Tutorial/Tutorial.arcs'
+
+import 'TicTacToe/TicTacToe.arcs'
+// Uncomment to enable native particle recipes
+import 'Native/native.arcs'
+
