@@ -54,11 +54,11 @@ function createChainOfEdges(...nodeIds: string[]) {
 /**
  * Marks the nodes representing the given particles as having ingress. 
  *
- * This is needed to get the existing unit tests to pass. Once we have a way of
- * detecting nodes with ingress properly (e.g. handles with the map or create
- * fate), we can delete this hack.
- * 
- * TODO: Delete this hack.
+ * This is a convenient hack for constructing unit tests with the desired
+ * properties. Normally only handles with the use, map or copy fates are
+ * considered ingress nodes, but they're a bit too inconvenient to use in most
+ * test cases, so this method can be used to manually mark particles as ingress
+ * nodes.
  */
 function markParticlesWithIngress(graph: FlowGraph, ...particleNames: string[]) {
   for (const name of particleNames) {
@@ -72,8 +72,6 @@ function markParticlesWithIngress(graph: FlowGraph, ...particleNames: string[]) 
  * Same as markParticlesWithIngress, but operates on handles instead of
  * particles. The handles with the given labels (of the form
  * "ParticleName.inputName") will be marked with ingress.
- * 
- * TODO: Delete this hack.
  */
 function markParticleInputsWithIngress(graph: FlowGraph, ...labels: string[]) {
   for (const label of labels) {
@@ -905,7 +903,6 @@ describe('FlowGraph validation', () => {
         P
           input <- s
     `);
-    markParticleInputsWithIngress(graph, 'P.input');
     assert.isTrue(validateGraph(graph).isValid);
   });
 
@@ -1090,7 +1087,6 @@ describe('FlowGraph validation', () => {
           P
             input <- s
       `);
-      markParticleInputsWithIngress(graph, 'P.input');
       assert.isTrue(validateGraph(graph).isValid);
     });
 
@@ -1110,7 +1106,6 @@ describe('FlowGraph validation', () => {
           P
             input <- s
       `);
-      markParticleInputsWithIngress(graph, 'P.input');
       assert.isTrue(validateGraph(graph).isValid);
     });
 
@@ -1150,7 +1145,6 @@ describe('FlowGraph validation', () => {
           P
             input <- s
       `);
-      markParticleInputsWithIngress(graph, 'P.input');
       assertFailures(validateGraph(graph), [`'check input is not from store 'my-store-id'' failed for path: P.input`]);
     });
 
@@ -1215,7 +1209,6 @@ describe('FlowGraph validation', () => {
             input1 <- s1
             input2 <- s2
       `);
-      markParticleInputsWithIngress(graph, 'P.input1');
       assertFailures(validateGraph(graph), [`'check input1 is from store MyStore' failed for path: P.input`]);
     });
   });

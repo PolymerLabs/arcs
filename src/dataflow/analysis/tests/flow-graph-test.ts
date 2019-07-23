@@ -273,4 +273,31 @@ describe('FlowGraph', () => {
     assert.sameMembers(allNodeIds, ['P0', 'P1', 'S0', 'S1', 'H0']);
     assert.sameMembers(allEdgeIds, ['E0', 'E1', 'E2', 'E3']);
   });
+
+  it('handles with the use, map or copy fates are marked as ingress', async () => {
+    const runForHandleWithFate = async (fate: string) => {
+      const graph = await buildFlowGraph(`
+        schema MyEntity
+          Text text
+        resource MyResource
+          start
+          [{"text": "asdf"}]
+        store MyStore of MyEntity 'my-store-id' in MyResource
+        particle P
+          in MyEntity foo
+        recipe R
+          ${fate} as foo
+          P
+            foo <- foo
+      `);
+      assert.lengthOf(graph.particles, 1);
+      assert.isFalse(graph.particles[0].ingress);
+      assert.lengthOf(graph.handles, 1);
+      return graph.handles[0];
+    };
+    assert.isFalse((await runForHandleWithFate('create')).ingress);
+    assert.isTrue((await runForHandleWithFate('use MyStore')).ingress);
+    assert.isTrue((await runForHandleWithFate('map MyStore')).ingress);
+    assert.isTrue((await runForHandleWithFate('copy MyStore')).ingress);
+  });
 });
