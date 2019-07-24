@@ -20,7 +20,7 @@ fail() {
 }
 
 status() {
-    echo "$MAG$1$END\n\n"
+    echo "$MAG$1$END"
 }
 
 status "1. Install nvm"
