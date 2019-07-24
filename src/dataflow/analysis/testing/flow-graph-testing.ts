@@ -52,7 +52,7 @@ export class TestNode extends Node {
 export class TestEdge implements Edge {
   readonly edgeId: string;
   readonly connectionName = 'connectionName';
-  modifier?: FlowModifier;
+  modifier: FlowModifier = new FlowModifier();
 
   constructor(readonly start: TestNode, readonly end: TestNode, readonly label: string) {
     this.edgeId = label;

@@ -290,6 +290,6 @@ export interface Edge {
    */
   readonly label: string;
 
-  readonly modifier?: FlowModifier;
+  readonly modifier: FlowModifier;
   check?: FlowCheck;
 }
