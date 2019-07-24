@@ -16,8 +16,8 @@ echo "\n\n2. Install node\n"
 nvm install 10 || \
   (echo 'Failed to install node version 10.' && exit 1)
 
-echo "\n\n3. Update npm to later version\n\n"
-npm install -g npm  || \
+echo "\n\n3. Update npm to latest version\n\n"
+nvm install-latest-npm  || \
   (echo 'Failed to update npm to latest version.' && exit 1)
 
 echo "\n\n4. Install node_modules\n\n"
