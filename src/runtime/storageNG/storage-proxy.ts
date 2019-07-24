@@ -9,6 +9,8 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
+import {PropagatedException, SystemException} from '../arc-exceptions.js';
 import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
 import {Runnable} from '../hot.js';
 import {Particle} from '../particle.js';
@@ -38,6 +40,18 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.scheduler = scheduler;
   }
 
+  reportExceptionInHost(exception: PropagatedException) {
+    // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
+    if (mapStackTrace) {      
+      mapStackTrace(exception.cause.stack, mappedStack => {
+        exception.cause.stack = mappedStack;
+        this.store.reportExceptionInHost(exception);
+      });
+    } else {      
+      this.store.reportExceptionInHost(exception);
+    }
+  }
+
   registerHandle(handle: Handle<T>): VersionMap {
     this.handles.push(handle);
 
@@ -53,8 +67,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     if (handle.options.keepSynced) {
       if (!this.keepSynced) {
         this.synchronizeModel().catch(e => {
-          // TODO: report the exception on the host side.
-          console.error('Error during SyncRequest', e);
+          this.reportExceptionInHost(new SystemException(
+              e, handle.key, 'StorageProxy::registerHandle'));
         });
         this.keepSynced = true;
       }
@@ -260,8 +274,8 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
                 console.error('Ignoring unknown update', update);
             }
           } catch (e) {
-            // TODO: report the exception on the host side.
-            console.error('Error dispatching to particle', e);
+            handle.storageProxy.reportExceptionInHost(new SystemException(
+                e, 'StorageProxyScheduler::_dispatch', handle.key));
           }
         }
       }

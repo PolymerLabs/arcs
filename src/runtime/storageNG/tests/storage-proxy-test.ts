@@ -101,4 +101,36 @@ describe('StorageProxy', async () => {
         mockStore.lastCapturedMessage,
         {type: ProxyMessageType.ModelUpdate, id: 1, model: crdtData});
   });
+
+  it('propagates exceptions to the store', async () => {
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const scheduler =
+        new StorageProxyScheduler<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy =
+        new StorageProxy(new CRDTSingleton<Entity>(), mockStore, scheduler);
+
+    const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(
+        'handle', storageProxy, {} as Particle, true, true);
+    handle.onSync = () => {
+      throw new Error('something wrong');
+    };
+
+    // When requested a sync, store will send back a model.
+    mockStore.onProxyMessage = async message => {
+      mockStore.lastCapturedMessage = message;
+      const crdtData = {
+        values: {'1': {value: {id: 'e1'}, version: {A: 1}}},
+        version: {A: 1}
+      };
+      await storageProxy.onMessage(
+          {type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1});
+      return true;
+    };
+
+    await storageProxy.getParticleView();
+    await scheduler.idle;
+    assert.equal(
+        mockStore.lastCapturedException.message,
+        'SystemException: exception Error raised when invoking system function StorageProxyScheduler::_dispatch on behalf of particle handle: something wrong');
+  });
 });
