@@ -1,4 +1,4 @@
-import './Json.schema'
+import './schemas/Json.arcs'
 
 particle UpdateMe in './source/UpdateMe.js'
   out Json output

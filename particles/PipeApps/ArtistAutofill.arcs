@@ -1,13 +1,7 @@
-<<<<<<< HEAD:particles/PipeApps/ArtistAutofill.arcs
 import './schemas/Json.arcs'
+import './schemas/PipeEntity.arcs'
 import '../Services/schemas/RandomData.arcs'
 import '../Services/particles/Random.arcs'
-=======
-import './Json.schema'
-import './PipeEntity.schema'
-import '../Services/schemas/RandomData.schema'
-import '../Services/particles/Random.particle'
->>>>>>> blast away deprecated pipe-shell:particles/PipeApps/ArtistAutofill.recipes
 
 schema Artist
   Text type

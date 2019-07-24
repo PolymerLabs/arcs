@@ -1,7 +1,7 @@
-import './PipeEntity.schema'
-import '../Music/Artist.recipes'
+import './schemas/PipeEntity.arcs'
+import '../Music/Artist.arcs'
 
-particle ArtistPipe in './source/ArtistPipe.js'
+particle ArtistPipe in 'source/ArtistPipe.js'
   in PipeEntity pipe
   out ArtistFind find
 

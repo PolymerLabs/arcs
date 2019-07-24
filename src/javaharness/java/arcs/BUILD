@@ -41,7 +41,7 @@ filegroup(
 )
 
 filegroup(
-    name = "particles2",
+    name = "particles",
     srcs = glob(
         ["particles/PipeApps/**/*"],
     ),
@@ -50,6 +50,6 @@ filegroup(
 j2cl_application(
     name = "javaharness",
     entry_points = ["arcs.harness"],
-    extra_dev_resources = [":pipes-shell-dist", ":particles2"],
+    extra_dev_resources = [":pipes-shell-dist", ":particles"],
     deps = ["//java/arcs/webimpl:harness_js"],
 )
