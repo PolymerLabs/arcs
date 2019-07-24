@@ -42,4 +42,7 @@ public abstract class WebHarnessModule {
 
   @Binds
   public abstract HandleFactory providesHandleFactory(HandleFactoryImpl impl);
+
+  @Binds
+  public abstract PortablePromiseFactory providesPortablePromiseFactory(PortablePromiseFactoryImpl impl);
 }
