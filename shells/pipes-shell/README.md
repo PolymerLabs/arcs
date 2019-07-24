@@ -2,7 +2,7 @@
 
 ### Dual Platform
 
-Plaform code is in the `web` or `node` folders.
+Platform code is in the `web` or `node` folders.
 
 The web entry-point is `web/index.html`, the node entry-point is `node/serve.sh`.
 
