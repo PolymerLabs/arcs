@@ -9,7 +9,7 @@ curl -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.
   (echo "Failed to download nvm version $NVM_VERSION." && exit 1)
 
 echo "\n\n1.1 ensure nvm is in your current process\n\n"
-. ~/.nvm/nvm.sh || \
+. ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh || \
   (echo 'Failed to ensure nvm is in this process.' && exit 1)
 
 echo "\n\n2. Install node\n"
