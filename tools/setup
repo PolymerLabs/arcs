@@ -2,22 +2,21 @@
 
 ROOT=$(dirname $0)/..
 
-# 1. Install nvm
+echo "1. Install nvm"
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | sh 
 
-# 1.1 ensure nvm is in your current process
+echo "1.1 ensure nvm is in your current process"
 source ~/.nvm/nvm.sh
 
-# 2. Install node
+echo "2. Install node"
 nvm install 10
 
-# 3. Update npm to later version
+echo "3. Update npm to later version"
 npm install -g npm
 
-# 4. Install node_modules
+echo "4. Install node_modules"
 (cd $ROOT && npm install)
 
-
-# 5. Build the project
+echo "5. Build the project"
 $ROOT/tools/sigh
 
