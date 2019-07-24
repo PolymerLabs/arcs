@@ -21,6 +21,7 @@
 import {Claim, ClaimType} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {DeepSet} from './deep-set.js';
+import {OrderedSet} from './ordered-set.js';
 
 /**
  * Represents the set of implicit and explicit claims that flow along a path in
@@ -29,13 +30,13 @@ import {DeepSet} from './deep-set.js';
 export class Flow {
   constructor(
       readonly nodeIds: Set<string> = new Set(),
-      readonly edgeIds: Set<string> = new Set(),
+      readonly edgeIds: OrderedSet<string> = new OrderedSet(),
       readonly tags: Set<string> = new Set()) {}
 
   /** Modifies the current Flow (in place) by applying the given FlowModifier. */
   modify(modifier: FlowModifier) {
+    this.edgeIds.addAll(modifier.edgeIds);
     modifier.nodeIds.forEach(n => this.nodeIds.add(n));
-    modifier.edgeIds.forEach(e => this.edgeIds.add(e));
     modifier.tagOperations.forEach((operation, tag) => {
       if (operation === 'add') {
         this.tags.add(tag);
@@ -46,7 +47,7 @@ export class Flow {
   }
 
   copy(): Flow {
-    return new Flow(new Set(this.nodeIds), new Set(this.edgeIds), new Set(this.tags));
+    return new Flow(new Set(this.nodeIds), this.edgeIds.copy(), new Set(this.tags));
   }
 
   copyAndModify(modifier: FlowModifier) {
@@ -126,7 +127,7 @@ export class FlowModifier {
       readonly nodeIds: Set<string> = new Set(),
 
       /** Edge IDs to add. */
-      readonly edgeIds: Set<string> = new Set(),
+      readonly edgeIds: OrderedSet<string> = new OrderedSet(),
 
       /** Tags to add/remove. Maps from tag name to operation. */
       readonly tagOperations: Map<string, TagOperation> = new Map()) {}
@@ -182,14 +183,14 @@ export class FlowModifier {
   }
 
   copy(): FlowModifier {
-    return new FlowModifier(new Set(this.nodeIds), new Set(this.edgeIds), new Map(this.tagOperations));
+    return new FlowModifier(new Set(this.nodeIds), this.edgeIds.copy(), new Map(this.tagOperations));
   }
 
   /** Copies the current FlowModifier, and then applies the given modifications to the copy. */
   copyAndModify(modifier: FlowModifier) {
     const copy = this.copy();
+    copy.edgeIds.addAll(modifier.edgeIds);
     modifier.nodeIds.forEach(n => copy.nodeIds.add(n));
-    modifier.edgeIds.forEach(n => copy.edgeIds.add(n));
     modifier.tagOperations.forEach((op, tag) => copy.tagOperations.set(tag, op));
     return copy;
   }
@@ -201,18 +202,18 @@ export class FlowModifier {
   }
 
   toUniqueString(): string {
-    const elements: string[] = [];
+    let elements: string[] = [];
     for (const nodeId of this.nodeIds) {
       elements.push('+node:' + nodeId);
-    }
-    for (const edgeId of this.edgeIds) {
-      elements.push('+edge:' + edgeId);
     }
     for (const [tag, op] of this.tagOperations) {
       const sign = op === TagOperation.Add ? '+' : '-';
       elements.push(sign + 'tag:' + tag);
     }
     elements.sort();
+    const edges = [...this.edgeIds].map(edgeId => '+edge:' + edgeId);
+    // Prepend edges. They are already ordered, and the ordering is important.
+    elements = [...edges, ...elements];
     return '{' + elements.join(', ') + '}';
   }
 }
