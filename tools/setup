@@ -4,27 +4,24 @@ ROOT=$(dirname $0)/..
 
 NVM_VERSION="v0.34.0"
 
+fail() {
+    echo $1
+    exit 1
+}
+
 echo "\n\n1. Install nvm\n\n"
 curl -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
-  (echo "Failed to download nvm version $NVM_VERSION." && exit 1)
+    fail "Failed to download nvm version $NVM_VERSION." 
 
 echo "\n\n1.1 ensure nvm is in your current process\n\n"
-. ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh || \
-  (echo 'Failed to ensure nvm is in this process.' && exit 1)
+. ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh
 
 echo "\n\n2. Install node\n"
-(cd $ROOT && nvm use) || \
-  (echo 'Failed to install target node version.' && exit 1)
+(cd $ROOT && nvm install && nvm use) || fail 'Failed to install target node version.' 
 
 echo "\n\n3. Update npm to latest version\n\n"
-nvm install-latest-npm  || \
-  (echo 'Failed to update npm to latest version.' && exit 1)
+nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 echo "\n\n4. Install node_modules\n\n"
-(cd $ROOT && npm install) || \
-  (echo 'Failed to install node_modules.' && exit 1)
-
-echo "\n\n5. Build the project\n\n"
-$ROOT/tools/sigh || \
-  (echo 'Failed to build project with `sigh`.' && exit 1)
+(cd $ROOT && npm install) || fail 'Failed to install node_modules.' 
 
