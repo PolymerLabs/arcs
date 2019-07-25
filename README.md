@@ -35,6 +35,17 @@ but if for example you see test errors on a version that's a full release later
 patches that will allow more recent versions to operate, ideally without
 requiring an upgrade to our current version.
 
+### Installing the easy way
+
+1) Run the setup script (MacOS, Linux)
+
+   ```
+   $ ./tools/setup
+   ```
+
+2) That's it! (You can skip the next two sections.)
+
+
 ### Installing from scratch
 
 1) Install nvm.

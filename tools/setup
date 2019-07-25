@@ -1,0 +1,50 @@
+#!/bin/sh
+
+ROOT=$(dirname $0)/..
+
+NVM_VERSION="v0.34.0"
+
+YLW="\033[33m"
+RED="\033[91m"
+GRN="\033[92m"
+MAG="\033[95m"
+BLD="\033[1m"
+END="\033[0m"
+
+CMD="$BLD$YLW"
+
+
+fail() {
+    echo "$RED$BLD$1$END"
+    exit 1
+}
+
+status() {
+    echo "$MAG$1$END"
+}
+
+status "1. Install nvm"
+curl -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
+    fail "Failed to download nvm version $NVM_VERSION." 
+
+status "1.1 ensure nvm is in your current process"
+. ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh
+
+status "2. Install node"
+(cd $ROOT && nvm install && nvm use) || fail 'Failed to install target node version.' 
+
+status "3. Update npm to latest version"
+nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
+
+status "4. Install dependencies"
+(cd $ROOT && npm ci) || fail 'Failed to install dependencies.' 
+
+
+echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
+echo "Next, try the following:\n"
+echo "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
+echo "- Serve the project: $CMD\`npm start\`$END"
+echo "- Run tests:"
+echo "  - $CMD\`./tools/sigh test\`$END"
+echo "  - $CMD\`./tools/test\`$END"
+
