@@ -190,7 +190,7 @@ export class DescriptionFormatter {
       // there will be a duplicate particle-description.
       particleDescription = particleDescriptions[particleDescriptions.length - 1];
     }
-    const particle = particleDescription._particle;
+    const particle: Particle = particleDescription._particle;
 
     if (handleNames.length === 0) {
       // return a particle token
@@ -224,7 +224,7 @@ export class DescriptionFormatter {
       return [];
     }
 
-    const providedSlotConn = particle.consumedSlotConnections[handleNames[0]].providedSlots[handleNames[1]];
+    const providedSlotConn = particle.getSlotConnectionByName(handleNames[0]).providedSlots[handleNames[1]];
     assert(providedSlotConn, `Could not find handle ${handleNames.join('.')}`);
     return [{
       fullName: valueTokens[0],

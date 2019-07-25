@@ -14,7 +14,7 @@ particle SlandleSlandleLogin in 'source/Login.js'
 
 recipe SlandleSlandleLogin &login
   create as key
-  `slot 'rootslotid-root' as root
+  `slot #root as root
   SlandleSlandleLogin
     key = key
     root consume root

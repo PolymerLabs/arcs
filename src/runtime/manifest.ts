@@ -934,7 +934,7 @@ ${e.message}
         if (slotConnectionItem.direction === 'provide') {
           throw new ManifestError(item.location, `invalid slot connection: provide slot must be dependent`);
         }
-        let slotConn = particle.consumedSlotConnections[slotConnectionItem.param];
+        let slotConn = particle.getSlotConnectionByName(slotConnectionItem.param);
         if (!slotConn) {
           // particles that reference verbs should store slot connection information as constraints to be used
           // during verb matching. However, if there's a spec then the slots need to be validated against it
@@ -1145,7 +1145,7 @@ ${e.message}
           }
         }
         if (targetSlot) {
-          particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
+          particle.getSlotConnectionByName(slotConnectionItem.param).connectToSlot(targetSlot);
         }
       }
     }

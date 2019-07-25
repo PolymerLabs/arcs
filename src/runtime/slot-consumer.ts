@@ -41,7 +41,7 @@ export interface Rendering {
 }
 
 export class SlotConsumer {
-  public readonly consumeConn?: SlotConnection;
+  public readonly consumeConn: SlotConnection;
   slotContext: SlotContext;
   readonly directlyProvidedSlotContexts: ProvidedSlotContext[] = [];
   readonly hostedSlotContexts: HostedSlotContext[] = [];
@@ -56,7 +56,7 @@ export class SlotConsumer {
   public readonly arc: Arc;
   public description: Description;
 
-  constructor(arc: Arc, consumeConn?: SlotConnection, containerKind?: string) {
+  constructor(arc: Arc, consumeConn: SlotConnection, containerKind?: string) {
     this.arc = arc;
     this.consumeConn = consumeConn;
     this.containerKind = containerKind;
@@ -142,6 +142,7 @@ export class SlotConsumer {
   }
 
   createProvidedContexts(): SlotContext | ConcatArray<SlotContext> {
+    assert(this.consumeConn.getSlotSpec(), `Missing consume connection spec`);
     return this.consumeConn.getSlotSpec().provideSlotConnections.map(
       spec => new ProvidedSlotContext(this.consumeConn.providedSlots[spec.name].id, spec.name, /* tags=*/ [], /* container= */ null, spec, this));
   }

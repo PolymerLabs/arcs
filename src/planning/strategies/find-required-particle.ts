@@ -12,30 +12,32 @@ import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
 
 export class FindRequiredParticle extends Strategy {
 
-  async generate(inputParams) {
+  async generate(inputParams: GenerateParams<Recipe>): Promise<Descendant<Recipe>[]> {
     const arc = this.arc;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onRequiredParticle(recipe: Recipe, particle: Particle) {
-        // TODO: This strategy only matches particles based on slots, and only slots in the recipe gets modified. 
-        //       This strategy should do the same for handles as well. 
+      onRequiredParticle(_recipe: Recipe, particle: Particle) {
+        // TODO: This strategy only matches particles based on slots, and only slots in the recipe gets modified.
+        //       This strategy should do the same for handles as well.
         const particlesMatch: Particle[] = arc.activeRecipe.particles.filter(arcParticle => particle.matches(arcParticle));
-        
+
         return particlesMatch.map(particleMatch => ((recipe: Recipe, particle: Particle) => {
           if (!particle.matches(particleMatch)) return undefined;
-          for (const [name, slotConn] of Object.entries(particle.consumedSlotConnections)) {
+          for (const slotConn of particle.getSlotConnections()) {
             const oldSlot = slotConn.targetSlot;
-            const newSlot = particleMatch.consumedSlotConnections[name].targetSlot;
+            const matchedSlotConn = particleMatch.getSlotConnectionByName(slotConn.name);
+            const newSlot = matchedSlotConn.targetSlot;
             if (!SlotUtils.replaceOldSlot(recipe, oldSlot, newSlot)) return undefined;
 
             for (const [pname, oldPSlot] of Object.entries(slotConn.providedSlots)) {
-              const pslot = particleMatch.consumedSlotConnections[name].providedSlots[pname];
+              const pslot = matchedSlotConn.providedSlots[pname];
               if (!SlotUtils.replaceOldSlot(recipe, oldPSlot, pslot)) return undefined;
             }
-            
-            // remove particle from require section 
+
+            // remove particle from require section
             for (const requires of recipe.requires) {
               if (requires.particles.indexOf(particle) !== -1) {
                 requires.removeParticle(particle);

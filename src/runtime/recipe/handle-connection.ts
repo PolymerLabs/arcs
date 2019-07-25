@@ -13,6 +13,7 @@ import {HandleConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
 
 import {Handle} from './handle.js';
+import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
 import {directionToArrow, acceptedDirections} from './recipe-util.js';
@@ -135,6 +136,17 @@ export class HandleConnection implements Comparable<HandleConnection> {
       return null;
     }
     return this.particle.spec.handleConnectionMap.get(this.name);
+  }
+
+  toSlotConnection(): SlotConnection {
+    // TODO: Remove in SLANDLESv2
+    if (!(this.handle && this.handle.type && this.handle.type.slandleType())) {
+      return undefined;
+    }
+    const slandle: SlotConnection = new SlotConnection(this.name, this.particle);
+    slandle.tags = this.tags;
+    slandle.targetSlot = this.handle && this.handle.toSlot();
+    return slandle;
   }
 
   get isOptional(): boolean {

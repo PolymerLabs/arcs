@@ -6,7 +6,7 @@ import '../Services/particles/Random.arcs'
 recipe SlandleStardateTOS
   create as stardate
   create as destination
-  `slot 'rootslotid-root' #root as root
+  `slot 'rootslotid-root' as root
 
   RandomParticle
     randomData -> randomPlanet
@@ -23,3 +23,4 @@ recipe SlandleStardateTOS
   SlandleStardateDisplay
     stardate <- stardate
     destination <- destination
+    root consume root

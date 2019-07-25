@@ -51,7 +51,7 @@ export class SlotConnection implements Comparable<SlotConnection> {
   set tags(tags: string[]) { this._tags = tags; }
 
   getSlotSpec(): ConsumeSlotConnectionSpec|undefined {
-    return this.particle.spec && this.particle.spec.getSlotSpec(this.name);
+    return this.particle.spec && this.particle.spec.getSlandleSpec(this.name);
   }
 
   connectToSlot(targetSlot: Slot): void {
@@ -113,30 +113,36 @@ export class SlotConnection implements Comparable<SlotConnection> {
   }
 
   isResolved(options?): boolean {
+    const error = (label: string) => {
+      if (options && options.errors) {
+        options.errors.set(this.name, label);
+      }
+      if (options && options.details) {
+        options.details = label; // TODO(jopra): use .errors instead.
+      }
+    };
     assert(Object.isFrozen(this), `slot connection ${this.name} must be frozen before it is resolved`);
 
     if (!this.name) {
-      if (options) {
-        options.details = 'missing name';
-      }
+      error('missing name');
       return false;
     }
     if (!this.particle) {
-      if (options) {
-        options.details = 'missing particle';
-      }
+      error('missing particle');
       return false;
     }
 
     const slotSpec = this.getSlotSpec();
-    
+
     if (slotSpec === undefined || slotSpec.isRequired) {
-      if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
+      if (!this.targetSlot) {
         // The required connection has no target slot
-        // or its target slot it not resolved (has no ID or source connection).
-        if (options) {
-          options.details = 'missing target-slot';
-        }
+        error(`missing target-slot`);
+        return false;
+      }
+      if (!this.targetSlot.id && !(this.targetSlot.sourceConnection && this.targetSlot.sourceConnection.isConnected())) {
+        // The required connection's target slot is not resolved (has no ID or source connection).
+        error(`unresolved target-slot`);
         return false;
       }
     }
@@ -144,13 +150,11 @@ export class SlotConnection implements Comparable<SlotConnection> {
       return true;
     }
 
-    if (this.getSlotSpec() == undefined) return true;
+    if (slotSpec === undefined) return true;
 
     return this.getSlotSpec().provideSlotConnections.every(providedSlot => {
       if (providedSlot && providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {
-        if (options) {
-          options.details = 'missing consuming slot';
-        }
+        error('missing consuming slot');
         return false;
       }
       return true;
@@ -160,7 +164,7 @@ export class SlotConnection implements Comparable<SlotConnection> {
   isConnectedToInternalSlot(): boolean {
     return this.targetSlot && (!!this.targetSlot.sourceConnection);
   }
-  isConnectedToRemoteSlot() {
+  isConnectedToRemoteSlot(): boolean {
     return this.targetSlot && (!!this.targetSlot.id);
   }
 

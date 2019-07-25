@@ -94,7 +94,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       handleNames: this.spec.inputs.map(i => i.name),
       // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
       // .arcs files, instead of .ptcl ones.
-      slotNames: [...this.spec.slotConnections.values()].map(s => s.name)
+      slotNames: this.spec.slandleConnectionNames()
     };
   }
 

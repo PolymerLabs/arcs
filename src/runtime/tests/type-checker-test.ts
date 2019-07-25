@@ -13,6 +13,7 @@ import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, Type, CollectionType, BigCollectionType} from '../type.js';
+import {Direction} from '../manifest-ast-nodes.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -357,7 +358,7 @@ describe('TypeChecker', () => {
 
   it(`doesn't modify an input baseType if invoked through Handle.effectiveType`, async () => {
     const baseType = TypeVariable.make('a');
-    const connection = {type: EntityType.make(['Thing'], {}), direction: 'inout'};
+    const connection = {type: EntityType.make(['Thing'], {}), direction: 'inout' as Direction};
     const newType = Handle.effectiveType(baseType, [connection]);
     assert.notStrictEqual(baseType, newType);
     assert.isNull(baseType.variable.resolution);

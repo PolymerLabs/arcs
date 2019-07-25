@@ -103,7 +103,7 @@ export class SlotComposer {
     return providedSlotContexts.filter(ctx => ctx.name === name);
   }
 
-  findContextById(slotId): SlotContext {
+  findContextById(slotId: string): SlotContext {
     return this._contexts.find(({id}) => id === slotId);
   }
 
@@ -128,7 +128,7 @@ export class SlotComposer {
 
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
-      Object.values(p.consumedSlotConnections).forEach(cs => {
+      p.getSlandleConnections().forEach(cs => {
         if (!cs.targetSlot) {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;

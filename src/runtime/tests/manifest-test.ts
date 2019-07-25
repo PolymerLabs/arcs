@@ -552,12 +552,12 @@ ${particleStr1}
       assert.lengthOf(recipe.handleConnections, 2);
       assert.lengthOf(recipe.slots, 3);
       assert.lengthOf(recipe.slotConnections, 3);
-      assert.lengthOf(Object.keys(recipe.particles[0].consumedSlotConnections), 2);
-      assert.lengthOf(Object.keys(recipe.particles[1].consumedSlotConnections), 1);
-      const mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
+      assert.lengthOf(recipe.particles[0].getSlotConnectionNames(), 2);
+      assert.lengthOf(recipe.particles[1].getSlotConnectionNames(), 1);
+      const mySlot = recipe.particles[1].getSlotConnectionByName('mySlot');
       assert.isDefined(mySlot.targetSlot);
       assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
-      assert.strictEqual(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+      assert.strictEqual(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].getSlotConnectionByName('oneMoreSlot').targetSlot);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
@@ -673,7 +673,6 @@ ${particleStr1}
       `)).recipes[0];
       const options = {errors: new Map(), details: '', showUnresolved: true};
       recipe.normalize(options);
-      console.log(recipe.obligations);
       assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
     await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
@@ -709,7 +708,7 @@ ${particleStr1}
     const recipeSlot = checkDefined(recipe.slots.find(s => s.id === 'slot-id0'));
     assert.deepEqual(recipeSlot.tags, ['aa', 'aaa']);
 
-    const slotConn = recipe.particles[0].consumedSlotConnections['slotA'];
+    const slotConn = recipe.particles[0].getSlotConnectionByName('slotA');
     assert(slotConn);
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
     assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
@@ -764,8 +763,8 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.slots, 2);
-    assert.strictEqual(checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).consumedSlotConnections['slotB1'].providedSlots['slotB2'],
-                 checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).consumedSlotConnections['slotA'].targetSlot);
+    assert.strictEqual(checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).getSlotConnectionByName('slotB1').providedSlots['slotB2'],
+                 checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).getSlotConnectionByName('slotA').targetSlot);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
@@ -811,7 +810,7 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.slots, 1);
     assert.strictEqual('slotA2', recipe.slots[0].name);
-    assert.isUndefined(recipe.particles[0].consumedSlotConnections['slotA1'].targetSlot);
+    assert.isUndefined(recipe.particles[0].getSlotConnectionByName('slotA1').targetSlot);
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
   });
@@ -1773,7 +1772,7 @@ resource SomeName
 
     assert.strictEqual(recipe.particles[0].primaryVerb, 'verb');
     assert.isUndefined(recipe.particles[0].spec);
-    const slotConnection = recipe.particles[0]._consumedSlotConnections.consumeSlot;
+    const slotConnection = recipe.particles[0].getSlotConnectionByName('consumeSlot');
     assert(slotConnection.providedSlots.provideSlot);
     assert.strictEqual(slotConnection.providedSlots.provideSlot.sourceConnection, slotConnection);
   });

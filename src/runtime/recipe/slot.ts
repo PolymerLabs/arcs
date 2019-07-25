@@ -59,6 +59,7 @@ export class Slot implements Comparable<Slot> {
   }
 
   get handles(): Handle[] {
+    // TODO(jopra): This lazy initialization is surprising. Consider removing.
     const handles: Handle[] = [];
     if (this.sourceConnection && this.sourceConnection.getSlotSpec()) {
       for (const handleName of this.sourceConnection.particle.getSlotSpecByName(this.name).handles) {

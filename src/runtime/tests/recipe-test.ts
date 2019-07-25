@@ -66,8 +66,8 @@ describe('recipe', () => {
     `);
     const recipe = manifest.recipes[0];
     const clonedRecipe = recipe.clone(); 
-    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections['root'].providedSlots['details'], 'recipe slots don\'t match');
-    assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].consumedSlotConnections['root'].providedSlots['details'], 'cloned recipe slots don\'t match');
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].getSlotConnectionByName('root').providedSlots['details'], 'recipe slots don\'t match');
+    assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].getSlotConnectionByName('root').providedSlots['details'], 'cloned recipe slots don\'t match');
   });
   it('validate handle connection types', async () => {
     const manifest = await Manifest.parse(`
@@ -591,7 +591,7 @@ describe('recipe', () => {
             provide moreDetails
     `)).recipes[0];
     const s1SlotRecipe = recipe.slots.find(slot => slot.name === 'details');
-    const s1SlotRequire = recipe.requires[0].particles[0].consumedSlotConnections['root'].providedSlots['details'];
+    const s1SlotRequire = recipe.requires[0].particles[0].getSlotConnectionByName('root').providedSlots['details'];
     assert.isTrue(s1SlotRecipe === s1SlotRequire, 'slot in require section is not the same as slot in recipe');
   });
   it('particles in require section don\'t need to have a particle spec', async () => {
@@ -632,8 +632,8 @@ describe('recipe', () => {
         C
           consume details as s0
     `)).recipes[0];
-    assert.isTrue(recipe.requires[0].particles[0].consumedSlotConnections['details'].targetSlot === recipe.requires[0].particles[1].consumedSlotConnections['details'].targetSlot, 'there is more than one slot');
-    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections['details'].targetSlot, 'slot in the require section doesn\'t match slot in the recipe');
+    assert.isTrue(recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot === recipe.requires[0].particles[1].getSlotConnectionByName('details').targetSlot, 'there is more than one slot');
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot, 'slot in the require section doesn\'t match slot in the recipe');
   });
   it('recipe with require section toString method works', async () => {
     const recipe = (await Manifest.parse(`

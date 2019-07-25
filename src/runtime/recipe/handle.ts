@@ -13,12 +13,13 @@ import {ParticleSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {Type, SlotType} from '../type.js';
+import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Fate} from '../manifest-ast-nodes.js';
+import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 
 export class Handle implements Comparable<Handle> {
@@ -44,6 +45,25 @@ export class Handle implements Comparable<Handle> {
   constructor(recipe: Recipe) {
     assert(recipe);
     this._recipe = recipe;
+  }
+
+  toSlot(): Slot {
+    if (!this.type) {
+      return undefined;
+    }
+    const slotType = this.type.slandleType();
+    if (!slotType) {
+      return undefined;
+    }
+    const slotInfo = slotType.getSlot();
+
+    const slandle = new Slot(this.recipe, this.localName);
+    slandle.tags = this.tags;
+    slandle.id = this.id;
+    slandle.formFactor = slotInfo.formFactor;
+    // TODO(jopra): cannot assign slandle handles as the slots do not actually track their handles but use a source particle connection mapping
+    // slandle.handles = [slotInfo.handle];
+    return slandle;
   }
 
   _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
@@ -183,7 +203,7 @@ export class Handle implements Comparable<Handle> {
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
 
-  static effectiveType(handleType: Type, connections: {type: Type|null|undefined, direction: string|undefined|null}[]) {
+  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
