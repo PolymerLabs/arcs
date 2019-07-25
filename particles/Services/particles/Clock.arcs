@@ -1,0 +1,26 @@
+import '../schemas/ClockData.arcs'
+
+// ClockParticle outputs an Instant that matches the current clock time
+// schema object.
+//
+// Usage:
+//
+// - Add a ClockData input to your particle
+//
+// ```
+//   particle FooParticle
+//     in ClockData randomFoo
+//    ...
+// ```
+//
+// - Add a ClockParticle to your Recipe
+// ```
+//   recipe FooRecipe
+//     ClockParticle
+//       clockdata -> clockFoo
+//   ...
+// ```
+
+particle ClockParticle in './js/Clock.js'
+  in ClockResolutionOptions clockOptions
+  out ClockData clockData

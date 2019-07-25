@@ -1,0 +1,8 @@
+// Wrapper around a clock instant so that we can input this into
+// Recipes
+
+schema ClockData
+  Instant now
+
+schema ClockResolutionOptions
+  Text clockResolution
