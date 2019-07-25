@@ -105,6 +105,8 @@ export class ResolveWalker extends RecipeWalker {
     });
 
     if (mappable.length === 0) {
+      // TODO(jopra): Reconsider this behaviour.
+      // Tracked at https://github.com/PolymerLabs/arcs/issues/3389
       return error('The only handles matching the requested type and tags are already present in this recipe');
     }
     return mappable.map(store => ((recipe, updateHandle) => {
