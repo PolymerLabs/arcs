@@ -37,7 +37,7 @@ requiring an upgrade to our current version.
 
 ### Installing the easy way
 
-1) Run the setup script
+1) Run the setup script (MacOS, Linux)
 
    ```
    $ ./tools/setup
