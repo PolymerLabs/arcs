@@ -263,7 +263,15 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 });
               }
 
-              for (const [name, id] of Object.entries(m.pecMsgBody.stores)) {
+              // TODO: FIXME: This is a workaround for slandles not having stores.
+              // Use for (const [name, id] of Object.entries(m.pecMsgBody)) when slandles have stores.
+              for (const handle of spec.args) {
+                const name = handle.name;
+                const matchingStores = Object.entries(m.pecMsgBody.stores).map(
+                  ([store_name, id]) => store_name == name ? id : undefined
+                ).filter(id => id);
+                const id = matchingStores.length == 1 ? matchingStores[0] : `#missing-store-for-${name}`;
+
                 this._handles.set(id, {
                   id: id,
                   label: `"${name}"`,
@@ -276,9 +284,27 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 let color;
                 let arrows;
                 switch (connSpec.direction) {
+                  case '`consume':
+                    arrows = {
+                      from: {
+                        enabled: true,
+                        type: 'circle'
+                      }
+                    };
+                    color = this._cssVar('--green');
+                    break;
                   case 'in':
                     arrows = 'from';
                     color = this._cssVar('--dark-green');
+                    break;
+                  case '`provide':
+                    arrows = {
+                      to: {
+                        enabled: true,
+                        type: 'circle'
+                      }
+                    };
+                    color = this._cssVar('--red');
                     break;
                   case 'out':
                     arrows = 'to';
@@ -308,7 +334,9 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                   color: {color},
                   details: {
                     direction: connSpec.direction,
-                    handleConnection: name
+                    handleConnection: name,
+                    type_tag: connSpec.type.tag,
+                    type_names: connSpec.type.data.names
                   }
                 });
               }

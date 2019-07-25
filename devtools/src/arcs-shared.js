@@ -21,7 +21,9 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         --focus-blue: #03a9f4;
         --light-focus-blue: #e4f6ff;
         --dark-red: #b71c1c;
+        --red: #ff0000;
         --dark-green: #09ba12;
+        --green: #00ff00;
         --darker-green: #08780e;
 
         --devtools-purple: rgb(136, 19, 145);
