@@ -22,5 +22,5 @@ public interface PortablePromise<T> {
     void doInvoke(Resolver<T> resolve, Rejector<?> reject);
   }
 
-  void then(Consumer<T> onFulfillment);
+  PortablePromise<T> then(Consumer<T> onFulfillment);
 }

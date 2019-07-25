@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 class PortablePromiseJsImpl<T> implements PortablePromise<T> {
   private final PortablePromise.PortablePromiseExecutor<T> executor;
-  private final Promise<T> promise;
+  private Promise<T> promise;
 
   public PortablePromiseJsImpl(PortablePromise.PortablePromiseExecutor<T> executor) {
     this.promise = new Promise((resolve, reject) -> {
@@ -21,12 +21,9 @@ class PortablePromiseJsImpl<T> implements PortablePromise<T> {
   }
 
   @Override
-  public void then(Consumer<T> onFulfillment) {
-    promise.then(
-      new ThenOnFulfilledCallbackFn<T, Void>() {
-        public IThenable<Void> onInvoke(T result) {
-          onFulfillment.accept(result);
-        }
-    });
+  public PortablePromise<T> then(Consumer<T> onFulfillment) {
+    promise = promise.then((result) ->
+        new Promise<>((resolve, reject) -> onFulfillment.accept(result)));
+    return this;
   }
 }
