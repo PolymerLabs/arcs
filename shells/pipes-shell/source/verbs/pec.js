@@ -7,13 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {handlePecMessage} from '../pec-port.js';
 
-'use strict';
-
-defineParticle(({DomParticle, html}) => {
-  return class extends DomParticle {
-    get template() {
-      return html`<div slotid="content"></div>`;
-    }
-  };
-});
+export const pec = async (msg, tid, bus) => {
+  return await handlePecMessage(msg, tid, bus);
+};

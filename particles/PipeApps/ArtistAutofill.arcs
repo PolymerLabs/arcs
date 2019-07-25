@@ -1,4 +1,5 @@
 import './schemas/Json.arcs'
+import './schemas/PipeEntity.arcs'
 import '../Services/schemas/RandomData.arcs'
 import '../Services/particles/Random.arcs'
 
@@ -14,11 +15,17 @@ particle RandomArtist in './source/RandomArtist.js'
 particle SuggestArtist in './source/SuggestArtist.js'
   in Artist artist
   out Json suggestion
-  consume app
+  consume content
 
-recipe Com_spotify_music &autofill
+particle RequireQuery in './source/Noop.js'
+  in PipeEntity query
+
+recipe AutofillSpotifyMusic &artist_autofill
   create as artist
   create as suggestion
+  use #artist_autofill as query
+  RequireQuery
+    query = query
   RandomParticle
     randomData -> randomArtist
   RandomArtist
@@ -27,3 +34,4 @@ recipe Com_spotify_music &autofill
   SuggestArtist
     artist = artist
     suggestion = suggestion
+  description `suggest artist`

@@ -1,8 +1,8 @@
-# shells/pipes-shell
+# shells/pipes-shell-demo
 
 ### Dual Platform
 
-Platform code is in the `web` or `node` folders.
+Plaform code is in the `web` or `node` folders.
 
 The web entry-point is `web/index.html`, the node entry-point is `node/serve.sh`.
 
@@ -36,8 +36,4 @@ or
 * 1 = particles/runtime-logging only
 * 2 = add shell logging
 
-### Verbs
 
-* spawn: spawn an arc using the named recipe
-  * send to shell: {"message":"spawn","recipe":"NotificationTest"}
-  * receive from shell: {"message":"data","tid":1,"data":{...whatever data the recipe produced}}

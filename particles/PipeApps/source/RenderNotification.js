@@ -11,21 +11,23 @@
 'use strict';
 
 defineParticle(({DomParticle, html, log}) => {
+
   return class extends DomParticle {
+    // for testing under DOM modality
     get template() {
-      return html`<span></span>`;
+      return `<span>{{json}}<span>`;
     }
-    update({recentEntities}, state) {
-      if (recentEntities) {
-        const json = this.query(recentEntities);
-        this.updateSingleton('suggestion', {json});
+    render(props, state) {
+      const json = JSON.stringify({
+        modality: 'notification',
+        content: 'Now is the time for all good men to come to the aid of their party.'}
+      );
+      if (state.json !== json) {
+        state.json = json;
+        this.updateSingleton('output', {json});
       }
-    }
-    query(entities) {
-      const people = entities.filter(entity => entity.type === 'people');
-      const sorted = people.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      const result = sorted[0] || Object;
-      return JSON.stringify(result);
+      return state;
     }
   };
+
 });

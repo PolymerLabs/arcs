@@ -9,11 +9,17 @@ cp -fR ../../../lib/build/worker.js dist/
 mkdir dist/particles
 #
 mkdir dist/particles/Common
-mkdir dist/particles/Common/schemas
-cp -fR ../../../../particles/Common/schemas/Description.schema dist/particles/Common/schemas
+mkdir dist/particles/Common/schema
+cp -fR ../../../../particles/Common/schema/Description.schema dist/particles/Common/schema
 #
 mkdir dist/particles/PipeApps
 cp -fR ../../../../particles/PipeApps/* dist/particles/PipeApps
+#
+mkdir dist/particles/Music
+cp -fR ../../../../particles/Music/* dist/particles/Music
+#
+mkdir dist/particles/Services
+cp -fR ../../../../particles/Services/* dist/particles/Services
 #
 # collate sources
 echo packing...
