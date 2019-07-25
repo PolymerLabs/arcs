@@ -96,12 +96,19 @@ export class Flow {
     for (const nodeId of this.nodeIds) {
       elements.push('node:' + nodeId);
     }
-    for (const edgeId of this.edgeIds) {
-      elements.push('edge:' + edgeId);
-    }
     for (const tag of this.tags) {
       elements.push('tag:' + tag);
     }
+
+    // NOTE: We use asSet() here for the edge IDs instead of asList(), and thus
+    // treat all different orderings of edges (i.e. paths) as equivalent,
+    // provided they visit the exact same edges. This helps dedupe visiting
+    // the same series of cycles in different orders, significantly reducing the
+    // search space.
+    for (const edgeId of this.edgeIds.asSet()) {
+      elements.push('edge:' + edgeId);
+    }
+
     elements.sort();
     return '{' + elements.join(', ') + '}';
   }
@@ -109,7 +116,10 @@ export class Flow {
 
 /** A set of unique flows. */
 export class FlowSet extends DeepSet<Flow> {
-  /** Copies the current FlowSet, and applies the given modifier to every flow in the copy. */
+  /**
+   * Copies the current FlowSet, and applies the given modifier to every flow in
+   * the copy.
+   */
   copyAndModify(modifier: FlowModifier) {
     return this.map(flow => flow.copyAndModify(modifier));
   }
@@ -202,7 +212,11 @@ export class FlowModifier {
   }
 
   toUniqueString(): string {
-    let elements: string[] = [];
+    const elements: string[] = [];
+    // The edgeIds list is ordered, but for de-duping we still want to sort them. 
+    for (const edgeId of this.edgeIds.asSet()) {
+      elements.push('+edge:' + edgeId);
+    }
     for (const nodeId of this.nodeIds) {
       elements.push('+node:' + nodeId);
     }
@@ -211,9 +225,6 @@ export class FlowModifier {
       elements.push(sign + 'tag:' + tag);
     }
     elements.sort();
-    const edges = [...this.edgeIds].map(edgeId => '+edge:' + edgeId);
-    // Prepend edges. They are already ordered, and the ordering is important.
-    elements = [...edges, ...elements];
     return '{' + elements.join(', ') + '}';
   }
 }

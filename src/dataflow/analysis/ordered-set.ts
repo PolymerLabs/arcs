@@ -13,23 +13,23 @@
  * by the Set so they are quick, and order is maintained by the Array. Elements
  * can be added to the OrderedSet multiple times.
  */
-export class OrderedSet<T> implements Iterable<T> {
-  readonly set: Set<T>;
-  readonly list: T[];
+export class OrderedSet<T> {
+  private readonly set: Set<T>;
+  private readonly array: T[];
 
   constructor() {
     this.set = new Set();
-    this.list = [];
+    this.array = [];
   }
 
   add(element: T) {
     this.set.add(element);
-    this.list.push(element);
+    this.array.push(element);
   }
 
   addAll(other: OrderedSet<T>) {
     other.set.forEach(e => this.set.add(e));
-    this.list.push(...other.list);
+    this.array.push(...other.array);
   }
 
   has(element: T): boolean {
@@ -42,11 +42,15 @@ export class OrderedSet<T> implements Iterable<T> {
     return copy;
   }
 
-  [Symbol.iterator]() {
-    return this.list[Symbol.iterator]();
+  get length(): number {
+    return this.array.length;
   }
 
-  get length(): number {
-    return this.list.length;
+  asSet(): ReadonlySet<T> {
+    return this.set;
+  }
+
+  asArray(): readonly T[] {
+    return this.array;
   }
 }

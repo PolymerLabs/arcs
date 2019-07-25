@@ -14,8 +14,8 @@ import {assert} from '../../../platform/chai-web.js';
 describe('OrderedSet', () => {
   it('starts off empty', () => {
     const set = new OrderedSet<string>();
-    assert.isEmpty(set.set);
-    assert.isEmpty(set.list);
+    assert.isEmpty(set.asSet());
+    assert.isEmpty(set.asArray());
   });
 
   it('can add multiple elements', () => {
@@ -25,8 +25,8 @@ describe('OrderedSet', () => {
     set.add('b');
     set.add('a');
 
-    assert.hasAllDeepKeys(set.set, ['a', 'b']);
-    assert.deepEqual(set.list, ['a', 'b', 'a']);
+    assert.hasAllDeepKeys(set.asSet(), ['a', 'b']);
+    assert.deepEqual(set.asArray(), ['a', 'b', 'a']);
   });
 
   it('can add elements from another OrderedSet', () => {
@@ -39,8 +39,8 @@ describe('OrderedSet', () => {
     second.add('c');
     second.addAll(first);
 
-    assert.hasAllDeepKeys(second.set, ['a', 'b', 'c']);
-    assert.deepEqual(second.list, ['a', 'c', 'a', 'b']);
+    assert.hasAllDeepKeys(second.asSet(), ['a', 'b', 'c']);
+    assert.deepEqual(second.asArray(), ['a', 'c', 'a', 'b']);
   });
 
   it('can check if an element exists', () => {
@@ -60,14 +60,6 @@ describe('OrderedSet', () => {
 
     assert.isTrue(copy.has('c'));
     assert.isFalse(original.has('c'));
-  });
-
-  it('is iterable', () => {
-    const set = new OrderedSet<string>();
-    set.add('a');
-    set.add('b');
-
-    assert.deepEqual([...set], ['a', 'b']);
   });
 
   it('reports the length of its list', () => {
