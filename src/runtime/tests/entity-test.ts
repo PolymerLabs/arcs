@@ -201,8 +201,8 @@ describe('Entity', () => {
     assert.strictEqual(e.now, now);
 
     // can supply strings
-    const jan1noon = '2019-01-01T12:00'
-    const e2 = new entityClass({txt: 'abc', now: jan1noon });
-    assert.strictEqual(e2.now, jan1noon);
+    const jan1noon = '2019-01-01T12:00';
+    const e2 = new entityClass({txt: 'abc', now: jan1noon});
+    assert.strictEqual(e2.now.toString(), jan1noon);
   });
 });
