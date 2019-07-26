@@ -7,7 +7,6 @@ function local:Status([String] $Message){
   Write-Host $Message -ForegroundColor DarkMagenta
 }
 
-
 Status("1. Install nvm")
 Install-Module -Name nvm
 
