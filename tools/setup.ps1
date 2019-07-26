@@ -16,7 +16,8 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 Status("2. Install Node")
 Set-Location -Path (Get-Item -Path $PSScriptRoot).Parent.FullName
 Install-NodeVersion
-Set-NodeVersion -Version 'v10.15.3'
+Set-NodeVersion -Version
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
 Status("3. Update npm to latest version")
 npm install -g npm@latest
