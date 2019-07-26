@@ -18,7 +18,7 @@ Status("1.1 Ensure nvm is in your current process")
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
 Status("2. Install Node")
-CD ..
+Set-Location -Path ..
 Install-NodeVersion
 Set-NodeVersion -Persist User
 
