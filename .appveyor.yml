@@ -10,10 +10,7 @@ init:
 
 install:
   - ps: $Env:Path # What's currently in the path?
-  - ps: Install-Product node $env:nodejs_version $env:Platform
-  - npm install -g npm@6.9.0
-  - node -e "console.log(process.arch);"
-  - appveyor-retry npm install
+  - ps: ./tools/setup.ps1
 
 build: off
 
