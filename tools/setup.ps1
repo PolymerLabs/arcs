@@ -1,5 +1,5 @@
 
-$ROOT = ( get-item $scriptPath ).Directory.parent.parent.FullName
+$ROOT = ( get-item $PSScriptRoot ).Directory.parent.parent.FullName
 
 # Stop when error occurs
 $ErrorActionPreference = "Stop"
