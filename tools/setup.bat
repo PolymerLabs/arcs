@@ -1,14 +1,22 @@
+@echo OFF&setlocal
 
-@ECHO OFF
+:Fail
+echo %~1
+EXIT /B 1
 
-echo "0. Install Chocolatey package manager"
+:Status
+echo %~1
+EXIT /B 0
+
+Rem https://chocolatey.org/install
+call :Status "0. Install Chocolatey package manager"
 @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
-echo "1. Install nvm"
+call :Status "1. Install nvm"
 choco install nvm
 
-echo "2. Install node"
+call :Status "2. Install node"
 nvm install && nvm use
 
-echo "3. Install dependencies"
+call :Status "3. Install dependencies"
 npm ci
