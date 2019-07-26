@@ -1,7 +1,5 @@
 language: node_js
 dist: xenial
-node_js:
-  - "10"
 env:
   global:
     # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
@@ -17,16 +15,10 @@ script:
   - npm run build:rollup
   - npm --prefix=server test
 
-before_install:
-  - npm install -g npm@6.9.0
-  - node --version
-  - npm --version
-
 cache: npm
 
 install:
-  - npm ci
-  - npm --prefix=server ci
+  - ./tools/setup
 
 before_deploy:
   # build apidocs
