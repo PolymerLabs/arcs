@@ -37,10 +37,17 @@ requiring an upgrade to our current version.
 
 ### Installing the easy way
 
-1) Run the setup script (MacOS, Linux)
-
+1) Run the setup script 
+   
+    
+   MacOS / Linux:
    ```
    $ ./tools/setup
+   ```
+   
+   Windows (Powershell): 
+   ```
+   $ ./tools/setup.ps1  
    ```
 
 2) That's it! (You can skip the next two sections.)
