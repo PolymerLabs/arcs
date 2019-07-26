@@ -89,7 +89,7 @@
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
-    "@tensorflow/tfjs-node": "^1.2.3",
+    "@tensorflow/tfjs": "^1.2.3",
     "assert": "^1.4.1",
     "esm": "^3.0.84",
     "firebase": "^6.0.4",
