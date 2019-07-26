@@ -20,8 +20,8 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckIsFromStore} from '../particle-check.js';
-import {ProvideSlotConnectionSpec} from '../particle-spec.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromOutput, CheckIsFromStore} from '../particle-check.js';
+import {ProvideSlotConnectionSpec, HandleConnectionSpec} from '../particle-spec.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -2116,6 +2116,31 @@ resource SomeName
       assert.strictEqual(check2.toManifestString(), `check input2 is not from store 'my-store-id'`);
       assert.strictEqual(check2.target.name, 'input2');
       assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}, /* isNot= */ true));
+    });
+
+    it(`supports 'is from output' checks`, async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          out T {} output1
+          out T {} output2
+          check input1 is from output output1
+          check input2 is not from output output2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 2);
+      
+      const check1 = checkDefined(particle.trustChecks[0]);
+      assert.strictEqual(check1.toManifestString(), 'check input1 is from output output1');
+      assert.strictEqual(check1.target.name, 'input1');
+
+      const check2 = checkDefined(particle.trustChecks[1]);
+      assert.strictEqual(check2.toManifestString(), 'check input2 is not from output output2');
+      assert.strictEqual(check2.target.name, 'input2');
+      assert.isTrue((check2.expression as CheckCondition).isNot);
     });
 
     it('supports checks on provided slots', async () => {

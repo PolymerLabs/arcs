@@ -421,6 +421,7 @@ ParticleCheckExpression
 ParticleCheckCondition
   = ParticleCheckIsFromHandle
   / ParticleCheckIsFromStore
+  / ParticleCheckIsFromOutput
   / ParticleCheckHasTag
 
 ParticleCheckHasTag
@@ -445,6 +446,18 @@ ParticleCheckIsFromHandle
       isNot: !!isNot,
       parentHandle,
     } as AstNode.ParticleCheckIsFromHandle;
+  }
+
+ParticleCheckIsFromOutput
+  = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'output' whiteSpace output:lowerIdent
+  {
+    return {
+      kind: 'particle-trust-check-is-from-output',
+      checkType: 'is-from-output',
+      location: location(),
+      isNot: !!isNot,
+      output,
+    } as AstNode.ParticleCheckIsFromOutput;
   }
 
 ParticleCheckIsFromStore

@@ -1059,6 +1059,25 @@ describe('FlowGraph validation', () => {
     });
   });
 
+  describe(`'is from output' check conditions`, () => {
+    it('fails when the output is directly connected to an ingress input', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} input
+          out Foo {} output
+          check input is from output output
+        recipe R
+          P
+            output -> h
+            input <- h
+      `);
+      markParticleInputsWithIngress(graph, 'P.input');
+      assert.isFalse(validateGraph(graph).isValid);
+      // should probably verify the failure message
+    });
+
+  });
+
   describe(`'is from store' check conditions`, () => {
     it('succeeds when the data store identified by name is present', async () => {
       const graph = await buildFlowGraph(`
