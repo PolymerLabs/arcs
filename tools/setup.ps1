@@ -16,7 +16,7 @@ if (Get-Command choco.exe -ErrorAction SilentlyContinue) {
   $ChocoInstalled = $true
   choco install nvm
 } else {
-  Install-Module -Name nvm -RequiredVersion 2.1.0
+  Install-Module -Name nvm
 }
 
 Status("1.1 Ensure nvm is in your current process")
