@@ -18,7 +18,10 @@ Set-Location -Path (Get-Item -Path $PSScriptRoot).Parent.FullName
 Install-NodeVersion
 Set-NodeVersion -Persist User
 
-Status("3. Install dependencies")
+Status("3. Update npm to latest version")
+npm install -g npm@latest
+
+Status("4. Install dependencies")
 npm ci
 
 
