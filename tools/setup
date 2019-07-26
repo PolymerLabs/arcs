@@ -33,7 +33,10 @@ status "1.1 Ensure nvm is in your current process"
 status "2. Install node"
 (cd $ROOT && nvm install && nvm use) || fail 'Failed to install target node version.' 
 
-status "3. Install dependencies"
+status "3. Update npm to latest version"
+nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
+
+status "4. Install dependencies"
 (cd $ROOT && npm ci) || fail 'Failed to install dependencies.' 
 
 
