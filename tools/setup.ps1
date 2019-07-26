@@ -14,7 +14,7 @@ function local:Status([String] $Message){
 Status("1. Install nvm")
 if (Get-Command choco.exe -ErrorAction SilentlyContinue) {
   $ChocoInstalled = $true
-  choco install nvm
+  choco install nvm -y
 } else {
   Install-Module -Name nvm
 }
