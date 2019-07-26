@@ -12,24 +12,15 @@ function local:Status([String] $Message){
 
 
 Status("1. Install nvm")
-if (Get-Command choco.exe -ErrorAction SilentlyContinue) {
-  $ChocoInstalled = $true
-  choco install nvm -y
-} else {
-  Install-Module -Name nvm
-}
+Install-Module -Name nvm
 
 Status("1.1 Ensure nvm is in your current process")
-if($ChocoInstalled) {
-  refreshenv
-} else {
-  $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-}
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
 Status("2. Install Node")
 CD ..
-nvm install
-nvm use
+Install-NodeVersion
+Set-NodeVersion -Persist User
 
 Status("3. Install dependencies")
 npm ci
