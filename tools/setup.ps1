@@ -27,13 +27,11 @@ if($ChocoInstalled) {
 }
 
 Status("2. Install Node")
-CD $ROOT
-Status("reached cd")
+CD ..
 nvm install
 nvm use
 
 Status("3. Install dependencies")
-CD $ROOT
 npm ci
 
 
