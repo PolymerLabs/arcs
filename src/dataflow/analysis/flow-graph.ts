@@ -26,7 +26,9 @@ export class FlowGraph {
   readonly handles: HandleNode[];
   readonly slots: SlotNode[];
   readonly nodes: Node[];
-  readonly edges: Edge[] = [];
+  
+  /** Maps from edge ID to Edge. */
+  readonly edgeMap: Map<string, Edge> = new Map();
 
   /** Maps from particle name to node. */
   readonly particleMap: Map<string, ParticleNode>;
@@ -65,7 +67,7 @@ export class FlowGraph {
       const addEdgeWithDirection = (direction: 'in' | 'out') => {
         const edgeId = 'E' + edgeIdCounter++;
         const edge = addHandleConnection(direction, particleNode, handleNode, connection, edgeId);
-        this.edges.push(edge);
+        this.edgeMap.set(edgeId, edge);
       };
 
       if (connection.direction === 'inout') {
@@ -85,7 +87,7 @@ export class FlowGraph {
       const slotNode = slotNodes.get(connection.targetSlot);
       const edgeId = 'E' + edgeIdCounter++;
       const edge = addSlotConnection(particleNode, slotNode, connection, edgeId);
-      this.edges.push(edge);
+      this.edgeMap.set(edgeId, edge);
 
       // Copy the Check object from the "provide" connection onto the SlotNode.
       // (Checks are defined by the particle that provides the slot, but are
@@ -114,6 +116,10 @@ export class FlowGraph {
     });
   }
 
+  get edges(): readonly Edge[] {
+    return [...this.edgeMap.values()];
+  }
+
   /** Returns a list of all pairwise particle connections, in string form: 'P1.foo -> P2.bar'. */
   get connectionsAsStrings(): string[] {
     const connections: string[] = [];
@@ -121,6 +127,11 @@ export class FlowGraph {
       handleNode.connectionsAsStrings.forEach(c => connections.push(c));
     }
     return connections;
+  }
+
+  /** Converts a list of edge IDs into a path string using the edge labels. */
+  edgeIdsToPath(edgeIds: readonly string[]) {
+    return edgeIds.map(edgeId => this.edgeMap.get(edgeId).label).join(' -> ');
   }
 
   /** Converts an "is from handle" check into the node ID that we need to search for. */

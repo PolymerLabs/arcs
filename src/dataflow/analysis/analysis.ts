@@ -10,14 +10,56 @@
 
 import {FlowGraph} from './flow-graph.js';
 import {assert} from '../../platform/assert-web.js';
-import {Edge, FlowModifier, FlowSet, FlowModifierSet} from './graph-internals.js';
+import {Edge, FlowModifier, FlowSet, FlowModifierSet, Flow} from './graph-internals.js';
+
+/** Failure result reported when a check statement is not satisfied. */
+class CheckFailure {
+  constructor(readonly check: string, readonly flow: Flow) {}
+
+  getFailureMessage(graph: FlowGraph): string {
+    return `'${this.check}' failed for path: ${graph.edgeIdsToPath(this.flow.edgeIds.asArray())}`;
+  }
+}
+
+/**
+ * Failure result reported when there is no data ingress into an edge with a
+ * check statement.
+ */
+class IngressFailure {
+  constructor(readonly check: string) {}
+  
+  getFailureMessage(graph: FlowGraph): string {
+    return `'${this.check}' failed: no data ingress.`;
+  }
+}
 
 /** Result from validating an entire graph. */
 export class ValidationResult {
-  failures: Set<string> = new Set();
+  readonly checkFailures: CheckFailure[] = [];
+  readonly ingressFailures: IngressFailure[] = [];
+  
+  addCheckFailure(check: string, flow: Flow) {
+    this.checkFailures.push(new CheckFailure(check, flow));
+  }
+
+  addIngressFailure(check: string) {
+    this.ingressFailures.push(new IngressFailure(check));
+  }
+
+  addAllFailures(other: ValidationResult) {
+    other.checkFailures.forEach(f => this.addCheckFailure(f.check, f.flow));
+    other.ingressFailures.forEach(f => this.addIngressFailure(f.check));
+  }
 
   get isValid() {
-    return this.failures.size === 0;
+    return this.checkFailures.length === 0 && this.ingressFailures.length === 0;
+  }
+
+  getFailureMessages(graph: FlowGraph): string[] {
+    return [
+      ...this.ingressFailures.map(f => f.getFailureMessage(graph)),
+      ...this.checkFailures.map(f => f.getFailureMessage(graph)),
+    ];
   }
 }
 
@@ -156,7 +198,7 @@ export class EdgeExpression {
 }
 
 export class Solver {
-  readonly edges: Edge[];
+  readonly edges: readonly Edge[];
 
   /** Maps from an edge to a "expression" for it. */
   readonly edgeExpressions: Map<Edge, EdgeExpression> = new Map();
@@ -169,7 +211,7 @@ export class Solver {
 
   private _isResolved = false;
 
-  constructor(edges: Edge[]) {
+  constructor(edges: readonly Edge[]) {
     this.edges = edges;
 
     // Fill dependentEdges map with empty sets.
@@ -195,7 +237,7 @@ export class Solver {
     for (const edge of this.edges) {
       if (edge.check) {
         const result = this.validateCheckOnEdge(edge);
-        result.failures.forEach(f => finalResult.failures.add(f));
+        finalResult.addAllFailures(result);
       }
     }
     return finalResult;
@@ -213,14 +255,13 @@ export class Solver {
 
     if (flows.size === 0) {
       // There is no ingress into this edge, so there's nothing to check.
-      finalResult.failures.add(`'${check.originalCheck.toManifestString()}' failed: no data ingress.`);
+      finalResult.addIngressFailure(check.originalCheck.toManifestString());
       return finalResult;
     }
 
     for (const flow of flows) {
       if (!flow.evaluateCheck(check)) {
-        // TODO: Figure out how to report the path that caused the failure.
-        finalResult.failures.add(`'${check.originalCheck.toManifestString()}' failed`);
+        finalResult.addCheckFailure(check.originalCheck.toManifestString(), flow);
       }
     }
 
