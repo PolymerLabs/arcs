@@ -27,7 +27,7 @@ status "1. Install nvm"
 curl -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
     fail "Failed to download nvm version $NVM_VERSION." 
 
-status "1.1 ensure nvm is in your current process"
+status "1.1 Ensure nvm is in your current process"
 . ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh
 
 status "2. Install node"
