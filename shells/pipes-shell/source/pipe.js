@@ -11,7 +11,7 @@
 //import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {requireContext} from './context.js';
-import {marshalPipesArc} from './pipes-api.js';
+import {marshalIngestionArc} from './pipes-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
@@ -25,7 +25,7 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   // marshal context
   const context = await requireContext();
   // marshal pipes-arc (and stores)
-  await marshalPipesArc(storage, context);
+  await marshalIngestionArc(storage, context);
   // marshal dispatcher
   populateDispatcher(dispatcher, composerFactory, storage, context);
   // create bus

@@ -10,38 +10,12 @@
 
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {storeByTag} from './lib/utils.js';
-import {requirePipesArc} from './lib/pipes-arc.js';
+import {requireIngestionArc} from './lib/ingestion-arc.js';
 import {initPipeStore, mirrorStore} from './context.js';
 
-let pipes;
-let pipeStore;
-let contextPipeStore;
+let ingestionArc;
 
-export const marshalPipesArc = async (storage, context) => {
-  // canonical arc to hold observed pipes entities
-  pipes = await requirePipesArc(storage);
-  // access the pipe store directly
-  pipeStore = storeByTag(pipes, 'pipeEntities');
-  // create a context store
-  contextPipeStore = await initPipeStore(context);
-  // mirror pipeStore entities into contextPipeStore, emulating
-  // the sharing mechanism implemented in fancier context impls
-  mirrorStore(pipeStore, contextPipeStore);
-  console.log('mirroring pipeStore into contextPipeStore');
+export const marshalIngestionArc = async (storage, context) => {
+  // canonical arc to ingest input.
+  ingestionArc = await requireIngestionArc(storage);
 };
-
-export const addPipeEntity = async data => {
-  // ensure there is a timestamp
-  data.timestamp = data.timestamp || Date.now();
-  // ensure there is a source value
-  data.source = data.source || 'com.unknown';
-  // construct an Entity
-  const entity = {
-    id: generateId(),
-    rawData: data
-  };
-  // add to pipeStore
-  console.log('adding pipeEntity', entity);
-  await pipeStore.store(entity, [generateId()]);
-};
-
