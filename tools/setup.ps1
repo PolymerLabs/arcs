@@ -1,5 +1,5 @@
 # Stop when error occurs
-$ErrorActionPreference = "Stop"
+# $ErrorActionPreference = "Stop"
 
 $ChocoInstalled = $false
 
