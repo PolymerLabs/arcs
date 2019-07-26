@@ -39,6 +39,29 @@ function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
   return (t instanceof Type) ? t.toLiteral() : t;
 }
 
+export function isRoot({name, tags, id, type}: {name: string, tags: string[], id?: string, type?: Type}): boolean {
+  const rootNames: string[] = [
+    'root',
+    'toproot',
+    'modal'
+  ];
+
+  if (type && !type.slandleType()) {
+    // If this is a handle that is not a Slandle, it cannot be a root slot.
+    return false;
+  }
+
+  // Checks that, if the id exists, it starts with the root id prefx.
+  const prefix = 'rootslotid-';
+  if (id && id.lastIndexOf(prefix, 0) === 0) {
+    const rootName = id.substr(prefix.length);
+    if (rootNames.includes(rootName)) {
+      return true;
+    }
+  }
+  return rootNames.includes(name) || tags.some(tag => rootNames.includes(tag));
+}
+
 export class HandleConnectionSpec {
   rawData: SerializedHandleConnectionSpec;
   direction: Direction;
@@ -87,7 +110,6 @@ export class HandleConnectionSpec {
       tags: this.tags,
       dependentConnections: this.dependentConnections.map(conn => conn.toSlotConnectionSpec()),
       // Fakes
-      isRoot: this.isRoot,
       isRequired: !this.isOptional, // TODO: Remove duplicated data isRequired vs isOptional (prefer isOptional)
       isSet,
       type: slotType,
@@ -95,11 +117,6 @@ export class HandleConnectionSpec {
       formFactor: slotInfo.formFactor,
       provideSlotConnections: [],
     };
-  }
-
-  isRoot(): boolean {
-    // TODO: Remove in SLANDLESv2
-    return this.type.slandleType() && (this.name === 'root' || this.tags.includes('root'));
   }
 
   get isInput() {
@@ -152,10 +169,6 @@ export class ConsumeSlotConnectionSpec {
     slotModel.provideSlotConnections.forEach(ps => {
       this.provideSlotConnections.push(new ProvideSlotConnectionSpec(ps));
     });
-  }
-
-  isRoot(): boolean {
-    return this.name === 'root' || this.tags.includes('root');
   }
 
   // Getters to 'fake' being a Handle.
