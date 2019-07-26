@@ -32,7 +32,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       }
       iron-list {
         flex-grow: 1;
-        overflow-y: scroll;
+        overflow-y: auto;
       }
       #download {
         height: 20px;

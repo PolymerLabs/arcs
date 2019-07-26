@@ -50,7 +50,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       .lm_content {
         background: white;
         position: relative;
-        overflow: scroll;
+        overflow: auto;
       }
       .lm_header .lm_tab {
         /* Fixing uneven padding caused by missing close button.

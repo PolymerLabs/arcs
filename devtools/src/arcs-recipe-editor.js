@@ -68,7 +68,7 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
       }
       [editor] {
         position: relative;
-        overflow: scroll;
+        overflow: auto;
       }
       #underline {
         position: absolute;
