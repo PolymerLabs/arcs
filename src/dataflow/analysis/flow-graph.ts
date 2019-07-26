@@ -148,7 +148,6 @@ export class FlowGraph {
       return false;
     });
     assert(edge, `Output with id ${check.output.name} does not exist.`);
-    console.log(`converting output check to edge id. Id: ${edge.edgeId}`);
     return edge.edgeId;
   }
 
