@@ -24,12 +24,12 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   Utils.init(paths.root, paths.map);
   // marshal context
   const context = await requireContext();
-  // marshal pipes-arc (and stores)
-  await marshalIngestionArc(storage, context);
   // marshal dispatcher
   populateDispatcher(dispatcher, composerFactory, storage, context);
   // create bus
   const bus = new Bus(dispatcher, client);
+  // marshal pipes-arc (and stores)
+  await marshalIngestionArc(storage, context, bus);
   // send pipe identifiers to client
   identifyPipe(context, bus);
   // return bus

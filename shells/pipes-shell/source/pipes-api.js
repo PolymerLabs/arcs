@@ -15,7 +15,7 @@ import {initPipeStore, mirrorStore} from './context.js';
 
 let ingestionArc;
 
-export const marshalIngestionArc = async (storage, context) => {
+export const marshalIngestionArc = async (storage, context, bus) => {
   // canonical arc to ingest input.
-  ingestionArc = await requireIngestionArc(storage);
+  ingestionArc = await requireIngestionArc(storage, bus);
 };
