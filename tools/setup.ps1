@@ -22,6 +22,9 @@ Status("2. Install Node")
 Write-Host $MyInvocation.MyCommand.Path
 Write-Host $PSScriptRoot
 Write-Host $ROOT
+Write-Host ( get-item $PSScriptRoot ).Directory.parent.parent.FullName
+Write-Host (Get-Item -Path ".\").Parent.FullName
+Write-Host (Get-Item -Path ".\").Parent.Parent.FullName
 Get-Location
 Set-Location -Path ..
 Install-NodeVersion
