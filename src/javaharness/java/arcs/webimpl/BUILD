@@ -18,6 +18,7 @@ j2cl_library(
         "//java/arcs/crdt:crdt-j2cl",
         "//java/arcs/nativeparticles:nativeparticles-j2cl",
         "@com_google_elemental2//:elemental2-core-j2cl",
+        "@com_google_elemental2//:elemental2-promise-j2cl",
         "@com_google_elemental2//:elemental2-dom-j2cl",
         "@com_google_j2cl//:jsinterop-annotations-j2cl",
         "@com_google_jsinterop_base//:jsinterop-base-j2cl",

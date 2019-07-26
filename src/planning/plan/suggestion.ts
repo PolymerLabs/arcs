@@ -22,6 +22,7 @@ import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Search} from '../../runtime/recipe/search.js';
 import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
+import {isRoot} from '../../runtime/particle-spec.js';
 
 
 export type DescriptionProperties = {
@@ -269,7 +270,7 @@ export class Suggestion {
       return true;
     }
 
-    if (!this.plan.slots.find(s => s.isRoot()) &&
+    if (!this.plan.slots.find(isRoot) &&
         !((this.plan.slotConnections || []).find(sc => sc.name === 'root'))) {
       // suggestion uses only non 'root' slots.
       // TODO: should check agains slot-composer's root contexts instead.
@@ -292,7 +293,7 @@ export class Suggestion {
     }
     let hasRootSlot = false;
     const usesRemoteNonRootSlots = this.plan.slots.some(slot => {
-      const isRootSlot = slot.isRoot();
+      const isRootSlot = isRoot(slot);
       if (isRootSlot) {
         hasRootSlot = true;
       }

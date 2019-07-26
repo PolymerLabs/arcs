@@ -11,7 +11,7 @@
 'use strict';
 
 defineParticle(({DomParticle, html, log}) => {
-  log('defineParticle');
+
   return class extends DomParticle {
     update({randomArtist}) {
       if (randomArtist) {
@@ -25,4 +25,5 @@ defineParticle(({DomParticle, html, log}) => {
       }
     }
   };
+
 });

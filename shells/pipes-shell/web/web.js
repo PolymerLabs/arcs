@@ -10,53 +10,51 @@
 
 // configure
 import '../../lib/platform/loglevel-web.js';
-import {paths} from './paths.js';
-import {manifest} from './config.js';
+import {version, paths, storage, test} from './config.js';
 
 // optional
-import '../../lib/database/pouchdb-support.js';
-import '../../lib/database/firebase-support.js';
-//import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
-
-import {Utils} from '../../lib/runtime/utils.js';
-import {ShellApiFactory} from '../device.js';
+//import '../../lib/database/pouchdb-support.js';
+//import '../../lib/database/firebase-support.js';
+//import '../../configuration/whitelisted.js';
 import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
 
-// usage:
-//
-// ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
-// [arcid =] ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
-//
-// [arcid =] ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
-//
-// results returned via `DeviceClient.foundSuggestions(arcid, json)` (if it exists)
-
-// can be used for testing:
-//
-// window.DeviceClient = {
-//   shellReady() {
-//     console.warn('context is ready!');
-//   },
-//   foundSuggestions(arcid, json) {
-//   }
-// };
-  window.onclick = () => {
-    if (window.ShellApi) {
-      window.ShellApi.receiveEntity();
-    }
-  };
-//
-
-const storage = `pouchdb://local/arcs/user`;
-const version = `version: jun-3`;
+// dependencies
+import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
+import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
+import {findContainers} from '../source/lib/utils.js';
+import {initPipe} from '../source/pipe.js';
+import {smokeTest} from '../source/smoke.js';
 
 console.log(`${version} -- ${storage}`);
+
+const composerFactory = modality => {
+  switch (modality) {
+    case 'dom': {
+      const node = document.body.appendChild(document.createElement('div'));
+      node.style = 'margin-bottom: 8px;';
+      node.innerHTML = '<div slotid="root"></div>';
+      return new DomSlotComposer({containers: findContainers(node)});
+    }
+    default:
+      return new RamSlotComposer();
+  }
+};
+
+const client = window.DeviceClient || {};
 
 (async () => {
   // if remote DevTools are requested, wait for connect
   await DevtoolsSupport();
-  // configure arcs environment
-  Utils.init(paths.root, paths.map);
-  // configure ShellApi (window.DeviceClient is bound in by outer process, otherwise undefined)
-  window.ShellApi = await ShellApiFactory(storage, manifest, window.DeviceClient);
+  // configure pipes and get a bus
+  const bus = await initPipe(client, paths, storage, composerFactory);
+  // export bus
+  window.ShellApi = bus;
+  // run smokeTest if requested
+  if (test) {
+    smokeTest(bus);
+    // world's dumbest ui
+    window.onclick = () => {
+      bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
+    };
+  }
 })();

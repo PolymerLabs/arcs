@@ -40,7 +40,7 @@ public class WebHarnessController implements HarnessController {
         document.body = (HTMLBodyElement) document.createElement("body");
         // Because we're not loading index.html from within pipes-shell
         HTMLBaseElement base = (HTMLBaseElement) document.createElement("base");
-        base.href = "pipes-shell-2/web/deploy/dist/";
+        base.href = "pipes-shell/web/deploy/dist/";
         document.body.appendChild(base);
 
         shellElement.src = "./shell.js";
@@ -104,7 +104,7 @@ public class WebHarnessController implements HarnessController {
         tests.put("testRejectRemoveNonexistent", () -> CollectionDataTest.testRejectRemoveNonexistent());
         tests.put("testRejectRemoveTooOld", () -> CollectionDataTest.testRejectRemoveTooOld());
         tests.put("testMergeModels", () -> CollectionDataTest.testMergeModels());
-        
+
         HTMLDivElement div = (HTMLDivElement) document.createElement("div");
 
         HTMLDivElement testsDiv = (HTMLDivElement) document.createElement("div");

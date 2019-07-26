@@ -1,90 +1,43 @@
-# pipes-shell
+# shells/pipes-shell
 
-Can be executed on either NodeJs or Browser platforms. Platform-agnostic code is at the top-level, platform-specific code is separated into folders:
+### Dual Platform
 
-- pipes-shell
-  * // platform-agnostic sources
-- node/
-  - serve.sh // entry-point to execute the NodeJs application
-  ...
-- web/
-  - index.html // entry-point to execute the Browser application
-  ...
+Platform code is in the `web` or `node` folders.
 
-Also inside each platform folder is a deploy folder that contains tools for building deployments:
+The web entry-point is `web/index.html`, the node entry-point is `node/serve.sh`.
 
-- [platform]
-  - deploy // resources to build deployment
-    - deploy.sh // constructs a deployment in dist/
-    - stats.sh // creates `pack-stats.json`
+There are deploy scripts for each platform, `web/deploy/deploy.sh` and `node/deploy/deploy.sh`. These scripts produce distributions into `web/deploy/dist` and `node/deploy/dist`, respectively.
 
-`pack-stats.json` contains Webpack information that can be used in tools like [(Online) Webpack Visualizer](https://chrisbateman.github.io/webpack-visualizer/).
+### Flags
 
-## Usage
+Flags are specified on the command line, or in the URL: e.g.:
 
-pipes-shell exposes JS entry/exit points designed to be bound into another process. These entry points can also be exercised via console. Here are some examples:
+`./serve.sh log test`
+or
+`index.html?log&test`
 
-```
-> ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
-> [transactionId] = ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
-> [transactionId] = ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
-```
-Results are returned via `DeviceClient.foundSuggestions(transactionId, json)` (if it exists). Returned JSON depends on the type of entity that triggered the request. As of this writing, for `com.google.android.apps.maps` and `com.music.spotify`, the json encodes a single pipe-entity, e.g:
+## Smoke Test
 
-`{"type":"address","name":"East Pole","timestamp":1552937651253,"source":"com.unknown"}`
+* test
+  * run several simulated bus transactions
 
-Example of implementing exit points for testing:
-```
-  window.DeviceClient = {
-    shellReady() {
-      console.warn('context is ready!');
-    },
-    foundSuggestions(transactionId, json) {
-    }
-  };
-```
-Also, when run under headful chrome, clicking the display will run a test receive.
+## Logging
 
-## Flags
+* (no flag)
+  * set logging level to 0
+* log
+  * set logging level to 2
+* log=[level]
+  * set logging level to [level]
 
-`pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]&solo=[manifest-url]`
+#### Log Levels
 
-- log[=level]
-  - controls logging verbosity
-    - 0 no logging
-    - 1 logging from Particles only
-    - 2 logging form Particles and Shell
-  - if `level` is ommitted, it defaults to `log=2`
-  - if `log` is ommitted, it defaults to `log=0`
+* 0 = no logging
+* 1 = particles/runtime-logging only
+* 2 = add shell logging
 
-- remote-explore-key
-  - used to connect to remote devtools (aka Arcs Explorer)
+### Verbs
 
-- solo
-  - fetch manifest from [manifest-url] instead of the default
-  - if omitted, use default manifest
-
-`pipes-shell/node/serve.sh log[=[0..2]] solo=[manifest-url] test`
-
-- log[=level]
-  - controls logging verbosity
-    - 0 no logging
-    - 1 logging from Particles only
-    - 2 logging form Particles and Shell
-  - if `level` is ommitted, it defaults to `log=2`
-  - if `log` is ommitted, it defaults to `log=0`
-
-- solo
-  - fetch manifest from [manifest-url] instead of the default
-  - if omitted, use default manifest
-
-- test
-  - test each ShellApi invocation at startup
-
-## Glitch Support
-
-- pipes-shell imports `custom.recipes` from https://thorn-egret.glitch.me/
-- `ShellApi.flush()` available clear caches (let changes to the glitch go into effect)
-- tries to fail gracefully if `ArtistAutofill` isn't available
-
-Note that the files in the glitch are copies of files in `particles/PipesApps` folder in the main repository (iow, they won't get lost if the glitch is blown up).
+* spawn: spawn an arc using the named recipe
+  * send to shell: {"message":"spawn","recipe":"NotificationTest"}
+  * receive from shell: {"message":"data","tid":1,"data":{...whatever data the recipe produced}}

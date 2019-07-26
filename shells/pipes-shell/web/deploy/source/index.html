@@ -25,12 +25,28 @@ http://polymer.github.io/PATENTS.txt
       background-color: white;
     }
     body, button, input {
-      font-family: 'Google Sans', sans-serif;
+      font-family: sans-serif;
       -webkit-font-smoothing: antialiased;
     }
   </style>
 
-  <script type="module" src="./shell.js"></script>
+  <script>
+    window.fetch = function fetchLocal(url) {
+      return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest
+        xhr.onload = function() {
+          resolve(new Response(xhr.responseText, {status: xhr.status || 200}))
+        }
+        xhr.onerror = function() {
+          reject(new TypeError('Local request failed for ' + url))
+        }
+        xhr.open('GET', url)
+        xhr.send(null)
+      })
+    };
+  </script>
+
+  <script type="text/javascript" src="./shell.js"></script>
 
 </head>
 <body>

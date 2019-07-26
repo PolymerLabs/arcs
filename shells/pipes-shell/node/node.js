@@ -7,56 +7,41 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+ // configure
 import '../../lib/platform/loglevel-node.js';
-import {paths} from './paths.js';
-import {manifest} from './config.js';
+import {version, paths, storage, test} from './config.js';
 
 // optional
 //import '../../lib/database/pouchdb-support.js';
 //import '../../lib/database/firebase-support.js';
-//import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
+//import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
 
-import {Utils} from '../../lib/runtime/utils.js';
-import {ShellApiFactory} from '../device.js';
+// dependencies
+import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
+import {initPipe} from '../pipe.js';
+import {smokeTest} from '../smoke.js';
 
-// usage:
-//
-// ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
-// [arcid =] ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
-//
-// [arcid =] ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
-//
-// results returned via `DeviceClient.foundSuggestions(arcid, json)` (if it exists)
+console.log(`${version} -- ${storage}`);
 
-//const storage = `pouchdb://local/arcs/`;
-const storage = `volatile://`;
-const version = `jun-3`;
+const composerFactory = modality => {
+  return new RamSlotComposer();
+};
 
-console.log(`version: ${version}, storage: ${storage}`);
-
-process.on('uncaughtException', (err) => {
-  console.error('uncaughtException:', err);
-  process.exit(1); //mandatory (as per the Node docs)
-});
+const client = global.DeviceClient || {};
 
 (async () => {
-  // configure arcs environment
-  Utils.init(paths.root, paths.map);
-  // configure ShellApi (DeviceClient is bound in by outer process, otherwise undefined)
-  global.ShellApi = await ShellApiFactory(storage, manifest, global.DeviceClient);
+  // if remote DevTools are requested, wait for connect
+  //await DevtoolsSupport();
+  // configure pipes and get a bus
+  const bus = await initPipe(client, paths, storage, composerFactory);
+  // export bus
+  global.ShellApi = bus;
+  // run smokeTest if requested
+  if (test) {
+    smokeTest(bus);
+  }
 })();
-
-if ('test' in global.params) {
-  setTimeout(() => test_on_start(), 1000);
-}
-
-const test_on_start = async () => {
-  global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
-  let id = global.ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`);
-  console.log('request id', id);
-  id = global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
-  console.log('request id', id);
-};
 
 // keep alive ... forever
 setInterval(() => true, 1000);

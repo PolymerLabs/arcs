@@ -1,6 +1,0 @@
-import 'MapsAutofill.arcs'
-import 'PeopleAutofill.arcs'
-import 'ArtistAutofill.arcs'
-import 'Caption.arcs'
-import 'UpdateMe.arcs'
-import 'ArtistPipe.arcs'

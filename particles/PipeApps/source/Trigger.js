@@ -13,7 +13,7 @@
 defineParticle(({DomParticle, html}) => {
   return class extends DomParticle {
     get template() {
-      return html`<div slotid="app"></div>`;
+      return html`<div slotid="content"></div>`;
     }
   };
 });
