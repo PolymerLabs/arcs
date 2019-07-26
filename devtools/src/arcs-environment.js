@@ -40,7 +40,7 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
       }
       [main] {
         flex-grow: 1;
-        overflow-y: scroll;
+        overflow-y: auto;
       }
       [name] {
         color: var(--devtools-blue);

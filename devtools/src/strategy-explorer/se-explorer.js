@@ -17,7 +17,7 @@ Polymer({
   _template: html`
     <style>
       :host {
-        overflow-y: scroll;
+        overflow-y: auto;
       }
     </style>
     <div>
