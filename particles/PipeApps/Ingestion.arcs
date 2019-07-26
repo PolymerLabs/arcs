@@ -11,9 +11,10 @@ schema Person
   Text firstName
   Text lastName
 
-// TODO: This should be a builtin particle.
-particle RecognizeEntity in './source/RecognizeEntity.js'
-  out [IncomingEntity] entities
+particle RecognizeEntity in './source/EchoParticle.java'
+  // TODO: direction should be `out`
+  // temporarily set to inout to trigger InitializeProxy calles.
+  inout [IncomingEntity] entities
 
 particle CopyEntities in './source/CopyEntities.js'
   inout [IncomingEntity] source
