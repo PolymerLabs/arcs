@@ -28,6 +28,7 @@ if($ChocoInstalled) {
 
 Status("2. Install Node")
 CD $ROOT
+Status("reached cd")
 nvm install
 nvm use
 
