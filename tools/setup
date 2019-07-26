@@ -37,7 +37,7 @@ status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 status "4. Install dependencies"
-(cd $ROOT && npm ci) || fail 'Failed to install dependencies.' 
+(cd $ROOT && npm ci && npm --prefix=server ci) || fail 'Failed to install dependencies.'
 
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
