@@ -29,7 +29,8 @@ Status("4. Failsafe: manually download node if necessary")
 If(node --version -eq $version) {
   Status("...skipping, version satisfied")
 } else {
-  $node_msi = $PSScriptRoot\"node.msi"
+  $filename = "node.msi"
+  $node_msi = $PSScriptRoot\$filename
   $start_time = Get-Date
   $wc = New-Object System.Net.WebClient
   $wc.DownloadFile($url, $node_msi)
