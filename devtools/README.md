@@ -104,7 +104,7 @@ button on the `chrome://extensions/` page.
 
 ## Notes on tooling
 
-In order to serve this web app without a build step we use [Empathy](https://github.com/PolymerLabs/empathy/tree/initial-implementation).
+In order to serve this web app without a build step we use [Compassion](https://github.com/shaper/compassion).
 It creates the `assets` directory where it rewrites Polymer 3 dependencies
 from `node_modules` to use local paths instead of NPM packages. Someday browsers
 may support it [natively](https://github.com/domenic/package-name-maps), but
