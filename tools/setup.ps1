@@ -27,7 +27,7 @@ npm install -g npm@latest
 
 Status("4. Failsafe: manually download node if necessary")
 If(node --version -eq $version) {
-  Status("...skipping, version satisfied")
+  Status("...skipping, version $version satisfied")
 } else {
   $filename = "node.msi"
   $node_msi = "$PSScriptRoot\$filename"
