@@ -30,7 +30,7 @@ If(node --version -eq $version) {
   Status("...skipping, version satisfied")
 } else {
   $filename = "node.msi"
-  $node_msi = $PSScriptRoot\$filename
+  $node_msi = "$PSScriptRoot\$filename"
   $start_time = Get-Date
   $wc = New-Object System.Net.WebClient
   $wc.DownloadFile($url, $node_msi)
