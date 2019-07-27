@@ -67,7 +67,7 @@ package arcs
 
       decode.push(`"${fixed}" -> {`,
                   `  decoder.validate("${typeChar}")`,
-                  `  ${fixed} = decoder.${decodeType}`,
+                  `  this.${fixed} = decoder.${decodeType}`,
                   `}`,
       );
 
