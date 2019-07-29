@@ -257,15 +257,14 @@ export class Planner implements InspectablePlanner {
     if (!this.speculator || this.noSpecEx) {
       return false;
     }
-    const hasDescriptionConnection =
-        plan.handleConnections.some(
-          ({type}) => type.toString() === `[Description {Text key, Text value}]`);
+    if (plan.handleConnections.some(({type}) => type.toString() === `[Description {Text key, Text value}]`)) {
+      return true;
+    }
     const planPatternsWithTokens = plan.patterns.filter(p => p.includes('${'));
     const particlesWithTokens = plan.particles.filter(p => !!p.spec.pattern && p.spec.pattern.includes('${'));
-    if (!hasDescriptionConnection && planPatternsWithTokens.length === 0 && particlesWithTokens.length === 0) {
+    if (planPatternsWithTokens.length === 0 && particlesWithTokens.length === 0) {
       return false;
     }
-
     // Check if recipe description use out handle connections.
     for (const pattern of planPatternsWithTokens) {
       const allTokens = Description.getAllTokens(pattern);
@@ -278,7 +277,6 @@ export class Planner implements InspectablePlanner {
         }
       }
     }
-
     // Check if particle descriptions use out handle connections.
     for (const particle of particlesWithTokens) {
       const allTokens = Description.getAllTokens(particle.spec.pattern);
