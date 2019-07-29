@@ -1289,7 +1289,7 @@ ReservedWord
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id "an identifier (e.g. 'id')"
-  = "'" id:[^']+ "'" { return id.join(''); }
+  = "'" id:[^'\n]+ ("'" / . { expected('\' at the end of an identifier'); }) { return id.join(''); }
 upperIdent "an uppercase identifier (e.g. Foo)"
   = [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
