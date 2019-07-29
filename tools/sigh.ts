@@ -79,7 +79,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   devServer: [peg, build, devServer],
   flowcheck: [peg, build, flowcheck],
   licenses: [build],
-  default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
+  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -686,6 +686,16 @@ function saneSpawnWithOutput(cmd: string, args: string[], opts?: SpawnOptions): 
   return {success: spawnWasSuccessful(result, opts), stdout: result.stdout.toString(), stderr: result.stderr.toString()};
 }
 
+function runTestsOrHealthOnCron(args: string[]): boolean {
+  // The 'cron' env check indicates the daily build in Travis.
+  if (process.env.TRAVIS_EVENT_TYPE === 'cron') {
+    // The cron job should add the following arguments when running the health command.
+    args.push('--all', '--uploadCodeHealthStats');
+    return health(args);
+  }
+  return runTests(args);
+}
+
 function runTests(args: string[]): boolean {
   const options = minimist(args, {
     string: ['grep'],
@@ -1024,12 +1034,6 @@ function flowcheck(args: string[]) {
 
 // Looks up the steps for `command` and runs each with `args`.
 function runSteps(command: string, args: string[]): boolean {
-  // The 'cron' env check indicates the daily build in Travis.
-  if (process.env.TRAVIS_EVENT_TYPE === 'cron' && command === 'test') {
-    // The cron job should actually run the health command.
-    command = 'health'; // Ideally the test command would handle health info.
-    args.push('--all', '--uploadCodeHealthStats');
-  }
   const funcs = steps[command];
   if (funcs === undefined) {
     console.log(`Unknown command: '${command}'`);
