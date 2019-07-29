@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {validateGraph, ValidationResult, Solver, EdgeExpression} from '../analysis.js';
+import {validateGraph, Solver, EdgeExpression} from '../analysis.js';
 import {buildFlowGraph, TestEdge, TestNode} from '../testing/flow-graph-testing.js';
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
 import {FlowSet, Flow, FlowModifier, TagOperation, FlowModifierSet} from '../graph-internals.js';
-import {FlowGraph} from '../../arcs-dataflow.js';
+import {FlowGraph} from '../flow-graph.js';
 
 /** Checks that the given ValidationResult failed with the expected failure messages. */
 function assertGraphFailures(graph: FlowGraph, expectedFailures: string[]) {
