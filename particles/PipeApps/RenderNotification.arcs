@@ -1,4 +1,4 @@
-import './Json.schema'
+import './schemas/Json.arcs'
 
 particle RenderNotification in './source/RenderNotification.js'
   out Json output
