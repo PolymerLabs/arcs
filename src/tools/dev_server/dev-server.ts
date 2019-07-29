@@ -15,6 +15,7 @@ import morgan from 'morgan';
 
 import {status} from './status-handler';
 import {ExplorerProxy} from './explorer-proxy';
+import {HotReloadServer} from './hot-reload-server';
 
 // ALDS - Arcs Local Development Server.
 //
@@ -25,13 +26,15 @@ import {ExplorerProxy} from './explorer-proxy';
 
 const options = minimist(process.argv.slice(2), {
   boolean: ['verbose'],
-  default: {port: 8786, explorePort: 8787, verbose: false}
+  default: {port: 8786, explorePort: 8787, hotReloadPort: 8888, verbose: false}
 });
 
 const port = Number(options['port']);
 const explorePort = Number(options['explorePort']);
+const hotReloadPort = Number(options['hotReloadPort']);
 
 const proxy = new ExplorerProxy();
+const hotReloadServer = new HotReloadServer(hotReloadPort);
 const app = express();
 if (options['verbose']) {
   app.use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'));
@@ -42,5 +45,6 @@ app.use(express.static('.'));
 const server = http.createServer(app);
 server.listen(port);
 proxy.listen(server, explorePort);
+hotReloadServer.start();
 
-console.log(`ALDS Started.\nWeb server port: ${port}\nExplorer port: ${explorePort}`);
+console.log(`ALDS Started.\nWeb server port: ${port}\nExplorer port: ${explorePort}\nHotReload port: ${hotReloadPort}`);
