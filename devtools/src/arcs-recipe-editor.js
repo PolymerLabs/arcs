@@ -153,6 +153,17 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
         color: red;
         background: transparent;
       }
+      [result] [dataflow] {
+        border-top: 1px solid var(--mid-gray);
+      }
+      [result] [dataflow]:not([error]) {
+        background: #f0fff0;
+      }
+      [result] [dataflow]:not([error]) pre {
+        padding: 4px;
+        color: green;
+        background: transparent;
+      }
       [suggestion] {
         background-color: white;
         border: 1px solid var(--mid-gray);
@@ -210,6 +221,10 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
           <input type="checkbox" id="derivation-checkbox">
           <label for="derivation-checkbox">Show derivation</label>
         </label>
+        <label title="Show dataflow results" on-click="dataflowSettingClicked">
+          <input type="checkbox" id="dataflow-checkbox">
+          <label for="dataflow-checkbox">Show dataflow</label>
+        </label>
       </div>
       <div section status>[[responseStatus(results)]]</div>
     </header>
@@ -236,6 +251,11 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
               </div>
             </template>
             <pre inner-h-t-m-l="[[item.content]]"></pre>
+            <template is="dom-if" if="[[and(item.dataflow, showDataflow)]]">
+              <div dataflow error$=[[!item.dataflow.success]]>
+                <pre>Dataflow: [[item.dataflow.message]]</pre>
+              </div>
+            </template>
             <template is="dom-repeat" items="[[item.errors]]">
               <div error>
                 <pre>[[item.error]]</pre>
@@ -344,10 +364,11 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
 
   processSuccess({results}) {
     this.positionErrorUnderline(null);
-    this.results = results.map(({recipe, derivation, errors}) => ({
+    this.results = results.map(({recipe, derivation, errors, dataflow}) => ({
       content: recipeHtmlify(recipe),
       derivation: derivation.sort(),
       errors,
+      dataflow,
       unresolvedCount: recipe.split('// unresolved ').length - 1 // Don't judge me.
     })).sort((a, b) => a.unresolvedCount - b.unresolvedCount);
   }
@@ -421,6 +442,10 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
 
   derivationSettingClicked(e) {
     this.showDerivation = this.shadowRoot.querySelector('#derivation-checkbox').checked;
+  }
+
+  dataflowSettingClicked(e) {
+    this.showDataflow = this.shadowRoot.querySelector('#dataflow-checkbox').checked;
   }
 
   resolutionDropdownClicked(e) {
