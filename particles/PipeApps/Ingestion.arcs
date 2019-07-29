@@ -1,0 +1,33 @@
+schema IncomingEntity
+  Text type
+  Text jsonData
+  Text source
+
+schema Place
+  Text name
+  Text address
+
+schema Person
+  Text firstName
+  Text lastName
+
+// TODO: This should be a builtin particle.
+particle RecognizeEntity in './source/RecognizeEntity.js'
+  out [IncomingEntity] entities
+
+particle CopyEntities in './source/CopyEntities.js'
+  inout [IncomingEntity] source
+  out [Place] places
+  out [Person] people
+
+recipe Ingestion
+  create #incomingEntities as incomingEntities
+  create #recentPlaces as recentPlaces
+  create #recentPeople as recentPeople
+  RecognizeEntity
+    entities -> incomingEntities
+  CopyEntities
+    source <- incomingEntities
+    places -> recentPlaces
+    people -> recentPeople
+  description `ingestion recipe`

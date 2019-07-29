@@ -12,20 +12,20 @@ import {logFactory} from '../../../../build/runtime/log-factory.js';
 import {RamSlotComposer} from '../../../lib/components/ram-slot-composer.js';
 import {ArcHost} from '../../../lib/components/arc-host.js';
 
-const id = 'pipes-arc';
-const manifest = `import 'https://$particles/PipeApps/BackgroundPipes.recipes'`;
+const id = 'ingestion-arc';
+const manifest = `import 'https://$particles/PipeApps/Ingestion.arcs'`;
 
-const log = logFactory('pipes-arc');
+const log = logFactory(id);
 
-export const requirePipesArc = async storage => {
-  if (!requirePipesArc.promise) {
-    requirePipesArc.promise = initPipesArc(storage);
+export const requireIngestionArc = async storage => {
+  if (!requireIngestionArc.promise) {
+    requireIngestionArc.promise = initIngestionArc(storage);
   }
-  return requirePipesArc.promise;
+  return requireIngestionArc.promise;
 };
 
-const initPipesArc = async storage => {
-  log('initPipesArc');
+const initIngestionArc = async storage => {
+  log('initIngestionArc');
   // TODO(sjmiles): use ArcHost because it supports serialization, this core support should be available
   // via something lower-level (Utils? other lib?)
   const host = new ArcHost(null, storage, new RamSlotComposer());
