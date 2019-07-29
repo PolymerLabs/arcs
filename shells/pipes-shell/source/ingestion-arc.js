@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../../../build/runtime/log-factory.js';
-import {RamSlotComposer} from '../../../lib/components/ram-slot-composer.js';
-import {ArcHost} from '../../../lib/components/arc-host.js';
-import {portIndustry} from '../pec-port.js';
+import {logFactory} from '../../../build/runtime/log-factory.js';
+import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
+import {ArcHost} from '../../lib/components/arc-host.js';
+import {portIndustry} from './pec-port.js';
 
 const id = 'ingestion-arc';
 const manifest = `import 'https://$particles/PipeApps/Ingestion.arcs'`;

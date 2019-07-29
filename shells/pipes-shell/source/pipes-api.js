@@ -10,8 +10,8 @@
 
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {storeByTag} from './lib/utils.js';
-import {requireIngestionArc} from './lib/ingestion-arc.js';
 import {initPipeStore, mirrorStore} from './context.js';
+import {requireIngestionArc} from './ingestion-arc.js';
 
 let ingestionArc;
 
