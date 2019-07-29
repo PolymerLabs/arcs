@@ -11,6 +11,14 @@
 import {FlowGraph} from './flow-graph.js';
 import {assert} from '../../platform/assert-web.js';
 import {Edge, FlowModifier, FlowSet, FlowModifierSet, Flow} from './graph-internals.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Manifest} from '../../runtime/manifest.js';
+
+/** Runs the dataflow analyser on the given recipe. */
+export function analyseDataflow(recipe: Recipe, manifest: Manifest): [FlowGraph, ValidationResult] {
+  const graph = new FlowGraph(recipe, manifest);
+  return [graph, validateGraph(graph)];
+}
 
 /** Failure result reported when a check statement is not satisfied. */
 class CheckFailure {

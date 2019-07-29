@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowGraph} from '../arcs-dataflow.js';
+import {FlowGraph} from '../analysis/flow-graph.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {validateGraph} from '../analysis/analysis.js';
