@@ -14,7 +14,7 @@ import '../ModelSelector.arcs'
 
 import './ClassifierStatics.arcs'
 
-recipe ImageClassifierUI
+recipe ImageClassifierUINoSpec
   // since we `use`, this recipe is incomplete and coalescer is triggered
   use as imgUrl
   use as predictions
@@ -27,7 +27,7 @@ recipe ImageClassifierUI
 
   description `image classification`
 
-recipe ImageClassifierRoutine
+recipe ImageClassifierRoutineNoSpec
   // find a model specification
   map as modelSpec
 
@@ -87,4 +87,3 @@ recipe ImageClassifierRoutine
     predictions -> predictions
 
   description `${LoadGraphModel.modelSpec}`
-

@@ -530,8 +530,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  // Critical section for instantiate,
-  private async _doInstantiate(recipe: Recipe): Promise<void> {
+  async mergeIntoActiveRecipe(recipe: Recipe) {
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
@@ -606,6 +605,13 @@ ${this.activeRecipe.toString()}`;
         this._registerStore(store, recipeHandle.tags);
       }
     }
+
+    return {handles, particles, slots};
+  }
+
+  // Critical section for instantiate,
+  private async _doInstantiate(recipe: Recipe): Promise<void> {
+    const {handles, particles, slots} = await this.mergeIntoActiveRecipe(recipe);
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 

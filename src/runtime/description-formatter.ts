@@ -135,11 +135,14 @@ export class DescriptionFormatter {
     return undefined;
   }
 
+  static readonly tokensRegex = /\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g;
+  static readonly tokensInnerRegex = /\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/;
+
   _initTokens(pattern: string, particleDescription) {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
     while (pattern.length > 0) {
-      const tokens = pattern.match(/\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g);
+      const tokens = pattern.match(DescriptionFormatter.tokensRegex);
       let firstToken;
       let tokenIndex;
       if (tokens) {
@@ -163,7 +166,7 @@ export class DescriptionFormatter {
   }
 
   _initSubTokens(pattern, particleDescription): {}[] {
-    const valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
+    const valueTokens = pattern.match(DescriptionFormatter.tokensInnerRegex);
     const handleNames = valueTokens[1].split('.');
     const extra = valueTokens.length === 3 ? valueTokens[2] : undefined;
 
