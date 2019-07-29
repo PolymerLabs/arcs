@@ -79,7 +79,7 @@
     "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-plugin-typescript2": "^0.21.1",
     "sloc": "^0.2.1",
-    "ts-pegjs": "^0.2.2",
+    "ts-pegjs": "^0.2.6",
     "tslint": "^5.18.0",
     "type-coverage": "^2.0.1",
     "typedoc": "^0.15.0",
