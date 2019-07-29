@@ -45,6 +45,9 @@ import {Description} from '../runtime/description.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Relevance} from '../runtime/relevance.js';
 import {PlannerInspector, PlannerInspectorFactory, InspectablePlanner} from './planner-inspector.js';
+import {logsFactory} from '../runtime/log-factory.js';
+
+const {log} = logsFactory('planner', 'olive');
 
 export interface AnnotatedDescendant extends Descendant<Recipe> {
   active?: boolean;
@@ -223,6 +226,7 @@ export class Planner implements InspectablePlanner {
     let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
     if (this._shouldSpeculate(plan)) {
+      log(`speculatively executing [${plan.name}]`);
       const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
@@ -230,6 +234,7 @@ export class Planner implements InspectablePlanner {
       const speculativeArc = result.speculativeArc;
       relevance = result.relevance;
       description = await Description.create(speculativeArc, relevance);
+      log(`[${plan.name}] => [${description.getRecipeSuggestion()}]`);
     } else {
       relevance = Relevance.create(arc, plan);
       description = await Description.createForPlan(arc, plan);
@@ -247,10 +252,10 @@ export class Planner implements InspectablePlanner {
   }
 
   _shouldSpeculate(plan) {
-    if (!this.speculator && this.noSpecEx) {
+    if (!this.speculator || this.noSpecEx) {
       return false;
     }
-    return !plan.name.toLowerCase().includes('nospec');
+    return !(plan.name && plan.name.toLowerCase().includes('nospec'));
     // return plan.handleConnections.some(
     //     ({type}) => type.toString() === `[Description {Text key, Text value}]`) ||
     //   plan.patterns.some(p => p.includes('${')) ||
