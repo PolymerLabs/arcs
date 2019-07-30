@@ -1,14 +1,8 @@
 package arcs.crdt;
 
-import java.util.HashMap;
 import java.util.Optional;
-import java.util.Map;
 
 // Classes and interfaces copied from src/runtime/crdt/crdt.ts
-class VersionMap extends HashMap<String, Integer> {}
-
-interface CRDTOperation {}
-
 class CRDTData {
   VersionMap version;
 }

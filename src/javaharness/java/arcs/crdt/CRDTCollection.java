@@ -6,53 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 // Classes and interfaces copied from src/runtime/crdt/crdt-collection.ts
-interface Referenceable {
-  String getId();
-}
-
-class VersionedValue<T> {
-  T value;
-  VersionMap version;
-  VersionedValue(T value, VersionMap version) {
-    this.value = value;
-    this.version = version;
-  }
-}
-
-class CollectionData<T extends Referenceable> extends CRDTData {
-   Map<String, VersionedValue<T>> values = new HashMap<>();
-   VersionMap version = new VersionMap();
-}
-
-enum CollectionOpTypes { ADD, REMOVE }
-
-class CollectionOperation<T> implements CRDTOperation {
-  CollectionOpTypes type;
-  Optional<T> added;
-  Optional<T> removed;
-  VersionMap clock;
-  String actor;
-
-  CollectionOperation(CollectionOpTypes type, T t, VersionMap clock, String actor) {
-    this.type = type;
-    switch (type) {
-      case ADD:
-        this.added = Optional.of(t);
-        break;
-      case REMOVE:
-        this.removed = Optional.of(t);
-        break;
-      default:
-        throw new AssertionError("Unsupported CollectionOpType " + type);
-    }
-    this.clock = clock;
-    this.actor = actor;
-  }
-}
 
 class RawCollection<T> extends HashSet<T> implements CRDTConsumerType {
   RawCollection() {}
