@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 
 
 class PortablePromiseJsImpl<T> implements PortablePromise<T> {
-  private final PortablePromise.PortablePromiseExecutor<T> executor;
   private Promise<T> promise;
 
   public PortablePromiseJsImpl(PortablePromise.PortablePromiseExecutor<T> executor) {
@@ -17,7 +16,10 @@ class PortablePromiseJsImpl<T> implements PortablePromise<T> {
       executor.doInvoke((T value) -> resolve.onInvoke(value),
                         (Object error) -> reject.onInvoke(error));
     });
-    this.executor = executor;
+  }
+
+  public PortablePromiseJsImpl(T value) {
+    this.promise = Promise.resolve(value);
   }
 
   @Override

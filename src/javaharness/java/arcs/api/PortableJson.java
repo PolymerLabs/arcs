@@ -26,6 +26,8 @@ public interface PortableJson {
     // Iterator methods.
     void forEach(Consumer<String> callback);
     List<String> keys();
+    List<String> asStringArray();
+    List<PortableJson> asObjectArray();
 
     // Object setters
     PortableJson put(String key, int num);

@@ -191,9 +191,9 @@ public class PECInnerPortImpl implements PECInnerPort {
     }
 
     private PortableJson constructMessage(String messageType) {
-        PortableJson message = jsonParser.emptyJson();
+        PortableJson message = jsonParser.emptyObject();
         message.put(MESSAGE_TYPE_FIELD, messageType);
-        message.put(MESSAGE_BODY_FIELD, jsonParser.emptyJson());
+        message.put(MESSAGE_BODY_FIELD, jsonParser.emptyObject());
         return message;
     }
 
@@ -214,7 +214,7 @@ public class PECInnerPortImpl implements PECInnerPort {
     }
 
     private void postMessage(PortableJson message) {
-        PortableJson json = jsonParser.emptyJson();
+        PortableJson json = jsonParser.emptyObject();
         json.put(MESSAGE_PEC_MESSAGE_KEY, MESSAGE_PEC_PEC_VALUE);
         json.put(MESSAGE_PEC_ID_FIELD, this.id);
         json.put(MESSAGE_PEC_ENTITY_KEY, message);
