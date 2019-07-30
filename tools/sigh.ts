@@ -62,7 +62,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS, languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, runTests],
+  test: [peg, railroad, build, wasm, runTests],
   webpack: [peg, railroad, build, webpack],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
@@ -79,7 +79,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   devServer: [peg, build, devServer],
   flowcheck: [peg, build, flowcheck],
   licenses: [build],
-  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
+  default: [check, peg, railroad, build, wasm, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -550,6 +550,11 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
 // With no args, finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
 // Otherwise only the requested configs are processed (e.g. tools/sigh wasm src/wasm/cpp/wasm.json)
 function wasm(args: string[]): boolean {
+  // TODO: https://github.com/PolymerLabs/arcs/issues/3418
+  if (process.platform !== 'linux') {
+    console.log(`Skipping step; wasm builds are not yet supported on ${process.platform}`);
+    return true;
+  }
   if (!installAndCheckEmsdk()) {
     return false;
   }
