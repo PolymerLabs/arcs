@@ -95,7 +95,7 @@ export class CheckIsFromHandle {
 export class CheckIsFromOutput {
   readonly type: CheckType.IsFromOutput = CheckType.IsFromOutput;
 
-  constructor(readonly output: HandleConnectionSpec, readonly isNot: boolean) {} // ???
+  constructor(readonly output: HandleConnectionSpec, readonly isNot: boolean) {}
 
   static fromASTNode(astNode: AstNode.ParticleCheckIsFromOutput, handleConnectionMap: Map<string, HandleConnectionSpec>) {
     const output = handleConnectionMap.get(astNode.output);
