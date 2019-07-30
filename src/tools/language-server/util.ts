@@ -12,7 +12,7 @@ import * as url from 'url';
 
 export const jsonrpc = '2.0';
 
-export interface AmlServiceOptions {
+export interface LanguageServiceOptions {
   log: string;       // The logging service to use (either 'console' or 'null').
   port: number;      // The port number to use for tcp/ip communication.
   help: boolean;     // Print the help information and do not run the server.
@@ -20,10 +20,10 @@ export interface AmlServiceOptions {
   stdio: boolean;    // Use stdio (rather than a tcp/ip port).
 }
 
-export interface AmlServiceContext {
+export interface LanguageServiceContext {
   logger: Logger;
   rootPath?: string;
-  options: AmlServiceOptions;
+  options: LanguageServiceOptions;
 }
 
 // tslint:disable: no-any

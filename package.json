@@ -29,7 +29,7 @@
     "watch:tsc": "tsc -w",
     "build:webpack": "webpack",
     "build:webpack-tools": "webpack --config ./src/tools/webpack.config.js",
-    "build:webpack-languageserver": "webpack --config ./src/tools/aml-language-server/webpack.config.js",
+    "build:webpack-languageserver": "webpack --config ./src/tools/language-server/webpack.config.js",
     "watch:webpack": "webpack --watch",
     "watch": "concurrently npm:watch:*"
   },

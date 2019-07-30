@@ -9,7 +9,7 @@
  */
 
 import {serve} from './server.js';
-import {DevNullLogger, AmlServiceOptions} from './util.js';
+import {DevNullLogger, LanguageServiceOptions} from './util.js';
 
 const minimist = require('minimist');
 const optionSet = {
@@ -20,7 +20,7 @@ const optionSet = {
 };
 
 function main() {
-  const options: AmlServiceOptions = minimist(process.argv, optionSet);
+  const options: LanguageServiceOptions = minimist(process.argv, optionSet);
   if (options.version || options.help) {
     const packageJson = require('../../../package.json');
     console.log(`Arcs Manifest Language Server v${packageJson.version}`);

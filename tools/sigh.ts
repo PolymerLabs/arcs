@@ -55,7 +55,7 @@ const build = buildPath('.', cleanObsolete, []);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 
-const buildLS = buildPath('./src/tools/aml-language-server', null, ['vscode-jsonrpc', 'vscode-languageserver']);
+const buildLS = buildPath('./src/tools/language-server', null, ['vscode-jsonrpc', 'vscode-languageserver']);
 const webpackLS = webpackPkg('webpack-languageserver');
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
@@ -279,7 +279,7 @@ function linkUnit(dummySrc: string, dummyDest: string): boolean {
 function languageServer(): boolean {
   keepProcessAlive = true; // Tell the runner to not exit.
   // Opens a language server on port 2089
-  return saneSpawn('tools/aml-language-server', []);
+  return saneSpawn('tools/language-server', []);
 }
 
 function peg(): boolean {

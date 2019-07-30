@@ -12,19 +12,19 @@ import {ErrorCodes, Message, StreamMessageReader as VSCodeStreamMessageReader, S
 import {isNotificationMessage, isRequestMessage, isResponseMessage} from 'vscode-jsonrpc/lib/messages';
 
 import {handlers} from './handlers.js';
-import {jsonrpc, Logger, AmlServiceOptions, AmlServiceContext, camelCase} from './util.js';
+import {jsonrpc, Logger, LanguageServiceOptions, LanguageServiceContext, camelCase} from './util.js';
 
-export class AmlService {
+export class LanguageService {
   reader: VSCodeStreamMessageReader;
   writer: VSCodeStreamMessageWriter;
-  context: AmlServiceContext;  // The state.
+  context: LanguageServiceContext;  // The state.
   initialized = false;  // error / onclose should trigger shutdown message.
   streaming = false;    // Client supports partialResult.
 
   constructor(
       reader: VSCodeStreamMessageReader,
       writer: VSCodeStreamMessageWriter,
-      options: AmlServiceOptions,
+      options: LanguageServiceOptions,
       logger: Logger) {
     this.reader = reader;
     this.writer = writer;
