@@ -273,37 +273,23 @@ export class Suggestion {
     if (!this.plan.slots.find(isRoot) &&
         !((this.plan.slotConnections || []).find(sc => sc.name === 'root'))) {
       // suggestion uses only non 'root' slots.
-      // TODO: should check agains slot-composer's root contexts instead.
+      // TODO: should check against slot-composer's root contexts instead.
       return true;
     }
 
     const usesHandlesFromActiveRecipe = this.plan.handles.some(handle => {
-      // TODO(mmandlis): find a generic way to exlude system handles (eg Theme),
+      // TODO(mmandlis): find a generic way to exclude system handles (eg Theme),
       // either by tagging or by exploring connection directions etc.
-      const hasHandle = !!handle.id &&
+      return !!handle.id &&
              !!arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
-      if (!hasHandle) {
-        logReason(`Has no handles`);
-      }
-      return hasHandle;
     });
     if (!usesHandlesFromActiveRecipe) {
       logReason(`No active recipe handles`);
       return false;
     }
-    let hasRootSlot = false;
     const usesRemoteNonRootSlots = this.plan.slots.some(slot => {
-      const isRootSlot = isRoot(slot);
-      if (isRootSlot) {
-        hasRootSlot = true;
-      }
-      const hasNonRootSlot = !isRootSlot && Boolean(arc.pec.slotComposer.findContextById(slot.id));
-      return hasNonRootSlot;
+      return !isRoot(slot) && Boolean(arc.pec.slotComposer.findContextById(slot.id));
     });
-    if (!hasRootSlot) {
-      logReason(`Has no root slot`);
-      return false;
-    }
     if (!usesRemoteNonRootSlots) {
       logReason(`No remote non-root slots.`);
       return false;
