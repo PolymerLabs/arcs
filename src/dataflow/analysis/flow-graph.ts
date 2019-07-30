@@ -15,7 +15,7 @@ import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';
 import {Node, Edge, FlowCondition, FlowCheck} from './graph-internals.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/assert-web.js';
-import {StoreReference, CheckIsFromHandle, CheckIsFromStore, CheckType, CheckCondition, CheckExpression, Check} from '../../runtime/particle-check.js';
+import {StoreReference, CheckIsFromHandle, CheckIsFromOutput, CheckIsFromStore, CheckType, CheckCondition, CheckExpression, Check} from '../../runtime/particle-check.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 
 /**
@@ -139,6 +139,18 @@ export class FlowGraph {
     return this.handleSpecMap.get(check.parentHandle).nodeId;
   }
 
+  /** Converts an "is from output" check into the edge ID that we need to search for. */
+  outputCheckToEdgeId(check: CheckIsFromOutput): string {
+    const edge = this.edges.find(edge => {
+      if (edge instanceof ParticleOutput) {
+        return (edge.connectionSpec === check.output);
+      }
+      return false;
+    });
+    assert(edge, `Output with id ${check.output.name} does not exist.`);
+    return edge.edgeId;
+  }
+
   /** Converts an "is from store" check into the node ID that we need to search for. */
   storeCheckToNodeId(check: CheckIsFromStore): string {
     const storeId = this.resolveStoreRefToID(check.storeRef);
@@ -181,6 +193,8 @@ export class FlowGraph {
         return {type: 'tag', negated: condition.isNot, value: condition.tag};
       case CheckType.IsFromHandle:
         return {type: 'node', negated: condition.isNot, value: this.handleCheckToNodeId(condition)};
+      case CheckType.IsFromOutput:
+        return {type: 'edge', negated: condition.isNot, value: this.outputCheckToEdgeId(condition)};
       case CheckType.IsFromStore:
         return {type: 'node', negated: condition.isNot, value: this.storeCheckToNodeId(condition)};
       default:
