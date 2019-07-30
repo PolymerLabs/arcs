@@ -18,7 +18,7 @@ import * as util from '../../../runtime/testing/test-util.js';
 describe('wasm C++ tests', () => {
   // TODO: https://github.com/PolymerLabs/arcs/issues/3418
   before(function() {
-    if (process.platform !== 'linux') {
+    if (!global['testFlags'].enableWasm) {
       this.skip();
     }
   });
