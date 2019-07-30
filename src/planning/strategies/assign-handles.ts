@@ -13,7 +13,7 @@ import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {StorageStub} from '../../runtime/manifest.js';
+import {StorageStub} from '../../runtime/storage-stub.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {

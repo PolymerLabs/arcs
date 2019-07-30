@@ -21,7 +21,7 @@ import {Loader} from './loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
-import {compareComparables, compareStrings} from './recipe/comparable.js';
+import {compareComparables} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
@@ -37,7 +37,8 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
-import {VolatileStorageProvider, VolatileStorage} from './storage/volatile-storage.js';
+import {StorageStub} from './storage-stub.js';
+import {VolatileStorage} from './storage/volatile-storage.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -45,103 +46,6 @@ export class ManifestError extends Error {
   constructor(location: AstNode.SourceLocation, message: string) {
     super(message);
     this.location = location;
-  }
-}
-
-// TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
-// deflated rather than requiring this stub.
-export class StorageStub {
-  constructor(public readonly type: Type, 
-              public readonly id: string,
-              public readonly name: string,
-              public readonly storageKey: string,
-              public readonly storageProviderFactory: StorageProviderFactory,
-              public readonly originalId: string,
-                /** Trust tags claimed by this data store. */
-              public readonly claims: ClaimIsTag[],
-              public readonly description: string,
-              public readonly version?: number,
-              public readonly source?: string,
-              public referenceMode: boolean = false,
-              public readonly model?: {}[]) {}
-
-  async inflate(storageProviderFactory?: StorageProviderFactory) {
-    const factory = storageProviderFactory || this.storageProviderFactory;
-    const store = this.isBackedByManifest()
-        ? await factory.construct(this.id, this.type, this.storageKey)
-        : await factory.connect(this.id, this.type, this.storageKey);
-    assert(store != null, 'inflating missing storageKey ' + this.storageKey);
-
-    if (this.isBackedByManifest()) {
-      // Constructed store: set the reference mode according to the stub.
-      store.referenceMode = this.referenceMode;
-    } else {
-      // Connected store: sync the stub's reference mode with the store.
-      this.referenceMode = store.referenceMode;
-    }
-
-    store.originalId = this.originalId;
-    store.name = this.name;
-    store.source = this.source;
-    store.description = this.description;
-    if (this.isBackedByManifest()) {
-      await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
-    }
-    return store;
-  }
-
-  toLiteral() {
-    return undefined; // Fake to match StorageProviderBase;
-  }
-
-  isBackedByManifest(): boolean {
-    return (this.version !== undefined && !!this.model);
-  }
-
-  toString(handleTags: string[]): string {
-    const results: string[] = [];
-    const handleStr: string[] = [];
-    handleStr.push(`store`);
-    if (this.name) {
-      handleStr.push(`${this.name}`);
-    }
-    handleStr.push(`of ${this.type.toString()}`);
-    if (this.id) {
-      handleStr.push(`'${this.id}'`);
-    }
-    if (this.originalId) {
-      handleStr.push(`!!${this.originalId}`);
-    }
-    if (this.version !== undefined) {
-      handleStr.push(`@${this.version}`);
-    }
-    if (handleTags && handleTags.length) {
-      handleStr.push(`${handleTags.join(' ')}`);
-    }
-    if (this.source) {
-      handleStr.push(`in '${this.source}'`);
-    } else if (this.storageKey) {
-      handleStr.push(`at '${this.storageKey}'`);
-    }
-    // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
-    // serialized here too - could it ever be part of StorageStub?
-    results.push(handleStr.join(' '));
-    if (this.claims.length > 0) {
-      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
-    }
-    if (this.description) {
-      results.push(`  description \`${this.description}\``);
-    }
-    return results.join('\n');
-  }
-
-  _compareTo(other: StorageProviderBase): number {
-    let cmp: number;
-    cmp = compareStrings(this.name, other.name);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.id, other.id);
-    if (cmp !== 0) return cmp;
-    return 0;
   }
 }
 
