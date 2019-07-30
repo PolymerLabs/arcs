@@ -11,10 +11,12 @@ import fs from 'fs';
 import path from 'path';
 
 import {AmlServiceContext} from './util.js';
+import {Loader} from '../../runtime/loader.js';
 
-export class LspLoader {
+export class LspLoader extends Loader {
   context: AmlServiceContext;
   constructor(context: AmlServiceContext) {
+    super();
     this.context = context;
   }
 
