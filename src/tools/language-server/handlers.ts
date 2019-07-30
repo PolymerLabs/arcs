@@ -17,14 +17,14 @@ import {SourcePosition} from '../../runtime/manifest-ast-nodes.js';
 
 import {LspLoader} from './lspLoader.js';
 import * as MessageTypes from './messageTypes.js';
-import {AmlServiceContext, jsonrpc, normalizeUri, uri2path} from './util.js';
+import {LanguageServiceContext, jsonrpc, normalizeUri, uri2path} from './util.js';
 
 // tslint:disable-next-line: no-any
-export type Handler = ((params: any, context: AmlServiceContext) => any);
+export type Handler = ((params: any, context: LanguageServiceContext) => any);
 
 export const handlers: Dictionary<Handler> = {
 // tslint:disable-next-line: no-any
-  initialize: (params: any, context: AmlServiceContext):
+  initialize: (params: any, context: LanguageServiceContext):
                   MessageTypes.InitializeResult => {
     context.rootPath =
         params.rootPath || uri2path(params.rootUri);
@@ -60,14 +60,14 @@ export const handlers: Dictionary<Handler> = {
   },
 
   textDocumentCompletion: async (
-      params, context: AmlServiceContext):
+      params, context: LanguageServiceContext):
       Promise<MessageTypes.CompletionItem> => {
         const uri = params.textDocument.uri as string;
         context.logger.info(`Completing for : ${uri}...`);
         return undefined;
       },
 
-  textDocumentDidSave: async (params, context: AmlServiceContext):
+  textDocumentDidSave: async (params, context: LanguageServiceContext):
       Promise<NotificationMessage> => {
         params = params as DidSaveTextDocumentParams;
         const uri = params.textDocument.uri;
@@ -75,7 +75,7 @@ export const handlers: Dictionary<Handler> = {
         return publishDiagnostics(uri, context);
       },
 
-  textDocumentDidChange: async (params, context: AmlServiceContext):
+  textDocumentDidChange: async (params, context: LanguageServiceContext):
       Promise<NotificationMessage> => {
         params = params as DidChangeTextDocumentParams;
         const uri = params.textDocument.uri;
@@ -83,7 +83,7 @@ export const handlers: Dictionary<Handler> = {
         return publishDiagnostics(uri, context);
       },
 
-  textDocumentDidOpen: async (params, context: AmlServiceContext):
+  textDocumentDidOpen: async (params, context: LanguageServiceContext):
       Promise<NotificationMessage> => {
         params = params as DidOpenTextDocumentParams;
         const uri = params.textDocument.uri;
@@ -92,7 +92,7 @@ export const handlers: Dictionary<Handler> = {
       }
 };
 
-async function publishDiagnostics(uri: string, context: AmlServiceContext):
+async function publishDiagnostics(uri: string, context: LanguageServiceContext):
     Promise<NotificationMessage> {
       const diagnosticParams: PublishDiagnosticsParams = await gatherDiagnostics(uri, context);
       return {
@@ -102,7 +102,7 @@ async function publishDiagnostics(uri: string, context: AmlServiceContext):
       };
     }
 
-async function gatherDiagnostics(uri: string, context: AmlServiceContext):
+async function gatherDiagnostics(uri: string, context: LanguageServiceContext):
     Promise<PublishDiagnosticsParams> {
       const path = uri2path(normalizeUri(uri));
       // TODO(cypher1): Catch exception and list them for later.
@@ -138,6 +138,6 @@ function convertToDiagnostic(error: ManifestError): Diagnostic {
     message: stripPreamble(error.message),
     code: error.key,
     severity: DiagnosticSeverity.Error,
-    source: error.location.filename || 'aml'
+    source: error.location.filename || 'unknown_file.arcs'
   };
 }

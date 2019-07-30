@@ -14,12 +14,12 @@ import {
     StreamMessageWriter,
 } from 'vscode-jsonrpc';
 
-import {AmlService} from './aml-service.js';
-import {Logger, DevNullLogger, AmlServiceOptions} from './util.js';
+import {LanguageService} from './language-service.js';
+import {Logger, DevNullLogger, LanguageServiceOptions} from './util.js';
 
 
 // tslint:disable-next-line: no-any
-function createReader(id:number, inS: any, outS: any, options: AmlServiceOptions, logger: Logger) {
+function createReader(id:number, inS: any, outS: any, options: LanguageServiceOptions, logger: Logger) {
   const reader = new StreamMessageReader(inS);
   const writer = new StreamMessageWriter(outS);
 
@@ -30,10 +30,10 @@ function createReader(id:number, inS: any, outS: any, options: AmlServiceOptions
     logger && logger.log(`Connection ${id} closed (exit notification)`);
   });
 
-  new AmlService(reader, writer, options, logger);
+  new LanguageService(reader, writer, options, logger);
 }
 
-export function serve(options: AmlServiceOptions) {
+export function serve(options: LanguageServiceOptions) {
   let logger: Logger = console;
   switch (options.log) {
     case 'console':
