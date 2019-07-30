@@ -10,12 +10,12 @@
 
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {storeByTag} from './lib/utils.js';
-import {requireIngestionArc} from './lib/ingestion-arc.js';
 import {initPipeStore, mirrorStore} from './context.js';
+import {requireIngestionArc} from './ingestion-arc.js';
 
 let ingestionArc;
 
-export const marshalIngestionArc = async (storage, context) => {
+export const marshalIngestionArc = async (storage, context, bus) => {
   // canonical arc to ingest input.
-  ingestionArc = await requireIngestionArc(storage);
+  ingestionArc = await requireIngestionArc(storage, bus);
 };
