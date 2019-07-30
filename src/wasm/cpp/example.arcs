@@ -44,12 +44,12 @@ particle StorageParticle in 'output.wasm'
   inout [Data] io_col
 
 recipe
-  use InSingletonStore as h1
-  use OutSingletonStore as h2
-  use InOutSingletonStore as h3
-  use InCollectionStore as h4
-  use OutCollectionStore as h5
-  use InOutCollectionStore as h6
+  copy InSingletonStore as h1
+  copy OutSingletonStore as h2
+  copy InOutSingletonStore as h3
+  copy InCollectionStore as h4
+  copy OutCollectionStore as h5
+  copy InOutCollectionStore as h6
   StorageParticle
     in_sng <- h1
     ot_sng -> h2
@@ -75,7 +75,7 @@ particle SpecialFieldsParticle in 'output.wasm'
   in SpecialFields input
 
 recipe
-  use SpecialFieldsStore as h1
+  copy SpecialFieldsStore as h1
   SpecialFieldsParticle
     input <- h1
 
