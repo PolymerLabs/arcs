@@ -1,5 +1,5 @@
 #include <arcs.h>
-#include <test-manifest.h>
+#include <test-arcs.h>
 
 class PassThrough : public arcs::Particle {
 public:
