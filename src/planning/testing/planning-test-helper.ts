@@ -16,6 +16,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Relevance} from '../../runtime/relevance.js';
+import {VolatileSingleton} from '../../runtime/storage/volatile-storage.js';
 import {InterfaceType} from '../../runtime/type.js';
 import {TestHelperOptions, TestHelper} from '../../runtime/testing/test-helper.js';
 import {devtoolsPlannerInspectorFactory} from '../../devtools-connector/devtools-planner-inspector.js';
@@ -124,7 +125,7 @@ export class PlanningTestHelper extends TestHelper {
           suggestions = suggestions.filter(p => {
             return options.hostedParticles.every(hosted => {
               const interfaceHandles = p.plan.handles.filter(h => h.type instanceof InterfaceType);
-              return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name === hosted) !== undefined;
+              return interfaceHandles.find(handle => (this.arc.findStoreById(handle.id) as VolatileSingleton)._stored['name'] === hosted) !== undefined;
             });
           });
         }

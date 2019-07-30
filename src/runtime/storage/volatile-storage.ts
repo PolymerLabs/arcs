@@ -202,7 +202,7 @@ export abstract class VolatileStorageProvider extends StorageProviderBase {
   fromLiteral({version, model}) {}
 }
 
-class VolatileCollection extends VolatileStorageProvider implements CollectionStorageProvider {
+export class VolatileCollection extends VolatileStorageProvider implements CollectionStorageProvider {
   _model: CrdtCollectionModel;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
@@ -359,7 +359,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
   }
 }
 
-class VolatileSingleton extends VolatileStorageProvider implements SingletonStorageProvider {
+export class VolatileSingleton extends VolatileStorageProvider implements SingletonStorageProvider {
   _stored: {id: string, storageKey?: string}|null;
   private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {
