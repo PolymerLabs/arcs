@@ -19,6 +19,7 @@ export const Bus = class {
     this.client = client;
   }
   receive(msg) {
+    log(`RECEIVE MSG!!!`);
     const body = this.parse(msg);
     const tid = this.assignTransactionId();
     log(`[${tid}] :: received [${JSON.stringify(body)}]`);
