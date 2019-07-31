@@ -36,14 +36,14 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private readonly scheduler: StorageProxyScheduler<T>;
 
   constructor(
+      apiChannelId: string,
       crdt: CRDTModel<T>,
       store: ActiveStore<T>,
-      apiChannelId: string,
       type: Type,
       pec: ParticleExecutionContext) {
+    this.apiChannelId = apiChannelId;
     this.crdt = crdt;
     this.store = store;
-    this.apiChannelId = apiChannelId;
     this.type = type;
     this.pec = pec;
     this.scheduler = new StorageProxyScheduler<T>();

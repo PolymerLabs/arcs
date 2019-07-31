@@ -23,9 +23,9 @@ function getCollectionHandle(): CollectionHandle<{id: string}> {
   return new CollectionHandle<{id: string}>(
       'me',
       new StorageProxy(
+          'id',
           new CRDTCollection<{id: string}>(),
           new MockStore<CRDTCollectionTypeRecord<{id: string}>>(),
-          'id',
           EntityType.make([], {}),
           null),
       IdGenerator.newSession(),
@@ -40,9 +40,9 @@ function getSingletonHandle(): SingletonHandle<{id: string}> {
   return new SingletonHandle<{id: string}>(
       'me',
       new StorageProxy(
+          'id',
           new CRDTSingleton<{id: string}>(),
           new MockStore<CRDTSingletonTypeRecord<{id: string}>>(),
-          'id',
           EntityType.make([], {}),
           null),
       IdGenerator.newSession(),
