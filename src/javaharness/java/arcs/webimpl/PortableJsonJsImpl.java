@@ -32,7 +32,7 @@ public class PortableJsonJsImpl implements PortableJson {
 
     @JsFunction
     interface Setter {
-      Object set(Object obj, String key, Object value);
+      void set(Object obj, String key, Any value);
     }
 
     @JsFunction
@@ -50,13 +50,13 @@ public class PortableJsonJsImpl implements PortableJson {
       return hasChecker.has(jsonObj, key);
     }
 
-    private <T> T setValue(String key, T value) {
+    private <T> void setValue(String key, T value) {
         Setter setter = (Setter) eval("(obj, key, value) => { obj[key] = value; };");
-        return Js.uncheckedCast(setter.set(jsonObj, key, value));
+        setter.set(jsonObj, key, Js.asAny(value));
     }
 
     private List<String> getAllKeys() {
-        Keys keys = (Keys) eval("let keys = []; (obj) => { for (let key in obj) { keys.push(key); } return keys; }");
+        Keys keys = (Keys) eval("(obj) => { return Object.keys(obj); }");
         return Arrays.asList(keys.get(jsonObj));
     }
 
