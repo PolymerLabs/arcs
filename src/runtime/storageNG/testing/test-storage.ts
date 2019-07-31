@@ -9,11 +9,14 @@
  */
 
 import {PropagatedException} from '../../arc-exceptions.js';
+import {IdGenerator} from '../../id.js';
+import {Particle} from '../../particle';
 import {CRDTTypeRecord, CRDTOperation} from '../../crdt/crdt.js';
 import {ActiveStore, ProxyMessage, StorageMode, ProxyCallback} from '../store.js';
 import {Exists, StorageDriverProvider, Driver, ReceiveMethod} from '../drivers/driver-factory.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {StorageKey} from '../storage-key.js';
+import {StorageProxy} from '../storage-proxy.js';
 import {Handle} from '../handle.js';
 
 
@@ -78,6 +81,9 @@ export class MockStorageKey extends StorageKey {
 export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSyncCalled = false;
   lastUpdate: CRDTOperation[] = null;
+  constructor(storageProxy: StorageProxy<T>) {
+    super('handle', storageProxy, IdGenerator.newSession(), {} as Particle, true, true);
+  }
   onSync() {
     this.onSyncCalled = true;
   }

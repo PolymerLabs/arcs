@@ -14,6 +14,8 @@ import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton.
 import {CollectionHandle, SingletonHandle} from '../handle.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {MockStore} from '../testing/test-storage.js';
+import {IdGenerator} from '../../id.js';
+import {EntityType} from '../../type.js';
 
 function getCollectionHandle(): CollectionHandle<{id: string}> {
   // tslint:disable-next-line: no-any
@@ -21,9 +23,12 @@ function getCollectionHandle(): CollectionHandle<{id: string}> {
   return new CollectionHandle<{id: string}>(
       'me',
       new StorageProxy(
+          'id',
           new CRDTCollection<{id: string}>(),
           new MockStore<CRDTCollectionTypeRecord<{id: string}>>(),
-          new StorageProxyScheduler()),
+          EntityType.make([], {}),
+          null),
+      IdGenerator.newSession(),
       fakeParticle,
       true,
       true);
@@ -35,9 +40,12 @@ function getSingletonHandle(): SingletonHandle<{id: string}> {
   return new SingletonHandle<{id: string}>(
       'me',
       new StorageProxy(
+          'id',
           new CRDTSingleton<{id: string}>(),
           new MockStore<CRDTSingletonTypeRecord<{id: string}>>(),
-          new StorageProxyScheduler()),
+          EntityType.make([], {}),
+          null),
+      IdGenerator.newSession(),
       fakeParticle,
       true,
       true);

@@ -14,7 +14,8 @@ import {PropagatedException, SystemException} from '../arc-exceptions.js';
 import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
 import {Runnable} from '../hot.js';
 import {Particle} from '../particle.js';
-
+import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {Type} from '../type.js';
 import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType} from './store.js';
 
@@ -25,19 +26,31 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
   private id: number;
+  apiChannelId: string;
   private store: ActiveStore<T>;
+  readonly type: Type;
+  pec: ParticleExecutionContext;
   private listenerAttached = false;
   private keepSynced = false;
   private synchronized = false;
   private readonly scheduler: StorageProxyScheduler<T>;
 
   constructor(
+      apiChannelId: string,
       crdt: CRDTModel<T>,
       store: ActiveStore<T>,
-      scheduler: StorageProxyScheduler<T>) {
+      type: Type,
+      pec: ParticleExecutionContext) {
+    this.apiChannelId = apiChannelId;
     this.crdt = crdt;
     this.store = store;
-    this.scheduler = scheduler;
+    this.type = type;
+    this.pec = pec;
+    this.scheduler = new StorageProxyScheduler<T>();
+  }
+
+  async idle(): Promise<void> {
+    return this.scheduler.idle;
   }
 
   reportExceptionInHost(exception: PropagatedException) {
@@ -258,29 +271,29 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
       const byHandle = this._queues.get(particle);
       this._queues.delete(particle);
       for (const [handle, queue] of byHandle.entries()) {
-        for (const update of queue) {
-          try {
-            switch (update.type) {
-              case HandleMessageType.Sync:
-                handle.onSync();
-                break;
-              case HandleMessageType.Desync:
-                handle.onDesync();
-                break;
-              case HandleMessageType.Update:
-                handle.onUpdate(update.ops);
-                break;
-              default:
-                console.error('Ignoring unknown update', update);
-            }
-          } catch (e) {
+        for (const update of queue) {          
+          this._dispatchh(handle, update).catch(e =>         
             handle.storageProxy.reportExceptionInHost(new SystemException(
-                e, 'StorageProxyScheduler::_dispatch', handle.key));
-          }
+                e, 'StorageProxyScheduler::_dispatch', handle.key)));          
         }
       }
     }
-
     this._updateIdle();
+  }
+
+  async _dispatchh(handle: Handle<T>, update: Event): Promise<void> {
+    switch (update.type) {
+      case HandleMessageType.Sync:
+        handle.onSync();
+        break;
+      case HandleMessageType.Desync:
+        await handle.onDesync();
+        break;
+      case HandleMessageType.Update:
+        handle.onUpdate(update.ops);
+        break;
+      default:
+        console.error('Ignoring unknown update', update);
+    }
   }
 }

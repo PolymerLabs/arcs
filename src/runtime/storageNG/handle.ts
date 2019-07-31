@@ -9,10 +9,14 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {UserException} from '../arc-exceptions.js';
 import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton';
 import {Particle} from '../particle';
+import {Entity, EntityClass} from '../entity.js';
+import {IdGenerator, Id} from '../id.js';
+import {EntityType, Type} from '../type.js';
 
 import {StorageProxy} from './storage-proxy';
 
@@ -29,19 +33,46 @@ export interface HandleOptions {
 export abstract class Handle<T extends CRDTTypeRecord> {
   storageProxy: StorageProxy<T>;
   key: string;
-  clock: VersionMap;
+  private readonly idGenerator: IdGenerator;
+  protected clock: VersionMap;
   options: HandleOptions;
   readonly canRead: boolean;
   readonly canWrite: boolean;
   particle: Particle;
+  entityClass: EntityClass|null;
+  // Optional, for debugging purpose.
+  readonly name: string; 
+
+  //TODO: this is used by multiplexer-dom-particle.ts, it probably won't work with this kind of store.
+  get storage() {
+    return this.storageProxy;
+  }
+
+  get type(): Type {
+    return this.storageProxy.type;
+  }
+
+  // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
+  get _id(): string {
+    return this.storageProxy.apiChannelId;
+  }
+
+  createIdentityFor(entity: Entity) {
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+  }
+
   constructor(
       key: string,
       storageProxy: StorageProxy<T>,
+      idGenerator: IdGenerator,
       particle: Particle,
       canRead: boolean,
-      canWrite: boolean) {
+      canWrite: boolean,
+      name?: string) {
     this.key = key;
+    this.name = name;
     this.storageProxy = storageProxy;
+    this.idGenerator = idGenerator;
     this.particle = particle;
     this.options = {
       keepSynced: true,
@@ -51,16 +82,34 @@ export abstract class Handle<T extends CRDTTypeRecord> {
     };
     this.canRead = canRead;
     this.canWrite = canWrite;
+    
+    const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
+    if (type instanceof EntityType) {
+      this.entityClass = type.entitySchema.entityClass(this.storageProxy.pec);
+    }
     this.clock = this.storageProxy.registerHandle(this);
   }
-  configure(options: HandleOptions): void {
+
+  // `options` may contain any of:
+  // - keepSynced (bool): load full data on startup, maintain data in proxy and resync as required
+  // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received
+  // - notifyUpdate (bool): call onHandleUpdate for every change event received
+  // - notifyDesync (bool): if keepSynced is true, call onHandleDesync when desync is detected
+  configure(options: {keepSynced?: boolean, notifySync?: boolean, notifyUpdate?: boolean, notifyDesync?: boolean}): void {
     assert(this.canRead, 'configure can only be called on readable Handles');
-    this.options = options;
+    this.options = {...this.options, ...options};
   }
+
+  protected reportUserExceptionInHost(exception: Error, particle: Particle, method: string) {
+    this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
+  }
+
   abstract onUpdate(updates: T['operation'][]): void;
   // TODO: this shuld be async and return Promise<void>.
   abstract onSync(): void;
-  onDesync(): void {
+  
+  async onDesync(): Promise<void> {
+    await this.particle.callOnHandleDesync(this, e => this.reportUserExceptionInHost(e, this.particle, 'onHandleUpdate'));
   }
 }
 

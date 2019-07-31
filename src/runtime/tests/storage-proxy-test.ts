@@ -10,7 +10,7 @@
 
 
 import {assert} from '../../platform/chai-web.js';
-import {handleFor, Handle, Singleton, Collection} from '../handle.js';
+import {handleFor, HandleOld, Singleton, Collection} from '../handle.js';
 import {ArcId, IdGenerator} from '../id.js';
 import {Schema} from '../schema.js';
 import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, SingletonProxy, NoOpStorageProxy} from '../storage-proxy.js';
@@ -229,7 +229,7 @@ class TestEngine {
     return StorageProxy.newNoOpProxy(store.type);
   }
 
-  newHandle(store, proxy, particle, canRead, canWrite): Handle {
+  newHandle(store, proxy, particle, canRead, canWrite): HandleOld {
     return handleFor(proxy, this._idGenerator, store.name, particle.id, canRead, canWrite);
   }
 
