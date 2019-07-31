@@ -13,7 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {handleFor, HandleOld, Singleton, Collection} from '../handle.js';
 import {ArcId, IdGenerator} from '../id.js';
 import {Schema} from '../schema.js';
-import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, SingletonProxy} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, SingletonProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {EntityType} from '../type.js';
@@ -223,6 +223,10 @@ class TestEngine {
     const fakePec: any = {idGenerator: this._idGenerator};
     // tslint:disable-next-line: no-any
     return StorageProxy.newProxy('X' + this._idCounters[1]++, store.type, this as any, fakePec, this._scheduler, store.name);
+  }
+
+  newNoOpProxy(store): NoOpStorageProxy {
+    return StorageProxy.newNoOpProxy(store.type);
   }
 
   newHandle(store, proxy, particle, canRead, canWrite): HandleOld {
@@ -806,5 +810,29 @@ describe('storage-proxy', () => {
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v2]');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v2](originator)');
     await engine.verify('HandleStore:bar:v2');
+  });
+
+  it('ensures NoOpStorageProxy overrides all methods', async () => {
+    const engine = new TestEngine('arc-id');
+    const fooProxy = engine.newProxy({type: engine.type, name: 'foo'});
+
+    const properties = [];
+    let proto = Object.getPrototypeOf(fooProxy);
+    while (proto && proto !== Object.prototype) {
+      Object.getOwnPropertyNames(proto).forEach(name => {
+        const desc = Object.getOwnPropertyDescriptor(proto, name);
+        if (desc && typeof desc.value === 'function') {
+          properties.push(name);
+        }
+      });
+      proto = Object.getPrototypeOf(proto);
+    }
+
+    const noOpProxy = engine.newNoOpProxy({type: engine.type});
+    const noOpProperties = Object.getOwnPropertyNames(Object.getPrototypeOf(noOpProxy));
+
+    properties.forEach(property => {
+      assert(noOpProperties.indexOf(property) !== -1);
+    });
   });
 });
