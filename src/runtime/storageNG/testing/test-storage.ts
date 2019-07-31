@@ -8,12 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {PropagatedException} from '../../arc-exceptions.js';
 import {CRDTTypeRecord, CRDTOperation} from '../../crdt/crdt.js';
 import {ActiveStore, ProxyMessage, StorageMode, ProxyCallback} from '../store.js';
 import {Exists, StorageDriverProvider, Driver, ReceiveMethod} from '../drivers/driver-factory.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {StorageKey} from '../storage-key.js';
 import {Handle} from '../handle.js';
+
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -40,6 +42,7 @@ export class MockDriver<Data> extends Driver<Data> {
 
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
+  lastCapturedException: PropagatedException = null;
   constructor() {
     super(new MockStorageKey(), Exists.ShouldCreate, null, StorageMode.Direct, CRDTSingleton);
   }
@@ -52,6 +55,9 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
     this.lastCapturedMessage = message;
     return Promise.resolve(true);
+  }
+  reportExceptionInHost(exception: PropagatedException): void {
+    this.lastCapturedException = exception;
   }
 }
 
