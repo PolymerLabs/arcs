@@ -24,7 +24,7 @@ import {Direction} from '../manifest-ast-nodes.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {
   private readonly _recipe: Recipe;
-  public _name: string; // TODO(lindner): make private, used in particle.ts
+  private _name: string;
   private _tags: string[] = [];
   private resolvedType?: Type = undefined;
   private _direction: Direction = 'any';

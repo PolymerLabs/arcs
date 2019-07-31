@@ -32,8 +32,7 @@ export class TestHelper {
   logging?: boolean;
   loader?: Loader;
   timeout;
-  // TODO(lindner): adding the type here causes many compilation errors.
-  arc;
+  arc: Arc;
   slotComposer: MockSlotComposer;
 
   static async setupOptions(options: TestHelperOptions): Promise<void> {

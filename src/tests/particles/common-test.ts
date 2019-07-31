@@ -11,6 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
+import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -75,6 +76,7 @@ describe('common particles test', () => {
     await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});
 
     // Copied 2 and 3 entities from two collections.
-    assert.strictEqual(5, helper.arc._stores[2]._model.size);
+    const collection = helper.arc._stores[2] as VolatileCollection;
+    assert.strictEqual(5, collection._model.size);
   });
 });
