@@ -62,7 +62,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS, languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, runTests],
+  test: [peg, railroad, build, wasm, runTests],
   webpack: [peg, railroad, build, webpack],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
@@ -79,7 +79,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   devServer: [peg, build, devServer],
   flowcheck: [peg, build, flowcheck],
   licenses: [build],
-  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
+  default: [check, peg, railroad, build, wasm, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -99,6 +99,11 @@ const nodeFlags = [
   '--experimental-modules',
   '--loader', fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs'))
 ];
+
+// Flags for unit tests; use `global['testFlags'].foo` to access them.
+const testFlags = {
+  enableWasm: false,
+};
 
 function* findProjectFiles(dir: string, exclude: RegExp|null, include: RegExp|((path: string) => boolean)): Iterable<string> {
   const predicate = (include instanceof RegExp) ? (fullPath => include.test(fullPath)) : include;
@@ -183,6 +188,7 @@ function installAndCheckEmsdk(): boolean {
   if (!saneSpawn('npx', ['emsdk-checkout']) ||
       !saneSpawn('npx', ['emsdk', 'install', 'latest']) ||
       !saneSpawn('npx', ['emsdk', 'activate', 'latest'])) {
+    console.error('emsdk installation failed');
     return false;
   }
 
@@ -194,13 +200,13 @@ function installAndCheckEmsdk(): boolean {
   const emsdkResult = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']);
   const match = emsdkResult.stdout.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
   if (match === null) {
-    console.error(emsdkResult.stdout);
-    console.error(emsdkResult.stderr);
-    throw new Error('failed to extract emsdk version');
+    console.error('Failed to extract emsdk version');
+    return false;
   }
   const emsdkVersion = match[1];
   if (!semver.satisfies(emsdkVersion, emsdkRequiredVersion)) {
-    throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${emsdkVersion}`);
+    console.error(`emsdk version check failed: at least ${emsdkRequiredVersion} is required, you have ${emsdkVersion}`);
+    return false;
   }
 
   return true;
@@ -479,7 +485,7 @@ interface WasmConfig {
 }
 
 // TODO: detect old headers/wasm modules/manifests in cleanObsolete()
-function buildWasmModule(configFile: string, logCmd: boolean): boolean {
+function buildWasmModule(configFile: string, logCmd: boolean, force: boolean): boolean {
   const srcDir = path.dirname(configFile);
   const json = JSON.parse(fs.readFileSync(configFile, 'utf-8')) as WasmConfig;
   let success = true;
@@ -495,11 +501,12 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
     const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
 
     // Generate the entity class header file from the manifest.
+    const updateFlag = force ? [] : ['--update'];
     let result = saneSpawnWithOutput('node', [
         ...nodeFlags,
         '--no-warnings',
         'build/tools/schema2packager.js',
-        '--update',  // only generate if the manifest has been updated
+        ...updateFlag,
         target,
         '-o', cfg.outDir,
         manifestPath
@@ -511,7 +518,7 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
     }
 
     const headerPath = result.stdout.trim();
-    if (targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, srcPath], true)) {
+    if (!force && targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, srcPath], true)) {
       continue;
     }
 
@@ -549,14 +556,22 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
 
 // With no args, finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
 // Otherwise only the requested configs are processed (e.g. tools/sigh wasm src/wasm/cpp/wasm.json)
+// Other options: --trace to show commands used, --force to disable timestamp checks
 function wasm(args: string[]): boolean {
-  if (!installAndCheckEmsdk()) {
-    return false;
+  // TODO: https://github.com/PolymerLabs/arcs/issues/3418
+  if (process.platform !== 'linux') {
+    console.log(`Skipping step; wasm builds are not yet supported on ${process.platform}`);
+    return true;
   }
-  const options = minimist(args, {
-    boolean: ['trace'],
-  });
+  if (!installAndCheckEmsdk()) {
+    console.log('Disabling wasm builds and tests due to emsdk installation failure');
+    return true;
+  }
+  testFlags.enableWasm = true;
 
+  const options = minimist(args, {
+    boolean: ['trace', 'force'],
+  });
   const specified = (options._.length > 0);
   const targets = specified ? options._ : findProjectFiles('src', null, /[/\\]wasm\.json$/);
   let success = true;
@@ -566,7 +581,7 @@ function wasm(args: string[]): boolean {
       success = false;
       continue;
     }
-    success = success && buildWasmModule(configFile, options.trace);
+    success = success && buildWasmModule(configFile, options.trace, options.force);
   }
   return success;
 }
@@ -783,6 +798,8 @@ function runTests(args: string[]): boolean {
       ${chainImports.join('\n      ')}
       (async () => {
         ${options.explore ? 'await DevtoolsConnection.onceConnected;' : ''}
+        // Mocha doesn't have any way to pass custom flags into tests.
+        global.testFlags = ${JSON.stringify(testFlags)};
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {
