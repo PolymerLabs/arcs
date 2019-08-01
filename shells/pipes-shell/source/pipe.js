@@ -38,7 +38,7 @@ export const initArcs = async (storage, bus) => {
   const context = await requireContext();
   // marshal ingestion arc.
   await marshalIngestionArc(storage, context, bus);
-}
+};
 
 const identifyPipe = async (context, bus) => {
   const recipes = context.allRecipes.map(r => r.name);
