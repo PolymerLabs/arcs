@@ -63,6 +63,7 @@ public class WebHarnessController implements HarnessController {
 
         // TODO: get rid of this once crdt tests are built and run properly as unittests.
         document.body.appendChild(addCrdtTests());
+        document.body.appendChild(addJsonTests());
 
         // Null out the current window.onclick test mechanism
         shellElement.onload = (evt) -> window.onclick = null;
@@ -92,6 +93,14 @@ public class WebHarnessController implements HarnessController {
         button.addEventListener("click", evt -> handler.accept(input.value));
         return div;
     }
+    private Node addJsonTests() {
+        Map<String, Runnable> tests = new HashMap<>();
+        tests.put("testEmpty", () -> PortableJsonJsImplTest.testEmpty());
+        tests.put("testObject", () -> PortableJsonJsImplTest.testObject());
+        tests.put("testArray", () -> PortableJsonJsImplTest.testArray());
+
+        return addTests("Test JSON", tests);
+    }
 
     private Node addCrdtTests() {
         Map<String, Runnable> tests = new HashMap<>();
@@ -105,6 +114,9 @@ public class WebHarnessController implements HarnessController {
         tests.put("testRejectRemoveTooOld", () -> CollectionDataTest.testRejectRemoveTooOld());
         tests.put("testMergeModels", () -> CollectionDataTest.testMergeModels());
 
+        return addTests("Test CRDTs", tests);
+    }
+    private Node addTests(String caption, Map<String, Runnable> tests) {
         HTMLDivElement div = (HTMLDivElement) document.createElement("div");
 
         HTMLDivElement testsDiv = (HTMLDivElement) document.createElement("div");
@@ -114,7 +126,7 @@ public class WebHarnessController implements HarnessController {
             statusDiv.appendChild(document.createElement("br"));
         }));
         div.appendChild(document.createElement("hr"));
-        div.appendChild(document.createTextNode("Test CRDTs:"));
+        div.appendChild(document.createTextNode(caption));
         div.appendChild(testsDiv);
 
         HTMLDivElement allTestsDiv = (HTMLDivElement) document.createElement("div");
