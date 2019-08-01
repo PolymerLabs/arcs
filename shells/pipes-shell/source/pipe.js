@@ -28,12 +28,16 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   populateDispatcher(dispatcher, composerFactory, storage, context);
   // create bus
   const bus = new Bus(dispatcher, client);
-  // marshal pipes-arc (and stores)
-  await marshalIngestionArc(storage, context, bus);
   // send pipe identifiers to client
   identifyPipe(context, bus);
   // return bus
   return bus;
+};
+
+export const initArcs = async (storage, bus) => {
+  const context = await requireContext();
+  // marshal ingestion arc.
+  await marshalIngestionArc(storage, context, bus);
 };
 
 const identifyPipe = async (context, bus) => {

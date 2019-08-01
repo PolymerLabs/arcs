@@ -22,7 +22,7 @@ import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
 import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {findContainers} from '../source/lib/utils.js';
-import {initPipe} from '../source/pipe.js';
+import {initPipe, initArcs} from '../source/pipe.js';
 import {smokeTest} from '../source/smoke.js';
 
 console.log(`${version} -- ${storage}`);
@@ -49,6 +49,8 @@ const client = window.DeviceClient || {};
   const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   window.ShellApi = bus;
+  // post startup shell initializations.
+  await initArcs(storage, bus);
   // run smokeTest if requested
   if (test) {
     smokeTest(bus);
