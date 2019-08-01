@@ -1060,22 +1060,75 @@ describe('FlowGraph validation', () => {
   });
 
   describe(`'is from output' check conditions`, () => {
+    it('succeeds when the output is directly connected to the input', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} foo
+          out Foo {} bar
+          check foo is from output bar
+        recipe R
+          P
+            foo <- h
+            bar -> h
+      `);
+      markParticlesWithIngress(graph, 'P');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
     it('fails when the output is directly connected to an ingress input', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          in Foo {} input
-          out Foo {} output
-          check input is from output output
+          in Foo {} foo
+          out Foo {} bar
+          check foo is from output bar
         recipe R
           P
-            output -> h
-            input <- h
+            foo <- h
+            bar -> h
       `);
-      markParticleInputsWithIngress(graph, 'P.input');
-      assert.isFalse(validateGraph(graph).isValid);
-      // should probably verify the failure message
+      markParticleInputsWithIngress(graph, 'P.foo');
+      assertGraphFailures(graph, [`'check foo is from output bar' failed for path: P.foo`]);
     });
 
+    it('succeeds when the output is separated from the input by another particle', async () => {
+      const graph = await buildFlowGraph(`
+      particle P1
+        in Foo {} foo
+        out Foo {} bar
+        check foo is from output bar
+      particle P2
+        in Foo {} foo
+        out Foo {} bar
+      recipe R
+        P1
+          foo <- h2
+          bar -> h1
+        P2
+          foo <- h1
+          bar -> h2
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('fails when another particle writes to the same handle', async () => {
+      const graph = await buildFlowGraph(`
+      particle P1
+        in Foo {} foo
+        out Foo {} bar
+        check foo is from output bar
+      particle P2
+        out Foo {} bar
+      recipe R
+        P1
+          foo <- h
+          bar -> h
+        P2
+          bar -> h
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
   });
 
   describe(`'is from store' check conditions`, () => {
