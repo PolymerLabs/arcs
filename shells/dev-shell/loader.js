@@ -8,14 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {PlatformLoader} from '../../../build/platform/loader-web.js';
+import {Utils} from '../../shells/lib/runtime/utils.js';
 
 export class DevShellLoader extends PlatformLoader {
   constructor(fileMap) {
-    super({
-      'https://$arcs/': '../../',
-      'https://$particles/': '../../particles/',
-      'https://$build/': '../../shells/lib/build/' // for worker.js
-    });
+    super(Utils.createPathMap('../..'));
     super.flushCaches();
     this._fileMap = fileMap;
   }
