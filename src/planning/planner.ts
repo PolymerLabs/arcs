@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Consumer} from '../runtime/hot.js';
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
@@ -290,7 +291,7 @@ export class Planner implements InspectablePlanner {
     return false;
   }
 
-  _updateGeneration(generations: Generation[], hash: string, handler: (_: AnnotatedDescendant) => void) {
+  _updateGeneration(generations: Generation[], hash: string, handler: Consumer<AnnotatedDescendant>) {
     if (generations) {
       generations.forEach(g => {
         g.generated.forEach(gg => {
