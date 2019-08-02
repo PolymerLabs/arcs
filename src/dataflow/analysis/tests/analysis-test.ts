@@ -1802,4 +1802,85 @@ describe('FlowGraph validation', () => {
       assertGraphFailures(graph, [`'check input1 is trusted' failed: no data ingress.`]);
     });
   });
+
+  describe('references', () => {
+    it('prunes unrelated inputs', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out [Foo {}] foo
+          out [Bar {}] bar
+          claim foo is trusted
+        particle P2
+          in [Foo {}] foo
+          in [Bar {}] bar
+          out Reference<Foo {}> ref
+        particle P3
+          in Reference<Foo {}> ref
+          check ref is trusted
+        recipe R
+          P1
+            foo -> h1
+            bar -> h2
+          P2
+            foo <- h1
+            bar <- h2
+            ref -> h3
+          P3
+            ref <- h3
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('inherits claims from related outputs', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          in Bar {} ingress
+          out Foo {} foo
+          out Reference<Foo {}> ref
+          claim foo is trusted
+        particle P2
+          in Reference<Foo {}> ref
+          check ref is trusted
+        recipe R
+          P1
+            ingress <- h1
+            foo -> h2
+            ref -> h3
+          P2
+            ref <- h3
+      `);
+      markParticleInputsWithIngress(graph, 'P1.ingress');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('"derives from" claims override reference pruning', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          out [Foo {}] foo
+          out [Bar {}] bar
+          claim foo is trusted
+        particle P2
+          in [Foo {}] foo
+          in [Bar {}] bar
+          out Reference<Foo {}> ref
+          claim ref derives from bar
+        particle P3
+          in Reference<Foo {}> ref
+          check ref is trusted
+        recipe R
+          P1
+            foo -> h1
+            bar -> h2
+          P2
+            foo <- h1
+            bar <- h2
+            ref -> h3
+          P3
+            ref <- h3
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assertGraphFailures(graph, [`'check ref is trusted' failed for path: P1.bar -> P2.bar -> P2.ref -> P3.ref`]);
+    });
+  });
 });
