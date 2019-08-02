@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NativeParticleImpl implements NativeParticle {
+public class ParticleImpl implements Particle {
   public ParticleSpec spec;
   protected Map<String, Handle> handleByName = new HashMap<>();
   protected Map<String, SlotProxy> slotProxyByName = new HashMap<>();

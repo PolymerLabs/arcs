@@ -35,7 +35,7 @@ public abstract class WebHarnessModule {
   abstract ParticleExecutionContext providesParticleExecutionContext(ParticleExecutionContextImpl impl);
 
   @Binds
-  abstract NativeParticleLoader providesNativeParticleLoader(NativeParticleLoaderImpl impl);
+  abstract ParticleLoader providesParticleLoader(ParticleLoaderImpl impl);
 
   @Binds
   public abstract PECInnerPortFactory providesPECInnerPortFactory(PECInnerPortFactoryImpl impl);

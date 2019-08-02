@@ -13,7 +13,7 @@ public abstract class StorageProxy implements Store {
   protected Integer version = null;
   protected boolean listenerAttached = false;
   protected boolean keepSynced = false;
-  protected Map<Handle, NativeParticle> observers = new HashMap<>();
+  protected Map<Handle, Particle> observers = new HashMap<>();
   PECInnerPort port;
 
   protected StorageProxy(String id, Type type, PECInnerPort port, String name) {
@@ -23,7 +23,7 @@ public abstract class StorageProxy implements Store {
       this.name = name;
   }
 
-  public void register(NativeParticle particle, Handle handle) {
+  public void register(Particle particle, Handle handle) {
     if (!handle.canRead) {
       return;
     }
@@ -87,7 +87,7 @@ public abstract class StorageProxy implements Store {
   }
 
   void notify(String kind, PortableJson details) {
-    for (Map.Entry<Handle, NativeParticle> observer : observers.entrySet()) {
+    for (Map.Entry<Handle, Particle> observer : observers.entrySet()) {
       observer.getKey().notify(kind, observer.getValue(), details);
     }
   }

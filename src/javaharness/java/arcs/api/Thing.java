@@ -25,11 +25,11 @@ public class Thing<T> {
         return get().hashCode();
     }
 
-    public NativeParticle getParticle() {
-        if (!(thing instanceof NativeParticle)) {
+    public Particle getParticle() {
+        if (!(thing instanceof Particle)) {
             throw new AssertionError("Thing is not a particle");
         }
-        return (NativeParticle) thing;
+        return (Particle) thing;
     }
 
     public StorageProxy getStorageProxy() {

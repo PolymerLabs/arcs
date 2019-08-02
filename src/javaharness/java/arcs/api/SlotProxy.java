@@ -7,7 +7,7 @@ import java.util.Set;
 
 public class SlotProxy {
   public final String slotName;
-  public final NativeParticle particle;
+  public final Particle particle;
   public final Map<String, String> providedSlots;
   public final Set<String> requestedContentTypes = new HashSet<>();
   private final PECInnerPort apiPort;
@@ -16,7 +16,7 @@ public class SlotProxy {
   // TODO: add event handling support:
   // private readonly handlers = new Map<string, ((event: {}) => void)[]>();
 
-  SlotProxy(PECInnerPort apiPort, NativeParticle particle, String slotName,
+  SlotProxy(PECInnerPort apiPort, Particle particle, String slotName,
       Map<String, String> providedSlots, PortableJsonParser jsonParser) {
     this.apiPort = apiPort;
     this.slotName = slotName;

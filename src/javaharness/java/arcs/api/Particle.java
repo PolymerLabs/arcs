@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Interface that all 'Native' built in particles must implement to create particles.
+ * Interface that all built in particles must implement to create particles.
  */
-public interface NativeParticle {
+public interface Particle {
   String getName();
 
   void setSpec(ParticleSpec spec);
