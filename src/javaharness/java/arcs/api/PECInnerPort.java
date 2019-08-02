@@ -13,7 +13,7 @@ public interface PECInnerPort {
   void HandleRemove(StorageProxy storageProxy, Consumer<PortableJson> callback, PortableJson data, String particleId);
   void HandleRemoveMultiple(StorageProxy storageProxy, Consumer<PortableJson> callback, PortableJson data, String particleId);
 
-  void Render(NativeParticle particle, String slotName, PortableJson content);
+  void Render(Particle particle, String slotName, PortableJson content);
 
   // TODO: add more methods.
 }

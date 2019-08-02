@@ -6,7 +6,7 @@ import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.PECInnerPort;
 import arcs.api.PECInnerPortFactory;
-import arcs.api.NativeParticle;
+import arcs.api.Particle;
 import jsinterop.annotations.JsType;
 
 import javax.inject.Inject;

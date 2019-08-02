@@ -6,7 +6,7 @@ class Singleton extends Handle {
   }
 
   @Override
-  public void notify(String kind, NativeParticle particle, PortableJson details) {
+  public void notify(String kind, Particle particle, PortableJson details) {
     throw new AssertionError("Singleton::notify not implemented");
   }
 }

@@ -74,12 +74,12 @@ public class PECInnerPortImpl implements PECInnerPort {
                     proxies.put(proxyName, mapper.thingForIdentifier(proxyId).getStorageProxy());
                 });
 
-                NativeParticle particle = pec.instantiateParticle(spec, proxies);
+                Particle particle = pec.instantiateParticle(spec, proxies);
                 if (particle == null) {
                     // TODO: improve error handling.
                     throw new AssertionError("Cannot instantiate particle " + spec.name);
                 }
-                mapper.establishThingMapping(messageBody.getString(INDENTIFIER_FIELD), new Thing<NativeParticle>(particle));
+                mapper.establishThingMapping(messageBody.getString(INDENTIFIER_FIELD), new Thing<Particle>(particle));
                 break;
             }
             case DEFINE_HANDLE_MSG:
@@ -99,7 +99,7 @@ public class PECInnerPortImpl implements PECInnerPort {
                 break;
             case START_RENDER_MSG: {
                 String particleId = messageBody.getString(PARTICLE_FIELD);
-                NativeParticle particle = mapper.thingForIdentifier(particleId).getParticle();
+                Particle particle = mapper.thingForIdentifier(particleId).getParticle();
                 String slotName = messageBody.getString(SLOT_NAME_FIELD);
                 Map<String, String> providedSlots = new HashMap<>();
                 PortableJson providedSlotsJson = messageBody.getObject(PROVIDED_SLOTS_FIELD);
@@ -116,7 +116,7 @@ public class PECInnerPortImpl implements PECInnerPort {
             }
             case STOP_RENDER_MSG: {
                 String particleId = messageBody.getString(PARTICLE_FIELD);
-                NativeParticle particle = mapper.thingForIdentifier(particleId).getParticle();
+                Particle particle = mapper.thingForIdentifier(particleId).getParticle();
                 String slotName = messageBody.getString(SLOT_NAME_FIELD);
                 if (!particle.hasSlotProxy(slotName)) {
                     throw new AssertionError("StopRender called for particle " +
@@ -181,10 +181,10 @@ public class PECInnerPortImpl implements PECInnerPort {
     }
 
     @Override
-    public void Render(NativeParticle particle, String slotName, PortableJson content) {
+    public void Render(Particle particle, String slotName, PortableJson content) {
         PortableJson message = constructMessage(RENDER_MSG);
         PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
-        body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<NativeParticle>(particle)));
+        body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<Particle>(particle)));
         body.put(SLOT_NAME_FIELD, slotName);
         body.put(CONTENT_FIELD, content);
         postMessage(message);

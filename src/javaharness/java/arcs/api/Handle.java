@@ -25,5 +25,5 @@ public abstract class Handle {
     this.canWrite = canWrite;
   }
 
-  abstract void notify(String kind, NativeParticle particle, PortableJson details);
+  abstract void notify(String kind, Particle particle, PortableJson details);
 }

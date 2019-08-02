@@ -1,11 +1,11 @@
-package arcs.nativeparticles;
+package arcs.builtinparticles;
 
-import arcs.api.NativeParticle;
-import arcs.api.NativeParticleFactory;
+import arcs.api.Particle;
+import arcs.api.ParticleFactory;
 
 import javax.inject.Inject;
 
-public class EchoParticleFactory implements NativeParticleFactory {
+public class EchoParticleFactory implements ParticleFactory {
     // TODO: Inject interfaces particles normally may want in defineParticle (e.g. html, log, etc)
     @Inject
     public EchoParticleFactory(/* put requirements here */) {
@@ -17,7 +17,7 @@ public class EchoParticleFactory implements NativeParticleFactory {
     }
 
     @Override
-    public NativeParticle createParticle() {
+    public Particle createParticle() {
         return new EchoParticle();
     }
 }

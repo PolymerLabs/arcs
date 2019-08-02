@@ -6,7 +6,7 @@ class Collection extends Handle {
   }
 
   @Override
-  public void notify(String kind, NativeParticle particle, PortableJson details) {
+  public void notify(String kind, Particle particle, PortableJson details) {
     switch (kind) {
       case "sync":
         // TODO: handle details properly (see handle.ts)
