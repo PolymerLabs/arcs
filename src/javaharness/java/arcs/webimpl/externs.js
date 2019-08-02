@@ -12,5 +12,5 @@ ShellApi.observeEntity = function(arg) {};
 ShellApi.receiveEntity = function(arg) {};
 /** @param {!string} arg */
 ShellApi.postMessage = function(arg) {};
-
-
+/** @param {!string} arg */
+ShellApi.receive = function(arg) {};
