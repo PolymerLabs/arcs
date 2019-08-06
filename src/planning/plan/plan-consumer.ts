@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {Consumer} from '../../runtime/hot.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 
 import {PlanningResult} from './planning-result.js';
@@ -17,7 +18,7 @@ import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
 import {SuggestFilter} from './suggest-filter.js';
 import {PlannerInspector} from '../planner-inspector.js';
 
-type Callback = ({}) => void;
+type Callback = Consumer<{}>;
 
 export type VisibilityOptions = {reasons?: Map<string, SuggestionVisibilityOptions>};
 

@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {Consumer} from '../hot.js';
 import {checkDefined} from './preconditions.js';
 
 // tslint:disable: no-any
@@ -26,14 +27,14 @@ export enum SequenceOutput {
 
 export interface InputResponseObject {
   response?: any;
-  responseCheck?: (value: any) => void;
+  responseCheck?: Consumer<any>;
   type: ExpectedResponse;
 }
 
 export interface OutputResponseObject {
   response?: any;
   default?: any;
-  onOutput?: (value: any) => void;
+  onOutput?: Consumer<any>;
   type: ExpectedResponse;
 
 }
@@ -75,7 +76,7 @@ interface Output {
 
 interface Sensor {
   name: string;
-  endInvariants: ((t: any) => void)[];
+  endInvariants: (Consumer<any>)[];
 }
 
 /**
@@ -272,7 +273,7 @@ export class SequenceTest<T> {
    * @param id The sensor to set an end invariant on
    * @param test a function that takes the final sensor value and asserts properties
    */
-  setEndInvariant(id: string, test: (t: any) => void) {
+  setEndInvariant(id: string, test: Consumer<any>) {
     this.sensors.get(id).endInvariants.push(test);
   }
 

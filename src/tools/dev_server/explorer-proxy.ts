@@ -10,6 +10,7 @@
 
 import WebSocket from 'ws';
 import {Server} from 'http';
+import {Consumer} from '../../runtime/hot.js';
 
 const reset = `\x1b[0m`;
 const green = (text: string) => `\x1b[32m${text}${reset}`;
@@ -24,7 +25,7 @@ const red = (text: string) => `\x1b[31m${text}${reset}`;
 export class ExplorerProxy {
   private device: WebSocket|null = null;
   private explorer: WebSocket|null = null;
-  private onceDeviceAppearsResolve: (ws: WebSocket) => void = () => {};
+  private onceDeviceAppearsResolve: Consumer<WebSocket> = () => {};
   private onceDeviceAppears: Promise<WebSocket>;
 
   constructor() {

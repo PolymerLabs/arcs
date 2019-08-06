@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../runtime/hot.js';
+import {Consumer, Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
@@ -36,7 +36,7 @@ export class PlanningResult {
   generations: SerializableGeneration[] = [];
   contextual = true;
   store?: SingletonStorageProvider;
-  private storeCallback: ({}) => void;
+  private storeCallback: Consumer<{}>;
   private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
