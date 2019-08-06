@@ -28,7 +28,9 @@ describe('Particle definitions', () => {
         const manifest = await Manifest.load(filename, loader);
         for (const particle of manifest.particles) {
           assert.isNotNull(particle.implFile, `particle ${particle.name} specified with implementation found in ${particle.implFile}.`);
-          assert.isTrue(fs.existsSync(particle.implFile), `${particle.implFile} not found`);
+          if (!particle.implFile.endsWith('.wasm')) {
+            assert.isTrue(fs.existsSync(particle.implFile), `${particle.implFile} not found`);
+          }
         }
       });
     });
