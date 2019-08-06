@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
- /**
+/**
  * Generates new IDs which are rooted in the current session. Only one IdGenerator should be instantiated for each running Arc, and all of the
  * IDs created should be created using that same IdGenerator instance.
  */
@@ -17,7 +17,7 @@ public class IdGenerator {
     this.currentSessionId = currentSessionId;
   }
 
-   /**
+  /**
    * Creates a new ID, as a child of the given parentId. The given subcomponent
    * will be appended to the component hierarchy of the given ID, but
    * the generator's random session ID will be used as the ID's root.
