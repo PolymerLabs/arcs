@@ -1,5 +1,5 @@
-#include "arcs.h"
-#include "example-arcs.h"
+#include <arcs.h>
+#include <working-arcs.h>
 #include <vector>
 
 class StorageParticle : public arcs::Particle {

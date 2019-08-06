@@ -1,0 +1,27 @@
+schema Product
+  Text name
+  Number sku
+
+resource ProductResource
+  start
+  [{"name": "Vegemite", "sku": 249126}]
+store ProductStore of Product in ProductResource
+
+// Particle name must match the C++ class name
+// Wasm module name must match one specified in wasm.json
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar
+
+particle Watcher in 'module.wasm'
+  consume root
+  in [Product] bar
+
+recipe
+  copy ProductStore as h1
+  BasicParticle
+    foo <- h1
+    bar -> h2
+  Watcher
+    bar <- h2
