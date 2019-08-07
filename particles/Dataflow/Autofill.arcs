@@ -1,0 +1,67 @@
+// Autofill Example.
+// From: https://docs.google.com/presentation/d/1i-mTjlyWFSHYxvcJj98fIkUkHSu7ya3COa2wZeiqyi8/edit#slide=id.g5907ddee85_0_32
+
+import './Datastores.arcs'
+
+schema CapturedEntity
+  Text entity
+  Text source
+
+particle ContentCapture in 'empty.js'
+  in * {} recentApps
+  out Text {} text
+  out Source {} source
+  claim source is trusted
+
+particle TextClassifier in 'empty.js'
+  in Text {} text
+  out [Entity {}] entities
+
+particle CaptureEntity in 'empty.js'
+  in [Entity {}] entities
+  in Source {} source
+  out [CapturedEntity] capturedEntities
+
+particle AutofillMatcher in 'empty.js'
+  in AutofillContext {} autofillContext
+  in [CapturedEntity] capturedEntities
+
+  // By outputting a reference, the dataflow analyser can see that this must
+  // have come from capturedEntities only.
+  out Reference<CapturedEntity> autofillEntity
+
+particle AutofillUX in 'empty.js'
+  in Reference<CapturedEntity> autofillEntity
+
+  // Check that the autofill dialog is being filled with an entity from a
+  // recent trusted source.
+  // TODO: Use AND instead of OR for this check, once the analyser can track
+  // the origin of individual fields inside an entity/reference.
+  check autofillEntity is trusted or is from store 'recent-apps'
+
+recipe AutofillRecipe
+  use RecentApps as recentApps
+  create as text
+  create as source
+  create as classifiedEntities
+  create as capturedEntities
+  create as autofillContext
+  create as autofillEntity
+
+  ContentCapture
+    recentApps <- recentApps
+    text -> text
+    source -> source
+  TextClassifier
+    text <- text
+    entities -> classifiedEntities
+  CaptureEntity
+    entities <- classifiedEntities
+    source <- source
+    capturedEntities -> capturedEntities
+  AutofillMatcher
+    autofillContext <- autofillContext
+    capturedEntities <- capturedEntities
+    autofillEntity -> autofillEntity
+  AutofillUX
+    autofillEntity <- autofillEntity

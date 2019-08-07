@@ -15,3 +15,6 @@ store PrivateModel of Model 'private-model' in DummyResource
 
 // A datastore representing data captured from the screen.
 store Screen of Model 'screen' in DummyResource
+
+// A datastore representing data captured from recently-used apps.
+store RecentApps of Model 'recent-apps' in DummyResource
