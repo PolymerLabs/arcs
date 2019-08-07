@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ParticleImpl implements Particle {
+public class ParticleBase implements Particle {
   public ParticleSpec spec;
   public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
