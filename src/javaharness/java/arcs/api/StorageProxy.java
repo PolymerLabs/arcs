@@ -17,6 +17,7 @@ public abstract class StorageProxy implements Store {
   protected PECInnerPort port;
   protected PortableJsonParser jsonParser;
   protected PortablePromiseFactory promiseFactory;
+  protected StorageProxyScheduler scheduler;
 
   protected StorageProxy(String id, Type type, PECInnerPort port, String name,
           PortableJsonParser jsonParser, PortablePromiseFactory promiseFactory) {
@@ -26,6 +27,7 @@ public abstract class StorageProxy implements Store {
       this.name = name;
       this.jsonParser = jsonParser;
       this.promiseFactory = promiseFactory;
+      this.scheduler = new StorageProxyScheduler(promiseFactory);
   }
 
   public void register(Particle particle, Handle handle) {
