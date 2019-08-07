@@ -476,10 +476,11 @@ function link(srcFiles: Iterable<string>): boolean {
 
 // Config for building wasm modules.
 interface WasmConfig {
-  [key: string]: {         // The target filename for the module.
-    manifest: string,      // The manifest to process; should be in the same dir as the json file
-    src: string[],         // The list of source files to compile (currently limited to one)
-    outDir: string,        // The output directory relative to project root; should be under 'build' for tests
+  [key: string]: {         // Target filename for the module.
+    manifest: string,      // Manifest to process; should be in the same dir as the json file
+    src: string[],         // List of source files to compile (currently limited to one)
+    outDir: string,        // Output dir relative to project root; should be under 'build' for tests;
+                           // can be '$here' to use the same dir as the json file.
     linkManifest: boolean  // Whether to link the manifest file into outDir; should be true for tests
   };
 }
@@ -493,6 +494,9 @@ function buildWasmModule(configFile: string, logCmd: boolean, force: boolean): b
     // TODO: fix arcs.h so more than one source file can be compiled into a module
     if (cfg.src.length !== 1) {
       throw new Error(`wasm modules must specify exactly one source file (${configFile})`);
+    }
+    if (cfg.outDir === '$here') {
+      cfg.outDir = srcDir;
     }
 
     const manifestPath = path.join(srcDir, cfg.manifest);

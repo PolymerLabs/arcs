@@ -1,6 +1,9 @@
-#include "arcs.h"
-#include "example-arcs.h"
+#include <arcs.h>
+#include <working-arcs.h>
 #include <vector>
+
+// This is an internal development file; not intended to be a particularly readable reference for
+// new users.
 
 class StorageParticle : public arcs::Particle {
 public:

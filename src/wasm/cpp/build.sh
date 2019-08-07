@@ -1,10 +1,13 @@
 #!/bin/bash
 
+## This is an internal development tool that is not generally intended for wide use ##
+
 fail() {
   echo "$1" >&2
   exit 1
 }
 
+# This script assumes you have emsdk installed and set up for global use.
 which em++ >/dev/null || fail "em++ not found; do you need to source emsdk_env.sh?"
 
 # Version check (n.b. the double 'sed' is because Mac OSX sed can't do capture groups)
