@@ -68,11 +68,13 @@
 }
 
 Manifest
-  = eolWhiteSpace? Indent? items:((SameIndent Annotation eolWhiteSpace)? SameIndent ManifestItem)*
+  = eolWhiteSpace? Indent? items:(Annotation SameIndent ManifestItem)*
   {
     const result: AstNode.ManifestItem[] = items.map(item => {
       const manifestItem = item[2];
-      manifestItem.annotation = optional(item[0], a => a[1], null);
+      const annotations = item[0];
+      manifestItem.triggers = annotations.triggerSet;
+      manifestItem.annotation = annotations.simpleAnnotation;
       return manifestItem;
     });
     checkNormal(result);
@@ -90,7 +92,23 @@ ManifestItem
   / Meta
   / Resource
 
-Annotation "an annotation (e.g. @foo)"
+Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)?
+  {
+    return {
+      triggerSet: triggerSet.map(trigger => trigger[1]),
+      simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
+    };
+  }
+
+Trigger "a trigger for a recipe"
+  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent lowerIdent whiteSpace lowerIdent)+ {
+  return pairs.map(pair => {
+    return [pair[2], pair[4]];
+  });
+}
+
+
+SimpleAnnotation "an annotation (e.g. @foo)"
   = '@' annotation:lowerIdent { return annotation; }
 
 Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {

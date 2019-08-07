@@ -47,6 +47,7 @@ export class Recipe implements Cloneable<Recipe> {
   private _cloneMap: CloneMap;
 
   annotation: string | undefined = undefined;
+  triggers: [string][][] = [];
 
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
