@@ -14,13 +14,20 @@ public abstract class StorageProxy implements Store {
   protected boolean listenerAttached = false;
   protected boolean keepSynced = false;
   protected Map<Handle, Particle> observers = new HashMap<>();
-  PECInnerPort port;
+  protected PECInnerPort port;
+  protected PortableJsonParser jsonParser;
+  protected PortablePromiseFactory promiseFactory;
+  protected StorageProxyScheduler scheduler;
 
-  protected StorageProxy(String id, Type type, PECInnerPort port, String name) {
+  protected StorageProxy(String id, Type type, PECInnerPort port, String name,
+          PortableJsonParser jsonParser, PortablePromiseFactory promiseFactory) {
       this.id = id;
       this.port = port;
       this.type = type;
       this.name = name;
+      this.jsonParser = jsonParser;
+      this.promiseFactory = promiseFactory;
+      this.scheduler = new StorageProxyScheduler(promiseFactory);
   }
 
   public void register(Particle particle, Handle handle) {

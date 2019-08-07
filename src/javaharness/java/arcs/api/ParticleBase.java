@@ -4,8 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ParticleImpl implements Particle {
+public class ParticleBase implements Particle {
   public ParticleSpec spec;
+  public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
   protected Map<String, SlotProxy> slotProxyByName = new HashMap<>();
 
@@ -23,6 +24,11 @@ public class ParticleImpl implements Particle {
   }
 
   @Override
+  public void setJsonParser(PortableJsonParser jsonParser) {
+    this.jsonParser = jsonParser;
+  }
+
+  @Override
   public void setHandles(Map<String, Handle> handleByName) {
     // TODO: Should be async.
     // TODO: add startBusy & doneBusy support.
@@ -31,12 +37,25 @@ public class ParticleImpl implements Particle {
   }
 
   @Override
+  public Handle getHandle(String id) {
+    if (!this.handleByName.containsKey(id)) {
+      throw new AssertionError("Handle " + id + "does not exist");
+    }
+    return this.handleByName.get(id);
+  }
+
+  @Override
   public void onHandleSync(Handle handle, PortableJson model) {
     // TODO: Implement
   }
 
   @Override
-  public void onHandleUpdate(Handle handle, PortableJson data) {
+  public void onHandleUpdate(Handle handle, PortableJson update) {
+    // TODO: Implement
+  }
+
+  @Override
+  public void onHandleDesync(Handle handle) {
     // TODO: Implement
   }
 

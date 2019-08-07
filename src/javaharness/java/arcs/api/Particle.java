@@ -10,11 +10,13 @@ public interface Particle {
   String getName();
 
   void setSpec(ParticleSpec spec);
-
+  void setJsonParser(PortableJsonParser jsonParser);
   void setHandles(Map<String, Handle> handleByName);
+  Handle getHandle(String id);
 
   void onHandleSync(Handle handle, PortableJson model);
-  void onHandleUpdate(Handle handle, PortableJson data);
+  void onHandleUpdate(Handle handle, PortableJson update);
+  void onHandleDesync(Handle handle);
 
   SlotProxy getSlot(String name);
   boolean hasSlotProxy(String name);

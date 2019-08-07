@@ -3,8 +3,9 @@ package arcs.api;
 public class CollectionProxy extends StorageProxy implements CollectionStore {
   PortableJson model;  // TODO: replace with crdt model class.
 
-  public CollectionProxy(String id, Type type, PECInnerPort port, String name) {
-    super(id, type, port, name);
+  public CollectionProxy(String id, Type type, PECInnerPort port, String name,
+      PortableJsonParser jsonParser, PortablePromiseFactory promiseFactory) {
+    super(id, type, port, name, jsonParser, promiseFactory);
   }
 
   @Override

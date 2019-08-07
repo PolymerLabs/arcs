@@ -1,8 +1,9 @@
 package arcs.api;
 
 class Collection extends Handle {
-  public Collection(StorageProxy storage, String name, boolean canRead, boolean canWrite) {
-    super(storage, name, canRead, canWrite);
+  public Collection(StorageProxy storage, IdGenerator idGenerator, String name,
+      String particleId, boolean canRead, boolean canWrite) {
+    super(storage, idGenerator, name, particleId, canRead, canWrite);
   }
 
   @Override

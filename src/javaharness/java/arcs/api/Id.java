@@ -32,7 +32,7 @@ public class Id {
   public static Id fromString(String str) {
     String bits[] = str.split(":");
 
-     if (bits[0].startsWith("!")) {
+    if (bits[0].startsWith("!")) {
       String root = bits[0].substring(1);
       String idTree[] = Arrays.asList(Arrays.copyOfRange(bits, 1, bits.length))
           .stream().filter(component -> component.length() > 0).toArray(String[]::new);
