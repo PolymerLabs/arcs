@@ -22,6 +22,9 @@ import {SYMBOL_INTERNALS} from './symbols.js';
 import {Handle as HandleNG} from './storageNG/handle.js';
 import {CRDTTypeRecord} from './crdt/crdt';
 
+// While transitioning to the NG storage stack, we define Handle as either the
+// "old" handle (before migration) or the NG handle. After migration the handle
+// defined in this file should go away.
 export type Handle = HandleOld | HandleNG<CRDTTypeRecord>;
 
 /**

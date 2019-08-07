@@ -105,11 +105,12 @@ export abstract class Handle<T extends CRDTTypeRecord> {
   }
 
   abstract onUpdate(updates: T['operation'][]): void;
-  // TODO: this shuld be async and return Promise<void>.
   abstract onSync(): void;
   
   async onDesync(): Promise<void> {
-    await this.particle.callOnHandleDesync(this, e => this.reportUserExceptionInHost(e, this.particle, 'onHandleUpdate'));
+    await this.particle.callOnHandleDesync(
+        this,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
   }
 }
 
@@ -169,26 +170,28 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
     return this.storageProxy.getParticleView().then(set => [...set]);
   }
 
-  onUpdate(ops: CollectionOperation<T>[]) {
+  async onUpdate(ops: CollectionOperation<T>[]): Promise<void> {
     for (const op of ops) {
       // Pass the change up to the particle.
-      // tslint:disable-next-line: no-any
-      const update: {added?: any, removed?: any, originator?: any} = {};
+      const update: {added?: T, removed?: T, originator: boolean} = {originator: (this.key === op.actor)};
       if (op.type === CollectionOpTypes.Add) {
         update.added = op.added;
       }
       if (op.type === CollectionOpTypes.Remove) {
         update.removed = op.removed;
-      }
-      update.originator = (this.key === op.actor);
-      // TODO: call onHandleUpdate on the particle, eg:
-      // this.particle.onHandleUpdate(this /*handle*/, update);
+      }      
+      await this.particle.callOnHandleUpdate(
+          this /*handle*/,
+          update,
+          e => this.reportUserExceptionInHost(e, this.particle, 'onHandleUpdate'));
     }
   }
 
-  onSync() {
-    // TODO: call onHandleSync on the particle, eg:
-    // particle.onHandleSync(this /*handle*/, this.toList() /*model*/);
+  async onSync(): Promise<void> {
+    await this.particle.callOnHandleSync(
+        this /*handle*/,
+        this.toList() /*model*/,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
   }
 }
 
@@ -220,26 +223,28 @@ export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSinglet
     return this.storageProxy.getParticleView();
   }
 
-  onUpdate(ops: SingletonOperation<T>[]) {
+  async onUpdate(ops: SingletonOperation<T>[]): Promise<void> {
     for (const op of ops) {
       // Pass the change up to the particle.
-      // tslint:disable-next-line: no-any
-      const update: {data?: any, originator?: any} = {};
+      const update: {data?: T, originator: boolean} = {originator: (this.key === op.actor)};
       if (op.type === SingletonOpTypes.Set) {
-        // TODO: do we also need to set oldData?
+        // TODO: also set oldData?
         update.data = op.value;
       }
       if (op.type === SingletonOpTypes.Clear) {
-        // TODO: what update should we return here?
+        // TODO: set oldData
       }
-      update.originator = (this.key === op.actor);
-      // TODO: call onHandleUpdate on the particle, eg:
-      // this.particle.onHandleUpdate(this /*handle*/, update);
+      await this.particle.callOnHandleUpdate(
+          this /*handle*/,
+          update,
+          e => this.reportUserExceptionInHost(e, this.particle, 'onHandleUpdate'));
     }
   }
 
-  onSync() {
-    // TODO: call onHandleSync on the particle, eg:
-    // particle.onHandleSync(this /*handle*/, this.get() /*model*/);
+  async onSync(): Promise<void> {
+    await this.particle.callOnHandleSync(
+        this /*handle*/,
+        this.get() /*model*/,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
   }
 }
