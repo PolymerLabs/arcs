@@ -20,6 +20,7 @@ import {Dictionary} from '../../hot.js';
 import {MockFirebaseStorageDriverProvider} from '../testing/mock-firebase.js';
 import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
+import {Arc} from '../../arc.js';
 
 let testKey: StorageKey;
 
@@ -171,9 +172,10 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
+      const arc = runtime.newArc('arc', 'volatile://');
       DriverFactory.clearRegistrationsForTesting();
-      VolatileStorageDriverProvider.register();
-      const storageKey = new VolatileStorageKey('unique');
+      VolatileStorageDriverProvider.register(arc);
+      const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore1 = await store1.activate();
   
@@ -275,9 +277,10 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
+      const arc = runtime.newArc('arc', 'volatile://');
       DriverFactory.clearRegistrationsForTesting();
-      VolatileStorageDriverProvider.register();
-      const storageKey = new VolatileStorageKey('unique');
+      VolatileStorageDriverProvider.register(arc);
+      const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore1 = await store1.activate();
   

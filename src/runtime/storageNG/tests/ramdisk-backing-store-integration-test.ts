@@ -11,11 +11,10 @@
 import {assert} from '../../../platform/chai-web.js';
 import {StorageMode, ProxyMessageType, ProxyMessage} from '../store.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
-import {VolatileStorageKey, VolatileStorageDriverProvider} from '../drivers/volatile.js';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk';
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {BackingStore} from '../backing-store.js';
-import {deepEqual} from 'assert';
 
 function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTCount) {
   if (message.type === ProxyMessageType.ModelUpdate) {
@@ -25,10 +24,10 @@ function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTC
   }
 }
 
-describe('Volatile + Backing Store Integration', async () => {
+describe('RamDisk + Backing Store Integration', async () => {
 
   beforeEach(() => {
-    VolatileStorageDriverProvider.register();
+    RamDiskStorageDriverProvider.register();
   });
 
   afterEach(() => {
@@ -37,7 +36,7 @@ describe('Volatile + Backing Store Integration', async () => {
 
   it('will allow storage of a number of objects', async () => {
     const runtime = new Runtime();
-    const storageKey = new VolatileStorageKey('unique');
+    const storageKey = new RamDiskStorageKey('unique');
     const store = await BackingStore.construct<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Backing, CRDTCount);
 
     const count1 = new CRDTCount();
