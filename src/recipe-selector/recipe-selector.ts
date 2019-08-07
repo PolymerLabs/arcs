@@ -14,8 +14,7 @@ import {Dictionary} from '../runtime/hot.js';
 export class RecipeSelector {
     // Only recipes with “@trigger” annotations get included in the lookup table.
     // Other recipes are silently ignored.
-    // If two triggers could match a request (one trigger is a subset of another) an exception is
-    // thrown.
+    // Specific semantics of overlapping triggers are still TBD.
     constructor(readonly recipes: Recipe[]) {
     }
     // Returns a Recipe or null if no trigger matches the request)
