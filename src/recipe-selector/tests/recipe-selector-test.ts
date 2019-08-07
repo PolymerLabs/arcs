@@ -30,7 +30,7 @@ describe('recipe-selector', () => {
     const r = checkDefined(manifest.recipes[0]);
     assert.lengthOf(manifest.recipes, 1);
     assert.lengthOf(manifest.recipes[0].triggers, 1);
-    assert.deepEqual(manifest.recipes[0].triggers[0], ['key1', 'value1'])
+    assert.deepEqual(manifest.recipes[0].triggers[0], ['key1', 'value1']);
   });
   it('trigger annotations parse with multipe key-value pairs', async () => {
     const manifest = await Manifest.parse(`
