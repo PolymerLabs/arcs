@@ -34,6 +34,8 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
+import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
+import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -94,6 +96,10 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
+  // Volatile storage local to this Arc instance.
+  readonly volatileMemory = new VolatileMemory();
+  private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
+
 constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
@@ -119,6 +125,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost(slotComposer, this, ports);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
+    
+    this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
+    DriverFactory.register(this.volatileStorageDriverProvider);
   }
 
   get loader(): Loader {
@@ -147,6 +156,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
       this.pec.slotComposer.dispose();
     }
+
+    DriverFactory.unregister(this.volatileStorageDriverProvider);
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it

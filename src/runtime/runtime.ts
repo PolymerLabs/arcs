@@ -39,7 +39,7 @@ export class Runtime {
   private loader: Loader | null;
   private composerClass: new () => SlotComposer | null;
   private context: Manifest;
-  private readonly volatileMemory: VolatileMemory;
+  private readonly ramDiskMemory: VolatileMemory;
 
   static getRuntime() {
     if (runtime == null) {
@@ -64,7 +64,7 @@ export class Runtime {
     this.loader = loader;
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
-    this.volatileMemory = new VolatileMemory();
+    this.ramDiskMemory = new VolatileMemory();
     runtime = this;
     // user information. One persona per runtime for now.
   }
@@ -73,8 +73,8 @@ export class Runtime {
     return this.cacheService;
   }
 
-  getVolatileMemory(): VolatileMemory {
-    return this.volatileMemory;
+  getRamDiskMemory(): VolatileMemory {
+    return this.ramDiskMemory;
   }
 
   destroy() {
