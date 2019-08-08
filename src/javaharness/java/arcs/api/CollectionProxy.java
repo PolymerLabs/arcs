@@ -65,13 +65,11 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     this.version = version;
     List<VersionedValue<ModelEntry>> values = new ArrayList<>();
     for (int i = 0; i < model.getLength(); ++i) {
-      values.add(new VersionedValue(
-        ModelEntry.fromJson(model.getObject(i)),
-        // TODO: here and everywhere in this file, figure out what operation's
-        // `actor` field should be.
-        new VersionMap(){{ put("pec", version); }}));
+      ModelEntry entry = ModelEntry.fromJson(model.getObject(i));
+      String key = entry.keys.iterator().next();
+      values.add(new VersionedValue(entry, new VersionMap(){{ put(key, version); }}));
     }
-    this.model = new CRDTCollection(values, new VersionMap(){{ put("pec", version); }});
+    this.model = new CRDTCollection(values, new VersionMap(){{ put(/* actor= */ "", version); }});
     return true;
   }
 
@@ -92,13 +90,8 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
         PortableJson add = update.getObject("add").getObject(i);
         boolean effective = add.getBool("effective");
         PortableJson value = add.getObject("value");
-        PortableJson keysJson = add.getObject(ModelEntry.KEYS);
-        List<String> keys = new ArrayList<>(keysJson.getLength());
-        for (int j = 0; j < keysJson.getLength(); ++j) { keys.add(keysJson.getString(j)); }
-        if (apply && model.applyOperation(new CollectionOperation<ModelEntry>(
-                CollectionOperation.Type.ADD, new ModelEntry(value.getString("id"), value, keys),
-                new VersionMap(){{ put("pec", model.nextVersion("pec")); }}, "pec")) ||
-           !apply && effective) {
+        if (apply && model.applyOperation(createAddOperation(value, add.getObject(ModelEntry.KEYS).asStringArray())) ||
+            !apply && effective) {
           added.put(added.getLength(), value);
         }
       }
@@ -108,8 +101,9 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
         VersionedValue vv = model.getData().get(remove.getObject("value").getString("id"));
         ModelEntry entry = (ModelEntry) vv.value;
         boolean effective = remove.getBool("effective");
-        if (apply && model.applyOperation(new CollectionOperation<ModelEntry>(
-              CollectionOperation.Type.REMOVE, entry, vv.version, "pec")) ||
+        if ((apply && model.applyOperation(new CollectionOperation<ModelEntry>(
+                CollectionOperation.Type.REMOVE, entry, vv.version,
+                remove.getObject(ModelEntry.KEYS).getString(0)))) ||
             !apply && effective) {
           removed.put(removed.getLength(), entry.value.value);
         }
@@ -159,11 +153,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     if (syncState != SyncState.FULL) {
       return;
     }
-    if (!model.applyOperation(new CollectionOperation<ModelEntry>(
-          CollectionOperation.Type.ADD,
-          new ModelEntry(value.getString("id"), value, Arrays.asList(keys)),
-          new VersionMap(){{ put("pec", model.nextVersion("pec")); }},
-          "pec"))) {
+    if (!model.applyOperation(createAddOperation(value, Arrays.asList(keys)))) {
       return;
     }
     PortableJson update = jsonParser.emptyObject()
@@ -195,7 +185,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
       VersionedValue vv = model.getData().get(item.getString("id"));
       ModelEntry entry = (ModelEntry) vv.value;
       if (model.applyOperation(new CollectionOperation<ModelEntry>(
-          CollectionOperation.Type.REMOVE, entry, vv.version, "pec"))) {
+          CollectionOperation.Type.REMOVE, entry, vv.version, item.getObject("keys").getString(0)))) {
         removedItems.put(removedItems.getLength(), item.put("rawData",
             entry.value.value.getObject("rawData")));
       }
@@ -230,7 +220,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     port.HandleRemove(this, (unused) -> {}, data, particleId);
 
     if (!model.applyOperation(new CollectionOperation<ModelEntry>(
-          CollectionOperation.Type.REMOVE, entry, vv.version, "pec"))) {
+          CollectionOperation.Type.REMOVE, entry, vv.version, /* actor= */ ""))) {
       return;
     }
     PortableJson update = jsonParser.emptyObject()
@@ -248,6 +238,12 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
         port.HandleToList(this, resolver);
       });
     }
+  }
+
+  private CollectionOperation<ModelEntry> createAddOperation(PortableJson value, List<String> keys) {
+    return new CollectionOperation<ModelEntry>(
+                CollectionOperation.Type.ADD, new ModelEntry(value.getString("id"), value, keys),
+                new VersionMap(){{ put(keys.get(0), model.nextVersion(keys.get(0))); }}, keys.get(0));
   }
 
   private PortableJson thisModelToList() {
