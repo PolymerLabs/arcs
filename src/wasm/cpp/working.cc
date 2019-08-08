@@ -7,9 +7,6 @@
 
 class StorageParticle : public arcs::Particle {
 public:
-  using TestSingleton = arcs::Singleton<arcs::Data>;
-  using TestCollection = arcs::Collection<arcs::Data>;
-
   StorageParticle() {
     registerHandle("in_sng", in_sng_);
     registerHandle("ot_sng", ot_sng_);
@@ -91,7 +88,7 @@ public:
     model->emplace("io_col", collectionToStr(io_col_));
   }
 
-  std::string collectionToStr(const TestCollection& col) {
+  std::string collectionToStr(const arcs::Collection<arcs::Data>& col) {
     if (col.empty()) {
       return "(empty)";
     }
@@ -108,10 +105,10 @@ public:
     std::string name = handler.substr(0, pos);
     std::string action = handler.substr(pos + 1);
 
-    arcs::Handle* handle = getHandle(name);
-    if (handle != nullptr) {
-      processSingleton(dynamic_cast<TestSingleton*>(handle), action);
-      processCollection(dynamic_cast<TestCollection*>(handle), action);
+    if (auto handle = getSingleton<arcs::Data>(name)) {
+      processSingleton(handle, action);
+    } else if (auto handle = getCollection<arcs::Data>(name)) {
+      processCollection(handle, action);
     } else if (action == "throw") {
       throw std::invalid_argument("this message doesn't get passed (yet?)");
     } else if (action == "assert") {
@@ -124,8 +121,7 @@ public:
     renderSlot("root", false, true);
   }
 
-  void processSingleton(TestSingleton* handle, const std::string& action) {
-    if (handle == nullptr) return;
+  void processSingleton(arcs::Singleton<arcs::Data>* handle, const std::string& action) {
     if (action == "get") {
       console("%s\n", arcs::entity_to_str(handle->get()).c_str());
     } else if (action == "set") {
@@ -139,8 +135,7 @@ public:
     }
   }
 
-  void processCollection(TestCollection* handle, const std::string& action) {
-    if (handle == nullptr) return;
+  void processCollection(arcs::Collection<arcs::Data>* handle, const std::string& action) {
     if (action == "size") {
       console("size: %lu\n", handle->size());
     } else if (action == "empty") {
@@ -175,13 +170,13 @@ public:
   }
 
 private:
-  TestSingleton in_sng_;
-  TestSingleton ot_sng_;
-  TestSingleton io_sng_;
+  arcs::Singleton<arcs::Data> in_sng_;
+  arcs::Singleton<arcs::Data> ot_sng_;
+  arcs::Singleton<arcs::Data> io_sng_;
 
-  TestCollection in_col_;
-  TestCollection ot_col_;
-  TestCollection io_col_;
+  arcs::Collection<arcs::Data> in_col_;
+  arcs::Collection<arcs::Data> ot_col_;
+  arcs::Collection<arcs::Data> io_col_;
 
   std::vector<arcs::Data> stored_;
 };
@@ -195,11 +190,11 @@ public:
     registerHandle("input", input_);
   }
 
-  void onHandleSync(arcs::Handle* handle, bool all_synced) override {
-    onHandleUpdate(handle);
+  void onHandleSync(const std::string& name, bool all_synced) override {
+    onHandleUpdate(name);
   }
 
-  void onHandleUpdate(arcs::Handle* handle) override {
+  void onHandleUpdate(const std::string& name) override {
     local_ = arcs::clone_entity(input_.get());
     renderSlot("root", false, true);
   }

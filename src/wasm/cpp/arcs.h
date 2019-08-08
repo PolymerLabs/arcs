@@ -603,7 +603,7 @@ public:
   // Called by the runtime to synchronize a handle.
   void sync(Handle* handle) {
     to_sync_.erase(handle);
-    onHandleSync(handle, to_sync_.empty());
+    onHandleSync(handle->name(), to_sync_.empty());
     if (to_sync_.empty() && !auto_render_slot_.empty()) {
       renderSlot(auto_render_slot_);
     }
@@ -611,20 +611,28 @@ public:
 
   // Called by the runtime to update a handle.
   void update(Handle* handle) {
-    onHandleUpdate(handle);
+    onHandleUpdate(handle->name());
     if (!auto_render_slot_.empty()) {
       renderSlot(auto_render_slot_);
     }
   }
 
-  // Convenience method for sub-classes to retrieve a handle by name.
-  Handle* getHandle(const std::string& name) const {
+  // Retrieve a handle by name; e.g. auto h = getSingleton<arcs::SomeEntityType>(name)
+  template<typename T>
+  arcs::Singleton<T>* getSingleton(const std::string& name) const {
     auto it = handles_.find(name);
-    return (it != handles_.end()) ? it->second : nullptr;
+    return (it != handles_.end()) ? dynamic_cast<arcs::Singleton<T>*>(it->second) : nullptr;
+  }
+
+  template<typename T>
+  arcs::Collection<T>* getCollection(const std::string& name) const {
+    auto it = handles_.find(name);
+    return (it != handles_.end()) ? dynamic_cast<arcs::Collection<T>*>(it->second) : nullptr;
   }
 
   // Can be called by sub-classes to initiate rendering; also invoked when auto-render is enabled
   // after all handles have been synchronized.
+  // TODO: it doesn't make sense to have both send flags false; ignore, error or convert to enum?
   void renderSlot(const std::string& slot_name, bool send_template = true, bool send_model = true) {
     const char* template_ptr = nullptr;
     std::string template_str;
@@ -655,13 +663,14 @@ public:
     return resolved;
   }
 
-  // Called once a particle has been set up. Initial processing and service requests may
-  // be executed here. Handles are *not* guaranteed to be synchronized at this point.
+  // Called once a particle has been set up. Initial processing and service requests may be
+  // executed here. Readable handles are *not* guaranteed to be synchronized at this point.
+  // Write-only handles may safely be accessed.
   virtual void init() {}
 
   // Override to provide specific handling of handle sync/updates.
-  virtual void onHandleSync(Handle* handle, bool all_synced) {}
-  virtual void onHandleUpdate(Handle* handle) {}
+  virtual void onHandleSync(const std::string& name, bool all_synced) {}
+  virtual void onHandleUpdate(const std::string& name) {}
 
   // Override to react to UI events triggered by handlers in the template provided below.
   virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}

@@ -59,6 +59,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   wasm: [peg, build, wasm],
+  wasmTest: [peg, build, wasm, runTests],
   watch: [watch],
   lint: [peg, build, lint, tslint],
   tslint: [peg, build, tslint],
@@ -450,6 +451,22 @@ function link(srcFiles: Iterable<string>): boolean {
   return success;
 }
 
+// Config for building wasm modules.
+interface WasmConfig {
+  [key: string]: {     // Target filename for the module.
+    manifest: string,  // Manifest to process; should be in the same dir as the json file
+    src: string[],     // List of source files to compile (currently limited to one)
+    outDir: string,    // Output dir relative to project root; should be under 'build' for tests;
+                       // can be '$here' to use the same dir as the json file
+  };
+}
+
+interface WasmCounts {
+  found: number;
+  built: number;
+  failed: number;
+}
+
 // With no args, finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
 // Otherwise only the requested configs are processed (e.g. tools/sigh wasm src/wasm/cpp/wasm.json)
 // Other options: --trace to show commands used, --force to disable timestamp checks
@@ -473,17 +490,24 @@ function wasm(args: string[]): boolean {
     boolean: ['trace', 'force'],
   });
   const specified = (options._.length > 0);
-  const targets = specified ? options._ : findProjectFiles('src', null, /[/\\]wasm\.json$/);
-  let success = true;
+  const targets = specified ? options._ : findProjectFiles('src', /javaharness/, /[/\\]wasm\.json$/);
+  const counts: WasmCounts = {found: 0, built: 0, failed: 0};
   for (const configFile of targets) {
     if (specified && !fs.existsSync(configFile)) {
       console.error(`wasm config not found: ${configFile}`);
-      success = false;
+      counts.failed++;
       continue;
     }
-    success = success && buildWasmModule(emsdk, configFile, options.trace, options.force);
+    buildWasmModule(emsdk, counts, configFile, options.trace, options.force);
   }
-  return success;
+  if (counts.found === 0) {
+    console.log('No wasm targets found');
+  } else if (counts.built === 0 && counts.failed === 0) {
+    console.log(`${counts.found} wasm targets found; all up-to-date`);
+  } else {
+    console.log(`${counts.found} wasm targets found; ${counts.built} built; ${counts.failed} failed`);
+  }
+  return counts.failed === 0;
 }
 
 // Attempts to install emsdk and verify that the version is correct.
@@ -514,23 +538,21 @@ function setupEmsdk() {
   return emsdk;
 }
 
-// Config for building wasm modules.
-interface WasmConfig {
-  [key: string]: {         // Target filename for the module.
-    manifest: string,      // Manifest to process; should be in the same dir as the json file
-    src: string[],         // List of source files to compile (currently limited to one)
-    outDir: string,        // Output dir relative to project root; should be under 'build' for tests;
-                           // can be '$here' to use the same dir as the json file.
-    linkManifest: boolean  // Whether to link the manifest file into outDir; should be true for tests
-  };
-}
+// TODO: detect old headers/modules in cleanObsolete()
+function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: boolean, force: boolean) {
+  let wasmConfig: WasmConfig;
+  try {
+    wasmConfig = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+  } catch (e) {
+    console.error(`Error parsing ${configFile}: ${e.message}\n`);
+    counts.failed++;
+    return;
+  }
 
-// TODO: detect old headers/wasm modules/manifests in cleanObsolete()
-function buildWasmModule(emsdk, configFile: string, logCmd: boolean, force: boolean): boolean {
   const srcDir = path.dirname(configFile);
-  const json = JSON.parse(fs.readFileSync(configFile, 'utf-8')) as WasmConfig;
-  let success = true;
-  for (const [name, cfg] of Object.entries(json)) {
+  for (const [name, cfg] of Object.entries(wasmConfig)) {
+    counts.found++;
+
     // TODO: fix arcs.h so more than one source file can be compiled into a module
     if (cfg.src.length !== 1) {
       throw new Error(`wasm modules must specify exactly one source file (${configFile})`);
@@ -557,7 +579,7 @@ function buildWasmModule(emsdk, configFile: string, logCmd: boolean, force: bool
       ], {logCmd});
     if (!spawnResult.success) {
       console.error(spawnResult.stderr);
-      success = false;
+      counts.failed++;
       continue;
     }
 
@@ -581,21 +603,11 @@ function buildWasmModule(emsdk, configFile: string, logCmd: boolean, force: bool
       console.error(`Compilation failed for ${name} in ${configFile}\n`);
       console.error(emsdkResult.stderr);
       console.error('------------------------------------------------------------------------\n');
-      success = false;
+      counts.failed++;
       continue;
     }
-
-    // For tests, link the manifest into the build dir so particles can simply declare
-    // "in 'module.wasm'" without worrying about the file's location. The tests themselves
-    // will need to load the manifest from within build.
-    if (cfg.linkManifest) {
-      if (!link([manifestPath])) {
-        console.error(`wasm::link failed (${configFile})`);
-        return false;
-      }
-    }
+    counts.built++;
   }
-  return success;
 }
 
 function tslint(args: string[]): boolean {
@@ -663,25 +675,25 @@ function webpackPkg(pkg: string): () => boolean {
   return fn;
 }
 
-type SpawnOptions = {
+interface SpawnOptions {
   shell?: boolean;
   stdio?: string;
   dontWarnOnFailure?: boolean;
   logCmd?: boolean;
-};
+}
 
-type RawSpawnResult = {
+interface RawSpawnResult {
   status: number;
   stdout: Buffer;
   stderr: Buffer;
   error?: Error;
-};
+}
 
-type SpawnResult = {
+interface SpawnResult {
   success: boolean;
   stdout: string;
   stderr: string;
-};
+}
 
 function spawnWasSuccessful(result: RawSpawnResult, opts: SpawnOptions = {}): boolean {
   if (result.status === 0 && !result.error) {
