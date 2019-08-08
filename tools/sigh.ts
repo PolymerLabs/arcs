@@ -45,7 +45,9 @@ const build = buildPath('.', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 
-const buildLS = buildPath('./src/tools/language-server', checkLanguageServerDeps);
+const buildLS = buildPath('./src/tools/language-server', () => {
+  getOptionalDependencies(['vscode-jsonrpc', 'vscode-languageserver'], 'The languageServer command');
+});
 const webpackLS = webpackPkg('webpack-languageserver');
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
@@ -69,6 +71,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   devServer: [peg, build, devServer],
   flowcheck: [peg, build, flowcheck],
   licenses: [build],
+  install: [install],
   default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
@@ -98,15 +101,27 @@ const testFlags = {
   enableWasm: false,
 };
 
-function getOptionalDependency(dep, prefix = null) {
-  try {
-    return require(dep);
-  } catch (e) {
-    if (prefix) {
-      console.log(`${prefix} requires extra dependencies: run 'npm install --no-save ${dep}' to install`);
+// tslint:disable-next-line: no-any
+function getOptionalDependencies(deps: string[], prefix): any[] {
+  const result = [];
+  const missing = [];
+  for (const dep of deps) {
+    try {
+      result.push(require(dep));
+    } catch (e) {
+      missing.push(dep);
     }
-    return null;
   }
+  if (missing.length) {
+    throw new Error(`${prefix} requires extra dependencies: run 'sigh install ${missing.join(' ')}' to install`);
+  }
+  return result;
+}
+
+function install(args: string[]): boolean {
+  const sighDeps = require('../package.json').sighDependencies;
+  args = args.map(x => (x in sighDeps) ? `${x}@${sighDeps[x]}` : x);
+  return saneSpawn('npm', ['install', '--no-save', ...args], {logCmd: true});
 }
 
 function* findProjectFiles(dir: string, exclude: RegExp|null, include: RegExp|((path: string) => boolean)): Iterable<string> {
@@ -342,7 +357,7 @@ function railroad(): boolean {
 
 // Removes .js files in the build dir that don't have a corresponding source file (.js or .ts) in src.
 // Also removes the generated source map and type def files if they exist.
-function cleanObsolete(): boolean {
+function cleanObsolete() {
   const exts = ['js', 'js.map', 'd.ts'];
   for (const file of [...findProjectFiles('build', /javaharness|sigh\.js/, /\.js$/)]) {
     const buildBase = file.slice(0, -2);  // drop 'js' extension
@@ -357,24 +372,11 @@ function cleanObsolete(): boolean {
       });
     }
   }
-  return true;
 }
 
-function checkLanguageServerDeps(): boolean {
-  const missing = ['vscode-jsonrpc', 'vscode-languageserver'].filter(dep => !getOptionalDependency(dep));
-  if (missing.length) {
-    console.log(`The languageServer command requires extra dependencies: ` +
-                `run 'npm install --no-save ${missing.join(' ')}' to install`);
-    return false;
-  }
-  return true;
-}
-
-function buildPath(path: string, preprocess: () => boolean): () => boolean {
+function buildPath(path: string, preprocess: () => void): () => boolean {
   const fn = () => {
-    if (!preprocess()) {
-      return false;
-    }
+    preprocess();
 
     if (!tsc(path)) {
       console.error('build::tsc failed');
@@ -485,10 +487,7 @@ function wasm(args: string[]): boolean {
 
 // Attempts to install emsdk and verify that the version is correct.
 function setupEmsdk() {
-  const emsdk = getOptionalDependency('emsdk-npm', 'The wasm command');
-  if (!emsdk) {
-    return null;
-  }
+  const [emsdk] = getOptionalDependencies(['emsdk-npm'], 'The wasm command');
 
   // Downloads and installs emsdk/emscripten as required.
   emsdk.install();
@@ -869,16 +868,13 @@ function runTests(args: string[]): boolean {
 
 // Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
 function watch(args: string[]): boolean {
+  const [chokidar] = getOptionalDependencies(['chokidar'], 'The watch command');
+
   const options = minimist(args, {
     string: ['dir'],
     default: {dir: '.'},
     stopEarly: true,  // Allow options to be used in the command; 'sigh watch --dir src test -g foo'
   });
-
-  const chokidar = getOptionalDependency('chokidar', 'The watch command');
-  if (!chokidar) {
-    return false;
-  }
 
   const command = options._.shift() || 'webpack';
   const watcher = chokidar.watch(options.dir, {
@@ -907,6 +903,11 @@ function health(args: string[]): boolean {
   const options = minimist(args, {
     boolean: ['migration', 'types', 'tests', 'nullChecks', 'uploadCodeHealthStats', 'all'],
   });
+
+  let request;
+  if (options.uploadCodeHealthStats) {
+    [request] = getOptionalDependencies(['request'], 'Uploading health data');
+  }
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
     console.error('Please select only one detailed report at a time');
@@ -1006,17 +1007,12 @@ function health(args: string[]): boolean {
   line();
 
   if (options.uploadCodeHealthStats) {
-    return uploadCodeHealthStats(healthInformation);
+    return uploadCodeHealthStats(request, healthInformation);
   }
   return true;
 }
 
-function uploadCodeHealthStats(data: string[]) {
-  const request = getOptionalDependency('request', 'Uploading health data');
-  if (!request) {
-    return false;
-  }
-
+function uploadCodeHealthStats(request, data: string[]) {
   console.log('Uploading health data');
   const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
 
