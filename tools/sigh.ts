@@ -113,7 +113,7 @@ function getOptionalDependencies(deps: string[], prefix): any[] {
     }
   }
   if (missing.length) {
-    throw new Error(`${prefix} requires extra dependencies: run 'sigh install ${missing.join(' ')}' to install`);
+    throw new Error(`${prefix} requires extra dependencies: run 'tools/sigh install ${missing.join(' ')}' to install`);
   }
   return result;
 }
@@ -176,8 +176,9 @@ function targetIsUpToDate(relativeTarget: string, relativeDeps: string[], quiet 
 }
 
 function check(): boolean {
-  const nodeRequiredVersion = require('../package.json').engines.node;
-  const npmRequiredVersion = require('../package.json').engines.npm;
+  const engines = require('../package.json').engines;
+  const nodeRequiredVersion = engines.node;
+  const npmRequiredVersion = engines.npm;
 
   if (!semver.satisfies(process.version, nodeRequiredVersion)) {
     throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
