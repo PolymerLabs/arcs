@@ -56,7 +56,6 @@
     "chromedriver": "^75.1.0",
     "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
-    "emsdk-npm": "github:mykmartin/emsdk-npm#travis-workaround",
     "eslint": "^6.0.1",
     "eslint-config-google": "^0.13.0",
     "eslint-plugin-header": "^3.0.0",
@@ -71,7 +70,6 @@
     "node-webcrypto-ossl": "^1.0.39",
     "npm-run-all": "^4.1.5",
     "pegjs": "^0.10.0",
-    "request": "^2.88.0",
     "rollup": "^1.17.0",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-ignore": "^1.0.5",
@@ -106,6 +104,13 @@
     "typescript": "^3.4.5",
     "ws": "~6.0.0"
   },
+  "sighDependencies": {
+    "chokidar": "^3.0.2",
+    "emsdk-npm": "github:mykmartin/emsdk-npm#arcs",
+    "request": "^2.88.0",
+    "vscode-jsonrpc": "^4.0.0",
+    "vscode-languageserver": "^5.2.1"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/PolymerLabs/arcs.git"
@@ -120,9 +125,5 @@
     "node": ">= 10.13.0",
     "npm": ">= 6.9.0",
     "emsdk": ">= 1.38.34"
-  },
-  "optionalDependencies": {
-    "vscode-jsonrpc": "^4.0.0",
-    "vscode-languageserver": "^5.2.1"
   }
 }
