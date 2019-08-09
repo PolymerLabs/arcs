@@ -590,7 +590,7 @@ export interface NameAndTagList {
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Annotation = string;
-export type Triggers = [string][][];
+export type Triggers = [string, string][][];
 export type Indent = number;
 export type LocalName = string;
 export type Manifest = ManifestItem[];
