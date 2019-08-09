@@ -509,7 +509,7 @@ export class WasmParticle extends Particle {
   private revHandleMap = new Map<WasmAddress, Handle>();
   private converters = new Map<Handle, EntityPackager>();
 
-  constructor(id:string, container: WasmContainer) {
+  constructor(id: string, container: WasmContainer) {
     super();
     this.id = id;
     this.container = container;

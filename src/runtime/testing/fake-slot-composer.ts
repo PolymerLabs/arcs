@@ -11,6 +11,8 @@
 import {ModalityHandler} from '../modality-handler.js';
 import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
 import {SlotContext} from '../slot-context.js';
+import {Particle} from '../recipe/particle.js';
+import {Content} from '../slot-consumer.js';
 
 /**
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
@@ -25,7 +27,7 @@ export class FakeSlotComposer extends SlotComposer {
       ...options});
   }
 
-  renderSlot(particle, slotName, content) {
+  renderSlot(particle: Particle, slotName: string, content: Content) {
     super.renderSlot(particle, slotName, content);
 
     // In production updateProvidedContexts() is done in DOM Mutation Observer.
@@ -50,7 +52,7 @@ export class RozSlotComposer extends FakeSlotComposer {
   // tslint:disable-next-line: no-any
   public received: [string, string, any][] = [];
 
-  renderSlot(particle, slotName, content) {
+  renderSlot(particle: Particle, slotName: string, content: Content) {
     // super.renderSlot may modify 'content', so record a copy of it before calling that.
     const copy = JSON.parse(JSON.stringify(content));
     if (copy.templateName) {

@@ -199,17 +199,17 @@ describe('wasm tests (C++)', () => {
     const results = (await output.toList()).map(e => e.rawData);
     assert.lengthOf(results, 4);
 
-    assert.deepStrictEqual(results[0], {call: 'resolveUrl', payload: 'RESOLVED($resolve-me)'});
+    const resolve = results.shift();
+    assert.deepStrictEqual(resolve, {call: 'resolveUrl', payload: 'RESOLVED($resolve-me)'});
 
-    const verifyRandom = (result, tag) => {
-      assert.strictEqual(result.call, 'random.next');
-      assert.strictEqual(result.tag, tag);
-      assert.match(result.payload, /^value:0\.[0-9]+;$/);  // eg. 'value:0.33731562467426324;'
-    };
-    verifyRandom(results[1], 'first');
-    verifyRandom(results[2], 'second');
+    for (const tag of ['first', 'second']) {
+      const random = results.shift();
+      assert.strictEqual(random.call, 'random.next');
+      assert.strictEqual(random.tag, tag);
+      assert.match(random.payload, /^value:0\.[0-9]+;$/);  // eg. 'value:0.33731562467426324;'
+    }
 
-    const clock = results[3];
+    const clock = results.shift();
     assert.strictEqual(clock.call, 'clock.now');
     assert.strictEqual(clock.tag, '');
     assert.match(clock.payload, /^value:20[0-9]{2}-[0-9]{2}-[0-9]{2};$/);  // eg. 'value:2019-11-07;'
