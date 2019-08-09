@@ -20,6 +20,7 @@ import {ArcPlannerInvoker} from './arc-planner-invoker.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {Slot} from '../runtime/recipe/slot.js';
+import {HotCodeReloader} from './hot-code-reloader.js';
 
 type StackFrame = {method:string, location?:string, target?:string, targetClass?:string};
 
@@ -37,6 +38,7 @@ export const devtoolsArcInspectorFactory: ArcInspectorFactory = {
 class DevtoolsArcInspector implements ArcInspector {
 
   private arcDevtoolsChannel: DevtoolsChannel = null;
+  private arc: Arc;
 
   private onceActiveResolve: Runnable|null = null;
   public onceActive: Promise<void>|null = null;
@@ -44,6 +46,7 @@ class DevtoolsArcInspector implements ArcInspector {
   constructor(arc: Arc) {
     if (arc.isStub) return;
 
+    this.arc = arc;
     this.onceActive = new Promise(resolve => this.onceActiveResolve = resolve);
 
     const connectedOnInstantiate = DevtoolsConnection.isConnected;
@@ -60,6 +63,7 @@ class DevtoolsArcInspector implements ArcInspector {
 
       const unused1 = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
       const unused2 = new ArcPlannerInvoker(arc, this.arcDevtoolsChannel);
+      const unused3 = new HotCodeReloader(arc, this.arcDevtoolsChannel);
 
       this.arcDevtoolsChannel.send({
         messageType: 'arc-available',
@@ -92,6 +96,19 @@ class DevtoolsArcInspector implements ArcInspector {
     this.arcDevtoolsChannel.send({
       messageType: 'recipe-instantiated',
       messageBody: {slotConnections, activeRecipe}
+    });
+
+    if (!this.arc.isSpeculative) this.updateParticleSet(particles);
+  }
+
+  private updateParticleSet(particles: Particle[]) {
+    const particleSources = [];
+    particles.forEach(particle => {
+      particleSources.push(particle.spec.implFile);
+    });
+    this.arcDevtoolsChannel.send({
+      messageType: 'watch-particle-sources',
+      messageBody: particleSources
     });
   }
 
