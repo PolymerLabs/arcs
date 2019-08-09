@@ -122,9 +122,10 @@ export class Particle {
    *  - oldData: The previous value of a Singleton before it was updated.
    *  - added: An Array of Entities added to a Collection-backed Handle.
    *  - removed: An Array of Entities removed from a Collection-backed Handle.
+   *  - originator: whether the update originated from this particle.
    */
   // tslint:disable-next-line: no-any
-  protected async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}): Promise<void> {
+  protected async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: boolean}): Promise<void> {
   }
 
   async callOnHandleDesync(handle: Handle, onException: Consumer<Error>) {
