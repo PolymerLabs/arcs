@@ -16,7 +16,7 @@ public:
   std::string getTemplate(const std::string& slot_name) override {
     return R"(
       <div>Product is <b>{{name}}</b> <i>(sku <span>{{sku}}</span>)</i></div>
-      <button on-click="clicky">Copy to output store</button>
+      <button on-click="clicky">Copy to output store</button> <span>{{num}}</span> clicks
       <br>
     )";
   }
@@ -25,6 +25,7 @@ public:
     const arcs::Product& product = foo_.get();
     model->emplace("name", product.name());
     model->emplace("sku", arcs::num_to_str(product.sku()));
+    model->emplace("num", arcs::num_to_str(num_clicks_));
   }
 
   // Responding to UI events
@@ -36,13 +37,15 @@ public:
       // Basic printf-style logging; note the c_str() for std::string variables
       console("Product copied; new id is %s\n", copy._internal_id().c_str());
 
-      renderSlot("root");  // update display
+      num_clicks_++;
+      renderSlot("root", false, true);  // update display
     }
   }
 
 private:
   arcs::Singleton<arcs::Product> foo_;
   arcs::Collection<arcs::Product> bar_;
+  int num_clicks_ = 0;
 };
 
 
