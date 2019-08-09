@@ -18,11 +18,10 @@ See [here](particles/WasmTemplate) for a working example.
 
   ```json5
   {
-    "module.wasm": {                // output filename for the compiled wasm module
-      "manifest": "example.arcs",   // manifest file; defines the recipe, particle spec and schemas
-      "src": ["example.cc"],        // only a single source file is supported for now
-      "outDir": "$here",            // location of wasm module (and schema2packager output)
-      "linkManifest": false         // true for unit tests
+    "module.wasm": {               // output filename for the compiled wasm module
+      "manifest": "example.arcs",  // manifest file; defines the recipe, particle spec and schemas
+      "src": ["example.cc"],       // only a single source file is supported for now
+      "outDir": "$here"            // location of wasm module and schema2packager output
     }
   }
   ```

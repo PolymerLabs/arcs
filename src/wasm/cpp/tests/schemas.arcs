@@ -1,0 +1,14 @@
+schema Data
+  Number num
+  Text txt
+  URL lnk
+  Boolean flg
+
+schema RenderFlags
+  Boolean template
+  Boolean model
+
+schema ServiceResponse
+  Text call
+  Text tag
+  Text payload

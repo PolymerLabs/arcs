@@ -16,6 +16,8 @@ import {Handle, Singleton, Collection} from './handle.js';
 import {Content} from './slot-consumer.js';
 import {Dictionary} from './hot.js';
 import {Loader} from './loader.js';
+import {PECInnerPort} from './api-channel.js';
+import {UserException} from './arc-exceptions.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -405,6 +407,7 @@ type WasmAddress = number;
 // Holds an instance of a running wasm module, which may contain multiple particles.
 export class WasmContainer {
   loader: Loader;
+  apiPort: PECInnerPort;
   memory: WebAssembly.Memory;
   heapU8: Uint8Array;
   heap32: Int32Array;
@@ -413,8 +416,9 @@ export class WasmContainer {
   exports: any;
   particleMap = new Map<WasmAddress, WasmParticle>();
 
-  constructor(loader: Loader) {
+  constructor(loader: Loader, apiPort: PECInnerPort) {
     this.loader = loader;
+    this.apiPort = apiPort;
   }
 
   async initialize(buffer: ArrayBuffer) {
@@ -496,6 +500,7 @@ export class WasmContainer {
 
 // Creates and interfaces to a particle inside a WasmContainer's module.
 export class WasmParticle extends Particle {
+  private id: string;
   private container: WasmContainer;
   // tslint:disable-next-line: no-any
   private exports: any;
@@ -504,8 +509,9 @@ export class WasmParticle extends Particle {
   private revHandleMap = new Map<WasmAddress, Handle>();
   private converters = new Map<Handle, EntityPackager>();
 
-  constructor(container: WasmContainer) {
+  constructor(id: string, container: WasmContainer) {
     super();
+    this.id = id;
     this.container = container;
     this.exports = container.exports;
 
@@ -634,7 +640,10 @@ export class WasmParticle extends Particle {
   private getHandle(wasmHandle: WasmAddress) {
     const handle = this.revHandleMap.get(wasmHandle);
     if (!handle) {
-      throw new Error(`wasm particle '${this.spec.name}' attempted to write to unconnected handle`);
+      const err = new Error(`wasm particle '${this.spec.name}' attempted to write to unconnected handle`);
+      const userException = new UserException(err, 'WasmParticle::getHandle', this.id, this.spec.name);
+      this.container.apiPort.ReportExceptionInHost(userException);
+      throw err;
     }
     return handle;
   }
