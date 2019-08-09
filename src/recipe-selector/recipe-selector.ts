@@ -22,8 +22,8 @@ export class Match {
   matches(request: [string, string][]): boolean {
     if (this.trigger.length > request.length) return false;
     for (const pair of this.trigger) {
-      const found = request.findIndex(r => r[0] == pair[0] && r[1] == pair[1]);
-      if (found == -1) return false;
+      const found = request.findIndex(r => r[0] === pair[0] && r[1] === pair[1]);
+      if (found === -1) return false;
     }
     return true;
   }
@@ -47,7 +47,7 @@ export class RecipeSelector {
       recipes.forEach(recipe => {
         recipe.triggers.forEach(trigger => {
           if (this._table.find(match => match.matches(trigger))) {
-            throw new Error("Duplicate recipe trigger!");
+            throw new Error('Duplicate recipe trigger!');
           }
           this._table.push(new Match(trigger, recipe));
         });
