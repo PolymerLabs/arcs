@@ -23,7 +23,7 @@ particle SlandleChooser in 'source/Chooser.js'
   in [~a] choices
   inout [~a] resultList
   `consume Slot action
-    `provide [Slot{handle: choices}] annotation
+    `provide? [Slot{handle: choices}] annotation
   description `add items from ${person}'s ${choices}`
 
 particle SlandleAlsoOn in 'source/AlsoOn.js'

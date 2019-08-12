@@ -235,7 +235,7 @@ export class TypeVariableInfo {
   }
 
   isResolved(): boolean {
-    return (this._resolution && this._resolution.isResolved());
+    return this._resolution && this._resolution.isResolved();
   }
 }
 

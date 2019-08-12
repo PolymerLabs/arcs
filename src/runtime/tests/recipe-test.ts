@@ -38,7 +38,7 @@ describe('recipe', () => {
 
     recipe.normalize(options);
 
-    assert.strictEqual(4, options.errors.size);
+    assert.strictEqual(4, options.errors.size, 'expects four errors');
     recipe.handles.forEach(handle => assert.isTrue(options.errors.has(handle)));
     options.errors.has(recipe.slots[1]);
   });
