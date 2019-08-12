@@ -650,7 +650,7 @@ ${particleStr1}
           SomeParticle
             consume slotA as s0
       `)).recipes[0];
-      recipe.normalize();
+      assert.isTrue(recipe.normalize(), 'normalizes');
       const options = {errors: new Map(), details: '', showUnresolved: true};
       assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
@@ -672,7 +672,28 @@ ${particleStr1}
             slotA consume s0
       `)).recipes[0];
       const options = {errors: new Map(), details: '', showUnresolved: true};
-      recipe.normalize(options);
+      assert.isTrue(recipe.normalize(options), 'normalizes');
+      assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
+    };
+    await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
+    await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
+  });
+  it('SLANDLES consumes multiple set slots', async () => {
+    const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
+      const recipe = (await Manifest.parse(`
+        particle SomeParticle in 'some-particle.js'
+          \`consume${arg.isRequiredSlotA ? '' : '?'} [Slot] slotA
+          \`consume${arg.isRequiredSlotB ? '' : '?'} [Slot] slotB
+
+        recipe
+          \`slot 'slota-0' as s0
+          SomeParticle
+            slotA consume s0
+      `)).recipes[0];
+      const options = {errors: new Map(), details: '', showUnresolved: true};
+      assert.isTrue(recipe.normalize(options), `should normalizes ${JSON.stringify([...options.errors.values()])} ${JSON.stringify(options.details)}`);
       assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
     await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
@@ -792,7 +813,7 @@ ${particleStr1}
       checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
 
     const options = {errors: new Map(), details: '', showUnresolved: true};
-    recipe.normalize(options);
+    assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('recipe provided slot with no local name', async () => {

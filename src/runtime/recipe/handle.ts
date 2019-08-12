@@ -12,7 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
-import {Type, SlotType} from '../type.js';
+import {Type, SlotType, TypeVariable} from '../type.js';
 import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
@@ -118,12 +118,12 @@ export class Handle implements Comparable<Handle> {
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
-    const resolvedType = this.type.resolvedType();
-    if (resolvedType.canWriteSuperset && resolvedType.canWriteSuperset.tag === 'Slot') {
+    const resolvedType = this.type && this.type.resolvedType();
+    if (resolvedType && resolvedType.canWriteSuperset && resolvedType.canWriteSuperset.tag === 'Slot') {
       this._fate = this._fate === '?' ? '`slot' : this._fate;
     }
 
-    if (resolvedType.canReadSubset && resolvedType.canReadSubset.tag === 'Slot') {
+    if (resolvedType && resolvedType.canReadSubset && resolvedType.canReadSubset.tag === 'Slot') {
       this._fate = this._fate === '?' ? '`slot' : this._fate;
     }
 
@@ -211,7 +211,7 @@ export class Handle implements Comparable<Handle> {
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
-  static resolveEffectiveType(handleType: Type, connections: HandleConnection[]) {
+  static resolveEffectiveType(handleType: Type, connections: HandleConnection[]): Type {
     const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet);
   }
@@ -229,7 +229,7 @@ export class Handle implements Comparable<Handle> {
       connection.tags.forEach(tag => tags.add(tag));
     }
     if (!this.mappedType && this.fate === '`slot') {
-      this._mappedType = new SlotType(new SlotInfo(undefined, undefined));
+      this._mappedType = TypeVariable.make(this.id, null, null);
     }
     const type = Handle.resolveEffectiveType(this._mappedType, this._connections);
     if (!type) {
@@ -254,7 +254,13 @@ export class Handle implements Comparable<Handle> {
       if (this.fate === 'create' || this.fate === '`slot') {
         mustBeResolved = false;
       }
-      if ((mustBeResolved && !this.type.isResolved()) || !this.type.canEnsureResolved()) {
+      if (!this.type.canEnsureResolved()) {
+        if (options) {
+          options.details.push('unresolved type (cannot ensure resolved)');
+        }
+        resolved = false;
+      }
+      if (mustBeResolved && !this.type.isResolved()) {
         if (options) {
           options.details.push('unresolved type');
         }
