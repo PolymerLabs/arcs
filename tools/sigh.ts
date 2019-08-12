@@ -13,6 +13,7 @@ const os = require('os');
 const path = require('path');
 const minimist = require('minimist');
 const semver = require('semver');
+const chokidar = require('chokidar');
 
 // Use saneSpawn or saneSpawnWithOutput instead, this is not cross-platform.
 // tslint:disable-next-line: variable-name
@@ -885,8 +886,6 @@ function runTests(args: string[]): boolean {
 
 // Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
 function watch(args: string[]): boolean {
-  const [chokidar] = getOptionalDependencies(['chokidar'], 'The watch command');
-
   const options = minimist(args, {
     string: ['dir'],
     default: {dir: '.'},

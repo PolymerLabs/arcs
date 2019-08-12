@@ -106,7 +106,6 @@
     "ws": "~6.0.0"
   },
   "sighDependencies": {
-    "chokidar": "^3.0.2",
     "emsdk-npm": "github:mykmartin/emsdk-npm#arcs",
     "request": "^2.88.0",
     "vscode-jsonrpc": "^4.0.0",
