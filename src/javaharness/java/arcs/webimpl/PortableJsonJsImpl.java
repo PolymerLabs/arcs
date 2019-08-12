@@ -96,7 +96,7 @@ public class PortableJsonJsImpl implements PortableJson {
     @Override
     public List<String> asStringArray() {
         List<String> list = new ArrayList<>();
-        forEach(str -> list.add(str));
+        forEach(i -> list.add(getString(i)));
         return list;
     }
 

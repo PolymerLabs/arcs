@@ -34,7 +34,7 @@ public class StorageProxyScheduler {
   }
 
   // TODO: break apart args here, sync events should flush the queue.
-  void enqueue(Particle particle, Handle handle, Args args) {
+  void enqueue(Particle particle, Handle handle, String kind, PortableJson details) {
     if (!queues.containsKey(particle)) {
       queues.put(particle, new HashMap<>());
     }
@@ -43,7 +43,7 @@ public class StorageProxyScheduler {
       byHandle.put(handle, new ArrayList<Args>());
     }
     List<Args> queue = byHandle.get(handle);
-    queue.add(args);
+    queue.add(new Args(kind, particle, details));
     schedule();
   }
 

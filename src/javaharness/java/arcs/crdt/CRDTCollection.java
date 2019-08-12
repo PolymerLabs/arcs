@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Classes and interfaces copied from src/runtime/crdt/crdt-collection.ts
-
 class RawCollection<T> extends HashSet<T> implements CRDTConsumerType {
   RawCollection() {}
   RawCollection(List<T> list) { super(list); }
@@ -26,7 +25,19 @@ class CollectionChange<T extends Referenceable> extends CRDTChange<CRDTCollectio
 interface CollectionModel<T extends Referenceable> extends CRDTModel<CRDTCollectionTypeRecord<T>> {}
 
 public class CRDTCollection<T extends Referenceable> implements CollectionModel<T> {
-  private CollectionData<T> model = new CollectionData<>();
+  private CollectionData<T> model;
+
+  public CRDTCollection() {
+    model = new CollectionData<>();
+  }
+
+  public CRDTCollection(List<VersionedValue<T>> values, VersionMap version) {
+    model = new CollectionData<>();
+    for (VersionedValue<T> value : values) {
+      model.values.put(value.value.getId(), value);
+    }
+    model.version = version;
+  }
 
   @Override
   public MergeResult merge(CRDTData other) {
@@ -100,6 +111,10 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     model.version.put(key, clockValue);
     model.values.remove(value.getId());
     return true;
+  }
+
+  public int nextVersion(String key) {
+    return model.version.getOrDefault(key, 0).intValue() + 1;
   }
 
   private Map<String, VersionedValue<T>> mergeItems(CollectionData<T> data1, CollectionData<T> data2) {

@@ -11,7 +11,7 @@ public class CollectionOperation<T> implements CRDTOperation {
   VersionMap clock;
   String actor;
 
-  CollectionOperation(Type type, T t, VersionMap clock, String actor) {
+  public CollectionOperation(Type type, T t, VersionMap clock, String actor) {
     this.type = type;
     switch (type) {
       case ADD:
