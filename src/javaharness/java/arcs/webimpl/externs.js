@@ -2,15 +2,21 @@
  * @fileoverview Externs provided by Pipes-Shell.
  */
 /** @constructor */
-var ShellApi = function() {};
+var ShellApi = function () {
+};
 
 /** @param {!string} arg */
-ShellApi.chooseSuggestion = function(arg) {};
+ShellApi.chooseSuggestion = function (arg) {
+};
 /** @param {!string} arg */
-ShellApi.observeEntity = function(arg) {};
+ShellApi.observeEntity = function (arg) {
+};
 /** @param {!string} arg */
-ShellApi.receiveEntity = function(arg) {};
+ShellApi.receiveEntity = function (arg) {
+};
 /** @param {!string} arg */
-ShellApi.postMessage = function(arg) {};
+ShellApi.postMessage = function (arg) {
+};
 /** @param {!string} arg */
-ShellApi.receive = function(arg) {};
+ShellApi.receive = function (arg) {
+};

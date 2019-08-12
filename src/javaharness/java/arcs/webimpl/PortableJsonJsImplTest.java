@@ -1,6 +1,7 @@
 package arcs.webimpl;
 
 import arcs.api.PortableJson;
+
 import java.util.Arrays;
 
 public class PortableJsonJsImplTest {
@@ -62,7 +63,10 @@ public class PortableJsonJsImplTest {
     assert obj.getBool(3) == bool;
     assert parser.stringify(obj.getObject(4)) == parser.stringify(innerObj);
     assert parser.stringify(obj) == parser.stringify(parser.parse(parser.stringify(obj)));
-    assert parser.parse(parser.stringify(parser.parse(parser.stringify(obj)))).equals(parser.parse(parser.stringify(obj))) : "oi";
+    assert parser
+            .parse(parser.stringify(parser.parse(parser.stringify(obj))))
+            .equals(parser.parse(parser.stringify(obj)))
+        : "oi";
     assert obj.equals(parser.parse(parser.stringify(obj)));
     assert !obj.equals(innerObj);
     assert !innerObj.equals(obj);

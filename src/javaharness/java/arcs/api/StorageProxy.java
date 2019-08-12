@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
-enum SyncState {NONE, PENDING, FULL};
-
 public abstract class StorageProxy implements Store {
   public final String id;
   public final String name;
@@ -31,19 +29,26 @@ public abstract class StorageProxy implements Store {
   private static final String SYNC = "sync";
   private static final String DESYNC = "desync";
 
-  protected StorageProxy(String id, Type type, PECInnerPort port, String name,
-          PortableJsonParser jsonParser, PortablePromiseFactory promiseFactory) {
-      this.id = id;
-      this.port = port;
-      this.type = type;
-      this.name = name;
-      this.jsonParser = jsonParser;
-      this.promiseFactory = promiseFactory;
-      this.scheduler = new StorageProxyScheduler(promiseFactory);
+  protected StorageProxy(
+      String id,
+      Type type,
+      PECInnerPort port,
+      String name,
+      PortableJsonParser jsonParser,
+      PortablePromiseFactory promiseFactory) {
+    this.id = id;
+    this.port = port;
+    this.type = type;
+    this.name = name;
+    this.jsonParser = jsonParser;
+    this.promiseFactory = promiseFactory;
+    this.scheduler = new StorageProxyScheduler(promiseFactory);
   }
 
   abstract PortableJson getModelForSync();
+
   abstract boolean synchronizeModel(Integer version, PortableJson model);
+
   abstract PortableJson processUpdate(PortableJson operation, boolean apply);
 
   public void register(Particle particle, Handle handle) {
@@ -74,8 +79,10 @@ public abstract class StorageProxy implements Store {
 
   protected void onUpdate(PortableJson update) {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
-    if (observers.keySet().stream().filter(handle -> !handle.options.keepSynced &&
-       handle.options.notifyUpdate).findFirst() != null) {
+    if (observers.keySet().stream()
+            .filter(handle -> !handle.options.keepSynced && handle.options.notifyUpdate)
+            .findFirst()
+        != null) {
       PortableJson handleUpdate = processUpdate(update, false);
       notify(UPDATE, handleUpdate, options -> !options.keepSynced && options.notifyUpdate);
     }
@@ -86,8 +93,13 @@ public abstract class StorageProxy implements Store {
     }
     int updateVersion = update.getInt(VERSION);
     if (updateVersion <= version.intValue()) {
-      LOGGER.warning("StorageProxy " + id + " received stale model version " + updateVersion +
-                     "current is " + version);
+      LOGGER.warning(
+          "StorageProxy "
+              + id
+              + " received stale model version "
+              + updateVersion
+              + "current is "
+              + version);
       return;
     }
 
@@ -101,8 +113,13 @@ public abstract class StorageProxy implements Store {
   public void onSynchronize(PortableJson data) {
     int version = data.getInt(VERSION);
     if (this.version != null && version <= this.version.intValue()) {
-      LOGGER.warning("StorageProxy " + id + " received stale model version " + version +
-                "current is " + version);
+      LOGGER.warning(
+          "StorageProxy "
+              + id
+              + " received stale model version "
+              + version
+              + "current is "
+              + version);
       return;
     }
 
@@ -131,12 +148,13 @@ public abstract class StorageProxy implements Store {
   }
 
   private void processUpdates() {
-    Predicate<PortableJson> updateIsNext = update -> {
-      if (update.getInt(VERSION) == version.intValue() + 1) {
-        return true;
-      }
-      return false;
-    };
+    Predicate<PortableJson> updateIsNext =
+        update -> {
+          if (update.getInt(VERSION) == version.intValue() + 1) {
+            return true;
+          }
+          return false;
+        };
 
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
     while (updates.size() > 0 && updateIsNext.test(updates.get(0))) {
@@ -170,5 +188,11 @@ public abstract class StorageProxy implements Store {
       // If we were desynced but have now consumed all update events, we've caught up.
       syncState = SyncState.FULL;
     }
+  }
+
+  enum SyncState {
+    NONE,
+    PENDING,
+    FULL
   }
 }

@@ -18,8 +18,13 @@ public abstract class Handle {
     public boolean notifyDesync = false;
   }
 
-  protected Handle(StorageProxy storage, IdGenerator idGenerator, String name,
-      String particleId, boolean canRead, boolean canWrite) {
+  protected Handle(
+      StorageProxy storage,
+      IdGenerator idGenerator,
+      String name,
+      String particleId,
+      boolean canRead,
+      boolean canWrite) {
     this.storage = storage;
     this.type = storage.type;
     this.idGenerator = idGenerator;

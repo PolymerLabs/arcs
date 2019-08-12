@@ -3,8 +3,13 @@ package arcs.api;
 public class Collection extends Handle {
   private final CollectionStore collectionStore;
 
-  public Collection(StorageProxy storage, IdGenerator idGenerator, String name,
-      String particleId, boolean canRead, boolean canWrite) {
+  public Collection(
+      StorageProxy storage,
+      IdGenerator idGenerator,
+      String name,
+      String particleId,
+      boolean canRead,
+      boolean canWrite) {
     super(storage, idGenerator, name, particleId, canRead, canWrite);
     assert storage instanceof CollectionStore : "invalid storage";
     this.collectionStore = (CollectionStore) storage;
@@ -30,7 +35,8 @@ public class Collection extends Handle {
         particle.onHandleDesync(this);
         break;
       default:
-        throw new AssertionError("Unsupported notify kind " + kind + " for particle: " + particle.getName());
+        throw new AssertionError(
+            "Unsupported notify kind " + kind + " for particle: " + particle.getName());
     }
   }
 
@@ -53,7 +59,7 @@ public class Collection extends Handle {
       throw new AssertionError("Handle not writeable");
     }
     createIdForEntity(entity);
-    String keys[] = { generateKey() };
+    String keys[] = {generateKey()};
     collectionStore.store(entity, keys, particleId);
   }
 

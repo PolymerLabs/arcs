@@ -7,19 +7,20 @@ package(default_visibility = ["//visibility:public"])
 load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 
 java_library(
-    name = "api",
+    name = "builtinparticles",
     srcs = glob([
         "*.java",
     ]),
     deps = [
-        "@com_google_dagger",
-        "@javax_inject_source//jar",
-        "//java/arcs/crdt:crdt",
+        "//java/arcs:dagger-j2cl",
+        "//java/arcs:javax_inject-j2cl",
+        "//java/arcs/api"
     ],
 )
 
+
 j2cl_library(
-    name = "api-j2cl",
+    name = "builtinparticles-j2cl",
     srcs = glob([
         "*.java",
     ]),
@@ -27,6 +28,7 @@ j2cl_library(
         "//java/arcs:dagger-j2cl",
         "//java/arcs:dagger_runtime-j2cl",
         "//java/arcs:javax_inject-j2cl",
-        "//java/arcs/crdt:crdt-j2cl",
+        "//java/arcs/api:api-j2cl",
     ],
 )
+
