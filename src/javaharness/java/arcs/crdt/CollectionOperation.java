@@ -3,7 +3,10 @@ package arcs.crdt;
 import java.util.Optional;
 
 public class CollectionOperation<T> implements CRDTOperation {
-  public static enum Type { ADD, REMOVE }
+  public static enum Type {
+    ADD,
+    REMOVE
+  }
 
   Type type;
   Optional<T> added;

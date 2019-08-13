@@ -3,11 +3,10 @@ package arcs.api;
 import java.util.Arrays;
 
 /**
- * An immutable object consisting of two components: a root, and an idTree.
- * The root is the session ID from the particular session in which the ID was
- * constructed (see the IdGenerator class). The idTree is a list of
- * subcomponents, forming a hierarchy of IDs (child IDs are created by
- * appending subcomponents to their parent ID"s idTree).
+ * An immutable object consisting of two components: a root, and an idTree. The root is the session
+ * ID from the particular session in which the ID was constructed (see the IdGenerator class). The
+ * idTree is a list of subcomponents, forming a hierarchy of IDs (child IDs are created by appending
+ * subcomponents to their parent ID"s idTree).
  */
 // copied from id.ts
 public class Id {
@@ -34,8 +33,10 @@ public class Id {
 
     if (bits[0].startsWith("!")) {
       String root = bits[0].substring(1);
-      String idTree[] = Arrays.asList(Arrays.copyOfRange(bits, 1, bits.length))
-          .stream().filter(component -> component.length() > 0).toArray(String[]::new);
+      String idTree[] =
+          Arrays.asList(Arrays.copyOfRange(bits, 1, bits.length)).stream()
+              .filter(component -> component.length() > 0)
+              .toArray(String[]::new);
       return new Id(root, idTree);
     } else {
       return new Id("", bits);

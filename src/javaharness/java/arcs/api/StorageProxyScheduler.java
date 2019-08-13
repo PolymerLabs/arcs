@@ -1,6 +1,5 @@
 package arcs.api;
 
-import java.lang.Runnable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +63,11 @@ public class StorageProxyScheduler {
       return promiseFactory.newPromise(null);
     }
     if (idle == null) {
-      idle = promiseFactory.newPromise((resolver, rejecter) -> { idleResolver = resolver; });
+      idle =
+          promiseFactory.newPromise(
+              (resolver, rejecter) -> {
+                idleResolver = resolver;
+              });
     }
     return idle;
   }
@@ -74,10 +77,13 @@ public class StorageProxyScheduler {
       return;
     }
     scheduled = true;
-    promiseFactory.newPromise(null).then(Void -> {
-      scheduled = false;
-      dispatch();
-    });
+    promiseFactory
+        .newPromise(null)
+        .then(
+            Void -> {
+              scheduled = false;
+              dispatch();
+            });
   }
 
   private void dispatch() {

@@ -8,7 +8,7 @@ public class TypeFactory {
             case ENTITY:
                 return new EntityType(Schema.fromJson(data));
             case COLLECTION:
-                return new CollectionType(TypeFactory.typeFromJson(data));
+                return new CollectionType<>(TypeFactory.typeFromJson(data));
             default:
                 throw new AssertionError("Unsupported type tag " + tag);
         }
