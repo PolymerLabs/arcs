@@ -27,6 +27,7 @@ cache: npm
 install:
   - npm ci
   - npm --prefix=server ci
+  - npm run sigh-install chokidar
 
 before_deploy:
   # build apidocs
