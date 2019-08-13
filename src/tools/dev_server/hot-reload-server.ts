@@ -9,22 +9,22 @@
  */
 
 import WebSocket from 'ws';
-import chokidar from 'chokidar';
 
 /**
  * Hot Reload Server is opening a WebSocket connection for Arcs Explorer to support hot code reload feature.
  * This connection allows the two to exchange information about the files that need to be watched and if there
- * are any changes to those files. This class receive information about the files that needs to be watched 
+ * are any changes to those files. This class receive information about the files that needs to be watched
  * from Arcs Explorer and watches them. Given any changes happen to any of those files it notifies Arcs Explorer
  * such that any particles corresponding to those files can be reloaded.
  */
 export class HotReloadServer {
   private server: WebSocket.Server | null;
   private port: number;
-  private watchers: chokidar.FSWatcher[];
+  private watchers;
   private filesToWatch;
   private connected: boolean;
-  
+  private chokidar;
+
   constructor(port: number) {
     this.server = null;
     this.port = port;
@@ -33,13 +33,21 @@ export class HotReloadServer {
     this.connected = false;
   }
 
+  async init() {
+    // This will throw if chokidar hasn't been installed, but in that case we shouldn't get here
+    // if this is being launched with sigh.
+    // @ts-ignore TS1323 dynamic import
+    const chokidarModule = await import('chokidar');
+    this.chokidar = chokidarModule.default;
+  }
+
   start() {
     if (this.server === null) {
       this.server = new WebSocket.Server({port: this.port});
     }
     this.server.on('connection', ws => {
       console.log('Hot Reload Server Connected!');
-      
+
       ws.on('message', msg => {
         this.watchers.forEach(watcher => watcher.close());
         this.watchers = [];
@@ -51,7 +59,7 @@ export class HotReloadServer {
           const local = file.replace(/^https:\/\/\$particles\//, './particles/');
 
           console.log(`Watching: ${local}`);
-          this.watchers.push(chokidar.watch(local).on('change', path => {
+          this.watchers.push(this.chokidar.watch(local).on('change', path => {
             console.log(`Detected change: ${path}`);
             ws.send(file);
           }));

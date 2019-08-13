@@ -1066,6 +1066,7 @@ function schema2pkg(args: string[]) {
 }
 
 function devServer(args: string[]) {
+  getOptionalDependencies(['chokidar'], 'The devServer command');
   return spawnTool('build/tools/dev_server/dev-server.js', args);
 }
 
