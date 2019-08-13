@@ -17,6 +17,6 @@ public abstract class ParticlesModule {
   @Provides
   @IntoSet
   static ParticleFactory provideEchoParticleFactory(EchoParticleFactory echoParticleFactory) {
-    return new EchoParticleFactory();
+      return echoParticleFactory;
   }
 }
