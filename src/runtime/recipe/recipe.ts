@@ -186,7 +186,7 @@ export class Recipe implements Cloneable<Recipe> {
 
   get modality(): Modality {
     return Modality.intersection(
-        this.particles.filter(p => Boolean(p.spec && p.spec.slotConnections.size > 0)).map(p => p.spec.modality));
+        this.particles.filter(p => Boolean(p.spec && p.spec.slandleConnectionNames().length > 0)).map(p => p.spec.modality));
   }
 
   allRequiredSlotsPresent(options=undefined): boolean {
