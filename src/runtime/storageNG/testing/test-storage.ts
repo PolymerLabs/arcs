@@ -10,7 +10,7 @@
 
 import {PropagatedException} from '../../arc-exceptions.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
-import {CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt.js';
+import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt.js';
 import {Consumer} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle';
@@ -81,17 +81,16 @@ export class MockStorageKey extends StorageKey {
 
 export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSyncCalled = false;
-  lastUpdate: CRDTOperation[] = null;
+  lastUpdate = null;
   constructor(storageProxy: StorageProxy<T>) {
     super('handle', storageProxy, IdGenerator.newSession(), {} as Particle, true, true);
   }
   onSync() {
     this.onSyncCalled = true;
   }
-  onUpdate(ops: CRDTOperation[]) {
-    this.lastUpdate = ops;
+  onUpdate(op: CRDTOperation, oldData: CRDTConsumerType) {
+    this.lastUpdate = [op, oldData];
   }
-
 }
 
 export class MockStorageDriverProvider implements StorageDriverProvider {
