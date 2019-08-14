@@ -14,6 +14,7 @@ import arcs.api.PortableJsonParser;
 import arcs.api.PortablePromiseFactory;
 import arcs.api.ShellApi;
 import arcs.api.ShellApiBasedArcsEnvironment;
+import arcs.builtinparticles.EntityObserver;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -62,4 +63,8 @@ public abstract class WebHarnessModule {
   @Binds
   public abstract PortablePromiseFactory providesPortablePromiseFactory(
       PortablePromiseFactoryImpl impl);
+
+  @Singleton
+  @Binds
+  public abstract EntityObserver provideEntityObserver(EntityObserverImpl impl);
 }

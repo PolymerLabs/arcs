@@ -11,8 +11,7 @@ schema Person
   Text firstName
   Text lastName
 
-// TODO: This should be a builtin particle.
-particle RecognizeEntity in './source/RecognizeEntity.js'
+particle CaptureEntity in './source/CaptureEntity.java'
   out [IncomingEntity] entities
 
 particle CopyEntities in './source/CopyEntities.js'
@@ -24,7 +23,7 @@ recipe Ingestion
   create #incomingEntities as incomingEntities
   create #recentPlaces as recentPlaces
   create #recentPeople as recentPeople
-  RecognizeEntity
+  CaptureEntity
     entities -> incomingEntities
   CopyEntities
     source <- incomingEntities

@@ -42,6 +42,10 @@ defineParticle(({Particle}) => {
         const placesHandle = this.handles.get('places');
         await placesHandle.store(new placesHandle.entityClass(JSON.parse(entity.jsonData)));
         return 1;
+      } else if (entity.type === 'person') {
+        const peopleHandle = this.handles.get('people');
+        await peopleHandle.store(new peopleHandle.entityClass(JSON.parse(entity.jsonData)));
+        return 1;
       }
       return 0;
     }
