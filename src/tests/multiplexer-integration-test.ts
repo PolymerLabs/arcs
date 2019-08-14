@@ -23,7 +23,7 @@ describe('Multiplexer', () => {
     const helper = await PlanningTestHelper.create({
       manifestFilename: './src/tests/particles/artifacts/polymorphic-muxing.recipes'
     });
-    const context = helper.arc._context;
+    const context = helper.arc.context;
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
@@ -57,7 +57,7 @@ describe('Multiplexer', () => {
       }
     });
     postsStub['referenceMode'] = false;
-    postsStub['version'] = '1';
+    // version could be set here, but doesn't matter for tests.
     await helper.makePlans();
 
     // Render 3 posts
@@ -77,7 +77,7 @@ describe('Multiplexer', () => {
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
-    const postsStore = helper.arc.findStoreById(helper.arc.activeRecipe.handles[0].id);
+    const postsStore = helper.arc.findStoreById(helper.arc.activeRecipe.handles[0].id) as CollectionStorageProvider;
     await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
     await helper.idle();
     assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);

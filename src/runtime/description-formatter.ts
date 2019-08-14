@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec, isRoot} from './particle-spec.js';
 import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
@@ -135,11 +135,14 @@ export class DescriptionFormatter {
     return undefined;
   }
 
+  static readonly tokensRegex = /\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g;
+  static readonly tokensInnerRegex = /\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/;
+
   _initTokens(pattern: string, particleDescription) {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
     while (pattern.length > 0) {
-      const tokens = pattern.match(/\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g);
+      const tokens = pattern.match(DescriptionFormatter.tokensRegex);
       let firstToken;
       let tokenIndex;
       if (tokens) {
@@ -163,7 +166,7 @@ export class DescriptionFormatter {
   }
 
   _initSubTokens(pattern, particleDescription): {}[] {
-    const valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
+    const valueTokens = pattern.match(DescriptionFormatter.tokensInnerRegex);
     const handleNames = valueTokens[1].split('.');
     const extra = valueTokens.length === 3 ? valueTokens[2] : undefined;
 
@@ -483,8 +486,8 @@ export class DescriptionFormatter {
 
   static sort(p1: ParticleDescription, p2: ParticleDescription) {
     // Root slot comes first.
-    const hasRoot1 = [...p1._particle.spec.slotConnections.values()].some(slotSpec => slotSpec.isRoot());
-    const hasRoot2 = [...p2._particle.spec.slotConnections.values()].some(slotSpec => slotSpec.isRoot());
+    const hasRoot1 = [...p1._particle.spec.slotConnections.values()].some(slotSpec => isRoot(slotSpec));
+    const hasRoot2 = [...p2._particle.spec.slotConnections.values()].some(slotSpec => isRoot(slotSpec));
     if (hasRoot1 !== hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }

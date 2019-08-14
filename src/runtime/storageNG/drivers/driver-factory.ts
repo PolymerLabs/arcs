@@ -50,9 +50,9 @@ export abstract class Driver<Data> {
 
 export class DriverFactory {
   static clearRegistrationsForTesting() {
-    this.providers = [];
+    this.providers = new Set();
   }
-  static providers: StorageDriverProvider[] = [];
+  static providers: Set<StorageDriverProvider> = new Set();
   static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
     for (const provider of this.providers) {
       if (provider.willSupport(storageKey)) {
@@ -63,7 +63,11 @@ export class DriverFactory {
   }
 
   static register(storageDriverProvider: StorageDriverProvider) {
-    this.providers.push(storageDriverProvider);
+    this.providers.add(storageDriverProvider);
+  }
+
+  static unregister(storageDriverProvider: StorageDriverProvider) {
+    this.providers.delete(storageDriverProvider);
   }
 
   static willSupport(storageKey: StorageKey) {

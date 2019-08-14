@@ -202,7 +202,7 @@ export abstract class VolatileStorageProvider extends StorageProviderBase {
   fromLiteral({version, model}) {}
 }
 
-class VolatileCollection extends VolatileStorageProvider implements CollectionStorageProvider {
+export class VolatileCollection extends VolatileStorageProvider implements CollectionStorageProvider {
   _model: CrdtCollectionModel;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
@@ -359,7 +359,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
   }
 }
 
-class VolatileSingleton extends VolatileStorageProvider implements SingletonStorageProvider {
+export class VolatileSingleton extends VolatileStorageProvider implements SingletonStorageProvider {
   _stored: {id: string, storageKey?: string}|null;
   private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {
@@ -445,7 +445,7 @@ class VolatileSingleton extends VolatileStorageProvider implements SingletonStor
     return this._stored;
   }
 
-  async set(value : {id: string}, originatorId: string = null, barrier: string = null): Promise<void> {
+  async set(value, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
@@ -459,7 +459,7 @@ class VolatileSingleton extends VolatileStorageProvider implements SingletonStor
 
       // It's important to store locally first, as the upstream consumers
       // are set up to assume all writes are processed (at least locally) synchronously.
-      this._stored = {id: value.id, storageKey} as {id: string};
+      this._stored = {id: value.id, storageKey};
 
       await this.ensureBackingStore();
 

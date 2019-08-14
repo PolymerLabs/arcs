@@ -11,22 +11,12 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const minimist = require('minimist');
+const semver = require('semver');
 
 // Use saneSpawn or saneSpawnWithOutput instead, this is not cross-platform.
 // tslint:disable-next-line: variable-name
 const _DO_NOT_USE_spawn = require('child_process').spawnSync;
-const minimist = require('minimist');
-const chokidar = try_require('chokidar');
-const semver = require('semver');
-const request = try_require('request');
-
-function try_require(dep) {
-  try {
-    return require(dep);
-  } catch (e) {
-    return null;
-  }
-}
 
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
@@ -51,11 +41,13 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
   }]
 };
 
-const build = buildPath('.', cleanObsolete, []);
+const build = buildPath('.', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 
-const buildLS = buildPath('./src/tools/aml-language-server', null, ['vscode-jsonrpc', 'vscode-languageserver']);
+const buildLS = buildPath('./src/tools/language-server', () => {
+  getOptionalDependencies(['vscode-jsonrpc', 'vscode-languageserver'], 'The languageServer command');
+});
 const webpackLS = webpackPkg('webpack-languageserver');
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
@@ -67,6 +59,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   wasm: [peg, build, wasm],
+  wasmTest: [peg, build, wasm, runTests],
   watch: [watch],
   lint: [peg, build, lint, tslint],
   tslint: [peg, build, tslint],
@@ -79,7 +72,8 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   devServer: [peg, build, devServer],
   flowcheck: [peg, build, flowcheck],
   licenses: [build],
-  default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
+  install: [install],
+  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -99,6 +93,37 @@ const nodeFlags = [
   '--experimental-modules',
   '--loader', fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs'))
 ];
+
+// The 'cron' env type indicates the daily build in Travis.
+const isTravisDaily = (process.env.TRAVIS_EVENT_TYPE === 'cron');
+
+// Flags for unit tests; use `global['testFlags'].foo` to access them.
+const testFlags = {
+  enableWasm: false,
+};
+
+// tslint:disable-next-line: no-any
+function getOptionalDependencies(deps: string[], prefix): any[] {
+  const result = [];
+  const missing = [];
+  for (const dep of deps) {
+    try {
+      result.push(require(dep));
+    } catch (e) {
+      missing.push(dep);
+    }
+  }
+  if (missing.length) {
+    throw new Error(`${prefix} requires extra dependencies: run 'tools/sigh install ${missing.join(' ')}' to install`);
+  }
+  return result;
+}
+
+function install(args: string[]): boolean {
+  const sighDeps = require('../package.json').sighDependencies;
+  args = args.map(x => (x in sighDeps) ? `${x}@${sighDeps[x]}` : x);
+  return saneSpawn('npm', ['install', '--no-save', ...args], {logCmd: true});
+}
 
 function* findProjectFiles(dir: string, exclude: RegExp|null, include: RegExp|((path: string) => boolean)): Iterable<string> {
   const predicate = (include instanceof RegExp) ? (fullPath => include.test(fullPath)) : include;
@@ -152,8 +177,9 @@ function targetIsUpToDate(relativeTarget: string, relativeDeps: string[], quiet 
 }
 
 function check(): boolean {
-  const nodeRequiredVersion = require('../package.json').engines.node;
-  const npmRequiredVersion = require('../package.json').engines.npm;
+  const engines = require('../package.json').engines;
+  const nodeRequiredVersion = engines.node;
+  const npmRequiredVersion = engines.npm;
 
   if (!semver.satisfies(process.version, nodeRequiredVersion)) {
     throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
@@ -162,45 +188,6 @@ function check(): boolean {
   const npmVersion = saneSpawnWithOutput('npm', ['-v']).stdout;
   if (!semver.satisfies(npmVersion, npmRequiredVersion)) {
     throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
-  }
-
-  return true;
-}
-
-// emsdk-npm's installation process is not idempotent, so it fails if we put this in the npm
-// postinstall step. This is invoked by the wasm build step and will generally only be required
-// at the same cadence as npm install.
-function installAndCheckEmsdk(): boolean {
-  if (!fs.existsSync('node_modules/emsdk-npm')) {
-    console.error(`emsdk-npm not found - run 'npm install'`);
-    return false;
-  }
-  if (fs.existsSync('node_modules/emsdk-npm/emsdk')) {
-    return true;
-  }
-
-  console.log('-- Installing emsdk --');
-  if (!saneSpawn('npx', ['emsdk-checkout']) ||
-      !saneSpawn('npx', ['emsdk', 'install', 'latest']) ||
-      !saneSpawn('npx', ['emsdk', 'activate', 'latest'])) {
-    return false;
-  }
-
-  const emsdkRequiredVersion = require('../package.json').engines.emsdk;
-
-  // This call generates a bunch of unrelated output (emsdk env setup, plus the version output
-  // itself is quite verbose). The regex extracts the version from a line that looks like:
-  //   emcc (Emscripten gcc/clang-like replacement) 1.38.38 (4965260 Tue Jul 9 13:29:04 2019 ...
-  const emsdkResult = saneSpawnWithOutput('npx', ['emsdk-run', 'em++', '--version']);
-  const match = emsdkResult.stdout.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
-  if (match === null) {
-    console.error(emsdkResult.stdout);
-    console.error(emsdkResult.stderr);
-    throw new Error('failed to extract emsdk version');
-  }
-  const emsdkVersion = match[1];
-  if (!semver.satisfies(emsdkVersion, emsdkRequiredVersion)) {
-    throw new Error(`at least emsdk ${emsdkRequiredVersion} is required, you have ${emsdkVersion}`);
   }
 
   return true;
@@ -279,7 +266,7 @@ function linkUnit(dummySrc: string, dummyDest: string): boolean {
 function languageServer(): boolean {
   keepProcessAlive = true; // Tell the runner to not exit.
   // Opens a language server on port 2089
-  return saneSpawn('tools/aml-language-server', []);
+  return saneSpawn('tools/language-server', []);
 }
 
 function peg(): boolean {
@@ -389,16 +376,12 @@ function cleanObsolete() {
   }
 }
 
-function buildPath(path: string, preprocess: () => void, deps: string[]): () => boolean {
+function buildPath(path: string, preprocess: () => void): () => boolean {
   const fn = () => {
-    if (preprocess) {
-      preprocess();
-    }
+    preprocess();
+
     if (!tsc(path)) {
       console.error('build::tsc failed');
-      if (deps.length > 0) {
-        console.error(`The following dependencies may be required${deps.map(s=>` ${s}`)}`);
-      }
       return false;
     }
 
@@ -470,23 +453,112 @@ function link(srcFiles: Iterable<string>): boolean {
 
 // Config for building wasm modules.
 interface WasmConfig {
-  [key: string]: {         // The target filename for the module.
-    manifest: string,      // The manifest to process; should be in the same dir as the json file
-    src: string[],         // The list of source files to compile (currently limited to one)
-    outDir: string,        // The output directory relative to project root; should be under 'build' for tests
-    linkManifest: boolean  // Whether to link the manifest file into outDir; should be true for tests
+  [key: string]: {     // Target filename for the module.
+    manifest: string,  // Manifest to process; should be in the same dir as the json file
+    src: string[],     // List of source files to compile (currently limited to one)
+    outDir: string,    // Output dir relative to project root; should be under 'build' for tests;
+                       // can be '$here' to use the same dir as the json file
   };
 }
 
-// TODO: detect old headers/wasm modules/manifests in cleanObsolete()
-function buildWasmModule(configFile: string, logCmd: boolean): boolean {
+interface WasmCounts {
+  found: number;
+  built: number;
+  failed: number;
+}
+
+// With no args, finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
+// Otherwise only the requested configs are processed (e.g. tools/sigh wasm src/wasm/cpp/wasm.json)
+// Other options: --trace to show commands used, --force to disable timestamp checks
+function wasm(args: string[]): boolean {
+  // TODO: https://github.com/PolymerLabs/arcs/issues/3418
+  if (process.platform !== 'linux') {
+    console.log(`Skipping step; wasm builds are not yet supported on ${process.platform}`);
+    return true;
+  }
+  const emsdk = setupEmsdk();
+  if (!emsdk) {
+    if (isTravisDaily) {
+      console.log('Disabling wasm builds for Travis execution');
+      return true;
+    }
+    return false;
+  }
+  testFlags.enableWasm = true;
+
+  const options = minimist(args, {
+    boolean: ['trace', 'force'],
+  });
+  const specified = (options._.length > 0);
+  const targets = specified ? options._ : findProjectFiles('src', /javaharness/, /[/\\]wasm\.json$/);
+  const counts: WasmCounts = {found: 0, built: 0, failed: 0};
+  for (const configFile of targets) {
+    if (specified && !fs.existsSync(configFile)) {
+      console.error(`wasm config not found: ${configFile}`);
+      counts.failed++;
+      continue;
+    }
+    buildWasmModule(emsdk, counts, configFile, options.trace, options.force);
+  }
+  if (counts.found === 0) {
+    console.log('No wasm targets found');
+  } else if (counts.built === 0 && counts.failed === 0) {
+    console.log(`${counts.found} wasm targets found; all up-to-date`);
+  } else {
+    console.log(`${counts.found} wasm targets found; ${counts.built} built; ${counts.failed} failed`);
+  }
+  return counts.failed === 0;
+}
+
+// Attempts to install emsdk and verify that the version is correct.
+function setupEmsdk() {
+  const [emsdk] = getOptionalDependencies(['emsdk-npm'], 'The wasm command');
+
+  // Downloads and installs emsdk/emscripten as required.
+  emsdk.install();
+
+  // Verify the emsdk version. This also checks that em++ can be executed. The call generates a
+  // bunch of unrelated output (emsdk env setup, plus the version output itself is quite verbose),
+  // so the regex extracts the version from a line that looks like:
+  //   emcc (Emscripten gcc/clang-like replacement) 1.38.38 (4965260 Tue Jul 9 13:29:04 2019 ...
+  const result = emsdk.run('em++', ['--version']);
+  const match = result.stdout.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
+  if (match === null) {
+    console.error('Failed to extract emsdk version');
+    console.error(result.stdout);
+    console.error(result.stderr);
+    return null;
+  }
+  const emsdkVersion = match[1];
+  const emsdkRequired = require('../package.json').engines.emsdk;
+  if (!semver.satisfies(emsdkVersion, emsdkRequired)) {
+    console.error(`emsdk version check failed: at least ${emsdkRequired} is required, you have ${emsdkVersion}`);
+    return null;
+  }
+  return emsdk;
+}
+
+// TODO: detect old headers/modules in cleanObsolete()
+function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: boolean, force: boolean) {
+  let wasmConfig: WasmConfig;
+  try {
+    wasmConfig = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+  } catch (e) {
+    console.error(`Error parsing ${configFile}: ${e.message}\n`);
+    counts.failed++;
+    return;
+  }
+
   const srcDir = path.dirname(configFile);
-  const json = JSON.parse(fs.readFileSync(configFile, 'utf-8')) as WasmConfig;
-  let success = true;
-  for (const [name, cfg] of Object.entries(json)) {
+  for (const [name, cfg] of Object.entries(wasmConfig)) {
+    counts.found++;
+
     // TODO: fix arcs.h so more than one source file can be compiled into a module
     if (cfg.src.length !== 1) {
       throw new Error(`wasm modules must specify exactly one source file (${configFile})`);
+    }
+    if (cfg.outDir === '$here') {
+      cfg.outDir = srcDir;
     }
 
     const manifestPath = path.join(srcDir, cfg.manifest);
@@ -495,29 +567,30 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
     const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
 
     // Generate the entity class header file from the manifest.
-    let result = saneSpawnWithOutput('node', [
+    const updateFlag = force ? [] : ['--update'];
+    const spawnResult = saneSpawnWithOutput('node', [
         ...nodeFlags,
         '--no-warnings',
         'build/tools/schema2packager.js',
-        '--update',  // only generate if the manifest has been updated
+        ...updateFlag,
         target,
         '-o', cfg.outDir,
         manifestPath
       ], {logCmd});
-    if (!result.success) {
-      console.error(result.stderr);
-      success = false;
+    if (!spawnResult.success) {
+      console.error(spawnResult.stderr);
+      counts.failed++;
       continue;
     }
 
-    const headerPath = result.stdout.trim();
-    if (targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, srcPath], true)) {
+    const headerPath = spawnResult.stdout.trim();
+    if (!force && targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, srcPath], true)) {
       continue;
     }
 
     // Compile the wasm module.
-    result = saneSpawnWithOutput('npx', [
-        'emsdk-run', 'em++', '-std=c++17', '-O3',
+    const emsdkResult = emsdk.run('em++', [
+        '-std=c++17', '-O3',
         '-s', `EXPORTED_FUNCTIONS=['_malloc','_free']`,
         '-s', 'EMIT_EMSCRIPTEN_METADATA',
         '-I', 'src/wasm/cpp',  // for arcs.h
@@ -525,41 +598,16 @@ function buildWasmModule(configFile: string, logCmd: boolean): boolean {
         '-o', wasmPath,
         srcPath
       ], {logCmd});
-    if (!result.success) {
+    if (emsdkResult.status !== 0) {
       console.error('\n------------------------------------------------------------------------');
       console.error(`Compilation failed for ${name} in ${configFile}\n`);
-      console.error(result.stderr);
+      console.error(emsdkResult.stderr);
       console.error('------------------------------------------------------------------------\n');
-      success = false;
+      counts.failed++;
       continue;
     }
-
-    // For tests, link the manifest into the build dir so particles can simply declare
-    // "in 'module.wasm'" without worrying about the file's location. The tests themselves
-    // will need to load the manifest from within build.
-    if (cfg.linkManifest) {
-      if (!link([manifestPath])) {
-        console.error(`wasm::link failed (${configFile})`);
-        return false;
-      }
-    }
+    counts.built++;
   }
-  return success;
-}
-
-// Finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
-function wasm(args: string[]): boolean {
-  if (!installAndCheckEmsdk()) {
-    return false;
-  }
-  const options = minimist(args, {
-    boolean: ['trace'],
-  });
-  let success = true;
-  for (const configFile of findProjectFiles('src', null, /[/\\]wasm\.json$/)) {
-    success = success && buildWasmModule(configFile, options.trace);
-  }
-  return success;
 }
 
 function tslint(args: string[]): boolean {
@@ -627,25 +675,25 @@ function webpackPkg(pkg: string): () => boolean {
   return fn;
 }
 
-type SpawnOptions = {
+interface SpawnOptions {
   shell?: boolean;
   stdio?: string;
   dontWarnOnFailure?: boolean;
   logCmd?: boolean;
-};
+}
 
-type RawSpawnResult = {
+interface RawSpawnResult {
   status: number;
   stdout: Buffer;
   stderr: Buffer;
   error?: Error;
-};
+}
 
-type SpawnResult = {
+interface SpawnResult {
   success: boolean;
   stdout: string;
   stderr: string;
-};
+}
 
 function spawnWasSuccessful(result: RawSpawnResult, opts: SpawnOptions = {}): boolean {
   if (result.status === 0 && !result.error) {
@@ -684,6 +732,15 @@ function saneSpawnWithOutput(cmd: string, args: string[], opts?: SpawnOptions): 
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   return {success: spawnWasSuccessful(result, opts), stdout: result.stdout.toString(), stderr: result.stderr.toString()};
+}
+
+function runTestsOrHealthOnCron(args: string[]): boolean {
+  if (isTravisDaily) {
+    // The travis cron job should add the following arguments when running the health command.
+    args.push('--all', '--uploadCodeHealthStats');
+    return health(args);
+  }
+  return runTests(args);
 }
 
 function runTests(args: string[]): boolean {
@@ -764,6 +821,8 @@ function runTests(args: string[]): boolean {
       ${chainImports.join('\n      ')}
       (async () => {
         ${options.explore ? 'await DevtoolsConnection.onceConnected;' : ''}
+        // Mocha doesn't have any way to pass custom flags into tests.
+        global.testFlags = ${JSON.stringify(testFlags)};
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {
@@ -826,16 +885,13 @@ function runTests(args: string[]): boolean {
 
 // Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
 function watch(args: string[]): boolean {
+  const [chokidar] = getOptionalDependencies(['chokidar'], 'The watch command');
+
   const options = minimist(args, {
     string: ['dir'],
     default: {dir: '.'},
     stopEarly: true,  // Allow options to be used in the command; 'sigh watch --dir src test -g foo'
   });
-
-  if (chokidar === null) {
-    console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install --no-save chokidar\' then try again\n');
-    return false;
-  }
 
   const command = options._.shift() || 'webpack';
   const watcher = chokidar.watch(options.dir, {
@@ -864,6 +920,11 @@ function health(args: string[]): boolean {
   const options = minimist(args, {
     boolean: ['migration', 'types', 'tests', 'nullChecks', 'uploadCodeHealthStats', 'all'],
   });
+
+  let request;
+  if (options.uploadCodeHealthStats) {
+    [request] = getOptionalDependencies(['request'], 'Uploading health data');
+  }
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
     console.error('Please select only one detailed report at a time');
@@ -963,18 +1024,14 @@ function health(args: string[]): boolean {
   line();
 
   if (options.uploadCodeHealthStats) {
-    return uploadCodeHealthStats(healthInformation);
+    return uploadCodeHealthStats(request, healthInformation);
   }
   return true;
 }
 
-function uploadCodeHealthStats(data: string[]) {
+function uploadCodeHealthStats(request, data: string[]) {
   console.log('Uploading health data');
   const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
-
-  if (!request) {
-    return false;
-  }
 
   const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
   const branchFrom = process.env.TRAVIS_PULL_REQUEST_BRANCH || 'unknown-branch';
@@ -1009,6 +1066,7 @@ function schema2pkg(args: string[]) {
 }
 
 function devServer(args: string[]) {
+  getOptionalDependencies(['chokidar'], 'The devServer command');
   return spawnTool('build/tools/dev_server/dev-server.js', args);
 }
 
@@ -1024,12 +1082,6 @@ function flowcheck(args: string[]) {
 
 // Looks up the steps for `command` and runs each with `args`.
 function runSteps(command: string, args: string[]): boolean {
-  // The 'cron' env check indicates the daily build in Travis.
-  if (process.env.TRAVIS_EVENT_TYPE === 'cron' && command === 'test') {
-    // The cron job should actually run the health command.
-    command = 'health'; // Ideally the test command would handle health info.
-    args.push('--all', '--uploadCodeHealthStats');
-  }
   const funcs = steps[command];
   if (funcs === undefined) {
     console.log(`Unknown command: '${command}'`);

@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
-import {Handle, handleFor} from './handle.js';
+import {Handle, handleFor, HandleOld} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
@@ -25,6 +25,7 @@ import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
+import {Store} from './store.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -37,7 +38,7 @@ export type InnerArcHandle = {
 
 export class ParticleExecutionContext {
   private readonly apiPort : PECInnerPort;
-  private readonly particles = <Particle[]>[];
+  private readonly particles = new Map<string, Particle>();
   private readonly pecId: Id;
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
@@ -219,9 +220,82 @@ export class ParticleExecutionContext {
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
 
+    const particle: Particle = await this.createParticleFromSpec(id, spec);
+
+    const handleMap = new Map();
+    const registerList: {proxy: Store, particle: Particle, handle: Handle}[] = [];
+
+    proxies.forEach((proxy, name) => {
+      this.createHandle(particle, spec, id, name, proxy, handleMap, registerList);
+    });
+
+    return [particle, async () => {
+      await this.assignHandle(particle, spec, id, handleMap, registerList, p);
+      resolve();
+    }];
+  }
+
+  private async reloadParticle(id: string) {
+    let resolve: Runnable;
+    const p = new Promise<void>(res => resolve = res);
+    this.pendingLoads.push(p);
+
+    // Get the old particle based on the given id and delete the old particle's cache
+    const oldParticle = this.particles.get(id);
+    delete oldParticle.spec.implBlobUrl;
+
+    // Create a new particle and replace the old one
+    const particle: Particle = await this.createParticleFromSpec(id, oldParticle.spec);
+
+    const handleMap = new Map();
+    const registerList: {proxy: Store, particle: Particle, handle: Handle}[] = [];
+    // Create new handles and disable the handles of the old particles
+    oldParticle.handles.forEach((oldHandle) => {
+      this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
+      if (oldHandle instanceof HandleOld) oldHandle.disable(oldParticle);
+    });
+
+    return [particle, async () => {
+      // Set the new handles to the new particle
+      await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
+      resolve();
+
+      // Transfer the slot proxies from the old particle to the new one
+      for (const name of oldParticle.getSlotNames()) {
+        oldParticle.getSlot(name).rewire(particle);
+      }
+    }];
+  }
+
+  private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy,
+                       handleMap, registerList: {proxy: Store, particle: Particle, handle: Handle}[]) {
+    const connSpec = spec.handleConnectionMap.get(name);
+    const handle = handleFor(proxy, this.idGenerator, name, id, connSpec.isInput, connSpec.isOutput);
+    handleMap.set(name, handle);
+
+    // Defer registration of handles with proxies until after particles have a chance to
+    // configure them in setHandles.
+    registerList.push({proxy, particle, handle});
+  }
+
+  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap,
+                             registerList: {proxy: Store, particle: Particle, handle: Handle}[], p) {
+    await particle.callSetHandles(handleMap, err => {
+      const exc = new UserException(err, 'setHandles', id, spec.name);
+      this.apiPort.ReportExceptionInHost(exc);
+    });
+    registerList.forEach(({proxy, particle, handle}) => {
+      if (proxy instanceof StorageProxy) proxy.register(particle, handle);
+    });
+    const idx = this.pendingLoads.indexOf(p);
+    this.pendingLoads.splice(idx, 1);
+  }
+
+  private async createParticleFromSpec(id: string, spec: ParticleSpec): Promise<Particle> {
     let particle: Particle;
     if (spec.implFile && spec.implFile.endsWith('.wasm')) {
-      particle = await this.loadWasmParticle(spec);
+      // TODO(sherrypra): Make reloading WASM particle re-instantiate the entire container from scratch
+      particle = await this.loadWasmParticle(id, spec);
       particle.setCapabilities(this.capabilities(false));
     } else {
       const clazz = await this.loader.loadParticleClass(spec);
@@ -231,38 +305,12 @@ export class ParticleExecutionContext {
       particle = new clazz();
       particle.setCapabilities(this.capabilities(true));
     }
-    this.particles.push(particle);
+    this.particles.set(id, particle);
 
-    const handleMap = new Map();
-    const registerList: {proxy: StorageProxy, particle: Particle, handle: Handle}[] = [];
-
-    proxies.forEach((proxy, name) => {
-      const connSpec = spec.handleConnectionMap.get(name);
-      const handle = handleFor(proxy, this.idGenerator, name, id, connSpec.isInput, connSpec.isOutput);
-      handleMap.set(name, handle);
-
-      // Defer registration of handles with proxies until after particles have a chance to
-      // configure them in setHandles.
-      registerList.push({proxy, particle, handle});
-    });
-
-    return [particle, async () => {
-      await particle.callSetHandles(handleMap, err => {
-        const exc = new UserException(err, 'setHandles', id, spec.name);
-        this.apiPort.ReportExceptionInHost(exc);
-      });
-      registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
-      const idx = this.pendingLoads.indexOf(p);
-      this.pendingLoads.splice(idx, 1);
-      resolve();
-    }];
+    return particle;
   }
 
-  private async reloadParticle(id: string) {
-    // TODO(sherrypra): Implement this method.
-  }
-
-  private async loadWasmParticle(spec: ParticleSpec) {
+  private async loadWasmParticle(id: string, spec: ParticleSpec) {
     assert(spec.name.length > 0);
 
     let container = this.wasmContainers[spec.implFile];
@@ -271,7 +319,8 @@ export class ParticleExecutionContext {
       if (!buffer || buffer.byteLength === 0) {
         throw new Error(`Failed to load wasm binary '${spec.implFile}'`);
       }
-      container = new WasmContainer(this.loader);
+
+      container = new WasmContainer(this.loader, this.apiPort);
       await container.initialize(buffer);
       this.wasmContainers[spec.implFile] = container;
     }
@@ -279,7 +328,7 @@ export class ParticleExecutionContext {
     // Particle constructor expects spec to be attached to the class object (and attaches it to
     // the particle instance at that time).
     WasmParticle.spec = spec;
-    const particle = new WasmParticle(container);
+    const particle = new WasmParticle(id, container);
     WasmParticle.spec = null;
     return particle;
   }
@@ -300,7 +349,7 @@ export class ParticleExecutionContext {
     if (this.pendingLoads.length > 0 || this.scheduler.busy) {
       return true;
     }
-    if (this.particles.filter(particle => particle.busy).length > 0) {
+    if ([...this.particles.values()].filter(particle => particle.busy).length > 0) {
       return true;
     }
     return false;
@@ -310,7 +359,7 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    const busyParticlePromises = this.particles.filter(async particle => particle.busy).map(async particle => particle.idle);
+    const busyParticlePromises = [...this.particles.values()].filter(async particle => particle.busy).map(async particle => particle.idle);
     return Promise.all([this.scheduler.idle, ...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

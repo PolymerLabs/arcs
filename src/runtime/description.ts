@@ -16,7 +16,7 @@ import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
 import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
-import {StorageStub} from './manifest.js';
+import {StorageStub} from './storage-stub.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Dictionary} from './hot.js';
@@ -96,6 +96,15 @@ export class Description {
     return formatter.getHandleDescription(recipeHandle);
   }
 
+  public static getAllTokens(pattern: string): string[][] {
+    const allTokens = [];
+    const tokens = pattern.match(DescriptionFormatter.tokensRegex);
+    for (let i = 0; i < tokens.length; ++i) {
+      allTokens[i] = tokens[i].match(DescriptionFormatter.tokensInnerRegex)[1].split('.');
+    }
+    return allTokens;
+  }
+
   private static async initDescriptionHandles(allParticles: Particle[], arc?: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
     return await Promise.all(
       allParticles.map(particle => Description._createParticleDescription(particle, arc, relevance)));
@@ -147,7 +156,7 @@ export class Description {
   }
 
   private static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue>|undefined {
-    if (!store) {
+    if (!store || (store instanceof StorageStub)) {
       return undefined;
     }
     if (store.type instanceof CollectionType) {

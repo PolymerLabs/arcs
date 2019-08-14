@@ -31,7 +31,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
       }
       [main] {
         flex-grow: 1;
-        overflow-y: scroll;
+        overflow-y: auto;
       }
       .title {
         padding: 0 8px;

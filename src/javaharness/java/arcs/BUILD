@@ -17,18 +17,18 @@ load(
 )
 
 j2cl_import(
-    name = "dagger",
+    name = "dagger-j2cl",
     jar = "@com_google_dagger//:com_google_dagger",
 )
 
 j2cl_library(
-    name = "dagger_runtime",
+    name = "dagger_runtime-j2cl",
     srcs = ["@com_google_dagger_runtime//jar"],
-    deps = [":javax_inject"],
+    deps = [":javax_inject-j2cl"],
 )
 
 j2cl_library(
-    name = "javax_inject",
+    name = "javax_inject-j2cl",
     srcs = ["@javax_inject_source//jar"],
 )
 

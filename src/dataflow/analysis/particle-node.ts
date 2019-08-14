@@ -14,6 +14,8 @@ import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {Type, ReferenceType} from '../../runtime/type.js';
+import {TypeChecker} from '../../runtime/recipe/type-checker.js';
 
 export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();
@@ -79,6 +81,10 @@ export class ParticleInput implements Edge {
     this.connectionSpec = connection.spec;
     this.modifier = FlowModifier.fromClaims(this, connection.handle.claims);
   }
+
+  get type(): Type {
+    return this.connectionSpec.type;
+  }
 }
 
 export class ParticleOutput implements Edge {
@@ -90,7 +96,7 @@ export class ParticleOutput implements Edge {
   readonly connectionSpec: HandleConnectionSpec;
 
   readonly modifier: FlowModifier;
-  readonly derivesFrom: ParticleInput[];
+  readonly derivesFrom: Edge[];
 
   constructor(edgeId: string, particleNode: ParticleNode, otherEnd: Node, connection: HandleConnection) {
     this.edgeId = edgeId;
@@ -102,6 +108,10 @@ export class ParticleOutput implements Edge {
     
     this.modifier = FlowModifier.fromClaims(this, connection.spec.claims);
     this.derivesFrom = [];
+  }
+
+  get type(): Type {
+    return this.connectionSpec.type;
   }
 
   computeDerivedFromEdges() {
@@ -116,6 +126,47 @@ export class ParticleOutput implements Edge {
         }
       }
     }
+
+    if (this.derivesFrom.length === 0 && this.type.tag === 'Reference') {
+      this.getEdgesCompatibleWithReference().forEach(e => this.derivesFrom.push(e));
+    }
+  }
+
+  /**
+   * Returns the list of edges from which the given edge could have derived. The
+   * given edge must be a particle output of a Reference type. The logic behind
+   * which input/output edges could be the source of an output reference is
+   * described at go/arcs-dataflow-references. 
+   */
+  private getEdgesCompatibleWithReference(): Edge[] {
+    if (this.type.tag !== 'Reference') {
+      assert(false, 'Must be a Reference.');
+    }
+    const particleNode = this.start;
+    const outRef = this.type as ReferenceType;
+
+    const result: Edge[] = [];
+
+    // The output reference could have come from any compatible input type, or a
+    // compatible input reference.
+    for (const inEdge of particleNode.inEdges) {
+      if (isTypeCompatibleWithReference(inEdge.type, outRef, /* canBeReference= */ true)) {
+        result.push(inEdge);
+      }
+    }
+
+    // The output reference could come from any compatible output type, but *not*
+    // from an output reference type.
+    for (const outEdge of particleNode.outEdges) {
+      if (outEdge === this) {
+        continue;
+      }
+      if (outEdge instanceof ParticleOutput && isTypeCompatibleWithReference(outEdge.type, outRef, /* canBeReference= */ false)) {
+        result.push(outEdge);
+      }
+    }
+
+    return result;
   }
 }
 
@@ -127,4 +178,65 @@ export function createParticleNodes(particles: Particle[]) {
     nodes.set(particle, new ParticleNode(nodeId, particle));
   });
   return nodes;
+}
+
+/**
+ * Checks if the given type is a possible source of the given output reference.
+ * 
+ * @param canBeReference controls whether a reference type is allowed to be the
+ *     source of the output reference
+ */
+function isTypeCompatibleWithReference(type: Type, target: ReferenceType, canBeReference: boolean) {
+  switch (type.tag) {
+    case 'Entity':
+      if (TypeChecker.compareTypes({type, direction: 'in'}, {type: target.getContainedType(), direction: 'out'})) {
+        return true;
+      }
+      if (canBeReference) {
+        // Entities can contain references. One of them might be the origin.
+        for (const field of Object.values(type.getEntitySchema().fields)) {
+          if (isSchemaFieldCompatibleWithReference(field, target)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    case 'Reference':
+      return canBeReference
+          ? isTypeCompatibleWithReference(type.getContainedType(), target, canBeReference)
+          : false;
+    case 'Collection':
+    case 'BigCollection':
+      return isTypeCompatibleWithReference(type.getContainedType(), target, canBeReference);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Checks if the given schema field is a possible source of the given output
+ * reference. Equivalent to isTypeCompatibleWithReference, except handles schema
+ * fields, which have no proper types, instead of actual Type objects.
+ * 
+ * canBeReference is implicitly true when calling this method, because a schema
+ * can only contain the target type via a reference (schemas can't contain whole
+ * sub-entities).
+ */
+// tslint:disable-next-line: no-any
+function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType) {
+  switch (field.kind) {
+    case 'schema-reference': {
+      const referencedType = field.schema.model as Type;
+      if (isTypeCompatibleWithReference(referencedType, target, /* canBeReference= */ true)) {
+        return true;
+      }
+      return false;
+    }
+    case 'schema-collection':
+      return isSchemaFieldCompatibleWithReference(field.schema, target);
+    case 'schema-primitive':
+      return false;
+    default:
+      throw new Error(`Unsupported field: ${field}`);
+  }
 }

@@ -27,6 +27,8 @@ import * as util from '../testing/test-util.js';
 import {ArcType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
+import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 
 async function setup(storageKeyPrefix: string) {
   const loader = new Loader();
@@ -943,35 +945,57 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
-      assert.isNotNull(arc);
+    assert.isNotNull(arc);
 
-      const favoriteFoodClass = manifest.findSchemaByName('FavoriteFood').entityClass();
-      assert.isNotNull(favoriteFoodClass);
+    const favoriteFoodClass = manifest.findSchemaByName('FavoriteFood').entityClass();
+    assert.isNotNull(favoriteFoodClass);
 
-      const recipe = manifest.recipes[0];
-      assert.isNotNull(recipe);
+    const recipe = manifest.recipes[0];
+    assert.isNotNull(recipe);
 
-      const foodStore = await arc.createStore(favoriteFoodClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-      assert.isNotNull(foodStore);
-      recipe.handles[0].mapToStorage(foodStore);
+    const foodStore = await arc.createStore(favoriteFoodClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+    assert.isNotNull(foodStore);
+    recipe.handles[0].mapToStorage(foodStore);
 
-      const favoriteFoodType = manifest.findTypeByName('FavoriteFood');
-      assert.isNotNull(favoriteFoodType, 'FavoriteFood type is found');
+    const favoriteFoodType = manifest.findTypeByName('FavoriteFood');
+    assert.isNotNull(favoriteFoodType, 'FavoriteFood type is found');
 
-      const options = {errors: new Map()};
-      const normalized = recipe.normalize(options);
-      assert(normalized, 'not normalized ' + options.errors);
-      assert(recipe.isResolved());
-      await arc.instantiate(recipe);
+    const options = {errors: new Map()};
+    const normalized = recipe.normalize(options);
+    assert(normalized, 'not normalized ' + options.errors);
+    assert(recipe.isResolved());
+    await arc.instantiate(recipe);
 
-      const serialization = await arc.serialize();
+    const serialization = await arc.serialize();
 
-      const slotComposer = new FakeSlotComposer();
+    const slotComposer = new FakeSlotComposer();
 
-      const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
-      assert.strictEqual(newArc._stores.length, 1);
-      assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
-      assert.strictEqual(newArc.id.idTreeAsString(), 'test');
-    });
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+    assert.strictEqual(newArc._stores.length, 1);
+    assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.strictEqual(newArc.id.idTreeAsString(), 'test');
+  });
+  
+  it('registers and deregisters its own volatile storage', async () => {
+    const id1 = ArcId.newForTest('test1');
+    const id2 = ArcId.newForTest('test2');
+    const storageKey1 = storageKeyPrefix + id1.toString();
+    const storageKey2 = storageKeyPrefix + id2.toString();
+
+    DriverFactory.clearRegistrationsForTesting();
+    assert.isEmpty(DriverFactory.providers);
+
+    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1})});
+    assert.strictEqual(DriverFactory.providers.size, 1);
+
+    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2})});
+    assert.strictEqual(DriverFactory.providers.size, 2);
+
+    arc1.dispose();
+    assert.strictEqual(DriverFactory.providers.size, 1);
+
+    arc2.dispose();
+    assert.isEmpty(DriverFactory.providers);
+  });
 });
 }); // forEach storageKeyPrefix

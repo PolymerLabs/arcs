@@ -14,7 +14,8 @@ import {PECOuterPort, APIPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
 import {Runnable} from './hot.js';
-import {Manifest, StorageStub} from './manifest.js';
+import {Manifest} from './manifest.js';
+import {StorageStub} from './storage-stub.js';
 import {MessagePort} from './message-channel.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
@@ -48,6 +49,7 @@ export class ParticleExecutionHost {
   private idleVersion = 0;
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
+  public readonly particles: Particle[] = [];
 
   constructor(slotComposer: SlotComposer, arc: Arc, ports: MessagePort[]) {
     this.close = () => {
@@ -100,12 +102,17 @@ export class ParticleExecutionHost {
   }
 
   instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
+    this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
 
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
+  }
+
+  reload(particle: Particle) {
+    this.getPort(particle).ReloadParticle(particle, particle.id.toString());
   }
 
   startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {

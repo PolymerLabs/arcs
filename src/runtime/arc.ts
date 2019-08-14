@@ -15,11 +15,12 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
 import {Runnable} from './hot.js';
-import {Manifest, StorageStub} from './manifest.js';
+import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './particle-spec.js';
+import {StorageStub} from './storage-stub.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {Recipe, IsValidOptions} from './recipe/recipe.js';
@@ -33,6 +34,8 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
+import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
+import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -93,6 +96,10 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
+  // Volatile storage local to this Arc instance.
+  readonly volatileMemory = new VolatileMemory();
+  private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
+
 constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
@@ -118,6 +125,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost(slotComposer, this, ports);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
+    
+    this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
+    DriverFactory.register(this.volatileStorageDriverProvider);
   }
 
   get loader(): Loader {
@@ -146,6 +156,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
       this.pec.slotComposer.dispose();
     }
+
+    DriverFactory.unregister(this.volatileStorageDriverProvider);
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it
@@ -530,8 +542,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  // Critical section for instantiate,
-  private async _doInstantiate(recipe: Recipe): Promise<void> {
+  async mergeIntoActiveRecipe(recipe: Recipe) {
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
@@ -574,6 +585,7 @@ ${this.activeRecipe.toString()}`;
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef as StorageStub));
+          newStore.name = copiedStore.name && `Copy of ${copiedStore.name}`;
           const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
@@ -606,6 +618,13 @@ ${this.activeRecipe.toString()}`;
         this._registerStore(store, recipeHandle.tags);
       }
     }
+
+    return {handles, particles, slots};
+  }
+
+  // Critical section for instantiate,
+  private async _doInstantiate(recipe: Recipe): Promise<void> {
+    const {handles, particles, slots} = await this.mergeIntoActiveRecipe(recipe);
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 

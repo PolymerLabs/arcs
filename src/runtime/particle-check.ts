@@ -16,6 +16,7 @@ import {assert} from '../platform/assert-web.js';
 export enum CheckType {
   HasTag = 'has-tag',
   IsFromHandle = 'is-from-handle',
+  IsFromOutput = 'is-from-output',
   IsFromStore = 'is-from-store',
 }
 
@@ -54,7 +55,7 @@ export class CheckBooleanExpression {
 export type CheckExpression = CheckBooleanExpression | CheckCondition;
 
 /** A single check condition inside a trust check. */
-export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromStore;
+export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromOutput | CheckIsFromStore;
 
 /** A check condition of the form 'check x is <tag>'. */
 export class CheckHasTag {
@@ -80,13 +81,32 @@ export class CheckIsFromHandle {
   static fromASTNode(astNode: AstNode.ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpec>) {
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
     if (!parentHandle) {
-      throw new Error(`Unknown "check is from handle" handle name: ${parentHandle}.`);
+      throw new Error(`Unknown "check is from handle" handle name: ${astNode.parentHandle}.`);
     }
     return new CheckIsFromHandle(parentHandle, astNode.isNot);
   }
 
   toManifestString() {
     return `is ${this.isNot ? 'not ' : ''}from handle ${this.parentHandle.name}`;
+  }
+}
+
+/** A check condition of the form 'check x is from output <output>'. */
+export class CheckIsFromOutput {
+  readonly type: CheckType.IsFromOutput = CheckType.IsFromOutput;
+
+  constructor(readonly output: HandleConnectionSpec, readonly isNot: boolean) {}
+
+  static fromASTNode(astNode: AstNode.ParticleCheckIsFromOutput, handleConnectionMap: Map<string, HandleConnectionSpec>) {
+    const output = handleConnectionMap.get(astNode.output);
+    if (!output) {
+      throw new Error(`Unknown "check is from output" output name: ${astNode.output}.`);
+    }
+    return new CheckIsFromOutput(output, astNode.isNot);
+  }
+
+  toManifestString() {
+    return `is ${this.isNot ? 'not ' : ''}from output ${this.output.name}`;
   }
 }
 
@@ -125,6 +145,8 @@ function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleCon
       return CheckIsFromHandle.fromASTNode(astNode, handleConnectionMap);
     case CheckType.IsFromStore:
       return CheckIsFromStore.fromASTNode(astNode);
+    case CheckType.IsFromOutput:
+      return CheckIsFromOutput.fromASTNode(astNode, handleConnectionMap);
     default:
       throw new Error('Unknown check type.');
   }

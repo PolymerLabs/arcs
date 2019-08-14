@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
 import {Type} from '../type.js';
 import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
@@ -232,5 +233,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
   off(callback: number) {
     this.callbacks.delete(callback);
+  }
+  reportExceptionInHost(exception: PropagatedException): void {
+    this.pendingException = exception;
+    this.notifyIdle();
   }
 }

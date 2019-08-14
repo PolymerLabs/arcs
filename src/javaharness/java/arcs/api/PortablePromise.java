@@ -2,11 +2,9 @@ package arcs.api;
 
 import java.util.function.Consumer;
 
-/**
- * Portable representation of the Promise class.
- */
+/** Portable representation of the Promise class. */
 public interface PortablePromise<T> {
- public interface Resolver<T> extends Consumer<T> {
+  public interface Resolver<T> extends Consumer<T> {
     default void resolve(T arg) {
       accept(arg);
     }

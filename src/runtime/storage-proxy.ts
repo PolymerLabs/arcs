@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 import {CursorNextValue, PECInnerPort} from './api-channel.js';
 import {PropagatedException, SystemException} from './arc-exceptions.js';
-import {Handle, HandleOptions} from './handle.js';
+import {Handle, HandleOld, HandleOptions} from './handle.js';
 import {Runnable} from './hot.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
@@ -72,7 +72,7 @@ export abstract class StorageProxy implements Store {
   protected listenerAttached = false;
   private keepSynced = false;
   protected synchronized = SyncState.none;
-  protected observers: {particle: Particle, handle: Handle}[] = [];
+  protected observers: {particle: Particle, handle: HandleOld}[] = [];
   private readonly updates: {version: number}[] = [];
   protected barrier: string | null = null;
   constructor(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
@@ -110,7 +110,8 @@ export abstract class StorageProxy implements Store {
     if (!handle.canRead) {
       return;
     }
-    this.observers.push({particle, handle});
+    assert(handle instanceof HandleOld);
+    this.observers.push({particle, handle: handle as HandleOld});
 
     // Attach an event listener to the backing store when the first readable handle is registered.
     if (!this.listenerAttached) {
@@ -131,7 +132,7 @@ export abstract class StorageProxy implements Store {
       // model, notify it immediately.
       if (handle.options.notifySync && this.synchronized === SyncState.full) {
         const syncModel = this._getModelForSync();
-        this.scheduler.enqueue(particle, handle, ['sync', particle, syncModel]);
+        this.scheduler.enqueue(particle, handle as HandleOld, ['sync', particle, syncModel]);
       }
     }
   }
@@ -634,7 +635,7 @@ export class NoOpStorageProxy extends StorageProxy implements CollectionStore, B
 
 export class StorageProxyScheduler {
   private _scheduled = false;
-  private _queues = new Map<Particle, Map<Handle, [string, Particle, {}][]>>();
+  private _queues = new Map<Particle, Map<HandleOld, [string, Particle, {}][]>>();
   private _idleResolver: Runnable | null = null;
   private _idle: Promise<void> | null = null;
   constructor() {
@@ -644,7 +645,7 @@ export class StorageProxyScheduler {
   }
 
   // TODO: break apart args here, sync events should flush the queue.
-  enqueue(particle: Particle, handle: Handle, args: [string, Particle, {}]) {
+  enqueue(particle: Particle, handle: HandleOld, args: [string, Particle, {}]) {
     if (!this._queues.has(particle)) {
       this._queues.set(particle, new Map());
     }

@@ -110,7 +110,7 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
       }
       vaadin-split-layout > aside {
         background-color: var(--light-gray);
-        overflow: scroll;
+        overflow: auto;
       }
       vaadin-split-layout > aside.paddedBlocks > * {
         margin: 5px 5px 5px 2px;

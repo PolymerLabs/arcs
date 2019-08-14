@@ -16,10 +16,11 @@ import {Utils} from '../runtime/utils.js';
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
 export class ArcHost {
-  constructor(context, storage, composer) {
+  constructor(context, storage, composer, portFactories) {
     this.context = context;
     this.storage = storage;
     this.composer = composer;
+    this.portFactories = portFactories;
   }
   disposeArc() {
     if (this.arc) {
@@ -34,7 +35,7 @@ export class ArcHost {
     const context = this.context || await Utils.parse(``);
     const storage = config.storage || this.storage;
     this.serialization = await this.computeSerialization(config, storage);
-    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization);
+    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
@@ -69,8 +70,8 @@ export class ArcHost {
     }
     return serialization;
   }
-  async _spawn(context, composer, storage, id, serialization) {
-    return await Utils.spawn({id, context, composer, serialization, storage: `${storage}/${id}`});
+  async _spawn(context, composer, storage, id, serialization, portFactories) {
+    return await Utils.spawn({id, context, composer, serialization, storage: `${storage}/${id}`, portFactories});
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');

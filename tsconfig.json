@@ -12,6 +12,6 @@
   "exclude": [
     "build/**/*",
     "server/**/*",
-    "./src/tools/aml-language-server/**/*"
+    "./src/tools/language-server/**/*"
   ]
 }

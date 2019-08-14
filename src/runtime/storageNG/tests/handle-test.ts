@@ -9,35 +9,44 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
-import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {IdGenerator} from '../../id.js';
+import {Particle} from '../../particle';
+import {EntityType} from '../../type.js';
 import {CollectionHandle, SingletonHandle} from '../handle.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
-import {MockStore} from '../testing/test-storage.js';
+import {MockParticle, MockStore} from '../testing/test-storage.js';
 
-function getCollectionHandle(): CollectionHandle<{id: string}> {
-  // tslint:disable-next-line: no-any
-  const fakeParticle: any = {};
+function getCollectionHandle(particle?: MockParticle):
+    CollectionHandle<{id: string}> {
+  const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   return new CollectionHandle<{id: string}>(
       'me',
       new StorageProxy(
+          'id',
           new CRDTCollection<{id: string}>(),
           new MockStore<CRDTCollectionTypeRecord<{id: string}>>(),
-          new StorageProxyScheduler()),
+          EntityType.make([], {}),
+          null),
+      IdGenerator.newSession(),
       fakeParticle,
       true,
       true);
 }
 
-function getSingletonHandle(): SingletonHandle<{id: string}> {
-  // tslint:disable-next-line: no-any
-  const fakeParticle: any = {};
+function getSingletonHandle(particle?: MockParticle):
+    SingletonHandle<{id: string}> {
+  const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   return new SingletonHandle<{id: string}>(
       'me',
       new StorageProxy(
+          'id',
           new CRDTSingleton<{id: string}>(),
           new MockStore<CRDTSingletonTypeRecord<{id: string}>>(),
-          new StorageProxyScheduler()),
+          EntityType.make([], {}),
+          null),
+      IdGenerator.newSession(),
       fakeParticle,
       true,
       true);
@@ -75,6 +84,51 @@ describe('CollectionHandle', () => {
     await handle.addMultiple([{id: 'A'}, {id: 'B'}]);
     assert.sameDeepMembers(await handle.toList(), [{id: 'A'}, {id: 'B'}]);
   });
+
+  it('notifies particle on sync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getCollectionHandle(particle);
+    await handle.onSync();
+    assert.isTrue(particle.onSyncCalled);
+  });
+
+  it('notifies particle on desync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getCollectionHandle(particle);
+    await handle.onDesync();
+    assert.isTrue(particle.onDesyncCalled);
+  });
+
+  it('notifies particle of updates', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getCollectionHandle(particle);
+    const op: CollectionOperation<{id: string}> = {
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'id'},
+      actor: 'actor',
+      clock: {'actor': 1}
+    };
+    await handle.onUpdate(op, new Set());
+    assert.deepEqual(
+        particle.lastUpdate, {removed: {id: 'id'}, originator: false});
+  });
+
+  it('can override default options', () => {
+    const handle = getCollectionHandle();
+    assert.deepEqual(handle.options, {
+      keepSynced: true,
+      notifySync: true,
+      notifyUpdate: true,
+      notifyDesync: false,
+    });
+    handle.configure({notifyDesync: true, notifySync: false});
+    assert.deepEqual(handle.options, {
+      keepSynced: true,
+      notifySync: false,
+      notifyUpdate: true,
+      notifyDesync: true,
+    });
+  });
 });
 
 describe('SingletonHandle', () => {
@@ -87,5 +141,34 @@ describe('SingletonHandle', () => {
     assert.deepEqual(await handle.get(), {id: 'B'});
     await handle.clear();
     assert.strictEqual(await handle.get(), null);
+  });
+
+  it('notifies particle on sync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getSingletonHandle(particle);
+    await handle.onSync();
+    assert.isTrue(particle.onSyncCalled);
+  });
+
+  it('notifies particle on desync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getSingletonHandle(particle);
+    await handle.onDesync();
+    assert.isTrue(particle.onDesyncCalled);
+  });
+
+  it('notifies particle of updates', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getSingletonHandle(particle);
+    const op: SingletonOperation<{id: string}> = {
+      type: SingletonOpTypes.Set,
+      value: {id: 'id'},
+      actor: 'actor',
+      clock: {'actor': 1}
+    };
+    await handle.onUpdate(op, {id: 'old'});
+    assert.deepEqual(
+        particle.lastUpdate,
+        {data: {id: 'id'}, oldData: {id: 'old'}, originator: false});
   });
 });

@@ -20,8 +20,8 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckIsFromStore} from '../particle-check.js';
-import {ProvideSlotConnectionSpec} from '../particle-spec.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromOutput, CheckIsFromStore} from '../particle-check.js';
+import {ProvideSlotConnectionSpec, HandleConnectionSpec} from '../particle-spec.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -621,12 +621,46 @@ ${particleStr1}
     assert.lengthOf(recipe.slotConnections, 2);
     assert.isEmpty(recipe.slots);
   });
+  it('unnamed consume set slots', async () => {
+    const manifest = await Manifest.parse(`
+      particle SomeParticle &work in 'some-particle.js'
+        consume set of slotA
+      particle SomeParticle1 &rest in 'some-particle.js'
+        consume set of slotC
+
+      recipe
+        SomeParticle
+          consume slotA
+        SomeParticle1
+          consume slotC
+    `);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.slotConnections, 2);
+    assert.isEmpty(recipe.slots);
+  });
   it('SLANDLES unnamed consume slots', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle &work in 'some-particle.js'
         \`consume Slot slotA
       particle SomeParticle1 &rest in 'some-particle.js'
         \`consume Slot slotC
+
+      recipe
+        SomeParticle
+          slotA consume
+        SomeParticle1
+          slotC consume
+    `);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.handleConnections, 2);
+    assert.isEmpty(recipe.handles);
+  });
+  it('SLANDLES unnamed consume set slots', async () => {
+    const manifest = await Manifest.parse(`
+      particle SomeParticle &work in 'some-particle.js'
+        \`consume [Slot] slotA
+      particle SomeParticle1 &rest in 'some-particle.js'
+        \`consume [Slot] slotC
 
       recipe
         SomeParticle
@@ -650,7 +684,7 @@ ${particleStr1}
           SomeParticle
             consume slotA as s0
       `)).recipes[0];
-      recipe.normalize();
+      assert.isTrue(recipe.normalize(), 'normalizes');
       const options = {errors: new Map(), details: '', showUnresolved: true};
       assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
@@ -672,7 +706,28 @@ ${particleStr1}
             slotA consume s0
       `)).recipes[0];
       const options = {errors: new Map(), details: '', showUnresolved: true};
-      recipe.normalize(options);
+      assert.isTrue(recipe.normalize(options), 'normalizes');
+      assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
+    };
+    await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
+    await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
+  });
+  it('SLANDLES consumes multiple set slots', async () => {
+    const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
+      const recipe = (await Manifest.parse(`
+        particle SomeParticle in 'some-particle.js'
+          \`consume${arg.isRequiredSlotA ? '' : '?'} [Slot] slotA
+          \`consume${arg.isRequiredSlotB ? '' : '?'} [Slot] slotB
+
+        recipe
+          \`slot 'slota-0' as s0
+          SomeParticle
+            slotA consume s0
+      `)).recipes[0];
+      const options = {errors: new Map(), details: '', showUnresolved: true};
+      assert.isTrue(recipe.normalize(options), `should normalizes ${JSON.stringify([...options.errors.values()])} ${JSON.stringify(options.details)}`);
       assert.strictEqual(recipe.isResolved(options), arg.expectedIsResolved, `${arg.label}: Expected recipe to be ${arg.expectedIsResolved ? '' : 'un'}resolved.\nErrors: ${JSON.stringify([...options.errors, options.details])}`);
     };
     await parseRecipe({label: '1', isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
@@ -792,7 +847,85 @@ ${particleStr1}
       checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
 
     const options = {errors: new Map(), details: '', showUnresolved: true};
-    recipe.normalize(options);
+    assert.isTrue(recipe.normalize(options), 'normalizes');
+    assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
+  });
+  it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', async () => {
+    const manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume [Slot] slotA
+      particle ParticleB in 'some-particle.js'
+        \`consume Slot slotB1
+          \`provide Slot slotB2
+      recipe
+        \`slot 'slot-id0' as s0
+        ParticleA
+          slotA consume mySlot
+        ParticleB
+          slotB1 consume s0
+          slotB2 provide mySlot
+    `);
+    assert.lengthOf(manifest.particles, 2);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.handles, 2);
+    assert.strictEqual(
+      checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).connections['slotA'].handle,
+      checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
+    assert.isFalse(recipe.normalize(), 'does not normalize');
+  });
+  it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', async () => {
+    const manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume [Slot] slotA
+      particle ParticleB in 'some-particle.js'
+        \`consume Slot slotB1
+          \`provide [Slot] slotB2
+      recipe
+        \`slot 'slot-id0' as s0
+        ParticleA
+          slotA consume mySlot
+        ParticleB
+          slotB1 consume s0
+          slotB2 provide mySlot
+    `);
+    assert.lengthOf(manifest.particles, 2);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.handles, 2);
+    assert.strictEqual(
+      checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).connections['slotA'].handle,
+      checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
+
+    const options = {errors: new Map(), details: '', showUnresolved: true};
+    assert.isTrue(recipe.normalize(options), 'normalizes');
+    assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
+  });
+  it('SLANDLES recipe set slots with different names (passing set slots)', async () => {
+    const manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume [Slot] slotA
+      particle ParticleB in 'some-particle.js'
+        \`consume [Slot] slotB1
+          \`provide [Slot] slotB2
+      recipe
+        \`slot 'slot-id0' as s0
+        ParticleA
+          slotA consume mySlot
+        ParticleB
+          slotB1 consume s0
+          slotB2 provide mySlot
+    `);
+    assert.lengthOf(manifest.particles, 2);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.handles, 2);
+    assert.strictEqual(
+      checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).connections['slotA'].handle,
+      checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
+
+    const options = {errors: new Map(), details: '', showUnresolved: true};
+    assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('recipe provided slot with no local name', async () => {
@@ -819,6 +952,36 @@ ${particleStr1}
       particle ParticleA in 'some-particle.js'
         \`consume Slot slotA1
           \`provide Slot slotA2
+      recipe
+        ParticleA
+          slotA1 consume
+          slotA2 provide
+    `);
+    // Check that the manifest was parsed in the way we expect.
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.recipes, 1);
+
+    const recipe = manifest.recipes[0];
+    // Check that the parser found the handleConnections
+    assert.lengthOf(recipe.handleConnections, 2);
+    assert.strictEqual('slotA1', recipe.handleConnections[0].name);
+    assert.strictEqual('slotA2', recipe.handleConnections[1].name);
+
+    // Check that the handle connection
+    // wasn't resolved to a handle (even though it was parsed).
+    assert.isUndefined(recipe.handleConnections[0].handle);
+    assert.isUndefined(recipe.handleConnections[1].handle);
+
+    // The recipe shouldn't resolve (as there is nothing providing slotA1 or
+    // consuming slotA2).
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+  });
+  it('SLANDLES recipe provided set slots with no local name', async () => {
+    const manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume [Slot] slotA1
+          \`provide [Slot] slotA2
       recipe
         ParticleA
           slotA1 consume
@@ -2116,6 +2279,31 @@ resource SomeName
       assert.strictEqual(check2.toManifestString(), `check input2 is not from store 'my-store-id'`);
       assert.strictEqual(check2.target.name, 'input2');
       assert.deepEqual(check2.expression, new CheckIsFromStore({type: 'id', store: 'my-store-id'}, /* isNot= */ true));
+    });
+
+    it(`supports 'is from output' checks`, async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          out T {} output1
+          out T {} output2
+          check input1 is from output output1
+          check input2 is not from output output2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 2);
+      
+      const check1 = checkDefined(particle.trustChecks[0]);
+      assert.strictEqual(check1.toManifestString(), 'check input1 is from output output1');
+      assert.strictEqual(check1.target.name, 'input1');
+
+      const check2 = checkDefined(particle.trustChecks[1]);
+      assert.strictEqual(check2.toManifestString(), 'check input2 is not from output output2');
+      assert.strictEqual(check2.target.name, 'input2');
+      assert.isTrue((check2.expression as CheckCondition).isNot);
     });
 
     it('supports checks on provided slots', async () => {

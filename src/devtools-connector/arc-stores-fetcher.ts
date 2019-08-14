@@ -10,7 +10,8 @@
 
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
-import {Manifest, StorageStub} from '../runtime/manifest.js';
+import {Manifest} from '../runtime/manifest.js';
+import {StorageStub} from '../runtime/storage-stub.js';
 import {StorageProviderBase, SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
 

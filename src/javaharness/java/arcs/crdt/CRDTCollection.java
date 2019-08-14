@@ -1,76 +1,25 @@
 package arcs.crdt;
 
-import java.lang.Math;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-// Classes and interfaces copied from src/runtime/crdt/crdt-collection.ts
-interface Referenceable {
-  String getId();
-}
-
-class VersionedValue<T> {
-  T value;
-  VersionMap version;
-  VersionedValue(T value, VersionMap version) {
-    this.value = value;
-    this.version = version;
-  }
-}
-
-class CollectionData<T extends Referenceable> extends CRDTData {
-   Map<String, VersionedValue<T>> values = new HashMap<>();
-   VersionMap version = new VersionMap();
-}
-
-enum CollectionOpTypes { ADD, REMOVE }
-
-class CollectionOperation<T> implements CRDTOperation {
-  CollectionOpTypes type;
-  Optional<T> added;
-  Optional<T> removed;
-  VersionMap clock;
-  String actor;
-
-  CollectionOperation(CollectionOpTypes type, T t, VersionMap clock, String actor) {
-    this.type = type;
-    switch (type) {
-      case ADD:
-        this.added = Optional.of(t);
-        break;
-      case REMOVE:
-        this.removed = Optional.of(t);
-        break;
-      default:
-        throw new AssertionError("Unsupported CollectionOpType " + type);
-    }
-    this.clock = clock;
-    this.actor = actor;
-  }
-}
-
-class RawCollection<T> extends HashSet<T> implements CRDTConsumerType {
-  RawCollection() {}
-  RawCollection(List<T> list) { super(list); }
-}
-
-class CRDTCollectionTypeRecord<T extends Referenceable> extends CRDTTypeRecord {
-  CollectionData<T> data;
-  CollectionOperation<T> operation;
-  RawCollection<T> consumerType;
-}
-
-class CollectionChange<T extends Referenceable> extends CRDTChange<CRDTCollectionTypeRecord<T>> {}
-
-interface CollectionModel<T extends Referenceable> extends CRDTModel<CRDTCollectionTypeRecord<T>> {}
-
 public class CRDTCollection<T extends Referenceable> implements CollectionModel<T> {
-  private CollectionData<T> model = new CollectionData<>();
+  private CollectionData<T> model;
+
+  public CRDTCollection() {
+    model = new CollectionData<>();
+  }
+
+  public CRDTCollection(List<VersionedValue<T>> values, VersionMap version) {
+    model = new CollectionData<>();
+    for (VersionedValue<T> value : values) {
+      model.values.put(value.value.getId(), value);
+    }
+    model.version = version;
+  }
 
   @Override
   public MergeResult merge(CRDTData other) {
@@ -106,7 +55,9 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
   }
 
   @Override
-  public CollectionData<T> getData() { return model; }
+  public CollectionData<T> getData() {
+    return model;
+  }
 
   @Override
   public CRDTConsumerType getParticleView() {
@@ -121,9 +72,12 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
       return false;
     }
     this.model.version.put(key, version.getOrDefault(key, 0));
-    VersionMap previousVersion = model.values.containsKey(value.getId())
-        ? model.values.get(value.getId()).version : new VersionMap();
-    model.values.put(value.getId(), new VersionedValue(value, mergeVersions(version, previousVersion)));
+    VersionMap previousVersion =
+        model.values.containsKey(value.getId())
+            ? model.values.get(value.getId()).version
+            : new VersionMap();
+    model.values.put(
+        value.getId(), new VersionedValue(value, mergeVersions(version, previousVersion)));
     return true;
   }
 
@@ -146,12 +100,19 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     return true;
   }
 
-  private Map<String, VersionedValue<T>> mergeItems(CollectionData<T> data1, CollectionData<T> data2) {
+  public int nextVersion(String key) {
+    return model.version.getOrDefault(key, 0).intValue() + 1;
+  }
+
+  private Map<String, VersionedValue<T>> mergeItems(
+      CollectionData<T> data1, CollectionData<T> data2) {
     Map<String, VersionedValue<T>> merged = new HashMap<>();
     for (VersionedValue<T> v2 : data2.values.values()) {
       if (model.values.containsKey(v2.value.getId())) {
-        merged.put(v2.value.getId(), new VersionedValue(
-            v2.value, mergeVersions(model.values.get(v2.value.getId()).version, v2.version)));
+        merged.put(
+            v2.value.getId(),
+            new VersionedValue(
+                v2.value, mergeVersions(model.values.get(v2.value.getId()).version, v2.version)));
       } else if (!dominates(data1.version, v2.version)) {
         merged.put(v2.value.getId(), new VersionedValue(v2.value, v2.version));
       }
@@ -171,13 +132,15 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     }
     for (Map.Entry<String, Integer> entry : version2.entrySet()) {
       Integer version1Value = version1.get(entry.getKey());
-      merged.put(entry.getKey(), Math.max(entry.getValue().intValue(),
-                                          version1Value == null ? 0 : version1Value.intValue()));
+      merged.put(
+          entry.getKey(),
+          Math.max(
+              entry.getValue().intValue(), version1Value == null ? 0 : version1Value.intValue()));
     }
     return merged;
   }
 
-  private boolean dominates(VersionMap map1, VersionMap map2){
+  private boolean dominates(VersionMap map1, VersionMap map2) {
     for (Map.Entry<String, Integer> entry : map2.entrySet()) {
       if (map1.getOrDefault(entry.getKey(), 0).intValue() < entry.getValue()) {
         return false;

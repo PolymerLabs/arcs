@@ -23,12 +23,14 @@ recipe SlandleProducts
 
 recipe SlandleCreateShoppingList
   copy as products
+  `slot 'rootslotid-root' as root
   SlandleItems
+    root consume root
     list = products
   SlandleItemMultiplexer
     list = products
     hostedParticle = SlandleProductItem
-  description `create shopping list from ${Items.list}`
+  description `create shopping list from ${SlandleItems.list} using Slandles`
 
 recipe SlandleShopForOccasion
   use as shoplist

@@ -8,7 +8,7 @@ Code in arcs/api is platform independent and should have no dependencies on Andr
 
 Code in arcs/webimpl is platform dependent and expected to be reimplemented in arcs/androidimpl
 
-Native particles will reside and be registered in arcs/nativeparticles
+Native particles will reside and be registered in arcs/builtinparticles
 
 Note there are symbolic links between pipes-shell and
 the outer shells/pipes-shell directory, that means the pipes-shell
@@ -23,5 +23,5 @@ are installed. Run tools/sigh build and shells/pipes-shell/web/deploy/deploy.sh
 Then launch hotreload.sh and everything should build and run a server on port
 6006.
 
-Visit [http://localhost:6006/javaharness_dev.html?user=harness&solo=particles/PipeApps/PipeApps.recipes&log=2]
+Visit [http://localhost:6006/javaharness_dev.html?user=harness&solo=particles/PipeApps/PipeApps.recipes&log=2]()
 to try it out.

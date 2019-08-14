@@ -22,6 +22,7 @@ import './arcs-notifications.js';
 import './arcs-tracing.js';
 import './arcs-pec-log.js';
 import './arcs-selector.js';
+import './arcs-hot-reload.js';
 import './strategy-explorer/strategy-explorer.js';
 import './arcs-recipe-editor.js';
 import './arcs-connection-status.js';
@@ -50,7 +51,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       .lm_content {
         background: white;
         position: relative;
-        overflow: scroll;
+        overflow: auto;
       }
       .lm_header .lm_tab {
         /* Fixing uneven padding caused by missing close button.
@@ -63,7 +64,8 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
     <header class="header">
       <div section>
         <arcs-notifications></arcs-notifications><div divider></div>
-        <arcs-selector active-page="[[routeData.page]]"></arcs-selector>
+        <arcs-selector active-page="[[routeData.page]]"></arcs-selector><div divider></div>
+        <arcs-hot-reload></arcs-hot-reload>
       </div>
     </header>
     <div id="main"></div>

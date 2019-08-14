@@ -8,12 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTTypeRecord, CRDTOperation} from '../../crdt/crdt.js';
-import {ActiveStore, ProxyMessage, StorageMode, ProxyCallback} from '../store.js';
-import {Exists, StorageDriverProvider, Driver, ReceiveMethod} from '../drivers/driver-factory.js';
+import {PropagatedException} from '../../arc-exceptions.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
-import {StorageKey} from '../storage-key.js';
+import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt.js';
+import {Consumer} from '../../hot.js';
+import {IdGenerator} from '../../id.js';
+import {Particle} from '../../particle';
+import {Driver, Exists, ReceiveMethod, StorageDriverProvider} from '../drivers/driver-factory.js';
 import {Handle} from '../handle.js';
+import {StorageKey} from '../storage-key.js';
+import {StorageProxy} from '../storage-proxy.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode} from '../store.js';
+
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -40,6 +46,7 @@ export class MockDriver<Data> extends Driver<Data> {
 
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
+  lastCapturedException: PropagatedException = null;
   constructor() {
     super(new MockStorageKey(), Exists.ShouldCreate, null, StorageMode.Direct, CRDTSingleton);
   }
@@ -52,6 +59,9 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
     this.lastCapturedMessage = message;
     return Promise.resolve(true);
+  }
+  reportExceptionInHost(exception: PropagatedException): void {
+    this.lastCapturedException = exception;
   }
 }
 
@@ -71,14 +81,16 @@ export class MockStorageKey extends StorageKey {
 
 export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSyncCalled = false;
-  lastUpdate: CRDTOperation[] = null;
+  lastUpdate = null;
+  constructor(storageProxy: StorageProxy<T>) {
+    super('handle', storageProxy, IdGenerator.newSession(), {} as Particle, true, true);
+  }
   onSync() {
     this.onSyncCalled = true;
   }
-  onUpdate(ops: CRDTOperation[]) {
-    this.lastUpdate = ops;
+  onUpdate(op: CRDTOperation, oldData: CRDTConsumerType) {
+    this.lastUpdate = [op, oldData];
   }
-
 }
 
 export class MockStorageDriverProvider implements StorageDriverProvider {
@@ -87,5 +99,20 @@ export class MockStorageDriverProvider implements StorageDriverProvider {
   }
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     return new MockDriver<Data>(storageKey, exists);
+  }
+}
+
+export class MockParticle {
+  lastUpdate = null;
+  onSyncCalled = false;
+  onDesyncCalled = false;
+  async callOnHandleUpdate(handle: Handle<CRDTTypeRecord>, update, onException: Consumer<Error>) {
+    this.lastUpdate = update;
+  }
+  async callOnHandleSync(handle: Handle<CRDTTypeRecord>, model, onException: Consumer<Error>) {
+    this.onSyncCalled = true;
+  }
+  async callOnHandleDesync(handle: Handle<CRDTTypeRecord>, onException: Consumer<Error>) {
+    this.onDesyncCalled = true;
   }
 }

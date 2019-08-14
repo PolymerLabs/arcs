@@ -9,10 +9,14 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {UserException} from '../arc-exceptions.js';
 import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton';
 import {Particle} from '../particle';
+import {Entity, EntityClass} from '../entity.js';
+import {IdGenerator, Id} from '../id.js';
+import {EntityType, Type} from '../type.js';
 
 import {StorageProxy} from './storage-proxy';
 
@@ -29,19 +33,46 @@ export interface HandleOptions {
 export abstract class Handle<T extends CRDTTypeRecord> {
   storageProxy: StorageProxy<T>;
   key: string;
-  clock: VersionMap;
+  private readonly idGenerator: IdGenerator;
+  protected clock: VersionMap;
   options: HandleOptions;
   readonly canRead: boolean;
   readonly canWrite: boolean;
   particle: Particle;
+  entityClass: EntityClass|null;
+  // Optional, for debugging purpose.
+  readonly name: string;
+
+  //TODO: this is used by multiplexer-dom-particle.ts, it probably won't work with this kind of store.
+  get storage() {
+    return this.storageProxy;
+  }
+
+  get type(): Type {
+    return this.storageProxy.type;
+  }
+
+  // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
+  get _id(): string {
+    return this.storageProxy.apiChannelId;
+  }
+
+  createIdentityFor(entity: Entity) {
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+  }
+
   constructor(
       key: string,
       storageProxy: StorageProxy<T>,
+      idGenerator: IdGenerator,
       particle: Particle,
       canRead: boolean,
-      canWrite: boolean) {
+      canWrite: boolean,
+      name?: string) {
     this.key = key;
+    this.name = name;
     this.storageProxy = storageProxy;
+    this.idGenerator = idGenerator;
     this.particle = particle;
     this.options = {
       keepSynced: true,
@@ -51,16 +82,35 @@ export abstract class Handle<T extends CRDTTypeRecord> {
     };
     this.canRead = canRead;
     this.canWrite = canWrite;
+
+    const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
+    if (type instanceof EntityType) {
+      this.entityClass = type.entitySchema.entityClass(this.storageProxy.pec);
+    }
     this.clock = this.storageProxy.registerHandle(this);
   }
-  configure(options: HandleOptions): void {
+
+  // `options` may contain any of:
+  // - keepSynced (bool): load full data on startup, maintain data in proxy and resync as required
+  // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received
+  // - notifyUpdate (bool): call onHandleUpdate for every change event received
+  // - notifyDesync (bool): if keepSynced is true, call onHandleDesync when desync is detected
+  configure(options: {keepSynced?: boolean, notifySync?: boolean, notifyUpdate?: boolean, notifyDesync?: boolean}): void {
     assert(this.canRead, 'configure can only be called on readable Handles');
-    this.options = options;
+    this.options = {...this.options, ...options};
   }
-  abstract onUpdate(updates: T['operation'][]): void;
-  // TODO: this shuld be async and return Promise<void>.
+
+  protected reportUserExceptionInHost(exception: Error, particle: Particle, method: string) {
+    this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
+  }
+
+  abstract onUpdate(update: T['operation'], oldData: T['consumerType']): void;
   abstract onSync(): void;
-  onDesync(): void {
+
+  async onDesync(): Promise<void> {
+    await this.particle.callOnHandleDesync(
+        this,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
   }
 }
 
@@ -72,11 +122,11 @@ export abstract class Handle<T extends CRDTTypeRecord> {
 export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollectionTypeRecord<T>> {
   async get(id: string): Promise<T> {
     const data = await this.storageProxy.getData();
-    return data.values[id].value;    
+    return data.values[id].value;
   }
 
   async add(entity: T): Promise<boolean> {
-    this.clock[this.key] = (this.clock[this.key] || 0) + 1; 
+    this.clock[this.key] = (this.clock[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: CollectionOpTypes.Add,
       added: entity,
@@ -87,7 +137,7 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
   }
 
   async addMultiple(entities: T[]): Promise<boolean> {
-    return Promise.all(entities.map(e => this.add(e))).then(array => array.every(Boolean));    
+    return Promise.all(entities.map(e => this.add(e))).then(array => array.every(Boolean));
   }
 
   async remove(entity: T): Promise<boolean> {
@@ -101,7 +151,7 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
   }
 
   async clear(): Promise<boolean> {
-    const values:T[]  = await this.toList();    
+    const values: T[] = await this.toList();
     for (const value of values) {
       const removeOp: CRDTOperation = {
         type: CollectionOpTypes.Remove,
@@ -120,26 +170,26 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
     return this.storageProxy.getParticleView().then(set => [...set]);
   }
 
-  onUpdate(ops: CollectionOperation<T>[]) {
-    for (const op of ops) {
-      // Pass the change up to the particle.
-      // tslint:disable-next-line: no-any
-      const update: {added?: any, removed?: any, originator?: any} = {};
-      if (op.type === CollectionOpTypes.Add) {
-        update.added = op.added;
-      }
-      if (op.type === CollectionOpTypes.Remove) {
-        update.removed = op.removed;
-      }
-      update.originator = (this.key === op.actor);
-      // TODO: call onHandleUpdate on the particle, eg:
-      // this.particle.onHandleUpdate(this /*handle*/, update);
+  async onUpdate(op: CollectionOperation<T>, oldData: Set<T>): Promise<void> {
+    // Pass the change up to the particle.
+    const update: {added?: T, removed?: T, originator: boolean} = {originator: (this.key === op.actor)};
+    if (op.type === CollectionOpTypes.Add) {
+      update.added = op.added;
     }
+    if (op.type === CollectionOpTypes.Remove) {
+      update.removed = op.removed;
+    }
+    await this.particle.callOnHandleUpdate(
+        this /*handle*/,
+        update,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleUpdate'));
   }
 
-  onSync() {
-    // TODO: call onHandleSync on the particle, eg:
-    // particle.onHandleSync(this /*handle*/, this.toList() /*model*/);
+  async onSync(): Promise<void> {
+    await this.particle.callOnHandleSync(
+        this /*handle*/,
+        this.toList() /*model*/,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
   }
 }
 
@@ -171,26 +221,23 @@ export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSinglet
     return this.storageProxy.getParticleView();
   }
 
-  onUpdate(ops: SingletonOperation<T>[]) {
-    for (const op of ops) {
-      // Pass the change up to the particle.
-      // tslint:disable-next-line: no-any
-      const update: {data?: any, originator?: any} = {};
-      if (op.type === SingletonOpTypes.Set) {
-        // TODO: do we also need to set oldData?
-        update.data = op.value;
-      }
-      if (op.type === SingletonOpTypes.Clear) {
-        // TODO: what update should we return here?
-      }
-      update.originator = (this.key === op.actor);
-      // TODO: call onHandleUpdate on the particle, eg:
-      // this.particle.onHandleUpdate(this /*handle*/, update);
+  async onUpdate(op: SingletonOperation<T>, oldData: T): Promise<void> {
+    // Pass the change up to the particle.
+    const update: {data?: T, oldData: T, originator: boolean} = {oldData, originator: (this.key === op.actor)};
+    if (op.type === SingletonOpTypes.Set) {
+      update.data = op.value;
     }
+    // Nothing else to add (beyond oldData) for SingletonOpTypes.Clear.
+    await this.particle.callOnHandleUpdate(
+        this /*handle*/,
+        update,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleUpdate'));
   }
 
-  onSync() {
-    // TODO: call onHandleSync on the particle, eg:
-    // particle.onHandleSync(this /*handle*/, this.get() /*model*/);
+  async onSync(): Promise<void> {
+    await this.particle.callOnHandleSync(
+        this /*handle*/,
+        this.get() /*model*/,
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
   }
 }

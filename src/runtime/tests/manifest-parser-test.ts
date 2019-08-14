@@ -119,6 +119,25 @@ describe('manifest parser', () => {
         in A {Text handle} a
         out B {Boolean import, Number particle} b`);
   });
+  it('fails to parse an unterminated identifier', () => {
+    try {
+      parse(`
+        import 'foo`);
+      assert.fail('this parse should have failed, identifiers should terminate!');
+    } catch (e) {
+      assert.include(e.message, 'Expected', `bad error: '${e}'`);
+    }
+  });
+  it('fails to parse an identifier containing a new line', () => {
+    try {
+      parse(`
+        import 'foo
+          '`);
+      assert.fail('this parse should have failed, identifiers should not be multiline!');
+    } catch (e) {
+      assert.include(e.message, 'Expected', `bad error: '${e}'`);
+    }
+  });
   it('fails to parse a nonsense argument list', () => {
     try {
       parse(`

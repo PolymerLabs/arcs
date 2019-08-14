@@ -25,7 +25,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
     return html`
     <style include="shared-styles">
       .se-explorer-container {
-        overflow: scroll;
+        overflow: auto;
         flex-grow: 1;
       }
       .se-explorer-container[find-backlit] {

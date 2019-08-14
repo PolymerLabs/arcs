@@ -19,10 +19,8 @@ import {Id, IdGenerator} from './id.js';
 export function FakePecFactory(loader: Loader): PecFactory {
   return (pecId: Id, idGenerator: IdGenerator) => {
     const channel = new MessageChannel();
-    // Each PEC should get its own loader. Only a StubLoader knows how to be cloned,
-    // so its either a clone of a Stub or a new Loader.
-    const loaderToUse = loader instanceof StubLoader ? (loader as StubLoader).clone() : new Loader();
-    const pec = new ParticleExecutionContext(channel.port1, pecId, idGenerator, loaderToUse);
+    // Each PEC should get its own loader.
+    const pec = new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader.clone());
     return channel.port2;
   };
 }

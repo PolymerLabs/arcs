@@ -233,7 +233,7 @@ export interface ParticleCheckBooleanExpression extends BaseNode {
 
 export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
 
-export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromStore;
+export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore;
 
 export interface ParticleCheckHasTag extends BaseNode {
   kind: 'particle-trust-check-has-tag';
@@ -247,6 +247,13 @@ export interface ParticleCheckIsFromHandle extends BaseNode {
   checkType: CheckType.IsFromHandle;
   isNot: boolean;
   parentHandle: string;
+}
+
+export interface ParticleCheckIsFromOutput extends BaseNode {
+  kind: 'particle-trust-check-is-from-output';
+  checkType: CheckType.IsFromOutput;
+  isNot: boolean;
+  output: string;
 }
 
 export interface ParticleCheckIsFromStore extends BaseNode {
@@ -329,6 +336,7 @@ export interface RecipeNode extends BaseNode {
   verbs: VerbList;
   items: RecipeItem[];
   annotation: Annotation;
+  triggers: Triggers;
 }
 
 export interface RecipeParticle extends BaseNode {
@@ -582,6 +590,7 @@ export interface NameAndTagList {
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Annotation = string;
+export type Triggers = [string, string][][];
 export type Indent = number;
 export type LocalName = string;
 export type Manifest = ManifestItem[];

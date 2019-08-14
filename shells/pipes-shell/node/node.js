@@ -19,7 +19,7 @@ import {version, paths, storage, test} from './config.js';
 
 // dependencies
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
-import {initPipe} from '../pipe.js';
+import {initPipe, initArcs} from '../pipe.js';
 import {smokeTest} from '../smoke.js';
 
 console.log(`${version} -- ${storage}`);
@@ -37,6 +37,8 @@ const client = global.DeviceClient || {};
   const bus = await initPipe(client, paths, storage, composerFactory);
   // export bus
   global.ShellApi = bus;
+  // post startup shell initializations.
+  await initArcs(storage, bus);
   // run smokeTest if requested
   if (test) {
     smokeTest(bus);

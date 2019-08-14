@@ -332,4 +332,161 @@ describe('FlowGraph', () => {
     assert.lengthOf(foo2Out.derivesFrom, 1);
     assert.strictEqual(foo2Out.derivesFrom[0], foo1In);
   });
+
+  describe('references', () => {
+    it('derives from input with same type', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} foo
+          in Bar {} bar
+          out Reference<Foo {}> outRef
+        recipe R
+          P
+            foo <- h1
+            bar <- h2
+            outRef -> h3
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 1);
+      assert.strictEqual(outEdge.derivesFrom[0].label, 'P.foo');
+    });
+
+    it('derives from input with same reference type', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Reference<Foo {}> fooRef
+          in Bar {} bar
+          out Reference<Foo {}> outRef
+        recipe R
+          P
+            fooRef <- h1
+            bar <- h2
+            outRef -> h3
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 1);
+      assert.strictEqual(outEdge.derivesFrom[0].label, 'P.fooRef');
+    });
+
+    it('derives from input collections of same type', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in [Foo {}] fooCollection
+          in BigCollection<Foo {}> fooBigCollection
+          in Bar {} bar
+          out Reference<Foo {}> outRef
+        recipe R
+          P
+            fooCollection <- h1
+            fooBigCollection <- h2
+            bar <- h3
+            outRef -> h4
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 2);
+      const labels = outEdge.derivesFrom.map(e => e.label);
+      assert.sameMembers(labels, ['P.fooCollection', 'P.fooBigCollection']);
+    });
+
+    it('derives from input entity containing same reference', async () => {
+      const graph = await buildFlowGraph(`
+        schema Baz
+          Text abc
+          Number xyz
+          Reference<Foo {}> foo
+        particle P
+          in Baz baz
+          in Bar {} bar
+          out Reference<Foo {}> outRef
+        recipe R
+          P
+            baz <- h1
+            bar <- h2
+            outRef -> h3
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 1);
+      assert.strictEqual(outEdge.derivesFrom[0].label, 'P.baz');
+    });
+
+    it('derives from output of same type', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          out Reference<Foo {}> outRef
+          out Foo {} outFoo
+        recipe R
+          P
+            outRef -> h2
+            outFoo -> h3
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef') as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 1);
+      assert.strictEqual(outEdge.derivesFrom[0].label, 'P.outFoo');
+    });
+
+    it('derives from output collection containing same type', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          out Reference<Foo {}> outRef
+          out [Foo {}] outFoo
+        recipe R
+          P
+            outRef -> h1
+            outFoo -> h2
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef') as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 1);
+      assert.strictEqual(outEdge.derivesFrom[0].label, 'P.outFoo');
+    });
+
+    it('does not derive from output reference of same type', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          out Reference<Foo {}> outRef1
+          out Reference<Foo {}> outRef2
+        recipe R
+          P
+            outRef1 -> h1
+            outRef2 -> h2
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef1') as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 0);
+    });
+
+    it('does not derive from output entity containing same reference', async () => {
+      const graph = await buildFlowGraph(`
+        schema Baz
+          Text abc
+          Number xyz
+          Reference<Foo {}> foo
+        particle P
+          out Reference<Foo {}> outRef
+          out Baz outBaz
+        recipe R
+          P
+            outRef -> h1
+            outBaz -> h2
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef') as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 0);
+    });
+
+    it('"derives from" claims override reference logic', async () => {
+      const graph = await buildFlowGraph(`
+        particle P
+          in Foo {} foo
+          in Bar {} bar
+          out Reference<Foo {}> outRef
+          claim outRef derives from bar
+        recipe R
+          P
+            foo <- h1
+            bar <- h2
+            outRef -> h3
+      `);
+      const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
+      assert.lengthOf(outEdge.derivesFrom, 1);
+      assert.strictEqual(outEdge.derivesFrom[0].label, 'P.bar');
+    });
+  });
 });

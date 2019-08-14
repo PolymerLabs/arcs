@@ -4,8 +4,8 @@ import javax.inject.Inject;
 import java.util.Map;
 
 /**
- * Web based ArcsEnvironment using ShellApi. The Android version of this will different only in
- * not needing to use the ShellApi + Web runtime.
+ * Web based ArcsEnvironment using ShellApi. The Android version of this will different only in not
+ * needing to use the ShellApi + Web runtime.
  */
 public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
 
@@ -27,26 +27,20 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   }
 
   @Override
-  public void addReadyListener(ReadyListener listener) {
-  }
+  public void addReadyListener(ReadyListener listener) {}
 
   @Override
-  public void init() {
-  }
+  public void init() {}
 
   @Override
-  public void reset() {
-  }
+  public void reset() {}
 
   @Override
-  public void destroy() {
-  }
+  public void destroy() {}
 
   @Override
-  public void show() {
-  }
+  public void show() {}
 
   @Override
-  public void hide() {
-  }
+  public void hide() {}
 }
