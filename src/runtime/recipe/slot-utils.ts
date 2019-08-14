@@ -86,7 +86,7 @@ export class SlotUtils {
       return false;
     }
 
-    const potentialSlotConn = particle.getSlotConnectionBySpec(slotSpec);
+    const potentialSlotConn = particle.getSlandleConnectionBySpec(slotSpec);
     if (!SlotUtils.tagsOrNameMatch(slotSpec, slot.spec, potentialSlotConn, slot)) {
       return false;
     }

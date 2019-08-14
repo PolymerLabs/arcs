@@ -266,6 +266,10 @@ export class Particle implements Comparable<Particle> {
     return this._consumedSlotConnections[name];
   }
 
+  getSlandleConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection {
+    return this.getSlandleConnections().find(slotConn => slotConn.getSlotSpec() === spec);
+  }
+
   getSlotConnectionByName(name: string): SlotConnection {
     return this._consumedSlotConnections[name];
   }
