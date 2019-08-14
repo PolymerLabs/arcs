@@ -101,7 +101,7 @@ Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(Sa
   }
 
 Trigger "a trigger for a recipe"
-  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent lowerIdent whiteSpace lowerIdent)+ {
+  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
   return pairs.map(pair => {
     return [pair[2], pair[4]];
   });
@@ -1029,14 +1029,14 @@ RequireHandleSection
   }
 
 Tag
-  = '#' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
+  = '#' tag:simpleName {return tag;}
 
 TagList
   = head:Tag tail:(whiteSpace TagList)?
   { return [head, ...(tail && tail[1] || [])]; }
 
 Verb "a verb (e.g. &Verb)"
-  = '&' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
+  = '&' verb:simpleName {return verb;}
 
 VerbList
   = head:Verb tail:(whiteSpace VerbList)?
@@ -1327,6 +1327,10 @@ lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
+dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
+  = $ (simpleName ("." simpleName)*) // Note that a single simpleName matches too
+simpleName "a name starting with a letter and containing letters, digits and underscores"
+  = [a-zA-Z][a-zA-Z0-9_]* {return text();}
 whiteSpace "one or more whitespace characters"
   = " "+
 eolWhiteSpace "a group of new lines (and optionally comments)"
