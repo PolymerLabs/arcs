@@ -1,5 +1,7 @@
 # Recommended bazel settings for working with J2CL.
 # You can copy this into root of your workspace.
+import %workspace%/errorprone_errors.bazelrc
+import %workspace%/errorprone_warnings.bazelrc
 
 build --incompatible_depset_union=false
 build --incompatible_disable_deprecated_attr_params=false
@@ -12,3 +14,4 @@ build --spawn_strategy=local
 build --strategy=J2cl=worker
 build --strategy=Closure=worker
 build --experimental_persistent_javac
+
