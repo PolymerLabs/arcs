@@ -12,7 +12,7 @@ schema Person
   Text lastName
 
 // TODO: This should be a builtin particle.
-particle RecognizeEntity in './source/RecognizeEntity.js'
+particle RecognizeEntity in './source/RecognizeEntity.java'
   out [IncomingEntity] entities
 
 particle CopyEntities in './source/CopyEntities.js'

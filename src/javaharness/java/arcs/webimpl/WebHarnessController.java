@@ -1,5 +1,7 @@
 package arcs.webimpl;
 
+import arcs.api.ArcsApi;
+import arcs.api.PortableJsonParser;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.crdt.CollectionDataTest;
@@ -19,13 +21,21 @@ import static elemental2.dom.DomGlobal.window;
 /** Mainly for testing in Chrome. */
 public class WebHarnessController implements HarnessController {
 
-  private ArcsEnvironment environment;
-  private DeviceClient deviceClient;
+  private final ArcsApi arcsApi;
+  private final ArcsEnvironment environment;
+  private final DeviceClient deviceClient;
+  private final PortableJsonParser jsonParser;
 
   @Inject
-  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient) {
+  WebHarnessController(
+      ArcsApi arcsApi,
+      ArcsEnvironment environment,
+      DeviceClient deviceClient,
+      PortableJsonParser jsonParser) {
+    this.arcsApi = arcsApi;
     this.environment = environment;
     this.deviceClient = deviceClient;
+    this.jsonParser = jsonParser;
   }
 
   @Override
@@ -44,27 +54,50 @@ public class WebHarnessController implements HarnessController {
     shellElement.type = "module";
     document.body.appendChild(shellElement);
 
-    // make two buttons in the UI
+    // // make two buttons in the UI
+    // document.body.appendChild(
+    //     makeInputElement(
+    //         "Capture Place Entity",
+    //         val ->
+    //             environment.sendMessageToArcs(
+    //                 "{\"message\": \"capture\", \"entity\":{\"type\": \"address\", \"name\": \""
+    //                     + val
+    //                     + "\", \"source\": \"com.google.android.apps.maps\"}}",
+    //                 null)));
+
+    // Element dataParagraph = makeParagraph();
+
+    // document.body.appendChild(
+    //     makeInputElement(
+    //         "Autofill Address Entity",
+    //         val ->
+    //             environment.sendMessageToArcs(
+    //                 "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
+    //                 (id, result) -> dataParagraph.append("Test: " + result.toString()))));
+    // document.body.appendChild(dataParagraph);
+
     document.body.appendChild(
         makeInputElement(
             "Capture Place Entity",
             val ->
-                environment.sendMessageToArcs(
-                    "{\"message\": \"capture\", \"entity\":{\"type\": \"address\", \"name\": \""
-                        + val
-                        + "\", \"source\": \"com.google.android.apps.maps\"}}",
-                    null)));
-
-    Element dataParagraph = makeParagraph();
+                arcsApi.call(
+                    "ingestEntity",
+                    jsonParser.emptyObject().put("type", "place").put("source", "demo.mydemo")
+                        .put(
+                            "jsonData",
+                            jsonParser.stringify(jsonParser.emptyObject().put("name", val))))));
 
     document.body.appendChild(
         makeInputElement(
-            "Autofill Address Entity",
+            "Capture Person Entity",
             val ->
-                environment.sendMessageToArcs(
-                    "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
-                    (id, result) -> dataParagraph.append("Test: " + result.toString()))));
-    document.body.appendChild(dataParagraph);
+                arcsApi.call(
+                    "ingestEntity",
+                    jsonParser.emptyObject().put("type", "person").put("source", "demo.mydemo")
+                        .put(
+                            "jsonData",
+                            jsonParser.stringify(jsonParser.emptyObject().put("firstName", val)
+                                .put("lastName", val))))));
 
     // TODO: get rid of this once crdt tests are built and run properly as unittests.
     document.body.appendChild(addCrdtTests());
