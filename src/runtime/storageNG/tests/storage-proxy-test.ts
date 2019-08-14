@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {Particle} from '../../particle.js';
-import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';
 import {EntityType} from '../../type.js';
@@ -22,6 +22,10 @@ interface Entity {
 
 function getStorageProxy(store: ActiveStore<CRDTSingletonTypeRecord<Entity>>): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
   return new StorageProxy('id', new CRDTSingleton<Entity>(), store, EntityType.make([], {}), null /*pec*/);
+}
+
+function getNoOpStorageProxy(): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
+  return new NoOpStorageProxy();
 }
 
 describe('StorageProxy', async () => {
@@ -124,5 +128,30 @@ describe('StorageProxy', async () => {
     assert.equal(
         mockStore.lastCapturedException.message,
         'SystemException: exception Error raised when invoking system function StorageProxyScheduler::_dispatch on behalf of particle handle: something wrong');
+  });
+});
+
+describe('NoOpStorageProxy', () => {
+  it('overrides all methods in StorageProxy', async () => {
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy = getStorageProxy(mockStore);
+    const noOpStorageProxy = getNoOpStorageProxy();
+
+    const properties = [];
+    let proto = Object.getPrototypeOf(storageProxy);
+    while (proto && proto !== Object.prototype) {
+      Object.getOwnPropertyNames(proto).forEach(name => {
+        const desc = Object.getOwnPropertyDescriptor(proto, name);
+        if (desc && typeof desc.value === 'function') {
+          properties.push(name);
+        }
+      });
+      proto = Object.getPrototypeOf(proto);
+    }
+
+    const noOpProperties = Object.getOwnPropertyNames(Object.getPrototypeOf(noOpStorageProxy));
+    properties.forEach(property => {
+      assert(noOpProperties.indexOf(property) !== -1, 'Missing function: ' + property);
+    });
   });
 });

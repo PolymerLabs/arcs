@@ -95,7 +95,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return this.versionCopy();
   }
 
-  private versionCopy(): VersionMap {
+  deregisterHandle(handleIn: Handle<T>) {
+    this.handles = this.handles.filter(handle => handle !== handleIn);
+  }
+
+  protected versionCopy(): VersionMap {
     const version = {};
     for (const [k, v] of Object.entries(this.crdt.getData().version)) {
       version[k] = v;
@@ -166,7 +170,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return true;
   }
 
-  private notifyUpdate(operation: CRDTOperation, oldData: CRDTConsumerType) {
+  protected notifyUpdate(operation: CRDTOperation, oldData: CRDTConsumerType) {
     const version: VersionMap = this.versionCopy();
     for (const handle of this.handles) {
       if (handle.options.notifyUpdate) {
@@ -182,7 +186,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  private notifySync() {
+  protected notifySync() {
     for (const handle of this.handles) {
       if (handle.options.notifySync) {
         this.scheduler.enqueue(
@@ -191,7 +195,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  private notifyDesync() {
+  protected notifyDesync() {
     for (const handle of this.handles) {
       if (handle.options.notifyDesync) {
         this.scheduler.enqueue(
@@ -200,8 +204,50 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  private async synchronizeModel(): Promise<boolean> {
+  protected async synchronizeModel(): Promise<boolean> {
     return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: this.id});
+  }
+}
+
+export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
+  constructor() {
+    super(null, null, null, null, null);
+  }
+  async idle(): Promise<void> {
+    return new Promise(resolve => {});
+  }
+
+  reportExceptionInHost(exception: PropagatedException): void {}
+
+  registerHandle(handle: Handle<T>): VersionMap {
+    return {};
+  }
+  deregisterHandle(handle: Handle<T>): void {}
+
+  protected versionCopy(): VersionMap {
+    return null;
+  }
+
+  async applyOp(op: CRDTOperation): Promise<boolean> {
+    return new Promise(resolve => {});
+  }
+  async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
+    return new Promise(resolve => {});
+  }
+  async getData(): Promise<T['data']> {
+    return new Promise(resolve => {});
+  }
+  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
+    return new Promise(resolve => {});
+  }
+  protected notifyUpdate(operation: CRDTOperation, oldData: CRDTConsumerType) {}
+
+  protected notifySync() {}
+
+  protected notifyDesync() {}
+
+  protected async synchronizeModel(): Promise<boolean> {
+    return new Promise(resolve => {});
   }
 }
 

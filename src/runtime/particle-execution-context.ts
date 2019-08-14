@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
-import {Handle, handleFor, HandleOld} from './handle.js';
+import {Handle, handleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
@@ -252,7 +252,7 @@ export class ParticleExecutionContext {
     // Create new handles and disable the handles of the old particles
     oldParticle.handles.forEach((oldHandle) => {
       this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
-      if (oldHandle instanceof HandleOld) oldHandle.disable(oldParticle);
+      oldHandle.disable(oldParticle);
     });
 
     return [particle, async () => {
