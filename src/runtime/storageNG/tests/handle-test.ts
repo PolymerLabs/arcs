@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
+import {VersionMap} from '../../crdt/crdt';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
@@ -68,6 +69,7 @@ describe('CollectionHandle', () => {
     const handle = getCollectionHandle();
     const entity = {id: 'A', property: 'something'};
     await handle.add(entity);
+    await handle.add({id: 'B'});
     assert.deepEqual(await handle.get('A'), entity);
   });
 
@@ -108,9 +110,31 @@ describe('CollectionHandle', () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, new Set());
+    await handle.onUpdate(op, new Set(), {'actor': 1, 'other': 2});
     assert.deepEqual(
         particle.lastUpdate, {removed: {id: 'id'}, originator: false});
+  });
+
+  it('stores new version map', async () => {
+    const handle = getCollectionHandle();
+
+    const versionMap: VersionMap = {'actor': 1, 'other': 2};
+    // Make storageProxy return the defined version map.
+    handle.storageProxy.getParticleView = async () => {
+      return Promise.resolve([new Set(), versionMap]);
+    };
+
+    // This will pull in the version map above.
+    await handle.toList();
+    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
+    let capturedClock;
+    handle.storageProxy.applyOp = async (op: CollectionOperation<{id: string}>) => {
+      capturedClock = op.clock;
+      return true;
+    };
+    // Use an op that does not increment the clock.
+    await handle.remove({id: 'id'});
+    assert.deepEqual(capturedClock, versionMap);
   });
 
   it('can override default options', () => {
@@ -166,9 +190,31 @@ describe('SingletonHandle', () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {id: 'old'});
+    await handle.onUpdate(op, {id: 'old'}, {'actor': 1, 'other': 2});
     assert.deepEqual(
         particle.lastUpdate,
         {data: {id: 'id'}, oldData: {id: 'old'}, originator: false});
+  });
+
+  it('stores new version map', async () => {
+    const handle = getSingletonHandle();
+
+    const versionMap: VersionMap = {'actor': 1, 'other': 2};
+    // Make storageProxy return the defined version map.
+    handle.storageProxy.getParticleView = async () => {
+      return Promise.resolve([{id: 'id'}, versionMap]);
+    };
+
+    // This will pull in the version map above.
+    await handle.get();
+    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
+    let capturedClock;
+    handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
+      capturedClock = op.clock;
+      return true;
+    };
+    // Use an op that does not increment the clock.
+    await handle.clear();
+    assert.deepEqual(capturedClock, versionMap);
   });
 });

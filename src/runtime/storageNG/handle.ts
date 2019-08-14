@@ -104,7 +104,7 @@ export abstract class Handle<T extends CRDTTypeRecord> {
     this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
   }
 
-  abstract onUpdate(update: T['operation'], oldData: T['consumerType']): void;
+  abstract onUpdate(update: T['operation'], oldData: T['consumerType'], version: VersionMap): void;
   abstract onSync(): void;
 
   async onDesync(): Promise<void> {
@@ -121,8 +121,8 @@ export abstract class Handle<T extends CRDTTypeRecord> {
  */
 export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollectionTypeRecord<T>> {
   async get(id: string): Promise<T> {
-    const data = await this.storageProxy.getData();
-    return data.values[id].value;
+    const values: T[] = await this.toList();
+    return values.find(element => element.id === id);
   }
 
   async add(entity: T): Promise<boolean> {
@@ -167,10 +167,13 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
   }
 
   async toList(): Promise<T[]> {
-    return this.storageProxy.getParticleView().then(set => [...set]);
+    const [set, versionMap] = await this.storageProxy.getParticleView();
+    this.clock = versionMap;
+    return [...set];
   }
 
-  async onUpdate(op: CollectionOperation<T>, oldData: Set<T>): Promise<void> {
+  async onUpdate(op: CollectionOperation<T>, oldData: Set<T>, version: VersionMap): Promise<void> {
+    this.clock = version;
     // Pass the change up to the particle.
     const update: {added?: T, removed?: T, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
@@ -218,10 +221,13 @@ export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSinglet
   }
 
   async get(): Promise<T> {
-    return this.storageProxy.getParticleView();
+    const [value, versionMap] = await this.storageProxy.getParticleView();
+    this.clock = versionMap;
+    return value;
   }
 
-  async onUpdate(op: SingletonOperation<T>, oldData: T): Promise<void> {
+  async onUpdate(op: SingletonOperation<T>, oldData: T, version: VersionMap): Promise<void> {
+     this.clock = version;
     // Pass the change up to the particle.
     const update: {data?: T, oldData: T, originator: boolean} = {oldData, originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
