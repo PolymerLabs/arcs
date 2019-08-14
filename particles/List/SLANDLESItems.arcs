@@ -12,7 +12,7 @@ interface SlandleHostedItemInterface
   // all Interfaces are the same in List/* except for the slot
   `consume Slot item
 
-particle SlandleItemMultiplexer in 'source/Multiplexer.js'
+particle SlandleItemMultiplexer in 'source/SlandleMultiplexer.js'
   // TODO(sjmiles): redundancies:
   // 1. slot is declared in HostedItemInterface and as `consume [Slot]  here
   // 2. ~anyType is declared in HostedItemInterface and as `[~anyType]` here
