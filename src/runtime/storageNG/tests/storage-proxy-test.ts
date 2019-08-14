@@ -46,7 +46,7 @@ describe('StorageProxy', async () => {
       id: 1
     });
     await storageProxy.idle();
-    assert.sameDeepMembers(handle.lastUpdate, [op, null]);
+    assert.sameDeepMembers(handle.lastUpdate, [op, null, {A: 1}]);
   });
 
   it('will sync before returning the particle view', async () => {
@@ -64,8 +64,9 @@ describe('StorageProxy', async () => {
       return true;
     };
 
-    const result: Entity = await storageProxy.getParticleView();
+    const [result, versionMap] = await storageProxy.getParticleView();
     assert.deepEqual(result, {id: 'e1'});
+    assert.deepEqual(versionMap, {A: 1});
     assert.deepEqual(
         mockStore.lastCapturedMessage,
         {type: ProxyMessageType.SyncRequest, id: 1});

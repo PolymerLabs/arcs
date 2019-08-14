@@ -10,7 +10,7 @@
 
 import {PropagatedException} from '../../arc-exceptions.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
-import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt.js';
+import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
 import {Consumer} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle';
@@ -88,8 +88,8 @@ export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSync() {
     this.onSyncCalled = true;
   }
-  onUpdate(op: CRDTOperation, oldData: CRDTConsumerType) {
-    this.lastUpdate = [op, oldData];
+  onUpdate(op: CRDTOperation, oldData: CRDTConsumerType, version: VersionMap) {
+    this.lastUpdate = [op, oldData, version];
   }
 }
 

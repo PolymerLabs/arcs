@@ -92,7 +92,10 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         handle.onSync();
       }
     }
+    return this.versionCopy();
+  }
 
+  private versionCopy(): VersionMap {
     const version = {};
     for (const [k, v] of Object.entries(this.crdt.getData().version)) {
       version[k] = v;
@@ -115,9 +118,9 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return true;
   }
 
-  async getParticleView(): Promise<T['consumerType']> {
+  async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
     await this.synchronizeModel();
-    return this.crdt.getParticleView()!;
+    return [this.crdt.getParticleView()!, this.versionCopy()];
   }
 
   async getData(): Promise<T['data']> {
@@ -164,12 +167,13 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   private notifyUpdate(operation: CRDTOperation, oldData: CRDTConsumerType) {
+    const version: VersionMap = this.versionCopy();
     for (const handle of this.handles) {
       if (handle.options.notifyUpdate) {
         this.scheduler.enqueue(
             handle.particle,
             handle,
-            {type: HandleMessageType.Update, op: operation, oldData});
+            {type: HandleMessageType.Update, op: operation, oldData, version});
       } else if (handle.options.keepSynced) {
         // keepSynced but not notifyUpdate, notify of the new model.
         this.scheduler.enqueue(
@@ -209,7 +213,10 @@ enum HandleMessageType {
 
 type Event = {type: HandleMessageType.Sync} |
              {type: HandleMessageType.Desync} |
-             {type: HandleMessageType.Update, op: CRDTOperation, oldData: CRDTConsumerType};
+             {type: HandleMessageType.Update,
+               op: CRDTOperation,
+               oldData: CRDTConsumerType,
+               version: VersionMap};
 
 export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   private _scheduled = false;
@@ -294,7 +301,7 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
         await handle.onDesync();
         break;
       case HandleMessageType.Update:
-        handle.onUpdate(update.op, update.oldData);
+        handle.onUpdate(update.op, update.oldData, update.version);
         break;
       default:
         console.error('Ignoring unknown update', update);
