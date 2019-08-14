@@ -126,10 +126,10 @@ describe('CollectionHandle', () => {
 
     // This will pull in the version map above.
     await handle.toList();
-    // Swap out storageProxy.applyOp the check the updated clock is passed in the next op.
+    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
     let capturedClock;
     handle.storageProxy.applyOp = async (op: CollectionOperation<{id: string}>) => {
-      capturedClock=op.clock;
+      capturedClock = op.clock;
       return true;
     };
     // Use an op that does not increment the clock.
@@ -207,10 +207,10 @@ describe('SingletonHandle', () => {
 
     // This will pull in the version map above.
     await handle.get();
-    // Swap out storageProxy.applyOp the check the updated clock is passed in the next op.
+    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
     let capturedClock;
     handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
-      capturedClock=op.clock;
+      capturedClock = op.clock;
       return true;
     };
     // Use an op that does not increment the clock.
