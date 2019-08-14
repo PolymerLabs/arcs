@@ -63,7 +63,7 @@ public class Schema {
       return new PrimitiveField(json.getString("type"));
     } else {
       PortableJson types = json.getObject("types");
-      List<Field> fields = new ArrayList<Field>(types.getLength());
+      List<Field> fields = new ArrayList<>(types.getLength());
       for (int i = 0; i < types.getLength(); ++i) {
         fields.add(fieldFromJson(types.getObject(i)));
       }
@@ -86,16 +86,14 @@ public class Schema {
 
   public static Schema fromJson(PortableJson json) {
     PortableJson namesJson = json.getObject("names");
-    List<String> names = new ArrayList<String>(namesJson.getLength());
+    List<String> names = new ArrayList<>(namesJson.getLength());
     for (int i = 0; i < namesJson.getLength(); ++i) {
       names.add(namesJson.getString(i));
     }
     PortableJson fieldsJson = json.getObject("fields");
-    List<Field> fields = new ArrayList<Field>();
+    List<Field> fields = new ArrayList<>();
     fieldsJson.forEach(
-        fieldName -> {
-          fields.add(Schema.fieldFromJson(fieldsJson.getObject(fieldName)));
-        });
+        fieldName -> fields.add(Schema.fieldFromJson(fieldsJson.getObject(fieldName))));
     return new Schema(names, fields);
   }
 }

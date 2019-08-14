@@ -20,7 +20,7 @@ public class DeviceClientImpl implements DeviceClient {
   private final PortableJsonParser jsonParser;
   private Map<String, ArcsEnvironment.DataListener> inProgress;
   private final PECInnerPortFactory portFactory;
-  private final Map<String, PECInnerPort> portById = new HashMap<String, PECInnerPort>();
+  private final Map<String, PECInnerPort> portById = new HashMap<>();
 
   @Inject
   public DeviceClientImpl(

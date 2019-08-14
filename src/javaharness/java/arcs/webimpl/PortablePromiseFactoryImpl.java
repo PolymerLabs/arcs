@@ -10,12 +10,12 @@ public class PortablePromiseFactoryImpl implements PortablePromiseFactory {
   public PortablePromiseFactoryImpl() {}
 
   @Override
-  public <T> PortablePromise<T> newPromise(PortablePromise.PortablePromiseExecutor<T> executor) {
-    return new PortablePromiseJsImpl(executor);
+  public <T> PortablePromiseJsImpl<T> newPromise(PortablePromise.PortablePromiseExecutor<T> executor) {
+    return new PortablePromiseJsImpl<>(executor);
   }
 
   @Override
-  public <T> PortablePromise<T> newPromise(T value) {
-    return new PortablePromiseJsImpl(value);
+  public <T> PortablePromiseJsImpl<T> newPromise(T value) {
+    return new PortablePromiseJsImpl<>(value);
   }
 }

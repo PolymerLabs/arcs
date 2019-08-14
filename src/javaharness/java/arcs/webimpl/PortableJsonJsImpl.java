@@ -85,9 +85,9 @@ public class PortableJsonJsImpl implements PortableJson {
 
   @Override
   public List<String> keys() {
-    Set<String> keys = new HashSet<String>();
-    forEach(key -> keys.add(key));
-    return new ArrayList<String>(keys);
+    Set<String> keys = new HashSet<>();
+    forEach(keys::add);
+    return new ArrayList<>(keys);
   }
 
   @Override

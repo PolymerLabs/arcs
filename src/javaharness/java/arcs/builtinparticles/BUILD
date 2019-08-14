@@ -12,8 +12,8 @@ java_library(
         "*.java",
     ]),
     deps = [
-        "//java/arcs:dagger-j2cl",
-        "//java/arcs:javax_inject-j2cl",
+        "@com_google_dagger",
+        "@javax_inject_source//jar",
         "//java/arcs/api"
     ],
 )

@@ -40,10 +40,10 @@ public class Thing<T> {
     return (StorageProxy) thing;
   }
 
-  public Consumer<PortableJson> getConsumer() {
+  public Consumer<?> getConsumer() {
     if (!(thing instanceof Consumer)) {
       throw new AssertionError("Thing is not a consumer");
     }
-    return (Consumer<PortableJson>) thing;
+    return (Consumer<?>) thing;
   }
 }
