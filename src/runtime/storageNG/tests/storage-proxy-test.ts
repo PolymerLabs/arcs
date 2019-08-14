@@ -22,7 +22,7 @@ interface Entity {
 
 function getStorageProxy(store: ActiveStore<CRDTSingletonTypeRecord<Entity>>): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
   return new StorageProxy('id', new CRDTSingleton<Entity>(), store, EntityType.make([], {}), null /*pec*/);
-} 
+}
 
 describe('StorageProxy', async () => {
   it('will apply and propagate operation', async () => {
@@ -46,7 +46,7 @@ describe('StorageProxy', async () => {
       id: 1
     });
     await storageProxy.idle();
-    assert.sameDeepMembers(handle.lastUpdate, [op]);
+    assert.sameDeepMembers(handle.lastUpdate, [op, null]);
   });
 
   it('will sync before returning the particle view', async () => {
@@ -57,11 +57,11 @@ describe('StorageProxy', async () => {
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
 
     // When requested a sync, store will send back a model.
-    mockStore.onProxyMessage = async message => { 
+    mockStore.onProxyMessage = async message => {
       mockStore.lastCapturedMessage = message;
       const crdtData = {values: {'1': {value: {id: 'e1'}, version: {A: 1}}}, version: {A: 1}};
-      await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1}); 
-      return true; 
+      await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1});
+      return true;
     };
 
     const result: Entity = await storageProxy.getParticleView();

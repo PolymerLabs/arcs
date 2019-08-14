@@ -55,12 +55,12 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   reportExceptionInHost(exception: PropagatedException) {
     // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
-    if (mapStackTrace) {      
+    if (mapStackTrace) {
       mapStackTrace(exception.cause.stack, mappedStack => {
         exception.cause.stack = mappedStack;
         this.store.reportExceptionInHost(exception);
       });
-    } else {      
+    } else {
       this.store.reportExceptionInHost(exception);
     }
   }
@@ -101,8 +101,9 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   async applyOp(op: CRDTOperation): Promise<boolean> {
-    if (!this.crdt.applyOperation(op)) {      
-      return false;      
+    const oldData: CRDTConsumerType = this.crdt.getParticleView();
+    if (!this.crdt.applyOperation(op)) {
+      return false;
     }
     const message: ProxyMessage<T> = {
       type: ProxyMessageType.Operations,
@@ -110,7 +111,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       id: this.id
     };
     await this.store.onProxyMessage(message);
-    this.notifyUpdate([op]);
+    this.notifyUpdate(op, oldData);
     return true;
   }
 
@@ -132,11 +133,12 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         this.synchronized = true;
         this.notifySync();
         break;
-      case ProxyMessageType.Operations:
+      case ProxyMessageType.Operations: {
         // Bail if we're not in synchronized mode.
         if (!this.keepSynced) {
           return false;
         }
+        let oldData: CRDTConsumerType = this.crdt.getParticleView();
         for (const op of message.operations) {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
@@ -144,11 +146,13 @@ export class StorageProxy<T extends CRDTTypeRecord> {
             await this.notifyDesync();
             return this.synchronizeModel();
           }
+          this.notifyUpdate(op, oldData);
+          oldData = this.crdt.getParticleView();
         }
         // If we have consumed all operations, we've caught up.
         this.synchronized = true;
-        this.notifyUpdate(message.operations);
         break;
+      }
       case ProxyMessageType.SyncRequest:
         await this.store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: this.crdt.getData(), id: this.id});
         break;
@@ -159,13 +163,13 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return true;
   }
 
-  private notifyUpdate(operations: CRDTOperation[]) {
+  private notifyUpdate(operation: CRDTOperation, oldData: CRDTConsumerType) {
     for (const handle of this.handles) {
       if (handle.options.notifyUpdate) {
         this.scheduler.enqueue(
             handle.particle,
             handle,
-            {type: HandleMessageType.Update, ops: operations});
+            {type: HandleMessageType.Update, op: operation, oldData});
       } else if (handle.options.keepSynced) {
         // keepSynced but not notifyUpdate, notify of the new model.
         this.scheduler.enqueue(
@@ -205,7 +209,7 @@ enum HandleMessageType {
 
 type Event = {type: HandleMessageType.Sync} |
              {type: HandleMessageType.Desync} |
-             {type: HandleMessageType.Update, ops: CRDTOperation[]};
+             {type: HandleMessageType.Update, op: CRDTOperation, oldData: CRDTConsumerType};
 
 export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   private _scheduled = false;
@@ -271,17 +275,17 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
       const byHandle = this._queues.get(particle);
       this._queues.delete(particle);
       for (const [handle, queue] of byHandle.entries()) {
-        for (const update of queue) {          
-          this._dispatchh(handle, update).catch(e =>         
+        for (const update of queue) {
+          this._dispatchUpdate(handle, update).catch(e =>
             handle.storageProxy.reportExceptionInHost(new SystemException(
-                e, 'StorageProxyScheduler::_dispatch', handle.key)));          
+                e, 'StorageProxyScheduler::_dispatch', handle.key)));
         }
       }
     }
     this._updateIdle();
   }
 
-  async _dispatchh(handle: Handle<T>, update: Event): Promise<void> {
+  async _dispatchUpdate(handle: Handle<T>, update: Event): Promise<void> {
     switch (update.type) {
       case HandleMessageType.Sync:
         handle.onSync();
@@ -290,7 +294,7 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
         await handle.onDesync();
         break;
       case HandleMessageType.Update:
-        handle.onUpdate(update.ops);
+        handle.onUpdate(update.op, update.oldData);
         break;
       default:
         console.error('Ignoring unknown update', update);
