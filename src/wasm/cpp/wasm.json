@@ -1,7 +1,8 @@
 {
   "output.wasm": {
     "manifest": "working.arcs",
+    "genfile": "working.h",
     "src": ["working.cc"],
-    "outDir": "$here"
+    "outdir": "$here"
   }
 }
