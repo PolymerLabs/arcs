@@ -126,7 +126,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed slots', async () => {
+  it('resolves particles with multiple consumed slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         consume one
@@ -139,7 +139,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed SLANDLES', async () => {
+  it('resolves particles with multiple consumed SLANDLES', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume Slot one
@@ -152,7 +152,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed set SLANDLES', async () => {
+  it('resolves particles with multiple consumed set SLANDLES', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume [Slot] one
@@ -165,7 +165,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed SLANDLES with the = direction arrow', async () => {
+  it('resolves particles with multiple consumed SLANDLES with the = direction arrow', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume Slot one
@@ -178,7 +178,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed set SLANDLES with the = direction arrow', async () => {
+  it('resolves particles with multiple consumed set SLANDLES with the = direction arrow', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume [Slot] one
@@ -191,7 +191,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve SLANDLES with other SLANDLES', async () => {
+  it('resolves particles with SLANDLES with other SLANDLES', async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
         \`consume Slot inSlot
@@ -210,7 +210,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve set SLANDLES with other set SLANDLES', async () => {
+  it('resolves particles with set SLANDLES with other set SLANDLES', async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
         \`consume Slot inSlot
@@ -276,7 +276,7 @@ describe('Planner', () => {
     }, 'not compatible with \'`consume\'');
   });
 
-  it('can resolve multiple consumed SLANDLES with arrows', async () => {
+  it('resolves particles with multiple consumed SLANDLES with arrows', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume Slot one
@@ -289,7 +289,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed set SLANDLES with consume', async () => {
+  it('resolves particles with multiple consumed set SLANDLES with consume', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume [Slot] one
@@ -302,7 +302,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('can resolve multiple consumed set SLANDLES with arrows', async () => {
+  it('resolves particles with multiple consumed set SLANDLES with arrows', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         \`consume [Slot] one

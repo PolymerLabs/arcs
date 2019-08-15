@@ -706,7 +706,7 @@ ${particleStr1}
     assert.lengthOf(recipe.handleConnections, 2);
     assert.isEmpty(recipe.handles);
   });
-  it('multiple consumed slots', async () => {
+  it('resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
@@ -727,7 +727,7 @@ ${particleStr1}
     await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
-  it('SLANDLES multiple consumed slots', async () => {
+  it('SLANDLES resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
@@ -748,7 +748,7 @@ ${particleStr1}
     await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
-  it('SLANDLES consumes multiple set slots', async () => {
+  it('SLANDLES resolves & consumes in context with multiple set slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
