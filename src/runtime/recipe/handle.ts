@@ -129,16 +129,16 @@ export class Handle implements Comparable<Handle> {
     this._localName = null;
     this._tags.sort();
     const isSlotType = (type: Type) => {
-      if (!type || this._fate !== '?') return;
-      if ((type.canWriteSuperset && type.canWriteSuperset.slandleType())
-          ||(type.canReadSubset && type.canReadSubset.slandleType())) {
-        this._fate = '`slot';
-      }
+      const hasTypeWithoutFate = type && this._fate === '?';
+      const supersetIsSlandle = type.canWriteSuperset && type.canWriteSuperset.slandleType();
+      const subersetIsSlandle = type.canReadSubset && type.canReadSubset.slandleType();
+      return hasTypeWithoutFate && (supersetIsSlandle || subersetIsSlandle);
     };
     const resolvedType = this.type.resolvedType();
-    isSlotType(resolvedType);
     const collectionType = resolvedType && resolvedType.isCollectionType() && resolvedType.collectionType;
-    isSlotType(collectionType);
+    if (isSlotType(resolvedType) || isSlotType(collectionType)) {
+      this._fate = '`slot';
+    }
   }
 
   _finishNormalize() {
