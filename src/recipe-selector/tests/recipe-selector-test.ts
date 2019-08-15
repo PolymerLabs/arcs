@@ -80,6 +80,26 @@ describe('trigger parsing', () => {
     assert.lengthOf(manifest.recipes[0].triggers[1], 1);
     assert.deepEqual(manifest.recipes[0].triggers[1][0], ['key3', 'value3']);
   });
+  it('trigger value can have dots', async () => {
+    const manifest = await Manifest.parse(`
+      particle P1
+        out Foo {} foo
+      particle P2
+        in Foo {} bar
+      @trigger
+        app com.spotify.music
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    const recipe = checkDefined(manifest.recipes[0]);
+    assert.lengthOf(manifest.recipes, 1);
+    assert.lengthOf(manifest.recipes[0].triggers, 1);
+    assert.lengthOf(manifest.recipes[0].triggers[0], 1);
+    assert.deepEqual(manifest.recipes[0].triggers[0][0], ['app', 'com.spotify.music']);
+  });
 });
 
 describe('recipe-selector', () => {

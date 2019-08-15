@@ -12,13 +12,11 @@ java_library(
         "*.java",
     ]),
     deps = [
+        "//java/arcs/api",
         "@com_google_dagger",
         "@javax_inject_source//jar",
-        "//java/arcs/api"
     ],
 )
-
-
 
 j2cl_library(
     name = "builtinparticles-j2cl",
@@ -32,5 +30,3 @@ j2cl_library(
         "//java/arcs/api:api-j2cl",
     ],
 )
-
-
