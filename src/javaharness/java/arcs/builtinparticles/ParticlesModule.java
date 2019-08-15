@@ -1,8 +1,8 @@
 package arcs.builtinparticles;
 
 import arcs.api.ParticleFactory;
-import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
 import dagger.multibindings.IntoSet;
 import dagger.multibindings.Multibinds;
 import java.util.Set;
@@ -13,7 +13,9 @@ public abstract class ParticlesModule {
   @Multibinds
   abstract Set<ParticleFactory> provideParticleFactories();
 
-  @Binds
+  @Provides
   @IntoSet
-  abstract ParticleFactory provideEchoParticleFactory(EchoParticleFactory echoParticleFactory);
+  static ParticleFactory provideEchoParticleFactory(EchoParticleFactory echoParticleFactory) {
+    return echoParticleFactory;
+  }
 }
