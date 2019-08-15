@@ -109,7 +109,8 @@ public class PECInnerPortImpl implements PECInnerPort {
         break;
       case SIMPLE_CALLBACK_MSG:
         String callbackId = messageBody.getString(CALLBACK_FIELD);
-        Consumer<PortableJson> callback = (Consumer<PortableJson>) mapper.thingForIdentifier(callbackId).getConsumer();
+        Consumer<PortableJson> callback =
+            (Consumer<PortableJson>) mapper.thingForIdentifier(callbackId).getConsumer();
         PortableJson data = messageBody.getObject(DATA_FIELD);
         callback.accept(data);
         break;
@@ -160,12 +161,10 @@ public class PECInnerPortImpl implements PECInnerPort {
   public void InitializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     PortableJson message = constructMessage(INITIALIZE_PROXY_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
-    body.put(
-        PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
+    body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
     body.put(
         PROXY_CALLBACK_FIELD,
-        mapper.createMappingForThing(
-                new Thing<>(callback), /* requestedId= */ null));
+        mapper.createMappingForThing(new Thing<>(callback), /* requestedId= */ null));
     postMessage(message);
   }
 
@@ -173,12 +172,10 @@ public class PECInnerPortImpl implements PECInnerPort {
   public void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     PortableJson message = constructMessage(SYNCHRONIZE_PROXY_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
-    body.put(
-        PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
+    body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
     body.put(
         PROXY_CALLBACK_FIELD,
-        mapper.createMappingForThing(
-                new Thing<>(callback), /* requestedId= */ null));
+        mapper.createMappingForThing(new Thing<>(callback), /* requestedId= */ null));
     postMessage(message);
   }
 
@@ -244,12 +241,10 @@ public class PECInnerPortImpl implements PECInnerPort {
       String particleId) {
     PortableJson message = constructMessage(messageType);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
-    body.put(
-        PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
+    body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
     body.put(
         PROXY_CALLBACK_FIELD,
-        mapper.createMappingForThing(
-                new Thing<>(callback), /* requestedId= */ null));
+        mapper.createMappingForThing(new Thing<>(callback), /* requestedId= */ null));
     if (data != null) {
       body.put(DATA_FIELD, data);
     }

@@ -2,7 +2,6 @@ package arcs.webimpl;
 
 import arcs.api.PortablePromise;
 import elemental2.promise.Promise;
-
 import java.util.function.Consumer;
 
 class PortablePromiseJsImpl<T> implements PortablePromise<T> {

@@ -63,9 +63,7 @@ public class StorageProxyScheduler {
       return promiseFactory.newPromise(null);
     }
     if (idle == null) {
-      idle =
-          promiseFactory.newPromise(
-              (resolver, rejecter) -> idleResolver = resolver);
+      idle = promiseFactory.newPromise((resolver, rejecter) -> idleResolver = resolver);
     }
     return idle;
   }

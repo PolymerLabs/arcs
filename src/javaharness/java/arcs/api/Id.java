@@ -13,10 +13,8 @@ public class Id {
   /** The Session ID of the session during which the ID got created. See IdGenerator class. */
   final String root;
 
-    /**
-     * The components of the idTree.
-     */
-    final String[] idTree;
+  /** The components of the idTree. */
+  final String[] idTree;
 
   /** Protected constructor. Use IdGenerator to create new IDs instead. */
   protected Id(String root, String[] idTree) {
@@ -31,14 +29,14 @@ public class Id {
 
   /** Parses a string representation of an ID (see toString). */
   public static Id fromString(String str) {
-      String[] bits = str.split(":");
+    String[] bits = str.split(":");
 
     if (bits[0].startsWith("!")) {
       String root = bits[0].substring(1);
-        String[] idTree =
-                Arrays.stream(Arrays.copyOfRange(bits, 1, bits.length))
-                        .filter(component -> component.length() > 0)
-                        .toArray(String[]::new);
+      String[] idTree =
+          Arrays.stream(Arrays.copyOfRange(bits, 1, bits.length))
+              .filter(component -> component.length() > 0)
+              .toArray(String[]::new);
       return new Id(root, idTree);
     } else {
       return new Id("", bits);

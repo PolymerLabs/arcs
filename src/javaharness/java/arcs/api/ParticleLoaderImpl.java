@@ -1,8 +1,8 @@
 package arcs.api;
 
-import javax.inject.Inject;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class ParticleLoaderImpl implements ParticleLoader {
   private Set<ParticleFactory> particleFactories;

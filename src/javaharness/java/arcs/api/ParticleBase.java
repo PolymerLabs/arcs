@@ -86,7 +86,7 @@ public class ParticleBase implements Particle {
       // Did not receive StartRender
       return;
     }
-      slot.requestedContentTypes.addAll(contentTypes);
+    slot.requestedContentTypes.addAll(contentTypes);
     StringBuilder content = new StringBuilder("{");
     if (shouldRender(slotName)) {
       content.append("\"templateName\":\"").append(getTemplateName(slotName)).append("\", ");

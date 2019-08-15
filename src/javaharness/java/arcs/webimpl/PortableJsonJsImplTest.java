@@ -1,7 +1,6 @@
 package arcs.webimpl;
 
 import arcs.api.PortableJson;
-
 import java.util.Arrays;
 import java.util.Objects;
 

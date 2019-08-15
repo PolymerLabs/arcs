@@ -1,15 +1,14 @@
 package arcs.webimpl;
 
 import arcs.api.PortableJson;
-import jsinterop.annotations.JsFunction;
-import jsinterop.annotations.JsMethod;
-import jsinterop.base.Any;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsMethod;
+import jsinterop.base.Any;
 
 public class PortableJsonJsImpl implements PortableJson {
   private Any jsonObj;

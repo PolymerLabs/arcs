@@ -1,9 +1,9 @@
 package arcs.api;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+import javax.inject.Inject;
 
 public class DeviceClientImpl implements DeviceClient {
   private static final String FIELD_MESSAGE = "message";

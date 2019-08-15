@@ -1,9 +1,18 @@
 package arcs.api;
 
-import arcs.crdt.*;
-
+import arcs.crdt.CRDTCollection;
+import arcs.crdt.CollectionOperation;
+import arcs.crdt.Referenceable;
+import arcs.crdt.VersionMap;
+import arcs.crdt.VersionedValue;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class CollectionProxy extends StorageProxy implements CollectionStore {
   CRDTCollection<ModelEntry> model;

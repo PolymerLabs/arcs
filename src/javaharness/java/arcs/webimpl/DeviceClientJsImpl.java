@@ -4,10 +4,9 @@ import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClientImpl;
 import arcs.api.PECInnerPortFactory;
 import arcs.api.PortableJsonParser;
-import jsinterop.annotations.JsType;
-
-import javax.inject.Inject;
 import java.util.Map;
+import javax.inject.Inject;
+import jsinterop.annotations.JsType;
 
 @JsType(namespace = "arcs")
 public class DeviceClientJsImpl extends DeviceClientImpl {

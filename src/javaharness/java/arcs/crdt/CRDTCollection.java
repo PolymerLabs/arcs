@@ -133,9 +133,7 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     for (Map.Entry<String, Integer> entry : version2.entrySet()) {
       Integer version1Value = version1.get(entry.getKey());
       merged.put(
-          entry.getKey(),
-          Math.max(
-                  entry.getValue(), version1Value == null ? 0 : version1Value));
+          entry.getKey(), Math.max(entry.getValue(), version1Value == null ? 0 : version1Value));
     }
     return merged;
   }

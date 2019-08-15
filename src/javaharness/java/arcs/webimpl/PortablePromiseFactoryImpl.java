@@ -2,7 +2,6 @@ package arcs.webimpl;
 
 import arcs.api.PortablePromise;
 import arcs.api.PortablePromiseFactory;
-
 import javax.inject.Inject;
 
 public class PortablePromiseFactoryImpl implements PortablePromiseFactory {

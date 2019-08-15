@@ -1,20 +1,19 @@
 package arcs.webimpl;
 
+import static elemental2.dom.DomGlobal.document;
+import static elemental2.dom.DomGlobal.window;
+
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.crdt.CollectionDataTest;
 import elemental2.dom.*;
-import jsinterop.annotations.JsType;
-
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import static elemental2.dom.DomGlobal.document;
-import static elemental2.dom.DomGlobal.window;
+import javax.inject.Inject;
+import jsinterop.annotations.JsType;
 
 /** Mainly for testing in Chrome. */
 public class WebHarnessController implements HarnessController {
