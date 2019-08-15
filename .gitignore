@@ -44,3 +44,4 @@ bazel-javaharness
 bazel-out
 bazel-testlogs
 .ijwb
+.sighdeps
