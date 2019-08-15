@@ -561,7 +561,6 @@ function setupEmsdk() {
   return emsdk;
 }
 
-// TODO: detect old headers/modules in cleanObsolete()
 function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: boolean, force: boolean) {
   let wasmConfig: WasmConfig;
   try {
