@@ -129,7 +129,6 @@ export class StorePanel extends HTMLElement {
     if (schema) {
       this.schema.textContent = schema.toManifestString();
     } else {
-      console.log(this.store.backingType());
       this.schema.textContent = '// Unknown schema';
     }
     await this.update(true);
