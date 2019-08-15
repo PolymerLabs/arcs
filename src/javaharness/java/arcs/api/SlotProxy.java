@@ -33,6 +33,6 @@ public class SlotProxy {
     contentJson.forEach(requestedContentTypes::remove);
     // Slot is considered rendered, if a non-empty content was sent and all requested content types
     // were fullfilled.
-    boolean isRendered = requestedContentTypes.size() == 0 && contentJson.keys().size() == 0;
+    //    boolean isRendered = requestedContentTypes.size() == 0 && contentJson.keys().size() == 0;
   }
 }

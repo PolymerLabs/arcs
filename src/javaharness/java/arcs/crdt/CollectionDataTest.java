@@ -6,6 +6,7 @@ import java.util.Objects;
 // The set of tests copied from src/runtime/crdt/tests/crdt-collection-test.ts
 // Please, keep in sync.
 
+@SuppressWarnings("unchecked")
 public class CollectionDataTest {
   public static class Data implements Referenceable {
     public final String id;
@@ -238,6 +239,8 @@ public class CollectionDataTest {
             (CollectionData<Data>) change1.modelPostChange.get(),
             (CollectionData<Data>) change2.modelPostChange.get());
   }
+
+  private CollectionDataTest() {}
 }
 
 // Note: if/when adding more tests to this file, please, also update crdt-collection-test.ts

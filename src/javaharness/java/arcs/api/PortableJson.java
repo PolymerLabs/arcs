@@ -8,26 +8,25 @@ public interface PortableJson {
   // Array methods
   String getString(int index);
 
-  int getInt(int index);
-
-  double getNumber(int index);
-
-  boolean getBool(int index);
-
-  PortableJson getObject(int index);
-
-  int getLength();
-
-  // Object methods
   String getString(String key);
+
+  int getInt(int index);
 
   int getInt(String key);
 
+  double getNumber(int index);
+
   double getNumber(String key);
+
+  boolean getBool(int index);
 
   boolean getBool(String key);
 
+  PortableJson getObject(int index);
+
   PortableJson getObject(String key);
+
+  int getLength();
 
   boolean hasKey(String key);
 

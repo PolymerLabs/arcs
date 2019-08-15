@@ -23,7 +23,7 @@ public abstract class StorageProxy implements Store {
   protected PortablePromiseFactory promiseFactory;
   protected StorageProxyScheduler scheduler;
 
-  private static final Logger LOGGER = Logger.getLogger(StorageProxy.class.getName());
+  private static final Logger logger = Logger.getLogger(StorageProxy.class.getName());
 
   private static final String VERSION = "version";
   private static final String UPDATE = "update";
@@ -92,7 +92,7 @@ public abstract class StorageProxy implements Store {
     }
     int updateVersion = update.getInt(VERSION);
     if (updateVersion <= version) {
-      LOGGER.warning(
+      logger.warning(
           "StorageProxy "
               + id
               + " received stale model version "
@@ -112,7 +112,7 @@ public abstract class StorageProxy implements Store {
   public void onSynchronize(PortableJson data) {
     int version = data.getInt(VERSION);
     if (this.version != null && version <= this.version) {
-      LOGGER.warning(
+      logger.warning(
           "StorageProxy "
               + id
               + " received stale model version "

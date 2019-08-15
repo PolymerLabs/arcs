@@ -26,6 +26,7 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!(other instanceof CollectionData)) {
       throw new AssertionError("Cannot merge `other`");
     }
+    @SuppressWarnings("unchecked")
     CollectionData<T> otherModel = (CollectionData<T>) other;
     Map<String, VersionedValue<T>> newValues = mergeItems(model, otherModel);
     VersionMap newVersion = mergeVersions(model.version, otherModel.version);
@@ -43,15 +44,15 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!(op instanceof CollectionOperation)) {
       throw new AssertionError("Incompatible operation " + op);
     }
+    @SuppressWarnings("unchecked")
     CollectionOperation<T> operation = (CollectionOperation<T>) op;
     switch (operation.type) {
       case ADD:
         return add(operation.added.get(), operation.actor, operation.clock);
       case REMOVE:
         return remove(operation.removed.get(), operation.actor, operation.clock);
-      default:
-        throw new AssertionError("Op " + operation.type + " not supported");
     }
+    throw new AssertionError("Op " + operation.type + " not supported");
   }
 
   @Override
