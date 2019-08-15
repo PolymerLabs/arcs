@@ -13,4 +13,6 @@ public class TypeFactory {
         throw new AssertionError("Unsupported type tag " + tag);
     }
   }
+
+  private TypeFactory() {}
 }

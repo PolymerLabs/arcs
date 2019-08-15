@@ -15,7 +15,7 @@ public class DeviceClientImpl implements DeviceClient {
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
 
-  private static final Logger LOGGER = Logger.getLogger(DeviceClient.class.getName());
+  private static final Logger logger = Logger.getLogger(DeviceClient.class.getName());
 
   private final PortableJsonParser jsonParser;
   private Map<String, ArcsEnvironment.DataListener> inProgress;
@@ -34,12 +34,12 @@ public class DeviceClientImpl implements DeviceClient {
 
   @Override
   public void receive(String json) {
-    // LOGGER.info("receive called " + json);
+    // logger.info("receive called " + json);
     PortableJson content = jsonParser.parse(json);
     String message = content.getString(FIELD_MESSAGE);
     switch (message) {
       case MESSAGE_READY:
-        LOGGER.info("LOGGER: Received 'ready' message");
+        logger.info("logger: Received 'ready' message");
         break;
       case MESSAGE_DATA:
         String transactionId = String.valueOf(content.getInt(FIELD_TRANSACTION_ID));

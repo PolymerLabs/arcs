@@ -23,8 +23,6 @@ public class CollectionOperation<T> implements CRDTOperation {
       case REMOVE:
         this.removed = Optional.of(t);
         break;
-      default:
-        throw new AssertionError("Unsupported CollectionOperation.Type " + type);
     }
     this.clock = clock;
     this.actor = actor;

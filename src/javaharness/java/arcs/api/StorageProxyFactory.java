@@ -15,4 +15,6 @@ public class StorageProxyFactory {
     // return new SingletonProxy(id, type, port, name);
     throw new AssertionError("SingletonProxy not yet supported in Java.");
   }
+
+  private StorageProxyFactory() {}
 }
