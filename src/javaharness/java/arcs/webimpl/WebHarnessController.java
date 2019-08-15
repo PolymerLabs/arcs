@@ -1,20 +1,19 @@
 package arcs.webimpl;
 
+import static elemental2.dom.DomGlobal.document;
+import static elemental2.dom.DomGlobal.window;
+
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.crdt.CollectionDataTest;
 import elemental2.dom.*;
-import jsinterop.annotations.JsType;
-
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import static elemental2.dom.DomGlobal.document;
-import static elemental2.dom.DomGlobal.window;
+import javax.inject.Inject;
+import jsinterop.annotations.JsType;
 
 /** Mainly for testing in Chrome. */
 public class WebHarnessController implements HarnessController {
@@ -63,7 +62,7 @@ public class WebHarnessController implements HarnessController {
             val ->
                 environment.sendMessageToArcs(
                     "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
-                    (id, result) -> dataParagraph.append("Test: " + result.toString()))));
+                    (id, result) -> dataParagraph.append("Test: " + result))));
     document.body.appendChild(dataParagraph);
 
     // TODO: get rid of this once crdt tests are built and run properly as unittests.
@@ -100,28 +99,28 @@ public class WebHarnessController implements HarnessController {
 
   private Node addJsonTests() {
     Map<String, Runnable> tests = new HashMap<>();
-    tests.put("testEmpty", () -> PortableJsonJsImplTest.testEmpty());
-    tests.put("testObject", () -> PortableJsonJsImplTest.testObject());
-    tests.put("testArray", () -> PortableJsonJsImplTest.testArray());
+    tests.put("testEmpty", PortableJsonJsImplTest::testEmpty);
+    tests.put("testObject", PortableJsonJsImplTest::testObject);
+    tests.put("testArray", PortableJsonJsImplTest::testArray);
 
     return addTests("Test JSON", tests);
   }
 
   private Node addCrdtTests() {
     Map<String, Runnable> tests = new HashMap<>();
-    tests.put("testInitiallyIsEmpty", () -> CollectionDataTest.testInitiallyIsEmpty());
-    tests.put("testTwoItemsSameActor", () -> CollectionDataTest.testTwoItemsSameActor());
-    tests.put("testSameValueTwoActors", () -> CollectionDataTest.testSameValueTwoActors());
+    tests.put("testInitiallyIsEmpty", CollectionDataTest::testInitiallyIsEmpty);
+    tests.put("testTwoItemsSameActor", CollectionDataTest::testTwoItemsSameActor);
+    tests.put("testSameValueTwoActors", CollectionDataTest::testSameValueTwoActors);
     tests.put(
-        "testRejectAddsNotInSequence", () -> CollectionDataTest.testRejectAddsNotInSequence());
-    tests.put("testRemoveItem", () -> CollectionDataTest.testRemoveItem());
+        "testRejectAddsNotInSequence", CollectionDataTest::testRejectAddsNotInSequence);
+    tests.put("testRemoveItem", CollectionDataTest::testRemoveItem);
     tests.put(
         "testRejectRemoveIfVersionMismatch",
-        () -> CollectionDataTest.testRejectRemoveIfVersionMismatch());
+            CollectionDataTest::testRejectRemoveIfVersionMismatch);
     tests.put(
-        "testRejectRemoveNonexistent", () -> CollectionDataTest.testRejectRemoveNonexistent());
-    tests.put("testRejectRemoveTooOld", () -> CollectionDataTest.testRejectRemoveTooOld());
-    tests.put("testMergeModels", () -> CollectionDataTest.testMergeModels());
+        "testRejectRemoveNonexistent", CollectionDataTest::testRejectRemoveNonexistent);
+    tests.put("testRejectRemoveTooOld", CollectionDataTest::testRejectRemoveTooOld);
+    tests.put("testMergeModels", CollectionDataTest::testMergeModels);
 
     return addTests("Test CRDTs", tests);
   }
@@ -162,13 +161,13 @@ public class WebHarnessController implements HarnessController {
                 }
               });
           StringBuilder builder = new StringBuilder();
-          builder.append("Ran all tests: " + success.size() + " succeeded");
+          builder.append("Ran all tests: ").append(success.size()).append(" succeeded");
           if (success.size() > 0) {
-            builder.append(" (" + String.join("; ", success) + ")");
+            builder.append(" (").append(String.join("; ", success)).append(")");
           }
-          builder.append(", " + failure.size() + " failed");
+          builder.append(", ").append(failure.size()).append(" failed");
           if (failure.size() > 0) {
-            builder.append(" (" + String.join("; ", failure) + ")");
+            builder.append(" (").append(String.join("; ", failure)).append(")");
           }
           throw new AssertionError(builder.toString());
         },

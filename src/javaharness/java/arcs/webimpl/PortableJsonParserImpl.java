@@ -2,11 +2,10 @@ package arcs.webimpl;
 
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
+import java.util.Collection;
+import javax.inject.Inject;
 import jsinterop.annotations.JsType;
 import jsinterop.base.Any;
-
-import javax.inject.Inject;
-import java.util.Collection;
 
 public class PortableJsonParserImpl implements PortableJsonParser {
   @Inject

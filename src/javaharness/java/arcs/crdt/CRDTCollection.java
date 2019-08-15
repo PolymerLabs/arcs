@@ -22,7 +22,7 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
   }
 
   @Override
-  public MergeResult merge(CRDTData other) {
+  public MergeResult<?> merge(CRDTData other) {
     if (!(other instanceof CollectionData)) {
       throw new AssertionError("Cannot merge `other`");
     }
@@ -35,7 +35,7 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     CollectionChange<T> change = new CollectionChange<>();
     change.changeType = ChangeType.MODEL;
     change.modelPostChange = Optional.of(model);
-    return new MergeResult(change, change);
+    return new MergeResult<>(change, change);
   }
 
   @Override
@@ -43,7 +43,7 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!(op instanceof CollectionOperation)) {
       throw new AssertionError("Incompatible operation " + op);
     }
-    CollectionOperation<T> operation = (CollectionOperation) op;
+    CollectionOperation<T> operation = (CollectionOperation<T>) op;
     switch (operation.type) {
       case ADD:
         return add(operation.added.get(), operation.actor, operation.clock);
@@ -61,13 +61,13 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
 
   @Override
   public CRDTConsumerType getParticleView() {
-    return new RawCollection(
+    return new RawCollection<>(
         model.values.values().stream().map(v -> v.value).collect(Collectors.toList()));
   }
 
   private boolean add(T value, String key, VersionMap version) {
     // Only accept an add if it is immediately consecutive to the clock for that actor.
-    int expectedClockValue = model.version.getOrDefault(key, 0).intValue() + 1;
+    int expectedClockValue = model.version.getOrDefault(key, 0) + 1;
     if (expectedClockValue != version.getOrDefault(key, 0)) {
       return false;
     }
@@ -75,9 +75,9 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     VersionMap previousVersion =
         model.values.containsKey(value.getId())
             ? model.values.get(value.getId()).version
-            : new VersionMap();
+            : VersionMap.of();
     model.values.put(
-        value.getId(), new VersionedValue(value, mergeVersions(version, previousVersion)));
+        value.getId(), new VersionedValue<>(value, mergeVersions(version, previousVersion)));
     return true;
   }
 
@@ -85,9 +85,9 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
     if (!this.model.values.containsKey(value.getId())) {
       return false;
     }
-    int clockValue = version.getOrDefault(key, 0).intValue();
+    int clockValue = version.getOrDefault(key, 0);
     // Removes do not increment the clock.
-    int expectedClockValue = model.version.getOrDefault(key, 0).intValue();
+    int expectedClockValue = model.version.getOrDefault(key, 0);
     if (expectedClockValue != clockValue) {
       return false;
     }
@@ -101,7 +101,7 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
   }
 
   public int nextVersion(String key) {
-    return model.version.getOrDefault(key, 0).intValue() + 1;
+    return model.version.getOrDefault(key, 0) + 1;
   }
 
   private Map<String, VersionedValue<T>> mergeItems(
@@ -111,38 +111,36 @@ public class CRDTCollection<T extends Referenceable> implements CollectionModel<
       if (model.values.containsKey(v2.value.getId())) {
         merged.put(
             v2.value.getId(),
-            new VersionedValue(
+            new VersionedValue<>(
                 v2.value, mergeVersions(model.values.get(v2.value.getId()).version, v2.version)));
       } else if (!dominates(data1.version, v2.version)) {
-        merged.put(v2.value.getId(), new VersionedValue(v2.value, v2.version));
+        merged.put(v2.value.getId(), new VersionedValue<>(v2.value, v2.version));
       }
     }
     for (VersionedValue<T> v1 : data1.values.values()) {
       if (!data2.values.containsKey(v1.value.getId()) && !dominates(data2.version, v1.version)) {
-        merged.put(v1.value.getId(), new VersionedValue(v1.value, v1.version));
+        merged.put(v1.value.getId(), new VersionedValue<>(v1.value, v1.version));
       }
     }
     return merged;
   }
 
   private VersionMap mergeVersions(VersionMap version1, VersionMap version2) {
-    VersionMap merged = new VersionMap();
+    VersionMap merged = VersionMap.of();
     for (Map.Entry<String, Integer> entry : version1.entrySet()) {
       merged.put(entry.getKey(), entry.getValue());
     }
     for (Map.Entry<String, Integer> entry : version2.entrySet()) {
       Integer version1Value = version1.get(entry.getKey());
       merged.put(
-          entry.getKey(),
-          Math.max(
-              entry.getValue().intValue(), version1Value == null ? 0 : version1Value.intValue()));
+          entry.getKey(), Math.max(entry.getValue(), version1Value == null ? 0 : version1Value));
     }
     return merged;
   }
 
   private boolean dominates(VersionMap map1, VersionMap map2) {
     for (Map.Entry<String, Integer> entry : map2.entrySet()) {
-      if (map1.getOrDefault(entry.getKey(), 0).intValue() < entry.getValue()) {
+      if (map1.getOrDefault(entry.getKey(), 0) < entry.getValue()) {
         return false;
       }
     }

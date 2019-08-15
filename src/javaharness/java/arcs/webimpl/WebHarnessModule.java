@@ -17,10 +17,9 @@ import arcs.api.ShellApiBasedArcsEnvironment;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import javax.inject.Singleton;
-
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Singleton;
 
 @Module
 public abstract class WebHarnessModule {

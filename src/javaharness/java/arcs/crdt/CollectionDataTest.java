@@ -2,7 +2,6 @@ package arcs.crdt;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 // The set of tests copied from src/runtime/crdt/tests/crdt-collection-test.ts
 // Please, keep in sync.
@@ -41,26 +40,12 @@ public class CollectionDataTest {
     // can add two different items from the same actor
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
 
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 2);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 2), "me"));
 
     verifyIds(set, new String[] {"one", "two"});
   }
@@ -69,25 +54,11 @@ public class CollectionDataTest {
     // can add the same value from two actors
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("them", 1);
-              }
-            },
-            "them"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("them", 1), "them"));
 
     verifyIds(set, new String[] {"one"});
   }
@@ -96,71 +67,29 @@ public class CollectionDataTest {
     // rejects add operations not in sequence
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 0);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 0), "me"));
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 1), "me"));
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 3);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 3), "me"));
   }
 
   public static void testRemoveItem() {
     // can remove an item
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     verifySize(set, 1);
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.REMOVE,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 1), "me"));
     verifySize(set, 0);
   }
 
@@ -168,193 +97,73 @@ public class CollectionDataTest {
     // rejects remove operations if version mismatch
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.REMOVE,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 2);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 2), "me"));
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.REMOVE,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 0);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 0), "me"));
   }
 
   public static void testRejectRemoveNonexistent() {
     // rejects remove value not in collection
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.REMOVE,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.REMOVE, new Data("two"), VersionMap.of("me", 1), "me"));
   }
 
   public static void testRejectRemoveTooOld() {
     // rejects remove version too old
     CRDTCollection<Data> set = new CRDTCollection<>();
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("you", 1);
-              }
-            },
-            "you"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("you", 1), "you"));
     // This succeeds because the op clock is up to date wrt to the value "one" (whose version is
     // me:1).
     assert set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.REMOVE,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "them"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 1), "them"));
     // This fails because the op clock is not up to date wrt to the actor "you" (whose version is
     // you:1).
     assert !set.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.REMOVE,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "them"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.REMOVE, new Data("two"), VersionMap.of("me", 1), "them"));
   }
 
   public static void testMergeModels() {
     // can merge two models
     CRDTCollection<Data> set1 = new CRDTCollection<>();
     assert set1.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
     assert set1.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 2);
-              }
-            },
-            "me"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 2), "me"));
     CRDTCollection<Data> set2 = new CRDTCollection<>();
     assert set2.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("three"),
-            new VersionMap() {
-              {
-                put("you", 1);
-              }
-            },
-            "you"));
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("three"), VersionMap.of("you", 1), "you"));
     assert set2.applyOperation(
-        new CollectionOperation<Data>(
-            CollectionOperation.Type.ADD,
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("you", 2);
-              }
-            },
-            "you"));
-    MergeResult result1 = set1.merge(set2.getData());
+        new CollectionOperation<>(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("you", 2), "you"));
+    MergeResult<?> result1 = set1.merge(set2.getData());
 
     CollectionData<Data> expectedSet1 = new CollectionData<>();
     expectedSet1.values.put(
-        "one",
-        new VersionedValue<Data>(
-            new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 1);
-                put("you", 2);
-              }
-            }));
+        "one", new VersionedValue<>(new Data("one"), VersionMap.of("me", 1, "you", 2)));
+    expectedSet1.values.put("two", new VersionedValue<>(new Data("two"), VersionMap.of("me", 2)));
     expectedSet1.values.put(
-        "two",
-        new VersionedValue<Data>(
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 2);
-              }
-            }));
-    expectedSet1.values.put(
-        "three",
-        new VersionedValue<Data>(
-            new Data("three"),
-            new VersionMap() {
-              {
-                put("you", 1);
-              }
-            }));
-    expectedSet1.version =
-        new VersionMap() {
-          {
-            put("you", 2);
-            put("me", 2);
-          }
-        };
+        "three", new VersionedValue<>(new Data("three"), VersionMap.of("you", 1)));
+    expectedSet1.version = VersionMap.of("you", 2, "me", 2);
     CollectionChange<Data> modelChange1 = (CollectionChange<Data>) result1.modelChange;
     assert modelChange1.changeType == ChangeType.MODEL
         : "modelChange1.changeType should be ChangeType.MODEL";
@@ -366,44 +175,18 @@ public class CollectionDataTest {
 
     // Test removes also work in merge.
     set1.applyOperation(
-        new CollectionOperation<Data>(
+        new CollectionOperation<>(
             CollectionOperation.Type.REMOVE,
             new Data("one"),
-            new VersionMap() {
-              {
-                put("me", 2);
-                put("you", 2);
-              }
-            },
+            VersionMap.of("me", 2, "you", 2),
             "me"));
 
-    MergeResult result2 = set1.merge(set2.getData());
+    MergeResult<?> result2 = set1.merge(set2.getData());
     CollectionData<Data> expectedSet2 = new CollectionData<>();
+    expectedSet2.values.put("two", new VersionedValue<>(new Data("two"), VersionMap.of("me", 2)));
     expectedSet2.values.put(
-        "two",
-        new VersionedValue<Data>(
-            new Data("two"),
-            new VersionMap() {
-              {
-                put("me", 2);
-              }
-            }));
-    expectedSet2.values.put(
-        "three",
-        new VersionedValue<Data>(
-            new Data("three"),
-            new VersionMap() {
-              {
-                put("you", 1);
-              }
-            }));
-    expectedSet2.version =
-        new VersionMap() {
-          {
-            put("you", 2);
-            put("me", 2);
-          }
-        };
+        "three", new VersionedValue<>(new Data("three"), VersionMap.of("you", 1)));
+    expectedSet2.version = VersionMap.of("you", 2, "me", 2);
     CollectionChange<Data> modelChange2 = (CollectionChange<Data>) result2.modelChange;
     assert modelChange2.changeType == ChangeType.MODEL
         : "modelChange2.changeType should be ChangeType.MODEL";
@@ -414,7 +197,7 @@ public class CollectionDataTest {
         : "modelChange2 must be equal otherChange2";
   }
 
-  private static void verifySize(CRDTCollection set, int expectedSize) {
+  private static void verifySize(CRDTCollection<Data> set, int expectedSize) {
     assert ((RawCollection<Data>) set.getParticleView()).size() == expectedSize
         : "Expected size "
             + expectedSize
@@ -422,10 +205,10 @@ public class CollectionDataTest {
             + ((RawCollection<Data>) set.getParticleView()).size();
   }
 
-  private static void verifyIds(CRDTCollection set, String[] expectedIds) {
-    String setIds[] =
+  private static void verifyIds(CRDTCollection<Data> set, String[] expectedIds) {
+    String[] setIds =
         ((RawCollection<Data>) set.getParticleView())
-            .stream().map(Data::getId).collect(Collectors.toList()).toArray(new String[0]);
+            .stream().map(Data::getId).toArray(String[]::new);
     assert Arrays.equals(setIds, expectedIds)
         : "Expected ["
             + String.join(",", expectedIds)

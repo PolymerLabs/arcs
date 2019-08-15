@@ -74,6 +74,7 @@ public class ParticleBase implements Particle {
     slotProxyByName.put(slotProxy.slotName, slotProxy);
   }
 
+  @Override
   public void removeSlotProxy(String name) {
     slotProxyByName.remove(name);
   }
@@ -85,7 +86,7 @@ public class ParticleBase implements Particle {
       // Did not receive StartRender
       return;
     }
-    contentTypes.forEach(type -> slot.requestedContentTypes.add(type));
+    slot.requestedContentTypes.addAll(contentTypes);
     StringBuilder content = new StringBuilder("{");
     if (shouldRender(slotName)) {
       content.append("\"templateName\":\"").append(getTemplateName(slotName)).append("\", ");

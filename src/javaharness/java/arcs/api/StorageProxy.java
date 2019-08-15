@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,12 +60,12 @@ public abstract class StorageProxy implements Store {
     observers.put(handle, particle);
 
     if (!listenerAttached) {
-      port.InitializeProxy(this, json -> onUpdate(json));
+      port.InitializeProxy(this, this::onUpdate);
       listenerAttached = true;
     }
     if (handle.options.keepSynced) {
       if (!keepSynced) {
-        port.SynchronizeProxy(this, json -> onSynchronize(json));
+        port.SynchronizeProxy(this, this::onSynchronize);
         keepSynced = true;
       }
 
@@ -80,9 +81,7 @@ public abstract class StorageProxy implements Store {
   protected void onUpdate(PortableJson update) {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     if (observers.keySet().stream()
-            .filter(handle -> !handle.options.keepSynced && handle.options.notifyUpdate)
-            .findFirst()
-        != null) {
+            .anyMatch(handle -> !handle.options.keepSynced && handle.options.notifyUpdate)) {
       PortableJson handleUpdate = processUpdate(update, false);
       notify(UPDATE, handleUpdate, options -> !options.keepSynced && options.notifyUpdate);
     }
@@ -92,7 +91,7 @@ public abstract class StorageProxy implements Store {
       return;
     }
     int updateVersion = update.getInt(VERSION);
-    if (updateVersion <= version.intValue()) {
+    if (updateVersion <= version) {
       LOGGER.warning(
           "StorageProxy "
               + id
@@ -106,13 +105,13 @@ public abstract class StorageProxy implements Store {
     // Add the update to the queue and process. Most of the time the queue should be empty and
     // processUpdates will consume this event immediately.
     updates.add(update);
-    updates.sort((a, b) -> a.getInt(VERSION) - b.getInt(VERSION));
+    updates.sort(Comparator.comparingInt(a -> a.getInt(VERSION)));
     processUpdates();
   }
 
   public void onSynchronize(PortableJson data) {
     int version = data.getInt(VERSION);
-    if (this.version != null && version <= this.version.intValue()) {
+    if (this.version != null && version <= this.version) {
       LOGGER.warning(
           "StorageProxy "
               + id
@@ -149,12 +148,7 @@ public abstract class StorageProxy implements Store {
 
   private void processUpdates() {
     Predicate<PortableJson> updateIsNext =
-        update -> {
-          if (update.getInt(VERSION) == version.intValue() + 1) {
-            return true;
-          }
-          return false;
-        };
+        update -> update.getInt(VERSION) == version + 1;
 
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
     while (updates.size() > 0 && updateIsNext.test(updates.get(0))) {
@@ -176,7 +170,7 @@ public abstract class StorageProxy implements Store {
     if (updates.size() > 0) {
       if (syncState != SyncState.NONE) {
         syncState = SyncState.NONE;
-        port.SynchronizeProxy(this, x -> onSynchronize(x));
+        port.SynchronizeProxy(this, this::onSynchronize);
         for (Map.Entry<Handle, Particle> observer : observers.entrySet()) {
           Handle handle = observer.getKey();
           if (handle.options.notifyDesync) {

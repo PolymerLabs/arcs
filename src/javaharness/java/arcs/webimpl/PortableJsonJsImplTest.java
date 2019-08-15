@@ -1,8 +1,8 @@
 package arcs.webimpl;
 
 import arcs.api.PortableJson;
-
 import java.util.Arrays;
+import java.util.Objects;
 
 public class PortableJsonJsImplTest {
   public static void testEmpty() {
@@ -29,15 +29,15 @@ public class PortableJsonJsImplTest {
 
     assert Arrays.equals(obj.keys().toArray(), new String[] {"str", "int", "num", "bool", "obj"});
 
-    assert obj.getString("str") == str;
+    assert Objects.equals(obj.getString("str"), str);
     assert obj.getInt("int") == i;
     assert obj.getNumber("num") == num;
     assert obj.getBool("bool") == bool;
     assert innerObj.equals(obj.getObject("obj"));
-    assert parser.stringify(obj.getObject("obj")) == parser.stringify(innerObj);
+    assert Objects.equals(parser.stringify(obj.getObject("obj")), parser.stringify(innerObj));
 
     assert obj.equals(parser.parse(parser.stringify(obj)));
-    assert parser.stringify(obj) == parser.stringify(parser.parse(parser.stringify(obj)));
+    assert Objects.equals(parser.stringify(obj), parser.stringify(parser.parse(parser.stringify(obj))));
 
     assert !obj.equals(innerObj);
     assert !innerObj.equals(obj);
@@ -57,12 +57,12 @@ public class PortableJsonJsImplTest {
     obj.put(3, bool);
     obj.put(4, innerObj);
     assert obj.getLength() == 5;
-    assert obj.getString(0) == str;
+    assert Objects.equals(obj.getString(0), str);
     assert obj.getInt(1) == i;
     assert obj.getNumber(2) == num;
     assert obj.getBool(3) == bool;
-    assert parser.stringify(obj.getObject(4)) == parser.stringify(innerObj);
-    assert parser.stringify(obj) == parser.stringify(parser.parse(parser.stringify(obj)));
+    assert Objects.equals(parser.stringify(obj.getObject(4)), parser.stringify(innerObj));
+    assert Objects.equals(parser.stringify(obj), parser.stringify(parser.parse(parser.stringify(obj))));
     assert parser
             .parse(parser.stringify(parser.parse(parser.stringify(obj))))
             .equals(parser.parse(parser.stringify(obj)))

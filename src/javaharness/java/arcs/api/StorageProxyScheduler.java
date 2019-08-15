@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 public class StorageProxyScheduler {
   private boolean scheduled = false;
   private Map<Particle, Map<Handle, List<Args>>> queues = new HashMap<>();
-  private PortablePromise.Resolver idleResolver;
+  private PortablePromise.Resolver<?> idleResolver;
   private PortablePromise<Void> idle;
   private PortablePromiseFactory promiseFactory;
 
@@ -39,7 +39,7 @@ public class StorageProxyScheduler {
     }
     Map<Handle, List<Args>> byHandle = queues.get(particle);
     if (!byHandle.containsKey(handle)) {
-      byHandle.put(handle, new ArrayList<Args>());
+      byHandle.put(handle, new ArrayList<>());
     }
     List<Args> queue = byHandle.get(handle);
     queue.add(new Args(kind, particle, details));
@@ -63,11 +63,7 @@ public class StorageProxyScheduler {
       return promiseFactory.newPromise(null);
     }
     if (idle == null) {
-      idle =
-          promiseFactory.newPromise(
-              (resolver, rejecter) -> {
-                idleResolver = resolver;
-              });
+      idle = promiseFactory.newPromise((resolver, rejecter) -> idleResolver = resolver);
     }
     return idle;
   }

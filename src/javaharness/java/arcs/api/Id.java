@@ -14,27 +14,27 @@ public class Id {
   final String root;
 
   /** The components of the idTree. */
-  final String idTree[];
+  final String[] idTree;
 
   /** Protected constructor. Use IdGenerator to create new IDs instead. */
-  protected Id(String root, String idTree[]) {
+  protected Id(String root, String[] idTree) {
     this.root = root;
     this.idTree = idTree;
   }
 
   /** Creates a new ID. Use IdGenerator to create new IDs instead. */
-  static Id newIdInternal(String root, String idTree[]) {
+  static Id newIdInternal(String root, String[] idTree) {
     return new Id(root, idTree);
   }
 
   /** Parses a string representation of an ID (see toString). */
   public static Id fromString(String str) {
-    String bits[] = str.split(":");
+    String[] bits = str.split(":");
 
     if (bits[0].startsWith("!")) {
       String root = bits[0].substring(1);
-      String idTree[] =
-          Arrays.asList(Arrays.copyOfRange(bits, 1, bits.length)).stream()
+      String[] idTree =
+          Arrays.stream(Arrays.copyOfRange(bits, 1, bits.length))
               .filter(component -> component.length() > 0)
               .toArray(String[]::new);
       return new Id(root, idTree);
@@ -44,6 +44,7 @@ public class Id {
   }
 
   /** Returns the full ID string. */
+  @Override
   public String toString() {
     return "!" + root + ":" + String.join(":", idTree);
   }
@@ -53,7 +54,19 @@ public class Id {
     return String.join(":", idTree);
   }
 
-  boolean equal(Id id) {
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof Id)) {
+      return false;
+    }
+
+    Id id = (Id) other;
+
     if (!id.root.equals(this.root) || id.idTree.length != this.idTree.length) {
       return false;
     }

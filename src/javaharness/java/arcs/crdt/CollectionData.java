@@ -6,9 +6,12 @@ import java.util.Map;
 
 public class CollectionData<T extends Referenceable> extends CRDTData {
   Map<String, VersionedValue<T>> values = new HashMap<>();
-  VersionMap version = new VersionMap();
 
-  public VersionedValue get(String id) {
+  public CollectionData() {
+    version = VersionMap.of();
+  }
+
+  public VersionedValue<T> get(String id) {
     return values.get(id);
   }
 

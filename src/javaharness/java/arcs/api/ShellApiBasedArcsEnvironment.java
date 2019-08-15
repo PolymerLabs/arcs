@@ -1,7 +1,7 @@
 package arcs.api;
 
-import javax.inject.Inject;
 import java.util.Map;
+import javax.inject.Inject;
 
 /**
  * Web based ArcsEnvironment using ShellApi. The Android version of this will different only in not

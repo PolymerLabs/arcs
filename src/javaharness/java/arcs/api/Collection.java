@@ -1,5 +1,7 @@
 package arcs.api;
 
+import java.util.Objects;
+
 public class Collection extends Handle {
   private final CollectionStore collectionStore;
 
@@ -26,7 +28,8 @@ public class Collection extends Handle {
         PortableJson update = jsonParser.emptyObject();
         if (details.hasKey("add")) update.put("added", details.getObject("add"));
         if (details.hasKey("remove")) update.put("removed", details.getObject("remove"));
-        update.put("originator", details.getString("originatorId") == this.particleId);
+        update.put(
+            "originator", Objects.equals(details.getString("originatorId"), this.particleId));
         // TODO: Should return promise?
         particle.onHandleUpdate(this, update);
         break;
@@ -59,7 +62,7 @@ public class Collection extends Handle {
       throw new AssertionError("Handle not writeable");
     }
     createIdForEntity(entity);
-    String keys[] = {generateKey()};
+    String[] keys = {generateKey()};
     collectionStore.store(entity, keys, particleId);
   }
 

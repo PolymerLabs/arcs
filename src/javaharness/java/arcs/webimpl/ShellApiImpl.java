@@ -1,9 +1,8 @@
 package arcs.webimpl;
 
 import arcs.api.ShellApi;
-import jsinterop.annotations.JsType;
-
 import javax.inject.Inject;
+import jsinterop.annotations.JsType;
 
 /** Exposes Shell (Window) scope methods into Java from JS. */
 public class ShellApiImpl implements ShellApi {

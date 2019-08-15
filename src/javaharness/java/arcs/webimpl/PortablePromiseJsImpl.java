@@ -2,7 +2,6 @@ package arcs.webimpl;
 
 import arcs.api.PortablePromise;
 import elemental2.promise.Promise;
-
 import java.util.function.Consumer;
 
 class PortablePromiseJsImpl<T> implements PortablePromise<T> {
@@ -11,10 +10,8 @@ class PortablePromiseJsImpl<T> implements PortablePromise<T> {
   public PortablePromiseJsImpl(PortablePromise.PortablePromiseExecutor<T> executor) {
     this.promise =
         new Promise(
-            (resolve, reject) -> {
-              executor.doInvoke(
-                  (T value) -> resolve.onInvoke(value), (Object error) -> reject.onInvoke(error));
-            });
+            (resolve, reject) -> executor.doInvoke(
+                (T value) -> resolve.onInvoke(value), (Object error) -> reject.onInvoke(error)));
   }
 
   public PortablePromiseJsImpl(T value) {

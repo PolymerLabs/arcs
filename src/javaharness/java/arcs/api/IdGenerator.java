@@ -26,8 +26,8 @@ public class IdGenerator {
   public Id newChildId(Id parentId, String subcomponent) {
     // Append (and increment) a counter to the subcomponent, to ensure that it is unique.
     subcomponent += this.nextComponentId++;
-    List<String> idTree = new ArrayList<String>(Arrays.asList(parentId.idTree));
+    List<String> idTree = new ArrayList<>(Arrays.asList(parentId.idTree));
     idTree.add(subcomponent);
-    return Id.newIdInternal(this.currentSessionId.toString(), idTree.toArray(new String[0]));
+    return Id.newIdInternal(this.currentSessionId, idTree.toArray(new String[0]));
   }
 }

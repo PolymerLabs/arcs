@@ -1,7 +1,7 @@
 package arcs.crdt;
 
 interface CRDTModel<T extends CRDTTypeRecord> {
-  MergeResult merge(CRDTData other);
+  MergeResult<?> merge(CRDTData other);
 
   boolean applyOperation(CRDTOperation op);
 
