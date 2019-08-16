@@ -180,7 +180,7 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
   async onUpdate(op: CollectionOperation<T>, oldData: Set<T>, version: VersionMap): Promise<void> {
     this.clock = version;
     // Pass the change up to the particle.
-    const update: {added?: T, removed?: T, originator: boolean} = {originator: (this.key === op.actor)};
+    const update: {added?: T, removed?: T, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
       update.added = op.added;
     }
