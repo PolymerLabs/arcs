@@ -6,6 +6,8 @@ This is only required once per checkout.
 
 - `tools/sigh install emsdk-npm`
 
+Alternatively, pass `--install` to the `wasm` command the first time you use it.
+
 ## Build
 
 See [here](particles/WasmTemplate) for a working example.
