@@ -26,5 +26,3 @@ recipe
     }
   };
 });
-
-// ${hostedParticle.connections.map((c, i) => `${c.name} = handle${i+1}`).join('  \n')}

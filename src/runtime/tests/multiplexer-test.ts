@@ -102,7 +102,6 @@ describe('Multiplexer', () => {
     const n = recipe.normalize(options);
     console.log([...options.errors.entries()].map(x => x.map(x => x.toString())));
     assert(n, 'normalizes');
-    // assert(recipe.normalize(options), `normalizes ${JSON.stringify(Object.values(options.errors))}`);
     assert(recipe.isResolved());
 
     await arc.instantiate(recipe);
