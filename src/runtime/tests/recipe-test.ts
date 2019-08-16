@@ -454,7 +454,7 @@ describe('recipe', () => {
     // empty modality for recipe with no particles.
     const recipe = (await Manifest.parse(`recipe`)).recipes[0];
     assert.isEmpty(recipe.particles);
-    assert.lengthOf(recipe.modality.names, Modality.all.names.length);
+    assert.equal(recipe.modality, Modality.all);
     assert.isTrue(recipe.modality.isResolved());
     assert.isTrue(isResolved(recipe));
   });
@@ -470,7 +470,7 @@ describe('recipe', () => {
         P2
     `)).recipes[0];
     assert.lengthOf(recipe.particles, 3);
-    assert.lengthOf(recipe.modality.names, Modality.all.names.length);
+    assert.equal(recipe.modality, Modality.all);
     assert.isTrue(recipe.modality.isResolved());
     assert.isTrue(isResolved(recipe));
   });

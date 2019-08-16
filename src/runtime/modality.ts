@@ -14,19 +14,40 @@ enum ModalityName {
 }
 
 export class Modality {
+  // The `names` field in Modality contains the restrictive list of modalities.
+  // `null` stands for no restrictions at all.
+  // empty list stands for no suitable modalities being available.
   private constructor(public readonly names: string[]) {}
 
   static create(names: string[]) {
-    assert(names.every(name => Modality.all.names.includes(name)), `Unsupported modality in: ${names}`);
+    assert(names != null);
     return new Modality(names);
   }
 
   intersection(other: Modality): Modality {
-    return new Modality(this.names.filter(name => other.names.includes(name)));
+    return new Modality(this.names
+        ? this.names.filter(name => !other.names || other.names.includes(name))
+        : other.names);
+  }
+
+  static intersection(modalities: Modality[]): Modality {
+    const allNames = new Set<string>();
+    for (const modality of modalities) {
+      if (modality.names) {
+        for (const name of modality.names) {
+          allNames.add(name);
+        }
+      }
+    }
+    if (allNames.size === 0) {
+      return Modality.all;
+    }
+    return modalities.reduce(
+        (modality, total) => modality.intersection(total), Modality.create([...allNames]));
   }
 
   isResolved(): boolean {
-    return this.names.length > 0;
+    return !this.names || this.names.length > 0;
   }
 
   isCompatible(names: string[]): boolean {
@@ -34,9 +55,9 @@ export class Modality {
   }
 
   static get Name() { return ModalityName; }
-  static readonly all = new Modality([
-    Modality.Name.Dom, Modality.Name.DomTouch, Modality.Name.Vr, Modality.Name.Voice
-  ]);
+
+  static readonly all = new Modality(null);
+
   static readonly dom = new Modality([Modality.Name.Dom]);
   static readonly domTouch = new Modality([Modality.Name.DomTouch]);
   static readonly voice = new Modality([Modality.Name.Voice]);

@@ -138,7 +138,10 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     if (this.pec.slotComposer && this.pec.slotComposer.modality) {
       return this.pec.slotComposer.modality;
     }
-    return this.activeRecipe.modality;
+    if (!this.activeRecipe.isEmpty()) {
+      return this.activeRecipe.modality;
+    }
+    return Modality.intersection(this.context.allRecipes.map(recipe => recipe.modality));
   }
 
   dispose(): void {
@@ -529,7 +532,6 @@ ${this.activeRecipe.toString()}`;
    * Waits for completion of an existing Instantiate before returning.
    */
   async instantiate(recipe: Recipe): Promise<void> {
-
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
