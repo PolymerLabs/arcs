@@ -506,9 +506,9 @@ describe('recipe', () => {
   });
   it('verifies modalities - non matching', async () => {
     // empty modality intersection, no consumed slots, recipe is resolved.
-    // P0 modalities: dom-touch, voice, vr; P1 modality: vr; P2 and P3 modality: dom(default).
+    // P0 modalities: domTouch, voice, vr; P1 modality: vr; P2 and P3 modality: dom(default).
     const recipe = (await Manifest.parse(createRecipeString({
-      'P0': ['dom-touch', 'vr', 'voice'],
+      'P0': ['domTouch', 'vr', 'voice'],
       'P1': ['vr']
     }))).recipes[0];
     assert.isEmpty(recipe.modality.names);
@@ -517,9 +517,9 @@ describe('recipe', () => {
   });
   it('verifies modalities - matching vr', async () => {
     // empty modality intersection, no consumed slots, recipe is resolved.
-    // P0: dom-touch, voice, vr; P1: vr; P2: dom(default); P3: voice, vr.
+    // P0: domTouch, voice, vr; P1: vr; P2: dom(default); P3: voice, vr.
     const recipe = (await Manifest.parse(createRecipeString({
-      'P0': ['dom-touch', 'vr', 'voice'],
+      'P0': ['domTouch', 'vr', 'voice'],
       'P1': ['vr'],
       'P3': ['voice', 'vr']
     }))).recipes[0];

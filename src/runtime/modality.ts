@@ -10,7 +10,7 @@
 import {assert} from '../platform/assert-web.js';
 
 enum ModalityName {
-  Dom ='dom', DomTouch='dom-touch', Vr='vr', Voice='voice'
+  Dom ='dom', DomTouch='domTouch', Vr='vr', Voice='voice'
 }
 
 export class Modality {

@@ -628,7 +628,7 @@ TypeVariableList
   }
 
 ParticleModality
-  = 'modality' whiteSpace modality:Modality eolWhiteSpace
+  = 'modality' whiteSpace modality:fieldName eolWhiteSpace
   {
     return {
       kind: 'particle-modality',
@@ -636,16 +636,6 @@ ParticleModality
       modality,
     } as AstNode.ParticleModality;
   }
-
-Modality
-  = 'dom-touch'
-  / 'dom'
-  / 'vr'
-  / 'voice'
-  / 'mock-dom-touch'
-  / 'mock-dom'
-  / 'mock-vr'
-  / 'mock-voice'
 
 ParticleSlotConnection
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace

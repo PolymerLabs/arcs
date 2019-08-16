@@ -134,11 +134,11 @@ describe('plan consumer', () => {
     consume root
   particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
     consume root
-    modality dom-touch
+    modality domTouch
   particle ParticleBoth in './src/runtime/tests/artifacts/consumer-particle.js'
     consume root
     modality dom
-    modality dom-touch
+    modality domTouch
   ${addRecipe(['ParticleDom'])}
   ${addRecipe(['ParticleTouch'])}
   ${addRecipe(['ParticleDom', 'ParticleBoth'])}
