@@ -1,5 +1,5 @@
 #include <arcs.h>
-#include <schemas-arcs.h>
+#include <schemas.h>
 
 class HandleSyncUpdateTest : public arcs::Particle {
 public:
