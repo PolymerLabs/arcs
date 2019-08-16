@@ -18,7 +18,7 @@ import {Entity, EntityClass} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
 import {EntityType, Type} from '../type.js';
 
-import {StorageProxy} from './storage-proxy';
+import {StorageProxy, NoOpStorageProxy} from './storage-proxy';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -111,6 +111,11 @@ export abstract class Handle<T extends CRDTTypeRecord> {
     await this.particle.callOnHandleDesync(
         this,
         e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
+  }
+
+  disable(particle?: Particle) {
+    this.storageProxy.deregisterHandle(this);
+    this.storageProxy = new NoOpStorageProxy();
   }
 }
 
