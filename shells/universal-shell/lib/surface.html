@@ -1,0 +1,33 @@
+<!doctype html>
+
+<style>
+  body {
+    margin: 0;
+    box-sizing: border-box;
+  }
+  [slotid="modal"] {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+</style>
+
+<link rel="stylesheet" href="../../configuration/index.css">
+
+<div slotid="top" id="rootslotid-top"></div>
+<div slotid="root" id="rootslotid-root"></div>
+<div slotid="modal" id="rootslotid-modal"></div>
+
+<script type="module">
+  import '../../configuration/whitelisted.js';
+  import '../../lib/platform/loglevel-web.js';
+  import {SlotObserver} from '../../lib/renderer.js';
+  const renderer = new SlotObserver(document.body);
+  window.renderer = renderer;
+  window.render = content => renderer.render(content);
+</script>
+
