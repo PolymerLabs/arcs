@@ -5,6 +5,7 @@ import static elemental2.dom.DomGlobal.window;
 
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
+import arcs.api.PortableJsonParser;
 import arcs.crdt.CollectionDataTest;
 import elemental2.dom.*;
 import java.util.ArrayList;
@@ -20,11 +21,13 @@ public class WebHarnessController implements HarnessController {
 
   private ArcsEnvironment environment;
   private DeviceClient deviceClient;
+  private PortableJsonParser jsonParser;
 
   @Inject
-  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient) {
+  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient, PortableJsonParser jsonParser) {
     this.environment = environment;
     this.deviceClient = deviceClient;
+    this.jsonParser = jsonParser;
   }
 
   @Override
@@ -64,6 +67,16 @@ public class WebHarnessController implements HarnessController {
                     "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
                     (id, result) -> dataParagraph.append("Test: " + result))));
     document.body.appendChild(dataParagraph);
+
+    document.body.appendChild(
+        makeInputElement(
+            "Render notification",
+            val ->
+                environment.sendMessageToArcs(
+                  jsonParser.stringify(
+                    jsonParser.emptyObject().put("message", "spawn").put("modality", "voice").put("recipe", "NotificationTest")),
+                    (id, result) -> dataParagraph.append("Notification: " + jsonParser.parse(result).getString("text")))));
+
 
     // TODO: get rid of this once crdt tests are built and run properly as unittests.
     document.body.appendChild(addCrdtTests());

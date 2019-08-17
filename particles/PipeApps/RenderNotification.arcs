@@ -1,10 +1,11 @@
 import './schemas/Json.arcs'
 
 particle RenderNotification in './source/RenderNotification.js'
-  out Json output
   consume root
+  // TODO: temporarily using 'voice' modality for pipes demo.
+  // until #3480 is merged with support for arbitrary strings.
+  // modality notification
+  modality voice
 
 recipe NotificationTest
-  create as output
   RenderNotification
-    output = output

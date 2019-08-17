@@ -27,22 +27,13 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   // marshal dispatcher
   populateDispatcher(dispatcher, composerFactory, storage, context);
   // create bus
-  const bus = new Bus(dispatcher, client);
-  // send pipe identifiers to client
-  identifyPipe(context, bus);
-  // return bus
-  return bus;
+  return new Bus(dispatcher, client);
 };
 
 export const initArcs = async (storage, bus) => {
   const context = await requireContext();
   // marshal ingestion arc.
   await marshalIngestionArc(storage, context, bus);
-};
-
-const identifyPipe = async (context, bus) => {
-  const recipes = context.allRecipes.map(r => r.name);
-  bus.send({message: 'ready', recipes});
 };
 
 const populateDispatcher = (dispatcher, composerFactory, storage, context) => {

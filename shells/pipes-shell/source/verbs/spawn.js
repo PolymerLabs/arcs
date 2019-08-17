@@ -12,6 +12,8 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
 import {Utils} from '../../../lib/runtime/utils.js';
 import {recipeByName, marshalOutput} from '../lib/utils.js';
 import {logsFactory} from '../../../../build/runtime/log-factory.js';
+import {ModalityHandler} from '../../../../build/runtime/modality-handler.js';
+import {SlotConsumer} from '../../../../build/runtime/slot-consumer.js';
 import {Stores} from '../../../lib/runtime/stores.js';
 import {Schemas} from '../schemas.js';
 import {portIndustry} from '../pec-port.js';
@@ -24,19 +26,24 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
     warn(`found no recipes matching [${recipe}]`);
     return null;
   } else {
+    const modalityHandler = new ModalityHandler(class extends SlotConsumer {
+      setContent(content, handler) {
+        // Temporarily using transaction ID as slot ID.
+        // TODO: Replace by slot-providing-particle.
+        bus.send({message: 'output', slotid: '' + tid /*this.consumeConn.targetSlot.id*/, content});
+      }
+    });
     // instantiate arc
     const arc = await Utils.spawn({
       context,
       //storage,
       id: generateId(),
-      composer: composerFactory(modality),
+      composer: composerFactory(modality, modalityHandler),
       portFactories: [portIndustry(bus)]
     });
     // optionally instantiate recipe
     if (action) {
-      if (await instantiateRecipe(arc, action)) {
-        observeOutput(tid, bus, arc);
-      }
+      await instantiateRecipe(arc, action);
     }
     return arc;
   }
@@ -50,15 +57,4 @@ const instantiateRecipe = async (arc, recipe) => {
   }
   await arc.instantiate(plan);
   return true;
-};
-
-const observeOutput = async (tid, bus, arc) => {
-  // TODO(sjmiles): need better system than 20-and-out
-  for (let i=0; i<20; i++) {
-    const entity = await marshalOutput(arc);
-    if (entity) {
-      const data = JSON.parse(entity.rawData.json);
-      bus.send({message: 'data', tid, data});
-    }
-  }
 };

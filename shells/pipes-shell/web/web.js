@@ -17,6 +17,7 @@ import {version, paths, storage, test} from './config.js';
 //import '../../lib/database/firebase-support.js';
 //import '../../configuration/whitelisted.js';
 import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 
 // dependencies
 import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
@@ -27,13 +28,26 @@ import {smokeTest} from '../source/smoke.js';
 
 console.log(`${version} -- ${storage}`);
 
-const composerFactory = modality => {
+const composerFactory = (modality, modalityHandler) => {
   switch (modality) {
     case 'dom': {
       const node = document.body.appendChild(document.createElement('div'));
       node.style = 'margin-bottom: 8px;';
       node.innerHTML = '<div slotid="root"></div>';
       return new DomSlotComposer({containers: findContainers(node)});
+    }
+    // TODO: temporarily using 'voice' modality for pipes demo.
+    // until #3480 is merged with support for arbitrary strings.
+    case 'voice': {
+      return new class extends SlotComposer {
+        constructor(options) {
+          super(Object.assign({
+            modalityName: modality,
+            modalityHandler,
+            containers: {'root': {}}
+          }, options));
+        }
+      };
     }
     default:
       return new RamSlotComposer();

@@ -10,24 +10,11 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
-
-  return class extends DomParticle {
-    // for testing under DOM modality
-    get template() {
-      return `<span>{{json}}<span>`;
-    }
-    render(props, state) {
-      const json = JSON.stringify({
-        modality: 'notification',
-        content: 'Now is the time for all good men to come to the aid of their party.'}
-      );
-      if (state.json !== json) {
-        state.json = json;
-        this.updateSingleton('output', {json});
-      }
-      return state;
+defineParticle(({Particle, html, log}) => {
+  return class extends Particle {
+    addSlotProxy(slotlet) {
+      super.addSlotProxy(slotlet);
+      slotlet.render({text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'});
     }
   };
-
 });
