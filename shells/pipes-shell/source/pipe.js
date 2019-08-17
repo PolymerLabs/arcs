@@ -8,14 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {requireContext} from './context.js';
-import {marshalIngestionArc} from './pipes-api.js';
+import {requireIngestionArc} from './ingestion-arc.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
 import {spawn} from './verbs/spawn.js';
+//import {logsFactory} from '../../../build/runtime/log-factory.js';
 
 //const {log, warn} = logsFactory('pipe');
 
@@ -28,16 +28,17 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   populateDispatcher(dispatcher, composerFactory, storage, context);
   // create bus
   const bus = new Bus(dispatcher, client);
-  // send pipe identifiers to client
-  identifyPipe(context, bus);
   // return bus
   return bus;
 };
 
 export const initArcs = async (storage, bus) => {
+  // marshal ingestion arc
+  await requireIngestionArc(storage, bus);
+  // marshal context
   const context = await requireContext();
-  // marshal ingestion arc.
-  await marshalIngestionArc(storage, context, bus);
+  // send pipe identifiers to client
+  identifyPipe(context, bus);
 };
 
 const identifyPipe = async (context, bus) => {
