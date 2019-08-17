@@ -4,7 +4,6 @@ body {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  border: 8px solid lightblue;
   font-family: 'Google Sans', 'Roboto', sans-serif;
   line-height: 120%;
 }

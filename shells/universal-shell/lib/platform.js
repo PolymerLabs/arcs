@@ -134,7 +134,7 @@ const renderToasts = () => {
   toasts.forEach((toast, i) => {
     toast = dom('toast', toastContainer, {
       innerHTML: toast.msg,
-      style: 'display: block; opacity: 1; margin: 32px; background: lightgreen; padding: 16px; transition: all 200ms ease-in;',
+      style: 'cursor: pointer; display: block; opacity: 1; margin: 32px; background: lightgreen; padding: 16px; transition: all 200ms ease-in;',
       onclick: () => {
         toasts.splice(i, 1);
         toast.style.opacity = 0;
