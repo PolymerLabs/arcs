@@ -9,11 +9,9 @@
  */
 
 import {Utils} from '../../lib/runtime/utils.js';
-import {Stores} from '../../lib/runtime/stores.js';
-import {Schemas} from './schemas.js';
 
 const manifest = `
-import 'https://$particles/PipeApps/RenderNotification.arcs'
+import 'https://$particles/Notification/Notification.arcs'
 `;
 
 export const requireContext = async () => {

@@ -1,0 +1,16 @@
+
+// TEMPORARY conduit for slot rendering data
+// we use JSON so we can output arbitrary structures
+// with a single schema
+schema SlotOutput
+  Text json
+
+particle Notification in './source/Notification.js'
+  out SlotOutput output
+  consume root
+
+recipe Notification
+  create as output
+  Notification
+    output = output
+
