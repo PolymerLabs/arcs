@@ -23,10 +23,10 @@ export const Schemas = {
       }
     }
   },
-  Json: {
+  SlotOutput: {
     tag: 'Entity',
     data: {
-      names: ['Json'],
+      names: ['SlotOutput'],
       fields: {
         json: 'Text'
       }

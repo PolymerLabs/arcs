@@ -44,7 +44,7 @@ export const marshalOutput = async arc => {
   let data;
   let store = arc.__outputStore;
   if (!store) {
-    const type = Type.fromLiteral(Schemas.Json);
+    const type = Type.fromLiteral(Schemas.SlotOutput);
     const stores = arc.findStoresByType(type);
     store = stores[0];
     if (!store) {
