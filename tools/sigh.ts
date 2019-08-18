@@ -601,17 +601,12 @@ function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: 
   const srcDir = path.dirname(configFile);
   for (const [name, cfg] of Object.entries(wasmConfig)) {
     counts.found++;
-
-    // TODO: fix arcs.h so more than one source file can be compiled into a module
-    if (cfg.src.length !== 1) {
-      throw new Error(`wasm modules must specify exactly one source file (${configFile})`);
-    }
     if (cfg.outdir === '$here') {
       cfg.outdir = srcDir;
     }
 
     const manifestPath = path.join(srcDir, cfg.manifest);
-    const srcPath = path.join(srcDir, cfg.src[0]);
+    const srcPaths = ['src/wasm/cpp/arcs.cc', ...cfg.src.map(f => path.join(srcDir, f))];
     const wasmPath = path.join(cfg.outdir, name);
     const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
 
@@ -634,7 +629,7 @@ function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: 
     }
 
     const headerPath = spawnResult.stdout.trim();
-    if (!force && targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, srcPath], true)) {
+    if (!force && targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, ...srcPaths], true)) {
       continue;
     }
 
@@ -646,7 +641,7 @@ function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: 
         '-I', 'src/wasm/cpp',  // for arcs.h
         '-I', cfg.outdir,
         '-o', wasmPath,
-        srcPath
+        ...srcPaths
       ], {logCmd});
     if (emsdkResult.status !== 0) {
       console.error('\n------------------------------------------------------------------------');

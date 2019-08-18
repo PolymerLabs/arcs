@@ -70,7 +70,7 @@ private:
 };
 
 template<>
-Data clone_entity(const Data& entity) {
+inline Data clone_entity(const Data& entity) {
   Data clone;
   clone.num_ = entity.num_;
   clone.num_valid_ = entity.num_valid_;
@@ -84,7 +84,7 @@ Data clone_entity(const Data& entity) {
 }
 
 template<>
-bool entities_equal(const Data& a, const Data& b) {
+inline bool entities_equal(const Data& a, const Data& b) {
   return (a.has_num() ? (b.has_num() && a.num() == b.num()) : !b.has_num()) &&
          (a.has_txt() ? (b.has_txt() && a.txt() == b.txt()) : !b.has_txt()) &&
          (a.has_lnk() ? (b.has_lnk() && a.lnk() == b.lnk()) : !b.has_lnk()) &&
@@ -92,7 +92,7 @@ bool entities_equal(const Data& a, const Data& b) {
 }
 
 template<>
-std::string entity_to_str(const Data& entity, const char* join) {
+inline std::string entity_to_str(const Data& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id());
   if (entity.has_num())
@@ -107,7 +107,7 @@ std::string entity_to_str(const Data& entity, const char* join) {
 }
 
 template<>
-void internal::decode_entity(Data* entity, const char* str) {
+inline void internal::decode_entity(Data* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
@@ -137,7 +137,7 @@ void internal::decode_entity(Data* entity, const char* str) {
 }
 
 template<>
-std::string internal::encode_entity(const Data& entity) {
+inline std::string internal::encode_entity(const Data& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id());
   if (entity.has_num())
@@ -212,7 +212,7 @@ private:
 };
 
 template<>
-SpecialFields clone_entity(const SpecialFields& entity) {
+inline SpecialFields clone_entity(const SpecialFields& entity) {
   SpecialFields clone;
   clone.for_ = entity.for_;
   clone.for_valid_ = entity.for_valid_;
@@ -222,13 +222,13 @@ SpecialFields clone_entity(const SpecialFields& entity) {
 }
 
 template<>
-bool entities_equal(const SpecialFields& a, const SpecialFields& b) {
+inline bool entities_equal(const SpecialFields& a, const SpecialFields& b) {
   return (a.has_for() ? (b.has_for() && a._for() == b._for()) : !b.has_for()) &&
          (a.has_internal_id() ? (b.has_internal_id() && a.internal_id() == b.internal_id()) : !b.has_internal_id());
 }
 
 template<>
-std::string entity_to_str(const SpecialFields& entity, const char* join) {
+inline std::string entity_to_str(const SpecialFields& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id());
   if (entity.has_for())
@@ -239,7 +239,7 @@ std::string entity_to_str(const SpecialFields& entity, const char* join) {
 }
 
 template<>
-void internal::decode_entity(SpecialFields* entity, const char* str) {
+inline void internal::decode_entity(SpecialFields* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
@@ -261,7 +261,7 @@ void internal::decode_entity(SpecialFields* entity, const char* str) {
 }
 
 template<>
-std::string internal::encode_entity(const SpecialFields& entity) {
+inline std::string internal::encode_entity(const SpecialFields& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id());
   if (entity.has_for())

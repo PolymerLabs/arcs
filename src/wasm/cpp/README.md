@@ -20,7 +20,7 @@ See [here](particles/WasmTemplate) for a working example.
   {
     "module.wasm": {               // output filename for the compiled wasm module
       "manifest": "example.arcs",  // manifest file; defines the recipe, particle spec and schemas
-      "src": ["example.cc"],       // only a single source file is supported for now
+      "src": ["example.cc", ...],  // source files
       "outDir": "$here"            // location of wasm module and schema2packager output
     }
   }
