@@ -140,7 +140,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
 
   toSlotConnection(): SlotConnection {
     // TODO: Remove in SLANDLESv2
-    if (!(this.handle && this.handle.type && this.handle.type.slandleType())) {
+    if (!this.handle || this.handle.fate !== '`slot') {
       return undefined;
     }
     const slandle: SlotConnection = new SlotConnection(this.name, this.particle);

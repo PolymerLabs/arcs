@@ -8,12 +8,14 @@ import '../List/SLANDLESList.arcs'
 import '../Layout/SLANDLESLayout.arcs'
 
 recipe SlandleTVMazeSearchBar
+  `slot 'rootslotid-root' as root
   create #volatile as query
   SlandleTVMazeSearchBar
     query = query
   description `use TVMaze(tm) to search for TV shows with Slandles`
 
 recipe SlandleTVMazeSearchShows
+  `slot 'rootslotid-root' as root
   use as query
   create #tiles #shows as shows
   SlandleTVMazeSearchShows
@@ -22,6 +24,7 @@ recipe SlandleTVMazeSearchShows
   description `use TVMaze(tm) to search for TV shows with Slandles`
 
 recipe SlandleTVMazeShowTiles
+  `slot 'rootslotid-root' as root
   use as shows
   create #selected as selected
   SlandleSelectableTiles
@@ -37,6 +40,7 @@ recipe SlandleTVMazeShowTiles
   description `show information about ${SelectableTiles.list}`
 
 recipe SlandleTVMazeShowPanel
+  `slot 'rootslotid-root' as root
   use as show
   create #volatile as descriptions
   SlandleTVMazeShowPanel

@@ -132,8 +132,12 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
         [otherMappedHandles, otherConnections] =
             await this._mapParticleConnections(listHandleName, particleHandleName, resolvedHostedParticle, this.handles, arc);
       }
-      const hostedSlotName = [...resolvedHostedParticle.slotConnections.keys()][0];
-      const slotName = [...this.spec.slotConnections.values()][0].name;
+      // TODO(jopra): Using the [0] item may not be desired.
+      const hostedSlotName: string = resolvedHostedParticle.slandleConnectionNames()[0];
+      const slotNames: string[] = this.spec.slandleConnectionNames();
+      assert(slotNames.length > 0, 'there must be at least one slot');
+      // TODO(jopra): Using the [0] item may not be desired.
+      const slotName = slotNames[0];
       const slotId = await arc.createSlot(this, slotName, itemHandle._id);
       if (!slotId) {
         continue;

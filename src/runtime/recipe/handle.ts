@@ -16,6 +16,7 @@ import {Type, SlotType, TypeVariable} from '../type.js';
 import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
+import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
@@ -51,18 +52,27 @@ export class Handle implements Comparable<Handle> {
     if (!this.type) {
       return undefined;
     }
-    const slotType = this.type.slandleType();
-    if (!slotType) {
+    if (this.fate !== '`slot') {
       return undefined;
     }
-    const slotInfo = slotType.getSlot();
-
     const slandle = new Slot(this.recipe, this.localName);
     slandle.tags = this.tags;
     slandle.id = this.id;
-    slandle.formFactor = slotInfo.formFactor;
-    // TODO(jopra): cannot assign slandle handles as the slots do not actually track their handles but use a source particle connection mapping
-    // slandle.handles = [slotInfo.handle];
+
+    const slotType = this.type.slandleType();
+    if (slotType) {
+      const slotInfo = slotType.getSlot();
+      if (slotInfo) {
+        slandle.formFactor = slotInfo.formFactor;
+        if (slotInfo.handle) {
+          // TODO(jopra): cannot assign slandle handles as the slots do not
+          // actually track their handles but use a source particle connection
+          // mapping.
+          const particle = undefined;
+          slandle.sourceConnection = new SlotConnection(slotInfo.handle, particle);
+        }
+      }
+    }
     return slandle;
   }
 
@@ -118,22 +128,16 @@ export class Handle implements Comparable<Handle> {
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
-    const resolvedType = this.type && this.type.resolvedType();
-    if (resolvedType && resolvedType.canWriteSuperset && resolvedType.canWriteSuperset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
-    }
-
-    if (resolvedType && resolvedType.canReadSubset && resolvedType.canReadSubset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
-    }
-
+    const isSlotType = (type: Type) => {
+      const hasTypeWithoutFate = type && this._fate === '?';
+      const supersetIsSlandle = type.canWriteSuperset && type.canWriteSuperset.slandleType();
+      const subersetIsSlandle = type.canReadSubset && type.canReadSubset.slandleType();
+      return hasTypeWithoutFate && (supersetIsSlandle || subersetIsSlandle);
+    };
+    const resolvedType = this.type.resolvedType();
     const collectionType = resolvedType && resolvedType.isCollectionType() && resolvedType.collectionType;
-    if (collectionType && collectionType.canWriteSuperset && collectionType.canWriteSuperset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
-    }
-
-    if (collectionType && collectionType.canReadSubset && collectionType.canReadSubset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
+    if (isSlotType(resolvedType) || isSlotType(collectionType)) {
+      this._fate = '`slot';
     }
   }
 

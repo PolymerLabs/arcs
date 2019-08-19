@@ -14,7 +14,7 @@ import {Direction, ParticleClaimStatement, ParticleCheckStatement} from './manif
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
+import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
@@ -174,7 +174,14 @@ export class ConsumeSlotConnectionSpec {
   // Getters to 'fake' being a Handle.
   get isOptional(): boolean { return !this.isRequired; }
   get direction(): string { return '`consume'; }
-  get type(): SlotType { return SlotType.make(this.formFactor, null); } //TODO(jopra): FIX THIS NULL!
+  get type(): Type {
+    //TODO(jopra): FIXME make the null handle optional.
+    const slotT = SlotType.make(this.formFactor, null);
+    if (this.isSet) {
+      return slotT.collectionOf();
+    }
+    return slotT;
+  }
   get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
 
