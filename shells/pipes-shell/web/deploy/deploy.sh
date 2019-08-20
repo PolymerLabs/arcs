@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e
+
 # target
 mkdir dist
 # sources
@@ -9,8 +11,8 @@ cp -fR ../../../lib/build/worker.js dist/
 mkdir dist/particles
 #
 mkdir dist/particles/Common
-mkdir dist/particles/Common/schema
-cp -fR ../../../../particles/Common/schema/Description.schema dist/particles/Common/schema
+mkdir dist/particles/Common/schemas
+cp -fR ../../../../particles/Common/schemas/Description.arcs dist/particles/Common/schemas
 #
 mkdir dist/particles/PipeApps
 cp -fR ../../../../particles/PipeApps/* dist/particles/PipeApps
