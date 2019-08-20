@@ -239,7 +239,7 @@ export class ParticleSpec {
 
     this.implFile = model.implFile;
     this.implBlobUrl = model.implBlobUrl;
-    this.modality = Modality.create(model.modality || []);
+    this.modality = model.modality ? Modality.create(model.modality) : Modality.all;
     this.slotConnections = new Map();
     if (model.slotConnections) {
       model.slotConnections.forEach(s => this.slotConnections.set(s.name, new ConsumeSlotConnectionSpec(s)));

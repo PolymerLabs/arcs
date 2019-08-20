@@ -132,7 +132,7 @@ describe('A Strategy Sequence', () => {
         in [~a] collection
         out [Description] descriptions
         modality dom
-        modality dom-touch
+        modality domTouch
         consume master #root
           provide action
             handle collection
@@ -146,7 +146,7 @@ describe('A Strategy Sequence', () => {
       particle ShowProduct in 'source/ShowProduct.js'
         in Product product
         modality dom
-        modality dom-touch
+        modality domTouch
         consume item
   
       particle AlsoOn in 'source/AlsoOn.js'

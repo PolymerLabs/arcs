@@ -11,7 +11,7 @@ import '../Product.schema'
 particle ManageProducts in 'source/ManageProducts.js'
   ManageProducts(inout [Product] list)
   modality dom
-  modality dom-touch
+  modality domTouch
   consume root
     provide action
       handle list
