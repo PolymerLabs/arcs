@@ -127,13 +127,15 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     if (this.synchronized) {
       return [this.crdt.getParticleView()!, this.versionCopy()];
     } else {
-      return new Promise(async (resolve) => {
-        this.modelHasSynced = () => {
-          this.modelHasSynced = () => undefined;
-          resolve([this.crdt.getParticleView()!, this.versionCopy()]);
-        };
-        await this.synchronizeModel();
-      });
+      const promise: Promise<[T['consumerType'], VersionMap]> =
+          new Promise((resolve) => {
+            this.modelHasSynced = () => {
+              this.modelHasSynced = () => undefined;
+              resolve([this.crdt.getParticleView()!, this.versionCopy()]);
+            };
+          });
+      await this.synchronizeModel();
+      return promise;
     }
   }
 
