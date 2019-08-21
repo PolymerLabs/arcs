@@ -135,19 +135,19 @@ private:
 };
 
 template<>
-${name} clone_entity(const ${name}& entity) {
+inline ${name} clone_entity(const ${name}& entity) {
   ${name} clone;
   ${clone.join('\n  ')}
   return std::move(clone);
 }
 
 template<>
-bool entities_equal(const ${name}& a, const ${name}& b) {
+inline bool entities_equal(const ${name}& a, const ${name}& b) {
   return ${equals.join(' && \n         ')};
 }
 
 template<>
-std::string entity_to_str(const ${name}& entity, const char* join) {
+inline std::string entity_to_str(const ${name}& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id());
   ${toString.join('\n  ')}
@@ -155,7 +155,7 @@ std::string entity_to_str(const ${name}& entity, const char* join) {
 }
 
 template<>
-void internal::decode_entity(${name}* entity, const char* str) {
+inline void internal::decode_entity(${name}* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
@@ -170,7 +170,7 @@ void internal::decode_entity(${name}* entity, const char* str) {
 }
 
 template<>
-std::string internal::encode_entity(const ${name}& entity) {
+inline std::string internal::encode_entity(const ${name}& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id());
   ${encode.join('\n  ')}

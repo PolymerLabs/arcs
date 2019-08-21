@@ -2,7 +2,7 @@
   "output.wasm": {
     "manifest": "working.arcs",
     "genfile": "working.h",
-    "src": ["working.cc"],
+    "src": ["working.cc", "second.cc"],
     "outdir": "$here"
   }
 }
