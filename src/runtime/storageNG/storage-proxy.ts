@@ -34,6 +34,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private keepSynced = false;
   private synchronized = false;
   private readonly scheduler: StorageProxyScheduler<T>;
+  private modelHasSynced: Runnable = () => undefined;
 
   constructor(
       apiChannelId: string,
@@ -123,13 +124,17 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
-    await this.synchronizeModel();
-    return [this.crdt.getParticleView()!, this.versionCopy()];
-  }
-
-  async getData(): Promise<T['data']> {
-    await this.synchronizeModel();
-    return this.crdt.getData();
+    if (this.synchronized) {
+      return [this.crdt.getParticleView()!, this.versionCopy()];
+    } else {
+      return new Promise(async (resolve) => {
+        this.modelHasSynced = () => {
+          this.modelHasSynced = () => undefined;
+          resolve([this.crdt.getParticleView()!, this.versionCopy()]);
+        };
+        await this.synchronizeModel();
+      });
+    }
   }
 
   async onMessage(message: ProxyMessage<T>): Promise<boolean> {
@@ -138,6 +143,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
         this.synchronized = true;
+        this.modelHasSynced();
         this.notifySync();
         break;
       case ProxyMessageType.Operations: {
