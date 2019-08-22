@@ -110,6 +110,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         <iron-icon id="download" disabled$="{{!downloadEnabled}}" icon="file-download" title="Download log" on-click="downloadLog"></iron-icon>
         <div divider></div>
         <filter-input filter="{{searchParams}}"></filter-input>
+        <div divider></div>
+        Replay here?
       </div>
     </header>
     <iron-list id="list" items="{{filteredEntries}}">
