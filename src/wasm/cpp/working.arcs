@@ -59,27 +59,6 @@ recipe
     io_col = h6
 
 
-schema SpecialFields
-  // Test that language keywords can be field names
-  Text for
-  // Test that this doesn't conflict with the real internal id
-  Number internal_id
-
-resource SpecialFieldsResource
-  start
-  [{"for": "text", "internal_id": 55}]
-store SpecialFieldsStore of SpecialFields in SpecialFieldsResource
-
-particle SpecialFieldsParticle in 'output.wasm'
-  consume root
-  in SpecialFields input
-
-recipe
-  copy SpecialFieldsStore as h1
-  SpecialFieldsParticle
-    input <- h1
-
-
 particle ServiceParticle in 'output.wasm'
   consume root
 

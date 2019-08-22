@@ -26,7 +26,7 @@ const keywords = [
   'xor', 'xor_eq'
 ];
 
-// type-char to [cpp-type, pass-by-reference]
+// type-char to [cpp-type, is-string]
 const typeMap = {
   'T': ['std::string', true],
   'U': ['URL', true],
@@ -59,13 +59,16 @@ export class Schema2Cpp extends Schema2Base {
     const api: string[] = [];
     const clone: string[] = [];
     const equals: string[] = [];
+    const less: string[] = [];
     const decode: string[] = [];
     const encode: string[] = [];
     const toString: string[] = [];
+    const hash: string[] = [];
 
     const fieldCount = this.processSchema(schema, (field: string, typeChar: string) => {
       const type = typeMap[typeChar][0];
-      const [ref1, ref2] = typeMap[typeChar][1] ? ['const ', '&'] : ['', ''];
+      const isString = typeMap[typeChar][1];
+      const [ref1, ref2] = isString ? ['const ', '&'] : ['', ''];
       const fixed = (keywords.includes(field) ? '_' : '') + field;
       const valid = `${field}_valid_`;
 
@@ -84,6 +87,19 @@ export class Schema2Cpp extends Schema2Base {
 
       equals.push(`(a.has_${field}() ? (b.has_${field}() && a.${fixed}() == b.${fixed}()) : !b.has_${field}())`);
 
+      less.push(`if (a.has_${field}() != b.has_${field}()) {`,
+                `  return !a.has_${field}();`);
+      if (isString) {
+        less.push(`} else {`,
+                  `  cmp = a.${fixed}().compare(b.${fixed}());`,
+                  `  if (cmp != 0) return cmp < 0;`,
+                  `}`);
+      } else {
+        less.push(`} else if (a.${fixed}() != b.${fixed}()) {`,
+                  `  return a.${fixed}() < b.${fixed}();`,
+                  `}`);
+      }
+
       decode.push(`} else if (name == "${field}") {`,
                   `  decoder.validate("${typeChar}");`,
                   `  decoder.decode(entity->${field}_);`,
@@ -94,6 +110,9 @@ export class Schema2Cpp extends Schema2Base {
 
       toString.push(`if (entity.has_${field}())`,
                     `  printer.add("${field}: ", entity.${fixed}());`);
+
+      hash.push(`if (entity.has_${field}())`,
+                `  arcs::internal::hash_combine(h, entity.${fixed}());`);
     });
 
     return `\
@@ -109,14 +128,20 @@ public:
   ${name}& operator=(${name}&&) = default;
 
   ${api.join('\n  ')}
-  // Equality is based only on the internal id. Use arcs::entities_equal() to compare fields.
-  bool operator==(const ${name}& other) const { return _internal_id_ == other._internal_id_; }
-  bool operator!=(const ${name}& other) const { return _internal_id_ != other._internal_id_; }
+  // Equality ops compare internal ids and all data fields.
+  // Use arcs::fields_equal() to compare only the data fields.
+  bool operator==(const ${name}& other) const;
+  bool operator!=(const ${name}& other) const { return !(*this == other); }
 
   // For STL containers.
-  friend bool operator<(const ${name}& a, const ${name}& b) { return a._internal_id_ < b._internal_id_; }
+  friend bool operator<(const ${name}& a, const ${name}& b) {
+    int cmp = a._internal_id_.compare(b._internal_id_);
+    if (cmp != 0) return cmp < 0;
+    ${less.join('\n    ')};
+    return false;
+  }
 
-  // For testing and debugging only; do not use this value for any production purpose.
+  // For internal use, testing and debugging; do not use this value for any production purpose.
   const std::string& _internal_id() const { return _internal_id_; }
 
 private:
@@ -132,18 +157,23 @@ private:
   friend class Collection<${name}>;
   friend ${name} clone_entity<${name}>(const ${name}& entity);
   friend void internal::decode_entity<${name}>(${name}* entity, const char* str);
+  friend class internal::TestHelper;
 };
 
 template<>
 inline ${name} clone_entity(const ${name}& entity) {
   ${name} clone;
   ${clone.join('\n  ')}
-  return std::move(clone);
+  return clone;
 }
 
 template<>
-inline bool entities_equal(const ${name}& a, const ${name}& b) {
+inline bool fields_equal(const ${name}& a, const ${name}& b) {
   return ${equals.join(' && \n         ')};
+}
+
+inline bool ${name}::operator==(const ${name}& other) const {
+  return _internal_id_ == other._internal_id_ && fields_equal(*this, other);
 }
 
 template<>
@@ -151,7 +181,7 @@ inline std::string entity_to_str(const ${name}& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id());
   ${toString.join('\n  ')}
-  return std::move(printer.result(join));
+  return printer.result(join);
 }
 
 template<>
@@ -174,7 +204,7 @@ inline std::string internal::encode_entity(const ${name}& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id());
   ${encode.join('\n  ')}
-  return std::move(encoder.result());
+  return encoder.result();
 }
 
 }  // namespace arcs
@@ -183,7 +213,10 @@ inline std::string internal::encode_entity(const ${name}& entity) {
 template<>
 struct std::hash<arcs::${name}> {
   size_t operator()(const arcs::${name}& entity) const {
-    return std::hash<std::string>()(entity._internal_id());
+    size_t h = 0;
+    arcs::internal::hash_combine(h, entity._internal_id());
+    ${hash.join('\n    ')}
+    return h;
   }
 };
 `;

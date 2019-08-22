@@ -12,3 +12,7 @@ schema ServiceResponse
   Text call
   Text tag
   Text payload
+
+schema SpecialFields
+  Text for
+  Number internal_id

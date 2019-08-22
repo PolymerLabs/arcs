@@ -1,4 +1,5 @@
 #include <arcs.h>
+#include <cstring>
 
 namespace arcs {
 namespace internal {
@@ -277,7 +278,7 @@ void StringPrinter::add(const char* prefix, const bool& flag) {
 std::string StringPrinter::result(const char* join) {
   std::string res;
   if (!parts_.empty()) {
-    for (auto i = 0; i < parts_.size() - 1; i++) {
+    for (size_t i = 0; i < parts_.size() - 1; i++) {
       res += parts_[i] + join;
     }
     res += parts_.back();
