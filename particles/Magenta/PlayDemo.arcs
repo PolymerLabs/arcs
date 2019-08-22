@@ -1,0 +1,6 @@
+particle PlayDemoParticle in './js/PlayDemo.js'
+  consume root
+
+recipe PlayDemoRecipe
+  PlayDemoParticle
+  description `Play a simple demo song with Magenta`
