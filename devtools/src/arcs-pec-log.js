@@ -111,7 +111,9 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         <div divider></div>
         <filter-input filter="{{searchParams}}"></filter-input>
         <div divider></div>
-        Replay here?
+        <iron-icon title="Rewind" icon="av:fast-rewind" on-click="rewind"></iron-icon>
+        <iron-icon title="Step" icon="av:skip-next"></iron-icon>
+        <iron-icon title="Replay" icon="av:fast-forward"></iron-icon>
       </div>
     </header>
     <iron-list id="list" items="{{filteredEntries}}">
@@ -208,6 +210,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         }
         case 'arc-selected':
           this.arcName = msg.messageBody.arcId.substring(msg.messageBody.arcId.indexOf(':') + 1);
+          this.arcId = msg.messageBody.arcId;
           // fallthrough
         case 'page-refresh':
           this.reset();
@@ -330,6 +333,16 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     }
 
     event.stopPropagation();
+  }
+
+  // REWIND BELOW
+
+  rewind() {
+    this.send({
+      messageType: 'rewind',
+      messageBody: {},
+      arcId: this.arcId,
+    });
   }
 }
 
