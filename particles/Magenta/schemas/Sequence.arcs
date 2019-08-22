@@ -1,0 +1,31 @@
+// Basic schema definitions for working with note sequences in magenta-js.
+// Distilled from review of https://hello-magenta.glitch.me/
+
+schema Note
+  // `index` is used to allow storing notes in a Collection with an order,
+  // since we don't yet have support for ordered lists.
+  Number index
+  Number pitch
+  Number quantizedStartStep
+  Number quantizedEndStep
+  Boolean isDrum
+
+schema QuantizationInfo
+  Number stepsPerQuarter
+  Number qpm
+
+schema TempoEntry
+  // `index` is used to allow storing entries in a Collection with an order,
+  // since we don't yet have support for ordered lists.
+  Number index
+  Number time
+  Number qpm
+
+schema Song
+  // The collections below may not work in which case the involved particles
+  // will need to define them to go along with the non-collection fields we
+  // do keep here.
+  [Reference<Note>] notes
+  [Reference<TempoEntry>] tempos
+  Reference<QuantizationInfo> quantizationInfo
+  Number totalQuantizedSteps
