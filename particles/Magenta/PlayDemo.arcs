@@ -1,6 +1,6 @@
 import 'schemas/Sequence.arcs'
 
-particle PlayDemoParticle in './js/PlayDemo.js'
+particle PlayDemoParticle in './source/PlayDemo.js'
   consume root
 
 recipe PlayDemoRecipe

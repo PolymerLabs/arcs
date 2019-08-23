@@ -11,6 +11,7 @@ import 'Services/Services.arcs'
 import 'Stardate/Stardate.arcs'
 import 'Demo/Demo.arcs'
 import 'Processing/recipes/ImageClassifier.arcs'
+import 'Magenta/Visualizer.arcs'
 
 // for ArcMetaShare
 import 'Arcs/schemas/ArcMeta.arcs'
