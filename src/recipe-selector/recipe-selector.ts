@@ -75,17 +75,9 @@ export class SimplePlanner {
     const resolver = new RecipeResolver(arc);
     const recipe = this._selector.select(request);
     if (recipe) {
-      const options: IsValidOptions = {errors: new Map()};
-      const resolved = await resolver.resolve(recipe, options);
-      if (resolved) {
-        return resolved;
-      } else {
-        console.log(`could not resolve selected recipe: ${[...options.errors.values()].join('\n')}`);
-        throw new Error('Resolution failed');
-      }
-    } else {
-      throw new Error('Selection failed');
+      return await resolver.resolve(recipe);
     }
+    return null;
   }
   
 }

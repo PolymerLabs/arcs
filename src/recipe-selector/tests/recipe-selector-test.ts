@@ -296,7 +296,6 @@ describe('simple planner', () => {
       particle P1
         out Foo {} foo
         consume root
-        modality dom
       particle P2
         in Foo {} bar
       @trigger
