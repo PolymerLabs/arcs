@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe} from '../runtime/recipe/recipe.js';
-import {Dictionary} from '../runtime/hot.js';
+import {Arc} from '../runtime/arc.js';
+import {Recipe, IsValidOptions} from '../runtime/recipe/recipe.js';
+import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 
 // One entry in the lookup table, i.e. one trigger and the recipe it invokes.
 export class Match {
@@ -61,4 +62,22 @@ export class RecipeSelector {
       if (found) return found.recipe;
       return null;
     }
+}
+
+export class SimplePlanner {
+  private _selector: RecipeSelector;
+  
+  constructor(readonly recipes: Recipe[]) {
+    this._selector = new RecipeSelector(recipes);
+  }
+  
+  async plan(arc: Arc, request:  [string, string][]): Promise<Recipe> {
+    const resolver = new RecipeResolver(arc);
+    const recipe = this._selector.select(request);
+    if (recipe) {
+      return await resolver.resolve(recipe);
+    }
+    return null;
+  }
+  
 }
