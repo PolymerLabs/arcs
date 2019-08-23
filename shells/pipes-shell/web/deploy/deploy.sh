@@ -1,6 +1,4 @@
 #!/bin/sh
-set -e
-
 # target
 mkdir dist
 # sources
