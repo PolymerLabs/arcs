@@ -1,6 +1,14 @@
+import './schemas/Sequence.arcs'
+
+store Twankle of Song in 'twankle.json'
+
 particle VisualizerParticle in './source/Visualizer.js'
+  in Song track
   consume root
 
 recipe VisualizerRecipe
+  map Twankle as data
   VisualizerParticle
+    track <- data
+
   description `Visualize a song with Magenta`

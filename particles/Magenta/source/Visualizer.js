@@ -40,8 +40,11 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       return template;
     }
 
-    render() {
+    render({track}) {
+      if (track) {
+        return {notes: track};
+      }
       return {notes: Twinkle};
     }
-  };
+   };
 });

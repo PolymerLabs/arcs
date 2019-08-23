@@ -8,6 +8,8 @@ schema Note
   Number pitch
   Number quantizedStartStep
   Number quantizedEndStep
+  Number startTime
+  Number endTime
   Boolean isDrum
 
 schema QuantizationInfo
