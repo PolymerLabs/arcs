@@ -1,0 +1,6 @@
+particle VisualizerParticle in './source/Visualizer.js'
+  consume root
+
+recipe VisualizerRecipe
+  VisualizerParticle
+  description `Visualize a song with Magenta`
