@@ -1,6 +1,8 @@
 package arcs.api;
 
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Collection extends Handle {
   private final CollectionStore collectionStore;
@@ -19,6 +21,7 @@ public class Collection extends Handle {
 
   @Override
   public void notify(String kind, Particle particle, PortableJson details) {
+    Logger.getGlobal().log(Level.SEVERE, "Arcs: Notify: " + kind + " " + details);
     switch (kind) {
       case "sync":
         // TODO: Should return promise?
@@ -26,8 +29,8 @@ public class Collection extends Handle {
         break;
       case "update":
         PortableJson update = jsonParser.emptyObject();
-        if (details.hasKey("add")) update.put("added", details.getObject("add"));
-        if (details.hasKey("remove")) update.put("removed", details.getObject("remove"));
+        if (details.hasKey("add")) update.put("added", details.getArray("add"));
+        if (details.hasKey("remove")) update.put("removed", details.getArray("remove"));
         update.put(
             "originator", Objects.equals(details.getString("originatorId"), this.particleId));
         // TODO: Should return promise?

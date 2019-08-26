@@ -1,7 +1,7 @@
 load("@io_bazel_rules_closure//closure:defs.bzl", "closure_js_library")
 
-licenses(["notice"])  # Apache 2.0
-package(default_visibility = ["//visibility:public"])
+licenses(["notice"])
+package(default_visibility = ["//java/arcs:__subpackages__"])
 
 load(
     "@io_bazel_rules_closure//closure:defs.bzl",

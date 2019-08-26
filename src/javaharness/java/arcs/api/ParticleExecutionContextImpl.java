@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 
 public class ParticleExecutionContextImpl implements ParticleExecutionContext {
@@ -34,6 +36,8 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
             .loadParticle(spec.getFileName())
             .flatMap(x -> Optional.ofNullable(x.createParticle()))
             .orElse(null);
+    Logger.getGlobal().log(
+        Level.SEVERE, "Arcs: Trying to load particle " + spec.getFileName() + " got " + particle);
     Objects.requireNonNull(particle).setSpec(spec);
     particle.setJsonParser(jsonParser);
     this.particles.add(particle);

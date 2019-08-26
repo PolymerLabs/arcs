@@ -58,20 +58,20 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     PortableJson added = jsonParser.emptyArray();
     PortableJson removed = jsonParser.emptyArray();
     if (update.hasKey("add")) {
-      for (int i = 0; i < update.getObject("add").getLength(); ++i) {
-        PortableJson add = update.getObject("add").getObject(i);
+      for (int i = 0; i < update.getArray("add").getLength(); ++i) {
+        PortableJson add = update.getArray("add").getObject(i);
         boolean effective = add.getBool("effective");
         PortableJson value = add.getObject("value");
         if ((apply
                 && model.applyOperation(
-                    createAddOperation(value, add.getObject(ModelEntry.KEYS).asStringArray())))
+                    createAddOperation(value, add.getArray(ModelEntry.KEYS).asStringArray())))
             || (!apply && effective)) {
           added.put(added.getLength(), value);
         }
       }
     } else if (update.hasKey("remove")) {
-      for (int i = 0; i < update.getObject("remove").getLength(); ++i) {
-        PortableJson remove = update.getObject("remove").getObject(i);
+      for (int i = 0; i < update.getArray("remove").getLength(); ++i) {
+        PortableJson remove = update.getArray("remove").getObject(i);
         VersionedValue<ModelEntry> vv =
             model.getData().get(remove.getObject("value").getString("id"));
         ModelEntry entry = vv.value;
