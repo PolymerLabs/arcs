@@ -1,6 +1,7 @@
 package arcs.webimpl;
 
 import arcs.api.ArcsEnvironment;
+import arcs.api.HarnessController;
 import arcs.builtinparticles.ParticlesModule;
 import dagger.Component;
 import javax.inject.Singleton;

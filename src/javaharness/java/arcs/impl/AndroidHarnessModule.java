@@ -1,7 +1,8 @@
-package arcs.webimpl;
+package arcs.impl;
 
 import arcs.api.AlertSurface;
 import arcs.api.ArcsEnvironment;
+import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.ClipboardSurface;
 import arcs.api.DeviceClient;
 import arcs.api.HandleFactory;
@@ -25,7 +26,7 @@ import java.util.Map;
 import javax.inject.Singleton;
 
 @Module
-public abstract class WebHarnessModule {
+public abstract class AndroidHarnessModule {
 
   @Binds
   public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(
@@ -33,21 +34,23 @@ public abstract class WebHarnessModule {
 
   @Singleton
   @Provides
-  public static Map<String, ArcsEnvironment.DataListener> provideInProgressListeners() {
+  public static Map<String, DataListener> provideInProgressListeners() {
     return new HashMap<>();
   }
 
+  @Singleton
   @Binds
-  public abstract DeviceClient provideWebDeviceClient(DeviceClientJsImpl impl);
+  public abstract DeviceClient provideAndroidDeviceClient(DeviceClientAndroidImpl impl);
 
   @Binds
-  abstract ShellApi providesWebShellApi(ShellApiImpl impl);
+  @Singleton
+  abstract ShellApi providesWebShellApi(AndroidShellApiImpl impl);
 
   @Binds
-  abstract PortableJsonParser providesPortableJsonParser(PortableJsonParserImpl impl);
+  abstract PortableJsonParser providesPortableJsonParser(PortableJsonParserAndroidImpl impl);
 
   @Binds
-  public abstract HarnessController providesHarnessController(WebHarnessController impl);
+  public abstract HarnessController providesHarnessController(AndroidHarnessController impl);
 
   @Binds
   abstract ParticleExecutionContext providesParticleExecutionContext(
@@ -64,11 +67,12 @@ public abstract class WebHarnessModule {
 
   @Binds
   public abstract PortablePromiseFactory providesPortablePromiseFactory(
-      PortablePromiseFactoryImpl impl);
+      PortablePromiseFactoryAndroidImpl impl);
 
-  @Binds
-  public abstract ClipboardSurface provideClipboardSurface(WebClipboardSurface impl);
+  @Singleton
+  @Binds abstract AlertSurface providesAndroidToastAlertService(AndroidToastAlertService impl);
 
+  @Singleton
   @Binds
-  public abstract AlertSurface provideAlertSurface(WebAlertSurface impl);
+  abstract ClipboardSurface provideClipboardService(AndroidClipboardService clipboardService);
 }
