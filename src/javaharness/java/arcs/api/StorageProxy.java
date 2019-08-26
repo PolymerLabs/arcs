@@ -105,7 +105,7 @@ public abstract class StorageProxy implements Store {
     // Add the update to the queue and process. Most of the time the queue should be empty and
     // processUpdates will consume this event immediately.
     updates.add(update);
-    updates.sort(Comparator.comparingInt(a -> a.getInt(VERSION)));
+    updates.sort((a, b) -> a.getInt(VERSION) - b.getInt(VERSION));
     processUpdates();
   }
 
