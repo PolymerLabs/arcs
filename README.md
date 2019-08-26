@@ -110,6 +110,9 @@ $ git config core.hooksPath tools/hooks
   documentation are stale), but you'll still need to do the
   `npm config set msvs_version 2015` bit, and similar for Python if you
   install that manually per `node-gyp` option 2 instructions.
+- If you encounter errors due to spaces in your user name directory
+  with either `Git Bash` or `nvm`, you may benefit from solutions
+  described [here](https://stackoverflow.com/questions/24557224/git-bash-path-cannot-parse-windows-directory-with-space) and [here](https://github.com/coreybutler/nvm-windows/issues/41).
 
 ### Mac Installation Notes
 - When installing, if you run into SSL Cert verification errors, consider certifying Python 3.6 on Mac:
