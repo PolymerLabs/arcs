@@ -9,8 +9,18 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ChangeType, CRDTError} from '../crdt';
-import {CollectionOpTypes, CRDTCollection} from '../crdt-collection';
+import {ChangeType, VersionMap} from '../crdt';
+import {CollectionOpTypes, CRDTCollection, CollectionOperation} from '../crdt-collection';
+
+/** Creates an Add operation. */
+function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
+  return {type: CollectionOpTypes.Add, added: {id}, clock, actor};
+}
+
+/** Creates an Remove operation. */
+function removeOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
+  return {type: CollectionOpTypes.Remove, removed: {id}, clock, actor};
+}
 
 describe('CRDTCollection', () => {
   it('initially is empty', () => {
@@ -157,69 +167,196 @@ describe('CRDTCollection', () => {
       actor: 'them'
     }));
   });
-  it('can merge two models', () => {
-    const set1 = new CRDTCollection<{id: string}>();
-    set1.applyOperation({
-      type: CollectionOpTypes.Add,
-      added: {id: 'one'},
-      clock: {me: 1},
-      actor: 'me'
-    });
-    set1.applyOperation({
-      type: CollectionOpTypes.Add,
-      added: {id: 'two'},
-      clock: {me: 2},
-      actor: 'me'
-    });
-    const set2 = new CRDTCollection<{id: string}>();
-    set2.applyOperation({
-      type: CollectionOpTypes.Add,
-      added: {id: 'three'},
-      clock: {you: 1},
-      actor: 'you'
-    });
-    set2.applyOperation({
-      type: CollectionOpTypes.Add,
-      added: {id: 'one'},
-      clock: {you: 2},
-      actor: 'you'
-    });
-    const {modelChange, otherChange} = set1.merge(set2.getData());
-    const expectedValues = {
-      one: {value: {id: 'one'}, version: {me: 1, you: 2}},
-      two: {value: {id: 'two'}, version: {me: 2}},
-      three: {value: {id: 'three'}, version: {you: 1}}
-    };
-    if (modelChange.changeType === ChangeType.Model) {
-      assert.deepEqual(
-          modelChange.modelPostChange,
-          {values: expectedValues, version: {you: 2, me: 2}});
-    } else {
-      assert.fail('modelChange.changeType should be ChangeType.Model');
-    }
-    assert.deepEqual(modelChange, otherChange);
 
-    // Test removes also work in merge.
-    set1.applyOperation({
-      type: CollectionOpTypes.Remove,
-      removed: {id: 'one'},
-      clock: {me: 2, you: 2},
-      actor: 'me'
+  it('can merge two models', () => {
+    // Original set of data common to both sets. Say that actor c added them all.
+    const originalOps = [
+      addOp('kept by both', 'c', {c: 1}),
+      addOp('removed by a', 'c', {c: 2}),
+      addOp('removed by b', 'c', {c: 3}),
+      addOp('removed by a added by b', 'c', {c: 4}),
+      addOp('removed by b added by a', 'c', {c: 5}),
+    ];
+
+    const set1 = new CRDTCollection<{id: string}>();
+    const set2 = new CRDTCollection<{id: string}>();
+
+    originalOps.forEach(op => assert.isTrue(set1.applyOperation(op)));
+    originalOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+
+    assert.isTrue(set1.applyOperation(removeOp('removed by a', 'a', {a: 0, c: 5})));
+    assert.isTrue(set1.applyOperation(addOp('added by a', 'a', {a: 1, c: 5})));
+    assert.isTrue(set1.applyOperation(addOp('added by both', 'a', {a: 2, c: 5})));
+    assert.isTrue(set1.applyOperation(addOp('removed by b added by a', 'a', {a: 3, c: 5})));
+    assert.isTrue(set1.applyOperation(removeOp('removed by a added by b', 'a', {a: 3, c: 5})));
+
+    assert.isTrue(set2.applyOperation(addOp('added by both', 'b', {b: 1, c: 5})));
+    assert.isTrue(set2.applyOperation(addOp('added by b', 'b', {b: 2, c: 5})));
+    assert.isTrue(set2.applyOperation(removeOp('removed by b', 'b', {b: 2, c: 5})));
+    assert.isTrue(set2.applyOperation(removeOp('removed by b added by a', 'b', {b: 2, c: 5})));
+    assert.isTrue(set2.applyOperation(addOp('removed by a added by b', 'b', {b: 3, c: 5})));
+
+    const {modelChange, otherChange} = set1.merge(set2.getData());
+
+    const expectedVersion = {a: 3, b: 3, c: 5};
+    assert.deepEqual(modelChange, {
+      changeType: ChangeType.Model,
+      modelPostChange: {
+        values: {
+          'kept by both': {value: {id: 'kept by both'}, version: {c: 1}},
+          'removed by a added by b': {value: {id: 'removed by a added by b'}, version: {b: 3, c: 5}},
+          'removed by b added by a': {value: {id: 'removed by b added by a'}, version: {a: 3, c: 5}},
+          'added by a': {value: {id: 'added by a'}, version: {a: 1, c: 5}},
+          'added by b': {value: {id: 'added by b'}, version: {b: 2, c: 5}},
+          'added by both': {value: {id: 'added by both'}, version: {a: 2, b: 1, c: 5}},
+        },
+        version: expectedVersion
+      },
     });
-    const {modelChange: modelChange2, otherChange: otherChange2} =
-        set1.merge(set2.getData());
-    const expectedValues2 = {
-      two: {value: {id: 'two'}, version: {me: 2}},
-      three: {value: {id: 'three'}, version: {you: 1}}
-    };
-    if (modelChange2.changeType === ChangeType.Model) {
-      assert.deepEqual(
-          modelChange2.modelPostChange,
-          {values: expectedValues2, version: {you: 2, me: 2}});
+    if (otherChange.changeType === ChangeType.Operations) {
+      assert.deepEqual(otherChange, {
+        changeType: ChangeType.Operations,
+        operations: [{
+          type: CollectionOpTypes.FastForward,
+          added: [
+            [{id: 'added by both'}, {a: 2, b: 1, c: 5}],
+            [{id: 'removed by b added by a'}, {a: 3, c: 5}],
+            [{id: 'added by a'}, {a: 1, c: 5}],
+          ],
+          removed: [
+            {id: 'removed by a'},
+          ],
+          oldClock: {b: 3, c: 5},
+          newClock: expectedVersion,
+        }],
+      });
+      assert.isTrue(set2.applyOperation(otherChange.operations[0]));
+      if (modelChange.changeType === ChangeType.Model) {
+        assert.deepEqual(set2.getData(), modelChange.modelPostChange);
+      } else {
+        assert.fail('Expected modelChange.changeType to be ChangeType.Model');
+      }
     } else {
-      assert.fail('modelChange.changeType should be ChangeType.Model');
+      assert.fail('Expected otherChange.changeType to be ChangeType.Operations');
     }
-    assert.deepEqual(modelChange2, otherChange2);
+  });
+
+  describe('fast-forward operations', () => {
+    it('rejects fast-forward ops which begin in the future', () => {
+      const set = new CRDTCollection<{id: string}>();
+      
+      assert.isFalse(set.applyOperation({
+        type: CollectionOpTypes.FastForward,
+        added: [],
+        removed: [],
+        oldClock: {a: 5},  // > 0
+        newClock: {a: 10},
+      }));
+    });
+
+    it('accepts (but does not apply) fast-forward ops which end in the past', () => {
+      const set = new CRDTCollection<{id: string}>();
+      
+      // Add some initial elements.
+      assert.isTrue(set.applyOperation(addOp('one', 'me', {me: 1})));
+      assert.isTrue(set.applyOperation(addOp('two', 'me', {me: 2})));
+      assert.isTrue(set.applyOperation(addOp('three', 'me', {me: 3})));
+      
+      // Check it accepts the operation (returns true), but does not add the new
+      // element.
+      assert.isTrue(set.applyOperation({
+        type: CollectionOpTypes.FastForward,
+        added: [
+          [{id: 'four'}, {me: 2}],
+        ],
+        removed: [],
+        oldClock: {me: 1},
+        newClock: {me: 2},  // < 3
+      }));
+      assert.doesNotHaveAnyKeys(set.getData().values, ['four']);
+    });
+
+    it('advances the clock', () => {
+      const set = new CRDTCollection<{id: string}>();
+      
+      // Add some initial elements.
+      assert.isTrue(set.applyOperation(addOp('one', 'a', {a: 1})));
+      assert.isTrue(set.applyOperation(addOp('two', 'a', {a: 2})));
+      assert.isTrue(set.applyOperation(addOp('three', 'b', {b: 1})));
+      assert.isTrue(set.applyOperation(addOp('four', 'c', {c: 1})));
+      assert.deepEqual(set.getData().version, {a: 2, b: 1, c: 1});
+      
+      assert.isTrue(set.applyOperation({
+        type: CollectionOpTypes.FastForward,
+        added: [],
+        removed: [],
+        oldClock: {a: 2, b: 1},
+        newClock: {a: 27, b: 45},
+      }));
+
+      assert.deepEqual(set.getData().version, {a: 27, b: 45, c: 1});
+    });
+
+    it('can add elements', () => {
+      const set = new CRDTCollection<{id: string}>();
+      
+      // Add some initial elements.
+      assert.isTrue(set.applyOperation(addOp('one', 'a', {a: 1})));
+      assert.isTrue(set.applyOperation(addOp('two', 'b', {b: 1})));
+
+      // This is the point where the fast-forward was computed.
+      assert.isTrue(set.applyOperation({
+        type: CollectionOpTypes.FastForward,
+        added: [
+          [{id: 'one'}, {a: 1, b: 7}],
+          [{id: 'four'}, {a: 1, b: 9}],
+        ],
+        removed: [],
+        oldClock: {a: 1, b: 1},
+        newClock: {a: 1, b: 9},
+      }));
+      
+      // Model has since been updated.
+      assert.isTrue(set.applyOperation(removeOp('two', 'a', {a: 1, b: 1})));
+      assert.isTrue(set.applyOperation(addOp('three', 'a', {a: 2, b: 1})));
+
+      // one should be merged with the new version, two was removed and
+      // shouldn't be added back again, three was existing and shouldn't be
+      // deleted, and four is new.
+      assert.deepEqual(set.getData(), {
+        values: {
+          'one': {value: {id: 'one'}, version: {a: 1, b: 7}},      // Merged.
+          'three': {value: {id: 'three'}, version: {a: 2, b: 1}},  // Existing.
+          'four': {value: {id: 'four'}, version: {a: 1, b: 9}},    // Added.
+        },
+        version: {a: 2, b: 9},
+      });
+    });
+
+    it('can remove elements', () => {
+      const set = new CRDTCollection<{id: string}>();
+      
+      // Add some initial elements.
+      assert.isTrue(set.applyOperation(addOp('one', 'a', {a: 1})));
+      assert.isTrue(set.applyOperation(addOp('two', 'a', {a: 2})));
+      assert.isTrue(set.applyOperation(addOp('three', 'b', {b: 1})));
+      
+      assert.isTrue(set.applyOperation({
+        type: CollectionOpTypes.FastForward,
+        added: [],
+        removed: [
+          {id: 'one'},
+          {id: 'two'},
+        ],
+        oldClock: {a: 1, b: 1},
+        newClock: {a: 1, b: 5},
+      }));
+
+      // one should be removed, but two should not, because it's version is not
+      // dominated by newClock above.
+      assert.hasAllKeys(set.getData().values, ['two', 'three']);
+      assert.deepEqual(set.getData().version, {a: 2, b: 5});
+    });
   });
 });
 
