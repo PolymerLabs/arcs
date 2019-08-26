@@ -213,22 +213,32 @@ describe('CRDTCollection', () => {
         version: expectedVersion
       },
     });
-    assert.deepEqual(otherChange, {
-      changeType: ChangeType.Operations,
-      operations: [{
-        type: CollectionOpTypes.FastForward,
-        added: [
-          [{id: 'added by both'}, {a: 2, b: 1, c: 5}],
-          [{id: 'removed by b added by a'}, {a: 3, c: 5}],
-          [{id: 'added by a'}, {a: 1, c: 5}],
-        ],
-        removed: [
-          {id: 'removed by a'},
-        ],
-        oldClock: {b: 3, c: 5},
-        newClock: expectedVersion,
-      }],
-    });
+    if (otherChange.changeType === ChangeType.Operations) {
+      assert.deepEqual(otherChange, {
+        changeType: ChangeType.Operations,
+        operations: [{
+          type: CollectionOpTypes.FastForward,
+          added: [
+            [{id: 'added by both'}, {a: 2, b: 1, c: 5}],
+            [{id: 'removed by b added by a'}, {a: 3, c: 5}],
+            [{id: 'added by a'}, {a: 1, c: 5}],
+          ],
+          removed: [
+            {id: 'removed by a'},
+          ],
+          oldClock: {b: 3, c: 5},
+          newClock: expectedVersion,
+        }],
+      });
+      assert.isTrue(set2.applyOperation(otherChange.operations[0]));
+      if (modelChange.changeType === ChangeType.Model) {
+        assert.deepEqual(set2.getData(), modelChange.modelPostChange);
+      } else {
+        assert.fail('Expected modelChange.changeType to be ChangeType.Model');
+      }
+    } else {
+      assert.fail('Expected otherChange.changeType to be ChangeType.Operations');
+    }
   });
 
   describe('fast-forward operations', () => {
@@ -244,7 +254,7 @@ describe('CRDTCollection', () => {
       }));
     });
 
-    it('rejects fast-forward ops which end in the past', () => {
+    it('accepts (but does not apply) fast-forward ops which end in the past', () => {
       const set = new CRDTCollection<{id: string}>();
       
       // Add some initial elements.
@@ -252,13 +262,18 @@ describe('CRDTCollection', () => {
       assert.isTrue(set.applyOperation(addOp('two', 'me', {me: 2})));
       assert.isTrue(set.applyOperation(addOp('three', 'me', {me: 3})));
       
-      assert.isFalse(set.applyOperation({
+      // Check it accepts the operation (returns true), but does not add the new
+      // element.
+      assert.isTrue(set.applyOperation({
         type: CollectionOpTypes.FastForward,
-        added: [],
+        added: [
+          [{id: 'four'}, {me: 2}],
+        ],
         removed: [],
-        oldClock: {a: 1},
-        newClock: {a: 2},  // < 3
+        oldClock: {me: 1},
+        newClock: {me: 2},  // < 3
       }));
+      assert.doesNotHaveAnyKeys(set.getData().values, ['four']);
     });
 
     it('advances the clock', () => {

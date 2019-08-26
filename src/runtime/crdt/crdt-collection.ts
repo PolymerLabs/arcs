@@ -99,8 +99,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
         merged[id] = otherEntry;
       }
     }
-    for (const thisEntry of Object.values(this.model.values)) {
-      const id = thisEntry.value.id;
+    for (const [id, thisEntry] of Object.entries(this.model.values)) {
       if (!other.values[id] && !dominates(other.version, thisEntry.version)) {
         // Value was added by this model.
         merged[id] = thisEntry;
@@ -183,7 +182,8 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     }
     if (dominates(currentClock, op.newClock)) {
       // Current model already knows about everything in this fast-forward op.
-      return false;
+      // Nothing to do, but not an error.
+      return true;
     }
     for (const [value, version] of op.added) {
       const existingValue = this.model.values[value.id];
