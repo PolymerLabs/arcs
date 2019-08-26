@@ -5,7 +5,7 @@ schema Person
   Text name
 
 // The GetPerson particle allows the user to input their name, then writes
-// the input to the person handle.
+// the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
 particle GetPerson in './source/getPerson.js'
   out Person person
@@ -18,7 +18,7 @@ particle DisplayGreeting in './source/displayGreeting.js'
   in Person person
   consume greetingSlot
 
-recipe
+recipe HandleRecipe
   GetPerson
     // Pass the output person to the handle person.
     person -> person 

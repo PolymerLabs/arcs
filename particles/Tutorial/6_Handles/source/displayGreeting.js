@@ -28,13 +28,10 @@ const template = html`Hello, <span>{{name}}</span>!`;
     }
 
     render({person}) {
-      // Check that the person exists, and then return the data.
-      if (person) {
-        return {
-          name: person.name,
-        };
-      }
+      return {
+        name: person.name,
+      };
     }
-
+    
   };
 });
