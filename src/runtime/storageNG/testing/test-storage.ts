@@ -9,15 +9,16 @@
  */
 
 import {PropagatedException} from '../../arc-exceptions.js';
+import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
+import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
+import {Consumer} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle';
-import {CRDTTypeRecord, CRDTOperation} from '../../crdt/crdt.js';
-import {ActiveStore, ProxyMessage, StorageMode, ProxyCallback} from '../store.js';
-import {Exists, StorageDriverProvider, Driver, ReceiveMethod} from '../drivers/driver-factory.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
+import {Driver, Exists, ReceiveMethod, StorageDriverProvider} from '../drivers/driver-factory.js';
+import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {Handle} from '../handle.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode} from '../store.js';
 
 
 /**
@@ -80,17 +81,16 @@ export class MockStorageKey extends StorageKey {
 
 export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSyncCalled = false;
-  lastUpdate: CRDTOperation[] = null;
+  lastUpdate = null;
   constructor(storageProxy: StorageProxy<T>) {
     super('handle', storageProxy, IdGenerator.newSession(), {} as Particle, true, true);
   }
   onSync() {
     this.onSyncCalled = true;
   }
-  onUpdate(ops: CRDTOperation[]) {
-    this.lastUpdate = ops;
+  onUpdate(op: CRDTOperation, oldData: CRDTConsumerType, version: VersionMap) {
+    this.lastUpdate = [op, oldData, version];
   }
-
 }
 
 export class MockStorageDriverProvider implements StorageDriverProvider {
@@ -99,5 +99,20 @@ export class MockStorageDriverProvider implements StorageDriverProvider {
   }
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     return new MockDriver<Data>(storageKey, exists);
+  }
+}
+
+export class MockParticle {
+  lastUpdate = null;
+  onSyncCalled = false;
+  onDesyncCalled = false;
+  async callOnHandleUpdate(handle: Handle<CRDTTypeRecord>, update, onException: Consumer<Error>) {
+    this.lastUpdate = update;
+  }
+  async callOnHandleSync(handle: Handle<CRDTTypeRecord>, model, onException: Consumer<Error>) {
+    this.onSyncCalled = true;
+  }
+  async callOnHandleDesync(handle: Handle<CRDTTypeRecord>, onException: Consumer<Error>) {
+    this.onDesyncCalled = true;
   }
 }

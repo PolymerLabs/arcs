@@ -12,10 +12,11 @@ import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
-import {Type, SlotType} from '../type.js';
+import {Type, SlotType, TypeVariable} from '../type.js';
 import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
+import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
@@ -51,18 +52,27 @@ export class Handle implements Comparable<Handle> {
     if (!this.type) {
       return undefined;
     }
-    const slotType = this.type.slandleType();
-    if (!slotType) {
+    if (this.fate !== '`slot') {
       return undefined;
     }
-    const slotInfo = slotType.getSlot();
-
     const slandle = new Slot(this.recipe, this.localName);
     slandle.tags = this.tags;
     slandle.id = this.id;
-    slandle.formFactor = slotInfo.formFactor;
-    // TODO(jopra): cannot assign slandle handles as the slots do not actually track their handles but use a source particle connection mapping
-    // slandle.handles = [slotInfo.handle];
+
+    const slotType = this.type.slandleType();
+    if (slotType) {
+      const slotInfo = slotType.getSlot();
+      if (slotInfo) {
+        slandle.formFactor = slotInfo.formFactor;
+        if (slotInfo.handle) {
+          // TODO(jopra): cannot assign slandle handles as the slots do not
+          // actually track their handles but use a source particle connection
+          // mapping.
+          const particle = undefined;
+          slandle.sourceConnection = new SlotConnection(slotInfo.handle, particle);
+        }
+      }
+    }
     return slandle;
   }
 
@@ -118,22 +128,16 @@ export class Handle implements Comparable<Handle> {
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
+    const isSlotType = (type: Type) => {
+      const hasTypeWithoutFate = type && this._fate === '?';
+      const supersetIsSlandle = type.canWriteSuperset && type.canWriteSuperset.slandleType();
+      const subersetIsSlandle = type.canReadSubset && type.canReadSubset.slandleType();
+      return hasTypeWithoutFate && (supersetIsSlandle || subersetIsSlandle);
+    };
     const resolvedType = this.type.resolvedType();
-    if (resolvedType.canWriteSuperset && resolvedType.canWriteSuperset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
-    }
-
-    if (resolvedType.canReadSubset && resolvedType.canReadSubset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
-    }
-
     const collectionType = resolvedType && resolvedType.isCollectionType() && resolvedType.collectionType;
-    if (collectionType && collectionType.canWriteSuperset && collectionType.canWriteSuperset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
-    }
-
-    if (collectionType && collectionType.canReadSubset && collectionType.canReadSubset.tag === 'Slot') {
-      this._fate = this._fate === '?' ? '`slot' : this._fate;
+    if (isSlotType(resolvedType) || isSlotType(collectionType)) {
+      this._fate = '`slot';
     }
   }
 
@@ -211,7 +215,7 @@ export class Handle implements Comparable<Handle> {
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
-  static resolveEffectiveType(handleType: Type, connections: HandleConnection[]) {
+  static resolveEffectiveType(handleType: Type, connections: HandleConnection[]): Type {
     const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet);
   }
@@ -229,7 +233,7 @@ export class Handle implements Comparable<Handle> {
       connection.tags.forEach(tag => tags.add(tag));
     }
     if (!this.mappedType && this.fate === '`slot') {
-      this._mappedType = new SlotType(new SlotInfo(undefined, undefined));
+      this._mappedType = TypeVariable.make(this.id, null, null);
     }
     const type = Handle.resolveEffectiveType(this._mappedType, this._connections);
     if (!type) {
@@ -254,7 +258,13 @@ export class Handle implements Comparable<Handle> {
       if (this.fate === 'create' || this.fate === '`slot') {
         mustBeResolved = false;
       }
-      if ((mustBeResolved && !this.type.isResolved()) || !this.type.canEnsureResolved()) {
+      if (!this.type.canEnsureResolved()) {
+        if (options) {
+          options.details.push('unresolved type (cannot ensure resolved)');
+        }
+        resolved = false;
+      }
+      if (mustBeResolved && !this.type.isResolved()) {
         if (options) {
           options.details.push('unresolved type');
         }

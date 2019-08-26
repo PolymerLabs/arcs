@@ -2,10 +2,6 @@ package arcs.webimpl;
 
 import arcs.api.PortablePromise;
 import arcs.api.PortablePromiseFactory;
-
-import elemental2.promise.Promise;
-import java.lang.Runnable;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class PortablePromiseFactoryImpl implements PortablePromiseFactory {
@@ -13,11 +9,12 @@ public class PortablePromiseFactoryImpl implements PortablePromiseFactory {
   public PortablePromiseFactoryImpl() {}
 
   @Override
-  public <T> PortablePromise<T> newPromise(PortablePromise.PortablePromiseExecutor<T> executor) {
-    return new PortablePromiseJsImpl(executor);
+  public <T> PortablePromiseJsImpl<T> newPromise(PortablePromise.PortablePromiseExecutor<T> executor) {
+    return new PortablePromiseJsImpl<>(executor);
   }
+
   @Override
-  public <T> PortablePromise<T> newPromise(T value) {
-    return new PortablePromiseJsImpl(value);
+  public <T> PortablePromiseJsImpl<T> newPromise(T value) {
+    return new PortablePromiseJsImpl<>(value);
   }
 }

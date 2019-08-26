@@ -11,14 +11,20 @@
 import {MessagePort} from '../../../build/runtime/message-channel.js';
 
 class PecPort extends MessagePort {
-  constructor(pecId, bus) {
+  constructor(pecId, idGenerator, bus) {
     super();
     this.pecId = pecId;
+    this.sessionId = idGenerator.currentSessionIdForTesting;
     this.bus = bus;
   }
   close() {}
   postMessage(msg) {
     msg['id'] = this.pecId.toString();
+    if (this.sessionId) {
+      // Only send the sessionId in the very first pec call to initialize the ID generator.
+      msg['sessionId'] = this.sessionId;
+      this.sessionId = null;
+    }
     this.bus.send({message: 'pec', data: msg});
   }
   set onmessage(callback) {
@@ -29,8 +35,8 @@ class PecPort extends MessagePort {
 const pecPorts = {};
 
 export const portIndustry = (bus) => {
-  return (pecId) => {
-    const port = new PecPort(pecId, bus);
+  return (pecId, idGenerator) => {
+    const port = new PecPort(pecId, idGenerator, bus);
     pecPorts[pecId] = port;
     return port;
   };

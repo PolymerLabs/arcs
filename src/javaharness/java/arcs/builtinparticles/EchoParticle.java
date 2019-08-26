@@ -1,7 +1,5 @@
 package arcs.builtinparticles;
 
-import arcs.api.Particle;
-import arcs.api.ParticleImpl;
+import arcs.api.ParticleBase;
 
-public class EchoParticle extends ParticleImpl {
-}
+public class EchoParticle extends ParticleBase {}

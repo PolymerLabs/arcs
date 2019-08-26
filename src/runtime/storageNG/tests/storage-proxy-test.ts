@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {Particle} from '../../particle.js';
-import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';
 import {EntityType} from '../../type.js';
@@ -22,7 +22,11 @@ interface Entity {
 
 function getStorageProxy(store: ActiveStore<CRDTSingletonTypeRecord<Entity>>): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
   return new StorageProxy('id', new CRDTSingleton<Entity>(), store, EntityType.make([], {}), null /*pec*/);
-} 
+}
+
+function getNoOpStorageProxy(): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
+  return new NoOpStorageProxy();
+}
 
 describe('StorageProxy', async () => {
   it('will apply and propagate operation', async () => {
@@ -46,7 +50,7 @@ describe('StorageProxy', async () => {
       id: 1
     });
     await storageProxy.idle();
-    assert.sameDeepMembers(handle.lastUpdate, [op]);
+    assert.sameDeepMembers(handle.lastUpdate, [op, null, {A: 1}]);
   });
 
   it('will sync before returning the particle view', async () => {
@@ -57,15 +61,16 @@ describe('StorageProxy', async () => {
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
 
     // When requested a sync, store will send back a model.
-    mockStore.onProxyMessage = async message => { 
+    mockStore.onProxyMessage = async message => {
       mockStore.lastCapturedMessage = message;
       const crdtData = {values: {'1': {value: {id: 'e1'}, version: {A: 1}}}, version: {A: 1}};
-      await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1}); 
-      return true; 
+      await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1});
+      return true;
     };
 
-    const result: Entity = await storageProxy.getParticleView();
+    const [result, versionMap] = await storageProxy.getParticleView();
     assert.deepEqual(result, {id: 'e1'});
+    assert.deepEqual(versionMap, {A: 1});
     assert.deepEqual(
         mockStore.lastCapturedMessage,
         {type: ProxyMessageType.SyncRequest, id: 1});
@@ -123,5 +128,30 @@ describe('StorageProxy', async () => {
     assert.equal(
         mockStore.lastCapturedException.message,
         'SystemException: exception Error raised when invoking system function StorageProxyScheduler::_dispatch on behalf of particle handle: something wrong');
+  });
+});
+
+describe('NoOpStorageProxy', () => {
+  it('overrides all methods in StorageProxy', async () => {
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy = getStorageProxy(mockStore);
+    const noOpStorageProxy = getNoOpStorageProxy();
+
+    const properties = [];
+    let proto = Object.getPrototypeOf(storageProxy);
+    while (proto && proto !== Object.prototype) {
+      Object.getOwnPropertyNames(proto).forEach(name => {
+        const desc = Object.getOwnPropertyDescriptor(proto, name);
+        if (desc && typeof desc.value === 'function') {
+          properties.push(name);
+        }
+      });
+      proto = Object.getPrototypeOf(proto);
+    }
+
+    const noOpProperties = Object.getOwnPropertyNames(Object.getPrototypeOf(noOpStorageProxy));
+    properties.forEach(property => {
+      assert(noOpProperties.indexOf(property) !== -1, 'Missing function: ' + property);
+    });
   });
 });

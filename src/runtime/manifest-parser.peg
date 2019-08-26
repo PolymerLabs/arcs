@@ -68,11 +68,13 @@
 }
 
 Manifest
-  = eolWhiteSpace? Indent? items:((SameIndent Annotation eolWhiteSpace)? SameIndent ManifestItem)*
+  = eolWhiteSpace? Indent? items:(Annotation SameIndent ManifestItem)*
   {
     const result: AstNode.ManifestItem[] = items.map(item => {
       const manifestItem = item[2];
-      manifestItem.annotation = optional(item[0], a => a[1], null);
+      const annotations = item[0];
+      manifestItem.triggers = annotations.triggerSet;
+      manifestItem.annotation = annotations.simpleAnnotation;
       return manifestItem;
     });
     checkNormal(result);
@@ -90,7 +92,23 @@ ManifestItem
   / Meta
   / Resource
 
-Annotation "an annotation (e.g. @foo)"
+Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)?
+  {
+    return {
+      triggerSet: triggerSet.map(trigger => trigger[1]),
+      simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
+    };
+  }
+
+Trigger "a trigger for a recipe"
+  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
+  return pairs.map(pair => {
+    return [pair[2], pair[4]];
+  });
+}
+
+
+SimpleAnnotation "an annotation (e.g. @foo)"
   = '@' annotation:lowerIdent { return annotation; }
 
 Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
@@ -610,7 +628,7 @@ TypeVariableList
   }
 
 ParticleModality
-  = 'modality' whiteSpace modality:Modality eolWhiteSpace
+  = 'modality' whiteSpace modality:fieldName eolWhiteSpace
   {
     return {
       kind: 'particle-modality',
@@ -618,16 +636,6 @@ ParticleModality
       modality,
     } as AstNode.ParticleModality;
   }
-
-Modality
-  = 'dom-touch'
-  / 'dom'
-  / 'vr'
-  / 'voice'
-  / 'mock-dom-touch'
-  / 'mock-dom'
-  / 'mock-vr'
-  / 'mock-voice'
 
 ParticleSlotConnection
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace
@@ -1011,14 +1019,14 @@ RequireHandleSection
   }
 
 Tag
-  = '#' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
+  = '#' tag:simpleName {return tag;}
 
 TagList
   = head:Tag tail:(whiteSpace TagList)?
   { return [head, ...(tail && tail[1] || [])]; }
 
 Verb "a verb (e.g. &Verb)"
-  = '&' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
+  = '&' verb:simpleName {return verb;}
 
 VerbList
   = head:Verb tail:(whiteSpace VerbList)?
@@ -1309,6 +1317,10 @@ lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
+dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
+  = $ (simpleName ("." simpleName)*) // Note that a single simpleName matches too
+simpleName "a name starting with a letter and containing letters, digits and underscores"
+  = [a-zA-Z][a-zA-Z0-9_]* {return text();}
 whiteSpace "one or more whitespace characters"
   = " "+
 eolWhiteSpace "a group of new lines (and optionally comments)"

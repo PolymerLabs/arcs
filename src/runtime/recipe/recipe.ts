@@ -47,6 +47,7 @@ export class Recipe implements Cloneable<Recipe> {
   private _cloneMap: CloneMap;
 
   annotation: string | undefined = undefined;
+  triggers: [string, string][][] = [];
 
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
@@ -184,8 +185,8 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   get modality(): Modality {
-    return this.particles.filter(p => Boolean(p.spec && p.spec.slotConnections.size > 0)).map(p => p.spec.modality)
-      .reduce((modality, total) => modality.intersection(total), Modality.all);
+    return Modality.intersection(
+        this.particles.filter(p => Boolean(p.spec && p.spec.slotConnections.size > 0)).map(p => p.spec.modality));
   }
 
   allRequiredSlotsPresent(options=undefined): boolean {
@@ -253,13 +254,16 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   _isValid(options: IsValidOptions = undefined): boolean {
+    const checkAllValid = (list: {_isValid: (options: IsValidOptions) => boolean}[]) => list.every(
+      item => item._isValid(options)
+    );
     return !this._findDuplicate(this._handles, options)
         && !this._findDuplicate(this._slots, options)
-        && this._handles.every(handle => handle._isValid(options))
-        && this._particles.every(particle => particle._isValid(options))
-        && this._slots.every(slot => slot._isValid(options))
-        && this.handleConnections.every(connection => connection._isValid(options))
-        && this.slotConnections.every(connection => connection._isValid(options))
+        && checkAllValid(this._handles)
+        && checkAllValid(this._particles)
+        && checkAllValid(this._slots)
+        && checkAllValid(this.handleConnections)
+        && checkAllValid(this.slotConnections)
         && (!this.search || this.search.isValid());
   }
 

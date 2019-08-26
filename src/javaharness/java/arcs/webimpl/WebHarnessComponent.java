@@ -9,5 +9,6 @@ import javax.inject.Singleton;
 @Component(modules = {WebHarnessModule.class, ParticlesModule.class})
 public interface WebHarnessComponent {
   ArcsEnvironment getArcsEnvironment();
+
   HarnessController getHarnessController();
 }

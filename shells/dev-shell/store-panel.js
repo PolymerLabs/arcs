@@ -125,7 +125,12 @@ export class StorePanel extends HTMLElement {
   async attach(store) {
     this.store = store;
     this.storeName.textContent = store.name || store.id;
-    this.schema.textContent = this.store.backingType().entitySchema.toManifestString();
+    const schema = this.store.backingType().entitySchema;
+    if (schema) {
+      this.schema.textContent = schema.toManifestString();
+    } else {
+      this.schema.textContent = '// Unknown schema';
+    }
     await this.update(true);
     this.updateCallback = () => this.update(false);
     store.on('change', this.updateCallback, this);
@@ -175,7 +180,7 @@ export class StorePanel extends HTMLElement {
       // Strip enclosing brackets and remove indent before displaying.
       const json = JSON.stringify(this.data, null, 2).slice(4, -1).replace(/\n {2}/g, '\n');
       this.contents.value = json;
-      this.contents.rows = Math.min(json.match(/\n/g).length + 1, 20);
+      this.contents.rows = Math.min((json.match(/\n/g) || []).length + 1, 20);
     } else {
       this.contents.value = '';
       this.contents.rows = 2;

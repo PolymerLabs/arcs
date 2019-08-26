@@ -9,17 +9,19 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
-import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton.js';
+import {VersionMap} from '../../crdt/crdt';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {IdGenerator} from '../../id.js';
+import {Particle} from '../../particle';
+import {EntityType} from '../../type.js';
 import {CollectionHandle, SingletonHandle} from '../handle.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
-import {MockStore} from '../testing/test-storage.js';
-import {IdGenerator} from '../../id.js';
-import {EntityType} from '../../type.js';
+import {MockParticle, MockStore} from '../testing/test-storage.js';
 
-function getCollectionHandle(): CollectionHandle<{id: string}> {
-  // tslint:disable-next-line: no-any
-  const fakeParticle: any = {};
+function getCollectionHandle(particle?: MockParticle):
+    CollectionHandle<{id: string}> {
+  const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   return new CollectionHandle<{id: string}>(
       'me',
       new StorageProxy(
@@ -34,9 +36,9 @@ function getCollectionHandle(): CollectionHandle<{id: string}> {
       true);
 }
 
-function getSingletonHandle(): SingletonHandle<{id: string}> {
-  // tslint:disable-next-line: no-any
-  const fakeParticle: any = {};
+function getSingletonHandle(particle?: MockParticle):
+    SingletonHandle<{id: string}> {
+  const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   return new SingletonHandle<{id: string}>(
       'me',
       new StorageProxy(
@@ -67,6 +69,7 @@ describe('CollectionHandle', () => {
     const handle = getCollectionHandle();
     const entity = {id: 'A', property: 'something'};
     await handle.add(entity);
+    await handle.add({id: 'B'});
     assert.deepEqual(await handle.get('A'), entity);
   });
 
@@ -83,6 +86,73 @@ describe('CollectionHandle', () => {
     await handle.addMultiple([{id: 'A'}, {id: 'B'}]);
     assert.sameDeepMembers(await handle.toList(), [{id: 'A'}, {id: 'B'}]);
   });
+
+  it('notifies particle on sync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getCollectionHandle(particle);
+    await handle.onSync();
+    assert.isTrue(particle.onSyncCalled);
+  });
+
+  it('notifies particle on desync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getCollectionHandle(particle);
+    await handle.onDesync();
+    assert.isTrue(particle.onDesyncCalled);
+  });
+
+  it('notifies particle of updates', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getCollectionHandle(particle);
+    const op: CollectionOperation<{id: string}> = {
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'id'},
+      actor: 'actor',
+      clock: {'actor': 1}
+    };
+    await handle.onUpdate(op, new Set(), {'actor': 1, 'other': 2});
+    assert.deepEqual(
+        particle.lastUpdate, {removed: {id: 'id'}, originator: false});
+  });
+
+  it('stores new version map', async () => {
+    const handle = getCollectionHandle();
+
+    const versionMap: VersionMap = {'actor': 1, 'other': 2};
+    // Make storageProxy return the defined version map.
+    handle.storageProxy.getParticleView = async () => {
+      return Promise.resolve([new Set(), versionMap]);
+    };
+
+    // This will pull in the version map above.
+    await handle.toList();
+    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
+    let capturedClock;
+    handle.storageProxy.applyOp = async (op: CollectionOperation<{id: string}>) => {
+      capturedClock = op.clock;
+      return true;
+    };
+    // Use an op that does not increment the clock.
+    await handle.remove({id: 'id'});
+    assert.deepEqual(capturedClock, versionMap);
+  });
+
+  it('can override default options', () => {
+    const handle = getCollectionHandle();
+    assert.deepEqual(handle.options, {
+      keepSynced: true,
+      notifySync: true,
+      notifyUpdate: true,
+      notifyDesync: false,
+    });
+    handle.configure({notifyDesync: true, notifySync: false});
+    assert.deepEqual(handle.options, {
+      keepSynced: true,
+      notifySync: false,
+      notifyUpdate: true,
+      notifyDesync: true,
+    });
+  });
 });
 
 describe('SingletonHandle', () => {
@@ -95,5 +165,56 @@ describe('SingletonHandle', () => {
     assert.deepEqual(await handle.get(), {id: 'B'});
     await handle.clear();
     assert.strictEqual(await handle.get(), null);
+  });
+
+  it('notifies particle on sync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getSingletonHandle(particle);
+    await handle.onSync();
+    assert.isTrue(particle.onSyncCalled);
+  });
+
+  it('notifies particle on desync event', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getSingletonHandle(particle);
+    await handle.onDesync();
+    assert.isTrue(particle.onDesyncCalled);
+  });
+
+  it('notifies particle of updates', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = getSingletonHandle(particle);
+    const op: SingletonOperation<{id: string}> = {
+      type: SingletonOpTypes.Set,
+      value: {id: 'id'},
+      actor: 'actor',
+      clock: {'actor': 1}
+    };
+    await handle.onUpdate(op, {id: 'old'}, {'actor': 1, 'other': 2});
+    assert.deepEqual(
+        particle.lastUpdate,
+        {data: {id: 'id'}, oldData: {id: 'old'}, originator: false});
+  });
+
+  it('stores new version map', async () => {
+    const handle = getSingletonHandle();
+
+    const versionMap: VersionMap = {'actor': 1, 'other': 2};
+    // Make storageProxy return the defined version map.
+    handle.storageProxy.getParticleView = async () => {
+      return Promise.resolve([{id: 'id'}, versionMap]);
+    };
+
+    // This will pull in the version map above.
+    await handle.get();
+    // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
+    let capturedClock;
+    handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
+      capturedClock = op.clock;
+      return true;
+    };
+    // Use an op that does not increment the clock.
+    await handle.clear();
+    assert.deepEqual(capturedClock, versionMap);
   });
 });

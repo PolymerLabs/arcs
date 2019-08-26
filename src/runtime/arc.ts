@@ -34,6 +34,8 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
+import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
+import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -94,6 +96,10 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
+  // Volatile storage local to this Arc instance.
+  readonly volatileMemory = new VolatileMemory();
+  private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
+
 constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
@@ -119,6 +125,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost(slotComposer, this, ports);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
+    
+    this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
+    DriverFactory.register(this.volatileStorageDriverProvider);
   }
 
   get loader(): Loader {
@@ -129,7 +138,10 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     if (this.pec.slotComposer && this.pec.slotComposer.modality) {
       return this.pec.slotComposer.modality;
     }
-    return this.activeRecipe.modality;
+    if (!this.activeRecipe.isEmpty()) {
+      return this.activeRecipe.modality;
+    }
+    return Modality.intersection(this.context.allRecipes.map(recipe => recipe.modality));
   }
 
   dispose(): void {
@@ -147,6 +159,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
       this.pec.slotComposer.dispose();
     }
+
+    DriverFactory.unregister(this.volatileStorageDriverProvider);
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it
@@ -518,7 +532,6 @@ ${this.activeRecipe.toString()}`;
    * Waits for completion of an existing Instantiate before returning.
    */
   async instantiate(recipe: Recipe): Promise<void> {
-
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
@@ -574,6 +587,7 @@ ${this.activeRecipe.toString()}`;
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef as StorageStub));
+          newStore.name = copiedStore.name && `Copy of ${copiedStore.name}`;
           const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);

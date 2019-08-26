@@ -103,7 +103,7 @@ export class Suggestion {
 
   setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
     this.descriptionByModality['text'] = description.getRecipeSuggestion();
-    for (const planModality of this.plan.modality.names) {
+    for (const planModality of this.plan.modality.names || []) {
       if (modality.names.includes(planModality)) {
         this.descriptionByModality[planModality] =
           description.getRecipeSuggestion(descriptionFormatter);

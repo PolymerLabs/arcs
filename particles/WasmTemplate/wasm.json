@@ -1,0 +1,7 @@
+{
+  "module.wasm": {
+    "manifest": "example.arcs",
+    "src": ["example.cc"],
+    "outdir": "$here"
+  }
+}

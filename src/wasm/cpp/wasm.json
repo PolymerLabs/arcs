@@ -1,8 +1,8 @@
 {
   "output.wasm": {
-    "manifest": "example.arcs",
-    "src": ["example.cc"],
-    "outDir": "src/wasm/cpp",
-    "linkManifest": false
+    "manifest": "working.arcs",
+    "genfile": "working.h",
+    "src": ["working.cc", "second.cc"],
+    "outdir": "$here"
   }
 }

@@ -1,6 +1,5 @@
 package arcs.api;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -16,8 +15,12 @@ public class SlotProxy {
   // TODO: add event handling support:
   // private readonly handlers = new Map<string, ((event: {}) => void)[]>();
 
-  SlotProxy(PECInnerPort apiPort, Particle particle, String slotName,
-      Map<String, String> providedSlots, PortableJsonParser jsonParser) {
+  SlotProxy(
+      PECInnerPort apiPort,
+      Particle particle,
+      String slotName,
+      Map<String, String> providedSlots,
+      PortableJsonParser jsonParser) {
     this.apiPort = apiPort;
     this.slotName = slotName;
     this.particle = particle;
@@ -28,8 +31,9 @@ public class SlotProxy {
   void render(String content) {
     PortableJson contentJson = jsonParser.parse(content);
     this.apiPort.Render(particle, slotName, contentJson);
-    contentJson.forEach(key -> requestedContentTypes.remove(key));
-    // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
-    this.isRendered = requestedContentTypes.size() == 0 && contentJson.keys().size() == 0;
+    contentJson.forEach(requestedContentTypes::remove);
+    // Slot is considered rendered, if a non-empty content was sent and all requested content types
+    // were fullfilled.
+    isRendered = requestedContentTypes.size() == 0 && contentJson.keys().size() == 0;
   }
 }

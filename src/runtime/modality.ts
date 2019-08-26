@@ -10,23 +10,36 @@
 import {assert} from '../platform/assert-web.js';
 
 enum ModalityName {
-  Dom ='dom', DomTouch='dom-touch', Vr='vr', Voice='voice'
+  Dom ='dom', DomTouch='domTouch', Vr='vr', Voice='voice'
 }
 
 export class Modality {
-  private constructor(public readonly names: string[]) {}
+  // `all` true means modality is non restricted and any modality is compatible.
+  // Otherwise, the `names` field in Modality contains the restrictive list of
+  // modalities (an empty list stands for no suitable modalities being available).
+  private constructor(public readonly all: boolean, public readonly names: string[] = []) {}
 
   static create(names: string[]) {
-    assert(names.every(name => Modality.all.names.includes(name)), `Unsupported modality in: ${names}`);
-    return new Modality(names);
+    assert(names != null);
+    return new Modality(false, names);
   }
 
   intersection(other: Modality): Modality {
-    return new Modality(this.names.filter(name => other.names.includes(name)));
+    if (this.all && other.all) {
+      return new Modality(true, []);
+    }
+    if (this.all) {
+      return new Modality(false, other.names);
+    }
+    return new Modality(false, this.names.filter(name => other.all || other.names.includes(name)));
+  }
+
+  static intersection(modalities: Modality[]): Modality {
+    return modalities.reduce((modality, total) => modality.intersection(total), Modality.all);
   }
 
   isResolved(): boolean {
-    return this.names.length > 0;
+    return this.all || this.names.length > 0;
   }
 
   isCompatible(names: string[]): boolean {
@@ -34,11 +47,10 @@ export class Modality {
   }
 
   static get Name() { return ModalityName; }
-  static readonly all = new Modality([
-    Modality.Name.Dom, Modality.Name.DomTouch, Modality.Name.Vr, Modality.Name.Voice
-  ]);
-  static readonly dom = new Modality([Modality.Name.Dom]);
-  static readonly domTouch = new Modality([Modality.Name.DomTouch]);
-  static readonly voice = new Modality([Modality.Name.Voice]);
-  static readonly vr = new Modality([Modality.Name.Vr]);
+
+  static readonly all = new Modality(true, []);
+  static readonly dom = new Modality(false, [Modality.Name.Dom]);
+  static readonly domTouch = new Modality(false, [Modality.Name.DomTouch]);
+  static readonly voice = new Modality(false, [Modality.Name.Voice]);
+  static readonly vr = new Modality(false, [Modality.Name.Vr]);
 }

@@ -1,10 +1,22 @@
 package arcs.webimpl;
 
-import arcs.api.*;
+import arcs.api.ArcsEnvironment;
+import arcs.api.DeviceClient;
+import arcs.api.HandleFactory;
+import arcs.api.HandleFactoryImpl;
+import arcs.api.PECInnerPortFactory;
+import arcs.api.PECInnerPortFactoryImpl;
+import arcs.api.ParticleExecutionContext;
+import arcs.api.ParticleExecutionContextImpl;
+import arcs.api.ParticleLoader;
+import arcs.api.ParticleLoaderImpl;
+import arcs.api.PortableJsonParser;
+import arcs.api.PortablePromiseFactory;
+import arcs.api.ShellApi;
+import arcs.api.ShellApiBasedArcsEnvironment;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Singleton;
@@ -13,7 +25,8 @@ import javax.inject.Singleton;
 public abstract class WebHarnessModule {
 
   @Binds
-  public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(ShellApiBasedArcsEnvironment impl);
+  public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(
+      ShellApiBasedArcsEnvironment impl);
 
   @Singleton
   @Provides
@@ -24,15 +37,18 @@ public abstract class WebHarnessModule {
   @Binds
   public abstract DeviceClient provideWebDeviceClient(DeviceClientJsImpl impl);
 
-  @Binds abstract ShellApi providesWebShellApi(ShellApiImpl impl);
+  @Binds
+  abstract ShellApi providesWebShellApi(ShellApiImpl impl);
 
-  @Binds abstract PortableJsonParser providesPortableJsonParser(PortableJsonParserImpl impl);
+  @Binds
+  abstract PortableJsonParser providesPortableJsonParser(PortableJsonParserImpl impl);
 
   @Binds
   public abstract HarnessController providesHarnessController(WebHarnessController impl);
 
   @Binds
-  abstract ParticleExecutionContext providesParticleExecutionContext(ParticleExecutionContextImpl impl);
+  abstract ParticleExecutionContext providesParticleExecutionContext(
+      ParticleExecutionContextImpl impl);
 
   @Binds
   abstract ParticleLoader providesParticleLoader(ParticleLoaderImpl impl);
@@ -44,5 +60,6 @@ public abstract class WebHarnessModule {
   public abstract HandleFactory providesHandleFactory(HandleFactoryImpl impl);
 
   @Binds
-  public abstract PortablePromiseFactory providesPortablePromiseFactory(PortablePromiseFactoryImpl impl);
+  public abstract PortablePromiseFactory providesPortablePromiseFactory(
+      PortablePromiseFactoryImpl impl);
 }

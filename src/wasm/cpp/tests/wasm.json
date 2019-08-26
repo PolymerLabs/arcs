@@ -1,8 +1,8 @@
 {
   "test-module.wasm": {
-    "manifest": "test.arcs",
+    "manifest": "schemas.arcs",
+    "genfile": "schemas.h",
     "src": ["particles.cc"],
-    "outDir": "build/wasm/cpp/tests",
-    "linkManifest": true
+    "outdir": "build/wasm/cpp/tests"
   }
 }

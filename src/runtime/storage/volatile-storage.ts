@@ -445,7 +445,7 @@ export class VolatileSingleton extends VolatileStorageProvider implements Single
     return this._stored;
   }
 
-  async set(value : {id: string}, originatorId: string = null, barrier: string = null): Promise<void> {
+  async set(value, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
@@ -459,7 +459,7 @@ export class VolatileSingleton extends VolatileStorageProvider implements Single
 
       // It's important to store locally first, as the upstream consumers
       // are set up to assume all writes are processed (at least locally) synchronously.
-      this._stored = {id: value.id, storageKey} as {id: string};
+      this._stored = {id: value.id, storageKey};
 
       await this.ensureBackingStore();
 

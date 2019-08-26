@@ -10,24 +10,27 @@
 
 import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
 import {StorageKey} from '../storage-key.js';
-import {Runtime} from '../../runtime.js';
+import {Arc} from '../../arc.js';
+import {ArcId} from '../../id.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 
 export class VolatileStorageKey extends StorageKey {
+  readonly arcId: ArcId;
   readonly unique: string;
 
-  constructor(unique: string) {
+  constructor(arcId: ArcId, unique: string) {
     super('volatile');
+    this.arcId = arcId;
     this.unique = unique;
   }
 
   toString() {
-    return `${this.protocol}://${this.unique}`;
+    return `${this.protocol}://${this.arcId}/${this.unique}`;
   }
 
   childWithComponent(component: string) {
-    return new VolatileStorageKey(`${this.unique}/${component}`);
+    return new VolatileStorageKey(this.arcId, `${this.unique}/${component}`);
   }
 }
 
@@ -42,10 +45,10 @@ export class VolatileDriver<Data> extends Driver<Data> {
   private receiver: ReceiveMethod<Data>;
   private data: VolatileEntry<Data>;
 
-  constructor(storageKey: StorageKey, exists: Exists) {
+  constructor(storageKey: StorageKey, exists: Exists, memory: VolatileMemory) {
     super(storageKey, exists);
     const keyAsString = storageKey.toString();
-    this.memory = Runtime.getRuntime().getVolatileMemory();
+    this.memory = memory;
     switch (exists) {
       case Exists.ShouldCreate:
         if (this.memory.entries.has(keyAsString)) {
@@ -114,27 +117,31 @@ export class VolatileDriver<Data> extends Driver<Data> {
   }
 }
 
+/**
+ * Provides Volatile storage drivers. Volatile storage is local to an individual
+ * running Arc. It lives for as long as that Arc instance, and then gets
+ * deleted when the Arc is stopped.
+ */
 export class VolatileStorageDriverProvider implements StorageDriverProvider {
+  private readonly arc: Arc;
   
+  constructor(arc: Arc) {
+    this.arc = arc;
+  }
+
   willSupport(storageKey: StorageKey): boolean {
-    return storageKey.protocol === 'volatile';
+    return storageKey.protocol === 'volatile' && (storageKey as VolatileStorageKey).arcId.equal(this.arc.id);
   }
   
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
-    
-    return new VolatileDriver<Data>(storageKey, exists);
+
+    return new VolatileDriver<Data>(storageKey, exists, this.arc.volatileMemory);
   }
 
-  static register() {
-    DriverFactory.register(new VolatileStorageDriverProvider());
+  static register(arc: Arc) {
+    DriverFactory.register(new VolatileStorageDriverProvider(arc));
   }
 }
-
-// Note that this will automatically register for any production code
-// that uses volatile drivers; but it won't automatically register in 
-// testing; for safety, call VolatileStorageDriverProvider.register()
-// from your test code somewhere.
-VolatileStorageDriverProvider.register();

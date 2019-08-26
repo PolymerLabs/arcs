@@ -11,7 +11,7 @@ interface SlandleHostedChoiceInterface
   in [~anyOther] *
   `consume Slot choice
 
-particle SlandleChoicesMultiplexer in 'source/Multiplexer.js'
+particle SlandleChoicesMultiplexer in 'source/SlandleMultiplexer.js'
   in [~anyType] list
   in [~anyOther] choices
   host SlandleHostedChoiceInterface hostedParticle

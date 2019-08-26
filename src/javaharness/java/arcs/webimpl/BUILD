@@ -6,15 +6,15 @@ load("@io_bazel_rules_closure//closure:defs.bzl", "closure_js_library")
 load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 
 j2cl_library(
-    name = "webimpl",
+    name = "webimpl-j2cl",
     srcs = glob([
         "*.java",
     ]),
     deps = [
-        "//java/arcs:dagger",
-        "//java/arcs:dagger_runtime",
-        "//java/arcs:javax_inject",
-        "//java/arcs/api:javaharness_lib-j2cl",
+        "//java/arcs:dagger-j2cl",
+        "//java/arcs:dagger_runtime-j2cl",
+        "//java/arcs:javax_inject-j2cl",
+        "//java/arcs/api:api-j2cl",
         "//java/arcs/crdt:crdt-j2cl",
         "//java/arcs/builtinparticles:builtinparticles-j2cl",
         "@com_google_elemental2//:elemental2-core-j2cl",
@@ -33,5 +33,5 @@ closure_js_library(
         "checkTypes",
         "reportUnknownTypes",
     ],
-    deps = [":webimpl"],
+    deps = [":webimpl-j2cl"],
 )

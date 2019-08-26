@@ -3,7 +3,10 @@ package arcs.crdt;
 import java.util.Optional;
 
 public class CollectionOperation<T> implements CRDTOperation {
-  public static enum Type { ADD, REMOVE }
+  public enum Type {
+    ADD,
+    REMOVE
+  }
 
   Type type;
   Optional<T> added;
@@ -11,7 +14,7 @@ public class CollectionOperation<T> implements CRDTOperation {
   VersionMap clock;
   String actor;
 
-  CollectionOperation(Type type, T t, VersionMap clock, String actor) {
+  public CollectionOperation(Type type, T t, VersionMap clock, String actor) {
     this.type = type;
     switch (type) {
       case ADD:
@@ -20,8 +23,6 @@ public class CollectionOperation<T> implements CRDTOperation {
       case REMOVE:
         this.removed = Optional.of(t);
         break;
-      default:
-        throw new AssertionError("Unsupported CollectionOperation.Type " + type);
     }
     this.clock = clock;
     this.actor = actor;

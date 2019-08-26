@@ -11,6 +11,8 @@
 import {ModalityHandler} from '../modality-handler.js';
 import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
 import {SlotContext} from '../slot-context.js';
+import {Particle} from '../recipe/particle.js';
+import {Content} from '../slot-consumer.js';
 
 /**
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
@@ -25,7 +27,7 @@ export class FakeSlotComposer extends SlotComposer {
       ...options});
   }
 
-  renderSlot(particle, slotName, content) {
+  renderSlot(particle: Particle, slotName: string, content: Content) {
     super.renderSlot(particle, slotName, content);
 
     // In production updateProvidedContexts() is done in DOM Mutation Observer.
@@ -36,5 +38,33 @@ export class FakeSlotComposer extends SlotComposer {
   // Accessors for testing.
   get contexts(): SlotContext[] {
     return this._contexts;
+  }
+}
+
+/**
+ * A helper SlotComposer that records renderSlot calls.
+ *
+ *   I'm watching you, Wazowski. Always watching...
+ */
+export class RozSlotComposer extends FakeSlotComposer {
+  // To make test assertions more concise, renderSlot calls are recorded as tuples of
+  // (particle-name, slot-name, render-content) rather than objects with similarly named keys.
+  // tslint:disable-next-line: no-any
+  public received: [string, string, any][] = [];
+
+  renderSlot(particle: Particle, slotName: string, content: Content) {
+    // super.renderSlot may modify 'content', so record a copy of it before calling that.
+    const copy = JSON.parse(JSON.stringify(content));
+    if (copy.templateName) {
+      // Currently templateName can only ever be 'default'; no need to keep checking that in tests.
+      // If this ever changes, blow up here so we catch the change early.
+      if (copy.templateName !== 'default') {
+        throw new Error(`renderSlot called with templateName set to '${copy.templateName}' ` +
+                        `instead of 'default'; some unit tests will probably need updating`);
+      }
+      delete copy.templateName;
+    }
+    this.received.push([particle.name, slotName, copy]);
+    super.renderSlot(particle, slotName, content);
   }
 }

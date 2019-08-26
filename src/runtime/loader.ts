@@ -162,4 +162,8 @@ export class Loader {
     assert(this.pec);
     return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: ClientReference.newClientReference(this.pec), html});
   }
+
+  clone(): Loader {
+    return new Loader();
+  }
 }

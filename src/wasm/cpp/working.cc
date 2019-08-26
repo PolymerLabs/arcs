@@ -1,12 +1,12 @@
-#include "arcs.h"
-#include "example-arcs.h"
+#include <arcs.h>
+#include <working.h>
 #include <vector>
+
+// This is an internal development file; not intended to be a particularly readable reference for
+// new users.
 
 class StorageParticle : public arcs::Particle {
 public:
-  using TestSingleton = arcs::Singleton<arcs::Data>;
-  using TestCollection = arcs::Collection<arcs::Data>;
-
   StorageParticle() {
     registerHandle("in_sng", in_sng_);
     registerHandle("ot_sng", ot_sng_);
@@ -88,7 +88,7 @@ public:
     model->emplace("io_col", collectionToStr(io_col_));
   }
 
-  std::string collectionToStr(const TestCollection& col) {
+  std::string collectionToStr(const arcs::Collection<arcs::Data>& col) {
     if (col.empty()) {
       return "(empty)";
     }
@@ -105,10 +105,10 @@ public:
     std::string name = handler.substr(0, pos);
     std::string action = handler.substr(pos + 1);
 
-    arcs::Handle* handle = getHandle(name);
-    if (handle != nullptr) {
-      processSingleton(dynamic_cast<TestSingleton*>(handle), action);
-      processCollection(dynamic_cast<TestCollection*>(handle), action);
+    if (auto handle = getSingleton<arcs::Data>(name)) {
+      processSingleton(handle, action);
+    } else if (auto handle = getCollection<arcs::Data>(name)) {
+      processCollection(handle, action);
     } else if (action == "throw") {
       throw std::invalid_argument("this message doesn't get passed (yet?)");
     } else if (action == "assert") {
@@ -121,8 +121,7 @@ public:
     renderSlot("root", false, true);
   }
 
-  void processSingleton(TestSingleton* handle, const std::string& action) {
-    if (handle == nullptr) return;
+  void processSingleton(arcs::Singleton<arcs::Data>* handle, const std::string& action) {
     if (action == "get") {
       console("%s\n", arcs::entity_to_str(handle->get()).c_str());
     } else if (action == "set") {
@@ -136,8 +135,7 @@ public:
     }
   }
 
-  void processCollection(TestCollection* handle, const std::string& action) {
-    if (handle == nullptr) return;
+  void processCollection(arcs::Collection<arcs::Data>* handle, const std::string& action) {
     if (action == "size") {
       console("size: %lu\n", handle->size());
     } else if (action == "empty") {
@@ -172,13 +170,13 @@ public:
   }
 
 private:
-  TestSingleton in_sng_;
-  TestSingleton ot_sng_;
-  TestSingleton io_sng_;
+  arcs::Singleton<arcs::Data> in_sng_;
+  arcs::Singleton<arcs::Data> ot_sng_;
+  arcs::Singleton<arcs::Data> io_sng_;
 
-  TestCollection in_col_;
-  TestCollection ot_col_;
-  TestCollection io_col_;
+  arcs::Collection<arcs::Data> in_col_;
+  arcs::Collection<arcs::Data> ot_col_;
+  arcs::Collection<arcs::Data> io_col_;
 
   std::vector<arcs::Data> stored_;
 };
@@ -192,11 +190,11 @@ public:
     registerHandle("input", input_);
   }
 
-  void onHandleSync(arcs::Handle* handle, bool all_synced) override {
-    onHandleUpdate(handle);
+  void onHandleSync(const std::string& name, bool all_synced) override {
+    onHandleUpdate(name);
   }
 
-  void onHandleUpdate(arcs::Handle* handle) override {
+  void onHandleUpdate(const std::string& name) override {
     local_ = arcs::clone_entity(input_.get());
     renderSlot("root", false, true);
   }
@@ -226,52 +224,3 @@ public:
 
 DEFINE_PARTICLE(SpecialFieldsParticle)
 
-
-class ServiceParticle : public arcs::Particle {
-public:
-  void init() override {
-    url_ = resolveUrl("https://$particles/Services/assets/waltbird.jpg");
-    serviceRequest("ml5.classifyImage", {{"imageUrl", url_}});
-    serviceRequest("random.next", {}, "first");
-    serviceRequest("random.next", {}, "second");
-  }
-
-  std::string getTemplate(const std::string& slot_name) override {
-    return R"(<h2>Classification with ML5 in WASM via C++</h2>
-              <img style="max-width: 240px;" src="{{imageUrl}}"><br>
-              <div>Label: <span>{{label}}</span></div>
-              <div>Confidence: <span>{{probability}}</span></div>
-              <br>
-              <div>And here's some random numbers:<div>
-              <ul>
-                <li>{{rnd1}}</li>
-                <li>{{rnd2}}</li>
-              </ul>)";
-  }
-
-  void populateModel(const std::string& slot_name, arcs::Dictionary* model) override {
-    model->emplace("imageUrl", url_);
-    model->emplace("label", label_.size() ? label_ : "<working>");
-    model->emplace("probability", probability_.size() ? probability_ : "<working>");
-    model->emplace("rnd1", random_[0].size() ? random_[0] : "<working>");
-    model->emplace("rnd2", random_[1].size() ? random_[1] : "<working>");
-  }
-
-  void serviceResponse(const std::string& call, const arcs::Dictionary& response, const std::string& tag) override {
-    console("service call '%s' (tag '%s') completed\n", call.c_str(), tag.c_str());
-    if (call == "ml5.classifyImage") {
-      label_ = response.at("label");
-      probability_ = response.at("probability");
-    } else {
-      random_[(tag == "first") ? 0 : 1] = response.at("value");
-    }
-    renderSlot("root");
-  }
-
-  std::string url_ ;
-  std::string label_;
-  std::string probability_;
-  std::string random_[2];
-};
-
-DEFINE_PARTICLE(ServiceParticle)

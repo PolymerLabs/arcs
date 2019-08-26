@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
-import {Handle, handleFor, HandleOld} from './handle.js';
+import {Handle, handleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
@@ -252,7 +252,7 @@ export class ParticleExecutionContext {
     // Create new handles and disable the handles of the old particles
     oldParticle.handles.forEach((oldHandle) => {
       this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
-      if (oldHandle instanceof HandleOld) oldHandle.disable(oldParticle);
+      oldHandle.disable(oldParticle);
     });
 
     return [particle, async () => {
@@ -263,7 +263,7 @@ export class ParticleExecutionContext {
       // Transfer the slot proxies from the old particle to the new one
       for (const name of oldParticle.getSlotNames()) {
         oldParticle.getSlot(name).rewire(particle);
-      }      
+      }
     }];
   }
 
@@ -278,7 +278,7 @@ export class ParticleExecutionContext {
     registerList.push({proxy, particle, handle});
   }
 
-  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap, 
+  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap,
                              registerList: {proxy: Store, particle: Particle, handle: Handle}[], p) {
     await particle.callSetHandles(handleMap, err => {
       const exc = new UserException(err, 'setHandles', id, spec.name);
@@ -295,7 +295,7 @@ export class ParticleExecutionContext {
     let particle: Particle;
     if (spec.implFile && spec.implFile.endsWith('.wasm')) {
       // TODO(sherrypra): Make reloading WASM particle re-instantiate the entire container from scratch
-      particle = await this.loadWasmParticle(spec);
+      particle = await this.loadWasmParticle(id, spec);
       particle.setCapabilities(this.capabilities(false));
     } else {
       const clazz = await this.loader.loadParticleClass(spec);
@@ -310,7 +310,7 @@ export class ParticleExecutionContext {
     return particle;
   }
 
-  private async loadWasmParticle(spec: ParticleSpec) {
+  private async loadWasmParticle(id: string, spec: ParticleSpec) {
     assert(spec.name.length > 0);
 
     let container = this.wasmContainers[spec.implFile];
@@ -319,7 +319,8 @@ export class ParticleExecutionContext {
       if (!buffer || buffer.byteLength === 0) {
         throw new Error(`Failed to load wasm binary '${spec.implFile}'`);
       }
-      container = new WasmContainer(this.loader);
+
+      container = new WasmContainer(this.loader, this.apiPort);
       await container.initialize(buffer);
       this.wasmContainers[spec.implFile] = container;
     }
@@ -327,7 +328,7 @@ export class ParticleExecutionContext {
     // Particle constructor expects spec to be attached to the class object (and attaches it to
     // the particle instance at that time).
     WasmParticle.spec = spec;
-    const particle = new WasmParticle(container);
+    const particle = new WasmParticle(id, container);
     WasmParticle.spec = null;
     return particle;
   }

@@ -1,0 +1,8 @@
+import 'schemas/Sequence.arcs'
+
+particle PlayDemoParticle in './source/PlayDemo.js'
+  consume root
+
+recipe PlayDemoRecipe
+  PlayDemoParticle
+  description `Play a simple demo song with Magenta`

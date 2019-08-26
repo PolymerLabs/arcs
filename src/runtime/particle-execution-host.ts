@@ -49,6 +49,7 @@ export class ParticleExecutionHost {
   private idleVersion = 0;
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
+  public readonly particles: Particle[] = [];
 
   constructor(slotComposer: SlotComposer, arc: Arc, ports: MessagePort[]) {
     this.close = () => {
@@ -101,12 +102,17 @@ export class ParticleExecutionHost {
   }
 
   instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
+    this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
 
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
+  }
+
+  reload(particle: Particle) {
+    this.getPort(particle).ReloadParticle(particle, particle.id.toString());
   }
 
   startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {

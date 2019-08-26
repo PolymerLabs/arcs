@@ -9,11 +9,11 @@ http_archive(
     url = "https://github.com/google/j2cl/archive/master.zip",
 )
 
-http_archive(
-    name = "google_bazel_common",
-    strip_prefix = "bazel-common-1c225e62390566a9e88916471948ddd56e5f111c",
-    urls = ["https://github.com/google/bazel-common/archive/1c225e62390566a9e88916471948ddd56e5f111c.zip"],
-)
+#http_archive(
+#    name = "google_bazel_common",
+#    strip_prefix = "bazel-common-1c225e62390566a9e88916471948ddd56e5f111c",
+#    urls = ["https://github.com/google/bazel-common/archive/1c225e62390566a9e88916471948ddd56e5f111c.zip"],
+#)
 
 
 load("@com_google_j2cl//build_defs:repository.bzl", "load_j2cl_repo_deps")

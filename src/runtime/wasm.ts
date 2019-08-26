@@ -16,6 +16,8 @@ import {Handle, Singleton, Collection} from './handle.js';
 import {Content} from './slot-consumer.js';
 import {Dictionary} from './hot.js';
 import {Loader} from './loader.js';
+import {PECInnerPort} from './api-channel.js';
+import {UserException} from './arc-exceptions.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -235,11 +237,11 @@ class EmscriptenWasmDriver implements WasmDriver {
     // which is usually built into the glue code generated alongside the module. We're not using
     // the glue code, but if we set the EMIT_EMSCRIPTEN_METADATA flag when building, emscripten
     // will provide a custom section in the module itself with the required values.
-    const METADATA_SIZE = 10;
+    const METADATA_SIZE = 11;
     const METADATA_MAJOR = 0;
-    const METADATA_MINOR = 1;
+    const METADATA_MINOR = 2;
     const ABI_MAJOR = 0;
-    const ABI_MINOR = 3;
+    const ABI_MINOR = 4;
 
     // The logic for reading metadata values here was copied from the emscripten source.
     const buffer = new Uint8Array(customSection);
@@ -260,10 +262,10 @@ class EmscriptenWasmDriver implements WasmDriver {
     }
 
     // The specifics of the section are not published anywhere official (yet). The values here
-    // correspond to emscripten version 1.38.34:
-    //   https://github.com/emscripten-core/emscripten/blob/1.38.34/tools/shared.py#L3065
-    if (metadata.length !== METADATA_SIZE) {
-      throw new Error(`emscripten metadata section should have ${METADATA_SIZE} values; ` +
+    // correspond to emscripten version 1.38.42:
+    //   https://github.com/emscripten-core/emscripten/blob/1.38.42/tools/shared.py#L3051
+    if (metadata.length < 4) {
+      throw new Error(`emscripten metadata section should have at least 4 values; ` +
                       `got ${metadata.length}`);
     }
     if (metadata[0] !== METADATA_MAJOR || metadata[1] !== METADATA_MINOR) {
@@ -274,14 +276,19 @@ class EmscriptenWasmDriver implements WasmDriver {
       throw new Error(`emscripten ABI version should be ${ABI_MAJOR}.${ABI_MINOR}; ` +
                       `got ${metadata[2]}.${metadata[3]}`);
     }
+    if (metadata.length !== METADATA_SIZE) {
+      throw new Error(`emscripten metadata section should have ${METADATA_SIZE} values; ` +
+                      `got ${metadata.length}`);
+    }
 
-    // metadata[9] is 'tempdoublePtr'; appears to be related to pthreads and is not used here.
+    // metadata[4] is 'Settings.WASM_BACKEND'; whether the binary is from wasm backend or fastcomp.
+    // metadata[10] is 'tempdoublePtr'; appears to be related to pthreads and is not used here.
     this.cfg = {
-      memSize: metadata[4],
-      tableSize: metadata[5],
-      globalBase: metadata[6],
-      dynamicBase: metadata[7],
-      dynamictopPtr: metadata[8],
+      memSize: metadata[5],
+      tableSize: metadata[6],
+      globalBase: metadata[7],
+      dynamicBase: metadata[8],
+      dynamictopPtr: metadata[9],
     };
   }
 
@@ -405,6 +412,7 @@ type WasmAddress = number;
 // Holds an instance of a running wasm module, which may contain multiple particles.
 export class WasmContainer {
   loader: Loader;
+  apiPort: PECInnerPort;
   memory: WebAssembly.Memory;
   heapU8: Uint8Array;
   heap32: Int32Array;
@@ -413,8 +421,9 @@ export class WasmContainer {
   exports: any;
   particleMap = new Map<WasmAddress, WasmParticle>();
 
-  constructor(loader: Loader) {
+  constructor(loader: Loader, apiPort: PECInnerPort) {
     this.loader = loader;
+    this.apiPort = apiPort;
   }
 
   async initialize(buffer: ArrayBuffer) {
@@ -496,6 +505,7 @@ export class WasmContainer {
 
 // Creates and interfaces to a particle inside a WasmContainer's module.
 export class WasmParticle extends Particle {
+  private id: string;
   private container: WasmContainer;
   // tslint:disable-next-line: no-any
   private exports: any;
@@ -504,8 +514,9 @@ export class WasmParticle extends Particle {
   private revHandleMap = new Map<WasmAddress, Handle>();
   private converters = new Map<Handle, EntityPackager>();
 
-  constructor(container: WasmContainer) {
+  constructor(id: string, container: WasmContainer) {
     super();
+    this.id = id;
     this.container = container;
     this.exports = container.exports;
 
@@ -634,7 +645,10 @@ export class WasmParticle extends Particle {
   private getHandle(wasmHandle: WasmAddress) {
     const handle = this.revHandleMap.get(wasmHandle);
     if (!handle) {
-      throw new Error(`wasm particle '${this.spec.name}' attempted to write to unconnected handle`);
+      const err = new Error(`wasm particle '${this.spec.name}' attempted to write to unconnected handle`);
+      const userException = new UserException(err, 'WasmParticle::getHandle', this.id, this.spec.name);
+      this.container.apiPort.ReportExceptionInHost(userException);
+      throw err;
     }
     return handle;
   }

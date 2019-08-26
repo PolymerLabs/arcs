@@ -1,4 +1,3 @@
 package arcs.api;
 
-public interface Store {
-}
+public interface Store {}
