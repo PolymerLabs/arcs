@@ -12,7 +12,8 @@ import javax.inject.Inject;
 public class DeviceClientAndroidImpl extends DeviceClientImpl {
 
   @Inject
-  public DeviceClientAndroidImpl(PortableJsonParser jsonParser,
+  public DeviceClientAndroidImpl(
+      PortableJsonParser jsonParser,
       Map<String, DataListener> inProgress,
       PECInnerPortFactory portFactory) {
     super(jsonParser, inProgress, portFactory);
@@ -22,8 +23,8 @@ public class DeviceClientAndroidImpl extends DeviceClientImpl {
   @Override
   public void receive(String json) {
     try {
-    super.receive(json);
-    } catch(Throwable e) {
+      super.receive(json);
+    } catch (Throwable e) {
       Log.e("Arcs", "Got an excepton receiving " + json, e);
     }
   }

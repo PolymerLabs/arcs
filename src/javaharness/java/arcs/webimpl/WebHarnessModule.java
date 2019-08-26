@@ -67,7 +67,7 @@ public abstract class WebHarnessModule {
       PortablePromiseFactoryImpl impl);
 
   @Binds
-  public abstract ClipboardSurface provideClipboard(WebClipboardSurface impl);
+  public abstract ClipboardSurface provideClipboardSurface(WebClipboardSurface impl);
 
   @Binds
   public abstract AlertSurface provideAlertSurface(WebAlertSurface impl);
