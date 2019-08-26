@@ -191,6 +191,16 @@ public class PortableJsonJsImpl implements PortableJson {
     return this;
   }
 
+  @Override
+  public PortableJson getArray(String key) {
+    return getObject(key);
+  }
+
+  @Override
+  public PortableJson getArray(int index) {
+    return getObject(index);
+  }
+
   Any getRawObj() {
     return jsonObj;
   }
