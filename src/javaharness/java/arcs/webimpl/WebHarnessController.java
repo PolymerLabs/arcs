@@ -5,6 +5,7 @@ import static elemental2.dom.DomGlobal.window;
 
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
+import arcs.api.HarnessController;
 import arcs.crdt.CollectionDataTest;
 import elemental2.dom.*;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package arcs.webimpl;
+package arcs.api;
 
 public interface HarnessController {
   void init();
