@@ -18,4 +18,16 @@ public abstract class ParticlesModule {
   static ParticleFactory provideEchoParticleFactory(EchoParticleFactory echoParticleFactory) {
     return echoParticleFactory;
   }
+
+  @Provides
+  @IntoSet
+  static ParticleFactory provideCaptureEntityFactory(CaptureEntityFactory captureEntityFactory) {
+    return captureEntityFactory;
+  }
+
+  @Provides
+  @IntoSet
+  static ParticleFactory provideToastParticleFactory(ToastParticleFactory toastParticleFactory) {
+    return toastParticleFactory;
+  }
 }
