@@ -12,6 +12,7 @@ import java.util.Set;
 import org.junit.Test;
 
 public class PortableJsonAndroidImplTest {
+  // TODO(cromwellian): use dependendency injection to make these tests run on all platforms
   @Test
   public void testEmpty() {
     PortableJsonParser parser = new PortableJsonParserAndroidImpl();
