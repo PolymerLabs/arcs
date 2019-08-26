@@ -60,4 +60,8 @@ public interface PortableJson {
   PortableJson put(int index, boolean bool);
 
   PortableJson put(int index, PortableJson obj);
+
+  PortableJson getArray(String key);
+
+  PortableJson getArray(int index);
 }
