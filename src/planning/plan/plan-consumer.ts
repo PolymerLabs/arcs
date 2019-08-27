@@ -87,7 +87,7 @@ export class PlanConsumer {
     }
   }
 
-  private _onSuggestionsChanged() {
+  private _onSuggestionsChanged(): void {
     this.suggestionsChangeCallbacks.forEach(callback => callback({suggestions: this.result.suggestions}));
     if (this.inspector) {
       this.inspector.updatePlanningResults(this.result, {});
@@ -116,7 +116,7 @@ export class PlanConsumer {
     }
   }
 
-  private _maybeUpdateStrategyExplorer() {
+  private _maybeUpdateStrategyExplorer(): void {
     if (this.result.generations.length && this.inspector) {
       this.inspector.strategizingRecord(this.result.generations, {label: 'Plan Consumer', keep: true});
     }
