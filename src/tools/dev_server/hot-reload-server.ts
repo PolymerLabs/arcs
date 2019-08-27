@@ -56,13 +56,32 @@ export class HotReloadServer {
         const files = JSON.parse(msg.toString());
         for (const file of files) {
           this.filesToWatch.push(file);
-          const local = file.replace(/^https:\/\/\$particles\//, './particles/');
+          let local: string = file.replace(/^https:\/\/\$particles\//, './particles/');
+          local = local.replace(/^https:\/\/\$arcs\//, './');
 
           console.log(`Watching: ${local}`);
-          this.watchers.push(this.chokidar.watch(local).on('change', path => {
+          let watcher;
+          if (local.endsWith('.wasm')) {
+            watcher = this.chokidar.watch(local, {
+              awaitWriteFinish: true,
+              atomic: true,
+              usePolling: true
+            });
+          } else {
+            watcher = this.chokidar.watch(local);
+          }
+
+          watcher.on('change', async path => {
             console.log(`Detected change: ${path}`);
             ws.send(file);
-          }));
+          });
+          watcher.on('raw', (event, path)=> {
+            if (event === 'rename') {
+              watcher.unwatch(path);
+              watcher.add(path);
+            }
+          });
+          this.watchers.push(watcher);
         }
 
         if (!this.connected) {
