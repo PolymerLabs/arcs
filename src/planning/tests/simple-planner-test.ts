@@ -124,7 +124,7 @@ describe('simple planner', () => {
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const sp = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(sp.table, 0);
+    assert.lengthOf(sp.recipesByTrigger, 0);
   });
   it('accepts duplicate triggers', async () => {
     const manifest = await Manifest.parse(`
@@ -144,7 +144,7 @@ describe('simple planner', () => {
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const sp = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(sp.table, 2);
+    assert.lengthOf(sp.recipesByTrigger, 2);
   });
   it('works with one trigger with one key-value pair and one recipe', async () => {
     const manifest = await Manifest.parse(`
@@ -163,9 +163,9 @@ describe('simple planner', () => {
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const planner = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(planner.table, 1);
-    assert.deepEqual(planner.table[0].trigger, [['key1', 'value1']]);
-    assert.equal(planner.table[0].recipe, recipe);
+    assert.lengthOf(planner.recipesByTrigger, 1);
+    assert.deepEqual(planner.recipesByTrigger[0].trigger, [['key1', 'value1']]);
+    assert.equal(planner.recipesByTrigger[0].recipe, recipe);
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const resolved = await resolver.resolve(recipe);
@@ -190,9 +190,9 @@ describe('simple planner', () => {
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const planner = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(planner.table, 1);
-    assert.deepEqual(planner.table[0].trigger, [['key1', 'value1'], ['key2', 'value2']]);
-    assert.equal(planner.table[0].recipe, recipe);
+    assert.lengthOf(planner.recipesByTrigger, 1);
+    assert.deepEqual(planner.recipesByTrigger[0].trigger, [['key1', 'value1'], ['key2', 'value2']]);
+    assert.equal(planner.recipesByTrigger[0].recipe, recipe);
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const resolved = await resolver.resolve(recipe);
@@ -221,9 +221,9 @@ describe('simple planner', () => {
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const planner = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(planner.table, 2);
-    assert.deepEqual(planner.table[0].trigger, [['key1', 'value1'], ['key2', 'value2']]);
-    assert.deepEqual(planner.table[1].trigger, [['key3', 'value3']]);
+    assert.lengthOf(planner.recipesByTrigger, 2);
+    assert.deepEqual(planner.recipesByTrigger[0].trigger, [['key1', 'value1'], ['key2', 'value2']]);
+    assert.deepEqual(planner.recipesByTrigger[1].trigger, [['key3', 'value3']]);
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const resolved = await resolver.resolve(recipe);
@@ -258,8 +258,8 @@ describe('simple planner', () => {
     const recipe = checkDefined(manifest.recipes[1]);
     assert.lengthOf(manifest.recipes, 2);
     const planner = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(planner.table, 1);
-    assert.equal(planner.table[0].recipe, recipe);    
+    assert.lengthOf(planner.recipesByTrigger, 1);
+    assert.equal(planner.recipesByTrigger[0].recipe, recipe);    
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const resolved = await resolver.resolve(recipe);
@@ -294,9 +294,9 @@ describe('simple planner', () => {
     const recipe2 = checkDefined(manifest.recipes[1]);
     assert.lengthOf(manifest.recipes, 2);
     const planner = new SimplePlanner(manifest.recipes);
-    assert.lengthOf(planner.table, 2);
-    assert.equal(planner.table[0].recipe, recipe1);
-    assert.equal(planner.table[1].recipe, recipe2);
+    assert.lengthOf(planner.recipesByTrigger, 2);
+    assert.equal(planner.recipesByTrigger[0].recipe, recipe1);
+    assert.equal(planner.recipesByTrigger[1].recipe, recipe2);
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const resolved1 = await resolver.resolve(recipe1);

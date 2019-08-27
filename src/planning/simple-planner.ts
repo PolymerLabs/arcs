@@ -36,11 +36,11 @@ export class Match {
  * manifest file matching requests.
  */
 export class SimplePlanner {
-  private _table: Match[] = [];
+  private _recipesByTrigger: Match[] = [];
 
   // For testing only
-  get table() {
-    return this._table;
+  get recipesByTrigger() {
+    return this._recipesByTrigger;
   }
 
   // Only recipes with “@trigger” annotations get included in the lookup table.
@@ -52,7 +52,7 @@ export class SimplePlanner {
   constructor(readonly recipes: Recipe[]) {
     recipes.forEach(recipe => {
       recipe.triggers.forEach(trigger => {
-        this._table.push(new Match(trigger, recipe));
+        this._recipesByTrigger.push(new Match(trigger, recipe));
       });
     });
   }
@@ -62,12 +62,11 @@ export class SimplePlanner {
   // 1 - All pairs in the trigger are in the request.
   // 2 - The modality of the arc is compatible with the recipe.
   // 3 - The recipe resolves.
-  // TODO: 
   async plan(arc: Arc, request:  [string, string][]): Promise<Recipe> {
     const resolver = new RecipeResolver(arc);
     const arcModality = arc.modality; // Avoid calling this more than once.
-    for (let i = 0; i < this._table.length; i++) {
-      const match = this._table[i];
+    for (let i = 0; i < this._recipesByTrigger.length; i++) {
+      const match = this._recipesByTrigger[i];
       if (match.matches(request)) {
         if (match.recipe.isCompatible(arcModality)) {
           const result = await resolver.resolve(match.recipe);
