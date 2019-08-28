@@ -9,11 +9,9 @@
  */
 
 import {generateId} from '../../../../modalities/dom/components/generate-id.js';
-import {Utils} from '../../../lib/runtime/utils.js';
-import {recipeByName, marshalOutput} from '../lib/utils.js';
 import {logsFactory} from '../../../../build/runtime/log-factory.js';
-import {Stores} from '../../../lib/runtime/stores.js';
-import {Schemas} from '../schemas.js';
+import {Utils} from '../../../lib/utils.js';
+import {marshalOutput} from '../lib/utils.js';
 import {portIndustry} from '../pec-port.js';
 
 const {warn} = logsFactory('pipe');

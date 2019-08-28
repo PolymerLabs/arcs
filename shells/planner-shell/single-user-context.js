@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {SyntheticStores} from '../lib/runtime/synthetic-stores.js';
+import {SyntheticStores} from '../lib/synthetic-stores.js';
 import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('SingleUserContext', '#f2ce14');

@@ -56,7 +56,7 @@ export const Bus = class {
   }
   async recoverTransactionId(forValue) {
     // return tid whose async value matches forValue
-    for (let tid=0, promise; (promise=this.transactionIds[tid]); tid++) {
+    for (let tid=1, promise; (promise=this.transactionIds[tid]); tid++) {
       const value = await promise;
       if (value === forValue) {
         return tid;

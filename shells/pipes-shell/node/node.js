@@ -13,9 +13,9 @@ import '../../lib/platform/loglevel-node.js';
 import {version, paths, storage, test} from './config.js';
 
 // optional
-//import '../../lib/database/pouchdb-support.js';
-//import '../../lib/database/firebase-support.js';
-//import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
+//import '../../lib/pouchdb-support.js';
+//import '../../lib/firebase-support.js';
+//import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // dependencies
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';

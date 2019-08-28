@@ -9,7 +9,7 @@
  */
 
 import {Type} from '../../../../build/runtime/type.js';
-import {Utils} from '../../../lib/runtime/utils.js';
+import {Utils} from '../../../lib/utils.js';
 import {Schemas} from '../schemas.js';
 
 export const conformType = type => {

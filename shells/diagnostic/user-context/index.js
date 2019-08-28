@@ -7,13 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../lib/database/firebase-support.js';
+import '../../lib/firebase-support.js';
 import '../../lib/platform/loglevel-web.js';
 import {Const} from '../../configuration/constants.js';
-import {Utils} from '../../lib/runtime/utils.js';
-import {SyntheticStores} from '../../lib/runtime/synthetic-stores.js';
-import {StoreObserver} from '../../lib/components/context/store-observer.js';
-import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from '../../lib/components/context/context-listeners.js';
+import {Utils} from '../../lib/utils.js';
+import {SyntheticStores} from '../../lib/synthetic-stores.js';
+import {StoreObserver} from '../../lib/store-observer.js';
+import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from '../../lib/context-listeners.js';
 import {ProfileDisplayMixin, ShareDisplayMixin, ArcMetaDisplayMixin, ArcHandleDisplayMixin} from './table-mixins.js';
 import '../../../modalities/dom/components/arc-tools/store-explorer.js';
 
