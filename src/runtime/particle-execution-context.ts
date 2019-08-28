@@ -90,8 +90,8 @@ export class ParticleExecutionContext {
         return pec.instantiateParticle(id, spec, proxies);
       }
 
-      async onReloadParticle(id: string) {
-        return pec.reloadParticle(id);
+      async onReloadParticles(ids: string[]) {
+        return pec.reloadParticles(ids);
       }
 
       onSimpleCallback(callback: ({}) => void, data: {}) {
@@ -235,36 +235,50 @@ export class ParticleExecutionContext {
     }];
   }
 
-  private async reloadParticle(id: string) {
-    let resolve: Runnable;
-    const p = new Promise<void>(res => resolve = res);
-    this.pendingLoads.push(p);
-
-    // Get the old particle based on the given id and delete the old particle's cache
-    const oldParticle = this.particles.get(id);
-    delete oldParticle.spec.implBlobUrl;
-
-    // Create a new particle and replace the old one
-    const particle: Particle = await this.createParticleFromSpec(id, oldParticle.spec);
-
-    const handleMap = new Map();
-    const registerList: {proxy: Store, particle: Particle, handle: Handle}[] = [];
-    // Create new handles and disable the handles of the old particles
-    oldParticle.handles.forEach((oldHandle) => {
-      this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
-      oldHandle.disable(oldParticle);
+  private async reloadParticles(ids: string[]) {
+    // Delete old particles' caches
+    ids.forEach(id => {
+      const oldParticle = this.particles.get(id);
+      if (oldParticle.spec.implBlobUrl) delete oldParticle.spec.implBlobUrl;
+      if (oldParticle.spec.implFile.endsWith('.wasm') && this.wasmContainers[oldParticle.spec.implFile]) {
+        // For WASM particles the container will be re-instantiated along with all of the particles
+        this.wasmContainers[oldParticle.spec.implFile] = undefined;
+      }
     });
 
-    return [particle, async () => {
-      // Set the new handles to the new particle
-      await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
-      resolve();
+    const result = [];
+    // Go through the given array of particles one by one
+    for (const id of ids) {
+      let resolve: Runnable;
+      const p = new Promise<void>(res => resolve = res);
+      this.pendingLoads.push(p);
 
-      // Transfer the slot proxies from the old particle to the new one
-      for (const name of oldParticle.getSlotNames()) {
-        oldParticle.getSlot(name).rewire(particle);
-      }
-    }];
+      // Get the old particle
+      const oldParticle = this.particles.get(id);
+
+      // Create a new particle and replace the old one
+      const particle: Particle = await this.createParticleFromSpec(id, oldParticle.spec);
+
+      const handleMap = new Map();
+      const registerList: {proxy: Store, particle: Particle, handle: Handle}[] = [];
+      // Create new handles and disable the handles of the old particles
+      oldParticle.handles.forEach((oldHandle) => {
+        this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
+        oldHandle.disable(oldParticle);
+      });
+
+      result.push([particle, async () => {
+        // Set the new handles to the new particle
+        await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
+        resolve();
+
+        // Transfer the slot proxies from the old particle to the new one
+        for (const name of oldParticle.getSlotNames()) {
+          oldParticle.getSlot(name).rewire(particle);
+        }      
+      }]);
+    }
+    return result;
   }
 
   private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy,
@@ -294,7 +308,6 @@ export class ParticleExecutionContext {
   private async createParticleFromSpec(id: string, spec: ParticleSpec): Promise<Particle> {
     let particle: Particle;
     if (spec.implFile && spec.implFile.endsWith('.wasm')) {
-      // TODO(sherrypra): Make reloading WASM particle re-instantiate the entire container from scratch
       particle = await this.loadWasmParticle(id, spec);
       particle.setCapabilities(this.capabilities(false));
     } else {

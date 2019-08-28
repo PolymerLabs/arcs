@@ -10,6 +10,7 @@
 
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel, DevtoolsMessage} from './abstract-devtools-channel.js';
+import {Particle} from '../runtime/recipe/particle.js';
 
 /**
  * Listens to particle reload events for all particles instantiated in an arc and reloads the particles
@@ -29,11 +30,13 @@ export class HotCodeReloader {
     arcs.push(...this.arc.innerArcs);
 
     for (const arc of arcs) {
+      const particles: Particle[] = [];
       for (const particle of arc.pec.particles) {
         if (particle.spec.implFile === filepath) {
-          arc.pec.reload(particle);
+          particles.push(particle);
         }
       }
+      arc.pec.reload(particles);
     }
   }
 }

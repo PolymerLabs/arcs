@@ -171,11 +171,15 @@ class ThingMapper {
     return id;
   }
 
-  recreateMappingForThing(thing) {
-    assert(this._reverseIdMap.has(thing));
-    const id = this._reverseIdMap.get(thing);
-    floatingPromiseToAudit(this.establishThingMapping(id, thing));
-    return id;
+  recreateMappingForThing(things) {
+    const ids = [];
+    things.forEach(thing => {
+      assert(this._reverseIdMap.has(thing));
+      const id = this._reverseIdMap.get(thing);
+      floatingPromiseToAudit(this.establishThingMapping(id, thing));
+      ids.push(id);
+    });
+    return ids;
   }
 
   maybeCreateMappingForThing(thing) {
@@ -187,13 +191,21 @@ class ThingMapper {
 
   async establishThingMapping(id, thing) {
     let continuation;
-    if (Array.isArray(thing)) {
-      [thing, continuation] = thing;
+    if (!Array.isArray(id)) {
+      if (Array.isArray(thing)) {
+        [thing, continuation] = thing;
+      }
+      this._idMap.set(id, thing);
     }
-    this._idMap.set(id, thing);
+    
     if (thing instanceof Promise) {
       assert(continuation == null);
       await this.establishThingMapping(id, await thing);
+    } else if (Array.isArray(id)) {
+      assert(id.length === thing.length);
+      for (let i = 0; i < id.length; i++) {
+        await this.establishThingMapping(id[i], thing[i]);
+      }
     } else {
       this._reverseIdMap.set(thing, id);
       if (continuation) {
@@ -456,7 +468,7 @@ export abstract class PECOuterPort extends APIPort {
   @NoArgs Stop() {}
   DefineHandle(@RedundantInitializer store: StorageProviderBase, @ByLiteral(Type) type: Type, @Direct name: string) {}
   InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
-  ReloadParticle(@OverridingInitializer particle: recipeParticle.Particle, @Identifier @Direct id: string) {}
+  ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
@@ -520,7 +532,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string);
   abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
-  abstract onReloadParticle(id: string);
+  abstract onReloadParticles(ids: string[]);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
   abstract onSimpleCallback(callback: Consumer<{}>, data: {});
