@@ -202,6 +202,10 @@ export class ParticleExecutionContext {
       // TODO(sjmiles): experimental `services` impl
       serviceRequest: (particle, args, callback) => {
         this.apiPort.ServiceRequest(particle, args, callback);
+      },
+      // TODO(sjmiles): alternate render path via slotObserver (UiBroker)
+      output: (particle, content) => {
+        this.apiPort.Output(particle, content);
       }
     };
     if (hasInnerArcs) {
@@ -275,7 +279,7 @@ export class ParticleExecutionContext {
         // Transfer the slot proxies from the old particle to the new one
         for (const name of oldParticle.getSlotNames()) {
           oldParticle.getSlot(name).rewire(particle);
-        }      
+        }
       }]);
     }
     return result;

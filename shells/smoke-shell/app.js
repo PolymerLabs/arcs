@@ -14,7 +14,7 @@ export const App = async (composer) => {
   const arc = await Utils.spawn({id: 'smoke-arc', composer});
   console.log(`arc [${arc.id}]`);
 
-  const manifest = await Utils.parse(`import 'https://$particles/Arcs/Login.recipe'`);
+  const manifest = await Utils.parse(`import 'https://$particles/Arcs/Login.arcs'`);
   console.log(`manifest [${manifest.id}]`);
 
   const recipe = manifest.findRecipesByVerb('login')[0];

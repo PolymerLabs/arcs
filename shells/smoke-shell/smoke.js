@@ -9,7 +9,7 @@
  */
 import {App} from './app.js';
 import {Utils} from '../lib/utils.js';
-import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
+import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 
 // notify user we are live
 console.log('\n--- Arcs Shell ---\n');
@@ -19,8 +19,8 @@ console.log('\n--- Arcs Shell ---\n');
   try {
     // configure arcs environment
     Utils.init('../..');
-    // create a composer configured for node
-    const composer = new RamSlotComposer();
+    // create a composer
+    const composer = new UiSlotComposer();
     await App(composer);
   } catch (x) {
     console.error(x);

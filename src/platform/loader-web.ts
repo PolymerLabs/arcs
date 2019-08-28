@@ -9,12 +9,10 @@
  */
 
 import {PlatformLoaderBase} from './loader-platform.js';
-import {logFactory} from '../platform/log-web.js';
+import {logsFactory} from '../runtime/log-factory.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
-const log = logFactory('loader-web', 'green');
-const warn = logFactory('loader-web', 'green', 'warn');
-const error = logFactory('loader-web', 'green', 'error');
+const {log, warn, error} = logsFactory('loader-web', 'green');
 
 export class PlatformLoader extends PlatformLoaderBase {
   flushCaches(): void {
@@ -27,7 +25,8 @@ export class PlatformLoader extends PlatformLoaderBase {
   }
   async provisionObjectUrl(fileName: string) {
     const raw = await this.loadResource(fileName);
-    const code = `${raw}\n//# sourceURL=${fileName}`;
+    const path = this.resolve(fileName);
+    const code = `${raw}\n//# sourceURL=${path}`;
     return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
   }
   // Below here invoked from inside Worker
@@ -36,7 +35,7 @@ export class PlatformLoader extends PlatformLoaderBase {
     if (clazz) {
       clazz.spec = spec;
     } else {
-      warn(`[spec.implFile]::defineParticle() returned no particle.`);
+      warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
     }
     return clazz;
   }
@@ -44,20 +43,19 @@ export class PlatformLoader extends PlatformLoaderBase {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(unresolvedPath);
+    // resolve path
+    const resolvedPath = this.resolve(unresolvedPath);
     // resolved target
-    const url = blobUrl || this.resolve(unresolvedPath);
+    const url = blobUrl || resolvedPath;
     // load wrapped particle
-    const particle = this.loadWrappedParticle(url);
-    // execute particle wrapper, if we have one
-    if (particle) {
+    const wrapper = this.loadWrappedParticle(url, resolvedPath);
+    // unwrap particle wrapper, if we have one
+    if (wrapper) {
       const logger = this.provisionLogger(unresolvedPath);
-      return this.unwrapParticle(particle, logger);
+      return this.unwrapParticle(wrapper, logger);
     }
   }
-  provisionLogger(fileName: string) {
-    return logFactory(fileName.split('/').pop(), '#1faa00');
-  }
-  loadWrappedParticle(url: string) {
+  loadWrappedParticle(url: string, path?: string) {
     let result;
     // MUST be synchronous from here until deletion
     // of self.defineParticle because we share this
@@ -74,10 +72,13 @@ export class PlatformLoader extends PlatformLoaderBase {
       // import (execute) particle code
       importScripts(url);
     } catch (x) {
-      error(x);
+      error(`Error loading Particle from [${path}]`, x);
     }
     // clean up
     delete self['defineParticle'];
     return result;
+  }
+  provisionLogger(fileName: string) {
+    return logsFactory(fileName.split('/').pop(), '#1faa00').log;
   }
 }

@@ -1,15 +1,18 @@
 <!doctype html>
 
 <!-- could be `import`ed -->
-<script src="../lib/build/pouchdb.js"></script>
-<script src="../lib/build/firebase.js"></script>
+<!-- <script src="../lib/build/pouchdb.js"></script> -->
+<!-- <script src="../lib/build/firebase.js"></script> -->
 <!-- cannot be `import`ed (tries to use `this`) -->
-<script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
+<!-- <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script> -->
+
+<div slotid="rootslotid-root"></div>
 
 <script type="module">
   import {App} from './app.js';
   import {Utils} from '../lib/utils.js';
-  import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
+  import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
+  import {attachRenderer} from '../lib/xen-renderer.js';
 
   // run
   (async () => {
@@ -17,11 +20,30 @@
       // configure arcs environment
       Utils.init('../..');
       // construct renderer
-      const composer = new DomSlotComposer({rootContainer: document.body});
+      const composer = new UiSlotComposer();
+      composer.root = document.body;
+      attachRenderer(composer).dispatch = (pid, eventlet) => {
+        console.log('ui-broker/composer dispatch for pid', pid, eventlet);
+        this.firePecEvent(composer, pid, eventlet);
+      };
       // start app
       await App(composer);
     } catch (x) {
       console.error(x);
     }
   })();
+  //
+  const firePecEvent = (composer, pid, eventlet) => {
+    if (composer && composer.arc) {
+      const particle = composer.arc.activeRecipe.particles.find(
+        particle => String(particle.id) === String(pid)
+      );
+      if (particle) {
+        log('firing PEC event for', particle.name);
+        // TODO(sjmiles): we need `arc` and `particle` here even though
+        // the two are bound together, figure out how to simplify
+        composer.arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
+      }
+    }
+  };
 </script>
