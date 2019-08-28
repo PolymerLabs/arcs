@@ -21,7 +21,6 @@ public class Collection extends Handle {
 
   @Override
   public void notify(String kind, Particle particle, PortableJson details) {
-    Logger.getGlobal().log(Level.SEVERE, "Arcs: Notify: " + kind + " " + details);
     switch (kind) {
       case "sync":
         // TODO: Should return promise?

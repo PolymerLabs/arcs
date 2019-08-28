@@ -21,9 +21,9 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   @Override
   public void sendMessageToArcs(String msg, DataListener listener) {
     String transactionId = String.valueOf(shellApi.receive(msg));
-//    if (listener != null) {
-//      inProgress.put(transactionId, listener);
-//    }
+    if (listener != null) {
+      inProgress.put(transactionId, listener);
+    }
   }
 
   @Override
