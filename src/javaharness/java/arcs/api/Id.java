@@ -1,6 +1,8 @@
 package arcs.api;
 
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Random;
 
 /**
  * An immutable object consisting of two components: a root, and an idTree. The root is the session
@@ -76,5 +78,49 @@ public class Id {
       }
     }
     return true;
+  }
+
+  public static Id newArcId() {
+    return Id.fromString(Id.generateId());
+  }
+
+  // copied from /modalities/dom/components/generate-id.js
+  private static long lastPushTime = -1;
+  private static int lastRandChars[] = new int[12];
+  private static final String pushChars =
+      "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
+
+  private static String generateId() {
+    // TODO: Inject a Clock (so that tests can be repeatable and deterministic).
+    long now = new Date().getTime();
+    boolean duplicateTime = now == lastPushTime;
+    lastPushTime = now;
+
+    char timeStampChars[] = new char[8];
+    for (int i = 7; i >= 0; i--) {
+      timeStampChars[i] = pushChars.charAt((int) (now % 64));
+      now = (int) Math.floor(now / 64);
+    }
+    if (now != 0) throw new AssertionError("We should have converted the entire timestamp.");
+
+    String id = String.valueOf(timeStampChars);
+
+    if (!duplicateTime) {
+      for (int i = 0; i < 12; i++) {
+        lastRandChars[i] = (int) Math.floor(Math.random() * 64);
+      }
+    } else {
+      int i;
+      // If the timestamp hasn't changed since last push, use the same random number, except
+      // incremented by 1.
+      for (i = 11; i >= 0 && lastRandChars[i] == 63; i--) {
+        lastRandChars[i] = 0;
+      }
+      lastRandChars[i]++;
+    }
+    for (int i = 0; i < 12; i++) {
+      id += pushChars.charAt(lastRandChars[i]);
+    }
+    return id;
   }
 }
