@@ -65,13 +65,13 @@ package arcs
 
       fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
 
-      decode.push(`"${fixed}" -> {`,
+      decode.push(`"${field}" -> {`,
                   `  decoder.validate("${typeChar}")`,
                   `  this.${fixed} = decoder.${decodeType}`,
                   `}`,
       );
 
-      encode.push(`encoder.encode("${fixed}:${typeChar}", ${fixed})`);
+      encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
     });
 
     return `\
