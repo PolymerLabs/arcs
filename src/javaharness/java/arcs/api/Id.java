@@ -91,6 +91,7 @@ public class Id {
       "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
 
   private static String generateId() {
+    // TODO: Inject a Clock (so that tests can be repeatable and deterministic).
     long now = new Date().getTime();
     boolean duplicateTime = now == lastPushTime;
     lastPushTime = now;
