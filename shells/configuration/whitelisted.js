@@ -27,7 +27,7 @@ import '../lib/firebase-upload.js';
 
 // services for particle use
 // TODO(sjmiles): `textclassifier-service` is fake, deprecate?
-import '../services/textclassifier-service.js';
+import '../lib/services/textclassifier-service.js';
 import '../../build/services/magenta-service.js';
 // TODO(sjmiles): TensorFlowJs (tfjs, also part of ml5) uses `new Function()` which requires `unsafe-eval` csp
 import '../../build/services/tfjs-service.js';
