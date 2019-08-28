@@ -1,33 +1,45 @@
-schema IncomingEntity
-  Text type
-  Text jsonData
-  Text source
 
 schema Place
   Text name
   Text address
 
+schema IncomingEntity
+  Text type
+  Text jsonData
+  Text source
+
 schema Person
   Text firstName
   Text lastName
 
-// TODO: This should be a builtin particle.
-particle RecognizeEntity in './source/RecognizeEntity.js'
+schema Message
+  Text message
+
+particle CaptureEntity in './source/CaptureEntity.java'
   out [IncomingEntity] entities
 
 particle CopyEntities in './source/CopyEntities.js'
   inout [IncomingEntity] source
   out [Place] places
   out [Person] people
+  out [Message] messages
+
+particle ToastParticle in './source/ToastParticle.java'
+  in [Message] alert
+
 
 recipe Ingestion
   create #incomingEntities as incomingEntities
   create #recentPlaces as recentPlaces
   create #recentPeople as recentPeople
-  RecognizeEntity
+  create #recentMessages as recentMessages
+  CaptureEntity
     entities -> incomingEntities
   CopyEntities
     source <- incomingEntities
     places -> recentPlaces
     people -> recentPeople
+    messages -> recentMessages
+  ToastParticle
+    alert <- recentMessages
   description `ingestion recipe`
