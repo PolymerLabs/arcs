@@ -10,8 +10,9 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Consumer} from '../runtime/hot.js';
 
-export type DevtoolsListener = (msg: DevtoolsMessage) => void;
+export type DevtoolsListener = Consumer<DevtoolsMessage>;
 export type DevtoolsMessage = {
   arcId?: string,
   requestId?: string,

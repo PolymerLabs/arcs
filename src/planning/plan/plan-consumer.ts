@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {Consumer} from '../../runtime/hot.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 
 import {PlanningResult} from './planning-result.js';
@@ -17,21 +18,19 @@ import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
 import {SuggestFilter} from './suggest-filter.js';
 import {PlannerInspector} from '../planner-inspector.js';
 
-type Callback = ({}) => void;
-
 export type VisibilityOptions = {reasons?: Map<string, SuggestionVisibilityOptions>};
 
 export class PlanConsumer {
-  arc: Arc;
+  readonly arc: Arc;
   result: PlanningResult;
   suggestFilter = new SuggestFilter(false);
   // Callback is triggered when planning results have changed.
-  private suggestionsChangeCallbacks: Callback[] = [];
+  private suggestionsChangeCallbacks: Consumer<{suggestions: Suggestion[]}>[] = [];
   // Callback is triggered when suggestions visible to the user have changed.
-  private visibleSuggestionsChangeCallbacks: Callback[] = [];
+  private visibleSuggestionsChangeCallbacks: Consumer<Suggestion[]>[] = [];
   suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
-  inspector?: PlannerInspector;
+  readonly inspector?: PlannerInspector;
 
   constructor(arc: Arc, result: PlanningResult, inspector?: PlannerInspector) {
     assert(arc, 'arc cannot be null');
@@ -46,10 +45,15 @@ export class PlanConsumer {
     this._maybeUpdateStrategyExplorer();
   }
 
-  registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
-  registerVisibleSuggestionsChangedCallback(callback) { this.visibleSuggestionsChangeCallbacks.push(callback); }
+  registerSuggestionsChangedCallback(callback: Consumer<{suggestions: Suggestion[]}>): void {
+    this.suggestionsChangeCallbacks.push(callback);
+  }
 
-  setSuggestFilter(showAll: boolean, search?: string) {
+  registerVisibleSuggestionsChangedCallback(callback: Consumer<Suggestion[]>): void {
+    this.visibleSuggestionsChangeCallbacks.push(callback);
+  }
+
+  setSuggestFilter(showAll: boolean, search?: string): void {
     assert(!showAll || !search);
     if (this.suggestFilter.isEquivalent(showAll, search)) {
       return;
@@ -58,7 +62,7 @@ export class PlanConsumer {
     this._onMaybeSuggestionsChanged();
   }
 
-  onSuggestionsChanged() {
+  onSuggestionsChanged(): void {
     this._onSuggestionsChanged();
     this._onMaybeSuggestionsChanged();
     this._maybeUpdateStrategyExplorer();
@@ -75,7 +79,7 @@ export class PlanConsumer {
     });
   }
 
-  dispose() {
+  dispose(): void {
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
     if (this.suggestionComposer) {
@@ -83,7 +87,7 @@ export class PlanConsumer {
     }
   }
 
-  _onSuggestionsChanged() {
+  private _onSuggestionsChanged(): void {
     this.suggestionsChangeCallbacks.forEach(callback => callback({suggestions: this.result.suggestions}));
     if (this.inspector) {
       this.inspector.updatePlanningResults(this.result, {});
@@ -91,7 +95,7 @@ export class PlanConsumer {
     }
   }
 
-  _onMaybeSuggestionsChanged() {
+  private _onMaybeSuggestionsChanged(): void {
     const options: VisibilityOptions|undefined = this.inspector ? {reasons: new Map<string, SuggestionVisibilityOptions>()} : undefined;
     const suggestions = this.getCurrentSuggestions(options);
     if (!PlanningResult.isEquivalent(this.currentSuggestions, suggestions)) {
@@ -103,7 +107,7 @@ export class PlanConsumer {
     }
   }
 
-  _initSuggestionComposer() {
+  private _initSuggestionComposer(): void {
     const composer = this.arc.pec.slotComposer;
     if (composer && composer.findContextById('rootslotid-suggestions')) {
       this.suggestionComposer = new SuggestionComposer(this.arc, composer);
@@ -112,7 +116,7 @@ export class PlanConsumer {
     }
   }
 
-  _maybeUpdateStrategyExplorer() {
+  private _maybeUpdateStrategyExplorer(): void {
     if (this.result.generations.length && this.inspector) {
       this.inspector.strategizingRecord(this.result.generations, {label: 'Plan Consumer', keep: true});
     }

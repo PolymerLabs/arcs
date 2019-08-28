@@ -26,6 +26,14 @@ export type Runnable = () => void;
 /** A function that converts some input into a boolean, often use for calls like `filter`. */
 export type Predicate<T> = (input: T) => boolean;
 
+export class Predicates {
+  /** A Predicate that always succeeds */
+  static readonly alwaysTrue = <T>() => true;
+  /** A Predicate that always fails */
+  static readonly alwaysFalse = <T>() => false;
+  // TODO(lindner) and(..) negate(..) or(..) etc..
+}
+
 /** A function that maps an input to an output. */
 export type Mapper<I, O> = (input: I) => O;
 

@@ -23,7 +23,7 @@ import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Literal, Literalizable} from './hot.js';
+import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 
@@ -523,23 +523,23 @@ export abstract class PECInnerPort extends APIPort {
   abstract onReloadParticle(id: string);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
-  abstract onSimpleCallback(callback: (data: {}) => void, data: {});
+  abstract onSimpleCallback(callback: Consumer<{}>, data: {});
   abstract onAwaitIdle(version: number);
   abstract onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]);
   abstract onStopRender(particle: Particle, slotName: string);
 
   Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: Content) {}
-  InitializeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {version: number}) => void) {}
-  SynchronizeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {version: number, model: SerializedModelEntry[]}) => void) {}
-  HandleGet(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {id: string}) => void) {}
-  HandleToList(@Mapped handle: StorageProxy, @LocalMapped callback: (data: {id: string}[]) => void) {}
+  InitializeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number}>) {}
+  SynchronizeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number, model: SerializedModelEntry[]}>) {}
+  HandleGet(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{id: string}>) {}
+  HandleToList(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{id: string}[]>) {}
   HandleSet(@Mapped handle: StorageProxy, @Direct data: {}, @Direct particleId: string, @Direct barrier: string) {}
   HandleClear(@Mapped handle: StorageProxy, @Direct particleId: string, @Direct barrier: string) {}
-  HandleStore(@Mapped handle: StorageProxy, @LocalMapped callback: () => void, @Direct data: {}, @Direct particleId: string) {}
-  HandleRemove(@Mapped handle: StorageProxy, @LocalMapped callback: () => void, @Direct data: {}, @Direct particleId: string) {}
-  HandleRemoveMultiple(@Mapped handle: StorageProxy, @LocalMapped callback: () => void, @Direct data: {}, @Direct particleId: string) {}
-  HandleStream(@Mapped handle: StorageProxy, @LocalMapped callback: (data: number) => void, @Direct pageSize: number, @Direct forward: boolean) {}
-  StreamCursorNext(@Mapped handle: StorageProxy, @LocalMapped callback: (value: CursorNextValue) => void, @Direct cursorId: string) {}
+  HandleStore(@Mapped handle: StorageProxy, @LocalMapped callback: Runnable, @Direct data: {}, @Direct particleId: string) {}
+  HandleRemove(@Mapped handle: StorageProxy, @LocalMapped callback: Runnable, @Direct data: {}, @Direct particleId: string) {}
+  HandleRemoveMultiple(@Mapped handle: StorageProxy, @LocalMapped callback: Runnable, @Direct data: {}, @Direct particleId: string) {}
+  HandleStream(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<number>, @Direct pageSize: number, @Direct forward: boolean) {}
+  StreamCursorNext(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<CursorNextValue>, @Direct cursorId: string) {}
   StreamCursorClose(@Mapped handle: StorageProxy, @Direct cursorId: string) {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
@@ -547,22 +547,22 @@ export abstract class PECInnerPort extends APIPort {
   GetBackingStore(@LocalMapped callback: (proxy: StorageProxy, key: string) => void, @Direct storageKey: string, @ByLiteral(Type) type: Type) {}
   abstract onGetBackingStoreCallback(callback: (proxy: StorageProxy, key: string) => void, type: Type, name: string, id: string, storageKey: string);
 
-  ConstructInnerArc(@LocalMapped callback: (arc: string) => void, @Mapped particle: Particle) {}
-  abstract onConstructArcCallback(callback: (arc: string) => void, arc: string);
+  ConstructInnerArc(@LocalMapped callback: Consumer<string>, @Mapped particle: Particle) {}
+  abstract onConstructArcCallback(callback: Consumer<string>, arc: string);
 
-  ArcCreateHandle(@LocalMapped callback: (proxy: StorageProxy) => void, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  abstract onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string);
-  ArcMapHandle(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
-  abstract onMapHandleCallback(callback: (value: string) => void, id: string);
+  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  abstract onCreateHandleCallback(callback: Consumer<StorageProxy>, type: Type, name: string, id: string);
+  ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
+  abstract onMapHandleCallback(callback: Consumer<string>, id: string);
 
   // TODO(sjmiles): experimental `services` impl
   ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
 
-  ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
-  abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);
+  ArcCreateSlot(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
+  abstract onCreateSlotCallback(callback: Consumer<string>, hostedSlotId: string);
   abstract onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotID: string, content: Content);
 
-  ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: (data: {error?: string}) => void) {}
+  ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: Consumer<{error?: string}>) {}
 
   ReportExceptionInHost(@ByLiteral(PropagatedException) exception: PropagatedException) {}
 
