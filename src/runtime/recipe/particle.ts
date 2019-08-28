@@ -30,7 +30,7 @@ export class Particle implements Comparable<Particle> {
   private _verbs: string[] = [];
   private _tags: string[] = [];
   private _connections: Dictionary<HandleConnection> = {};
-  
+
   // TODO: replace with constraint connections on the recipe
   _unnamedConnections: HandleConnection[] = [];
 
@@ -129,9 +129,9 @@ export class Particle implements Comparable<Particle> {
   }
 
   /**
-   * Param particle matches this particle if the names are the same and the slot and handle requirements this particle 
-   * is a subset of the slot and handle requirements of the param particle. 
-   * @param particle 
+   * Param particle matches this particle if the names are the same and the slot and handle requirements this particle
+   * is a subset of the slot and handle requirements of the param particle.
+   * @param particle
    */
   matches(particle: Particle): boolean {
     if (this.name && particle.name && this.name !== particle.name) return false;
@@ -183,7 +183,7 @@ export class Particle implements Comparable<Particle> {
       const fulfilledSlotConnections = this.getSlotConnections().filter(connection => connection.targetSlot !== undefined);
       if (fulfilledSlotConnections.length === 0) {
         if (options && options.showUnresolved) {
-          options.details = `unfullfilled slot connections ${JSON.stringify([...this.spec.slotConnections])}`;
+          options.details = `unfulfilled slot connections ${JSON.stringify([...this.spec.slotConnections])}`;
         }
         return false;
       }
@@ -361,9 +361,9 @@ export class Particle implements Comparable<Particle> {
   }
 
   addSlotConnectionAsCopy(name: string) : SlotConnection {
-    // Called when a recipe and all of it's contents are being cloned. 
-    // Each slot connection in the existing recipe has to be created for the clone, 
-    // This method must not create slots for provided slot connections otherwise there 
+    // Called when a recipe and all of it's contents are being cloned.
+    // Each slot connection in the existing recipe has to be created for the clone,
+    // This method must not create slots for provided slot connections otherwise there
     // will be duplicate slots.
     const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
