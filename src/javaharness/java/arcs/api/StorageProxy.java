@@ -122,7 +122,7 @@ public abstract class StorageProxy implements Store {
       return;
     }
 
-    PortableJson model = data.getObject("model");
+    PortableJson model = data.getArray("model");
     if (!synchronizeModel(version, model)) {
       return;
     }

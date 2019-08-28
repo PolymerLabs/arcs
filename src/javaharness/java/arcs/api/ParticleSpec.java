@@ -61,7 +61,7 @@ public class ParticleSpec {
 
   public static ParticleSpec fromJson(PortableJson json) {
     ParticleSpec spec = new ParticleSpec(json.getString("name"), json.getString("implFile"));
-    PortableJson args = json.getObject("args");
+    PortableJson args = json.getArray("args");
     for (int i = 0; i < args.getLength(); ++i) {
       HandleConnectionSpec handleSpec = HandleConnectionSpec.fromJson(args.getObject(i));
       spec.handleConnectionMap.put(handleSpec.name, handleSpec);

@@ -62,7 +62,7 @@ public class Schema {
     if (kind.equals("schema-primitive")) {
       return new PrimitiveField(json.getString("type"));
     } else {
-      PortableJson types = json.getObject("types");
+      PortableJson types = json.getArray("types");
       List<Field> fields = new ArrayList<>(types.getLength());
       for (int i = 0; i < types.getLength(); ++i) {
         fields.add(fieldFromJson(types.getObject(i)));
@@ -85,7 +85,7 @@ public class Schema {
   }
 
   public static Schema fromJson(PortableJson json) {
-    PortableJson namesJson = json.getObject("names");
+    PortableJson namesJson = json.getArray("names");
     List<String> names = new ArrayList<>(namesJson.getLength());
     for (int i = 0; i < namesJson.getLength(); ++i) {
       names.add(namesJson.getString(i));
