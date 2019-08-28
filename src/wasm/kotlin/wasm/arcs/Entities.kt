@@ -21,19 +21,19 @@ data class Data(
       when (name) {
         "num" -> {
           decoder.validate("N")
-          num = decoder.decodeNum()
+          this.num = decoder.decodeNum()
         }
         "txt" -> {
           decoder.validate("T")
-          txt = decoder.decodeText()
+          this.txt = decoder.decodeText()
         }
         "lnk" -> {
           decoder.validate("U")
-          lnk = decoder.decodeText()
+          this.lnk = decoder.decodeText()
         }
         "flg" -> {
           decoder.validate("B")
-          flg = decoder.decodeBool()
+          this.flg = decoder.decodeBool()
         }
       }
       decoder.validate("|")
@@ -49,6 +49,44 @@ data class Data(
     encoder.encode("txt:T", txt)
     encoder.encode("lnk:U", lnk)
     encoder.encode("flg:B", flg)
+    return encoder.result()
+  }
+}
+
+data class Info(
+  var for_: String = "", var val_: Double = 0.0
+) : Entity<Info>() {
+  override fun decodeEntity(encoded: String): Info? {
+    if (encoded.isEmpty()) {
+      return null
+    }
+    val decoder = StringDecoder(encoded)
+    this.internalId = decoder.decodeText()
+    decoder.validate("|")
+    var i = 0
+    while (!decoder.done() && i < 2) {
+      val name = decoder.upTo(":")
+      when (name) {
+        "for" -> {
+          decoder.validate("T")
+          this.for_ = decoder.decodeText()
+        }
+        "val" -> {
+          decoder.validate("N")
+          this.val_ = decoder.decodeNum()
+        }
+      }
+      decoder.validate("|")
+      i++
+    }
+    return this
+  }
+
+  override fun encodeEntity(): String {
+    val encoder = StringEncoder()
+    encoder.encode("", internalId)
+    encoder.encode("for:T", for_)
+    encoder.encode("val:N", val_)
     return encoder.result()
   }
 }

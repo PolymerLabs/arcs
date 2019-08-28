@@ -28,12 +28,12 @@ store InfoStore of [Info] in InfoResource
 
 particle TestParticle in 'build/bin/wasm32/mainDebugExecutable/main.wasm'
   consume root
-  in Data data
+  inout Data data
   out Data res
   inout [Info] info
 
 recipe KotlinTestRecipe
-  map DataStore as h1
+  copy DataStore as h1
   create as h2
   copy InfoStore as h3
   TestParticle

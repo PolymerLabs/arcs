@@ -5,6 +5,6 @@ using Kotlin with Multiplatform [https://kotlinlang.org/docs/reference/multiplat
 
 ### Getting Started
 
-* run ./gradlew build
+* run ./src/gradlew build
 * uncomment the kotlin.arcs import in ../native.arcs
 * Launch Arcs Shell (npm start) and look for the 'KotlinJsTest' or 'KotlinWasmTest' recipe.

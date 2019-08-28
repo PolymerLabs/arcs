@@ -8,10 +8,13 @@ import kotlin.native.internal.ExportForCppRuntime
 class TestParticle : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
+      log("A handle was updated!")
         if (handle.name.equals("data")) {
-            updated = 1
+          log("data was updated")
+          updated = 1
         } else if (handle.name.equals("info")) {
-            updated = 2
+          log("info was updated.")
+          updated = 2
         }
       renderSlot("root")
     }
@@ -19,7 +22,7 @@ class TestParticle : Particle() {
     override fun onHandleSync(handle: Handle, willSync: Boolean) {
         log("onHandleSync called")
         if (willSync) {
-            log("All handles synced\n")
+          log("All handles synced\n")
           renderSlot("root")
         }
     }
@@ -29,6 +32,7 @@ class TestParticle : Particle() {
     }
 
     override fun getTemplate(slotName: String): String {
+      log("getting template")
       val dataCol = if (updated == 1) "color: blue;" else ""
       val dataStr = "${data.get().toString()}\n"
 
@@ -64,7 +68,7 @@ class TestParticle : Particle() {
             <th>Errors</th>
             </tr>
             <tr>
-            <td><button on-click="set">Set</button></td>
+            <td><button on-click="add">Add</button></td>
             <td><button on-click="store">Store</button></td>
             <td>
             <button on-click="throw">Throw</button> &nbsp;
@@ -72,7 +76,7 @@ class TestParticle : Particle() {
             </td>
             </tr>
             <tr>
-            <td><button on-click="vclear">Clear</button></td>
+            <td><button on-click="dataclear">Clear</button></td>
             <td><button on-click="remove">Remove</button></td>
             <td>
             <button on-click="assert">Assert</button> &nbsp;
@@ -81,7 +85,7 @@ class TestParticle : Particle() {
             </tr>
             <tr>
             <td></td>
-            <td><button on-click="cclear">Clear</button></td>
+            <td><button on-click="infoclear">Clear</button></td>
             </tr>
              </table>"""
       }
@@ -97,31 +101,31 @@ class TestParticle : Particle() {
         registerHandle("res", res)
         registerHandle("info", info)
 
-        eventHandler("set") {
-            val res = data.get()!!
-            res.num = res.num * 2
-            res.txt = res.txt + "!!!!!!"
-            res.lnk = ""
-            this.res.set(res)
+        eventHandler("add") {
+          val newData = data.get()!!
+          newData.num = newData.num + 2
+          newData.txt = newData.txt + "!!!!!!"
+          this.data.set(newData)
         }
 
-        eventHandler("vclear") {
-            res.clear()
+        eventHandler("dataclear") {
+          data.clear()
         }
 
         eventHandler("store") {
-            val info = Info()
-            info.internalId = "wasm" + (++storeCount)
-            info.val_ = (this.info.size() + storeCount).toDouble()
-            this.info.store(info)
+          val info = Info()
+          info.internalId = "wasm" + (++storeCount)
+          info.val_ = (this.info.size() + storeCount).toDouble()
+          this.info.store(info)
         }
+
         eventHandler("remove") {
             val iterator = info.iterator()
             if (iterator.hasNext()) {
                 info.remove(iterator.next())
             }
         }
-        eventHandler("cclear") {
+        eventHandler("infoclear") {
             info.clear()
         }
         eventHandler("throw") {
