@@ -12,10 +12,10 @@
 
  defineParticle(({DomParticle, html}) => {
 
-  const template = html`
-      <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-      <div slotid="greetingSlot"></div>
-  `;
+    const template = html`
+  <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
+  <div slotid="greetingSlot"></div>
+    `;
 
   return class extends DomParticle {
     get template() {

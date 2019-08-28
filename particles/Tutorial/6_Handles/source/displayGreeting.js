@@ -21,10 +21,9 @@ const template = html`Hello, <span>{{name}}</span>!`;
       return template;
     }
 
-    shouldRender(props) {
-      // Here we check that props is not null/undefined, and that it contains the expected inputData. This is what the render function below
-      // needs.
-      return props && props.person;
+    shouldRender({person}) {
+      // Here we check that the person is defined.
+      return person;
     }
 
     render({person}) {
