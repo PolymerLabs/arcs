@@ -88,19 +88,21 @@ const locateNodes = function(root, locator, map) {
 /* Annotation Producer */
 // must return `true` for any node whose key we wish to track
 const annotatorImpl = function(node, key, notes, opts) {
+  let tracking = false;
   // hook
   if (opts.annotator && opts.annotator(node, key, notes, opts)) {
-    return true;
+    tracking = true;
   }
   // default
   switch (node.nodeType) {
     case Node.DOCUMENT_FRAGMENT_NODE:
-      return;
+      break;
     case Node.ELEMENT_NODE:
-      return annotateElementNode(node, key, notes);
+      return tracking || annotateElementNode(node, key, notes);
     case Node.TEXT_NODE:
-      return annotateTextNode(node, key, notes);
+      return tracking || annotateTextNode(node, key, notes);
   }
+  return tracking;
 };
 
 const annotateTextNode = function(node, key, notes) {
@@ -197,6 +199,8 @@ const listen = function(controller, node, eventName, handlerName) {
   node.addEventListener(eventName, function(e) {
     if (controller[handlerName]) {
       return controller[handlerName](e, e.detail);
+    } else if (controller.defaultHandler) {
+      return controller.defaultHandler(handlerName, e);
     }
   });
 };
@@ -406,5 +410,6 @@ const createTemplate = innerHTML => {
 export const Template = {
   createTemplate,
   setBoolAttribute,
-  stamp
+  stamp,
+  takeNote
 };
