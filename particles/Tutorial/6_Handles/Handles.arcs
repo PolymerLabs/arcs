@@ -1,0 +1,31 @@
+// Tutorial 6: Handles
+// Shows how to use a handle to pass information between particles.
+
+schema Person
+  Text name
+
+// The GetPerson particle allows the user to input their name, then writes
+// the input to the Person handle.
+// This particle also provides a slot to display a greeting to the person.
+particle GetPerson in './source/GetPerson.js'
+  out Person person
+  consume root
+    provide greetingSlot
+
+// The DisplayGreeting particle, takes the name passed through the Person
+// handle, and displays a greeting.
+particle DisplayGreeting in './source/DisplayGreeting.js'
+  in Person person
+  consume greetingSlot
+
+recipe HandleRecipe
+  GetPerson
+    // Pass the output person to the handle person.
+    person -> person 
+    consume root 
+      provide greetingSlot as greeting
+  DisplayGreeting
+    // Define the input person to be the handle person.
+    person <- person
+    consume greetingSlot as greeting
+  description `Tutorial 6: Handles`

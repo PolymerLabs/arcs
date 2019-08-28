@@ -22,3 +22,7 @@ import '4_RenderSlots/RenderSlots.arcs'
 // Tutorial 5: Collections
 // Collections of entities, and data stores defined in the manifest.
 import '5_Collections/Collections.arcs'
+
+// Tutorial 6: Handles
+// Passing an entity through a handle.
+import '6_Handles/Handles.arcs'
