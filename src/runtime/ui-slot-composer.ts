@@ -251,7 +251,7 @@ export class UiSlotComposer {
       });
       //
       //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');
-      observer.observe(content, this["arc"]);
+      observer.observe(content, this['arc']);
     }
   }
 
