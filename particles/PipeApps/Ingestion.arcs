@@ -24,7 +24,7 @@ particle CopyEntities in './source/CopyEntities.js'
   out [Person] people
   out [Message] messages
 
-particle ToastParticle in './source/NotificationParticle.java'
+particle ToastParticle in './source/ToastParticle.java'
   in [Message] alert
 
 
