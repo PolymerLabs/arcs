@@ -349,8 +349,8 @@ class PECOuterPortImpl extends PECOuterPort {
   // TODO(sjmiles): experimental `output` impl
   onOutput(particle: Particle, content: {}) {
     const composer = this.arc.pec.slotComposer;
-    if (composer && composer["delegateOutput"]) {
-      composer["delegateOutput"](particle, content);
+    if (composer && composer['delegateOutput']) {
+      composer['delegateOutput'](particle, content);
     }
   }
 

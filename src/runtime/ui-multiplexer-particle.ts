@@ -1,4 +1,5 @@
 /**
+ * @license
  * Copyright (c) 2017 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -15,7 +16,7 @@ import {Type} from './type.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 
-  plexeds: any[];
+  plexeds; //: any[];
 
   async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.plexeds = [];
@@ -27,7 +28,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     let otherMappedHandles: string[] = [];
     let otherConnections: string[] = [];
     if (particleHandle) {
-      hostedParticle = await particleHandle["get"]();
+      hostedParticle = await particleHandle['get']();
       if (hostedParticle) {
         ({otherMappedHandles, otherConnections} =
             await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc));
@@ -70,7 +71,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     //console.warn('m-d-p', slotIds);
     // clear data from unused particles/handles
     for (let i=list.length, plexed; (plexed=this.plexeds[i]); i++) {
-      plexed.then(plexed => plexed.handle["clear"]());
+      plexed.then(plexed => plexed.handle['clear']());
     }
   }
 
@@ -87,13 +88,14 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     const plexed = await this.requirePlexed(index, item,
       {hostedParticle, arc, type, otherConnections, otherMappedHandles});
     // TODO(sjmiles): work out a proper cast (and conditional), or fix upstream type
-    plexed.handle["set"](item);
+    plexed.handle['set'](item);
     return plexed.slotId;
   }
 
   async requirePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles}) {
     let promise = this.plexeds[index];
     if (!promise) {
+      // eslint-disable-next-line no-async-promise-executor
       promise = new Promise(async resolve => {
         const handle = await this.acquireItemHandle(index, {arc, item, type});
         const hosting = await this.resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles});

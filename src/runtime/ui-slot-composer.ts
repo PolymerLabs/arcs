@@ -46,10 +46,11 @@ export class UiSlotComposer {
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
   constructor(options: SlotComposerOptions) {
-    const opts = Object.assign({
+    const opts = {
       containers: {'root': 'root-context'},
-      modalityHandler: ModalityHandler.basicHandler
-    }, options);
+      modalityHandler: ModalityHandler.basicHandler,
+      ...options
+    };
 
     // TODO: Support rootContext for backward compatibility, remove when unused.
     // options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;
@@ -116,7 +117,7 @@ export class UiSlotComposer {
     return this._contexts.filter(filter) as ProvidedSlotContext[];
   }
 
-  findContextById(slotId: string): any {
+  findContextById(slotId: string) {
     return this._contexts.find(({id}) => id === slotId) || {};
   }
 
@@ -165,8 +166,8 @@ export class UiSlotComposer {
       // is allowed under new rendering factorisation. Maybe we bring this back as a validity
       // test in the future, but it's not a requirement atm.
       //assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
-      if (context && context.addSlotConsumer) {
-        context.addSlotConsumer(consumer);
+      if (context && context['addSlotConsumer']) {
+        context['addSlotConsumer'](consumer);
       }
     });
 
@@ -226,7 +227,7 @@ export class UiSlotComposer {
     }
   }
 
-  delegateOutput(particle: Particle, content: any) {
+  delegateOutput(particle: Particle, content) {
     const observer = this['slotObserver'];
     if (observer && content) {
       const connections = particle._consumedSlotConnections;

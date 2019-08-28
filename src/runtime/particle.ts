@@ -23,7 +23,7 @@ export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;
   serviceRequest?: (particle: Particle, args, callback) => void;
   // TODO(sjmiles): missing type info
-  output?
+  output?;
 }
 
 /**
