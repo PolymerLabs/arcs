@@ -1,6 +1,7 @@
 {
   "module.wasm": {
     "manifest": "example.arcs",
+    "genfile": "entities.h",
     "src": ["example.cc"],
     "outdir": "$here"
   }
