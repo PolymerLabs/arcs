@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ContextStores} from '../../lib/components/context/context-stores.js';
-import {nameOfType, simpleNameOfType, boxes} from '../../lib/components/context/context-utils.js';
+import {ContextStores} from '../../lib/context-stores.js';
+import {nameOfType, simpleNameOfType, boxes} from '../../lib/context-utils.js';
 import {ObserverTable} from './observer-table.js';
 
 const handlesTable = new ObserverTable('handles');

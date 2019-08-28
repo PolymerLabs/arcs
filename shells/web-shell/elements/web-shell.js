@@ -12,7 +12,7 @@ import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {Const} from '../../configuration/constants.js';
 import {Xen} from '../../lib/components/xen.js';
-import {Utils} from '../../lib/runtime/utils.js';
+import {Utils} from '../../lib/utils.js';
 import '../../lib/elements/launcher-arc.js';
 import './web-config.js';
 import './web-arc.js';

@@ -4,12 +4,14 @@ Is a platform-agnostic (Web/Nodejs) library of Arcs middle-ware.
 
 ### Import platform-specific code
 
-- for web environment, project entry-point must load the following scripts:
+- for web environment, pouchdb, firebase, and sourcemapped-stacktrace support are optional and require
+  the following scripts:
 
 ```
 <!-- may be `import`ed -->
-<script src="..//lib/build/pouchdb.js"></script>
+<script src="../lib/build/pouchdb.js"></script>
 <script src="../lib/build/firebase.js"></script>
+
 <!-- cannot be `import`ed (tries to use `this`) -->
 <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
 ```
@@ -18,12 +20,16 @@ Is a platform-agnostic (Web/Nodejs) library of Arcs middle-ware.
 
 - any of lib/*.js
 
-### Accessing environment objects
+### Initializing environment objects
 
 ```
-import {Utils} from 'lib/runtime/utils.js'
+import {Utils} from 'lib/utils.js'
+
+// after `Utils.init`, `Utils.env` will be populated with runtime objects
 Utils.init(path_to_arcs_root);
 console.log(Utils.env.loader, Utils.env.pecFactory);
+
+// Utils methods generally expect `Utils.init` to have been called.
 ```
 
 ## smoke-shell example
@@ -33,5 +39,4 @@ console.log(Utils.env.loader, Utils.env.pecFactory);
   - smoke-shell/smoke.html (web)
 - smoke-shell's main implementation is platform-agnostic
   - app.js
-
 

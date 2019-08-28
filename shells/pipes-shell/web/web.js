@@ -13,10 +13,10 @@ import '../../lib/platform/loglevel-web.js';
 import {version, paths, storage, test} from './config.js';
 
 // optional
-//import '../../lib/database/pouchdb-support.js';
-//import '../../lib/database/firebase-support.js';
+//import '../../lib/pouchdb-support.js';
+//import '../../lib/firebase-support.js';
 //import '../../configuration/whitelisted.js';
-import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
+import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // dependencies
 import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';

@@ -9,8 +9,8 @@
  */
 
 import {Xen} from '../../lib/components/xen.js';
-import {UserContext} from '../../lib/components/context/user-context.js';
-import {initShares} from '../../lib/sharing/shares.js';
+import {UserContext} from '../../lib/components/user-context.js';
+import {initShares} from '../../lib/shares.js';
 import {logsFactory} from '../../../build/runtime/log-factory.js';
 
 const {log} = logsFactory('UserContext', '#4f0433');

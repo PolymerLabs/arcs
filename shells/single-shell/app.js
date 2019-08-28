@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Utils} from '../lib/runtime/utils.js';
+import {Utils} from '../lib/utils.js';
 
 export const App = async (composer, manifestPath) => {
   const context = await Utils.parse(`
