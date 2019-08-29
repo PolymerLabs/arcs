@@ -61,6 +61,14 @@ kotlin {
         }
     }
 
+    wasm32("JsonStore")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('3_JsonStore')
+
+        }
+    }
+
     wasm32()
     targets {
         fromPreset(presets.wasm32, 'wasm32') {
