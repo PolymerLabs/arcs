@@ -20,4 +20,4 @@ recipe RenderSlotsRecipe
   ChildParticle
     consume mySlot as slot0
 
-  description `Tutorial 4: Render Slots`
+  description `Javascript Tutorial 4: Render Slots`

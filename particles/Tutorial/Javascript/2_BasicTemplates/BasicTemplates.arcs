@@ -6,4 +6,4 @@ particle BasicTemplateParticle in 'basic-template.js'
 
 recipe BasicTemplateRecipe
   BasicTemplateParticle
-  description `Tutorial 2: Basic Templates`
+  description `Javascript Tutorial 2: Basic Templates`

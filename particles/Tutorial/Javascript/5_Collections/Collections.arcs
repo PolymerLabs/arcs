@@ -28,4 +28,4 @@ recipe CollectionRecipe
   CollectionParticle
     inputData <- data
 
-  description `Tutorial 5: Collections`
+  description `Javascript Tutorial 5: Collections`

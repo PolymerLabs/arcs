@@ -28,4 +28,4 @@ recipe HandleRecipe
     // Define the input person to be the handle person.
     person <- person
     consume greetingSlot as greeting
-  description `Tutorial 6: Handles`
+  description `Javascript Tutorial 6: Handles`

@@ -23,4 +23,4 @@ recipe JsonStoreRecipe
     // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
     inputData <- data
 
-  description `Tutorial 3: JSON Store`
+  description `Javascript Tutorial 3: JSON Store`
