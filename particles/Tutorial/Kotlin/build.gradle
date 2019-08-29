@@ -38,13 +38,25 @@ group 'arcs-wasm'
 version '0.0.1'
 
 kotlin {
+    wasm32("particle")
     sourceSets {
-        commonMain {
+        wasm32Main {
             kotlin.srcDir('common')
-
         }
+    }
+
+    wasm32("HelloWorld")
+    sourceSets {
         wasm32Main {
             kotlin.srcDir('1_HelloWorld')
+
+        }
+    }
+
+    wasm32("BasicTemplates")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('2_BasicTemplates')
 
         }
     }

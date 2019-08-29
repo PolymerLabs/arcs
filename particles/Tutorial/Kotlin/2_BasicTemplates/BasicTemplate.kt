@@ -5,7 +5,13 @@ import kotlin.native.internal.ExportForCppRuntime
 /**
  * Sample WASM Particle.
  */
-class HelloWorldParticle : Particle() {
+class BasicTemplateParticle : Particle() {
+
+  override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
+    return model + mapOf(
+      "name" to "Human"
+    )
+  } 
 
   override fun onHandleUpdate(handle: Handle) {
     renderSlot("root")
@@ -23,13 +29,13 @@ class HelloWorldParticle : Particle() {
     }
 
     override fun getTemplate(slotName: String): String {
-        return """<b>Hello, world!</b>"""
+        return """<b>Hello, <span>{{name}}</span>!</b>"""
       }
 }
 
 @Retain
-@ExportForCppRuntime("_newHelloWorldParticle")
-fun constructHelloWorldParticle(): WasmAddress {
-    log("_newHelloWorldParticle called")
-    return HelloWorldParticle().toWasmAddress()
+@ExportForCppRuntime("_newBasicTemplateParticle")
+fun constructBasicTemplateParticle(): WasmAddress {
+    log("_newBasicTemplateParticle called")
+    return BasicTemplateParticle().toWasmAddress()
 }
