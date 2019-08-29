@@ -107,6 +107,8 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
       }
     }
 
+    const operations = simplifyFastForwardOp(fastForwardOp) || [fastForwardOp];
+
     this.model.values = merged;
     this.model.version = newClock;
     
@@ -116,7 +118,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     };
     const otherChange: CollectionChange<T> = {
       changeType: ChangeType.Operations,
-      operations: [fastForwardOp],
+      operations,
     };
     return {modelChange, otherChange};
   }
@@ -235,4 +237,73 @@ function dominates(map1: VersionMap, map2: VersionMap): boolean {
     }
   }
   return true;
+}
+
+/**
+ * Converts a simple fast-forward operation into a sequence of regular ops.
+ * Currently only supports converting add ops made by a single actor. Returns
+ * null if it could not simplify the fast-forward operation.
+ */
+export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<T>): CollectionOperation<T>[] {
+  if (fastForwardOp.removed.length > 0) {
+    // Remove ops can't be replayed in order.
+    return null;
+  }
+  if (fastForwardOp.added.length === 0) {
+    // Just a version bump, no add ops to replay.
+    return null;
+  }
+  const actor = getSingleActorIncrement(fastForwardOp.oldClock, fastForwardOp.newClock);
+  if (actor === null) {
+    return null;
+  }
+  // Sort the add ops in increasing order by the actor's version.
+  const addOps = [...fastForwardOp.added].sort(([elem1, v1], [elem2, v2]) => (v1[actor] || 0) - (v2[actor] || 0));
+  const expectedClock = {...fastForwardOp.oldClock};
+  for (const [elem, version] of addOps) {
+    expectedClock[actor]++;
+    if (!sameVersions(expectedClock, version)) {
+      // The add op didn't match the expected increment-by-one pattern. Can't
+      // replay it properly.
+      return null;
+    }
+  }
+  // If we reach here then all added versions are incremented by one.
+  // Check the final clock.
+  if (!sameVersions(expectedClock, fastForwardOp.newClock)) {
+    return null;
+  }
+  return addOps.map(([elem, version]) => ({
+    type: CollectionOpTypes.Add,
+    added: elem,
+    actor,
+    clock: version,
+  }));
+}
+
+/**
+ * Given two version maps, returns the actor who incremented their version. If
+ * there's more than one such actor, returns null.
+ */
+function getSingleActorIncrement(oldVersion: VersionMap, newVersion: VersionMap): string | null {
+  if (Object.keys(oldVersion).length !== Object.keys(newVersion).length) {
+    return null;
+  }
+  let actor: string | null = null;
+  for (const [k, v1] of Object.entries(oldVersion)) {
+    const v2 = newVersion[k] || 0;
+    if (v1 < v2) {
+      if (actor === null) {
+        actor = k;
+        continue;
+      } else {
+        // Version changed for more than one actor.
+        return null;
+      }
+    } else if (v1 !== v2) {
+      // Some other sort of non-incremental version change happened.
+      return null;
+    }
+  }
+  return actor;
 }

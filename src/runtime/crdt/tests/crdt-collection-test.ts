@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {ChangeType, VersionMap} from '../crdt';
-import {CollectionOpTypes, CRDTCollection, CollectionOperation} from '../crdt-collection';
+import {CollectionOpTypes, CRDTCollection, CollectionOperation, simplifyFastForwardOp} from '../crdt-collection';
 
 /** Creates an Add operation. */
 function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
@@ -241,6 +241,35 @@ describe('CRDTCollection', () => {
     }
   });
 
+  it('can simplify single-actor add ops in merges', () => {
+    const set1 = new CRDTCollection<{id: string}>();
+    const set2 = new CRDTCollection<{id: string}>();
+
+    const originalOps = [
+      addOp('zero', 'a', {a: 1}),
+      addOp('one', 'b', {b: 1}),
+    ];
+    originalOps.forEach(op => assert.isTrue(set1.applyOperation(op)));
+    originalOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+
+    // Add a bunch of things to set2.
+    const set2AddOps = [
+      addOp('two', 'b', {a: 1, b: 2}),
+      addOp('three', 'b', {a: 1, b: 3}),
+      addOp('four', 'b', {a: 1, b: 4}),
+      addOp('five', 'b', {a: 1, b: 5}),
+    ];
+    set2AddOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+    
+    const {modelChange, otherChange} = set2.merge(set1.getData());
+
+    // Check that add ops are produced (not a fast-forward op).
+    assert.deepEqual(otherChange, {
+      changeType: ChangeType.Operations,
+      operations: set2AddOps,
+    });
+  });
+
   describe('fast-forward operations', () => {
     it('rejects fast-forward ops which begin in the future', () => {
       const set = new CRDTCollection<{id: string}>();
@@ -356,6 +385,103 @@ describe('CRDTCollection', () => {
       // dominated by newClock above.
       assert.hasAllKeys(set.getData().values, ['two', 'three']);
       assert.deepEqual(set.getData().version, {a: 2, b: 5});
+    });
+  });
+
+  describe('simplifyFastForwardOp', () => {
+    it(`simplifies single add op from a single actor`, () => {
+      assert.deepEqual(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [[{id: 'one'}, {a: 2, b: 1}]],
+        removed: [],
+        oldClock: {a: 1, b: 1},
+        newClock: {a: 2, b: 1},
+      }), [{
+        type: CollectionOpTypes.Add,
+        added: {id: 'one'},
+        actor: 'a',
+        clock: {a: 2, b: 1},
+      }]);
+    });
+
+    it(`simplifies multiple add ops from a single actor`, () => {
+      assert.deepEqual(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [
+          [{id: 'two'}, {a: 3, b: 1}],
+          [{id: 'one'}, {a: 2, b: 1}],
+        ],
+        removed: [],
+        oldClock: {a: 1, b: 1},
+        newClock: {a: 3, b: 1},
+      }), [
+        {
+          type: CollectionOpTypes.Add,
+          added: {id: 'one'},
+          actor: 'a',
+          clock: {a: 2, b: 1},
+        },
+        {
+          type: CollectionOpTypes.Add,
+          added: {id: 'two'},
+          actor: 'a',
+          clock: {a: 3, b: 1},
+        },
+      ]);
+    });
+
+    it(`doesn't simplify remove ops`, () => {
+      assert.isNull(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [],
+        removed: [[{id: 'one'}, {a: 1}]],
+        oldClock: {a: 1},
+        newClock: {a: 1},
+      }));
+    });
+
+    it(`doesn't simplify pure version bumps`, () => {
+      assert.isNull(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [],
+        removed: [],
+        oldClock: {a: 1},
+        newClock: {a: 5},
+      }));
+    });
+
+    it(`doesn't simplify add ops from a single actor with version jumps`, () => {
+      assert.isNull(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [
+          [{id: 'one'}, {a: 1}],
+          [{id: 'two'}, {a: 2}],
+          [{id: 'four'}, {a: 4}],
+        ],
+        removed: [],
+        oldClock: {a: 0},
+        newClock: {a: 4},
+      }));
+    });
+
+    it(`doesn't simplify add ops from multiple actors`, () => {
+      assert.isNull(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [[{id: 'one'}, {a: 2, b: 2}]],
+        removed: [],
+        oldClock: {a: 1, b: 1},
+        newClock: {a: 2, b: 2},
+      }));
+    });
+
+    it(`doesn't simplify add ops with a version jump at the end`, () => {
+      assert.isNull(simplifyFastForwardOp({
+        type: CollectionOpTypes.FastForward,
+        added: [[{id: 'one'}, {a: 2}]],
+        removed: [],
+        oldClock: {a: 1},
+        newClock: {a: 3},  // Fails because it's > 2
+      }));
     });
   });
 });
