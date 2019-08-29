@@ -197,7 +197,7 @@ class ThingMapper {
       }
       this._idMap.set(id, thing);
     }
-    
+
     if (thing instanceof Promise) {
       assert(continuation == null);
       await this.establishThingMapping(id, await thing);
@@ -541,6 +541,9 @@ export abstract class PECInnerPort extends APIPort {
   abstract onStopRender(particle: Particle, slotName: string);
 
   Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: Content) {}
+  // TODO(sjmiles): alternate render path for slotObserver (UiBroker)
+  Output(@Mapped particle: Particle, @Direct content: {}) {}
+
   InitializeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number}>) {}
   SynchronizeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number, model: SerializedModelEntry[]}>) {}
   HandleGet(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{id: string}>) {}

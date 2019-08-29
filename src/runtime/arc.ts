@@ -125,7 +125,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost(slotComposer, this, ports);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
-    
+
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     DriverFactory.register(this.volatileStorageDriverProvider);
   }
@@ -289,7 +289,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
         }
-        
+
         const indent = '  ';
         const data = JSON.stringify(serializedData);
 
