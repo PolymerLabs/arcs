@@ -80,7 +80,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     // TODO: drop back to non-sync mode if all handles re-configure to !keepSynced.
     if (handle.options.keepSynced) {
       if (!this.keepSynced) {
-        this.synchronizeModel().catch(e => {
+        this.requestSynchronization().catch(e => {
           this.reportExceptionInHost(new SystemException(
               e, handle.key, 'StorageProxy::registerHandle'));
         });
@@ -134,7 +134,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
               resolve([this.crdt.getParticleView()!, this.versionCopy()]);
             };
           });
-      await this.synchronizeModel();
+      // Request a new model, it will come back asynchronously with a ModelUpdate message.
+      await this.requestSynchronization();
       return promise;
     }
   }
@@ -159,7 +160,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
             // If we cannot cleanly apply ops, sync the whole model.
             this.synchronized = false;
             await this.notifyDesync();
-            return this.synchronizeModel();
+            return this.requestSynchronization();
           }
           this.notifyUpdate(op, oldData);
           oldData = this.crdt.getParticleView();
@@ -212,7 +213,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  protected async synchronizeModel(): Promise<boolean> {
+  protected async requestSynchronization(): Promise<boolean> {
     return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: this.id});
   }
 }
@@ -254,7 +255,7 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
 
   protected notifyDesync() {}
 
-  protected async synchronizeModel(): Promise<boolean> {
+  protected async requestSynchronization(): Promise<boolean> {
     return new Promise(resolve => {});
   }
 }
