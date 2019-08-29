@@ -227,7 +227,7 @@ export class UiSlotComposer {
     }
   }
 
-  delegateOutput(particle: Particle, content) {
+  delegateOutput(arc: Arc, particle: Particle, content) {
     const observer = this['slotObserver'];
     if (observer && content) {
       const connections = particle._consumedSlotConnections;
@@ -251,7 +251,7 @@ export class UiSlotComposer {
       });
       //
       //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');
-      observer.observe(content, this['arc']);
+      observer.observe(content, arc);
     }
   }
 

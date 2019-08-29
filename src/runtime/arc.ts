@@ -106,11 +106,6 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
-    // TODO(sjmiles): currently slotObserver recovers arc from composer (find a fix)
-    if (slotComposer && !slotComposer['arc']) {
-      slotComposer['arc'] = this;
-    }
-
     if (typeof id === 'string') {
       // TODO(csilvestrini): Replace this warning with an exception.
       console.error(
