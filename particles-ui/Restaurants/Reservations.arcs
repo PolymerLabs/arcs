@@ -1,0 +1,79 @@
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import '../List/List.arcs'
+import '../Layout/Layout.arcs'
+import '../Events/Events.arcs'
+import '../Restaurants/schemas/Restaurant.arcs'
+import '../Common/schemas/Description.arcs'
+
+particle ReservationForm in 'source/ReservationForm.js'
+  inout Event event
+  in Restaurant restaurant
+  consume action
+    provide annotation
+
+// TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
+// so fork the particle
+particle DetailReservationForm in 'source/ReservationForm.js'
+  inout Event event
+  in Restaurant restaurant
+  consume detailAction
+    provide annotation
+
+particle ReservationAnnotation in 'source/ReservationAnnotation.js'
+  inout Event event
+  in Restaurant restaurant
+  out [Description] descriptions
+  consume annotation
+
+// TODO(sjmiles): we don't have optional handles yet, so fork the particle
+// rather than having every instance generate descriptions
+particle ReservationMultiAnnotation in 'source/ReservationAnnotation.js'
+  in Restaurant restaurant
+  inout Event event
+  consume annotation
+
+// TODO(sjmiles): below leaves out definition of the
+// list of restaurants to bind to annotators, but
+// Coalescer seems to Do The Right Thing.
+// Ideally we could identify things about the list
+// we want (i.e. via `use`), but it doesn't coalesce
+// when I do that.
+
+recipe MakeReservations
+  use as restaurants
+  use #selected as restaurant
+  create #reservation as event
+  create #volatile as calendarDescriptions
+  //create #volatile as annotationDescriptions
+  slot 'rootslotid-top' as top
+  Calendar
+    event = event
+    descriptions = calendarDescriptions
+    consume action as top
+  // top-of-frame event editor
+  ReservationForm
+    restaurant = restaurant
+    event = event
+    consume action as top
+  // per-restaurant tile scheduler
+  AnnotationMultiplexer
+    list = restaurants
+    annotation = event
+    hostedParticle = ReservationMultiAnnotation
+  // event editor (+scheduler) on restaurant detail
+  DetailReservationForm
+    restaurant = restaurant
+    event = event
+    consume detailAction
+      provide annotation as detailAnnotation
+  ReservationAnnotation
+    restaurant = restaurant
+    event = event
+    descriptions = annotationDescriptions
+    consume annotation as detailAnnotation

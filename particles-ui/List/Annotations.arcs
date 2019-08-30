@@ -1,0 +1,37 @@
+interface HostedAnnotationInterface
+  in ~anyType *
+  inout ~anyOther *
+  consume annotation
+
+particle AnnotationMultiplexer in 'source/Multiplexer.js'
+  in [~anyType] list
+  inout ~anyOther annotation
+  host HostedAnnotationInterface hostedParticle
+  consume set of annotation
+
+interface HostedSimpleAnnotationInterface
+  in ~anyType *
+  consume annotation
+
+particle SimpleAnnotationMultiplexer in 'source/Multiplexer.js'
+  in [~anyType] list
+  host HostedSimpleAnnotationInterface hostedParticle
+  consume set of annotation
+
+interface HostedCombinedAnnotationInterface
+  in ~anyType *
+  in [~anyOther] *
+  consume annotation
+
+particle CombinedAnnotationMultiplexer in 'source/Multiplexer.js'
+  in [~anyType] list
+  in [~anyOther] choices
+  host HostedCombinedAnnotationInterface hostedParticle
+  consume set of annotation
+
+//recipe AnnotationMultiplexer
+//  use #items as list
+//  use #annotation as annotation
+//  AnnotationMultiplexer
+//    list = list
+//    annotation = annotation

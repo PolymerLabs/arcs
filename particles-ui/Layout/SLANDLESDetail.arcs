@@ -1,0 +1,9 @@
+particle SlandleDetailSlider in 'source/DetailSlider.js'
+  inout ~a selected
+  `consume? Slot modal
+    `provide Slot {handle: selected} content
+
+recipe SlandleDetailSlider
+  use #selected as selected
+  SlandleDetailSlider
+    selected = selected

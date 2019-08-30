@@ -20,9 +20,14 @@ http://polymer.github.io/PATENTS.txt
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
 <link rel="shortcut icon" href="../configuration/logo_64.png">
 
+<script type="module" src="../configuration/whitelisted.js"></script>
+
 <style>
   body {
     font-family: sans-serif;
+  }
+  [slotid="modal"] {
+    display: none;
   }
 </style>
 
@@ -33,22 +38,31 @@ http://polymer.github.io/PATENTS.txt
 <script>window.logLevel = 2;</script>
 
 <script type="module">
-  import '../services/ml5-service.js';
-  import {Utils} from '../lib/utils.js';
-  import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
   import {App} from './app.js';
-  import '../configuration/whitelisted.js';
+  import {Utils} from '../lib/utils.js';
+  import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
+  import {SlotObserver} from '../lib/xen-renderer.js';
+
+  const utils = Utils.init('../..', {
+    'https://$particles/': `../../particles-ui/`,
+  });
+
+  //const defaultManifest = `Arcs/Login.Arcs`;
+  const defaultManifest = `Restaurants/Restaurants.Arcs`;
+
+  const composer = new UiSlotComposer();
+  composer.root = document.body;
+  composer.slotObserver = new SlotObserver(composer.root);
+  // TODO(sjmiles): make the slotObserver do this
+  composer.slotObserver.dispatch = (pid, eventlet) => {
+    console.log('ui-broker/composer dispatch for pid', pid, eventlet);
+    composer.sendEvent(pid, eventlet);
+  };
 
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);
   }
-  const utils = Utils.init('../..');
-
-  const composer = new DomSlotComposer({
-    rootContainer: document.body
-  });
-
-  const manifest = getUrlParam('manifest') || `Arcs/Login.recipe`;
+  const manifest = getUrlParam('manifest') || defaultManifest;
 
   (async () => {
     try {

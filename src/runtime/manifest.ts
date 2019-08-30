@@ -172,6 +172,9 @@ export class Manifest {
   get schemas(): Dictionary<Schema> {
     return this._schemas;
   }
+  get allSchemas() {
+    return [...this._findAll(manifest => Object.values(manifest._schemas))];
+  }
   get fileName() {
     return this._fileName;
   }

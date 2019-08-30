@@ -1,0 +1,6 @@
+particle SlandleBottomScrollTest in 'source/BottomScrollTest.js'
+  `consume Slot root
+  description `bottom scroller`
+
+recipe SlandleBottomScrollTest
+  SlandleBottomScrollTest

@@ -1,0 +1,10 @@
+particle DetailSlider in 'source/DetailSlider.js'
+  inout ~a selected
+  consume modal
+    must provide content
+      handle selected
+
+recipe DetailSlider
+  use #selected as selected
+  DetailSlider
+    selected = selected

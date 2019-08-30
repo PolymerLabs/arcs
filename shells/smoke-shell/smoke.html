@@ -12,7 +12,7 @@
   import {App} from './app.js';
   import {Utils} from '../lib/utils.js';
   import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
-  import {attachRenderer} from '../lib/xen-renderer.js';
+  import {SlotObserver} from '../lib/xen-renderer.js';
 
   // run
   (async () => {
@@ -22,9 +22,11 @@
       // construct renderer
       const composer = new UiSlotComposer();
       composer.root = document.body;
-      attachRenderer(composer).dispatch = (pid, eventlet) => {
+      composer.slotObserver = new SlotObserver(composer.root);
+      // TODO(sjmiles): make the slotObserver do this
+       composer.slotObserver.dispatch = (pid, eventlet) => {
         console.log('ui-broker/composer dispatch for pid', pid, eventlet);
-        this.firePecEvent(composer, pid, eventlet);
+        composer.sendEvent(pid, eventlet);
       };
       // start app
       await App(composer);
@@ -32,18 +34,4 @@
       console.error(x);
     }
   })();
-  //
-  const firePecEvent = (composer, pid, eventlet) => {
-    if (composer && composer.arc) {
-      const particle = composer.arc.activeRecipe.particles.find(
-        particle => String(particle.id) === String(pid)
-      );
-      if (particle) {
-        log('firing PEC event for', particle.name);
-        // TODO(sjmiles): we need `arc` and `particle` here even though
-        // the two are bound together, figure out how to simplify
-        composer.arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
-      }
-    }
-  };
 </script>

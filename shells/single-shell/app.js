@@ -11,8 +11,8 @@ import {Utils} from '../lib/utils.js';
 
 export const App = async (composer, manifestPath) => {
   const context = await Utils.parse(`
-import 'https://$particles/canonical.arcs'
-import 'https://$particles/Profile/Sharing.recipe'
+//import 'https://$particles/canonical.arcs'
+//import 'https://$particles/Profile/Sharing.recipe'
   `);
   console.log(`context [${context.id}]`);
 
