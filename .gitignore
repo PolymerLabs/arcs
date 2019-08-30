@@ -43,5 +43,7 @@ bazel-genfiles
 bazel-javaharness
 bazel-out
 bazel-testlogs
+bazel-arcs
+.bazelrc
 .ijwb
 .sighdeps
