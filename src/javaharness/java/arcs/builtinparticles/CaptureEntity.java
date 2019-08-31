@@ -1,7 +1,6 @@
 package arcs.builtinparticles;
 
-import arcs.api.AlertSurface;
-import arcs.api.ClipboardSurface;
+import arcs.api.ClipboardService;
 import arcs.api.Collection;
 import arcs.api.Handle;
 import arcs.api.ParticleBase;
@@ -14,13 +13,13 @@ import java.util.logging.Logger;
 public class CaptureEntity extends ParticleBase {
 
   private PortableJsonParser parser;
-  private final ClipboardSurface clipboardSurface;
+  private final ClipboardService clipboardService;
 
   public CaptureEntity(/*EntityObserver entityObserver*/ PortableJsonParser parser,
-      ClipboardSurface clipboardSurface) {
+      ClipboardService clipboardService) {
     //    entityObserver.registerListener(this);
     this.parser = parser;
-    this.clipboardSurface = clipboardSurface;
+    this.clipboardService = clipboardService;
   }
 
   @Override
@@ -29,7 +28,7 @@ public class CaptureEntity extends ParticleBase {
     Handle handle = handleByName.get("entities");
 
     if ("entities".equals(handle.name)) {
-      clipboardSurface.listen(text -> {
+      clipboardService.listen(text -> {
         String jsonData = parser.stringify(parser
             .emptyObject()
             .put("name", "Google Office")

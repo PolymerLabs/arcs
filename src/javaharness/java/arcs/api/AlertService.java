@@ -1,5 +1,5 @@
 package arcs.api;
 
-public interface AlertSurface {
+public interface AlertService {
   void alert(String msg);
 }

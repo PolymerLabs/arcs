@@ -19,13 +19,13 @@ class PortableJsonParserAndroidImpl implements PortableJsonParser {
       try {
         return new PortableJsonAndroidImpl(new JSONObject(json));
       } catch (JSONException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     } else if (json.trim().startsWith("[")) {
       try {
         return new PortableJsonAndroidImpl(new JSONArray(json));
       } catch (JSONException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     }
     return null;

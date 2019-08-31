@@ -1,20 +1,18 @@
 package arcs.builtinparticles;
 
-import arcs.api.AlertSurface;
+import arcs.api.AlertService;
 import arcs.api.Particle;
 import arcs.api.ParticleFactory;
-import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
 
 public class ToastParticleFactory implements ParticleFactory {
 
-  private AlertSurface alertSurface;
+  private AlertService alertSurface;
 
   // TODO: Inject interfaces particles normally may want in defineParticle (e.g. html, log, etc)
   @Inject
-  public ToastParticleFactory(AlertSurface alertSurface) {
-    //    this.entityObserver = entityObserver;
-    this.alertSurface = alertSurface;
+  public ToastParticleFactory(AlertService alertService) {
+    this.alertSurface = alertService;
   }
 
   @Override

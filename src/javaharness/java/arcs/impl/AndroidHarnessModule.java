@@ -1,9 +1,9 @@
 package arcs.impl;
 
-import arcs.api.AlertSurface;
+import arcs.api.AlertService;
 import arcs.api.ArcsEnvironment;
 import arcs.api.ArcsEnvironment.DataListener;
-import arcs.api.ClipboardSurface;
+import arcs.api.ClipboardService;
 import arcs.api.DeviceClient;
 import arcs.api.HandleFactory;
 import arcs.api.HandleFactoryImpl;
@@ -70,9 +70,9 @@ public abstract class AndroidHarnessModule {
       PortablePromiseFactoryAndroidImpl impl);
 
   @Singleton
-  @Binds abstract AlertSurface providesAndroidToastAlertService(AndroidToastAlertService impl);
+  @Binds abstract AlertService providesAndroidToastAlertService(AndroidToastAlertService impl);
 
   @Singleton
   @Binds
-  abstract ClipboardSurface provideClipboardService(AndroidClipboardService clipboardService);
+  abstract ClipboardService provideClipboardService(AndroidClipboardService clipboardService);
 }

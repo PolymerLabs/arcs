@@ -5,12 +5,14 @@ licenses(["notice"])
 package(default_visibility = ["//java/arcs:__subpackages__"])
 
 load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
+load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
-java_library(
+android_library(
     name = "crdt",
     srcs = glob([
         "*.java",
     ]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
       "@com_google_dagger",
       "@javax_inject_source//jar",

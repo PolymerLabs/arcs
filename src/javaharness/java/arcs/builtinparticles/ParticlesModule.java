@@ -1,6 +1,7 @@
 package arcs.builtinparticles;
 
 import arcs.api.ParticleFactory;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.IntoSet;
@@ -13,21 +14,15 @@ public abstract class ParticlesModule {
   @Multibinds
   abstract Set<ParticleFactory> provideParticleFactories();
 
-  @Provides
+  @Binds
   @IntoSet
-  static ParticleFactory provideEchoParticleFactory(EchoParticleFactory echoParticleFactory) {
-    return echoParticleFactory;
-  }
+  abstract ParticleFactory provideEchoParticleFactory(EchoParticleFactory echoParticleFactory);
 
-  @Provides
+  @Binds
   @IntoSet
-  static ParticleFactory provideCaptureEntityFactory(CaptureEntityFactory captureEntityFactory) {
-    return captureEntityFactory;
-  }
+  abstract ParticleFactory provideCaptureEntityFactory(CaptureEntityFactory captureEntityFactory);
 
-  @Provides
+  @Binds
   @IntoSet
-  static ParticleFactory provideToastParticleFactory(ToastParticleFactory toastParticleFactory) {
-    return toastParticleFactory;
-  }
+  abstract ParticleFactory provideToastParticleFactory(ToastParticleFactory toastParticleFactory);
 }

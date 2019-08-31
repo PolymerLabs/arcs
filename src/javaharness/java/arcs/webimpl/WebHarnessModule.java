@@ -1,8 +1,8 @@
 package arcs.webimpl;
 
-import arcs.api.AlertSurface;
+import arcs.api.AlertService;
 import arcs.api.ArcsEnvironment;
-import arcs.api.ClipboardSurface;
+import arcs.api.ClipboardService;
 import arcs.api.DeviceClient;
 import arcs.api.HandleFactory;
 import arcs.api.HandleFactoryImpl;
@@ -67,8 +67,8 @@ public abstract class WebHarnessModule {
       PortablePromiseFactoryImpl impl);
 
   @Binds
-  public abstract ClipboardSurface provideClipboardSurface(WebClipboardSurface impl);
+  public abstract ClipboardService provideClipboardSurface(WebClipboardService impl);
 
   @Binds
-  public abstract AlertSurface provideAlertSurface(WebAlertSurface impl);
+  public abstract AlertService provideAlertSurface(WebAlertService impl);
 }

@@ -5,8 +5,6 @@ import arcs.api.PortableJson;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,9 +46,8 @@ class PortableJsonAndroidImpl implements PortableJson {
     try {
       return func.apply((JSONArray) jsonObject);
     } catch (JSONException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return null;
   }
 
   @Override
@@ -200,10 +197,12 @@ class PortableJsonAndroidImpl implements PortableJson {
     return this;
   }
 
+  @Override
   public int hashCode() {
     return getRawObj().hashCode();
   }
 
+  @Override
   public boolean equals(Object other) {
     if (!(other instanceof PortableJsonAndroidImpl)) {
       return false;

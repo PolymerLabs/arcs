@@ -2,7 +2,6 @@ package arcs.api;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Random;
 
 /**
  * An immutable object consisting of two components: a root, and an idTree. The root is the session
@@ -86,8 +85,8 @@ public class Id {
 
   // copied from /modalities/dom/components/generate-id.js
   private static long lastPushTime = -1;
-  private static int lastRandChars[] = new int[12];
-  private static final String pushChars =
+  private static int[] lastRandChars = new int[12];
+  private static final String PUSH_CHARS =
       "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
 
   private static String generateId() {
@@ -96,9 +95,9 @@ public class Id {
     boolean duplicateTime = now == lastPushTime;
     lastPushTime = now;
 
-    char timeStampChars[] = new char[8];
+    char[] timeStampChars = new char[8];
     for (int i = 7; i >= 0; i--) {
-      timeStampChars[i] = pushChars.charAt((int) (now % 64));
+      timeStampChars[i] = PUSH_CHARS.charAt((int) (now % 64));
       now = (int) Math.floor(now / 64);
     }
     if (now != 0) throw new AssertionError("We should have converted the entire timestamp.");
@@ -119,7 +118,7 @@ public class Id {
       lastRandChars[i]++;
     }
     for (int i = 0; i < 12; i++) {
-      id += pushChars.charAt(lastRandChars[i]);
+      id += PUSH_CHARS.charAt(lastRandChars[i]);
     }
     return id;
   }

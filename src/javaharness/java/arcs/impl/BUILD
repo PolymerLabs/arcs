@@ -7,9 +7,9 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 android_library(
   name = "impl",
   srcs = glob(["**/*.java"]),
+  javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
   deps = [
       "//java/arcs/api",
-      "@org_json_local//jar",
       "@com_google_dagger",
       "@javax_inject_source//jar",
       "//java/arcs/builtinparticles",

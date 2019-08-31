@@ -1,13 +1,13 @@
 package arcs.webimpl;
 
-import arcs.api.ClipboardSurface;
+import arcs.api.ClipboardService;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class WebClipboardSurface implements ClipboardSurface {
+public class WebClipboardService implements ClipboardService {
 
   @Inject
-  public WebClipboardSurface() {
+  public WebClipboardService() {
   }
 
   @Override
