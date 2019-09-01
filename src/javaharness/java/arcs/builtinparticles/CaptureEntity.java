@@ -7,17 +7,13 @@ import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class CaptureEntity extends ParticleBase {
 
   private PortableJsonParser parser;
   private final ClipboardService clipboardService;
 
-  public CaptureEntity(/*EntityObserver entityObserver*/ PortableJsonParser parser,
-      ClipboardService clipboardService) {
-    //    entityObserver.registerListener(this);
+  public CaptureEntity(PortableJsonParser parser, ClipboardService clipboardService) {
     this.parser = parser;
     this.clipboardService = clipboardService;
   }
@@ -28,46 +24,21 @@ public class CaptureEntity extends ParticleBase {
     Handle handle = handleByName.get("entities");
 
     if ("entities".equals(handle.name)) {
-      clipboardService.listen(text -> {
-        String jsonData = parser.stringify(parser
-            .emptyObject()
-            .put("name", "Google Office")
-            .put("address", text));
-        onEntity(
-            parser
-                .emptyObject()
-                .put("type", "place")
-                .put("source", "com.google.chat")
-                .put(
-                    "jsonData",
-                    jsonData));
-      });
-
+      clipboardService.listen(
+          text -> {
+            String jsonData =
+                parser.stringify(
+                    parser.emptyObject().put("name", "Google Office").put("address", text));
+            onEntity(
+                parser
+                    .emptyObject()
+                    .put("type", "place")
+                    .put("source", "com.google.chat")
+                    .put("jsonData", jsonData));
+          });
     }
   }
 
-  @Override
-  public void onHandleSync(Handle handle, PortableJson model) {
-    Logger.getGlobal().log(Level.SEVERE, "Arcs: onHandleSync name " + handle.name);
-
-//    if ("entities".equals(handle.name)) {
-//      Logger.getGlobal().log(Level.SEVERE, "Arcs: Setting place entity");
-//      String jsonData = parser.stringify(parser
-//          .emptyObject()
-//          .put("name", "Google Office")
-//          .put("address", "325 Spear St, San Francisco, Ca"));
-//      onEntity(
-//          parser
-//              .emptyObject()
-//              .put("type", "place")
-//              .put("source", "com.google.chat")
-//              .put(
-//                  "jsonData",
-//                  jsonData));
-//    }
-  }
-
-//  @Override
   public void onEntity(PortableJson entity) {
     if (!entity.hasKey("type") || entity.getString("type") == null) {
       throw new AssertionError("Incoming entity missing `type`");
