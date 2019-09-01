@@ -1,8 +1,6 @@
 package arcs.api;
 
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Collection extends Handle {
   private final CollectionStore collectionStore;

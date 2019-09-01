@@ -18,7 +18,7 @@ public class AndroidHarnessController implements HarnessController {
     this.deviceClient = deviceClient;
   }
 
-  //  @Override
+  @Override
   public void init() {
     exportDeviceClient();
   }

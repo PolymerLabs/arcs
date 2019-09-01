@@ -6,12 +6,12 @@ import android.content.ClipboardManager;
 import android.content.ClipboardManager.OnPrimaryClipChangedListener;
 import android.content.Context;
 import android.util.Log;
-import arcs.api.ClipboardSurface;
+import arcs.api.ClipboardService;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class AndroidClipboardService implements ClipboardSurface {
+public class AndroidClipboardService implements ClipboardService {
 
   private Context ctx;
   private OnPrimaryClipChangedListener onPrimaryClipChangedListener;

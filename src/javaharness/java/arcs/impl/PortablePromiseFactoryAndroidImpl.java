@@ -12,7 +12,7 @@ public class PortablePromiseFactoryAndroidImpl implements PortablePromiseFactory
 
   @Override
   public <T> PortablePromise<T> newPromise(PortablePromiseExecutor<T> executor) {
-    return new PortablePromiseAndroidImpl(executor);
+    return new PortablePromiseAndroidImpl<>(executor);
   }
 
   @Override

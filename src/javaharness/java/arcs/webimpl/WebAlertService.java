@@ -1,13 +1,13 @@
 package arcs.webimpl;
 
-import arcs.api.AlertSurface;
+import arcs.api.AlertService;
 import javax.inject.Inject;
 import jsinterop.annotations.JsMethod;
 
-public class WebAlertSurface implements AlertSurface {
+public class WebAlertService implements AlertService {
 
   @Inject
-  public WebAlertSurface() {
+  public WebAlertService() {
   }
 
   @Override

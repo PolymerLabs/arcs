@@ -3,6 +3,7 @@ package arcs.impl;
 import arcs.api.PortablePromise;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public class PortablePromiseAndroidImpl<T> implements PortablePromise<T> {
@@ -12,7 +13,7 @@ public class PortablePromiseAndroidImpl<T> implements PortablePromise<T> {
   public PortablePromiseAndroidImpl(PortablePromise.PortablePromiseExecutor<T> executor) {
     this.future = new CompletableFuture<>();
     // TODO(cromwellian): make this injectable policy
-    Executors.newSingleThreadExecutor()
+    Future<?> unused = Executors.newSingleThreadExecutor()
         .submit(
             () -> {
               executor.doInvoke(
@@ -27,7 +28,7 @@ public class PortablePromiseAndroidImpl<T> implements PortablePromise<T> {
 
   @Override
   public PortablePromise<T> then(Consumer<T> onFulfillment) {
-    future.thenAccept(onFulfillment);
+    Future<?> unused = future.thenAccept(onFulfillment);
     return this;
   }
 }

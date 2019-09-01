@@ -1,16 +1,16 @@
 package arcs.builtinparticles;
 
-import arcs.api.AlertSurface;
+import arcs.api.AlertService;
 import arcs.api.Handle;
 import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
 
 public class ToastParticle extends ParticleBase {
 
-  private AlertSurface alertSurface;
+  private AlertService alertService;
 
-  public ToastParticle(AlertSurface alertSurface) {
-    this.alertSurface = alertSurface;
+  public ToastParticle(AlertService alertService) {
+    this.alertService = alertService;
   }
 
   @Override
@@ -25,6 +25,6 @@ public class ToastParticle extends ParticleBase {
 
   //  @Override
   public void onEntity(PortableJson entity) {
-    alertSurface.alert(entity.getString("message"));
+    alertService.alert(entity.getString("message"));
   }
 }

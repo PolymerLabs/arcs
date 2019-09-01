@@ -5,12 +5,14 @@ licenses(["notice"])
 package(default_visibility = ["//java/arcs:__subpackages__"])
 
 load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
+load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
-java_library(
+android_library(
     name = "builtinparticles",
     srcs = glob([
         "*.java",
     ]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//java/arcs/api",
         "@com_google_dagger",

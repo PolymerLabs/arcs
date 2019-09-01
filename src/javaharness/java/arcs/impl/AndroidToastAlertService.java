@@ -2,11 +2,11 @@ package arcs.impl;
 
 import android.content.Context;
 import android.widget.Toast;
-import arcs.api.AlertSurface;
+import arcs.api.AlertService;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class AndroidToastAlertService implements AlertSurface {
+public class AndroidToastAlertService implements AlertService {
 
   private Context appContext;
 

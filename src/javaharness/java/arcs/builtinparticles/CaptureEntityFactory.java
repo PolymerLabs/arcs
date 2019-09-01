@@ -1,26 +1,22 @@
 package arcs.builtinparticles;
 
-import arcs.api.AlertSurface;
-import arcs.api.ClipboardSurface;
+import arcs.api.ClipboardService;
 import arcs.api.Particle;
 import arcs.api.ParticleFactory;
-
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
 
 public class CaptureEntityFactory implements ParticleFactory {
 
   private PortableJsonParser parser;
-  private ClipboardSurface clipboardSurface;
-  private AlertSurface alertSurface;
+  private ClipboardService clipboardService;
 
   //  private final EntityObserver entityObserver;
   // TODO: Inject interfaces particles normally may want in defineParticle (e.g. html, log, etc)
   @Inject
-  public CaptureEntityFactory(PortableJsonParser parser, ClipboardSurface clipboardSurface) {
-//    this.entityObserver = entityObserver;
+  public CaptureEntityFactory(PortableJsonParser parser, ClipboardService clipboardService) {
     this.parser = parser;
-    this.clipboardSurface = clipboardSurface;
+    this.clipboardService = clipboardService;
   }
 
   @Override
@@ -30,6 +26,6 @@ public class CaptureEntityFactory implements ParticleFactory {
 
   @Override
   public Particle createParticle() {
-    return new CaptureEntity(parser /*entityObserver*/, clipboardSurface);
+    return new CaptureEntity(parser, clipboardService);
   }
 }
