@@ -145,7 +145,7 @@ export class SlotComposer {
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
       const context = this.findContextById(consumer.consumeConn.targetSlot.id);
-      assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
+      assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()} (${consumer.consumeConn.targetSlot && consumer.consumeConn.targetSlot.id})`);
       context.addSlotConsumer(consumer);
     });
 
