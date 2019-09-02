@@ -259,10 +259,9 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
   }
   // Sort the add ops in increasing order by the actor's version.
   const addOps = [...fastForwardOp.added].sort(([elem1, v1], [elem2, v2]) => (v1[actor] || 0) - (v2[actor] || 0));
-  const expectedClock = {...fastForwardOp.oldClock};
+  let expectedVersion = fastForwardOp.oldClock[actor];
   for (const [elem, version] of addOps) {
-    expectedClock[actor]++;
-    if (!sameVersions(expectedClock, version)) {
+    if (++expectedVersion !== version[actor]) {
       // The add op didn't match the expected increment-by-one pattern. Can't
       // replay it properly.
       return null;
@@ -270,6 +269,8 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
   }
   // If we reach here then all added versions are incremented by one.
   // Check the final clock.
+  const expectedClock = {...fastForwardOp.oldClock};
+  expectedClock[actor] = expectedVersion;
   if (!sameVersions(expectedClock, fastForwardOp.newClock)) {
     return null;
   }
@@ -289,21 +290,6 @@ function getSingleActorIncrement(oldVersion: VersionMap, newVersion: VersionMap)
   if (Object.keys(oldVersion).length !== Object.keys(newVersion).length) {
     return null;
   }
-  let actor: string | null = null;
-  for (const [k, v1] of Object.entries(oldVersion)) {
-    const v2 = newVersion[k] || 0;
-    if (v1 < v2) {
-      if (actor === null) {
-        actor = k;
-        continue;
-      } else {
-        // Version changed for more than one actor.
-        return null;
-      }
-    } else if (v1 !== v2) {
-      // Some other sort of non-incremental version change happened.
-      return null;
-    }
-  }
-  return actor;
+  const incrementedActors = Object.entries(oldVersion).filter(([k, v]) => newVersion[k] > v);
+  return incrementedActors.length === 1 ? incrementedActors[0][0] : null;
 }
