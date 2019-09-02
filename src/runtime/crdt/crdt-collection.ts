@@ -290,6 +290,6 @@ function getSingleActorIncrement(oldVersion: VersionMap, newVersion: VersionMap)
   if (Object.keys(oldVersion).length !== Object.keys(newVersion).length) {
     return null;
   }
-  const incrementedActors = Object.entries(oldVersion).filter(([k,v]) => newVersion[k] > v);
+  const incrementedActors = Object.entries(oldVersion).filter(([k, v]) => newVersion[k] > v);
   return incrementedActors.length === 1 ? incrementedActors[0][0] : null;
 }
