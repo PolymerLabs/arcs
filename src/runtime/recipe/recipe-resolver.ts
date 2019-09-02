@@ -102,7 +102,7 @@ export class ResolveWalker extends RecipeWalker {
       }
     }
 
-    if (mappable.length === 0) {
+    if (!mappable || mappable.length === 0) {
       return error('Cannot find a handle matching requested type and tags.');
     }
     mappable = mappable.filter(incomingHandle => {

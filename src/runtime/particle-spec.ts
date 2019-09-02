@@ -39,14 +39,15 @@ function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
   return (t instanceof Type) ? t.toLiteral() : t;
 }
 
-export function isRoot({name, tags, id, type}: {name: string, tags: string[], id?: string, type?: Type}): boolean {
+export function isRoot({name, tags, id, type, fate}: {name: string, tags: string[], id?: string, type?: Type, fate?: string}): boolean {
   const rootNames: string[] = [
     'root',
     'toproot',
     'modal'
   ];
 
-  if (type && !type.slandleType()) {
+  // TODO: This should also look at the fate...
+  if ((fate && fate !== '`slot') || (type && !type.slandleType())) {
     // If this is a handle that is not a Slandle, it cannot be a root slot.
     return false;
   }
