@@ -176,8 +176,7 @@ export class Particle implements Comparable<Particle> {
       return false;
     }
     const slandleConnections = Object.values(this.connections).filter(
-      connection => connection.type.isSlot()
-        || (connection.type.isCollectionType() && connection.type.getContainedType().isSlot())
+      connection => Boolean(connection.toSlotConnection())
     );
     if (slandleConnections.length ===0 && this.spec.slotConnections.size > 0) {
       const fulfilledSlotConnections = this.getSlotConnections().filter(connection => connection.targetSlot !== undefined);

@@ -40,10 +40,21 @@ export class ResolveWalker extends RecipeWalker {
       return [];
     };
     const arc = this.arc;
-    if (handle.connections.length === 0 ||
-        (handle.id && handle.storageKey) || (!handle.type) ||
-        (!handle.fate)) {
-      return error('No connections to handle or missing handle information');
+    if (handle.id && handle.storageKey) {
+      // TODO(jopra): REMOVE?
+      error('Handle already mapped');
+    }
+
+    if (handle.connections.length === 0) {
+      error('No connections to handle');
+    }
+
+    if (!handle.type) {
+      return error('Missing handle type');
+    }
+
+    if (!handle.fate) {
+      return error('Missing handle fate');
     }
 
     let mappable;
@@ -109,7 +120,7 @@ export class ResolveWalker extends RecipeWalker {
       // Tracked at https://github.com/PolymerLabs/arcs/issues/3389
       return error('The only handles matching the requested type and tags are already present in this recipe');
     }
-    return mappable.map(store => ((recipe, updateHandle) => {
+    return mappable.map(store => ((recipe, updateHandle: Handle) => {
       updateHandle.mapToStorage(store);
       return 0;
     }));
