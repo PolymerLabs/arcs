@@ -1,9 +1,3 @@
-_RUNNER_SCRIPT = """#!/bin/sh
-set -e
-cd "{repo_root}"
-{cmd}
-"""
-
 def _absolute_path(repo_root, path):
     """Converts path relative to the repo root into an absolute file path."""
     return repo_root + "/" + path
@@ -38,10 +32,13 @@ def _run_in_repo(ctx):
     # Write a shell script to perform the command.
     script_name = ctx.attr.name + ".sh"
     script_file = ctx.actions.declare_file(script_name)
-    ctx.actions.write(
+    ctx.actions.expand_template(
+        template = ctx.file._template,
         output = script_file,
-        content = _RUNNER_SCRIPT.format(repo_root = repo_root, cmd = cmd),
-        is_executable = True,
+        substitutions = {
+            "{repo_root}": repo_root,
+            "{cmd}": cmd,
+        },
     )
 
     # Run the shell script.
@@ -84,6 +81,10 @@ output file respectively.
         ),
         "progress_message": attr.string(
             doc = "Message to display when running the command.",
+        ),
+        "_template": attr.label(
+            default = "run_in_repo_template.sh",
+            allow_single_file = True,
         ),
     },
     doc = """
