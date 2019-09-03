@@ -14,6 +14,7 @@ import {Type} from '../type.js';
 import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
 import {ActiveStore, ProxyCallback, StorageMode, ProxyMessageType, ProxyMessage} from './store-interface.js';
+import {noAwait} from '../util.js';
 
 export enum DirectStoreState {Idle = 'Idle', AwaitingResponse = 'AwaitingResponse', AwaitingResponseDirty = 'AwaitingResponseDirty', AwaitingDriverModel = 'AwaitingDriverModel'}
 
@@ -215,13 +216,13 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
         }
         const change: CRDTChange<T> = {changeType: ChangeType.Operations, operations: message.operations};
         // to make tsetse checks happy
-        const noAwait = this.processModelChange(change, null, this.version, false);
+        noAwait(this.processModelChange(change, null, this.version, false));
         return true;
       }
       case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
         // to make tsetse checks happy
-        const noAwait = this.processModelChange(modelChange, otherChange, this.version, false);
+        noAwait(this.processModelChange(modelChange, otherChange, this.version, false));
         return true;
       }
       default:
