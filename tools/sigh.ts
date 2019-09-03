@@ -605,31 +605,33 @@ function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: 
       cfg.outdir = srcDir;
     }
 
-    const manifestPath = path.join(srcDir, cfg.manifest);
     const srcPaths = ['src/wasm/cpp/arcs.cc', ...cfg.src.map(f => path.join(srcDir, f))];
     const wasmPath = path.join(cfg.outdir, name);
     const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
 
     // Generate the entity class header file from the manifest.
-    const updateFlag = force ? [] : ['--update'];
-    const spawnResult = saneSpawnWithOutput('node', [
-        ...nodeFlags,
-        '--no-warnings',
-        'build/tools/schema2packager.js',
-        ...updateFlag,
-        target,
-        '-d', cfg.outdir,
-        '-f', cfg.genfile,
-        manifestPath
-      ], {logCmd});
-    if (!spawnResult.success) {
-      console.error(spawnResult.stderr);
-      counts.failed++;
-      continue;
+    const deps = ['src/wasm/cpp/arcs.h', ...srcPaths];
+    if (cfg.manifest) {
+      const updateFlag = force ? [] : ['--update'];
+      const spawnResult = saneSpawnWithOutput('node', [
+          ...nodeFlags,
+          '--no-warnings',
+          'build/tools/schema2packager.js',
+          ...updateFlag,
+          target,
+          '-d', cfg.outdir,
+          '-f', cfg.genfile,
+          path.join(srcDir, cfg.manifest)
+        ], {logCmd});
+      if (!spawnResult.success) {
+        console.error(spawnResult.stderr);
+        counts.failed++;
+        continue;
+      }
+      deps.push(spawnResult.stdout.trim());
     }
 
-    const headerPath = spawnResult.stdout.trim();
-    if (!force && targetIsUpToDate(wasmPath, ['src/wasm/cpp/arcs.h', headerPath, ...srcPaths], true)) {
+    if (!force && targetIsUpToDate(wasmPath, deps, true)) {
       continue;
     }
 
