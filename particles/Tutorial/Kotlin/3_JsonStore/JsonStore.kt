@@ -3,7 +3,7 @@ package arcs
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
- * Sample WASM Particle.
+ * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class JsonStoreParticle : Particle() {
 
@@ -13,16 +13,10 @@ class JsonStoreParticle : Particle() {
   }
 
   override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
-    if(res.get() != null) {
-      return model + mapOf(
-        "name" to res.get()!!.name,
-        "age" to res.get()!!.age.toString()
-      )
-    }
     return model + mapOf(
-        "name" to "",
-        "age" to "0"
-      )
+      "name" to res.get()!!.name ?: "",
+      "age" to res.get()!!.age.toString() ?: "0"
+    )   
   } 
 
   override fun onHandleUpdate(handle: Handle) {
@@ -42,7 +36,6 @@ class JsonStoreParticle : Particle() {
 
     override fun getTemplate(slotName: String): String {
         log("getting template")
-        //return """Hello!"""
         return """<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"""
       }
 }
