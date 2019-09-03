@@ -214,12 +214,14 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           }
         }
         const change: CRDTChange<T> = {changeType: ChangeType.Operations, operations: message.operations};
-        void this.processModelChange(change, null, this.version, false);
+        // to make tsetse checks happy
+        const noAwait = this.processModelChange(change, null, this.version, false);
         return true;
       }
       case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
-        void this.processModelChange(modelChange, otherChange, this.version, false);
+        // to make tsetse checks happy
+        const noAwait = this.processModelChange(modelChange, otherChange, this.version, false);
         return true;
       }
       default:

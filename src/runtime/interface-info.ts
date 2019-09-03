@@ -151,7 +151,7 @@ export class InterfaceInfo {
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
-    this.typeVars.map(({object, field}) => object[field] = (object[field] as Type).mergeTypeVariablesByName(variableMap));
+    this.typeVars.forEach(({object, field}) => object[field] = (object[field] as Type).mergeTypeVariablesByName(variableMap));
   }
 
   get canReadSubset() {

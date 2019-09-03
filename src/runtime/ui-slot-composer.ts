@@ -234,7 +234,7 @@ export class UiSlotComposer {
       // build slot id map
       const slotMap = {};
       Object.values(connections).forEach(({providedSlots}) => {
-        Object.values(providedSlots).map(({name, id}) => slotMap[name] = id);
+        Object.values(providedSlots).forEach(({name, id}) => slotMap[name] = id);
       });
       // identify parent container
       const container = Object.values(connections)[0];

@@ -81,7 +81,7 @@ export class DescriptionFormatter {
   // tslint:disable-next-line: no-any
   _combineSelectedDescriptions(selectedDescriptions: ParticleDescription[], options: CombinedDescriptionsOptions = {}) {
     const suggestions = [];
-    selectedDescriptions.map(particle => {
+    selectedDescriptions.forEach(particle => {
       if (!this.seenParticles.has(particle._particle)) {
         suggestions.push(this.patternToSuggestion(particle.pattern, particle));
       }
