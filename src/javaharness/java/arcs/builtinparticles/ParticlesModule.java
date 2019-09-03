@@ -3,7 +3,6 @@ package arcs.builtinparticles;
 import arcs.api.ParticleFactory;
 import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
 import dagger.multibindings.IntoSet;
 import dagger.multibindings.Multibinds;
 import java.util.Set;

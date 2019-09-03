@@ -36,7 +36,7 @@ public class SlotProxy {
     // were fullfilled.
      isRendered = requestedContentTypes.size() == 0 && contentJson.keys().size() == 0;
   }
-  
+
   public boolean isRendered() {
     return isRendered;
   }

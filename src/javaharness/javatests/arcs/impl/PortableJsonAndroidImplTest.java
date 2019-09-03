@@ -3,12 +3,8 @@ package arcs.impl;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
-import static org.junit.Assert.assertEquals;
-
-import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -40,8 +36,8 @@ public class PortableJsonAndroidImplTest {
     obj.put("bool", bool);
     obj.put("obj", innerObj);
 
-    assert new HashSet(Arrays.asList(obj.keys().toArray()))
-        .equals(new HashSet(Arrays.asList(new String[] {"str", "int", "num", "bool", "obj"})));
+    assert new HashSet<>(Arrays.asList(obj.keys().toArray()))
+        .equals(new HashSet<>(Arrays.asList("str", "int", "num", "bool", "obj")));
 
     assert Objects.equals(obj.getString("str"), str);
     System.err.println("int is " + obj.getInt("int") + " vs " + i);

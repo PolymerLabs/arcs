@@ -198,6 +198,12 @@ class PortableJsonAndroidImpl implements PortableJson {
   }
 
   @Override
+  public PortableJson put(int index, PortableJson obj) {
+    array(x -> x.put(index, ((PortableJsonAndroidImpl) obj).getRawObj()));
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return getRawObj().hashCode();
   }
@@ -208,12 +214,6 @@ class PortableJsonAndroidImpl implements PortableJson {
       return false;
     }
     return stringify().equals(((PortableJsonAndroidImpl) other).stringify());
-  }
-
-  @Override
-  public PortableJson put(int index, PortableJson obj) {
-    array(x -> x.put(index, ((PortableJsonAndroidImpl) obj).getRawObj()));
-    return this;
   }
 
   @Override
