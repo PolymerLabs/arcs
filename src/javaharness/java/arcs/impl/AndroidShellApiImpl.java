@@ -9,8 +9,6 @@ import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.ShellApi;
 import java.util.Map;
 import javax.inject.Inject;
-import org.json.JSONObject;
-import org.json.JSONStringer;
 
 /** Exposes Shell (Window) scope methods into Java from JS. */
 public class AndroidShellApiImpl implements ShellApi {

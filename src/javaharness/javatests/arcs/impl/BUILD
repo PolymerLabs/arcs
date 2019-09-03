@@ -1,4 +1,6 @@
 
+licenses(["notice"])
+
 java_test(
     name = "AllTests",
     srcs = glob(["*.java"]),
