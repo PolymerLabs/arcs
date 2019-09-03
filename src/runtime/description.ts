@@ -155,7 +155,7 @@ export class Description {
     return {};
   }
 
-  private static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue>|undefined {
+  private static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue|undefined> {
     if (!store || (store instanceof StorageStub)) {
       return undefined;
     }

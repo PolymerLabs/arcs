@@ -394,7 +394,7 @@ export class RecipeUtil {
         newMatches = newMatches.concat(
             RecipeUtil._assignHandlesToEmptyPosition(shape, match, [thisHandle], nullHandles));
       } else {
-        newMatches.concat(match);
+        newMatches = newMatches.concat(match);
       }
     }
     return newMatches;

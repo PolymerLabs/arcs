@@ -19,6 +19,7 @@ import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
 import {Direction} from '../../runtime/manifest-ast-nodes.js';
 import {Type} from '../../runtime/type.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {Dictionary} from '../../runtime/hot.js';
 
 // This strategy substitutes '&verb' declarations with recipes,
 // according to the following conditions:
@@ -32,7 +33,7 @@ import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 // this strategy currently only connects the first instance of the pattern up
 // if there are multiple instances.
 type HandleConstraint = {handle: Handle, direction: Direction};
-type SlotConstraint = {targetSlot: Slot, providedSlots: Dict<Slot>};
+type SlotConstraint = {targetSlot: Slot, providedSlots: Dictionary<Slot>};
 
 export class MatchRecipeByVerb extends Strategy {
 
@@ -52,7 +53,7 @@ export class MatchRecipeByVerb extends Strategy {
         //
         // Note that slots are only included if connected to other components of the recipe - e.g.
         // the target slot has a source connection.
-        const slotConstraints: Dict<SlotConstraint> = {};
+        const slotConstraints: Dictionary<SlotConstraint> = {};
         for (const consumeSlot of particle.getSlotConnections()) {
           const targetSlot = consumeSlot.targetSlot && consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
           slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
@@ -177,7 +178,7 @@ export class MatchRecipeByVerb extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  static satisfiesHandleConstraints(recipe: Recipe, handleConstraints: {named: Dict<HandleConstraint>, unnamed: HandleConstraint[]}) {
+  static satisfiesHandleConstraints(recipe: Recipe, handleConstraints: {named: Dictionary<HandleConstraint>, unnamed: HandleConstraint[]}) {
     for (const handleName in handleConstraints.named) {
       if (!MatchRecipeByVerb.satisfiesHandleConnection(
               recipe, handleName, handleConstraints.named[handleName])) {
@@ -250,7 +251,7 @@ export class MatchRecipeByVerb extends Strategy {
     return Boolean(Handle.effectiveType(handleConstraint.handle.mappedType, connections));
   }
 
-  static satisfiesSlotConstraints(recipe: Recipe, slotConstraints: Dict<SlotConstraint>): boolean {
+  static satisfiesSlotConstraints(recipe: Recipe, slotConstraints: Dictionary<SlotConstraint>): boolean {
     for (const slotName in slotConstraints) {
       if (!MatchRecipeByVerb.satisfiesSlotConnection(
               recipe, slotName, slotConstraints[slotName])) {
