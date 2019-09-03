@@ -2,7 +2,9 @@
 package(default_visibility = ["//java/arcs:__subpackages__",
                               "//javatests/arcs:__subpackages__"])
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+licenses(["notice"])
+
+load("@build_bazel_rules_android//android:rules.bzl", "android_library", "android_binary")
 
 android_library(
   name = "impl",
@@ -25,6 +27,7 @@ android_binary(
     name = "app",
     manifest = "AndroidManifest.xml",
     deps = [":impl"],
+    licenses = ["notice"],
     dexopts = ["--min-sdk-version=24", "--target-sdk-version=26"],
 )
 
