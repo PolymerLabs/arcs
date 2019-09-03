@@ -17,6 +17,11 @@ def arcs_cc_schema(name, src, out = None):
         name = name,
         srcs = [src],
         outs = [out],
-        cmd = "./tools/sigh schema2pkg --cpp --outdir / --outfile {OUT} {SRC}",
+        # TODO: generated header guard should contain whole workspace-relative
+        # path to file.
+        cmd = "./tools/sigh schema2pkg --cpp " +
+              "--outdir $(dirname {OUT}) " +
+              "--outfile $(basename {OUT}) " +
+              "{SRC}",
         progress_message = "Generating C++ entity schemas",
     )
