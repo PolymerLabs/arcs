@@ -20,6 +20,9 @@ _emscripten_args = [
     "EXPORTED_FUNCTIONS=['_malloc','_free']",
     "-s",
     "EMIT_EMSCRIPTEN_METADATA",
+    # For workspace-relative #includes:
+    "-I",
+    ".",
 ]
 
 def _collect_deps(srcs, hdrs, deps):
@@ -37,9 +40,6 @@ def _collect_deps(srcs, hdrs, deps):
 def _cc_wasm_binary(ctx):
     args = ctx.actions.args()
     args.add_all(_emscripten_args)
-
-    # For workspace-relative #includes.
-    args.add("-I", ".")
 
     # For generated #includes.
     args.add("-I", ctx.genfiles_dir.path)
