@@ -117,10 +117,12 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
 
     layout.init();
 
+    // We need to observe the body for changes as opposed to #main, because when the viewport
+    // shrinks #main will not shrink if it is filled with content, body however will.
     new ResizeObserver(rects => {
       const {height, width} = rects[0].contentRect;
-      layout.updateSize(width, height);
-    }).observe(this.$.main);
+      layout.updateSize(width, height - this.$.header.offsetHeight);
+    }).observe(document.body);
   }
 }
 
