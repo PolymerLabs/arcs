@@ -9,7 +9,7 @@ load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 android_library(
-    name = "api",
+    name = "api-android",
     srcs = glob([
         "*.java",
     ]),
@@ -17,7 +17,7 @@ android_library(
     deps = [
         "@com_google_dagger",
         "@javax_inject_source//jar",
-        "//java/arcs/crdt:crdt",
+        "//java/arcs/crdt:crdt-android",
     ],
 )
 

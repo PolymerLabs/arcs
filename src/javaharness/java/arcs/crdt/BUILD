@@ -8,7 +8,7 @@ load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 android_library(
-    name = "crdt",
+    name = "crdt-android",
     srcs = glob([
         "*.java",
     ]),

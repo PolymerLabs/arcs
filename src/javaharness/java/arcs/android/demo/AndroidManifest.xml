@@ -1,0 +1,23 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="arcs.android.demo"
+  android:versionCode="1"
+  android:versionName="1.0">
+
+  <uses-permission android:name="android.permission.INTERNET"/>
+
+  <uses-sdk
+    android:minSdkVersion="28"
+    android:targetSdkVersion="28"/>
+
+  <application
+    android:label="Arcs Harness App">
+    <activity
+      android:name=".MainActivity"
+      android:label="ArcsHarnessApp">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>
