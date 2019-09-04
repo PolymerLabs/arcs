@@ -16,7 +16,7 @@ import {VolatileSingleton, VolatileCollection} from '../../../runtime/storage/vo
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
 
 const schemasFile = 'src/wasm/cpp/tests/schemas.arcs';
-const wasmFile = 'build/wasm/cpp/tests/test-module.wasm';
+const buildDir = 'build/wasm/cpp/tests';
 
 class TestLoader extends Loader {
   resolve(path: string) {
@@ -55,7 +55,7 @@ describe('wasm tests (C++)', () => {
     const {arc, stores} = await setup(`
       import '${schemasFile}'
 
-      particle HandleSyncUpdateTest in '${wasmFile}'
+      particle HandleSyncUpdateTest in '${buildDir}/test-module.wasm'
         in Data input1
         in Data input2
         out [Data] output
@@ -95,7 +95,7 @@ describe('wasm tests (C++)', () => {
     const {arc, stores, slotComposer} = await setup(`
       import '${schemasFile}'
 
-      particle RenderTest in '${wasmFile}'
+      particle RenderTest in '${buildDir}/test-module.wasm'
         consume root
         in RenderFlags flags
 
@@ -135,7 +135,7 @@ describe('wasm tests (C++)', () => {
         [{"txt": "initial"}]
       store DataStore of Data in DataResource
 
-      particle AutoRenderTest in '${wasmFile}'
+      particle AutoRenderTest in '${buildDir}/test-module.wasm'
         consume root
         in Data data
 
@@ -164,7 +164,7 @@ describe('wasm tests (C++)', () => {
     const {arc, stores, slotComposer} = await setup(`
       import '${schemasFile}'
 
-      particle EventsTest in '${wasmFile}'
+      particle EventsTest in '${buildDir}/test-module.wasm'
         consume root
         out Data output
 
@@ -187,7 +187,7 @@ describe('wasm tests (C++)', () => {
     const {stores} = await setup(`
       import '${schemasFile}'
 
-      particle ServicesTest in '${wasmFile}'
+      particle ServicesTest in '${buildDir}/test-module.wasm'
         out [ServiceResponse] output
 
       recipe
@@ -220,7 +220,7 @@ describe('wasm tests (C++)', () => {
     assertThrowsAsync(async () => await setup(`
       import '${schemasFile}'
 
-      particle MissingRegisterHandleTest in '${wasmFile}'
+      particle MissingRegisterHandleTest in '${buildDir}/test-module.wasm'
         in Data input
 
       recipe
@@ -233,7 +233,7 @@ describe('wasm tests (C++)', () => {
     const {stores} = await setup(`
       import '${schemasFile}'
 
-      particle EntityClassApiTest in '${wasmFile}'
+      particle EntityClassApiTest in '${buildDir}/test-module.wasm'
         out [Data] errors
 
       recipe
@@ -251,7 +251,7 @@ describe('wasm tests (C++)', () => {
     const {stores} = await setup(`
       import '${schemasFile}'
 
-      particle SpecialSchemaFieldsTest in '${wasmFile}'
+      particle SpecialSchemaFieldsTest in '${buildDir}/test-module.wasm'
         out [Data] errors
 
       recipe
@@ -263,5 +263,22 @@ describe('wasm tests (C++)', () => {
     if (errors.length > 0) {
       assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
     }
+  });
+
+  it('schemaless manifests', async () => {
+    const {arc, stores, slotComposer} = await setup(`
+      import '${schemasFile}'
+
+      particle SchemalessTest in '${buildDir}/schemaless.wasm'
+        consume root
+
+      recipe
+        slot 'rootslotid-root' as slot1
+        SchemalessTest
+          consume root as slot1
+      `);
+    assert.deepStrictEqual(slotComposer.received, [
+      ['SchemalessTest', 'root', {template: 'no schemas here!', model: {}}],
+    ]);
   });
 });

@@ -4,5 +4,9 @@
     "genfile": "entities.h",
     "src": ["particle-api.cc", "entity-class.cc"],
     "outdir": "build/wasm/cpp/tests"
+  },
+  "schemaless.wasm": {
+    "src": ["schemaless.cc"],
+    "outdir": "build/wasm/cpp/tests"
   }
 }
