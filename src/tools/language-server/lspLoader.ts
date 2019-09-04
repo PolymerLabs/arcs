@@ -10,14 +10,14 @@
 import fs from 'fs';
 import path from 'path';
 
-import {LanguageServiceContext} from './util.js';
+import {Logger} from './util.js';
 import {Loader} from '../../runtime/loader.js';
 
 export class LspLoader extends Loader {
-  context: LanguageServiceContext;
-  constructor(context: LanguageServiceContext) {
+  logger: Logger;
+  constructor(logger: Logger) {
     super();
-    this.context = context;
+    this.logger = logger;
   }
 
   path(fileName: string): string {
@@ -38,12 +38,12 @@ export class LspLoader extends Loader {
   async loadResource(fileName: string): Promise<string> {
   return new Promise((resolve, reject) => {
     fs.readFile(fileName, {encoding: 'utf-8'}, (err, data: string) => {
-      this.context.logger.info(`Finished reading file ${fileName}`);
+      this.logger.info(`Finished reading file ${fileName}`);
       if (err || !data) {
-        this.context.logger.error(`Error reading file ${fileName}`);
+        this.logger.error(`Error reading file ${fileName}`);
         reject(err);
       }
-      this.context.logger.info(`Success reading file ${fileName}`);
+      this.logger.info(`Success reading file ${fileName}`);
       resolve(data);
     });
   });
