@@ -13,9 +13,11 @@ class JsonStoreParticle : Particle() {
   }
 
   override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
+    val person = res.get() ?: PersonDetails("", 0.0);
+
     return model + mapOf(
-      "name" to res.get()!!.name ?: "",
-      "age" to res.get()!!.age.toString() ?: "0"
+      "name" to person.name,
+      "age" to person.age.toString()
     )   
   } 
 
@@ -25,24 +27,24 @@ class JsonStoreParticle : Particle() {
 
   override fun onHandleSync(handle: Handle, willSync: Boolean) {
     if(willSync) {
-      log("All handles synched\n")
+      log("All handles synched")
       renderSlot("root")
     }
   }
 
-    private fun console(s: String) {
-      log(s)
-    }
+  private fun console(s: String) {
+    log(s)
+  }
 
-    override fun getTemplate(slotName: String): String {
-        log("getting template")
-        return """<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"""
-      }
+  override fun getTemplate(slotName: String): String {
+    log("getting template")
+      return """<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"""
+  }
 }
 
 @Retain
 @ExportForCppRuntime("_newJsonStoreParticle")
 fun constructJsonStoreParticle(): WasmAddress {
-    log("_newJsonStoreParticle called")
-    return JsonStoreParticle().toWasmAddress()
+  log("_newJsonStoreParticle called")
+  return JsonStoreParticle().toWasmAddress()
 }
