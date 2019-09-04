@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border: 8px solid lightblue;
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+  line-height: 120%;
+}
+
+[container] {
+  box-sizing: border-box;
+  display: flex;
+  margin: 16px;
+}
+
+[row] {
+  flex-direction: column;
+}
+
+[flex] {
+  flex: 1;
+}
+
+[orange] {
+  border: 3px solid orange;
+}
+
+[purple] {
+  border: 3px solid purple;
+}
+
+span {
+  display: block;
+  padding: 4px;
+}
+
+[bold] {
+  font-weight: bold;
+}
+
+[big] {
+  font-size: 130%;
+}
