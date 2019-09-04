@@ -84,10 +84,10 @@ cc_wasm_binary = rule(
     doc = "Builds a wasm binary from C++",
 )
 
-# cc_wasm_library just holds on to source / header files. It doesn't try to
-# compile anything.
-# TODO(team): Consider implementing support for the dynamic linking spec;
-# then built libraries could be re-used rather than passing sources around.
+# cc_wasm_library just collects sources and headers, it doesn't actually build
+# anything.
+# TODO: make this build some sort of static/dynamic library that we can link
+# into the final binary.
 def _cc_wasm_library(ctx):
     srcs, hdrs = _collect_deps(
         srcs = ctx.files.srcs,
