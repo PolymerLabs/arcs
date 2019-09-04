@@ -90,7 +90,6 @@ public:
     output_.set(&out);
   }
 
-private:
   arcs::Singleton<arcs::Data> output_;
 };
 
@@ -115,7 +114,8 @@ public:
     serviceRequest("clock.now", {{"timeUnit", "DAYS"}});
   }
 
-  void serviceResponse(const std::string& call, const arcs::Dictionary& response, const std::string& tag) override {
+  void serviceResponse(
+      const std::string& call, const arcs::Dictionary& response, const std::string& tag) override {
     std::string payload;
     for (const auto& pair : response) {
       payload += pair.first + ":" + pair.second + ";";
@@ -128,7 +128,6 @@ public:
     output_.store(&out);
   }
 
-private:
   arcs::Collection<arcs::ServiceResponse> output_;
 };
 
@@ -152,7 +151,6 @@ public:
     data_.set(&data);
   }
 
-private:
   arcs::Singleton<arcs::Data> data_;
 };
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <functional>
 #include <memory>
 
 namespace arcs {
@@ -112,7 +113,27 @@ void decode_entity(T* entity, const char* str) {
 template<typename T>
 std::string encode_entity(const T& entity) {
   static_assert(sizeof(T) == 0, "Only schema-specific implementations of encode_entity can be used");
+  return "";
 }
+
+// Hash combining borrowed from Boost.
+template<typename T>
+void hash_combine(std::size_t& seed, const T& v) {
+  #if SIZE_WIDTH == 64
+    static constexpr size_t magic = 0x9e3779b97f4a7c15;
+  #else
+    static constexpr size_t magic = 0x9e3779b9;
+  #endif
+  seed ^= std::hash<T>()(v) + magic + (seed << 6) + (seed >> 2);
+}
+
+class TestHelper {
+public:
+  template<typename T>
+  static void set_id(T* entity, const std::string& id) {
+    entity->_internal_id_ = id;
+  }
+};
 
 }  // namespace internal
 
@@ -142,14 +163,16 @@ T clone_entity(const T& entity) {
 
 // Returns whether two entities have the same data fields set (does not compare internal ids).
 template<typename T>
-bool entities_equal(const T& a, const T& b) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of entities_equal can be used");
+bool fields_equal(const T& a, const T& b) {
+  static_assert(sizeof(T) == 0, "Only schema-specific implementations of fields_equal can be used");
+  return false;
 }
 
 // Converts an entity to a string. Unset fields are omitted.
 template<typename T>
 std::string entity_to_str(const T& entity, const char* join = ", ") {
   static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
+  return "";
 }
 
 // Strips trailing zeros, and the decimal point for integer values.
