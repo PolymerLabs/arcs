@@ -13,7 +13,7 @@ import minimist from 'minimist';
 import {Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
-import {Utils} from '../../shells/lib/runtime/utils.js';
+import {Utils} from '../../shells/lib/utils.js';
 
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {}
