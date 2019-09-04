@@ -9,6 +9,17 @@
  */
 
 export const Schemas = {
+  IncomingEntity: {
+    tag: 'Entity',
+    data: {
+      names: ['IncomingEntity'],
+      fields: {
+        type: 'Text',
+        source: 'Text',
+        jsonData: 'Text'
+      }
+    }
+  },
   PipeEntity: {
     tag: 'Entity',
     data: {

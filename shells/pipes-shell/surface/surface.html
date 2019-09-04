@@ -1,0 +1,26 @@
+<!doctype html>
+
+<style>
+  body {
+    margin: 0;
+    box-sizing: border-box;
+  }
+  [slotid="modal"] {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+</style>
+
+<link rel="stylesheet" href="./index.css">
+
+<div slotid="top" id="rootslotid-top"></div>
+<div slotid="root" id="rootslotid-root"></div>
+<div slotid="modal" id="rootslotid-modal"></div>
+
+<script type="module" src="./surface.js"></script>
+

@@ -12,9 +12,12 @@ import {logFactory} from '../../../build/runtime/log-factory.js';
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {ArcHost} from '../../lib/components/arc-host.js';
 import {portIndustry} from './pec-port.js';
+// TODO(sjmiles): controversial `sharing` model for accessing arc data
+import {Sharing} from './sharing.js';
 
 const id = 'ingestion-arc';
-const manifest = `import 'https://$particles/PipeApps/Ingestion.arcs'`;
+const manifest = `import 'https://$particles/Pipes/Ingestion.arcs'`;
+//const manifest = ``;
 
 const log = logFactory(id);
 
@@ -30,5 +33,8 @@ const initIngestionArc = async (storage, bus) => {
   // TODO(sjmiles): use ArcHost because it supports serialization, this core support should be available
   // via something lower-level (Utils? other lib?)
   const host = new ArcHost(null, storage, new RamSlotComposer(), [portIndustry(bus)]);
-  return await host.spawn({id, manifest});
+  const arc = await host.spawn({id, manifest});
+  // TODO(sjmiles): controversial `sharing` model for accessing arc data
+  await Sharing.init(arc);
+  return arc;
 };

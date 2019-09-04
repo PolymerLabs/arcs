@@ -9,10 +9,10 @@
  */
 
 import {generateId} from '../../../../modalities/dom/components/generate-id.js';
-import {logsFactory} from '../../../../build/runtime/log-factory.js';
 import {Utils} from '../../../lib/utils.js';
 import {marshalOutput} from '../lib/utils.js';
 import {portIndustry} from '../pec-port.js';
+import {logsFactory} from '../../../../build/runtime/log-factory.js';
 
 const {warn} = logsFactory('pipe');
 
@@ -27,9 +27,11 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
       context,
       //storage,
       id: generateId(),
-      composer: composerFactory(modality),
+      composer: composerFactory(modality, bus, tid),
       portFactories: [portIndustry(bus)]
     });
+    // TODO(sjmiles): why is this here?
+    //arc.tid = tid;
     // optionally instantiate recipe
     if (action) {
       if (await instantiateRecipe(arc, action)) {
@@ -37,6 +39,15 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
       }
     }
     return arc;
+  }
+};
+
+export const instantiateRecipeByName = async (arc, name) => {
+  const recipe = arc.context.allRecipes.find(r => r.name === name);
+  if (!recipe) {
+    warn(`found no recipes matching [${name}]`);
+  } else {
+    await instantiateRecipe(arc, recipe);
   }
 };
 
@@ -55,8 +66,14 @@ const observeOutput = async (tid, bus, arc) => {
   for (let i=0; i<20; i++) {
     const entity = await marshalOutput(arc);
     if (entity) {
-      const data = JSON.parse(entity.rawData.json);
+      let data = {};
+      try {
+       data = JSON.parse(entity.rawData.json);
+      } catch (x) {
+        //
+      }
       bus.send({message: 'data', tid, data});
     }
   }
 };
+

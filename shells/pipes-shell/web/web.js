@@ -24,6 +24,8 @@ import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {findContainers} from '../source/lib/utils.js';
 import {initPipe, initArcs} from '../source/pipe.js';
 import {smokeTest} from '../source/smoke.js';
+// fetch override that supports file
+import '../source/lib/fetch-local.js';
 
 console.log(`${version} -- ${storage}`);
 

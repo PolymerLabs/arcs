@@ -21,12 +21,18 @@ export const smokeTest = async bus => {
     }
   };
   //
+  const ingestionTest = () => {
+    // ingest an arc
+    bus.receive({message: 'ingest', data: {foo: 3}});
+  };
+  //
   const notificationTest = () => {
     // spawn an arc
     bus.receive({message: 'spawn', modality: 'dom', recipe: 'NotificationTest'});
   };
   //
   enqueue([
+    ingestionTest,
     notificationTest
   ], 500);
 };
