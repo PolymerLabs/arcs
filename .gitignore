@@ -47,3 +47,4 @@ bazel-arcs
 .bazelrc
 .ijwb
 .sighdeps
+**/.aswb/**
