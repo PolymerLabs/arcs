@@ -28,17 +28,35 @@ type Result = {
 
 export class ArcStoresFetcher {
   private arc: Arc;
+  private arcDevtoolsChannel: ArcDevtoolsChannel;
+  private watchedHandles: Set<string> = new Set();
   
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     this.arc = arc;
+    this.arcDevtoolsChannel = arcDevtoolsChannel;
 
     arcDevtoolsChannel.listen('fetch-stores', async () => arcDevtoolsChannel.send({
       messageType: 'fetch-stores-result',
-      messageBody: await this._listStores()
+      messageBody: await this.listStores()
     }));
   }
 
-  async _listStores() {
+  onRecipeInstantiated() {
+    for (const store of this.arc._stores) {
+      if (!this.watchedHandles.has(store.id)) {
+        this.watchedHandles.add(store.id);
+        store.on('change', async () => this.arcDevtoolsChannel.send({
+          messageType: 'store-value-changed',
+          messageBody: {
+            id: store.id.toString(),
+            value: await this.dereference(store)
+          }
+        }), this);
+      }
+    }
+  }
+
+  private async listStores() {
     const find = (manifest: Manifest): [StorageStub, string[]][] => {
       let tags = [...manifest.storeTags];
       if (manifest.imports) {
@@ -47,27 +65,14 @@ export class ArcStoresFetcher {
       return tags;
     };
     return {
-      arcStores: await this._digestStores([...this.arc.storeTags]),
-      contextStores: await this._digestStores(find(this.arc.context))
+      arcStores: await this.digestStores([...this.arc.storeTags]),
+      contextStores: await this.digestStores(find(this.arc.context))
     };
   }
 
-  async _digestStores(stores: [StorageProviderBase | StorageStub, string[] | Set<string>][]) {
+  private async digestStores(stores: [StorageProviderBase | StorageStub, string[] | Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
-      // tslint:disable-next-line: no-any
-      let value: any;
-      if ((store as CollectionStorageProvider).toList) {
-        value = await (store as CollectionStorageProvider).toList();
-      } else if ((store as SingletonStorageProvider).get) {
-        value = await (store as SingletonStorageProvider).get();
-      } else {
-        value = `(don't know how to dereference)`;
-      }
-      // TODO: Fix issues with WebRTC message splitting.
-      if (JSON.stringify(value).length > 50000) {
-        value = 'too large for WebRTC';
-      }
       result.push({
         name: store.name,
         tags: tags ? [...tags] : [],
@@ -75,9 +80,20 @@ export class ArcStoresFetcher {
         storage: store.storageKey,
         type: store.type,
         description: store.description,
-        value
+        value: await this.dereference(store)
       });
     }
     return result;
+  }
+
+  // tslint:disable-next-line: no-any
+  private async dereference(store: StorageProviderBase | StorageStub): Promise<any> {
+    if ((store as CollectionStorageProvider).toList) {
+      return (store as CollectionStorageProvider).toList();
+    } else if ((store as SingletonStorageProvider).get) {
+      return (store as SingletonStorageProvider).get();
+    } else {
+      return `(don't know how to dereference)`;
+    }
   }
 }

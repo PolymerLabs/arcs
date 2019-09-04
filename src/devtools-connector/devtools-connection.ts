@@ -40,7 +40,7 @@ export class DevtoolsConnection {
 }
 
 export class DevtoolsForTests {
-  static get channel() {
+  static get channel(): DevtoolsChannelStub {
     return channel;
   }
   static ensureStub() {

@@ -36,13 +36,12 @@ export const devtoolsArcInspectorFactory: ArcInspectorFactory = {
 };
 
 class DevtoolsArcInspector implements ArcInspector {
-
-  private arcDevtoolsChannel: DevtoolsChannel = null;
   private arc: Arc;
-
+  private arcDevtoolsChannel: DevtoolsChannel = null;
   private onceActiveResolve: Runnable|null = null;
+  private storesFetcher: ArcStoresFetcher;
   public onceActive: Promise<void>|null = null;
-  
+
   constructor(arc: Arc) {
     if (arc.isStub) return;
 
@@ -61,9 +60,10 @@ class DevtoolsArcInspector implements ArcInspector {
 
       this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
 
-      const unused1 = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
-      const unused2 = new ArcPlannerInvoker(arc, this.arcDevtoolsChannel);
-      const unused3 = new HotCodeReloader(arc, this.arcDevtoolsChannel);
+      this.storesFetcher = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
+
+      const unused1 = new ArcPlannerInvoker(arc, this.arcDevtoolsChannel);
+      const unused2 = new HotCodeReloader(arc, this.arcDevtoolsChannel);
 
       this.arcDevtoolsChannel.send({
         messageType: 'arc-available',
@@ -80,6 +80,7 @@ class DevtoolsArcInspector implements ArcInspector {
 
   public recipeInstantiated(particles: Particle[], activeRecipe: string) {
     if (!DevtoolsConnection.isConnected) return;
+    this.storesFetcher.onRecipeInstantiated();
 
     type TruncatedSlot = {id: string, name: string};
     const truncate = ({id, name}: Slot) => ({id, name});

@@ -14,8 +14,8 @@ import './common/object-explorer.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 function nameCompare(x, y) {
-  const nameA = x.name.toUpperCase();
-  const nameB = y.name.toUpperCase();
+  const nameA = (x.name || '').toUpperCase();
+  const nameB = (y.name || '').toUpperCase();
   if (nameA < nameB) return -1;
   if (nameA > nameB) return 1;
   return 0;
