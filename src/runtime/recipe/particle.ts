@@ -227,7 +227,7 @@ export class Particle implements Comparable<Particle> {
   set id(id: Id) { assert(!this._id, 'Particle ID can only be set once.'); this._id = id; }
   get name() { return this._name; }
   set name(name) { this._name = name; }
-  get connections(): Dict<HandleConnection> { return this._connections; } // {parameter -> HandleConnection}
+  get connections(): Dictionary<HandleConnection> { return this._connections; } // {parameter -> HandleConnection}
   get unnamedConnections() { return this._unnamedConnections; } // HandleConnection*
   get primaryVerb() { return (this._verbs.length > 0) ? this._verbs[0] : undefined; }
   set verbs(verbs: string[]) { this._verbs = verbs; }

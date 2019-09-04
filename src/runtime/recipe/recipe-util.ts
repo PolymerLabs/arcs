@@ -400,7 +400,7 @@ export class RecipeUtil {
     return newMatches;
   }
 
-  static find(recipe: Recipe, shape: Shape): {match: Dict<RecipeUtilComponent>, score: number}[] {
+  static find(recipe: Recipe, shape: Shape): {match: Dictionary<RecipeUtilComponent>, score: number}[] {
     // Particles and Handles are initially stored by a forward map from
     // shape component to recipe component.
     // Handle connections, particles and handles are also stored by a reverse map
@@ -448,7 +448,7 @@ export class RecipeUtil {
     }
 
     return matches.map((match: {forward: Map<RecipeComponent, RecipeUtilComponent>, score: number}) => {
-      const result: Dict<RecipeUtilComponent> = {};
+      const result: Dictionary<RecipeUtilComponent> = {};
       match.forward.forEach((value: RecipeUtilComponent, key: RecipeComponent) => result[shape.reverse.get(key)] = value);
       return {match: result, score: match.score};
     });
