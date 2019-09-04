@@ -16,7 +16,7 @@ import {VolatileSingleton, VolatileCollection} from '../../../runtime/storage/vo
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
 
 const schemasFile = 'src/wasm/cpp/tests/schemas.arcs';
-const buildDir = 'build/wasm/cpp/tests';
+const buildDir = 'bazel-bin/src/wasm/cpp/tests';
 
 class TestLoader extends Loader {
   resolve(path: string) {
@@ -43,12 +43,12 @@ async function setup(manifestString) {
   return {arc, stores: info.stores, slotComposer: arc.pec.slotComposer as RozSlotComposer};
 }
 
-describe('wasm tests (C++)', () => {
+describe.only('wasm tests (C++)', () => {
   // TODO: https://github.com/PolymerLabs/arcs/issues/3418
   before(function() {
-    if (!global['testFlags'].enableWasm) {
-      this.skip();
-    }
+    // if (!global['testFlags'].enableWasm) {
+    //   this.skip();
+    // }
   });
 
   it('onHandleSync / onHandleUpdate', async () => {

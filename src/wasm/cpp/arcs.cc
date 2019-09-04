@@ -1,4 +1,4 @@
-#include <arcs.h>
+#include "src/wasm/cpp/arcs.h"
 #include <cstring>
 
 namespace arcs {
