@@ -7,10 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-defineParticle(({UiParticle, html}) => {
-  return class extends UiParticle {
+
+'use strict';
+
+defineParticle(({DomParticle}) => {
+  return class extends DomParticle {
     get template() {
-      return html`Child`;
+      return '&nbsp;';
     }
   };
 });

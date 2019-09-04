@@ -7,18 +7,18 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-defineParticle(({DomParticle, html}) => {   
-  return class extends DomParticle {
+defineParticle(({UiParticle, html}) => {
+  return class extends UiParticle {
     get template() {
       return html`Hello <span>{{name}}</span>, aged <span>{{age}}</span>!`;
     }
 
     // Return true if the input data is valid and we should render to the template. The "props" object contains all of the inputs to the
     // particle. In this case, there's only one input, called "inputData".
-    shouldRender(props) {
-      // Here we check that props is not null/undefined, and that it contains the expected inputData. This is what the render function below
+    shouldRender({inputData}) {
+      // Here we check that props contains the expected inputData. This is what the render function below
       // needs.
-      return props && props.inputData;
+      return inputData;
     }
 
     // The render function is called with the same "props" argument as shouldRender, but here we destructure it into {inputData} to access the

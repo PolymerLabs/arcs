@@ -12,11 +12,15 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {   
+defineParticle(({UiParticle, html}) => {
 
-const template = html`Hello, <span>{{name}}</span>!`;
+const template = html`
 
-  return class extends DomParticle {
+Hello, <span>{{name}}</span>!
+
+`;
+
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -31,6 +35,6 @@ const template = html`Hello, <span>{{name}}</span>!`;
         name: person.name,
       };
     }
-    
+
   };
 });

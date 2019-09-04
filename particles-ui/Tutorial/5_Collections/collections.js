@@ -7,15 +7,15 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-defineParticle(({DomParticle, html}) => {   
-  return class extends DomParticle {
+defineParticle(({UiParticle, html}) => {
+  return class extends UiParticle {
     get template() {
       // This template defines a subtemplate called "person". By filling in the "people" placeholder with a special construction given below in
       // the render() method, we can apply the "person" template on every element in our input list (which here turns it into an <li> element).
       return html`
         Hello to everyone:
         <ul>{{people}}</ul>
-      
+
         <template person>
           <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->
           <li>Hello <span>{{name}}</span>, age <span>{{age}}</span>!</li>
@@ -23,8 +23,8 @@ defineParticle(({DomParticle, html}) => {
       `;
     }
 
-    shouldRender(props) {
-      return props && props.inputData;
+    shouldRender({inputData}) {
+      return inputData;
     }
 
     // inputData is a list of PersonDetails objects.

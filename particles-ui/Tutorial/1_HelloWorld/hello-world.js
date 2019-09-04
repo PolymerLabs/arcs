@@ -8,15 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// The JavaScript code for the Hello World particle. This is mostly boilerplate for defining a new particle using the DomParticle class, which
+// The JavaScript code for the Hello World particle. This is mostly boilerplate for defining a new particle using the UiParticle class, which
 // is a subclass of Particle that provides convenient methods for rendering to the DOM. (There are other more basic ways to render to the DOM,
-// but DomParticle provides a nice abstraction for it, similar to React).
+// but UiParticle provides a nice abstraction for it, similar to React).
 
-defineParticle(({DomParticle, html}) => {
-  return class extends DomParticle {
+defineParticle(({UiParticle, html}) => {
+  return class extends UiParticle {
     // Getter function which returns static HTML to display. In later tutorials we'll see how to use the templating functionality this provides.
     get template() {
-      // You can use the html helper like so to render HTML:
+      // You can use the html helper to hint your syntax-highlighting editor that string contains HTML code
       return html`<b>Hello, world!</b>`;
     }
   };
