@@ -1,0 +1,80 @@
+buildscript {
+    ext.serialization_version = "0.12.0"
+
+    repositories {
+        mavenCentral()
+        jcenter()
+
+        maven { url "https://dl.bintray.com/jetbrains/kotlin-native-dependencies" }
+        maven { url "https://kotlin.bintray.com/kotlin-eap" }
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://polymerlabs.bintray.com/arcs" }
+        afterEvaluate {
+            maven {
+                url "https://kotlin.bintray.com/kotlinx"
+                credentials {
+                    username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
+                    password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
+                }
+            }
+        }
+    }
+    dependencies {
+        classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+    }
+}
+
+// see ../settings.gradle so this plugins could be resolved
+plugins {
+    id 'kotlin-multiplatform'
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+}
+
+group 'arcs-wasm'
+version '0.0.1'
+
+kotlin {
+    wasm32("particle")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('common')
+        }
+    }
+
+    wasm32("HelloWorld")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('1_HelloWorld')
+
+        }
+    }
+
+    wasm32("BasicTemplates")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('2_BasicTemplates')
+
+        }
+    }
+
+    wasm32("JsonStore")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('3_JsonStore')
+
+        }
+    }
+
+    wasm32()
+    targets {
+        fromPreset(presets.wasm32, 'wasm32') {
+            compilations.main.outputKinds 'EXECUTABLE'
+            compilations.main.entryPoint 'arcs.main'
+        }
+    }
+}
+

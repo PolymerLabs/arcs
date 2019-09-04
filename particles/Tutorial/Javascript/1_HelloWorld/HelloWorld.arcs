@@ -12,4 +12,4 @@ recipe HelloWorldRecipe
   HelloWorldParticle
 
   // This sets a nicer name for our recipe in the shell. Otherwise it would be displayed as "HelloWorldRecipe".
-  description `Tutorial 1: Hello World`
+  description `Javascript Tutorial 1: Hello World`
