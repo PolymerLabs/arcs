@@ -15,8 +15,8 @@ import {LanguageService} from './language-service.js';
 
 const minimist = require('minimist');
 const optionSet = {
-  string: ['log'],
-  boolean: ['help', 'version'],
+  string: ['log', 'socket'],
+  boolean: ['help', 'version', 'stdio', 'node-ipc'],
   alias: {'v': 'version', 'h': 'help', 'l': 'log'},
   default: {'log': 'null'}
 };
