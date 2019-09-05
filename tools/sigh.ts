@@ -616,6 +616,7 @@ function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: 
     if (cfg.outdir === '$here') {
       cfg.outdir = srcDir;
     }
+    fs.mkdirSync(cfg.outdir, {recursive: true});
 
     const srcPaths = ['src/wasm/cpp/arcs.cc', ...cfg.src.map(f => path.join(srcDir, f))];
     const wasmPath = path.join(cfg.outdir, name);
