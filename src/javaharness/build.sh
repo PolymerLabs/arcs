@@ -1,4 +1,4 @@
 #!/bin/sh
 
-bazel build java/arcs:javaharness
+bazel build java/arcs/web/demo:demo
 

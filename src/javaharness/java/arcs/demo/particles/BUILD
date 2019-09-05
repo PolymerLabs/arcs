@@ -1,26 +1,26 @@
-load("@io_bazel_rules_closure//closure:defs.bzl", "closure_js_library")
-
 licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:__subpackages__"])
 
-load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("@com_google_j2cl//build_defs:rules.bzl", "j2cl_library")
 
 android_library(
-    name = "crdt-android",
+    name = "particles-android",
     srcs = glob([
         "*.java",
     ]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
-      "@com_google_dagger",
-      "@javax_inject_source//jar",
+        "//java/arcs/api:api-android",
+        "//java/arcs/demo/services:services-android",
+        "@com_google_dagger",
+        "@javax_inject_source//jar",
     ],
 )
 
 j2cl_library(
-    name = "crdt-j2cl",
+    name = "particles-j2cl",
     srcs = glob([
         "*.java",
     ]),
@@ -28,5 +28,7 @@ j2cl_library(
         "//java/arcs:dagger-j2cl",
         "//java/arcs:dagger_runtime-j2cl",
         "//java/arcs:javax_inject-j2cl",
+        "//java/arcs/api:api-j2cl",
+        "//java/arcs/demo/services:services-j2cl",
     ],
 )
