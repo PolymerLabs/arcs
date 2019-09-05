@@ -9,7 +9,7 @@
  */
 
 //import {logsFactory} from '../../../build/runtime/log-factory.js';
-import {Utils} from '../../lib/runtime/utils.js';
+import {Utils} from '../../lib/utils.js';
 import {requireContext} from './context.js';
 import {marshalIngestionArc} from './pipes-api.js';
 import {dispatcher} from './dispatcher.js';
