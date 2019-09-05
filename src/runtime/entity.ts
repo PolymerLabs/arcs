@@ -218,12 +218,6 @@ export abstract class Entity implements Storable {
     return `${this.constructor.name} { ${fields.join(', ')} }`;
   }
 
-  // TODO: remove ASAP, once we're satisfied there are no lingering direct accesses on these fields
-  // Note that this breaks any schemas that have an 'id' field (or rawData/dataClone).
-  get id() { throw new Error('entity.id is no longer valid; use Entity.id() or Particle.idFor()'); }
-  get rawData() { throw new Error('entity.rawData is no longer valid; use plain .field access or spread notation'); }
-  get dataClone() { throw new Error('entity.dataClone() is no longer valid; use use Entity.dataClone() or Particle.dataClone()'); }
-
   // Dynamically constructs a new JS class for the entity type represented by the given schema.
   // This creates a new class which extends the Entity base class and implements the required
   // static properties, then returns a Proxy wrapping that to guard against incorrect field writes.
