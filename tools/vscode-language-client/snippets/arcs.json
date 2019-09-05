@@ -1,0 +1,23 @@
+{
+    "recipe": {
+        "prefix": "recipe",
+        "body": [
+            "recipe ${0:recipeName}"
+        ],
+        "description": "Insert recipe definition"
+    },
+    "particle": {
+        "prefix": "particle in",
+        "body": [
+            "particle ${0:particleName} in '${1:file}'"
+        ],
+        "description": "Insert particle definition"
+    },
+    "consume": {
+        "prefix": "consume",
+        "body": [
+            "consume ${1:slot}$0"
+        ],
+        "description": "Insert consume slot"
+    }
+}

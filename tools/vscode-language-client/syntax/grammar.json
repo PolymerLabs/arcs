@@ -1,0 +1,69 @@
+{
+  "scopeName": "source.arcs",
+  "patterns": [{ "include": "#keyword", "include": "#symbol", "include": "#syntax.type" }],
+  "repository": {
+    "keyword": {
+      "patterns": [
+        { "include": "#direction" },
+        { "include": "#fate" },
+        { "include": "#syntax.control" }
+      ]
+    },
+    "direction": {
+      "match": "in|out|inout|host|`consume|`provide|any",
+      "name": "keyword.direction"
+    },
+    "fate": {
+      "match": "?|use|map|create|copy|`slot",
+      "name": "keyword.fate"
+    },
+    "syntax.control": {
+      "match": "particle|recipe|import|interface|schema|require|handle",
+      "name": "syntax.control"
+    },
+    "symbol": {
+      "patterns": [
+        { "include": "#direction-arrow" }
+      ]
+    },
+    "direction-arrow": {
+      "match": "->|<-|<->|=|consume|provide",
+      "name": "symbol.direction-arrow"
+    },
+    "syntax.type": {
+      "patterns": [
+        { "include": "#type-primitives" },
+        { "include": "#reference-type" },
+        { "include": "#collection-type" }
+      ]
+    },
+    "reference-type": {
+      "begin": "\\Reference<",
+      "end": "\\>",
+      "beginCaptures": {
+        "0": { "name": "type.reference-type.open" }
+      },
+      "endCaptures": {
+        "0": { "name": "type.reference-type.close" }
+      },
+      "name": "type.reference-type",
+      "patterns": [{ "include": "#type" }]
+    },
+    "collection-type": {
+      "begin": "\\[",
+      "end": "\\]",
+      "beginCaptures": {
+        "0": { "name": "punctuation.bracket.open" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.bracket.close" }
+      },
+      "name": "type.collection-type",
+      "patterns": [{ "include": "#type" }]
+    },
+    "type-primitives": {
+      "match": "Slot|Number|Text|URL",
+      "name": "type.type-primitives"
+    }
+  }
+}
