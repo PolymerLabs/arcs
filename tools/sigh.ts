@@ -47,7 +47,7 @@ const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 
 const buildLS = buildPath('./src/tools/language-server', () => {
-  getOptionalDependencies(['vscode-jsonrpc', 'vscode-languageserver'], 'Build the languageServer');
+  getOptionalDependencies(['vscode-jsonrpc', 'vscode-languageserver', 'vscode', 'vscode-languageclient'], 'Build the languageServer');
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 

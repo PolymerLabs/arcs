@@ -7,33 +7,15 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import * as child_process from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
 import {
   commands,
-  Disposable,
   ExtensionContext,
-  IndentAction,
-  languages,
   OutputChannel,
-  TextDocument,
-  Uri,
   window,
   workspace,
-  WorkspaceFolder,
-  WorkspaceFoldersChangeEvent,
 } from 'vscode';
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  NotificationType,
-  ServerOptions,
-  TransportKind,
-} from 'vscode-languageclient';
 
 import {ClientWorkspace} from './workspace';
-import {ClientRequest} from 'http';
 
 // Note: The commandId parameter must match the command field in package.json
 function clientCommands(context: ExtensionContext) {

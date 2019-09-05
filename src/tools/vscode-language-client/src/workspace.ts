@@ -7,14 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import * as child_process from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
 import {
-  commands,
   Disposable,
   ExtensionContext,
-  IndentAction,
   languages,
   OutputChannel,
   TextDocument,
@@ -22,8 +18,6 @@ import {
   window,
   workspace,
   WorkspaceConfiguration,
-  WorkspaceFolder,
-  WorkspaceFoldersChangeEvent,
   TextDocumentContentChangeEvent,
   TextDocumentChangeEvent,
   Diagnostic,
@@ -32,18 +26,9 @@ import {
 import {
   LanguageClient,
   LanguageClientOptions,
-  NotificationType,
   RevealOutputChannelOn,
-  ServerOptions,
-  TransportKind,
   Executable,
 } from 'vscode-languageclient';
-
-import {
-  DidChangeTextDocumentParams,
-  DidSaveTextDocumentParams,
-} from 'vscode-languageserver-protocol';
-import {stringify} from 'querystring';
 
 const clientName = 'Arcs Language Server';
 
@@ -178,7 +163,8 @@ export class ClientWorkspace {
 
   public get arcsPath(): string | undefined {
     // TODO (jopra): Checkout into a default location if this is not set...
-    return this.configuration.get<string>('arcs.arcsPath');
+    const arcsPath = this.configuration.get<string>('arcs.arcsPath');
+    return arcsPath && path.resolve(arcsPath);
   }
 
   public get lspPath(): string | undefined {
