@@ -30,7 +30,7 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    Utils.init('result: ${process.cwd()}');
+    Utils.init(`${process.cwd()}/${src}`);
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
