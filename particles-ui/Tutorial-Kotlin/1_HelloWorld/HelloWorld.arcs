@@ -1,0 +1,15 @@
+// Tutorial: Hello World
+// Defines a really simple particle that just prints out "Hello, world!"
+
+// Defines the Hello World particle, and links it to the Kotlin source code in file HelloWorld.kt.
+particle HelloWorldParticle in '../build/bin/wasm32/mainDebugExecutable/main.wasm'
+  // The "root" slot is a special slot provided by the system. It is where the main content gets rendered. This binds our particle to the root
+  // slot so that it can render things to the screen.
+  consume root
+
+// Defines a new recipe, containing nothing other than our HelloWorldParticle.
+recipe HelloWorldRecipe
+  HelloWorldParticle
+
+  // This sets a nicer name for our recipe in the shell. Otherwise it would be displayed as "HelloWorldRecipe".
+  description `Kotlin Tutorial 1: Hello World`

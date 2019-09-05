@@ -1,0 +1,26 @@
+// Tutorial 3: JSON Store
+// Loads data stored in a JSON file.
+
+// Defines a new Entity called PersonDetails, with two fields.
+schema PersonDetails
+  Text name
+  Number age
+
+// Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
+store PersonToGreetStore of PersonDetails in 'data.json'
+
+particle JsonStoreParticle in '../build/bin/wasm32/mainDebugExecutable/main.wasm'
+  // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
+  in PersonDetails inputData
+  consume root
+
+recipe JsonStoreRecipe
+  // This line connects this recipe to the data store above. It also creates a local alias for it called "data", which is how we will refer to
+  // it inside the scope of this recipe.
+  map PersonToGreetStore as data
+
+  JsonStoreParticle
+    // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
+    inputData <- data
+
+  description `Kotlin Tutorial 3: JSON Store`

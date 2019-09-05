@@ -1,0 +1,23 @@
+// Tutorial 4: Render Slots
+// Creates two particles, and renders one inside the other using render slots.
+
+// The "parent" particle. It provides a slot for another particle to be rendered inside it.
+particle ParentParticle in '../build/bin/wasm32/mainDebugExecutable/main.wasm'
+  // This particle renders to the root slot ("consumes" it), and provides a slot inside it called "mySlot" in which another particle can render
+  // itself. The child particle will be rendered inside a special div with the identifier "mySlot", which this particle will need to provide in
+  // its HTML.
+  consume root
+    provide mySlot
+
+// The "child" particle. Instead of consuming "root" it consumes "mySlot", which connects it to the slot provided by ParentParticle.
+particle ChildParticle in '../build/bin/wasm32/mainDebugExecutable/main.wasm'
+  consume mySlot
+
+recipe RenderSlotsRecipe
+  ParentParticle
+    consume root
+      provide mySlot as slot0
+  ChildParticle
+    consume mySlot as slot0
+
+  description `Kotlin Tutorial 4: Render Slots`
