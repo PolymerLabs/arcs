@@ -1,4 +1,4 @@
-#include <arcs.h>
+#include "src/wasm/cpp/arcs.h"
 
 class SchemalessTest : public arcs::Particle {
 public:

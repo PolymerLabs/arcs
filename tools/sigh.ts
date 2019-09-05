@@ -51,7 +51,7 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-const wasmOptional = args => wasm(true, args);
+const wasmOptional = args => true;//wasm(true, args);
 const wasmRequired = args => wasm(false, args);
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
@@ -409,7 +409,7 @@ function cleanObsolete() {
     } else {
       // wasm outputs - look for a corresponding wasm.json config, and check if the module or
       // genfile names match.
-      
+
       // build/path/to/module.wasm -> src/path/to/wasm.json
       const configFile = path.join('src', path.dirname(file).slice(6), 'wasm.json');
       const baseName = path.basename(file);

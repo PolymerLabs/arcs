@@ -14,7 +14,11 @@ cc_wasm_binary(
         "particle-api.cc",
     ],
     hdrs = ["entities.h"],
-    deps = [
-        "//src/wasm/cpp:arcs",
-    ],
+    deps = ["//src/wasm/cpp:arcs"],
+)
+
+cc_wasm_binary(
+    name = "schemaless",
+    srcs = ["schemaless.cc"],
+    deps = ["//src/wasm/cpp:arcs"],
 )
