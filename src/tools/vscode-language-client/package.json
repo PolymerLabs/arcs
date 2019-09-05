@@ -45,7 +45,6 @@
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "lint": "tslint --config ./tslint.json './src/**/*.ts'",
-        "test": "node ./build/test/runTest.js",
         "prettier": "prettier **/*.ts",
         "installDevExtension": "npm install && ./node_modules/.bin/vsce package -o ./build/arcs-vscode-dev.vsix && code --install-extension ./build/arcs-vscode-dev.vsix"
     },
@@ -61,8 +60,7 @@
         "tslint": "^5.14.0",
         "typescript": "^3.0.0",
         "vsce": "^1.63.0",
-        "vscode": "^1.1.36",
-        "vscode-test": "^0.4.3"
+        "vscode": "^1.1.36"
     },
     "contributes": {
         "configuration": {
