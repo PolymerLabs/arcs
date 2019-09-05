@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -23,8 +32,8 @@ import {
   TransportKind,
 } from 'vscode-languageclient';
 
-import { ClientWorkspace } from './workspace';
-import { ClientRequest } from 'http';
+import {ClientWorkspace} from './workspace';
+import {ClientRequest} from 'http';
 
 // Note: The commandId parameter must match the command field in package.json
 function clientCommands(context: ExtensionContext) {
@@ -55,7 +64,7 @@ function start(context: ExtensionContext) {
     // Catch the already open files.
     workspace.textDocuments.forEach(doc => client && client.didOpenTextDocument(doc, context));
   } else {
-    let status = 'Failed to start. You may need to update Arcs, or configure the extension.';
+    const status = 'Failed to start. You may need to update Arcs, or configure the extension.';
     window.showInformationMessage(`Arcs Language Server ${status}`);
   }
 }
@@ -70,7 +79,7 @@ function stop() {
 // Called after extension is started
 export async function activate(context: ExtensionContext): Promise<void> {
   const services = clientCommands(context).map(
-    (comm: { id: string, impl: (...args: any[]) => any }) =>
+    (comm: {id: string, impl: (...args: any[]) => any}) =>
       commands.registerCommand(comm.id, comm.impl)
   );
 

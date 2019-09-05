@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -34,7 +43,7 @@ import {
   DidChangeTextDocumentParams,
   DidSaveTextDocumentParams,
 } from 'vscode-languageserver-protocol';
-import { stringify } from 'querystring';
+import {stringify} from 'querystring';
 
 const clientName = 'Arcs Language Server';
 
@@ -59,7 +68,7 @@ export class ClientWorkspace {
       return false;
     }
     // Run the node server
-    let serverOptions: Executable = {
+    const serverOptions: Executable = {
       command: 'node',
       args: [
         this.lspPath,
@@ -69,9 +78,9 @@ export class ClientWorkspace {
     };
 
     // Options to control the language client
-    let clientOptions: LanguageClientOptions = {
+    const clientOptions: LanguageClientOptions = {
       // Register the server for plain text documents
-      documentSelector: [{ scheme: 'file', language: 'arcs' }],
+      documentSelector: [{scheme: 'file', language: 'arcs'}],
       synchronize: {
         // Notify the server about file changes to '.clientrc files contained in the workspace
         fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
@@ -100,7 +109,7 @@ export class ClientWorkspace {
     this.lc.onNotification(
       'textDocument/publishDiagnostics',
       (params: {uri: Uri, diagnostics: Diagnostic[]}) => {
-        let uri = Uri.parse(params.uri.toString());
+        const uri = Uri.parse(params.uri.toString());
         this.diagnostics.set(uri, params.diagnostics);
       });
 
@@ -119,31 +128,31 @@ export class ClientWorkspace {
   public didChangeTextDocument(change: TextDocumentChangeEvent, _context: ExtensionContext) {
     if (!this.lc) { return; }
     // TODO:
-    let doc = change.document;
+    const doc = change.document;
     if (doc.languageId !== 'arcs') {
       return; // Ignore non-arcs files.
     }
     this.outputChannel.appendLine(`${doc.uri} changed`);
-    let contentChanges: TextDocumentContentChangeEvent[] = [];
+    const contentChanges: TextDocumentContentChangeEvent[] = [];
     this.lc.sendNotification(
       'textDocument/didChangeTextDocument',
-      { textDocument: doc, contentChanges });
+      {textDocument: doc, contentChanges});
   }
 
   public didOpenTextDocument(textDocument: TextDocument, _context: ExtensionContext) {
-    if (!this.lc) { return; }
+    if (!this.lc) {return; }
     if (textDocument.languageId !== 'arcs') {
       return; // Ignore non-arcs files.
     }
     this.outputChannel.appendLine(`Client: ${textDocument.uri} opened`);
-    let contentChanges: TextDocumentContentChangeEvent[] = [];
+    const contentChanges: TextDocumentContentChangeEvent[] = [];
 
     // TODO(jopra): Add open support.
     // Currently this is 'faked' but really just pretends that the file was
     // saved.
     this.lc.sendNotification(
       'textDocument/didSaveTextDocument',
-      { textDocument, contentChanges });
+      {textDocument, contentChanges});
   }
 
   public didSaveTextDocument(textDocument: TextDocument, _context: ExtensionContext) {
@@ -152,10 +161,10 @@ export class ClientWorkspace {
       return; // Ignore non-arcs files.
     }
     this.outputChannel.appendLine(`Client: ${textDocument.uri} saved`);
-    let contentChanges: TextDocumentContentChangeEvent[] = [];
+    const contentChanges: TextDocumentContentChangeEvent[] = [];
     this.lc.sendNotification(
       'textDocument/didSaveTextDocument',
-      { textDocument, contentChanges });
+      {textDocument, contentChanges});
   }
 
   // Getters for easy configuation value usage.
@@ -179,8 +188,8 @@ export class ClientWorkspace {
       return undefined;
     }
     const packedPath = [this.arcsPath,
-      "dist", "tools", "language-server",
-      "language-server.js"
+      'dist', 'tools', 'language-server',
+      'language-server.js'
     ];
     return path.join(...packedPath);
   }
