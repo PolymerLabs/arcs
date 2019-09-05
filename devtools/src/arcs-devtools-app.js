@@ -61,7 +61,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
     </style>
     <arcs-communication-channel></arcs-communication-channel>
     <arcs-connection-status></arcs-connection-status>
-    <header class="header">
+    <header id="header" class="header">
       <div section>
         <arcs-notifications></arcs-notifications><div divider></div>
         <arcs-selector active-page="[[routeData.page]]"></arcs-selector><div divider></div>
