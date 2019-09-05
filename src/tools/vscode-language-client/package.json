@@ -41,7 +41,7 @@
     ],
     "main": "./build/extension.js",
     "scripts": {
-        "vscode:prepublish": "npm run lint && npm run compile",
+        "vscode:prepublish": "npm install && npm run lint && npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "lint": "tslint --config ./tslint.json './src/**/*.ts'",
