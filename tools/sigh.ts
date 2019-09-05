@@ -125,7 +125,7 @@ function getOptionalDependencies(deps: string[], prefix): any[] {
         super(`${prefix} requires extra dependencies: re-run with '--install' or use\n` +
               `       'tools/sigh install ${missing.join(' ')}' to install manually\n`);
       }
-    };
+    }();
   }
   if (!install(missing)) {
     throw new Error('Failed to install optional dependencies');
