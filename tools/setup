@@ -44,6 +44,9 @@ status "4. Install dependencies"
 ## BAZEL
 status "5. Install bazel"
 (wget "$BAZEL_DEB" && sudo dpkg -i $(basename "$BAZEL_DEB"))
+
+status "5.1. Set up your .bazelrc file"
+(cd $ROOT && echo "build --define=repo_root=$(pwd)" >> .bazelrc)
 ###
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
