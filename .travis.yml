@@ -11,10 +11,10 @@ addons:
   chrome: stable
 
 script:
-  - bazel build //src/wasm/cpp/...
   - npm run test-with-start
   - npm run build:rollup
   - npm --prefix=server test
+  - bazel test //src/wasm/...
 
 cache: npm
 
