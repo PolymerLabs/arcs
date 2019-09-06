@@ -19,16 +19,23 @@ class UiBrokerImpl implements UiBroker {
 
   @Override
   public boolean render(PortableJson content) {
-    String modality = content.getObject("data").getString("modality");
-    String[] names = modality.split(",");
-    if (names.length == 0) {
-      return false;
+    String[] names = null;
+    if (content.getObject("data").hasKey("modality")) {
+      String modality = content.getObject("data").getString("modality");
+      names = modality.split(",");
+    } else {
+      names = renderers.keySet().toArray(new String[renderers.size()]);
     }
+    if (names.length == 0) {
+      throw new AssertionError("No renderers for content");
+    }
+
+    boolean rendered = false;
     for (int i = 0; i < names.length; ++i) {
       if (renderers.containsKey(names[i])) {
-        renderers.get(names[i]).render(content);
+        rendered |= renderers.get(names[i]).render(content);
       }
     }
-    return true;
+    return rendered;
   }
 }

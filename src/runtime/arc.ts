@@ -141,7 +141,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     if (!this.activeRecipe.isEmpty()) {
       return this.activeRecipe.modality;
     }
-    return Modality.intersection(this.context.allRecipes.map(recipe => recipe.modality));
+    return Modality.union(this.context.allRecipes.map(recipe => recipe.modality));
   }
 
   dispose(): void {

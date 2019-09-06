@@ -13,7 +13,11 @@ class LogRenderer implements UiRenderer {
   LogRenderer() {}
 
   @Override
-  public void render(PortableJson content) {
-    logger.warning("LogRenderer: " + content.getObject("data").getString("template"));
+  public boolean render(PortableJson content) {
+    if (content.hasKey("data") && content.getObject("data").hasKey("template")) {
+      logger.warning("LogRenderer: " + content.getObject("data").getString("template"));
+      return true;
+    }
+    return false;
   } 
 }

@@ -16,7 +16,11 @@ class AlertRenderer implements UiRenderer {
   }
 
   @Override
-  public void render(PortableJson content) {
-    alertService.alert(content.getObject("data").getString("template"));
+  public boolean render(PortableJson content) {
+    if (content.hasKey("data") && content.getObject("data").hasKey("template")) {
+      alertService.alert(content.getObject("data").getString("template"));
+      return true;
+    }
+    return false;
   } 
 }

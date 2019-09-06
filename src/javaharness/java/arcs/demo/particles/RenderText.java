@@ -33,9 +33,4 @@ public class RenderText extends ParticleBase {
   public String getTemplate(String slotName) {
     return "Hello world!";
   }
-
-  @Override
-  public void renderSlot(String slotName, List<String> contentTypes) {
-    // NOOP. This method should be removed altogether.
-  }
 }

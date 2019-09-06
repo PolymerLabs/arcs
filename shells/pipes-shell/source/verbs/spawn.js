@@ -17,7 +17,7 @@ import {UiSlotComposer} from '../../../../build/runtime/ui-slot-composer.js';
 
 const {warn} = logsFactory('pipe');
 
-export const spawn = async ({modality, recipe}, tid, bus, composerFactory, storage, context) => {
+export const spawn = async ({modality, recipe}, tid, bus, /*composerFactory,*/ storage, context) => {
   const action = context.allRecipes.find(r => (r.name === recipe));
   if (recipe && !action) {
     warn(`found no recipes matching [${recipe}]`);
@@ -38,7 +38,7 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
         delete content.particle;
         bus.send({message: 'output', data: content});
       }
-    }
+    };
 
     // optionally instantiate recipe
     if (action) {

@@ -29,10 +29,5 @@ public interface PECInnerPort {
       PortableJson data,
       String particleId);
 
-  // TODO: deprecated, remove once completely switched to the new UI.
-  void Render(Particle particle, String slotName, PortableJson content);
-
   void Output(Particle particle, PortableJson content);
-
-  // TODO: add more methods.
 }
