@@ -1,62 +1,68 @@
 package arcs.android.demo;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
-import android.view.View;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-
-import arcs.android.impl.AndroidHarnessController;
-import arcs.android.impl.AndroidShellApiImpl;
+import android.widget.Button;
 /**
  * Main class for the Bazel Android "Hello, World" app.
  */
 public class MainActivity extends Activity {
+  private static final String TAG = "Arcs";
 
-  private WebView arcsWebView;
+  private final ServiceConnection connection =
+      new ServiceConnection() {
+        @Override
+        public void onServiceConnected(
+            ComponentName componentName, IBinder iBinder) {
+          Log.d(TAG, "Connected to ArcsService.");
+          connected = true;
+          updateBtn();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+          Log.d(TAG, "Disconnected to ArcsService.");
+          connected = false;
+          updateBtn();
+        }
+      };
+
+  private Button toggleConnectionButton;
+
+  private boolean connected;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    Log.v("Bazel", "Hello, Android");
-
     setContentView(R.layout.activity_main);
 
-    arcsWebView = new WebView(this);
+    toggleConnectionButton = findViewById(R.id.toggle_service_connection);
+    toggleConnectionButton.setOnClickListener(v -> toggleConnection());
 
-    arcsWebView.setVisibility(View.VISIBLE);
-    setContentView(arcsWebView);
-    setWebViewSettings();
-
-    DemoComponent component = DaggerDemoComponent.builder().appContext(this).build();
-    ((AndroidHarnessController) component.getHarnessController()).init(arcsWebView);
-    ((AndroidShellApiImpl) component.getShellApi()).setWebKit(arcsWebView);
+    updateBtn();
   }
 
-  private void setWebViewSettings() {
-    WebSettings arcsSettings = this.arcsWebView.getSettings();
-    arcsSettings.setDatabaseEnabled(true);
-    arcsSettings.setGeolocationEnabled(true);
-    arcsSettings.setJavaScriptEnabled(true);
-    arcsSettings.setDomStorageEnabled(true);
-    arcsSettings.setSafeBrowsingEnabled(false);
-    // These two are needed for file:// URLs to work and load subresources
-    arcsSettings.setAllowFileAccessFromFileURLs(true);
-    // needed to allow WebWorkers to work in FileURLs.
-    arcsSettings.setAllowUniversalAccessFromFileURLs(true);
-    WebView.setWebContentsDebuggingEnabled(true);
-    arcsWebView.setWebViewClient(new WebViewClient() {
-      @Override
-      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-        return super.shouldInterceptRequest(view, request);
-      }
-    });
-    arcsWebView.loadUrl("http://localhost:8786/shells/pipes-shell/web/deploy/dist/?log=2"); //?m=https://$particles/PipeApps/Ingestion.arcs&log=2");
+  private void toggleConnection() {
+    Log.d(TAG, "toggleConnection");
+    if (connected) {
+      unbindService(connection);
+      Log.d(TAG, "Disconnected to ArcsService.");
+      connected = false;
+      updateBtn();
+    } else {
+      Intent intent = new Intent(this, ArcsService.class);
+      bindService(intent, connection, BIND_AUTO_CREATE);
+    }
   }
 
+  private void updateBtn() {
+    Log.d(TAG, "updateBtn");
+    toggleConnectionButton.setText(connected ? "Disconnect" : "Connect");
+  }
 }
