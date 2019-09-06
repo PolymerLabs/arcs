@@ -23,5 +23,5 @@ are installed. Run tools/sigh build and shells/pipes-shell/web/deploy/deploy.sh
 Then launch hotreload.sh and everything should build and run a server on port
 6006.
 
-Visit [http://localhost:6006/javaharness_dev.html?user=harness&solo=particles/PipeApps/PipeApps.recipes&log=2]()
+Visit [http://localhost:6006/demo_dev.html?user=harness&solo=particles/PipeApps/PipeApps.recipes&log=2]()
 to try it out.
