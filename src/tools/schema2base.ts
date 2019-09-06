@@ -30,7 +30,8 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    Utils.init(`${process.cwd()}/${src}`);
+    const srcPath = `${process.cwd()}/${src}`;
+    Utils.init(srcPath);
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
@@ -38,7 +39,7 @@ export abstract class Schema2Base {
       return;
     }
 
-    const manifest = await Utils.parse(`import '${process.cwd()}/${src}'`);
+    const manifest = await Utils.parse(`import '${srcPath}'`);
 
     // Collect declared schemas along with any inlined in particle connections.
     const schemas: Dictionary<Schema> = {};
