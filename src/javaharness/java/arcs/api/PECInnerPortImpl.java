@@ -34,6 +34,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final String STOP_MSG = "Stop";
   private static final String DEV_TOOLS_CONNECTED_MSG = "DevToolsConnected";
   private static final String RENDER_MSG = "Render";
+  private static final String OUTPUT_MSG = "Output";
   private static final String CONTENT_FIELD = "content";
   private static final String MESSAGE_PEC_MESSAGE_KEY = "message";
   private static final String MESSAGE_PEC_PEC_VALUE = "pec";
@@ -91,8 +92,12 @@ public class PECInnerPortImpl implements PECInnerPort {
             // TODO: improve error handling.
             throw new AssertionError("Cannot instantiate particle " + spec.name);
           }
+
           mapper.establishThingMapping(
               messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
+
+          // TODO: implement proper capabilities.
+          particle.setOutput((content) -> Output(particle, content));
           break;
         }
       case DEFINE_HANDLE_MSG:
@@ -222,6 +227,15 @@ public class PECInnerPortImpl implements PECInnerPort {
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<>(particle)));
     body.put(SLOT_NAME_FIELD, slotName);
+    body.put(CONTENT_FIELD, content);
+    postMessage(message);
+  }
+
+  @Override
+  public void Output(Particle particle, PortableJson content) {
+    PortableJson message = constructMessage(OUTPUT_MSG);
+    PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
+    body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<>(particle)));
     body.put(CONTENT_FIELD, content);
     postMessage(message);
   }

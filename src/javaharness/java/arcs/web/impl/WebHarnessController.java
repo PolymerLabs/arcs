@@ -6,6 +6,7 @@ import static elemental2.dom.DomGlobal.window;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
+import arcs.api.PortableJsonParser;
 import arcs.crdt.CollectionDataTest;
 import elemental2.dom.*;
 import java.util.ArrayList;
@@ -19,13 +20,15 @@ import jsinterop.annotations.JsType;
 /** Mainly for testing in Chrome. */
 public class WebHarnessController implements HarnessController {
 
-  private ArcsEnvironment environment;
-  private DeviceClient deviceClient;
+  private final ArcsEnvironment environment;
+  private final DeviceClient deviceClient;
+  private final PortableJsonParser jsonParser;
 
   @Inject
-  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient) {
+  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient, PortableJsonParser jsonParser) {
     this.environment = environment;
     this.deviceClient = deviceClient;
+    this.jsonParser = jsonParser;
   }
 
   @Override
@@ -64,6 +67,17 @@ public class WebHarnessController implements HarnessController {
                 environment.sendMessageToArcs(
                     "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
                     (id, result) -> dataParagraph.append("Test: " + result))));
+
+    document.body.appendChild(
+        makeInputElement(
+            "DEMO UI renderers",
+            val ->
+                environment.sendMessageToArcs(
+                    jsonParser.stringify(jsonParser.emptyObject()
+                        .put("message", "spawn")
+                        // .put("modality", "log")
+                        .put("recipe", "DemoText")),
+                    null)));
     document.body.appendChild(dataParagraph);
 
     // TODO: get rid of this once crdt tests are built and run properly as unittests.

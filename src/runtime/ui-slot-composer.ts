@@ -32,7 +32,7 @@ export type SlotComposerOptions = {
 
 export class UiSlotComposer {
   private readonly _containerKind: string;
-  readonly modality: Modality;
+  readonly modality: Modality; // = Modality.all;
   readonly modalityHandler: ModalityHandler;
   private readonly _consumers: SlotConsumer[] = [];
   protected _contexts: SlotContext[] = [];
@@ -241,7 +241,9 @@ export class UiSlotComposer {
       if (container) {
         Object.assign(content, {
           containerSlotName: container.targetSlot.name,
-          containerSlotId: container.targetSlot.id
+          containerSlotId: container.targetSlot.id,
+          modality: particle.spec.modality.names.join(','),
+          // modality: arc.modality,
         });
       }
       Object.assign(content, {

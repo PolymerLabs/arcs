@@ -2,6 +2,7 @@ package arcs.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /** Interface that all built in particles must implement to create particles. */
 public interface Particle {
@@ -40,4 +41,8 @@ public interface Particle {
   String getTemplateName(String slotName);
 
   String getModel();
+
+  void setOutput(Consumer<PortableJson> output);
+
+  void renderModel();
 }

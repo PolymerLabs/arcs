@@ -3,12 +3,14 @@ package arcs.api;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ParticleBase implements Particle {
   public ParticleSpec spec;
   public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
   protected Map<String, SlotProxy> slotProxyByName = new HashMap<>();
+  protected Consumer<PortableJson> output;
 
   @Override
   public String getName() {
@@ -59,6 +61,20 @@ public class ParticleBase implements Particle {
     // TODO: Implement
   }
 
+  @Override
+  public void setOutput(Consumer<PortableJson> output) {
+    this.output = output;
+  }
+
+  @Override
+  public void renderModel() {
+    if (this.output != null) {
+      this.output.accept(jsonParser.emptyObject()
+          .put("template", getTemplate(""))
+          .put("model", getModel()));
+    }
+  }
+ 
   @Override
   public SlotProxy getSlot(String name) {
     return slotProxyByName.get(name);
