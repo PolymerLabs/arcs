@@ -27,14 +27,12 @@ This is controlled using VsCode's settings.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+The extension has undergone fairly little testing. Please report problems on [our github](https://github.com/PolymerLabs/arcs/).
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 0.0.0
 
-Initial Developement release
+Initial Development release
 
 -----------------------------------------------------------------------------------------------------------
