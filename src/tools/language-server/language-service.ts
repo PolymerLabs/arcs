@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ExecuteCommandParams, InitializeParams, IConnection, Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, TextDocumentSyncKind, InitializeResult} from 'vscode-languageserver';
+import {ExecuteCommandParams, InitializeParams, IConnection,
+  DidSaveTextDocumentParams, TextDocumentSyncKind, InitializeResult
+} from 'vscode-languageserver';
 
-import {Logger, LanguageServiceOptions, LanguageServiceContext, camelCase, normalizeUri, uri2path} from './util.js';
-import {LspLoader} from './lsp-loader.js';
+import {Logger, LanguageServiceOptions, uri2path} from './util.js';
 import {gatherDiagnostics} from './diagnostics.js';
 
 export class LanguageService {
@@ -54,21 +55,8 @@ export class LanguageService {
       capabilities: {
         // Tell the client that the server works in FULL text document sync mode
         textDocumentSync: TextDocumentSyncKind.Full,
-        /*
-           hoverProvider: false,
-           signatureHelpProvider: {
-           triggerCharacters: ['(', ','],
-           },
-           definitionProvider: false, // TODO(cypher1): Provide definitions.
-           typeDefinitionProvider: false,
-           referencesProvider: false,
-           documentSymbolProvider: false,
-           workspaceSymbolProvider: false,
-           xdefinitionProvider: false,
-         */
         completionProvider: {
           resolveProvider: true,
-          // triggerCharacters: ['.'], // TODO(cypher1): Provide Completing (on all).
         },
         renameProvider: false,
         executeCommandProvider: {

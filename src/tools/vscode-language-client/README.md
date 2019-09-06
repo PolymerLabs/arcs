@@ -1,6 +1,6 @@
-# Arcs Language Client (for VSCode)
+# Arcs Language Client (for VS Code)
 
-A minimal language server protocol client for working with Arcs using VsCode.
+A minimal language server protocol client for working with Arcs using VS Code.
 
 ## Features
 
@@ -10,7 +10,7 @@ Syntax Highlighting: In progress
 
 ## Requirements
 
-Requires a working & building arcs environment and a version of VsCode in your path named 'code'.
+Requires a working & building arcs environment and a version of VS Code in your path named 'code'.
 
 Use the following npm command to install a dev version of the extension.
 
@@ -21,7 +21,7 @@ npm run install:vscodeclient
 ## Extension Settings
 
 The extension also needs to know where arcs is installed (this also allows switching between different arcs installs during development).
-This is controlled using VsCode's settings.
+This is controlled using VS Code's settings.
 
 * `arcs.arcsPath`: Path pointing to the arcs repo root directory.
 

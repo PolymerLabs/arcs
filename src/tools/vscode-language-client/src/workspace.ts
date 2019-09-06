@@ -34,14 +34,13 @@ const clientName = 'Arcs Language Server';
 
 export class ClientWorkspace {
   private configuration: WorkspaceConfiguration;
-  // TODO: private readonly folder: WorkspaceFolder;
-  private disposables: Disposable[];
+  // TODO(jopra): Add support for Workspaces and WorkspaceFolders
+  private disposables: Disposable[] = [];
   private lc: LanguageClient | null = null;
   public outputChannel: OutputChannel;
   private diagnostics: DiagnosticCollection;
 
   constructor(outputChannel: OutputChannel) {
-    this.disposables = [];
     this.configuration = workspace.getConfiguration();
     this.outputChannel = outputChannel;
     this.diagnostics = languages.createDiagnosticCollection('arcs');
@@ -58,7 +57,6 @@ export class ClientWorkspace {
       args: [
         this.lspPath,
         '--stdio'
-        // '--log=~/.arcs-lsp-log-vscode'
       ]
     };
 
@@ -72,12 +70,11 @@ export class ClientWorkspace {
       },
       revealOutputChannelOn: this.revealOutputChannelOn,
       outputChannel: this.outputChannel,
-      // workspaceFolder: this.folder,
     };
 
     // Create the language client and start the client.
     this.lc = new LanguageClient(
-      'arcslanguageServer',
+      'arcsLanguageServer',
       clientName,
       serverOptions,
       clientOptions
@@ -112,7 +109,6 @@ export class ClientWorkspace {
 
   public didChangeTextDocument(change: TextDocumentChangeEvent, _context: ExtensionContext) {
     if (!this.lc) { return; }
-    // TODO:
     const doc = change.document;
     if (doc.languageId !== 'arcs') {
       return; // Ignore non-arcs files.
