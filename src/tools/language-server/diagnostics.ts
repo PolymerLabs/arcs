@@ -14,7 +14,7 @@ import {Manifest, ManifestError} from '../../runtime/manifest.js';
 import {SourcePosition} from '../../runtime/manifest-ast-nodes.js';
 
 import {Logger, uri2path, normalizeUri} from './util.js';
-import {LspLoader} from './lspLoader.js';
+import {LspLoader} from './lsp-loader.js';
 
 
 export async function gatherDiagnostics(uri: string, logger: Logger):

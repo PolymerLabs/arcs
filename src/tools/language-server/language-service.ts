@@ -11,7 +11,7 @@
 import {ExecuteCommandParams, InitializeParams, IConnection, Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, TextDocumentSyncKind, InitializeResult} from 'vscode-languageserver';
 
 import {Logger, LanguageServiceOptions, LanguageServiceContext, camelCase, normalizeUri, uri2path} from './util.js';
-import {LspLoader} from './lspLoader.js';
+import {LspLoader} from './lsp-loader.js';
 import {gatherDiagnostics} from './diagnostics.js';
 
 export class LanguageService {
