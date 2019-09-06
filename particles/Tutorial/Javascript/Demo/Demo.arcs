@@ -1,0 +1,43 @@
+// Tutorial 6: Handles
+// Shows how to use a handle to pass information between particles.
+
+schema Person
+  Text name
+  Text avatar
+
+
+particle Main in './source/Main.js'
+  consume root
+    provide playerSlotOne
+    provide playerSlotTwo
+    provide greetingSlot
+
+particle GetPlayerOne in './source/GetPerson.js'
+  out Person personOne
+  consume playerSlotOne
+
+particle GetPlayerTwo in './source/GetPerson.js'
+  out Person personTwo
+  consume playerSlotTwo
+
+particle DisplayGreeting in './source/DisplayGreeting.js'
+  in Person person
+  consume greetingSlot
+
+recipe HandleRecipe
+  Main
+    consume root 
+      provide playerSlotOne as playerOne
+      provide playerSlotTwo as playerTwo
+      provide greetingSlot as greeting
+  GetPlayerOne
+    personOne -> personOne
+    consume playerSlotOne as playerOne
+  GetPlayerTwo
+    personTwo -> personTwo
+    consume playerSlotTwo as playerTwo
+  DisplayGreeting
+    person <- personOne
+    consume greetingSlot as greeting
+  
+  description `Javascript Tutorial 6: Handles`
