@@ -2663,4 +2663,32 @@ resource SomeName
       `), `Another slot with name 'mySlot' has already been provided by this particle`);
     });
   });
+
+  describe('all schemas chicken', () => {
+    it('handles manifests with no schemas', async () => {
+      it('handles an empty manifest'), async () => {
+        const emptyManifest = await Manifest.parse(`
+        `);
+        const emptyResult = emptyManifest.allSchemas;
+        assert.isEmpty(emptyResult);
+      }
+      it('handles a non-empty manifest'), async () => {
+        const manifest = await Manifest.parse(`
+          particle A
+          recipe Foo
+            A
+        `);
+        const result = manifest.allSchemas;
+        assert.isEmpty(result);
+      }
+    });
+  });
 });
+
+// it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
+//   const loader = new StubLoader({
+//     'a': `import 'b'`,
+//     'b': `lol what is this`,
+//   });
+//   await Manifest.load('a', loader);
+// });
