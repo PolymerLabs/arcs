@@ -53,6 +53,7 @@ abstract class Particle : WasmObject() {
     abstract fun onHandleSync(handle: Handle, willSync: Boolean)
 
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
+      log("renderSlot");
       val template = if (sendTemplate) getTemplate(slotName) else ""
       var model = ""
       if (sendModel) {
