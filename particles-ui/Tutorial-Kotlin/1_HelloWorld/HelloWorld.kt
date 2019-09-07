@@ -9,15 +9,17 @@ class HelloWorldParticle : Particle() {
 
   override fun onHandleUpdate(handle: Handle) {
     log("onHandleUpdate called")
-    renderSlot("root")
+    this.renderOutput();
+    //renderSlot("root")
   }
 
   override fun onHandleSync(handle: Handle, willSync: Boolean) {
     log("onHandleSync called")
-    if (willSync) {
-      log("All handles synched\n")
-      renderSlot("root")
-    }
+    this.renderOutput();
+    // if (willSync) {
+    //   log("All handles synched\n")
+    //   renderSlot("root")
+    // }
   }
 
   override fun getTemplate(slotName: String): String {
