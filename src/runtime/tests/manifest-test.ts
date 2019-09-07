@@ -2682,6 +2682,31 @@ resource SomeName
         assert.isEmpty(result);
       });
     });
+    it('handles manifests with one schemaa', async () => {
+      it('handles an empty schema', async () => {
+        const emptyManifest = await Manifest.parse(`
+          schema Foo
+          particle Bar
+            recipe Food
+              Bar
+        `);
+        const emptyResult = emptyManifest.allSchemas;
+        assert.isEmpty(emptyResult);
+      });
+      it('handles a schema with fields', async () => {
+        const manifest = await Manifest.parse(`
+        schema Foo
+          Text a
+          Number b
+          Boolean c
+        particle Bar
+          recipe Food
+            Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.isEmpty(result);
+      });
+    });
   });
 });
 
