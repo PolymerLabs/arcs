@@ -2666,13 +2666,13 @@ resource SomeName
 
   describe('all schemas chicken', () => {
     it('handles manifests with no schemas', async () => {
-      it('handles an empty manifest'), async () => {
+      it('handles an empty manifest', async () => {
         const emptyManifest = await Manifest.parse(`
         `);
         const emptyResult = emptyManifest.allSchemas;
         assert.isEmpty(emptyResult);
-      }
-      it('handles a non-empty manifest'), async () => {
+      });
+      it('handles a non-empty manifest', async () => {
         const manifest = await Manifest.parse(`
           particle A
           recipe Foo
@@ -2680,7 +2680,7 @@ resource SomeName
         `);
         const result = manifest.allSchemas;
         assert.isEmpty(result);
-      }
+      });
     });
   });
 });
