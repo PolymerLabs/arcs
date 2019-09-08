@@ -10,17 +10,17 @@
 'use strict';
 
 defineParticle(({Particle, MultiplexerDomParticle}) => {
-  return class Multiplexer extends MultiplexerDomParticle {
+  return class SlandleMultiplexer extends MultiplexerDomParticle {
     constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
       const recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
   use '${itemHandle._id}' as handle1
   ${other.handles.join('\n')}
-  \`slot '${slot.id}' as slot1
+  \`slot '${slot.id}' as handle2
   ${hostedParticle.name}
     ${hostedParticle.handleConnections[0].name} <- handle1
-    ${hostedParticle.handleConnections[1].name} consume slot1
+    ${hostedParticle.handleConnections[1].name} consume handle2
     ${other.connections.join('\n')}
   `;
       return recipe;

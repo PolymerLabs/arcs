@@ -322,7 +322,7 @@ export class ParticleSpec {
   }
 
   isCompatible(modality: Modality): boolean {
-    return this.slotConnections.size === 0 || this.modality.intersection(modality).isResolved();
+    return this.slandleConnectionNames().length === 0 || this.modality.intersection(modality).isResolved();
   }
 
   setImplBlobUrl(url: string): void {

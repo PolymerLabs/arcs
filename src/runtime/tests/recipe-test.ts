@@ -531,6 +531,63 @@ describe('recipe', () => {
     assert.isTrue(recipe.modality.isCompatible([Modality.Name.Vr]));
     assert.isFalse(recipe.modality.isCompatible([Modality.Name.Dom]));
   });
+  const createSlandlesParticleSpecString = (name, slotName, modalities = []) => {
+    return `
+      particle ${name}
+        ${slotName ? `\`consume Slot ${slotName}` : ''}
+        ${modalities.map(m => `modality ${m}`).join('\n        ')}`;
+  };
+  const createSlandlesRecipeString = (modalities = {}) => {
+    const str = `
+      ${createSlandlesParticleSpecString('P0', 'root', modalities['P0'])}
+      ${createSlandlesParticleSpecString('P1', 'root', modalities['P1'])}
+      ${createSlandlesParticleSpecString('P2', null,   modalities['P2'])}
+      ${createSlandlesParticleSpecString('P3', 'root', modalities['P3'])}
+      recipe
+        \`slot 'slot-id' as root
+        P0
+          root consume root
+        P1
+          root consume root
+        P2
+        P3
+          root consume root`;
+    return str;
+  };
+  it('SLANDLES verifies modalities - default', async () => {
+    // Default 'dom' modality in all particles.
+    const recipe = (await Manifest.parse(createSlandlesRecipeString())).recipes[0];
+    assert.deepEqual(recipe.modality.names, Modality.dom.names);
+    assert.isTrue(recipe.modality.isResolved());
+    assert.isTrue(isResolved(recipe));
+  });
+  it('SLANDLES verifies modalities - non matching', async () => {
+    // empty modality intersection, no consumed slots, recipe is resolved.
+    // P0 modalities: domTouch, voice, vr; P1 modality: vr; P2 and P3 modality: dom(default).
+    const recipe = (await Manifest.parse(createSlandlesRecipeString({
+      'P0': ['domTouch', 'vr', 'voice'],
+      'P1': ['vr']
+    }))).recipes[0];
+    assert.isEmpty(recipe.modality.names);
+    assert.isFalse(recipe.modality.isResolved());
+    assert.isFalse(isResolved(recipe));
+  });
+  it('SLANDLES verifies modalities - matching vr', async () => {
+    // empty modality intersection, no consumed slots, recipe is resolved.
+    // P0: domTouch, voice, vr; P1: vr; P2: dom(default); P3: voice, vr.
+    const recipe = (await Manifest.parse(createSlandlesRecipeString({
+      'P0': ['domTouch', 'vr', 'voice'],
+      'P1': ['vr'],
+      'P3': ['voice', 'vr']
+    }))).recipes[0];
+
+    // resolved recipe with non empty modality names intersection.
+    assert.deepEqual(recipe.modality.names, Modality.vr.names);
+    assert.isTrue(recipe.modality.isResolved());
+    assert.isTrue(isResolved(recipe));
+    assert.isTrue(recipe.modality.isCompatible([Modality.Name.Vr]));
+    assert.isFalse(recipe.modality.isCompatible([Modality.Name.Dom]));
+  });
   it('comments unfulfilled slot connections', async () => {
     const recipe = (await Manifest.parse(`
       schema Thing
@@ -544,8 +601,24 @@ describe('recipe', () => {
     `)).recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isFalse(recipe.isResolved());
-    assert.isTrue(recipe.toString({showUnresolved: true}).includes(
-        'unresolved particle: unfulfilled slot connections'));
+    assert.include(recipe.toString({showUnresolved: true}),
+        'unresolved particle: unfulfilled slot connections');
+  });
+  it('SLANDLES comments unfulfilled slandle connections', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+      particle MyParticle in 'myparticle.js'
+        in Thing inThing
+        \`consume Slot mySlot
+      recipe
+        create as handle0
+        MyParticle as particle0
+          inThing <- handle0
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isFalse(recipe.isResolved());
+    assert.include(recipe.toString({showUnresolved: true}),
+        'unresolved particle: unresolved connections');
   });
   it('particles match if one particle is a subset of another', async () => {
     const recipes = (await Manifest.parse(`

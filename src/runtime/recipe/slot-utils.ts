@@ -60,7 +60,7 @@ export class SlotUtils {
 
   // Returns all possible slot candidates, sorted by "quality"
   static findAllSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, arc) {
-    const slotConn = particle.getSlotConnectionByName(slotSpec.name);
+    const slotConn = particle.getSlandleConnectionByName(slotSpec.name);
     return {
       // Note: during manfiest parsing, target slot is only set in slot connection, if the slot exists in the recipe.
       // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
@@ -86,7 +86,7 @@ export class SlotUtils {
       return false;
     }
 
-    const potentialSlotConn = particle.getSlotConnectionBySpec(slotSpec);
+    const potentialSlotConn = particle.getSlandleConnectionBySpec(slotSpec);
     if (!SlotUtils.tagsOrNameMatch(slotSpec, slot.spec, potentialSlotConn, slot)) {
       return false;
     }
