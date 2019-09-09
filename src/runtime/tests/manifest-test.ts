@@ -2682,7 +2682,7 @@ resource SomeName
         assert.isEmpty(result);
       });
     });
-    describe('handles manifests with one schema', () => {
+    describe('handles manifests with simple schemas', () => {
       it('handles a schema with no fields', async () => {
         const manifest = await Manifest.parse(`
           schema Foo
@@ -2710,6 +2710,76 @@ resource SomeName
         assert.isNotNull(result[0].fields.b);
         assert.isNotNull(result[0].fields.c);
       });
+      it('handles schemas with no fields', async () => {
+        const manifest = await Manifest.parse(`
+          schema Foo
+          schema Boo
+          schema Roo
+          particle Bar
+            recipe Food
+              Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.equal(result.length, 3);
+        assert.isEmpty(result[0].fields);
+        assert.isEmpty(result[1].fields);
+        assert.isEmpty(result[2].fields);
+      });
+      it('handles multiple schemas with fields', async () => {
+        const manifest = await Manifest.parse(`
+        schema Foo
+          Text a
+        schema Boo
+          Number b
+          Boolean c
+        schema Roo
+          URL d
+        schema Goo
+          Text e
+          Text f
+        particle Bar
+          recipe Food
+            Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.equal(result.length, 4);
+        assert.isNotNull(result[0].fields.a);
+        assert.isNotNull(result[1].fields.b);
+        assert.isNotNull(result[1].fields.c);
+        assert.isNotNull(result[2].fields.d);
+        assert.isNotNull(result[3].fields.e);
+        assert.isNotNull(result[3].fields.f);
+      });
+    });
+    describe('handles manifests with external stores of defined schemas', () => {
+      it('handles a simple external store of a schema', async () => {
+        const manifestStr = `
+        schema Foo
+          Text name
+          Number age
+        
+        store FooStore of Foo in 'b'
+        
+        particle Bar
+          recipe Food
+            Bar`;
+        const JsonStr = `
+        [
+          {
+              "name": "Jack",
+              "age": 7
+          }
+        ]`;
+        const loader = new StubLoader({
+            'a': manifestStr,
+            'b': JsonStr,
+        });
+        const manifest = await Manifest.load('a', loader);
+        const result = manifest.allSchemas;
+        assert.equal(result.length, 1);
+        assert.isNotNull(result[0].fields.name);
+        assert.isNotNull(result[0].fields.age);
+      });
     });
   });
 });
@@ -2720,4 +2790,6 @@ resource SomeName
 //     'b': `lol what is this`,
 //   });
 //   await Manifest.load('a', loader);
+//const manifest = await Manifest.load('a', loader, {registry});
+
 // });
