@@ -2706,9 +2706,9 @@ resource SomeName
         `);
         const result = manifest.allSchemas;
         assert.equal(result.length, 1);
-        assert.isNotNull(result[0].fields.a);
-        assert.isNotNull(result[0].fields.b);
-        assert.isNotNull(result[0].fields.c);
+        assert.isDefined(result[0].fields.a);
+        assert.isDefined(result[0].fields.b);
+        assert.isDefined(result[0].fields.c);
       });
       it('handles schemas with no fields', async () => {
         const manifest = await Manifest.parse(`
@@ -2743,12 +2743,12 @@ resource SomeName
         `);
         const result = manifest.allSchemas;
         assert.equal(result.length, 4);
-        assert.isNotNull(result[0].fields.a);
-        assert.isNotNull(result[1].fields.b);
-        assert.isNotNull(result[1].fields.c);
-        assert.isNotNull(result[2].fields.d);
-        assert.isNotNull(result[3].fields.e);
-        assert.isNotNull(result[3].fields.f);
+        assert.isDefined(result[0].fields.a);
+        assert.isDefined(result[1].fields.b);
+        assert.isDefined(result[1].fields.c);
+        assert.isDefined(result[2].fields.d);
+        assert.isDefined(result[3].fields.e);
+        assert.isDefined(result[3].fields.f);
       });
     });
     describe('handles manifests with external stores of defined schemas', () => {
@@ -2777,19 +2777,72 @@ resource SomeName
         const manifest = await Manifest.load('a', loader);
         const result = manifest.allSchemas;
         assert.equal(result.length, 1);
-        assert.isNotNull(result[0].fields.name);
-        assert.isNotNull(result[0].fields.age);
+        assert.isDefined(result[0].fields.name);
+        assert.isDefined(result[0].fields.age);
+      });
+      it('handles multiple schemas with stores and passing them via handles', async () => {
+        const manifestStr = `
+        schema Data
+          Number num
+          Text txt
+          URL lnk
+          Boolean flg
+
+        resource DataResource
+          start
+          [
+            {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}
+          ]
+        store DataStore of Data in DataResource
+
+
+        schema Info
+          Text for
+          Number val
+
+        store InfoStore of [Info] in 'b'
+
+
+        particle TestParticle
+          consume root
+          inout Data data
+          out Data res
+          inout [Info] info
+
+        recipe KotlinTestRecipe
+          copy DataStore as h1
+          create as h2
+          copy InfoStore as h3
+          TestParticle
+            data <- h1
+            res -> h2
+            info = h3
+
+
+        particle ServiceParticle
+          consume root
+
+        recipe ServicesAPI
+          ServiceParticle
+        `;
+        const JsonStr = `
+        [
+            {"for": "xx", "val": -5.8},
+            {"val": 107},
+            {"for": "yy"}
+        ]`;
+        const loader = new StubLoader({
+            'a': manifestStr,
+            'b': JsonStr,
+        });
+        const manifest = await Manifest.load('a', loader);
+        const result = manifest.allSchemas;
+        assert.equal(result.length, 2);
+        // assert.isDefined(result[0].fields.name);
+        // assert.isDefined(result[0].fields.age);
+        // assert.isDefined(result[1].fields.link);
+        // assert.isDefined(result[1].fields.link);
       });
     });
   });
 });
-
-// it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
-//   const loader = new StubLoader({
-//     'a': `import 'b'`,
-//     'b': `lol what is this`,
-//   });
-//   await Manifest.load('a', loader);
-//const manifest = await Manifest.load('a', loader, {registry});
-
-// });
