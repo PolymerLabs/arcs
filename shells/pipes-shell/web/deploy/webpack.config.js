@@ -17,7 +17,8 @@ module.exports = {
   //target: 'node',
   //devtool: 'source-map',
   optimization: {
-     minimize: true,
+     minimize: false,
+     //minimize: true,
      minimizer: [
        new TerserPlugin({
          terserOptions: {
