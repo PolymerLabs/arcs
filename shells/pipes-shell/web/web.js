@@ -19,6 +19,7 @@ import {version, paths, storage, test} from './config.js';
 import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // dependencies
+import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {findContainers} from '../source/lib/utils.js';
@@ -36,7 +37,7 @@ const composerFactory = modality => {
       return new DomSlotComposer({containers: findContainers(node)});
     }
     default:
-      return new RamSlotComposer();
+      return new UiSlotComposer(); //RamSlotComposer();
   }
 };
 

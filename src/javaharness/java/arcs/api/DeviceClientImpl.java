@@ -9,6 +9,7 @@ public class DeviceClientImpl implements DeviceClient {
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
   private static final String MESSAGE_DATA = "data";
+  private static final String MESSAGE_OUTPUT = "output";
   private static final String MESSAGE_PEC = "pec";
   private static final String FIELD_TRANSACTION_ID = "tid";
   private static final String FIELD_DATA = "data";
@@ -21,15 +22,18 @@ public class DeviceClientImpl implements DeviceClient {
   private Map<String, ArcsEnvironment.DataListener> inProgress;
   private final PECInnerPortFactory portFactory;
   private final Map<String, PECInnerPort> portById = new HashMap<>();
+  private final UiBroker uiBroker;
 
   @Inject
   public DeviceClientImpl(
       PortableJsonParser jsonParser,
       Map<String, ArcsEnvironment.DataListener> inProgress,
-      PECInnerPortFactory portFactory) {
+      PECInnerPortFactory portFactory,
+      UiBroker uiBroker) {
     this.jsonParser = jsonParser;
     this.inProgress = inProgress;
     this.portFactory = portFactory;
+    this.uiBroker = uiBroker;
   }
 
   @Override
@@ -41,18 +45,13 @@ public class DeviceClientImpl implements DeviceClient {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
         break;
-      case MESSAGE_DATA:
-        String transactionId = String.valueOf(content.getInt(FIELD_TRANSACTION_ID));
-        if (inProgress.containsKey(transactionId)) {
-          PortableJson dataJson = content.getObject(FIELD_DATA);
-          if (dataJson != null) {
-            inProgress.get(transactionId).onData(transactionId, jsonParser.stringify(dataJson));
-          }
-          inProgress.remove(transactionId);
-        }
-        break;
       case MESSAGE_PEC:
         postMessage(content.getObject(FIELD_DATA));
+        break;
+      case MESSAGE_OUTPUT:
+        if (!uiBroker.render(content)) {
+          logger.warning("Skipped rendering content for " + content.getString("containerSlotName"));
+        }
         break;
       default:
         throw new AssertionError("Received unsupported message: " + message);

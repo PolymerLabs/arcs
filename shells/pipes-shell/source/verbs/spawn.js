@@ -30,6 +30,13 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
       composer: composerFactory(modality),
       portFactories: [portIndustry(bus)]
     });
+    composer.slotObserver = {
+      observe: (content, arc) => {
+        delete content.particle;
+        bus.send({message: 'output', data: content});
+      }
+    };
+
     // optionally instantiate recipe
     if (action) {
       if (await instantiateRecipe(arc, action)) {
