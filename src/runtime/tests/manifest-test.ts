@@ -2665,7 +2665,7 @@ resource SomeName
   });
 
   describe('all schemas chicken', () => {
-    it('handles manifests with no schemas', async () => {
+    describe('handles manifests with no schemas', () => {
       it('handles an empty manifest', async () => {
         const emptyManifest = await Manifest.parse(`
         `);
@@ -2682,16 +2682,17 @@ resource SomeName
         assert.isEmpty(result);
       });
     });
-    it('handles manifests with one schemaa', async () => {
-      it('handles an empty schema', async () => {
-        const emptyManifest = await Manifest.parse(`
+    describe('handles manifests with one schema', () => {
+      it('handles a schema with no fields', async () => {
+        const manifest = await Manifest.parse(`
           schema Foo
           particle Bar
             recipe Food
               Bar
         `);
-        const emptyResult = emptyManifest.allSchemas;
-        assert.isEmpty(emptyResult);
+        const result = manifest.allSchemas;
+        assert.equal(result.length, 1);
+        assert.isEmpty(result[0].fields);
       });
       it('handles a schema with fields', async () => {
         const manifest = await Manifest.parse(`
@@ -2704,7 +2705,10 @@ resource SomeName
             Bar
         `);
         const result = manifest.allSchemas;
-        assert.isEmpty(result);
+        assert.equal(result.length, 1);
+        assert.isNotNull(result[0].fields.a);
+        assert.isNotNull(result[0].fields.b);
+        assert.isNotNull(result[0].fields.c);
       });
     });
   });
