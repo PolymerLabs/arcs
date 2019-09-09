@@ -10,7 +10,7 @@
 
 import '../../configuration/whitelisted.js';
 import '../../lib/platform/loglevel-web.js';
-import {SlotObserver} from '../../lib/renderer.js';
+import {SlotObserver} from '../../lib/xen-renderer.js';
 
 const renderer = new SlotObserver(document.body);
 
