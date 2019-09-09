@@ -5,29 +5,29 @@ import java.util.function.Consumer;
 public interface PECInnerPort {
   void handleMessage(PortableJson message);
 
-  void InitializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);
+  void initializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);
 
-  void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);
+  void synchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);
 
-  void HandleStore(
+  void handleStore(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
       String particleId);
 
-  void HandleToList(StorageProxy storageProxy, Consumer<PortableJson> callback);
+  void handleToList(StorageProxy storageProxy, Consumer<PortableJson> callback);
 
-  void HandleRemove(
+  void handleRemove(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
       String particleId);
 
-  void HandleRemoveMultiple(
+  void handleRemoveMultiple(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
       String particleId);
 
-  void Output(Particle particle, PortableJson content);
+  void output(Particle particle, PortableJson content);
 }

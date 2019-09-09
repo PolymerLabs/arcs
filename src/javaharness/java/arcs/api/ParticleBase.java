@@ -70,6 +70,7 @@ public class ParticleBase implements Particle {
   public void renderModel() {
     if (this.output != null) {
       this.output.accept(jsonParser.emptyObject()
+          // TODO: add support for slotName.
           .put("template", getTemplate(""))
           .put("model", getModel()));
     }

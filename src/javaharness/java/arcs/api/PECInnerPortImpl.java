@@ -100,7 +100,7 @@ public class PECInnerPortImpl implements PECInnerPort {
               messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
 
           // TODO: implement proper capabilities.
-          particle.setOutput((content) -> Output(particle, content));
+          particle.setOutput((content) -> output(particle, content));
           break;
         }
       case DEFINE_HANDLE_MSG:
@@ -148,7 +148,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void InitializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void initializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     PortableJson message = constructMessage(INITIALIZE_PROXY_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
@@ -159,7 +159,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void synchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     PortableJson message = constructMessage(SYNCHRONIZE_PROXY_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
@@ -170,7 +170,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void HandleStore(
+  public void handleStore(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
@@ -179,14 +179,14 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void HandleToList(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void handleToList(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     postMessage(
         constructHandleMessage(
             HANDLE_TO_LIST_MSG, storageProxy, callback, /* data= */ null, /* particleId= */ null));
   }
 
   @Override
-  public void HandleRemove(
+  public void handleRemove(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
@@ -196,7 +196,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void HandleRemoveMultiple(
+  public void handleRemoveMultiple(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
@@ -207,7 +207,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void Output(Particle particle, PortableJson content) {
+  public void output(Particle particle, PortableJson content) {
     PortableJson message = constructMessage(OUTPUT_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<>(particle)));

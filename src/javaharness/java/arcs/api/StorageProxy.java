@@ -59,12 +59,12 @@ public abstract class StorageProxy implements Store {
     observers.put(handle, particle);
 
     if (!listenerAttached) {
-      port.InitializeProxy(this, this::onUpdate);
+      port.initializeProxy(this, this::onUpdate);
       listenerAttached = true;
     }
     if (handle.options.keepSynced) {
       if (!keepSynced) {
-        port.SynchronizeProxy(this, this::onSynchronize);
+        port.synchronizeProxy(this, this::onSynchronize);
         keepSynced = true;
       }
 
@@ -169,7 +169,7 @@ public abstract class StorageProxy implements Store {
     if (updates.size() > 0) {
       if (syncState != SyncState.NONE) {
         syncState = SyncState.NONE;
-        port.SynchronizeProxy(this, this::onSynchronize);
+        port.synchronizeProxy(this, this::onSynchronize);
         for (Map.Entry<Handle, Particle> observer : observers.entrySet()) {
           Handle handle = observer.getKey();
           if (handle.options.notifyDesync) {
