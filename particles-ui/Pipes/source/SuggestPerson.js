@@ -10,11 +10,12 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
-  return class extends DomParticle {
-    get template() {
-      return html`<span></span>`;
-    }
+defineParticle(({UiParticle, html, log}) => {
+
+  return class extends UiParticle {
+    // get template() {
+    //   return html`<span></span>`;
+    // }
     update({recentEntities}, state) {
       if (recentEntities) {
         const json = this.query(recentEntities);
@@ -28,4 +29,5 @@ defineParticle(({DomParticle, html, log}) => {
       return JSON.stringify(result);
     }
   };
+
 });
