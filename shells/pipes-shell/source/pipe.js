@@ -107,6 +107,9 @@ const brokerFactory = bus => {
         id: String(output.particle.id)
       };
       const tid = await bus.recoverTransactionId(arc);
+      if (!tid) {
+        log(`couldn't match the arc to a tid, inner arc?`);
+      }
       bus.send({message: 'slot', tid, content: output});
     },
     dispose: () => null
