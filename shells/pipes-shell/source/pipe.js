@@ -100,7 +100,7 @@ const composerFactory = (modality, bus, tid) => {
 const brokerFactory = bus => {
   return {
     observe: async (output, arc) => {
-      console.log('UiBroker received', output);
+      log('UiBroker received', output);
       const content = output;
       content.particle = {
         name: output.particle.name,
