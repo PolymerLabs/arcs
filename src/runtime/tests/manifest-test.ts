@@ -2664,7 +2664,7 @@ resource SomeName
     });
   });
 
-  describe('all schemas chicken', () => {
+  describe('all schemas', () => {
     describe('handles manifests with no schemas', () => {
       it('handles an empty manifest', async () => {
         const emptyManifest = await Manifest.parse(`
