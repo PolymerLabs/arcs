@@ -2784,7 +2784,7 @@ resource SomeName
         particle Bar
           recipe Food
             Bar`;
-        const JsonStr = `
+        const jsonStr = `
         [
           {
               "name": "Jack",
@@ -2793,7 +2793,7 @@ resource SomeName
         ]`;
         const loader = new StubLoader({
             'a': manifestStr,
-            'b': JsonStr,
+            'b': jsonStr,
         });
         const manifest = await Manifest.load('a', loader);
         const result = manifest.allSchemas;
@@ -2849,7 +2849,7 @@ resource SomeName
         recipe ServicesAPI
           ServiceParticle
         `;
-        const JsonStr = `
+        const jsonStr = `
         [
             {"for": "xx", "val": -5.8},
             {"val": 107},
@@ -2857,7 +2857,7 @@ resource SomeName
         ]`;
         const loader = new StubLoader({
             'a': manifestStr,
-            'b': JsonStr,
+            'b': jsonStr,
         });
         const manifest = await Manifest.load('a', loader);
         const result = manifest.allSchemas;
