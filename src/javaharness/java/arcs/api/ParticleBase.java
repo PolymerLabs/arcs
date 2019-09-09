@@ -9,7 +9,6 @@ public class ParticleBase implements Particle {
   public ParticleSpec spec;
   public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
-  // protected Map<String, SlotProxy> slotProxyByName = new HashMap<>();
   protected Consumer<PortableJson> output;
 
   @Override
@@ -75,7 +74,7 @@ public class ParticleBase implements Particle {
           .put("model", getModel()));
     }
   }
- 
+
   @Override
   public String getTemplate(String slotName) {
     return "";

@@ -19,13 +19,13 @@ import {spawn} from './verbs/spawn.js';
 
 //const {log, warn} = logsFactory('pipe');
 
-export const initPipe = async (client, paths, storage) => { //, composerFactory) => {
+export const initPipe = async (client, paths, storage, composerFactory) => {
   // configure arcs environment
   Utils.init(paths.root, paths.map);
   // marshal context
   const context = await requireContext();
   // marshal dispatcher
-  populateDispatcher(dispatcher, /*composerFactory,*/ storage, context);
+  populateDispatcher(dispatcher, composerFactory, storage, context);
   // create bus
   const bus = new Bus(dispatcher, client);
   // send pipe identifiers to client
@@ -45,13 +45,13 @@ const identifyPipe = async (context, bus) => {
   bus.send({message: 'ready', recipes});
 };
 
-const populateDispatcher = (dispatcher, /*composerFactory,*/ storage, context) => {
+const populateDispatcher = (dispatcher, composerFactory, storage, context) => {
   Object.assign(dispatcher, {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
     },
     spawn: async (msg, tid, bus) => {
-      return await spawn(msg, tid, bus, /*composerFactory,*/ storage, context);
+      return await spawn(msg, tid, bus, composerFactory, storage, context);
     }
   });
   return dispatcher;

@@ -22,5 +22,5 @@ class AlertRenderer implements UiRenderer {
       return true;
     }
     return false;
-  } 
+  }
 }

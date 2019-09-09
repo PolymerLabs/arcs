@@ -19,5 +19,5 @@ class LogRenderer implements UiRenderer {
       return true;
     }
     return false;
-  } 
+  }
 }
