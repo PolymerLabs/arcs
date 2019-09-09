@@ -10,7 +10,8 @@
     android:targetSdkVersion="28"/>
 
   <application
-    android:label="Arcs Harness App">
+    android:label="Arcs Demo">
+
     <activity
       android:name=".MainActivity"
       android:label="ArcsHarnessApp">
@@ -19,5 +20,9 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
+
+    <service
+        android:name=".ArcsService"
+        android:exported="false"/>
   </application>
 </manifest>
