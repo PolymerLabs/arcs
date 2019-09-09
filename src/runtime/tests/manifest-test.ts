@@ -2691,8 +2691,11 @@ resource SomeName
               Bar
         `);
         const result = manifest.allSchemas;
-        assert.equal(result.length, 1);
+        assert.lengthOf(result, 1);
         assert.isEmpty(result[0].fields);
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+    
       });
       it('handles a schema with fields', async () => {
         const manifest = await Manifest.parse(`
@@ -2705,10 +2708,12 @@ resource SomeName
             Bar
         `);
         const result = manifest.allSchemas;
-        assert.equal(result.length, 1);
+        assert.lengthOf(result, 1);
         assert.isDefined(result[0].fields.a);
         assert.isDefined(result[0].fields.b);
         assert.isDefined(result[0].fields.c);
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
       });
       it('handles schemas with no fields', async () => {
         const manifest = await Manifest.parse(`
@@ -2720,7 +2725,7 @@ resource SomeName
               Bar
         `);
         const result = manifest.allSchemas;
-        assert.equal(result.length, 3);
+        assert.lengthOf(result, 3);
         assert.isEmpty(result[0].fields);
         assert.isEmpty(result[1].fields);
         assert.isEmpty(result[2].fields);
@@ -2742,11 +2747,27 @@ resource SomeName
             Bar
         `);
         const result = manifest.allSchemas;
-        assert.equal(result.length, 4);
+        assert.lengthOf(result, 4);
+
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+        assert.lengthOf(Object.keys(result[0].fields), 1);
         assert.isDefined(result[0].fields.a);
+
+        assert.lengthOf(result[1].names, 1);
+        assert.deepEqual(result[1].names, ['Boo']);
+        assert.lengthOf(Object.keys(result[1].fields), 2);
         assert.isDefined(result[1].fields.b);
         assert.isDefined(result[1].fields.c);
+
+        assert.lengthOf(result[2].names, 1);
+        assert.deepEqual(result[2].names, ['Roo']);
+        assert.lengthOf(Object.keys(result[2].fields), 1);
         assert.isDefined(result[2].fields.d);
+
+        assert.lengthOf(result[3].names, 1);
+        assert.deepEqual(result[3].names, ['Goo']);
+        assert.lengthOf(Object.keys(result[3].fields), 2);
         assert.isDefined(result[3].fields.e);
         assert.isDefined(result[3].fields.f);
       });
@@ -2776,11 +2797,14 @@ resource SomeName
         });
         const manifest = await Manifest.load('a', loader);
         const result = manifest.allSchemas;
-        assert.equal(result.length, 1);
+        assert.lengthOf(result, 1);
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+        assert.lengthOf(Object.keys(result[0].fields), 2);
         assert.isDefined(result[0].fields.name);
         assert.isDefined(result[0].fields.age);
       });
-      it('handles multiple schemas with stores and passing them via handles', async () => {
+      it('handles multiple schemas with internal and external stores and passing them via handles', async () => {
         const manifestStr = `
         schema Data
           Number num
@@ -2838,10 +2862,20 @@ resource SomeName
         const manifest = await Manifest.load('a', loader);
         const result = manifest.allSchemas;
         assert.equal(result.length, 2);
-        // assert.isDefined(result[0].fields.name);
-        // assert.isDefined(result[0].fields.age);
-        // assert.isDefined(result[1].fields.link);
-        // assert.isDefined(result[1].fields.link);
+
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Data']);
+        assert.lengthOf(Object.keys(result[0].fields), 4);
+        assert.isDefined(result[0].fields.num);
+        assert.isDefined(result[0].fields.txt);
+        assert.isDefined(result[0].fields.lnk);
+        assert.isDefined(result[0].fields.flg);
+
+        assert.lengthOf(result[1].names, 1);
+        assert.deepEqual(result[1].names, ['Info']);
+        assert.lengthOf(Object.keys(result[1].fields), 2);
+        assert.isDefined(result[1].fields.for);
+        assert.isDefined(result[1].fields.val);
       });
     });
   });
