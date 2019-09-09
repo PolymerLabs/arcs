@@ -16,10 +16,10 @@ import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
 import {spawn, instantiateRecipeByName} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
-import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
+import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {logsFactory} from '../../../build/runtime/log-factory.js';
 
-const {log, warn} = logsFactory('pipe');
+const {log} = logsFactory('pipe');
 
 export const initPipe = async (client, paths, storage) => {
   // configure arcs environment
@@ -86,25 +86,14 @@ const populateDispatcher = (dispatcher, composerFactory, storage, context) => {
 };
 
 const composerFactory = (modality, bus, tid) => {
-  switch (modality) {
-    case 'ram': {
-      return new RamSlotComposer();
-    }
-    default: {
-      const composer = new RamSlotComposer({
-        top: 'top',
-        root: 'root',
-        modal: 'modal'
-      });
-      // TODO(sjmiles): hack in transaction identity, make this cleaner
-      composer.tid = tid;
-      // TODO(sjmiles): slotObserver could be late attached
-      // or we could attach a thunk that dispatches to an actual
-      // broker configured elsewhere.
-      composer.slotObserver = brokerFactory(bus);
-      return composer;
-    }
-  }
+  const composer = new UiSlotComposer();
+  // TODO(sjmiles): hack in transaction identity, make this cleaner
+  composer.tid = tid;
+  // TODO(sjmiles): slotObserver could be late attached
+  // or we could attach a thunk that dispatches to an actual
+  // broker configured elsewhere.
+  composer.slotObserver = brokerFactory(bus);
+  return composer;
 };
 
 // `slot-composer` delegates ui work to a `ui-broker`
