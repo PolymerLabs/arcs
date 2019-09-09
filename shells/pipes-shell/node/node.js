@@ -18,15 +18,10 @@ import {version, paths, storage, test} from './config.js';
 //import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // dependencies
-import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {initPipe, initArcs} from '../pipe.js';
 import {smokeTest} from '../smoke.js';
 
 console.log(`${version} -- ${storage}`);
-
-const composerFactory = modality => {
-  return new RamSlotComposer();
-};
 
 const client = global.DeviceClient || {};
 
@@ -34,7 +29,7 @@ const client = global.DeviceClient || {};
   // if remote DevTools are requested, wait for connect
   //await DevtoolsSupport();
   // configure pipes and get a bus
-  const bus = await initPipe(client, paths, storage, composerFactory);
+  const bus = await initPipe(client, paths, storage);
   // export bus
   global.ShellApi = bus;
   // post startup shell initializations.

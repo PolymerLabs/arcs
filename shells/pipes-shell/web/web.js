@@ -19,9 +19,6 @@ import {version, paths, storage, test} from './config.js';
 import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // dependencies
-import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
-import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
-import {findContainers} from '../source/lib/utils.js';
 import {initPipe, initArcs} from '../source/pipe.js';
 import {smokeTest} from '../source/smoke.js';
 // fetch override that supports file
@@ -29,26 +26,13 @@ import '../source/lib/fetch-local.js';
 
 console.log(`${version} -- ${storage}`);
 
-const composerFactory = modality => {
-  switch (modality) {
-    case 'dom': {
-      const node = document.body.appendChild(document.createElement('div'));
-      node.style = 'margin-bottom: 8px;';
-      node.innerHTML = '<div slotid="root"></div>';
-      return new DomSlotComposer({containers: findContainers(node)});
-    }
-    default:
-      return new RamSlotComposer();
-  }
-};
-
 const client = window.DeviceClient || {};
 
 (async () => {
   // if remote DevTools are requested, wait for connect
   await DevtoolsSupport();
   // configure pipes and get a bus
-  const bus = await initPipe(client, paths, storage, composerFactory);
+  const bus = await initPipe(client, paths, storage);
   // export bus
   window.ShellApi = bus;
   // post startup shell initializations.
