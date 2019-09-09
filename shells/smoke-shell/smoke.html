@@ -24,7 +24,7 @@
       composer.root = document.body;
       composer.slotObserver = new SlotObserver(composer.root);
       // TODO(sjmiles): make the slotObserver do this
-       composer.slotObserver.dispatch = (pid, eventlet) => {
+      composer.slotObserver.dispatch = (pid, eventlet) => {
         console.log('ui-broker/composer dispatch for pid', pid, eventlet);
         composer.sendEvent(pid, eventlet);
       };
