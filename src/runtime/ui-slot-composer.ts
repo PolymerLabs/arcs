@@ -224,7 +224,7 @@ export class UiSlotComposer {
     slotObserver.dispatch = (pid, eventlet) => {
       console.log('ui-broker/composer dispatch for pid', pid, eventlet);
       this.sendEvent(pid, eventlet);
-    }
+    };
   }
 
   // TODO(sjmiles): maybe better implemented as a slot dispose (arc dispose?) notification to
