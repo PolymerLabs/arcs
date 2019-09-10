@@ -865,7 +865,6 @@ function runTests(args: string[]): boolean {
     }
 
     for (const test of tests) {
-      console.log('testing file: ' + test);
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
         mocha.suite.emit('pre-require', global, '${test}', mocha);
