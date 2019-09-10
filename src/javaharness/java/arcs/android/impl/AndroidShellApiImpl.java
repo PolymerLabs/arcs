@@ -1,6 +1,5 @@
 package arcs.android.impl;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -20,15 +19,16 @@ public class AndroidShellApiImpl implements ShellApi {
   private static final String TID_FIELD_NAME = "tid";
   private static final String DYNAMIC_MANIFEST_URL =
       "file:///android_asset/pipes-shell/dynamic.manifest";
-  private Context context;
   private Map<String, DataListener> inProgress;
+  private WebView webView;
 
   @Inject
-  public AndroidShellApiImpl(Map<String, DataListener> inProgress) {
+  public AndroidShellApiImpl(
+      Map<String, DataListener> inProgress,
+      WebView webView) {
     this.inProgress = inProgress;
+    this.webView = webView;
   }
-
-  private WebView webView;
 
   @Override
   public String receive(String json) {
@@ -53,9 +53,5 @@ public class AndroidShellApiImpl implements ShellApi {
       Log.e("Arcs", "webView is null");
     }
     return "1";
-  }
-
-  public void setWebKit(WebView arcsWebView) {
-    webView = arcsWebView;
   }
 }
