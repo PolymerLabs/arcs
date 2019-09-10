@@ -49,6 +49,12 @@ async function setup(manifestString) {
 }
 
 describe('wasm tests (C++)', () => {
+  before(function() {
+    if (!global['testFlags'].bazel) {
+      this.skip();
+    }
+  });
+
   it('onHandleSync / onHandleUpdate', async () => {
     const {arc, stores} = await setup(`
       import '${schemasFile}'
