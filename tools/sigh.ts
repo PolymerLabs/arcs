@@ -856,8 +856,8 @@ function runTests(args: string[]): boolean {
     // from the repo root.
     let tests: Iterable<string>;
     if (options.file) {
-      // Switch from "src/abc/foo-test.ts" to "../build/abc/foo-test.js
-      let filename = options.file.replace(/^src\//, "../build/").replace(/\.ts$/, ".js");
+      // Switch from "src/abc/foo-test.ts" to "../build/abc/foo-test.js"
+      let filename = options.file.replace(/^src\//, '../build/').replace(/\.ts$/, '.js');
       filename = fixPathForWindows(path.resolve(__dirname, filename));
       tests = [filename];
     } else {
