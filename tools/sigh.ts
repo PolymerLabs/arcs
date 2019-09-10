@@ -51,12 +51,9 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-// TODO(csilvestrini): Remove wasm support from sigh entirely.
-// const wasmOptional = args => wasm(true, args);
-// const wasmRequired = args => wasm(false, args);
-const wasmOptional = args => true;
-const wasmRequired = args => true;
-
+// TODO(csilvestrini): Remove wasm stuff from sigh entirely.
+const wasmOptional = args => wasm(true, args);
+const wasmRequired = args => wasm(false, args);
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS],
