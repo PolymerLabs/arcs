@@ -28,8 +28,7 @@
     }
   </style>
   <button class="butt" type="button" on-click="onClick">
-  <div slotid="avatarSlotOne"></div>
-  <div slotid="avatarSlotTwo"></div>
+  <div slotid="avatarSlot"></div>
   </button>
   `;
 
