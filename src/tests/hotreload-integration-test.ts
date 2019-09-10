@@ -86,7 +86,7 @@ describe('Hot Code Reload for JS Particle', async () => {
 
 describe('Hot Code Reload for WASM Particle', async () => {
   before(function() {
-    if (!global['testFlags'].enableWasm) {
+    if (!global['testFlags'].bazel) {
       this.skip();
     }
   });
@@ -108,7 +108,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const pecFactories = [FakePecFactory(loader).bind(null)];
     const slotComposer = new FakeSlotComposer();
     const arc = new Arc({id, pecFactories, slotComposer, loader, context});
-  
+
     const [recipe] = arc.context.recipes;
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     await arc.instantiate(recipe);
