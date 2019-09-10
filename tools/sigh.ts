@@ -51,19 +51,14 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-// TODO(csilvestrini): Remove wasm stuff from sigh entirely.
-const wasmOptional = args => wasm(true, args);
-const wasmRequired = args => wasm(false, args);
-
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS],
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, wasmOptional, runTests],
+  test: [peg, railroad, build, runTests],
   webpack: [peg, railroad, build, webpack],
   webpackTools: [peg, build, webpackTools],
-  build: [peg, build, wasmOptional],
-  wasm: [peg, build, wasmRequired],
+  build: [peg, build],
   watch: [watch],
   lint: [peg, build, lint, tslint],
   tslint: [peg, build, tslint],
@@ -77,7 +72,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   flowcheck: [peg, build, flowcheck],
   licenses: [build],
   install: [install],
-  default: [check, peg, railroad, build, wasmOptional, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
+  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -103,8 +98,6 @@ const isTravisDaily = (process.env.TRAVIS_EVENT_TYPE === 'cron');
 
 // Flags for unit tests; use `global['testFlags'].foo` to access them.
 const testFlags = {
-  // TODO(csilvestrini): Delete this flag.
-  enableWasm: false,
   /** If true, runs tests flagged as bazel tests. */
   bazel: false,
 };
@@ -405,26 +398,8 @@ function cleanObsolete() {
         });
       }
     } else {
-      // wasm outputs - look for a corresponding wasm.json config, and check if the module or
-      // genfile names match.
-
-      // build/path/to/module.wasm -> src/path/to/wasm.json
-      const configFile = path.join('src', path.dirname(file).slice(6), 'wasm.json');
-      const baseName = path.basename(file);
-      let found = false;
-      if (fs.existsSync(configFile)) {
-        const wasmConfig: WasmConfig = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-        for (const [name, cfg] of Object.entries(wasmConfig)) {
-          if (name === baseName || cfg.genfile === baseName) {
-            found = true;
-            break;
-          }
-        }
-      }
-      if (!found) {
-        console.log('Cleaning obsolete build output:', file);
-        fs.unlinkSync(file);
-      }
+      console.log('Cleaning obsolete build output:', file);
+      fs.unlinkSync(file);
     }
   }
 }
@@ -502,170 +477,6 @@ function link(srcFiles: Iterable<string>): boolean {
     }
   }
   return success;
-}
-
-// Config for building wasm modules.
-interface WasmConfig {
-  [key: string]: {     // Target filename for the module.
-    manifest: string,  // Manifest to process; should be in the same dir as the json file
-    genfile: string,   // Output filename for schema2packager generated file
-    src: string[],     // List of source files to compile (currently limited to one)
-    outdir: string,    // Output dir relative to project root; should be under 'build' for tests;
-                       // can be '$here' to use the same dir as the json file
-  };
-}
-
-interface WasmCounts {
-  found: number;
-  built: number;
-  failed: number;
-}
-
-// With no args, finds all 'wasm.json' files to generate C++ headers and compile wasm modules.
-// Otherwise only the requested configs are processed (e.g. tools/sigh wasm src/wasm/cpp/wasm.json)
-// Other options: --trace to show commands used, --force to disable timestamp checks
-function wasm(optional: boolean, args: string[]): boolean {
-  // TODO: https://github.com/PolymerLabs/arcs/issues/3418
-  if (process.platform !== 'linux' || isTravisDaily) {
-    console.log(`Skipping step; wasm builds are not yet supported on ${isTravisDaily ? 'Travis' : process.platform}`);
-    return true;
-  }
-
-  let emsdk;
-  try {
-    emsdk = setupEmsdk();
-  } catch (e) {
-    if (optional && e.constructor.name === 'MissingDeps') {
-      console.log('Skipping step and disabling wasm; emsdk is not installed');
-      return true;
-    }
-    throw e;
-  }
-  if (!emsdk) {
-    return false;
-  }
-  testFlags.enableWasm = true;
-
-  const options = minimist(args, {
-    boolean: ['trace', 'force'],
-  });
-  const specified = (options._.length > 0);
-  const targets = specified ? options._ : findProjectFiles('src', /javaharness/, /[/\\]wasm\.json$/);
-  const counts: WasmCounts = {found: 0, built: 0, failed: 0};
-  for (const configFile of targets) {
-    if (specified && !fs.existsSync(configFile)) {
-      console.error(`wasm config not found: ${configFile}`);
-      counts.failed++;
-      continue;
-    }
-    buildWasmModule(emsdk, counts, configFile, options.trace, options.force);
-  }
-  if (counts.found === 0) {
-    console.log('No wasm targets found');
-  } else if (counts.built === 0 && counts.failed === 0) {
-    console.log(`${counts.found} wasm targets found; all up-to-date`);
-  } else {
-    console.log(`${counts.found} wasm targets found; ${counts.built} built; ${counts.failed} failed`);
-  }
-  return counts.failed === 0;
-}
-
-// Attempts to install emsdk and verify that the version is correct.
-function setupEmsdk() {
-  const [emsdk] = getOptionalDependencies(['emsdk-npm'], 'The wasm command');
-
-  // Downloads and installs emsdk/emscripten as required.
-  emsdk.install();
-
-  // Verify the emsdk version. This also checks that em++ can be executed. The call generates a
-  // bunch of unrelated output (emsdk env setup, plus the version output itself is quite verbose),
-  // so the regex extracts the version from a line that looks like:
-  //   emcc (Emscripten gcc/clang-like replacement) 1.38.38 (4965260 Tue Jul 9 13:29:04 2019 ...
-  const result = emsdk.run('em++', ['--version']);
-  const match = result.stdout.match(/\nemcc [^0-9.]+ ([0-9.]+) /);
-  if (match === null) {
-    console.error('Failed to extract emsdk version');
-    console.error(result.stdout);
-    console.error(result.stderr);
-    return null;
-  }
-  const emsdkVersion = match[1];
-  const emsdkRequired = require('../package.json').engines.emsdk;
-  if (!semver.satisfies(emsdkVersion, emsdkRequired)) {
-    console.error(`emsdk version check failed: at least ${emsdkRequired} is required, you have ${emsdkVersion}`);
-    return null;
-  }
-  return emsdk;
-}
-
-function buildWasmModule(emsdk, counts: WasmCounts, configFile: string, logCmd: boolean, force: boolean) {
-  let wasmConfig: WasmConfig;
-  try {
-    wasmConfig = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-  } catch (e) {
-    console.error(`Error parsing ${configFile}: ${e.message}\n`);
-    counts.failed++;
-    return;
-  }
-
-  const srcDir = path.dirname(configFile);
-  for (const [name, cfg] of Object.entries(wasmConfig)) {
-    counts.found++;
-    if (cfg.outdir === '$here') {
-      cfg.outdir = srcDir;
-    }
-    fs.mkdirSync(cfg.outdir, {recursive: true});
-
-    const srcPaths = ['src/wasm/cpp/arcs.cc', ...cfg.src.map(f => path.join(srcDir, f))];
-    const wasmPath = path.join(cfg.outdir, name);
-    const target = (path.extname(cfg.src[0]) === '.cc') ? '--cpp' : '--kotlin';
-
-    // Generate the entity class header file from the manifest.
-    const deps = ['src/wasm/cpp/arcs.h', ...srcPaths];
-    if (cfg.manifest) {
-      const updateFlag = force ? [] : ['--update'];
-      const spawnResult = saneSpawnWithOutput('node', [
-          ...nodeFlags,
-          '--no-warnings',
-          'build/tools/schema2packager.js',
-          ...updateFlag,
-          target,
-          '-d', cfg.outdir,
-          '-f', cfg.genfile,
-          path.join(srcDir, cfg.manifest)
-        ], {logCmd});
-      if (!spawnResult.success) {
-        console.error(spawnResult.stderr);
-        counts.failed++;
-        continue;
-      }
-      deps.push(spawnResult.stdout.trim());
-    }
-
-    if (!force && targetIsUpToDate(wasmPath, deps, true)) {
-      continue;
-    }
-
-    // Compile the wasm module.
-    const emsdkResult = emsdk.run('em++', [
-        '-std=c++17', '-O3',
-        '-s', `EXPORTED_FUNCTIONS=['_malloc','_free']`,
-        '-s', 'EMIT_EMSCRIPTEN_METADATA',
-        '-I', 'src/wasm/cpp',  // for arcs.h
-        '-I', cfg.outdir,
-        '-o', wasmPath,
-        ...srcPaths
-      ], {logCmd});
-    if (emsdkResult.status !== 0) {
-      console.error('\n------------------------------------------------------------------------');
-      console.error(`Compilation failed for ${name} in ${configFile}\n`);
-      console.error(emsdkResult.stderr);
-      console.error('------------------------------------------------------------------------\n');
-      counts.failed++;
-      continue;
-    }
-    counts.built++;
-  }
 }
 
 function tslint(args: string[]): boolean {
