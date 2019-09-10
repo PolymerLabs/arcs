@@ -31,7 +31,7 @@ def arcs_ts_test(name, src, deps):
     run_in_repo_test(
         name = name,
         srcs = [src],
-        cmd = "./tools/sigh test --file {SRC}",
+        cmd = "./tools/sigh test --bazel --file {SRC}",
         tags = EXECUTION_REQUIREMENTS_TAGS,
         deps = deps,
     )
