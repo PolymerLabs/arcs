@@ -9,6 +9,7 @@ particle Main in './source/Main.js'
   consume root
     provide playerSlot
     provide greetingSlot
+    provide cellSlot
 
 particle GetPlayer in './source/GetPerson.js'
   out Person playerOne
@@ -19,11 +20,25 @@ particle DisplayGreeting in './source/DisplayGreeting.js'
   in Person person
   consume greetingSlot
 
+particle DisplayAvatarOne in './source/DisplayAvatar.js'
+  in Person player
+  consume avatarSlotOne
+
+particle DisplayAvatarTwo in './source/DisplayAvatar.js'
+  in Person player
+  consume avatarSlotTwo
+
+particle Cell in './source/Cell.js'
+  consume cellSlot
+    provide avatarSlotOne
+    provide avatarSlotTwo
+
 recipe HandleRecipe
   Main
     consume root 
       provide playerSlot as getPlayer
       provide greetingSlot as greeting
+      provide cellSlot as cell
   GetPlayer
     playerOne -> playerOne
     playerTwo -> playerTwo
@@ -31,5 +46,14 @@ recipe HandleRecipe
   DisplayGreeting
     person <- playerTwo
     consume greetingSlot as greeting
-  
+  Cell
+    consume cellSlot as cell 
+      provide avatarSlotOne as avatarOne
+      provide avatarSlotTwo as avatarTwo 
+  DisplayAvatarOne
+    player <- playerOne
+    consume avatarSlotOne as avatarOne
+  DisplayAvatarTwo
+    player <- playerTwo
+    consume avatarSlotTwo as avatarTwo
   description `Javascript Tutorial 6: Handles`

@@ -14,15 +14,22 @@
 
 defineParticle(({DomParticle, html}) => {   
 
-const template = html`
-  <div slotid="playerSlot"></div>
-  <div slotid="greetingSlot"></div>
-  <div slotid="cellSlot"></div>
-`;
+const template = html`<span>{{avatar}}</span>`;
 
   return class extends DomParticle {
     get template() {
       return template;
+    }
+
+    shouldRender({player}) {
+      // Here we check that the person is defined.
+      return player;
+    }
+
+    render({player}) {
+      return {
+        avatar: player.avatar,
+      };
     }
     
   };
