@@ -4,6 +4,9 @@ ROOT=$(dirname $0)/..
 
 NVM_VERSION="v0.34.0"
 
+BAZEL_DEB="https://github.com/bazelbuild/bazel/releases/download/0.29.0/bazel_0.29.0-linux-x86_64.deb"
+BAZEL_PKG_NAME=$(basename "$BAZEL_DEB")
+
 YLW="\033[33m"
 RED="\033[91m"
 GRN="\033[92m"
@@ -38,6 +41,12 @@ nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 status "4. Install dependencies"
 (cd $ROOT && npm ci && npm --prefix=server ci) || fail 'Failed to install dependencies.'
+
+status "5. Install bazel"
+(wget "$BAZEL_DEB" && set -x && sudo dpkg -i $BAZEL_PKG_NAME)
+
+status "5.1. Set up the .bazelrc file"
+(cd $ROOT && echo "build --define=repo_root=$(pwd)" >> .bazelrc)
 
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"

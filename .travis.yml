@@ -14,6 +14,7 @@ script:
   - npm run test-with-start
   - npm run build:rollup
   - npm --prefix=server test
+  - bazel test --noshow_progress --noshow_loading_progress --test_output=errors //src/wasm/... //src/tests/...
 
 cache: npm
 
