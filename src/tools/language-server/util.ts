@@ -9,11 +9,10 @@
  */
 
 import * as url from 'url';
-
-export const jsonrpc = '2.0';
+import fs from 'fs';
 
 export interface LanguageServiceOptions {
-  log: string;       // The logging service to use (either 'console' or 'null').
+  log: string;       // The logging service to use ('console', 'null', or a file path).
   port: number;      // The port number to use for tcp/ip communication.
   help: boolean;     // Print the help information and do not run the server.
   version: boolean;  // Print the version information and do not run the server.
@@ -21,9 +20,6 @@ export interface LanguageServiceOptions {
 }
 
 export interface LanguageServiceContext {
-  logger: Logger;
-  rootPath?: string;
-  options: LanguageServiceOptions;
 }
 
 // tslint:disable: no-any
@@ -40,6 +36,42 @@ export class DevNullLogger implements Logger {
   public info(..._values: any[]): void {}
   public warn(..._values: any[]): void {}
   public error(..._values: any[]): void {}
+}
+
+// tslint:disable: no-any
+export class FileLogger implements Logger {
+  path: string;
+
+  constructor(path: string) {
+    this.path = path;
+  }
+
+  private write(level: string, values: any[]): void {
+    const str = (val: any) => {
+      if (val instanceof Object) {
+        return JSON.stringify(val, null, 2);
+      }
+      if (val.toString) {
+        return val.toString();
+      }
+      return val;
+    };
+    const msg = values.map(str).join(' ');
+    fs.appendFileSync(this.path, `${level}: ${msg}\n`);
+  }
+
+  public log(...values: any[]): void {
+    this.write('LOG', values);
+  }
+  public info(...values: any[]): void {
+    this.write('INFO', values);
+  }
+  public warn(...values: any[]): void {
+    this.write('WARN', values);
+  }
+  public error(...values: any[]): void {
+    this.write('ERROR', values);
+  }
 }
 
 export function normalizeUri(uri: string): string {
