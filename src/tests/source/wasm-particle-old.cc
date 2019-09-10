@@ -1,4 +1,4 @@
-#include <arcs.h>
+#include "src/wasm/cpp/arcs.h"
 
 class HotReloadTest : public arcs::Particle {
   std::string getTemplate(const std::string& slot_name) override {

@@ -1,5 +1,5 @@
-#include <arcs.h>
-#include <entities.h>
+#include "src/wasm/cpp/arcs.h"
+#include "src/wasm/cpp/tests/entities.h"
 
 class HandleSyncUpdateTest : public arcs::Particle {
 public:

@@ -15,8 +15,13 @@ import {RozSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {VolatileSingleton, VolatileCollection} from '../../../runtime/storage/volatile-storage.js';
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
 
+// Import some service definition files for their side-effects (the services get
+// registered automatically).
+import '../../../services/clock-service.js';
+import '../../../services/random-service.js';
+
 const schemasFile = 'src/wasm/cpp/tests/schemas.arcs';
-const buildDir = 'build/wasm/cpp/tests';
+const buildDir = 'bazel-bin/src/wasm/cpp/tests';
 
 class TestLoader extends Loader {
   resolve(path: string) {
@@ -44,9 +49,8 @@ async function setup(manifestString) {
 }
 
 describe('wasm tests (C++)', () => {
-  // TODO: https://github.com/PolymerLabs/arcs/issues/3418
   before(function() {
-    if (!global['testFlags'].enableWasm) {
+    if (!global['testFlags'].bazel) {
       this.skip();
     }
   });
