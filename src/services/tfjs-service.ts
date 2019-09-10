@@ -256,17 +256,20 @@ const getTopKClasses = async ({input, y, yHat, labels, topK = 3}): Promise<Class
   return topClassesAndProbs;
 };
 
-Services.register('tf', {
-  loadLayersModel,
-  loadGraphModel,
-  warmUp,
-  predict,
-  dispose,
-  normalize,
-  reshape,
-  expandDims,
-  getTopKClasses,
-  resizeBilinear,
-  imageToTensor,
-});
+export function registerTfService() {
+  Services.register('tf', {
+    loadLayersModel,
+    loadGraphModel,
+    warmUp,
+    predict,
+    dispose,
+    normalize,
+    reshape,
+    expandDims,
+    getTopKClasses,
+    resizeBilinear,
+    imageToTensor,
+  });
+}
 
+registerTfService();

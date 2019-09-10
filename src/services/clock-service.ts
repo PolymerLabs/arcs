@@ -37,21 +37,25 @@ type ClockServiceNowOptions = {
 
 const log = logFactory('tfjs-service');
 
-Services.register('clock', {
-  now: ({timeUnit}: ClockServiceNowOptions) => {
-    try {
-      const unit = timeUnit ? TimeUnit.fromString(timeUnit) : TimeUnit.SECONDS;
+export function registerClockService() {
+  Services.register('clock', {
+    now: ({timeUnit}: ClockServiceNowOptions) => {
+      try {
+        const unit = timeUnit ? TimeUnit.fromString(timeUnit) : TimeUnit.SECONDS;
 
-      // Get current millis
-      const millis = Date.now();
+        // Get current millis
+        const millis = Date.now();
 
-      // Truncate to timeunit and return
-      return Instant.fromEpochMilliseconds(millis).truncateTo(unit).toString();
+        // Truncate to timeunit and return
+        return Instant.fromEpochMilliseconds(millis).truncateTo(unit).toString();
 
-    } catch (e) {
-      // TODO document what happens during failures.
-      log('error ', e);
-      return undefined;
+      } catch (e) {
+        // TODO document what happens during failures.
+        log('error ', e);
+        return undefined;
+      }
     }
-  }
-});
+  });
+}
+
+registerClockService();

@@ -35,6 +35,10 @@ const classifyImage = async ({imageUrl}) => {
   };
 };
 
-Services.register('ml5', {
-  classifyImage
-});
+export function registerMl5Service() {
+  Services.register('ml5', {
+    classifyImage
+  });
+}
+
+registerMl5Service();

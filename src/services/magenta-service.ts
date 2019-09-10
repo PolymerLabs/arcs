@@ -30,6 +30,10 @@ export const loadAndPlayMusic = async () => {
     .then((samples) => player.start(samples[0], 80));
 };
 
-Services.register('magenta', {
-  loadAndPlayMusic
-});
+export function registerMagentaService() {
+  Services.register('magenta', {
+    loadAndPlayMusic
+  });
+}
+
+registerMagentaService();

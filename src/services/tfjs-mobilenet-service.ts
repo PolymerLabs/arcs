@@ -147,9 +147,13 @@ const getImage = async (image: MobilenetImageInput | undefined, imageUrl: string
   return !image && imageUrl ? await loadImage(imageUrl): image;
 };
 
-Services.register('mobilenet', {
-  load,
-  classify,
-  extractEmbeddings,
-  dispose,
-});
+export function registerMobilenetService() {
+  Services.register('mobilenet', {
+    load,
+    classify,
+    extractEmbeddings,
+    dispose,
+  });
+}
+
+registerMobilenetService();

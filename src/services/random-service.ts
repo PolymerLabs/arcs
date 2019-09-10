@@ -21,6 +21,10 @@
 import {Services} from '../runtime/services.js';
 import {Random} from '../runtime/random.js';
 
-Services.register('random', {
-  next: () => Random.next()
-});
+export function registerRandomService() {
+  Services.register('random', {
+    next: () => Random.next()
+  });
+}
+
+registerRandomService();
