@@ -1,4 +1,5 @@
 #include "src/wasm/cpp/arcs.h"
+#include "src/tests/source/entities.h"
 
 class HotReloadTest : public arcs::Particle {
   std::string getTemplate(const std::string& slot_name) override {
@@ -12,3 +13,31 @@ class HotReloadTest : public arcs::Particle {
 };
 
 DEFINE_PARTICLE(HotReloadTest)
+
+class ReloadHandleTest : public arcs::Particle {
+  public:
+    ReloadHandleTest() {
+      registerHandle("personIn", personIn);
+      registerHandle("personOut", personOut);
+    }
+    void onHandleSync(const std::string& name, bool all_synced) override {
+      update(name);
+    }
+    void onHandleUpdate(const std::string& name) override {
+      update(name);
+    }
+    void update(const std::string& name) {
+      arcs::Person out;
+      if (auto input = getSingleton<arcs::Person>(name)) {
+        out.set_name(input->get().name());
+        out.set_age(input->get().age() * 2);
+      } else {
+        out.set_name("unexpected handle name: " + name);
+      }
+      personOut.set(&out);
+    }
+    arcs::Singleton<arcs::Person> personIn;
+    arcs::Singleton<arcs::Person> personOut;
+};
+
+DEFINE_PARTICLE(ReloadHandleTest);
