@@ -1,8 +1,26 @@
+# Execution requirements for running commands in the repo root.
+EXECUTION_REQUIREMENTS_TAGS = [
+    "no-sandbox",
+    "no-cache",
+    "no-remote",
+    "local",
+]
+
+# Same as the above, but as a dictionary.
+EXECUTION_REQUIREMENTS_DICT = dict([(k, "1") for k in EXECUTION_REQUIREMENTS_TAGS])
+
 def _absolute_path(repo_root, path):
     """Converts path relative to the repo root into an absolute file path."""
     return repo_root + "/" + path
 
-def _run_in_repo(ctx):
+def _write_shell_script(ctx, run_script):
+    """Writes out a script for running a command in the repo root.
+
+    If run_script is true, this function will also run the script.
+
+    Returns the created script as a File object.
+    """
+
     # Extract the repo root directory from .bazelrc
     if "repo_root" not in ctx.var:
         fail(
@@ -41,26 +59,34 @@ def _run_in_repo(ctx):
         },
     )
 
-    # Run the shell script.
-    ctx.actions.run(
-        executable = script_file,
-        inputs = input_files,
-        outputs = output_files,
-        progress_message = ctx.attr.progress_message,
-        use_default_shell_env = True,
-        execution_requirements = {
-            "no-sandbox": "1",
-            "no-cache": "1",
-            "no-remote": "1",
-            "local": "1",
-        },
-    )
+    # Optionally run the shell script.
+    if run_script:
+        ctx.actions.run(
+            executable = script_file,
+            inputs = depset(input_files, transitive = ctx.attr.deps),
+            outputs = output_files,
+            progress_message = ctx.attr.progress_message,
+            use_default_shell_env = True,
+            execution_requirements = EXECUTION_REQUIREMENTS_DICT,
+        )
 
-run_in_repo = rule(
-    implementation = _run_in_repo,
-    attrs = {
-        "cmd": attr.string(
-            doc = """
+    return script_file
+
+def _run_in_repo(ctx):
+    _write_shell_script(ctx = ctx, run_script = True)
+
+def _run_in_repo_test(ctx):
+    script_file = _write_shell_script(ctx = ctx, run_script = False)
+
+    return [DefaultInfo(
+        executable = script_file,
+        runfiles = ctx.runfiles(files = ctx.files.srcs + ctx.files.deps),
+    )]
+
+# Attributes for the run_in_repo rule.
+_RUN_RULE_ATTRS = {
+    "cmd": attr.string(
+        doc = """
 Command to run in the repo root. You can use standard python format placeholders
 of the form \{SRCS\}, which will be substituted when the command is run.
 Placeholders are:
@@ -69,24 +95,29 @@ Placeholders are:
 You can also use SRC and OUT, provided you have supplied only a single input or
 output file respectively.
 """,
-        ),
-        "outs": attr.output_list(
-            allow_empty = False,
-            mandatory = True,
-            doc = "Output file(s) created by this rule.",
-        ),
-        "srcs": attr.label_list(
-            allow_files = True,
-            doc = "Input file(s) used by this rule.",
-        ),
-        "progress_message": attr.string(
-            doc = "Message to display when running the command.",
-        ),
-        "_template": attr.label(
-            default = "run_in_repo_template.sh",
-            allow_single_file = True,
-        ),
-    },
+    ),
+    "outs": attr.output_list(
+        allow_empty = False,
+        mandatory = True,
+        doc = "Output file(s) created by this rule.",
+    ),
+    "srcs": attr.label_list(
+        allow_files = True,
+        doc = "Input file(s) used by this rule.",
+    ),
+    "progress_message": attr.string(
+        doc = "Message to display when running the command.",
+    ),
+    "deps": attr.label_list(),
+    "_template": attr.label(
+        default = "run_in_repo_template.sh",
+        allow_single_file = True,
+    ),
+}
+
+run_in_repo = rule(
+    implementation = _run_in_repo,
+    attrs = _RUN_RULE_ATTRS,
     doc = """
 Runs the given shell command in the root directory of the respository. This lets
 you read/write files directly from the repository (as opposed to the bazel
@@ -94,4 +125,19 @@ sandbox), so it can be destructive and can overwrite existing files.
 
 Useful for invoking sigh commands.
 """,
+)
+
+# Attributes for the run_in_repo_test rule. Same as above, but with no outputs.
+_TEST_RULE_ATTRS = dict(_RUN_RULE_ATTRS)
+_TEST_RULE_ATTRS["outs"] = attr.output_list(
+    allow_empty = True,
+    mandatory = False,
+    doc = "Output file(s) created by this rule.",
+)
+
+run_in_repo_test = rule(
+    implementation = _run_in_repo_test,
+    attrs = _TEST_RULE_ATTRS,
+    test = True,
+    doc = "Equivalent to run_in_repo, but for tests.",
 )

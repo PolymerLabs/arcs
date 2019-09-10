@@ -1,4 +1,4 @@
-load(":run_in_repo.bzl", "run_in_repo")
+load(":run_in_repo.bzl", "EXECUTION_REQUIREMENTS_TAGS", "run_in_repo", "run_in_repo_test")
 
 def arcs_cc_schema(name, src, out = None):
     """Generates a C++ header file for the given .arcs schema file.
@@ -24,4 +24,14 @@ def arcs_cc_schema(name, src, out = None):
               "--outfile $(basename {OUT}) " +
               "{SRC}",
         progress_message = "Generating C++ entity schemas",
+    )
+
+def arcs_ts_test(name, src, deps):
+    """Runs a TypeScript test file using `sigh test`."""
+    run_in_repo_test(
+        name = name,
+        srcs = [src],
+        cmd = "./tools/sigh test --file {SRC}",
+        tags = EXECUTION_REQUIREMENTS_TAGS,
+        deps = deps,
     )

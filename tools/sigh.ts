@@ -403,7 +403,7 @@ function cleanObsolete() {
     } else {
       // wasm outputs - look for a corresponding wasm.json config, and check if the module or
       // genfile names match.
-      
+
       // build/path/to/module.wasm -> src/path/to/wasm.json
       const configFile = path.join('src', path.dirname(file).slice(6), 'wasm.json');
       const baseName = path.basename(file);
@@ -799,7 +799,7 @@ function runTestsOrHealthOnCron(args: string[]): boolean {
 
 function runTests(args: string[]): boolean {
   const options = minimist(args, {
-    string: ['grep'],
+    string: ['grep', 'file'],
     inspect: ['inspect'],
     explore: ['explore'],
     coverage: ['coverage'],
@@ -844,7 +844,21 @@ function runTests(args: string[]): boolean {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     const chain = [];
     const mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../build/platform/mocha-node.js'));
-    for (const test of testsInDir(process.cwd())) {
+
+    // If a specific test file was provided, run it directly. Otherwise run all
+    // the tests we can find. Expected file is the relative path to a .ts file
+    // from the repo root.
+    let tests: Iterable<string>;
+    if (options.file) {
+      // Switch from "src/abc/foo-test.ts" to "../build/abc/foo-test.js"
+      let filename = options.file.replace(/^src\//, '../build/').replace(/\.ts$/, '.js');
+      filename = fixPathForWindows(path.resolve(__dirname, filename));
+      tests = [filename];
+    } else {
+      tests = testsInDir(process.cwd());
+    }
+
+    for (const test of tests) {
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
         mocha.suite.emit('pre-require', global, '${test}', mocha);
