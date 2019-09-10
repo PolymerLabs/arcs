@@ -3,8 +3,9 @@
 #include <map>
 #include <algorithm>
 #include <functional>
-#include <arcs.h>
-#include <entities.h>
+
+#include "src/wasm/cpp/arcs.h"
+#include "src/wasm/cpp/tests/entities.h"
 
 class InternalsTestBase : public arcs::Particle {
 public:

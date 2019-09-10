@@ -1,5 +1,6 @@
-#include <arcs.h>
 #include <cstring>
+
+#include "src/wasm/cpp/arcs.h"
 
 namespace arcs {
 namespace internal {
