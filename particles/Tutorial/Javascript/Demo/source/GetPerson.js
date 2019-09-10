@@ -14,7 +14,6 @@
 
     const template = html`
   <b>Player One</b><input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-  <input value="{{avatar}}" placeholder="Enter your avatar" spellcheck="false" on-change="onAvatarInputChange">
     `;
 
   return class extends DomParticle {
@@ -24,15 +23,12 @@
 
     update(props, state) {
       // Get the handle "person" and update the data stored to be the name of the person we will greet.
-      this.updateSingleton('person', {name: 'One', avatar: 'X'});
+      this.updateSingleton('playerOne', {name: 'Human', avatar: 'X'});
+      this.updateSingleton('playerTwo', {name: 'Computer', avatar: 'O'});
     }
 
     onNameInputChange(e) {
-      this.updateSingleton('person', {name: e.data.value});
-    }
-
-    onAvatarInputChange(e) {
-      this.updateSingleton('person', {avatar: e.data.value});
+      this.updateSingleton('playerOne', {name: e.data.value});
     }
   };
 });

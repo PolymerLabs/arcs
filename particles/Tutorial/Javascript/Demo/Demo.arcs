@@ -5,20 +5,15 @@ schema Person
   Text name
   Text avatar
 
-
 particle Main in './source/Main.js'
   consume root
-    provide playerSlotOne
-    provide playerSlotTwo
+    provide playerSlot
     provide greetingSlot
 
-particle GetPlayerOne in './source/GetPerson.js'
-  out Person personOne
-  consume playerSlotOne
-
-particle GetPlayerTwo in './source/GetPerson.js'
-  out Person personTwo
-  consume playerSlotTwo
+particle GetPlayer in './source/GetPerson.js'
+  out Person playerOne
+  out Person playerTwo
+  consume playerSlot
 
 particle DisplayGreeting in './source/DisplayGreeting.js'
   in Person person
@@ -27,17 +22,14 @@ particle DisplayGreeting in './source/DisplayGreeting.js'
 recipe HandleRecipe
   Main
     consume root 
-      provide playerSlotOne as playerOne
-      provide playerSlotTwo as playerTwo
+      provide playerSlot as getPlayer
       provide greetingSlot as greeting
-  GetPlayerOne
-    personOne -> personOne
-    consume playerSlotOne as playerOne
-  GetPlayerTwo
-    personTwo -> personTwo
-    consume playerSlotTwo as playerTwo
+  GetPlayer
+    playerOne -> playerOne
+    playerTwo -> playerTwo
+    consume playerSlot as getPlayer
   DisplayGreeting
-    person <- personOne
+    person <- playerTwo
     consume greetingSlot as greeting
   
   description `Javascript Tutorial 6: Handles`

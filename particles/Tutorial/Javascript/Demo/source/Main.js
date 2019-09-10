@@ -14,7 +14,7 @@
 
 defineParticle(({DomParticle, html}) => {   
 
-const template = html`<b>boo</b><div slotid="playerSlotOne"></div><div slotid="playerSlotTwo"></div>
+const template = html`<b>boo</b><div slotid="playerSlot"></div>
 <div slotid="greetingSlot"></div>`;
 
   return class extends DomParticle {
