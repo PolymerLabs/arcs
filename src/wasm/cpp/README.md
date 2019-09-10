@@ -11,7 +11,7 @@ build and run the wasm code/tests (everything under `src/wasm/`).
 
 ## Build
 
-See [here](particles/WasmTemplate) for a working example.
+See [here](../../../particles/WasmTemplate) for a working example.
 
 - Add a `BUILD` file in the relevant directory
 - Generate a C++ header file from your particle spec using the `arcs_cc_schema`
