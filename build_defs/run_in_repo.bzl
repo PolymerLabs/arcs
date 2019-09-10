@@ -63,7 +63,7 @@ def _write_shell_script(ctx, run_script):
     if run_script:
         ctx.actions.run(
             executable = script_file,
-            inputs = input_files,
+            inputs = depset(input_files, transitive = ctx.attr.deps),
             outputs = output_files,
             progress_message = ctx.attr.progress_message,
             use_default_shell_env = True,
@@ -80,7 +80,7 @@ def _run_in_repo_test(ctx):
 
     return [DefaultInfo(
         executable = script_file,
-        runfiles = ctx.runfiles(files = ctx.files.srcs),
+        runfiles = ctx.runfiles(files = ctx.files.srcs + ctx.files.deps),
     )]
 
 # Attributes for the run_in_repo rule.
@@ -108,6 +108,7 @@ output file respectively.
     "progress_message": attr.string(
         doc = "Message to display when running the command.",
     ),
+    "deps": attr.label_list(),
     "_template": attr.label(
         default = "run_in_repo_template.sh",
         allow_single_file = True,

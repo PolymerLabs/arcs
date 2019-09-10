@@ -26,11 +26,12 @@ def arcs_cc_schema(name, src, out = None):
         progress_message = "Generating C++ entity schemas",
     )
 
-def arcs_ts_test(name, src):
+def arcs_ts_test(name, src, deps):
     """Runs a TypeScript test file using `sigh test`."""
     run_in_repo_test(
         name = name,
         srcs = [src],
         cmd = "./tools/sigh test --file {SRC}",
         tags = EXECUTION_REQUIREMENTS_TAGS,
+        deps = deps,
     )
