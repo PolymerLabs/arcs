@@ -15,6 +15,11 @@ import {RozSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {VolatileSingleton, VolatileCollection} from '../../../runtime/storage/volatile-storage.js';
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
 
+// Import some service definition files for their side-effects (the services get
+// registered automatically).
+import '../../../services/clock-service.js';
+import '../../../services/random-service.js';
+
 const schemasFile = 'src/wasm/cpp/tests/schemas.arcs';
 const buildDir = 'bazel-bin/src/wasm/cpp/tests';
 
