@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="arcs.android.demo"
+  package="arcs.android.demo.ui"
   android:versionCode="1"
   android:versionName="1.0">
 
@@ -9,9 +9,7 @@
     android:minSdkVersion="28"
     android:targetSdkVersion="28"/>
 
-  <application
-    android:label="Arcs Demo">
-
+  <application>
     <activity
       android:name=".MainActivity"
       android:label="ArcsHarnessApp">
@@ -20,9 +18,5 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
-
-    <service
-        android:name=".ArcsService"
-        android:exported="false"/>
   </application>
 </manifest>

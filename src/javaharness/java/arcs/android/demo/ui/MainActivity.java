@@ -1,4 +1,4 @@
-package arcs.android.demo;
+package arcs.android.demo.ui;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Button;
+import arcs.android.demo.service.ArcsService;
+
 /**
  * Main class for the Bazel Android "Hello, World" app.
  */

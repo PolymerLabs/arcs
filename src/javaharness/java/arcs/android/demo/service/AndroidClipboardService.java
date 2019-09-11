@@ -1,4 +1,4 @@
-package arcs.android.demo;
+package arcs.android.demo.service;
 
 import static android.content.ClipDescription.MIMETYPE_TEXT_PLAIN;
 

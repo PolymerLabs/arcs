@@ -6,6 +6,7 @@ import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.DeviceClientImpl;
 import arcs.api.PECInnerPortFactory;
 import arcs.api.PortableJsonParser;
+import arcs.api.UiBroker;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -15,8 +16,9 @@ public class DeviceClientAndroidImpl extends DeviceClientImpl {
   public DeviceClientAndroidImpl(
       PortableJsonParser jsonParser,
       Map<String, DataListener> inProgress,
-      PECInnerPortFactory portFactory) {
-    super(jsonParser, inProgress, portFactory);
+      PECInnerPortFactory portFactory,
+      UiBroker uiBroker) {
+    super(jsonParser, inProgress, portFactory, uiBroker);
   }
 
   @JavascriptInterface

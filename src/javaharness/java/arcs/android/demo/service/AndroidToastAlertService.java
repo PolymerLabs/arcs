@@ -1,4 +1,4 @@
-package arcs.android.demo;
+package arcs.android.demo.service;
 
 import android.content.Context;
 import android.widget.Toast;
