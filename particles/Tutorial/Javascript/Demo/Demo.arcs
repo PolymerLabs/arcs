@@ -69,12 +69,15 @@ recipe
       provide avatarSlot as avatar3
   DisplayAvatar1
     player <- currentPlayer
+    gameState <- cellState1
     consume avatarSlot as avatar1
   DisplayAvatar2
     player <- currentPlayer
+    gameState <- cellState2
     consume avatarSlot as avatar2
   DisplayAvatar3
     player <- currentPlayer
+    gameState <- cellState3
     consume avatarSlot as avatar3
   
   description `Javascript Tutorial Demo`

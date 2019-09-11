@@ -21,15 +21,16 @@ const template = html`<span>{{avatar}}</span>`;
       return template;
     }
 
-    shouldRender({player}) {
+    shouldRender({player, gameState}) {
       // Here we check that the person is defined.
-      return player;
+      return player && gameState;
     }
 
-    render({player}) {
-      return {
-        avatar: player.avatar,
-      };
+    render({player, gameState}, {avatar}) {
+      if (gameState.gameOver && !avatar) {
+        this.setState({avatar: player.avatar});
+      }
+      return {avatar: avatar};
     }
     
   };

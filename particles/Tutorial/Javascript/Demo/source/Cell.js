@@ -28,7 +28,7 @@
     }
   </style>
   <button class="butt" type="button" on-click="onClick">
-  <div hidden={{hidden}} slotid="avatarSlot"></div>
+  <div  slotid="avatarSlot"></div>
   </button>
   `;
 

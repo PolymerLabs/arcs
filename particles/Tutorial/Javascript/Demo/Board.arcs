@@ -27,12 +27,15 @@ particle Cell3 in './source/Cell.js'
 
 particle DisplayAvatar1 in './source/DisplayAvatar.js'
   in Person player
+  in GameState gameState
   consume avatarSlot
 
 particle DisplayAvatar2 in './source/DisplayAvatar.js'
   in Person player
+  in GameState gameState
   consume avatarSlot
 
 particle DisplayAvatar3 in './source/DisplayAvatar.js'
   in Person player
+  in GameState gameState
   consume avatarSlot
