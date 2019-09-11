@@ -32,6 +32,10 @@ particle DisplayAvatar in './source/DisplayAvatar.js'
   in Person player
   consume avatarSlot
 
+particle Board in './source/Board.js'
+  consume cellSlot
+    provide cellSlot
+
 particle Cell in './source/Cell.js'
   inout GameState gameState
   consume cellSlot
@@ -43,7 +47,7 @@ recipe
     consume root 
       provide playerSlot as getPlayer
       provide greetingSlot as greeting
-      provide cellSlot as cell
+      provide cellSlot as board
   GetPlayer
     playerOne -> playerOne
     playerTwo -> playerTwo
@@ -55,6 +59,9 @@ recipe
   DisplayGreeting
     person <- playerTwo
     consume greetingSlot as greeting
+  Board
+    consume cellSlot as board
+      provide cellSlot as cell
   Cell
     gameState <-> gameState
     consume cellSlot as cell 
