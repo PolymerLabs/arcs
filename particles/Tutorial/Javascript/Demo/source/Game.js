@@ -12,12 +12,21 @@
 
 /* global defineParticle */
 // TODO (heimlich@) change to particle
-defineParticle(({DomParticle, log}) => {   
+defineParticle(({DomParticle, log}) => { 
 
   return class extends DomParticle {
-    update({playerOne}) {
-      if (playerOne) {
-        this.updateSingleton('currentPlayer', playerOne);
+
+    get template() {
+      return '';
+    }
+
+    update({playerOne, playerTwo, gameState}, {initialised}) {
+      if (playerOne && playerTwo && gameState) {
+        if (gameState.moves % 2 == 0) {
+          this.updateSingleton('currentPlayer', playerOne);
+        } else {
+          this.updateSingleton('currentPlayer', playerTwo);
+        }
       }
     }
   };

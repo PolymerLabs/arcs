@@ -41,7 +41,7 @@
     render({gameState}, {initialised}) {
       if (!initialised) {
         this.setState({initialised: true});
-        this.updateSingleton('gameState', {gameOver: false});
+        this.updateSingleton('gameState', {gameOver: false, moves: 0});
       }
       if (gameState) {
         return {hidden: !gameState.gameOver};
@@ -50,7 +50,7 @@
     }
 
     onClick(e) {
-      this.updateSingleton('gameState', {gameOver: true});
+      this.updateSingleton('gameState', {gameOver: true, moves: 1});
     }
 
   };

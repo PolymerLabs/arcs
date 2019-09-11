@@ -4,3 +4,4 @@ schema Person
 
 schema GameState
   Boolean gameOver
+  Number moves

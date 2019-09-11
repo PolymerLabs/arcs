@@ -36,6 +36,18 @@ const template = html`
     get template() {
       return template;
     }
+
+    render({gameState, cellState1, cellState2, cellState3}, {initialised}) {
+      if (!initialised) {
+        this.setState({initialised: true});
+        this.updateSingleton('gameState', {gameOver: false, moves: 0});
+      }
+      if (gameState && cellState1 && cellState2 && cellState3) {
+        const mvs = cellState1.moves + cellState2.moves + cellState3.moves;
+        this.updateSingleton('gameState', {gameOver: false, moves: mvs});
+      }
+      return {};
+    }
     
   };
 });

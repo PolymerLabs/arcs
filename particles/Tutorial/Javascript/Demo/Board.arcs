@@ -1,6 +1,10 @@
 import 'DemoSchemas.arcs'
 
 particle Board in './source/Board.js'
+  inout GameState gameState
+  in GameState cellState1
+  in GameState cellState2
+  in GameState cellState3
   consume cellSlot
     provide cellSlot1
     provide cellSlot2

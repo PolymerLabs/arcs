@@ -12,6 +12,7 @@ particle Main in './source/Main.js'
 particle Game in './source/Game.js'
   in Person playerOne
   in Person playerTwo
+  in GameState gameState
   out Person currentPlayer
 
 particle GetPlayer in './source/GetPerson.js'
@@ -24,9 +25,10 @@ particle DisplayGreeting in './source/DisplayGreeting.js'
   consume greetingSlot
 
 recipe 
-  create #cell1 as gameState1
-  create #cell2 as gameState2
-  create #cell3 as gameState3
+  create #cell1 as cellState1
+  create #cell2 as cellState2
+  create #cell3 as cellState3
+  create #game as gameState
   Main
     consume root 
       provide playerSlot as getPlayer
@@ -37,27 +39,32 @@ recipe
     playerTwo -> playerTwo
     consume playerSlot as getPlayer
   Game
+    gameState <- gameState
     playerOne <- playerOne
     playerTwo <- playerTwo
     currentPlayer -> currentPlayer
   DisplayGreeting
-    person <- playerTwo
+    person <- playerOne
     consume greetingSlot as greeting
   Board
+    gameState <-> gameState
+    cellState1 <- cellState1
+    cellState2 <- cellState2
+    cellState3 <- cellState3
     consume cellSlot as board
       provide cellSlot1 as cell1
       provide cellSlot2 as cell2
       provide cellSlot3 as cell3
   Cell1
-    gameState <-> gameState1
+    gameState <-> cellState1
     consume cellSlot1 as cell1 
       provide avatarSlot as avatar1
   Cell2
-    gameState <-> gameState2
+    gameState <-> cellState2
     consume cellSlot2 as cell2 
       provide avatarSlot as avatar2
   Cell3
-    gameState <-> gameState3
+    gameState <-> cellState3
     consume cellSlot3 as cell3 
       provide avatarSlot as avatar3
   DisplayAvatar1
