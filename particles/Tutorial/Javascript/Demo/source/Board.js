@@ -15,7 +15,21 @@
 defineParticle(({DomParticle, html}) => {   
 
 const template = html`
-  <div slotid="cellSlot"></div>
+  <style>
+    .column {
+      float: left;
+      padding: 10px;
+    }
+
+    .row:after {
+      clear: both;
+    }
+  </style>
+  <div class="row">
+    <div class = "col">
+      <div slotid="cellSlot1"></div><div slotid="cellSlot2"></div><div slotid="cellSlot3"></div>
+    </div>
+  </div>
 `;
 
   return class extends DomParticle {

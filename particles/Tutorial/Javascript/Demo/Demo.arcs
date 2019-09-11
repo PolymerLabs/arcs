@@ -34,15 +34,29 @@ particle DisplayAvatar in './source/DisplayAvatar.js'
 
 particle Board in './source/Board.js'
   consume cellSlot
-    provide cellSlot
+    provide cellSlot1
+    provide cellSlot2
+    provide cellSlot3
 
-particle Cell in './source/Cell.js'
+particle Cell1 in './source/Cell.js'
   inout GameState gameState
-  consume cellSlot
+  consume cellSlot1
+    provide avatarSlot
+
+particle Cell2 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot2
+    provide avatarSlot
+
+particle Cell3 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot3
     provide avatarSlot
 
 recipe 
-  create #game as gameState
+  create #cell1 as gameState1
+  create #cell2 as gameState2
+  create #cell3 as gameState3
   Main
     consume root 
       provide playerSlot as getPlayer
@@ -61,13 +75,23 @@ recipe
     consume greetingSlot as greeting
   Board
     consume cellSlot as board
-      provide cellSlot as cell
-  Cell
-    gameState <-> gameState
-    consume cellSlot as cell 
-      provide avatarSlot as avatar
+      provide cellSlot1 as cell1
+      provide cellSlot2 as cell2
+      provide cellSlot3 as cell3
+  Cell1
+    gameState <-> gameState1
+    consume cellSlot1 as cell1 
+      provide avatarSlot as avatar1
+  Cell2
+    gameState <-> gameState2
+    consume cellSlot2 as cell2 
+      provide avatarSlot as avatar2
+  Cell3
+    gameState <-> gameState3
+    consume cellSlot3 as cell3 
+      provide avatarSlot as avatar3
   DisplayAvatar
     player <- currentPlayer
-    consume avatarSlot as avatar
+    consume avatarSlot as avatar1
   
   description `Javascript Tutorial Demo`
