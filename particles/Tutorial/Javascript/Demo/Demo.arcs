@@ -60,8 +60,14 @@ recipe
     gameState <-> gameState3
     consume cellSlot3 as cell3 
       provide avatarSlot as avatar3
-  DisplayAvatar
+  DisplayAvatar1
     player <- currentPlayer
     consume avatarSlot as avatar1
+  DisplayAvatar2
+    player <- currentPlayer
+    consume avatarSlot as avatar2
+  DisplayAvatar3
+    player <- currentPlayer
+    consume avatarSlot as avatar3
   
   description `Javascript Tutorial Demo`
