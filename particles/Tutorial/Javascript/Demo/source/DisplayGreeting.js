@@ -27,9 +27,7 @@ const template = html`Hello, <span>{{name}}</span>!`;
     }
 
     render({person}) {
-      return {
-        name: person.name,
-      };
+      return {name: person.name};
     }
     
   };

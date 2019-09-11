@@ -10,7 +10,7 @@
 
  /* global defineParticle */
 
- defineParticle(({DomParticle, html}) => {
+ defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
   <style>
@@ -28,7 +28,7 @@
     }
   </style>
   <button class="butt" type="button" on-click="onClick">
-  <div slotid="avatarSlot"></div>
+  <div hidden={{hidden}} slotid="avatarSlot"></div>
   </button>
   `;
 
@@ -38,12 +38,20 @@
       return template;
     }
 
-    render() {
-      return {};
+    render({gameState}, {initialised}) {
+      if (!initialised) {
+        this.setState({initialised: true});
+        this.updateSingleton('gameState', {gameOver: false});
+      }
+      if (gameState) {
+        return {hidden: !gameState.gameOver};
+      }
+      return {hidden: true};
     }
 
     onClick(e) {
-      console.log('This button was clicked!\n', e);
+      this.updateSingleton('gameState', {gameOver: true});
     }
+
   };
 });

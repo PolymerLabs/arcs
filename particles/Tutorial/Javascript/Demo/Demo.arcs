@@ -5,16 +5,19 @@ schema Person
   Text name
   Text avatar
 
+schema GameState
+  Boolean gameOver
+
 particle Main in './source/Main.js'
   consume root
     provide playerSlot
     provide greetingSlot
     provide cellSlot
 
-  particle Game in './source/Game.js'
-    in Person playerOne
-    in Person playerTwo
-    out Person currentPlayer
+particle Game in './source/Game.js'
+  in Person playerOne
+  in Person playerTwo
+  out Person currentPlayer
 
 particle GetPlayer in './source/GetPerson.js'
   out Person playerOne
@@ -30,10 +33,12 @@ particle DisplayAvatar in './source/DisplayAvatar.js'
   consume avatarSlot
 
 particle Cell in './source/Cell.js'
+  inout GameState gameState
   consume cellSlot
     provide avatarSlot
 
-recipe HandleRecipe
+recipe 
+  create #game as gameState
   Main
     consume root 
       provide playerSlot as getPlayer
@@ -51,10 +56,11 @@ recipe HandleRecipe
     person <- playerTwo
     consume greetingSlot as greeting
   Cell
+    gameState <-> gameState
     consume cellSlot as cell 
       provide avatarSlot as avatar
   DisplayAvatar
     player <- currentPlayer
     consume avatarSlot as avatar
   
-  description `Javascript Tutorial 6: Handles`
+  description `Javascript Tutorial Demo`
