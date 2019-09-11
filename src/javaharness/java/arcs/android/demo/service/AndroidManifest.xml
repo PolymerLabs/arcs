@@ -9,5 +9,14 @@
     <service
         android:name=".ArcsService"
         android:exported="false"/>
+
+    <service
+        android:name=".ArcsAutofillService"
+        android:label="Arcs Demo Autofill Service"
+        android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+      <intent-filter>
+        <action android:name="android.service.autofill.AutofillService" />
+      </intent-filter>
+    </service>
   </application>
 </manifest>

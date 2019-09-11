@@ -14,6 +14,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
+    <Button
+        android:id="@+id/autofill_demo_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Autofill Demo" />
+
   </LinearLayout>
 
 </FrameLayout>

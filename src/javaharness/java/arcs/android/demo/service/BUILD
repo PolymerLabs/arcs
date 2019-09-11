@@ -9,8 +9,9 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android
 
 android_library(
     name = "service",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(["*.java"]),
     manifest = "AndroidManifest.xml",
+    resource_files = glob(["res/**"]),
     deps = [
         "//java/arcs/android/demo/api",
         "//java/arcs/android/impl",
