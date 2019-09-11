@@ -1,0 +1,6 @@
+schema Person
+  Text name
+  Text avatar
+
+schema GameState
+  Boolean gameOver

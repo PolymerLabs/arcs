@@ -1,0 +1,26 @@
+import 'DemoSchemas.arcs'
+
+particle Board in './source/Board.js'
+  consume cellSlot
+    provide cellSlot1
+    provide cellSlot2
+    provide cellSlot3
+
+particle Cell1 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot1
+    provide avatarSlot
+
+particle Cell2 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot2
+    provide avatarSlot
+
+particle Cell3 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot3
+    provide avatarSlot
+
+particle DisplayAvatar in './source/DisplayAvatar.js'
+  in Person player
+  consume avatarSlot
