@@ -2,6 +2,6 @@
   package="arcs.android.demo.api">
 
   <uses-sdk
-    android:minSdkVersion="28"
-    android:targetSdkVersion="28"/>
+    android:minSdkVersion="29"
+    android:targetSdkVersion="29"/>
 </manifest>
