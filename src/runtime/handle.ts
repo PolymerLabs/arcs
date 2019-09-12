@@ -160,7 +160,7 @@ export abstract class HandleOld {
     }
     // Set this handle's storage to a no-operation storage proxy so any actions that need to be
     // taken by this handle in the future (due to some async operations) will do nothing and finish quietly
-    this._storage = StorageProxy.newNoOpProxy(this.storage.type);
+    this._storage = StorageProxy.newNoOpProxy(this.storage.id, this.storage.type);
   }
 }
 

@@ -1,0 +1,3 @@
+schema Person
+  Text name
+  Number age

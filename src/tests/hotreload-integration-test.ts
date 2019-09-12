@@ -17,9 +17,15 @@ import {Loader} from '../runtime/loader.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
+import {SingletonStorageProvider} from '../runtime/storage/storage-provider-base.js';
+import * as util from '../runtime/testing/test-util.js';
 
 class StubWasmLoader extends Loader {
   public reloaded = false;
+
+  resolve(path: string) {
+    return (path[0] === '$') ? `RESOLVED(${path})`: path;
+  }
 
   async loadWasmBinary(spec): Promise<ArrayBuffer> {
     const file = this.reloaded ? 'wasm-particle-new.wasm' : 'wasm-particle-old.wasm';
@@ -82,6 +88,85 @@ describe('Hot Code Reload for JS Particle', async () => {
     assert.deepEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '15'});
     assert.deepEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, new age: <span>{{age}}</span>`);
   });
+
+  it('ensures new handles are working', async () => {
+    const context = await Manifest.parse(`
+      schema Person
+        Text name
+        Number age
+
+      particle A in 'A.js'
+        in Person personIn
+        out Person personOut
+
+      recipe
+        use as personIn
+        use as personOut
+        A
+          personIn <- personIn
+          personOut -> personOut
+    `);
+
+    const loader = new StubLoader({
+      'A.js': `defineParticle(({Particle}) => {
+        return class extends Particle {
+          async setHandles(handles) {
+            this.handles = handles;
+            this.handleOut = handles.get('personOut');
+          }
+          onHandleSync(handle, model) {
+            this.update(model);
+          }
+          onHandleUpdate(handle, update) {
+            this.update(update.data);
+          }
+          async update(value) {
+            await this.handleOut.set(new this.handleOut.entityClass({name: value.name, age: (value.age * 2)}));
+          }
+        };
+      });`
+    });
+
+    const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
+    const personType = context.findTypeByName('Person');
+
+    const personStoreIn = await arc.createStore(personType) as SingletonStorageProvider;
+    const personStoreOut = await arc.createStore(personType) as SingletonStorageProvider;
+    await personStoreIn.set({id: 'id1', rawData: {name: 'Jack', age: 15}});
+
+    const recipe = context.recipes[0];
+    recipe.handles[0].mapToStorage(personStoreIn);    
+    recipe.handles[1].mapToStorage(personStoreOut);
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'name', 'Jack');
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'age', 30);
+
+    loader._fileMap['A.js'] = `defineParticle(({Particle}) => {
+      return class extends Particle {
+        async setHandles(handles) {
+          this.handles = handles;
+          this.handleOut = handles.get('personOut');
+        }
+        onHandleSync(handle, model) {
+          this.update(model);
+        }
+        onHandleUpdate(handle, update) {
+          this.update(update.data);
+        }
+        async update(value) {
+          await this.handleOut.set(new this.handleOut.entityClass({name: value.name, age: (value.age - 2)}));
+        }
+      };
+    });`;
+    arc.pec.reload(arc.pec.particles);
+    await arc.idle;
+    await personStoreIn.set({id: 'id1', rawData: {name: 'Jane', age: 20}});
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'name', 'Jane');
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'age', 18);
+  });
 });
 
 describe('Hot Code Reload for WASM Particle', async () => {
@@ -124,5 +209,46 @@ describe('Hot Code Reload for WASM Particle', async () => {
 
     assert.deepEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '15'});
     assert.deepEqual(slotConsumer._content.template, `<div>Hello <span>{{name}}</span>, new age: <span>{{age}}</span></div>`);
+  });
+
+  it('ensures new handles are working', async () => {
+    const loader = new StubWasmLoader();
+    const context = await Manifest.parse(`
+      import 'src/tests/source/schemas.arcs'
+
+      particle ReloadHandleTest in 'build/tests/source/test-module.wasm'
+        in Person personIn
+        out Person personOut
+
+      recipe
+        use as personIn
+        use as personOut
+        ReloadHandleTest
+          personIn <- personIn
+          personOut -> personOut`, {loader, fileName: process.cwd() + '/input.arcs'});
+
+    const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
+    const personType = context.findTypeByName('Person');
+
+    const personStoreIn = await arc.createStore(personType) as SingletonStorageProvider;
+    const personStoreOut = await arc.createStore(personType) as SingletonStorageProvider;
+    await personStoreIn.set({id: 'id1', rawData: {name: 'Jack', age: 15}});
+
+    const recipe = context.recipes[0];
+    recipe.handles[0].mapToStorage(personStoreIn);    
+    recipe.handles[1].mapToStorage(personStoreOut);
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'name', 'Jack');
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'age', 30);
+
+    loader.reloaded = true;
+    arc.pec.reload(arc.pec.particles);
+    await arc.idle;
+    await personStoreIn.set({id: 'id1', rawData: {name: 'Jane', age: 20}});
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'name', 'Jane');
+    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'age', 18);
   });
 });
