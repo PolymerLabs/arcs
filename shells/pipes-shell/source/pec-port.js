@@ -34,8 +34,9 @@ class PecPort extends MessagePort {
 
 const pecPorts = {};
 
-export const portIndustry = (bus) => {
+export const portIndustry = (bus, overridePecId) => {
   return (pecId, idGenerator) => {
+    pecId = overridePecId || pecId;
     const port = new PecPort(pecId, idGenerator, bus);
     pecPorts[pecId] = port;
     return port;

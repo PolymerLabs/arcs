@@ -6,14 +6,25 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class ParticleBase implements Particle {
+  private String id;
   public ParticleSpec spec;
   public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
   protected Consumer<PortableJson> output;
 
   @Override
+  public String getId() {
+    return id;
+  }
+
+  @Override
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  @Override
   public String getName() {
-    return this.spec.name;
+    return this.spec == null ? this.getClass().getSimpleName() : this.spec.name;
   }
 
   @Override

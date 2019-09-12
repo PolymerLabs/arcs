@@ -3,6 +3,7 @@ package arcs.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Generates new IDs which are rooted in the current session. Only one IdGenerator should be
@@ -16,6 +17,11 @@ public class IdGenerator {
 
   IdGenerator(String currentSessionId) {
     this.currentSessionId = currentSessionId;
+  }
+
+  public static IdGenerator newSession() {
+    String sessionId = String.valueOf(Math.floor(Math.random() * Math.pow(2, 30)));
+    return new IdGenerator(sessionId);
   }
 
   /**

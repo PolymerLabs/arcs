@@ -18,7 +18,7 @@ const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
 export const runArc = async (msg, tid, bus, runtime, env) => {
-  const {recipe, arcid, storageKeyPrefix, pecid} = msg;
+  const {recipe, arcid, storageKeyPrefix, pecid, particleid, particlename} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcid) {
     warn(`arcid must be provided.`);
@@ -30,7 +30,7 @@ export const runArc = async (msg, tid, bus, runtime, env) => {
   }
   const arc = runtime.runArc(arcid, storageKeyPrefix || 'volatile://', {
       fileName: './serialized.manifest',
-      pecFactories: [].concat([env.pecFactory], [portIndustry(bus)]),
+      pecFactories: [].concat([env.pecFactory], [portIndustry(bus, pecid)]),
       loader: runtime.loader,
       inspectorFactory: devtoolsArcInspectorFactory,
   });
@@ -42,23 +42,49 @@ export const runArc = async (msg, tid, bus, runtime, env) => {
   };
 
   // optionally instantiate recipe
-  if (action && await instantiateRecipe(arc, action)) {
+  if (action && await instantiateRecipe(arc, action, particleid, particlename)) {
     log(`successfully instantiated ${recipe} in ${arc}`);
   }
   return arc;
 };
 
-const instantiateRecipe = async (arc, recipe) => {
-  const plan = await Utils.resolve(arc, recipe);
+const instantiateRecipe = async (arc, recipe, particleid, particlename) => {
+  let plan = await Utils.resolve(arc, recipe);
   if (!plan) {
     warn(`failed to resolve recipe ${recipe}`);
     return false;
   }
   if (RecipeUtil.matchesRecipe(arc.activeRecipe, plan)) {
     log(`recipe ${recipe} is already instantiated in ${arc}`);
+
+    if (particleid) {
+      const particle = arc.activeRecipe.particles.find(p => p.id === particleid);
+    }
+    return false;
+  }
+
+  plan = updateParticleInPlan(plan, particleid, particlename);
+  if (!plan) {
+    warn(`failed updating particle id '${particleid}', name ${particlename} in plan ${plan.toString()}`);
     return false;
   }
 
   await arc.instantiate(plan);
   return true;
 };
+
+const updateParticleInPlan = (plan, particleid, particlename) => {
+  if (!!particleid && !!particlename) {
+    plan = plan.clone();
+    plan.particles.find(p => p.name == particlename).id = particleid;
+    if (!plan.normalize()) {
+      warn(`cannot normalize after setting id ${particleid} for particle ${particlename}`);
+      return null;
+    }
+    if (!plan.isResolved()) {
+      warn(`unresolved plan after setting id ${particleid} for particle ${particlename}`);
+      return null;
+    }
+  }
+  return plan;  
+}

@@ -39,3 +39,13 @@ recipe Ingestion
   ToastParticle
     alert <- recentMessages
   description `ingestion recipe`
+
+resource MessagesList
+  start
+  [{"message": "hello world!"}]
+store Messages of [Message] #demoMessages in MessagesList
+
+recipe Toast
+  map #demoMessages as demoMessages
+  ToastParticle
+    alert <- demoMessages

@@ -66,13 +66,42 @@ public class DeviceClientImpl implements DeviceClient {
     }
   }
 
-  private void processPecMessage(PortableJson message) {
+  private void processPecMessage(PortableJson message) { 
     String id = message.getString(FIELD_PEC_ID);
-    if (message.hasKey(FIELD_SESSION_ID)) {
+    if (!portById.containsKey(id)) {
       portById.put(id, portFactory.createPECInnerPort(id, message.getString(FIELD_SESSION_ID)));
     }
 
     PECInnerPort port = portById.get(id);
     port.processMessage(message);
+  }
+
+  @Override
+  public void startArc(String json, Particle particle) {
+    // 
+    PortableJson request = jsonParser.parse(json);
+    request.put("message", "runArc");
+    if (!request.hasKey("arcid")) {
+      request.put("arcid", request.getString("recipe").toLowerCase() + "-arc");
+    }
+    if (!request.hasKey("pecid")) {
+      request.put("pecid", request.getString("recipe").toLowerCase() + "-pec");
+    }
+    if (particle != null) {
+      request.put("particleid", particle.getId()).put("particlename", particle.getName());
+    }
+
+    createPecForParticle(request.getString("pecid"), particle);
+    environment.sendMessageToArcs(jsonParser.stringify(request), null);
+  }
+
+  protected void createPecForParticle(String pecid, Particle particle) {
+    if (!portById.containsKey(pecid)) {
+      portById.put(pecid, portFactory.createPECInnerPort(pecid, null));
+    }
+    PECInnerPort port = portById.get(pecid);
+    if (particle != null) {
+      port.mapParticle(particle);
+    }
   }
 }

@@ -69,7 +69,7 @@ public class PECInnerPortImpl implements PECInnerPort {
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
     this.promiseFactory = promiseFactory;
-    this.idGenerator = new IdGenerator(sessionId);
+    this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
   }
 
   @SuppressWarnings("unchecked")
@@ -90,17 +90,25 @@ public class PECInnerPortImpl implements PECInnerPort {
               });
 
           String particleId = messageBody.getString(PARTICLE_ID_FIELD);
-          Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
-          if (particle == null) {
-            // TODO: improve error handling.
-            throw new AssertionError("Cannot instantiate particle " + spec.name);
+          if (mapper.hasThingForIdentifier(particleId)) {
+           // Non-factory instantiation of a Particle.
+            Particle particle = mapper.thingForIdentifier(particleId).getParticle();
+            pec.initializeParticle(particle, spec, proxies, idGenerator);
+            // TODO: implement proper capabilities.
+            particle.setOutput((content) -> output(particle, content));
+          } else {
+            Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
+            if (particle == null) {
+              // TODO: improve error handling.
+              throw new AssertionError("Cannot instantiate particle " + spec.name);
+            }
+
+            mapper.establishThingMapping(
+                messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
+            // TODO: implement proper capabilities.
+            particle.setOutput((content) -> output(particle, content));
           }
 
-          mapper.establishThingMapping(
-              messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
-
-          // TODO: implement proper capabilities.
-          particle.setOutput((content) -> output(particle, content));
           break;
         }
       case DEFINE_HANDLE_MSG:
@@ -145,6 +153,11 @@ public class PECInnerPortImpl implements PECInnerPort {
       default:
         throw new AssertionError("Unsupported message type: " + messageType);
     }
+  }
+
+  @Override
+  public void mapParticle(Particle particle) {
+    mapper.establishThingMapping(particle.getId(), new Thing<>(particle));
   }
 
   @Override
