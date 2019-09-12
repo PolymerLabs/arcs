@@ -14,7 +14,7 @@
 
 defineParticle(({DomParticle, html}) => {   
 
-const template = html`Hello, <span>{{name}}</span>!`;
+const template = html`Hello, <span>{{name}}</span>! Today you are playing as <span>{{avatar}}`;
 
   return class extends DomParticle {
     get template() {
@@ -27,7 +27,7 @@ const template = html`Hello, <span>{{name}}</span>!`;
     }
 
     render({person}) {
-      return {name: person.name};
+      return {name: person.name, avatar: person.avatar};
     }
     
   };

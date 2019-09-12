@@ -28,7 +28,7 @@
     }
 
     onNameInputChange(e) {
-      this.updateSingleton('playerOne', {name: e.data.value});
+      this.updateSingleton('playerOne', {name: e.data.value, avatar: 'X'});
     }
   };
 });

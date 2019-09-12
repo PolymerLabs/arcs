@@ -67,7 +67,7 @@ const template = html`
         const mvs = cellState1.moves + cellState2.moves + cellState3.moves +
                     cellState4.moves + cellState5.moves + cellState6.moves +
                     cellState7.moves + cellState8.moves + cellState9.moves;
-        this.updateSingleton('gameState', {gameOver: false, moves: mvs});
+        this.updateSingleton('gameState', {gameOver: mvs == 9, moves: mvs});
       }
       return {};
     }

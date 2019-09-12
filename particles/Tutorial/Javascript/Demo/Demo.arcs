@@ -8,6 +8,7 @@ particle Main in './source/Main.js'
     provide playerSlot
     provide greetingSlot
     provide cellSlot
+    provide congratulationsSlot
 
 particle Game in './source/Game.js'
   in Person playerOne
@@ -23,6 +24,11 @@ particle GetPlayer in './source/GetPerson.js'
 particle DisplayGreeting in './source/DisplayGreeting.js'
   in Person person
   consume greetingSlot
+
+particle Congratulations in './source/Congratulations.js'
+  in Person person
+  in GameState gameState
+  consume congratulationsSlot
 
 recipe 
   create #cell1 as cellState1
@@ -40,6 +46,7 @@ recipe
       provide playerSlot as getPlayer
       provide greetingSlot as greeting
       provide cellSlot as board
+      provide congratulationsSlot as congratulations
   GetPlayer
     playerOne -> playerOne
     playerTwo -> playerTwo
@@ -145,5 +152,9 @@ recipe
     player <- currentPlayer
     gameState <- cellState9
     consume avatarSlot as avatar9
+  Congratulations
+    person <- currentPlayer
+    gameState <- gameState
+    consume congratulationsSlot as congratulations
   
   description `Javascript Tutorial Demo`

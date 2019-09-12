@@ -14,16 +14,20 @@
 
 defineParticle(({DomParticle, html}) => {   
 
-const template = html`
-  <div slotid="playerSlot"></div>
-  <div slotid="greetingSlot"></div>
-  <div slotid="cellSlot"></div>
-  <div slotid="congratulationsSlot"></div>
-`;
+const template = html`Congrats to <span>{{name}}</span>, you won! Please hit refresh to start a new game.`;
 
   return class extends DomParticle {
     get template() {
       return template;
+    }
+
+    shouldRender({person, gameState}) {
+      // Here we check that the person is defined.
+      return person && gameState && gameState.gameOver;
+    }
+
+    render({person}) {
+      return {name: person.name};
     }
     
   };
