@@ -13,14 +13,28 @@ import android.service.autofill.SaveCallback;
 import android.service.autofill.SaveRequest;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
+import arcs.android.client.ArcsServiceBridge;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 /**
  * Demo implementation of an {@link AutofillService} for Arcs. This service retrieves Autofill
  * suggestions from Arcs, and makes them available on Android.
  */
 public class ArcsAutofillService extends AutofillService {
+
+  @Inject ArcsServiceBridge arcsServiceBridge;
+
+  @Override
+  public void onCreate() {
+    super.onCreate();
+
+    DaggerArcsAutofillServiceComponent.builder()
+        .appContext(getApplicationContext())
+        .build()
+        .inject(this);
+  }
 
   @Override
   public void onFillRequest(
@@ -55,6 +69,8 @@ public class ArcsAutofillService extends AutofillService {
    */
   private String getAutofillSuggestion(ViewNode node) {
     // TODO(csilvestrini): Pull autofill suggestions from Arcs.
+
+    arcsServiceBridge.sendMessageToArcs("Hello!", null);
 
     String[] hints = node.getAutofillHints();
     if (hints == null || hints.length == 0) {

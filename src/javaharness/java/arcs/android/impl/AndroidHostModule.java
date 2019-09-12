@@ -1,11 +1,5 @@
 package arcs.android.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.inject.Singleton;
-
 import arcs.api.ArcsEnvironment;
 import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.DeviceClient;
@@ -16,7 +10,6 @@ import arcs.api.PECInnerPortFactory;
 import arcs.api.PECInnerPortFactoryImpl;
 import arcs.api.ParticleExecutionContext;
 import arcs.api.ParticleExecutionContextImpl;
-import arcs.api.ParticleFactory;
 import arcs.api.ParticleLoader;
 import arcs.api.ParticleLoaderImpl;
 import arcs.api.PortableJsonParser;
@@ -26,9 +19,12 @@ import arcs.api.ShellApiBasedArcsEnvironment;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import java.util.HashMap;
+import java.util.Map;
+import javax.inject.Singleton;
 
-@Module
-public abstract class AndroidHarnessModule {
+@Module(includes = AndroidCommonModule.class)
+public abstract class AndroidHostModule {
 
   @Binds
   public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(

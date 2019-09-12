@@ -7,14 +7,14 @@ import arcs.demo.ui.RenderersModule;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import arcs.android.impl.AndroidHarnessModule;
+import arcs.android.impl.AndroidHostModule;
 import arcs.demo.particles.ParticlesModule;
 import dagger.BindsInstance;
 import dagger.Component;
 
 @Singleton
 @Component(modules = {
-    AndroidHarnessModule.class,
+    AndroidHostModule.class,
     ParticlesModule.class,
     RenderersModule.class,
     ArcsServiceModule.class})

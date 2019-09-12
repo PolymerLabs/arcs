@@ -13,7 +13,6 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
-        "//java/arcs/android/demo/api",
         "//java/arcs/android/demo/service",
         "@com_google_dagger",
         "@flogger//jar",
