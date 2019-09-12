@@ -5,24 +5,26 @@ particle Board in './source/Board.js'
   in GameState cellState1
   in GameState cellState2
   in GameState cellState3
+  in GameState cellState4
+  in GameState cellState5
+  in GameState cellState6
+  in GameState cellState7
+  in GameState cellState8
+  in GameState cellState9
   consume cellSlot
     provide cellSlot1
     provide cellSlot2
     provide cellSlot3
+    provide cellSlot4
+    provide cellSlot5
+    provide cellSlot6
+    provide cellSlot7
+    provide cellSlot8
+    provide cellSlot9
 
 particle Cell1 in './source/Cell.js'
   inout GameState gameState
   consume cellSlot1
-    provide avatarSlot
-
-particle Cell2 in './source/Cell.js'
-  inout GameState gameState
-  consume cellSlot2
-    provide avatarSlot
-
-particle Cell3 in './source/Cell.js'
-  inout GameState gameState
-  consume cellSlot3
     provide avatarSlot
 
 particle DisplayAvatar1 in './source/DisplayAvatar.js'
@@ -30,12 +32,82 @@ particle DisplayAvatar1 in './source/DisplayAvatar.js'
   in GameState gameState
   consume avatarSlot
 
+particle Cell2 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot2
+    provide avatarSlot
+
 particle DisplayAvatar2 in './source/DisplayAvatar.js'
   in Person player
   in GameState gameState
   consume avatarSlot
 
+particle Cell3 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot3
+    provide avatarSlot
+
 particle DisplayAvatar3 in './source/DisplayAvatar.js'
+  in Person player
+  in GameState gameState
+  consume avatarSlot
+
+particle Cell4 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot4
+    provide avatarSlot
+
+particle DisplayAvatar4 in './source/DisplayAvatar.js'
+  in Person player
+  in GameState gameState
+  consume avatarSlot
+
+particle Cell5 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot5
+    provide avatarSlot
+
+particle DisplayAvatar5 in './source/DisplayAvatar.js'
+  in Person player
+  in GameState gameState
+  consume avatarSlot
+
+particle Cell6 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot6
+    provide avatarSlot
+
+particle DisplayAvatar6 in './source/DisplayAvatar.js'
+  in Person player
+  in GameState gameState
+  consume avatarSlot
+
+particle Cell7 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot7
+    provide avatarSlot
+
+particle DisplayAvatar7 in './source/DisplayAvatar.js'
+  in Person player
+  in GameState gameState
+  consume avatarSlot
+
+particle Cell8 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot8
+    provide avatarSlot
+
+particle DisplayAvatar8 in './source/DisplayAvatar.js'
+  in Person player
+  in GameState gameState
+  consume avatarSlot
+
+particle Cell9 in './source/Cell.js'
+  inout GameState gameState
+  consume cellSlot9
+    provide avatarSlot
+
+particle DisplayAvatar9 in './source/DisplayAvatar.js'
   in Person player
   in GameState gameState
   consume avatarSlot

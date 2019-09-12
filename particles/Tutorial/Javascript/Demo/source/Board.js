@@ -21,13 +21,22 @@ const template = html`
       padding: 10px;
     }
 
-    .row:after {
+    .row {
+      content: "";
+      display: table;
       clear: both;
+      display: inline-flex;
     }
   </style>
   <div class="row">
     <div class = "col">
       <div slotid="cellSlot1"></div><div slotid="cellSlot2"></div><div slotid="cellSlot3"></div>
+    </div>
+    <div class = "col">
+      <div slotid="cellSlot4"></div><div slotid="cellSlot5"></div><div slotid="cellSlot6"></div>
+    </div>
+    <div class = "col">
+      <div slotid="cellSlot7"></div><div slotid="cellSlot8"></div><div slotid="cellSlot9"></div>
     </div>
   </div>
 `;
@@ -37,13 +46,27 @@ const template = html`
       return template;
     }
 
-    render({gameState, cellState1, cellState2, cellState3}, {initialised}) {
+    render({
+        gameState, 
+        cellState1, 
+        cellState2, 
+        cellState3,
+        cellState4,
+        cellState5,
+        cellState6,
+        cellState7,
+        cellState8,
+        cellState9}, {initialised}) {
       if (!initialised) {
         this.setState({initialised: true});
         this.updateSingleton('gameState', {gameOver: false, moves: 0});
       }
-      if (gameState && cellState1 && cellState2 && cellState3) {
-        const mvs = cellState1.moves + cellState2.moves + cellState3.moves;
+      if (gameState && cellState1 && cellState2 && cellState3 &&
+                      cellState4 && cellState5 && cellState6 &&
+                      cellState7 && cellState8 && cellState9) {
+        const mvs = cellState1.moves + cellState2.moves + cellState3.moves +
+                    cellState4.moves + cellState5.moves + cellState6.moves +
+                    cellState7.moves + cellState8.moves + cellState9.moves;
         this.updateSingleton('gameState', {gameOver: false, moves: mvs});
       }
       return {};

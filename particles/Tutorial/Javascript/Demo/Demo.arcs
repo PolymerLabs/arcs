@@ -28,6 +28,12 @@ recipe
   create #cell1 as cellState1
   create #cell2 as cellState2
   create #cell3 as cellState3
+  create #cell4 as cellState4
+  create #cell5 as cellState5
+  create #cell6 as cellState6
+  create #cell7 as cellState7
+  create #cell8 as cellState8
+  create #cell9 as cellState9
   create #game as gameState
   Main
     consume root 
@@ -51,33 +57,93 @@ recipe
     cellState1 <- cellState1
     cellState2 <- cellState2
     cellState3 <- cellState3
+    cellState4 <- cellState4
+    cellState5 <- cellState5
+    cellState6 <- cellState6
+    cellState7 <- cellState7
+    cellState8 <- cellState8
+    cellState9 <- cellState9
     consume cellSlot as board
       provide cellSlot1 as cell1
       provide cellSlot2 as cell2
       provide cellSlot3 as cell3
+      provide cellSlot4 as cell4
+      provide cellSlot5 as cell5
+      provide cellSlot6 as cell6
+      provide cellSlot7 as cell7
+      provide cellSlot8 as cell8
+      provide cellSlot9 as cell9
   Cell1
     gameState <-> cellState1
     consume cellSlot1 as cell1 
       provide avatarSlot as avatar1
-  Cell2
-    gameState <-> cellState2
-    consume cellSlot2 as cell2 
-      provide avatarSlot as avatar2
-  Cell3
-    gameState <-> cellState3
-    consume cellSlot3 as cell3 
-      provide avatarSlot as avatar3
   DisplayAvatar1
     player <- currentPlayer
     gameState <- cellState1
     consume avatarSlot as avatar1
+  Cell2
+    gameState <-> cellState2
+    consume cellSlot2 as cell2 
+      provide avatarSlot as avatar2
   DisplayAvatar2
     player <- currentPlayer
     gameState <- cellState2
     consume avatarSlot as avatar2
+  Cell3
+    gameState <-> cellState3
+    consume cellSlot3 as cell3 
+      provide avatarSlot as avatar3
   DisplayAvatar3
     player <- currentPlayer
     gameState <- cellState3
     consume avatarSlot as avatar3
+  Cell4
+    gameState <-> cellState4
+    consume cellSlot4 as cell4 
+      provide avatarSlot as avatar4
+  DisplayAvatar4
+    player <- currentPlayer
+    gameState <- cellState4
+    consume avatarSlot as avatar4
+  Cell5
+    gameState <-> cellState5
+    consume cellSlot5 as cell5 
+      provide avatarSlot as avatar5
+  DisplayAvatar5
+    player <- currentPlayer
+    gameState <- cellState5
+    consume avatarSlot as avatar5 
+  Cell6
+    gameState <-> cellState6
+    consume cellSlot6 as cell6 
+      provide avatarSlot as avatar6
+  DisplayAvatar6
+    player <- currentPlayer
+    gameState <- cellState6
+    consume avatarSlot as avatar6
+  Cell7
+    gameState <-> cellState7
+    consume cellSlot7 as cell7 
+      provide avatarSlot as avatar7
+  DisplayAvatar7
+    player <- currentPlayer
+    gameState <- cellState7
+    consume avatarSlot as avatar7
+  Cell8
+    gameState <-> cellState8
+    consume cellSlot8 as cell8 
+      provide avatarSlot as avatar8
+  DisplayAvatar8
+    player <- currentPlayer
+    gameState <- cellState8
+    consume avatarSlot as avatar8
+  Cell9
+    gameState <-> cellState9
+    consume cellSlot9 as cell9 
+      provide avatarSlot as avatar9
+  DisplayAvatar9
+    player <- currentPlayer
+    gameState <- cellState9
+    consume avatarSlot as avatar9
   
   description `Javascript Tutorial Demo`
