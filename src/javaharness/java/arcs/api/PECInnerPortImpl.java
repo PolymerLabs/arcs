@@ -13,6 +13,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final String MESSAGE_PEC_ID_FIELD = "id";
   private static final String INDENTIFIER_FIELD = "identifier";
   private static final String INSTANTIATE_PARTICLE_MSG = "InstantiateParticle";
+  private static final String REINSTANTIATE_PARTICLE_MSG = "ReinstantiateParticle";
   private static final String PARTICLE_SPEC_FIELD = "spec";
   private static final String PARTICLE_STORES_FIELD = "stores";
   private static final String PARTICLE_ID_FIELD = "id";
@@ -79,6 +80,7 @@ public class PECInnerPortImpl implements PECInnerPort {
     PortableJson messageBody = message.getObject(MESSAGE_BODY_FIELD);
     switch (messageType) {
       case INSTANTIATE_PARTICLE_MSG:
+      case REINSTANTIATE_PARTICLE_MSG:
         {
           ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject(PARTICLE_SPEC_FIELD));
           PortableJson stores = messageBody.getObject(PARTICLE_STORES_FIELD);
