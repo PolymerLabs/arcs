@@ -45,7 +45,7 @@ function init() {
     execute();
   } else {
     const exampleManifest = `\
-import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.arcs'
+import 'https://$particles/Tutorial/Javascript/1_HelloWorld/HelloWorld.arcs'
 
 schema Data
   Number num
