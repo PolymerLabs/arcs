@@ -39,13 +39,15 @@ function init() {
   popup.addEventListener('click', () => popup.style.display = 'none');
 
   const params = new URLSearchParams(window.location.search);
+  window.logLevel = (params.get('log') !== null) ? 1 : 0;
+
   const manifestParam = params.get('m') || params.get('manifest');
   if (manifestParam) {
     files.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
     execute();
   } else {
     const exampleManifest = `\
-import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.arcs'
+import 'https://$particles/Tutorial/Javascript/1_HelloWorld/HelloWorld.arcs'
 
 schema Data
   Number num
@@ -67,9 +69,10 @@ recipe
     data <- h0`;
 
     const exampleParticle = `\
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     get template() {
+      log(\`Add '?log' to the URL to enable particle logging\`);
       return html\`<span>{{num}}</span> : <span>{{str}}</span>\`;
     }
     render({data}) {
