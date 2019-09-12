@@ -23,12 +23,23 @@ public class WebHarnessController implements HarnessController {
   private final ArcsEnvironment environment;
   private final DeviceClient deviceClient;
   private final PortableJsonParser jsonParser;
+  private final DummyClipboard dummyClipboard;
+
+  public static interface DummyClipboard {
+    void setText(String text);
+    void onChange(Consumer<String> onChange);
+  }
 
   @Inject
-  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient, PortableJsonParser jsonParser) {
+  WebHarnessController(
+      ArcsEnvironment environment,
+      DeviceClient deviceClient,
+      PortableJsonParser jsonParser,
+      DummyClipboard dummyClipboard) {
     this.environment = environment;
     this.deviceClient = deviceClient;
     this.jsonParser = jsonParser;
+    this.dummyClipboard = dummyClipboard;
   }
 
   @Override
@@ -49,14 +60,7 @@ public class WebHarnessController implements HarnessController {
 
     // make two buttons in the UI
     document.body.appendChild(
-        makeInputElement(
-            "Capture Place Entity",
-            val ->
-                environment.sendMessageToArcs(
-                    "{\"message\": \"capture\", \"entity\":{\"type\": \"address\", \"name\": \""
-                        + val
-                        + "\", \"source\": \"com.google.android.apps.maps\"}}",
-                    null)));
+        makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
 
     Element dataParagraph = makeParagraph();
 

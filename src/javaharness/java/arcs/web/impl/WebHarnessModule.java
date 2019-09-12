@@ -20,6 +20,7 @@ import dagger.Module;
 import dagger.Provides;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Module
@@ -63,4 +64,26 @@ public abstract class WebHarnessModule {
   @Binds
   public abstract PortablePromiseFactory providesPortablePromiseFactory(
       PortablePromiseFactoryImpl impl);
+
+  @Provides
+  @Singleton
+  public static WebHarnessController.DummyClipboard provideDummyClipboard() {
+    return new WebHarnessController.DummyClipboard() {
+      private String text;
+      private Consumer<String> onChange;
+
+      @Override
+      public void setText(String text) {
+        this.text = text;
+        if (onChange != null) {
+            onChange.accept(text);
+        }
+
+      }
+      @Override
+      public void onChange(Consumer<String> onChange) {
+        this.onChange = onChange;
+      }
+    };
+  }
 }
