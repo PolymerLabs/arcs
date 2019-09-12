@@ -38,8 +38,9 @@ export class Runtime {
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
   private composerClass: new () => SlotComposer | null;
-  private context: Manifest;
+  public readonly context: Manifest;
   private readonly ramDiskMemory: VolatileMemory;
+  private readonly arcById = new Map<string, Arc>();
 
   static getRuntime() {
     if (runtime == null) {
@@ -81,13 +82,27 @@ export class Runtime {
 
   }
 
-  newArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions) {
+  newArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
     const id = IdGenerator.newSession().newArcId(name);
     const storageKey = storageKeyPrefix + id.toString();
     return new Arc({id, storageKey, loader: this.loader, slotComposer: new this.composerClass(), context: this.context, ...options});
   }
 
   // Stuff the shell needs
+
+  /**
+   * Given an arc name, return either:
+   * (1) the already running arc
+   * (2) a deserialized arc (TODO: needs implementation)
+   * (3) a newly created arc
+   */
+  runArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
+    if (!this.arcById[name]) {
+      // TODO: Support deserializing serialized arcs.
+      this.arcById[name] = this.newArc(name, storageKeyPrefix, options);
+    }
+    return this.arcById[name];
+  }
 
   /**
    * Given an arc, returns it's description as a string.
