@@ -15,7 +15,7 @@ const _factory = (preamble, color, log = 'log') =>
   );
 
 // don't spam the console for workers
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && window.logLevel !== undefined) {
   console.log(`log-web: binding logFactory to level [${window.logLevel}]`);
 }
 
