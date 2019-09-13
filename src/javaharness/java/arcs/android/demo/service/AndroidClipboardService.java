@@ -6,10 +6,10 @@ import android.content.ClipboardManager;
 import android.content.ClipboardManager.OnPrimaryClipChangedListener;
 import android.content.Context;
 import android.util.Log;
+import arcs.android.api.Annotations.AppContext;
 import arcs.demo.services.ClipboardService;
 import java.util.function.Consumer;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 public class AndroidClipboardService implements ClipboardService {
 
@@ -17,7 +17,7 @@ public class AndroidClipboardService implements ClipboardService {
   private OnPrimaryClipChangedListener onPrimaryClipChangedListener;
 
   @Inject
-  public AndroidClipboardService(@Named("AppContext") Context ctx) {
+  public AndroidClipboardService(@AppContext Context ctx) {
     this.ctx = ctx;
   }
 

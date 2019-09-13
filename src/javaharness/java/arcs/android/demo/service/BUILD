@@ -13,7 +13,8 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
-        "//java/arcs/android/demo/api",
+        "//java/arcs/android/api",
+        "//java/arcs/android/client",
         "//java/arcs/android/impl",
         "//java/arcs/api:api-android",
         "//java/arcs/demo/particles:particles-android",

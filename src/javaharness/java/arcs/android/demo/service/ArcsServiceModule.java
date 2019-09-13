@@ -1,5 +1,6 @@
 package arcs.android.demo.service;
 
+import arcs.android.client.ArcsServiceStarter;
 import arcs.demo.services.AlertService;
 import arcs.demo.services.ClipboardService;
 import dagger.Binds;
@@ -13,4 +14,7 @@ public abstract class ArcsServiceModule {
 
   @Binds
   public abstract AlertService provideAlertSurface(AndroidToastAlertService impl);
+
+  @Binds
+  public abstract ArcsServiceStarter provideArcsServiceStarter(ArcsServiceStarterImpl impl);
 }
