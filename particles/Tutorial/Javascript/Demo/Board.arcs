@@ -22,13 +22,12 @@ particle Board in './source/Board.js'
     provide cellSlot8
     provide cellSlot9
 
-particle Cell1 in './source/Cell.js'
+particle Cell in './source/Cell.js'
   inout GameState gameState
-  consume cellSlot1
+  consume cellSlot
     provide avatarSlot
 
-particle DisplayAvatar1 in './source/DisplayAvatar.js'
+particle DisplayAvatar in './source/DisplayAvatar.js'
   in Person player
   in GameState gameState
   consume avatarSlot
-  

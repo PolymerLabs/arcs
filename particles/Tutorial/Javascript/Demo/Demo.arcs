@@ -80,75 +80,75 @@ recipe
       provide cellSlot7 as cell7
       provide cellSlot8 as cell8
       provide cellSlot9 as cell9
-  Cell1
+  Cell
     gameState <-> cellState1
-    consume cellSlot1 as cell1 
+    consume cellSlot as cell1 
       provide avatarSlot as avatar1
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState1
     consume avatarSlot as avatar1
-  Cell1
+  Cell
     gameState <-> cellState2
-    consume cellSlot1 as cell2 
+    consume cellSlot as cell2 
       provide avatarSlot as avatar2
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState2
     consume avatarSlot as avatar2
-  Cell1
+  Cell
     gameState <-> cellState3
-    consume cellSlot1 as cell3 
+    consume cellSlot as cell3 
       provide avatarSlot as avatar3
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState3
     consume avatarSlot as avatar3
-  Cell1
+  Cell
     gameState <-> cellState4
-    consume cellSlot1 as cell4 
+    consume cellSlot as cell4 
       provide avatarSlot as avatar4
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState4
     consume avatarSlot as avatar4
-  Cell1
+  Cell
     gameState <-> cellState5
-    consume cellSlot1 as cell5 
+    consume cellSlot as cell5 
       provide avatarSlot as avatar5
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState5
     consume avatarSlot as avatar5 
-  Cell1
+  Cell
     gameState <-> cellState6
-    consume cellSlot1 as cell6 
+    consume cellSlot as cell6 
       provide avatarSlot as avatar6
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState6
     consume avatarSlot as avatar6
-  Cell1
+  Cell
     gameState <-> cellState7
-    consume cellSlot1 as cell7 
+    consume cellSlot as cell7 
       provide avatarSlot as avatar7
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState7
     consume avatarSlot as avatar7
-  Cell1
+  Cell
     gameState <-> cellState8
-    consume cellSlot1 as cell8 
+    consume cellSlot as cell8 
       provide avatarSlot as avatar8
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState8
     consume avatarSlot as avatar8
-  Cell1
+  Cell
     gameState <-> cellState9
-    consume cellSlot1 as cell9 
+    consume cellSlot as cell9 
       provide avatarSlot as avatar9
-  DisplayAvatar1
+  DisplayAvatar
     player <- currentPlayer
     gameState <- cellState9
     consume avatarSlot as avatar9
