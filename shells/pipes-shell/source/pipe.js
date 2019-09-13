@@ -18,7 +18,6 @@ import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
 import {spawn} from './verbs/spawn.js';
 import {runarc} from './verbs/runarc.js';
-import {portIndustry} from './pec-port.js';
 
 //const {log, warn} = logsFactory('pipe');
 
@@ -64,8 +63,7 @@ const populateDispatcher = (dispatcher, composerFactory, storage, context, env) 
     // TODO: eventually this should replace `spawn`. currently adding a parallel
     // API call, to not affect existing demos.
     runarc: async (msg, tid, bus) => {
-      return await runarc(msg, tid, bus, runtime,
-          [].concat([env.pecFactory], [portIndustry(bus)]));
+      return await runarc(msg, tid, bus, runtime, env);
     }
   });
   return dispatcher;

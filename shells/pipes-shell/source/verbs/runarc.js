@@ -12,11 +12,12 @@ import {logsFactory} from '../../../../build/runtime/log-factory.js';
 import {RecipeUtil} from '../../../../build/runtime/recipe/recipe-util.js';
 import {Utils} from '../../../lib/utils.js';
 import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
+import {portIndustry} from '../pec-port.js';
 
 const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
-export const runarc = async (msg, tid, bus, runtime, pecFactories) => {
+export const runarc = async (msg, tid, bus, runtime, env) => {
   const {recipe, arcid, storageKeyPrefix, pecid} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcid) {
@@ -29,7 +30,7 @@ export const runarc = async (msg, tid, bus, runtime, pecFactories) => {
   }
   const arc = runtime.runArc(arcid, storageKeyPrefix || 'volatile://', {
       fileName: './serialized.manifest',
-      pecFactories,
+      pecFactories: [].concat([env.pecFactory], [portIndustry(bus)]),
       loader: runtime.loader,
       inspectorFactory: devtoolsArcInspectorFactory,
   });
