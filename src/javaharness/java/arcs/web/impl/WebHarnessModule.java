@@ -15,6 +15,7 @@ import arcs.api.PortableJsonParser;
 import arcs.api.PortablePromiseFactory;
 import arcs.api.ShellApi;
 import arcs.api.ShellApiBasedArcsEnvironment;
+import arcs.demo.services.ClipboardService;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -65,25 +66,7 @@ public abstract class WebHarnessModule {
   public abstract PortablePromiseFactory providesPortablePromiseFactory(
       PortablePromiseFactoryImpl impl);
 
-  @Provides
+  @Binds
   @Singleton
-  public static WebHarnessController.DummyClipboard provideDummyClipboard() {
-    return new WebHarnessController.DummyClipboard() {
-      private String text;
-      private Consumer<String> onChange;
-
-      @Override
-      public void setText(String text) {
-        this.text = text;
-        if (onChange != null) {
-            onChange.accept(text);
-        }
-
-      }
-      @Override
-      public void onChange(Consumer<String> onChange) {
-        this.onChange = onChange;
-      }
-    };
-  }
+  public abstract ClipboardService provideClipboardSurface(DummyClipboard impl);
 }

@@ -13,8 +13,7 @@ import {RecipeUtil} from '../../../../build/runtime/recipe/recipe-util.js';
 import {Utils} from '../../../lib/utils.js';
 import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
 
-const {warn} = logsFactory('pipe');
-const {log} = logsFactory('pipe');
+const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
 export const runarc = async (msg, tid, bus, runtime, pecFactories) => {
@@ -27,26 +26,25 @@ export const runarc = async (msg, tid, bus, runtime, pecFactories) => {
   if (recipe && !action) {
     warn(`found no recipes matching [${recipe}]`);
     return null;
-  } else {
-    const arc = runtime.runArc(arcid, storageKeyPrefix || 'volatile://', {
-        fileName: './serialized.manifest',
-        pecFactories,
-        loader: runtime.loader,
-        inspectorFactory: devtoolsArcInspectorFactory,
-    });
-    arc.pec.slotComposer.slotObserver = {
-      observe: (content, arc) => {
-        delete content.particle;
-        bus.send({message: 'output', data: content});
-      }
-    };
-
-    // optionally instantiate recipe
-    if (action && await instantiateRecipe(arc, action)) {
-      log(`successfully instantiated ${recipe} in ${arc}`);
-    }
-    return arc;
   }
+  const arc = runtime.runArc(arcid, storageKeyPrefix || 'volatile://', {
+      fileName: './serialized.manifest',
+      pecFactories,
+      loader: runtime.loader,
+      inspectorFactory: devtoolsArcInspectorFactory,
+  });
+  arc.pec.slotComposer.slotObserver = {
+    observe: (content, arc) => {
+      delete content.particle;
+      bus.send({message: 'output', data: content});
+    }
+  };
+
+  // optionally instantiate recipe
+  if (action && await instantiateRecipe(arc, action)) {
+    log(`successfully instantiated ${recipe} in ${arc}`);
+  }
+  return arc;
 };
 
 const instantiateRecipe = async (arc, recipe) => {

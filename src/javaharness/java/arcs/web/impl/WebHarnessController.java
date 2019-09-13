@@ -8,6 +8,7 @@ import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
 import arcs.api.PortableJsonParser;
 import arcs.crdt.CollectionDataTest;
+import arcs.demo.services.ClipboardService;
 import elemental2.dom.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,21 +26,16 @@ public class WebHarnessController implements HarnessController {
   private final PortableJsonParser jsonParser;
   private final DummyClipboard dummyClipboard;
 
-  public static interface DummyClipboard {
-    void setText(String text);
-    void onChange(Consumer<String> onChange);
-  }
-
   @Inject
   WebHarnessController(
       ArcsEnvironment environment,
       DeviceClient deviceClient,
       PortableJsonParser jsonParser,
-      DummyClipboard dummyClipboard) {
+      ClipboardService clipboardService) {
     this.environment = environment;
     this.deviceClient = deviceClient;
     this.jsonParser = jsonParser;
-    this.dummyClipboard = dummyClipboard;
+    this.dummyClipboard = (DummyClipboard) clipboardService;
   }
 
   @Override

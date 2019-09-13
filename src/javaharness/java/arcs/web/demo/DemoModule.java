@@ -8,8 +8,8 @@ import dagger.Module;
 @Module
 public abstract class DemoModule {
 
-  @Binds
-  public abstract ClipboardService provideClipboardSurface(WebClipboardService impl);
+  // @Binds
+  // public abstract ClipboardService provideClipboardSurface(WebClipboardService impl);
 
   @Binds
   public abstract AlertService provideAlertSurface(WebAlertService impl);

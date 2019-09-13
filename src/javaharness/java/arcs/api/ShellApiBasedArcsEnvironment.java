@@ -25,7 +25,7 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   public void sendMessageToArcs(String msg, DataListener listener) {
     String transactionId = String.valueOf(shellApi.receive(msg));
     if (listener != null) {
-      logger.warning("Deprected use of `listener` in msg: " + msg);
+      logger.warning("Deprecated use of `listener` in msg: " + msg);
       inProgress.put(transactionId, listener);
     }
   }
