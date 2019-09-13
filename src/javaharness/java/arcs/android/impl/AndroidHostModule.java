@@ -12,7 +12,6 @@ import arcs.api.ParticleExecutionContext;
 import arcs.api.ParticleExecutionContextImpl;
 import arcs.api.ParticleLoader;
 import arcs.api.ParticleLoaderImpl;
-import arcs.api.PortableJsonParser;
 import arcs.api.PortablePromiseFactory;
 import arcs.api.ShellApi;
 import arcs.api.ShellApiBasedArcsEnvironment;
@@ -43,9 +42,6 @@ public abstract class AndroidHostModule {
   @Binds
   @Singleton
   abstract ShellApi providesWebShellApi(AndroidShellApiImpl impl);
-
-  @Binds
-  abstract PortableJsonParser providesPortableJsonParser(PortableJsonParserAndroidImpl impl);
 
   @Binds
   public abstract HarnessController providesHarnessController(AndroidHarnessController impl);

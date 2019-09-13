@@ -8,22 +8,26 @@ import android.webkit.WebViewClient;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
+import arcs.api.UiBroker;
 import javax.inject.Inject;
 
 public class AndroidHarnessController implements HarnessController {
 
-  private ArcsEnvironment environment;
-  private DeviceClient deviceClient;
-  private WebView webView;
+  private final ArcsEnvironment environment;
+  private final DeviceClient deviceClient;
+  private final WebView webView;
+  private final UiBroker uiBroker;
 
   @Inject
   AndroidHarnessController(
       ArcsEnvironment environment,
       DeviceClient deviceClient,
-      WebView webView) {
+      WebView webView,
+      UiBroker uiBroker) {
     this.environment = environment;
     this.deviceClient = deviceClient;
     this.webView = webView;
+    this.uiBroker = uiBroker;
   }
 
   @Override
@@ -32,6 +36,11 @@ public class AndroidHarnessController implements HarnessController {
       setWebViewSettings();
       webView.addJavascriptInterface(deviceClient, "DeviceClient");
     }
+  }
+
+  @Override
+  public UiBroker getUiBroker() {
+    return uiBroker;
   }
 
   private void setWebViewSettings() {

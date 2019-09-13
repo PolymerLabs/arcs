@@ -1,8 +1,6 @@
 package arcs.api;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -80,6 +78,9 @@ public class PECInnerPortImpl implements PECInnerPort {
     switch (messageType) {
       case INSTANTIATE_PARTICLE_MSG:
         {
+          // TODO: Do I need to check that this isn't a ProxiedClientParticle? Definitely don't want
+          // to instantiate those!
+
           ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject(PARTICLE_SPEC_FIELD));
           PortableJson stores = messageBody.getObject(PARTICLE_STORES_FIELD);
           Map<String, StorageProxy> proxies = new HashMap<>();

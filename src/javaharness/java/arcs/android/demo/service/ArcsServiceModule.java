@@ -4,6 +4,7 @@ import arcs.demo.services.AlertService;
 import arcs.demo.services.ClipboardService;
 import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
 import javax.inject.Named;
 
 @Module
@@ -15,9 +16,9 @@ public abstract class ArcsServiceModule {
   @Binds
   public abstract AlertService provideAlertSurface(AndroidToastAlertService impl);
 
-  @Binds
+  @Provides
   @Named("ArcsService")
-  public Class arcsServiceClass() {
+  public static Class arcsServiceClass() {
     return ArcsService.class;
   }
 }

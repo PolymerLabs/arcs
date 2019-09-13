@@ -4,16 +4,11 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.os.CancellationSignal;
 import android.service.autofill.AutofillService;
-import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillRequest;
-import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.service.autofill.SaveRequest;
-import android.view.autofill.AutofillValue;
-import android.widget.RemoteViews;
-import arcs.android.client.ArcsServiceBridge;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -24,7 +19,9 @@ import javax.inject.Inject;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject ArcsServiceBridge arcsServiceBridge;
+  @Inject AutofillParticle.Factory autofillParticleFactory;
+  // @Inject ArcsServiceBridge arcsServiceBridge;
+  // @Inject HarnessController harnessController;
 
   @Override
   public void onCreate() {
@@ -43,42 +40,18 @@ public class ArcsAutofillService extends AutofillService {
     AssistStructure structure = fillContexts.get(fillContexts.size() - 1).getStructure();
     List<ViewNode> nodes = collectViewNodes(structure);
 
-    Dataset.Builder dataset = new Dataset.Builder();
-    for (ViewNode node : nodes) {
-      String suggestion = getAutofillSuggestion(node);
-      dataset.setValue(
-          node.getAutofillId(), AutofillValue.forText(suggestion), createRemoteView(suggestion));
-    }
+    AutofillParticle particle = autofillParticleFactory.create(nodes, callback);
+    
+    // AutofillRenderer renderer = new AutofillRenderer(this, nodes, callback);
+    //
+    // // TODO: Eep! This should not be set once the ArcsService boots up, not every time! :O
+    // harnessController.getUiBroker().addRenderer("autofill", renderer);
 
-    FillResponse fillResponse = new FillResponse.Builder().addDataset(dataset.build()).build();
-    callback.onSuccess(fillResponse);
+    // TODO: How to start/run particle?
   }
 
   @Override
   public void onSaveRequest(SaveRequest request, SaveCallback callback) {}
-
-  private RemoteViews createRemoteView(String contents) {
-    RemoteViews view = new RemoteViews(getPackageName(), R.layout.autofill_result);
-    view.setTextViewText(R.id.autofill_result_text, contents);
-    return view;
-  }
-
-  /**
-   * Returns an autofill suggestion for the given node. Currently just returns a dummy value taken
-   * from the node's autofill hint. Eventually this should talk to Arcs.
-   */
-  private String getAutofillSuggestion(ViewNode node) {
-    // TODO(csilvestrini): Pull autofill suggestions from Arcs.
-
-    arcsServiceBridge.sendMessageToArcs("Hello!", null);
-
-    String[] hints = node.getAutofillHints();
-    if (hints == null || hints.length == 0) {
-      return "Some result";
-    } else {
-      return hints[0];
-    }
-  }
 
   private static List<ViewNode> collectViewNodes(AssistStructure structure) {
     ArrayList<ViewNode> result = new ArrayList<>();

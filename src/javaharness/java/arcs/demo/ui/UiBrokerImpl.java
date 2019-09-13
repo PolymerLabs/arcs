@@ -4,8 +4,6 @@ import arcs.api.PortableJson;
 import arcs.api.UiBroker;
 import arcs.api.UiRenderer;
 import java.util.Map;
-import java.util.Set;
-import java.util.logging.Logger;
 import javax.inject.Inject;
 
 class UiBrokerImpl implements UiBroker {
@@ -18,8 +16,13 @@ class UiBrokerImpl implements UiBroker {
   }
 
   @Override
+  public void addRenderer(String name, UiRenderer renderer) {
+    renderers.put(name, renderer);
+  }
+
+  @Override
   public boolean render(PortableJson content) {
-    String[] names = null;
+    String[] names;
     if (content.getObject("data").hasKey("modality")) {
       String modality = content.getObject("data").getString("modality");
       names = modality.split(",");

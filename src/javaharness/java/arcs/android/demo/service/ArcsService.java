@@ -8,6 +8,7 @@ import android.view.View;
 import android.webkit.WebView;
 import arcs.android.api.IArcsService;
 import arcs.api.HarnessController;
+import arcs.api.ShellApiBasedArcsEnvironment;
 import javax.inject.Inject;
 
 /**
@@ -20,8 +21,8 @@ public class ArcsService extends Service {
 
   private WebView arcsWebView;
 
-  @Inject
-  HarnessController harnessController;
+  @Inject HarnessController harnessController;
+  @Inject ShellApiBasedArcsEnvironment shellEnvironment;
 
   @Override
   public void onCreate() {
@@ -48,7 +49,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        // TODO!
+        shellEnvironment.sendMessageToArcs(message, /* listener= */ null);
       }
     };
   }
