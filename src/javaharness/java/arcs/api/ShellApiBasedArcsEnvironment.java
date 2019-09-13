@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.Map;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 
 /**
@@ -8,6 +9,8 @@ import javax.inject.Inject;
  * needing to use the ShellApi + Web runtime.
  */
 public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
+
+  private static final Logger logger = Logger.getLogger(ShellApiBasedArcsEnvironment.class.getName());
 
   private final Map<String, DataListener> inProgress;
   private ShellApi shellApi;
@@ -22,6 +25,7 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   public void sendMessageToArcs(String msg, DataListener listener) {
     String transactionId = String.valueOf(shellApi.receive(msg));
     if (listener != null) {
+      logger.warning("Deprecated use of `listener` in msg: " + msg);
       inProgress.put(transactionId, listener);
     }
   }

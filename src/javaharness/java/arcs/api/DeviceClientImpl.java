@@ -19,6 +19,7 @@ public class DeviceClientImpl implements DeviceClient {
   private static final Logger logger = Logger.getLogger(DeviceClient.class.getName());
 
   private final PortableJsonParser jsonParser;
+  private final ArcsEnvironment environment;
   private Map<String, ArcsEnvironment.DataListener> inProgress;
   private final PECInnerPortFactory portFactory;
   private final Map<String, PECInnerPort> portById = new HashMap<>();
@@ -27,10 +28,12 @@ public class DeviceClientImpl implements DeviceClient {
   @Inject
   public DeviceClientImpl(
       PortableJsonParser jsonParser,
+      ArcsEnvironment environment,
       Map<String, ArcsEnvironment.DataListener> inProgress,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
     this.jsonParser = jsonParser;
+    this.environment = environment;
     this.inProgress = inProgress;
     this.portFactory = portFactory;
     this.uiBroker = uiBroker;
@@ -44,6 +47,11 @@ public class DeviceClientImpl implements DeviceClient {
     switch (message) {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
+        // TODO: Onstartup Arcs should be configuration based, not hardcoded.
+        environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
+            .put("message", "runArc")
+            .put("recipe", "Ingestion")
+            .put("arcid", "ingestion-arc")), null);
         break;
       case MESSAGE_PEC:
         postMessage(content.getObject(FIELD_DATA));

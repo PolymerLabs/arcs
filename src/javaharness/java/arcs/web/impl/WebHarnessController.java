@@ -8,6 +8,7 @@ import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
 import arcs.api.PortableJsonParser;
 import arcs.crdt.CollectionDataTest;
+import arcs.demo.services.ClipboardService;
 import elemental2.dom.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,12 +24,18 @@ public class WebHarnessController implements HarnessController {
   private final ArcsEnvironment environment;
   private final DeviceClient deviceClient;
   private final PortableJsonParser jsonParser;
+  private final DummyClipboard dummyClipboard;
 
   @Inject
-  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient, PortableJsonParser jsonParser) {
+  WebHarnessController(
+      ArcsEnvironment environment,
+      DeviceClient deviceClient,
+      PortableJsonParser jsonParser,
+      ClipboardService clipboardService) {
     this.environment = environment;
     this.deviceClient = deviceClient;
     this.jsonParser = jsonParser;
+    this.dummyClipboard = (DummyClipboard) clipboardService;
   }
 
   @Override
@@ -49,14 +56,7 @@ public class WebHarnessController implements HarnessController {
 
     // make two buttons in the UI
     document.body.appendChild(
-        makeInputElement(
-            "Capture Place Entity",
-            val ->
-                environment.sendMessageToArcs(
-                    "{\"message\": \"capture\", \"entity\":{\"type\": \"address\", \"name\": \""
-                        + val
-                        + "\", \"source\": \"com.google.android.apps.maps\"}}",
-                    null)));
+        makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
 
     Element dataParagraph = makeParagraph();
 

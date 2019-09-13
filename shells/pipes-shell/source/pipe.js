@@ -9,35 +9,41 @@
  */
 
 //import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
+import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {Utils} from '../../lib/utils.js';
 import {requireContext} from './context.js';
-import {marshalIngestionArc} from './pipes-api.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
 import {spawn} from './verbs/spawn.js';
+import {runArc} from './verbs/run-arc.js';
 
 //const {log, warn} = logsFactory('pipe');
 
+const manifest = `
+import 'https://$particles/PipeApps/RenderNotification.arcs'
+import 'https://$particles/PipeApps/Ingestion.arcs'
+`;
+
 export const initPipe = async (client, paths, storage, composerFactory) => {
   // configure arcs environment
-  Utils.init(paths.root, paths.map);
+  const env = Utils.init(paths.root, paths.map);
   // marshal context
-  const context = await requireContext();
+  const context = await requireContext(manifest);
   // marshal dispatcher
-  populateDispatcher(dispatcher, composerFactory, storage, context);
+  populateDispatcher(dispatcher, composerFactory, storage, context, env);
   // create bus
   const bus = new Bus(dispatcher, client);
-  // send pipe identifiers to client
-  identifyPipe(context, bus);
   // return bus
   return bus;
 };
 
 export const initArcs = async (storage, bus) => {
-  const context = await requireContext();
-  // marshal ingestion arc.
-  await marshalIngestionArc(storage, context, bus);
+  const context = await requireContext(manifest);
+  // This must happen after `initPipe` returned, and `window.ShellApi` was initialized.
+  // send pipe identifiers to client
+  identifyPipe(context, bus);
 };
 
 const identifyPipe = async (context, bus) => {
@@ -45,13 +51,19 @@ const identifyPipe = async (context, bus) => {
   bus.send({message: 'ready', recipes});
 };
 
-const populateDispatcher = (dispatcher, composerFactory, storage, context) => {
+const populateDispatcher = (dispatcher, composerFactory, storage, context, env) => {
+  const runtime = new Runtime(env.loader, UiSlotComposer, context);
   Object.assign(dispatcher, {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
     },
     spawn: async (msg, tid, bus) => {
       return await spawn(msg, tid, bus, composerFactory, storage, context);
+    },
+    // TODO: eventually this should replace `spawn`. currently adding a parallel
+    // API call, to not affect existing demos.
+    runArc: async (msg, tid, bus) => {
+      return await runArc(msg, tid, bus, runtime, env);
     }
   });
   return dispatcher;

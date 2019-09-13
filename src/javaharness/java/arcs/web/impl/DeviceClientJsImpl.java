@@ -15,10 +15,11 @@ public class DeviceClientJsImpl extends DeviceClientImpl {
   @Inject
   public DeviceClientJsImpl(
       PortableJsonParser jsonParser,
+      ArcsEnvironment environment,
       Map<String, ArcsEnvironment.DataListener> inProgress,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
-    super(jsonParser, inProgress, portFactory, uiBroker);
+    super(jsonParser, environment, inProgress, portFactory, uiBroker);
   }
 
   @Override

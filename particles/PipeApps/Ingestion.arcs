@@ -1,12 +1,8 @@
+import './schemas/IncomingEntity.arcs'
 
 schema Place
   Text name
   Text address
-
-schema IncomingEntity
-  Text type
-  Text jsonData
-  Text source
 
 schema Person
   Text firstName

@@ -10,13 +10,13 @@
 
 import {Utils} from '../../lib/utils.js';
 
-const manifest = `
+const defaultManifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
 `;
 
-export const requireContext = async () => {
+export const requireContext = async manifest => {
   if (!requireContext.promise) {
-    requireContext.promise = Utils.parse(manifest);
+    requireContext.promise = Utils.parse(manifest || defaultManifest);
   }
   return await requireContext.promise;
 };
