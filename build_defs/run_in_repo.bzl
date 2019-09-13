@@ -63,7 +63,7 @@ def _write_shell_script(ctx, run_script):
     if run_script:
         ctx.actions.run(
             executable = script_file,
-            inputs = depset(input_files, transitive = ctx.attr.deps),
+            inputs = depset(input_files + ctx.files.deps),
             outputs = output_files,
             progress_message = ctx.attr.progress_message,
             use_default_shell_env = True,
