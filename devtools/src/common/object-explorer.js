@@ -7,6 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+import '../../deps/@polymer/polymer/lib/elements/dom-if.js';
+import '../../deps/@polymer/polymer/lib/elements/dom-repeat.js';
 import {PolymerElement} from '../../deps/@polymer/polymer/polymer-element.js';
 import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
 
@@ -22,6 +25,12 @@ import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
  *   - Store information on DOM elements.
  *     E.g. information about state of expansion needs to be in the data model.
  * 
+ * These constraints forced the implementation to use a helper data structure,
+ * referenced by the 'data' property, which contains contents the displayed object
+ * as well as additional metadata, such as which nodes are expanded in the UI.
+ * It can be computed automatically if the 'object' property is provided, or it
+ * can be provided directly.
+ * 
  * ..:: Read Before Using ::..
  * 
  * There are 2 parallel APIs to the ObjectExplorer.
@@ -31,6 +40,9 @@ import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
  *   Pass the object to explore through an 'object' attribute:
  *     <object-explorer object="[[objectToExplore]]"></object-explorer>
  * 
+ *   Changes to the underlying object will not be picked up automatically,
+ *   developer needs to call this.$.explorer.refresh() explicitly.
+ *
  *   Trigger searching through a 'find' attribute:
  *     <object-explorer object="[[objectToExplore]]" find="[[searchParams]]">
  *     or:
@@ -86,6 +98,9 @@ export class ObjectExplorer extends PolymerElement {
       }
       :host([expanded]:not([folded])) {
         flex-direction: column;
+      }
+      :host(object-explorer:not([inner])) {
+        padding: 2px 4px;
       }
       :host([inner]:not([folded])) {
         padding-left: 10px;
@@ -164,6 +179,20 @@ export class ObjectExplorer extends PolymerElement {
         padding: 3px 0;
         box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, .2);
       }
+      @keyframes flash {
+        0% {
+          background: rgba(255, 255, 0, 1.0);
+        }
+        100% {
+          background: rgba(255, 255, 0, 0);
+        }
+      }
+      :host([flash-trigger]) {
+          animation-name: flash;
+          animation-duration: 1.5s;
+          animation-iteration-count: 1;
+          animation-timing-function: cubic-bezier(.1, .75, .5, .9);
+      } 
     </style>
     <span class="header" expandable$=[[data.expandable]] on-click="_handleExpand" inner$=[[inner]]>
       <slot></slot>
@@ -191,6 +220,7 @@ export class ObjectExplorer extends PolymerElement {
 
   static get is() { return 'object-explorer'; }
 
+  // Prepares the 'data' property from the JS object to be displayed.
   static prepareData(ref, key = '') {
     const data = {
       type: ref === null ? 'null' : typeof ref,
@@ -224,6 +254,13 @@ export class ObjectExplorer extends PolymerElement {
     return data;
   }
 
+  /**
+   * Modifies the given 'data' object to reflect search query in the 'params' argument.
+   * 
+   * @param data the structure to modify
+   * @param params query for searching through the 'data' object. Must be null or an object of the
+   *          form {phrase, regex}, with exactly one of those fields set to a non-empty string.
+   */
   static find(data, params) {
     const localParams = {phrase: null, regex: null, compiledRegex: null};
     if (params) {
@@ -264,6 +301,8 @@ export class ObjectExplorer extends PolymerElement {
     return data.found;
   }
 
+  // Calculates the properties of the 'data' object which depend
+  // on whether the object-explorer is expanded.
   static _expandedDependentProps(data) {
     return {
       begin: data.expanded ? '' : (data.isArray ? '[' : '{'),
@@ -320,44 +359,105 @@ export class ObjectExplorer extends PolymerElement {
     return [parts.join(''), i > 0];
   }
 
+  // Attempts to mirror from 'prevData' to 'newData' which nodes are expanded in the UI.
+  static _inheritExpansion(prevData, newData) {
+    if (!prevData ||
+        prevData.type !== 'object' ||
+        newData.type !== 'object' ||
+        !newData.expandable ||
+        prevData.isArray !== newData.isArray) return;
+
+    if (prevData.expanded) {
+      newData.expanded = true;
+      Object.assign(newData, this._expandedDependentProps(newData));  
+    }
+
+    // Iteration over keys works well for objects, but is not ideal for arrays.
+    // E.g. if an element [2] is expanded and we insert a new element at index 0,
+    //      the element [3] should get expanded, but we still expand [2].
+    // Some more clever algorithm could be implemented here.
+    for (let i = 0; i < newData.props.length; i++) {
+      ObjectExplorer._inheritExpansion(
+          prevData.props.find(p => p.key === newData.props[i].key),
+          newData.props[i]);
+    }
+  }
+
   static get properties() {
     return {
+      // Drives what the UI shows and holds both
+      // the displayed object and various display-related metadata.
       data: Object,
+      // Used to provide the object to be displayed, setting it re-calculates 'data'.
       object: {
         type: Object,
         observer: '_objectProvided'
       },
+      // Function that re-calculates 'data' from the provided 'object',
+      // if the innards of the 'object' has changed but reference stayed the same.
+      refresh: {
+        type: Object,
+        value: function() {
+          return () => {
+            this._objectProvided(this.object);
+          };
+        }
+      },
+      // 'data.expanded' is reflected to DOM attribute for CSS styling.
       expanded: {
         type: Boolean,
         reflectToAttribute: true,
         computed: '_id(data.expanded)'
       },
+      // 'data.expandable' is reflected to DOM attribute for CSS styling.
       expandable: {
         type: Boolean,
         reflectToAttribute: true,
         computed: '_id(data.expandable)'
       },
+      // Set in DOM by the parent object-explorer to true for CSS styling.
       inner: {
         type: Boolean,
         reflectToAttribute: true,
         value: false,
       },
+      // Set in DOM by the parent object-explorer to true if this instance
+      // is a key-value pair in a collapsed (horizontal line) display.
       folded: {
         type: Boolean,
         reflectToAttribute: true,
         value: false
       },
+      // Set for collapsed (horizontal line) Arrays to skip integer indexes.
       skipKey: Boolean,
+      // Set to trigger searching inside explored object.
       find: {
         type: String,
         reflectToAttribute: true,
         value: null,
         observer: '_onFindChanged'
       },
+      // 'data.found' is reflected to DOM attribute for CSS styling.
+      // E.g. highlighting object where search query was found,
+      //      or hiding ones where it was not found.
       found: {
         type: Boolean,
         reflectToAttribute: true,
         computed: '_id(data.found)'
+      },
+      // Function that triggers a brief flash to point users attention.
+      // E.g. to notify of an object that has changed.
+      flash: {
+        type: Object,
+        value: function() {
+          return () => {
+            this.removeAttribute('flash-trigger');
+            // #Hackery. This triggers the DOM reflow, flushing the attribute removal to DOM tree,
+            // which ensures that the CSS animation gets restarted once we re-add the attribute.
+            void this.offsetWidth;
+            this.setAttribute('flash-trigger', '');
+          };
+        }
       },
     };
   }
@@ -367,7 +467,10 @@ export class ObjectExplorer extends PolymerElement {
   }
 
   _objectProvided(object) {
-    this.set('data', ObjectExplorer.prepareData(object));
+    const newData = ObjectExplorer.prepareData(object);
+    ObjectExplorer._inheritExpansion(this.data, newData);
+    this.data = newData;
+    this._onFindChanged();
   }
 
   _switchExpanded(newExpanded) {
@@ -393,9 +496,9 @@ export class ObjectExplorer extends PolymerElement {
     this.dispatchEvent(new CustomEvent('expand', {detail: this.data}));
   }
 
-  _onFindChanged(params) {
+  _onFindChanged() {
     if (!this.data) return;
-    ObjectExplorer.find(this.data, params);
+    ObjectExplorer.find(this.data, this.find);
     this.notifyPath('data.displayKey');
     this.notifyPath('data.displayValue');
     this.notifyPath('data.found');

@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {AbstractDevtoolsChannel} from '../devtools-connector/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
 import WebSocket from 'ws';
@@ -25,7 +24,7 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
         if (msg === 'init') {
           DevtoolsBroker.markConnected();
         } else {
-          this._handleMessage(JSON.parse(msg));
+          void this._handleMessage(JSON.parse(msg));
         }
       });
     });

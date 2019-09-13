@@ -53,9 +53,6 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         display: flex;
         flex-direction: column;
       }
-      object-explorer {
-        margin: 2px 4px;
-      }
       [name]:not(:empty) {
         color: var(--devtools-purple);
         margin-right: 1ch;
@@ -86,7 +83,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         <div class="title">{{item.label}}</div>
         <div class="content">
           <template is="dom-repeat" items="{{item.items}}">
-            <object-explorer object="{{item}}">
+            <object-explorer store-id$="[[item.id]]" object="{{item}}">
               <span name>[[item.name]]</span>
               <span tags>[[_tagsString(item.tags)]]</span>
               <span type>[[_typeString(item.type)]]</span>
@@ -142,6 +139,18 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
           this.loading = false;
           this.splice('storeGroups.0.items', 0, this.storeGroups[0].items.length, ...msg.messageBody.arcStores);
           this.splice('storeGroups.1.items', 0, this.storeGroups[1].items.length, ...msg.messageBody.contextStores);
+          break;
+        case 'store-value-changed':
+          for (let sgi = 0; sgi < this.storeGroups.length; sgi++) {
+            for (let i = 0; i < this.storeGroups[sgi].items.length; i++) {
+              if (this.storeGroups[sgi].items[i].id === msg.messageBody.id) {
+                this.set(`storeGroups.${sgi}.items.${i}.value`, msg.messageBody.value);
+                const explorer =  this.shadowRoot.querySelector(`object-explorer[store-id="${msg.messageBody.id}"]`);
+                explorer.refresh();
+                explorer.flash();
+              }
+            }
+          }
           break;
         case 'arc-selected':
           this._reset();

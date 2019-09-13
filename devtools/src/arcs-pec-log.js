@@ -101,9 +101,6 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         margin: 0 1ch;
         color: var(--devtools-blue);
       }
-      object-explorer {
-        margin: 2px;
-      }
     </style>
     <header class="header">
       <div section>
