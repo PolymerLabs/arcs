@@ -15,7 +15,7 @@ public interface ArcsEnvironment {
 
   /** Called by ArcsEnvironment when the Arcs runtime is ready. */
   interface ReadyListener {
-    void onReady(List<String> autofillTypes);
+    void onReady(List<String> recipes);
   }
 
   /**

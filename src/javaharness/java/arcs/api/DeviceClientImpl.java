@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -8,6 +9,7 @@ import javax.inject.Inject;
 public class DeviceClientImpl implements DeviceClient {
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
+  private static final String FIELD_READY_RECIPES = "recipes";
   private static final String MESSAGE_DATA = "data";
   private static final String MESSAGE_OUTPUT = "output";
   private static final String MESSAGE_PEC = "pec";
@@ -20,7 +22,8 @@ public class DeviceClientImpl implements DeviceClient {
 
   private final PortableJsonParser jsonParser;
   private final ArcsEnvironment environment;
-  private Map<String, ArcsEnvironment.DataListener> inProgress;
+  private final Map<String, ArcsEnvironment.DataListener> inProgress;
+  private final List<ArcsEnvironment.ReadyListener> readyListeners;
   private final PECInnerPortFactory portFactory;
   private final Map<String, PECInnerPort> portById = new HashMap<>();
   private final UiBroker uiBroker;
@@ -30,11 +33,13 @@ public class DeviceClientImpl implements DeviceClient {
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
       Map<String, ArcsEnvironment.DataListener> inProgress,
+      List<ArcsEnvironment.ReadyListener> readyListeners,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
     this.jsonParser = jsonParser;
     this.environment = environment;
     this.inProgress = inProgress;
+    this.readyListeners = readyListeners;
     this.portFactory = portFactory;
     this.uiBroker = uiBroker;
   }
@@ -47,11 +52,7 @@ public class DeviceClientImpl implements DeviceClient {
     switch (message) {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
-        // TODO: Onstartup Arcs should be configuration based, not hardcoded.
-        environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
-            .put("message", "runArc")
-            .put("recipe", "Ingestion")
-            .put("arcid", "ingestion-arc")), null);
+        readyListeners.forEach(listener -> listener.onReady(content.getArray(FIELD_READY_RECIPES).asStringArray()));
         break;
       case MESSAGE_PEC:
         postMessage(content.getObject(FIELD_DATA));
