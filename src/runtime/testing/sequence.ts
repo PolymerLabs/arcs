@@ -405,7 +405,7 @@ export class SequenceTest<T> {
    * 001200 (abdfce)
    * etc..
    */
-  private* interleavings_raw(length: number, amounts: number[]) {
+  private* interleavings_raw(length: number, amounts: number[]): IterableIterator<number[]> {
     const currentChoice: number[] = [];
     for (let i = 0; i < length; i++) {
       currentChoice.push(0);

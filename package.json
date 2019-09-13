@@ -46,8 +46,8 @@
     "@types/pouchdb": "^6.4.0",
     "@types/pouchdb-core": "^7.0.3",
     "@types/ws": "~6.0.1",
-    "@typescript-eslint/eslint-plugin": "^1.12.0",
-    "@typescript-eslint/parser": "^1.12.0",
+    "@typescript-eslint/eslint-plugin": "^2.2.0",
+    "@typescript-eslint/parser": "^2.2.0",
     "@wdio/cli": "^5.11.1",
     "@wdio/local-runner": "^5.11.2",
     "@wdio/mocha-framework": "^5.11.0",
@@ -58,8 +58,8 @@
     "chromedriver": "^76.0.1",
     "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
-    "eslint": "^6.0.1",
-    "eslint-config-google": "^0.13.0",
+    "eslint": "^6.3.0",
+    "eslint-config-google": "^0.14.0",
     "eslint-plugin-header": "^3.0.0",
     "express": "^4.17.1",
     "glob": "^7.1.4",
@@ -80,7 +80,7 @@
     "rollup-plugin-typescript2": "^0.21.2",
     "sloc": "^0.2.1",
     "ts-pegjs": "^0.2.6",
-    "tslint": "^5.18.0",
+    "tslint": "^5.20.0",
     "type-coverage": "^2.0.1",
     "typedoc": "^0.15.0",
     "wdio-chromedriver-service": "^5.0.2",
@@ -89,7 +89,7 @@
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.2.3",
+    "@tensorflow/tfjs": "^1.2.9",
     "assert": "^1.4.1",
     "esm": "^3.0.84",
     "firebase": "^6.0.4",
@@ -103,7 +103,7 @@
     "pouchdb-debug": "^7.1.1",
     "source-map-support": "^0.5.12",
     "sourcemapped-stacktrace": "^1.1.9",
-    "typescript": "^3.4.5",
+    "typescript": "^3.5.3",
     "ws": "~6.0.0"
   },
   "sighDependencies": {

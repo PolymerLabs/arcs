@@ -46,6 +46,7 @@
     "no-empty-pattern": "off", // No {} in patterns, but sometimes we use {} to denote an unused argument?
     "require-atomic-updates": "off",
     "no-prototype-builtins": "off",
+    "operator-linebreak": "off",
 
     // eslint-config-google 0.10.0 introduced indent checks
     // most projects are opting for prettier instead, so disable
