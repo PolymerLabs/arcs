@@ -49,7 +49,7 @@ public class DeviceClientImpl implements DeviceClient {
         logger.info("logger: Received 'ready' message");
         // TODO: Onstartup Arcs should be configuration based, not hardcoded.
         environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
-            .put("message", "runarc")
+            .put("message", "runArc")
             .put("recipe", "Ingestion")
             .put("arcid", "ingestion-arc")), null);
         break;

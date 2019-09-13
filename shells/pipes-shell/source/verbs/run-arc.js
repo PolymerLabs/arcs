@@ -17,7 +17,7 @@ import {portIndustry} from '../pec-port.js';
 const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
-export const runarc = async (msg, tid, bus, runtime, env) => {
+export const runArc = async (msg, tid, bus, runtime, env) => {
   const {recipe, arcid, storageKeyPrefix, pecid} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcid) {
