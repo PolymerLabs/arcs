@@ -368,11 +368,12 @@ public:
 
   // -- Setup --
 
-  // Called by sub-class constructors to map names to their handle fields.
+  // Particle constructors must call this for each handle declared in the particle manifest.
   void registerHandle(std::string name, Handle& handle);
 
-  // Optionally called by sub-class constructors to indicate that we should automatically call
-  // renderSlot() with the given slot name once all handles are synced, and whenever one is updated.
+  // Particle constructors may call this to indicate that the particle should automatically invoke
+  // renderSlot() with the given slot name once all connected handles are synced, and thereafter
+  // whenever a handle is updated.
   void autoRender(const std::string& slot_name = "root");
 
   // Called once a particle has been set up. Initial processing and service requests may be
@@ -382,8 +383,14 @@ public:
 
   // -- Storage --
 
-  // Override to provide specific handling of handle sync/updates.
+  // Called once during startup for each readable handle connected to the particle to indicate that
+  // the handle has received its full data model. 'all_synced' will be true for the last such call
+  // during startup. This may also be called after startup if a handle needed to re-synchronize with
+  // its backing store (in which case 'all_synced' will also be true).
   virtual void onHandleSync(const std::string& name, bool all_synced) {}
+
+  // Called after startup when a readable handle receives updated data (including writes from the
+  // particle itself).
   virtual void onHandleUpdate(const std::string& name) {}
 
   // Retrieve a handle by name; e.g. auto h = getSingleton<arcs::SomeEntityType>(name)
@@ -401,33 +408,41 @@ public:
 
   // -- Rendering and events --
 
-  // Override to provide a template string and key:value model for rendering into a slot.
+  // Override to provide a template string for rendering into a slot. The string should be a
+  // constant (templates may be cached by the runtime), optionally with "{{key}}" placeholders
+  // that can be substituted for data values provided by populateModel().
   virtual std::string getTemplate(const std::string& slot_name) { return ""; }
+
+  // Override to populate a model mapping the template {{placeholders}} to the current data values.
   virtual void populateModel(const std::string& slot_name, Dictionary* model) {}
 
-  // Can be called by sub-classes to initiate rendering; also invoked when auto-render is enabled
-  // after all handles have been synchronized.
+  // Call to trigger a render from within the particle. 'send_template' and 'send_model' instruct
+  // the system to call getTemplate() and populateModel() for this render, respectively. Also
+  // invoked when auto-render is enabled after all readable handles have been synchronized.
   // TODO: it doesn't make sense to have both send flags false; ignore, error or convert to enum?
   void renderSlot(const std::string& slot_name, bool send_template = true, bool send_model = true);
 
-  // Override to react to UI events triggered by handlers in the template provided below.
+  // Override to react to UI events triggered by handlers in the template provided above.
+  // 'slot_name' will correspond to the rendering slot hosting the UI element associated with the
+  // event indicated by 'handler'.
   virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}
 
   // -- Services --
 
-  // Sub-classes may call this to resolve URLs like 'https://$particles/path/to/assets/pic.jpg'.
+  // Particles may call this to resolve URLs like 'https://$particles/path/to/assets/pic.jpg'.
   // The '$here' prefix can be used to map to the location of the wasm binary file (for example:
   // '$here/path/to/assets/pic.jpg').
   std::string resolveUrl(const std::string& url);
 
-  // Sub-classes can request a service call using this method and the response will be delivered via
-  // serviceResponse(). The optional tag argument can be used to disambiguate multiple requests.
+  // Particles can request a service call using this method and the response will be delivered via
+  // serviceResponse(). The optional tag argument can be used to disambiguate multiple request to
+  // the same service point. 'call' is of the form "service.method"; for example: "clock.now".
   void serviceRequest(const std::string& call, const Dictionary& args, const std::string& tag = "");
   virtual void serviceResponse(
       const std::string& call, const Dictionary& response, const std::string& tag) {}
 
   // -- Internal API --
-  // These are public to allow access from JS, but should not be called by sub-classes.
+  // These are public to allow access from the runtime, but should not be called by sub-classes.
 
   // Called by the runtime to associate the inner handle instance with the outer object.
   Handle* connectHandle(const char* name, bool can_read, bool can_write);
