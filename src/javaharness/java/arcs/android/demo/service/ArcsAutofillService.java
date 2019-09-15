@@ -69,8 +69,7 @@ public class ArcsAutofillService extends AutofillService {
    * from the node's autofill hint. Eventually this should talk to Arcs.
    */
   private String getAutofillSuggestion(ViewNode node) {
-    // TODO(csilvestrini): Pull autofill suggestions from Arcs. Should use an AutofillParticle
-    // class, which uses the ArcsServiceBridge to communicate with the main ArcsService.
+    // TODO(csilvestrini): Pull autofill suggestions from Arcs.
 
     String[] hints = node.getAutofillHints();
     if (hints == null || hints.length == 0) {

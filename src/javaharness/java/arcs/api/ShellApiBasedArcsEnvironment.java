@@ -29,4 +29,22 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
       inProgress.put(transactionId, listener);
     }
   }
+
+  @Override
+  public void addReadyListener(ReadyListener listener) {}
+
+  @Override
+  public void init() {}
+
+  @Override
+  public void reset() {}
+
+  @Override
+  public void destroy() {}
+
+  @Override
+  public void show() {}
+
+  @Override
+  public void hide() {}
 }

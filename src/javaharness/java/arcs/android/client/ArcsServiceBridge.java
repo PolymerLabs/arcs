@@ -68,4 +68,24 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
   public void onServiceDisconnected(ComponentName name) {
     arcsService = null;
   }
+
+  // Unimplemented ArcsEnvironment methods,
+
+  @Override
+  public void addReadyListener(ReadyListener listener) {}
+
+  @Override
+  public void init() {}
+
+  @Override
+  public void reset() {}
+
+  @Override
+  public void destroy() {}
+
+  @Override
+  public void show() {}
+
+  @Override
+  public void hide() {}
 }
