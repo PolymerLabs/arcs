@@ -6,8 +6,9 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
-import arcs.android.demo.api.IArcsService;
+import arcs.android.api.IArcsService;
 import arcs.api.HarnessController;
+import arcs.api.ShellApiBasedArcsEnvironment;
 import javax.inject.Inject;
 
 /**
@@ -20,8 +21,8 @@ public class ArcsService extends Service {
 
   private WebView arcsWebView;
 
-  @Inject
-  HarnessController harnessController;
+  @Inject HarnessController harnessController;
+  @Inject ShellApiBasedArcsEnvironment shellEnvironment;
 
   @Override
   public void onCreate() {
@@ -46,6 +47,10 @@ public class ArcsService extends Service {
   public IBinder onBind(Intent intent) {
     Log.d(TAG, "onBind()");
     return new IArcsService.Stub() {
+      @Override
+      public void sendMessageToArcs(String message) {
+        shellEnvironment.sendMessageToArcs(message, /* listener= */ null);
+      }
     };
   }
 }

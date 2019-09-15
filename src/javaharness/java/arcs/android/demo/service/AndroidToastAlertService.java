@@ -2,16 +2,16 @@ package arcs.android.demo.service;
 
 import android.content.Context;
 import android.widget.Toast;
+import arcs.android.api.Annotations.AppContext;
 import arcs.demo.services.AlertService;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 public class AndroidToastAlertService implements AlertService {
 
   private Context appContext;
 
   @Inject
-  public AndroidToastAlertService(@Named("AppContext") Context appContext) {
+  public AndroidToastAlertService(@AppContext Context appContext) {
     this.appContext = appContext;
   }
 
