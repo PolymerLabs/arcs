@@ -20,6 +20,7 @@ import {VersionMap, CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver-factory.js';
 import {Type} from '../type.js';
 import {Producer, Consumer, Runnable} from '../hot.js';
+import {PropagatedException} from '../arc-exceptions.js';
 
 export type Reference = {id: string, storageKey: StorageKey, version: VersionMap};
 export class ReferenceCollection extends CRDTCollection<Reference> {}
@@ -115,6 +116,10 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
     result.containerStore = await DirectStore.construct(storageKey, exists, type, StorageMode.Direct, referenceConstructor);
     result.registerStoreCallbacks();
     return result;
+  }
+
+  reportExceptionInHost(exception: PropagatedException): void {
+    // TODO(shans): Figure out idle / exception store for reference mode stores.
   }
 
   on(callback: ProxyCallback<Container>): number {
