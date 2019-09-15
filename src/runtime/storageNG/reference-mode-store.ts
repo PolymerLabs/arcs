@@ -13,13 +13,12 @@ import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOp
 import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode} from './store.js';
 import {BackingStore} from './backing-store.js';
 import {CRDTEntityTypeRecord, CRDTEntity, EntityData} from '../crdt/crdt-entity.js';
-import {Dictionary} from 'lodash';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
 import {VersionMap, CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver-factory.js';
 import {Type} from '../type.js';
-import {Producer, Consumer, Runnable} from '../hot.js';
+import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 
 export type Reference = {id: string, storageKey: StorageKey, version: VersionMap};
