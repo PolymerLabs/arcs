@@ -28,14 +28,17 @@ export class ReferenceSingleton extends CRDTSingleton<Reference> {}
 
 export type ReferenceModeOperation<T extends Referenceable> = CRDTSingletonTypeRecord<T>['operation'] | CRDTCollectionTypeRecord<T>['operation'];
 
+enum ReferenceModeUpdateSource {Container, BackingStore, StorageProxy}
+
 type PreEnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> = 
-  {from: 'proxy', message: ProxyMessage<Container>} |
-  {from: 'backing', message: ProxyMessage<Entity>, muxId: string} |
-  {from: 'container', message: ProxyMessage<RefContainer>};
+  {from: ReferenceModeUpdateSource.StorageProxy, message: ProxyMessage<Container>} |
+  {from: ReferenceModeUpdateSource.BackingStore, message: ProxyMessage<Entity>, muxId: string} |
+  {from: ReferenceModeUpdateSource.Container, message: ProxyMessage<RefContainer>};
 type EnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> = 
   PreEnqueuedMessage<Container, Entity, RefContainer> & {promise: Consumer<boolean>};
 
 type BlockableRunnable = {fn: Runnable, block?: string};
+
 
 /**
  * ReferenceModeStores adapt between a collection (CRDTCollection or CRDTSingleton) of entities from the perspective of their public API,
@@ -146,15 +149,15 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
    * to be updated.
    */
   async onContainerStore(message: ProxyMessage<ReferenceContainer>) {
-    return this.enqueue({from: 'container', message});
+    return this.enqueue({from: ReferenceModeUpdateSource.Container, message});
   }
 
   async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>, muxId: string) {
-    return this.enqueue({from: 'backing', message, muxId});
+    return this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message, muxId});
   }
 
   async onProxyMessage(message: ProxyMessage<Container>): Promise<boolean> {
-    return this.enqueue({from: 'proxy', message});
+    return this.enqueue({from: ReferenceModeUpdateSource.StorageProxy, message});
   }
 
   /**
@@ -178,13 +181,13 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       // or we'll potentially get duplicate calls to processQueue.
       const nextMessage = this.receiveQueue[0];
       switch (nextMessage.from) {
-        case 'proxy':
+        case ReferenceModeUpdateSource.StorageProxy:
           nextMessage.promise(await this.handleProxyMessage(nextMessage.message));
           break;
-        case 'backing':
+        case ReferenceModeUpdateSource.BackingStore:
           nextMessage.promise(await this.handleBackingStore(nextMessage.message, nextMessage.muxId));
           break;
-        case 'container':
+        case ReferenceModeUpdateSource.Container:
           nextMessage.promise(await this.handleContainerStore(nextMessage.message));
           break;
         default:
@@ -355,7 +358,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
         break;
       }
       default:
-          throw new Error('Unexpected ProxyMessageType');
+        throw new Error('Unexpected ProxyMessageType');
     }
     return true;
   }
