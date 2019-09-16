@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-_kotlin_native_sha256 = "ff44126d6bfd0ac08305f2615b2c0cdd4b60f8406e4dec6d2389897e0231bf3f"
-_kotlin_native_version = "v1.3.50-release-11850"
+_kotlin_native_sha256 = "100920f1a3352846bc5a2990c87cb71f221abf8261251632ad10c6459d962393"
+_kotlin_native_version = "1.3.50"
 
 def kotlin_native_repo():
     """Downloads the kotlin-native release and "installs" the kotlinc compiler.
@@ -11,7 +11,7 @@ def kotlin_native_repo():
     """
     http_archive(
         name = "kotlin_native",
-        urls = ["https://github.com/JetBrains/kotlin-native/archive/" + _kotlin_native_version + ".zip"],
-        sha256 = _kotlin_native_sha256,
+        url = "https://github.com/JetBrains/kotlin/releases/download/v{0}/kotlin-native-macos-{0}.tar.gz".format(_kotlin_native_version),
+        type = "tar.gz",
         build_file = "//build_defs/kotlin-native:kotlinc.BUILD",
     )
