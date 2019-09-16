@@ -78,20 +78,19 @@ public class DeviceClientImpl implements DeviceClient {
 
   @Override
   public void startArc(String json, Particle particle) {
-    // 
     PortableJson request = jsonParser.parse(json);
     request.put("message", "runArc");
-    if (!request.hasKey("arcid")) {
-      request.put("arcid", request.getString("recipe").toLowerCase() + "-arc");
+    if (!request.hasKey("arcId")) {
+      request.put("arcId", request.getString("recipe").toLowerCase() + "-arc");
     }
-    if (!request.hasKey("pecid")) {
-      request.put("pecid", request.getString("recipe").toLowerCase() + "-pec");
+    if (!request.hasKey("pecId")) {
+      request.put("pecId", request.getString("recipe").toLowerCase() + "-pec");
     }
     if (particle != null) {
-      request.put("particleid", particle.getId()).put("particlename", particle.getName());
+      request.put("particleId", particle.getId()).put("particleName", particle.getName());
     }
 
-    createPecForParticle(request.getString("pecid"), particle);
+    createPecForParticle(request.getString("pecId"), particle);
     environment.sendMessageToArcs(jsonParser.stringify(request), null);
   }
 

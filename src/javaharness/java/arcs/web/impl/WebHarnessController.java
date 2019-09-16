@@ -66,10 +66,6 @@ public class WebHarnessController implements HarnessController {
         deviceClient.startArc(
             jsonParser.stringify(jsonParser.emptyObject().put("recipe", "Ingestion")),
             null);
-        // environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
-        //     .put("message", "runArc")
-        //     .put("recipe", "Ingestion")
-        //     .put("arcid", "ingestion-arc")), null);
       }
     });
 

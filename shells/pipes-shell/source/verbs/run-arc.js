@@ -18,19 +18,19 @@ const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
 export const runArc = async (msg, tid, bus, runtime, env) => {
-  const {recipe, arcid, storageKeyPrefix, pecid, particleid, particlename} = msg;
+  const {recipe, arcId, storageKeyPrefix, pecId, particleId, particleName} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
-  if (!arcid) {
-    warn(`arcid must be provided.`);
+  if (!arcId) {
+    warn(`arcId must be provided.`);
     return null;    
   }
   if (recipe && !action) {
     warn(`found no recipes matching [${recipe}]`);
     return null;
   }
-  const arc = runtime.runArc(arcid, storageKeyPrefix || 'volatile://', {
+  const arc = runtime.runArc(arcId, storageKeyPrefix || 'volatile://', {
       fileName: './serialized.manifest',
-      pecFactories: [].concat([env.pecFactory], [portIndustry(bus, pecid)]),
+      pecFactories: [].concat([env.pecFactory], [portIndustry(bus, pecId)]),
       loader: runtime.loader,
       inspectorFactory: devtoolsArcInspectorFactory,
   });
@@ -42,13 +42,13 @@ export const runArc = async (msg, tid, bus, runtime, env) => {
   };
 
   // optionally instantiate recipe
-  if (action && await instantiateRecipe(arc, action, particleid, particlename)) {
+  if (action && await instantiateRecipe(arc, action, particleId, particleName)) {
     log(`successfully instantiated ${recipe} in ${arc}`);
   }
   return arc;
 };
 
-const instantiateRecipe = async (arc, recipe, particleid, particlename) => {
+const instantiateRecipe = async (arc, recipe, particleId, particleName) => {
   let plan = await Utils.resolve(arc, recipe);
   if (!plan) {
     warn(`failed to resolve recipe ${recipe}`);
@@ -57,15 +57,17 @@ const instantiateRecipe = async (arc, recipe, particleid, particlename) => {
   if (RecipeUtil.matchesRecipe(arc.activeRecipe, plan)) {
     log(`recipe ${recipe} is already instantiated in ${arc}`);
 
-    if (particleid) {
-      const particle = arc.activeRecipe.particles.find(p => p.id === particleid);
+    if (particleId) {
+      const particle = arc.activeRecipe.particles.find(p => p.id === particleId);
+      assert(particle, `Particle ${particleName} (${particleId} is not found in the active recipe`);
+      // TODO: re-instantiate the particle.
     }
     return false;
   }
 
-  plan = updateParticleInPlan(plan, particleid, particlename);
+  plan = updateParticleInPlan(plan, particleId, particleName);
   if (!plan) {
-    warn(`failed updating particle id '${particleid}', name ${particlename} in plan ${plan.toString()}`);
+    warn(`failed updating particle id '${particleId}', name ${particleName} in plan ${plan.toString()}`);
     return false;
   }
 
@@ -73,18 +75,18 @@ const instantiateRecipe = async (arc, recipe, particleid, particlename) => {
   return true;
 };
 
-const updateParticleInPlan = (plan, particleid, particlename) => {
-  if (!!particleid && !!particlename) {
+const updateParticleInPlan = (plan, particleId, particleName) => {
+  if (!!particleId && !!particleName) {
     plan = plan.clone();
-    plan.particles.find(p => p.name == particlename).id = particleid;
+    plan.particles.find(p => p.name === particleName).id = particleId;
     if (!plan.normalize()) {
-      warn(`cannot normalize after setting id ${particleid} for particle ${particlename}`);
+      warn(`cannot normalize after setting id ${particleId} for particle ${particleName}`);
       return null;
     }
     if (!plan.isResolved()) {
-      warn(`unresolved plan after setting id ${particleid} for particle ${particlename}`);
+      warn(`unresolved plan after setting id ${particleId} for particle ${particleName}`);
       return null;
     }
   }
   return plan;  
-}
+};
