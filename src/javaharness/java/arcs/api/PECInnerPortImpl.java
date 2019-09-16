@@ -74,7 +74,7 @@ public class PECInnerPortImpl implements PECInnerPort {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void handleMessage(PortableJson message) {
+  public void processMessage(PortableJson message) {
     String messageType = message.getString(MESSAGE_TYPE_FIELD);
     PortableJson messageBody = message.getObject(MESSAGE_BODY_FIELD);
     switch (messageType) {
