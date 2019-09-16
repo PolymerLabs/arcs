@@ -3,7 +3,7 @@ package arcs.api;
 import java.util.function.Consumer;
 
 public interface PECInnerPort {
-  void handleMessage(PortableJson message);
+  void processMessage(PortableJson message);
 
   void initializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);
 

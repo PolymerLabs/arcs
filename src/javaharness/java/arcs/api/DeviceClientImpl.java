@@ -39,7 +39,6 @@ public class DeviceClientImpl implements DeviceClient {
 
   @Override
   public void receive(String json) {
-    // logger.info("receive called " + json);
     PortableJson content = jsonParser.parse(json);
     String message = content.getString(FIELD_MESSAGE);
     switch (message) {
@@ -55,7 +54,7 @@ public class DeviceClientImpl implements DeviceClient {
             dataJson == null ? null : jsonParser.stringify(dataJson));
         break;
       case MESSAGE_PEC:
-        postMessage(content.getObject(FIELD_DATA));
+        processPecMessage(content.getObject(FIELD_DATA));
         break;
       case MESSAGE_OUTPUT:
         if (!uiBroker.render(content)) {
@@ -67,13 +66,13 @@ public class DeviceClientImpl implements DeviceClient {
     }
   }
 
-  protected void postMessage(PortableJson msg) {
-    String id = msg.getString(FIELD_PEC_ID);
-    if (msg.hasKey(FIELD_SESSION_ID)) {
-      portById.put(id, portFactory.createPECInnerPort(id, msg.getString(FIELD_SESSION_ID)));
+  private void processPecMessage(PortableJson message) {
+    String id = message.getString(FIELD_PEC_ID);
+    if (message.hasKey(FIELD_SESSION_ID)) {
+      portById.put(id, portFactory.createPECInnerPort(id, message.getString(FIELD_SESSION_ID)));
     }
 
     PECInnerPort port = portById.get(id);
-    port.handleMessage(msg);
+    port.processMessage(message);
   }
 }
