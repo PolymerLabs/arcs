@@ -2,7 +2,7 @@ import 'DemoSchemas.arcs'
 
 particle Board in './source/Board.js'
   inout GameState gameState
-  in PersonId currentPlayerId
+  in * {Number id2} currentPlayerId
   in GameState cellState1
   in GameState cellState2
   in GameState cellState3
@@ -25,7 +25,7 @@ particle Board in './source/Board.js'
 
 particle Cell in './source/Cell.js'
   inout GameState gameState
-  in PersonId currentPlayerId
+  in * {Number id2} currentPlayerId
   consume cellSlot
     provide avatarSlot
 

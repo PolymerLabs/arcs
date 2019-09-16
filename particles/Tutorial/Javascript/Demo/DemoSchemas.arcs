@@ -3,9 +3,6 @@ schema Person
   Text avatar
   Number id2
 
-schema PersonId
-  Number id2
-
 schema GameState
   Boolean gameOver
   Number moves
