@@ -7,6 +7,7 @@ import android.os.RemoteException;
 import arcs.android.api.IArcsService;
 import arcs.api.ArcsEnvironment;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
 import javax.inject.Inject;
 
@@ -69,10 +70,16 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     arcsService = null;
   }
 
-  // Unimplemented ArcsEnvironment methods,
+  // Unimplemented ArcsEnvironment methods
+
+  @Override
+  public void fireDataEvent(String tid, String data) {}
 
   @Override
   public void addReadyListener(ReadyListener listener) {}
+
+  @Override
+  public void fireReadyEvent(List<String> recipes) {}
 
   @Override
   public void init() {}

@@ -58,6 +58,16 @@ public class WebHarnessController implements HarnessController {
     document.body.appendChild(
         makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
 
+    environment.addReadyListener(new ArcsEnvironment.ReadyListener() {
+      @Override
+      public void onReady(List<String> recipes) {
+        environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
+            .put("message", "runArc")
+            .put("recipe", "Ingestion")
+            .put("arcid", "ingestion-arc")), null);
+      }
+    });
+
     Element dataParagraph = makeParagraph();
 
     document.body.appendChild(

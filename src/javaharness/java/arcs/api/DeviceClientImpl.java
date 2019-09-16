@@ -8,6 +8,7 @@ import javax.inject.Inject;
 public class DeviceClientImpl implements DeviceClient {
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
+  private static final String FIELD_READY_RECIPES = "recipes";
   private static final String MESSAGE_DATA = "data";
   private static final String MESSAGE_OUTPUT = "output";
   private static final String MESSAGE_PEC = "pec";
@@ -20,7 +21,6 @@ public class DeviceClientImpl implements DeviceClient {
 
   private final PortableJsonParser jsonParser;
   private final ArcsEnvironment environment;
-  private Map<String, ArcsEnvironment.DataListener> inProgress;
   private final PECInnerPortFactory portFactory;
   private final Map<String, PECInnerPort> portById = new HashMap<>();
   private final UiBroker uiBroker;
@@ -29,12 +29,10 @@ public class DeviceClientImpl implements DeviceClient {
   public DeviceClientImpl(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
-      Map<String, ArcsEnvironment.DataListener> inProgress,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
     this.jsonParser = jsonParser;
     this.environment = environment;
-    this.inProgress = inProgress;
     this.portFactory = portFactory;
     this.uiBroker = uiBroker;
   }
@@ -47,11 +45,14 @@ public class DeviceClientImpl implements DeviceClient {
     switch (message) {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
-        // TODO: Onstartup Arcs should be configuration based, not hardcoded.
-        environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
-            .put("message", "runArc")
-            .put("recipe", "Ingestion")
-            .put("arcid", "ingestion-arc")), null);
+        environment.fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
+        break;
+      case MESSAGE_DATA:
+        logger.warning("logger: Received deprected 'data' message");
+        PortableJson dataJson = content.getObject(FIELD_DATA);
+        environment.fireDataEvent(
+            String.valueOf(content.getInt(FIELD_TRANSACTION_ID)),
+            dataJson == null ? null : jsonParser.stringify(dataJson));
         break;
       case MESSAGE_PEC:
         postMessage(content.getObject(FIELD_DATA));

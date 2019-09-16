@@ -4,9 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.webkit.WebView;
-import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.ShellApi;
-import java.util.Map;
 import javax.inject.Inject;
 
 /** Exposes Shell (Window) scope methods into Java from JS. */
@@ -19,14 +17,10 @@ public class AndroidShellApiImpl implements ShellApi {
   private static final String TID_FIELD_NAME = "tid";
   private static final String DYNAMIC_MANIFEST_URL =
       "file:///android_asset/pipes-shell/dynamic.manifest";
-  private Map<String, DataListener> inProgress;
   private WebView webView;
 
   @Inject
-  public AndroidShellApiImpl(
-      Map<String, DataListener> inProgress,
-      WebView webView) {
-    this.inProgress = inProgress;
+  public AndroidShellApiImpl(WebView webView) {
     this.webView = webView;
   }
 
@@ -47,7 +41,7 @@ public class AndroidShellApiImpl implements ShellApi {
                   webView.evaluateJavascript(
                       script,
                       (String tid) -> {
-                        if (inProgress.containsKey(tid)) {}
+                        // TODO: deprecated tid callback.
                       }));
     } else {
       Log.e("Arcs", "webView is null");

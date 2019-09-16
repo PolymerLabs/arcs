@@ -31,14 +31,9 @@ import dagger.Provides;
 public abstract class AndroidHarnessModule {
 
   @Binds
+  @Singleton
   public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(
       ShellApiBasedArcsEnvironment impl);
-
-  @Singleton
-  @Provides
-  public static Map<String, DataListener> provideInProgressListeners() {
-    return new HashMap<>();
-  }
 
   @Singleton
   @Binds

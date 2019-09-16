@@ -6,7 +6,6 @@ import arcs.api.PECInnerPortFactory;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
 import arcs.api.UiRenderer;
-import java.util.Map;
 import javax.inject.Inject;
 import jsinterop.annotations.JsType;
 
@@ -16,10 +15,9 @@ public class DeviceClientJsImpl extends DeviceClientImpl {
   public DeviceClientJsImpl(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
-      Map<String, ArcsEnvironment.DataListener> inProgress,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
-    super(jsonParser, environment, inProgress, portFactory, uiBroker);
+    super(jsonParser, environment, portFactory, uiBroker);
   }
 
   @Override

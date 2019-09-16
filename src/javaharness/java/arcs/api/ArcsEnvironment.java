@@ -15,7 +15,7 @@ public interface ArcsEnvironment {
 
   /** Called by ArcsEnvironment when the Arcs runtime is ready. */
   interface ReadyListener {
-    void onReady(List<String> autofillTypes);
+    void onReady(List<String> recipes);
   }
 
   /**
@@ -28,11 +28,22 @@ public interface ArcsEnvironment {
   void sendMessageToArcs(String msg, DataListener listener);
 
   /**
+   * Fires an event to notify listener when given transaction-id data is available.
+   * TODO: DataListeners are deprecated, remove.
+   */
+  void fireDataEvent(String tid, String data);
+
+  /**
    * A callback when Arcs is ready to for interaction.
    *
    * @param listener a callback interface for suggestions.
    */
   void addReadyListener(ReadyListener listener);
+
+  /**
+   * Fires an event to notify listeners when Arcs is ready for interaction.
+   */
+  void fireReadyEvent(List<String> recipes);
 
   /** Initialize Arcs */
   void init();
