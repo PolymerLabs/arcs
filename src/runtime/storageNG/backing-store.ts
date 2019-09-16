@@ -18,16 +18,23 @@ import {Dictionary} from '../hot.js';
 
 export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>, muxId: string) => Promise<boolean>;
 
+
+type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, id: number} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, id: number}>};
 /**
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
 export class BackingStore<T extends CRDTTypeRecord>  {
   
-  private stores: Dictionary<{store: DirectStore<T>, id: number}> = {};
+  private stores: Dictionary<StoreRecord<T>> = {};
   private callbacks = new Map<number, MultiplexedProxyCallback<T>>();
   private nextCallbackId = 1;
 
-  private constructor(private storageKey: StorageKey, private exists: Exists, private type: Type, private mode: StorageMode, private modelConstructor: new () => CRDTModel<T>) {
+  private constructor(
+    public storageKey: StorageKey,
+    private exists: Exists,
+    private type: Type,
+    private mode: StorageMode,
+    public modelConstructor: new () => CRDTModel<T>) {
   }
 
   on(callback: MultiplexedProxyCallback<T>): number {
@@ -39,17 +46,37 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     this.callbacks.delete(callback);
   }
   
-  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
-    return Promise.all([...this.callbacks.values()].map(callback => callback(message, muxId))).then(a => a.reduce((a, b) => a && b));
+  getLocalModel(muxId: string) {
+    const store = this.stores[muxId];
+
+    if (store == null) {
+      this.stores[muxId] = {type: 'pending', promise: this.setupStore(muxId)};
+      return null;  
+    }
+    if (store.type === 'pending') {
+      return null;
+    } else { 
+      return store.store.localModel;
+    }
+  }
+
+  private async setupStore(muxId: string): Promise<{type: 'record', store: DirectStore<T>, id: number}> {
+    const store = await DirectStore.construct(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode, this.modelConstructor);
+    const id = store.on(msg => this.processStoreCallback(muxId, msg));
+    const record: StoreRecord<T> = {store, id, type: 'record'};
+    this.stores[muxId] = record;
+    return record;
   }
 
   async onProxyMessage(message: ProxyMessage<T>, muxId: string): Promise<boolean> {
-    if (this.stores[muxId] == null) {
-      const store = await DirectStore.construct(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode, this.modelConstructor);
-      const id = store.on(msg => this.processStoreCallback(muxId, msg));
-      this.stores[muxId] = {store, id};
+    let storeRecord = this.stores[muxId];
+    if (storeRecord == null) {
+      storeRecord = await this.setupStore(muxId);
     }
-    const {store, id} = this.stores[muxId];
+    if (storeRecord.type === 'pending') {
+      storeRecord = await storeRecord.promise;
+    }
+    const {store, id} = storeRecord;
     message.id = id;
     return store.onProxyMessage(message);
   }
@@ -59,6 +86,16 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   }
 
   async idle() {
-    await Promise.all(Object.values(this.stores).map(({store}) => store.idle()));
+    const stores: DirectStore<T>[] = [];
+    for (const store of Object.values(this.stores)) {
+      if (store.type === 'record') {
+        stores.push(store.store);
+      }
+    }
+    await Promise.all(stores.map(store => store.idle()));
+  }
+
+  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
+    return Promise.all([...this.callbacks.values()].map(callback => callback(message, muxId))).then(a => a.reduce((a, b) => a && b));
   }
 }

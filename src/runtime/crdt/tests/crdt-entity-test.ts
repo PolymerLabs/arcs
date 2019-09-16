@@ -70,7 +70,7 @@ describe('CRDTEntity', () => {
     const entity = new CRDTEntity(singletons, collections);
     
     const value = {id: 'bob', value: 'bob'} as Referenceable;
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', value, actor: 'me', clock: {'me': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: value, actor: 'me', clock: {'me': 1}}));
     assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<Referenceable>([value])}});
   });
 
@@ -84,8 +84,8 @@ describe('CRDTEntity', () => {
     const entity = new CRDTEntity(singletons, collections);
     
     const value = {id: 'bob', value: 'bob'} as Referenceable;
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', value, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Remove, field: 'tags', value, actor: 'me', clock: {'me': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: value, actor: 'me', clock: {'me': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Remove, field: 'tags', removed: value, actor: 'me', clock: {'me': 1}}));
     assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<Referenceable>()}});
   });
 
@@ -108,8 +108,8 @@ describe('CRDTEntity', () => {
 
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', value: tag, actor: 'me', clock: {'me': 1}}));
-    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'favoriteNumbers', value: favoriteNumber, actor: 'me', clock: {'me': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: tag, actor: 'me', clock: {'me': 1}}));
+    assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'favoriteNumbers', added: favoriteNumber, actor: 'me', clock: {'me': 1}}));
     assert.deepEqual(entity.getParticleView(), {
       singletons: {name, age}, 
       collections: {tags: new Set([tag]), favoriteNumbers: new Set([favoriteNumber])}
@@ -139,8 +139,8 @@ describe('CRDTEntity', () => {
 
     assert.throws(() => entity.applyOperation({type: EntityOpTypes.Set, field: 'invalid', value: {id: 'foo'}, actor: 'me', clock: {'me': 1}}), 'Invalid field');
     assert.throws(() => entity.applyOperation({type: EntityOpTypes.Clear, field: 'invalid', actor: 'me', clock: {'me': 1}}), 'Invalid field');
-    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Add, field: 'invalid', value: {id: 'foo'}, actor: 'me', clock: {'me': 1}}), 'Invalid field');
-    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Remove, field: 'invalid', value: {id: 'foo'}, actor: 'me', clock: {'me': 1}}), 'Invalid field');
+    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Add, field: 'invalid', added: {id: 'foo'}, actor: 'me', clock: {'me': 1}}), 'Invalid field');
+    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Remove, field: 'invalid', removed: {id: 'foo'}, actor: 'me', clock: {'me': 1}}), 'Invalid field');
   });
 
   it('fails when singleton operations are provided to collection fields', () => {
@@ -155,9 +155,9 @@ describe('CRDTEntity', () => {
   it('fails when collection operations are provided to singleton fields', () => {
     const entity = new CRDTEntity({thing: new CRDTSingleton<{id: string}>()}, {});
 
-    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Add, field: 'thing', value: {id: 'foo'}, actor: 'me', clock: {'me': 1}}),
+    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Add, field: 'thing', added: {id: 'foo'}, actor: 'me', clock: {'me': 1}}),
       `Can't apply Add operation to singleton field`);
-    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Remove, field: 'thing', value: {id: 'foo'}, actor: 'me', clock: {'me': 1}}),
+    assert.throws(() => entity.applyOperation({type: EntityOpTypes.Remove, field: 'thing', removed: {id: 'foo'}, actor: 'me', clock: {'me': 1}}),
       `Can't apply Remove operation to singleton field`);
   });
 });
