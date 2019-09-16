@@ -19,9 +19,7 @@ import arcs.demo.services.ClipboardService;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
@@ -30,6 +28,7 @@ import javax.inject.Singleton;
 public abstract class WebHarnessModule {
 
   @Binds
+  @Singleton
   public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(
       ShellApiBasedArcsEnvironment impl);
 
@@ -37,12 +36,6 @@ public abstract class WebHarnessModule {
   @Provides
   public static Map<String, ArcsEnvironment.DataListener> provideInProgressListeners() {
     return new HashMap<>();
-  }
-
-  @Singleton
-  @Provides
-  public static List<ArcsEnvironment.ReadyListener> provideReadyListeners() {
-    return new ArrayList<>();
   }
 
   @Binds

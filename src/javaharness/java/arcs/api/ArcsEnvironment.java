@@ -34,6 +34,11 @@ public interface ArcsEnvironment {
    */
   void addReadyListener(ReadyListener listener);
 
+  /**
+   * Fires an event to notify listeners when Arcs is ready for interaction.
+   */
+  void fireReadyEvent(List<String> recipes);
+
   /** Initialize Arcs */
   void init();
 

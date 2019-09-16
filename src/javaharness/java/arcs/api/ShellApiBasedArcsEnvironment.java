@@ -1,5 +1,6 @@
 package arcs.api;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -14,16 +15,14 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   private static final Logger logger = Logger.getLogger(ShellApiBasedArcsEnvironment.class.getName());
 
   private final Map<String, DataListener> inProgress;
-  private final List<ReadyListener> readyListeners;
+  private final List<ReadyListener> readyListeners = new ArrayList<>();
   private ShellApi shellApi;
 
   @Inject
   public ShellApiBasedArcsEnvironment(
       Map<String, DataListener> inProgress,
-      List<ReadyListener> readyListeners,
       ShellApi shellApi) {
     this.inProgress = inProgress;
-    this.readyListeners = readyListeners;
     this.shellApi = shellApi;
   }
 
@@ -39,7 +38,12 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   @Override
   public void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
-  } 
+  }
+
+  @Override
+  public void fireReadyEvent(List<String> recipes) {
+    readyListeners.forEach(listener -> listener.onReady(recipes));
+  }
 
   @Override
   public void init() {}

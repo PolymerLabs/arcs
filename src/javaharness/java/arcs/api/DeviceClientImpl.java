@@ -1,7 +1,6 @@
 package arcs.api;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -23,7 +22,6 @@ public class DeviceClientImpl implements DeviceClient {
   private final PortableJsonParser jsonParser;
   private final ArcsEnvironment environment;
   private final Map<String, ArcsEnvironment.DataListener> inProgress;
-  private final List<ArcsEnvironment.ReadyListener> readyListeners;
   private final PECInnerPortFactory portFactory;
   private final Map<String, PECInnerPort> portById = new HashMap<>();
   private final UiBroker uiBroker;
@@ -33,13 +31,11 @@ public class DeviceClientImpl implements DeviceClient {
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
       Map<String, ArcsEnvironment.DataListener> inProgress,
-      List<ArcsEnvironment.ReadyListener> readyListeners,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
     this.jsonParser = jsonParser;
     this.environment = environment;
     this.inProgress = inProgress;
-    this.readyListeners = readyListeners;
     this.portFactory = portFactory;
     this.uiBroker = uiBroker;
   }
@@ -52,7 +48,7 @@ public class DeviceClientImpl implements DeviceClient {
     switch (message) {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
-        readyListeners.forEach(listener -> listener.onReady(content.getArray(FIELD_READY_RECIPES).asStringArray()));
+        environment.fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
         break;
       case MESSAGE_PEC:
         postMessage(content.getObject(FIELD_DATA));

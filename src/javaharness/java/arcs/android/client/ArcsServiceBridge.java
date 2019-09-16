@@ -69,10 +69,13 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     arcsService = null;
   }
 
-  // Unimplemented ArcsEnvironment methods,
+  // Unimplemented ArcsEnvironment methods
 
   @Override
   public void addReadyListener(ReadyListener listener) {}
+
+  @Override
+  public void fireReadyEvent(List<String> recipes) {}
 
   @Override
   public void init() {}

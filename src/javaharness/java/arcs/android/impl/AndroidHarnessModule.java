@@ -1,8 +1,6 @@
 package arcs.android.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +8,6 @@ import javax.inject.Singleton;
 
 import arcs.api.ArcsEnvironment;
 import arcs.api.ArcsEnvironment.DataListener;
-import arcs.api.ArcsEnvironment.ReadyListener;
 import arcs.api.DeviceClient;
 import arcs.api.HandleFactory;
 import arcs.api.HandleFactoryImpl;
@@ -34,6 +31,7 @@ import dagger.Provides;
 public abstract class AndroidHarnessModule {
 
   @Binds
+  @Singleton
   public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(
       ShellApiBasedArcsEnvironment impl);
 
@@ -41,12 +39,6 @@ public abstract class AndroidHarnessModule {
   @Provides
   public static Map<String, DataListener> provideInProgressListeners() {
     return new HashMap<>();
-  }
-
-  @Singleton
-  @Provides
-  public static List<ReadyListener> provideReadyListeners() {
-    return new ArrayList<>();
   }
 
   @Singleton
