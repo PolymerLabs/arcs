@@ -10,13 +10,38 @@
 
 import {Utils} from '../../lib/utils.js';
 
-const defaultManifest = `
-import 'https://$particles/PipeApps/RenderNotification.arcs'
-`;
-
 export const requireContext = async manifest => {
   if (!requireContext.promise) {
-    requireContext.promise = Utils.parse(manifest || defaultManifest);
+    requireContext.promise = Utils.parse(manifest);
+    window.context = await requireContext.promise;
   }
   return await requireContext.promise;
+};
+
+// TODO(sjmiles): live context tools below included so "classic" ingestion demos
+// continue to function. These methods are easily removed when the demos are no
+// longer important.
+
+export const mirrorStore = async (sourceStore, contextStore) => {
+  const change = change => {
+    cloneStoreChange(contextStore, change);
+  };
+  cloneStore(sourceStore, contextStore);
+  sourceStore.on('change', change, {});
+};
+
+const cloneStore = async (sourceStore, contextStore) => {
+  const change = {add: []};
+  const values = await sourceStore.toList();
+  if (values.length) {
+    values.forEach(value => change.add.push({value}));
+    cloneStoreChange(contextStore, change);
+  }
+};
+
+const cloneStoreChange = async (store, change) => {
+  console.log('mirroring store change', change);
+  if (store && change.add) {
+    await Promise.all(change.add.map(async add => store.store(add.value, [Math.random()])));
+  }
 };
