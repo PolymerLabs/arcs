@@ -23,12 +23,12 @@
 
     update(props, state) {
       // Get the handle "person" and update the data stored to be the name of the person we will greet.
-      this.updateSingleton('playerOne', {name: 'Human', avatar: 'X'});
-      this.updateSingleton('playerTwo', {name: 'Computer', avatar: 'O'});
+      this.updateSingleton('playerOne', {name: 'Human', avatar: 'X', id2: 0});
+      this.updateSingleton('playerTwo', {name: 'Computer', avatar: 'O', id2: 1});
     }
 
     onNameInputChange(e) {
-      this.updateSingleton('playerOne', {name: e.data.value, avatar: 'X'});
+      this.updateSingleton('playerOne', {name: e.data.value, avatar: 'X', id2: 1});
     }
   };
 });

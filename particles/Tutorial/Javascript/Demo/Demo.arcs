@@ -15,6 +15,7 @@ particle Game in './source/Game.js'
   in Person playerTwo
   in GameState gameState
   out Person currentPlayer
+  out PersonId currentPlayerId
 
 particle GetPlayer in './source/GetPerson.js'
   out Person playerOne
@@ -56,11 +57,13 @@ recipe
     playerOne <- playerOne
     playerTwo <- playerTwo
     currentPlayer -> currentPlayer
+    currentPlayerId -> currentPlayerId
   DisplayGreeting
     person <- playerOne
     consume greetingSlot as greeting
   Board
     gameState <-> gameState
+    currentPlayerId <- currentPlayerId
     cellState1 <- cellState1
     cellState2 <- cellState2
     cellState3 <- cellState3
@@ -82,6 +85,7 @@ recipe
       provide cellSlot9 as cell9
   Cell
     gameState <-> cellState1
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell1 
       provide avatarSlot as avatar1
   DisplayAvatar
@@ -90,6 +94,7 @@ recipe
     consume avatarSlot as avatar1
   Cell
     gameState <-> cellState2
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell2 
       provide avatarSlot as avatar2
   DisplayAvatar
@@ -98,6 +103,7 @@ recipe
     consume avatarSlot as avatar2
   Cell
     gameState <-> cellState3
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell3 
       provide avatarSlot as avatar3
   DisplayAvatar
@@ -106,6 +112,7 @@ recipe
     consume avatarSlot as avatar3
   Cell
     gameState <-> cellState4
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell4 
       provide avatarSlot as avatar4
   DisplayAvatar
@@ -114,6 +121,7 @@ recipe
     consume avatarSlot as avatar4
   Cell
     gameState <-> cellState5
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell5 
       provide avatarSlot as avatar5
   DisplayAvatar
@@ -122,6 +130,7 @@ recipe
     consume avatarSlot as avatar5 
   Cell
     gameState <-> cellState6
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell6 
       provide avatarSlot as avatar6
   DisplayAvatar
@@ -130,6 +139,7 @@ recipe
     consume avatarSlot as avatar6
   Cell
     gameState <-> cellState7
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell7 
       provide avatarSlot as avatar7
   DisplayAvatar
@@ -138,6 +148,7 @@ recipe
     consume avatarSlot as avatar7
   Cell
     gameState <-> cellState8
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell8 
       provide avatarSlot as avatar8
   DisplayAvatar
@@ -146,6 +157,7 @@ recipe
     consume avatarSlot as avatar8
   Cell
     gameState <-> cellState9
+    currentPlayerId <- currentPlayerId
     consume cellSlot as cell9 
       provide avatarSlot as avatar9
   DisplayAvatar

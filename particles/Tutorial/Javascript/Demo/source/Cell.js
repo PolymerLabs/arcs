@@ -38,11 +38,14 @@
       return template;
     }
 
-    render({gameState}, {initialised}) {
+    render({gameState, currentPlayerId}, {initialised, clicked}) {
       if (!initialised) {
-        this.setState({initialised: true});
+        this.setState({initialised: true, clicks: 0});
         this.updateSingleton('gameState', {gameOver: false, moves: 0});
       }
+      if (clicked && gameState && !gameState.gameOver) {
+        this.updateSingleton('gameState', {gameOver: true, moves: 1, winnerId: currentPlayerId.id2});
+        }
       if (gameState) {
         return {hidden: !gameState.gameOver};
       }
@@ -50,7 +53,7 @@
     }
 
     onClick(e) {
-      this.updateSingleton('gameState', {gameOver: true, moves: 1});
+      this.setState({clicked: true});
     }
 
   };
