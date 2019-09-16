@@ -21,12 +21,12 @@ const template = html`Congrats to <span>{{name}}</span>, you won! Please hit ref
       return template;
     }
 
-    shouldRender({person, gameState}) {
+    shouldRender({gameState}) {
       // Here we check that the person is defined.
       return person && gameState && gameState.gameOver;
     }
 
-    render({person}) {
+    render({gameState}) {
       return {name: person.name};
     }
     
