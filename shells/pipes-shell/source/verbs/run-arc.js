@@ -76,7 +76,7 @@ const reinstantiateParticle = (arc, particleId, particleName) => {
       arc.reinstantiateParticle(particle);
       return true;
     }
-    warn(`Particle ${particleName} (${particleId} is not found in the active recipe`);    
+    warn(`Particle ${particleName} (${particleId} is not found in the active recipe`);
   }
   return false;
 };
@@ -99,5 +99,5 @@ const updateParticleInPlan = (plan, particleId, particleName) => {
       return null;
     }
   }
-  return plan;  
+  return plan;
 };
