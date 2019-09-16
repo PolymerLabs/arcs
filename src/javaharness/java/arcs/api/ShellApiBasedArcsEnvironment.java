@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -14,15 +15,12 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
 
   private static final Logger logger = Logger.getLogger(ShellApiBasedArcsEnvironment.class.getName());
 
-  private final Map<String, DataListener> inProgress;
+  private final Map<String, DataListener> inProgress = new HashMap<>();
   private final List<ReadyListener> readyListeners = new ArrayList<>();
   private ShellApi shellApi;
 
   @Inject
-  public ShellApiBasedArcsEnvironment(
-      Map<String, DataListener> inProgress,
-      ShellApi shellApi) {
-    this.inProgress = inProgress;
+  public ShellApiBasedArcsEnvironment(ShellApi shellApi) {
     this.shellApi = shellApi;
   }
 
@@ -32,6 +30,16 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
     if (listener != null) {
       logger.warning("Deprecated use of `listener` in msg: " + msg);
       inProgress.put(transactionId, listener);
+    }
+  }
+
+  @Override
+  public void fireDataEvent(String tid, String data) {
+    if (inProgress.containsKey(tid)) {
+      if (data != null) {
+        inProgress.get(tid).onData(tid, data);
+      }
+      inProgress.remove(tid);
     }
   }
 

@@ -28,6 +28,12 @@ public interface ArcsEnvironment {
   void sendMessageToArcs(String msg, DataListener listener);
 
   /**
+   * Fires an event to notify listener when given transaction-id data is available.
+   * TODO: DataListeners are deprecated, remove.
+   */
+  void fireDataEvent(String tid, String data);
+
+  /**
    * A callback when Arcs is ready to for interaction.
    *
    * @param listener a callback interface for suggestions.

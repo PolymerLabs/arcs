@@ -36,12 +36,6 @@ public abstract class AndroidHarnessModule {
       ShellApiBasedArcsEnvironment impl);
 
   @Singleton
-  @Provides
-  public static Map<String, DataListener> provideInProgressListeners() {
-    return new HashMap<>();
-  }
-
-  @Singleton
   @Binds
   public abstract DeviceClient provideAndroidDeviceClient(DeviceClientAndroidImpl impl);
 

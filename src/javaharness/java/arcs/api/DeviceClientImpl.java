@@ -21,7 +21,6 @@ public class DeviceClientImpl implements DeviceClient {
 
   private final PortableJsonParser jsonParser;
   private final ArcsEnvironment environment;
-  private final Map<String, ArcsEnvironment.DataListener> inProgress;
   private final PECInnerPortFactory portFactory;
   private final Map<String, PECInnerPort> portById = new HashMap<>();
   private final UiBroker uiBroker;
@@ -30,12 +29,10 @@ public class DeviceClientImpl implements DeviceClient {
   public DeviceClientImpl(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
-      Map<String, ArcsEnvironment.DataListener> inProgress,
       PECInnerPortFactory portFactory,
       UiBroker uiBroker) {
     this.jsonParser = jsonParser;
     this.environment = environment;
-    this.inProgress = inProgress;
     this.portFactory = portFactory;
     this.uiBroker = uiBroker;
   }
@@ -49,6 +46,13 @@ public class DeviceClientImpl implements DeviceClient {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
         environment.fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
+        break;
+      case MESSAGE_DATA:
+        logger.warning("logger: Received deprected 'data' message");
+        PortableJson dataJson = content.getObject(FIELD_DATA);
+        environment.fireDataEvent(
+            String.valueOf(content.getInt(FIELD_TRANSACTION_ID)),
+            dataJson == null ? null : jsonParser.stringify(dataJson));
         break;
       case MESSAGE_PEC:
         postMessage(content.getObject(FIELD_DATA));
