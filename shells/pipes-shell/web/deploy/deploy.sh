@@ -2,13 +2,13 @@
 # target
 mkdir dist
 # sources
-cp -fR ../canonical.manifest dist/
-cp -fR source/index.html dist/
-# worker build
-cp -fR ../../../lib/build/worker.js dist/
+cp -f ../canonical.manifest dist/
+cp -f source/index.html dist/
 # particles
 mkdir dist/particles
-cp -fR ../../../../particles-ui/* dist/particles/
+cp -fR ../../../../particles/* dist/particles/
+# worker build
+cp -fR ../../../lib/build/worker.js dist/
 # collate sources
 echo packing...
 npx webpack
