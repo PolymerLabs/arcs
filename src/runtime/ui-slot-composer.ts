@@ -218,12 +218,37 @@ export class UiSlotComposer {
 
   // TODO(sjmiles): experimental slotObserver stuff below here
 
+  observeSlots(slotObserver) {
+    this['slotObserver'] = slotObserver;
+    // TODO(sjmiles): this is weird, fix
+    slotObserver.dispatch = (pid, eventlet) => {
+      console.log('ui-slot-composer dispatch for pid', pid, eventlet);
+      this.sendEvent(pid, eventlet);
+    };
+  }
+
   // TODO(sjmiles): maybe better implemented as a slot dispose (arc dispose?) notification to
   // let client code clean up (so `slotObserver` details [like dispose()] can be hidden here)
   disposeObserver() {
     const observer = this['slotObserver'];
     if (observer) {
       observer.dispose();
+    }
+  }
+
+  sendEvent(particleId, eventlet) {
+    // TODO(sjmiles): `arc` is bound to `this` in arc.ts specifically for use here, simplify
+    const arc = this['arc'];
+    if (arc) {
+      const particle = arc.activeRecipe.particles.find(
+        particle => String(particle.id) === String(particleId)
+      );
+      if (particle) {
+        // TODO(sjmiles): we need `arc` and `particle` here even though
+        // the two are bound together, simplify
+        //log('firing PEC event for', particle.name);
+        arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
+      }
     }
   }
 

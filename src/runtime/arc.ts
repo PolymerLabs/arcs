@@ -106,6 +106,11 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
+    // TODO(sjmiles): FIXME: currently some UiBrokers need to recover arc from composer in order to forward events
+    if (slotComposer && !slotComposer['arc']) {
+      slotComposer['arc'] = this;
+    }
+
     if (typeof id === 'string') {
       // TODO(csilvestrini): Replace this warning with an exception.
       console.error(
