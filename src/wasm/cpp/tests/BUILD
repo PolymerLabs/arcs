@@ -26,5 +26,8 @@ cc_wasm_binary(
 arcs_ts_test(
     name = "wasm-cpp-test",
     src = "wasm-cpp-test.ts",
-    deps = [":test-module"],
+    deps = [
+        ":test-module",
+        ":schemaless",
+    ],
 )
