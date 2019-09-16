@@ -36,14 +36,8 @@ async function launch() {
 
   const proxy = new ExplorerProxy();
   const hotReloadServer = new HotReloadServer(hotReloadPort);
-  try {
-    await hotReloadServer.init();
-  } catch (e) {
-    // Shouldn't be reachable if invoking from sigh.
-    console.error(`HotReloadServer failed to initialize - run 'tools/sigh devServer' for details`);
-    process.exit(1);
-  }
-
+  await hotReloadServer.init();
+  
   const app = express();
   if (options['verbose']) {
     app.use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'));
