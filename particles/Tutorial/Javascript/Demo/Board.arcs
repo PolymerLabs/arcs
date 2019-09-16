@@ -33,3 +33,17 @@ particle DisplayAvatar in './source/DisplayAvatar.js'
   in Person player
   in GameState gameState
   consume avatarSlot
+
+particle Computer in './source/RandomComputer.js'
+  in GameState gameState
+  inout GameState cellState1
+  inout GameState cellState2
+  inout GameState cellState3
+  inout GameState cellState4
+  inout GameState cellState5
+  inout GameState cellState6
+  inout GameState cellState7
+  inout GameState cellState8
+  inout GameState cellState9
+  in Person currentPlayer
+  in Person me

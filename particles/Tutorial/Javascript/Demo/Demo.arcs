@@ -168,5 +168,18 @@ recipe
     person <- currentPlayer
     gameState <- gameState
     consume congratulationsSlot as congratulations
+  Computer
+    currentPlayer <- currentPlayer
+    me <- playerTwo
+    gameState <- gameState
+    cellState1 <-> cellState1
+    cellState2 <-> cellState2
+    cellState3 <-> cellState3
+    cellState4 <-> cellState4
+    cellState5 <-> cellState5
+    cellState6 <-> cellState6
+    cellState7 <-> cellState7
+    cellState8 <-> cellState8
+    cellState9 <-> cellState9
   
   description `Javascript Tutorial Demo`
