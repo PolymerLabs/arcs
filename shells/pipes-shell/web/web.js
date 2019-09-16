@@ -18,28 +18,11 @@ import {version, paths, storage, test} from './config.js';
 //import '../../configuration/whitelisted.js';
 import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
-// dependencies
-import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
-import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
-import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
-import {findContainers} from '../source/lib/utils.js';
+// main dependencies
 import {initPipe, initArcs} from '../source/pipe.js';
 import {smokeTest} from '../source/smoke.js';
 
 console.log(`${version} -- ${storage}`);
-
-const composerFactory = modality => {
-  switch (modality) {
-    case 'dom': {
-      const node = document.body.appendChild(document.createElement('div'));
-      node.style = 'margin-bottom: 8px;';
-      node.innerHTML = '<div slotid="root"></div>';
-      return new DomSlotComposer({containers: findContainers(node)});
-    }
-    default:
-      return new UiSlotComposer(); //RamSlotComposer();
-  }
-};
 
 const client = window.DeviceClient || {};
 
@@ -47,7 +30,7 @@ const client = window.DeviceClient || {};
   // if remote DevTools are requested, wait for connect
   await DevtoolsSupport();
   // configure pipes and get a bus
-  const bus = await initPipe(client, paths, storage, composerFactory);
+  const bus = await initPipe(client, paths, storage);
   // export bus
   window.ShellApi = bus;
   // post startup shell initializations.
@@ -57,7 +40,7 @@ const client = window.DeviceClient || {};
     smokeTest(bus);
     // world's dumbest ui
     window.onclick = () => {
-      bus.receive({message: 'ingest', modality: 'dom', entity: {type: 'caption', name: 'Dogs are awesome'}});
+      bus.receive({message: 'ingest', entity: {type: 'notion', jsonData: 'Dogs are awesome'}});
     };
   }
 })();
