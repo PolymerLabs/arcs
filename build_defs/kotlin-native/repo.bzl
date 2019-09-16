@@ -11,7 +11,7 @@ def kotlin_native_repo():
     """
     http_archive(
         name = "kotlin_native",
-        urls = ["https://github.com/JetBrains/kotlin-native/archive/ " + _kotlin_native_version + ".zip"],
+        urls = ["https://github.com/JetBrains/kotlin-native/archive/" + _kotlin_native_version + ".zip"],
         sha256 = _kotlin_native_sha256,
         build_file = "//build_defs/kotlin-native:kotlinc.BUILD",
     )
