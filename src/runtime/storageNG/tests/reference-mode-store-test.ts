@@ -20,6 +20,8 @@ import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord} from '../../crdt/crdt-e
 import {CRDTCollection, CollectionOpTypes, CollectionData, CollectionOperation} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 
+/* eslint-disable no-async-promise-executor */
+
 let testKey: StorageKey;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}> {
@@ -162,7 +164,6 @@ describe('Reference Mode Store', async () => {
     let sentSyncRequest = false;
 
     return new Promise(async (resolve, reject) => {
-
       const id = activeStore.on(async proxyMessage => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.isFalse(sentSyncRequest);
@@ -176,7 +177,8 @@ describe('Reference Mode Store', async () => {
           resolve(true);
           return true;
         }
-        throw new Error();
+        reject(new Error());
+        return false;
       });
 
       await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});    
@@ -375,7 +377,7 @@ describe('Reference Mode Store', async () => {
       let backingStoreSent = false;
       activeStore.on(async message => {
         if (!backingStoreSent) {
-          reject();
+          reject(new Error());
           return false;
         }
         const entityRecord = message['model'].values['an-id'].value;

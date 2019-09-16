@@ -77,7 +77,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
    * The ReferenceModeStore needs to convert them to tracked CRDTs, which means it needs to synthesize
    * updates. This key is used as the unique write key for those updates.
    */
-  private crdtKey = (Math.random() * Math.pow(2,64)) + '';
+  private crdtKey = (Math.random() * Math.pow(2, 64)) + '';
 
   /*
    * The versions dictionary tracks the maximum write version for each entity ID, to ensure synthesized
@@ -450,11 +450,11 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
     const entityCRDT = new CRDTEntity(singletons, collections);
     entityCRDT.merge(model);
     const data = entityCRDT.getParticleView();
-    for (const key of Object.keys(data.singletons)) {
-      entity[key] = data.singletons[key];
+    for (const [key, value] of Object.entries(data.singletons)) {
+      entity[key] = value;
     }
-    for (const key of Object.keys(data.collections)) {
-      entity[key] = data.collections[key];
+    for (const [key, value] of Object.entries(data.collections)) {
+      entity[key] = value;
     }
     return entity;
   }
@@ -471,7 +471,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
    * store are returned in the pendingIds list. The returned function should not be invoked until
    * all references in pendingIds have valid backing in the backing store.
    */
-  private constructPendingIdsAndModel(data: ReferenceContainer["data"]): {pendingIds: {id: string, version: VersionMap}[], model: Producer<Container["data"]>} {
+  private constructPendingIdsAndModel(data: ReferenceContainer['data']): {pendingIds: {id: string, version: VersionMap}[], model: Producer<Container['data']>} {
     const pendingIds: {id: string, version: VersionMap}[] = [];
     for (const id of Object.keys(data.values)) {
       const version = data.values[id].value.version;
@@ -487,7 +487,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
     }
 
     const fn = () => {
-      const model = {values: {}, version: this.cloneMap(data.version)} as Container["data"];
+      const model = {values: {}, version: this.cloneMap(data.version)} as Container['data'];
       for (const id of Object.keys(data.values)) {
         const version = data.values[id].value.version;
         const entity = Object.keys(version).length === 0 ? new this.backingStore.modelConstructor() : this.backingStore.getLocalModel(id);
@@ -632,6 +632,6 @@ function isCollectionOperation<T>(operation: CollectionOperation<T> | SingletonO
 }
 
 function isSingletonOperation<T>(operation: CollectionOperation<T> | SingletonOperation<T>): operation is SingletonOperation<T> {
-  return !Boolean(operation['added'] || operation['removed']);
+  return !isCollectionOperation(operation);
 }
 
