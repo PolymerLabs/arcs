@@ -26,14 +26,11 @@ public class PecPortManager {
     port.onReceivePecMessage(message);
   }
 
-  // TODO(csilvestrini): Hook this up to IArcsService.
-  public RemotePecPort createRemotePecPort(String pecId) {
+  public void addRemotePecPort(String pecId, RemotePecPort remotePecPort) {
     if (ports.containsKey(pecId)) {
       throw new IllegalArgumentException("pecId already exists: " + pecId);
     }
-    RemotePecPort remotePecPort = new RemotePecPort();
     ports.put(pecId, remotePecPort);
-    return remotePecPort;
   }
 
   public PECInnerPort getOrCreateInnerPort(String pecId, String sessionId) {

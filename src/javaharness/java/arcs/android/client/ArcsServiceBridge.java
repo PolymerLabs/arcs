@@ -7,8 +7,11 @@ import android.os.RemoteException;
 import arcs.android.api.IArcsService;
 import arcs.api.ArcsEnvironment;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 
 public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
@@ -16,53 +19,63 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
   private final ArcsServiceStarter arcsServiceStarter;
   private IArcsService arcsService; // Access via connectToArcsService.
   private Queue<String> messageQueue = new ArrayDeque<>();
+  private List<CompletableFuture<IArcsService>> waitingFutures = new ArrayList<>();
 
   @Inject
   ArcsServiceBridge(ArcsServiceStarter arcsServiceStarter) {
     this.arcsServiceStarter = arcsServiceStarter;
   }
 
-  private void connectToArcsService() {
+  public IArcsService connectToArcsServiceSync() {
     if (arcsService != null) {
-      return;
+      return arcsService;
     }
+    // Construct a future that will be run when the ArcsService is ready (in onServiceConnected).
+    CompletableFuture<IArcsService> future = new CompletableFuture<>();
+    waitingFutures.add(future);
+
+    // Start up the ArcsService.
     arcsServiceStarter.start(this);
+
+    // Block until the future completes.
+    try {
+      return future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private void processQueue() {
-    if (arcsService == null) {
-      throw new IllegalStateException("Not connected to the ArcsService.");
+  public CompletableFuture<IArcsService> connectToArcsService() {
+    if (arcsService != null) {
+      return CompletableFuture.completedFuture(arcsService);
     }
-
-    for (String message; (message = messageQueue.poll()) != null; ) {
-      try {
-        arcsService.sendMessageToArcs(message);
-      } catch (RemoteException e) {
-        throw new RuntimeException(e);
-      }
-    }
+    return CompletableFuture.supplyAsync(this::connectToArcsServiceSync);
   }
 
   @Override
-  public void sendMessageToArcs(String msg, DataListener listener) {
+  public void sendMessageToArcs(String message, DataListener listener) {
     if (listener != null) {
       // TODO: Add support for listeners.
       throw new UnsupportedOperationException(
           "listeners are not yet supported by the ArcsServiceBridge.");
     }
 
-    messageQueue.add(msg);
-    if (arcsService != null) {
-      processQueue();
-    } else {
-      connectToArcsService();
-    }
+    connectToArcsService().thenAccept(service -> {
+      try {
+        service.sendMessageToArcs(message);
+      } catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   @Override
   public void onServiceConnected(ComponentName name, IBinder binder) {
     arcsService = IArcsService.Stub.asInterface(binder);
-    processQueue();
+    for (CompletableFuture<IArcsService> future : waitingFutures) {
+      future.complete(arcsService);
+    }
+    waitingFutures.clear();
   }
 
   @Override

@@ -13,7 +13,7 @@ import android.service.autofill.SaveCallback;
 import android.service.autofill.SaveRequest;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
-import arcs.android.client.ArcsServiceBridge;
+import arcs.android.client.RemotePec;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -24,8 +24,7 @@ import javax.inject.Inject;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  // TODO: Don't inject ArcsServiceBridge directly here; it should be used by a Particle instead.
-  @Inject ArcsServiceBridge arcsServiceBridge;
+  @Inject RemotePec remotePec;
 
   @Override
   public void onCreate() {
@@ -43,6 +42,11 @@ public class ArcsAutofillService extends AutofillService {
     List<FillContext> fillContexts = request.getFillContexts();
     AssistStructure structure = fillContexts.get(fillContexts.size() - 1).getStructure();
     List<ViewNode> nodes = collectViewNodes(structure);
+
+    // Start up an Arcs remote PEC.
+    // TODO(csilvestrini): Make this actually do something. It should instantiate a particle and
+    // start up an Arc.
+    remotePec.init();
 
     Dataset.Builder dataset = new Dataset.Builder();
     for (ViewNode node : nodes) {
