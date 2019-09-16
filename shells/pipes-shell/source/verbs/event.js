@@ -27,4 +27,4 @@ export const event = async (msg, tid, bus) => {
       arc.pec.sendEvent(particle, /*slotName*/'', msg.eventlet);
     }
   }
-}
+};
