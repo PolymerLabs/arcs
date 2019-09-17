@@ -13,7 +13,10 @@ _kotlinc_args = [
     "-target",
     "wasm32",
     # Enable optimizations in the compilation
-    "-opt"
+    "-opt",
+    # Don't link the libraries from the dist/klib automatically
+    "-nodefaultlibs"
+
 ]
 
 def _collect_deps(srcs, deps):
@@ -50,16 +53,6 @@ def _kt_wasm_binary(ctx):
         arguments = [args],
         executable = ctx.executable.kotlinc_wrapper,
     )
-
-
-
-
-
-
-# set up param to show where the file is, can refer to the file
-# compiler = attr.label(executable = true, cfg = "host", default = new Label("@//konan_native:cmd/konanc"))
-# see https://cs.corp.google.com/piper///depot/google3/javascript/tools/nodejs/nodejs_rules.bzl?rcl=267277475&l=88
-# `_konancompiler = ...` <-- private attr
 
 
 kt_wasm_binary = rule(
