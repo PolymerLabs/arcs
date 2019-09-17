@@ -1,5 +1,5 @@
 filegroup(
-    name = "core",
+    name = "core_srcs",
     srcs = glob([
         "gen/**",
         "planning/**/*.ts",
