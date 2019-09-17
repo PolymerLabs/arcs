@@ -99,6 +99,9 @@ public class PECInnerPortImpl implements PECInnerPort {
             // TODO: implement proper capabilities.
             particle.setOutput((content) -> output(particle, content));
           } else {
+            if (REINSTANTIATE_PARTICLE_MSG.equals(messageType)) {
+              throw new AssertionError("Unexpected reinstantiate call for " + particleId);
+            }
             Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
             if (particle == null) {
               // TODO: improve error handling.

@@ -111,7 +111,7 @@ export class ParticleExecutionHost {
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
 
-  reinstantiate(particle: Particle, /*pecId: String,*/ stores: Map<string, StorageProviderBase>): void {
+  reinstantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     const apiPort = this.getPort(particle);

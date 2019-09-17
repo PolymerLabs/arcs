@@ -87,6 +87,7 @@ const updateParticleInPlan = (plan, particleId, particleName) => {
     const particle = plan.particles.find(p => p.name === particleName);
     if (!particle) {
       warn(`Cannot find particle ${particleName} in plan = ${plan.toString()}.`);
+      return null;
     }
     particle.id = particleId;
     if (!plan.normalize()) {
