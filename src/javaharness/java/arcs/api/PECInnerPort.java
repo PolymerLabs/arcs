@@ -2,8 +2,7 @@ package arcs.api;
 
 import java.util.function.Consumer;
 
-public interface PECInnerPort {
-  void processMessage(PortableJson message);
+public interface PECInnerPort extends PecMessageReceiver {
 
   void mapParticle(Particle particle);
 

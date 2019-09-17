@@ -3,9 +3,9 @@ package arcs.web.impl;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClientImpl;
 import arcs.api.PECInnerPortFactory;
+import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
-import arcs.api.UiRenderer;
 import javax.inject.Inject;
 import jsinterop.annotations.JsType;
 
@@ -15,9 +15,9 @@ public class DeviceClientJsImpl extends DeviceClientImpl {
   public DeviceClientJsImpl(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
-      PECInnerPortFactory portFactory,
+      PecPortManager pecPortManager,
       UiBroker uiBroker) {
-    super(jsonParser, environment, portFactory, uiBroker);
+    super(jsonParser, environment, pecPortManager, uiBroker);
   }
 
   @Override
