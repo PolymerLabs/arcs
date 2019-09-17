@@ -14,7 +14,15 @@ script:
   - npm run test-with-start
   - npm run build:rollup
   - npm --prefix=server test
-  - bazel test --noshow_progress --noshow_loading_progress --test_output=errors //src/wasm/... //src/tests/...
+  # Test WASM:
+  - cat travis.bazelrc >> .bazelrc
+  - bazel test //src/wasm/... //src/tests/...
+  # Test JavaHarness (need to cd into different folder since javaharness has its
+  # own WORKSPACE file):
+  - cat travis.bazelrc >> src/javaharness/.bazelrc
+  - (cd src/javaharness && ./travis_install_android_sdk.sh)
+  - (cd src/javaharness && bazel build ... )
+  - (cd src/javaharness && bazel test ... )
 
 cache: npm
 

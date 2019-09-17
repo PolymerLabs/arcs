@@ -1,6 +1,5 @@
 workspace(name = "arcs_javaharness")
 
-#load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 maven_jar(
     name = "org_json_local",
     artifact = "org.json:json:20141113",
@@ -16,25 +15,18 @@ maven_jar(
     artifact = "com.google.flogger:flogger-system-backend:0.4",
 )
 
-#git_repository(
-#    name = "android_sdk_downloader",
-#    remote = "https://github.com/quittle/bazel_android_sdk_downloader",
-#    commit = "a08905c5571dc9a74027ec57c90ffad53d7f7efe",
-#)
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-#load("@android_sdk_downloader//:rules.bzl", "android_sdk_repository")
-
-#android_sdk_repository(
-#    name = "androidsdk",
-#    workspace_name = "arcs_javaharness",
-#  api_level = 27,
-#    build_tools_version = "27.0.3",
-#)
-
-android_sdk_repository(
-    name = "androidsdk",
-    api_level = 29,
+git_repository(
+  name = "android_sdk_downloader",
+  commit = "a08905c5571dc9a74027ec57c90ffad53d7f7efe",
+  remote = "https://github.com/quittle/bazel_android_sdk_downloader",
+  shallow_since = "1528178123 +0000"
 )
+
+load(":android_sdk.bzl", "android_sdk")
+
+android_sdk()
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 

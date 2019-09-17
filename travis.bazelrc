@@ -1,0 +1,5 @@
+# Additional .bazelrc options for Travis.
+# Stops annoying progress spam, and shows output for failing tests.
+
+build --noshow_progress --noshow_loading_progress
+test --noshow_progress --noshow_loading_progress --test_output=errors
