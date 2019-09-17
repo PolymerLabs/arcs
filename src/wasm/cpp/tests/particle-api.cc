@@ -1,5 +1,40 @@
 #include "src/wasm/cpp/arcs.h"
 #include "src/wasm/cpp/tests/entities.h"
+#include <functional>
+#include <map>
+#include <string>
+
+std::map< unsigned int, std::function<void()> > callbackMap;
+
+int registerCallback(std::function<void()> callback) {
+  static int ctr = 0;
+  callbackMap.insert(std::make_pair(++ctr, callback));
+  return ctr;
+}
+
+void runCallbackFromJavaScript(int callbackId) {
+  console("callbackId: %d\n", callbackId);
+  std::function<void()> callback = callbackMap[callbackId];
+  console("callback: %d\n", callbackId);
+  callback();
+}
+
+void doSomethingInJavaScript(int someData, int callbackId) {
+  // do something async with someData.
+  // ...
+
+  runCallbackFromJavaScript(callbackId);
+}
+
+void runTheExample() {
+  std::string s = "abc";
+  static std::string ss = "";
+  int callbackId = registerCallback([=] {
+    // do something with s
+    console("%s\n", s.c_str());
+  });
+  doSomethingInJavaScript(12345, callbackId);
+}
 
 class HandleSyncUpdateTest : public arcs::Particle {
 public:
@@ -7,6 +42,7 @@ public:
     registerHandle("input1", input1_);
     registerHandle("input2", input2_);
     registerHandle("output", output_);
+    runTheExample();
   }
 
   void onHandleSync(const std::string& name, bool all_synced) override {
