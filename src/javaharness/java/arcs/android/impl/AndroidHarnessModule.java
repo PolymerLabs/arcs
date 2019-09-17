@@ -1,6 +1,13 @@
 package arcs.android.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Singleton;
+
 import arcs.api.ArcsEnvironment;
+import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.DeviceClient;
 import arcs.api.HandleFactory;
 import arcs.api.HandleFactoryImpl;
@@ -9,6 +16,7 @@ import arcs.api.PECInnerPortFactory;
 import arcs.api.PECInnerPortFactoryImpl;
 import arcs.api.ParticleExecutionContext;
 import arcs.api.ParticleExecutionContextImpl;
+import arcs.api.ParticleFactory;
 import arcs.api.ParticleLoader;
 import arcs.api.ParticleLoaderImpl;
 import arcs.api.PortableJsonParser;
@@ -17,7 +25,7 @@ import arcs.api.ShellApi;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import dagger.Binds;
 import dagger.Module;
-import javax.inject.Singleton;
+import dagger.Provides;
 
 @Module
 public abstract class AndroidHarnessModule {
@@ -57,8 +65,4 @@ public abstract class AndroidHarnessModule {
   @Binds
   public abstract PortablePromiseFactory providesPortablePromiseFactory(
       PortablePromiseFactoryAndroidImpl impl);
-  //
-  // @Binds
-  // @Singleton
-  // public abstract PecPortManager
 }
