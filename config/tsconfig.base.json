@@ -10,6 +10,7 @@
     "noImplicitThis": true,
     "module": "es2015",
     "moduleResolution": "Node",
+    "skipLibCheck": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
 

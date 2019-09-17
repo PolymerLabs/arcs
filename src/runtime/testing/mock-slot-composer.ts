@@ -133,7 +133,7 @@ export class MockSlotComposer extends FakeSlotComposer {
   /**
    * Returns promise to completion of all expectations.
    */
-  expectationsCompleted() {
+  async expectationsCompleted(): Promise<void> {
     if (this.expectQueue.length === 0 || this.expectQueue.every(e => e.isOptional)) {
       return Promise.resolve();
     }
