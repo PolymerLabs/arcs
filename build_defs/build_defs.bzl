@@ -56,5 +56,5 @@ def arcs_ts_test(name, src, deps):
         srcs = [src],
         cmd = "./tools/sigh test --bazel --file {SRC}",
         tags = EXECUTION_REQUIREMENTS_TAGS,
-        deps = deps,
+        deps = deps + ["//src:core_srcs"],
     )
