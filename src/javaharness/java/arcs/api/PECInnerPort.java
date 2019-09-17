@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 public interface PECInnerPort {
   void processMessage(PortableJson message);
 
+  void mapParticle(Particle particle);
+
   void initializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);
 
   void synchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);

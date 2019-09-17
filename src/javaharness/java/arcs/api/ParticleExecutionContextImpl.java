@@ -34,6 +34,17 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
             .loadParticle(spec.getFileName())
             .flatMap(x -> Optional.ofNullable(x.createParticle()))
             .orElse(null);
+    particle.setId(particleId);
+    initializeParticle(particle, spec, proxies, idGenerator);
+    return particle;
+  }
+
+  @Override
+  public void initializeParticle(
+      Particle particle,
+      ParticleSpec spec,
+      Map<String, StorageProxy> proxies,
+      IdGenerator idGenerator) {
     Objects.requireNonNull(particle).setSpec(spec);
     particle.setJsonParser(jsonParser);
     this.particles.add(particle);
@@ -48,7 +59,7 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
               storageProxy,
               idGenerator,
               proxyName,
-              particleId,
+              particle.getId(),
               spec.isInput(proxyName),
               spec.isOutput(proxyName));
       handleMap.put(proxyName, handle);
@@ -60,6 +71,5 @@ public class ParticleExecutionContextImpl implements ParticleExecutionContext {
       StorageProxy storageProxy = registerMap.get(handle);
       storageProxy.register(particle, handle);
     }
-    return particle;
   }
 }

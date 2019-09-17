@@ -6,6 +6,9 @@ import java.util.function.Consumer;
 
 /** Interface that all built in particles must implement to create particles. */
 public interface Particle {
+  String getId();
+  void setId(String id); // TODO: should be a ctor parameter instead?
+
   String getName();
 
   void setSpec(ParticleSpec spec);

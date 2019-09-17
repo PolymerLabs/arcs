@@ -7,14 +7,18 @@ import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
 import arcs.api.PortableJsonParser;
-import arcs.crdt.CollectionDataTest;
 import arcs.demo.services.ClipboardService;
+import arcs.crdt.CollectionDataTest;
+import arcs.demo.services.AlertService;
+import arcs.demo.services.ClipboardService;
+import arcs.demo.particles.ToastParticle;
 import elemental2.dom.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 import jsinterop.annotations.JsType;
 
@@ -25,6 +29,8 @@ public class WebHarnessController implements HarnessController {
   private final DeviceClient deviceClient;
   private final PortableJsonParser jsonParser;
   private final DummyClipboard dummyClipboard;
+
+  private static final Logger logger = Logger.getLogger(WebHarnessController.class.getName());
 
   @Inject
   WebHarnessController(
@@ -54,19 +60,33 @@ public class WebHarnessController implements HarnessController {
     shellElement.type = "module";
     document.body.appendChild(shellElement);
 
-    // make two buttons in the UI
-    document.body.appendChild(
-        makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
-
     environment.addReadyListener(new ArcsEnvironment.ReadyListener() {
       @Override
       public void onReady(List<String> recipes) {
-        environment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
-            .put("message", "runArc")
-            .put("recipe", "Ingestion")
-            .put("arcid", "ingestion-arc")), null);
+        deviceClient.startArc(
+            jsonParser.stringify(jsonParser.emptyObject().put("recipe", "Ingestion")),
+            null);
       }
     });
+
+    // make buttons in the UI
+    document.body.appendChild(
+        makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
+
+    document.body.appendChild(
+        makeInputElement("Toast", val -> {
+          ToastParticle toast = new ToastParticle(new AlertService() {
+            @Override
+            public void alert(String msg) {
+              logger.warning("ALERT: " + msg);
+            }
+          });
+          toast.setId("toast-particle");
+          deviceClient.startArc(
+              jsonParser.stringify(jsonParser.emptyObject()
+                  .put("recipe", "Toast")),
+              toast);
+    }));
 
     Element dataParagraph = makeParagraph();
 

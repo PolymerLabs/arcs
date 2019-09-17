@@ -11,7 +11,6 @@ public class CaptureEntityFactory implements ParticleFactory {
   private PortableJsonParser parser;
   private ClipboardService clipboardService;
 
-  //  private final EntityObserver entityObserver;
   // TODO: Inject interfaces particles normally may want in defineParticle (e.g. html, log, etc)
   @Inject
   public CaptureEntityFactory(PortableJsonParser parser, ClipboardService clipboardService) {

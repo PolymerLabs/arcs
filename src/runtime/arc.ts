@@ -432,7 +432,9 @@ ${this.activeRecipe.toString()}`;
   }
 
   async _instantiateParticle(recipeParticle: Particle) {
-    recipeParticle.id = this.generateID('particle');
+    if (!recipeParticle.id) {
+      recipeParticle.id = this.generateID('particle');
+    }
     const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
