@@ -1,6 +1,7 @@
 package arcs.api;
 
-import javax.inject.Inject;
+import android.os.RemoteException;
+import arcs.android.api.IRemotePecCallback;
 
 /**
  * A proxy PEC port implementation. It receives PEC messages and forwards them to a real
@@ -8,11 +9,20 @@ import javax.inject.Inject;
  */
 public class RemotePecPort implements PecMessageReceiver {
 
-  @Inject
-  RemotePecPort() {}
+  private final IRemotePecCallback callback;
+  private final PortableJsonParser jsonParser;
+
+  public RemotePecPort(IRemotePecCallback callback, PortableJsonParser jsonParser) {
+    this.callback = callback;
+    this.jsonParser = jsonParser;
+  }
 
   @Override
   public void onReceivePecMessage(PortableJson message) {
-    // TODO(csilvestrini): Forward message through the IArcsService back to the actual remote PEC.
+    try {
+      callback.onMessage(jsonParser.stringify(message));
+    } catch (RemoteException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

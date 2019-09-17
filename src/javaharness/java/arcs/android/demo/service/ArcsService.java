@@ -7,7 +7,11 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import arcs.android.api.IArcsService;
+import arcs.android.api.IRemotePecCallback;
 import arcs.api.HarnessController;
+import arcs.api.PecPortManager;
+import arcs.api.PortableJsonParser;
+import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import javax.inject.Inject;
 
@@ -23,6 +27,8 @@ public class ArcsService extends Service {
 
   @Inject HarnessController harnessController;
   @Inject ShellApiBasedArcsEnvironment shellEnvironment;
+  @Inject PecPortManager pecPortManager;
+  @Inject PortableJsonParser jsonParser;
 
   @Override
   public void onCreate() {
@@ -33,8 +39,7 @@ public class ArcsService extends Service {
     arcsWebView = new WebView(this);
     arcsWebView.setVisibility(View.GONE);
 
-    DaggerArcsServiceComponent
-        .builder()
+    DaggerArcsServiceComponent.builder()
         .appContext(getApplicationContext())
         .webView(arcsWebView)
         .build()
@@ -50,6 +55,17 @@ public class ArcsService extends Service {
       @Override
       public void sendMessageToArcs(String message) {
         shellEnvironment.sendMessageToArcs(message, /* listener= */ null);
+      }
+
+      @Override
+      public void registerRemotePec(String pecId, IRemotePecCallback callback) {
+        RemotePecPort remotePecPort = new RemotePecPort(callback, jsonParser);
+        pecPortManager.addRemotePecPort(pecId, remotePecPort);
+      }
+
+      @Override
+      public void deregisterRemotePec(String pecId) {
+        // TODO(csilvestrini): Remove from PecPortManager.
       }
     };
   }
