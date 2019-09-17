@@ -10,6 +10,12 @@ import sys
 import os.path
 print(os.path.abspath(sys.argv[1]))' "$repo_rel")
 
+konan_deps=${BASH_SOURCE[0]}.runfiles/konan_dependencies
+deps=$(python -c '
+import sys
+import os.path
+print(os.path.abspath(sys.argv[1]))' "$konan_deps")
+
 # Space for setting up required environment variables
 # ...
 #exec $repo/gradlew dependencies:update
@@ -17,5 +23,6 @@ print(os.path.abspath(sys.argv[1]))' "$repo_rel")
 #exec $repo/gradlew dist distPlatformLibs
 
 # Run the command line args that were passed to this script.
-echo $repo
-exec $repo/bin/kotlinc "$@"
+echo "$repo"
+echo "$deps"
+exec $repo/bin/kotlinc "-repo $deps" "$@"
