@@ -56,13 +56,7 @@ const instantiateRecipe = async (arc, recipe, particleId, particleName) => {
   }
   if (RecipeUtil.matchesRecipe(arc.activeRecipe, plan)) {
     log(`recipe ${recipe} is already instantiated in ${arc}`);
-
-    if (particleId) {
-      const particle = arc.activeRecipe.particles.find(p => p.id === particleId);
-      assert(particle, `Particle ${particleName} (${particleId} is not found in the active recipe`);
-      // TODO: re-instantiate the particle.
-    }
-    return false;
+    return reinstantiateParticle(arc, particleId, particleName);
   }
 
   plan = updateParticleInPlan(plan, particleId, particleName);
@@ -75,10 +69,27 @@ const instantiateRecipe = async (arc, recipe, particleId, particleName) => {
   return true;
 };
 
+const reinstantiateParticle = (arc, particleId, particleName) => {
+  if (particleId) {
+    const particle = arc.activeRecipe.particles.find(p => p.id === particleId);
+    if (particle) {
+      arc.reinstantiateParticle(particle);
+      return true;
+    }
+    warn(`Particle ${particleName} (${particleId} is not found in the active recipe`);    
+  }
+  return false;
+};
+
 const updateParticleInPlan = (plan, particleId, particleName) => {
   if (!!particleId && !!particleName) {
     plan = plan.clone();
-    plan.particles.find(p => p.name === particleName).id = particleId;
+    const particle = plan.particles.find(p => p.name === particleName);
+    if (!particle) {
+      warn(`Cannot find particle ${particleName} in plan = ${plan.toString()}.`);
+      return null;
+    }
+    particle.id = particleId;
     if (!plan.normalize()) {
       warn(`cannot normalize after setting id ${particleId} for particle ${particleName}`);
       return null;

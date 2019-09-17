@@ -90,6 +90,10 @@ export class ParticleExecutionContext {
         return pec.instantiateParticle(id, spec, proxies);
       }
 
+      async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
+        assert(false, `Not implemented`);
+      }
+
       async onReloadParticles(ids: string[]) {
         return pec.reloadParticles(ids);
       }

@@ -105,6 +105,7 @@ describe('API channel', function() {
       onGetBackingStoreCallback() {}
       onInnerArcRender() {}
       onInstantiateParticle() {}
+      onReinstantiateParticle() {}
       onReloadParticles() {}
       onMapHandleCallback() {}
       onSimpleCallback() {}

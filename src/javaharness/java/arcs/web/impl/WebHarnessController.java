@@ -64,7 +64,9 @@ public class WebHarnessController implements HarnessController {
       @Override
       public void onReady(List<String> recipes) {
         deviceClient.startArc(
-            jsonParser.stringify(jsonParser.emptyObject().put("recipe", "Ingestion")),
+            jsonParser.stringify(jsonParser.emptyObject()
+                .put("recipe", "Ingestion")
+                .put("arcId", "ingestion-arc")),
             null);
       }
     });
@@ -73,20 +75,21 @@ public class WebHarnessController implements HarnessController {
     document.body.appendChild(
         makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
 
-    document.body.appendChild(
-        makeInputElement("Toast", val -> {
-          ToastParticle toast = new ToastParticle(new AlertService() {
-            @Override
-            public void alert(String msg) {
-              logger.warning("ALERT: " + msg);
-            }
-          });
-          toast.setId("toast-particle");
-          deviceClient.startArc(
-              jsonParser.stringify(jsonParser.emptyObject()
-                  .put("recipe", "Toast")),
-              toast);
-    }));
+    HTMLDivElement toastDiv = (HTMLDivElement) document.createElement("div");
+    document.body.appendChild(toastDiv);
+    makeButtonElement(toastDiv, "Toast (in NEW Arc)", () -> {
+      deviceClient.startArc(
+          jsonParser.stringify(jsonParser.emptyObject().put("recipe", "Toast")),
+          new DemoToastParticle());
+    });
+
+    makeButtonElement(toastDiv, "Toast (in SAME arc)", () -> {
+      deviceClient.startArc(
+          jsonParser.stringify(jsonParser.emptyObject()
+              .put("recipe", "Toast")
+              .put("arcId", "toast-arc")),
+          new DemoToastParticle());
+    });
 
     Element dataParagraph = makeParagraph();
 
@@ -140,6 +143,28 @@ public class WebHarnessController implements HarnessController {
     div.appendChild(button);
     button.addEventListener("click", evt -> handler.accept(input.value));
     return div;
+  }
+
+  private void makeButtonElement(HTMLDivElement div, String label, Runnable handler) {
+    HTMLButtonElement button = (HTMLButtonElement) document.createElement("button");
+    button.append(label);
+    div.appendChild(button);
+    button.addEventListener("click", evt -> handler.run());
+  }
+
+  private class DemoToastParticle extends ToastParticle {
+    DemoToastParticle() {
+      super(new AlertService() {
+        int count = 0;
+        @Override
+        public void alert(String msg) {
+          logger.warning("ALERT: " + msg + " (" + count++ + ")");
+        }
+      });
+      setId("toast-particle");
+    }
+    @Override
+    public String getName() { return "ToastParticle"; }
   }
 
   private Node addJsonTests() {

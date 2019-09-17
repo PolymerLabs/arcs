@@ -468,6 +468,7 @@ export abstract class PECOuterPort extends APIPort {
   @NoArgs Stop() {}
   DefineHandle(@RedundantInitializer store: StorageProviderBase, @ByLiteral(Type) type: Type, @Direct name: string) {}
   InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
+  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
   ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
@@ -532,6 +533,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string);
   abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
+  abstract onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
   abstract onReloadParticles(ids: string[]);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});

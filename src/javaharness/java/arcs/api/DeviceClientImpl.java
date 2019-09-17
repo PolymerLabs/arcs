@@ -74,10 +74,11 @@ public class DeviceClientImpl implements DeviceClient {
     PortableJson request = jsonParser.parse(json);
     request.put("message", "runArc");
     if (!request.hasKey("arcId")) {
-      request.put("arcId", request.getString("recipe").toLowerCase() + "-arc");
+      request.put("arcId", Id.newArcId().toString());
     }
+    Id arcId = Id.fromString(request.getString("arcId"));
     if (!request.hasKey("pecId")) {
-      request.put("pecId", request.getString("recipe").toLowerCase() + "-pec");
+      request.put("pecId", IdGenerator.newSession().newChildId(arcId, "pec").toString());
     }
     if (particle != null) {
       request.put("particleId", particle.getId()).put("particleName", particle.getName());
