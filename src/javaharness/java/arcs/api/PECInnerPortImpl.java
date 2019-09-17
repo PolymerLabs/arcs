@@ -1,8 +1,6 @@
 package arcs.api;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -74,7 +72,7 @@ public class PECInnerPortImpl implements PECInnerPort {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void processMessage(PortableJson message) {
+  public void onReceivePecMessage(PortableJson message) {
     String messageType = message.getString(MESSAGE_TYPE_FIELD);
     PortableJson messageBody = message.getObject(MESSAGE_BODY_FIELD);
     switch (messageType) {

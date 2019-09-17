@@ -1,7 +1,5 @@
 package arcs.api;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 import javax.inject.Inject;
 
@@ -21,19 +19,18 @@ public class DeviceClientImpl implements DeviceClient {
 
   private final PortableJsonParser jsonParser;
   private final ArcsEnvironment environment;
-  private final PECInnerPortFactory portFactory;
-  private final Map<String, PECInnerPort> portById = new HashMap<>();
+  private final PecPortManager pecPortManager;
   private final UiBroker uiBroker;
 
   @Inject
   public DeviceClientImpl(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
-      PECInnerPortFactory portFactory,
+      PecPortManager pecPortManager,
       UiBroker uiBroker) {
     this.jsonParser = jsonParser;
     this.environment = environment;
-    this.portFactory = portFactory;
+    this.pecPortManager = pecPortManager;
     this.uiBroker = uiBroker;
   }
 
@@ -47,14 +44,14 @@ public class DeviceClientImpl implements DeviceClient {
         environment.fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
         break;
       case MESSAGE_DATA:
-        logger.warning("logger: Received deprected 'data' message");
+        logger.warning("logger: Received deprecated 'data' message");
         PortableJson dataJson = content.getObject(FIELD_DATA);
         environment.fireDataEvent(
             String.valueOf(content.getInt(FIELD_TRANSACTION_ID)),
             dataJson == null ? null : jsonParser.stringify(dataJson));
         break;
       case MESSAGE_PEC:
-        processPecMessage(content.getObject(FIELD_DATA));
+        deliverPecMessage(content.getObject(FIELD_DATA));
         break;
       case MESSAGE_OUTPUT:
         if (!uiBroker.render(content)) {
@@ -66,14 +63,10 @@ public class DeviceClientImpl implements DeviceClient {
     }
   }
 
-  private void processPecMessage(PortableJson message) { 
-    String id = message.getString(FIELD_PEC_ID);
-    if (!portById.containsKey(id)) {
-      portById.put(id, portFactory.createPECInnerPort(id, message.getString(FIELD_SESSION_ID)));
-    }
-
-    PECInnerPort port = portById.get(id);
-    port.processMessage(message);
+  private void deliverPecMessage(PortableJson message) {
+    String pecId = message.getString(FIELD_PEC_ID);
+    String sessionId = message.getString(FIELD_SESSION_ID);
+    pecPortManager.deliverPecMessage(pecId, sessionId, message);
   }
 
   @Override
@@ -94,13 +87,10 @@ public class DeviceClientImpl implements DeviceClient {
     environment.sendMessageToArcs(jsonParser.stringify(request), null);
   }
 
-  protected void createPecForParticle(String pecid, Particle particle) {
-    if (!portById.containsKey(pecid)) {
-      portById.put(pecid, portFactory.createPECInnerPort(pecid, null));
-    }
-    PECInnerPort port = portById.get(pecid);
+  private void createPecForParticle(String pecId, Particle particle) {
+    PECInnerPort pecInnerPort = pecPortManager.getOrCreateInnerPort(pecId, /* sessionId= */ null);
     if (particle != null) {
-      port.mapParticle(particle);
+      pecInnerPort.mapParticle(particle);
     }
   }
 }

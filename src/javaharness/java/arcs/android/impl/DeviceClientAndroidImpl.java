@@ -3,9 +3,8 @@ package arcs.android.impl;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import arcs.api.ArcsEnvironment;
-import arcs.api.ArcsEnvironment.DataListener;
 import arcs.api.DeviceClientImpl;
-import arcs.api.PECInnerPortFactory;
+import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
 import javax.inject.Inject;
@@ -16,9 +15,9 @@ public class DeviceClientAndroidImpl extends DeviceClientImpl {
   public DeviceClientAndroidImpl(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
-      PECInnerPortFactory portFactory,
+      PecPortManager pecPortManager,
       UiBroker uiBroker) {
-    super(jsonParser, environment, portFactory, uiBroker);
+    super(jsonParser, environment, pecPortManager, uiBroker);
   }
 
   @JavascriptInterface
