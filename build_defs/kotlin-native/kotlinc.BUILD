@@ -1,5 +1,3 @@
-# TODO(alxr): Document
-
 _files_without_spaces = [f for f in glob(["**"]) if " " not in f]
 
 filegroup(

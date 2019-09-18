@@ -3,6 +3,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 _kotlin_native_sha256 = "100920f1a3352846bc5a2990c87cb71f221abf8261251632ad10c6459d962393"
 _kotlin_native_version = "1.3.50"
 
+#TODO(alxr): Make multiplatform
 MACOS_DEPENDENCIES = [
     ("clang-llvm-6.0.1-darwin-macos", "21b1bfb5d11c07aad7627c121b323202da257ed2276afa6942d4086ab393509a"),
     ("target-sysroot-2-wasm", "039958041b364458d652237aaa06c12b89973ef0934819cca9d47299f1a76b64"),

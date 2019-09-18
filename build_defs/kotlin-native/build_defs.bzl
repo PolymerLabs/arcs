@@ -32,14 +32,15 @@ def _collect_deps(srcs, deps):
     )
     return exported_klib_depset, klib_depset
 
-
-
 def _kt_wasm_binary(ctx):
     args = ctx.actions.args()
+
+    # Pass dependencies to wrapper script
     args.add(",".join([x for x, _ in MACOS_DEPENDENCIES]))
+
     args.add_all(_kotlinc_args)
 
-    args.add("-o", "{0}".format(ctx.outputs.wasm.path).rstrip(".wasm"))
+    args.add("-o", ctx.outputs.wasm.path.rstrip(".wasm"))
 
     linkable_klibs, klibs = _collect_deps(
         srcs = ctx.files.srcs,
