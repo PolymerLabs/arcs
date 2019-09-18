@@ -14,18 +14,37 @@
 // response.
 defineParticle(({Particle}) => {
   return class DummyAutofillResponder extends Particle {
+    setHandles(handles) {
+      super.setHandles(handles);
+      this.handles = handles;
+    }
+
+    onHandleSync(handle, model) {
+      super.onHandleSync(handle, model);
+      if (handle.name !== 'request') {
+        return;
+      }
+      for (const request of model) {
+        this._addResponse(request);
+      }
+    }
+
     onHandleUpdate(handle, update) {
+      super.onHandleUpdate(handle, update);
       if (handle.name !== 'request' || !update.added) {
         return;
       }
-      const responseHandle = this.handles.get('response');
       for (const request of update.added) {
-        const response = new responseHandle.entityClass({
-          autofillId: request.autofillId,
-          suggestion: 'autofilled!!',
-        });
-        responseHandle.store(response);
+        this._addResponse(request);
       }
+    }
+
+    _addResponse(request) {
+      const responseHandle = this.handles.get('response');
+      responseHandle.store(new responseHandle.entityClass({
+        autofillId: request.autofillId,
+        suggestion: 'autofilled!!',
+      }));
     }
   };
 });

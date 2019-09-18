@@ -7,6 +7,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebSettings;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.HarnessController;
@@ -39,6 +40,9 @@ public class ArcsService extends Service {
 
     arcsWebView = new WebView(this);
     arcsWebView.setVisibility(View.GONE);
+    arcsWebView.getSettings().setAppCacheEnabled(false);
+    arcsWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+    arcsWebView.clearCache(true);
 
     DaggerArcsServiceComponent.builder()
         .appContext(getApplicationContext())
@@ -71,6 +75,16 @@ public class ArcsService extends Service {
                 },
                 jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
+        // TODO: This method should be called startArc and receive more parameters.
+        // TODO: Use startArc method instead, should be factored out of DeviceClient.
+        shellEnvironment.sendMessageToArcs(jsonParser.stringify(jsonParser.emptyObject()
+            .put("message", "runArc")
+            .put("arcId", "arc-" + pecId)
+            .put("pecId", pecId)
+            .put("recipe", "AndroidAutofill")
+            .put("particleId", "autofill-particle-id")
+            .put("particleName", "AutofillParticle")
+            ), null);
       }
 
       @Override

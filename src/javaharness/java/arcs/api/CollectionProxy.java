@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class CollectionProxy extends StorageProxy implements CollectionStore {
   CRDTCollection<ModelEntry> model;
@@ -134,7 +135,9 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
             .emptyObject()
             .put("value", value)
             .put(ModelEntry.KEYS, jsonParser.fromStringArray(Arrays.asList(keys)));
-    port.handleStore(this, (unused) -> {}, data, particleId);
+    port.handleStore(this, new Consumer<PortableJson>() {
+      @Override public void accept(PortableJson unused) {}
+    }, data, particleId);
 
     if (syncState != SyncState.FULL) {
       return;

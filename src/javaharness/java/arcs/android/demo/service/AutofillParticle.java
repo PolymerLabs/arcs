@@ -1,6 +1,7 @@
 package arcs.android.demo.service;
 
 import android.app.assist.AssistStructure.ViewNode;
+import android.util.Log;
 import android.view.autofill.AutofillId;
 import arcs.api.Collection;
 import arcs.api.Handle;
@@ -9,11 +10,14 @@ import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AutofillParticle extends ParticleBase {
 
   private final List<ViewNode> nodes;
   private final AutofillCallback callback;
+
+  private static final String TAG = "Arcs";
 
   public interface AutofillCallback {
     void onAutofillResult(AutofillId autofillId, String suggestion);
@@ -23,6 +27,8 @@ public class AutofillParticle extends ParticleBase {
     this.jsonParser = jsonParser;
     this.nodes = nodes;
     this.callback = callback;
+
+    Log.d(TAG, "AutofillParticle::ctor()");
   }
 
   @Override
@@ -30,17 +36,21 @@ public class AutofillParticle extends ParticleBase {
     return "AutofillParticle";
   }
 
-  // Called when the particle is first synced with its handles. Fill in the request handle so the
-  // rest of the recipe can use the data.
   @Override
-  public void onHandleSync(Handle handle, PortableJson model) {
-    super.onHandleSync(handle, model);
+  public String getId() {
+    // TODO: should be assigned when particle is constructed, not hardcoded.
+    return "autofill-particle-id";
+  }
 
-    if (handle.name.equals("request")) {
-      Collection requestHandle = (Collection) handle;
-      for (PortableJson request : getJsonRequests()) {
-        requestHandle.store(request);
-      }
+  @Override
+  public void setHandles(Map<String, Handle> handleByName) {
+    super.setHandles(handleByName);
+
+    Collection requestHandle = (Collection) handleByName.get("request");
+    // Fill in the request handle so the rest of the recipe can use the data.
+    // NOTE: request is an `out` handle, it doesn't get onHandleSync calls.
+    for (PortableJson request : getJsonRequests()) {
+      requestHandle.store(jsonParser.emptyObject().put("rawData", request));
     }
   }
 
@@ -53,7 +63,7 @@ public class AutofillParticle extends ParticleBase {
     if (handle.name.equals("response") && update.hasKey("added")) {
       PortableJson added = update.getArray("added");
       for (int i = 0; i < added.getLength(); i++) {
-        PortableJson response = added.getObject(i);
+        PortableJson response = added.getObject(i).getObject("rawData");
         AutofillId autofillId = nodes.get(response.getInt("autofillId")).getAutofillId();
         String suggestion = response.getString("suggestion");
         callback.onAutofillResult(autofillId, suggestion);

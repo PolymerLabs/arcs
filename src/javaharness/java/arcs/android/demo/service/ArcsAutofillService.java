@@ -50,9 +50,6 @@ public class ArcsAutofillService extends AutofillService {
     Dataset.Builder dataset = new Dataset.Builder();
     numSuggestionsPending = nodes.size();
 
-    // Start up an Arcs remote PEC.
-    remotePec.init();
-
     // TODO(csilvestrini): Hook up this particle to the RemotePec, and start up the Arc.
     AutofillParticle particle =
         new AutofillParticle(
@@ -71,6 +68,9 @@ public class ArcsAutofillService extends AutofillService {
                 callback.onSuccess(fillResponse);
               }
             });
+
+    // Start up an Arcs remote PEC and arc with a particle.
+    remotePec.init(particle);
   }
 
   @Override

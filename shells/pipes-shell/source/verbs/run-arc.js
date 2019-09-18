@@ -22,7 +22,7 @@ export const runArc = async (msg, tid, bus, runtime, env) => {
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
     warn(`arcId must be provided.`);
-    return null;    
+    return null;
   }
   if (recipe && !action) {
     warn(`found no recipes matching [${recipe}]`);
