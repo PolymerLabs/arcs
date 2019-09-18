@@ -8,5 +8,3 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-
-exports_files(["cmd/kotlinc"])

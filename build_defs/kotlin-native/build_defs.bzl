@@ -1,3 +1,4 @@
+load("//build_defs/kotlin-native:repo.bzl", "MACOS_DEPENDENCIES")
 
 KtNativeInfo = provider(
     doc = "The minimum info about a Kotlin/Native dependency",
@@ -35,9 +36,10 @@ def _collect_deps(srcs, deps):
 
 def _kt_wasm_binary(ctx):
     args = ctx.actions.args()
+    args.add(",".join([x for x, _ in MACOS_DEPENDENCIES]))
     args.add_all(_kotlinc_args)
 
-    args.add("-o", ctx.label.name)
+    args.add("-o", "{0}".format(ctx.outputs.wasm.path).rstrip(".wasm"))
 
     linkable_klibs, klibs = _collect_deps(
         srcs = ctx.files.srcs,
