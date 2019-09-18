@@ -3,6 +3,7 @@ package arcs.android.demo.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
@@ -59,7 +60,16 @@ public class ArcsService extends Service {
 
       @Override
       public void registerRemotePec(String pecId, IRemotePecCallback callback) {
-        RemotePecPort remotePecPort = new RemotePecPort(callback, jsonParser);
+        RemotePecPort remotePecPort =
+            new RemotePecPort(
+                message -> {
+                  try {
+                    callback.onMessage(message);
+                  } catch (RemoteException e) {
+                    throw new RuntimeException(e);
+                  }
+                },
+                jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
       }
 
