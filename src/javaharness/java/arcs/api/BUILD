@@ -20,6 +20,7 @@ android_library(
         "//java/arcs/crdt:crdt-android",
         "@com_google_dagger",
         "@javax_inject_source//jar",
+        "@org_json//jar",
     ],
 )
 
