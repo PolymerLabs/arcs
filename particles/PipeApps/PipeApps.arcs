@@ -1,3 +1,4 @@
+import 'AndroidAutofill.arcs'
 import 'MapsAutofill.arcs'
 import 'PeopleAutofill.arcs'
 import 'ArtistAutofill.arcs'
