@@ -3,6 +3,24 @@
 # Expects a comma-delimited list of dependency files as a first argument.
 # The rest of the arguments are passed in to the `kotlinc` compiler.
 
+
+# Create directory if it doesn't exist
+soft_mkdir() {
+  if [ ! -d "$1" ]; then
+   mkdir $1
+  fi
+}
+
+
+# create file if it doesn't exist
+soft_touch() {
+  if [ ! -f "$1" ]; then
+    touch $1
+  fi
+}
+
+
+
 dependencies=$1
 shift 1
 
@@ -19,16 +37,22 @@ import os.path
 print(os.path.abspath(sys.argv[1]))' "$konan_deps")
 
 # Space for setting up required environment variables
-mkdir "$deps/dependencies"
-touch "$deps/dependencies/.extracted"
-mkdir "$deps/cache"
-touch "$deps/cache/.lock"
+
+
+soft_mkdir "$deps/dependencies"
+soft_touch "$deps/dependencies/.extracted"
+soft_mkdir "$deps/cache"
+soft_touch "$deps/cache/.lock"
 export KONAN_DATA_DIR="$deps"
 
 IFS=$','
 for i in $dependencies; do
-  ln -s "$deps/$i/$i" "$deps/dependencies/$i"
-  echo "$i" >> "$deps/dependencies/.extracted"
+  src="$deps/$i/$i"
+  dst="$deps/dependencies/$i"
+  if [ ! -e "$dst" ]; then
+    ln -s "$src" "$dst"
+    echo "$i" >> "$deps/dependencies/.extracted"
+  fi
 done
 unset IFS
 

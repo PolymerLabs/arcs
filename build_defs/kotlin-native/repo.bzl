@@ -26,7 +26,6 @@ def kotlin_native_repo():
         build_file = "//build_defs/kotlin-native:kotlinc.BUILD",
     )
 
-
     [http_archive(
         name = x,
         urls = ["https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.tar.gz".format(x)],
