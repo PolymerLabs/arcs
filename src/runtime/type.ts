@@ -808,6 +808,10 @@ export class ReferenceType extends Type {
   toString(options = undefined): string {
     return 'Reference<' + this.referredType.toString() + '>';
   }
+
+  getEntitySchema(): Schema {
+    return this.referredType.getEntitySchema();
+  }
 }
 
 
