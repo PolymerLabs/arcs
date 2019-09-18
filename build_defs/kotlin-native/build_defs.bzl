@@ -7,15 +7,27 @@ KtNativeInfo = provider(
     ),
 )
 
-# Arguments for kotlinc
-_kotlinc_args = [
-    "-target",
-    "wasm32",
-    # Enable optimizations in the compilation
-    "-opt",
-    # Don't link the libraries from the dist/klib automatically
-    "-nodefaultlibs",
-]
+def _common_args(ctx, klibs):
+    args = ctx.actions.args()
+
+    # Pass dependencies to wrapper script
+    args.add(",".join([x for x, _ in MACOS_DEPENDENCIES]))
+
+    # Arguments for kotlinc
+    args.add_all([
+                 "-target",
+                 "wasm32",
+                 # Enable optimizations in the compilation
+                 "-opt",
+                 # Don't link the libraries from the dist/klib automatically
+                 "-nodefaultlibs",
+                 ])
+
+    args.add_all(klibs, before_each = "-l")
+
+    args.add_all(ctx.files.srcs)
+
+    return args
 
 def _collect_deps(srcs, deps):
     """Builds depsets out of srcs and deps."""
@@ -26,23 +38,14 @@ def _collect_deps(srcs, deps):
     return srcs_depset,  klib_depset
 
 def _kt_wasm_binary(ctx):
-    args = ctx.actions.args()
-
-    # Pass dependencies to wrapper script
-    args.add(",".join([x for x, _ in MACOS_DEPENDENCIES]))
-
-    args.add_all(_kotlinc_args)
-
-    args.add("-o", ctx.outputs.wasm.path.rstrip(".wasm"))
-
     srcs_deps, klibs = _collect_deps(
         srcs = ctx.files.srcs,
         deps = ctx.attr.deps,
     )
 
-    args.add_all(klibs, before_each = "-l")
+    args = _common_args(ctx, klibs)
 
-    args.add_all(ctx.files.srcs)
+    args.add("-o", ctx.outputs.wasm.path.rstrip(".wasm"))
 
     ctx.actions.run(
         progress_message = "Compiling Kotlin to WebAssembly: %s" % ctx.label.name,
@@ -73,25 +76,16 @@ kt_wasm_binary = rule(
 
 
 def _kt_wasm_library(ctx):
-    args = ctx.actions.args()
-
-    # Pass dependencies to wrapper script
-    args.add(",".join([x for x, _ in MACOS_DEPENDENCIES]))
-
-    args.add_all(_kotlinc_args)
-
-    args.add("-produce", "library")
-
-    args.add("-o", ctx.outputs.klib.path.rstrip(".klib"))
-
     srcs_deps, klibs = _collect_deps(
         srcs = ctx.files.srcs,
         deps = ctx.attr.deps,
     )
 
-    args.add_all(klibs, before_each = "-l")
+    args = _common_args(ctx, klibs)
 
-    args.add_all(ctx.files.srcs)
+    args.add("-produce", "library")
+
+    args.add("-o", ctx.outputs.klib.path.rstrip(".klib"))
 
     ctx.actions.run(
         progress_message = "Building a Koltin Library with WebAssebly target: %s" % ctx.label.name,
@@ -102,6 +96,7 @@ def _kt_wasm_library(ctx):
     )
 
     return [KtNativeInfo(klibraries = depset(order = "preorder", direct = [ctx.outputs.klib], transitive = [klibs]))]
+
 
 kt_wasm_library = rule(
     implementation = _kt_wasm_library,

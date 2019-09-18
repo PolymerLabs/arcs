@@ -19,8 +19,6 @@ soft_touch() {
   fi
 }
 
-
-
 dependencies=$1
 shift 1
 
