@@ -40,8 +40,7 @@ public class PecPortManager {
     } else if (port instanceof PECInnerPort) {
       return (PECInnerPort) port;
     } else {
-      throw new IllegalArgumentException(
-          String.format("PEC with ID %s is not an inner port: ", pecId));
+      throw new IllegalArgumentException("PEC with ID %s is not an inner port: " + pecId);
     }
   }
 
