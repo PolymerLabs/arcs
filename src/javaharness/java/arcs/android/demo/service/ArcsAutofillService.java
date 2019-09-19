@@ -70,7 +70,15 @@ public class ArcsAutofillService extends AutofillService {
             });
 
     // Start up an Arcs remote PEC and arc with a particle.
-    remotePec.init(particle);
+    // TODO: Generate Ids properly.
+    particle.setId("autofill-particle-id");
+    String pecId = "example-remote-pec";
+    remotePec.init(
+        String.format("arc-%s", pecId),
+        pecId,
+        "AndroidAutofill",
+        particle);
+
   }
 
   @Override

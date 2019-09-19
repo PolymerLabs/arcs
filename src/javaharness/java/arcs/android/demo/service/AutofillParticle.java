@@ -32,17 +32,6 @@ public class AutofillParticle extends ParticleBase {
   }
 
   @Override
-  public String getName() {
-    return "AutofillParticle";
-  }
-
-  @Override
-  public String getId() {
-    // TODO: should be assigned when particle is constructed, not hardcoded.
-    return "autofill-particle-id";
-  }
-
-  @Override
   public void setHandles(Map<String, Handle> handleByName) {
     super.setHandles(handleByName);
 

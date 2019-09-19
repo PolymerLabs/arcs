@@ -52,10 +52,10 @@ public class AndroidHarnessController implements HarnessController {
         return super.shouldInterceptRequest(view, request);
       }
     });
-    webView.loadUrl("file:///android_asset/index.html");
+    // webView.loadUrl("file:///android_asset/index.html");
 
     // Uncomment this to view Arcs in devtools extension:
-    // webView.loadUrl("file:///android_asset/index.html?explore-proxy");
+    webView.loadUrl("file:///android_asset/index.html?explore-proxy");
     // Uncomment this to load pipes-shell from localhost and to view Arcs in devtools extension:
     // webView.loadUrl("http://localhost:8786/shells/pipes-shell/web/deploy/dist/?log=2&explore-proxy");
     // Also, uncomment additional permissions in AndroidManifest.xml

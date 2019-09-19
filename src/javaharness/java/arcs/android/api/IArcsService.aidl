@@ -10,8 +10,14 @@ interface IArcsService {
   // e.g. attachPec, unattachPec, etc.
   void sendMessageToArcs(String message);
 
-  void registerRemotePec(String pecId, IRemotePecCallback callback);
+  void startArc(
+      String arcId,
+      String pecId,
+      String recipe,
+      String particleId,
+      String particleName,
+      IRemotePecCallback callback);
 
-  void deregisterRemotePec(String pecId);
+  void stopArc(String arcId);
 }
 

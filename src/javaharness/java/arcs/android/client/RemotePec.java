@@ -1,7 +1,6 @@
 package arcs.android.client;
 
 import android.os.RemoteException;
-import android.util.Log;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.Particle;
 import arcs.api.PECInnerPort;
@@ -17,8 +16,6 @@ public class RemotePec {
   private final PortableJsonParser jsonParser;
 
   private PECInnerPort pecInnerPort;
-
-  private static final String TAG = "Arcs";
 
   private final IRemotePecCallback callback =
       new IRemotePecCallback.Stub() {
@@ -37,20 +34,12 @@ public class RemotePec {
     this.jsonParser = jsonParser;
   }
 
-  public void init(Particle particle) {
+  public void init(String arcId, String pecId, String recipe, Particle particle) {
     if (pecInnerPort != null) {
-      // TODO: RemotePec is being initialized from onFillRequest, so repeated calls are being made.
-      // It should should be initialized on service start up, and the particle be updated onFillRequest.
-      // Here should be an exception instead.
-      Log.d(TAG, "PEC has already been initialized.");
-      return;
-      // throw new IllegalStateException("PEC has already been initialized.");
+      throw new IllegalStateException("PEC has already been initialized.");
     }
 
-    // TODO(csilvestrini): Generate these properly.
-    String pecId = "example-remote-pec";
-    String sessionId = "example-session-id";
-    pecInnerPort = pecInnerPortFactory.createPECInnerPort(pecId, sessionId);
+    pecInnerPort = pecInnerPortFactory.createPECInnerPort(pecId, /* sessionId= */ null);
 
     bridge
         .connectToArcsService()
@@ -60,10 +49,14 @@ public class RemotePec {
                 if (particle != null) {
                   pecInnerPort.mapParticle(particle);
                 }
-                service.registerRemotePec(pecId, callback);
-
-                // TODO(csilvestrini): Add particles and run arc.
-
+                // TODO: Parameters shouldn't be hardcoded here!
+                service.startArc(
+                    arcId,
+                    pecId,
+                    recipe,
+                    particle == null ? null : particle.getId(),
+                    particle == null ? null : particle.getName(),
+                    callback);
               } catch (RemoteException e) {
                 throw new RuntimeException(e);
               }
