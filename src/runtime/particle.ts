@@ -77,6 +77,7 @@ export class Particle {
   }
 
   async callSetHandles(handles: ReadonlyMap<string, Handle>, onException: Consumer<Error>) {
+    this.handles = handles;
     await this.invokeSafely(async p => p.setHandles(handles), onException);
   }
 
