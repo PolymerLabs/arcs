@@ -1,4 +1,4 @@
-load("//build_defs/kotlin-native:repo.bzl", "MACOS_DEPENDENCIES")
+load("//build_defs/kotlin-native:repo.bzl", "get_dependencies")
 
 KtNativeInfo = provider(
     doc = "The minimum info about a Kotlin/Native dependency",
@@ -11,7 +11,7 @@ def _common_args(ctx, klibs):
     args = ctx.actions.args()
 
     # Pass dependencies to wrapper script
-    args.add(",".join([x for x, _ in MACOS_DEPENDENCIES]))
+    args.add(",".join([x for x, _ in get_dependencies()]))
 
     # Arguments for kotlinc
     args.add_all([
