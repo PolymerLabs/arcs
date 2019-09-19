@@ -18,7 +18,7 @@ import {ArcHost} from '../../lib/components/arc-host.js';
 import {portIndustry} from './pec-port.js';
 import {Sharing} from './sharing.js';
 
-const id = 'ingestion-arc';
+const id = 'classic-ingestion-arc';
 const manifest = `import 'https://$particles/Pipes/Ingestion.arcs'`;
 
 const log = logFactory(id);
