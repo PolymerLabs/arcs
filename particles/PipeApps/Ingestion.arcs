@@ -1,12 +1,9 @@
 import './schemas/IncomingEntity.arcs'
+import './schemas/Person.arcs'
 
 schema Place
   Text name
   Text address
-
-schema Person
-  Text firstName
-  Text lastName
 
 schema Message
   Text message

@@ -21,10 +21,19 @@ defineParticle(({Particle}) => {
 
     onHandleSync(handle, model) {
       super.onHandleSync(handle, model);
-      if (handle.name !== 'request') {
+      if (handle.name === 'request') {
+        this.request = model;
+      }
+      if (handle.name == 'recentPeople') {
+        this.recentPeople = model;
+      }
+      this._addResponses();
+    }
+    _addResponses() {
+      if (!this.request || !this.recentPeople) {
         return;
       }
-      for (const request of model) {
+      for (const request of this.request) {
         this._addResponse(request);
       }
     }
@@ -40,10 +49,14 @@ defineParticle(({Particle}) => {
     }
 
     _addResponse(request) {
+      if (!this.recentPeople || this.recentPeople.length === 0) {
+        return;
+      }
       const responseHandle = this.handles.get('response');
       responseHandle.store(new responseHandle.entityClass({
         autofillId: request.autofillId,
-        suggestion: 'autofilled!!',
+        // TODO: use the apporpirate field for requested id
+        suggestion: `${this.recentPeople[0].firstName} ${this.recentPeople[0].lastName}`,
       }));
     }
   };
