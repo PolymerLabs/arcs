@@ -18,6 +18,7 @@ script:
 
 cache: npm
 
+# Thinking about adding steps to the install script? Why not modify the tools/setup script instead?
 install:
   - ./tools/setup
 
