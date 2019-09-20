@@ -14,11 +14,11 @@ import android.service.autofill.SaveRequest;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
 import arcs.android.client.RemotePec;
-import arcs.api.PortableJsonParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Demo implementation of an {@link AutofillService} for Arcs. This service retrieves Autofill
@@ -26,7 +26,7 @@ import javax.inject.Inject;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject RemotePec remotePec;
+  @Inject Provider<RemotePec> remotePecProvider;
   @Inject PortableJsonParser jsonParser;
 
   @Override
@@ -54,13 +54,14 @@ public class ArcsAutofillService extends AutofillService {
       return;
     }
 
-    Dataset.Builder dataset = new Dataset.Builder();
+    RemotePec remotePec = remotePecProvider.get();
 
-    AutofillParticle particle =
+    AutofillParticle autofillParticle =
         new AutofillParticle(
             jsonParser,
             node.get(),
             (autofillId, suggestion) -> {
+              Dataset.Builder dataset = new Dataset.Builder();
               dataset.setValue(
                   autofillId, AutofillValue.forText(suggestion), createRemoteView(suggestion));
 
@@ -68,18 +69,11 @@ public class ArcsAutofillService extends AutofillService {
                   new FillResponse.Builder().addDataset(dataset.build()).build();
 
               callback.onSuccess(fillResponse);
-              // TODO: Shutdown the RemotePec.
+              remotePec.shutdown();
             });
 
-    // Start up an Arcs remote PEC and arc with a particle.
-    // TODO: Generate Ids properly.
-    particle.setId("autofill-particle-id");
-    String pecId = "example-remote-pec";
-    remotePec.init(
-        String.format("arc-%s", pecId),
-        pecId,
-        "AndroidAutofill",
-        particle);
+    // Start up an Arcs remote PEC and arc with the autofill particle.
+    remotePec.runArc("AndroidAutofill", autofillParticle);
   }
 
   @Override

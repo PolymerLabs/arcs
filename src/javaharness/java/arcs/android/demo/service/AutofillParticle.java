@@ -8,6 +8,7 @@ import arcs.api.Handle;
 import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
+
 import java.util.Map;
 
 public class AutofillParticle extends ParticleBase {

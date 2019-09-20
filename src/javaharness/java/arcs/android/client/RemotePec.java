@@ -2,9 +2,11 @@ package arcs.android.client;
 
 import android.os.RemoteException;
 import arcs.android.api.IRemotePecCallback;
-import arcs.api.Particle;
+import arcs.api.Id;
+import arcs.api.IdGenerator;
 import arcs.api.PECInnerPort;
 import arcs.api.PECInnerPortFactory;
+import arcs.api.Particle;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
@@ -16,6 +18,8 @@ public class RemotePec {
   private final PortableJsonParser jsonParser;
 
   private PECInnerPort pecInnerPort;
+  private Id arcId;
+  private Id pecId;
 
   private final IRemotePecCallback callback =
       new IRemotePecCallback.Stub() {
@@ -27,22 +31,35 @@ public class RemotePec {
       };
 
   @Inject
-  RemotePec(ArcsServiceBridge bridge, PECInnerPortFactory pecInnerPortFactory,
+  RemotePec(
+      ArcsServiceBridge bridge,
+      PECInnerPortFactory pecInnerPortFactory,
       PortableJsonParser jsonParser) {
     this.bridge = bridge;
     this.pecInnerPortFactory = pecInnerPortFactory;
     this.jsonParser = jsonParser;
   }
 
-  public void init(String arcId, String pecId, String recipe, Particle particle) {
+  /**
+   * Starts a new arc running the given recipe. The given particle implementation is attached to
+   * that arc.
+   */
+  public void runArc(String recipe, Particle particle) {
     if (pecInnerPort != null) {
       throw new IllegalStateException("PEC has already been initialized.");
     }
 
-    pecInnerPort = pecInnerPortFactory.createPECInnerPort(pecId, /* sessionId= */ null);
-    if (particle != null) {
-      pecInnerPort.mapParticle(particle);
-    }
+    IdGenerator idGenerator = IdGenerator.newSession();
+    arcId = Id.newArcId();
+    pecId = idGenerator.newChildId(arcId, "pec");
+    Id particleId = idGenerator.newChildId(pecId, "particle");
+
+    particle.setId(particleId.toString());
+    particle.setJsonParser(jsonParser);
+
+    pecInnerPort =
+        pecInnerPortFactory.createPECInnerPort(pecId.toString(), idGenerator.getSessionId());
+    pecInnerPort.mapParticle(particle);
 
     bridge
         .connectToArcsService()
@@ -50,12 +67,37 @@ public class RemotePec {
             service -> {
               try {
                 service.startArc(
-                    arcId,
-                    pecId,
+                    arcId.toString(),
+                    pecId.toString(),
                     recipe,
-                    particle == null ? null : particle.getId(),
-                    particle == null ? null : particle.getName(),
+                    particle.getId(),
+                    particle.getName(),
                     callback);
+              } catch (RemoteException e) {
+                throw new RuntimeException(e);
+              }
+            });
+  }
+
+  /** Shuts down the running arc and remote PEC. */
+  public void shutdown() {
+    if (pecInnerPort == null) {
+      return;
+    }
+    pecInnerPort = null;
+
+    String arcId = this.arcId.toString();
+    this.arcId = null;
+
+    String pecId = this.pecId.toString();
+    this.pecId = null;
+
+    bridge
+        .connectToArcsService()
+        .thenAccept(
+            service -> {
+              try {
+                service.stopArc(arcId, pecId);
               } catch (RemoteException e) {
                 throw new RuntimeException(e);
               }

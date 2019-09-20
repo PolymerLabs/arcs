@@ -44,6 +44,10 @@ public class PecPortManager {
     }
   }
 
+  public void removePecPort(String pecId) {
+    ports.remove(pecId);
+  }
+
   private PECInnerPort createInnerPecPort(String pecId, String sessionId) {
     PECInnerPort pecInnerPort = portFactory.createPECInnerPort(pecId, sessionId);
     ports.put(pecId, pecInnerPort);
