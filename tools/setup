@@ -25,6 +25,14 @@ status() {
     echo "$MAG$1$END"
 }
 
+append_once() {
+  if grep -Fxq "$1" "$2"; then
+    status "Already updated."
+  else
+    echo "$1" >> "$2" || warn "Failed to update $2"
+  fi
+}
+
 # Detect Platform
 case $(uname | tr '[:upper:]' '[:lower:]') in
   linux*)
@@ -50,10 +58,10 @@ esac
 BAZEL_SCRIPT_NAME=$(basename "$BAZEL_DEP")
 
 status "0. Pre-requisites"
-if  "$OS_NAME" == "linux"; then
+if [ "$OS_NAME" = "linux" ]; then
   status "0.1 Installing pre-requisites for Bazel"
   sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3
-elif "$OS_NAME" == "osx"; then
+elif [ "$OS_NAME" = "osx" ]; then
   status "0.1. Checking for Command Line Tools"
   xcode-select --version || xcode-select --install || fail "Unable to install Command Line Tools"
 fi
@@ -63,12 +71,12 @@ curl -L -s -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/in
     fail "Failed to download nvm version $NVM_VERSION."
 
 status "1.1 ensure nvm is in your current process"
-. ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh
+# shellcheck disable=SC1090
+. ~/.nvm/nvm.sh
 
 status "2. Install node"
-pushd .
 cd $ROOT && nvm install && nvm use || fail 'Failed to install target node version.'
-popd
+cd -
 
 status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
