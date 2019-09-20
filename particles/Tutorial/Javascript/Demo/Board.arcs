@@ -2,7 +2,6 @@ import 'DemoSchemas.arcs'
 
 particle Board in './source/Board.js'
   in GameState gameState
-  in * {Number id2} currentPlayerId
   out Move humanMove
   consume cellSlot
     

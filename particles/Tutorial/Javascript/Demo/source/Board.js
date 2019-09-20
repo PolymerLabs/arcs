@@ -47,13 +47,29 @@ const template = html`
         <span>{{spot1}}</span>
       </button>
       <button class="butt" type="button" on-click="onClick" value=2>
+        <span>{{spot2}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=3>
+        <span>{{spot3}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=4>
+        <span>{{spot4}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=5>
+        <span>{{spot5}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=6>
+        <span>{{spot6}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=7>
+        <span>{{spot7}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=8>
+        <span>{{spot8}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=9>
+        <span>{{spot9}}</span>
+      </button>
   </div>
 `;
 
@@ -69,9 +85,19 @@ const template = html`
       }
       console.log(`gameState`, gameState);
       if (gameState) {
-        console.log(`spot1: ${spot1}`);
+        
         const arr = gameState.board.split(`,`);
-        this.setState({spot1: arr[0]});
+        return {
+          spot1: arr[0],
+          spot2: arr[1],
+          spot3: arr[2],
+          spot4: arr[3],
+          spot5: arr[4],
+          spot6: arr[5],
+          spot7: arr[6],
+          spot8: arr[7],
+          spot9: arr[8],
+        };
       }
       // if (gameState && cellState1 && cellState2 && cellState3 &&
       //                 cellState4 && cellState5 && cellState6 &&

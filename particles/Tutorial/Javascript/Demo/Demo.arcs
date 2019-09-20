@@ -16,7 +16,6 @@ particle Game in './source/Game.js'
   in GameState gameState
   in Move humanMove
   out Move move
-  out Person currentPlayer
 
 particle GetPlayer in './source/GetPerson.js'
   out Person playerOne
@@ -45,24 +44,22 @@ recipe
     consume playerSlot as getPlayer
   MoveApplier
     move <- move
-    gameState <-> gamestate
+    gameState <-> gameState
   Game
     gameState <- gameState
     playerOne <- playerOne
     playerTwo <- playerTwo
     humanMove <- humanMove
     move -> move
-    currentPlayer -> currentPlayer
   DisplayGreeting
     person <- playerOne
     consume greetingSlot as greeting
   Board
     gameState <- gameState
-    currentPlayerId <- currentPlayer
     humanMove -> humanMove
     consume cellSlot as board
   Congratulations
-    person <- currentPlayer
+    person <- playerOne
     gameState <- gameState
     consume congratulationsSlot as congratulations
   description `Javascript Tutorial Demo`

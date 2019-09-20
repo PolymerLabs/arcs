@@ -23,28 +23,29 @@ defineParticle(({DomParticle, log}) => {
     update({playerOne, playerTwo, gameState, humanMove}, {initialised}) {
       //TODO Make this not depend on gameState.
       if (playerOne && playerTwo && gameState && humanMove) {
-        if (gameState.gameOver) {
-          if (gameState.winnerId == playerOne.playerId) {
-            this.updateSingleton('currentPlayer', playerOne);
-            this.updateSingleton('currentPlayerId', {id2: playerOne.id2});
-          } else if (gameState.winnerId == playerOne.playerId) {
-            this.updateSingleton('currentPlayer', playerTwo);
-            this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
-          }
-        } else if (gameState.moves % 2 == 0) {
-          this.updateSingleton('currentPlayer', playerOne);
-          this.updateSingleton('currentPlayerId', {id2: playerOne.id2});
+        if (!gameState.gameOver) {
+        //   if (gameState.winnerId == playerOne.playerId) {
+        //     this.updateSingleton('currentPlayer', playerOne);
+        //     this.updateSingleton('currentPlayerId', {id2: playerOne.id2});
+        //   } else if (gameState.winnerId == playerOne.playerId) {
+        //     this.updateSingleton('currentPlayer', playerTwo);
+        //     this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
+        //   }
+        // } else if (gameState.moves % 2 == 0) {
+          if (gameState.moves % 2 == 0) {
+          // this.updateSingleton('currentPlayer', playerOne);
+          // this.updateSingleton('currentPlayerId', {id2: playerOne.id2});
+          this.updateSingleton('move', {move: humanMove.move, playerAvatar: playerOne.avatar});
         } else {
-          this.updateSingleton('currentPlayer', playerTwo);
-          this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
+          this.updateSingleton('move', {move: humanMove.move, playerAvatar: playerTwo.avatar});
+          // this.updateSingleton('currentPlayer', playerTwo);
+          // this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
         }
 
         
-      }
-      if (humanMove) {
-        this.updateSingleton('move', {move: humanMove.move, playerId: 0});
-      }
+      } 
     }
-  };
+  }
+};
 });
 

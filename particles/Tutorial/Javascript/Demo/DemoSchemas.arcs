@@ -6,9 +6,9 @@ schema Person
 schema GameState
   Boolean gameOver
   Number moves
-  Number winnerId
+  Text winnerAvatar
   Text board
 
 schema Move 
-  Number playerId
+  Text playerAvatar
   Text move
