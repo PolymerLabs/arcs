@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Web based ArcsEnvironment using ShellApi. The Android version of this will different only in not
  * needing to use the ShellApi + Web runtime.
  */
+@Singleton
 public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
 
   private static final Logger logger = Logger.getLogger(ShellApiBasedArcsEnvironment.class.getName());

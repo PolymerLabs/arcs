@@ -6,8 +6,8 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
-import android.webkit.WebView;
 import android.webkit.WebSettings;
+import android.webkit.WebView;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.HarnessController;
@@ -27,6 +27,7 @@ public class ArcsService extends Service {
   private static final String TAG = "Arcs";
 
   private WebView arcsWebView;
+  private boolean arcsReady;
 
   @Inject HarnessController harnessController;
   @Inject ShellApiBasedArcsEnvironment shellEnvironment;
@@ -51,6 +52,8 @@ public class ArcsService extends Service {
         .build()
         .inject(this);
 
+    shellEnvironment.addReadyListener(recipes -> arcsReady = true);
+
     harnessController.init();
   }
 
@@ -71,7 +74,7 @@ public class ArcsService extends Service {
           String particleId,
           String particleName,
           IRemotePecCallback callback) {
-      RemotePecPort remotePecPort =
+        RemotePecPort remotePecPort =
             new RemotePecPort(
                 message -> {
                   try {
@@ -83,17 +86,17 @@ public class ArcsService extends Service {
                 jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
         // TODO: Use startArc method instead - should be factored out of DeviceClient.
-        PortableJson request = jsonParser.emptyObject()
-            .put("message", "runArc")
-            .put("arcId", arcId)
-            .put("pecId", pecId)
-            .put("recipe", recipe);
+        PortableJson request =
+            jsonParser
+                .emptyObject()
+                .put("message", "runArc")
+                .put("arcId", arcId)
+                .put("pecId", pecId)
+                .put("recipe", recipe);
         if (particleId != null) {
-          request
-              .put("particleId", particleId)
-              .put("particleName", particleName);
+          request.put("particleId", particleId).put("particleName", particleName);
         }
-        shellEnvironment.sendMessageToArcs(jsonParser.stringify(request), null);
+        runWhenReady(() -> shellEnvironment.sendMessageToArcs(jsonParser.stringify(request), null));
       }
 
       @Override
@@ -101,5 +104,13 @@ public class ArcsService extends Service {
         // TODO(csilvestrini): Implement
       }
     };
+  }
+
+  private void runWhenReady(Runnable runnable) {
+    if (arcsReady) {
+      runnable.run();
+    } else {
+      shellEnvironment.addReadyListener(recipes -> runnable.run());
+    }
   }
 }
