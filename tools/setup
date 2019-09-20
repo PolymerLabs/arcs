@@ -85,7 +85,7 @@ status "4. Install dependencies"
 (cd $ROOT && npm ci && npm --prefix=server ci) || fail 'Failed to install dependencies.'
 
 status "4.1. Install sigh dependencies"
-(cd $ROOT && ./tools/sigh install) || fail 'Failed to install sigh dependencies.'
+(cd $ROOT && ./tools/sigh install chokidar) || fail 'Failed to install sigh dependencies.'
 
 status "5. Install Bazel"
 
