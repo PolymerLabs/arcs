@@ -82,7 +82,7 @@ status "5.1. Downloading install script"
 curl -O -L "$BAZEL_DEP" || fail "Failed to download Bazel binary"
 
 status "5.2. Running install script"
-(chmod +x $BAZEL_PKG_NAME && set -x && ( . $BAZEL_PKG_NAME --user || source $BAZEL_PKG_NAME --user)) \
+(chmod +x $BAZEL_PKG_NAME && ( . $BAZEL_PKG_NAME --user || source $BAZEL_PKG_NAME --user)) \
  || fail "Failed to install Bazel"
 echo 'export PATH="$PATH:$HOME/bin"'  >> ~/.profile || warn 'Failed to add "$HOME/bin" to $PATH'
 
