@@ -47,7 +47,7 @@ case $(uname | tr '[:upper:]' '[:lower:]') in
     ;;
 esac
 
-BAZEL_PKG_NAME=$(basename "$BAZEL_DEP")
+BAZEL_SCRIPT_NAME=$(basename "$BAZEL_DEP")
 
 status "0. Pre-requisites"
 if [ "$OS_NAME" == "linux" ]; then
@@ -85,12 +85,12 @@ status "5.1. Downloading install script"
 curl -O -L "$BAZEL_DEP" || fail "Failed to download Bazel binary"
 
 status "5.2. Running install script"
-(chmod +x $BAZEL_PKG_NAME && ( . $BAZEL_PKG_NAME --user || source $BAZEL_PKG_NAME --user)) \
+(chmod +x $BAZEL_SCRIPT_NAME && ( . $BAZEL_SCRIPT_NAME --user || source $BAZEL_SCRIPT_NAME --user)) \
  || fail "Failed to install Bazel"
 echo 'export PATH="$PATH:$HOME/bin"'  >> ~/.profile || warn 'Failed to add "$HOME/bin" to $PATH'
 
 status "5.3. Clean up"
-rm "$BAZEL_PKG_NAME"
+rm "$BAZEL_SCRIPT_NAME"
 
 status "5.4. Set up the .bazelrc file"
 (cd $ROOT && echo "build --define=repo_root=$(pwd)" >> .bazelrc)
