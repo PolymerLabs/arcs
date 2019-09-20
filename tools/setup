@@ -50,16 +50,16 @@ esac
 BAZEL_SCRIPT_NAME=$(basename "$BAZEL_DEP")
 
 status "0. Pre-requisites"
-if [ "$OS_NAME" == "linux" ]; then
+if  "$OS_NAME" == "linux"; then
   status "0.1 Installing pre-requisites for Bazel"
   sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3
-elif [ "$OS_NAME" == "osx" ]; then
+elif "$OS_NAME" == "osx"; then
   status "0.1. Checking for Command Line Tools"
   xcode-select --version || xcode-select --install || fail "Unable to install Command Line Tools"
 fi
 
 status "1. Install nvm"
-curl -L -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
+curl -L -s -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
     fail "Failed to download nvm version $NVM_VERSION."
 
 status "1.1 ensure nvm is in your current process"
@@ -82,8 +82,8 @@ status "4.1. Install sigh dependencies"
 status "5. Install Bazel"
 
 status "5.1. Downloading install script"
-curl -O -L "$BAZEL_DEP" || fail "Failed to download Bazel binary"
-
+curl -O -L -s "$BAZEL_DEP" --output "$BAZEL_SCRIPT_NAME" || fail "Failed to download Bazel binary"
+ls
 status "5.2. Running install script"
 (chmod +x $BAZEL_SCRIPT_NAME && ( . $BAZEL_SCRIPT_NAME --user || source $BAZEL_SCRIPT_NAME --user)) \
  || fail "Failed to install Bazel"
