@@ -10,7 +10,6 @@ GRN="\033[92m"
 MAG="\033[95m"
 BLD="\033[1m"
 END="\033[0m"
-
 CMD="$BLD$YLW"
 
 warn() {
@@ -39,6 +38,8 @@ case $(uname | tr '[:upper:]' '[:lower:]') in
   msys*)
     OS_NAME=windows
     BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-windows-x86_64.exe"
+    # TODO(alxr) investigate windows compatability
+    fail "Windows is currently unsupported. Please follow install instructions in the README."
     ;;
   *)
     OS_NAME=notset
@@ -65,7 +66,9 @@ status "1.1 ensure nvm is in your current process"
 . ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh
 
 status "2. Install node"
-(cd $ROOT && nvm install && nvm use) || fail 'Failed to install target node version.'
+pushd .
+cd $ROOT && nvm install && nvm use || fail 'Failed to install target node version.'
+popd
 
 status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
