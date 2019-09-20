@@ -6,8 +6,8 @@ Our C++ code is built by Bazel. You will need to install Bazel, and use it to
 build and run the wasm code/tests (everything under `src/wasm/`).
 
 1. **Installing Bazel:** run the `tools/setup` script to install Bazel on Linux
-   (or otherwise look at that script to see which version of Bazel to download
-   and how to set it up).
+   and MacOS (or otherwise look at that script to see which version of Bazel to 
+   download and how to set it up).
 
 ## Build
 

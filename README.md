@@ -43,7 +43,7 @@ requiring an upgrade to our current version.
    $ ./tools/setup
    ```
 
-2) That's it! (You can skip the next two sections.)
+2) That's it! (You can skip the next section.)
 
 
 ### Installing from scratch
