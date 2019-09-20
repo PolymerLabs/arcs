@@ -20,7 +20,6 @@ cache: npm
 
 install:
   - ./tools/setup
-  - npm run sigh-install chokidar
 
 
 before_deploy:
