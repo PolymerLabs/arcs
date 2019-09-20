@@ -29,7 +29,7 @@ status() {
 case $(uname | tr '[:upper:]' '[:lower:]') in
   linux*)
     OS_NAME=linux
-    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel_$BAZEL_VERSION-installer-linux-x86_64.sh"
+    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh"
     ;;
   darwin*)
     OS_NAME=osx
