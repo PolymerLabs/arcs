@@ -17,6 +17,7 @@ def _run_schema2pkg(name, src, out, language_name, language_flag, file_extension
         name = name,
         srcs = [src],
         outs = [out],
+        deps = ["//src/tools:schema2pkg_srcs"],
         # TODO: generated header guard should contain whole workspace-relative
         # path to file.
         cmd = "./tools/sigh schema2pkg " +
