@@ -43,7 +43,7 @@ case $(uname | tr '[:upper:]' '[:lower:]') in
     ;;
   *)
     OS_NAME=notset
-    warn "Can't detect host OS"
+    fail "Can't detect host OS"
     ;;
 esac
 
