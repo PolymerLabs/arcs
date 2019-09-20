@@ -2,9 +2,9 @@ package arcs.android.client;
 
 import android.os.RemoteException;
 import arcs.android.api.IRemotePecCallback;
-import arcs.api.Particle;
 import arcs.api.PECInnerPort;
 import arcs.api.PECInnerPortFactory;
+import arcs.api.Particle;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
@@ -34,7 +34,7 @@ public class RemotePec {
     this.jsonParser = jsonParser;
   }
 
-  public void init(String arcId, String pecId, String recipe, Particle particle) {
+  public void init(String pecId, String arcId, String recipe, Particle particle) {
     if (pecInnerPort != null) {
       throw new IllegalStateException("PEC has already been initialized.");
     }

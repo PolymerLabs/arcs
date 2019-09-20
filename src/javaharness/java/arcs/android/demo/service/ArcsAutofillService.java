@@ -13,8 +13,7 @@ import android.service.autofill.SaveCallback;
 import android.service.autofill.SaveRequest;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
-import arcs.android.client.RemotePec;
-import arcs.api.PortableJsonParser;
+import arcs.android.client.ArcsExecutor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,8 +25,7 @@ import javax.inject.Inject;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject RemotePec remotePec;
-  @Inject PortableJsonParser jsonParser;
+  @Inject ArcsExecutor arcsExecutor;
 
   @Override
   public void onCreate() {
@@ -54,13 +52,11 @@ public class ArcsAutofillService extends AutofillService {
       return;
     }
 
-    Dataset.Builder dataset = new Dataset.Builder();
-
-    AutofillParticle particle =
+    AutofillParticle autofillParticle =
         new AutofillParticle(
-            jsonParser,
             node.get(),
             (autofillId, suggestion) -> {
+              Dataset.Builder dataset = new Dataset.Builder();
               dataset.setValue(
                   autofillId, AutofillValue.forText(suggestion), createRemoteView(suggestion));
 
@@ -68,18 +64,11 @@ public class ArcsAutofillService extends AutofillService {
                   new FillResponse.Builder().addDataset(dataset.build()).build();
 
               callback.onSuccess(fillResponse);
-              // TODO: Shutdown the RemotePec.
+              // TODO: Shutdown the Arc and PEC.
             });
 
-    // Start up an Arcs remote PEC and arc with a particle.
-    // TODO: Generate Ids properly.
-    particle.setId("autofill-particle-id");
-    String pecId = "example-remote-pec";
-    remotePec.init(
-        String.format("arc-%s", pecId),
-        pecId,
-        "AndroidAutofill",
-        particle);
+    // Start up an Arcs remote PEC and arc with the autofill particle.
+    arcsExecutor.runArc("AndroidAutofill", autofillParticle);
   }
 
   @Override
