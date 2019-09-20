@@ -247,7 +247,9 @@ export class UiSlotComposer {
       Object.assign(content, {
         particle,
         slotMap,
-        outputSlotId: particle.id.toString()
+        outputSlotId: particle.id.toString(),
+        // TODO: Remove this temporary hack, once android provided slot id is populated in recipe.
+        arcId: arc.id.idTreeAsString()
       });
       //
       //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');

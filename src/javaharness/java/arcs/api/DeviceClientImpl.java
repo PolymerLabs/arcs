@@ -55,7 +55,7 @@ public class DeviceClientImpl implements DeviceClient {
         break;
       case MESSAGE_OUTPUT:
         if (!uiBroker.render(content)) {
-          logger.warning("Skipped rendering content for " + content.getString("containerSlotName"));
+          logger.warning("Skipped rendering content for " + content.getObject("data").getString("containerSlotName"));
         }
         break;
       default:

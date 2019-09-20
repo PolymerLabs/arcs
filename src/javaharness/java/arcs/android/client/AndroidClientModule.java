@@ -3,6 +3,7 @@ package arcs.android.client;
 import arcs.android.impl.AndroidCommonModule;
 import arcs.api.ArcsEnvironment;
 import arcs.api.ParticleFactory;
+import arcs.api.UiBroker;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -26,4 +27,8 @@ public abstract class AndroidClientModule {
   static Set<ParticleFactory> provideParticleFactories() {
     return new HashSet<>();
   }
+
+  @Binds
+  @Singleton
+  public abstract UiBroker provideUiBroker(AndroidUiBroker impl);
 }

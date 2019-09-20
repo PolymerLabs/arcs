@@ -3,4 +3,4 @@ schema Person
   Text lastName
   Text password
   Text phone
-  Text address
+  Text postalAddress
