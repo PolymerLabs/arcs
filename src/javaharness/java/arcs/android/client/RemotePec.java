@@ -40,16 +40,15 @@ public class RemotePec {
     }
 
     pecInnerPort = pecInnerPortFactory.createPECInnerPort(pecId, /* sessionId= */ null);
+    if (particle != null) {
+      pecInnerPort.mapParticle(particle);
+    }
 
     bridge
         .connectToArcsService()
         .thenAccept(
             service -> {
               try {
-                if (particle != null) {
-                  pecInnerPort.mapParticle(particle);
-                }
-                // TODO: Parameters shouldn't be hardcoded here!
                 service.startArc(
                     arcId,
                     pecId,

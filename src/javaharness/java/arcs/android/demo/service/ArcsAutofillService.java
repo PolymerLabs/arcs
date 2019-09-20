@@ -50,7 +50,6 @@ public class ArcsAutofillService extends AutofillService {
     Dataset.Builder dataset = new Dataset.Builder();
     numSuggestionsPending = nodes.size();
 
-    // TODO(csilvestrini): Hook up this particle to the RemotePec, and start up the Arc.
     AutofillParticle particle =
         new AutofillParticle(
             jsonParser,

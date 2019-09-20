@@ -14,11 +14,6 @@
 // response.
 defineParticle(({Particle}) => {
   return class DummyAutofillResponder extends Particle {
-    setHandles(handles) {
-      super.setHandles(handles);
-      this.handles = handles;
-    }
-
     onHandleSync(handle, model) {
       super.onHandleSync(handle, model);
       if (handle.name === 'request') {

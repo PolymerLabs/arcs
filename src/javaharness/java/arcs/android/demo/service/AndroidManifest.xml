@@ -5,12 +5,9 @@
     android:minSdkVersion="29"
     android:targetSdkVersion="29"/>
 
-  <!-- Uncomment this to view Arcs in devtools extension. -->
   <uses-permission android:name="android.permission.INTERNET"/>
 
-  <!-- application -->
-  <!-- Uncomment this to view Arcs in devtools extension. -->
-  <application android:usesCleartextTraffic="true">
+  <application>
     <service
         android:name=".ArcsService"
         android:exported="false"/>

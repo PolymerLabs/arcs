@@ -34,7 +34,6 @@ public class AndroidShellApiImpl implements ShellApi {
                       script,
                       (String tid) -> {
                         // TODO: deprecated tid callback.
-                        // Log.e("Arcs", "Shell replied " + tid);
                       }));
     } else {
       Log.e("Arcs", "webView is null");

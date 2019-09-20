@@ -25,7 +25,6 @@ class PecPort extends MessagePort {
       msg['sessionId'] = this.sessionId;
       this.sessionId = null;
     }
-    console.log(`Posting on port ${this.pecId.toString()} message  ${msg['messageType']}`);
     this.bus.send({message: 'pec', data: msg});
   }
   set onmessage(callback) {
