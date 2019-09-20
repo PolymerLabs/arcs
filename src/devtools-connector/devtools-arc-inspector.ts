@@ -40,6 +40,7 @@ class DevtoolsArcInspector implements ArcInspector {
   private arcDevtoolsChannel: DevtoolsChannel = null;
   private onceActiveResolve: Runnable|null = null;
   private storesFetcher: ArcStoresFetcher;
+  private hotCodeReloader: HotCodeReloader;
   public onceActive: Promise<void>|null = null;
 
   constructor(arc: Arc) {
@@ -63,7 +64,7 @@ class DevtoolsArcInspector implements ArcInspector {
       this.storesFetcher = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
 
       const unused1 = new ArcPlannerInvoker(arc, this.arcDevtoolsChannel);
-      const unused2 = new HotCodeReloader(arc, this.arcDevtoolsChannel);
+      this.hotCodeReloader = new HotCodeReloader(arc, this.arcDevtoolsChannel);
 
       this.arcDevtoolsChannel.send({
         messageType: 'arc-available',
@@ -99,18 +100,7 @@ class DevtoolsArcInspector implements ArcInspector {
       messageBody: {slotConnections, activeRecipe}
     });
 
-    if (!this.arc.isSpeculative) this.updateParticleSet(particles);
-  }
-
-  private updateParticleSet(particles: Particle[]) {
-    const particleSources = [];
-    particles.forEach(particle => {
-      particleSources.push(particle.spec.implFile);
-    });
-    this.arcDevtoolsChannel.send({
-      messageType: 'watch-particle-sources',
-      messageBody: particleSources
-    });
+    if (!this.arc.isSpeculative) this.hotCodeReloader.updateParticleSet(particles);
   }
 
   public pecMessage(name: string, pecMsgBody: object, pecMsgCount: number, stackString: string) {
