@@ -18,6 +18,6 @@ interface IArcsService {
       String particleName,
       IRemotePecCallback callback);
 
-  void stopArc(String arcId);
+  void stopArc(String arcId, String pecId);
 }
 

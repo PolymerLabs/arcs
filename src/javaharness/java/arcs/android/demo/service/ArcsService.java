@@ -97,8 +97,10 @@ public class ArcsService extends Service {
       }
 
       @Override
-      public void stopArc(String arcId) {
-        // TODO(csilvestrini): Implement
+      public void stopArc(String arcId, String pecId) {
+        // TODO: Stop the running arc once the Arcs Runtime supports that.
+
+        pecPortManager.removePecPort(pecId);
       }
     };
   }
