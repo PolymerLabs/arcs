@@ -103,19 +103,6 @@ private:
   std::vector<std::string> parts_;
 };
 
-// Serialization methods for transporting data across the wasm boundary.
-// Schema-specific implementations will be generated for these.
-template<typename T>
-void decode_entity(T* entity, const char* str) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of decode_entity can be used");
-}
-
-template<typename T>
-std::string encode_entity(const T& entity) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of encode_entity can be used");
-  return "";
-}
-
 // Hash combining borrowed from Boost.
 template<typename T>
 void hash_combine(std::size_t& seed, const T& v) {
@@ -127,9 +114,52 @@ void hash_combine(std::size_t& seed, const T& v) {
   seed ^= std::hash<T>()(v) + magic + (seed << 6) + (seed >> 2);
 }
 
-class TestHelper {
+// Various bits of code need private access to the generated entity classes. Wrapping them as
+// static methods in a class simplifies things: it only requires a single friend directive, and
+// allows partial specialization where standalone template functions do not.
+template<typename T>
+class Accessor {
 public:
-  template<typename T>
+  // -- Generated entity class functions --
+  // These are exposed to particle implementations via the entity helpers defined below.
+
+  static T clone_entity(const T& entity) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of clone_entity can be used");
+    return entity;
+  }
+
+  static size_t hash_entity(const T& entity) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of hash_entity can be used");
+    return 0;
+  }
+
+  static bool fields_equal(const T& a, const T& b) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of fields_equal can be used");
+    return false;
+  }
+
+  static std::string entity_to_str(const T& entity, const char* join) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
+    return "";
+  }
+
+  // -- Data transport methods --
+
+  static void decode_entity(T* entity, const char* str) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of decode_entity can be used");
+  }
+
+  static std::string encode_entity(const T& entity) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of encode_entity can be used");
+    return "";
+  }
+
+  // -- Test methods --
+
+  static const std::string& get_id(const T& entity) {
+    return entity._internal_id_;
+  }
+
   static void set_id(T* entity, const std::string& id) {
     entity->_internal_id_ = id;
   }
@@ -158,21 +188,25 @@ public:
 // Copies the schema-based data fields; does not copy the internal id.
 template<typename T>
 T clone_entity(const T& entity) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of clone_entity can be used");
+  return internal::Accessor<T>::clone_entity(entity);
+}
+
+// Generates a hash for all fields (including the internal id).
+template<typename T>
+size_t hash_entity(const T& entity) {
+  return internal::Accessor<T>::hash_entity(entity);
 }
 
 // Returns whether two entities have the same data fields set (does not compare internal ids).
 template<typename T>
 bool fields_equal(const T& a, const T& b) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of fields_equal can be used");
-  return false;
+  return internal::Accessor<T>::fields_equal(a, b);
 }
 
 // Converts an entity to a string. Unset fields are omitted.
 template<typename T>
 std::string entity_to_str(const T& entity, const char* join = ", ") {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
-  return "";
+  return internal::Accessor<T>::entity_to_str(entity, join);
 }
 
 // Strips trailing zeros, and the decimal point for integer values.
@@ -210,7 +244,7 @@ public:
   void sync(const char* model) override {
     failForDirection(Out);
     entity_ = T();
-    internal::decode_entity(&entity_, model);
+    internal::Accessor<T>::decode_entity(&entity_, model);
   }
 
   void update(const char* model, const char* ignored) override {
@@ -226,7 +260,7 @@ public:
   // the given entity with it. The data fields will not be modified.
   void set(T* entity) {
     failForDirection(In);
-    std::string encoded = internal::encode_entity(*entity);
+    std::string encoded = internal::Accessor<T>::encode_entity(*entity);
     const char* id = internal::singletonSet(particle_, this, encoded.c_str());
     if (id != nullptr) {
       entity->_internal_id_ = id;
@@ -286,7 +320,7 @@ public:
     internal::StringDecoder::decodeList(removed, [this](const std::string& str) {
       // TODO: just get the id, no need to decode the full entity
       T entity;
-      internal::decode_entity(&entity, str.c_str());
+      internal::Accessor<T>::decode_entity(&entity, str.c_str());
       entities_.erase(entity._internal_id_);
     });
   }
@@ -315,7 +349,7 @@ public:
   // the given entity with it. The data fields will not be modified.
   void store(T* entity) {
     failForDirection(In);
-    std::string encoded = internal::encode_entity(*entity);
+    std::string encoded = internal::Accessor<T>::encode_entity(*entity);
     const char* id = internal::collectionStore(particle_, this, encoded.c_str());
     if (id != nullptr) {
       entity->_internal_id_ = id;
@@ -329,7 +363,7 @@ public:
 
   void remove(const T& entity) {
     failForDirection(In);
-    std::string encoded = internal::encode_entity(entity);
+    std::string encoded = internal::Accessor<T>::encode_entity(entity);
     internal::collectionRemove(particle_, this, encoded.c_str());
     if (dir_ == InOut) {
       entities_.erase(entity._internal_id_);
@@ -349,7 +383,7 @@ private:
     failForDirection(Out);
     internal::StringDecoder::decodeList(added, [this](const std::string& str) {
       std::unique_ptr<T> eptr(new T());
-      internal::decode_entity(eptr.get(), str.c_str());
+      internal::Accessor<T>::decode_entity(eptr.get(), str.c_str());
       entities_.erase(eptr->_internal_id_);  // emplace doesn't overwrite
       entities_.emplace(eptr->_internal_id_, std::move(eptr));
     });

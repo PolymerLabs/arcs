@@ -10,8 +10,8 @@ arcs_cc_schema(
 cc_wasm_binary(
     name = "test-module",
     srcs = [
-        "entity-class.cc",
-        "particle-api.cc",
+        "entity-class-test.cc",
+        "particle-api-test.cc",
     ],
     hdrs = ["entities.h"],
     deps = ["//src/wasm/cpp:arcs"],
@@ -19,7 +19,7 @@ cc_wasm_binary(
 
 cc_wasm_binary(
     name = "schemaless",
-    srcs = ["schemaless.cc"],
+    srcs = ["schemaless-test.cc"],
     deps = ["//src/wasm/cpp:arcs"],
 )
 

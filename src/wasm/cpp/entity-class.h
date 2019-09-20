@@ -48,33 +48,30 @@ public:
   friend bool operator<(const Data& a, const Data& b) {
     int cmp = a._internal_id_.compare(b._internal_id_);
     if (cmp != 0) return cmp < 0;
-    if (a.has_num() != b.has_num()) {
-      return !a.has_num();
-    } else if (a.num() != b.num()) {
-      return a.num() < b.num();
+    if (a.num_valid_ != b.num_valid_) {
+      return !a.num_valid_;
+    } else if (a.num_ != b.num_) {
+      return a.num_ < b.num_;
     }
-    if (a.has_txt() != b.has_txt()) {
-      return !a.has_txt();
+    if (a.txt_valid_ != b.txt_valid_) {
+      return !a.txt_valid_;
     } else {
-      cmp = a.txt().compare(b.txt());
+      cmp = a.txt_.compare(b.txt_);
       if (cmp != 0) return cmp < 0;
     }
-    if (a.has_lnk() != b.has_lnk()) {
-      return !a.has_lnk();
+    if (a.lnk_valid_ != b.lnk_valid_) {
+      return !a.lnk_valid_;
     } else {
-      cmp = a.lnk().compare(b.lnk());
+      cmp = a.lnk_.compare(b.lnk_);
       if (cmp != 0) return cmp < 0;
     }
-    if (a.has_flg() != b.has_flg()) {
-      return !a.has_flg();
-    } else if (a.flg() != b.flg()) {
-      return a.flg() < b.flg();
+    if (a.flg_valid_ != b.flg_valid_) {
+      return !a.flg_valid_;
+    } else if (a.flg_ != b.flg_) {
+      return a.flg_ < b.flg_;
     };
     return false;
   }
-
-  // For internal use, testing and debugging; do not use this value for any production purpose.
-  const std::string& _internal_id() const { return _internal_id_; }
 
 private:
   // Allow private copying for use in Handles.
@@ -98,13 +95,11 @@ private:
 
   friend class Singleton<Data>;
   friend class Collection<Data>;
-  friend Data clone_entity<Data>(const Data& entity);
-  friend void internal::decode_entity<Data>(Data* entity, const char* str);
-  friend class internal::TestHelper;
+  friend class internal::Accessor<Data>;
 };
 
 template<>
-inline Data clone_entity(const Data& entity) {
+inline Data internal::Accessor<Data>::clone_entity(const Data& entity) {
   Data clone;
   clone.num_ = entity.num_;
   clone.num_valid_ = entity.num_valid_;
@@ -118,11 +113,26 @@ inline Data clone_entity(const Data& entity) {
 }
 
 template<>
-inline bool fields_equal(const Data& a, const Data& b) {
-  return (a.has_num() ? (b.has_num() && a.num() == b.num()) : !b.has_num()) &&
-         (a.has_txt() ? (b.has_txt() && a.txt() == b.txt()) : !b.has_txt()) &&
-         (a.has_lnk() ? (b.has_lnk() && a.lnk() == b.lnk()) : !b.has_lnk()) &&
-         (a.has_flg() ? (b.has_flg() && a.flg() == b.flg()) : !b.has_flg());
+inline size_t internal::Accessor<Data>::hash_entity(const Data& entity) {
+  size_t h = 0;
+  internal::hash_combine(h, entity._internal_id_);
+  if (entity.num_valid_)
+    internal::hash_combine(h, entity.num_);
+  if (entity.txt_valid_)
+    internal::hash_combine(h, entity.txt_);
+  if (entity.lnk_valid_)
+    internal::hash_combine(h, entity.lnk_);
+  if (entity.flg_valid_)
+    internal::hash_combine(h, entity.flg_);
+  return h;
+}
+
+template<>
+inline bool internal::Accessor<Data>::fields_equal(const Data& a, const Data& b) {
+  return (a.num_valid_ ? (b.num_valid_ && a.num_ == b.num_) : !b.num_valid_) &&
+         (a.txt_valid_ ? (b.txt_valid_ && a.txt_ == b.txt_) : !b.txt_valid_) &&
+         (a.lnk_valid_ ? (b.lnk_valid_ && a.lnk_ == b.lnk_) : !b.lnk_valid_) &&
+         (a.flg_valid_ ? (b.flg_valid_ && a.flg_ == b.flg_) : !b.flg_valid_);
 }
 
 inline bool Data::operator==(const Data& other) const {
@@ -130,22 +140,22 @@ inline bool Data::operator==(const Data& other) const {
 }
 
 template<>
-inline std::string entity_to_str(const Data& entity, const char* join) {
+inline std::string internal::Accessor<Data>::entity_to_str(const Data& entity, const char* join) {
   internal::StringPrinter printer;
-  printer.addId(entity._internal_id());
-  if (entity.has_num())
-    printer.add("num: ", entity.num());
-  if (entity.has_txt())
-    printer.add("txt: ", entity.txt());
-  if (entity.has_lnk())
-    printer.add("lnk: ", entity.lnk());
-  if (entity.has_flg())
-    printer.add("flg: ", entity.flg());
+  printer.addId(entity._internal_id_);
+  if (entity.num_valid_)
+    printer.add("num: ", entity.num_);
+  if (entity.txt_valid_)
+    printer.add("txt: ", entity.txt_);
+  if (entity.lnk_valid_)
+    printer.add("lnk: ", entity.lnk_);
+  if (entity.flg_valid_)
+    printer.add("flg: ", entity.flg_);
   return printer.result(join);
 }
 
 template<>
-inline void internal::decode_entity(Data* entity, const char* str) {
+inline void internal::Accessor<Data>::decode_entity(Data* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
@@ -175,17 +185,17 @@ inline void internal::decode_entity(Data* entity, const char* str) {
 }
 
 template<>
-inline std::string internal::encode_entity(const Data& entity) {
+inline std::string internal::Accessor<Data>::encode_entity(const Data& entity) {
   internal::StringEncoder encoder;
-  encoder.encode("", entity._internal_id());
-  if (entity.has_num())
-    encoder.encode("num:N", entity.num());
-  if (entity.has_txt())
-    encoder.encode("txt:T", entity.txt());
-  if (entity.has_lnk())
-    encoder.encode("lnk:U", entity.lnk());
-  if (entity.has_flg())
-    encoder.encode("flg:B", entity.flg());
+  encoder.encode("", entity._internal_id_);
+  if (entity.num_valid_)
+    encoder.encode("num:N", entity.num_);
+  if (entity.txt_valid_)
+    encoder.encode("txt:T", entity.txt_);
+  if (entity.lnk_valid_)
+    encoder.encode("lnk:U", entity.lnk_);
+  if (entity.flg_valid_)
+    encoder.encode("flg:B", entity.flg_);
   return encoder.result();
 }
 
@@ -195,17 +205,7 @@ inline std::string internal::encode_entity(const Data& entity) {
 template<>
 struct std::hash<arcs::Data> {
   size_t operator()(const arcs::Data& entity) const {
-    size_t h = 0;
-    arcs::internal::hash_combine(h, entity._internal_id());
-    if (entity.has_num())
-      arcs::internal::hash_combine(h, entity.num());
-    if (entity.has_txt())
-      arcs::internal::hash_combine(h, entity.txt());
-    if (entity.has_lnk())
-      arcs::internal::hash_combine(h, entity.lnk());
-    if (entity.has_flg())
-      arcs::internal::hash_combine(h, entity.flg());
-    return h;
+    return arcs::hash_entity(entity);
   }
 };
 
