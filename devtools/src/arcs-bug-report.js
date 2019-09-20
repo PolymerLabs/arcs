@@ -10,12 +10,7 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 import {MessengerMixin} from './arcs-shared.js';
-<<<<<<< HEAD
 import '../deps/jszip/dist/jszip.js';
-=======
-import '../node_modules/jszip/dist/jszip.js';
-import '../node_modules/file-saver/dist/FileSaver.js';
->>>>>>> Add zip and download.
 
 /**
  * Saves/loads a bug report which contains debug messages sent to devtools.
@@ -30,12 +25,8 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
       }
     </style>
     <div class="wrapper">
-<<<<<<< HEAD
-      <input type="file" id="fileElem" style="display:none" onchange="_loadBugReport(this.files)">
-      <button id="fileSelect">Select some files</button>
-=======
-      <button type="button" on-click="_loadBugReport">Load Bug Report</button>
->>>>>>> Add zip and download.
+      <input type="file" id="fileElem" style="display:none" on-change="_loadBugReport">
+      <button id="fileSelect">Load Bug Report</button>
       <button type="button" on-click="_saveBugReport">Save Bug Report</button>
     </div>`;
   }
@@ -45,16 +36,16 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
   constructor() {
     super();
     this.messages = [];
-<<<<<<< HEAD
+  }
 
+  ready() {
+    super.ready();
     const fileElem = this.$.fileElem;
     this.$.fileSelect.addEventListener("click", function (e) {
       if (fileElem) {
         fileElem.click();
       }
     }, false);
-=======
->>>>>>> Add zip and download.
   }
 
   onRawMessageBundle(messages) {
@@ -62,28 +53,35 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
   }
 
   _saveBugReport() {
-    console.log("save here");
-
     var zip = new JSZip();
     var file = zip.file("bugreport.txt", JSON.stringify(this.messages));
     file.generateAsync({ type: "blob" })
       .then(function (blob) {
-        saveAs(blob, "bugreport.zip");
+        const a = document.createElement('a');
+        a.download = `bugreport.zip`;
+        a.href = window.URL.createObjectURL(blob);
+        a.click();
       });
-<<<<<<< HEAD
   }
 
-  _loadBugReport(files) {
-    console.log("load here " + files);
-=======
-
-    
-   // JSZip.writeFile("bugreport.json", messagesString);
+  _loadBugReport(event) {
+    let files = event.target.files;
+    for (var i = 0; i < files.length; i++) {
+      JSZip.loadAsync(files[i]).then(
+        zip => this._decompress(zip),
+        e => alert("Error reading " + f.name + ": " + e.message));
+    }
   }
 
-  _loadBugReport() {
-    console.log("load here");
->>>>>>> Add zip and download.
+  _decompress(zip) {
+    zip.forEach(
+      relativePath => zip.file(relativePath).async("text").then(
+        txt => this._handleLog(txt)));
+  }
+
+  _handleLog(txt) {
+    let messages = JSON.parse(txt);
+    this.emitFilteredMessages(messages);
   }
 }
 
