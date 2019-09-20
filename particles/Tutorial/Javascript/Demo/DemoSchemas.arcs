@@ -7,3 +7,8 @@ schema GameState
   Boolean gameOver
   Number moves
   Number winnerId
+  Text board
+
+schema Move 
+  Number playerId
+  Text move

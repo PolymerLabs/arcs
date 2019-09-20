@@ -14,6 +14,8 @@ particle Game in './source/Game.js'
   in Person playerOne
   in Person playerTwo
   in GameState gameState
+  in Move humanMove
+  out Move move
   out Person currentPlayer
 
 particle GetPlayer in './source/GetPerson.js'
@@ -31,15 +33,6 @@ particle Congratulations in './source/Congratulations.js'
   consume congratulationsSlot
 
 recipe 
-  create #cell1 as cellState1
-  create #cell2 as cellState2
-  create #cell3 as cellState3
-  create #cell4 as cellState4
-  create #cell5 as cellState5
-  create #cell6 as cellState6
-  create #cell7 as cellState7
-  create #cell8 as cellState8
-  create #cell9 as cellState9
   create #game as gameState
   Main
     consume root 
@@ -55,129 +48,23 @@ recipe
     gameState <- gameState
     playerOne <- playerOne
     playerTwo <- playerTwo
+    humanMove <- humanMove
+    move -> move
     currentPlayer -> currentPlayer
   DisplayGreeting
     person <- playerOne
     consume greetingSlot as greeting
   Board
-    gameState <-> gameState
+    gameState <- gameState
     currentPlayerId <- currentPlayer
-    cellState1 <- cellState1
-    cellState2 <- cellState2
-    cellState3 <- cellState3
-    cellState4 <- cellState4
-    cellState5 <- cellState5
-    cellState6 <- cellState6
-    cellState7 <- cellState7
-    cellState8 <- cellState8
-    cellState9 <- cellState9
+    humanMove -> humanMove
     consume cellSlot as board
-      provide cellSlot1 as cell1
-      provide cellSlot2 as cell2
-      provide cellSlot3 as cell3
-      provide cellSlot4 as cell4
-      provide cellSlot5 as cell5
-      provide cellSlot6 as cell6
-      provide cellSlot7 as cell7
-      provide cellSlot8 as cell8
-      provide cellSlot9 as cell9
-  Cell
-    gameState <-> cellState1
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell1 
-      provide avatarSlot as avatar1
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState1
-    consume avatarSlot as avatar1
-  Cell
-    gameState <-> cellState2
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell2 
-      provide avatarSlot as avatar2
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState2
-    consume avatarSlot as avatar2
-  Cell
-    gameState <-> cellState3
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell3 
-      provide avatarSlot as avatar3
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState3
-    consume avatarSlot as avatar3
-  Cell
-    gameState <-> cellState4
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell4 
-      provide avatarSlot as avatar4
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState4
-    consume avatarSlot as avatar4
-  Cell
-    gameState <-> cellState5
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell5 
-      provide avatarSlot as avatar5
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState5
-    consume avatarSlot as avatar5 
-  Cell
-    gameState <-> cellState6
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell6 
-      provide avatarSlot as avatar6
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState6
-    consume avatarSlot as avatar6
-  Cell
-    gameState <-> cellState7
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell7 
-      provide avatarSlot as avatar7
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState7
-    consume avatarSlot as avatar7
-  Cell
-    gameState <-> cellState8
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell8 
-      provide avatarSlot as avatar8
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState8
-    consume avatarSlot as avatar8
-  Cell
-    gameState <-> cellState9
-    currentPlayerId <- currentPlayer
-    consume cellSlot as cell9 
-      provide avatarSlot as avatar9
-  DisplayAvatar
-    player <- currentPlayer
-    gameState <- cellState9
-    consume avatarSlot as avatar9
   Congratulations
     person <- currentPlayer
     gameState <- gameState
     consume congratulationsSlot as congratulations
-  Computer
-    currentPlayer <- currentPlayer
-    me <- playerTwo
-    gameState <- gameState
-    cellState1 <-> cellState1
-    cellState2 <-> cellState2
-    cellState3 <-> cellState3
-    cellState4 <-> cellState4
-    cellState5 <-> cellState5
-    cellState6 <-> cellState6
-    cellState7 <-> cellState7
-    cellState8 <-> cellState8
-    cellState9 <-> cellState9
+  MoveApplier
+    move <- move
+    gameState <-> gamestate
   
   description `Javascript Tutorial Demo`

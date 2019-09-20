@@ -20,8 +20,8 @@ defineParticle(({DomParticle, log}) => {
       return '';
     }
 
-    update({playerOne, playerTwo, gameState}, {initialised}) {
-      if (playerOne && playerTwo && gameState) {
+    update({playerOne, playerTwo, gameState, humanMove}, {initialised}) {
+      if (playerOne && playerTwo && gameState && humanMove) {
         if (gameState.gameOver) {
           if (gameState.winnerId == playerOne.playerId) {
             this.updateSingleton('currentPlayer', playerOne);
@@ -37,6 +37,8 @@ defineParticle(({DomParticle, log}) => {
           this.updateSingleton('currentPlayer', playerTwo);
           this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
         }
+
+        this.updateSingleton('move', {move: humanMove.move, playerId: 0});
       }
     }
   };

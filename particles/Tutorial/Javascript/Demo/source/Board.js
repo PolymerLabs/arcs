@@ -16,9 +16,10 @@ defineParticle(({DomParticle, html}) => {
 
 const template = html`
   <style>
-    .column {
-      float: left;
-      padding: 10px;
+    .grid-container {
+      display: grid;
+      grid-template-columns: 50px 50px 50px;
+      grid-column-gap: 0px;
     }
 
     .row {
@@ -27,17 +28,31 @@ const template = html`
       clear: both;
       display: inline-flex;
     }
+
+    .butt {
+      border: 1px outset blue;
+      background-color: lightBlue;
+      height:50px;
+      width:50px;
+      cursor:pointer;
+    }
+
+    .butt:hover {
+      background-color: blue;
+      color:white;
+    }
   </style>
-  <div class="row">
-    <div class = "col">
-      <div slotid="cellSlot1"></div><div slotid="cellSlot2"></div><div slotid="cellSlot3"></div>
-    </div>
-    <div class = "col">
-      <div slotid="cellSlot4"></div><div slotid="cellSlot5"></div><div slotid="cellSlot6"></div>
-    </div>
-    <div class = "col">
-      <div slotid="cellSlot7"></div><div slotid="cellSlot8"></div><div slotid="cellSlot9"></div>
-    </div>
+  <div class="grid-container">
+    
+      <button class="butt" type="button" on-click="onClick" value=1>
+      <button class="butt" type="button" on-click="onClick" value=2>
+      <button class="butt" type="button" on-click="onClick" value=3>
+      <button class="butt" type="button" on-click="onClick" value=4>
+      <button class="butt" type="button" on-click="onClick" value=5>
+      <button class="butt" type="button" on-click="onClick" value=6>
+      <button class="butt" type="button" on-click="onClick" value=7>
+      <button class="butt" type="button" on-click="onClick" value=8>
+      <button class="butt" type="button" on-click="onClick" value=9>
   </div>
 `;
 
@@ -46,79 +61,71 @@ const template = html`
       return template;
     }
 
-    render({
-        gameState, 
-        cellState1, 
-        cellState2, 
-        cellState3,
-        cellState4,
-        cellState5,
-        cellState6,
-        cellState7,
-        cellState8,
-        cellState9}, {initialised}) {
+    render({gameState}, {initialised}) {
       if (!initialised) {
         this.setState({initialised: true});
-        this.updateSingleton('gameState', {gameOver: false, moves: 0});
+        this.updateSingleton('gameState', {gameOver: false, moves: 0, board: `         `});
       }
-      if (gameState && cellState1 && cellState2 && cellState3 &&
-                      cellState4 && cellState5 && cellState6 &&
-                      cellState7 && cellState8 && cellState9) {
-        const mvs = cellState1.moves + cellState2.moves + cellState3.moves +
-                    cellState4.moves + cellState5.moves + cellState6.moves +
-                    cellState7.moves + cellState8.moves + cellState9.moves;
-        // X Y Y 
-        // X Y Y
-        // X Y Y
-        if (this.checkIfWon(cellState1.winnerId, cellState2.winnerId, cellState3.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState1.winnerId});
-        }
-        // Y X Y  
-        // Y X Y 
-        // Y X Y 
-        else if (this.checkIfWon(cellState4.winnerId, cellState5.winnerId, cellState6.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState4.winnerId});
-        }
-        // Y Y X   
-        // Y Y X  
-        // Y Y X  
-        else if (this.checkIfWon(cellState7.winnerId, cellState8.winnerId, cellState9.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState7.winnerId});
-        }
-        // X X X   
-        // Y Y Y  
-        // Y Y Y  
-        else if (this.checkIfWon(cellState1.winnerId, cellState4.winnerId, cellState7.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState1.winnerId});
-        }
-        // Y Y Y  
-        // X X X   
-        // Y Y Y  
-        else if (this.checkIfWon(cellState2.winnerId, cellState5.winnerId, cellState8.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState2.winnerId});
-        }
-        // Y Y Y     
-        // Y Y Y 
-        // X X X 
-        else if (this.checkIfWon(cellState3.winnerId, cellState6.winnerId, cellState9.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState3.winnerId});
-        }
-        // X Y Y     
-        // Y X Y 
-        // Y Y X 
-        else if (this.checkIfWon(cellState1.winnerId, cellState5.winnerId, cellState9.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState1.winnerId});
-        }
-        // Y Y X     
-        // Y X Y 
-        // X Y Y 
-        else if (this.checkIfWon(cellState7.winnerId, cellState5.winnerId, cellState3.winnerId)) {
-          this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState3.winnerId});
-        }
-        else {
-          this.updateSingleton('gameState', {gameOver: mvs == 9, moves: mvs});
-        }
-      }
+      // if (gameState && cellState1 && cellState2 && cellState3 &&
+      //                 cellState4 && cellState5 && cellState6 &&
+      //                 cellState7 && cellState8 && cellState9) {
+      //   const mvs = cellState1.moves + cellState2.moves + cellState3.moves +
+      //               cellState4.moves + cellState5.moves + cellState6.moves +
+      //               cellState7.moves + cellState8.moves + cellState9.moves;
+        
+                  
+      //   // X Y Y 
+      //   // X Y Y
+      //   // X Y Y
+      //   if (this.checkIfWon(cellState1.winnerId, cellState2.winnerId, cellState3.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState1.winnerId});
+      //   }
+      //   // Y X Y  
+      //   // Y X Y 
+      //   // Y X Y 
+      //   else if (this.checkIfWon(cellState4.winnerId, cellState5.winnerId, cellState6.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState4.winnerId});
+      //   }
+      //   // Y Y X   
+      //   // Y Y X  
+      //   // Y Y X  
+      //   else if (this.checkIfWon(cellState7.winnerId, cellState8.winnerId, cellState9.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState7.winnerId});
+      //   }
+      //   // X X X   
+      //   // Y Y Y  
+      //   // Y Y Y  
+      //   else if (this.checkIfWon(cellState1.winnerId, cellState4.winnerId, cellState7.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState1.winnerId});
+      //   }
+      //   // Y Y Y  
+      //   // X X X   
+      //   // Y Y Y  
+      //   else if (this.checkIfWon(cellState2.winnerId, cellState5.winnerId, cellState8.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState2.winnerId});
+      //   }
+      //   // Y Y Y     
+      //   // Y Y Y 
+      //   // X X X 
+      //   else if (this.checkIfWon(cellState3.winnerId, cellState6.winnerId, cellState9.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState3.winnerId});
+      //   }
+      //   // X Y Y     
+      //   // Y X Y 
+      //   // Y Y X 
+      //   else if (this.checkIfWon(cellState1.winnerId, cellState5.winnerId, cellState9.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState1.winnerId});
+      //   }
+      //   // Y Y X     
+      //   // Y X Y 
+      //   // X Y Y 
+      //   else if (this.checkIfWon(cellState7.winnerId, cellState5.winnerId, cellState3.winnerId)) {
+      //     this.updateSingleton('gameState', {gameOver: true, moves: mvs, winnerId: cellState3.winnerId});
+      //   }
+      //   else {
+      //     this.updateSingleton('gameState', {gameOver: mvs == 9, moves: mvs});
+      //   }
+      // }
       return {};
     }
 
@@ -131,6 +138,10 @@ const template = html`
         }
       }
       return false;
+    }
+
+    onClick(e) {
+      this.updateSingleton(`humanMove`, {move: e.data.value});
     }
     
   };

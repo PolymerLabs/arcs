@@ -3,28 +3,12 @@ import 'DemoSchemas.arcs'
 particle Board in './source/Board.js'
   inout GameState gameState
   in * {Number id2} currentPlayerId
-  in GameState cellState1
-  in GameState cellState2
-  in GameState cellState3
-  in GameState cellState4
-  in GameState cellState5
-  in GameState cellState6
-  in GameState cellState7
-  in GameState cellState8
-  in GameState cellState9
+  out Move humanMove
   consume cellSlot
-    provide cellSlot1
-    provide cellSlot2
-    provide cellSlot3
-    provide cellSlot4
-    provide cellSlot5
-    provide cellSlot6
-    provide cellSlot7
-    provide cellSlot8
-    provide cellSlot9
+    
 
 particle Cell in './source/Cell.js'
-  inout GameState gameState
+  in GameState gameState
   in * {Number id2} currentPlayerId
   consume cellSlot
     provide avatarSlot
@@ -34,16 +18,7 @@ particle DisplayAvatar in './source/DisplayAvatar.js'
   in GameState gameState
   consume avatarSlot
 
-particle Computer in './source/RandomComputer.js'
-  in GameState gameState
-  inout GameState cellState1
-  inout GameState cellState2
-  inout GameState cellState3
-  inout GameState cellState4
-  inout GameState cellState5
-  inout GameState cellState6
-  inout GameState cellState7
-  inout GameState cellState8
-  inout GameState cellState9
-  in Person currentPlayer
-  in Person me
+particle MoveApplier in './source/MoveApplier.js'
+  in Move move
+  inout GameState gameState
+
