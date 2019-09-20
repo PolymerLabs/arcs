@@ -8,13 +8,11 @@ import arcs.api.Handle;
 import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class AutofillParticle extends ParticleBase {
 
-  private final List<ViewNode> nodes;
+  private final ViewNode node;
   private final AutofillCallback callback;
 
   private static final String TAG = "Arcs";
@@ -23,9 +21,9 @@ public class AutofillParticle extends ParticleBase {
     void onAutofillResult(AutofillId autofillId, String suggestion);
   }
 
-  AutofillParticle(PortableJsonParser jsonParser, List<ViewNode> nodes, AutofillCallback callback) {
+  AutofillParticle(PortableJsonParser jsonParser, ViewNode node, AutofillCallback callback) {
     this.jsonParser = jsonParser;
-    this.nodes = nodes;
+    this.node = node;
     this.callback = callback;
 
     Log.d(TAG, "AutofillParticle::ctor()");
@@ -38,9 +36,7 @@ public class AutofillParticle extends ParticleBase {
     Collection requestHandle = (Collection) handleByName.get("request");
     // Fill in the request handle so the rest of the recipe can use the data.
     // NOTE: request is an `out` handle, it doesn't get onHandleSync calls.
-    for (PortableJson request : getJsonRequests()) {
-      requestHandle.store(jsonParser.emptyObject().put("rawData", request));
-    }
+    requestHandle.store(jsonParser.emptyObject().put("rawData", getJsonRequest()));
   }
 
   // Called when the particle's handles are updated. Return the autofill suggestion back to the
@@ -51,27 +47,22 @@ public class AutofillParticle extends ParticleBase {
 
     if (handle.name.equals("response") && update.hasKey("added")) {
       PortableJson added = update.getArray("added");
-      for (int i = 0; i < added.getLength(); i++) {
-        PortableJson response = added.getObject(i).getObject("rawData");
-        AutofillId autofillId = nodes.get(response.getInt("autofillId")).getAutofillId();
-        String suggestion = response.getString("suggestion");
-        callback.onAutofillResult(autofillId, suggestion);
+      if (added.getLength() != 1) {
+        throw new IllegalStateException("Expected a single result.");
       }
+      PortableJson response = added.getObject(0).getObject("rawData");
+      String suggestion = response.getString("suggestion");
+      callback.onAutofillResult(node.getAutofillId(), suggestion);
     }
   }
 
-  private List<PortableJson> getJsonRequests() {
-    List<PortableJson> requests = new ArrayList<>();
-    for (int id = 0; id < nodes.size(); id++) {
-      PortableJson request = jsonParser.emptyObject().put("autofillId", id);
+  private PortableJson getJsonRequest() {
+    PortableJson request = jsonParser.emptyObject();
 
-      ViewNode node = nodes.get(id);
-      String[] hints = node.getAutofillHints();
-      if (hints != null && hints.length > 0) {
-        request.put("hint", hints[0]);
-      }
-      requests.add(request);
+    String[] hints = node.getAutofillHints();
+    if (hints != null && hints.length > 0) {
+      request.put("hint", hints[0]);
     }
-    return requests;
+    return request;
   }
 }

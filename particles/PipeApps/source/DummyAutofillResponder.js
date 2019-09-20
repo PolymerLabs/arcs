@@ -48,11 +48,11 @@ defineParticle(({Particle}) => {
         return;
       }
       const responseHandle = this.handles.get('response');
-      responseHandle.store(new responseHandle.entityClass({
-        autofillId: request.autofillId,
-        // TODO: use the apporpirate field for requested id
-        suggestion: `${this.recentPeople[0].firstName} ${this.recentPeople[0].lastName}`,
-      }));
+      let suggestion = `${this.recentPeople[0].firstName} ${this.recentPeople[0].lastName}`;
+      if (request.hint) {
+        suggestion += ` (${request.hint})`;
+      }
+      responseHandle.store(new responseHandle.entityClass({suggestion}));
     }
   };
 });
