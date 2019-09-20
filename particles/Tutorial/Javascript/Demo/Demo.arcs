@@ -33,7 +33,6 @@ particle Congratulations in './source/Congratulations.js'
   consume congratulationsSlot
 
 recipe 
-  create #game as gameState
   Main
     consume root 
       provide playerSlot as getPlayer
@@ -44,6 +43,9 @@ recipe
     playerOne -> playerOne
     playerTwo -> playerTwo
     consume playerSlot as getPlayer
+  MoveApplier
+    move <- move
+    gameState <-> gamestate
   Game
     gameState <- gameState
     playerOne <- playerOne
@@ -63,8 +65,4 @@ recipe
     person <- currentPlayer
     gameState <- gameState
     consume congratulationsSlot as congratulations
-  MoveApplier
-    move <- move
-    gameState <-> gamestate
-  
   description `Javascript Tutorial Demo`

@@ -43,8 +43,9 @@ const template = html`
     }
   </style>
   <div class="grid-container">
-    
       <button class="butt" type="button" on-click="onClick" value=1>
+        <span>{{spot1}}</span>
+      </button>
       <button class="butt" type="button" on-click="onClick" value=2>
       <button class="butt" type="button" on-click="onClick" value=3>
       <button class="butt" type="button" on-click="onClick" value=4>
@@ -64,7 +65,13 @@ const template = html`
     render({gameState}, {initialised}) {
       if (!initialised) {
         this.setState({initialised: true});
-        this.updateSingleton('gameState', {gameOver: false, moves: 0, board: `         `});
+        //this.updateSingleton('gameState', {gameOver: false, moves: 0, board: `         `});
+      }
+      console.log(`gameState`, gameState);
+      if (gameState) {
+        console.log(`spot1: ${spot1}`);
+        const arr = gameState.board.split(`,`);
+        this.setState({spot1: arr[0]});
       }
       // if (gameState && cellState1 && cellState2 && cellState3 &&
       //                 cellState4 && cellState5 && cellState6 &&

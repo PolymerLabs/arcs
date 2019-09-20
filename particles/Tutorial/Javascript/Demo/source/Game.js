@@ -21,6 +21,7 @@ defineParticle(({DomParticle, log}) => {
     }
 
     update({playerOne, playerTwo, gameState, humanMove}, {initialised}) {
+      //TODO Make this not depend on gameState.
       if (playerOne && playerTwo && gameState && humanMove) {
         if (gameState.gameOver) {
           if (gameState.winnerId == playerOne.playerId) {
@@ -38,6 +39,9 @@ defineParticle(({DomParticle, log}) => {
           this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
         }
 
+        
+      }
+      if (humanMove) {
         this.updateSingleton('move', {move: humanMove.move, playerId: 0});
       }
     }

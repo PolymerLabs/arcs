@@ -18,16 +18,17 @@
     }
 
     update({move, gameState}, state) {
+      if (!gameState) { // Gamestate has not been set yet
+        console.log(`setting gameState`);
+        this.updateSingleton('gameState', {gameOver: false, moves: 0, board: ',,,,,,,,,'});
+      }
       if (move) {
         if (gameState) {
-          console.log(`board: `, gameState.board);
+          //console.log(`board: `, gameState.board);
           const arr = gameState.board.split(`,`);
           const mv = parseInt(move.move, 10) - 1;
           arr[mv] = move.playerId;
           this.updateSingleton('gameState', {board: arr.join(), moves: gameState.moves + 1});
-        } else { // Gamestate has not been set yet
-          console.log(`setting gameState`);
-          this.updateSingleton('gameState', {board: ',,,,,,,,,'});
         }
       }
     }
