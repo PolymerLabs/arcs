@@ -7,6 +7,8 @@ import arcs.api.Collection;
 import arcs.api.Handle;
 import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
+import arcs.api.PortableJsonParser;
+
 import java.util.Map;
 
 public class AutofillParticle extends ParticleBase {
@@ -20,7 +22,8 @@ public class AutofillParticle extends ParticleBase {
     void onAutofillResult(AutofillId autofillId, String suggestion);
   }
 
-  AutofillParticle(ViewNode node, AutofillCallback callback) {
+  AutofillParticle(PortableJsonParser jsonParser, ViewNode node, AutofillCallback callback) {
+    this.jsonParser = jsonParser;
     this.node = node;
     this.callback = callback;
 

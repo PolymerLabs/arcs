@@ -27,6 +27,7 @@ import javax.inject.Provider;
 public class ArcsAutofillService extends AutofillService {
 
   @Inject Provider<RemotePec> remotePecProvider;
+  @Inject PortableJsonParser jsonParser;
 
   @Override
   public void onCreate() {
@@ -57,6 +58,7 @@ public class ArcsAutofillService extends AutofillService {
 
     AutofillParticle autofillParticle =
         new AutofillParticle(
+            jsonParser,
             node.get(),
             (autofillId, suggestion) -> {
               Dataset.Builder dataset = new Dataset.Builder();
