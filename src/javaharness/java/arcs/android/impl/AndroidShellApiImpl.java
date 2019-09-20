@@ -10,13 +10,6 @@ import javax.inject.Inject;
 /** Exposes Shell (Window) scope methods into Java from JS. */
 public class AndroidShellApiImpl implements ShellApi {
 
-  private static final String ARCS_API_NAME = "DeviceClient";
-  private static final String READY_MESSAGE = "ready";
-  private static final String SUGGESTIONS_MESSAGE = "suggestions";
-  private static final String MESSAGE_FIELD_NAME = "message";
-  private static final String TID_FIELD_NAME = "tid";
-  private static final String DYNAMIC_MANIFEST_URL =
-      "file:///android_asset/pipes-shell/dynamic.manifest";
   private WebView webView;
 
   @Inject
@@ -26,7 +19,6 @@ public class AndroidShellApiImpl implements ShellApi {
 
   @Override
   public String receive(String json) {
-
     String escapedEnvelope = json.replace("\\\"", "\\\\\"");
 
     String script = String.format("ShellApi.receive('%s');", escapedEnvelope);

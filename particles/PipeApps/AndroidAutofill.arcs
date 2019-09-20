@@ -1,0 +1,44 @@
+import './schemas/IncomingEntity.arcs'
+import './schemas/Person.arcs'
+
+schema AutofillRequest
+  Number autofillId
+  Text hint
+
+schema AutofillResponse
+  Number autofillId
+  Text suggestion
+
+// An Android particle which powers the Android AutofillService.
+particle AutofillParticle in './source/AutofillParticle.java'
+  out [AutofillRequest] request
+  // TODO: Provide a slot for the response instead of a handle.
+  in [AutofillResponse] response
+
+// A dummy JS particle which handles the Autofill requests.
+particle DummyAutofillResponder in './source/DummyAutofillResponder.js'
+  in [Person] recentPeople
+  in [AutofillRequest] request
+  out [AutofillResponse] response
+
+recipe AndroidAutofill
+  map #recentPeople as recentPeople
+  AutofillParticle
+    request -> request
+    response <- response
+  DummyAutofillResponder
+    recentPeople <- recentPeople
+    request <- request
+    response -> response
+
+resource PeopleJson
+    start
+    [{
+      "firstName": "John",
+      "lastName": "Smith",
+      "password": "qwerty123",
+      "phone": "987-6543-210",
+      "address": "123 Main st."
+    }]
+
+store RecentPeople of [Person] #recentPeople in PeopleJson

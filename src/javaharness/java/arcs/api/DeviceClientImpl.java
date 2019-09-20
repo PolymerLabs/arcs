@@ -65,7 +65,7 @@ public class DeviceClientImpl implements DeviceClient {
 
   private void deliverPecMessage(PortableJson message) {
     String pecId = message.getString(FIELD_PEC_ID);
-    String sessionId = message.getString(FIELD_SESSION_ID);
+    String sessionId = message.hasKey(FIELD_SESSION_ID) ? message.getString(FIELD_SESSION_ID) : null;
     pecPortManager.deliverPecMessage(pecId, sessionId, message);
   }
 

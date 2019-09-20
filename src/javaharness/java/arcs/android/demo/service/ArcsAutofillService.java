@@ -14,6 +14,7 @@ import android.service.autofill.SaveRequest;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
 import arcs.android.client.RemotePec;
+import arcs.api.PortableJsonParser;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -25,6 +26,9 @@ import javax.inject.Inject;
 public class ArcsAutofillService extends AutofillService {
 
   @Inject RemotePec remotePec;
+  @Inject PortableJsonParser jsonParser;
+
+  private int numSuggestionsPending;
 
   @Override
   public void onCreate() {
@@ -43,20 +47,37 @@ public class ArcsAutofillService extends AutofillService {
     AssistStructure structure = fillContexts.get(fillContexts.size() - 1).getStructure();
     List<ViewNode> nodes = collectViewNodes(structure);
 
-    // Start up an Arcs remote PEC.
-    // TODO(csilvestrini): Make this actually do something. It should instantiate a particle and
-    // start up an Arc.
-    remotePec.init();
-
     Dataset.Builder dataset = new Dataset.Builder();
-    for (ViewNode node : nodes) {
-      String suggestion = getAutofillSuggestion(node);
-      dataset.setValue(
-          node.getAutofillId(), AutofillValue.forText(suggestion), createRemoteView(suggestion));
-    }
+    numSuggestionsPending = nodes.size();
 
-    FillResponse fillResponse = new FillResponse.Builder().addDataset(dataset.build()).build();
-    callback.onSuccess(fillResponse);
+    AutofillParticle particle =
+        new AutofillParticle(
+            jsonParser,
+            nodes,
+            (autofillId, suggestion) -> {
+              numSuggestionsPending--;
+
+              dataset.setValue(
+                  autofillId, AutofillValue.forText(suggestion), createRemoteView(suggestion));
+
+              if (numSuggestionsPending <= 0) {
+                // All suggestions have been provided by Arcs. Return result to Android OS.
+                FillResponse fillResponse =
+                    new FillResponse.Builder().addDataset(dataset.build()).build();
+                callback.onSuccess(fillResponse);
+              }
+            });
+
+    // Start up an Arcs remote PEC and arc with a particle.
+    // TODO: Generate Ids properly.
+    particle.setId("autofill-particle-id");
+    String pecId = "example-remote-pec";
+    remotePec.init(
+        String.format("arc-%s", pecId),
+        pecId,
+        "AndroidAutofill",
+        particle);
+
   }
 
   @Override
@@ -66,21 +87,6 @@ public class ArcsAutofillService extends AutofillService {
     RemoteViews view = new RemoteViews(getPackageName(), R.layout.autofill_result);
     view.setTextViewText(R.id.autofill_result_text, contents);
     return view;
-  }
-
-  /**
-   * Returns an autofill suggestion for the given node. Currently just returns a dummy value taken
-   * from the node's autofill hint. Eventually this should talk to Arcs.
-   */
-  private String getAutofillSuggestion(ViewNode node) {
-    // TODO(csilvestrini): Pull autofill suggestions from Arcs.
-
-    String[] hints = node.getAutofillHints();
-    if (hints == null || hints.length == 0) {
-      return "Some result";
-    } else {
-      return hints[0];
-    }
   }
 
   private static List<ViewNode> collectViewNodes(AssistStructure structure) {

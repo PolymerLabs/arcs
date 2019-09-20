@@ -5,6 +5,8 @@
     android:minSdkVersion="29"
     android:targetSdkVersion="29"/>
 
+  <uses-permission android:name="android.permission.INTERNET"/>
+
   <application>
     <service
         android:name=".ArcsService"

@@ -7,10 +7,12 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebSettings;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
+import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
@@ -39,6 +41,9 @@ public class ArcsService extends Service {
 
     arcsWebView = new WebView(this);
     arcsWebView.setVisibility(View.GONE);
+    arcsWebView.getSettings().setAppCacheEnabled(false);
+    arcsWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+    arcsWebView.clearCache(true);
 
     DaggerArcsServiceComponent.builder()
         .appContext(getApplicationContext())
@@ -59,8 +64,14 @@ public class ArcsService extends Service {
       }
 
       @Override
-      public void registerRemotePec(String pecId, IRemotePecCallback callback) {
-        RemotePecPort remotePecPort =
+      public void startArc(
+          String arcId,
+          String pecId,
+          String recipe,
+          String particleId,
+          String particleName,
+          IRemotePecCallback callback) {
+      RemotePecPort remotePecPort =
             new RemotePecPort(
                 message -> {
                   try {
@@ -71,11 +82,23 @@ public class ArcsService extends Service {
                 },
                 jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
+        // TODO: Use startArc method instead - should be factored out of DeviceClient.
+        PortableJson request = jsonParser.emptyObject()
+            .put("message", "runArc")
+            .put("arcId", arcId)
+            .put("pecId", pecId)
+            .put("recipe", recipe);
+        if (particleId != null) {
+          request
+              .put("particleId", particleId)
+              .put("particleName", particleName);
+        }
+        shellEnvironment.sendMessageToArcs(jsonParser.stringify(request), null);
       }
 
       @Override
-      public void deregisterRemotePec(String pecId) {
-        // TODO(csilvestrini): Remove from PecPortManager.
+      public void stopArc(String arcId) {
+        // TODO(csilvestrini): Implement
       }
     };
   }

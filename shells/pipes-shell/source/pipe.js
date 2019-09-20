@@ -24,6 +24,7 @@ import {runArc} from './verbs/run-arc.js';
 const manifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
 import 'https://$particles/PipeApps/Ingestion.arcs'
+import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 `;
 
 export const initPipe = async (client, paths, storage, composerFactory) => {

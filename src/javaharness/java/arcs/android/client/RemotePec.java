@@ -2,6 +2,7 @@ package arcs.android.client;
 
 import android.os.RemoteException;
 import arcs.android.api.IRemotePecCallback;
+import arcs.api.Particle;
 import arcs.api.PECInnerPort;
 import arcs.api.PECInnerPortFactory;
 import arcs.api.PortableJson;
@@ -33,25 +34,28 @@ public class RemotePec {
     this.jsonParser = jsonParser;
   }
 
-  public void init() {
+  public void init(String arcId, String pecId, String recipe, Particle particle) {
     if (pecInnerPort != null) {
       throw new IllegalStateException("PEC has already been initialized.");
     }
 
-    // TODO(csilvestrini): Generate these properly.
-    String pecId = "example-remote-pec";
-    String sessionId = "example-session-id";
-    pecInnerPort = pecInnerPortFactory.createPECInnerPort(pecId, sessionId);
+    pecInnerPort = pecInnerPortFactory.createPECInnerPort(pecId, /* sessionId= */ null);
+    if (particle != null) {
+      pecInnerPort.mapParticle(particle);
+    }
 
     bridge
         .connectToArcsService()
         .thenAccept(
             service -> {
               try {
-                service.registerRemotePec(pecId, callback);
-
-                // TODO(csilvestrini): Add particles and run arc.
-
+                service.startArc(
+                    arcId,
+                    pecId,
+                    recipe,
+                    particle == null ? null : particle.getId(),
+                    particle == null ? null : particle.getName(),
+                    callback);
               } catch (RemoteException e) {
                 throw new RuntimeException(e);
               }
