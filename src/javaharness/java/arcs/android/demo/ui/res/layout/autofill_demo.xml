@@ -45,7 +45,7 @@
           android:textAppearance="@android:style/TextAppearance.Material.Medium"
           android:layout_marginRight="20dp"/>
       <EditText
-          android:id="@+id/editText"
+          android:onClick="onFieldTap"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:ems="10"
@@ -60,6 +60,7 @@
           android:textAppearance="@android:style/TextAppearance.Material.Medium"
           android:layout_marginRight="20dp"/>
       <EditText
+          android:onClick="onFieldTap"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:ems="10"
@@ -73,6 +74,7 @@
           android:textAppearance="@android:style/TextAppearance.Material.Medium"
           android:layout_marginRight="20dp"/>
       <EditText
+          android:onClick="onFieldTap"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:ems="10"
@@ -86,6 +88,7 @@
           android:textAppearance="@android:style/TextAppearance.Material.Medium"
           android:layout_marginRight="20dp"/>
       <EditText
+          android:onClick="onFieldTap"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:ems="10"

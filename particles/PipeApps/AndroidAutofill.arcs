@@ -2,15 +2,14 @@ import './schemas/IncomingEntity.arcs'
 import './schemas/Person.arcs'
 
 schema AutofillRequest
-  Number autofillId
   Text hint
 
 schema AutofillResponse
-  Number autofillId
   Text suggestion
 
 // An Android particle which powers the Android AutofillService.
 particle AutofillParticle in './source/AutofillParticle.java'
+  // TODO: Use a Singleton instead, when that is supported in Java.
   out [AutofillRequest] request
   // TODO: Provide a slot for the response instead of a handle.
   in [AutofillResponse] response

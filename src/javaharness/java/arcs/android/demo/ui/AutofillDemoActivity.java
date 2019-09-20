@@ -61,4 +61,9 @@ public class AutofillDemoActivity extends Activity {
     intent.setData(Uri.parse("package:arcs.android.demo"));
     startActivityForResult(intent, REQUEST_CODE_AUTOFILL_SET);
   }
+
+  /** Called when an autofill field gets tapped. Requests that the field gets filled. */
+  private void onFieldTap(View view) {
+    autofillManager.requestAutofill(view);
+  }
 }

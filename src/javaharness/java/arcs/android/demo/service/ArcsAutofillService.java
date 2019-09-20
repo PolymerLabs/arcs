@@ -17,6 +17,7 @@ import arcs.android.client.RemotePec;
 import arcs.api.PortableJsonParser;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 
 /**
@@ -27,8 +28,6 @@ public class ArcsAutofillService extends AutofillService {
 
   @Inject RemotePec remotePec;
   @Inject PortableJsonParser jsonParser;
-
-  private int numSuggestionsPending;
 
   @Override
   public void onCreate() {
@@ -47,25 +46,29 @@ public class ArcsAutofillService extends AutofillService {
     AssistStructure structure = fillContexts.get(fillContexts.size() - 1).getStructure();
     List<ViewNode> nodes = collectViewNodes(structure);
 
+    // Find which view the user has focused on.
+    Optional<ViewNode> node = nodes.stream().filter(ViewNode::isFocused).findAny();
+
+    if (!node.isPresent()) {
+      callback.onSuccess(null);
+      return;
+    }
+
     Dataset.Builder dataset = new Dataset.Builder();
-    numSuggestionsPending = nodes.size();
 
     AutofillParticle particle =
         new AutofillParticle(
             jsonParser,
-            nodes,
+            node.get(),
             (autofillId, suggestion) -> {
-              numSuggestionsPending--;
-
               dataset.setValue(
                   autofillId, AutofillValue.forText(suggestion), createRemoteView(suggestion));
 
-              if (numSuggestionsPending <= 0) {
-                // All suggestions have been provided by Arcs. Return result to Android OS.
-                FillResponse fillResponse =
-                    new FillResponse.Builder().addDataset(dataset.build()).build();
-                callback.onSuccess(fillResponse);
-              }
+              FillResponse fillResponse =
+                  new FillResponse.Builder().addDataset(dataset.build()).build();
+
+              callback.onSuccess(fillResponse);
+              // TODO: Shutdown the RemotePec.
             });
 
     // Start up an Arcs remote PEC and arc with a particle.
@@ -77,7 +80,6 @@ public class ArcsAutofillService extends AutofillService {
         pecId,
         "AndroidAutofill",
         particle);
-
   }
 
   @Override
