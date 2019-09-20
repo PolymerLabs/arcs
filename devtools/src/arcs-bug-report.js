@@ -10,7 +10,12 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 import {MessengerMixin} from './arcs-shared.js';
+<<<<<<< HEAD
 import '../deps/jszip/dist/jszip.js';
+=======
+import '../node_modules/jszip/dist/jszip.js';
+import '../node_modules/file-saver/dist/FileSaver.js';
+>>>>>>> Add zip and download.
 
 /**
  * Saves/loads a bug report which contains debug messages sent to devtools.
@@ -25,8 +30,12 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
       }
     </style>
     <div class="wrapper">
+<<<<<<< HEAD
       <input type="file" id="fileElem" style="display:none" onchange="_loadBugReport(this.files)">
       <button id="fileSelect">Select some files</button>
+=======
+      <button type="button" on-click="_loadBugReport">Load Bug Report</button>
+>>>>>>> Add zip and download.
       <button type="button" on-click="_saveBugReport">Save Bug Report</button>
     </div>`;
   }
@@ -36,6 +45,7 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
   constructor() {
     super();
     this.messages = [];
+<<<<<<< HEAD
 
     const fileElem = this.$.fileElem;
     this.$.fileSelect.addEventListener("click", function (e) {
@@ -43,6 +53,8 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
         fileElem.click();
       }
     }, false);
+=======
+>>>>>>> Add zip and download.
   }
 
   onRawMessageBundle(messages) {
@@ -58,10 +70,20 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
       .then(function (blob) {
         saveAs(blob, "bugreport.zip");
       });
+<<<<<<< HEAD
   }
 
   _loadBugReport(files) {
     console.log("load here " + files);
+=======
+
+    
+   // JSZip.writeFile("bugreport.json", messagesString);
+  }
+
+  _loadBugReport() {
+    console.log("load here");
+>>>>>>> Add zip and download.
   }
 }
 

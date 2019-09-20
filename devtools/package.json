@@ -12,6 +12,7 @@
     "@vaadin/vaadin-split-layout": "^4.1.0",
     "@webcomponents/webcomponentsjs": "^2.2.10",
     "diff": "^4.0.1",
+    "file-saver": "^2.0.2",
     "golden-layout": "^1.5.9",
     "jquery": "^3.4.1",
     "jszip": "^3.2.2",
