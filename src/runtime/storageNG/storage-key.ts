@@ -18,4 +18,12 @@ export abstract class StorageKey {
   abstract toString(): string;
 
   abstract childWithComponent(component: string): StorageKey; 
+
+  childKeyForArcInfo() {
+    return this.childWithComponent('arc-info');
+  }
+
+  childKeyForHandle(id: string) {
+    return this.childWithComponent(`handle/${id}`);
+  }
 }

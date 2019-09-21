@@ -60,6 +60,13 @@ function getSingletonHandle(store: StorageProviderBase): Singleton {
 // TODO(lindner): add fireBase
 //  const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test/arc-1';
 
+describe('Arc new storage', () => {
+  it('applies existing stores to a particle', async () => {
+    const runtime = Runtime.newForNodeTesting();
+    const arc = runtime.newArc('test', arcId => new VolatileStorageKey(arcId, ''));
+  });
+});
+
 ['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
 describe('Arc ' + storageKeyPrefix, () => {
   it('idle can safely be called multiple times ', async () => {
@@ -76,8 +83,8 @@ describe('Arc ' + storageKeyPrefix, () => {
     }
 
     const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
-    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as StorageProviderBase;
+    const barStore = await arc.createStore(Bar.type, undefined, 'test:2') as StorageProviderBase;
     await getSingletonHandle(fooStore).set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
@@ -93,7 +100,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     }
 
     const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
-    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as StorageProviderBase;
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
@@ -136,9 +143,9 @@ describe('Arc ' + storageKeyPrefix, () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
-    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1') as StorageProviderBase;
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
-    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3') as StorageProviderBase;
     const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
 
     const recipe = manifest.recipes[0];
@@ -253,9 +260,9 @@ describe('Arc ' + storageKeyPrefix, () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
-    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1') as StorageProviderBase;
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
-    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3') as StorageProviderBase;
     const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
 
     const recipe = manifest.recipes[0];
@@ -396,9 +403,9 @@ describe('Arc ' + storageKeyPrefix, () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
-    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1') as StorageProviderBase;
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
-    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3') as StorageProviderBase;
     const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
 
     const recipe = manifest.recipes[0];
@@ -497,9 +504,9 @@ describe('Arc ' + storageKeyPrefix, () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
-    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1') as StorageProviderBase;
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
-    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3') as StorageProviderBase;
     const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
 
     const recipe = manifest.recipes[0];
@@ -549,9 +556,9 @@ describe('Arc ' + storageKeyPrefix, () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
-    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1') as StorageProviderBase;
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
-    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3') as StorageProviderBase;
     const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
 
     const recipe = manifest.recipes[0];
