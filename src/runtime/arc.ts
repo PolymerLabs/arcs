@@ -36,7 +36,10 @@ import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
 import {Runtime} from './runtime.js';
 import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
-import {DriverFactory} from './storageNG/drivers/driver-factory.js';
+import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
+import {StorageKey} from './storageNG/storage-key.js';
+import {Store, StorageMode} from './storageNG/store.js';
+import {KeyBase} from './storage/key-base.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -44,7 +47,7 @@ export type ArcOptions = Readonly<{
   pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
-  storageKey?: string;
+  storageKey?: string | StorageKey;
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
@@ -65,6 +68,14 @@ type DeserializeArcOptions = Readonly<{
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
+type UnifiedStore = {
+  id: string;
+  type: Type;
+  storageKey: string | StorageKey;
+  version: number; // TODO(shans): This needs to be a version vector for new storage.
+  referenceMode: boolean;
+};
+
 export class Arc {
   private readonly _context: Manifest;
   private readonly pecFactories: PecFactory[];
@@ -77,15 +88,15 @@ export class Arc {
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
-  private readonly storesById = new Map<string, StorageProviderBase>();
+  private readonly storesById = new Map<string, UnifiedStore>();
   // storage keys for referenced handles
-  private storageKeys: Dictionary<string> = {};
-  public readonly storageKey?: string;
+  private storageKeys: Dictionary<string | StorageKey> = {};
+  public readonly storageKey?: string | StorageKey;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
-  public readonly storeTags = new Map<StorageProviderBase, Set<string>>();
+  public readonly storeTags = new Map<UnifiedStore, Set<string>>();
   // Map from each store to its description (originating in the manifest).
-  private readonly storeDescriptions = new Map<StorageProviderBase, string>();
+  private readonly storeDescriptions = new Map<UnifiedStore, string>();
   private waitForIdlePromise: Promise<void> | null;
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
@@ -94,7 +105,7 @@ export class Arc {
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
+  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, UnifiedStore>}>();
   readonly pec: ParticleExecutionHost;
 
   // Volatile storage local to this Arc instance.
@@ -230,18 +241,23 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     return innerArc;
   }
 
-  private async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
-    const type = handle.type.getContainedType() || handle.type;
+  private async _serializeStore(store: UnifiedStore, context: SerializeContext, id: string): Promise<void> {
+    const type = store.type.getContainedType() || store.type;
     if (type instanceof InterfaceType) {
       context.interfaces += type.interfaceInfo.toString() + '\n';
     }
-    const key = this.storageProviderFactory.parseStringAsKey(handle.storageKey);
-    const tags: Set<string> = this.storeTags.get(handle) || new Set();
+    let key: StorageKey | KeyBase;
+    if (typeof store.storageKey === 'string') {
+      key = this.storageProviderFactory.parseStringAsKey(store.storageKey);
+    } else {
+      key = store.storageKey;
+    }
+    const tags: Set<string> = this.storeTags.get(store) || new Set();
     const handleTags = [...tags].map(a => `#${a}`).join(' ');
 
-    const actualHandle = this.activeRecipe.findHandle(handle.id);
+    const actualHandle = this.activeRecipe.findHandle(store.id);
     const originalId = actualHandle ? actualHandle.originalId : null;
-    let combinedId = `'${handle.id}'`;
+    let combinedId = `'${store.id}'`;
     if (originalId) {
       combinedId += `!!'${originalId}'`;
     }
@@ -249,7 +265,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     switch (key.protocol) {
       case 'firebase':
       case 'pouchdb':
-        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
+        context.handles += `store ${id} of ${store.type.toString()} ${combinedId} @${store.version === null ? 0 : store.version} ${handleTags} at '${store.storageKey}'\n`;
         break;
       case 'volatile': {
         // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
@@ -257,7 +273,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         let serializedData: {storageKey: string}[] | null = [];
         if (!volatile) {
           // TODO: include keys in serialized [big]collections?
-          serializedData = (await handle.toLiteral()).model.map((model) => {
+          serializedData = (await store.toLiteral()).model.map((model) => {
             const {id, value} = model;
             const index = model['index']; // TODO: Invalid Type
 
@@ -280,16 +296,16 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
             return result;
           });
         }
-        if (handle.referenceMode && serializedData.length > 0) {
+        if (store.referenceMode && serializedData.length > 0) {
           const storageKey = serializedData[0].storageKey;
           if (!context.dataResources.has(storageKey)) {
             const storeId = `${id}_Data`;
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
-            if (handle instanceof StorageProviderBase) {
-              await handle.ensureBackingStore();
-              await this._serializeHandle(handle.backingStore, context, storeId);
+            if (store instanceof StorageProviderBase) {
+              await store.ensureBackingStore();
+              await this._serializeStore(store.backingStore, context, storeId);
             }
           }
           const storeId = context.dataResources.get(storageKey);
@@ -304,7 +320,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           + data.split('\n').map(line => indent + line).join('\n')
           + '\n';
 
-        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
+        context.handles += `store ${id} of ${store.type.toString()} ${combinedId} @${store.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }
       default:
@@ -333,12 +349,12 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       context.resources += `import '${url}'\n`;
     }
 
-    for (const handle of this._stores) {
-      if (!handlesToSerialize.has(handle.id) || contextSet.has(handle.id)) {
+    for (const store of this._stores) {
+      if (!handlesToSerialize.has(store.id) || contextSet.has(store.id)) {
         continue;
       }
 
-      await this._serializeHandle(handle, context, `Store${id++}`);
+      await this._serializeStore(store, context, `Store${id++}`);
     }
 
     return context.resources + context.interfaces + context.handles;
@@ -392,7 +408,12 @@ ${this.activeRecipe.toString()}`;
   // contents of the serialized arc before persisting.
   async persistSerialization(serialization: string): Promise<void> {
     const storage = this.storageProviderFactory;
-    const key = storage.parseStringAsKey(this.storageKey).childKeyForArcInfo();
+    let key;
+    if (typeof this.storageKey === 'string') {
+      key = storage.parseStringAsKey(this.storageKey).childKeyForArcInfo();
+    } else {
+      key = this.storageKey.childKeyForArcInfo();
+    }
     const arcInfoType = new ArcType();
     const store = await storage.connectOrConstruct('store', arcInfoType, key.toString()) as SingletonStorageProvider;
     store.referenceMode = false;
@@ -488,7 +509,7 @@ ${this.activeRecipe.toString()}`;
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  get _stores(): (StorageProviderBase)[] {
+  get _stores(): UnifiedStore[] {
     return [...this.storesById.values()];
   }
 
@@ -660,7 +681,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string): Promise<StorageProviderBase> {
+  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type instanceof RelationType) {
@@ -671,11 +692,12 @@ ${this.activeRecipe.toString()}`;
       id = this.generateID().toString();
     }
 
-    if (storageKey == undefined && this.storageKey) {
-      storageKey =
-          this.storageProviderFactory.parseStringAsKey(this.storageKey)
-              .childKeyForHandle(id)
-              .toString();
+    if (storageKey == undefined) {
+      if (typeof this.storageKey === 'string') {
+        storageKey = this.storageProviderFactory.parseStringAsKey(this.storageKey).childKeyForHandle(id).toString();
+      } else if (this.storageKey) {
+        storageKey = this.storageKey.childKeyForHandle(id);
+      }
     }
 
     // TODO(sjmiles): use `volatile` for volatile stores
@@ -684,15 +706,22 @@ ${this.activeRecipe.toString()}`;
       storageKey = 'volatile';
     }
 
-    const store = await this.storageProviderFactory.construct(id, type, storageKey);
-    assert(store, `failed to create store with id [${id}]`);
-    store.name = name;
+    if (typeof storageKey === 'string') {
+      const store = await this.storageProviderFactory.construct(id, type, storageKey);
+      assert(store, `failed to create store with id [${id}]`);
+      store.name = name;
 
-    this._registerStore(store, tags);
-    return store;
+      this._registerStore(store, tags);
+      return store;
+    } else {
+      const store = new Store(storageKey, Exists.ShouldCreate, type, id, name);
+      
+      this._registerStore(store, tags);
+      return store;
+    }
   }
 
-  _registerStore(store: StorageProviderBase, tags?: string[]): void {
+  _registerStore(store: UnifiedStore, tags?: string[]): void {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];

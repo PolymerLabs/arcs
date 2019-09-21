@@ -103,7 +103,7 @@
     "pouchdb-debug": "^7.1.1",
     "source-map-support": "^0.5.12",
     "sourcemapped-stacktrace": "^1.1.9",
-    "typescript": "^3.5.3",
+    "typescript": "^3.6.3",
     "ws": "~6.0.0"
   },
   "sighDependencies": {

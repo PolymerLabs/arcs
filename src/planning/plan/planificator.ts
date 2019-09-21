@@ -151,13 +151,15 @@ export class Planificator {
   }
 
   static constructSuggestionKey(arc: Arc, storageKeyBase?: string): KeyBase {
-    const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
+    // XXX
+    const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey as string);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
     return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
   }
 
   static constructSearchKey(arc: Arc): KeyBase {
-    const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
+    // XXXX
+    const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey as string);
     const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
     return keybase.childKeyForSearch(planificatorId);
 }

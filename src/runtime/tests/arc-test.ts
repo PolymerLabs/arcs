@@ -60,6 +60,13 @@ function getSingletonHandle(store: StorageProviderBase): Singleton {
 // TODO(lindner): add fireBase
 //  const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test/arc-1';
 
+describe('Arc new storage', () => {
+  it('applies existing stores to a particle', async () => {
+    const runtime = Runtime.newForNodeTesting();
+    const arc = runtime.newArc('test', arcId => new VolatileStorageKey(arcId, ''));
+  });
+});
+
 ['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
 describe('Arc ' + storageKeyPrefix, () => {
   it('idle can safely be called multiple times ', async () => {

@@ -63,4 +63,9 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
     this.exists = Exists.ShouldExist;
     return activeStore;
   }
+
+  // TODO(shans): DELETEME once we've switched to this storage stack
+  get referenceMode() {
+    return this.mode === StorageMode.ReferenceMode;
+  }
 }
