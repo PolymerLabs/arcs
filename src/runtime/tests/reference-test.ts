@@ -15,7 +15,7 @@ import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/st
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
-import {EntityType, ReferenceType} from '../type.js';
+import {EntityType, ReferenceType, CollectionType} from '../type.js';
 import {Id} from '../id.js';
 
 describe('references', () => {
@@ -48,11 +48,11 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     assert.strictEqual(recipe.handles[0].id, 'reference:1');
     recipe.handles[0].type.maybeEnsureResolved();
-    assert.isTrue(recipe.handles[0].type instanceof ReferenceType);
+    assert.instanceOf(recipe.handles[0].type, ReferenceType);
     assert.strictEqual(((recipe.handles[0].type.resolvedType() as ReferenceType).referredType as EntityType).entitySchema.name, 'Result');
   });
 
-  it('exposes a dereference API to particles', async () => {
+  it('exposes a dereference API to particles for singleton handles', async () => {
     const loader = new StubLoader({
       'manifest': `
         schema Result
@@ -95,16 +95,82 @@ describe('references', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.isTrue(arc._stores[0].type instanceof ReferenceType);
+    const refStore = arc._stores[0] as SingletonStorageProvider;
+    assert.isTrue(refStore.type instanceof ReferenceType);
 
     const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-    const backingStore = await volatileEngine.baseStorageFor(arc._stores[1].type, volatileEngine.baseStorageKey(arc._stores[1].type));
-    await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
+    const backingStore = await volatileEngine.baseStorageFor(refStore.type, volatileEngine.baseStorageKey(refStore.type));
+    await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
+    await refStore.set({id: 'id1', storageKey: backingStore.storageKey});
+    await arc.idle;
 
-    const refStore = arc._stores[0] as SingletonStorageProvider;
-    await refStore.set({id: 'id:1', storageKey: backingStore.storageKey});
+    const outStore = arc._stores[1] as SingletonStorageProvider;
+    const value = (await outStore.get()).rawData;
+    assert.deepStrictEqual(value, {value: 'val1'});
+  });
 
-    await assertSingletonWillChangeTo(arc, arc._stores[1], 'value', 'what a result!');
+  it('exposes a dereference API to particles for collection handles', async () => {
+    const loader = new StubLoader({
+      'manifest': `
+        schema Result
+          Text value
+
+        particle Dereferencer in 'dereferencer.js'
+          in [Reference<Result>] inResult
+          out [Result] outResult
+
+        recipe
+          create 'input:1' as handle0
+          create 'output:1' as handle1
+          Dereferencer
+            inResult <- handle0
+            outResult -> handle1
+      `,
+      'dereferencer.js': `
+        defineParticle(({Particle}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('outResult');
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'inResult') {
+                for (const ref of update.added) {
+                  await ref.dereference();
+                  this.output.store(ref.entity);
+                }
+              }
+            }
+          }
+        });
+      `
+    });
+
+    const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    const refStore = arc._stores[0] as CollectionStorageProvider;
+    assert.instanceOf(refStore.type, CollectionType);
+
+    const resType = refStore.type.getContainedType();
+    assert.instanceOf(resType, ReferenceType);
+
+    const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
+    const backingStore = await volatileEngine.baseStorageFor(resType, volatileEngine.baseStorageKey(resType));
+    await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
+    await backingStore.store({id: 'id2', rawData: {value: 'val2'}}, ['key2']);
+    await refStore.store({id: 'id1', storageKey: backingStore.storageKey}, ['key1a']);
+    await refStore.store({id: 'id2', storageKey: backingStore.storageKey}, ['key2a']);
+    await arc.idle;
+
+    const outStore = arc._stores[1] as CollectionStorageProvider;
+    const values = (await outStore.toList()).map(e => e.rawData);
+    assert.deepStrictEqual(values, [{value: 'val1'}, {value: 'val2'}]);
   });
 
   it('exposes a reference API to particles', async () => {
