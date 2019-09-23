@@ -22,6 +22,6 @@ interface IArcsService {
 
   void stopArc(String arcId, String pecId);
 
-  void registerRenderers(in List<String> modalities, IRemoteOutputCallback callback);
+  void registerRenderer(String modality, IRemoteOutputCallback callback);
 }
 

@@ -31,32 +31,32 @@ public interface ArcsEnvironment {
    * Fires an event to notify listener when given transaction-id data is available.
    * TODO: DataListeners are deprecated, remove.
    */
-  void fireDataEvent(String tid, String data);
+  default void fireDataEvent(String tid, String data) {}
 
   /**
    * A callback when Arcs is ready to for interaction.
    *
    * @param listener a callback interface for suggestions.
    */
-  void addReadyListener(ReadyListener listener);
+  default void addReadyListener(ReadyListener listener) {}
 
   /**
    * Fires an event to notify listeners when Arcs is ready for interaction.
    */
-  void fireReadyEvent(List<String> recipes);
+  default void fireReadyEvent(List<String> recipes) {}
 
   /** Initialize Arcs */
-  void init();
+  default void init() {}
 
   /** Reset Arcs to the Launcher state. */
-  void reset();
+  default void reset() {}
 
   /** Tear down any resources used by the environment. */
-  void destroy();
+  default void destroy() {}
 
   /** Cause Arcs full screen UI to be shown. */
-  void show();
+  default void show() {}
 
   /** Cause Arcs full screen UI to be hidden. */
-  void hide();
+  default void hide() {}
 }

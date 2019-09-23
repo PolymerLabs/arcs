@@ -39,7 +39,9 @@ public class RemotePec {
     this.jsonParser = jsonParser;
   }
 
-  public Id getArcId() { return arcId; }
+  public Id getArcId() {
+    return arcId;
+  }
   /**
    * Starts a new arc running the given recipe. The given particle implementation is attached to
    * that arc.
@@ -62,22 +64,8 @@ public class RemotePec {
         pecInnerPortFactory.createPECInnerPort(pecId.toString(), idGenerator.getSessionId());
     pecInnerPort.mapParticle(particle);
 
-    bridge
-        .connectToArcsService()
-        .thenAccept(
-            service -> {
-              try {
-                service.startArc(
-                    arcId.toString(),
-                    pecId.toString(),
-                    recipe,
-                    particle.getId(),
-                    particle.getName(),
-                    callback);
-              } catch (RemoteException e) {
-                throw new RuntimeException(e);
-              }
-            });
+    bridge.startArc(
+        arcId.toString(), pecId.toString(), recipe, particle.getId(), particle.getName(), callback);
   }
 
   /** Shuts down the running arc and remote PEC. */
@@ -91,15 +79,6 @@ public class RemotePec {
     String arcId = this.arcId.toString();
     this.arcId = null;
 
-    bridge
-        .connectToArcsService()
-        .thenAccept(
-            service -> {
-              try {
-                service.stopArc(arcId, pecId);
-              } catch (RemoteException e) {
-                throw new RuntimeException(e);
-              }
-            });
+    bridge.stopArc(arcId, pecId);
   }
 }
