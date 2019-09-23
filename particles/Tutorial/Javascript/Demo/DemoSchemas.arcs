@@ -8,6 +8,7 @@ schema GameState
   Number moves
   Text winnerAvatar
   Text board
+  Number attemptedMoves
 
 schema Move 
   Text playerAvatar

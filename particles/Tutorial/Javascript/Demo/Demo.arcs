@@ -15,6 +15,7 @@ particle Game in './source/Game.js'
   in Person playerTwo
   in GameState gameState
   in Move humanMove
+  in Move computerMove
   out Move move
 
 particle GetPlayer in './source/GetPerson.js'
@@ -50,6 +51,7 @@ recipe
     playerOne <- playerOne
     playerTwo <- playerTwo
     humanMove <- humanMove
+    computerMove <- computerMove
     move -> move
   DisplayGreeting
     person <- playerOne
@@ -62,4 +64,7 @@ recipe
     person <- playerOne
     gameState <- gameState
     consume congratulationsSlot as congratulations
+  RandomComputer
+    computerMove -> computerMove
+    gameState <- gameState
   description `Javascript Tutorial Demo`

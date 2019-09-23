@@ -21,14 +21,14 @@ const template = html`<span>{{startmsg}}</span> Please hit refresh to start a ne
       return template;
     }
 
-    shouldRender({person, gameState}) {
+    shouldRender({gameState}) {
       // Here we check that the person is defined.
-      return person && gameState && gameState.gameOver;
+      return gameState && gameState.gameOver;
     }
 
-    render({person, gameState}) {
-      if (gameState.winnerId !== undefined) {
-        return {startmsg: `Congratulations ${person.name}, you won!`};
+    render({gameState}) {
+      if (gameState.winnerAvatar !== undefined) {
+        return {startmsg: `Congratulations ${gameState.winnerAvatar}, you won!`};
       } 
       return {startmsg: `It's a tie!`};
     }

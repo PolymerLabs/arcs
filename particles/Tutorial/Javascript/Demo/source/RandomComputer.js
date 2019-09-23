@@ -22,36 +22,21 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
 
-    async update({currentPlayer, gameState, me,
-                  cellState1, cellState2, cellState3,
-                  cellState4, cellState5, cellState6,
-                  cellState7, cellState8, cellState9}, {mvs}) {
-      if (currentPlayer && gameState && me &&
-        cellState1 && cellState2 && cellState3 &&
-        cellState4 && cellState5 && cellState6 &&
-        cellState7 && cellState8 && cellState9) {
-        if (currentPlayer.id2 == me.id2) {
-          if (!mvs) {
-            this.setState({mvs: 0});
+    update({gameState}, {}) {
+      if (gameState) {
+        
+        const emptyCells = [];
+        const board = gameState.board.split(`,`);
+        for (let i = 0; i < board.length - 1; i++) {
+          if (board[i] == ``) {
+            emptyCells.push((i + 1).toString());
           }
-          if (gameState.moves > mvs) {
-            const cells = [];
-            !cellState1.gameOver ? cells.push(`cellState1`) : cells;
-            !cellState2.gameOver ? cells.push(`cellState2`) : cells;
-            !cellState3.gameOver ? cells.push(`cellState3`) : cells;
-            !cellState4.gameOver ? cells.push(`cellState4`) : cells;
-            !cellState5.gameOver ? cells.push(`cellState5`) : cells;
-            !cellState6.gameOver ? cells.push(`cellState6`) : cells;
-            !cellState7.gameOver ? cells.push(`cellState7`) : cells;
-            !cellState8.gameOver ? cells.push(`cellState8`) : cells;
-            !cellState9.gameOver ? cells.push(`cellState9`) : cells;
-
-            const selection = Math.floor(Math.random() * cells.length);
-            this.updateSingleton(cells[selection], {gameOver: true, moves: 1, winnerId: me.id2});
-            this.setState({mvs: gameState.moves + 1});
-          }
-          
         }
+        console.log(`computer thinks board is: `, gameState.board);
+        console.log(`computer thinks empty cells are:`, emptyCells);
+        const selection = Math.floor(Math.random() * emptyCells.length);
+        console.log(`setting computer move to `, selection);
+        this.updateSingleton('computerMove', {move: emptyCells[selection]});
       }
     }
   };

@@ -20,32 +20,22 @@ defineParticle(({DomParticle, log}) => {
       return '';
     }
 
-    update({playerOne, playerTwo, gameState, humanMove}, {initialised}) {
-      //TODO Make this not depend on gameState.
-      if (playerOne && playerTwo && gameState && humanMove) {
-        if (!gameState.gameOver) {
-        //   if (gameState.winnerId == playerOne.playerId) {
-        //     this.updateSingleton('currentPlayer', playerOne);
-        //     this.updateSingleton('currentPlayerId', {id2: playerOne.id2});
-        //   } else if (gameState.winnerId == playerOne.playerId) {
-        //     this.updateSingleton('currentPlayer', playerTwo);
-        //     this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
-        //   }
-        // } else if (gameState.moves % 2 == 0) {
+    update({playerOne, playerTwo, gameState, humanMove, computerMove}, {mvs}) {
+      if (!mvs) {
+        this.setState({mvs: 1});
+      }
+      if (playerOne && playerTwo && gameState && humanMove && computerMove) {
+        if (!gameState.gameOver ) { 
           if (gameState.moves % 2 == 0) {
-          // this.updateSingleton('currentPlayer', playerOne);
-          // this.updateSingleton('currentPlayerId', {id2: playerOne.id2});
-          this.updateSingleton('move', {move: humanMove.move, playerAvatar: playerOne.avatar});
-        } else {
-          this.updateSingleton('move', {move: humanMove.move, playerAvatar: playerTwo.avatar});
-          // this.updateSingleton('currentPlayer', playerTwo);
-          // this.updateSingleton('currentPlayerId', {id2: playerTwo.id2});
-        }
-
-        
-      } 
+            this.updateSingleton('move', {move: humanMove.move, playerAvatar: playerOne.avatar});
+            this.setState({mvs: gameState.moves});
+          } else if (mvs < (gameState.moves + gameState.attemptedMoves)) {            
+            this.updateSingleton('move', {move: computerMove.move, playerAvatar: playerTwo.avatar});
+            this.setState({mvs: gameState.moves + gameState.attemptedMoves + 2});
+          }  
+        } 
+      }
     }
-  }
-};
+  };
 });
 
