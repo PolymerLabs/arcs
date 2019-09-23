@@ -18,7 +18,7 @@ const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
 export const runArc = async (msg, tid, bus, runtime, env) => {
-  const {recipe, arcId, storageKeyPrefix, pecId, particleId, particleName} = msg;
+  const {recipe, arcId, storageKeyPrefix, pecId, particleId, particleName, providedSlotId} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
     warn(`arcId must be provided.`);
@@ -42,13 +42,13 @@ export const runArc = async (msg, tid, bus, runtime, env) => {
   };
 
   // optionally instantiate recipe
-  if (action && await instantiateRecipe(arc, action, particleId, particleName)) {
+  if (action && await instantiateRecipe(arc, action, particleId, particleName, providedSlotId)) {
     log(`successfully instantiated ${recipe} in ${arc}`);
   }
   return arc;
 };
 
-const instantiateRecipe = async (arc, recipe, particleId, particleName) => {
+const instantiateRecipe = async (arc, recipe, particleId, particleName, providedSlotId) => {
   let plan = await Utils.resolve(arc, recipe);
   if (!plan) {
     warn(`failed to resolve recipe ${recipe}`);
@@ -59,7 +59,7 @@ const instantiateRecipe = async (arc, recipe, particleId, particleName) => {
     return reinstantiateParticle(arc, particleId, particleName);
   }
 
-  plan = updateParticleInPlan(plan, particleId, particleName);
+  plan = updateParticleInPlan(plan, particleId, particleName, providedSlotId);
   if (!plan) {
     warn(`failed updating particle id '${particleId}', name ${particleName} in plan ${plan.toString()}`);
     return false;
@@ -81,7 +81,7 @@ const reinstantiateParticle = (arc, particleId, particleName) => {
   return false;
 };
 
-const updateParticleInPlan = (plan, particleId, particleName) => {
+const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) => {
   if (!!particleId && !!particleName) {
     plan = plan.clone();
     const particle = plan.particles.find(p => p.name === particleName);
@@ -90,6 +90,17 @@ const updateParticleInPlan = (plan, particleId, particleName) => {
       return null;
     }
     particle.id = particleId;
+    if (providedSlotId) {
+      if (particle.getSlotConnections().length !== 1) {
+        warn(`Unexpected ${particle.getSlotConnections().length} of consumed slots for particle ${particleName}.`);
+        return;
+      }
+      const providedSlots = Object.values(particle.getSlotConnections()[0].providedSlots);
+      if (providedSlots.length !== 1) {
+        warn(`Unexpected ${providedSlots.length} of provided slots for particle ${particleName}.`);
+      }
+      providedSlots[0].id = providedSlotId;
+    }
     if (!plan.normalize()) {
       warn(`cannot normalize after setting id ${particleId} for particle ${particleName}`);
       return null;

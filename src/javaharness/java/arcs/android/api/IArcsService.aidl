@@ -17,10 +17,13 @@ interface IArcsService {
       String recipe,
       String particleId,
       String particleName,
+      String providedSlotId,
       IRemotePecCallback callback);
 
   void stopArc(String arcId, String pecId);
 
   void registerRenderer(String modality, IRemoteOutputCallback callback);
+  // TODO: add unregisterRenderer method.
+  // TODO: add UI events passing / handling method.
 }
 
