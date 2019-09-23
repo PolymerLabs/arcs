@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 const path = require('path');
-const webpack = require('webpack');
+//const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 //const Visualizer = require('webpack-visualizer-plugin');
 
@@ -17,8 +17,7 @@ module.exports = {
   //target: 'node',
   //devtool: 'source-map',
   optimization: {
-     minimize: false,
-     //minimize: true,
+     minimize: true,
      minimizer: [
        new TerserPlugin({
          terserOptions: {
@@ -28,7 +27,7 @@ module.exports = {
     ]
   },
   entry: {
-    shell: `../web.js`
+    surface: `../surface.js`
   },
   output: {
     filename: '[name].js',
@@ -50,10 +49,10 @@ module.exports = {
     // new Visualizer({
     //   filename: '../webpack-stats.html'
     // })
-    new webpack.NormalModuleReplacementPlugin(
-      // use deployment configuration
-      /paths.js/,
-      resource =>  resource.request = './deploy/source/paths.js'
-    )
+    // new webpack.NormalModuleReplacementPlugin(
+    //   // use deployment configuration
+    //   /paths.js/,
+    //   resource =>  resource.request = './deploy/source/paths.js'
+    // )
   ]
 };

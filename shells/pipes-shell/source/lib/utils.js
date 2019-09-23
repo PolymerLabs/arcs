@@ -40,6 +40,15 @@ export const instantiateRecipe = async (arc, recipe) => {
   }
 };
 
+export const instantiateRecipeByName = async (arc, name) => {
+  const recipe = recipeByName(arc.context, name);
+  if (!recipe) {
+    console.warn(`found no recipes matching [${name}]`);
+  } else {
+    await instantiateRecipe(arc, recipe);
+  }
+};
+
 export const marshalOutput = async arc => {
   let data;
   let store = arc.__outputStore;
