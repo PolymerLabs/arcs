@@ -58,7 +58,7 @@
           } else if (this.checkIfWon(arr[0], arr[3], arr[6])) { // left col
             newGameOver = true;
             newWinnerAvatar = arr[0];
-          } else if (this.checkIfWon(arr[1], arr[4], arr[6])) { // middle col
+          } else if (this.checkIfWon(arr[1], arr[4], arr[7])) { // middle col
             newGameOver = true;
             newWinnerAvatar = arr[1];
           } else if (this.checkIfWon(arr[2], arr[5], arr[8])) { // right col
