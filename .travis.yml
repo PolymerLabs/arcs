@@ -18,9 +18,9 @@ script:
 
 cache: npm
 
+# Thinking about adding install steps? Why not modify the tools/setup script instead?
 install:
   - ./tools/setup
-  - npm run sigh-install chokidar
 
 
 before_deploy:

@@ -1,11 +1,8 @@
 #!/bin/sh
 
 ROOT=$(dirname $0)/..
-
 NVM_VERSION="v0.34.0"
-
-BAZEL_DEB="https://github.com/bazelbuild/bazel/releases/download/0.29.0/bazel_0.29.0-linux-x86_64.deb"
-BAZEL_PKG_NAME=$(basename "$BAZEL_DEB")
+BAZEL_VERSION="0.29.0"
 
 YLW="\033[33m"
 RED="\033[91m"
@@ -13,12 +10,14 @@ GRN="\033[92m"
 MAG="\033[95m"
 BLD="\033[1m"
 END="\033[0m"
-
 CMD="$BLD$YLW"
 
+warn() {
+    echo "$RED$BLD$1$END"
+}
 
 fail() {
-    echo "$RED$BLD$1$END"
+    warn $1
     exit 1
 }
 
@@ -26,15 +25,58 @@ status() {
     echo "$MAG$1$END"
 }
 
+append_once() {
+  if grep -Fxq "$1" "$2"; then
+    status "Already updated."
+  else
+    echo "$1" >> "$2" || warn "Failed to update $2"
+  fi
+}
+
+# Detect Platform
+case $(uname | tr '[:upper:]' '[:lower:]') in
+  linux*)
+    OS_NAME=linux
+    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh"
+    ;;
+  darwin*)
+    OS_NAME=osx
+    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-darwin-x86_64.sh"
+    ;;
+  msys*)
+    OS_NAME=windows
+    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-windows-x86_64.exe"
+    # TODO(alxr) investigate windows compatability
+    fail "Windows is currently unsupported. Please follow install instructions in the README."
+    ;;
+  *)
+    OS_NAME=notset
+    fail "Can't detect host OS"
+    ;;
+esac
+
+BAZEL_SCRIPT_NAME=$(basename "$BAZEL_DEP")
+
+status "0. Pre-requisites"
+if [ "$OS_NAME" = "linux" ]; then
+  status "0.1 Installing pre-requisites for Bazel"
+  sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3
+elif [ "$OS_NAME" = "osx" ]; then
+  status "0.1. Checking for Command Line Tools"
+  xcode-select --version || xcode-select --install || fail "Unable to install Command Line Tools"
+fi
+
 status "1. Install nvm"
-curl -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
+curl -L -s -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh" | sh || \
     fail "Failed to download nvm version $NVM_VERSION."
 
 status "1.1 ensure nvm is in your current process"
-. ~/.nvm/nvm.sh || source ~/.nvm/nvm.sh
+# shellcheck disable=SC1090
+. ~/.nvm/nvm.sh
 
 status "2. Install node"
-(cd $ROOT && nvm install && nvm use) || fail 'Failed to install target node version.'
+cd $ROOT && nvm install && nvm use || fail 'Failed to install target node version.'
+cd -
 
 status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
@@ -42,11 +84,22 @@ nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 status "4. Install dependencies"
 (cd $ROOT && npm ci && npm --prefix=server ci) || fail 'Failed to install dependencies.'
 
-status "5. Install bazel"
-(wget "$BAZEL_DEB" && set -x && sudo dpkg -i $BAZEL_PKG_NAME)
+status "4.1. Install sigh dependencies"
+(cd $ROOT && ./tools/sigh install chokidar) || fail 'Failed to install sigh dependencies.'
 
-status "5.1. Set up the .bazelrc file"
-(cd $ROOT && echo "build --define=repo_root=$(pwd)" >> .bazelrc)
+status "5. Install Bazel"
+
+status "5.1. Downloading and running install script"
+curl -L -s -O "$BAZEL_DEP" --output "$BAZEL_SCRIPT_NAME"
+chmod +x "$BAZEL_SCRIPT_NAME"
+"./$BAZEL_SCRIPT_NAME" --user || fail "Failed to install Bazel"
+rm "$BAZEL_SCRIPT_NAME"
+
+status "5.2. Updating PATH"
+append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
+
+status "5.3. Set up the .bazelrc file"
+(cd $ROOT && append_once "build --define=repo_root=$(pwd)" .bazelrc)
 
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
@@ -54,6 +107,8 @@ echo "node --version"
 node --version
 echo "npm --version"
 npm --version
+echo "bazel --version"
+bazel --version
 echo "\nNext, try the following:\n"
 echo "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
 echo "- Serve the project: $CMD\`npm start\`$END"
