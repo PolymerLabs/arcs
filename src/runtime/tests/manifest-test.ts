@@ -2663,4 +2663,220 @@ resource SomeName
       `), `Another slot with name 'mySlot' has already been provided by this particle`);
     });
   });
+
+  describe('all schemas', () => {
+    describe('handles manifests with no schemas', () => {
+      it('handles an empty manifest', async () => {
+        const emptyManifest = await Manifest.parse(`
+        `);
+        const emptyResult = emptyManifest.allSchemas;
+        assert.isEmpty(emptyResult);
+      });
+      it('handles a non-empty manifest', async () => {
+        const manifest = await Manifest.parse(`
+          particle A
+          recipe Foo
+            A
+        `);
+        const result = manifest.allSchemas;
+        assert.isEmpty(result);
+      });
+    });
+    describe('handles manifests with simple schemas', () => {
+      it('handles a schema with no fields', async () => {
+        const manifest = await Manifest.parse(`
+          schema Foo
+          particle Bar
+            recipe Food
+              Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.lengthOf(result, 1);
+        assert.isEmpty(result[0].fields);
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+    
+      });
+      it('handles a schema with fields', async () => {
+        const manifest = await Manifest.parse(`
+        schema Foo
+          Text a
+          Number b
+          Boolean c
+        particle Bar
+          recipe Food
+            Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.lengthOf(result, 1);
+        assert.isDefined(result[0].fields.a);
+        assert.isDefined(result[0].fields.b);
+        assert.isDefined(result[0].fields.c);
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+      });
+      it('handles schemas with no fields', async () => {
+        const manifest = await Manifest.parse(`
+          schema Foo
+          schema Boo
+          schema Roo
+          particle Bar
+            recipe Food
+              Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.lengthOf(result, 3);
+        assert.isEmpty(result[0].fields);
+        assert.isEmpty(result[1].fields);
+        assert.isEmpty(result[2].fields);
+      });
+      it('handles multiple schemas with fields', async () => {
+        const manifest = await Manifest.parse(`
+        schema Foo
+          Text a
+        schema Boo
+          Number b
+          Boolean c
+        schema Roo
+          URL d
+        schema Goo
+          Text e
+          Text f
+        particle Bar
+          recipe Food
+            Bar
+        `);
+        const result = manifest.allSchemas;
+        assert.lengthOf(result, 4);
+
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+        assert.lengthOf(Object.keys(result[0].fields), 1);
+        assert.isDefined(result[0].fields.a);
+
+        assert.lengthOf(result[1].names, 1);
+        assert.deepEqual(result[1].names, ['Boo']);
+        assert.lengthOf(Object.keys(result[1].fields), 2);
+        assert.isDefined(result[1].fields.b);
+        assert.isDefined(result[1].fields.c);
+
+        assert.lengthOf(result[2].names, 1);
+        assert.deepEqual(result[2].names, ['Roo']);
+        assert.lengthOf(Object.keys(result[2].fields), 1);
+        assert.isDefined(result[2].fields.d);
+
+        assert.lengthOf(result[3].names, 1);
+        assert.deepEqual(result[3].names, ['Goo']);
+        assert.lengthOf(Object.keys(result[3].fields), 2);
+        assert.isDefined(result[3].fields.e);
+        assert.isDefined(result[3].fields.f);
+      });
+    });
+    describe('handles manifests with external stores of defined schemas', () => {
+      it('handles a simple external store of a schema', async () => {
+        const manifestStr = `
+        schema Foo
+          Text name
+          Number age
+        
+        store FooStore of Foo in 'b'
+        
+        particle Bar
+          recipe Food
+            Bar`;
+        const jsonStr = `
+        [
+          {
+              "name": "Jack",
+              "age": 7
+          }
+        ]`;
+        const loader = new StubLoader({
+            'a': manifestStr,
+            'b': jsonStr,
+        });
+        const manifest = await Manifest.load('a', loader);
+        const result = manifest.allSchemas;
+        assert.lengthOf(result, 1);
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Foo']);
+        assert.lengthOf(Object.keys(result[0].fields), 2);
+        assert.isDefined(result[0].fields.name);
+        assert.isDefined(result[0].fields.age);
+      });
+      it('handles multiple schemas with internal and external stores and passing them via handles', async () => {
+        const manifestStr = `
+        schema Data
+          Number num
+          Text txt
+          URL lnk
+          Boolean flg
+
+        resource DataResource
+          start
+          [
+            {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}
+          ]
+        store DataStore of Data in DataResource
+
+
+        schema Info
+          Text for
+          Number val
+
+        store InfoStore of [Info] in 'b'
+
+
+        particle TestParticle
+          consume root
+          inout Data data
+          out Data res
+          inout [Info] info
+
+        recipe KotlinTestRecipe
+          copy DataStore as h1
+          create as h2
+          copy InfoStore as h3
+          TestParticle
+            data <- h1
+            res -> h2
+            info = h3
+
+
+        particle ServiceParticle
+          consume root
+
+        recipe ServicesAPI
+          ServiceParticle
+        `;
+        const jsonStr = `
+        [
+            {"for": "xx", "val": -5.8},
+            {"val": 107},
+            {"for": "yy"}
+        ]`;
+        const loader = new StubLoader({
+            'a': manifestStr,
+            'b': jsonStr,
+        });
+        const manifest = await Manifest.load('a', loader);
+        const result = manifest.allSchemas;
+        assert.equal(result.length, 2);
+
+        assert.lengthOf(result[0].names, 1);
+        assert.deepEqual(result[0].names, ['Data']);
+        assert.lengthOf(Object.keys(result[0].fields), 4);
+        assert.isDefined(result[0].fields.num);
+        assert.isDefined(result[0].fields.txt);
+        assert.isDefined(result[0].fields.lnk);
+        assert.isDefined(result[0].fields.flg);
+
+        assert.lengthOf(result[1].names, 1);
+        assert.deepEqual(result[1].names, ['Info']);
+        assert.lengthOf(Object.keys(result[1].fields), 2);
+        assert.isDefined(result[1].fields.for);
+        assert.isDefined(result[1].fields.val);
+      });
+    });
+  });
 });

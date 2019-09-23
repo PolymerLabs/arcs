@@ -21,8 +21,8 @@ import './arcs-environment.js';
 import './arcs-notifications.js';
 import './arcs-tracing.js';
 import './arcs-pec-log.js';
+import './arcs-hcr-list.js';
 import './arcs-selector.js';
-import './arcs-hot-reload.js';
 import './strategy-explorer/strategy-explorer.js';
 import './arcs-recipe-editor.js';
 import './arcs-connection-status.js';
@@ -64,8 +64,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
     <header id="header" class="header">
       <div section>
         <arcs-notifications></arcs-notifications><div divider></div>
-        <arcs-selector active-page="[[routeData.page]]"></arcs-selector><div divider></div>
-        <arcs-hot-reload></arcs-hot-reload>
+        <arcs-selector active-page="[[routeData.page]]"></arcs-selector>
       </div>
     </header>
     <div id="main"></div>
@@ -85,7 +84,8 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       'Strategizer': 'strategy-explorer',
       'Planner': 'arcs-planning',
       'Tracing': 'arcs-tracing',
-      'Editor': 'arcs-recipe-editor'
+      'Editor': 'arcs-recipe-editor',
+      'HCR': 'arcs-hcr-list'
     };
 
     // TODO: Save user's layout to local storage and restore from it.

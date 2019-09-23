@@ -1,10 +1,9 @@
 package arcs.api;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 public class PECInnerPortImpl implements PECInnerPort {
   private static final String MESSAGE_TYPE_FIELD = "messageType";
@@ -12,6 +11,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final String MESSAGE_PEC_ID_FIELD = "id";
   private static final String INDENTIFIER_FIELD = "identifier";
   private static final String INSTANTIATE_PARTICLE_MSG = "InstantiateParticle";
+  private static final String REINSTANTIATE_PARTICLE_MSG = "ReinstantiateParticle";
   private static final String PARTICLE_SPEC_FIELD = "spec";
   private static final String PARTICLE_STORES_FIELD = "stores";
   private static final String PARTICLE_ID_FIELD = "id";
@@ -34,6 +34,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final String STOP_MSG = "Stop";
   private static final String DEV_TOOLS_CONNECTED_MSG = "DevToolsConnected";
   private static final String RENDER_MSG = "Render";
+  private static final String OUTPUT_MSG = "Output";
   private static final String CONTENT_FIELD = "content";
   private static final String MESSAGE_PEC_MESSAGE_KEY = "message";
   private static final String MESSAGE_PEC_PEC_VALUE = "pec";
@@ -43,6 +44,8 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final String HANDLE_TO_LIST_MSG = "HandleToList";
   private static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
   private static final String HANDLE_REMOVE_MSG = "HandleRemove";
+
+  private static final Logger logger = Logger.getLogger(PECInnerPortImpl.class.getName());
 
   private final String id;
   private final ArcsEnvironment environment;
@@ -65,16 +68,22 @@ public class PECInnerPortImpl implements PECInnerPort {
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
     this.promiseFactory = promiseFactory;
-    this.idGenerator = new IdGenerator(sessionId);
+    this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
+  }
+
+  @Override
+  public String getId() {
+    return id;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public void handleMessage(PortableJson message) {
+  public void onReceivePecMessage(PortableJson message) {
     String messageType = message.getString(MESSAGE_TYPE_FIELD);
     PortableJson messageBody = message.getObject(MESSAGE_BODY_FIELD);
     switch (messageType) {
       case INSTANTIATE_PARTICLE_MSG:
+      case REINSTANTIATE_PARTICLE_MSG:
         {
           ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject(PARTICLE_SPEC_FIELD));
           PortableJson stores = messageBody.getObject(PARTICLE_STORES_FIELD);
@@ -86,13 +95,28 @@ public class PECInnerPortImpl implements PECInnerPort {
               });
 
           String particleId = messageBody.getString(PARTICLE_ID_FIELD);
-          Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
-          if (particle == null) {
-            // TODO: improve error handling.
-            throw new AssertionError("Cannot instantiate particle " + spec.name);
+          if (mapper.hasThingForIdentifier(particleId)) {
+           // Non-factory instantiation of a Particle.
+            Particle particle = mapper.thingForIdentifier(particleId).getParticle();
+            pec.initializeParticle(particle, spec, proxies, idGenerator);
+            // TODO: implement proper capabilities.
+            particle.setOutput((content) -> output(particle, content));
+          } else {
+            if (REINSTANTIATE_PARTICLE_MSG.equals(messageType)) {
+              throw new AssertionError("Unexpected reinstantiate call for " + particleId);
+            }
+            Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
+            if (particle == null) {
+              // TODO: improve error handling.
+              throw new AssertionError("Cannot instantiate particle " + spec.name);
+            }
+
+            mapper.establishThingMapping(
+                messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
+            // TODO: implement proper capabilities.
+            particle.setOutput((content) -> output(particle, content));
           }
-          mapper.establishThingMapping(
-              messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
+
           break;
         }
       case DEFINE_HANDLE_MSG:
@@ -119,17 +143,7 @@ public class PECInnerPortImpl implements PECInnerPort {
           String particleId = messageBody.getString(PARTICLE_FIELD);
           Particle particle = mapper.thingForIdentifier(particleId).getParticle();
           String slotName = messageBody.getString(SLOT_NAME_FIELD);
-          Map<String, String> providedSlots = new HashMap<>();
-          PortableJson providedSlotsJson = messageBody.getObject(PROVIDED_SLOTS_FIELD);
-          for (int i = 0; i < providedSlotsJson.keys().size(); ++i) {
-            String name = providedSlotsJson.keys().get(i);
-            providedSlots.put(name, providedSlotsJson.getString(name));
-          }
-          List<String> contentTypes = new ArrayList<>();
-          PortableJson contentTypesJson = messageBody.getObject(CONTENT_TYPES_FIELD);
-          contentTypesJson.forEach(i -> contentTypes.add(contentTypesJson.getString(i)));
-          particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots, jsonParser));
-          particle.renderSlot(slotName, contentTypes);
+          logger.info("Unexpected StartRender call for particle " + particle.getName() + " slot " + slotName);
           break;
         }
       case STOP_RENDER_MSG:
@@ -137,15 +151,7 @@ public class PECInnerPortImpl implements PECInnerPort {
           String particleId = messageBody.getString(PARTICLE_FIELD);
           Particle particle = mapper.thingForIdentifier(particleId).getParticle();
           String slotName = messageBody.getString(SLOT_NAME_FIELD);
-          if (!particle.hasSlotProxy(slotName)) {
-            throw new AssertionError(
-                "StopRender called for particle "
-                    + particle.getName()
-                    + " slot "
-                    + slotName
-                    + " without StartRender call.");
-          }
-          particle.removeSlotProxy(slotName);
+          logger.info("Unexpected StopRender call for particle " + particle.getName() + " slot " + slotName);
           break;
         }
       case STOP_MSG:
@@ -158,7 +164,12 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void InitializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void mapParticle(Particle particle) {
+    mapper.establishThingMapping(particle.getId(), new Thing<>(particle));
+  }
+
+  @Override
+  public void initializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     PortableJson message = constructMessage(INITIALIZE_PROXY_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
@@ -169,7 +180,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void SynchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void synchronizeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     PortableJson message = constructMessage(SYNCHRONIZE_PROXY_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PROXY_HANDLE_ID_FIELD, mapper.identifierForThing(new Thing<>(storageProxy)));
@@ -180,7 +191,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void HandleStore(
+  public void handleStore(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
@@ -189,14 +200,14 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void HandleToList(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void handleToList(StorageProxy storageProxy, Consumer<PortableJson> callback) {
     postMessage(
         constructHandleMessage(
             HANDLE_TO_LIST_MSG, storageProxy, callback, /* data= */ null, /* particleId= */ null));
   }
 
   @Override
-  public void HandleRemove(
+  public void handleRemove(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
@@ -206,7 +217,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void HandleRemoveMultiple(
+  public void handleRemoveMultiple(
       StorageProxy storageProxy,
       Consumer<PortableJson> callback,
       PortableJson data,
@@ -217,11 +228,10 @@ public class PECInnerPortImpl implements PECInnerPort {
   }
 
   @Override
-  public void Render(Particle particle, String slotName, PortableJson content) {
-    PortableJson message = constructMessage(RENDER_MSG);
+  public void output(Particle particle, PortableJson content) {
+    PortableJson message = constructMessage(OUTPUT_MSG);
     PortableJson body = message.getObject(MESSAGE_BODY_FIELD);
     body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<>(particle)));
-    body.put(SLOT_NAME_FIELD, slotName);
     body.put(CONTENT_FIELD, content);
     postMessage(message);
   }

@@ -1,0 +1,109 @@
+{
+    "name": "arcs",
+    "displayName": "Arcs Language Client",
+    "description": "Arcs language support - instant feedback for writing manifests and recipes.",
+    "version": "0.0.0",
+    "publisher": "arcs",
+    "icon": "arcs-icon.png",
+    "galleryBanner": {
+        "color": "#FFFFFF",
+        "theme": "dark"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/PolymerLabs/arcs"
+    },
+    "engines": {
+        "vscode": "^1.1.36"
+    },
+    "bugs": {
+        "url": "https://github.com/PolymerLabs/arcs/issues"
+    },
+    "categories": [
+        "Programming Languages",
+        "Linters",
+        "Snippets",
+        "Formatters",
+        "Other"
+    ],
+    "keywords": [
+        "arcs",
+        "language",
+        "vscode",
+        "client",
+        "particle",
+        "recipe",
+        "manifest"
+    ],
+    "preview": true,
+    "activationEvents": [
+        "onLanguage:arcs"
+    ],
+    "main": "./build/extension.js",
+    "scripts": {
+        "vscode:prepublish": "npm install && npm run lint && npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "tslint --config ./tslint.json './src/**/*.ts'",
+        "prettier": "prettier **/*.ts",
+        "installDevExtension": "npm install && ./node_modules/.bin/vsce package -o ./build/arcs-vscode-dev.vsix && code --install-extension ./build/arcs-vscode-dev.vsix"
+    },
+    "dependencies": {
+        "@types/glob": "^7.1.1",
+        "@types/mocha": "^5.2.7",
+        "glob": "^7.1.4",
+        "vscode-languageclient": "^4.4.2",
+        "vscode-languageserver-protocol": "^3.14.1"
+    },
+    "devDependencies": {
+        "mocha": "^6.1.4",
+        "tslint": "^5.14.0",
+        "typescript": "^3.0.0",
+        "vsce": "^1.63.0",
+        "vscode": "^1.1.36"
+    },
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Arcs",
+            "properties": {
+                "arcs.arcsPath": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "~/arcs/",
+                    "description": "The path to look for the arcs language server."
+                }
+            }
+        },
+        "languages": [
+            {
+                "id": "arcs",
+                "extensions": [
+                    ".arcs"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "arcs",
+                "scopeName": "source.arcs",
+                "path": "./syntax/grammar.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "arcs",
+                "path": "./snippets/arcs.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "arcs.restart",
+                "title": "Restart the Arcs LS",
+                "description": "Turn it off and on again",
+                "category": "Arcs"
+            }
+        ]
+    }
+}

@@ -2,11 +2,11 @@ package arcs.android.impl;
 
 import android.util.Log;
 import android.webkit.JavascriptInterface;
-import arcs.api.ArcsEnvironment.DataListener;
+import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClientImpl;
-import arcs.api.PECInnerPortFactory;
+import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
-import java.util.Map;
+import arcs.api.UiBroker;
 import javax.inject.Inject;
 
 public class DeviceClientAndroidImpl extends DeviceClientImpl {
@@ -14,9 +14,10 @@ public class DeviceClientAndroidImpl extends DeviceClientImpl {
   @Inject
   public DeviceClientAndroidImpl(
       PortableJsonParser jsonParser,
-      Map<String, DataListener> inProgress,
-      PECInnerPortFactory portFactory) {
-    super(jsonParser, inProgress, portFactory);
+      ArcsEnvironment environment,
+      PecPortManager pecPortManager,
+      UiBroker uiBroker) {
+    super(jsonParser, environment, pecPortManager, uiBroker);
   }
 
   @JavascriptInterface
@@ -25,7 +26,7 @@ public class DeviceClientAndroidImpl extends DeviceClientImpl {
     try {
       super.receive(json);
     } catch (Throwable e) {
-      Log.e("Arcs", "Got an excepton receiving " + json, e);
+      Log.e("Arcs", "Got an exception receiving " + json, e);
     }
   }
 }

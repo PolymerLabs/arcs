@@ -20,6 +20,9 @@ export type Producer<T> = () => T;
 /** A function that takes a value of type `T` as input. */
 export type Consumer<T> = (input: T) => void;
 
+/** A function that takes a value of type `T` as input and can be awaited for completion. */
+export type AsyncConsumer<T> = (input: T) => Promise<void>;
+
 /** A function that just runs; it takes no values and returns nothing. */
 export type Runnable = () => void;
 

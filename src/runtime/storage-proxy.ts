@@ -56,8 +56,8 @@ export abstract class StorageProxy implements Store {
     return new SingletonProxy(id, type, port, pec, scheduler, name);
   }
 
-  static newNoOpProxy(type: Type) {
-    return new NoOpStorageProxy(null, type, null, null, null, 'NoOpStorage');
+  static newNoOpProxy(id: string, type: Type) {
+    return new NoOpStorageProxy(id, type, null, null, null, 'NoOpStorage');
   }
 
   storageKey: string;
@@ -626,10 +626,10 @@ export class NoOpStorageProxy extends StorageProxy implements CollectionStore, B
     return new Promise(resolve => {});
   }
   async cursorClose(cursorId: number): Promise<void> {
-    throw new Promise(resolve => {});
+    return new Promise(resolve => {});
   }
   async set(entity: {}, particleId: string): Promise<void> {
-    throw new Promise(resolve => {});
+    return new Promise(resolve => {});
   }
 }
 

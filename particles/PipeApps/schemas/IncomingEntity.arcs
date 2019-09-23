@@ -1,0 +1,4 @@
+schema IncomingEntity
+  Text type
+  Text jsonData
+  Text source

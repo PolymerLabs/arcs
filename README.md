@@ -43,7 +43,7 @@ requiring an upgrade to our current version.
    $ ./tools/setup
    ```
 
-2) That's it! (You can skip the next two sections.)
+2) That's it! (You can skip the next section.)
 
 
 ### Installing from scratch
@@ -72,6 +72,11 @@ requiring an upgrade to our current version.
    ```
    $ npm install -g npm   # can use npm@6.3.0 to install a specific version
    ```
+
+1) Optional: install Bazel (required for building/running WebAssembly particles,
+   optional if you only want to develop using JavaScript). See the
+   `./tools/setup` script for the correct version of Bazel to install. See the
+   [C++ wasm instructions](src/wasm/cpp/README.md) for more info.
 
 ### Installing within the Arcs project:
 
@@ -169,6 +174,14 @@ To run a specific Selenium test using Mocha's 'grep' capability:
 This also works for unit tests: `./tools/sigh test --grep 'regex'`. In addition,
 for unit tests you can run only a single test case by using `it.only()` instead
 of `it()`, or a single suite using `describe.only()` instead of `describe()`.
+
+### WebAssembly tests
+
+Test using Bazel (run from your repo root):
+
+```
+bazel test //src/wasm/... //src/tests/...
+```
 
 ### Debugging tests
 

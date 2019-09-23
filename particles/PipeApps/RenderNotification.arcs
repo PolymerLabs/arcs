@@ -8,3 +8,11 @@ recipe NotificationTest
   create as output
   RenderNotification
     output = output
+
+particle RenderText in './source/RenderText.java'
+  consume root
+  modality log
+  modality alert
+
+recipe DemoText
+  RenderText

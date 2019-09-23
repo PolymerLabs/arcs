@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class CollectionProxy extends StorageProxy implements CollectionStore {
   CRDTCollection<ModelEntry> model;
@@ -112,7 +113,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     } else {
       return promiseFactory.newPromise(
           (resolver, rejecter) ->
-              port.HandleToList(
+              port.handleToList(
                   this,
                   result -> {
                     PortableJson entity = null;
@@ -134,7 +135,9 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
             .emptyObject()
             .put("value", value)
             .put(ModelEntry.KEYS, jsonParser.fromStringArray(Arrays.asList(keys)));
-    port.HandleStore(this, (unused) -> {}, data, particleId);
+    port.handleStore(this, new Consumer<PortableJson>() {
+      @Override public void accept(PortableJson unused) {}
+    }, data, particleId);
 
     if (syncState != SyncState.FULL) {
       return;
@@ -153,7 +156,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
   @Override
   public void clear(String particleId) {
     if (syncState != SyncState.FULL) {
-      port.HandleRemoveMultiple(this, (unused) -> {}, jsonParser.emptyArray(), particleId);
+      port.handleRemoveMultiple(this, (unused) -> {}, jsonParser.emptyArray(), particleId);
     }
 
     PortableJson items = jsonParser.emptyArray();
@@ -164,7 +167,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
       item.put(ModelEntry.KEYS, keysJson);
       items.put(items.getLength(), item);
     }
-    port.HandleRemoveMultiple(this, (unused) -> {}, items, particleId);
+    port.handleRemoveMultiple(this, (unused) -> {}, items, particleId);
 
     PortableJson removedItems = jsonParser.emptyArray();
     for (int i = 0; i < items.getLength(); ++i) {
@@ -195,7 +198,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     if (syncState != SyncState.FULL) {
       PortableJson data =
           jsonParser.emptyObject().put("id", id).put(ModelEntry.KEYS, jsonParser.emptyArray());
-      port.HandleRemove(this, (unused) -> {}, data, particleId);
+      port.handleRemove(this, (unused) -> {}, data, particleId);
       return;
     }
 
@@ -213,7 +216,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
             .emptyObject()
             .put("id", id)
             .put(ModelEntry.KEYS, jsonParser.fromStringArray(Arrays.asList(keys)));
-    port.HandleRemove(this, (unused) -> {}, data, particleId);
+    port.handleRemove(this, (unused) -> {}, data, particleId);
 
     if (!model.applyOperation(
         new CollectionOperation<>(
@@ -235,7 +238,7 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
     } else {
       return promiseFactory.newPromise(
           (PortablePromise.Resolver<PortableJson> resolver, PortablePromise.Rejector<?> rejecter) ->
-              port.HandleToList(this, resolver));
+              port.handleToList(this, resolver));
     }
   }
 

@@ -10,24 +10,24 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
-import {Consumer} from '../runtime/hot.js';
+import {AsyncConsumer} from '../runtime/hot.js';
 
-export type DevtoolsListener = Consumer<DevtoolsMessage>;
+export type DevtoolsListener = AsyncConsumer<DevtoolsMessage>;
 export type DevtoolsMessage = {
   arcId?: string,
   requestId?: string,
   messageType: string,
   // tslint:disable-next-line: no-any
-  messageBody: any,
+  messageBody?: any,
   meta?: {
     arcId: string,
   }
 };
 
 export class AbstractDevtoolsChannel {
-  debouncedMessages: DevtoolsMessage[] = [];
-  messageListeners: Map<string, DevtoolsListener[]> = new Map();
-  timer = null;
+  private debouncedMessages: DevtoolsMessage[] = [];
+  private messageListeners: Map<string, DevtoolsListener[]> = new Map();
+  private timer = null;
   
   constructor() {
   }
@@ -62,14 +62,12 @@ export class AbstractDevtoolsChannel {
     return new ArcDevtoolsChannel(arc, this);
   }
 
-  _handleMessage(msg: DevtoolsMessage) {
+  async _handleMessage(msg: DevtoolsMessage) {
     const listeners = this.messageListeners.get(`${msg.arcId}/${msg.messageType}`);
     if (!listeners) {
       console.warn(`No one is listening to ${msg.messageType} message`);
     } else {
-      for (const listener of listeners) {
-        listener(msg);
-      }
+      await Promise.all(listeners.map(l => l(msg)));
     }
   }
 

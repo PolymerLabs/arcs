@@ -37,6 +37,10 @@ public class ThingMapper {
     return id;
   }
 
+ public boolean hasThingForIdentifier(String id) {
+    return idMap.containsKey(id);
+  }
+
   public Thing<?> thingForIdentifier(String id) {
     try {
       return Optional.ofNullable(idMap.get(id))

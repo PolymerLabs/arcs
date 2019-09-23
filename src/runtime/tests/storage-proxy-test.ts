@@ -226,7 +226,7 @@ class TestEngine {
   }
 
   newNoOpProxy(store): NoOpStorageProxy {
-    return StorageProxy.newNoOpProxy(store.type);
+    return StorageProxy.newNoOpProxy(store.id, store.type);
   }
 
   newHandle(store, proxy, particle, canRead, canWrite): HandleOld {
@@ -828,7 +828,7 @@ describe('storage-proxy', () => {
       proto = Object.getPrototypeOf(proto);
     }
 
-    const noOpProxy = engine.newNoOpProxy({type: engine.type});
+    const noOpProxy = engine.newNoOpProxy({id: 'test', type: engine.type});
     const noOpProperties = Object.getOwnPropertyNames(Object.getPrototypeOf(noOpProxy));
 
     properties.forEach(property => {

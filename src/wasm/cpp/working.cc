@@ -1,6 +1,6 @@
-#include <arcs.h>
-#include <working.h>
 #include <vector>
+#include "src/wasm/cpp/arcs.h"
+#include "src/wasm/cpp/entity-class.h"
 
 // This is an internal development file; not intended to be a particularly readable reference for
 // new users.

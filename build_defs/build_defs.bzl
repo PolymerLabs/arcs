@@ -1,52 +1,61 @@
-load(":run_in_repo.bzl", "run_in_repo")
+load(":run_in_repo.bzl", "EXECUTION_REQUIREMENTS_TAGS", "run_in_repo", "run_in_repo_test")
 
+def _run_schema2pkg(name, src, out, language_name, language_flag, file_extension):
+    """Generates source code for the given .arcs schema file.
 
-def _title_case(name):
-    return name[0].upper() + name[1:]
-
-def _arcs_schema(name, src, target, out):
-    """Generates entities in a supported target language via sigh schema2pkg.
+    Runs sigh schema2pkg to generate the output.
     """
-    supported = ['kotlin', 'cpp']
 
     if not src.endswith(".arcs"):
         fail("src must be a .arcs file")
 
-    if target.lower() not in supported:
-        fail("target must be one of: [{0}]".format(", ".join(supported)))
+    if out == None:
+        # Clean up the output name.
+        out = src.replace(".arcs", "").replace("_", "-").replace(".", "-") + file_extension
 
     run_in_repo(
         name = name,
         srcs = [src],
         outs = [out],
+        deps = ["//src/tools:schema2pkg_srcs"],
         # TODO: generated header guard should contain whole workspace-relative
         # path to file.
-        cmd = "./tools/sigh schema2pkg  --{0}" +
+        cmd = "./tools/sigh schema2pkg " +
+              language_flag + " " +
               "--outdir $(dirname {OUT}) " +
               "--outfile $(basename {OUT}) " +
-              "{SRC}".format(target.lower()),
-        progress_message = "Generating {0} entity schemas".format(_title_case(target)),
+              "{SRC}",
+        progress_message = "Generating {} entity schemas".format(language_name),
     )
 
 def arcs_cc_schema(name, src, out = None):
-    """Generates a C++ header file for the given .arcs schema file.
-
-    Runs sigh schema2pkg to generate the output.
-    """
-    if out == None:
-        # Clean up the output name.
-        out = src.replace(".arcs", "").replace("_", "-").replace(".", "-") + ".h"
-
-    _arcs_schema(name, src, 'cpp', out)
+    """Generates a C++ header file for the given .arcs schema file."""
+    _run_schema2pkg(
+        name = name,
+        src = src,
+        out = out,
+        language_name = "C++",
+        language_flag = "--cpp",
+        file_extension = ".h",
+    )
 
 def arcs_kt_schema(name, src, out = None):
-    """Generates dataclasses in a Kotlin file for the given .arcs schema file.
+    """Generates a Kotlin file for the given .arcs schema file."""
+    _run_schema2pkg(
+        name = name,
+        src = src,
+        out = out,
+        language_name = "Kotlin",
+        language_flag = "--kotlin",
+        file_extension = ".kt",
+    )
 
-    Runs sigh schema2pkg to generate the output.
-    """
-    if out == None:
-        # Clean up the output name.
-        parts = src.replace(".arcs", "").replace("_", "-").replace(".", "-") .split('-')
-        out = "".join([_title_case(p) for p in parts]) + ".kt"
-
-    _arcs_schema(name, src, 'kotlin', out)
+def arcs_ts_test(name, src, deps):
+    """Runs a TypeScript test file using `sigh test`."""
+    run_in_repo_test(
+        name = name,
+        srcs = [src],
+        cmd = "./tools/sigh test --bazel --file {SRC}",
+        tags = EXECUTION_REQUIREMENTS_TAGS,
+        deps = deps + ["//src:core_srcs"],
+    )

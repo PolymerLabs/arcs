@@ -22,6 +22,7 @@ j2cl_library(
         "//java/arcs/web/impl:impl",
         "//java/arcs/demo/particles:particles-j2cl",
         "//java/arcs/demo/services:services-j2cl",
+        "//java/arcs/demo/ui:ui-j2cl",
         "@com_google_elemental2//:elemental2-core-j2cl",
         "@com_google_elemental2//:elemental2-promise-j2cl",
         "@com_google_elemental2//:elemental2-dom-j2cl",

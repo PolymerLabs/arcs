@@ -2,9 +2,13 @@ package arcs.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /** Interface that all built in particles must implement to create particles. */
 public interface Particle {
+  String getId();
+  void setId(String id); // TODO: should be a ctor parameter instead?
+
   String getName();
 
   void setSpec(ParticleSpec spec);
@@ -21,23 +25,13 @@ public interface Particle {
 
   void onHandleDesync(Handle handle);
 
-  SlotProxy getSlot(String name);
-
-  boolean hasSlotProxy(String name);
-
-  void addSlotProxy(SlotProxy slotProxy);
-
-  void removeSlotProxy(String name);
-
-  void renderSlot(String slotName, List<String> contentTypes);
-
-  // These APIs are copied from dom-particle-base.ts
+  // These APIs are copied from ui-particle.js
   // TODO: Consider adding a similar layer of abstraction, if needed.
-  boolean shouldRender(String slotName);
-
   String getTemplate(String slotName);
 
-  String getTemplateName(String slotName);
-
   String getModel();
+
+  void setOutput(Consumer<PortableJson> output);
+
+  void renderModel();
 }

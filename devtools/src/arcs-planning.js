@@ -37,9 +37,6 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         display: flex;
         flex-direction: column;
       }
-      object-explorer {
-        margin: 2px 4px;
-      }
       .refresh {
         -webkit-mask-position: -165px 0px;
         cursor: pointer;

@@ -14,6 +14,13 @@ public class ToastParticle extends ParticleBase {
   }
 
   @Override
+  public void onHandleSync(Handle handle, PortableJson model) {
+    for (int i = 0; i < model.getLength(); ++i) {
+      onEntity(model.getObject(i).getObject("rawData"));
+    }
+  }
+
+  @Override
   public void onHandleUpdate(Handle handle, PortableJson update) {
     if ("alert".equals(handle.name) && update.hasKey("added")) {
       update

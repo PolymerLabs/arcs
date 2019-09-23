@@ -6,26 +6,42 @@ import static elemental2.dom.DomGlobal.window;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
+import arcs.api.PortableJsonParser;
+import arcs.demo.services.ClipboardService;
 import arcs.crdt.CollectionDataTest;
+import arcs.demo.services.AlertService;
+import arcs.demo.services.ClipboardService;
+import arcs.demo.particles.ToastParticle;
 import elemental2.dom.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 import jsinterop.annotations.JsType;
 
 /** Mainly for testing in Chrome. */
 public class WebHarnessController implements HarnessController {
 
-  private ArcsEnvironment environment;
-  private DeviceClient deviceClient;
+  private final ArcsEnvironment environment;
+  private final DeviceClient deviceClient;
+  private final PortableJsonParser jsonParser;
+  private final DummyClipboard dummyClipboard;
+
+  private static final Logger logger = Logger.getLogger(WebHarnessController.class.getName());
 
   @Inject
-  WebHarnessController(ArcsEnvironment environment, DeviceClient deviceClient) {
+  WebHarnessController(
+      ArcsEnvironment environment,
+      DeviceClient deviceClient,
+      PortableJsonParser jsonParser,
+      ClipboardService clipboardService) {
     this.environment = environment;
     this.deviceClient = deviceClient;
+    this.jsonParser = jsonParser;
+    this.dummyClipboard = (DummyClipboard) clipboardService;
   }
 
   @Override
@@ -44,16 +60,36 @@ public class WebHarnessController implements HarnessController {
     shellElement.type = "module";
     document.body.appendChild(shellElement);
 
-    // make two buttons in the UI
+    environment.addReadyListener(new ArcsEnvironment.ReadyListener() {
+      @Override
+      public void onReady(List<String> recipes) {
+        deviceClient.startArc(
+            jsonParser.stringify(jsonParser.emptyObject()
+                .put("recipe", "Ingestion")
+                .put("arcId", "ingestion-arc")),
+            null);
+      }
+    });
+
+    // make buttons in the UI
     document.body.appendChild(
-        makeInputElement(
-            "Capture Place Entity",
-            val ->
-                environment.sendMessageToArcs(
-                    "{\"message\": \"capture\", \"entity\":{\"type\": \"address\", \"name\": \""
-                        + val
-                        + "\", \"source\": \"com.google.android.apps.maps\"}}",
-                    null)));
+        makeInputElement("Capture Place Entity", val -> dummyClipboard.setText(val)));
+
+    HTMLDivElement toastDiv = (HTMLDivElement) document.createElement("div");
+    document.body.appendChild(toastDiv);
+    makeButtonElement(toastDiv, "Toast (in NEW Arc)", () -> {
+      deviceClient.startArc(
+          jsonParser.stringify(jsonParser.emptyObject().put("recipe", "Toast")),
+          new DemoToastParticle());
+    });
+
+    makeButtonElement(toastDiv, "Toast (in SAME arc)", () -> {
+      deviceClient.startArc(
+          jsonParser.stringify(jsonParser.emptyObject()
+              .put("recipe", "Toast")
+              .put("arcId", "toast-arc")),
+          new DemoToastParticle());
+    });
 
     Element dataParagraph = makeParagraph();
 
@@ -64,6 +100,17 @@ public class WebHarnessController implements HarnessController {
                 environment.sendMessageToArcs(
                     "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
                     (id, result) -> dataParagraph.append("Test: " + result))));
+
+    document.body.appendChild(
+        makeInputElement(
+            "DEMO UI renderers",
+            val ->
+                environment.sendMessageToArcs(
+                    jsonParser.stringify(jsonParser.emptyObject()
+                        .put("message", "spawn")
+                        // .put("modality", "log")
+                        .put("recipe", "DemoText")),
+                    null)));
     document.body.appendChild(dataParagraph);
 
     // TODO: get rid of this once crdt tests are built and run properly as unittests.
@@ -96,6 +143,28 @@ public class WebHarnessController implements HarnessController {
     div.appendChild(button);
     button.addEventListener("click", evt -> handler.accept(input.value));
     return div;
+  }
+
+  private void makeButtonElement(HTMLDivElement div, String label, Runnable handler) {
+    HTMLButtonElement button = (HTMLButtonElement) document.createElement("button");
+    button.append(label);
+    div.appendChild(button);
+    button.addEventListener("click", evt -> handler.run());
+  }
+
+  private class DemoToastParticle extends ToastParticle {
+    DemoToastParticle() {
+      super(new AlertService() {
+        int count = 0;
+        @Override
+        public void alert(String msg) {
+          logger.warning("ALERT: " + msg + " (" + count++ + ")");
+        }
+      });
+      setId("toast-particle");
+    }
+    @Override
+    public String getName() { return "ToastParticle"; }
   }
 
   private Node addJsonTests() {

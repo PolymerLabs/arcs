@@ -1,14 +1,14 @@
 package arcs.api;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 import javax.inject.Inject;
 
 public class DeviceClientImpl implements DeviceClient {
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
+  private static final String FIELD_READY_RECIPES = "recipes";
   private static final String MESSAGE_DATA = "data";
+  private static final String MESSAGE_OUTPUT = "output";
   private static final String MESSAGE_PEC = "pec";
   private static final String FIELD_TRANSACTION_ID = "tid";
   private static final String FIELD_DATA = "data";
@@ -18,54 +18,80 @@ public class DeviceClientImpl implements DeviceClient {
   private static final Logger logger = Logger.getLogger(DeviceClient.class.getName());
 
   private final PortableJsonParser jsonParser;
-  private Map<String, ArcsEnvironment.DataListener> inProgress;
-  private final PECInnerPortFactory portFactory;
-  private final Map<String, PECInnerPort> portById = new HashMap<>();
+  private final ArcsEnvironment environment;
+  private final PecPortManager pecPortManager;
+  private final UiBroker uiBroker;
 
   @Inject
   public DeviceClientImpl(
       PortableJsonParser jsonParser,
-      Map<String, ArcsEnvironment.DataListener> inProgress,
-      PECInnerPortFactory portFactory) {
+      ArcsEnvironment environment,
+      PecPortManager pecPortManager,
+      UiBroker uiBroker) {
     this.jsonParser = jsonParser;
-    this.inProgress = inProgress;
-    this.portFactory = portFactory;
+    this.environment = environment;
+    this.pecPortManager = pecPortManager;
+    this.uiBroker = uiBroker;
   }
 
   @Override
   public void receive(String json) {
-    // logger.info("receive called " + json);
     PortableJson content = jsonParser.parse(json);
     String message = content.getString(FIELD_MESSAGE);
     switch (message) {
       case MESSAGE_READY:
         logger.info("logger: Received 'ready' message");
+        environment.fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
         break;
       case MESSAGE_DATA:
-        String transactionId = String.valueOf(content.getInt(FIELD_TRANSACTION_ID));
-        if (inProgress.containsKey(transactionId)) {
-          PortableJson dataJson = content.getObject(FIELD_DATA);
-          if (dataJson != null) {
-            inProgress.get(transactionId).onData(transactionId, jsonParser.stringify(dataJson));
-          }
-          inProgress.remove(transactionId);
-        }
+        logger.warning("logger: Received deprecated 'data' message");
+        PortableJson dataJson = content.getObject(FIELD_DATA);
+        environment.fireDataEvent(
+            String.valueOf(content.getInt(FIELD_TRANSACTION_ID)),
+            dataJson == null ? null : jsonParser.stringify(dataJson));
         break;
       case MESSAGE_PEC:
-        postMessage(content.getObject(FIELD_DATA));
+        deliverPecMessage(content.getObject(FIELD_DATA));
+        break;
+      case MESSAGE_OUTPUT:
+        if (!uiBroker.render(content)) {
+          logger.warning("Skipped rendering content for " + content.getObject("data").getString("containerSlotName"));
+        }
         break;
       default:
         throw new AssertionError("Received unsupported message: " + message);
     }
   }
 
-  protected void postMessage(PortableJson msg) {
-    String id = msg.getString(FIELD_PEC_ID);
-    if (msg.hasKey(FIELD_SESSION_ID)) {
-      portById.put(id, portFactory.createPECInnerPort(id, msg.getString(FIELD_SESSION_ID)));
+  private void deliverPecMessage(PortableJson message) {
+    String pecId = message.getString(FIELD_PEC_ID);
+    String sessionId = message.hasKey(FIELD_SESSION_ID) ? message.getString(FIELD_SESSION_ID) : null;
+    pecPortManager.deliverPecMessage(pecId, sessionId, message);
+  }
+
+  @Override
+  public void startArc(String json, Particle particle) {
+    PortableJson request = jsonParser.parse(json);
+    request.put("message", "runArc");
+    if (!request.hasKey("arcId")) {
+      request.put("arcId", Id.newArcId().toString());
+    }
+    Id arcId = Id.fromString(request.getString("arcId"));
+    if (!request.hasKey("pecId")) {
+      request.put("pecId", IdGenerator.newSession().newChildId(arcId, "pec").toString());
+    }
+    if (particle != null) {
+      request.put("particleId", particle.getId()).put("particleName", particle.getName());
     }
 
-    PECInnerPort port = portById.get(id);
-    port.handleMessage(msg);
+    createPecForParticle(request.getString("pecId"), particle);
+    environment.sendMessageToArcs(jsonParser.stringify(request), null);
+  }
+
+  private void createPecForParticle(String pecId, Particle particle) {
+    PECInnerPort pecInnerPort = pecPortManager.getOrCreateInnerPort(pecId, /* sessionId= */ null);
+    if (particle != null) {
+      pecInnerPort.mapParticle(particle);
+    }
   }
 }

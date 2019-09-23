@@ -141,7 +141,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     if (!this.activeRecipe.isEmpty()) {
       return this.activeRecipe.modality;
     }
-    return Modality.intersection(this.context.allRecipes.map(recipe => recipe.modality));
+    return Modality.union(this.context.allRecipes.map(recipe => recipe.modality));
   }
 
   dispose(): void {
@@ -431,13 +431,27 @@ ${this.activeRecipe.toString()}`;
     return [...this.loadedParticleInfo.values()].map(({spec}) => spec);
   }
 
+  async reinstantiateParticle(recipeParticle: Particle) {
+    const info = await this._getParticleInstantiationInfo(recipeParticle);
+    this.pec.reinstantiate(recipeParticle, info.stores);
+  }
+
   async _instantiateParticle(recipeParticle: Particle) {
-    recipeParticle.id = this.generateID('particle');
+    if (!recipeParticle.id) {
+      recipeParticle.id = this.generateID('particle');
+    }
+    const info = await this._getParticleInstantiationInfo(recipeParticle);
+    this.pec.instantiate(recipeParticle, info.stores);
+  }
+
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, StorageProviderBase>}> {
     const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BloblUrl representing spec.implFile
-    await this._provisionSpecUrl(recipeParticle.spec);
+    if (!recipeParticle.isJavaParticle()) {
+      await this._provisionSpecUrl(recipeParticle.spec);
+    }
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       if (connection.handle.fate !== '`slot') {
@@ -447,7 +461,7 @@ ${this.activeRecipe.toString()}`;
         info.stores.set(name, store as StorageProviderBase);
       }
     }
-    this.pec.instantiate(recipeParticle, info.stores);
+    return info;
   }
 
   private async _provisionSpecUrl(spec: ParticleSpec): Promise<void> {

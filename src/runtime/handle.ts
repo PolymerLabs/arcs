@@ -151,7 +151,7 @@ export abstract class HandleOld {
   }
 
   /**
-   * Disables this handle so that it is no longer able to make changes or receive updates from the 
+   * Disables this handle so that it is no longer able to make changes or receive updates from the
    * storage proxy
    */
   disable(particle?: Particle): void {
@@ -160,7 +160,7 @@ export abstract class HandleOld {
     }
     // Set this handle's storage to a no-operation storage proxy so any actions that need to be
     // taken by this handle in the future (due to some async operations) will do nothing and finish quietly
-    this._storage = StorageProxy.newNoOpProxy(this.storage.type);
+    this._storage = StorageProxy.newNoOpProxy(this.storage.id, this.storage.type);
   }
 }
 
@@ -229,7 +229,17 @@ export class Collection extends HandleOld {
   }
 
   _restore(list) {
-    return (list !== null) ? list.map(a => restore(a, this.entityClass)) : null;
+    if (list == null) {
+      return null;
+    }
+    const containedType = this.type.getContainedType();
+    if (containedType instanceof EntityType) {
+      return list.map(e => restore(e, this.entityClass));
+    }
+    if (containedType instanceof ReferenceType) {
+      return list.map(r => new Reference(r, containedType, this.storage.pec));
+    }
+    throw new Error(`Don't know how to deliver handle data of type ${this.type}`);
   }
 
   /**
@@ -494,9 +504,9 @@ export function handleFor(storage: Store, idGenerator: IdGenerator, name: string
     handle = new Singleton(storage, idGenerator, name, particleId, canRead, canWrite);
   }
 
-  const type = storage.type.getContainedType() || storage.type;
-  if (type instanceof EntityType) {
-    handle.entityClass = type.entitySchema.entityClass(storage.pec);
+  const schema = storage.type.getEntitySchema();
+  if (schema) {
+    handle.entityClass = schema.entityClass(storage.pec);
   }
   return handle;
 }

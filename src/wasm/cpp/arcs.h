@@ -103,19 +103,6 @@ private:
   std::vector<std::string> parts_;
 };
 
-// Serialization methods for transporting data across the wasm boundary.
-// Schema-specific implementations will be generated for these.
-template<typename T>
-void decode_entity(T* entity, const char* str) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of decode_entity can be used");
-}
-
-template<typename T>
-std::string encode_entity(const T& entity) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of encode_entity can be used");
-  return "";
-}
-
 // Hash combining borrowed from Boost.
 template<typename T>
 void hash_combine(std::size_t& seed, const T& v) {
@@ -127,9 +114,52 @@ void hash_combine(std::size_t& seed, const T& v) {
   seed ^= std::hash<T>()(v) + magic + (seed << 6) + (seed >> 2);
 }
 
-class TestHelper {
+// Various bits of code need private access to the generated entity classes. Wrapping them as
+// static methods in a class simplifies things: it only requires a single friend directive, and
+// allows partial specialization where standalone template functions do not.
+template<typename T>
+class Accessor {
 public:
-  template<typename T>
+  // -- Generated entity class functions --
+  // These are exposed to particle implementations via the entity helpers defined below.
+
+  static T clone_entity(const T& entity) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of clone_entity can be used");
+    return entity;
+  }
+
+  static size_t hash_entity(const T& entity) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of hash_entity can be used");
+    return 0;
+  }
+
+  static bool fields_equal(const T& a, const T& b) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of fields_equal can be used");
+    return false;
+  }
+
+  static std::string entity_to_str(const T& entity, const char* join) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
+    return "";
+  }
+
+  // -- Data transport methods --
+
+  static void decode_entity(T* entity, const char* str) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of decode_entity can be used");
+  }
+
+  static std::string encode_entity(const T& entity) {
+    static_assert(sizeof(T) == 0, "Only schema-specific implementations of encode_entity can be used");
+    return "";
+  }
+
+  // -- Test methods --
+
+  static const std::string& get_id(const T& entity) {
+    return entity._internal_id_;
+  }
+
   static void set_id(T* entity, const std::string& id) {
     entity->_internal_id_ = id;
   }
@@ -158,21 +188,25 @@ public:
 // Copies the schema-based data fields; does not copy the internal id.
 template<typename T>
 T clone_entity(const T& entity) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of clone_entity can be used");
+  return internal::Accessor<T>::clone_entity(entity);
+}
+
+// Generates a hash for all fields (including the internal id).
+template<typename T>
+size_t hash_entity(const T& entity) {
+  return internal::Accessor<T>::hash_entity(entity);
 }
 
 // Returns whether two entities have the same data fields set (does not compare internal ids).
 template<typename T>
 bool fields_equal(const T& a, const T& b) {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of fields_equal can be used");
-  return false;
+  return internal::Accessor<T>::fields_equal(a, b);
 }
 
 // Converts an entity to a string. Unset fields are omitted.
 template<typename T>
 std::string entity_to_str(const T& entity, const char* join = ", ") {
-  static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
-  return "";
+  return internal::Accessor<T>::entity_to_str(entity, join);
 }
 
 // Strips trailing zeros, and the decimal point for integer values.
@@ -210,7 +244,7 @@ public:
   void sync(const char* model) override {
     failForDirection(Out);
     entity_ = T();
-    internal::decode_entity(&entity_, model);
+    internal::Accessor<T>::decode_entity(&entity_, model);
   }
 
   void update(const char* model, const char* ignored) override {
@@ -226,7 +260,7 @@ public:
   // the given entity with it. The data fields will not be modified.
   void set(T* entity) {
     failForDirection(In);
-    std::string encoded = internal::encode_entity(*entity);
+    std::string encoded = internal::Accessor<T>::encode_entity(*entity);
     const char* id = internal::singletonSet(particle_, this, encoded.c_str());
     if (id != nullptr) {
       entity->_internal_id_ = id;
@@ -286,7 +320,7 @@ public:
     internal::StringDecoder::decodeList(removed, [this](const std::string& str) {
       // TODO: just get the id, no need to decode the full entity
       T entity;
-      internal::decode_entity(&entity, str.c_str());
+      internal::Accessor<T>::decode_entity(&entity, str.c_str());
       entities_.erase(entity._internal_id_);
     });
   }
@@ -315,7 +349,7 @@ public:
   // the given entity with it. The data fields will not be modified.
   void store(T* entity) {
     failForDirection(In);
-    std::string encoded = internal::encode_entity(*entity);
+    std::string encoded = internal::Accessor<T>::encode_entity(*entity);
     const char* id = internal::collectionStore(particle_, this, encoded.c_str());
     if (id != nullptr) {
       entity->_internal_id_ = id;
@@ -329,7 +363,7 @@ public:
 
   void remove(const T& entity) {
     failForDirection(In);
-    std::string encoded = internal::encode_entity(entity);
+    std::string encoded = internal::Accessor<T>::encode_entity(entity);
     internal::collectionRemove(particle_, this, encoded.c_str());
     if (dir_ == InOut) {
       entities_.erase(entity._internal_id_);
@@ -349,7 +383,7 @@ private:
     failForDirection(Out);
     internal::StringDecoder::decodeList(added, [this](const std::string& str) {
       std::unique_ptr<T> eptr(new T());
-      internal::decode_entity(eptr.get(), str.c_str());
+      internal::Accessor<T>::decode_entity(eptr.get(), str.c_str());
       entities_.erase(eptr->_internal_id_);  // emplace doesn't overwrite
       entities_.emplace(eptr->_internal_id_, std::move(eptr));
     });
@@ -368,11 +402,12 @@ public:
 
   // -- Setup --
 
-  // Called by sub-class constructors to map names to their handle fields.
+  // Particle constructors must call this for each handle declared in the particle manifest.
   void registerHandle(std::string name, Handle& handle);
 
-  // Optionally called by sub-class constructors to indicate that we should automatically call
-  // renderSlot() with the given slot name once all handles are synced, and whenever one is updated.
+  // Particle constructors may call this to indicate that the particle should automatically invoke
+  // renderSlot() with the given slot name once all connected handles are synced, and thereafter
+  // whenever a handle is updated.
   void autoRender(const std::string& slot_name = "root");
 
   // Called once a particle has been set up. Initial processing and service requests may be
@@ -382,8 +417,14 @@ public:
 
   // -- Storage --
 
-  // Override to provide specific handling of handle sync/updates.
+  // Called once during startup for each readable handle connected to the particle to indicate that
+  // the handle has received its full data model. 'all_synced' will be true for the last such call
+  // during startup. This may also be called after startup if a handle needed to re-synchronize with
+  // its backing store (in which case 'all_synced' will also be true).
   virtual void onHandleSync(const std::string& name, bool all_synced) {}
+
+  // Called after startup when a readable handle receives updated data (including writes from the
+  // particle itself).
   virtual void onHandleUpdate(const std::string& name) {}
 
   // Retrieve a handle by name; e.g. auto h = getSingleton<arcs::SomeEntityType>(name)
@@ -401,33 +442,41 @@ public:
 
   // -- Rendering and events --
 
-  // Override to provide a template string and key:value model for rendering into a slot.
+  // Override to provide a template string for rendering into a slot. The string should be a
+  // constant (templates may be cached by the runtime), optionally with "{{key}}" placeholders
+  // that can be substituted for data values provided by populateModel().
   virtual std::string getTemplate(const std::string& slot_name) { return ""; }
+
+  // Override to populate a model mapping the template {{placeholders}} to the current data values.
   virtual void populateModel(const std::string& slot_name, Dictionary* model) {}
 
-  // Can be called by sub-classes to initiate rendering; also invoked when auto-render is enabled
-  // after all handles have been synchronized.
+  // Call to trigger a render from within the particle. 'send_template' and 'send_model' instruct
+  // the system to call getTemplate() and populateModel() for this render, respectively. Also
+  // invoked when auto-render is enabled after all readable handles have been synchronized.
   // TODO: it doesn't make sense to have both send flags false; ignore, error or convert to enum?
   void renderSlot(const std::string& slot_name, bool send_template = true, bool send_model = true);
 
-  // Override to react to UI events triggered by handlers in the template provided below.
+  // Override to react to UI events triggered by handlers in the template provided above.
+  // 'slot_name' will correspond to the rendering slot hosting the UI element associated with the
+  // event indicated by 'handler'.
   virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}
 
   // -- Services --
 
-  // Sub-classes may call this to resolve URLs like 'https://$particles/path/to/assets/pic.jpg'.
+  // Particles may call this to resolve URLs like 'https://$particles/path/to/assets/pic.jpg'.
   // The '$here' prefix can be used to map to the location of the wasm binary file (for example:
   // '$here/path/to/assets/pic.jpg').
   std::string resolveUrl(const std::string& url);
 
-  // Sub-classes can request a service call using this method and the response will be delivered via
-  // serviceResponse(). The optional tag argument can be used to disambiguate multiple requests.
+  // Particles can request a service call using this method and the response will be delivered via
+  // serviceResponse(). The optional tag argument can be used to disambiguate multiple request to
+  // the same service point. 'call' is of the form "service.method"; for example: "clock.now".
   void serviceRequest(const std::string& call, const Dictionary& args, const std::string& tag = "");
   virtual void serviceResponse(
       const std::string& call, const Dictionary& response, const std::string& tag) {}
 
   // -- Internal API --
-  // These are public to allow access from JS, but should not be called by sub-classes.
+  // These are public to allow access from the runtime, but should not be called by sub-classes.
 
   // Called by the runtime to associate the inner handle instance with the outer object.
   Handle* connectHandle(const char* name, bool can_read, bool can_write);

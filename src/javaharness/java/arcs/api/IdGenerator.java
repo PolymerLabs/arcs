@@ -18,6 +18,15 @@ public class IdGenerator {
     this.currentSessionId = currentSessionId;
   }
 
+  public static IdGenerator newSession() {
+    String sessionId = String.valueOf(Math.floor(Math.random() * Math.pow(2, 30)));
+    return new IdGenerator(sessionId);
+  }
+
+  public String getSessionId() {
+    return currentSessionId;
+  }
+
   /**
    * Creates a new ID, as a child of the given parentId. The given subcomponent will be appended to
    * the component hierarchy of the given ID, but the generator's random session ID will be used as

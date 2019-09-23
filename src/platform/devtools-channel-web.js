@@ -72,7 +72,7 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
   _connectViaWebSocket(proxyPort) {
     const ws = new WebSocket(`ws://localhost:${proxyPort || window.location.port || '8786'}`);
     ws.onopen = _ => {
-      console.log(`WebSocket channel opened.`);
+      console.log(`WebSocket channel opened, waiting for Arcs Explorer...`);
       ws.onmessage = msg => this._onChannelMessage(msg, ws);
     };
     ws.onerror = _ => {
@@ -87,6 +87,7 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
   _onChannelMessage({data}, channel) {
     if (data === 'init') {
       this.channel = channel;
+      console.log('Arcs Explorer connected.');
       DevtoolsBroker.markConnected();
       this._sendHeartbeat();
     } else {

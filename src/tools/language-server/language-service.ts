@@ -8,90 +8,93 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ErrorCodes, Message, StreamMessageReader as VSCodeStreamMessageReader, StreamMessageWriter as VSCodeStreamMessageWriter} from 'vscode-jsonrpc';
-import {isNotificationMessage, isRequestMessage, isResponseMessage} from 'vscode-jsonrpc/lib/messages';
+import {ExecuteCommandParams, InitializeParams, IConnection,
+  DidSaveTextDocumentParams, TextDocumentSyncKind, InitializeResult
+} from 'vscode-languageserver';
 
-import {handlers} from './handlers.js';
-import {jsonrpc, Logger, LanguageServiceOptions, LanguageServiceContext, camelCase} from './util.js';
+import {Logger, LanguageServiceOptions, uri2path} from './util.js';
+import {gatherDiagnostics} from './diagnostics.js';
 
 export class LanguageService {
-  reader: VSCodeStreamMessageReader;
-  writer: VSCodeStreamMessageWriter;
-  context: LanguageServiceContext;  // The state.
-  initialized = false;  // error / onclose should trigger shutdown message.
-  streaming = false;    // Client supports partialResult.
+  connection: IConnection;
+  rootPath: string | undefined = undefined;
+  logger: Logger;
+  options: LanguageServiceOptions;
+  isInitialized = false;  // error / onclose should trigger shutdown message.
 
-  constructor(
-      reader: VSCodeStreamMessageReader,
-      writer: VSCodeStreamMessageWriter,
-      options: LanguageServiceOptions,
-      logger: Logger) {
-    this.reader = reader;
-    this.writer = writer;
-    this.context = {logger, options};
+  constructor( connection: IConnection, options: LanguageServiceOptions, logger: Logger) {
+    this.connection = connection;
+    this.options = options;
+    this.logger = logger;
+  }
 
-    this.reader.listen(message => {
-      this.update(message).then((response: Message) => {
-        this.context.logger.info('Response: ', response ? response : 'No response.');
-        if (response) {
-          writer.write(response);
+  start() {
+    // Register service manager handlers
+    this.connection.onInitialize(this.initialize.bind(this));
+    this.connection.onInitialized(this.initialized.bind(this));
+    this.connection.onShutdown(this.shutdown.bind(this));
+    this.connection.onExit(this.exit.bind(this));
+
+    // Register language service handlers
+
+    // TODO: this.connection.onCompletion(this.completion);
+    this.connection.onDidSaveTextDocument(this.didSaveTextDocument.bind(this));
+    // TODO: this.connection.onDidChangeConfiguration(this.didChangeConfig.bind(this));
+    // TODO: this.connection.onDidChangeTextDocument(this.didChange.bind(this));
+    this.connection.onExecuteCommand(this.executeCommand.bind(this));
+
+    this.connection.listen();
+  }
+
+  // Handlers
+
+  initialize(params: InitializeParams): InitializeResult {
+    this.rootPath = params.rootPath || uri2path(params.rootUri);
+
+    return {
+      capabilities: {
+        // Tell the client that the server works in FULL text document sync mode
+        textDocumentSync: TextDocumentSyncKind.Full,
+        completionProvider: {
+          resolveProvider: true,
+        },
+        renameProvider: false,
+        executeCommandProvider: {
+          commands: [],
         }
-      }).catch(e => this.context.logger.error(e));
-    });
-
-    this.reader.onError(err => {
-      this.context.logger.error(err);
-    });
-  }
-
-  async update(message: Message): Promise<Message | undefined> {
-    const logger = this.context.logger;
-    // Ignore responses (currently unhandled).
-    if (isResponseMessage(message)) {
-      logger.info('Received response message:', message);
-      return undefined;
-    }
-    if (!isRequestMessage(message) && !isNotificationMessage(message)) {
-      logger.error('Received invalid message:', message);
-      return undefined;
-    }
-    logger.info('Received valid message:', message);
-
-    const method = camelCase(message.method);
-    switch (method) {
-      case 'initialize':
-        this.initialized = true;
-        this.streaming = message.params.capabilities.streaming;
-        break;
-      case 'shutdown':
-        this.initialized = false; // TODO(cypher1): Cleanup.
-        // Ignore as the service will close when the socket does.
-        return undefined;
-      case 'exit':
-        // Ignore as the service will close when the socket does.
-        return undefined;
-      default: // Fall through to use handlers[method].
-    }
-    // The message needs to be handler by an appropriate handler.
-    const handler = handlers[method];
-
-    if (typeof handler !== 'function') {
-      // Method not implemented
-      if (isRequestMessage(message)) {
-        return {
-          jsonrpc,
-          id: message.id,
-          error: {
-            code: ErrorCodes.MethodNotFound,
-            message: `Method ${method} not implemented`,
-          },
-        } as Message;
-      } else {
-        logger.warn(`Method ${method} not implemented`);
       }
-      return undefined;
-    }
-
-    return await handler(message.params, this.context);
+    };
   }
+
+  initialized() {
+    this.isInitialized = true;
+  }
+
+  shutdown() {
+    this.isInitialized = false;
+    // TODO(cypher1): Cleanup.
+  }
+
+  exit() {
+    // TODO(cypher1): Cleanup.
+  }
+
+  async executeCommand(params: ExecuteCommandParams) {
+    this.logger.info(`execute command requested ${params}`);
+  }
+
+  async didSaveTextDocument(params: DidSaveTextDocumentParams) {
+    const uri = params.textDocument.uri;
+    this.logger.info(`Handling save for: ${uri}...`);
+    this.publishDiagnostics(uri);
+  }
+
+  // Other functions
+  async publishDiagnostics(uri: string) {
+    this.logger.info(`publishDiagnostics: ${uri}...`);
+
+    const diagnostics = await gatherDiagnostics(uri, this.logger);
+    this.connection.sendDiagnostics({uri, diagnostics});
+  }
+
 }

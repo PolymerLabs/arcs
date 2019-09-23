@@ -9,7 +9,7 @@ java_test(
     deps = [
         "//java/arcs/android/impl:impl",
         "@junit//jar",
-        "//java/arcs/api",
+        "//java/arcs/api:api-android",
     ],
 )
 

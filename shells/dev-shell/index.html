@@ -39,11 +39,11 @@
       font-family: monospace;
       background: #eaeaea;
     }
-    .import {
+    .short {
       width: fit-content;
       margin: 10px 0 14px 30px;
     }
-    .url {
+    .long {
       width: 700px;
       overflow: auto;
       margin-left: 30px;
@@ -96,18 +96,18 @@
       <ul>
         <li>
           Relative to the arcs serving root:
-          <div class="code import">import 'https://$arcs/SomeTopLevel.recipe'</div>
+          <div class="code short">import 'https://$arcs/TopLevelManifest.arcs'</div>
         </li>
         <li>
           Relative to the particles directory:
-          <div class="code import">import 'https://$particles/Tutorial/3_JsonStore/JsonStore.recipe'</div>
+          <div class="code short">import 'https://$particles/Tutorial/Javascript/6_Handles/Handles.arcs'</div>
         </li>
       </ul>
 
-      <p>You can also seed the manifest file with one or more imports using the URL query parameter 
+      <p>You can also seed the manifest file with one or more imports using the URL parameter 
       <span class="code">m</span> or <span class="code">manifest</span>:</p>
 
-      <div class="code url">http://localhost:8786/shells/dev-shell/?m=https://$particles/Profile/FavoriteFood.arcs;https://$particles/Stardate/Stardate.arcs</div>
+      <div class="code long">http://localhost:8786/shells/dev-shell/?m=https://$particles/Profile/FavoriteFood.arcs;https://$particles/Stardate/Stardate.arcs</div>
 
       <p><button>Export</button> will save the in-browser files as a combined text file.</p>
 
@@ -120,6 +120,10 @@
 
       <p>Pressing <span class="code">ctrl-enter</span> in the manifest or file panels is a shortcut for clicking
       <button>Execute</button>.</p>
+
+      <p>Particle logging is enabled with the <span class="code">log</span> URL parameter:
+
+      <div class="code short">http://localhost:8786/shells/dev-shell/?log</div>
 
       <h4><i>Interaction</i></h4>
 

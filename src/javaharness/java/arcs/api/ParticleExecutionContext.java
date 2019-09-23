@@ -8,4 +8,10 @@ public interface ParticleExecutionContext {
       ParticleSpec spec,
       Map<String, StorageProxy> proxies,
       IdGenerator idGenerator);
+
+  void initializeParticle(
+      Particle particle,
+      ParticleSpec spec,
+      Map<String, StorageProxy> proxies,
+      IdGenerator idGenerator);
 }

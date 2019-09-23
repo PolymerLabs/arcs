@@ -30,4 +30,10 @@ public abstract class ParticlesModule {
   static ParticleFactory provideToastParticleFactory(ToastParticleFactory toastParticleFactory) {
     return toastParticleFactory;
   }
+
+  @Provides
+  @IntoSet
+  static ParticleFactory provideRenderTextFactory(RenderTextFactory renderTextFactory) {
+    return renderTextFactory;
+  }
 }

@@ -23,13 +23,21 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
     return null;
   } else {
     // instantiate arc
+    const composer = composerFactory(modality);
     const arc = await Utils.spawn({
       context,
       //storage,
       id: generateId(),
-      composer: composerFactory(modality),
+      composer,
       portFactories: [portIndustry(bus)]
     });
+    composer.slotObserver = {
+      observe: (content, arc) => {
+        delete content.particle;
+        bus.send({message: 'output', data: content});
+      }
+    };
+
     // optionally instantiate recipe
     if (action) {
       if (await instantiateRecipe(arc, action)) {
