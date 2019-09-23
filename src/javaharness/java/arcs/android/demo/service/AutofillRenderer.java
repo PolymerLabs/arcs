@@ -1,36 +1,42 @@
 package arcs.android.demo.service;
 
-import android.view.autofill.AutofillId;
+import android.content.Context;
 import android.service.autofill.Dataset;
-import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
+import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
-import arcs.api.UiRenderer;
-import arcs.api.PortableJson;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
+import java.util.function.Consumer;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import arcs.android.api.Annotations;
+import arcs.api.PortableJson;
+import arcs.api.UiRenderer;
+
+@Singleton
 public class AutofillRenderer implements UiRenderer {
 
   public static class SlotInfo {
-    final String packageName;
     final AutofillId autofillId;
-    final FillCallback fillCallback;
-    final Runnable customCallback;
-    SlotInfo(String packageName, AutofillId autofillId, FillCallback fillCallback, Runnable customCallback) {
-      this.packageName = packageName;
+    final Consumer<FillResponse> callback;
+
+    SlotInfo(AutofillId autofillId, Consumer<FillResponse> callback) {
       this.autofillId = autofillId;
-      this.fillCallback = fillCallback;
-      this.customCallback = customCallback;
+      this.callback = callback;
     }
   }
+
   private final Map<String, SlotInfo> slotById = new HashMap<>();
+  private final Context context;
 
   @Inject
-  AutofillRenderer() {
+  AutofillRenderer(@Annotations.AppContext Context context) {
+    this.context = context;
   }
 
   @Override
@@ -53,31 +59,25 @@ public class AutofillRenderer implements UiRenderer {
     String suggestion = data.getString("candidate");
     Dataset.Builder dataset = new Dataset.Builder();
     dataset.setValue(
-        slotInfo.autofillId,
-        AutofillValue.forText(suggestion),
-        createRemoteView(slotInfo.packageName, suggestion));
+        slotInfo.autofillId, AutofillValue.forText(suggestion), createRemoteView(suggestion));
 
-    FillResponse fillResponse =
-        new FillResponse.Builder().addDataset(dataset.build()).build();
-    slotInfo.fillCallback.onSuccess(fillResponse);
-
-    // Run custom callback;
-    slotInfo.customCallback.run();
+    FillResponse fillResponse = new FillResponse.Builder().addDataset(dataset.build()).build();
+    slotInfo.callback.accept(fillResponse);
 
     // Remove slot info.
     slotById.remove(slotId);
     return true;
   }
 
-  void addCallback(String slotId, String packageName, AutofillId autofillId, FillCallback fillCallback, Runnable customCallback) {
+  void addCallback(String slotId, AutofillId autofillId, Consumer<FillResponse> callback) {
     if (slotById.containsKey(slotId)) {
-      throw new AssertionError("Callback already exists for " + slotId.toString());
+      throw new IllegalArgumentException("Callback already exists for " + slotId.toString());
     }
-    slotById.put(slotId, new SlotInfo(packageName, autofillId, fillCallback, customCallback));
+    slotById.put(slotId, new SlotInfo(autofillId, callback));
   }
 
-  private RemoteViews createRemoteView(String packageName, String contents) {
-    RemoteViews view = new RemoteViews(packageName, R.layout.autofill_result);
+  private RemoteViews createRemoteView(String contents) {
+    RemoteViews view = new RemoteViews(context.getPackageName(), R.layout.autofill_result);
     view.setTextViewText(R.id.autofill_result_text, contents);
     return view;
   }

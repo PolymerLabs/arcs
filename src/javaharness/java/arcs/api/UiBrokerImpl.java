@@ -2,8 +2,7 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.logging.Logger;
+
 import javax.inject.Inject;
 
 public class UiBrokerImpl implements UiBroker {
@@ -19,7 +18,7 @@ public class UiBrokerImpl implements UiBroker {
   public void registerRenderer(String modality, UiRenderer renderer) {
     if (this.renderers.containsKey(modality)) {
       // TODO: should multiple renderers per modality be supported?
-      throw new IllegalStateException("Renderer already registered for " + modality);
+      throw new IllegalArgumentException("Renderer already registered for " + modality);
     }
     renderers.put(modality, renderer);
   }
@@ -28,7 +27,7 @@ public class UiBrokerImpl implements UiBroker {
   public boolean render(PortableJson content) {
     String[] names = null;
     if (content.getObject("data").hasKey("modality")) {
-      String modality = content.getObject("da`ta").getString("modality");
+      String modality = content.getObject("data").getString("modality");
       names = modality.split(",");
     } else {
       names = renderers.keySet().toArray(new String[renderers.size()]);

@@ -1,6 +1,7 @@
 package arcs.android.client;
 
-import android.os.RemoteException;
+import javax.inject.Inject;
+
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.Id;
 import arcs.api.IdGenerator;
@@ -9,7 +10,6 @@ import arcs.api.PECInnerPortFactory;
 import arcs.api.Particle;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
-import javax.inject.Inject;
 
 public class RemotePec {
 
@@ -42,6 +42,7 @@ public class RemotePec {
   public Id getArcId() {
     return arcId;
   }
+
   /**
    * Starts a new arc running the given recipe. The given particle implementation is attached to
    * that arc.
