@@ -78,13 +78,8 @@ const template = html`
       return template;
     }
 
-    render({gameState}, {initialised}) {
-      if (!initialised) {
-        this.setState({initialised: true});
-      }
-      console.log(`gameState`, gameState);
+    render({gameState}, {}) {
       if (gameState) {
-        
         const arr = gameState.board.split(`,`);
         return {
           spot1: arr[0],

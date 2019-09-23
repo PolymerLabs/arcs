@@ -27,15 +27,14 @@ defineParticle(({DomParticle, html}) => {
         
         const emptyCells = [];
         const board = gameState.board.split(`,`);
+        // Determine which cells are empty.
         for (let i = 0; i < board.length - 1; i++) {
           if (board[i] == ``) {
             emptyCells.push((i + 1).toString());
           }
         }
-        console.log(`computer thinks board is: `, gameState.board);
-        console.log(`computer thinks empty cells are:`, emptyCells);
+        // Select a random empty cell.
         const selection = Math.floor(Math.random() * emptyCells.length);
-        console.log(`setting computer move to `, selection);
         this.updateSingleton('computerMove', {move: emptyCells[selection]});
       }
     }

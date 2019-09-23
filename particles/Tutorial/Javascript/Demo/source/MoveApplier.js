@@ -17,7 +17,7 @@
       return '';
     }
 
-    update({move, gameState}, {lastMove}) {
+    update({move, gameState}, {}) {
       if (!gameState) { // Gamestate has not been set yet
         const gs = {
           board: ',,,,,,,,,',
@@ -27,7 +27,6 @@
           attemptedMoves: 0
         };
         this.updateSingleton('gameState', gs);
-        this.setState({lastMove: ``});
       } else if (move) {
         // Get the old gameState values to update.
         let newMoves = gameState.moves;

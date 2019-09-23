@@ -27,7 +27,7 @@ const template = html`<span>{{startmsg}}</span> Please hit refresh to start a ne
     }
 
     render({gameState}) {
-      if (gameState.winnerAvatar !== undefined) {
+      if (gameState.winnerAvatar !== null) {
         return {startmsg: `Congratulations ${gameState.winnerAvatar}, you won!`};
       } 
       return {startmsg: `It's a tie!`};
