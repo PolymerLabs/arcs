@@ -98,7 +98,7 @@ export class Loader {
   }
 
   async _loadURL(url: string): Promise<string> {
-    const fetcher = (url: string) => fetch(url).then(async res => res.ok ? res.text() : undefined);
+    const fetcher = (url: string) => fetch(url).then(async res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`)));
     if (/\/\/schema.org\//.test(url)) {
       if (url.endsWith('/Thing')) {
         return fetcher('https://schema.org/Product.jsonld').then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));
