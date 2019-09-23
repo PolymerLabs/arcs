@@ -19,10 +19,35 @@ soft_touch() {
   fi
 }
 
-dependencies=$1
+_DEPENDENCIES=$1
 shift 1
 
-repo_rel=${BASH_SOURCE[0]}.runfiles/kotlin_native/kotlin-native-macos-1.3.50
+case $(ls "${BASH_SOURCE[0]}.runfiles/" | grep "kotlin_native_") in
+  *windows*)
+    PLATFORM="windows"
+    idx=0
+    ;;
+  *macos*)
+    PLATFORM="macos"
+    idx=1
+  ;;
+  *linux*)
+    PLATFORM="linux"
+    idx=2
+  ;;
+  *)
+    echo "Unknown Kotlin Native Compiler platform!"
+    exit 1
+esac
+
+# Get only relevant platform's dependencies
+set -f
+_ALL_DEPS=(${_DEPENDENCIES//|/ })
+set +f
+DEPENDENCIES=${_ALL_DEPS[idx]}
+
+
+repo_rel="${BASH_SOURCE[0]}.runfiles/kotlin_native_$PLATFORM/kotlin-native-$PLATFORM-1.3.50"
 repo=$(python -c '
 import sys
 import os.path
@@ -44,7 +69,7 @@ soft_touch "$deps/cache/.lock"
 export KONAN_DATA_DIR="$deps"
 
 IFS=$','
-for i in $dependencies; do
+for i in $DEPENDENCIES; do
   src="$deps/$i/$i"
   dst="$deps/dependencies/$i"
   if [ ! -e "$dst" ]; then
