@@ -12,7 +12,7 @@ soft_mkdir() {
 }
 
 
-# create file if it doesn't exist
+# Create file if it doesn't exist
 soft_touch() {
   if [ ! -f "$1" ]; then
     touch $1
@@ -80,5 +80,5 @@ done
 unset IFS
 
 # Run the command line args that were passed to this script.
-exec $repo/bin/kotlinc "$@"
+exec "$repo/bin/kotlinc" "$@"
 

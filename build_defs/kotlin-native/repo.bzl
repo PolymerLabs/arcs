@@ -34,17 +34,13 @@ PLATFORMS = [
      "sha": "15eb0589aef8dcb435e4cb04ef9a3ad90b8d936118b491618a70912cef742874"},
 ]
 
+
 def get_dependencies(target):
   for p in PLATFORMS:
       if p["platform"] == target:
           return p["deps"]
   return []
 
-# TODO(alxr) remove
-def print_and_return(p):
-    out = _repo_tmpl.format(**p)
-    print(out)
-    return out
 
 def kotlin_native_repo():
     """Downloads the kotlin-native release and "installs" the kotlinc compiler.
@@ -55,8 +51,8 @@ def kotlin_native_repo():
     for p in PLATFORMS:
         http_archive(
             name = "kotlin_native_{platform}".format(**p),
-            url = print_and_return(p),
-            type = "tar.gz",
+            url = _repo_tmpl.format(**p),
+            type = p["ext"],
             sha256 = p["sha"],
             build_file = "//build_defs/kotlin-native:kotlinc.BUILD",
         )
