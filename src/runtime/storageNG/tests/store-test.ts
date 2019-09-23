@@ -15,6 +15,7 @@ import {CRDTCount, CountOpTypes, CountData, CountOperation} from '../../crdt/crd
 import {StorageKey} from '../storage-key.js';
 import {DirectStore} from '../direct-store.js';
 import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/test-storage.js';
+import {CountType} from '../../type.js';
 
 let testKey: StorageKey;
 
@@ -30,7 +31,7 @@ describe('Store', async () => {
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     try {
       await store.activate();
       assert.fail('store.activate() should not have succeeded');
@@ -42,7 +43,7 @@ describe('Store', async () => {
   it('will construct Direct stores when required', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     assert.strictEqual(activeStore.constructor, DirectStore);
@@ -51,7 +52,7 @@ describe('Store', async () => {
   it('will propagate model updates from proxies to drivers', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const driver = activeStore['driver'] as MockDriver<CountData>;    
@@ -70,7 +71,7 @@ describe('Store', async () => {
   it('will apply and propagate operation updates from proxies to drivers', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const driver = activeStore['driver'] as MockDriver<CountData>;
@@ -91,7 +92,7 @@ describe('Store', async () => {
   it('will respond to a model request from a proxy with a model', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const driver = activeStore['driver'] as MockDriver<CountData>;
@@ -127,7 +128,7 @@ describe('Store', async () => {
   it('will only send a model response to the requesting proxy', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
     
     return new Promise((resolve, reject) => {
@@ -150,7 +151,7 @@ describe('Store', async () => {
   it('will propagate updates from drivers to proxies', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const count = new CRDTCount();
@@ -177,7 +178,7 @@ describe('Store', async () => {
   it(`won't send an update to the driver after driver-originated messages`, async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const remoteCount = new CRDTCount();
@@ -194,7 +195,7 @@ describe('Store', async () => {
   it('will resend failed driver updates after merging', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     // local count from proxy
@@ -227,7 +228,7 @@ describe('Store', async () => {
   
   it('resolves a combination of messages from the proxy and the driver', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
-    const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
     const driver = activeStore['driver'] as MockDriver<CountData>;
     let lastModel = null;

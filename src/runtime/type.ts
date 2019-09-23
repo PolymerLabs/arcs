@@ -16,6 +16,11 @@ import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {Predicate, Literal} from './hot.js';
+import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
+import {CRDTCount} from './crdt/crdt-count.js';
+import {ReferenceCollection} from './storageNG/reference-mode-store.js';
+import {CRDTCollection} from './crdt/crdt-collection.js';
+
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -24,7 +29,7 @@ export interface TypeLiteral extends Literal {
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle';
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count';
 
 export abstract class Type {
   tag: Tag;
@@ -160,6 +165,10 @@ export abstract class Type {
     return false;
   }
 
+  get isReference(): boolean {
+    return false;
+  }
+
   collectionOf() {
     return new CollectionType(this);
   }
@@ -244,8 +253,25 @@ export abstract class Type {
   toPrettyString(): string|null {
     return null;
   }
+
+  crdtInstanceConstructor<T extends CRDTTypeRecord>(): (new () => CRDTModel<T>) | null {
+    return null;
+  }
 }
 
+export class CountType extends Type {
+  constructor() {
+    super('Count');
+  }
+
+  toLiteral(): TypeLiteral {
+    return {tag: 'Count'};
+  }
+
+  crdtInstanceConstructor() {
+    return CRDTCount;
+  }
+}
 
 export class EntityType extends Type {
   readonly entitySchema: Schema;
@@ -310,6 +336,10 @@ export class EntityType extends Type {
                                    .trim();
     }
     return JSON.stringify(this.entitySchema.toLiteral());
+  }
+
+  crdtInstanceConstructor() {
+    return this.entitySchema.crdtConstructor();
   }
 }
 
@@ -500,8 +530,15 @@ export class CollectionType<T extends Type> extends Type {
     }
     return `${this.collectionType.toPrettyString()} List`;
   }
-}
 
+  crdtInstanceConstructor() {
+    if (this.getContainedType().isReference) {
+      return ReferenceCollection;
+    }
+    
+    return CRDTCollection;
+  }
+}
 
 export class BigCollectionType<T extends Type> extends Type {
   readonly bigCollectionType: T;

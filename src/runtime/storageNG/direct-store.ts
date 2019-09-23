@@ -32,8 +32,8 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   /*
    * This class should only ever be constructed via the static construct method
    */
-  private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
-    super(storageKey, exists, type, mode, modelConstructor);
+  private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode) {
+    super(storageKey, exists, type, mode);
   }
 
   async idle() {
@@ -67,9 +67,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     }
   }
 
-  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
-    const me = new DirectStore<T>(storageKey, exists, type, mode, modelConstructor);
-    me.localModel = new modelConstructor();
+  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode) {
+    const me = new DirectStore<T>(storageKey, exists, type, mode);
+    me.localModel = new (type.crdtInstanceConstructor<T>())();
     me.driver = await DriverFactory.driverInstance(storageKey, exists);
     if (me.driver == null) {
       throw new CRDTError(`No driver exists to support storage key ${storageKey}`);

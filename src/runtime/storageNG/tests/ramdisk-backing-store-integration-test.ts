@@ -15,6 +15,7 @@ import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdis
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {BackingStore} from '../backing-store.js';
+import {CountType} from '../../type.js';
 
 function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTCount) {
   if (message.type === ProxyMessageType.ModelUpdate) {
@@ -37,7 +38,7 @@ describe('RamDisk + Backing Store Integration', async () => {
   it('will allow storage of a number of objects', async () => {
     const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
-    const store = await BackingStore.construct<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Backing, CRDTCount);
+    const store = await BackingStore.construct<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), StorageMode.Backing);
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
