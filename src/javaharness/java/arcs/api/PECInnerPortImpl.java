@@ -71,6 +71,11 @@ public class PECInnerPortImpl implements PECInnerPort {
     this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
   }
 
+  @Override
+  public String getId() {
+    return id;
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public void onReceivePecMessage(PortableJson message) {

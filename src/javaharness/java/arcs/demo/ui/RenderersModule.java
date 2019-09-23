@@ -1,6 +1,7 @@
 package arcs.demo.ui;
 
 import arcs.api.UiBroker;
+import arcs.api.UiBrokerImpl;
 import arcs.api.UiRenderer;
 import dagger.Binds;
 import dagger.Module;
@@ -11,6 +12,7 @@ import dagger.multibindings.Multibinds;
 import dagger.multibindings.StringKey;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Singleton;
 
 @Module
 public abstract class RenderersModule {
@@ -33,5 +35,6 @@ public abstract class RenderersModule {
   }
 
   @Binds
+  @Singleton
   public abstract UiBroker provideUiBroker(UiBrokerImpl impl);
 }

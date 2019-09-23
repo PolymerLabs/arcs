@@ -4,6 +4,8 @@ import java.util.function.Consumer;
 
 public interface PECInnerPort extends PecMessageReceiver {
 
+  String getId();
+
   void mapParticle(Particle particle);
 
   void initializeProxy(StorageProxy storageProxy, Consumer<PortableJson> callback);

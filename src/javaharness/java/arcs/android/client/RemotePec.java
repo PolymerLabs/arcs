@@ -19,7 +19,6 @@ public class RemotePec {
 
   private PECInnerPort pecInnerPort;
   private Id arcId;
-  private Id pecId;
 
   private final IRemotePecCallback callback =
       new IRemotePecCallback.Stub() {
@@ -40,10 +39,12 @@ public class RemotePec {
     this.jsonParser = jsonParser;
   }
 
+  public Id getArcId() { return arcId; }
   /**
    * Starts a new arc running the given recipe. The given particle implementation is attached to
    * that arc.
    */
+  // TODO(mmandlis): This method should accept additional options: arcId and pecId.
   public void runArc(String recipe, Particle particle) {
     if (pecInnerPort != null) {
       throw new IllegalStateException("PEC has already been initialized.");
@@ -51,7 +52,7 @@ public class RemotePec {
 
     IdGenerator idGenerator = IdGenerator.newSession();
     arcId = Id.newArcId();
-    pecId = idGenerator.newChildId(arcId, "pec");
+    Id pecId = idGenerator.newChildId(arcId, "pec");
     Id particleId = idGenerator.newChildId(pecId, "particle");
 
     particle.setId(particleId.toString());
@@ -84,13 +85,11 @@ public class RemotePec {
     if (pecInnerPort == null) {
       return;
     }
+    String pecId = this.pecInnerPort.getId();
     pecInnerPort = null;
 
     String arcId = this.arcId.toString();
     this.arcId = null;
-
-    String pecId = this.pecId.toString();
-    this.pecId = null;
 
     bridge
         .connectToArcsService()

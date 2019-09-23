@@ -4,31 +4,25 @@ import './schemas/Person.arcs'
 schema AutofillRequest
   Text hint
 
-schema AutofillResponse
-  Text suggestion
-
 // An Android particle which powers the Android AutofillService.
 particle AutofillParticle in './source/AutofillParticle.java'
   // TODO: Use a Singleton instead, when that is supported in Java.
   out [AutofillRequest] request
-  // TODO: Provide a slot for the response instead of a handle.
-  in [AutofillResponse] response
 
 // A dummy JS particle which handles the Autofill requests.
 particle DummyAutofillResponder in './source/DummyAutofillResponder.js'
   in [Person] recentPeople
   in [AutofillRequest] request
-  out [AutofillResponse] response
+  consume root
+  modality autofill
 
 recipe AndroidAutofill
   map #recentPeople as recentPeople
   AutofillParticle
     request -> request
-    response <- response
   DummyAutofillResponder
     recentPeople <- recentPeople
     request <- request
-    response -> response
 
 resource PeopleJson
     start
@@ -37,7 +31,7 @@ resource PeopleJson
       "lastName": "Smith",
       "password": "qwerty123",
       "phone": "987-6543-210",
-      "address": "123 Main st."
+      "postalAddress": "123 Main st."
     }]
 
 store RecentPeople of [Person] #recentPeople in PeopleJson

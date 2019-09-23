@@ -10,12 +10,16 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemotePecCallback;
+import arcs.android.api.IRemoteOutputCallback;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
+import arcs.api.UiBroker;
+import arcs.api.UiRenderer;
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -33,6 +37,7 @@ public class ArcsService extends Service {
   @Inject ShellApiBasedArcsEnvironment shellEnvironment;
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
+  @Inject UiBroker uiBroker;
 
   @Override
   public void onCreate() {
@@ -104,6 +109,21 @@ public class ArcsService extends Service {
         // TODO: Stop the running arc once the Arcs Runtime supports that.
 
         pecPortManager.removePecPort(pecId);
+      }
+
+      @Override
+      public void registerRenderers(List<String> modalities, IRemoteOutputCallback callback) {
+        modalities.forEach(modality -> uiBroker.registerRenderer(modality, new UiRenderer() {
+          @Override
+          public boolean render(PortableJson content) {
+            try {
+              callback.onOutput(jsonParser.stringify(content));
+            } catch (RemoteException e) {
+              throw new RuntimeException(e);
+            }
+            return true;
+          }
+        }));
       }
     };
   }

@@ -1,6 +1,8 @@
 package arcs.android.api;
 
 import arcs.android.api.IRemotePecCallback;
+import arcs.android.api.IRemoteOutputCallback;
+import java.util.List;
 
 /**
   * This interface allows apps to communicate with ArcsService.
@@ -19,5 +21,7 @@ interface IArcsService {
       IRemotePecCallback callback);
 
   void stopArc(String arcId, String pecId);
+
+  void registerRenderers(in List<String> modalities, IRemoteOutputCallback callback);
 }
 

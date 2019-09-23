@@ -24,6 +24,7 @@ defineParticle(({Particle}) => {
       }
       this._addResponses();
     }
+
     _addResponses() {
       if (!this.request || !this.recentPeople) {
         return;
@@ -47,12 +48,10 @@ defineParticle(({Particle}) => {
       if (!this.recentPeople || this.recentPeople.length === 0) {
         return;
       }
-      const responseHandle = this.handles.get('response');
-      let suggestion = `${this.recentPeople[0].firstName} ${this.recentPeople[0].lastName}`;
-      if (request.hint) {
-        suggestion += ` (${request.hint})`;
-      }
-      responseHandle.store(new responseHandle.entityClass({suggestion}));
+      const candidate = request.hint === 'name'
+          ? `${this.recentPeople[0].firstName} ${this.recentPeople[0].lastName}`
+          : this.recentPeople[0][request.hint];
+      this.output({candidate});
     }
   };
 });
