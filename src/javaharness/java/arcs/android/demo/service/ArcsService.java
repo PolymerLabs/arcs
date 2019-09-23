@@ -112,18 +112,15 @@ public class ArcsService extends Service {
       }
 
       @Override
-      public void registerRenderers(List<String> modalities, IRemoteOutputCallback callback) {
-        modalities.forEach(modality -> uiBroker.registerRenderer(modality, new UiRenderer() {
-          @Override
-          public boolean render(PortableJson content) {
-            try {
-              callback.onOutput(jsonParser.stringify(content));
-            } catch (RemoteException e) {
-              throw new RuntimeException(e);
-            }
-            return true;
+      public void registerRenderer(String modality, IRemoteOutputCallback callback) {
+        uiBroker.registerRenderer(modality, content -> {
+          try {
+            callback.onOutput(jsonParser.stringify(content));
+          } catch (RemoteException e) {
+            throw new RuntimeException(e);
           }
-        }));
+          return true;
+        });
       }
     };
   }

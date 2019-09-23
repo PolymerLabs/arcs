@@ -1,17 +1,11 @@
 package arcs.android.client;
 
-import android.os.RemoteException;
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBrokerImpl;
 import arcs.api.UiRenderer;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import javax.inject.Inject;
 
 public class AndroidUiBroker extends UiBrokerImpl {
@@ -29,7 +23,7 @@ public class AndroidUiBroker extends UiBrokerImpl {
 
   @Inject
   AndroidUiBroker(ArcsServiceBridge bridge, PortableJsonParser jsonParser) {
-    super(new HashMap<String, UiRenderer>());
+    super(new HashMap<>());
     this.bridge = bridge;
     this.jsonParser = jsonParser;
   }
@@ -37,20 +31,6 @@ public class AndroidUiBroker extends UiBrokerImpl {
   @Override
   public void registerRenderer(String modality, UiRenderer renderer) {
     super.registerRenderer(modality, renderer);
-    remoteRegister(Arrays.asList(modality));
-  }
-
-  private void remoteRegister(List<String> modalities) {
-    bridge
-        .connectToArcsService()
-        .thenAccept(
-            service -> {
-              try {
-                service.registerRenderers(modalities, callback);
-              } catch (RemoteException e) {
-                throw new RuntimeException(e);
-              }
-            }
-    );
+    bridge.registerRenderer(modality, callback);
   }
 }
