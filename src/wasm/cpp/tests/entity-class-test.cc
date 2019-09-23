@@ -1,62 +1,17 @@
 #include <vector>
+#include <set>
 #include <unordered_set>
-#include <map>
-#include <algorithm>
-#include <functional>
+#include "src/wasm/cpp/tests/test-base.h"
 
-#include "src/wasm/cpp/arcs.h"
-#include "src/wasm/cpp/tests/entities.h"
-
-class InternalsTestBase : public arcs::Particle {
-public:
-  InternalsTestBase() {
-    registerHandle("errors", errors_);
-  }
-
-  void check(bool ok, const std::string& condition, const std::string& file, int line) {
-    if (!ok) {
-      arcs::Data err;
-      err.set_txt("[" + test_name_ + "] " + file + ":" + std::to_string(line) +
-                  ": expected " + condition);
-      errors_.store(&err);
-    }
-  }
-
-  std::string test_name_;
-  arcs::Collection<arcs::Data> errors_;
-};
-
-#define RUN(test) \
-  test_name_ = #test; \
-  test()
-
-#define IS_TRUE(expression) \
-  check((expression), "'" #expression "' to be true", __FILE__, __LINE__)
-
-#define IS_FALSE(expression) \
-  check(!(expression), "'" #expression "' to be false", __FILE__, __LINE__)
-
-#define EQUAL(expression, expected) \
-  check((expression) == (expected), "'" #expression "' to equal '" #expected "'", __FILE__, __LINE__)
-
-#define NOT_EQUAL(expression, expected) \
-  check((expression) != (expected), "'" #expression "' to not equal '" #expected "'", __FILE__, __LINE__)
-
-#define LESS(lhs, rhs) \
-  check((lhs) < (rhs), "'" #lhs "' to be less than '" #rhs "'", __FILE__, __LINE__)
-
-#define NOT_LESS(lhs, rhs) \
-  check(!((lhs) < (rhs)), "'" #lhs "' to not be less than '" #rhs "'", __FILE__, __LINE__)
+using arcs::internal::Accessor;
 
 template<typename T>
 size_t hash(const T& d) {
   return std::hash<T>()(d);
 }
 
-using arcs::internal::Accessor;
 
-
-class EntityClassApiTest : public InternalsTestBase {
+class EntityClassApiTest : public TestBase {
 public:
   void init() override {
     RUN(test_field_methods);
@@ -69,8 +24,8 @@ public:
     RUN(test_clone_entity);
     RUN(test_entity_to_str);
     RUN(test_stl_vector);
+    RUN(test_stl_set);
     RUN(test_stl_unordered_set);
-    RUN(test_stl_map);
   }
 
   void test_field_methods() {
@@ -435,13 +390,59 @@ public:
     v.push_back(std::move(d1));
     v.push_back(std::move(d2));
     v.push_back(std::move(d3));
-    EQUAL(v.size(), 3);
-    EQUAL(Accessor::get_id(v[0]), "");
-    EQUAL(v[0].num(), 12);
-    EQUAL(Accessor::get_id(v[1]), "");
-    EQUAL(v[1].num(), 12);
-    EQUAL(Accessor::get_id(v[2]), "id");
-    IS_FALSE(v[2].has_num());
+
+    auto converter = [](const arcs::Data& d) {
+      return arcs::entity_to_str(d);
+    };
+    std::vector<std::string> expected = {
+      "{}, num: 12",
+      "{}, num: 12",
+      "{id}"
+    };
+    CHECK_ORDERED(v, converter, expected);
+  }
+
+  void test_stl_set() {
+    arcs::Data d1;
+    d1.set_num(45);
+    d1.set_txt("woop");
+
+    // duplicate
+    arcs::Data d2;
+    d2.set_num(45);
+    d2.set_txt("woop");
+
+    // duplicate fields but with an id
+    arcs::Data d3;
+    Accessor::set_id(&d3, "id");
+    d3.set_num(45);
+    d3.set_txt("woop");
+
+    // same id, different fields
+    arcs::Data d4;
+    Accessor::set_id(&d4, "id");
+    d4.set_flg(false);
+
+    // duplicate
+    arcs::Data d5 = arcs::clone_entity(d4);
+    Accessor::set_id(&d5, "id");
+
+    std::set<arcs::Data> s;
+    s.insert(std::move(d1));
+    s.insert(std::move(d2));
+    s.insert(std::move(d3));
+    s.insert(std::move(d4));
+    s.insert(std::move(d5));
+
+    auto converter = [](const arcs::Data& d) {
+      return arcs::entity_to_str(d);
+    };
+    std::vector<std::string> expected = {
+      "{id}, flg: false",
+      "{id}, num: 45, txt: woop",
+      "{}, num: 45, txt: woop"
+    };
+    CHECK_UNORDERED(s, converter, expected);
   }
 
   void test_stl_unordered_set() {
@@ -475,68 +476,23 @@ public:
     s.insert(std::move(d3));
     s.insert(std::move(d4));
     s.insert(std::move(d5));
-    EQUAL(s.size(), 3);
 
-    std::vector<std::string> res;
-    for (const auto& d : s) {
-      res.push_back(arcs::entity_to_str(d));
-    }
-    std::sort(res.begin(), res.end());
-    EQUAL(res[0], "{id}, flg: false");
-    EQUAL(res[1], "{id}, num: 45, txt: woop");
-    EQUAL(res[2], "{}, num: 45, txt: woop");
-  }
-
-  void test_stl_map() {
-    arcs::Data d1;
-    d1.set_num(45);
-    d1.set_txt("woop");
-
-    // duplicate
-    arcs::Data d2;
-    d2.set_num(45);
-    d2.set_txt("woop");
-
-    // duplicate fields but with an id
-    arcs::Data d3;
-    Accessor::set_id(&d3, "id");
-    d3.set_num(45);
-    d3.set_txt("woop");
-
-    // same id, different fields
-    arcs::Data d4;
-    Accessor::set_id(&d4, "id");
-    d4.set_flg(false);
-
-    // duplicate
-    arcs::Data d5 = arcs::clone_entity(d4);
-    Accessor::set_id(&d5, "id");
-
-    std::map<std::string, arcs::Data> m;
-    m.emplace("1", std::move(d1));
-    m.emplace("2", std::move(d2));
-    m.emplace("3", std::move(d3));
-    m.emplace("4", std::move(d4));
-    m.emplace("5", std::move(d5));
-    EQUAL(m.size(), 5);
-
-    std::vector<std::string> res;
-    for (const auto& pair : m) {
-      res.push_back(pair.first + " " + arcs::entity_to_str(pair.second));
-    }
-    std::sort(res.begin(), res.end());
-    EQUAL(res[0], "1 {}, num: 45, txt: woop");
-    EQUAL(res[1], "2 {}, num: 45, txt: woop");
-    EQUAL(res[2], "3 {id}, num: 45, txt: woop");
-    EQUAL(res[3], "4 {id}, flg: false");
-    EQUAL(res[4], "5 {id}, flg: false");
+    auto converter = [](const arcs::Data& d) {
+      return arcs::entity_to_str(d);
+    };
+    std::vector<std::string> expected = {
+      "{id}, flg: false",
+      "{id}, num: 45, txt: woop",
+      "{}, num: 45, txt: woop"
+    };
+    CHECK_UNORDERED(s, converter, expected);
   }
 };
 
 DEFINE_PARTICLE(EntityClassApiTest)
 
 
-class SpecialSchemaFieldsTest : public InternalsTestBase {
+class SpecialSchemaFieldsTest : public TestBase {
 public:
   void init() override {
     RUN(test_language_keyword_field);
