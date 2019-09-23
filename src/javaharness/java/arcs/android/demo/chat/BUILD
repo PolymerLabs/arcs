@@ -15,6 +15,7 @@ android_library(
     deps = [
         "//java/arcs/android/api",
         "//java/arcs/android/client",
+        "//java/arcs/android/demo/service",
         "//java/arcs/android/impl",
         "//java/arcs/api:api-android",
         "//java/arcs/demo/particles:particles-android",

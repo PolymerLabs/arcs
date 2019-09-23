@@ -9,6 +9,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import arcs.android.client.RemotePec;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Demo activity of a long-running arc (chat app). Demo lets you simulate
@@ -17,11 +20,19 @@ import android.widget.TextView;
 public class ChatActivity extends Activity {
 
   private InputMethodManager inputMethodManager;
-  private String chatLog = "";
+  private ChatParticle chatParticle;
+  private RemotePec remotePec;
+
+  @Inject Provider<RemotePec> remotePecProvider;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    DaggerChatActivityComponent.builder()
+        .appContext(getApplicationContext())
+        .build()
+        .inject(this);
 
     setContentView(R.layout.chat_demo_layout);
 
@@ -39,6 +50,17 @@ public class ChatActivity extends Activity {
           }
           return false;
         });
+
+    chatParticle = new ChatParticle(this::onChatUpdate);
+    remotePec = remotePecProvider.get();
+    remotePec.runArc("AndroidChat", chatParticle);
+  }
+
+  private void onChatUpdate(String chatLog) {
+    runOnUiThread(() -> {
+      TextView chatView = findViewById(R.id.chat_log);
+      chatView.setText(chatLog);
+    });
   }
 
   private void onSubmit() {
@@ -48,14 +70,6 @@ public class ChatActivity extends Activity {
     editText.setText("");
     inputMethodManager.hideSoftInputFromWindow(editText.getApplicationWindowToken(), 0);
 
-    addMessageToChatLog(message);
-  }
-
-  private void addMessageToChatLog(String message) {
-    // TODO: Use Arcs for the chat log.
-    chatLog += message + "\n";
-
-    TextView chatView = findViewById(R.id.chat_log);
-    chatView.setText(chatLog);
+    chatParticle.addChatMessage(message);
   }
 }

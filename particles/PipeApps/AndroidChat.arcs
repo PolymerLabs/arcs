@@ -1,0 +1,19 @@
+schema Message
+  Number index
+  Text text
+
+particle ChatParticle in './source/ChatParticle.java'
+  out [Message] messages
+  in [Message] happy
+
+particle SmileyAdder in './source/SmileyAdder.js'
+  in [Message] messages
+  out [Message] happy
+
+recipe AndroidChat
+  ChatParticle
+    messages -> messages
+    happy <- happy
+  SmileyAdder
+    messages <- messages
+    happy -> happy

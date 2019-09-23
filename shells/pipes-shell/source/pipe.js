@@ -29,6 +29,7 @@ const manifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
 import 'https://$particles/PipeApps/Ingestion.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
+import 'https://$particles/PipeApps/AndroidChat.arcs'
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
 `;
