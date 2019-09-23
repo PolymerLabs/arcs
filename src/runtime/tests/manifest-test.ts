@@ -413,12 +413,14 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
-    const loader = new StubLoader({
-      'a': `import 'b'`,
-      'b': `lol what is this`,
+  it('treats a failed import as non-fatal', async () => {
+    assertThrowsAsync(async () => {
+      const loader = new StubLoader({
+        'a': `import 'b'`,
+        'b': `lol what is this`,
+      });
+      await Manifest.load('a', loader);
     });
-    await Manifest.load('a', loader);
   });
   it('throws an error when a particle has invalid description', async () => {
     try {
