@@ -437,8 +437,8 @@ ${e.message}
           try {
             manifest._imports.push(await Manifest.load(target, loader, {registry}));
           } catch (e) {
-            manifest.errors.push(e);
             manifest.errors.push(new ManifestError(item.location, `Error importing '${target}'`));
+            throw e;
           }
         }
       }));
