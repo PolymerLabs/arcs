@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="arcs.android.demo.chat"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+  <uses-sdk
+      android:minSdkVersion="29"
+      android:targetSdkVersion="29"/>
+
+  <application>
+    <activity
+        android:name="arcs.android.demo.chat.ChatActivity"
+        android:label="Long-running Arc Demo" />
+  </application>
+</manifest>

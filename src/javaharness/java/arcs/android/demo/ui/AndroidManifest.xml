@@ -20,7 +20,7 @@
     </activity>
 
     <activity
-      android:name=".AutofillDemoActivity"
-      android:label="Autofill Demo" />
+        android:name=".AutofillDemoActivity"
+        android:label="Autofill Demo" />
   </application>
 </manifest>

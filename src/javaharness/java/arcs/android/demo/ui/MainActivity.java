@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Button;
+import arcs.android.demo.chat.ChatActivity;
 import arcs.android.demo.service.ArcsService;
 
 /**
@@ -50,6 +51,9 @@ public class MainActivity extends Activity {
     Button autofillDemoButton = findViewById(R.id.autofill_demo_button);
     autofillDemoButton.setOnClickListener(v -> startAutofillDemo());
 
+    Button longRunningArcDemoButton = findViewById(R.id.long_arc_demo_button);
+    longRunningArcDemoButton.setOnClickListener(v -> startLongRunningArcDemo());
+
     updateBtn();
   }
 
@@ -73,6 +77,11 @@ public class MainActivity extends Activity {
 
   private void startAutofillDemo() {
     Intent intent = new Intent(this, AutofillDemoActivity.class);
+    startActivity(intent);
+  }
+
+  private void startLongRunningArcDemo() {
+    Intent intent = new Intent(this, ChatActivity.class);
     startActivity(intent);
   }
 }

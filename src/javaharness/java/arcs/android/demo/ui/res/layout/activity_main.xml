@@ -20,6 +20,12 @@
         android:layout_height="wrap_content"
         android:text="Autofill Demo" />
 
+    <Button
+        android:id="@+id/long_arc_demo_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Long-running Arc Demo" />
+
   </LinearLayout>
 
 </FrameLayout>
