@@ -28,7 +28,6 @@ particle DisplayGreeting in './source/DisplayGreeting.js'
   consume greetingSlot
 
 particle Congratulations in './source/Congratulations.js'
-  in Person person
   in GameState gameState
   consume congratulationsSlot
 
@@ -61,7 +60,6 @@ recipe
     humanMove -> humanMove
     consume cellSlot as board
   Congratulations
-    person <- playerOne
     gameState <- gameState
     consume congratulationsSlot as congratulations
   RandomComputer
