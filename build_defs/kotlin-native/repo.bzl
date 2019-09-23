@@ -5,9 +5,9 @@ _kotlin_native_version = "1.3.50"
 _repo_tmpl = _kotlin_native_version.join(["https://github.com/JetBrains/kotlin/releases/download/v","/kotlin-native-{platform}-",".{ext}"])
 
 _WINDOWS_DEPENDENCIES = [
-    ("libffi-3.2.1-mingw-w64-x86-64", ""),
-    ("msys2-mingw-w64-x86_64-gcc-7.3.0-clang-llvm-lld-6.0.1-2", ""),
-    ("target-toolchain-2-mingw-wasm", ""),
+    ("libffi-3.2.1-mingw-w64-x86-64", "2047faedec4ca6bc074e12642ecf3a14545cbb248224ef3637965714d7e7ea5f"),
+    ("msys2-mingw-w64-x86_64-gcc-7.3.0-clang-llvm-lld-6.0.1", "931131ae6545bc8afc497281cbd0a2c39eb2c067f3bfac53a993886fa00ba131"),
+    ("target-toolchain-1-mingw-wasm", "b0e814436eafa9f4971696ecdbbf23a34185500085d6257c46464ef69561101d"),
     ("target-sysroot-2-wasm", "039958041b364458d652237aaa06c12b89973ef0934819cca9d47299f1a76b64"),
   ]
 
@@ -19,9 +19,9 @@ _MACOS_DEPENDENCIES = [
   ]
 
 _LINUX_DEPENDENCIES = [
-    ("libffi-3.2.1-2-linux-x86-64", ""),
-    ("clang-llvm-6.0.1-linux-x86-64", ""),
-    ("target-toolchain-2-linux-wasm", ""),
+    ("libffi-3.2.1-2-linux-x86-64", "5608bd3845f28151265ec38554763c32b05fe1c8b53dcd7eef9362c919a13b67"),
+    ("clang-llvm-6.0.1-linux-x86-64", "93a23e63cbf16bf24cbc52e9fef1291be5c4796559d90f3918c3c149ee8582bf"),
+    ("target-toolchain-2-linux-wasm", "d5cd155377b3a389430303972ff0f85b9550895b7b088a26fb9c51cb8538387c"),
     ("target-sysroot-2-wasm", "039958041b364458d652237aaa06c12b89973ef0934819cca9d47299f1a76b64"),
   ]
 
@@ -63,9 +63,9 @@ def kotlin_native_repo():
 
         [http_archive(
             name = x,
-            urls = ["https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.tar.gz".format(x)],
-            type = "tar.gz",
+            urls = ["https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.{ext}".format(x, **p)],
+            type = p["ext"],
             sha256 = sha,
-            build_file = "//build_defs/kotlin-native:konan.BUILD",
+            build_file = "//build_defs/kotlin-native:kotlinc.BUILD",
         ) for x, sha in p["deps"]]
 
