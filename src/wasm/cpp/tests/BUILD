@@ -12,6 +12,7 @@ cc_wasm_binary(
     srcs = [
         "entity-class-test.cc",
         "particle-api-test.cc",
+        "reference-class-test.cc",
     ],
     hdrs = [
         "entities.h",

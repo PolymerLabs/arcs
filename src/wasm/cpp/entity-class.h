@@ -74,6 +74,9 @@ public:
   }
 
 private:
+  // Ref<T> instances require a Handle pointer; entity classes can ignore it.
+  Data(Handle* handle) {}
+
   // Allow private copying for use in Handles.
   Data(const Data&) = default;
   Data& operator=(const Data&) = default;
