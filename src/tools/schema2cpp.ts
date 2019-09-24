@@ -152,18 +152,18 @@ private:
 
   friend class Singleton<${name}>;
   friend class Collection<${name}>;
-  friend class internal::Accessor<${name}>;
+  friend class internal::Accessor;
 };
 
 template<>
-inline ${name} internal::Accessor<${name}>::clone_entity(const ${name}& entity) {
+inline ${name} internal::Accessor::clone_entity(const ${name}& entity) {
   ${name} clone;
   ${clone.join('\n  ')}
   return clone;
 }
 
 template<>
-inline size_t internal::Accessor<${name}>::hash_entity(const ${name}& entity) {
+inline size_t internal::Accessor::hash_entity(const ${name}& entity) {
   size_t h = 0;
   internal::hash_combine(h, entity._internal_id_);
   ${hash.join('\n  ')}
@@ -171,7 +171,7 @@ inline size_t internal::Accessor<${name}>::hash_entity(const ${name}& entity) {
 }
 
 template<>
-inline bool internal::Accessor<${name}>::fields_equal(const ${name}& a, const ${name}& b) {
+inline bool internal::Accessor::fields_equal(const ${name}& a, const ${name}& b) {
   return ${equals.join(' && \n         ')};
 }
 
@@ -180,7 +180,7 @@ inline bool ${name}::operator==(const ${name}& other) const {
 }
 
 template<>
-inline std::string internal::Accessor<${name}>::entity_to_str(const ${name}& entity, const char* join) {
+inline std::string internal::Accessor::entity_to_str(const ${name}& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id_);
   ${toString.join('\n  ')}
@@ -188,7 +188,7 @@ inline std::string internal::Accessor<${name}>::entity_to_str(const ${name}& ent
 }
 
 template<>
-inline void internal::Accessor<${name}>::decode_entity(${name}* entity, const char* str) {
+inline void internal::Accessor::decode_entity(${name}* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
@@ -203,7 +203,7 @@ inline void internal::Accessor<${name}>::decode_entity(${name}* entity, const ch
 }
 
 template<>
-inline std::string internal::Accessor<${name}>::encode_entity(const ${name}& entity) {
+inline std::string internal::Accessor::encode_entity(const ${name}& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
   ${encode.join('\n  ')}

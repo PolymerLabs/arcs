@@ -8,21 +8,28 @@ schema AutofillRequest
 particle AutofillParticle in './source/AutofillParticle.java'
   // TODO: Use a Singleton instead, when that is supported in Java.
   out [AutofillRequest] request
+  consume root
+    provide fillSlot
+  modality autofill
 
 // A dummy JS particle which handles the Autofill requests.
 particle DummyAutofillResponder in './source/DummyAutofillResponder.js'
   in [Person] recentPeople
   in [AutofillRequest] request
-  consume root
+  consume fillSlot
   modality autofill
 
 recipe AndroidAutofill
   map #recentPeople as recentPeople
+  slot as rootSlot
   AutofillParticle
     request -> request
+    consume root as rootSlot
+      provide fillSlot as fillSlot
   DummyAutofillResponder
     recentPeople <- recentPeople
     request <- request
+    consume fillSlot as fillSlot
 
 resource PeopleJson
     start

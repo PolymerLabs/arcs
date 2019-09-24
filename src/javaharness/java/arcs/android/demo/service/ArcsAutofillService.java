@@ -64,12 +64,8 @@ public class ArcsAutofillService extends AutofillService {
     // Start up an Arcs remote PEC and arc with the autofill particle.
     remotePec.runArc("AndroidAutofill", autofillParticle);
 
-    // TODO: Use provided slot id instead.
-    // Currently ui-slot-composer uses the id of the consuming particle as the slot ID,
-    // As a workaround falling back to arc id as slot ID.
-    String slotId = remotePec.getArcId().toString();
     autofillRenderer.addCallback(
-        slotId,
+        remotePec.getProvidedSlotId(),
         node.get().getAutofillId(),
         fillResponse -> {
           callback.onSuccess(fillResponse);

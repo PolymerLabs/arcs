@@ -42,13 +42,7 @@ public class AutofillRenderer implements UiRenderer {
   @Override
   public boolean render(PortableJson content) {
     PortableJson data = content.getObject("data");
-    String slotId = data.getString("outputSlotId");
-
-    // TODO: This is a hack: falling back to arcId.
-    // The slotId is the ID of a particle rendering, not the particle providing the slot.
-    if (!slotById.containsKey(slotId) && data.hasKey("arcId")) {
-      slotId = data.getString("arcId");
-    }
+    String slotId = data.getString("containerSlotId");
     SlotInfo slotInfo = slotById.get(slotId);
 
     if (slotInfo == null) {

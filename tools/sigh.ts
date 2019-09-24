@@ -870,7 +870,7 @@ function health(args: string[]): boolean {
   }
 
   // Generating coverage report from tests.
-  runSteps('test', testOptions);
+  const testResult = runSteps('test', testOptions);
 
   if (options.tests) {
     return saneSpawn('node_modules/.bin/c8', ['report']);
@@ -919,12 +919,12 @@ function health(args: string[]): boolean {
   line();
 
   if (options.uploadCodeHealthStats) {
-    return uploadCodeHealthStats(request, healthInformation);
+    uploadCodeHealthStats(request, healthInformation, testResult);
   }
-  return true;
+  return testResult;
 }
 
-function uploadCodeHealthStats(request, data: string[]) {
+function uploadCodeHealthStats(request, data: string[], testResult: boolean) {
   console.log('Uploading health data');
   const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
 
@@ -939,12 +939,12 @@ function uploadCodeHealthStats(request, data: string[]) {
     if (error || response.statusCode !== 200) {
       console.error(error);
       console.error(response.toJSON());
-      return;
+    } else {
+      console.log(`Upload response status: ${response.statusCode}`);
     }
-    console.log(`Upload response status: ${response.statusCode}`);
+    process.exit(testResult ? 0 : 1);
   });
   keepProcessAlive = true; // Tell the runner to not exit.
-  return true;
 }
 
 function spawnTool(toolPath: string, args: string[]) {

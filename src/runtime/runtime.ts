@@ -14,8 +14,11 @@ import {Arc} from './arc.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {Id, IdGenerator} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
+import {Handle} from './recipe/handle.js';
 import {SlotComposer} from './slot-composer.js';
 import {Loader} from './loader.js';
+import {StorageStub} from './storage-stub.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
@@ -102,6 +105,15 @@ export class Runtime {
       this.arcById[name] = this.newArc(name, storageKeyPrefix, options);
     }
     return this.arcById[name];
+  }
+
+  // TODO: This is a temporary method to allow sharing stores with other Arcs.
+  registerStore(store: StorageProviderBase, tags: string[]): void {
+    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
+      // tslint:disable-next-line: no-any
+      this.context['_addStore']((store as any) as StorageStub, tags);
+    }
+    // TODO: clear stores, when arc is being disposed.
   }
 
   /**

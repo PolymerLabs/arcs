@@ -78,6 +78,7 @@ public class ArcsService extends Service {
           String recipe,
           String particleId,
           String particleName,
+          String providedSlotId,
           IRemotePecCallback callback) {
         RemotePecPort remotePecPort =
             new RemotePecPort(
@@ -97,6 +98,7 @@ public class ArcsService extends Service {
                 .put("message", "runArc")
                 .put("arcId", arcId)
                 .put("pecId", pecId)
+                .put("providedSlotId", providedSlotId)
                 .put("recipe", recipe);
         if (particleId != null) {
           request.put("particleId", particleId).put("particleName", particleName);

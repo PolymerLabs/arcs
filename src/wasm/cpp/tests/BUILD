@@ -13,21 +13,15 @@ cc_wasm_binary(
         "entity-class-test.cc",
         "particle-api-test.cc",
     ],
-    hdrs = ["entities.h"],
-    deps = ["//src/wasm/cpp:arcs"],
-)
-
-cc_wasm_binary(
-    name = "schemaless",
-    srcs = ["schemaless-test.cc"],
+    hdrs = [
+        "entities.h",
+        "test-base.h",
+    ],
     deps = ["//src/wasm/cpp:arcs"],
 )
 
 arcs_ts_test(
     name = "wasm-cpp-test",
     src = "wasm-cpp-test.ts",
-    deps = [
-        ":test-module",
-        ":schemaless",
-    ],
+    deps = [":test-module"],
 )

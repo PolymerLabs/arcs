@@ -42,7 +42,9 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         height: 9px;
         display: inline-block;
         border: 1px solid var(--mid-gray);
-        border-radius: 3px;
+      }
+      .legend span[node][circle] {
+        border-radius: 5px;
       }
       .legend span[edge] {
         width: 10px;
@@ -100,8 +102,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     <div id="graphContainer">
       <div class="legend">
         <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
-        <div><span node style="background: var(--light-gray)"></span> Handle</div>
-        <div><span node style="background: var(--dark-green)"></span> Slot</div>
+        <div><span node circle style="background: var(--light-gray)"></span> Handle</div>
+        <div><span node circle style="background: var(--dark-green)"></span> Slot</div>
         <div><span node style="background: var(--dark-red)"></span> Arc</div>
         <div><span edge arrow-right style="background: var(--dark-green); border-color: var(--dark-green);"></span> Read</div>
         <div><span edge arrow-right style="background: var(--dark-red); border-color: var(--dark-red);"></span> Write</div>
@@ -163,6 +165,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
               this._slots.set(sc.consumed.id, {
                 id: sc.consumed.id,
                 label: sc.consumed.name,
+                shape: 'ellipsis',
                 color: this._cssVar('--dark-green'),
                 font: {color: 'white'},
                 details: {
@@ -189,6 +192,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
               this._slots.set(provided.id, {
                 id: provided.id,
                 label: provided.name,
+                shape: 'ellipsis',
                 color: this._cssVar('--dark-green'),
                 font: {color: 'white'},
                 details: {
@@ -229,6 +233,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 id: innerArcId,
                 label: `Arc ${innerArcIdSuffix}`,
                 font: {color: 'white'},
+                shape: 'box',
                 color: this._cssVar('--dark-red'),
               });
 
@@ -253,6 +258,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
               if (!this._particles.has(particleId)) {
                 this._particles.set(particleId, {
                   id: particleId,
+                  shape: 'box',
                   label: spec.name,
                   color: this._cssVar('--highlight-blue'),
                   font: {color: 'white'},
@@ -275,6 +281,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 this._handles.set(id, {
                   id: id,
                   label: `"${name}"`,
+                  shape: 'ellipsis',
                   color: this._cssVar('--light-gray'),
                   details: {id, name}
                 });
@@ -373,7 +380,9 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         height: '100%',
         width: '100%',
         nodes: {
-          shape: 'box'
+          shapeProperties: {
+            borderRadius: 0
+          }
         }
       });
       this.graph.on('doubleClick', params => {
