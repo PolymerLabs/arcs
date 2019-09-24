@@ -29,32 +29,29 @@ _LINUX_DEPENDENCIES = [
     ("target-sysroot-2-wasm", "039958041b364458d652237aaa06c12b89973ef0934819cca9d47299f1a76b64"),
 ]
 
-PLATFORMS = [
-    {
+PLATFORMS = {
+    "windows": {
         "platform": "windows",
         "ext": "zip",
         "deps": _WINDOWS_DEPENDENCIES,
         "sha": "2eed825696fcae19c49d3a32ee5a43971dd4992c2ce99a9a2be6e88334bcf875",
     },
-    {
+    "macos": {
         "platform": "macos",
         "ext": "tar.gz",
         "deps": _MACOS_DEPENDENCIES,
         "sha": "100920f1a3352846bc5a2990c87cb71f221abf8261251632ad10c6459d962393",
     },
-    {
+    "linux": {
         "platform": "linux",
         "ext": "tar.gz",
         "deps": _LINUX_DEPENDENCIES,
         "sha": "15eb0589aef8dcb435e4cb04ef9a3ad90b8d936118b491618a70912cef742874",
     },
-]
+}
 
 def get_dependencies(target):
-  for p in PLATFORMS:
-      if p["platform"] == target:
-          return p["deps"]
-  return []
+    return PLATFORMS[target]["deps"]
 
 def kotlin_native_repo():
     """Downloads the kotlin-native release and "installs" the kotlinc compiler.
@@ -62,9 +59,9 @@ def kotlin_native_repo():
     Kotlin-Native is used to compile Kotlin into Wasm. This rule downloads the latest
     experimental repository and makes the kotlinc compiler available for BUILD rules.
     """
-    for p in PLATFORMS:
+    for p in PLATFORMS.values():
         http_archive(
-            name = "kotlin_native_{platform}".format(**p),
+            name = "kotlin_native_{0}".format(p["platform"]),
             url = _repo_tmpl.format(**p),
             type = p["ext"],
             sha256 = p["sha"],
