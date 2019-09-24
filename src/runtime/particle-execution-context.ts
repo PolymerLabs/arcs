@@ -321,7 +321,7 @@ export class ParticleExecutionContext {
     } else {
       const clazz = await this.loader.loadParticleClass(spec);
       if (!clazz) {
-        return Promise.reject(new Error(`Could not load particle ${id} ${spec.name}`));
+        return Promise.reject(new Error(`Unknown error loading particle ${id} ${spec.name}`));
       }
       particle = new clazz();
       particle.setCapabilities(this.capabilities(true));
