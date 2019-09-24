@@ -41,7 +41,7 @@ class MyEntityCollection extends CRDTCollection<MyEntity> {}
 const schema = new Schema(['Thing'], {name: 'Text', age: 'Number'});
 const collectionType = new CollectionType(new EntityType(schema));
 
-describe.only('Reference Mode Store', async () => {
+describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
