@@ -10,7 +10,6 @@
   
 import {Id} from './id.js';
 import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
-import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
@@ -18,7 +17,6 @@ import {TypeVariableInfo} from './type-variable-info.js';
 import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
-import {ReferenceCollection} from './storageNG/reference-mode-store.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 
 
@@ -532,10 +530,6 @@ export class CollectionType<T extends Type> extends Type {
   }
 
   crdtInstanceConstructor() {
-    if (this.getContainedType().isReference) {
-      return ReferenceCollection;
-    }
-    
     return CRDTCollection;
   }
 }
