@@ -34,6 +34,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
+import {Runtime} from './runtime.js';
 import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 
@@ -703,6 +704,8 @@ ${this.activeRecipe.toString()}`;
 
     this.storageKeys[store.id] = store.storageKey;
     store.on('change', () => this._onDataChange(), this);
+
+    Runtime.getRuntime().registerStore(store, tags);
   }
 
   _tagStore(store: StorageProviderBase, tags: Set<string>): void {
