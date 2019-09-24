@@ -244,8 +244,10 @@ export class DomParticleBase extends Particle {
       } else {
         throw new Error('Singleton required');
       }
+    } else {
+      console.log('This should be a warning!');
+      return undefined;
     }
-    return undefined;
   }
 
   /**
