@@ -11,8 +11,8 @@ class HelloWorldParticle : Particle() {
     renderSlot("root")
   }
 
-  override fun onHandleSync(handle: Handle, willSync: Boolean) {
-    if(willSync) {
+  override fun onHandleSync(handle: Handle, allSynced: Boolean) {
+    if(allSynced) {
       log("All handles synched\n")
       renderSlot("root")
     }
