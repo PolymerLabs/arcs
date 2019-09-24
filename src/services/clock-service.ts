@@ -35,7 +35,7 @@ type ClockServiceNowOptions = {
   timeUnit: string;
 };
 
-const log = logFactory('tfjs-service');
+const log = logFactory('clock-service');
 
 Services.register('clock', {
   now: ({timeUnit}: ClockServiceNowOptions) => {
