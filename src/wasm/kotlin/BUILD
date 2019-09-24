@@ -18,17 +18,16 @@ kt_wasm_library(
 kt_wasm_binary(
     name = "service_particle",
     srcs = ["wasm/arcs/ServiceParticle.kt"],
-    deps = [
-        ":particle_interop"
-        ],
+    deps = [":particle_interop"],
     entry_point = "arcs.main"
 )
 
 kt_wasm_binary(
     name = "test_harness",
-    srcs = ["wasm/arcs/TestParticle.kt"],
-    deps = [
-        ":particle_interop"
+    srcs = [
+        "wasm/arcs/TestParticle.kt",
+        "wasm/arcs/Entities.kt"
         ],
+    deps = [":particle_interop"],
     entry_point = "arcs.main"
 )
