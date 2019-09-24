@@ -18,6 +18,7 @@ import '3_JsonStore/JsonStore.arcs'
 // Tutorial 4: Render Slots
 // Connecting particles together with slots.
 import '4_RenderSlots/RenderSlots.arcs'
+import '4_RenderSlots/RenderSlandles.arcs'
 
 // Tutorial 5: Collections
 // Collections of entities, and data stores defined in the manifest.

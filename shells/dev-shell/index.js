@@ -153,8 +153,8 @@ async function wrappedExecute() {
       resolvedRecipe = await resolver.resolve(recipe, options);
       if (!resolvedRecipe) {
         arcPanel.showError('Error in RecipeResolver', `${
-          [...options.errors.entries()].join('\n')
-        }.\n${recipe.toString()}`);
+          [...options.errors.entries()].join('\n\n')
+        }.\n\n${recipe.toString()}`);
         continue;
       }
     }
