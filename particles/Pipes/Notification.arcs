@@ -1,0 +1,6 @@
+
+particle Notification in './source/Notification.js'
+  consume root
+
+recipe Notification
+  Notification

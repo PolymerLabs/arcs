@@ -9,6 +9,7 @@
  */
 
 export const smokeTest = async bus => {
+  const send = envelope => bus.receive(envelope);
   const enqueue = (tests, delay) => {
     if (tests.length) {
       console.warn(`busish: starting new task...(${tests.length} remaining)`);
@@ -21,12 +22,23 @@ export const smokeTest = async bus => {
     }
   };
   //
+  const ingestionTest = () => {
+    // ingest some data
+    send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
+  };
+  //
+  const autofillTest = () => {
+    send({message: 'spawn', recipe: 'PersonAutofill'});
+  };
+  //
   const notificationTest = () => {
     // spawn an arc
-    bus.receive({message: 'spawn', modality: 'dom', recipe: 'NotificationTest'});
+    send({message: 'spawn', modality: 'dom', recipe: 'Notification'});
   };
   //
   enqueue([
+    ingestionTest,
+    autofillTest,
     notificationTest
   ], 500);
 };

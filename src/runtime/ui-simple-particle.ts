@@ -11,7 +11,7 @@
 import {Entity} from './entity.js';
 import {BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
-import {SlotProxy} from './slot-proxy.js';
+//import {SlotProxy} from './slot-proxy.js';
 //import {Content} from './slot-consumer.js';
 
 export interface UiParticleConfig {

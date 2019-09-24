@@ -19,9 +19,9 @@ class TestParticle : Particle() {
       renderSlot("root")
     }
 
-    override fun onHandleSync(handle: Handle, willSync: Boolean) {
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         log("onHandleSync called")
-        if (willSync) {
+        if (allSynced) {
           log("All handles synced\n")
           renderSlot("root")
         }

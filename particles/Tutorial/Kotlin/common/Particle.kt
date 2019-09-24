@@ -50,7 +50,7 @@ abstract class Particle : WasmObject() {
     }
 
     abstract fun onHandleUpdate(handle: Handle)
-    abstract fun onHandleSync(handle: Handle, willSync: Boolean)
+    abstract fun onHandleSync(handle: Handle, allSynced: Boolean)
 
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
       val template = if (sendTemplate) getTemplate(slotName) else ""

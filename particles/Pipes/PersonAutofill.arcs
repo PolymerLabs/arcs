@@ -1,0 +1,18 @@
+import './Ingestion.arcs'
+import './schemas/Json.arcs'
+
+particle SuggestPerson in './source/SuggestPerson.js'
+  in [IncomingEntity] recentEntities
+  out Json suggestion
+  consume root
+
+//particle RequireQuery in './source/Noop.js'
+//  in IncomingEntity query
+
+recipe PersonAutofill &autofill
+  map 'pipe-entities' as recentEntities
+  //create as recentEntities
+  create as suggestion
+  SuggestPerson
+    recentEntities = recentEntities
+    suggestion = suggestion

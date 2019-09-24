@@ -161,7 +161,6 @@ export class DomParticleBase extends Particle {
     if (typeof pattern === 'string') {
       return super.setParticleDescription(pattern);
     }
-
     if (pattern.template && pattern.model) {
       await super.setDescriptionPattern('_template_', pattern.template);
       await super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
