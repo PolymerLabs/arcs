@@ -61,7 +61,7 @@ const instantiateRecipe = async (arc, recipe, particleId, particleName, provided
 
   plan = updateParticleInPlan(plan, particleId, particleName, providedSlotId);
   if (!plan) {
-    warn(`failed updating particle id '${particleId}', name ${particleName} in plan ${plan.toString()}`);
+    warn(`failed updating particle id '${particleId}', name ${particleName} in recipe ${recipe}`);
     return false;
   }
 
