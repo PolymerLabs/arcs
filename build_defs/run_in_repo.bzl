@@ -116,7 +116,6 @@ output file respectively.
 }
 
 run_in_repo = rule(
-    implementation = _run_in_repo,
     attrs = _RUN_RULE_ATTRS,
     doc = """
 Runs the given shell command in the root directory of the respository. This lets
@@ -125,10 +124,12 @@ sandbox), so it can be destructive and can overwrite existing files.
 
 Useful for invoking sigh commands.
 """,
+    implementation = _run_in_repo,
 )
 
 # Attributes for the run_in_repo_test rule. Same as above, but with no outputs.
 _TEST_RULE_ATTRS = dict(_RUN_RULE_ATTRS)
+
 _TEST_RULE_ATTRS["outs"] = attr.output_list(
     allow_empty = True,
     mandatory = False,
@@ -136,8 +137,8 @@ _TEST_RULE_ATTRS["outs"] = attr.output_list(
 )
 
 run_in_repo_test = rule(
-    implementation = _run_in_repo_test,
     attrs = _TEST_RULE_ATTRS,
-    test = True,
     doc = "Equivalent to run_in_repo, but for tests.",
+    test = True,
+    implementation = _run_in_repo_test,
 )

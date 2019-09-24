@@ -1,4 +1,4 @@
-# Wrapper script around Emscripten command line tools (e.g. em++).
+# Wrapper script around Emscripten command line tools (i.e. em++).
 sh_binary(
     name = "emsdk_wrapper",
     srcs = ["emsdk_wrapper.sh"],
