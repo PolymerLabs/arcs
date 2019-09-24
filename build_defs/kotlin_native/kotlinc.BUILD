@@ -5,4 +5,3 @@ filegroup(
     srcs = _files_without_spaces,
     visibility = ["//visibility:public"],
 )
-

@@ -55,15 +55,12 @@ def _kt_wasm_binary(ctx):
         executable = ctx.executable.kotlinc_wrapper,
     )
 
-
 kt_wasm_binary = rule(
-    implementation = _kt_wasm_binary,
-    outputs = {
-       "wasm": "%{name}.wasm",
-       "js": "%{name}.wasm.js",
-    },
     attrs = {
-        "srcs": attr.label_list(allow_files = True, allow_empty = True),
+        "srcs": attr.label_list(
+            allow_files = True,
+            allow_empty = True,
+        ),
         "deps": attr.label_list(providers = [KtNativeInfo]),
         "kotlinc_wrapper": attr.label(
             default = Label("//build_defs/kotlin-native:kotlinc_wrapper"),
@@ -72,8 +69,12 @@ kt_wasm_binary = rule(
         ),
     },
     doc = "Builds a Wasm binary from Kotlin",
+    outputs = {
+        "wasm": "%{name}.wasm",
+        "js": "%{name}.wasm.js",
+    },
+    implementation = _kt_wasm_binary,
 )
-
 
 def _kt_wasm_library(ctx):
     srcs_deps, klibs = _collect_deps(
@@ -97,14 +98,12 @@ def _kt_wasm_library(ctx):
 
     return [KtNativeInfo(klibraries = depset(order = "preorder", direct = [ctx.outputs.klib], transitive = [klibs]))]
 
-
 kt_wasm_library = rule(
-    implementation = _kt_wasm_library,
-    outputs = {
-        "klib": "%{name}.klib"
-    },
     attrs = {
-        "srcs": attr.label_list(allow_files = True, allow_empty = True),
+        "srcs": attr.label_list(
+            allow_files = True,
+            allow_empty = True,
+        ),
         "deps": attr.label_list(providers = [KtNativeInfo]),
         "kotlinc_wrapper": attr.label(
             default = Label("//build_defs/kotlin-native:kotlinc_wrapper"),
@@ -113,4 +112,8 @@ kt_wasm_library = rule(
         ),
     },
     doc = "Builds a Wasm library (klib) from Kotlin files",
+    outputs = {
+        "klib": "%{name}.klib",
+    },
+    implementation = _kt_wasm_library,
 )
