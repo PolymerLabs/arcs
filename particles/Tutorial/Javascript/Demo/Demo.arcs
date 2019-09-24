@@ -3,6 +3,16 @@
 import 'Board.arcs'
 import 'DemoSchemas.arcs'
 
+resource PlayerData
+  start
+  [
+    {"name": "Jill", "avatar": "Y"},
+    {"name": "Jack", "avatar": "P"}
+  ]
+
+// This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
+store Players of [Person] in PlayerData
+
 particle Main in './source/Main.js'
   consume root
     provide playerSlot
@@ -13,6 +23,7 @@ particle Main in './source/Main.js'
 particle Game in './source/Game.js'
   in Person playerOne
   in Person playerTwo
+  in [Person] players
   in GameState gameState
   in Move humanMove
   in Move computerMove
@@ -21,17 +32,20 @@ particle Game in './source/Game.js'
 particle GetPlayer in './source/GetPerson.js'
   out Person playerOne
   out Person playerTwo
+  inout [Person] players
   consume playerSlot
 
 particle DisplayGreeting in './source/DisplayGreeting.js'
   in Person person
+  in [Person] players
   consume greetingSlot
 
 particle Congratulations in './source/Congratulations.js'
   in GameState gameState
   consume congratulationsSlot
 
-recipe 
+recipe GameDemoRecipe
+  copy Players as data
   Main
     consume root 
       provide playerSlot as getPlayer
@@ -41,12 +55,14 @@ recipe
   GetPlayer
     playerOne -> playerOne
     playerTwo -> playerTwo
+    players <-> data
     consume playerSlot as getPlayer
   MoveApplier
     move <- move
     gameState <-> gameState
   Game
     gameState <- gameState
+    players <- data
     playerOne <- playerOne
     playerTwo <- playerTwo
     humanMove <- humanMove
@@ -54,6 +70,7 @@ recipe
     move -> move
   DisplayGreeting
     person <- playerOne
+    players <- data
     consume greetingSlot as greeting
   Board
     gameState <- gameState

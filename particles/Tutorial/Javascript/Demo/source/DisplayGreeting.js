@@ -14,20 +14,34 @@
 
 defineParticle(({DomParticle, html}) => {   
 
-const template = html`Hello, <span>{{name}}</span>! Today you are playing as <span>{{avatar}}`;
+const template = html`
+<ul>{{people}}</ul>
+<template Foo>
+  <li>Hello, <span>{{name}}</span>! Today you are playing as <span>{{avatar}}</li>
+</template>`;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
 
-    shouldRender({person}) {
+    shouldRender({players, person}) {
       // Here we check that the person is defined.
-      return person;
+      return players;
     }
 
-    render({person}) {
-      return {name: person.name, avatar: person.avatar};
+    render({players, person}) {
+      return {
+        // This will fill in the "people" placeholder in the template above. We construct an object with special properties named "$template"
+        // and "models", which defines how to render each item in the list.
+        people: {
+          // $template gives the name of the template to use to render each element.
+          $template: 'Foo',
+          // Each model in this list will get passed into the person template. The template can access the properties in this model (here, name
+          // and age) via placeholders.
+          models: players.map(player => ({name: player.name, avatar: player.avatar})),
+        }
+      };
     }
     
   };
