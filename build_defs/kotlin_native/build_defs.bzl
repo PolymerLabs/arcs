@@ -1,4 +1,4 @@
-load("//build_defs/kotlin-native:repo.bzl", "PLATFORMS")
+load("//build_defs/kotlin_native:repo.bzl", "PLATFORMS")
 
 KtNativeInfo = provider(
     doc = "The minimum info about a Kotlin/Native dependency",
