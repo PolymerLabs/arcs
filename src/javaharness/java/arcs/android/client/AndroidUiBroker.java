@@ -1,12 +1,14 @@
 package arcs.android.client;
 
+import java.util.HashMap;
+
+import javax.inject.Inject;
+
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBrokerImpl;
 import arcs.api.UiRenderer;
-import java.util.HashMap;
-import javax.inject.Inject;
 
 public class AndroidUiBroker extends UiBrokerImpl {
   private final IRemoteOutputCallback callback =

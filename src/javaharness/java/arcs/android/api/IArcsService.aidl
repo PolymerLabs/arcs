@@ -2,7 +2,6 @@ package arcs.android.api;
 
 import arcs.android.api.IRemotePecCallback;
 import arcs.android.api.IRemoteOutputCallback;
-import java.util.List;
 
 /**
   * This interface allows apps to communicate with ArcsService.
