@@ -13,7 +13,10 @@ cc_wasm_binary(
         "entity-class-test.cc",
         "particle-api-test.cc",
     ],
-    hdrs = ["entities.h"],
+    hdrs = [
+        "entities.h",
+        "test-base.h",
+    ],
     deps = ["//src/wasm/cpp:arcs"],
 )
 
