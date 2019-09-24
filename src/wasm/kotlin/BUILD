@@ -12,7 +12,6 @@ arcs_kt_schema(
 kt_wasm_library(
     name = "particle_interop",
     srcs = glob(["sdk/arcs/*.kt"]),
-    deps = []
 )
 
 kt_wasm_binary(
