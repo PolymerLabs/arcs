@@ -255,14 +255,14 @@ export class UiSlotComposer {
   delegateOutput(arc: Arc, particle: Particle, content) {
     const observer = this['slotObserver'];
     if (observer && content) {
-      const connections = particle._consumedSlotConnections;
+      const connections = particle.getSlotConnections();
       // build slot id map
       const slotMap = {};
-      Object.values(connections).forEach(({providedSlots}) => {
+      connections.forEach(({providedSlots}) => {
         Object.values(providedSlots).forEach(({name, id}) => slotMap[name] = id);
       });
       // identify parent container
-      const container = Object.values(connections)[0];
+      const container = connections[0];
       if (container) {
         Object.assign(content, {
           containerSlotName: container.targetSlot.name,
@@ -273,8 +273,6 @@ export class UiSlotComposer {
         particle,
         slotMap,
         outputSlotId: particle.id.toString(),
-        // TODO: Remove this temporary hack, once android provided slot id is populated in recipe.
-        arcId: arc.id.idTreeAsString()
       });
       //
       //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');

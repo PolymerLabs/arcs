@@ -19,6 +19,7 @@ public class RemotePec {
 
   private PECInnerPort pecInnerPort;
   private Id arcId;
+  private String providedSlotId;
 
   private final IRemotePecCallback callback =
       new IRemotePecCallback.Stub() {
@@ -43,6 +44,10 @@ public class RemotePec {
     return arcId;
   }
 
+  public String getProvidedSlotId() {
+    return providedSlotId;
+  }
+
   /**
    * Starts a new arc running the given recipe. The given particle implementation is attached to
    * that arc.
@@ -65,8 +70,9 @@ public class RemotePec {
         pecInnerPortFactory.createPECInnerPort(pecId.toString(), idGenerator.getSessionId());
     pecInnerPort.mapParticle(particle);
 
+    providedSlotId = idGenerator.newChildId(pecId, "slotId").toString();
     bridge.startArc(
-        arcId.toString(), pecId.toString(), recipe, particle.getId(), particle.getName(), callback);
+        arcId.toString(), pecId.toString(), recipe, particle.getId(), particle.getName(), providedSlotId, callback);
   }
 
   /** Shuts down the running arc and remote PEC. */
