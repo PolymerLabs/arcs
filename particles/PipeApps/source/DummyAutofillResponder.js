@@ -48,9 +48,10 @@ defineParticle(({Particle}) => {
       if (!this.recentPeople || this.recentPeople.length === 0) {
         return;
       }
+      const index = this.recentPeople.length - 1;
       const candidate = request.hint === 'name'
-          ? `${this.recentPeople[0].firstName} ${this.recentPeople[0].lastName}`
-          : this.recentPeople[0][request.hint];
+          ? `${this.recentPeople[index].firstName} ${this.recentPeople[index].lastName}`
+          : this.recentPeople[index][request.hint];
       this.output({candidate});
     }
   };

@@ -18,6 +18,12 @@
       android:layout_height="wrap_content"
       android:text="Enable Autofill in Settings" />
 
+  <Button
+      android:id="@+id/capture_person_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Capture Person" />
+
   <View
       android:id="@+id/divider"
       android:layout_width="match_parent"

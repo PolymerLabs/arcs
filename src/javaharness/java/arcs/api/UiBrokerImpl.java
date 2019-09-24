@@ -16,10 +16,6 @@ public class UiBrokerImpl implements UiBroker {
 
   @Override
   public void registerRenderer(String modality, UiRenderer renderer) {
-    if (this.renderers.containsKey(modality)) {
-      // TODO: should multiple renderers per modality be supported?
-      throw new IllegalArgumentException("Renderer already registered for " + modality);
-    }
     renderers.put(modality, renderer);
   }
 
