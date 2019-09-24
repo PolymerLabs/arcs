@@ -53,15 +53,8 @@ size_t hash(const T& d) {
   return std::hash<T>()(d);
 }
 
-template<typename T>
-const std::string& get_id(const T& entity) {
-  return arcs::internal::Accessor<T>::get_id(entity);
-}
+using arcs::internal::Accessor;
 
-template<typename T>
-void set_id(T* entity, const std::string& id) {
-  arcs::internal::Accessor<T>::set_id(entity, id);
-}
 
 class EntityClassApiTest : public InternalsTestBase {
 public:
@@ -130,22 +123,22 @@ public:
 
   void test_id_equality() {
     arcs::Data d1, d2;
-    EQUAL(get_id(d1), "");
+    EQUAL(Accessor::get_id(d1), "");
 
     // unset vs value
-    set_id(&d1, "id_a");
-    EQUAL(get_id(d1), "id_a");
+    Accessor::set_id(&d1, "id_a");
+    EQUAL(Accessor::get_id(d1), "id_a");
     NOT_EQUAL(d1, d2);
     NOT_LESS(d1, d2);
     LESS(d2, d1);
 
     // value vs value
-    set_id(&d2, "id_b");
+    Accessor::set_id(&d2, "id_b");
     NOT_EQUAL(d1, d2);
     LESS(d1, d2);
     NOT_LESS(d2, d1);
 
-    set_id(&d2, "id_a");
+    Accessor::set_id(&d2, "id_a");
     EQUAL(d1, d2);
     NOT_LESS(d1, d2);
     NOT_LESS(d2, d1);
@@ -337,14 +330,14 @@ public:
     EQUAL(hash(d1), hash(d2));
 
     // Entities with the same fields but different ids are op!= but fields_equal()
-    set_id(&d1, "id_a");
+    Accessor::set_id(&d1, "id_a");
     NOT_EQUAL(d1, d2);
     NOT_LESS(d1, d2);
     LESS(d2, d1);
     IS_TRUE(arcs::fields_equal(d1, d2));
     NOT_EQUAL(hash(d1), hash(d2));
 
-    set_id(&d2, "id_b");
+    Accessor::set_id(&d2, "id_b");
     NOT_EQUAL(d1, d2);
     LESS(d1, d2);
     NOT_LESS(d2, d1);
@@ -352,7 +345,7 @@ public:
     NOT_EQUAL(hash(d1), hash(d2));
 
     // Entities with the same fields and ids are op== and fields_equal()
-    set_id(&d2, "id_a");
+    Accessor::set_id(&d2, "id_a");
     EQUAL(d1, d2);
     NOT_LESS(d1, d2);
     NOT_LESS(d2, d1);
@@ -409,9 +402,9 @@ public:
     EQUAL(hash(d2), hash(src));
 
     // Cloning doesn't include the internal id.
-    set_id(&src, "id");
+    Accessor::set_id(&src, "id");
     arcs::Data d3 = arcs::clone_entity(src);
-    EQUAL(get_id(d3), "");
+    EQUAL(Accessor::get_id(d3), "");
     NOT_EQUAL(d3, src);
     IS_TRUE(arcs::fields_equal(d3, src));
     NOT_EQUAL(hash(d3), hash(src));
@@ -427,7 +420,7 @@ public:
     EQUAL(arcs::entity_to_str(d), "{}, num: 6, txt: boo, flg: false");
     EQUAL(arcs::entity_to_str(d, "|"), "{}|num: 6|txt: boo|flg: false");
 
-    set_id(&d, "id");
+    Accessor::set_id(&d, "id");
     d.clear_flg();
     EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo");
   }
@@ -436,18 +429,18 @@ public:
     arcs::Data d1, d2, d3;
     d1.set_num(12);
     d2.set_num(12);
-    set_id(&d3, "id");
+    Accessor::set_id(&d3, "id");
 
     std::vector<arcs::Data> v;
     v.push_back(std::move(d1));
     v.push_back(std::move(d2));
     v.push_back(std::move(d3));
     EQUAL(v.size(), 3);
-    EQUAL(get_id(v[0]), "");
+    EQUAL(Accessor::get_id(v[0]), "");
     EQUAL(v[0].num(), 12);
-    EQUAL(get_id(v[1]), "");
+    EQUAL(Accessor::get_id(v[1]), "");
     EQUAL(v[1].num(), 12);
-    EQUAL(get_id(v[2]), "id");
+    EQUAL(Accessor::get_id(v[2]), "id");
     IS_FALSE(v[2].has_num());
   }
 
@@ -463,18 +456,18 @@ public:
 
     // duplicate fields but with an id
     arcs::Data d3;
-    set_id(&d3, "id");
+    Accessor::set_id(&d3, "id");
     d3.set_num(45);
     d3.set_txt("woop");
 
     // same id, different fields
     arcs::Data d4;
-    set_id(&d4, "id");
+    Accessor::set_id(&d4, "id");
     d4.set_flg(false);
 
     // duplicate
     arcs::Data d5 = arcs::clone_entity(d4);
-    set_id(&d5, "id");
+    Accessor::set_id(&d5, "id");
 
     std::unordered_set<arcs::Data> s;
     s.insert(std::move(d1));
@@ -506,18 +499,18 @@ public:
 
     // duplicate fields but with an id
     arcs::Data d3;
-    set_id(&d3, "id");
+    Accessor::set_id(&d3, "id");
     d3.set_num(45);
     d3.set_txt("woop");
 
     // same id, different fields
     arcs::Data d4;
-    set_id(&d4, "id");
+    Accessor::set_id(&d4, "id");
     d4.set_flg(false);
 
     // duplicate
     arcs::Data d5 = arcs::clone_entity(d4);
-    set_id(&d5, "id");
+    Accessor::set_id(&d5, "id");
 
     std::map<std::string, arcs::Data> m;
     m.emplace("1", std::move(d1));
@@ -570,7 +563,7 @@ public:
   // Test that a field called 'internal_id' doesn't conflict with the Arcs internal id.
   void test_internal_id_field() {
     arcs::SpecialFields s;
-    set_id(&s, "real");
+    Accessor::set_id(&s, "real");
 
     IS_FALSE(s.has_internal_id());
     EQUAL(s.internal_id(), 0);
@@ -583,12 +576,12 @@ public:
     IS_TRUE(s.has_internal_id());
     EQUAL(s.internal_id(), 0);
 
-    EQUAL(get_id(s), "real");
+    EQUAL(Accessor::get_id(s), "real");
   }
 
   void test_general_usage() {
     arcs::SpecialFields s1;
-    set_id(&s1, "id");
+    Accessor::set_id(&s1, "id");
     s1.set_for("abc");
     s1.set_internal_id(15);
     NOT_EQUAL(hash(s1), 0);
@@ -603,7 +596,7 @@ public:
     NOT_EQUAL(hash(s1), hash(s2));
 
     // same fields and ids
-    set_id(&s2, "id");
+    Accessor::set_id(&s2, "id");
     EQUAL(s1, s2);
     NOT_LESS(s1, s2);
     NOT_LESS(s2, s1);

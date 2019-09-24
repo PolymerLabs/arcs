@@ -95,11 +95,11 @@ private:
 
   friend class Singleton<Data>;
   friend class Collection<Data>;
-  friend class internal::Accessor<Data>;
+  friend class internal::Accessor;
 };
 
 template<>
-inline Data internal::Accessor<Data>::clone_entity(const Data& entity) {
+inline Data internal::Accessor::clone_entity(const Data& entity) {
   Data clone;
   clone.num_ = entity.num_;
   clone.num_valid_ = entity.num_valid_;
@@ -113,7 +113,7 @@ inline Data internal::Accessor<Data>::clone_entity(const Data& entity) {
 }
 
 template<>
-inline size_t internal::Accessor<Data>::hash_entity(const Data& entity) {
+inline size_t internal::Accessor::hash_entity(const Data& entity) {
   size_t h = 0;
   internal::hash_combine(h, entity._internal_id_);
   if (entity.num_valid_)
@@ -128,7 +128,7 @@ inline size_t internal::Accessor<Data>::hash_entity(const Data& entity) {
 }
 
 template<>
-inline bool internal::Accessor<Data>::fields_equal(const Data& a, const Data& b) {
+inline bool internal::Accessor::fields_equal(const Data& a, const Data& b) {
   return (a.num_valid_ ? (b.num_valid_ && a.num_ == b.num_) : !b.num_valid_) &&
          (a.txt_valid_ ? (b.txt_valid_ && a.txt_ == b.txt_) : !b.txt_valid_) &&
          (a.lnk_valid_ ? (b.lnk_valid_ && a.lnk_ == b.lnk_) : !b.lnk_valid_) &&
@@ -140,7 +140,7 @@ inline bool Data::operator==(const Data& other) const {
 }
 
 template<>
-inline std::string internal::Accessor<Data>::entity_to_str(const Data& entity, const char* join) {
+inline std::string internal::Accessor::entity_to_str(const Data& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id_);
   if (entity.num_valid_)
@@ -155,7 +155,7 @@ inline std::string internal::Accessor<Data>::entity_to_str(const Data& entity, c
 }
 
 template<>
-inline void internal::Accessor<Data>::decode_entity(Data* entity, const char* str) {
+inline void internal::Accessor::decode_entity(Data* entity, const char* str) {
   if (str == nullptr) return;
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
@@ -185,7 +185,7 @@ inline void internal::Accessor<Data>::decode_entity(Data* entity, const char* st
 }
 
 template<>
-inline std::string internal::Accessor<Data>::encode_entity(const Data& entity) {
+inline std::string internal::Accessor::encode_entity(const Data& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
   if (entity.num_valid_)
