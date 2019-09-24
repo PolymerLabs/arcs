@@ -87,7 +87,7 @@ def _kt_wasm_library(ctx):
 
     args.add("-produce", "library")
 
-    args.add("-o", ctx.outputs.klib.path.rstrip(".klib"))
+    args.add("-o", ctx.outputs.klib.path.replace(".klib", ""))
 
     ctx.actions.run(
         progress_message = "Building a Kotlin Library with WebAssembly target: %s" % ctx.label.name,
