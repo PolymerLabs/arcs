@@ -63,7 +63,7 @@ kt_wasm_binary = rule(
         ),
         "deps": attr.label_list(providers = [KtNativeInfo]),
         "kotlinc_wrapper": attr.label(
-            default = Label("//build_defs/kotlin-native:kotlinc_wrapper"),
+            default = Label("//build_defs/kotlin_native:kotlinc_wrapper"),
             executable = True,
             cfg = "host",
         ),
@@ -106,7 +106,7 @@ kt_wasm_library = rule(
         ),
         "deps": attr.label_list(providers = [KtNativeInfo]),
         "kotlinc_wrapper": attr.label(
-            default = Label("//build_defs/kotlin-native:kotlinc_wrapper"),
+            default = Label("//build_defs/kotlin_native:kotlinc_wrapper"),
             executable = True,
             cfg = "host",
         ),
