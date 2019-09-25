@@ -28,12 +28,16 @@ particle Game in './source/Game.js'
   in Move humanMove
   in Move computerMove
   out Move move
+  check playerOne is private
+  check playerTwo is private
 
 particle GetPlayer in './source/GetPerson.js'
   out Person playerOne
   out Person playerTwo
   inout [Person] players
   consume playerSlot
+  claim playerOne is private
+  claim playerTwo is private
 
 particle DisplayGreeting in './source/DisplayGreeting.js'
   in Person person

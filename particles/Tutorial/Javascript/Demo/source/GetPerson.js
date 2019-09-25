@@ -31,8 +31,9 @@
       console.log(`players`, this.props.players);
       const updatedPlayers = this.props.players;
       this.updateSingleton('playerOne', {name: e.data.value, avatar: 'X'});
-      updatedPlayers.push({name: e.data.value, avatar: 'X'});
-      this.updateCollection('players', this.props.players);
+      this.appendRawDataToHandle('players', [{name: 'Sarah', avatar: 'X'}]);
+      //updatedPlayers.push({name: e.data.value, avatar: 'X'});
+      //this.updateCollection('players', this.props.players);
       
     }
   };
