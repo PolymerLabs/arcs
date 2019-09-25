@@ -26,7 +26,7 @@ resource InfoResource
 store InfoStore of [Info] in InfoResource
 
 
-particle TestParticle in 'http://localhost:8786/bazel-bin/particles/Native/Kotlin2/test_harness.wasm'
+particle TestParticle in 'https://$arcs/bazel-bin/particles/Native/Wasm/test_harness.wasm'
   consume root
   inout Data data
   out Data res

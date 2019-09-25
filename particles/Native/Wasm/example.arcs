@@ -14,7 +14,7 @@ particle BasicParticle in 'module.wasm'
   in Product foo
   out [Product] bar
 
-particle Watcher in 'module.wasm'
+particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
   consume root
   in [Product] bar
 
