@@ -8,79 +8,81 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html}) => {
+/* defineParticle */
+
+defineParticle(({UiParticle, html}) => {
 
   const host = `calendar`;
 
   const styles = html`
 <style>
-  [${host}] {
+  :host {
     padding: 6px;
   }
-  [${host}] .date-picker {
+  .date-picker {
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     padding: 6px 0 12px;
   }
-  [${host}] .schedule-icon {
+  .schedule-icon {
     position: absolute;
     top: 12px;
     left: 28px;
   }
-  [${host}] input {
+  input {
     padding: 5px;
     margin: 2px 6px 0;
     font-size: 14px;
     border: 0;
     background: transparent;
   }
-  [${host}] input::-webkit-clear-button {
+  input::-webkit-clear-button {
     display: none;
   }
-  [${host}] .scroll-container {
+  .scroll-container {
     position: relative;
     height: 90px;
     overflow-y: hidden;
   }
-  [${host}][expanded] .scroll-container {
+  [expanded] .scroll-container {
     height: auto;
   }
-  [${host}] .expand-button,
-  [${host}] .collapse-button {
+  .expand-button,
+  .collapse-button {
     margin: 4px auto 0;
     background-color: transparent;
     border: 0;
   }
-  [${host}] .expand-button {
+  .expand-button {
     display: block;
   }
-  [${host}][expanded] .expand-button {
+  [expanded] .expand-button {
     display: none;
   }
-  [${host}] .collapse-button {
+  .collapse-button {
     display: none;
   }
-  [${host}][expanded] .collapse-button {
+  [expanded] .collapse-button {
     display: block;
   }
-  [${host}] .hour-row {
+  .hour-row {
     display: flex;
   }
-  [${host}] .hour-row .label {
+  .hour-row .label {
     width: 50px;
     padding-right: 10px;
     text-align: right;
     font-size: 12px;
     color: #555;
   }
-  [${host}] .hour-row .block {
+  .hour-row .block {
     flex: 1;
     height: 30px;
     font-size: 0;
   }
-  [${host}] .hour-row .block button {
+  .hour-row .block button {
     width: 100%;
     height: 50%;
     background: #FFF;
@@ -89,16 +91,16 @@ defineParticle(({DomParticle, html}) => {
     border-radius: 0;
     outline: none;
   }
-  [${host}] .scroll-container div:first-child > .block {
+  .scroll-container div:first-child > .block {
     border-top: 1px solid #CCC;
   }
-  [${host}] .events-container {
+  .events-container {
     position: absolute;
     top: 0;
     left: 60px;
     right: 10px;
   }
-  [${host}] .events-container .event {
+  .events-container .event {
     position: absolute;
     left: 0;
     right: 0;
@@ -110,7 +112,7 @@ defineParticle(({DomParticle, html}) => {
     font-size: 14px;
     pointer-events: none;
   }
-  [${host}] .events-container .selected-event {
+  .events-container .selected-event {
     display: flex;
     align-items: center;
     position: absolute;
@@ -125,10 +127,10 @@ defineParticle(({DomParticle, html}) => {
     font-size: 14px;
     pointer-events: none;
   }
-  [${host}] .events-container .selected-event .date-icon {
+  .events-container .selected-event .date-icon {
     padding-left: 4px;
   }
-  [${host}] .x-button {
+  .x-button {
     display: inline-flex;
     align-items: center;
     position: relative;
@@ -141,7 +143,7 @@ defineParticle(({DomParticle, html}) => {
     outline: none;
     overflow: hidden;
   }
-  [${host}] .x-button:disabled {
+  .x-button:disabled {
     opacity: 0.3;
   }
 </style>
@@ -183,9 +185,9 @@ ${styles}
   <button class="expand-button" on-click="_expandCalendar"><icon>expand_more</icon></button>
   <button class="collapse-button" on-click="_collapseCalendar"><icon>expand_less</icon></button>
 </div>
-    `.trim();
+    `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -359,12 +361,11 @@ ${styles}
       this._setState({expanded: false});
     }
     _storeNewEvent(startDate) {
-      const event = this.handles.get('event');
       const newEvent = Object.assign({}, (this._event || {}), {
         startDate: startDate,
         endDate: startDate
       });
-      event.set(new event.entityClass(newEvent));
+      this.set('event', newEvent);
     }
   };
 

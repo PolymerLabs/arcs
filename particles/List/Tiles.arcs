@@ -7,18 +7,22 @@ particle TileMultiplexer in 'source/Multiplexer.js'
   host HostedTileInterface hostedParticle
   consume set of tile
 
-//recipe TileMultiplexer
-//  use #tile as list
-//  TileMultiplexer
-//    list = list
-
 particle SelectableTiles in 'source/Tiles.js'
   in [~anyType] list
   inout ~anyType selected
   consume root #tiles
-    must provide set of tile
+    //must
+    provide set of tile
     provide set of annotation
     provide action
+
+// TODO(sjmiles): recipes below would be for use by Coalescer, but they create
+// too much noise atm.
+
+//recipe TileMultiplexer
+//  use #tile as list
+//  TileMultiplexer
+//    list = list
 
 //recipe SelectableCopyTilesRecipe
 //  copy #items as items
