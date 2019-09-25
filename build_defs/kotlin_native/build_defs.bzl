@@ -46,7 +46,10 @@ def _kt_wasm_binary(ctx):
 
     args = _common_args(ctx, klibs)
 
-    args.add("-o", ctx.outputs.wasm.path.rstrip(".wasm"))
+    if ctx.attr.entry_point:
+        args.add("-e", ctx.attr.entry_point)
+
+    args.add("-o", ctx.outputs.wasm.path.replace(".wasm", ""))
 
     ctx.actions.run(
         progress_message = "Compiling Kotlin to WebAssembly: %s" % ctx.label.name,
@@ -68,6 +71,9 @@ kt_wasm_binary = rule(
             executable = True,
             cfg = "host",
         ),
+        "entry_point": attr.string(
+            doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.main`."
+        )
     },
     doc = "Builds a Wasm binary from Kotlin",
     outputs = {

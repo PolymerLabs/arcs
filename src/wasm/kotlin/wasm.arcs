@@ -26,7 +26,7 @@ resource InfoResource
 store InfoStore of [Info] in InfoResource
 
 
-particle TestParticle in 'build/bin/wasm32/mainDebugExecutable/main.wasm'
+particle TestParticle in '../../../bazel-bin/src/wasm/kotlin/test_harness.wasm'
   consume root
   inout Data data
   out Data res
@@ -42,7 +42,7 @@ recipe KotlinTestRecipe
     info = h3
 
 
-particle ServiceParticle in 'build/bin/wasm32/mainDebugExecutable/main.wasm'
+particle ServiceParticle in '../../../bazel-bin/src/wasm/kotlin/service_particle.wasm'
   consume root
 
 recipe ServicesAPI
