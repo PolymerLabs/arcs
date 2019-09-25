@@ -22,5 +22,9 @@
     <activity
       android:name=".AutofillDemoActivity"
       android:label="Autofill Demo" />
+
+    <activity
+        android:name=".NotificationDemoActivity"
+        android:label="Notification Demo" />
   </application>
 </manifest>

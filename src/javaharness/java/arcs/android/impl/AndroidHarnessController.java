@@ -52,7 +52,7 @@ public class AndroidHarnessController implements HarnessController {
         return super.shouldInterceptRequest(view, request);
       }
     });
-    webView.loadUrl("file:///android_asset/index.html");
+    webView.loadUrl("file:///android_asset/index.html?log");
 
     // TODO: add a boolean flag to controll these.
 

@@ -8,9 +8,12 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import javax.inject.Inject;
+
 import arcs.android.api.IArcsService;
-import arcs.android.api.IRemotePecCallback;
 import arcs.android.api.IRemoteOutputCallback;
+import arcs.android.api.IRemotePecCallback;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
@@ -18,9 +21,6 @@ import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import arcs.api.UiBroker;
-import arcs.api.UiRenderer;
-import java.util.List;
-import javax.inject.Inject;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
@@ -38,6 +38,7 @@ public class ArcsService extends Service {
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
+  @Inject NotificationRenderer notificationRenderer;
 
   @Override
   public void onCreate() {
@@ -60,6 +61,8 @@ public class ArcsService extends Service {
     shellEnvironment.addReadyListener(recipes -> arcsReady = true);
 
     harnessController.init();
+
+    uiBroker.registerRenderer("notification", notificationRenderer);
   }
 
   @Override
@@ -97,9 +100,13 @@ public class ArcsService extends Service {
                 .emptyObject()
                 .put("message", "runArc")
                 .put("arcId", arcId)
-                .put("pecId", pecId)
-                .put("providedSlotId", providedSlotId)
                 .put("recipe", recipe);
+        if (pecId != null) {
+          request.put("pecId", pecId);
+        }
+        if (providedSlotId != null) {
+          request.put("providedSlotId", providedSlotId);
+        }
         if (particleId != null) {
           request.put("particleId", particleId).put("particleName", particleName);
         }

@@ -10,24 +10,15 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({UiParticle, html, log}) => {
 
-  return class extends DomParticle {
-    // for testing under DOM modality
-    get template() {
-      return `<span>{{json}}<span>`;
-    }
-    render(props, state) {
-      const json = JSON.stringify({
+  return class extends UiParticle {
+    setHandles(handles) {
+      this.output({
         modality: 'notification',
-        content: 'Now is the time for all good men to come to the aid of their party.'}
-      );
-      if (state.json !== json) {
-        state.json = json;
-        this.updateSingleton('output', {json});
-      }
-      return state;
+        title: `Hello`,
+        text: `I'm a notification.`
+      });
     }
   };
-
 });
