@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../../build/platform/log-web.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Xen} from '../components/xen.js';
 import {ArcComponentMixin} from '../components/arc-component.js';
+import {SlotObserver} from '../xen-renderer.js';
 
 const ArcCustomElement = ArcComponentMixin(Xen.AsyncMixin(Xen.Base));
 
-const log = logFactory('ArcElement', '#bb1396');
+const {log, warn} = logsFactory('ArcElement', '#bb1396');
 
 const template = Xen.Template.html`
   <style>
@@ -46,6 +47,27 @@ const ArcElementMixin = Base => class extends Base {
       root: this.host.querySelector('[slotid="root"]'),
       modal: this.host.querySelector('[slotid="modal"]')
     };
+  }
+  // arcs delegate ui work to a `ui-broker`
+  createBroker() {
+    const observer = new SlotObserver(this.host);
+    observer.dispatch = (pid, eventlet) => this.dispatchEventlet(this.state.arc, pid, eventlet);
+    return observer;
+  }
+  dispatchEventlet(arc, pid, eventlet) {
+    const pidStr = String(pid);
+    if (arc) {
+      // find the particle from the pid in the message
+      const particle = arc.activeRecipe.particles.find(
+        particle => String(particle.id) === pidStr
+      );
+      if (particle) {
+        log('firing PEC event for', particle.name);
+        // TODO(sjmiles): we need `arc` and `particle` here even though
+        // the two are bound together, figure out how to simplify
+        arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
+      }
+    }
   }
 };
 
