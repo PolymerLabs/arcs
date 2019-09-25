@@ -72,8 +72,10 @@ type UnifiedStore = {
   id: string;
   type: Type;
   storageKey: string | StorageKey;
-  version: number; // TODO(shans): This needs to be a version vector for new storage.
+  version?: number; // TODO(shans): This needs to be a version vector for new storage.
   referenceMode: boolean;
+  _compareTo(other: UnifiedStore): number;
+  toString(tags: string[]): string; // TODO(shans): This shouldn't be called toString as toString doesn't take arguments.
 };
 
 export class Arc {
@@ -522,7 +524,7 @@ ${this.activeRecipe.toString()}`;
                          speculative: true,
                          innerArc: this.isInnerArc,
                          inspectorFactory: this.inspectorFactory});
-    const storeMap: Map<StorageProviderBase, StorageProviderBase> = new Map();
+    const storeMap: Map<UnifiedStore, UnifiedStore> = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
       await clone.cloneFrom(store);
@@ -815,7 +817,7 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id: string): StorageProviderBase | StorageStub {
+  findStoreById(id: string): UnifiedStore {
     const store = this.storesById.get(id);
     if (store == null) {
       return this._context.findStoreById(id);
@@ -846,7 +848,7 @@ ${this.activeRecipe.toString()}`;
     return versionById;
   }
 
-  keyForId(id: string): string {
+  keyForId(id: string): string | StorageKey {
     return this.storageKeys[id];
   }
 
