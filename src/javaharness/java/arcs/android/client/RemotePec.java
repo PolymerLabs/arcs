@@ -84,7 +84,7 @@ public class RemotePec {
     }
 
     if (particle.getId() == null) {
-      particle.setId(idGenerator.newChildId(Id.fromString(arcId), "particle").toString()); //particleId.toString());
+      particle.setId(idGenerator.newChildId(Id.fromString(arcId), "particle").toString());
     }
 
     particle.setJsonParser(jsonParser);
