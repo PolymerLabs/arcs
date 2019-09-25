@@ -31,14 +31,12 @@ recipe AndroidAutofill
     request <- request
     consume fillSlot as fillSlot
 
-resource PeopleJson
-    start
-    [{
-      "firstName": "John",
-      "lastName": "Smith",
-      "password": "qwerty123",
-      "phone": "987-6543-210",
-      "postalAddress": "123 Main st."
-    }]
+particle CapturePerson in './source/CapturePerson.java'
+  inout [Person] people
+  consume root
+    provide unused
 
-store RecentPeople of [Person] #recentPeople in PeopleJson
+recipe IngestPeople
+  create #recentPeople #shared as people
+  CapturePerson
+    people -> people

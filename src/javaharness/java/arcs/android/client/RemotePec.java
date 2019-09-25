@@ -18,8 +18,10 @@ public class RemotePec {
   private final PortableJsonParser jsonParser;
 
   private PECInnerPort pecInnerPort;
-  private Id arcId;
+  private String arcId;
+  private String pecId;
   private String providedSlotId;
+  private final IdGenerator idGenerator;
 
   private final IRemotePecCallback callback =
       new IRemotePecCallback.Stub() {
@@ -38,10 +40,25 @@ public class RemotePec {
     this.bridge = bridge;
     this.pecInnerPortFactory = pecInnerPortFactory;
     this.jsonParser = jsonParser;
+    idGenerator = IdGenerator.newSession();
   }
 
-  public Id getArcId() {
+  public void setArcId(String arcId) {
+    if (this.arcId != null) {
+      throw new IllegalStateException("Cannot override existing arcId " + this.arcId);
+    }
+    this.arcId = arcId;
+  }
+
+  public String getArcId() {
     return arcId;
+  }
+
+  public void setPecId(String pecId) {
+    if (this.pecId != null) {
+      throw new IllegalStateException("Cannot override existing pecId " + this.pecId);
+    }
+    this.pecId = pecId;
   }
 
   public String getProvidedSlotId() {
@@ -58,21 +75,27 @@ public class RemotePec {
       throw new IllegalStateException("PEC has already been initialized.");
     }
 
-    IdGenerator idGenerator = IdGenerator.newSession();
-    arcId = Id.newArcId();
-    Id pecId = idGenerator.newChildId(arcId, "pec");
-    Id particleId = idGenerator.newChildId(pecId, "particle");
+    if (getArcId() == null) {
+      setArcId(Id.newArcId().toString());
+    }
 
-    particle.setId(particleId.toString());
+    if (pecId == null) {
+      setPecId(idGenerator.newChildId(Id.fromString(arcId), "pec").toString());
+    }
+
+    if (particle.getId() == null) {
+      particle.setId(idGenerator.newChildId(Id.fromString(arcId), "particle").toString());
+    }
+
     particle.setJsonParser(jsonParser);
 
     pecInnerPort =
-        pecInnerPortFactory.createPECInnerPort(pecId.toString(), idGenerator.getSessionId());
+        pecInnerPortFactory.createPECInnerPort(pecId, idGenerator.getSessionId());
     pecInnerPort.mapParticle(particle);
 
-    providedSlotId = idGenerator.newChildId(pecId, "slotId").toString();
+    providedSlotId = idGenerator.newChildId(Id.fromString(arcId), "slotId").toString();
     bridge.startArc(
-        arcId.toString(), pecId.toString(), recipe, particle.getId(), particle.getName(), providedSlotId, callback);
+        arcId, pecId, recipe, particle.getId(), particle.getName(), providedSlotId, callback);
   }
 
   /** Shuts down the running arc and remote PEC. */
@@ -83,7 +106,7 @@ public class RemotePec {
     String pecId = this.pecInnerPort.getId();
     pecInnerPort = null;
 
-    String arcId = this.arcId.toString();
+    String arcId = this.arcId;
     this.arcId = null;
 
     bridge.stopArc(arcId, pecId);

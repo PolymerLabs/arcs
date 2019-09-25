@@ -27,9 +27,6 @@ public class PecPortManager {
   }
 
   public void addRemotePecPort(String pecId, RemotePecPort remotePecPort) {
-    if (ports.containsKey(pecId)) {
-      throw new IllegalArgumentException("pecId already exists: " + pecId);
-    }
     ports.put(pecId, remotePecPort);
   }
 

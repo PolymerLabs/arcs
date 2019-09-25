@@ -46,8 +46,9 @@ class PortableJsonAndroidImpl implements PortableJson {
     try {
       return func.apply((JSONArray) jsonObject);
     } catch (JSONException e) {
-      throw new RuntimeException(e);
+      Log.e("Arcs", "Exception, Json is " + ((JSONArray) jsonObject).toString(), e);
     }
+    return null;
   }
 
   @Override
@@ -92,12 +93,22 @@ class PortableJsonAndroidImpl implements PortableJson {
 
   @Override
   public PortableJson getObject(int index) {
-    return array(x -> new PortableJsonAndroidImpl(x.getJSONObject(index)));
+    return array(x -> {
+      JSONObject obj = x.optJSONObject(index);
+      return obj == null
+          ? new PortableJsonAndroidImpl(x.getJSONArray(index))
+          : new PortableJsonAndroidImpl(obj);
+    });
   }
 
   @Override
   public PortableJson getObject(String key) {
-    return object(x -> new PortableJsonAndroidImpl(x.getJSONObject(key)));
+    return object(x -> {
+      JSONObject obj = x.optJSONObject(key);
+      return obj == null
+          ? new PortableJsonAndroidImpl(x.getJSONArray(key))
+          : new PortableJsonAndroidImpl(obj);
+    });
   }
 
   @Override
@@ -112,7 +123,13 @@ class PortableJsonAndroidImpl implements PortableJson {
 
   @Override
   public void forEach(Consumer<String> callback) {
-    keys().forEach(callback::accept);
+    if (jsonObject instanceof JSONObject) {
+      keys().forEach(callback::accept);
+    } else {
+      for (int i = 0; i < getLength(); ++i) {
+        callback.accept(getString(i));
+      }
+    }
   }
 
   @Override
@@ -216,6 +233,7 @@ class PortableJsonAndroidImpl implements PortableJson {
     return stringify().equals(((PortableJsonAndroidImpl) other).stringify());
   }
 
+  // TODO: Can we unify getObject and getArray?
   @Override
   public PortableJson getArray(String key) {
     return object(x -> new PortableJsonAndroidImpl(x.getJSONArray(key)));
