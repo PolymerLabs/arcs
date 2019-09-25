@@ -25,3 +25,5 @@ recipe
     bar -> h2
   Watcher
     bar <- h2
+
+  description `Wasm Products Example`

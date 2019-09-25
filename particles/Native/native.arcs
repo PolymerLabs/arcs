@@ -1,3 +1,3 @@
 //import 'Java/j2cl.arcs'
 //import 'Kotlin/kotlin.arcs'
-//import 'Wasm/wasm.arcs'
+import 'Wasm/wasm.arcs'
