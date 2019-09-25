@@ -76,6 +76,7 @@
         https://s1.ticketm.net
         https://i.scdn.co
         https://*.youtube.com
+        https://*.ggpht.com
         ;
     style-src
         'self'
