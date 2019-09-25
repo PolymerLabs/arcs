@@ -230,22 +230,6 @@ export class UiSlotComposer {
   }
 
   sendEvent(particleId, eventlet) {
-    // TODO(sjmiles): `arc` is bound to `this` in arc.ts specifically for use here, simplify
-    const arc = this['arc'];
-    if (arc) {
-      const particle = arc.activeRecipe.particles.find(
-        particle => String(particle.id) === String(particleId)
-      );
-      if (particle) {
-        // TODO(sjmiles): we need `arc` and `particle` here even though
-        // the two are bound together, simplify
-        //log('firing PEC event for', particle.name);
-        arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
-      }
-    }
-  }
-
-  sendEvent(particleId, eventlet) {
     const findConsumer = id => this.consumers.find(consumer => consumer.consumeConn.particle.id === id);
     const consumer = findConsumer(particleId);
     if (consumer) {
