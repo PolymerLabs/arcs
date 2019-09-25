@@ -30,13 +30,13 @@ public class MainActivity extends Activity {
    * Start the Arcs dev server (ALDS) via "./tools/sigh devServer"
    */
   // TODO: Pass this value in from Bazel somehow (can I use a flag?). Or use a toggle switch.
-  private static final boolean USE_DEVSERVER = true;
+  private static final boolean USE_DEVSERVER = false;
 
   private static final String SHELL_JS_URL =
           USE_DEVSERVER
                   ? "http://10.0.2.2:8786/shells/pipes-shell/web/index.html?log"
                   : "file:///android_asset/pipes_shell_dist/index.html?log";
-                  
+
   private static final String SHELL_SURFACE_URL =
           USE_DEVSERVER
                   ? "http://10.0.2.2:8786/shells/pipes-shell/surface/surface.html"
