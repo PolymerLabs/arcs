@@ -31,8 +31,8 @@ type SingletonEntityData<S extends Identified> = {[P in keyof S]: CRDTSingletonT
 type CollectionEntityData<S extends Identified> = {[P in keyof S]: CRDTCollectionTypeRecord<S[P]>['data']};
 
 // These extend actual CRDT objects across an entity structure.
-type SingletonEntityModel<S extends Identified> = {[P in keyof S]: CRDTSingleton<S[P]>};
-type CollectionEntityModel<S extends Identified> = {[P in keyof S]: CRDTCollection<S[P]>};
+export type SingletonEntityModel<S extends Identified> = {[P in keyof S]: CRDTSingleton<S[P]>};
+export type CollectionEntityModel<S extends Identified> = {[P in keyof S]: CRDTCollection<S[P]>};
 
 // The data view of an entity.
 export type EntityData<S extends Identified, C extends Identified> = 
@@ -71,7 +71,11 @@ type EntityModel<S extends Identified, C extends Identified> = CRDTModel<CRDTEnt
 type EntityChange<S extends Identified, C extends Identified> = CRDTChange<CRDTEntityTypeRecord<S, C>>;
 
 export class CRDTEntity<S extends Identified, C extends Identified> implements EntityModel<S, C> {
-  private model: EntityInternalModel<S, C>;
+  // Note that this should really be private, but it can't be because subclasses need to be
+  // automatically constructed (which means constructed in a function) and anonymous subclasses
+  // can't be returned from a function if they have private or protected members because of
+  // TS4094 (see e.g. https://github.com/Microsoft/TypeScript/issues/30355 for Microsoft's take on the issue)
+  model: EntityInternalModel<S, C>;
   
   constructor(singletons: SingletonEntityModel<S>, collections: CollectionEntityModel<C>) {
     this.model = {singletons, collections, version: {}};

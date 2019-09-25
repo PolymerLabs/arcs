@@ -14,6 +14,7 @@ import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-coun
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk';
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
+import {CountType} from '../../type.js';
 
 describe('RamDisk + Store Integration', async () => {
 
@@ -28,7 +29,7 @@ describe('RamDisk + Store Integration', async () => {
   it('will store a sequence of model and operation updates as models', async () => {
     const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
-    const store = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const count = new CRDTCount();
@@ -50,10 +51,10 @@ describe('RamDisk + Store Integration', async () => {
   it('will store operation updates from multiple sources', async () => {
     const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
-    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore1 = await store1.activate();
 
-    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
     const activeStore2 = await store2.activate();
 
     const count1 = new CRDTCount();
@@ -91,10 +92,10 @@ describe('RamDisk + Store Integration', async () => {
     // store1.onProxyMessage, DELAY, DELAY, DELAY, store1.onProxyMessage, store2.onProxyMessage, DELAY, DELAY, DELAY, store2.onProxyMessage, DELAY, DELAY, DELAY, DELAY, DELAY
     const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
-    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore1 = await store1.activate();
 
-    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
     const activeStore2 = await store2.activate();
 
     const opReply1 = activeStore1.onProxyMessage({type: ProxyMessageType.Operations, operations: [

@@ -19,6 +19,7 @@ import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode} from '../store.js';
+import {Type, ReferenceType, CountType} from '../../type.js';
 
 
 /**
@@ -48,7 +49,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   constructor() {
-    super(new MockStorageKey(), Exists.ShouldCreate, null, StorageMode.Direct, CRDTSingleton);
+    super(new MockStorageKey(), Exists.ShouldCreate, new CountType(), StorageMode.Direct);
   }
   on(callback: ProxyCallback<T>): number {
     return 1;

@@ -13,13 +13,13 @@ import {Type} from '../type.js';
 import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback} from './store-interface';
-import {BackingStore} from './backing-store.js';
 import {DirectStore} from './direct-store.js';
+import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
 
 export {StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback};
 
 type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>): Promise<ActiveStore<T>>;
+  construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode): Promise<ActiveStore<T>>;
 };
 
 // A representation of a store. Note that initially a constructed store will be
@@ -32,19 +32,23 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
   exists: Exists;
   readonly type: Type;
   readonly mode: StorageMode;
+  readonly id: string;
+  readonly name: string;
+  readonly version: number = 0; // TODO(shans): Needs to become the version vector, and is also probably only available on activated storage?
   modelConstructor: new () => CRDTModel<T>;
 
   static readonly constructors = new Map<StorageMode, StoreConstructor>([
     [StorageMode.Direct, DirectStore],
-    [StorageMode.ReferenceMode, null]
+    [StorageMode.ReferenceMode, ReferenceModeStore]
   ]);
 
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
+  constructor(storageKey: StorageKey, exists: Exists, type: Type, id: string, name: string = '') {
     this.storageKey = storageKey;
     this.exists = exists;
     this.type = type;
-    this.mode = mode;
-    this.modelConstructor = modelConstructor;
+    this.mode = storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
+    this.id = id;
+    this.name = name;
   }
 
   async activate(): Promise<ActiveStore<T>> {
@@ -55,7 +59,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
     if (constructor == null) {
       throw new Error(`No constructor registered for mode ${this.mode}`);
     }
-    const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode, this.modelConstructor);
+    const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode);
     this.exists = Exists.ShouldExist;
     return activeStore;
   }

@@ -10,14 +10,14 @@
 
 import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet, SingletonOperationClear} from '../crdt/crdt-singleton.js';
 import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection, CollectionOperationAdd, CollectionOperationRemove} from '../crdt/crdt-collection.js';
-import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode} from './store.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode} from './store-interface.js';
 import {BackingStore} from './backing-store.js';
 import {CRDTEntityTypeRecord, CRDTEntity, EntityData} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
-import {VersionMap, CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
+import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver-factory.js';
-import {Type} from '../type.js';
+import {Type, CollectionType, ReferenceType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 
@@ -38,6 +38,23 @@ type EnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRe
 
 type BlockableRunnable = {fn: Runnable, block?: string};
 
+export class ReferenceModeStorageKey extends StorageKey {
+  constructor(public backingKey: StorageKey, public storageKey: StorageKey) {
+    super('reference-mode');
+  }
+
+  embedKey(key: StorageKey) {
+    return key.toString().replace(/\{/g, '{{').replace(/\}/g, '}}');
+  }
+
+  toString(): string {
+    return `${this.protocol}://{${this.embedKey(this.backingKey)}}{${this.embedKey(this.storageKey)}}`;
+  }
+
+  childWithComponent(component: string): StorageKey {
+    return new ReferenceModeStorageKey(this.backingKey, this.storageKey.childWithComponent(component));
+  }
+}
 
 /**
  * ReferenceModeStores adapt between a collection (CRDTCollection or CRDTSingleton) of entities from the perspective of their public API,
@@ -111,11 +128,17 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   static async construct<Entity extends Referenceable, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>,
                          ReferenceContainer extends CRDTSingletonTypeRecord<Reference> | CRDTCollectionTypeRecord<Reference>,
                          Container extends CRDTSingletonTypeRecord<Entity> | CRDTCollectionTypeRecord<Entity>>(
-      backingKey: StorageKey, storageKey: StorageKey, exists: Exists, type: Type, backingConstructor: new () => CRDTModel<CRDTEntityTypeRecord<S, C>>,
-      referenceConstructor: new () => CRDTModel<ReferenceContainer>, modelConstructor: new () => CRDTModel<Container>) {
-    const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(storageKey, exists, type, StorageMode.ReferenceMode, modelConstructor);
-    result.backingStore = await BackingStore.construct(backingKey, exists, type, StorageMode.Backing, backingConstructor);
-    result.containerStore = await DirectStore.construct(storageKey, exists, type, StorageMode.Direct, referenceConstructor);
+      storageKey: ReferenceModeStorageKey, exists: Exists, type: Type) {
+    const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(storageKey, exists, type, StorageMode.ReferenceMode);
+    result.backingStore = await BackingStore.construct(storageKey.backingKey, exists, type.getContainedType(), StorageMode.Backing);
+    let refType: Type;
+    if (type.isCollectionType()) {
+      refType = new CollectionType(new ReferenceType(type.getContainedType()));
+    } else {
+      // TODO(shans) probably need a singleton type here now.
+      refType = new ReferenceType(type.getContainedType());
+    }
+    result.containerStore = await DirectStore.construct(storageKey.storageKey, exists, type, StorageMode.Direct);
     result.registerStoreCallbacks();
     return result;
   }
@@ -406,7 +429,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       this.versions[entity.id] = {};
     }
     const entityVersion = this.versions[entity.id];
-    const model = new this.backingStore.modelConstructor().getData();
+    const model = this.newBackingInstance().getData();
     let maxVersion = 0;
     for (const key of Object.keys(entity)) {
       if (key === 'id') {
@@ -490,7 +513,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       const model = {values: {}, version: this.cloneMap(data.version)} as Container['data'];
       for (const id of Object.keys(data.values)) {
         const version = data.values[id].value.version;
-        const entity = Object.keys(version).length === 0 ? new this.backingStore.modelConstructor() : this.backingStore.getLocalModel(id);
+        const entity = Object.keys(version).length === 0 ? this.newBackingInstance() : this.backingStore.getLocalModel(id);
         model.values[id] = {value: this.entityFromModel(entity.getData(), id), version: data.values[id].version};
       }
       return model;
@@ -526,6 +549,11 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   private async updateBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
     return this.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: 1}, entity.id);
+  }
+
+  private newBackingInstance() {
+    const instanceConstructor = this.type.getContainedType().crdtInstanceConstructor<CRDTEntityTypeRecord<S, C>>();
+    return new instanceConstructor();
   }
 
   /**

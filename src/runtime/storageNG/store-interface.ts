@@ -35,7 +35,6 @@ export type StoreInterface<T extends CRDTTypeRecord> = {
   exists: Exists;
   readonly type: Type;
   readonly mode: StorageMode;
-  modelConstructor: new () => CRDTModel<T>;
 };
 
 // A representation of an active store. Subclasses of this class provide specific
@@ -45,14 +44,12 @@ export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInte
   exists: Exists;
   readonly type: Type;
   readonly mode: StorageMode;
-  modelConstructor: new () => CRDTModel<T>;
 
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
+  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode) {
     this.storageKey = storageKey;
     this.exists = exists;
     this.type = type;
     this.mode = mode;
-    this.modelConstructor = modelConstructor;
   }
   
   async idle() {

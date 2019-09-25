@@ -14,6 +14,7 @@ import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-coun
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../testing/mock-firebase.js';
+import {CountType} from '../../type.js';
 
 describe('Firebase + Store Integration', async () => {
 
@@ -29,7 +30,7 @@ describe('Firebase + Store Integration', async () => {
   it('will store a sequence of model and operation updates as models', async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('location');
-    const store = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
     const count = new CRDTCount();
@@ -52,10 +53,10 @@ describe('Firebase + Store Integration', async () => {
   it('will store operation updates from multiple sources', async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
-    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore1 = await store1.activate();
 
-    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
     const activeStore2 = await store2.activate();
 
     const count1 = new CRDTCount();
@@ -92,10 +93,10 @@ describe('Firebase + Store Integration', async () => {
   it('will store operation updates from multiple sources with some delays', async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
-    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore1 = await store1.activate();
 
-    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
     const activeStore2 = await store2.activate();
 
     void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
@@ -134,10 +135,10 @@ describe('Firebase + Store Integration', async () => {
   it(`doesn't deadlock given a particular timing pattern`, async () => {
     const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
-    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+    const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore1 = await store1.activate();
 
-    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+    const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
     const activeStore2 = await store2.activate();
 
     void activeStore1.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [

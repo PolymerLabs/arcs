@@ -21,6 +21,7 @@ import {MockFirebaseStorageDriverProvider} from '../testing/mock-firebase.js';
 import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {MockStorageKey, MockStorageDriverProvider} from '../testing/test-storage.js';
 import {Arc} from '../../arc.js';
+import {CountType} from '../../type.js';
 
 let testKey: StorageKey;
 
@@ -56,7 +57,7 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
 
-      const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store = new Store<CRDTCountTypeRecord>(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore = store.activate();
       return activeStore;
     });
@@ -123,7 +124,7 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
 
-      const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store = new Store<CRDTCountTypeRecord>(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore = store.activate();
       return activeStore;
     });
@@ -171,15 +172,15 @@ describe('Store Sequence', async () => {
   it('applies operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
-      const runtime = new Runtime();
+      const runtime = Runtime.newForNodeTesting();
       const arc = runtime.newArc('arc', 'volatile://');
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore1 = await store1.activate();
   
-      const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+      const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
       const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
     });
@@ -229,10 +230,10 @@ describe('Store Sequence', async () => {
       DriverFactory.clearRegistrationsForTesting();
       MockFirebaseStorageDriverProvider.register();
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
-      const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore1 = await store1.activate();
   
-      const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+      const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
       const activeStore2 = await store2.activate();
       sequenceTest.setVariable(store1V, activeStore1);
       sequenceTest.setVariable(store2V, activeStore2);
@@ -276,15 +277,15 @@ describe('Store Sequence', async () => {
   it('applies model against operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
-      const runtime = new Runtime();
+      const runtime = Runtime.newForNodeTesting();
       const arc = runtime.newArc('arc', 'volatile://');
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
-      const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore1 = await store1.activate();
   
-      const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
+      const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
       const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
     });

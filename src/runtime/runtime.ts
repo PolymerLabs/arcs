@@ -88,7 +88,8 @@ export class Runtime {
   newArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
     const id = IdGenerator.newSession().newArcId(name);
     const storageKey = storageKeyPrefix + id.toString();
-    return new Arc({id, storageKey, loader: this.loader, slotComposer: new this.composerClass(), context: this.context, ...options});
+    const slotComposer = this.composerClass ? new this.composerClass() : null;
+    return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
   }
 
   // Stuff the shell needs

@@ -14,6 +14,10 @@ import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {EntityType, Type} from './type.js';
 import {Dictionary} from './hot.js';
+import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
+import {Referenceable} from './crdt/crdt-collection.js';
+import {Singleton} from './handle.js';
+import {CRDTSingleton} from './crdt/crdt-singleton.js';
 
 export class Schema {
   readonly names: string[];
@@ -176,6 +180,26 @@ export class Schema {
 
   entityClass(context: ParticleExecutionContext|null = null): EntityClass {
     return Entity.createEntityClass(this, context);
+  }
+
+  crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {
+    const singletons = {};
+    const collections = {};
+    // TODO(shans) do this properly
+    for (const [field, {type}] of Object.entries(this.fields)) {
+      if (type === 'Text') {
+        singletons[field] = new CRDTSingleton<{id: string}>();
+      } else if (type === 'Number') {
+        singletons[field] = new CRDTSingleton<{id: string, value: number}>();
+      } else {
+        throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
+      }
+    }
+    return class EntityCRDT extends CRDTEntity<S, C> {
+      constructor() {
+        super(singletons as SingletonEntityModel<S>, collections as CollectionEntityModel<C>);
+      }
+    };
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
