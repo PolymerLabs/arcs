@@ -82,7 +82,7 @@ const cleanFiles = ['manifest-railroad.html', eslintCache];
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', 'user-test', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
-const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|javaharness|Kotlin|particles[/\\]Native)\b/;
+const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|hackathon|javaharness|Kotlin|particles[/\\]Native)\b/;
 
 // RE pattern to exclude when finding within project built files.
 const buildExclude = /\b(node_modules|deps|src|third_party|javaharness|Kotlin)\b/;
