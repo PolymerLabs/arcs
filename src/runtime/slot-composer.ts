@@ -134,9 +134,11 @@ export class SlotComposer {
           return;
         }
 
+        // TODO
         const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, this._containerKind);
         const providedContexts = slotConsumer.createProvidedContexts();
         this._contexts = this._contexts.concat(providedContexts);
+        console.log(this._contexts);
         newConsumers.push(slotConsumer);
       });
     });

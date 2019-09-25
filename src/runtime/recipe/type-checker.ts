@@ -17,7 +17,6 @@ export interface TypeListInfo {
 }
 
 export class TypeChecker {
-
   // resolve a list of handleConnection types against a handle
   // base type. This is the core type resolution mechanism, but should only
   // be used when types can actually be associated with each other / constrained.
@@ -29,7 +28,7 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType: Type, list: TypeListInfo[]) {
-    const newBaseType = TypeVariable.make('', null, null);
+    const newBaseType = TypeVariable.make(null, null, null);
     if (baseType) {
       newBaseType.variable.resolution = baseType;
     }

@@ -963,7 +963,12 @@ ${e.message}
             const handle = recipe.newHandle();
             handle.tags = [];
             handle.localName = connectionItem.target.name;
-            handle.fate = 'create';
+            if (connection.direction === '`consume' || connection.direction === '`provide') {
+              // TODO(jopra): This is something of a hack to catch users who have not forward-declared their slandles.
+              handle.fate = '`slot';
+            } else {
+              handle.fate = 'create';
+            }
             // TODO: item does not exist on handle.
             handle['item'] = {kind: 'handle'};
             entry = {item: handle['item'], handle};

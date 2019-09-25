@@ -233,7 +233,7 @@ export class Handle implements Comparable<Handle> {
       connection.tags.forEach(tag => tags.add(tag));
     }
     if (!this.mappedType && this.fate === '`slot') {
-      this._mappedType = TypeVariable.make(this.id, null, null);
+      this._mappedType = TypeVariable.make(null, null, null);
     }
     const type = Handle.resolveEffectiveType(this._mappedType, this._connections);
     if (!type) {

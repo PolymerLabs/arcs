@@ -20,12 +20,20 @@ interface TypeVariableInfoLiteral {
 }
 
 export class TypeVariableInfo {
+  static variableCount: number = 0;
+
   name: string;
   _canWriteSuperset?: Type|null;
   _canReadSubset?: Type|null;
   _resolution?: Type|null;
 
   constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
+
+    if (!name) {
+      TypeVariableInfo.variableCount+=1;
+      name = `type${TypeVariableInfo.variableCount}`;
+    }
+
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
