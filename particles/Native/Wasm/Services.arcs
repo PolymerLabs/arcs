@@ -1,0 +1,6 @@
+particle ServiceParticle in 'http://localhost:8786/bazel-bin/particles/Native/Kotlin2/service_particle.wasm'
+  consume root
+
+recipe ServicesAPI
+  ServiceParticle
+  description `Wasm Services`
