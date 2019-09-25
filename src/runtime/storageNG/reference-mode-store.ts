@@ -131,7 +131,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       storageKey: ReferenceModeStorageKey, exists: Exists, type: Type) {
     const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(storageKey, exists, type, StorageMode.ReferenceMode);
     result.backingStore = await BackingStore.construct(storageKey.backingKey, exists, type.getContainedType(), StorageMode.Backing);
-    let refType;
+    let refType: Type;
     if (type.isCollectionType()) {
       refType = new CollectionType(new ReferenceType(type.getContainedType()));
     } else {

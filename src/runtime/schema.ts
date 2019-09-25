@@ -191,6 +191,8 @@ export class Schema {
         singletons[field] = new CRDTSingleton<{id: string}>();
       } else if (type === 'Number') {
         singletons[field] = new CRDTSingleton<{id: string, value: number}>();
+      } else {
+        throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
       }
     }
     return class EntityCRDT extends CRDTEntity<S, C> {
