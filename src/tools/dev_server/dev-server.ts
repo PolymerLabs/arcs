@@ -25,11 +25,9 @@ import {HotReloadServer} from './hot-reload-server';
 // There are many plans for extending this list for various development features.
 
 
-const YELLOW = '\x1b[33m';
 const GREEN = '\x1b[32m';
 const BOLD = '\x1b[1m';
 const END = '\x1b[0m';
-const CMD = `${BOLD}${YELLOW}`;
 
 async function launch() {
   const options = minimist(process.argv.slice(2), {
@@ -59,8 +57,8 @@ async function launch() {
 
   console.log(`${GREEN}${BOLD}ALDS Started.${END}\n\nWeb server port: ${port}\nExplorer port: ${explorePort}\nHotReload port: ${hotReloadPort}`);
   console.log(`\n${GREEN}Next, try visiting:${END}`);
-  console.log(`- ${CMD}http://localhost:${port}/shells/web-shell${END}`);
-  console.log(`- ${CMD}http://localhost:${port}/shells/dev-shell${END}`);
+  console.log(`- http://localhost:${port}/shells/web-shell`);
+  console.log(`- http://localhost:${port}/shells/dev-shell`);
 }
 
 void launch();
