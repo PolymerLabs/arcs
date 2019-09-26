@@ -16,6 +16,7 @@ import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
 import {UnifiedStore} from '../arc.js';
+import {Consumer} from '../hot.js';
 
 export {StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback};
 
@@ -31,20 +32,25 @@ type StoreConstructor = {
 export class Store<T extends CRDTTypeRecord> implements StoreInterface<T>, UnifiedStore {
   source: string;
   _compareTo(other: UnifiedStore): number {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   toString(tags: string[]): string {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
-  toLiteral: () => Promise<any>;
+
+  // tslint:disable-next-line no-any
+  async toLiteral(): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+  
   cloneFrom(store: UnifiedStore): void {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   modelForSynchronization(): {} {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
-  on(type: string, fn: import("../hot.js").Consumer<{}>, target: {}): void {
-    throw new Error("Method not implemented.");
+  on(type: string, fn: Consumer<{}>, target: {}): void {
+    throw new Error('Method not implemented.');
   }
   description: string;
   readonly storageKey: StorageKey;

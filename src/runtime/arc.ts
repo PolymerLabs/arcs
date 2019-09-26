@@ -88,7 +88,7 @@ export interface UnifiedStore {
   modelForSynchronization(): {};
   on(type: string, fn: Consumer<{}>, target: {}): void;
   description: string;
-};
+}
 
 export class Arc {
   private readonly _context: Manifest;
