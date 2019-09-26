@@ -2,9 +2,9 @@
 
 ## Build & Test
 0. Make sure the project is [setup](../../../README.md#install)!
-1. `bazel build src/wasm/kotlin:test_harness src/wasm/kotlin:service_particle`
+1. `bazel build particles/Native/Wasm:all`
 2. `npm start`
-3. Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/src/wasm/kotlin/wasm.arcs](http://localhost:8786/shells/dev-shell/?m=https://$arcs/src/wasm/kotlin/wasm.arcs)
+3. Visit [localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs)
 
 ## Converting Arcs Schemas to Kotlin
 Subject to change

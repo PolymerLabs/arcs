@@ -11,7 +11,7 @@ build and run the wasm code/tests (everything under `src/wasm/`).
 
 ## Build
 
-See [here](../../../particles/WasmTemplate) for a working example.
+See [here](../../../particles/Native/Wasm) for a working example.
 
 - Add a `BUILD` file in the relevant directory
 - Generate a C++ header file from your particle spec using the `arcs_cc_schema`
@@ -28,7 +28,7 @@ See [here](../../../particles/WasmTemplate) for a working example.
   ```
 - Write your C++ particle(s)
   - Include the Arcs C++ header: `#include "src/wasm/cpp/arcs.h"`.
-  - Include your generated schema header(s): `#include "particles/WasmTemplate/example.h"`.
+  - Include your generated schema header(s): `#include "particles/Native/Wasm/example.h"`.
   - Particles inherit from `arcs::Particle` and use `arcs::Singleton` and
     `arcs::Collection`
 - Add a `wasm_cc_binary` build rule for your C++ particle(s) to your `BUILD`
@@ -45,11 +45,11 @@ See [here](../../../particles/WasmTemplate) for a working example.
       deps = ["//src/wasm/cpp:arcs"],
   )
   ```
-- Build your particle using Bazel: `bazel build //particles/WasmTemplate:example_particle`.
+- Build your particle using Bazel: `bazel build //particles/Native/Wasm:example_particle`.
 
 
 ## Execute
 
 - `npm start`
-- Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/particles/WasmTemplate/example.arcs](http://localhost:8786/shells/dev-shell/?m=https://$arcs/particles/WasmTemplate/example.arcs)
+- Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs](http://localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs)
   **(TODO(csilvestrini): update this path)**
