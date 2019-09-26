@@ -32,9 +32,9 @@ const template = Xen.Template.html`
       pointer-events: none;
     }
   </style>
-  <div slotid="toproot"></div>
-  <div slotid="root"></div>
-  <div slotid="modal"></div>
+  <div slotid="toproot" id="rootslotid-toproot" ></div>
+  <div slotid="root" id="rootslotid-root"></div>
+  <div slotid="modal" id="rootslotid-modal"></div>
 `;
 
 const ArcElementMixin = Base => class extends Base {
@@ -51,23 +51,12 @@ const ArcElementMixin = Base => class extends Base {
   // arcs delegate ui work to a `ui-broker`
   createBroker() {
     const observer = new SlotObserver(this.host);
-    observer.dispatch = (pid, eventlet) => this.dispatchEventlet(this.state.arc, pid, eventlet);
+    // TODO(sjmiles): `this.state.host.composer.arc` is < ideal
+    observer.dispatch = (pid, eventlet) => this.dispatchEventlet(this.state.host.composer.arc, pid, eventlet);
     return observer;
   }
   dispatchEventlet(arc, pid, eventlet) {
-    const pidStr = String(pid);
-    if (arc) {
-      // find the particle from the pid in the message
-      const particle = arc.activeRecipe.particles.find(
-        particle => String(particle.id) === pidStr
-      );
-      if (particle) {
-        log('firing PEC event for', particle.name);
-        // TODO(sjmiles): we need `arc` and `particle` here even though
-        // the two are bound together, figure out how to simplify
-        arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
-      }
-    }
+    this.state.host.composer.sendEvent(pid, eventlet);
   }
 };
 

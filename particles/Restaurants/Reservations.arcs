@@ -50,17 +50,17 @@ recipe MakeReservations
   use #selected as restaurant
   create #reservation as event
   create #volatile as calendarDescriptions
-  //create #volatile as annotationDescriptions
-  slot 'rootslotid-top' as top
+  create #volatile as annotationDescriptions
+  slot 'rootslotid-toproot' as toproot
   Calendar
     event = event
     descriptions = calendarDescriptions
-    consume action as top
+    consume action as toproot
   // top-of-frame event editor
   ReservationForm
     restaurant = restaurant
     event = event
-    consume action as top
+    consume action as toproot
   // per-restaurant tile scheduler
   AnnotationMultiplexer
     list = restaurants
