@@ -458,7 +458,7 @@ ${this.activeRecipe.toString()}`;
     const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
-    // if supported, provide particle caching via a BloblUrl representing spec.implFile
+    // if supported, provide particle caching via a BlobUrl representing spec.implFile
     if (!recipeParticle.isJavaParticle()) {
       await this._provisionSpecUrl(recipeParticle.spec);
     }

@@ -75,7 +75,7 @@ const template = Xen.Template.html`
   <arc-element id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></arc-element>
 `;
 
-const suggestionTemplate = Xen.Template.html`<suggestion-element>{{descriptionText}}</suggestion-element>`;
+const suggestionTemplate = Xen.Template.html`<suggestion-element plan="{{plan}}">{{text}}</suggestion-element>`;
 
 const {log, warn} = logsFactory('WebShell', '#6660ac');
 
@@ -156,11 +156,15 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   render(props, state) {
     const {hideLauncher, showLogin, arc, nullArc, suggestions} = state;
+    const suggestionList = {
+      template: suggestionTemplate,
+      models: !suggestions ? [] : suggestions.map(s => ({plan: s, text: s.descriptionText}))
+    };
     const renderModel = {
+      suggestionList,
       plannerArc: hideLauncher ? arc : nullArc,
       hideArc: showLogin ? true : !hideLauncher,
-      hideLauncher: showLogin ? true : hideLauncher,
-      suggestionList: {template: suggestionTemplate, models: suggestions}
+      hideLauncher: showLogin ? true : hideLauncher
     };
     return [props, state, renderModel];
   }
