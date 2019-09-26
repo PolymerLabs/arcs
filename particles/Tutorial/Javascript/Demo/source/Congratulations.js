@@ -21,15 +21,23 @@ const template = html`<span>{{startmsg}}</span> Please hit refresh to start a ne
       return template;
     }
 
-    shouldRender({gameState}) {
-      // Here we check that the person is defined.
-      return gameState && gameState.gameOver;
+    shouldRender({gameState, players}) {
+      // Here we check that the game is over.
+      return players && gameState && gameState.gameOver;
     }
 
-    render({gameState}) {
+    render({gameState, players}) {
       if (gameState.winnerAvatar !== null) {
-        return {startmsg: `Congratulations ${gameState.winnerAvatar}, you won!`};
+        let winner = '';
+        // Find the winner's name based on the avatar.
+        for (let i = 0; i < players.length; i++) {
+          if (players[i].avatar == gameState.winnerAvatar) {
+            winner = players[i].name;
+          }
+        }
+        return {startmsg: `Congratulations ${winner}, you won!`};
       } 
+      // If there is no winner, we know it was a tie.
       return {startmsg: `It's a tie!`};
     }
     

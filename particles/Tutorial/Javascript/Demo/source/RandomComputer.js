@@ -28,7 +28,7 @@ defineParticle(({DomParticle, html}) => {
         const emptyCells = [];
         const board = gameState.board.split(`,`);
         // Determine which cells are empty.
-        for (let i = 0; i < board.length - 1; i++) {
+        for (let i = 0; i < board.length; i++) {
           if (board[i] == ``) {
             emptyCells.push((i + 1).toString());
           }

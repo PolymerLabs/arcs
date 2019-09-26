@@ -23,18 +23,21 @@
     }
 
     update(props, {enteredName}) {
+      // Set default name.
       if (!enteredName) {
         this.setState({enteredName: 'Human'});
       }
     }
 
     onNameInputChange(e) {
+      // Save entered name.
       this.setState({enteredName: e.data.value});
     }
 
     onClick() {
-      const newAvatar = String.fromCharCode(87 + this.props.players.length);
-      console.log(`enteredName: `, this.state.enteredName);
+      // Add the player to the players handle.
+      const charX = 88; // X is 88 in unicode.
+      const newAvatar = String.fromCharCode(charX + this.props.players.length - 1);
       this.appendRawDataToHandle('players', [{name: this.state.enteredName, avatar: newAvatar}]);
     }
   };

@@ -20,7 +20,7 @@
     update({move, gameState}, {}) {
       if (!gameState) { // Gamestate has not been set yet
         const gs = {
-          board: ',,,,,,,,,',
+          board: ',,,,,,,,',
           moves: 0,
           gameOver: false,
           winnerAvatar: null,
@@ -87,6 +87,8 @@
       }
     }
 
+    // Helper function to determin if the three values given are not null
+    // and equal each other.
     checkIfWon(winner1, winner2, winner3) {
       if (winner1 != ``) {
         if (winner1 == winner2) {
@@ -97,5 +99,6 @@
       }
       return false;
     }
+
   };
 });

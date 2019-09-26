@@ -81,6 +81,8 @@ const template = html`
     render({gameState}, {}) {
       if (gameState) {
         const arr = gameState.board.split(`,`);
+        // Return the values that should be filled
+        // into the board
         return {
           spot1: arr[0],
           spot2: arr[1],
@@ -93,9 +95,13 @@ const template = html`
           spot9: arr[8],
         };
       }
+      // If the gameState does not exist yet, the game has
+      // not been initialised, so return nothing.
       return {};
     }
     
+    // The board acts as the human mover. When the human clicks
+    // on the board, the move should update accordingly.
     onClick(e) {
       this.updateSingleton(`humanMove`, {move: e.data.value});
     }

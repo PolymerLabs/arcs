@@ -1,7 +1,7 @@
 // Tutorial 6: Handles
 // Shows how to use a handle to pass information between particles.
-import 'Board.arcs'
-import 'DemoSchemas.arcs'
+import 'TicTacToe.arcs'
+import 'GameSchemas.arcs'
 
 resource PlayerData
   start
@@ -9,7 +9,8 @@ resource PlayerData
     {"name": "Computer", "avatar": "O"}
   ]
 
-// This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
+// This data store contains a list of entities rather than a single entity, 
+// and is backed by the Person resource defined in DemoSchemas.arcs.
 store Players of [Person] in PlayerData
 
 particle Main in './source/Main.js'
@@ -37,6 +38,7 @@ particle DisplayGreeting in './source/DisplayGreeting.js'
   consume greetingSlot
 
 particle Congratulations in './source/Congratulations.js'
+  in [Person] players
   in GameState gameState
   consume congratulationsSlot
 
@@ -48,29 +50,38 @@ recipe GameDemoRecipe
       provide greetingSlot as greeting
       provide cellSlot as board
       provide congratulationsSlot as congratulations
+
   GetPlayer
     players <-> data
     consume playerSlot as getPlayer
+
   MoveApplier
     move <- move
     gameState <-> gameState
+
   Game
     gameState <- gameState
     players <- data
     humanMove <- humanMove
     computerMove <- computerMove
     move -> move
+
   DisplayGreeting
     players <- data
     consume greetingSlot as greeting
-  Board
+
+  TicTacToeBoard
     gameState <- gameState
     humanMove -> humanMove
-    consume cellSlot as board
+    consume boardSlot as board
+
   Congratulations
     gameState <- gameState
+    players <- data
     consume congratulationsSlot as congratulations
+
   RandomComputer
     computerMove -> computerMove
     gameState <- gameState
-  description `Javascript Tutorial Demo`
+
+  description `Javascript Tutorial TicTacToe Demo`
