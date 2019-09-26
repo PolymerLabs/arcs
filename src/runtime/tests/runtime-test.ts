@@ -16,6 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer';
 import {Id, ArcId} from '../id.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -60,5 +61,45 @@ describe('Runtime', () => {
     const expected = await Manifest.load('./src/runtime/tests/artifacts/test.manifest', loader, registry);
     const actual = await Runtime.loadManifest('./src/runtime/tests/artifacts/test.manifest', loader, registry);
     assertManifestsEqual(actual, expected);
+  });
+  it('runs arcs', async () => {
+    const runtime = Runtime.getRuntime();
+    assert.equal(runtime.arcById.size, 0);
+    const arc = runtime.runArc('test-arc', 'volatile://');
+    assert.isNotNull(arc);
+    assert.hasAllKeys(runtime.arcById, ['test-arc']);
+    runtime.runArc('test-arc', 'volatile://');
+    assert.hasAllKeys(runtime.arcById, ['test-arc']);
+    runtime.runArc('other-test-arc', 'volatile://');
+    assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
+  });
+  it('registers and unregisters stores', async () => {
+    const context = await Manifest.parse(``);
+    const loader = new StubLoader({
+      manifest: `
+        schema Thing
+        particle MyParticle in './my-particle.js'
+          out Thing t1
+          out Thing t2
+          out [Thing] t3
+        recipe
+          create #shared as t1
+          create as t2
+          create #shared #things as t3
+          MyParticle
+            t1 -> t1
+            t2 -> t2
+            t3 -> t3
+      `,
+      '*': 'defineParticle(({Particle}) => class extends Particle {});',
+    });
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.runArc('test-arc', 'volatile://');
+    const manifest = await Manifest.load('manifest', loader);
+    manifest.recipes[0].normalize();
+    await arc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(arc.context.stores, 2);
+    arc.dispose();
+    assert.lengthOf(arc.context.stores, 0);
   });
 });
