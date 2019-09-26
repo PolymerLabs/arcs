@@ -25,10 +25,9 @@ defineParticle(({DomParticle, log}) => {
         this.setState({mvs: 1});
       }
       if (playerOne && playerTwo && gameState && humanMove && computerMove && players) {
-        console.log(`players`, players);
         if (!gameState.gameOver ) { 
-          const currPlayer = gameState.moves % players.length;
-          if (currPlayer != players.length - 1) {
+          const currPlayer = (gameState.moves + 1) % players.length;
+          if (currPlayer != 0) {
             this.updateSingleton('move', {move: humanMove.move, playerAvatar: players[currPlayer].avatar});
             this.setState({mvs: gameState.moves});
           } else if (mvs < (gameState.moves + gameState.attemptedMoves)) {            

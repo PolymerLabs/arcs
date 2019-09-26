@@ -6,8 +6,7 @@ import 'DemoSchemas.arcs'
 resource PlayerData
   start
   [
-    {"name": "Jill", "avatar": "Y"},
-    {"name": "Jack", "avatar": "P"}
+    {"name": "Computer", "avatar": "O"}
   ]
 
 // This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
