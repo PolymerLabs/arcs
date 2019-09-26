@@ -62,18 +62,18 @@ describe('Runtime', () => {
     const actual = await Runtime.loadManifest('./src/runtime/tests/artifacts/test.manifest', loader, registry);
     assertManifestsEqual(actual, expected);
   });
-  it.only('runs arcs', async () => {
+  it('runs arcs', async () => {
     const runtime = Runtime.getRuntime();
     assert.equal(runtime.arcById.size, 0);
     const arc = runtime.runArc('test-arc', 'volatile://');
     assert.isNotNull(arc);
-    assert.equal(runtime.arcById.size, 1);
+    assert.hasAllKeys(runtime.arcById, ['test-arc']);
     runtime.runArc('test-arc', 'volatile://');
-    assert.equal(runtime.arcById.size, 1);
+    assert.hasAllKeys(runtime.arcById, ['test-arc']);
     runtime.runArc('other-test-arc', 'volatile://');
-    assert.equal(runtime.arcById.size, 2);
+    assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
   });
-  it.only('registers and unregisters stores', async () => {
+  it('registers and unregisters stores', async () => {
     const context = await Manifest.parse(``);
     const loader = new StubLoader({
       manifest: `
