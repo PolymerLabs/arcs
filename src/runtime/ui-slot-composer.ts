@@ -230,6 +230,7 @@ export class UiSlotComposer {
   }
 
   sendEvent(particleId, eventlet) {
+    log('sendEvent:', particleId, eventlet);
     const findConsumer = id => this.consumers.find(consumer => consumer.consumeConn.particle.id === id);
     const consumer = findConsumer(particleId);
     if (consumer) {
@@ -239,8 +240,11 @@ export class UiSlotComposer {
         //log('firing PEC event for', particle.name);
         // TODO(sjmiles): we need `arc` and `particle` here even though
         // the two are bound together, simplify
+        log('... found consumer, particle, and arc to delegate sendEvent');
         arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
       }
+    } else {
+      warn('...found no consumer!');
     }
   }
 
