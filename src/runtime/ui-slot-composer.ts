@@ -262,7 +262,13 @@ export class UiSlotComposer {
       if (container) {
         Object.assign(content, {
           containerSlotName: container.targetSlot.name,
-          containerSlotId: container.targetSlot.id
+          containerSlotId: container.targetSlot.id,
+        });
+      }
+      const modality = particle.recipe.modality;
+      if (!modality.all) {
+        Object.assign(content, {
+          modality: modality.names.join(',')
         });
       }
       Object.assign(content, {
