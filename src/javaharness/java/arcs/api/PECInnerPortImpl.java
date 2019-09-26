@@ -269,6 +269,6 @@ public class PECInnerPortImpl implements PECInnerPort {
     json.put(MESSAGE_PEC_MESSAGE_KEY, MESSAGE_PEC_PEC_VALUE);
     json.put(MESSAGE_PEC_ID_FIELD, this.id);
     json.put(MESSAGE_PEC_ENTITY_KEY, message);
-    environment.sendMessageToArcs(jsonParser.stringify(json), null);
+    environment.sendMessageToArcs(jsonParser.stringify(json));
   }
 }

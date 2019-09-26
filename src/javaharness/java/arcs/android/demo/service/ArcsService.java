@@ -8,9 +8,12 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import javax.inject.Inject;
+
 import arcs.android.api.IArcsService;
-import arcs.android.api.IRemotePecCallback;
 import arcs.android.api.IRemoteOutputCallback;
+import arcs.android.api.IRemotePecCallback;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
@@ -18,9 +21,6 @@ import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import arcs.api.UiBroker;
-import arcs.api.UiRenderer;
-import java.util.List;
-import javax.inject.Inject;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
@@ -68,7 +68,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        shellEnvironment.sendMessageToArcs(message, /* listener= */ null);
+        shellEnvironment.sendMessageToArcs(message);
       }
 
       @Override
@@ -103,26 +103,31 @@ public class ArcsService extends Service {
         if (particleId != null) {
           request.put("particleId", particleId).put("particleName", particleName);
         }
-        runWhenReady(() -> shellEnvironment.sendMessageToArcs(jsonParser.stringify(request), null));
+        runWhenReady(() -> shellEnvironment.sendMessageToArcs(jsonParser.stringify(request)));
       }
 
       @Override
       public void stopArc(String arcId, String pecId) {
-        // TODO: Stop the running arc once the Arcs Runtime supports that.
-
+        runWhenReady(
+            () ->
+                shellEnvironment.sendMessageToArcs(
+                    jsonParser.stringify(
+                        jsonParser.emptyObject().put("message", "stopArc").put("arcId", arcId))));
         pecPortManager.removePecPort(pecId);
       }
 
       @Override
       public void registerRenderer(String modality, IRemoteOutputCallback callback) {
-        uiBroker.registerRenderer(modality, content -> {
-          try {
-            callback.onOutput(jsonParser.stringify(content));
-          } catch (RemoteException e) {
-            throw new RuntimeException(e);
-          }
-          return true;
-        });
+        uiBroker.registerRenderer(
+            modality,
+            content -> {
+              try {
+                callback.onOutput(jsonParser.stringify(content));
+              } catch (RemoteException e) {
+                throw new RuntimeException(e);
+              }
+              return true;
+            });
       }
     };
   }

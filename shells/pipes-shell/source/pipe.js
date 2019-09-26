@@ -18,7 +18,7 @@ import {requireIngestionArc} from './ingestion-arc.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
-import {runArc} from './verbs/run-arc.js';
+import {runArc, stopArc} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
@@ -72,6 +72,9 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     // API call, to not affect existing demos.
     runArc: async (msg, tid, bus) => {
       return await runArc(msg, tid, bus, runtime, env);
+    },
+    stopArc: async (msg, tid, bus) => {
+      return await stopArc(msg, runtime);
     },
     // TODO(sjmiles): below here are "live context" tools (remove when other context options are viable)
     ingest: async (msg, tid, bus) => {

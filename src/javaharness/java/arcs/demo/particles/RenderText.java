@@ -20,13 +20,13 @@ public class RenderText extends ParticleBase {
   @Override
   public void setHandles(Map<String, Handle> handleByName) {
     super.setHandles(handleByName);
-    this.renderModel();
+    this.output();
   }
 
   @Override
   public void setOutput(Consumer<PortableJson> output) {
     super.setOutput(output);
-    renderModel();
+    this.output();
   }
 
   @Override

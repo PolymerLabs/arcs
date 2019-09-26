@@ -8,11 +8,6 @@ import java.util.List;
  */
 public interface ArcsEnvironment {
 
-  /** Called by ArcsEnvironment when data is sent from Arcs. */
-  interface DataListener {
-    void onData(String arcId, String data);
-  }
-
   /** Called by ArcsEnvironment when the Arcs runtime is ready. */
   interface ReadyListener {
     void onReady(List<String> recipes);
@@ -25,13 +20,7 @@ public interface ArcsEnvironment {
    * @param msg a message in JSON format
    * @param listener an optional callback, triggered when Arcs replies to this message.
    */
-  void sendMessageToArcs(String msg, DataListener listener);
-
-  /**
-   * Fires an event to notify listener when given transaction-id data is available.
-   * TODO: DataListeners are deprecated, remove.
-   */
-  default void fireDataEvent(String tid, String data) {}
+  void sendMessageToArcs(String msg);
 
   /**
    * A callback when Arcs is ready to for interaction.

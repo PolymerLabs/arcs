@@ -58,13 +58,7 @@ class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
   }
 
   @Override
-  public void sendMessageToArcs(String message, DataListener listener) {
-    if (listener != null) {
-      // TODO: Add support for listeners.
-      throw new UnsupportedOperationException(
-          "listeners are not yet supported by the ArcsServiceBridge.");
-    }
-
+  public void sendMessageToArcs(String message) {
     runServiceMethod(service -> service.sendMessageToArcs(message));
   }
 

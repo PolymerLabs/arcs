@@ -45,10 +45,6 @@ public class DeviceClientImpl implements DeviceClient {
         break;
       case MESSAGE_DATA:
         logger.warning("logger: Received deprecated 'data' message");
-        PortableJson dataJson = content.getObject(FIELD_DATA);
-        environment.fireDataEvent(
-            String.valueOf(content.getInt(FIELD_TRANSACTION_ID)),
-            dataJson == null ? null : jsonParser.stringify(dataJson));
         break;
       case MESSAGE_PEC:
         deliverPecMessage(content.getObject(FIELD_DATA));
@@ -85,7 +81,7 @@ public class DeviceClientImpl implements DeviceClient {
     }
 
     createPecForParticle(request.getString("pecId"), particle);
-    environment.sendMessageToArcs(jsonParser.stringify(request), null);
+    environment.sendMessageToArcs(jsonParser.stringify(request));
   }
 
   private void createPecForParticle(String pecId, Particle particle) {
