@@ -49,8 +49,8 @@ defineParticle(({UiParticle, html, log}) => {
 
 <template items>
   <div item selected$="{{selected}}">
-    <div slotid="{{item_slot}}" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
-    <div slotid="{{annotation_slot}}" subid$="{{id}}"></div>
+    <div slotid$="{{item_slot}}" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
+    <div slotid$="{{annotation_slot}}" subid$="{{id}}"></div>
   </div>
 </template>
 
@@ -83,7 +83,7 @@ defineParticle(({UiParticle, html, log}) => {
       };
     }
     onSelect(e) {
-      const item = this._props.list.find(i => this.idFor(i) === e.data.key);
+      const item = this.props.list.find(i => this.idFor(i) === e.data.key);
       this.handles.get('selected').set(item);
     }
   };
