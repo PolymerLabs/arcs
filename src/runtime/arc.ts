@@ -14,7 +14,7 @@ import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
-import {Runnable} from './hot.js';
+import {Runnable, Consumer} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './modality.js';
@@ -63,19 +63,31 @@ type DeserializeArcOptions = Readonly<{
   loader: Loader;
   fileName: string;
   context: Manifest;
-  inspectorFactory?: ArcInspectorFactory
+  inspectorFactory?: ArcInspectorFactory;
 }>;
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
-type UnifiedStore = {
+export interface UnifiedStore {
   id: string;
+  name: string;
+  source: string;
   type: Type;
   storageKey: string | StorageKey;
   version?: number; // TODO(shans): This needs to be a version vector for new storage.
   referenceMode: boolean;
   _compareTo(other: UnifiedStore): number;
   toString(tags: string[]): string; // TODO(shans): This shouldn't be called toString as toString doesn't take arguments.
+  // TODO(shans): toLiteral is currently used in _serializeStore, during recipe serialization. It's used when volatile
+  // stores need to be written out as resources into the manifest. Problem is, it expects a particular CRDT model shape;
+  // for new storage we probably need to extract the model from the store instead and have the CRDT directly produce a
+  // JSON representation for insertion into the serialization.
+  // tslint:disable-next-line no-any
+  toLiteral: () => Promise<any>;
+  cloneFrom(store: UnifiedStore): void;
+  modelForSynchronization(): {};
+  on(type: string, fn: Consumer<{}>, target: {}): void;
+  description: string;
 };
 
 export class Arc {
@@ -437,7 +449,7 @@ ${this.activeRecipe.toString()}`;
     });
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
-      const store = await storeStub.inflate();
+      const store: UnifiedStore = await storeStub.inflate();
       arc._registerStore(store, tags);
     }));
     const recipe = manifest.activeRecipe.clone();
@@ -473,8 +485,8 @@ ${this.activeRecipe.toString()}`;
     this.pec.instantiate(recipeParticle, info.stores);
   }
 
-  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, StorageProviderBase>}> {
-    const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, UnifiedStore>}> {
+    const info = {spec: recipeParticle.spec, stores: new Map<string, UnifiedStore>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BloblUrl representing spec.implFile
@@ -487,7 +499,7 @@ ${this.activeRecipe.toString()}`;
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-        info.stores.set(name, store as StorageProviderBase);
+        info.stores.set(name, store as UnifiedStore);
       }
     }
     return info;
@@ -526,7 +538,7 @@ ${this.activeRecipe.toString()}`;
                          inspectorFactory: this.inspectorFactory});
     const storeMap: Map<UnifiedStore, UnifiedStore> = new Map();
     for (const store of this._stores) {
-      const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
+      const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile') as UnifiedStore;
       await clone.cloneFrom(store);
       storeMap.set(store, clone);
       if (this.storeDescriptions.has(store)) {
@@ -535,7 +547,7 @@ ${this.activeRecipe.toString()}`;
     }
 
     this.loadedParticleInfo.forEach((info, id) => {
-      const stores: Map<string, StorageProviderBase> = new Map();
+      const stores: Map<string, UnifiedStore> = new Map();
       info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
       arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
     });
@@ -658,9 +670,13 @@ ${this.activeRecipe.toString()}`;
         assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
         const type = recipeHandle.type.resolvedType();
         assert(type.isResolved());
-        const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
-        assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
-        this._registerStore(store, recipeHandle.tags);
+        if (typeof storageKey === 'string') {
+          const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+          assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
+          this._registerStore(store, recipeHandle.tags);
+        } else {
+          throw new Error('Need to implement storageNG code path here!');
+        }
       }
     }
 
@@ -739,7 +755,7 @@ ${this.activeRecipe.toString()}`;
     Runtime.getRuntime().registerStore(store, tags);
   }
 
-  _tagStore(store: StorageProviderBase, tags: Set<string>): void {
+  _tagStore(store: UnifiedStore, tags: Set<string>): void {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
     tags = tags || new Set();
@@ -785,7 +801,7 @@ ${this.activeRecipe.toString()}`;
     return null;
   }
 
-  findStoresByType(type: Type, options?: {tags: string[]}): StorageProviderBase[] {
+  findStoresByType(type: Type, options?: {tags: string[]}): UnifiedStore[] {
     const typeKey = Arc._typeToKey(type);
     let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
@@ -817,7 +833,7 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id: string): UnifiedStore {
+  findStoreById(id: string): UnifiedStore | StorageStub {
     const store = this.storesById.get(id);
     if (store == null) {
       return this._context.findStoreById(id);

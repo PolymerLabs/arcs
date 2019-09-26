@@ -10,7 +10,7 @@
 
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
-import {Arc} from './arc.js';
+import {Arc, UnifiedStore} from './arc.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -119,7 +119,7 @@ export class Runtime {
   }
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: StorageProviderBase, tags: string[]): void {
+  registerStore(store: UnifiedStore, tags: string[]): void {
     if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
       // tslint:disable-next-line: no-any
       this.context['_addStore']((store as any) as StorageStub, tags);

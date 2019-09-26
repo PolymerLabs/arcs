@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {handleFor, Collection} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Schema} from '../schema.js';
-import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {CollectionStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
 import {ArcId, IdGenerator} from '../id.js';
@@ -28,7 +28,7 @@ describe('entity', () => {
 
     const collectionType = new EntityType(schema).collectionOf();
     
-    const storage = await arc.createStore(collectionType);
+    const storage = await arc.createStore(collectionType) as StorageProviderBase;
     const handle = handleFor(storage, IdGenerator.newSession()) as Collection;
     await handle.store(entity);
 
