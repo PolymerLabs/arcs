@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver, html}) => {
+defineParticle(({UiParticle, resolver, html}) => {
 
   const template = html`
 <div item show-product>
@@ -93,7 +93,7 @@ defineParticle(({DomParticle, resolver, html}) => {
 </div>
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -105,7 +105,9 @@ defineParticle(({DomParticle, resolver, html}) => {
         const resolvedImage = resolver ? resolver(product.image) : product.image;
         return Object.assign({
             resolvedImage,
-            styleBackground: `background-image:url(${resolvedImage})`
+            styleBackground: `background-image:url(${resolvedImage})`,
+            // TODO(sjmiles): subid required by renderer, not used in template (iirc, verify!)
+            subid: this.idFor(product)
           },
           product
         );

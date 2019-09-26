@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
     <div style="padding: 4px 0;" style%="{{style}}"><span>{{arrival}}</span></div>
@@ -18,7 +18,7 @@ defineParticle(({DomParticle, html}) => {
 
   const daysToMs = 24*60*60*1000;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -48,7 +48,8 @@ defineParticle(({DomParticle, html}) => {
       }
       return {
         arrival,
-        style
+        style,
+        subid: this.idFor(product)
       };
     }
   };

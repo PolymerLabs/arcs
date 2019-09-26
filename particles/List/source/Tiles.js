@@ -75,7 +75,7 @@ defineParticle(({UiParticle, html, log}) => {
       };
     }
     onSelect(e) {
-      const item = this._props.list.find(i => this.idFor(i) === e.data.key);
+      const item = this.props.list.find(i => this.idFor(i) === e.data.key);
       this.handles.get('selected').set(item);
     }
   };
