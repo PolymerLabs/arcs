@@ -20,26 +20,19 @@ particle Main in './source/Main.js'
     provide congratulationsSlot
 
 particle Game in './source/Game.js'
-  in Person playerOne
-  in Person playerTwo
   in [Person] players
   in GameState gameState
   in Move humanMove
   in Move computerMove
   out Move move
-  check playerOne is private
-  check playerTwo is private
+  check players is private
 
 particle GetPlayer in './source/GetPerson.js'
-  out Person playerOne
-  out Person playerTwo
   inout [Person] players
   consume playerSlot
-  claim playerOne is private
-  claim playerTwo is private
+  claim players is private
 
 particle DisplayGreeting in './source/DisplayGreeting.js'
-  in Person person
   in [Person] players
   consume greetingSlot
 
@@ -56,8 +49,6 @@ recipe GameDemoRecipe
       provide cellSlot as board
       provide congratulationsSlot as congratulations
   GetPlayer
-    playerOne -> playerOne
-    playerTwo -> playerTwo
     players <-> data
     consume playerSlot as getPlayer
   MoveApplier
@@ -66,13 +57,10 @@ recipe GameDemoRecipe
   Game
     gameState <- gameState
     players <- data
-    playerOne <- playerOne
-    playerTwo <- playerTwo
     humanMove <- humanMove
     computerMove <- computerMove
     move -> move
   DisplayGreeting
-    person <- playerOne
     players <- data
     consume greetingSlot as greeting
   Board

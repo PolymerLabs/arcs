@@ -5,7 +5,6 @@ particle Board in './source/Board.js'
   out Move humanMove
   consume cellSlot
     
-
 particle Cell in './source/Cell.js'
   in GameState gameState
   in * {Number id2} currentPlayerId

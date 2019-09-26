@@ -20,18 +20,18 @@ defineParticle(({DomParticle, log}) => {
       return '';
     }
 
-    update({playerOne, playerTwo, gameState, humanMove, computerMove, players}, {mvs}) {
+    update({gameState, humanMove, computerMove, players}, {mvs}) {
       if (!mvs) {
         this.setState({mvs: 1});
       }
-      if (playerOne && playerTwo && gameState && humanMove && computerMove && players) {
+      if (gameState && humanMove && computerMove && players) {
         if (!gameState.gameOver ) { 
           const currPlayer = (gameState.moves + 1) % players.length;
           if (currPlayer != 0) {
             this.updateSingleton('move', {move: humanMove.move, playerAvatar: players[currPlayer].avatar});
             this.setState({mvs: gameState.moves});
           } else if (mvs < (gameState.moves + gameState.attemptedMoves)) {            
-            this.updateSingleton('move', {move: computerMove.move, playerAvatar: playerTwo.avatar});
+            this.updateSingleton('move', {move: computerMove.move, playerAvatar: players[currPlayer].avatar});
             this.setState({mvs: gameState.moves + gameState.attemptedMoves + 2});
           }  
         } 
