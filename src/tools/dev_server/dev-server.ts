@@ -21,7 +21,7 @@ import {HotReloadServer} from './hot-reload-server';
 //
 // It consists of 2 components:
 // * Web Server serving static files from the root directory.
-// * WebSocket proxy for exchangin messages between Arcs Runtime and Arcs Explorer.
+// * WebSocket proxy for exchanging messages between Arcs Runtime and Arcs Explorer.
 // There are many plans for extending this list for various development features.
 
 
