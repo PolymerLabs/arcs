@@ -68,6 +68,17 @@ type DeserializeArcOptions = Readonly<{
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
+/**
+ * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
+ * We should be able to remove this once we've switched across to the NG stack.
+ * 
+ * Note that for old-style stores, StorageStubs are used *sometimes* to represent storage which isn't activated. For new-style stores,
+ * Store itself represents an inactive store, and needs to be activated using activate(). This will present some integration
+ * challenges :)
+ * 
+ * Note also that old-style stores use strings for Storage Keys, while NG storage uses storageNG/StorageKey subclasses. This provides
+ * a simple test for determining whether a store is old or new.
+ */
 export interface UnifiedStore {
   id: string;
   name: string;
@@ -422,7 +433,7 @@ ${this.activeRecipe.toString()}`;
   // contents of the serialized arc before persisting.
   async persistSerialization(serialization: string): Promise<void> {
     const storage = this.storageProviderFactory;
-    let key;
+    let key: KeyBase | StorageKey;
     if (typeof this.storageKey === 'string') {
       key = storage.parseStringAsKey(this.storageKey).childKeyForArcInfo();
     } else {
