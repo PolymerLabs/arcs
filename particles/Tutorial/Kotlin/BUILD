@@ -1,8 +1,6 @@
 load("//build_defs:build_defs.bzl", "arcs_kt_schema", "arcs_ts_test")
 load("//build_defs/kotlin_native:build_defs.bzl", "kt_wasm_binary", "kt_wasm_library")
 
-
-
 kt_wasm_binary(
     name = "hello_world",
     srcs = ["1_HelloWorld/HelloWorld.kt"],
@@ -25,7 +23,10 @@ arcs_kt_schema(
 
 kt_wasm_binary(
     name = "json_store",
-    srcs = ["3_JsonStore/JsonStore.kt", ":store_schema"],
+    srcs = [
+        "3_JsonStore/JsonStore.kt",
+        ":store_schema",
+    ],
     entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
