@@ -74,7 +74,7 @@ export class SlotConsumer {
   }
 
   addHostedSlotContexts(context: HostedSlotContext): void {
-    context.containerAvailable = Boolean(this.slotContext.containerAvailable);
+    context.containerAvailable = Boolean(this.slotContext && this.slotContext.containerAvailable);
     this.hostedSlotContexts.push(context);
   }
 
