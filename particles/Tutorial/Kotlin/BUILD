@@ -2,11 +2,6 @@ load("//build_defs:build_defs.bzl", "arcs_kt_schema", "arcs_ts_test")
 load("//build_defs/kotlin_native:build_defs.bzl", "kt_wasm_binary", "kt_wasm_library")
 
 
-#arcs_kt_schema(
-#    name = "wasm_schemas",
-#    src = "Harness.arcs",
-#    out = "Entities.kt",
-#)
 
 kt_wasm_binary(
     name = "hello_world",
@@ -18,6 +13,19 @@ kt_wasm_binary(
 kt_wasm_binary(
     name = "basic_template",
     srcs = ["2_BasicTemplates/BasicTemplate.kt"],
+    entry_point = "arcs.main",
+    deps = ["//src/wasm/kotlin:arcs"],
+)
+
+arcs_kt_schema(
+    name = "store_schema",
+    src = "3_JsonStore/JsonStore.arcs",
+    out = "3_JsonStore/Entities.kt",
+)
+
+kt_wasm_binary(
+    name = "json_store",
+    srcs = ["3_JsonStore/JsonStore.kt", ":store_schema"],
     entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
