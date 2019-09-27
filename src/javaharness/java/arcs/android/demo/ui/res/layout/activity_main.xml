@@ -20,6 +20,11 @@
         android:layout_height="wrap_content"
         android:text="Autofill Demo" />
 
-  </LinearLayout>
+    <Button
+        android:id="@+id/notification_demo_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Notification Demo" />
 
+  </LinearLayout>
 </FrameLayout>

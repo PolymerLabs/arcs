@@ -16,7 +16,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
-class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
+public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
 
   private final ArcsServiceStarter arcsServiceStarter;
   private IArcsService arcsService; // Access via connectToArcsService.
@@ -37,7 +37,7 @@ class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     this.arcsServiceStarter = arcsServiceStarter;
   }
 
-  void startArc(
+  public void startArc(
       String arcId,
       String pecId,
       String recipe,
@@ -49,11 +49,11 @@ class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
         service -> service.startArc(arcId, pecId, recipe, particleId, particleName, providedSlotId, callback));
   }
 
-  void stopArc(String arcId, String pecId) {
+  public void stopArc(String arcId, String pecId) {
     runServiceMethod(service -> service.stopArc(arcId, pecId));
   }
 
-  void registerRenderer(String modality, IRemoteOutputCallback callback) {
+  public void registerRenderer(String modality, IRemoteOutputCallback callback) {
     runServiceMethod(service -> service.registerRenderer(modality, callback));
   }
 

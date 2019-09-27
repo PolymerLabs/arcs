@@ -38,6 +38,7 @@ public class ArcsService extends Service {
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
+  @Inject NotificationRenderer notificationRenderer;
 
   @Override
   public void onCreate() {
@@ -60,6 +61,8 @@ public class ArcsService extends Service {
     shellEnvironment.addReadyListener(recipes -> arcsReady = true);
 
     harnessController.init();
+
+    uiBroker.registerRenderer("notification", notificationRenderer);
   }
 
   @Override
@@ -97,9 +100,13 @@ public class ArcsService extends Service {
                 .emptyObject()
                 .put("message", "runArc")
                 .put("arcId", arcId)
-                .put("pecId", pecId)
-                .put("providedSlotId", providedSlotId)
                 .put("recipe", recipe);
+        if (pecId != null) {
+          request.put("pecId", pecId);
+        }
+        if (providedSlotId != null) {
+          request.put("providedSlotId", providedSlotId);
+        }
         if (particleId != null) {
           request.put("particleId", particleId).put("particleName", particleName);
         }
