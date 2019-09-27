@@ -95,4 +95,7 @@ public class ParticleBase implements Particle {
   public String getModel() {
     return "";
   }
+
+  @Override
+  public boolean providesSlot() { return false; }
 }

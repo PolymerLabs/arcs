@@ -34,4 +34,8 @@ public interface Particle {
   void setOutput(Consumer<PortableJson> output);
 
   void output();
+
+  // Particle doesn't know its spec until it is instantiated. This is a helper method
+  // indicates to Arcs whether provided slot ID mapping needs to be created with the Renderer.
+  boolean providesSlot();
 }
