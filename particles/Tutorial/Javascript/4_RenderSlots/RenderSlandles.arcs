@@ -1,0 +1,19 @@
+// Tutorial 4: Render Slots
+// Creates two particles, and renders one inside the other using render slots.
+
+particle SlandleParentParticle in 'parent.js'
+  `consume Slot root
+    `provide Slot mySlot
+
+particle SlandleChildParticle in 'child.js'
+  `consume Slot childSlot
+
+recipe SlandleRenderSlotsRecipe
+  `slot 'rootslotid-root' as root
+  SlandleParentParticle
+    root consume root
+      mySlot provide shared
+  SlandleChildParticle
+    childSlot consume shared
+
+  description `Tutorial 4: Render Slandles`
