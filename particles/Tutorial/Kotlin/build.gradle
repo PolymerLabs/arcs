@@ -69,6 +69,13 @@ kotlin {
         }
     }
 
+    wasm32("RenderSlots")
+    sourceSets {
+        wasm32Main {
+            kotlin.srcDir('4_RenderSlots')
+        }
+    }
+
     wasm32()
     targets {
         fromPreset(presets.wasm32, 'wasm32') {
