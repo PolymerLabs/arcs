@@ -14,3 +14,10 @@ kt_wasm_binary(
     entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
+
+kt_wasm_binary(
+    name = "basic_template",
+    srcs = ["2_BasicTemplates/BasicTemplate.kt"],
+    entry_point = "arcs.main",
+    deps = ["//src/wasm/kotlin:arcs"],
+)
