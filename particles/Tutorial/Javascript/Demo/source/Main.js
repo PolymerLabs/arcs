@@ -12,18 +12,16 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {   
+defineParticle(({SimpleParticle, html}) => {   
 
-const template = html`
-  <div slotid="playerSlot"></div>
-  <div slotid="greetingSlot"></div>
-  <div slotid="cellSlot"></div>
-  <div slotid="congratulationsSlot"></div>
-`;
-
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
-      return template;
+      return html`
+      <div slotid="playerSlot"></div>
+      <div slotid="greetingSlot"></div>
+      <div slotid="cellSlot"></div>
+      <div slotid="congratulationsSlot"></div>
+    `;
     }
     
   };

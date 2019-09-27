@@ -12,33 +12,36 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {   
+defineParticle(({SimpleParticle, html}) => {   
 
-const template = html`<span>{{startmsg}}</span> Please hit refresh to start a new game.`;
+const template = html`<span>{{startmsg}}</span> Please hit reset to start a new game. <button on-click="onClick">Reset</button>`;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }
 
-    shouldRender({gameState, players}) {
+    shouldRender({gameState, playerOne, playerTwo}) {
       // Here we check that the game is over.
-      return players && gameState && gameState.gameOver;
+      return playerOne && playerTwo && gameState && gameState.gameOver;
     }
 
-    render({gameState, players}) {
+    render({gameState, playerOne, playerTwo}) {
       if (gameState.winnerAvatar !== null) {
         let winner = '';
-        // Find the winner's name based on the avatar.
-        for (let i = 0; i < players.length; i++) {
-          if (players[i].avatar == gameState.winnerAvatar) {
-            winner = players[i].name;
-          }
+        if (gameState.winnerAvatar == playerOne.avatar) {
+          winner = playerOne.name;
+        } else {
+          winner = playerTwo.name;
         }
         return {startmsg: `Congratulations ${winner}, you won!`};
       } 
       // If there is no winner, we know it was a tie.
       return {startmsg: `It's a tie!`};
+    }
+
+    onClick() {
+      this.updateSingleton('humanMove', {move: 'reset'});
     }
     
   };

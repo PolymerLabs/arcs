@@ -10,19 +10,11 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({SimpleParticle, html}) => {
 
-  const template = html`
-<b>Player One</b><input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-  `;
+  return class extends SimpleParticle {
 
-  return class extends DomParticle {
-
-    get template() {
-      return template;
-    }
-
-    update({gameState}, {}) {
+    update({gameState}) {
       if (gameState) {
         
         const emptyCells = [];

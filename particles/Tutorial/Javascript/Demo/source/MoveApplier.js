@@ -10,30 +10,28 @@
 
  /* global defineParticle */
 
- defineParticle(({DomParticle, html}) => {
+ defineParticle(({SimpleParticle, html}) => {
 
-  return class extends DomParticle {
-    get template() {
-      return '';
-    }
-
+  return class extends SimpleParticle {
     update({move, gameState}, {}) {
-      if (!gameState) { // Gamestate has not been set yet
+      // If the move is reset or start, reset the gameState
+      if (move && (move.move == 'start' || move.move == 'reset')) {
         const gs = {
           board: ',,,,,,,,',
-          moves: 0,
           gameOver: false,
           winnerAvatar: null,
-          attemptedMoves: 0
+          currentPlayer: 1,
+          lastMove: '',
+          gameStarted: true
         };
         this.updateSingleton('gameState', gs);
-      } else if (move) {
+      }
+      if (move && gameState && gameState.lastMove != move.move) {
         // Get the old gameState values to update.
-        let newMoves = gameState.moves;
         let newBoard = gameState.board;
-        let newAttemptedMoves = gameState.attemptedMoves;
         let newGameOver = gameState.gameOver;
         let newWinnerAvatar = gameState.winnerAvatar;
+        let newCurrentPlayer = gameState.currentPlayer;
 
         // Get the board and move in a usable state
         const arr = gameState.board.split(`,`);
@@ -41,64 +39,54 @@
         
         // If the move is valid
         if (arr[mv] == ``) {
+
           // Apply move
           arr[mv] = move.playerAvatar;
           newBoard = arr.join();
-          newMoves = newMoves + 1;
-          // Check if the game is over
-          if (this.checkIfWon(arr[0], arr[1], arr[2])) { // top row
-            newGameOver = true;
-            newWinnerAvatar = arr[0];
-          } else if (this.checkIfWon(arr[3], arr[4], arr[5])) { // middle row
-            newGameOver = true;
-            newWinnerAvatar = arr[3];
-          } else if (this.checkIfWon(arr[6], arr[7], arr[8])) { // bottom row
-            newGameOver = true;
-            newWinnerAvatar = arr[6];
-          } else if (this.checkIfWon(arr[0], arr[3], arr[6])) { // left col
-            newGameOver = true;
-            newWinnerAvatar = arr[0];
-          } else if (this.checkIfWon(arr[1], arr[4], arr[7])) { // middle col
-            newGameOver = true;
-            newWinnerAvatar = arr[1];
-          } else if (this.checkIfWon(arr[2], arr[5], arr[8])) { // right col
-            newGameOver = true;
-            newWinnerAvatar = arr[2];
-          } else if (this.checkIfWon(arr[0], arr[4], arr[8])) { // L-R diag
-            newGameOver = true;
-            newWinnerAvatar = arr[0];
-          } else if (this.checkIfWon(arr[2], arr[4], arr[6])) { // R-: diag
-            newGameOver = true;
-            newWinnerAvatar = arr[2];
-          } else if (newMoves == 9) { // Tied game
-            newGameOver = true;
+
+          // Define all the possible winning sequences
+          const winningSequences = [
+            [0, 1, 2], 
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+          ];
+
+          // Check if the game is tied
+          newGameOver = true;
+          for (const cell of arr) {
+            if (cell == '') {
+              newGameOver = false;
+              break;
+            }
           }
-        } else {
-          newAttemptedMoves++;
-        }
+          
+          // Check if the game has been won
+          for (const ws of winningSequences) {
+            if (arr[ws[0]] !== '' && arr[ws[0]] === arr[ws[1]] && arr[ws[1]] == arr[ws[2]]) {
+              newGameOver = true;
+              newWinnerAvatar = arr[ws[0]];
+              break;
+            }
+          }
+          
+          newCurrentPlayer = newCurrentPlayer % 2 + 1;
+        } 
+        // Update gameState
         const gs = {
           board: newBoard,
-          moves: newMoves,
           gameOver: newGameOver,
           winnerAvatar: newWinnerAvatar,
-          attemptedMoves: newAttemptedMoves
+          currentPlayer: newCurrentPlayer,
+          lastMove: move.move,
+          gameStarted: gameState.gameStarted
         };
         this.updateSingleton('gameState', gs);
       }
     }
-
-    // Helper function to determin if the three values given are not null
-    // and equal each other.
-    checkIfWon(winner1, winner2, winner3) {
-      if (winner1 != ``) {
-        if (winner1 == winner2) {
-          if (winner2 == winner3) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
   };
 });

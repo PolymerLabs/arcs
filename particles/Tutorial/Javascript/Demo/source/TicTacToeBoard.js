@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {   
+defineParticle(({SimpleParticle, html}) => {   
 
 const template = html`
   <style>
@@ -22,86 +22,56 @@ const template = html`
       grid-column-gap: 0px;
     }
 
-    .row {
-      content: "";
-      display: table;
-      clear: both;
-      display: inline-flex;
-    }
-
     .butt {
       border: 1px outset blue;
       background-color: lightBlue;
-      height:50px;
-      width:50px;
-      cursor:pointer;
+      height: 50px;
+      width: 50px;
+      cursor: pointer;
     }
 
     .butt:hover {
       background-color: blue;
-      color:white;
+      color: white;
     }
   </style>
   <div class="grid-container">
-      <button class="butt" type="button" on-click="onClick" value=1>
-        <span>{{spot1}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=2>
-        <span>{{spot2}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=3>
-        <span>{{spot3}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=4>
-        <span>{{spot4}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=5>
-        <span>{{spot5}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=6>
-        <span>{{spot6}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=7>
-        <span>{{spot7}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=8>
-        <span>{{spot8}}</span>
-      </button>
-      <button class="butt" type="button" on-click="onClick" value=9>
-        <span>{{spot9}}</span>
-      </button>
+      <div class="grid-container">{{buttons}}</div>
   </div>
+  <template button>
+    <button class="butt" type="button" on-click="onClick" value={{value}}>
+      <span>{{spot}}</span>
+    </button>
+  </template>
 `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }
 
-    render({gameState}, {}) {
+    shouldRender({gameState}) {
+      return gameState && gameState.gameStarted;
+    }
+
+    render({gameState}) {
       if (gameState) {
         const arr = gameState.board.split(`,`);
-        // Return the values that should be filled
-        // into the board
+        // Return the values that should be filled into the board
         return {
-          spot1: arr[0],
-          spot2: arr[1],
-          spot3: arr[2],
-          spot4: arr[3],
-          spot5: arr[4],
-          spot6: arr[5],
-          spot7: arr[6],
-          spot8: arr[7],
-          spot9: arr[8],
+          buttons: {
+            $template: 'button',
+            models: arr.map((spot, index) => ({spot: spot, value: index +1}))
+          },
         };
       }
-      // If the gameState does not exist yet, the game has
-      // not been initialised, so return nothing.
+      // If the gameState does not exist yet, the game has not been 
+      // initialised, so return nothing.
       return {};
     }
     
-    // The board acts as the human mover. When the human clicks
-    // on the board, the move should update accordingly.
+    // The board acts as the human mover. When the human clicks on the 
+    // board, the move should update accordingly.
     onClick(e) {
       this.updateSingleton(`humanMove`, {move: e.data.value});
     }

@@ -1,13 +1,15 @@
 schema Person
   Text name
   Text avatar
+  Boolean myTurn
 
 schema GameState
   Boolean gameOver
-  Number moves
   Text winnerAvatar
   Text board
-  Number attemptedMoves
+  Number currentPlayer
+  Text lastMove
+  Boolean gameStarted
 
 schema Move 
   Text playerAvatar

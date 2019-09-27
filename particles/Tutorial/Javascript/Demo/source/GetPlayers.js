@@ -10,14 +10,14 @@
 
  /* global defineParticle */
 
- defineParticle(({DomParticle, html}) => {
+ defineParticle(({SimpleParticle, html}) => {
 
     const template = html`
-  <b>To add a player, enter their name:</b>
+  <b>Please enter your name:</b>
   <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange"> <button on-click="onClick">Enter</button>
     `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }
@@ -27,6 +27,7 @@
       if (!enteredName) {
         this.setState({enteredName: 'Human'});
       }
+      this.updateSingleton('playerTwo', {name: 'Computer', avatar: '🤖', myTurn: false});
     }
 
     onNameInputChange(e) {
@@ -36,9 +37,8 @@
 
     onClick() {
       // Add the player to the players handle.
-      const charX = 88; // X is 88 in unicode.
-      const newAvatar = String.fromCharCode(charX + this.props.players.length - 1);
-      this.appendRawDataToHandle('players', [{name: this.state.enteredName, avatar: newAvatar}]);
+      const newAvatar = String.fromCodePoint(0X1F9D1); 
+      this.updateSingleton('playerOne', {name: this.state.enteredName, avatar: newAvatar, myTurn: false});
     }
   };
 });

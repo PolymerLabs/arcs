@@ -1,12 +1,12 @@
-// Tutorial 6: Handles
-// Shows how to use a handle to pass information between particles.
+// Tutorial Demo
+// Shows how to use Arcs features to create a tic-tac-toe game.
 import 'TicTacToe.arcs'
 import 'GameSchemas.arcs'
 
 resource PlayerData
   start
   [
-    {"name": "Computer", "avatar": "O"}
+    {"name": "Computer", "avatar": "🤖"}
   ]
 
 // This data store contains a list of entities rather than a single entity, 
@@ -21,39 +21,45 @@ particle Main in './source/Main.js'
     provide congratulationsSlot
 
 particle Game in './source/Game.js'
-  in [Person] players
-  in GameState gameState
-  in Move humanMove
-  in Move computerMove
-  out Move move
-  check players is private
+  inout Person playerOne
+  inout Person playerTwo
+  in GameState {gameOver} gameState
+  in Move {Text move} humanMove
+  in Move {Text move} computerMove
+  inout Move move
+  check playerOne is private
+  check playerTwo is private
 
-particle GetPlayer in './source/GetPerson.js'
-  inout [Person] players
+particle GetPlayers in './source/GetPlayers.js'
+  out Person playerOne
+  out Person playerTwo
   consume playerSlot
-  claim players is private
+  claim playerOne is private
+  claim playerTwo is private
 
 particle DisplayGreeting in './source/DisplayGreeting.js'
-  in [Person] players
+  in Person player
   consume greetingSlot
 
 particle Congratulations in './source/Congratulations.js'
-  in [Person] players
-  in GameState gameState
+  in Person playerOne
+  in Person playerTwo
+  out Move {move} humanMove
+  in GameState {gameOver, winnerAvatar} gameState
   consume congratulationsSlot
 
 recipe GameDemoRecipe
-  copy Players as data
   Main
     consume root 
-      provide playerSlot as getPlayer
+      provide playerSlot as getPlayers
       provide greetingSlot as greeting
       provide cellSlot as board
       provide congratulationsSlot as congratulations
 
-  GetPlayer
-    players <-> data
-    consume playerSlot as getPlayer
+  GetPlayers
+    playerOne -> playerOne
+    playerTwo -> playerTwo
+    consume playerSlot as getPlayers
 
   MoveApplier
     move <- move
@@ -61,13 +67,14 @@ recipe GameDemoRecipe
 
   Game
     gameState <- gameState
-    players <- data
+    playerOne <-> playerOne
+    playerTwo <-> playerTwo
     humanMove <- humanMove
     computerMove <- computerMove
-    move -> move
+    move <-> move
 
   DisplayGreeting
-    players <- data
+    player = playerOne
     consume greetingSlot as greeting
 
   TicTacToeBoard
@@ -77,7 +84,9 @@ recipe GameDemoRecipe
 
   Congratulations
     gameState <- gameState
-    players <- data
+    playerOne <- playerOne
+    playerTwo <- playerTwo
+    humanMove -> humanMove
     consume congratulationsSlot as congratulations
 
   RandomComputer

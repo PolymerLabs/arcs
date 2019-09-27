@@ -12,49 +12,52 @@
 
 /* global defineParticle */
 // TODO (heimlich@) change to particle
-defineParticle(({DomParticle, log}) => { 
+defineParticle(({SimpleParticle}) => { 
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
 
-    get template() {
-      return '';
-    }
-
-    update({gameState, humanMove, computerMove, players}, {mvs}) {
-      // mvs lets us make sure the computer does not become over eager
-      // and fill the whole board due to async updating of handles.
-      if (!mvs) {
-        this.setState({mvs: 1});
+    update({gameState, humanMove, computerMove, playerOne, playerTwo, move}) {
+      if (!move) {
+        this.updateSingleton('move', {});
       }
-      if (gameState && humanMove && computerMove && players) {
-        if (!gameState.gameOver ) { 
-          // Find the current player. Note the +1 is because the conputer
-          // is the first element of players, but we want the computer
-          // to make the final move in each round.
-          const currPlayer = (gameState.moves + 1) % players.length;
-          // If the current move is not the computer
-          if (currPlayer != 0) {
-            // Set the current move to be the humanMove, and update
-            // the avatar. Note that if the player has not moved yet
-            // this will be an invalid move, so MoveApplier will 
-            // ignore it until a proper move is applied.
+      // If both the players exist, but we don't have a human move yet, then
+      // start the game!
+      if (playerOne && playerTwo && !humanMove) {
+        this.updateSingleton('move', {move: 'start'});
+      }
+      if (gameState && humanMove && computerMove && playerOne && playerTwo) {
+        if (humanMove.move == 'reset') {
+          this.updateSingleton('move', humanMove);
+          return;
+        }
+        if (!gameState.gameOver && gameState.lastMove == move.move) { 
+          // If the current player is the human, and the current move is not already the human
+          // input.
+          if (gameState.currentPlayer == 1 && move.move != humanMove.move) {
+            // Set the current move to be the humanMove, and update the avatar.
             const mv = {
               move: humanMove.move, 
-              playerAvatar: players[currPlayer].avatar
+              playerAvatar: playerOne.avatar
             };
             this.updateSingleton('move', mv);
-            this.setState({mvs: gameState.moves});
-          } else if (mvs < (gameState.moves + gameState.attemptedMoves)) { 
-            // This if ensures the computer only can move after gameState
-            // has been updated.   
+            const pOne = {
+              name: playerOne.name,
+              avatar: playerOne.avatar,
+              myTurn: true
+            };
+            const pTwo = {
+              name: playerTwo.name,
+              avatar: playerTwo.avatar,
+              myTurn: false
+            };
+            this.updateSingleton('playerOne', pOne);
+            this.updateSingleton('playerTwo', pTwo);
+          } else if (gameState.currentPlayer == 2) {  
             const mv = {
               move: computerMove.move, 
-              playerAvatar: players[currPlayer].avatar
-            };        
+              playerAvatar: playerTwo.avatar
+            };  
             this.updateSingleton('move', mv);
-            // Update mvs to make sure the computer won't takeover the game
-            // while gameState updates.
-            this.setState({mvs: gameState.moves + gameState.attemptedMoves + 1});
           }  
         } 
       }
