@@ -60,17 +60,9 @@ abstract class Particle : WasmObject() {
     onRenderOutput(this.toWasmAddress(), template.toWasmString(), model.toWasmString())
   }
 
+  // TODO(sjmiles): deprecated
   fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
     log("ignoring renderSlot");
-    /*
-    val template = if (sendTemplate) getTemplate(slotName) else ""
-    var model = ""
-    if (sendModel) {
-    val dict = populateModel(slotName)
-    model = StringEncoder.encodeDictionary(dict)
-    }
-    render(this.toWasmAddress(), slotName.toWasmString(), template.toWasmString(), model.toWasmString())
-    */
   }
 
   fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
