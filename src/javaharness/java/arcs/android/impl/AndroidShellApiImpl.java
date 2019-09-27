@@ -4,8 +4,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.webkit.WebView;
-import arcs.api.ShellApi;
+
 import javax.inject.Inject;
+
+import arcs.api.ShellApi;
 
 /** Exposes Shell (Window) scope methods into Java from JS. */
 public class AndroidShellApiImpl implements ShellApi {
@@ -25,16 +27,8 @@ public class AndroidShellApiImpl implements ShellApi {
     Log.e("Arcs", "Receive called " + script);
 
     if (webView != null) {
-      // TODO(cromwellian): receive() should take a callback since the
-      // TID cannot be provided synchronously on Android
       new Handler(Looper.getMainLooper())
-          .post(
-              () ->
-                  webView.evaluateJavascript(
-                      script,
-                      (String tid) -> {
-                        // TODO: deprecated tid callback.
-                      }));
+          .post(() -> webView.evaluateJavascript(script, (String unused) -> {}));
     } else {
       Log.e("Arcs", "webView is null");
     }

@@ -95,22 +95,13 @@ public class WebHarnessController implements HarnessController {
 
     document.body.appendChild(
         makeInputElement(
-            "Autofill Address Entity",
-            val ->
-                environment.sendMessageToArcs(
-                    "{\"message\": \"autofill\", \"modality\": \"dom\", \"entity\": {\"type\": \"address\"}}",
-                    (id, result) -> dataParagraph.append("Test: " + result))));
-
-    document.body.appendChild(
-        makeInputElement(
             "DEMO UI renderers",
             val ->
                 environment.sendMessageToArcs(
                     jsonParser.stringify(jsonParser.emptyObject()
                         .put("message", "spawn")
                         // .put("modality", "log")
-                        .put("recipe", "DemoText")),
-                    null)));
+                        .put("recipe", "DemoText")))));
     document.body.appendChild(dataParagraph);
 
     // TODO: get rid of this once crdt tests are built and run properly as unittests.

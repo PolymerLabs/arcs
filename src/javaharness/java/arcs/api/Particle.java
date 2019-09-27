@@ -33,5 +33,5 @@ public interface Particle {
 
   void setOutput(Consumer<PortableJson> output);
 
-  void renderModel();
+  void output();
 }

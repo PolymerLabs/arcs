@@ -17,7 +17,6 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
 
   private static final Logger logger = Logger.getLogger(ShellApiBasedArcsEnvironment.class.getName());
 
-  private final Map<String, DataListener> inProgress = new HashMap<>();
   private final List<ReadyListener> readyListeners = new ArrayList<>();
   private ShellApi shellApi;
 
@@ -27,22 +26,8 @@ public class ShellApiBasedArcsEnvironment implements ArcsEnvironment {
   }
 
   @Override
-  public void sendMessageToArcs(String msg, DataListener listener) {
-    String transactionId = String.valueOf(shellApi.receive(msg));
-    if (listener != null) {
-      logger.warning("Deprecated use of `listener` in msg: " + msg);
-      inProgress.put(transactionId, listener);
-    }
-  }
-
-  @Override
-  public void fireDataEvent(String tid, String data) {
-    if (inProgress.containsKey(tid)) {
-      if (data != null) {
-        inProgress.get(tid).onData(tid, data);
-      }
-      inProgress.remove(tid);
-    }
+  public void sendMessageToArcs(String msg) {
+    shellApi.receive(msg);
   }
 
   @Override
