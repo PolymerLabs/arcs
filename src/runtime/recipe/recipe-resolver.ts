@@ -113,7 +113,7 @@ export class ResolveWalker extends RecipeWalker {
       // Tracked at https://github.com/PolymerLabs/arcs/issues/3389
       return error('The only handles matching the requested type and tags are already present in this recipe');
     }
-    return mappable.map(store => ((recipe, updateHandle) => {
+    return mappable.map(store => ((recipe, updateHandle: Handle) => {
       updateHandle.mapToStorage(store);
       return 0;
     }));
