@@ -200,8 +200,6 @@ defineParticle(({UiParticle, html}) => {
     }
     storeNewEvent(newEvent) {
       this.set('event', newEvent);
-      //const event = this.handles.get('event');
-      //event.set(new event.entityClass(newEvent));
     }
   };
 
