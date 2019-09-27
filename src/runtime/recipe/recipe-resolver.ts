@@ -39,6 +39,12 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
+    if (handle.fate === '`slot') {
+      return [];
+    }
+    if (handle.type.slandleType()) {
+      return [];
+    }
     const arc = this.arc;
     if (handle.connections.length === 0 ||
         (handle.id && handle.storageKey) || (!handle.type) ||
@@ -59,7 +65,6 @@ export class ResolveWalker extends RecipeWalker {
           mappable = arc.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
-        case '`slot':
         case '?':
           mappable = [];
           break;
@@ -78,7 +83,6 @@ export class ResolveWalker extends RecipeWalker {
           storeById = arc.context.findStoreById(handle.id);
           break;
         case 'create':
-        case '`slot':
         case '?':
           break;
         default:
