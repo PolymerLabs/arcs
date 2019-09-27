@@ -38,7 +38,8 @@ export const runArc = async (msg, bus, runtime, env) => {
     observe: (content, arc) => {
       delete content.particle;
       bus.send({message: 'output', data: content});
-    }
+    },
+    dispose: () => null
   };
 
   // optionally instantiate recipe
@@ -114,5 +115,5 @@ const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) =>
 };
 
 export const stopArc = async ({arcId}, runtime) => {
-  runtime.stopArc(arcId);
+  runtime.stop(arcId);
 };

@@ -125,7 +125,10 @@ export class Runtime {
     // TODO: clear stores, when arc is being disposed.
   }
 
-  unregisterStore(storeId: string) {
+  unregisterStore(storeId: string, tags: string[]) {
+    if (!tags.includes('shared')) {
+      return;
+    }
     const index = this.context.stores.findIndex(store => store.id === storeId);
     if (index >= 0) {
       const store = this.context.stores[index];

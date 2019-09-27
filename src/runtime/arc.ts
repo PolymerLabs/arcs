@@ -169,7 +169,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     DriverFactory.unregister(this.volatileStorageDriverProvider);
 
     for (const store of this._stores) {
-      Runtime.getRuntime().unregisterStore(store.id);
+      Runtime.getRuntime().unregisterStore(store.id, [...this.findStoreTags(store)]);
     }
   }
 
