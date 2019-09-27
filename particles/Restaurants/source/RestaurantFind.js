@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle}) => {
+defineParticle(({UiParticle}) => {
 
   const service = `https://xenonjs.com/services/http/php`;
   const placesService =`${service}/places.php`;
@@ -18,7 +18,7 @@ defineParticle(({DomParticle}) => {
   const makePlacesUrl = ({loc, radius, type}) =>
     `${placesService}?location=${loc}&radius=${radius}&type=${type}`;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     willReceiveProps({location, restaurants}, {count}) {
       if (!count && restaurants && location) {
         this.fetchPlaces(location);
@@ -36,7 +36,9 @@ defineParticle(({DomParticle}) => {
       this.receivePlaces(places);
     }
     async receivePlaces(places) {
-      const results = places.results || [];
+      const results = (places.results || []);
+      // cap # of results
+      //const results = (places.results || []).slice(0, 5);
       const restaurants = results.map(p => this.placeToEntity(p));
       await this.clearHandle('restaurants');
       this.appendRawDataToHandle('restaurants', restaurants);

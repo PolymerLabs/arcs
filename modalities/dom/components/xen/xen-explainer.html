@@ -46,7 +46,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         Mustache expressions used in attributes map a model value to an element *property*.
         The expression below is essentially `li.hidden = hide;`.
         Gotcha: attribute names are forced to lowercase by the parser, so we can only map
-        model values to property names that are all lowercase.
+        model values to property names that are all lowercase (unless we use the trick below).
       -->
       <li hidden="{{hide}}">Probably can't see me.</li>
       <li class="{{class}}">Inverted via CSS class.</li>
@@ -73,8 +73,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <li style="{{objectStyle}}">I'm stylish</li>
       <li style="{{stringStyle}}">I'm stylish</li>
       <!--
-        Setting an Object adds styles to the node.
-        Setting a String replaces styles on the node.
+        Use `xen:style` as an alternate but equivalent syntax if your editor/validator doesn't like
+        `style` used this way.
+      -->
+      <li xen:style="{{objectStyle}}">I'm stylish</li>
+      <li xen:style="{{stringStyle}}">I'm stylish</li>
+      <!--
+        Setting an Object *adds* styles to the node.
+        Setting a String *replaces* styles on the node.
         Use `style%` if there is a conflict with static style attribute.
       -->
       <li style="border: 4px dotted red;" style%="{{objectStyle}}">I'm stylish, and red.</li>

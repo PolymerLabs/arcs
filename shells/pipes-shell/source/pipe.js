@@ -31,6 +31,8 @@ import 'https://$particles/PipeApps/Ingestion.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
+import 'https://$particles/Restaurants/Restaurants.arcs'
+import 'https://$particles/Notification/Notification.arcs'
 `;
 
 export const initPipe = async (client, paths, storage) => {

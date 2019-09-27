@@ -45,7 +45,7 @@ describe('wait for server', () => {
       // TODO(sjmiles): bug in description generator means we don't know
       // if first letter is "Y" or "y", also you could be "free" or "busy"
       await chooseSuggestion('ou are');
-      const calendarNode = `[particle-host="Calendar::action"]`;
+      const calendarNode = `[particle="Calendar"]`;
       await waitFor(calendarNode);
     });
     it('gifts', async function() {

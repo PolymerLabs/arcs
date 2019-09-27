@@ -9,10 +9,12 @@
  */
 'use strict';
 
-defineParticle(({Particle, MultiplexerDomParticle}) => {
-  return class Multiplexer extends MultiplexerDomParticle {
-    constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
-      return Particle.buildManifest`
+/* global defineParticle */
+
+defineParticle(({Particle, UiMultiplexerParticle}) => {
+
+  const composeRecipeManifest = (hostedParticle, itemHandle, slot, other) => Particle.buildManifest`
+
 ${hostedParticle}
 recipe
   use '${itemHandle._id}' as handle1
@@ -22,9 +24,11 @@ recipe
     ${hostedParticle.handleConnections[0].name} <- handle1
     ${other.connections.join('\n')}
     consume ${slot.name} as slot1
-  `;
+`;
+
+  return class Multiplexer extends UiMultiplexerParticle {
+    constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
+      return composeRecipeManifest(hostedParticle, itemHandle, slot, other);
     }
   };
 });
-
-// ${hostedParticle.connections.map((c, i) => `${c.name} = handle${i+1}`).join('  \n')}

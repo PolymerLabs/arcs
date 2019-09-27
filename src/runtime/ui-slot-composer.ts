@@ -142,7 +142,6 @@ export class UiSlotComposer {
 
   async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
     const newConsumers = <SlotConsumer[]>[];
-
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       p.getSlandleConnections().forEach(cs => {
@@ -150,14 +149,12 @@ export class UiSlotComposer {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;
         }
-
         const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, this._containerKind);
         const providedContexts = slotConsumer.createProvidedContexts();
         this._contexts = this._contexts.concat(providedContexts);
         newConsumers.push(slotConsumer);
       });
     });
-
     // Set context for each of the slots.
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
@@ -170,17 +167,13 @@ export class UiSlotComposer {
         context['addSlotConsumer'](consumer);
       }
     });
-
     // Calculate the Descriptions only once per-Arc
     const allArcs = this.consumers.map(consumer => consumer.arc);
     const uniqueArcs = [...new Set(allArcs).values()];
-
     // get arc -> description
     const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
-
     // create a mapping from the zipped uniqueArcs and descriptions
     const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
-
     // ... and apply to each consumer
     for (const consumer of this.consumers) {
       consumer.description = consumerByArc.get(consumer.arc);
@@ -237,18 +230,21 @@ export class UiSlotComposer {
   }
 
   sendEvent(particleId, eventlet) {
-    // TODO(sjmiles): `arc` is bound to `this` in arc.ts specifically for use here, simplify
-    const arc = this['arc'];
-    if (arc) {
-      const particle = arc.activeRecipe.particles.find(
-        particle => String(particle.id) === String(particleId)
-      );
-      if (particle) {
+    log('sendEvent:', particleId, eventlet);
+    const findConsumer = id => this.consumers.find(consumer => consumer.consumeConn.particle.id === id);
+    const consumer = findConsumer(particleId);
+    if (consumer) {
+      const particle = consumer.consumeConn.particle;
+      const arc = consumer.arc;
+      if (arc) {
+        //log('firing PEC event for', particle.name);
         // TODO(sjmiles): we need `arc` and `particle` here even though
         // the two are bound together, simplify
-        //log('firing PEC event for', particle.name);
+        log('... found consumer, particle, and arc to delegate sendEvent');
         arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
       }
+    } else {
+      warn('...found no consumer!');
     }
   }
 

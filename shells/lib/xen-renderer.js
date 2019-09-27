@@ -23,6 +23,9 @@ export const SlotObserver = class {
     this.root = root;
     this.pendingSlots = [];
   }
+  dispose() {
+    this.disposeParticleOutput();
+  }
   disposeParticleOutput() {
     this.root.querySelectorAll(':host > [slotid]').forEach(n => n.innerText = '');
   }

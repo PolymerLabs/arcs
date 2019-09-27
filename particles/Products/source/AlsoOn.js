@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
 
@@ -20,7 +20,7 @@ defineParticle(({DomParticle, html}) => {
 
   `.trim();
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

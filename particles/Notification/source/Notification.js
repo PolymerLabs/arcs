@@ -8,28 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- /* global defineParticle */
+'use strict';
 
-defineParticle(({UiParticle, html}) => {
-
-  const template = html`
-
-  <style>
-    :host {
-      display: none;
-    }
-  </style>
-  
-  <geo-location on-coords="onCoords"></geo-location>
-
-  `;
+defineParticle(({UiParticle}) => {
 
   return class extends UiParticle {
-    get template() {
-      return template;
-    }
-    onCoords(e) {
-      this.updateSingleton('location', e.data.value);
+    render(props, state) {
+      return {
+        modality: 'notification',
+        text: `Don't forget dinner reservations.`
+      };
     }
   };
 

@@ -10,13 +10,13 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
     <div style="padding: 4px 0;">{{message}}</div>
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -29,7 +29,10 @@ defineParticle(({DomParticle, html}) => {
         'Guardian of the Galaxy Figure': `Manufacturer recommended for ages 13 and older.`,
         'Book: How to Draw': `Award-winning book!`
       };
-      return {message: messages[product.name]};
+      return {
+        message: messages[product.name],
+        subid: this.idFor(product)
+      };
     }
   };
 });
