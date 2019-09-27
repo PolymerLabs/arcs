@@ -41,22 +41,37 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
   ready() {
     super.ready();
     const fileElem = this.$.fileElem;
-    this.$.fileSelect.addEventListener("click", function (e) {
+    this.$.fileSelect.addEventListener('click', function(e) {
       if (fileElem) {
         fileElem.click();
       }
     }, false);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('bugreport')) {
+      this.emitFilteredMessages([{ messageType: 'mode-bugreport', }]);
+    }
   }
 
-  onRawMessageBundle(messages) {
-    this.messages = this.messages.concat(messages);
+  onMessage(msg) {
+    switch (msg.messageType) {
+      case 'mode-bugreport':
+        const fileElem = this.$.fileElem;
+        if (fileElem) {
+          fileElem.click();
+        }
+        return;
+      default:
+        this.messages.push(msg);
+        return;
+    }
   }
 
   _saveBugReport() {
-    var zip = new JSZip();
-    var file = zip.file("bugreport.txt", JSON.stringify(this.messages));
-    file.generateAsync({ type: "blob" })
-      .then(function (blob) {
+    const zip = new JSZip();
+    const file = zip.file('bugreport.txt', JSON.stringify(this.messages));
+    file.generateAsync({type: 'blob'})
+      .then(function(blob) {
         const a = document.createElement('a');
         a.download = `bugreport.zip`;
         a.href = window.URL.createObjectURL(blob);
@@ -65,23 +80,26 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
   }
 
   _loadBugReport(event) {
-    let files = event.target.files;
-    for (var i = 0; i < files.length; i++) {
+    const files = event.target.files;
+    for (let i = 0; i < files.length; i++) {
       JSZip.loadAsync(files[i]).then(
         zip => this._decompress(zip),
-        e => alert("Error reading " + f.name + ": " + e.message));
+        e => alert('Error reading ' + f.name + ': ' + e.message));
     }
   }
 
   _decompress(zip) {
     zip.forEach(
-      relativePath => zip.file(relativePath).async("text").then(
+      relativePath => zip.file(relativePath).async('text').then(
         txt => this._handleLog(txt)));
   }
 
   _handleLog(txt) {
-    let messages = JSON.parse(txt);
+    const messages = JSON.parse(txt);
+    console.log(messages);
     this.emitFilteredMessages(messages);
+
+    // document.dispatchEvent(new CustomEvent('raw-messages', {detail: messages}));
   }
 }
 

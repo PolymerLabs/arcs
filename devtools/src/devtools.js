@@ -17,8 +17,8 @@
   const msgQueue = [];
   let windowForEvents = undefined;
 
+  const params = new URLSearchParams(window.location.search);
   const sendMessage = (function chooseConnection() {
-    const params = new URLSearchParams(window.location.search);
     if (params.has('remote-explore-key')) {
       return connectViaWebRtc(params.get('remote-explore-key'));
     } else if (chrome.devtools && chrome.devtools.inspectedWindow.tabId) {
