@@ -71,7 +71,7 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     // TODO: eventually this should replace `spawn`. currently adding a parallel
     // API call, to not affect existing demos.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, tid, bus, runtime, env);
+      return await runArc(msg, bus, runtime, env);
     },
     stopArc: async (msg, tid, bus) => {
       return await stopArc(msg, runtime);
