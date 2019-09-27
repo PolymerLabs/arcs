@@ -10,7 +10,7 @@ public class ParticleBase implements Particle {
   public ParticleSpec spec;
   public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
-  protected Consumer<PortableJson> output;
+  protected Consumer<PortableJson> outputConsumer;
 
   @Override
   public String getId() {
@@ -73,13 +73,13 @@ public class ParticleBase implements Particle {
 
   @Override
   public void setOutput(Consumer<PortableJson> output) {
-    this.output = output;
+    this.outputConsumer = output;
   }
 
   @Override
-  public void renderModel() {
-    if (this.output != null) {
-      this.output.accept(jsonParser.emptyObject()
+  public void output() {
+    if (this.outputConsumer != null) {
+      this.outputConsumer.accept(jsonParser.emptyObject()
           // TODO: add support for slotName.
           .put("template", getTemplate(""))
           .put("model", getModel()));

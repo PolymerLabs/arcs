@@ -79,7 +79,7 @@ public class AutofillDemoActivity extends Activity {
   }
 
   /** Called when an autofill field gets tapped. Requests that the field gets filled. */
-  private void onFieldTap(View view) {
+  public void onFieldTap(View view) {
     autofillManager.requestAutofill(view);
   }
 

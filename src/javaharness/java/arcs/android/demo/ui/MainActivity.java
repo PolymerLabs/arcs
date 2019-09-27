@@ -50,6 +50,9 @@ public class MainActivity extends Activity {
     Button autofillDemoButton = findViewById(R.id.autofill_demo_button);
     autofillDemoButton.setOnClickListener(v -> startAutofillDemo());
 
+    Button notificationDemoButton = findViewById(R.id.notification_demo_button);
+    notificationDemoButton.setOnClickListener(v -> startNotificationDemo());
+
     updateBtn();
   }
 
@@ -73,6 +76,11 @@ public class MainActivity extends Activity {
 
   private void startAutofillDemo() {
     Intent intent = new Intent(this, AutofillDemoActivity.class);
+    startActivity(intent);
+  }
+
+  private void startNotificationDemo() {
+    Intent intent = new Intent(this, NotificationDemoActivity.class);
     startActivity(intent);
   }
 }
