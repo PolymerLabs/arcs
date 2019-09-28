@@ -265,11 +265,14 @@ export class UiSlotComposer {
           containerSlotId: container.targetSlot.id,
         });
       }
-      const modality = particle.recipe.modality;
-      if (!modality.all) {
-        Object.assign(content, {
-          modality: modality.names.join(',')
-        });
+      if (!content.modality) {
+        // Set modality according to particle spec, unless already set by the particle.
+        const modality = particle.recipe.modality;
+        if (!modality.all) {
+          Object.assign(content, {
+            modality: modality.names.join(',')
+          });
+        }
       }
       Object.assign(content, {
         particle,
