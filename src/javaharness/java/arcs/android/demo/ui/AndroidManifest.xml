@@ -12,7 +12,8 @@
   <application>
     <activity
       android:name=".MainActivity"
-      android:label="ArcsHarnessApp">
+      android:label="ArcsHarnessApp"
+      android:exported="false">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
@@ -21,10 +22,12 @@
 
     <activity
       android:name=".AutofillDemoActivity"
-      android:label="Autofill Demo" />
+      android:label="Autofill Demo"
+      android:exported="false" />
 
     <activity
         android:name=".NotificationDemoActivity"
-        android:label="Notification Demo" />
+        android:label="Notification Demo"
+        android:exported="false" />
   </application>
 </manifest>
