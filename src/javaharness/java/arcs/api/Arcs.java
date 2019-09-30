@@ -1,17 +1,44 @@
 package arcs.api;
 
 public interface Arcs {
-  Arc runArc(String recipe);
+  default ArcData runArc(String recipe) {
+    ArcData arcData = new ArcData.Builder().setRecipe(recipe).build();
+    runArc(arcData);
+    return arcData;
+  }
 
-  Arc runArc(String recipe, Particle particle);
+  default ArcData runArc(String recipe, Particle particle) {
+    ArcData arcData = new ArcData.Builder().setRecipe(recipe).setParticle(particle).build();
+    runArc(arcData);
+    return arcData;
+  }
 
-  Arc runArc(String recipe, String arcId, String pecId);
+  default ArcData runArc(String recipe, String arcId, String pecId) {
+    ArcData arcData =
+        new ArcData.Builder().setRecipe(recipe).setArcId(arcId).setPecId(pecId).build();
+    runArc(arcData);
+    return arcData;
+  }
 
-  Arc runArc(String recipe, String arcId, String pecId, Particle particle);
+  default ArcData runArc(String recipe, String arcId, String pecId, Particle particle) {
+    ArcData arcData =
+        new ArcData.Builder()
+            .setRecipe(recipe)
+            .setArcId(arcId)
+            .setPecId(pecId)
+            .setParticle(particle)
+            .build();
+    runArc(arcData);
+    return arcData;
+  }
 
-  void runArc(Arc arc);
+  void runArc(ArcData arcData);
 
-  void stopArc(String arcId, String pecId);
+  void stopArc(ArcData arcData);
 
-  void registerRenderer(String modality, UiRenderer renderer);
+  UiBroker getUiBroker();
+
+  default void registerRenderer(String modality, UiRenderer renderer) {
+    getUiBroker().registerRenderer(modality, renderer);
+  }
 }

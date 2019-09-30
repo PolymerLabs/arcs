@@ -19,7 +19,7 @@ import dagger.Provides;
 public abstract class AndroidClientModule {
 
   @Binds
-  public abstract Arcs providesArcs(AndroidArcsImpl impl);
+  public abstract Arcs providesArcs(ArcsAndroid impl);
 
   // Bind the ArcsServiceBridge to the ArcsEnvironment, so that all of the PEC code communicates
   // via the service bridge (instead of trying to talk directly to JS).

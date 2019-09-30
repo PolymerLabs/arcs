@@ -14,7 +14,7 @@ import javax.inject.Inject;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.android.api.IRemotePecCallback;
-import arcs.api.Arc;
+import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
@@ -120,14 +120,14 @@ public class ArcsService extends IntentService {
         runWhenReady(
             () ->
                 arcs.runArc(
-                    new Arc.Builder()
+                    new ArcData.Builder()
                         .setArcId(arcId)
                         .setPecId(pecId)
                         .setRecipe(recipe)
                         .setParticleId(particleId)
                         .setParticleName(particleName)
                         .setProvidedSlotId(providedSlotId)
-                        .get()));
+                        .build()));
       }
 
       @Override

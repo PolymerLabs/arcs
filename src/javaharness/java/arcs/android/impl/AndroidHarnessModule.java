@@ -15,7 +15,7 @@ import javax.inject.Singleton;
 public abstract class AndroidHarnessModule {
 
   @Binds
-  public abstract Arcs provideArcs(LocalArcsImpl impl);
+  public abstract Arcs provideArcs(ArcsLocal impl);
 
   @Binds
   @Singleton

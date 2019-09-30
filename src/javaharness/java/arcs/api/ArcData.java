@@ -1,9 +1,10 @@
 package arcs.api;
 
-public class Arc {
+public class ArcData {
   private String arcId;
   private String pecId;
   private String recipe;
+  // Only one of either {particleId, particleName}, or particle can be set.
   private String particleId;
   private String particleName;
   private Particle particle;
@@ -23,11 +24,11 @@ public class Arc {
   }
 
   public String getParticleId() {
-    return particleId;
+    return particle == null ? particleId : particle.getId();
   }
 
   public String getParticleName() {
-    return particleName;
+    return particle == null ? particleName : particle.getName();
   }
 
   public Particle getParticle() {
@@ -43,82 +44,80 @@ public class Arc {
   }
 
   public static class Builder {
-    private final Arc arc = new Arc();
+    private final ArcData arcData = new ArcData();
     private final IdGenerator idGenerator = IdGenerator.newSession();
 
     public Builder setArcId(String arcId) {
-      arc.arcId = arcId;
+      arcData.arcId = arcId;
       return this;
     }
 
     public Builder setPecId(String pecId) {
-      arc.pecId = pecId;
+      arcData.pecId = pecId;
       return this;
     }
 
     public Builder setRecipe(String recipe) {
-      arc.recipe = recipe;
+      arcData.recipe = recipe;
       return this;
     }
 
     public Builder setParticleId(String particleId) {
-      if (arc.particle != null) {
+      if (arcData.particle != null) {
         throw new IllegalArgumentException("Cannot set particle id - particle already set");
       }
-      arc.particleId = particleId;
+      arcData.particleId = particleId;
       return this;
     }
 
     public Builder setParticleName(String particleName) {
-      if (arc.particle != null) {
+      if (arcData.particle != null) {
         throw new IllegalArgumentException("Cannot set particle name - particle already set");
       }
-      arc.particleName = particleName;
+      arcData.particleName = particleName;
       return this;
     }
 
     public Builder setParticle(Particle particle) {
-      if (arc.particleName != null || arc.particleId != null) {
+      if (arcData.particleName != null || arcData.particleId != null) {
         throw new IllegalArgumentException(
             "Cannot set particle - particle name and/or id already set");
       }
-      arc.particle = particle;
+      arcData.particle = particle;
       return this;
     }
 
     public Builder setProvidedSlotId(String providedSlotId) {
-      arc.providedSlotId = providedSlotId;
+      arcData.providedSlotId = providedSlotId;
       return this;
     }
 
-    public Arc get() {
+    public ArcData build() {
       Id arcId;
-      if (arc.arcId == null) {
+      if (arcData.arcId == null) {
         arcId = Id.newArcId();
-        arc.arcId = arcId.toString();
+        arcData.arcId = arcId.toString();
       } else {
-        arcId = Id.fromString(arc.arcId);
+        arcId = Id.fromString(arcData.arcId);
       }
-      if (arc.pecId == null) {
-        arc.pecId = idGenerator.newChildId(arcId, "pec").toString();
+      if (arcData.pecId == null) {
+        arcData.pecId = idGenerator.newChildId(arcId, "pec").toString();
       }
-      if (arc.particleName != null) {
-        if (arc.particleId == null) {
-          arc.particleId = idGenerator.newChildId(arcId, "particle").toString();
+      if (arcData.particleName != null) {
+        if (arcData.particleId == null) {
+          arcData.particleId = idGenerator.newChildId(arcId, "particle").toString();
         }
       }
-      if (arc.particle != null) {
-        if (arc.particle.getId() == null) {
-          arc.particle.setId(idGenerator.newChildId(arcId, "particle").toString());
+      if (arcData.particle != null) {
+        if (arcData.particle.getId() == null) {
+          arcData.particle.setId(idGenerator.newChildId(arcId, "particle").toString());
         }
-        arc.particleName = arc.particle.getName();
-        arc.particleId = arc.particle.getId();
-        arc.providedSlotId =
-            arc.particle.providesSlot() ? idGenerator.newChildId(arcId, "slotId").toString() : null;
+        arcData.providedSlotId =
+            arcData.particle.providesSlot() ? idGenerator.newChildId(arcId, "slotId").toString() : null;
       }
-      arc.sessionId = idGenerator.getSessionId();
+      arcData.sessionId = idGenerator.getSessionId();
 
-      return arc;
+      return arcData;
     }
   }
 }

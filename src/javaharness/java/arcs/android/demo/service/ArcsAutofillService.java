@@ -17,7 +17,7 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
-import arcs.api.Arc;
+import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.UiBroker;
 
@@ -59,14 +59,14 @@ public class ArcsAutofillService extends AutofillService {
     }
 
     AutofillParticle autofillParticle = new AutofillParticle(node.get());
-    Arc arc = arcs.runArc("AndroidAutofill", autofillParticle);
+    ArcData arcData = arcs.runArc("AndroidAutofill", autofillParticle);
 
     autofillRenderer.addCallback(
-        arc.getProvidedSlotId(),
+        arcData.getProvidedSlotId(),
         node.get().getAutofillId(),
         fillResponse -> {
           callback.onSuccess(fillResponse);
-          arcs.stopArc(arc.getArcId(), arc.getPecId());
+          arcs.stopArc(arcData);
         });
   }
 

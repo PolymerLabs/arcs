@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.android.api.IRemotePecCallback;
-import arcs.api.Arc;
+import arcs.api.ArcData;
 import arcs.api.ArcsEnvironment;
 
 public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
@@ -41,16 +41,16 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     this.arcsServiceStarter = arcsServiceStarter;
   }
 
-  void startArc(Arc arc, IRemotePecCallback callback) {
+  void startArc(ArcData arcData, IRemotePecCallback callback) {
     runServiceMethod(
         service ->
             service.startArc(
-                arc.getArcId(),
-                arc.getPecId(),
-                arc.getRecipe(),
-                arc.getParticleId(),
-                arc.getParticleName(),
-                arc.getProvidedSlotId(),
+                arcData.getArcId(),
+                arcData.getPecId(),
+                arcData.getRecipe(),
+                arcData.getParticleId(),
+                arcData.getParticleName(),
+                arcData.getProvidedSlotId(),
                 callback));
   }
 
