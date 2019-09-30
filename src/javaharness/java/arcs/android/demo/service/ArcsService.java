@@ -78,7 +78,7 @@ public class ArcsService extends IntentService {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    super.onStartCommand(intent, startId, startId);
+    super.onStartCommand(intent, flags, startId);
     Log.d(TAG, "onStartCommand()");
 
     return START_STICKY;
