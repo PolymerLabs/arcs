@@ -46,12 +46,25 @@ import {Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 
+export enum ErrorSeverity {
+  Error = 'error',
+  Warning = 'warning'
+}
+
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
   key: string;
+  severity = ErrorSeverity.Error;
   constructor(location: AstNode.SourceLocation, message: string) {
     super(message);
     this.location = location;
+  }
+}
+
+export class ManifestWarning extends ManifestError {
+  constructor(location: AstNode.SourceLocation, message: string) {
+    super(location, message);
+    this.severity = ErrorSeverity.Warning;
   }
 }
 
@@ -128,7 +141,8 @@ export class Manifest {
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
-  private errors: ManifestError[] = [];
+  readonly errors: ManifestError[] = [];
+  // readonly warnings: ManifestError[] = [];
 
   constructor({id}: {id: Id | string}) {
     // TODO: Cleanup usage of strings as Ids.
@@ -374,7 +388,7 @@ export class Manifest {
       return await Manifest.parse(content, {
         fileName,
         loader,
-        registry,
+        registry
       });
     })();
     return await registry[fileName];
@@ -386,7 +400,7 @@ export class Manifest {
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {fileName, loader, registry, context, throwImportErrors} = options;
+    let {fileName, loader, registry, context} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -434,10 +448,12 @@ export class Manifest {
           highlight += '^';
         }
         let preamble: string;
+        // Peg Parsing Errors don't have severity attached.
+        const severity = e.severity || ErrorSeverity.Error;
         if (parseError) {
-          preamble = 'Parse error in';
+          preamble = `Parse ${severity} in`;
         } else {
-          preamble = 'Post-parse processing error caused by';
+          preamble = `Post-parse processing ${severity} caused by`;
         }
         message = `${preamble} '${fileName}' line ${e.location.start.line}.
 ${e.message}
@@ -689,9 +705,9 @@ ${e.message}
     }
 
     if (particleItem.hasParticleArgument) {
-      const warning = new ManifestError(particleItem.location, `Particle uses deprecated argument body`);
+      const warning = new ManifestWarning(particleItem.location, `Particle uses deprecated argument body`);
       warning.key = 'hasParticleArgument';
-      manifest['_warnings'].push(warning);
+      manifest.errors.push(warning);
     }
 
     // TODO: loader should not be optional.
@@ -701,6 +717,13 @@ ${e.message}
 
     const processArgTypes = args => {
       for (const arg of args) {
+        if (arg.type && arg.type.kind === 'type-name'
+            // For now let's focus on entities, we should do interfaces next.
+            && arg.type.model && arg.type.model.tag === 'Entity') {
+          const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
+          warning.key = 'externalSchemas';
+          manifest.errors.push(warning);
+        }
         arg.type = arg.type.model;
         processArgTypes(arg.dependentConnections);
       }
