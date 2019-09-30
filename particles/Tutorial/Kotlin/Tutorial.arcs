@@ -6,3 +6,9 @@
 // Tutorial 1: Hello World
 // Create your first particle and recipe.
 import '1_HelloWorld/HelloWorld.arcs'
+
+import '2_BasicTemplates/BasicTemplates.arcs'
+
+import '3_JsonStore/JsonStore.arcs'
+
+import '4_RenderSlots/RenderSlots.arcs'
