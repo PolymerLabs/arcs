@@ -693,9 +693,14 @@ export class WasmParticle extends Particle {
     this.output(content);
   }
 
+  // TODO(sjmiles): deprecated in UiBroker contexts
   // Called by the shell to initiate rendering; the particle will call env._render in response.
   renderSlot(slotName: string, contentTypes: string[]) {
-    // TODO(sjmiles): deprecated
+    const p = this.container.store(slotName);
+    const sendTemplate = contentTypes.includes('template');
+    const sendModel = contentTypes.includes('model');
+    this.exports._renderSlot(this.innerParticle, p, sendTemplate, sendModel);
+    this.container.free(p);
   }
 
   // TODO
@@ -703,11 +708,24 @@ export class WasmParticle extends Particle {
     throw new Error('renderHostedSlot not implemented for wasm particles');
   }
 
+  // TODO(sjmiles): deprecated in UiBroker contexts
   // Actually renders the slot. May be invoked due to an external request via renderSlot(),
   // or directly from the wasm particle itself (e.g. in response to a data update).
   // template is a string provided by the particle. model is an encoded Dictionary.
   renderImpl(slotNamePtr: WasmAddress, templatePtr: WasmAddress, modelPtr: WasmAddress) {
-    // TODO(sjmiles): deprecated
+    const slot = this.slotProxiesByName.get(this.container.read(slotNamePtr));
+    if (slot) {
+      const content: Content = {templateName: 'default'};
+      if (templatePtr) {
+        content.template = this.container.read(templatePtr);
+        slot.requestedContentTypes.add('template');
+      }
+      if (modelPtr) {
+        content.model = new StringDecoder().decodeDictionary(this.container.read(modelPtr));
+        slot.requestedContentTypes.add('model');
+      }
+      slot.render(content);
+    }
   }
 
   // Wasm particles can request service calls with a Dictionary of arguments and an optional string
