@@ -1,0 +1,11 @@
+// Tutorial 2: Basic Templates
+// Shows how to use templates to render data. This recipe has the exact same structure as the Hello World tutorial, only the JS is different.
+
+particle BasicTemplateParticle in 'basic-template.js'
+  `consume Slot root
+
+recipe BasicTemplateRecipe
+  `slot 'rootslotid-root' as root
+  BasicTemplateParticle
+    root consume root
+  description `Javascript Tutorial 2: Basic Templates`
