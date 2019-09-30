@@ -680,8 +680,8 @@ export class WasmParticle extends Particle {
     return p;
   }
 
-  // TODO(sjmiles): UiBroker changes ... we don't have `capabilities` for some reason, so just
-  // go straight to output
+  // TODO(sjmiles): UiBroker changes ... we don't have `capabilities` yet,
+  // so just go straight to output
   output(content) {
     this.container.apiPort.Output(this, content);
   }
