@@ -128,7 +128,7 @@ export class UiSlotComposer {
     // who renderered the slot (i.e. the dom node or other container). The renderer identifies these
     // slots by entity-id (`subid`) instead. But `subid` is not unique, we need more information to
     // locate the output slot, so we embed the muxed-slot's id into our output-slot-id.
-    const hostedSlotId = `${slotConsumer.slotContext.id}___${innerArc.generateID()}`;
+    const hostedSlotId = `${slotConsumer.slotContext.id}___${innerArc.generateID('slot')}`;
     //this._contexts.push(new HostedSlotContext(hostedSlotId, slotConsumer, storeId));
     return hostedSlotId;
   }
