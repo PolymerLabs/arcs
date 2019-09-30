@@ -30,7 +30,7 @@ class StubWasmLoader extends Loader {
 
   async loadWasmBinary(spec): Promise<ArrayBuffer> {
     const file = this.reloaded ? 'wasm-particle-new.wasm' : 'wasm-particle-old.wasm';
-    return super.loadWasmBinary({implFile: `bazel-bin/src/tests/source/${file}`});
+    return super.loadWasmBinary({implFile: `src/tests/source/${file}`});
   }
 
   clone(): StubWasmLoader {

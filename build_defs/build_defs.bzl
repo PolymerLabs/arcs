@@ -17,7 +17,13 @@ def arcs_ts_test(name, src, deps):
     run_in_repo_test(
         name = name,
         srcs = [src],
-        cmd = "./tools/sigh test --bazel --file {SRC}",
+        cmd = "$(location //tools:sigh_bin) test --bazel --file {SRC}",
         tags = EXECUTION_REQUIREMENTS_TAGS,
-        deps = deps + ["//src:core_srcs"],
+        deps = deps + [
+            "//:all_srcs",
+            "//tools:sigh_bin",
+            "//tools:tools_srcs",
+            "//:node_modules",
+            "//:tsconfig"
+        ],
     )

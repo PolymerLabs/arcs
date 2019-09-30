@@ -1,3 +1,18 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "build_bazel_rules_nodejs",
+    sha256 = "0942d188f4d0de6ddb743b9f6642a26ce1ad89f09c0035a9a5ca5ba9615c96aa",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.38.1/rules_nodejs-0.38.1.tar.gz"],
+)
+
+load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories")
+
+node_repositories(
+    package_json = ["//:package.json"],
+    node_version = "10.16.0",
+    yarn_version = "1.13.0",
+)
+
 load("//build_defs/emscripten:repo.bzl", "emsdk_repo")
 load("//build_defs/kotlin_native:repo.bzl", "kotlin_native_repo")
 
@@ -41,8 +56,6 @@ android_sdk_repository(
     name = "androidsdk",
     api_level = 29,
 )
-
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Needed for some reason now
 http_archive(
