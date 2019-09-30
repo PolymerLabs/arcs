@@ -152,6 +152,13 @@ fun serviceResponse(particlePtr: WasmAddress, callPtr: WasmString, responsePtr: 
 
 }
 
+@Retain
+@ExportForCppRuntime("_renderOutput")
+fun renderOutput(particlePtr: WasmAddress) {
+  particlePtr.toObject<Particle>()
+    .renderOutput()
+}
+
 @SymbolName("_singletonSet")
 external fun singletonSet(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
 

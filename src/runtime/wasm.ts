@@ -443,6 +443,7 @@ export class WasmContainer {
       _collectionStore: (p, handle, entity) => this.getParticle(p).collectionStore(handle, entity),
       _collectionRemove: (p, handle, entity) => this.getParticle(p).collectionRemove(handle, entity),
       _collectionClear: (p, handle) => this.getParticle(p).collectionClear(handle),
+      _onRenderOutput: (p, template, model) => this.getParticle(p).onRenderOutput(template, model),
       _render: (p, slotName, template, model) => this.getParticle(p).renderImpl(slotName, template, model),
       _serviceRequest: (p, call, args, tag) => this.getParticle(p).serviceRequest(call, args, tag),
       _resolveUrl: (url) => this.resolve(url),
@@ -526,6 +527,18 @@ export class WasmParticle extends Particle {
     }
     this.innerParticle = this.exports[fn]();
     this.container.register(this, this.innerParticle);
+    // TODO(sjmiles): probably too soon: we need to render at least once, but we may have handle
+    // work pending. @shans says: if the particle has readable handles, onHandleUpdate is guaranteed
+    // to be called, otherwise we need `renderOutput` manually. Need to optimize this across all
+    // particle bases.
+    setTimeout(() => this.renderOutput(), 100);
+  }
+
+  renderOutput() {
+    // TODO(sjmiles): not yet implemented in CPP
+    if (this.exports['_renderOutput']) {
+      this.exports._renderOutput(this.innerParticle);
+    }
   }
 
   // TODO: for now we set up Handle objects with onDefineHandle and map them into the
@@ -667,6 +680,23 @@ export class WasmParticle extends Particle {
     return p;
   }
 
+  // TODO(sjmiles): UiBroker changes ... we don't have `capabilities` for some reason, so just
+  // go straight to output
+  output(content) {
+    this.container.apiPort.Output(this, content);
+  }
+
+  // render request call-back from wasm
+  onRenderOutput(templatePtr: WasmAddress, modelPtr: WasmAddress) {
+    const content: Content = {templateName: 'default'};
+    content.template = this.container.read(templatePtr);
+    content.model = new StringDecoder().decodeDictionary(this.container.read(modelPtr));
+    this.output(content);
+  }
+
+  /**
+   * @deprecated for contexts using UiBroker (e.g Kotlin)
+   */
   // Called by the shell to initiate rendering; the particle will call env._render in response.
   renderSlot(slotName: string, contentTypes: string[]) {
     const p = this.container.store(slotName);
@@ -676,11 +706,17 @@ export class WasmParticle extends Particle {
     this.container.free(p);
   }
 
+  /**
+   * @deprecated for contexts using UiBroker (e.g Kotlin)
+   */
   // TODO
   renderHostedSlot(slotName: string, hostedSlotId: string, content: Content) {
     throw new Error('renderHostedSlot not implemented for wasm particles');
   }
 
+  /**
+   * @deprecated for contexts using UiBroker (e.g Kotlin)
+   */
   // Actually renders the slot. May be invoked due to an external request via renderSlot(),
   // or directly from the wasm particle itself (e.g. in response to a data update).
   // template is a string provided by the particle. model is an encoded Dictionary.
