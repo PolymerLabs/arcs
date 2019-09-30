@@ -4,14 +4,12 @@ load("//build_defs/kotlin_native:build_defs.bzl", "kt_wasm_binary", "kt_wasm_lib
 kt_wasm_binary(
     name = "hello_world",
     srcs = ["1_HelloWorld/HelloWorld.kt"],
-    entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
 
 kt_wasm_binary(
     name = "basic_template",
     srcs = ["2_BasicTemplates/BasicTemplate.kt"],
-    entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
 
@@ -27,6 +25,5 @@ kt_wasm_binary(
         "3_JsonStore/JsonStore.kt",
         ":store_schema",
     ],
-    entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )

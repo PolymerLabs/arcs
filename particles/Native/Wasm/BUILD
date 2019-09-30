@@ -25,7 +25,6 @@ arcs_kt_schema(
 kt_wasm_binary(
     name = "service_particle",
     srcs = ["source/ServiceParticle.kt"],
-    entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
 
@@ -35,6 +34,5 @@ kt_wasm_binary(
         "source/TestParticle.kt",
         ":wasm_schemas",
     ],
-    entry_point = "arcs.main",
     deps = ["//src/wasm/kotlin:arcs"],
 )
