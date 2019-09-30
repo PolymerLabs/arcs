@@ -463,9 +463,6 @@ public:
   // TODO: it doesn't make sense to have both send flags false; ignore, error or convert to enum?
   void renderSlot(const std::string& slot_name, bool send_template = true, bool send_model = true);
 
-  // render request call-back from wasm
-  virtual void onRenderOutput(const std::string& template, Dictionary* model) {}
-
   // Override to react to UI events triggered by handlers in the template provided above.
   // 'slot_name' will correspond to the rendering slot hosting the UI element associated with the
   // event indicated by 'handler'.

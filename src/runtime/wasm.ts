@@ -533,7 +533,9 @@ export class WasmParticle extends Particle {
   }
 
   renderOutput() {
-    this.exports._renderOutput(this.innerParticle);
+    if (this.exports['_renderOutput']) {
+      this.exports._renderOutput(this.innerParticle);
+    }
   }
 
   // TODO: for now we set up Handle objects with onDefineHandle and map them into the
