@@ -116,17 +116,20 @@ export class Runtime {
     this.arcById.delete(name);
   }
 
-  // TODO: This is a temporary method to allow sharing stores with other Arcs.
+  // Temporary method to allow sharing stores with other Arcs (until Context
+  // is properly implemented)
   registerStore(store: StorageProviderBase, tags: string[]): void {
-    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
+  // #shared tag indicates that a store should be made available to all arcs.
+  if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
       // tslint:disable-next-line: no-any
       this.context['_addStore']((store as any) as StorageStub, tags);
     }
-    // TODO: clear stores, when arc is being disposed.
   }
 
+  // Temporary method to allow sharing stores with other Arcs.
   unregisterStore(storeId: string, tags: string[]) {
-    if (!tags.includes('shared')) {
+  // #shared tag indicates that a store was made available to all arcs.
+  if (!tags.includes('shared')) {
       return;
     }
     const index = this.context.stores.findIndex(store => store.id === storeId);
