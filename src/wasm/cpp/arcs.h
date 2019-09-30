@@ -466,7 +466,7 @@ public:
   // TODO(sjmiles): UiBroker: we don't have `capabilities` here, so just go straight to output
   void output(const std::string& content);
   // render request call-back from wasm
-  void onRenderOutput(const std::string& template, Dictionary* model);
+  //void onRenderOutput(const std::string& template, Dictionary* model);
 
   // Override to react to UI events triggered by handlers in the template provided above.
   // 'slot_name' will correspond to the rendering slot hosting the UI element associated with the

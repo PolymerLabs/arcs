@@ -384,10 +384,9 @@ void Particle::renderSlot(const std::string& slot_name, bool send_template, bool
   internal::render(this, slot_name.c_str(), template_ptr, model_ptr);
 }
 
-void Particle::onRenderOutput(const std::string& template, Dictionary* model) {
+//void Particle::onRenderOutput(const std::string& template, Dictionary* model) {
   //
-}
-
+//}
 
 std::string Particle::resolveUrl(const std::string& url) {
   const char* p = internal::resolveUrl(url.c_str());
