@@ -72,6 +72,7 @@ kt_wasm_binary = rule(
             cfg = "host",
         ),
         "entry_point": attr.string(
+            default = 'arcs.main',
             doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.main`."
         )
     },
