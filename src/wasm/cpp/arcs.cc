@@ -44,6 +44,16 @@ void updateHandle(Particle* particle, Handle* handle, const char* encoded1, cons
 }
 
 EMSCRIPTEN_KEEPALIVE
+void output(Particle* particle, const char* content) {
+  // TODO(sjmiles): don't know details
+}
+
+EMSCRIPTEN_KEEPALIVE
+void onRenderOutput(Particle* particle, const char* template, const char* model) {
+  // TODO(sjmiles): don't know details
+}
+
+EMSCRIPTEN_KEEPALIVE
 void renderSlot(Particle* particle, const char* slot_name, bool send_template, bool send_model) {
   particle->renderSlot(slot_name, send_template, send_model);
 }
