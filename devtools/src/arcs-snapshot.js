@@ -73,7 +73,7 @@ class ArcsSnapshot extends MessengerMixin(PolymerElement) {
     const zip = new JSZip();
     const file = zip.file('snapshot.txt', JSON.stringify(
       this.messages.filter(message => message.messageType != 'mode-snapshot')));
-    file.generateAsync({type: 'blob', compression: "DEFLATE"})
+    file.generateAsync({type: 'blob', compression: 'DEFLATE'})
       .then(function(blob) {
         const a = document.createElement('a');
         a.download = `arcs-snapshot.zip`;
@@ -84,7 +84,7 @@ class ArcsSnapshot extends MessengerMixin(PolymerElement) {
 
   _load(event) {
     // Clears all contents in devtools.
-    document.dispatchEvent(new CustomEvent('raw-messages', { detail: [{ messageType: 'page-refresh' }] }));
+    document.dispatchEvent(new CustomEvent('raw-messages', {detail: [{messageType: 'page-refresh'}]}));
 
     const files = event.target.files;
     for (let i = 0; i < files.length; i++) {
