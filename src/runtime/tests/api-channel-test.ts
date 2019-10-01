@@ -92,6 +92,8 @@ describe('API channel', function() {
       onStreamCursorNext() {}
       onSynchronizeProxy() {}
       onInitializeProxy() {}
+      onRegister() {}
+      onProxyMessage() {}
     }(port, arc);
     
 

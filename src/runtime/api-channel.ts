@@ -26,6 +26,9 @@ import {PropagatedException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
+import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
+import {ActiveStore, ProxyCallback, ProxyMessage} from './storageNG/store.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -490,6 +493,8 @@ export abstract class PECOuterPort extends APIPort {
   abstract onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean);
   abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
   abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
+  abstract onRegister(handle: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onProxyMessage(handle: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
@@ -558,6 +563,12 @@ export abstract class PECInnerPort extends APIPort {
   HandleStream(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<number>, @Direct pageSize: number, @Direct forward: boolean) {}
   StreamCursorNext(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<CursorNextValue>, @Direct cursorId: string) {}
   StreamCursorClose(@Mapped handle: StorageProxy, @Direct cursorId: string) {}
+  Register(@Mapped handle: StorageProxyNG<CRDTTypeRecord>,
+           @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
+           @LocalMapped idCallback: Consumer<number>): void  {}
+  ProxyMessage(@Mapped handle: StorageProxyNG<CRDTTypeRecord>,
+               @Direct message: ProxyMessage<CRDTTypeRecord>,
+               @LocalMapped callback: Consumer<Promise<boolean>>): void  {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 
