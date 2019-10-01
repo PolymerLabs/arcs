@@ -52,17 +52,17 @@ abstract class Particle : WasmObject() {
   abstract fun onHandleSync(handle: Handle, willSync: Boolean)
 
   fun renderOutput() {
-    log("renderOutput");
-    var slotName = "";
+    log("renderOutput")
+    val slotName = ""
     val template = getTemplate(slotName)
     val dict = populateModel(slotName)
-    var model = StringEncoder.encodeDictionary(dict)
+    val model = StringEncoder.encodeDictionary(dict)
     onRenderOutput(this.toWasmAddress(), template.toWasmString(), model.toWasmString())
   }
 
   // TODO(sjmiles): deprecated
   fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
-    log("ignoring renderSlot");
+    log("ignoring renderSlot")
   }
 
   fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
