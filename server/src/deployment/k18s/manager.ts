@@ -32,21 +32,22 @@ import {
   V1VolumeMount
 } from '@kubernetes/client-node';
 
-import {ExtensionsV1beta1Deployment} from '../../../node_modules/@kubernetes/client-node/dist/api';
-import {CloudManager} from '../cloud';
-import {Container, ContainerManager, DeploymentStatus} from '../containers';
-import {Disk} from '../disks';
-import {GCE_PERSISTENT_DISK_TYPE} from '../gcp/gcp-constants';
-import {DEFAULT_GCP_DISK_SIZE} from '../gcp/gcpdisk';
-import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from '../utils';
 
+/* eslint-disable-next-line import/extensions */
+import {ExtensionsV1beta1Deployment} from '../../../node_modules/@kubernetes/client-node/dist/api';
+import {CloudManager} from '../cloud.js';
+import {Container, ContainerManager, DeploymentStatus} from '../containers.js';
+import {Disk} from '../disks.js';
+import {GCE_PERSISTENT_DISK_TYPE} from '../gcp/gcp-constants.js';
+import {DEFAULT_GCP_DISK_SIZE} from '../gcp/gcpdisk.js';
+import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from '../utils.js';
 import {
   ARCS_DOCKER_IMAGE,
   ARCS_INGRESS_PREFIX,
   CONTAINER_PORT,
   EXTERNAL_PORT,
   K18S_NAMESPACE
-} from './k18s-constants';
+} from './k18s-constants.js';
 
 
 const USE_PREFIX_MAPPING = true;

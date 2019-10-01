@@ -14,8 +14,8 @@ import {Description} from '../description.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer';
-import {Id, ArcId} from '../id.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {ArcId} from '../id.js';
 import {StubLoader} from '../testing/stub-loader.js';
 
 // tslint:disable-next-line: no-any

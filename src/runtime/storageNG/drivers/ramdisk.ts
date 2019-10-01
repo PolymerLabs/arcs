@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageKey} from '../storage-key';
-import {Runtime} from '../../runtime';
-import {StorageDriverProvider, Exists, DriverFactory} from './driver-factory';
-import {VolatileDriver} from './volatile';
+import {StorageKey} from '../storage-key.js';
+import {Runtime} from '../../runtime.js';
+import {StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
+import {VolatileDriver} from './volatile.js';
 
 export class RamDiskStorageKey extends StorageKey {
   readonly unique: string;
@@ -33,16 +33,16 @@ export class RamDiskStorageKey extends StorageKey {
 /**
  * Provides RamDisk storage drivers. RamDisk storage is shared amongst all Arcs,
  * and will persist for as long as the Arcs Runtime does.
- * 
+ *
  * This works in the exact same way as Volatile storage, but the memory is not
  * tied to a specific running Arc.
  */
 export class RamDiskStorageDriverProvider implements StorageDriverProvider {
-  
+
   willSupport(storageKey: StorageKey): boolean {
     return storageKey.protocol === 'ramdisk';
   }
-  
+
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
@@ -59,7 +59,7 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
 }
 
 // Note that this will automatically register for any production code
-// that uses ramdisk drivers; but it won't automatically register in 
+// that uses ramdisk drivers; but it won't automatically register in
 // testing; for safety, call RamDiskStorageDriverProvider.register()
 // from your test code somewhere.
 RamDiskStorageDriverProvider.register();

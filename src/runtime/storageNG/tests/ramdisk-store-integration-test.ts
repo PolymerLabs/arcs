@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Store, StorageMode, ProxyMessageType} from '../store.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {CountType} from '../../type.js';
@@ -59,7 +59,7 @@ describe('RamDisk + Store Integration', async () => {
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
-   
+
     const count2 = new CRDTCount();
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', value: 23, version: {from: 0, to: 15}});
 
@@ -79,7 +79,7 @@ describe('RamDisk + Store Integration', async () => {
 
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
     assert.strictEqual(results.filter(a => !a).length, 0);
-    
+
     await activeStore1.idle();
     await activeStore2.idle();
 
@@ -124,7 +124,7 @@ describe('RamDisk + Store Integration', async () => {
 
     const results = await Promise.all([opReply1, opReply2, opReply3, opReply4]);
     assert.strictEqual(results.filter(a => !a).length, 0);
-    
+
     await activeStore1.idle();
     await activeStore2.idle();
 

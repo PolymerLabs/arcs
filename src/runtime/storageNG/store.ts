@@ -12,7 +12,7 @@ import {CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type} from '../type.js';
 import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
-import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback} from './store-interface';
+import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
 
@@ -23,10 +23,10 @@ type StoreConstructor = {
 };
 
 // A representation of a store. Note that initially a constructed store will be
-// inactive - it will not connect to a driver, will not accept connections from 
+// inactive - it will not connect to a driver, will not accept connections from
 // StorageProxy objects, and no data will be read or written.
 //
-// Calling 'activate() will generate an interactive store and return it. 
+// Calling 'activate() will generate an interactive store and return it.
 export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
   readonly storageKey: StorageKey;
   exists: Exists;

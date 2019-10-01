@@ -7,9 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ContainerManager} from './containers';
-import {DiskManager} from './disks';
-import {GCPCloud} from './gcp/gcp';
+import {ContainerManager} from './containers.js';
+import {DiskManager} from './disks.js';
+import {GCPCloud} from './gcp/gcp.js';
 
 
 /**

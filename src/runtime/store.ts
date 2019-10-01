@@ -7,9 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PropagatedException} from './arc-exceptions';
-import {Type} from './type';
-import {ParticleExecutionContext} from './particle-execution-context';
+import {PropagatedException} from './arc-exceptions.js';
+import {Type} from './type.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ModelValue} from './storage/crdt-collection-model.js';
 
 /**
@@ -30,22 +30,22 @@ export interface Store {
 export interface SingletonStore extends Store {
   // tslint:disable-next-line: no-any
   get(): Promise<any>;
-  
+
   // tslint:disable-next-line: no-any
   set(entity: any, particleId: string): Promise<void>;
-  
+
   clear(particleId: string): Promise<void>;
 }
 
 export interface CollectionStore extends Store {
   // tslint:disable-next-line: no-any
   get(id: string): Promise<any>;
-  
+
   // tslint:disable-next-line: no-any
   store(value: any, keys: string[], particleId?: string): Promise<void>;
-  
+
   clear?(particleId: string): Promise<void>;
-  
+
   remove(id: string, keys: string[], originatorId?: string): Promise<void>;
 
   // tslint:disable-next-line: no-any
@@ -58,9 +58,9 @@ export interface BigCollectionStore extends Store {
 
   // tslint:disable-next-line: no-any
   store(value: any, keys: string[], originatorId?: string): Promise<void>;
-  
+
   remove(id: string, keys?: string[], originatorId?: string): Promise<void>;
-  
+
   stream(pageSize: number, forward?: boolean): Promise<number>;
 
   // tslint:disable-next-line: no-any

@@ -13,9 +13,9 @@ import {NextFunction, Request, Response} from 'express';
 import express from 'express';
 import fetch from 'node-fetch';
 
-import {AppBase} from './app-base';
-import {CloudManager} from './deployment/cloud';
-import {Container, DeploymentStatus} from './deployment/containers';
+import {AppBase} from './app-base.js';
+import {CloudManager} from './deployment/cloud.js';
+import {Container, DeploymentStatus} from './deployment/containers.js';
 
 interface Deployment {
   id: string;

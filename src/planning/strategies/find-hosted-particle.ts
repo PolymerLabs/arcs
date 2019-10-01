@@ -11,12 +11,11 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec, ParticleSpec} from '../../runtime/particle-spec.js';
-import {Particle} from '../../runtime/recipe/particle';
+import {Particle} from '../../runtime/recipe/particle.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {InterfaceType, Type} from '../../runtime/type.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
-import {Descendant} from '../../runtime/recipe/walker.js';
 
 export class FindHostedParticle extends Strategy {
   async generate(inputParams: StrategyParams) {

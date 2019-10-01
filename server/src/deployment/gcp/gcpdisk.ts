@@ -10,11 +10,10 @@
 import common from '@google-cloud/common';
 import Compute from '@google-cloud/compute';
 
-import {CloudManager} from '../cloud';
-import {Disk, DiskManager} from '../disks';
-import {ARCS_NODE_LABEL, arcsKeyFor, waitForGcp} from '../utils';
-
-import {GCE_PERSISTENT_DISK_TYPE, GCP_ZONE} from './gcp-constants';
+import {CloudManager} from '../cloud.js';
+import {Disk, DiskManager} from '../disks.js';
+import {ARCS_NODE_LABEL, arcsKeyFor, waitForGcp} from '../utils.js';
+import {GCE_PERSISTENT_DISK_TYPE, GCP_ZONE} from './gcp-constants.js';
 
 /**
  * Represents disk storage provisioned on a cloud provider.

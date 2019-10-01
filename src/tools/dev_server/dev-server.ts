@@ -13,9 +13,9 @@ import http from 'http';
 import minimist from 'minimist';
 import morgan from 'morgan';
 
-import {status} from './status-handler';
-import {ExplorerProxy} from './explorer-proxy';
-import {HotReloadServer} from './hot-reload-server';
+import {status} from './status-handler.js';
+import {ExplorerProxy} from './explorer-proxy.js';
+import {HotReloadServer} from './hot-reload-server.js';
 
 // ALDS - Arcs Local Development Server.
 //
@@ -37,7 +37,7 @@ async function launch() {
   const proxy = new ExplorerProxy();
   const hotReloadServer = new HotReloadServer(hotReloadPort);
   await hotReloadServer.init();
-  
+
   const app = express();
   if (options['verbose']) {
     app.use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'));

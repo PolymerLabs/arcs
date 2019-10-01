@@ -11,9 +11,9 @@
 import debug from 'debug';
 import http from 'http';
 
-import {AppBase} from './app-base';
-import {app as masterapp} from './arcs-master-app';
-import {app as dbapp} from './pouch-db-app';
+import {AppBase} from './app-base.js';
+import {app as masterapp} from './arcs-master-app.js';
+import {app as dbapp} from './pouch-db-app.js';
 
 const app: AppBase = process.env.ARCS_MASTER ? masterapp : dbapp;
 
