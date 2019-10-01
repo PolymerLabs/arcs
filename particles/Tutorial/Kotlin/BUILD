@@ -27,3 +27,15 @@ kt_wasm_binary(
     ],
     deps = ["//src/wasm/kotlin:arcs"],
 )
+
+kt_wasm_binary(
+    name = "parent_particle",
+    srcs = ["4_RenderSlots/ParentParticle.kt"],
+    deps = ["//src/wasm/kotlin:arcs"],
+)
+
+kt_wasm_binary(
+    name = "child_particle",
+    srcs = ["4_RenderSlots/ChildParticle.kt"],
+    deps = ["//src/wasm/kotlin:arcs"],
+)
