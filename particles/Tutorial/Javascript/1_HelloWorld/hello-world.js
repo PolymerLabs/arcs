@@ -12,8 +12,8 @@
 // is a subclass of Particle that provides convenient methods for rendering to the DOM. (There are other more basic ways to render to the DOM,
 // but DomParticle provides a nice abstraction for it, similar to React).
 
-defineParticle(({DomParticle, html}) => {
-  return class extends DomParticle {
+defineParticle(({SimpleParticle, html}) => {
+  return class extends SimpleParticle {
     // Getter function which returns static HTML to display. In later tutorials we'll see how to use the templating functionality this provides.
     get template() {
       // You can use the html helper like so to render HTML:
