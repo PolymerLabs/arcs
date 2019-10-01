@@ -68,14 +68,22 @@ export class PlatformLoader extends PlatformLoaderBase {
       // multiple particles not supported: last particle wins
       result = particleWrapper;
     };
+    let err;
     try {
       // import (execute) particle code
       importScripts(url);
     } catch (x) {
-      error(`Error loading Particle from [${path}]`, x);
+      // Note: This error not thrown here to ensure that defineParticle is
+      // deleted.
+      // TODO(jopra): Throwing should ensure that self is never used.
+      // Can this be simplified?
+      err = new Error(`Failed to load particle from '${path}'\n` + x);
     }
     // clean up
     delete self['defineParticle'];
+    if (err) {
+      throw err;
+    }
     return result;
   }
   provisionLogger(fileName: string) {
