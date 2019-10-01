@@ -29,7 +29,7 @@ public class NotificationRenderer implements UiRenderer {
   private final Context context;
   private final PortableJsonParser jsonParser;
 
-  private static final String TAG = "Arcs";
+  private static final String TAG = NotificationRenderer.class.getSimpleName();
 
   @Inject
   NotificationRenderer(@Annotations.AppContext Context context, PortableJsonParser jsonParser) {
@@ -56,15 +56,15 @@ public class NotificationRenderer implements UiRenderer {
             .setContentText(text)
             .setAutoCancel(true);
 
+    String outputSlotId = data.getString(OUTPUT_SLOT_ID_FIELD);
     // TODO(mmandlis): refactor to a generic method usable by other renderers as well.
     if (data.hasKey(HANDLER_FIELD)) {
       String handler = data.getString(HANDLER_FIELD);
-      String outputSlotId = data.getString(OUTPUT_SLOT_ID_FIELD);
 
       Intent notificationIntent = new Intent(context, ArcsService.class);
       notificationIntent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
       notificationIntent.putExtra(
-          ArcsService.INTENT_EVENTLET_FIELD,
+          ArcsService.INTENT_EVENT_DATA_FIELD,
           jsonParser.stringify(jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
       PendingIntent pendingIntent =
           PendingIntent.getService(
@@ -73,7 +73,8 @@ public class NotificationRenderer implements UiRenderer {
     }
 
     NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-    notificationManager.notify(0, builder.build());
+    // TODO: Let particle control the notification id, in case it features multiple notifications.
+    notificationManager.notify(outputSlotId.hashCode(), builder.build());
 
     return true;
   }
