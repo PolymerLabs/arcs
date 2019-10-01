@@ -152,7 +152,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
         if (!conn) return;
         const slandleConn = conn.toSlotConnection();
         if (!slandleConn) return;
-        assert(!slandle.providedSlots[conn.spec.name], `provided slot '${conn.spec.name}'already exists`);
+        assert(!slandle.providedSlots[conn.spec.name], `provided slot '${conn.spec.name}' already exists`);
         slandle.providedSlots[conn.spec.name] = slandleConn.targetSlot;
       });
     }
