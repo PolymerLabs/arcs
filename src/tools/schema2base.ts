@@ -11,7 +11,6 @@ import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
 import {Schema} from '../runtime/schema.js';
-import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 
