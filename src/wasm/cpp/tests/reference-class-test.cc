@@ -5,6 +5,11 @@
 
 using arcs::internal::Accessor;
 
+static auto converter() {
+  return [](const arcs::Ref<arcs::Data>& r) { return arcs::entity_to_str(r); };
+}
+
+
 class TestHandle : public arcs::Handle {
 public:
   void sync(const char* model) override {}
@@ -17,6 +22,7 @@ public:
 
   arcs::Data data;
 };
+
 
 class ReferenceClassApiTest : public TestBase {
 public:
@@ -31,10 +37,10 @@ public:
   }
 
   void test_accessor_methods() {
-    arcs::Ref<arcs::Data> r1(nullptr);
+    arcs::Ref<arcs::Data> r1;
 
     Accessor::decode_entity(&r1, "5:id789|6:key123|");
-    EQUAL(arcs::entity_to_str(r1), "REF<id789:key123>");
+    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123>");
     EQUAL(Accessor::encode_entity(r1), "5:id789|6:key123|");
 
     size_t h1 = arcs::hash_entity(r1);
@@ -68,8 +74,10 @@ public:
   }
 
   void test_empty_references() {
-    arcs::Ref<arcs::Data> r1(nullptr);
+    arcs::Ref<arcs::Data> r1;
 
+    EQUAL(r1.entity(), arcs::Data());
+    IS_FALSE(r1.is_dereferenced());
     EQUAL(arcs::entity_to_str(r1), "REF<>");
     EQUAL(Accessor::encode_entity(r1), "0:|0:|");
     EQUAL(Accessor::get_id(r1), "");
@@ -87,18 +95,24 @@ public:
 
     arcs::Ref<arcs::Data> r1(&handle);
     Accessor::decode_entity(&r1, "5:id789|6:key123|");
-
-    // References initialise with a valid but empty entity.
-    EQUAL(r1.entity(), arcs::Data());
+    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123>");
+    EQUAL(arcs::entity_to_str(r1.entity()), "{}");
 
     // Make a copy prior to dereferencing.
     arcs::Ref<arcs::Data> r2 = r1;
+    IS_FALSE(r1.is_dereferenced());
+    IS_FALSE(r2.is_dereferenced());
 
     // dereference() via TestHandle is synchronous.
     bool called = false;
     r1.dereference([&called] { called = true; });
     IS_TRUE(called);
+    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123|{id789}, num: 42, txt: ltuae>");
     EQUAL(arcs::entity_to_str(r1.entity()), "{id789}, num: 42, txt: ltuae");
+
+    // Dereferencing one Ref instance affects copies.
+    IS_TRUE(r1.is_dereferenced());
+    IS_TRUE(r2.is_dereferenced());
 
     // Populating the reference shouldn't affect the encoded form.
     EQUAL(Accessor::encode_entity(r1), "5:id789|6:key123|");
@@ -153,7 +167,7 @@ public:
     handle.data.set_num(99);
 
     // empty
-    arcs::Ref<arcs::Data> r1(nullptr);
+    arcs::Ref<arcs::Data> r1;
 
     // populated and dereferenced
     arcs::Ref<arcs::Data> r2(&handle);
@@ -161,24 +175,21 @@ public:
     r2.dereference([] {});
 
     // populated but not dereferenced
-    arcs::Ref<arcs::Data> r3(nullptr);
+    arcs::Ref<arcs::Data> r3;
     Accessor::decode_entity(&r3, "3:idB|4:keyB|");
 
     // same reference as r2, but not a copy
-    arcs::Ref<arcs::Data> r4(nullptr);
+    arcs::Ref<arcs::Data> r4;
     Accessor::decode_entity(&r4, "3:idA|4:keyA|");
 
     std::vector<arcs::Ref<arcs::Data>> v = {r1, r2, r3, r4};
-    auto converter = [](const arcs::Ref<arcs::Data>& r) {
-      return arcs::entity_to_str(r) + " " + arcs::entity_to_str(r.entity());
-    };
     std::vector<std::string> expected = {
-      "REF<> {}",
-      "REF<idA:keyA> {idA}, num: 99",
-      "REF<idB:keyB> {}",
-      "REF<idA:keyA> {}"
+      "REF<>",
+      "REF<idA|keyA|{idA}, num: 99>",
+      "REF<idB|keyB>",
+      "REF<idA|keyA>"
     };
-    CHECK_ORDERED(v, converter, expected);
+    CHECK_ORDERED(v, converter(), expected);
   }
 
   void test_stl_set() {
@@ -186,7 +197,7 @@ public:
     handle.data.set_txt("zz");
 
     // empty
-    arcs::Ref<arcs::Data> r1(nullptr);
+    arcs::Ref<arcs::Data> r1;
 
     // dereferenced
     arcs::Ref<arcs::Data> r2(&handle);
@@ -194,24 +205,20 @@ public:
     r2.dereference([] {});
 
     // populated but not dereferenced
-    arcs::Ref<arcs::Data> r3(nullptr);
+    arcs::Ref<arcs::Data> r3;
     Accessor::decode_entity(&r3, "3:idB|4:keyB|");
 
     // same reference as r2, but not a copy
-    arcs::Ref<arcs::Data> r4(nullptr);
+    arcs::Ref<arcs::Data> r4;
     Accessor::decode_entity(&r4, "3:idA|4:keyA|");
 
     std::set<arcs::Ref<arcs::Data>> s = {r1, r2, r3, r4};
-
-    auto converter = [](const arcs::Ref<arcs::Data>& r) {
-      return arcs::entity_to_str(r) + " " + arcs::entity_to_str(r.entity());
-    };
     std::vector<std::string> expected = {
-      "REF<> {}",
-      "REF<idA:keyA> {idA}, txt: zz",
-      "REF<idB:keyB> {}"
+      "REF<>",
+      "REF<idA|keyA|{idA}, txt: zz>",
+      "REF<idB|keyB>"
     };
-    CHECK_UNORDERED(s, converter, expected);
+    CHECK_UNORDERED(s, converter(), expected);
   }
 
   void test_stl_unordered_set() {
@@ -219,7 +226,7 @@ public:
     handle.data.set_lnk("knl");
 
     // empty
-    arcs::Ref<arcs::Data> r1(nullptr);
+    arcs::Ref<arcs::Data> r1;
 
     // dereferenced
     arcs::Ref<arcs::Data> r2(&handle);
@@ -227,24 +234,20 @@ public:
     r2.dereference([] {});
 
     // populated but not dereferenced
-    arcs::Ref<arcs::Data> r3(nullptr);
+    arcs::Ref<arcs::Data> r3;
     Accessor::decode_entity(&r3, "3:idB|4:keyB|");
 
     // same reference as r2, but not a copy
-    arcs::Ref<arcs::Data> r4(nullptr);
+    arcs::Ref<arcs::Data> r4;
     Accessor::decode_entity(&r4, "3:idA|4:keyA|");
 
     std::unordered_set<arcs::Ref<arcs::Data>> s = {r1, r2, r3, r4};
-
-    auto converter = [](const arcs::Ref<arcs::Data>& r) {
-      return arcs::entity_to_str(r) + " " + arcs::entity_to_str(r.entity());
-    };
     std::vector<std::string> expected = {
-      "REF<> {}",
-      "REF<idA:keyA> {idA}, lnk: knl",
-      "REF<idB:keyB> {}"
+      "REF<>",
+      "REF<idA|keyA|{idA}, lnk: knl>",
+      "REF<idB|keyB>"
     };
-    CHECK_UNORDERED(s, converter, expected);
+    CHECK_UNORDERED(s, converter(), expected);
   }
 };
 
