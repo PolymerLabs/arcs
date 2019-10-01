@@ -1,6 +1,6 @@
 package arcs.crdt;
 
-public enum ChangeType {
+enum ChangeType {
   OPERATIONS,
   MODEL
 }

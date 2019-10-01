@@ -1,4 +1,4 @@
-package arcs.android.impl;
+package arcs.crdt;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -6,6 +6,6 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-  PortableJsonAndroidImplTest.class,
+  CrdtTest.class,
 })
 public class AllTests {}

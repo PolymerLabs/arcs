@@ -1,3 +1,3 @@
 package arcs.crdt;
 
-public class CollectionChange<T extends Referenceable> extends CRDTChange<CRDTCollectionTypeRecord<T>> {}
+class CollectionChange<T extends Referenceable> extends CRDTChange<CRDTCollectionTypeRecord<T>> {}

@@ -1,6 +1,6 @@
 package arcs.crdt;
 
-public class MergeResult<T extends CRDTTypeRecord> {
+class MergeResult<T extends CRDTTypeRecord> {
   CRDTChange<T> modelChange;
   CRDTChange<T> otherChange;
 
