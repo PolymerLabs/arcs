@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Disk} from './disks.js';
+import {Disk} from './disks';
 
 /**
  * Represents informations and operations related to deployed containers.
@@ -25,7 +25,7 @@ export interface Container {
   disk(): Promise<Disk>;
 
   status(): DeploymentStatus;
-
+  
   /**
    * Return an externally accessible URL that maps to the running
    * node VM.
