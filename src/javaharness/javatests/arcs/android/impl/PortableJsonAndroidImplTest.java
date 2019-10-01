@@ -5,6 +5,7 @@ import arcs.api.PortableJsonParser;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -17,8 +18,8 @@ public class PortableJsonAndroidImplTest {
     PortableJsonParser parser = new PortableJsonParserAndroidImpl();
     PortableJson obj = parser.emptyObject();
     PortableJson arr = parser.emptyArray();
-    assert obj.keys().size() == 0;
-    assert arr.getLength() == 0;
+    assertEquals(0, obj.keys().size());
+    assertEquals(0, arr.getLength());
   }
 
   @Test
@@ -36,23 +37,25 @@ public class PortableJsonAndroidImplTest {
     obj.put("bool", bool);
     obj.put("obj", innerObj);
 
-    assert new HashSet<>(Arrays.asList(obj.keys().toArray()))
-        .equals(new HashSet<>(Arrays.asList("str", "int", "num", "bool", "obj")));
+    assertEquals(
+        new HashSet<>(Arrays.asList("str", "int", "num", "bool", "obj")),
+        new HashSet<>(Arrays.asList(obj.keys().toArray())));
 
-    assert Objects.equals(obj.getString("str"), str);
+    assertEquals(str, obj.getString("str"));
     System.err.println("int is " + obj.getInt("int") + " vs " + i);
-    assert obj.getInt("int") == i;
-    assert obj.getNumber("num") == num;
-    assert obj.getBool("bool") == bool;
-    assert innerObj.equals(obj.getObject("obj"));
-    assert Objects.equals(parser.stringify(obj.getObject("obj")), parser.stringify(innerObj));
+    assertEquals(i, obj.getInt("int"));
+    assertEquals(num, obj.getNumber("num"), 2);
+    assertEquals(bool, obj.getBool("bool"));
+    assertEquals(innerObj, obj.getObject("obj"));
+    assertEquals(parser.stringify(obj.getObject("obj")), parser.stringify(innerObj));
 
-    assert obj.equals(parser.parse(parser.stringify(obj)));
-    assert Objects.equals(
-        parser.stringify(obj), parser.stringify(parser.parse(parser.stringify(obj))));
+    assertEquals(obj, parser.parse(parser.stringify(obj)));
+    assertEquals(
+        parser.stringify(obj),
+        parser.stringify(parser.parse(parser.stringify(obj))));
 
-    assert !obj.equals(innerObj);
-    assert !innerObj.equals(obj);
+    assertNotSame(obj, innerObj);
+    assertNotSame(innerObj, obj);
   }
 
   @Test
@@ -70,21 +73,20 @@ public class PortableJsonAndroidImplTest {
     obj.put(2, num);
     obj.put(3, bool);
     obj.put(4, innerObj);
-    assert obj.getLength() == 5;
-    assert Objects.equals(obj.getString(0), str);
-    assert obj.getInt(1) == i;
-    assert obj.getNumber(2) == num;
-    assert obj.getBool(3) == bool;
-    assert Objects.equals(parser.stringify(obj.getObject(4)), parser.stringify(innerObj));
-    assert Objects.equals(
-        parser.stringify(obj), parser.stringify(parser.parse(parser.stringify(obj))));
-    System.out.println(parser.stringify(obj));
-    assert parser
-            .parse(parser.stringify(parser.parse(parser.stringify(obj))))
-            .equals(parser.parse(parser.stringify(obj)))
-        : "oi";
-    assert obj.equals(parser.parse(parser.stringify(obj)));
-    assert !obj.equals(innerObj);
-    assert !innerObj.equals(obj);
+    assertEquals(5, obj.getLength());
+    assertEquals(str, obj.getString(0));
+    assertEquals(i, obj.getInt(1));
+    assertEquals(num, obj.getNumber(2), 2);
+    assertEquals(bool, obj.getBool(3));
+    assertEquals(parser.stringify(innerObj), parser.stringify(obj.getObject(4)));
+    assertEquals(
+        parser.stringify(obj),
+        parser.stringify(parser.parse(parser.stringify(obj))));
+    assertEquals(
+        parser.parse(parser.stringify(obj)),
+        parser.parse(parser.stringify(parser.parse(parser.stringify(obj)))));
+    assertEquals(obj, parser.parse(parser.stringify(obj)));
+    assertNotSame(obj, innerObj);
+    assertNotSame(innerObj, obj);
   }
 }
