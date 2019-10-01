@@ -17,7 +17,15 @@ defineParticle(({UiParticle, html, log}) => {
       this.output({
         modality: 'notification',
         title: `Hello`,
-        text: `I'm a notification.`
+        text: `I'm a notification.`,
+        handler: `onNotificationClick`
+      });
+    }
+    onNotificationClick(event) {
+      this.output({
+        modality: 'notification',
+        title: `Hello`,
+        text: `Notification was clicked`
       });
     }
   };

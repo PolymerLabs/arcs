@@ -5,15 +5,12 @@ import android.os.Bundle;
 
 import javax.inject.Inject;
 
-import arcs.android.api.IRemotePecCallback;
-import arcs.android.client.ArcsServiceBridge;
-import arcs.api.Id;
+import arcs.api.Arcs;
 
 /** Notification demo activity. */
 public class NotificationDemoActivity extends Activity {
 
-  @Inject
-  ArcsServiceBridge bridge;
+  @Inject Arcs arcs;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -30,10 +27,6 @@ public class NotificationDemoActivity extends Activity {
   }
 
   private void sendNotification() {
-    bridge.startArc(Id.newArcId().toString(), null, "NotificationTest", null, null, null,
-        new IRemotePecCallback.Stub() {
-          @Override
-          public void onMessage(String message) {}
-        });
+    arcs.runArc("NotificationTest");
   }
 }

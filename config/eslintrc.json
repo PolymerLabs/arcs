@@ -10,7 +10,8 @@
   },
 
   "plugins": [
-    "header"
+    "header",
+    "import"
   ],
 
   "rules": {
@@ -68,7 +69,10 @@
     "linebreak-style": "off",
     "no-multi-spaces": "off",
     "keyword-spacing": [1, {"before": true, "after": true}],
-    "no-constant-condition": "off"
+    "no-constant-condition": "off",
+
+    // Always require .js extension for imported files, but not for node packages.
+    "import/extensions": [1, "always", {"ignorePackages": true}]
   },
   "env": {
     "browser": true,

@@ -11,9 +11,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
-import arcs.android.client.RemotePec;
+import arcs.api.Arcs;
 import arcs.api.PortableJsonParser;
 
 /** Autofill demo activity. Contains Autofill status info, and some example autofill fields. */
@@ -21,7 +20,7 @@ public class AutofillDemoActivity extends Activity {
 
   private static final int REQUEST_CODE_AUTOFILL_SET = 1;
   private AutofillManager autofillManager;
-  @Inject Provider<RemotePec> remotePecProvider;
+  @Inject Arcs arcs;
   @Inject PortableJsonParser jsonParser;
 
   @Override
@@ -87,9 +86,6 @@ public class AutofillDemoActivity extends Activity {
     CapturePerson capturePerson = new CapturePerson();
     capturePerson.setId("capture-person-particle");
     capturePerson.setJsonParser(jsonParser);
-    RemotePec remotePec = remotePecProvider.get();
-    remotePec.setArcId("capture-person-arc");
-    remotePec.setPecId("capture-person-pec");
-    remotePec.runArc("IngestPeople", capturePerson);
+    arcs.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
   }
 }

@@ -155,3 +155,70 @@ public:
 };
 
 DEFINE_PARTICLE(UnconnectedHandlesTest)
+
+
+class InputReferenceHandlesTest : public arcs::Particle {
+public:
+  InputReferenceHandlesTest() {
+    registerHandle("sng", sng_);
+    registerHandle("col", col_);
+    registerHandle("res", res_);
+  }
+
+  void onHandleSync(const std::string& name, bool all_synced) override {
+    if (all_synced) {
+      report("empty_before", sng_.get());
+      sng_.get().dereference([this] { report("empty_after", sng_.get()); });
+    }
+  }
+
+  void onHandleUpdate(const std::string& name) override {
+    if (name == "sng") {
+      report("s::before", sng_.get());
+      sng_.get().dereference([this] { report("s::after", sng_.get()); });
+    } else if (name == "col") {
+      for (auto& ref : col_) {
+        report("c::before", ref);
+        ref.dereference([ref, this] { report("c::after", ref); });
+      }
+    }
+  }
+
+  void report(const std::string& label, const arcs::Ref<arcs::Data>& ref) {
+    arcs::Data d;
+    const std::string& id = arcs::internal::Accessor::get_id(ref);
+    d.set_txt(label + " <" + id + "> " + arcs::entity_to_str(ref.entity()));
+    res_.store(&d);
+  }
+
+  arcs::Singleton<arcs::Ref<arcs::Data>> sng_;
+  arcs::Collection<arcs::Ref<arcs::Data>> col_;
+  arcs::Collection<arcs::Data> res_;
+};
+
+DEFINE_PARTICLE(InputReferenceHandlesTest)
+
+
+class OutputReferenceHandlesTest : public arcs::Particle {
+public:
+  OutputReferenceHandlesTest() {
+    registerHandle("sng", sng_);
+    registerHandle("col", col_);
+  }
+
+  void init() override {
+    arcs::Ref<arcs::Data> r1;
+    arcs::internal::Accessor::decode_entity(&r1, "3:idX|4:keyX|");
+    sng_.set(&r1);
+
+    arcs::Ref<arcs::Data> r2;
+    arcs::internal::Accessor::decode_entity(&r2, "3:idY|4:keyY|");
+    col_.store(&r1);
+    col_.store(&r2);
+  }
+
+  arcs::Singleton<arcs::Ref<arcs::Data>> sng_;
+  arcs::Collection<arcs::Ref<arcs::Data>> col_;
+};
+
+DEFINE_PARTICLE(OutputReferenceHandlesTest)

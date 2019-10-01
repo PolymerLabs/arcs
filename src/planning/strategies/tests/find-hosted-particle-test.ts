@@ -13,11 +13,11 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base';
+import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {Id, ArcId} from '../../../runtime/id.js';
+import {ArcId} from '../../../runtime/id.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);

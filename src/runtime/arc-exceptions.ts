@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Particle} from './particle';
 import {Consumer, Literal} from './hot.js';
 
 export interface SerializedPropagatedException extends Literal {

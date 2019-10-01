@@ -17,7 +17,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
-import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
+import {CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
@@ -812,7 +812,7 @@ recipe
     assert.isTrue(recipe.isResolved());
     const arc = createTestArc(recipe, manifest);
     const fooStore = await arc.createStore(fooType, undefined, 'test:1') as SingletonStorageProvider;
-    const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');
+    const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2') as StorageProviderBase;
 
     return {
       arc,

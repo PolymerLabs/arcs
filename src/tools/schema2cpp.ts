@@ -142,6 +142,9 @@ public:
   }
 
 private:
+  // Ref<T> instances require a Handle pointer; entity classes can ignore it.
+  ${name}(Handle* handle) {}
+
   // Allow private copying for use in Handles.
   ${name}(const ${name}&) = default;
   ${name}& operator=(const ${name}&) = default;

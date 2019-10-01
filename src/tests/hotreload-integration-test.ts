@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../platform/chai-web.js';
-import {StubLoader} from '../runtime/testing/stub-loader';
-import {Manifest} from '../runtime/manifest';
+import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {Manifest} from '../runtime/manifest.js';
 import {Arc} from '../runtime/arc.js';
 import {ArcId} from '../runtime/id.js';
 import {Loader} from '../runtime/loader.js';
@@ -134,7 +134,7 @@ describe('Hot Code Reload for JS Particle', async () => {
     await personStoreIn.set({id: 'id1', rawData: {name: 'Jack', age: 15}});
 
     const recipe = context.recipes[0];
-    recipe.handles[0].mapToStorage(personStoreIn);    
+    recipe.handles[0].mapToStorage(personStoreIn);
     recipe.handles[1].mapToStorage(personStoreOut);
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 
@@ -233,7 +233,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     await personStoreIn.set({id: 'id1', rawData: {name: 'Jack', age: 15}});
 
     const recipe = context.recipes[0];
-    recipe.handles[0].mapToStorage(personStoreIn);    
+    recipe.handles[0].mapToStorage(personStoreIn);
     recipe.handles[1].mapToStorage(personStoreOut);
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 

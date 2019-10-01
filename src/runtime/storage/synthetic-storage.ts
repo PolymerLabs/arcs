@@ -169,7 +169,11 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     this.model = [];
     for (const handle of handles || []) {
       if (this.storageFactory.isPersistent(handle.storageKey)) {
-        this.model.push(new ArcHandle(handle.id, handle.storageKey, handle.mappedType, handle.tags));
+        if (typeof handle.storageKey === 'string') {
+          this.model.push(new ArcHandle(handle.id, handle.storageKey, handle.mappedType, handle.tags));
+        } else {
+          throw new Error(`Can't use old storage stack with NG StorageKey objects`);
+        }
       }
     }
     if (fireEvent) {

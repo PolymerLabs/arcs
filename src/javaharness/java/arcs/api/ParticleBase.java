@@ -57,21 +57,6 @@ public class ParticleBase implements Particle {
   }
 
   @Override
-  public void onHandleSync(Handle handle, PortableJson model) {
-    // TODO: Implement
-  }
-
-  @Override
-  public void onHandleUpdate(Handle handle, PortableJson update) {
-    // TODO: Implement
-  }
-
-  @Override
-  public void onHandleDesync(Handle handle) {
-    // TODO: Implement
-  }
-
-  @Override
   public void setOutput(Consumer<PortableJson> output) {
     this.outputConsumer = output;
   }
@@ -84,15 +69,5 @@ public class ParticleBase implements Particle {
           .put("template", getTemplate(""))
           .put("model", getModel()));
     }
-  }
-
-  @Override
-  public String getTemplate(String slotName) {
-    return "";
-  }
-
-  @Override
-  public String getModel() {
-    return "";
   }
 }

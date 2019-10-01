@@ -4,17 +4,21 @@ import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
-import arcs.android.api.IArcsService;
-import arcs.android.api.IRemoteOutputCallback;
-import arcs.android.api.IRemotePecCallback;
-import arcs.api.ArcsEnvironment;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
 import javax.inject.Inject;
+
+import arcs.android.api.IArcsService;
+import arcs.android.api.IRemoteOutputCallback;
+import arcs.android.api.IRemotePecCallback;
+import arcs.api.ArcData;
+import arcs.api.ArcsEnvironment;
 
 public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
 
@@ -37,16 +41,17 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     this.arcsServiceStarter = arcsServiceStarter;
   }
 
-  public void startArc(
-      String arcId,
-      String pecId,
-      String recipe,
-      String particleId,
-      String particleName,
-      String providedSlotId,
-      IRemotePecCallback callback) {
+  void startArc(ArcData arcData, IRemotePecCallback callback) {
     runServiceMethod(
-        service -> service.startArc(arcId, pecId, recipe, particleId, particleName, providedSlotId, callback));
+        service ->
+            service.startArc(
+                arcData.getArcId(),
+                arcData.getPecId(),
+                arcData.getRecipe(),
+                arcData.getParticleId(),
+                arcData.getParticleName(),
+                arcData.getProvidedSlotId(),
+                callback));
   }
 
   public void stopArc(String arcId, String pecId) {
