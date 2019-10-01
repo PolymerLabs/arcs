@@ -11,6 +11,9 @@
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Entity, EntityRawData} from './entity.js';
+import {Reference} from './reference.js';
+import {ReferenceType} from './type.js';
+import {Storable} from './handle.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
 import {Content} from './slot-consumer.js';
@@ -18,6 +21,7 @@ import {Dictionary} from './hot.js';
 import {Loader} from './loader.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
 
 // Encodes/decodes the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -31,55 +35,72 @@ import {UserException} from './arc-exceptions.js';
 //
 //  <collection> = <num-entities>:<length>:<encoded><length>:<encoded> ...
 //
+//  <reference> = <length>:<id>|<length>:<storage-key>|
+//
 // Examples:
 //   Singleton:   4:id05|txt:T3:abc|lnk:U10:http://def|num:N37:|flg:B1|
 //   Collection:  3:29:4:id12|txt:T4:qwer|num:N9.2:|18:6:id2670|num:N-7:|15:5:id501|flg:B0|
+//   Reference:   5:id461|65:volatile://!684596363489092:example^^volatile-Result {Text value}|
 //
 // The encoder classes also support a "Dictionary" format of key:value string pairs:
 //   <size>:<key-len>:<key><value-len>:<value><key-len>:<key><value-len>:<value>...
 export class EntityPackager {
-  readonly schema: Schema;
-  private encoder = new StringEncoder();
-  private decoder = new StringDecoder();
+  private encoder: StringEncoder;
+  private decoder: StringDecoder;
 
-  constructor(schema: Schema) {
+  constructor(handle: Handle) {
+    const schema = handle.entityClass.schema;
     assert(schema.names.length > 0, 'At least one schema name is required for entity packaging');
-    this.schema = schema;
+
+    let refType: ReferenceType = null;
+    if (handle.type instanceof ReferenceType) {
+      refType = handle.type;
+    } else if (handle.type.getContainedType() instanceof ReferenceType) {
+      refType = handle.type.getContainedType() as ReferenceType;
+    }
+
+    this.encoder = new StringEncoder(schema);
+    this.decoder = new StringDecoder(schema, refType, handle.storage.pec);
   }
 
   encodeSingleton(entity: Entity): string {
-    return this.encoder.encodeSingleton(this.schema, entity);
+    return this.encoder.encodeSingleton(entity);
   }
 
   encodeCollection(entities: Entity[]): string {
-    return this.encoder.encodeCollection(this.schema, entities);
+    return this.encoder.encodeCollection(entities);
   }
 
-  decodeSingleton(str: string): Entity {
-    const {id, data} = this.decoder.decodeSingleton(str);
-    const entity = new (this.schema.entityClass())(data);
-    if (id !== '') {
-      Entity.identify(entity, id);
-    }
-    return entity;
+  decodeSingleton(str: string): Storable {
+    return this.decoder.decodeSingleton(str);
   }
 }
 
+function encodeStr(str: string) {
+  return str.length + ':' + str;
+}
+
 class StringEncoder {
-  encodeSingleton(schema: Schema, entity: Entity): string {
-    const id = Entity.id(entity);
-    let encoded = id.length + ':' + id + '|';
-    for (const [name, value] of Object.entries(entity)) {
-      encoded += this.encodeField(schema.fields[name], name, value);
+  constructor(readonly schema: Schema) {}
+
+  encodeSingleton(entity: Entity): string {
+    if (entity instanceof Reference) {
+      const {id, storageKey} = entity.dataClone();
+      return encodeStr(id) + '|' + encodeStr(storageKey) + '|';
+    } else {
+      const id = Entity.id(entity);
+      let encoded = encodeStr(id) + '|';
+      for (const [name, value] of Object.entries(entity)) {
+        encoded += this.encodeField(this.schema.fields[name], name, value);
+      }
+      return encoded;
     }
-    return encoded;
   }
 
-  encodeCollection(schema: Schema, entities: Entity[]): string {
+  encodeCollection(entities: Entity[]): string {
     let encoded = entities.length + ':';
     for (const entity of entities) {
-      const str = this.encodeSingleton(schema, entity);
-      encoded += str.length + ':' + str;
+      encoded += encodeStr(this.encodeSingleton(entity));
     }
     return encoded;
   }
@@ -88,7 +109,7 @@ class StringEncoder {
     const entries = Object.entries(dict);
     let encoded = entries.length + ':';
     for (const [key, value] of entries) {
-      encoded += key.length + ':' + key + value.length + ':' + value;
+      encoded += encodeStr(key) + encodeStr(value);
     }
     return encoded;
   }
@@ -113,7 +134,7 @@ class StringEncoder {
     switch (type) {
       case 'Text':
       case 'URL':
-        return (value as string).length + ':' + value;
+        return encodeStr(value);
 
       case 'Number':
         return value + ':';
@@ -133,21 +154,35 @@ class StringEncoder {
 
 class StringDecoder {
   str: string;
+  constructor(readonly schema: Schema = null,
+              readonly referenceType: ReferenceType = null,
+              readonly pec: ParticleExecutionContext = null) {}
 
-  decodeSingleton(str: string): {id: string; data: EntityRawData} {
+  decodeSingleton(str: string): Storable {
     this.str = str;
     const len = Number(this.upTo(':'));
     const id = this.chomp(len);
     this.validate('|');
 
-    const data = {};
-    while (this.str.length > 0) {
-      const name = this.upTo(':');
-      const typeChar = this.chomp(1);
-      data[name] = this.decodeValue(typeChar);
+    if (this.referenceType) {
+      const keyLen = Number(this.upTo(':'));
+      const storageKey = this.chomp(keyLen);
       this.validate('|');
+      return new Reference({id, storageKey}, this.referenceType, this.pec);
+    } else {
+      const data = {};
+      while (this.str.length > 0) {
+        const name = this.upTo(':');
+        const typeChar = this.chomp(1);
+        data[name] = this.decodeValue(typeChar);
+        this.validate('|');
+      }
+      const entity = new (this.schema.entityClass())(data);
+      if (id !== '') {
+        Entity.identify(entity, id);
+      }
+      return entity;
     }
-    return {id, data};
   }
 
   decodeDictionary(str: string): Dictionary<string> {
@@ -443,6 +478,7 @@ export class WasmContainer {
       _collectionStore: (p, handle, entity) => this.getParticle(p).collectionStore(handle, entity),
       _collectionRemove: (p, handle, entity) => this.getParticle(p).collectionRemove(handle, entity),
       _collectionClear: (p, handle) => this.getParticle(p).collectionClear(handle),
+      _dereference: (p, handle, refId, continuationId) => this.getParticle(p).dereference(handle, refId, continuationId),
       _render: (p, slotName, template, model) => this.getParticle(p).renderImpl(slotName, template, model),
       _serviceRequest: (p, call, args, tag) => this.getParticle(p).serviceRequest(call, args, tag),
       _resolveUrl: (url) => this.resolve(url),
@@ -543,7 +579,7 @@ export class WasmParticle extends Particle {
       }
       this.handleMap.set(handle, wasmHandle);
       this.revHandleMap.set(wasmHandle, handle);
-      this.converters.set(handle, new EntityPackager(handle.entityClass.schema));
+      this.converters.set(handle, new EntityPackager(handle));
     }
     this.exports._init(this.innerParticle);
   }
@@ -642,6 +678,32 @@ export class WasmParticle extends Particle {
     void collection.clear();
   }
 
+  // Called by particles to retrieve the entity held by a reference-typed handle.
+  async dereference(wasmHandle: WasmAddress, refIdPtr: WasmAddress, continuationId: number) {
+    const handle = this.getHandle(wasmHandle);
+    const converter = this.converters.get(handle);
+    if (!converter) {
+      throw new Error('cannot find handle ' + handle.name);
+    }
+    const refId = this.container.read(refIdPtr);
+
+    let ref: Reference;
+    if (handle instanceof Singleton) {
+      ref = await handle.get() as Reference;
+    } else if (handle instanceof Collection) {
+      ref = await handle.get(refId);
+    } else {
+      throw new Error(`wasm particle '${this.spec.name}' dereferenced an unsupported handle type ${handle._id}`);
+    }
+    let p = 0;
+    if (ref) {
+      const entity = await ref.dereference();
+      p = this.container.store(converter.encodeSingleton(entity));
+    }
+    this.exports._dereferenceResponse(this.innerParticle, continuationId, p);
+    this.container.free(p);
+  }
+
   private getHandle(wasmHandle: WasmAddress) {
     const handle = this.revHandleMap.get(wasmHandle);
     if (!handle) {
@@ -653,14 +715,15 @@ export class WasmParticle extends Particle {
     return handle;
   }
 
-  private decodeEntity(handle: Handle, entityPtr: WasmAddress): Entity {
+  private decodeEntity(handle: Handle, entityPtr: WasmAddress): Storable {
     const converter = this.converters.get(handle);
     return converter.decodeSingleton(this.container.read(entityPtr));
   }
 
-  private ensureIdentified(entity: Entity, handle: Handle): WasmAddress {
+  private ensureIdentified(entity: Storable, handle: Handle): WasmAddress {
     let p = 0;
-    if (!Entity.isIdentified(entity)) {
+    // TODO: rework Reference/Entity internals to avoid this instance check?
+    if (entity instanceof Entity && !Entity.isIdentified(entity)) {
       handle.createIdentityFor(entity);
       p = this.container.store(Entity.id(entity));
     }
