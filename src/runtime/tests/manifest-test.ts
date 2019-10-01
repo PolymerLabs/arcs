@@ -792,7 +792,6 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     recipe.normalize();
     assert.lengthOf(recipe.handles, 2);
-    console.log(recipe.handles.map(h => h.type));
     assert.isTrue(recipe.isResolved());
   });
 
