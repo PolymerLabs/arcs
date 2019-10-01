@@ -38,8 +38,7 @@ export abstract class Schema2Base {
       return;
     }
 
-    const srcPath = `${process.cwd()}/${src}`;
-    const manifest = await Utils.parse(`import '${srcPath}'`);
+    const manifest = await Utils.parse(`import '${src}'`);
 
     // Collect declared schemas along with any inlined in particle connections.
     const schemas: Dictionary<Schema> = {};

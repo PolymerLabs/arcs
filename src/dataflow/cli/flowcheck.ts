@@ -9,23 +9,22 @@
  */
 
 import {FlowGraph} from '../analysis/flow-graph.js';
-import {Loader} from '../../runtime/loader.js';
-import {Manifest} from '../../runtime/manifest.js';
 import {validateGraph} from '../analysis/analysis.js';
+import {Utils} from '../../../shells/lib/utils.js';
 
 // TODO make this a function and test it; it's big enough now
 
 (async () => {
+  Utils.init('../../..');
   const filenames = process.argv.slice(2);
   if (filenames.length === 0) {
     console.error('Usage: flowcheck <manifest files>');
     process.exit(1);
   }
 
-  const loader = new Loader();
   for (const filename of filenames) {
     console.log('Checking file ' + filename);
-    const manifest = await Manifest.load(filename, loader);
+    const manifest = await Utils.parse(`import '${filename}'`);
     for (const recipe of manifest.allRecipes) {
       console.log('  Checking recipe ' + recipe.name);
 
