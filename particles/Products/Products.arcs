@@ -1,17 +1,13 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
 import '../List/List.arcs'
 import 'ProductItem.arcs'
 import 'Gifts.arcs'
 import 'Recommend.arcs'
 import 'Manufacturer.arcs'
 import 'Interests.arcs'
+
+// Generic 'Products' recipe. It has no description so it will never
+// surface as a Suggestion by itself, only when Coalesced.
+// TODO(sjmiles): ironically, not part of the Products demo. Remove?
 
 recipe Products
   use as products
@@ -20,6 +16,8 @@ recipe Products
   ItemMultiplexer
     list = products
     hostedParticle = ProductItem
+
+// Entry point for Products Demo: create a shopping list from context data
 
 recipe CreateShoppingList
   copy as products
@@ -30,6 +28,9 @@ recipe CreateShoppingList
     hostedParticle = ProductItem
   description `create shopping list from ${Items.list}`
 
+// Convert simple shopping list to a shopping list for an occasion, like a birthday
+// add-on for Shopping List
+
 recipe ShopForOccasion
   use as shoplist
   map as person
@@ -39,6 +40,10 @@ recipe ShopForOccasion
     list = shoplist
     hostedParticle = Arrivinator
     consume annotation as annotationSlot
+  // description derives from GiftList particle
+
+// Make items from wishlist available to add to Shopping List
+// add-on for Shopping List
 
 recipe UseWishlist
   map #wishlist as wishlist

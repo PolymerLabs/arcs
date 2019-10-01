@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../../build/platform/log-web.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Xen} from '../components/xen.js';
 import {ArcComponentMixin} from '../components/arc-component.js';
+import {SlotObserver} from '../xen-renderer.js';
 
 const ArcCustomElement = ArcComponentMixin(Xen.AsyncMixin(Xen.Base));
 
-const log = logFactory('ArcElement', '#bb1396');
+const {log, warn} = logsFactory('ArcElement', '#bb1396');
 
 const template = Xen.Template.html`
   <style>
@@ -31,9 +32,9 @@ const template = Xen.Template.html`
       pointer-events: none;
     }
   </style>
-  <div slotid="toproot"></div>
-  <div slotid="root"></div>
-  <div slotid="modal"></div>
+  <div slotid="toproot" id="rootslotid-toproot" ></div>
+  <div slotid="root" id="rootslotid-root"></div>
+  <div slotid="modal" id="rootslotid-modal"></div>
 `;
 
 const ArcElementMixin = Base => class extends Base {
@@ -46,6 +47,16 @@ const ArcElementMixin = Base => class extends Base {
       root: this.host.querySelector('[slotid="root"]'),
       modal: this.host.querySelector('[slotid="modal"]')
     };
+  }
+  // arcs delegate ui work to a `ui-broker`
+  createBroker() {
+    const observer = new SlotObserver(this.host);
+    // TODO(sjmiles): `this.state.host.composer.arc` is < ideal
+    observer.dispatch = (pid, eventlet) => this.dispatchEventlet(this.state.host.composer.arc, pid, eventlet);
+    return observer;
+  }
+  dispatchEventlet(arc, pid, eventlet) {
+    this.state.host.composer.sendEvent(pid, eventlet);
   }
 };
 

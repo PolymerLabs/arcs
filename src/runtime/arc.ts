@@ -169,7 +169,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     DriverFactory.unregister(this.volatileStorageDriverProvider);
 
     for (const store of this._stores) {
-      Runtime.getRuntime().unregisterStore(store.id);
+      Runtime.getRuntime().unregisterStore(store.id, [...this.findStoreTags(store)]);
     }
   }
 
@@ -458,7 +458,7 @@ ${this.activeRecipe.toString()}`;
     const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
-    // if supported, provide particle caching via a BloblUrl representing spec.implFile
+    // if supported, provide particle caching via a BlobUrl representing spec.implFile
     if (!recipeParticle.isJavaParticle()) {
       await this._provisionSpecUrl(recipeParticle.spec);
     }

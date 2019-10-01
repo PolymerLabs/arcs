@@ -1,18 +1,6 @@
-import './schemas/Json.arcs'
-
 particle RenderNotification in './source/RenderNotification.js'
-  out Json output
   consume root
+  modality notification 
 
 recipe NotificationTest
-  create as output
   RenderNotification
-    output = output
-
-particle RenderText in './source/RenderText.java'
-  consume root
-  modality log
-  modality alert
-
-recipe DemoText
-  RenderText

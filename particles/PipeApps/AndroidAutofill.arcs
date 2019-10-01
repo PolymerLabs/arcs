@@ -33,8 +33,6 @@ recipe AndroidAutofill
 
 particle CapturePerson in './source/CapturePerson.java'
   inout [Person] people
-  consume root
-    provide unused
 
 recipe IngestPeople
   create #recentPeople #shared as people

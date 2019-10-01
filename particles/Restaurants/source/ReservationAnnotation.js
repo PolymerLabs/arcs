@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({UiParticle, html, log}) => {
 
   const template = html`
 
@@ -47,7 +47,7 @@ defineParticle(({DomParticle, html, log}) => {
 </template>
 `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -75,7 +75,7 @@ defineParticle(({DomParticle, html, log}) => {
       const restaurantId = this.idFor(restaurant) || '';
       const times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       return {
-        subId: restaurantId,
+        subid: restaurantId,
         availableTimes: {
           $template: 'available-times',
           models: times

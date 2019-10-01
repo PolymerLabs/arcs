@@ -76,27 +76,27 @@ recipe
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 0);
       assert.strictEqual(suggestionsChangeCount, 1);
-      assert.strictEqual(visibleSuggestionsChangeCount, 0);
+      assert.strictEqual(visibleSuggestionsChangeCount, 1);
 
       // Shows all suggestions.
       consumer.setSuggestFilter(true);
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 1);
       assert.strictEqual(suggestionsChangeCount, 1);
-      assert.strictEqual(visibleSuggestionsChangeCount, 1);
+      assert.strictEqual(visibleSuggestionsChangeCount, 2);
 
       // Filters suggestions by string.
       consumer.setSuggestFilter(false, 'show');
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 1);
       assert.strictEqual(suggestionsChangeCount, 1);
-      assert.strictEqual(visibleSuggestionsChangeCount, 1);
+      assert.strictEqual(visibleSuggestionsChangeCount, 2);
 
       consumer.setSuggestFilter(false);
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 0);
       assert.strictEqual(suggestionsChangeCount, 1);
-      assert.strictEqual(visibleSuggestionsChangeCount, 2);
+      assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
       await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List']});
       await helper.makePlans();

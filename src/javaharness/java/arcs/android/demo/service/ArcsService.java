@@ -1,6 +1,6 @@
 package arcs.android.demo.service;
 
-import android.app.Service;
+import android.app.IntentService;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -8,36 +8,45 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import javax.inject.Inject;
+
 import arcs.android.api.IArcsService;
-import arcs.android.api.IRemotePecCallback;
 import arcs.android.api.IRemoteOutputCallback;
+import arcs.android.api.IRemotePecCallback;
+import arcs.api.ArcData;
+import arcs.api.Arcs;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
-import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import arcs.api.UiBroker;
-import arcs.api.UiRenderer;
-import java.util.List;
-import javax.inject.Inject;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
  * ArcsService to communicate with Arcs.
  */
-public class ArcsService extends Service {
+// TODO: this is generic Arcs service class, move outside demo.
+public class ArcsService extends IntentService {
+  public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
 
   private static final String TAG = "Arcs";
 
   private WebView arcsWebView;
   private boolean arcsReady;
 
+  @Inject Arcs arcs;
   @Inject HarnessController harnessController;
   @Inject ShellApiBasedArcsEnvironment shellEnvironment;
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
+  @Inject NotificationRenderer notificationRenderer;
+
+  public ArcsService() {
+    super(ArcsService.class.getSimpleName());
+  }
 
   @Override
   public void onCreate() {
@@ -60,6 +69,22 @@ public class ArcsService extends Service {
     shellEnvironment.addReadyListener(recipes -> arcsReady = true);
 
     harnessController.init();
+
+    uiBroker.registerRenderer("notification", notificationRenderer);
+  }
+
+  @Override
+  public void onDestroy() {
+    Log.d(TAG, "onDestroy()");
+    super.onDestroy();
+  }
+
+  @Override
+  public int onStartCommand(Intent intent, int flags, int startId) {
+    super.onStartCommand(intent, flags, startId);
+    Log.d(TAG, "onStartCommand()");
+
+    return START_STICKY;
   }
 
   @Override
@@ -68,7 +93,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        shellEnvironment.sendMessageToArcs(message, /* listener= */ null);
+        shellEnvironment.sendMessageToArcs(message);
       }
 
       @Override
@@ -91,40 +116,57 @@ public class ArcsService extends Service {
                 },
                 jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
-        // TODO: Use startArc method instead - should be factored out of DeviceClient.
-        PortableJson request =
-            jsonParser
-                .emptyObject()
-                .put("message", "runArc")
-                .put("arcId", arcId)
-                .put("pecId", pecId)
-                .put("providedSlotId", providedSlotId)
-                .put("recipe", recipe);
-        if (particleId != null) {
-          request.put("particleId", particleId).put("particleName", particleName);
-        }
-        runWhenReady(() -> shellEnvironment.sendMessageToArcs(jsonParser.stringify(request), null));
+
+        runWhenReady(
+            () ->
+                arcs.runArc(
+                    new ArcData.Builder()
+                        .setArcId(arcId)
+                        .setPecId(pecId)
+                        .setRecipe(recipe)
+                        .setParticleId(particleId)
+                        .setParticleName(particleName)
+                        .setProvidedSlotId(providedSlotId)
+                        .build()));
       }
 
       @Override
       public void stopArc(String arcId, String pecId) {
-        // TODO: Stop the running arc once the Arcs Runtime supports that.
-
+        runWhenReady(
+            () ->
+                shellEnvironment.sendMessageToArcs(
+                    jsonParser.stringify(
+                        jsonParser.emptyObject().put("message", "stopArc").put("arcId", arcId))));
         pecPortManager.removePecPort(pecId);
       }
 
       @Override
       public void registerRenderer(String modality, IRemoteOutputCallback callback) {
-        uiBroker.registerRenderer(modality, content -> {
-          try {
-            callback.onOutput(jsonParser.stringify(content));
-          } catch (RemoteException e) {
-            throw new RuntimeException(e);
-          }
-          return true;
-        });
+        uiBroker.registerRenderer(
+            modality,
+            content -> {
+              try {
+                callback.onOutput(jsonParser.stringify(content));
+              } catch (RemoteException e) {
+                throw new RuntimeException(e);
+              }
+              return true;
+            });
       }
     };
+  }
+
+  @Override
+  public boolean onUnbind(Intent intent) {
+    Log.d(TAG, "onUnbind()");
+    return super.onUnbind(intent);
+  }
+
+  @Override
+  protected void onHandleIntent(Intent intent) {
+    String referenceId = intent.getStringExtra(INTENT_REFERENCE_ID_FIELD);
+    Log.d(TAG, "Received referenceId " + referenceId);
+    // TODO: pass this ID to Arcs as part an input event.
   }
 
   private void runWhenReady(Runnable runnable) {

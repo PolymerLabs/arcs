@@ -1,11 +1,3 @@
-// @license
-// Copyright (c) 2018 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
 interface HostedItemInterface
   in ~anyType *
   // TODO(sjmiles): using slot-type for form-factor
@@ -20,41 +12,14 @@ particle ItemMultiplexer in 'source/Multiplexer.js'
   host HostedItemInterface hostedParticle
   consume set of item
 
-// TODO(sjmiles): recipe is the minimum coalescable artifact, which is good because we need to be able specify
-// handle fates before colascing ... is there a way to combine the declarations when the recipe has only one Particle?
-//recipe ItemMultiplexer
-  // TODO(sjmiles): restricting fate
-  // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
-//  use #items as list
-//  ItemMultiplexer
-//    list = list
-
-//particle List in 'source/List.js'
-//  in [~anyType] list
-//  consume root #items
-//    must provide set of item
-//      handle items
-//  description `show ${list}`
-
-//recipe List
-//  use #items as items
-//  List
-//    items = items
-//  ItemMultiplexer
-//    list = items
-
 particle Items in 'source/Items.js'
   in [~anyType] list
   consume root #items
     provide preamble
-    must provide set of item
-      handle list
+    provide set of item
     provide set of annotation
-      handle list
     provide action
-      handle list
     provide postamble
-  description `display ${list}`
 
 particle SelectableItems in 'source/Items.js'
   in [~anyType] list
@@ -69,6 +34,18 @@ particle SelectableItems in 'source/Items.js'
       handle list
     provide postamble
   description `display ${list}`
+
+// TODO(sjmiles): recipes below would be for use by Coalescer, but they create
+// too much noise atm.
+
+// TODO(sjmiles): recipe is the minimum coalescable artifact, which is good because we need to be able specify
+// handle fates before colascing ... is there a way to combine the declarations when the recipe has only one Particle?
+//recipe ItemMultiplexer
+  // TODO(sjmiles): restricting fate
+  // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
+//  use #items as list
+//  ItemMultiplexer
+//    list = list
 
 // TODO(sjmiles): nearly duplicate recipes here because we want to support `use` and `copy` but not `create`,
 // maybe there should be a fate for this, or require `create` to be explicit

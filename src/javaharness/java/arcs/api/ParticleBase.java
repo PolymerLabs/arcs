@@ -10,7 +10,7 @@ public class ParticleBase implements Particle {
   public ParticleSpec spec;
   public PortableJsonParser jsonParser;
   protected Map<String, Handle> handleByName = new HashMap<>();
-  protected Consumer<PortableJson> output;
+  protected Consumer<PortableJson> outputConsumer;
 
   @Override
   public String getId() {
@@ -57,42 +57,17 @@ public class ParticleBase implements Particle {
   }
 
   @Override
-  public void onHandleSync(Handle handle, PortableJson model) {
-    // TODO: Implement
-  }
-
-  @Override
-  public void onHandleUpdate(Handle handle, PortableJson update) {
-    // TODO: Implement
-  }
-
-  @Override
-  public void onHandleDesync(Handle handle) {
-    // TODO: Implement
-  }
-
-  @Override
   public void setOutput(Consumer<PortableJson> output) {
-    this.output = output;
+    this.outputConsumer = output;
   }
 
   @Override
-  public void renderModel() {
-    if (this.output != null) {
-      this.output.accept(jsonParser.emptyObject()
+  public void output() {
+    if (this.outputConsumer != null) {
+      this.outputConsumer.accept(jsonParser.emptyObject()
           // TODO: add support for slotName.
           .put("template", getTemplate(""))
           .put("model", getModel()));
     }
-  }
-
-  @Override
-  public String getTemplate(String slotName) {
-    return "";
-  }
-
-  @Override
-  public String getModel() {
-    return "";
   }
 }

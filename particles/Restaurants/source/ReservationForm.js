@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
 
@@ -61,7 +61,6 @@ defineParticle(({DomParticle, html}) => {
     vertical-align: top;
     border: 0;
     background: transparent;
-    font-family: 'Google Sans';
     font-size: 16px;
     line-height: 24px;
   }
@@ -92,7 +91,7 @@ defineParticle(({DomParticle, html}) => {
 </template>
     `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -122,12 +121,21 @@ defineParticle(({DomParticle, html}) => {
         timePicker[`selected${i}`] = Boolean(partySize == i);
       }
       return {
-        subId: restaurantId,
+        subid: restaurantId,
         timePicker: {
           $template: 'time-picker',
           models: [timePicker]
-        }
+        },
+        partySize,
+        date
       };
+    }
+    renderModel(model) {
+      super.renderModel({
+        modality: 'notification',
+        text: `Event for party of ${model.partySize} at ${model.date.toLocaleString()}`
+      });
+      super.renderModel(model);
     }
     initializeEvent() {
       /* Default time selection:
@@ -191,8 +199,7 @@ defineParticle(({DomParticle, html}) => {
       this.storeNewEvent(newEvent);
     }
     storeNewEvent(newEvent) {
-      const event = this.handles.get('event');
-      event.set(new event.entityClass(newEvent));
+      this.set('event', newEvent);
     }
   };
 
