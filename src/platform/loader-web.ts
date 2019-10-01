@@ -68,6 +68,7 @@ export class PlatformLoader extends PlatformLoaderBase {
       // multiple particles not supported: last particle wins
       result = particleWrapper;
     };
+    let err;
     try {
       // import (execute) particle code
       importScripts(url);
