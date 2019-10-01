@@ -71,11 +71,11 @@ type SerializeContext = {handles: string, resources: string, interfaces: string,
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
  * We should be able to remove this once we've switched across to the NG stack.
- * 
+ *
  * Note that for old-style stores, StorageStubs are used *sometimes* to represent storage which isn't activated. For new-style stores,
  * Store itself represents an inactive store, and needs to be activated using activate(). This will present some integration
  * challenges :)
- * 
+ *
  * Note also that old-style stores use strings for Storage Keys, while NG storage uses storageNG/StorageKey subclasses. This provides
  * a simple test for determining whether a store is old or new.
  */
@@ -748,7 +748,7 @@ ${this.activeRecipe.toString()}`;
       return store;
     } else {
       const store = new Store(storageKey, Exists.ShouldCreate, type, id, name);
-      
+
       this._registerStore(store, tags);
       return store;
     }
@@ -856,9 +856,9 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  findStoreTags(store: StorageProviderBase | StorageStub): Set<string> {
-    if (this.storeTags.has(store as StorageProviderBase)) {
-      return this.storeTags.get(store as StorageProviderBase);
+  findStoreTags(store: UnifiedStore | StorageStub): Set<string> {
+    if (this.storeTags.has(store as UnifiedStore)) {
+      return this.storeTags.get(store as UnifiedStore);
     }
     return this._context.findStoreTags(store as StorageStub);
   }
