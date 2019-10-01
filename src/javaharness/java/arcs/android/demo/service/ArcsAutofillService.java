@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
-import arcs.android.client.RemotePec;
+import arcs.api.ArcData;
+import arcs.api.Arcs;
 import arcs.api.UiBroker;
 
 /**
@@ -27,7 +27,7 @@ import arcs.api.UiBroker;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject Provider<RemotePec> remotePecProvider;
+  @Inject Arcs arcs;
   @Inject UiBroker uiBroker;
   @Inject AutofillRenderer autofillRenderer;
 
@@ -58,18 +58,15 @@ public class ArcsAutofillService extends AutofillService {
       return;
     }
 
-    RemotePec remotePec = remotePecProvider.get();
-
     AutofillParticle autofillParticle = new AutofillParticle(node.get());
-    // Start up an Arcs remote PEC and arc with the autofill particle.
-    remotePec.runArc("AndroidAutofill", autofillParticle);
+    ArcData arcData = arcs.runArc("AndroidAutofill", autofillParticle);
 
     autofillRenderer.addCallback(
-        remotePec.getProvidedSlotId(),
+        arcData.getProvidedSlotId(),
         node.get().getAutofillId(),
         fillResponse -> {
           callback.onSuccess(fillResponse);
-          remotePec.shutdown();
+          arcs.stopArc(arcData);
         });
   }
 

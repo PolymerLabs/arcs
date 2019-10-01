@@ -14,9 +14,10 @@ import javax.inject.Inject;
 import arcs.android.api.IArcsService;
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.android.api.IRemotePecCallback;
+import arcs.api.ArcData;
+import arcs.api.Arcs;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
-import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
@@ -26,6 +27,7 @@ import arcs.api.UiBroker;
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
  * ArcsService to communicate with Arcs.
  */
+// TODO: this is generic Arcs service class, move outside demo.
 public class ArcsService extends IntentService {
   public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
 
@@ -34,6 +36,7 @@ public class ArcsService extends IntentService {
   private WebView arcsWebView;
   private boolean arcsReady;
 
+  @Inject Arcs arcs;
   @Inject HarnessController harnessController;
   @Inject ShellApiBasedArcsEnvironment shellEnvironment;
   @Inject PecPortManager pecPortManager;
@@ -113,23 +116,18 @@ public class ArcsService extends IntentService {
                 },
                 jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
-        // TODO: Use startArc method instead - should be factored out of DeviceClient.
-        PortableJson request =
-            jsonParser
-                .emptyObject()
-                .put("message", "runArc")
-                .put("arcId", arcId)
-                .put("recipe", recipe);
-        if (pecId != null) {
-          request.put("pecId", pecId);
-        }
-        if (providedSlotId != null) {
-          request.put("providedSlotId", providedSlotId);
-        }
-        if (particleId != null) {
-          request.put("particleId", particleId).put("particleName", particleName);
-        }
-        runWhenReady(() -> shellEnvironment.sendMessageToArcs(jsonParser.stringify(request)));
+
+        runWhenReady(
+            () ->
+                arcs.runArc(
+                    new ArcData.Builder()
+                        .setArcId(arcId)
+                        .setPecId(pecId)
+                        .setRecipe(recipe)
+                        .setParticleId(particleId)
+                        .setParticleName(particleName)
+                        .setProvidedSlotId(providedSlotId)
+                        .build()));
       }
 
       @Override

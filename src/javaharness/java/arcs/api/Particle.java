@@ -19,19 +19,23 @@ public interface Particle {
 
   Handle getHandle(String id);
 
-  void onHandleSync(Handle handle, PortableJson model);
+  default void onHandleSync(Handle handle, PortableJson model) {}
 
-  void onHandleUpdate(Handle handle, PortableJson update);
+  default void onHandleUpdate(Handle handle, PortableJson update) {}
 
-  void onHandleDesync(Handle handle);
+  default void onHandleDesync(Handle handle) {}
 
   // These APIs are copied from ui-particle.js
   // TODO: Consider adding a similar layer of abstraction, if needed.
-  String getTemplate(String slotName);
+  default String getTemplate(String slotName) { return ""; }
 
-  String getModel();
+  default String getModel() { return ""; }
 
   void setOutput(Consumer<PortableJson> output);
 
   void output();
+
+  // Particle doesn't know its spec until it is instantiated. This is a helper method
+  // indicates to Arcs whether provided slot ID mapping needs to be created with the Renderer.
+  default boolean providesSlot() { return false; }
 }

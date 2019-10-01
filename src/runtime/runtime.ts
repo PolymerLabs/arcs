@@ -128,8 +128,8 @@ export class Runtime {
 
   // Temporary method to allow sharing stores with other Arcs.
   unregisterStore(storeId: string, tags: string[]) {
-  // #shared tag indicates that a store was made available to all arcs.
-  if (!tags.includes('shared')) {
+    // #shared tag indicates that a store was made available to all arcs.
+    if (!tags.includes('shared')) {
       return;
     }
     const index = this.context.stores.findIndex(store => store.id === storeId);

@@ -35,4 +35,7 @@ public class AutofillParticle extends ParticleBase {
     }
     return request;
   }
+
+  @Override
+  public boolean providesSlot() { return true; }
 }

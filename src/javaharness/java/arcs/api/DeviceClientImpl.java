@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.logging.Logger;
+
 import javax.inject.Inject;
 
 public class DeviceClientImpl implements DeviceClient {
@@ -51,7 +52,9 @@ public class DeviceClientImpl implements DeviceClient {
         break;
       case MESSAGE_OUTPUT:
         if (!uiBroker.render(content)) {
-          logger.warning("Skipped rendering content for " + content.getObject("data").getString("containerSlotName"));
+          logger.warning(
+              "Skipped rendering content for "
+                  + content.getObject("data").getString("containerSlotName"));
         }
         break;
       default:
@@ -61,33 +64,8 @@ public class DeviceClientImpl implements DeviceClient {
 
   private void deliverPecMessage(PortableJson message) {
     String pecId = message.getString(FIELD_PEC_ID);
-    String sessionId = message.hasKey(FIELD_SESSION_ID) ? message.getString(FIELD_SESSION_ID) : null;
+    String sessionId =
+        message.hasKey(FIELD_SESSION_ID) ? message.getString(FIELD_SESSION_ID) : null;
     pecPortManager.deliverPecMessage(pecId, sessionId, message);
-  }
-
-  @Override
-  public void startArc(String json, Particle particle) {
-    PortableJson request = jsonParser.parse(json);
-    request.put("message", "runArc");
-    if (!request.hasKey("arcId")) {
-      request.put("arcId", Id.newArcId().toString());
-    }
-    Id arcId = Id.fromString(request.getString("arcId"));
-    if (!request.hasKey("pecId")) {
-      request.put("pecId", IdGenerator.newSession().newChildId(arcId, "pec").toString());
-    }
-    if (particle != null) {
-      request.put("particleId", particle.getId()).put("particleName", particle.getName());
-    }
-
-    createPecForParticle(request.getString("pecId"), particle);
-    environment.sendMessageToArcs(jsonParser.stringify(request));
-  }
-
-  private void createPecForParticle(String pecId, Particle particle) {
-    PECInnerPort pecInnerPort = pecPortManager.getOrCreateInnerPort(pecId, /* sessionId= */ null);
-    if (particle != null) {
-      pecInnerPort.mapParticle(particle);
-    }
   }
 }

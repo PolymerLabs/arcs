@@ -1,5 +1,6 @@
 package arcs.android.impl;
 
+import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
@@ -12,6 +13,9 @@ import javax.inject.Singleton;
 /** Dagger module for the Android Harness (i.e. the main ArcsService). */
 @Module(includes = AndroidCommonModule.class)
 public abstract class AndroidHarnessModule {
+
+  @Binds
+  public abstract Arcs provideArcs(ArcsLocal impl);
 
   @Binds
   @Singleton
