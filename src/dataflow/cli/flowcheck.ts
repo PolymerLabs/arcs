@@ -23,10 +23,10 @@ import {Utils} from '../../../shells/lib/utils.js';
   }
 
   for (const filename of filenames) {
-    console.log('Checking file ' + filename);
+    console.log(`Checking file ${filename}`);
     const manifest = await Utils.parse(`import '${filename}'`);
     for (const recipe of manifest.allRecipes) {
-      console.log('  Checking recipe ' + recipe.name);
+      console.log(`  Checking recipe ${recipe.name}`);
 
       if (!recipe.normalize()) {
         console.error(`    Failed to normalize recipe ${recipe.name}`);
@@ -45,7 +45,7 @@ import {Utils} from '../../../shells/lib/utils.js';
         console.log('    Data-flow checks passed.');
       } else {
         for (const failure of result.getFailureMessages(graph)) {
-          console.error('    ' + failure);
+          console.error(`    ${failure}`);
         }
       }
     }
