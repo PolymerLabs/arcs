@@ -6,6 +6,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({
+  CrdtTest.class,
   PortableJsonAndroidImplTest.class,
 })
 public class AllTests {}

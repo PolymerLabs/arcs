@@ -10,6 +10,7 @@ java_test(
         "//java/arcs/android/impl:impl",
         "@junit//jar",
         "//java/arcs/api:api-android",
+        "//java/arcs/crdt:crdt-android",
     ],
 )
 
