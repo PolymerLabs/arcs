@@ -30,6 +30,7 @@ import arcs.api.UiBroker;
 // TODO: this is generic Arcs service class, move outside demo.
 public class ArcsService extends IntentService {
   public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
+  public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
 
   private static final String TAG = "Arcs";
 
@@ -164,9 +165,17 @@ public class ArcsService extends IntentService {
 
   @Override
   protected void onHandleIntent(Intent intent) {
+    // TODO(mmandlis): refactor into an Arcs API method.
     String referenceId = intent.getStringExtra(INTENT_REFERENCE_ID_FIELD);
+    String eventlet = intent.getStringExtra(INTENT_EVENT_DATA_FIELD);
     Log.d(TAG, "Received referenceId " + referenceId);
-    // TODO: pass this ID to Arcs as part an input event.
+    shellEnvironment.sendMessageToArcs(
+        jsonParser.stringify(
+            jsonParser
+                .emptyObject()
+                .put("message", "uiEvent")
+                .put("particleId", referenceId)
+                .put("eventlet", jsonParser.parse(eventlet))));
   }
 
   private void runWhenReady(Runnable runnable) {

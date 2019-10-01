@@ -18,7 +18,7 @@ import {requireIngestionArc} from './ingestion-arc.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
-import {runArc, stopArc} from './verbs/run-arc.js';
+import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
@@ -70,10 +70,13 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
     },
-    // TODO: eventually this should replace `spawn`. currently adding a parallel
-    // API call, to not affect existing demos.
+    // TODO: consolidate runArc and uiEvent with spawn and event, as well as
+    // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
       return await runArc(msg, bus, runtime, env);
+    },
+    uiEvent: async (msg, tid, bus) => {
+      return await uiEvent(msg, runtime);
     },
     stopArc: async (msg, tid, bus) => {
       return await stopArc(msg, runtime);

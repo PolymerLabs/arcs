@@ -231,7 +231,8 @@ export class UiSlotComposer {
 
   sendEvent(particleId, eventlet) {
     log('sendEvent:', particleId, eventlet);
-    const findConsumer = id => this.consumers.find(consumer => consumer.consumeConn.particle.id === id);
+    const findConsumer = id => this.consumers.find(
+        consumer => consumer.consumeConn.particle.id.toString() === id);
     const consumer = findConsumer(particleId);
     if (consumer) {
       const particle = consumer.consumeConn.particle;

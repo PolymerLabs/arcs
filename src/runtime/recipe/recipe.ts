@@ -335,7 +335,15 @@ export class Recipe implements Cloneable<Recipe> {
       }
     }
     return null;
+  }
 
+  findParticle(id: string): Particle {
+    for (const particle of this.particles) {
+      if (particle.id.toString() === id) {
+        return particle;
+      }
+    }
+    return null;
   }
 
   get patterns(): string[] {
