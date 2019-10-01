@@ -11,16 +11,13 @@ import './file-pane.js';
 import './output-pane.js';
 import '../configuration/whitelisted.js';
 import {DevShellLoader} from './loader.js';
+import {createUiComposer} from './ui-composer.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
-import {Modality} from '../../build/runtime/modality.js';
-import {ModalityHandler} from '../../build/runtime/modality-handler.js';
 import {PecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
-import {SlotComposer} from '../../build/runtime/slot-composer.js';
-import {SlotDomConsumer} from '../../build/runtime/slot-dom-consumer.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 
@@ -30,6 +27,7 @@ import '../../build/services/random-service.js';
 const files = document.getElementById('file-pane');
 const output = document.getElementById('output-pane');
 const popup = document.getElementById('popup');
+
 init();
 
 function init() {
@@ -68,9 +66,9 @@ recipe
   P
     data <- h0`;
 
-    const exampleParticle = `\
-defineParticle(({DomParticle, html, log}) => {
-  return class extends DomParticle {
+    const exampleParticle = `
+defineParticle(({SimpleParticle, html, log}) => {
+  return class extends SimpleParticle {
     get template() {
       log(\`Add '?log' to the URL to enable particle logging\`);
       return html\`<span>{{num}}</span> : <span>{{str}}</span>\`;
@@ -90,7 +88,6 @@ function execute() {
 }
 
 async function wrappedExecute() {
-  SlotDomConsumer.clearCache();  // prevent caching of template strings
   document.dispatchEvent(new Event('clear-arcs-explorer'));
   output.reset();
 
@@ -121,15 +118,7 @@ async function wrappedExecute() {
       continue;
     }
 
-    const slotComposer = new SlotComposer({
-      modalityName: Modality.Name.Dom,
-      modalityHandler: ModalityHandler.domHandler,
-      containers: {
-        toproot: arcPanel.arcToproot,
-        root: arcPanel.arcRoot,
-        modal: arcPanel.arcModal,
-      }
-    });
+    const slotComposer = createUiComposer(arcPanel.shadowRoot);
     const storage = new StorageProviderFactory(id);
     const arc = new Arc({
       id,
