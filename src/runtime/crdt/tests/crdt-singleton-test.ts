@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ChangeType, CRDTError} from '../crdt';
-import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton';
+import {ChangeType} from '../crdt.js';
+import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton.js';
 
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {
@@ -86,7 +86,7 @@ describe('CRDTSingleton', () => {
       clock: {A: 1},
     });
     assert.deepEqual(
-      singleton.getData().values, {'1': {value: {id: '1'}, version: {A: 1}}}); 
+      singleton.getData().values, {'1': {value: {id: '1'}, version: {A: 1}}});
     assert.deepEqual(singleton.getParticleView(), {id: '1'});
 
     // Another actor concurrently setting a value, both values will be kept.

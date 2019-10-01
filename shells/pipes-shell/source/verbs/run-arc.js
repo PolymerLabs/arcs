@@ -117,3 +117,8 @@ const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) =>
 export const stopArc = async ({arcId}, runtime) => {
   runtime.stop(arcId);
 };
+
+export const uiEvent = async ({particleId, eventlet}, runtime) => {
+  const arc = runtime.findArcByParticleId(particleId);
+  arc.pec.slotComposer.sendEvent(particleId, eventlet);
+};

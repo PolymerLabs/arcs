@@ -14,66 +14,70 @@ import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Reference} from '../reference.js';
 import {Entity} from '../entity.js';
+import {Handle} from '../handle.js';
+
+function fakeHandle(schema) {
+  return {
+    entityClass: {schema},
+    type: {getContainedType: () => null},
+    storage: {pec: null}
+  } as Handle;
+}
+
+async function setup() {
+  const manifest = await Manifest.parse(`
+    schema Foo
+      Text      txt
+      URL       lnk
+      Number    num
+      Boolean   flg`);
+  const schema = manifest.schemas.Foo;
+  return {entityClass: schema.entityClass(), handle: fakeHandle(schema)};
+}
 
 describe('wasm', () => {
-
-  let manifest;
-  before(async () => {
-    manifest = await Manifest.parse(`
-      schema Foo
-        Text      txt
-        URL       lnk
-        Number    num
-        Boolean   flg`);
-  });
-
   it('entity packaging supports basic field types', async () => {
-    const schema = manifest.schemas.Foo;
-    const entityClass = schema.entityClass();
+    const {entityClass, handle} = await setup();
     const foo = new entityClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true});
     Entity.identify(foo, 'test');
 
-    const packager = new EntityPackager(schema);
+    const packager = new EntityPackager(handle);
     const encoded = packager.encodeSingleton(foo);
     assert.deepEqual(foo, packager.decodeSingleton(encoded));
   });
 
   it('entity packaging supports partially assigned entity', async () => {
-    const schema = manifest.schemas.Foo;
-    const entityClass = schema.entityClass();
+    const {entityClass, handle} = await setup();
     const foo = new entityClass({txt: 'abc', num: -5.1});
     Entity.identify(foo, '!test:foo:bar|');
 
-    const packager = new EntityPackager(schema);
+    const packager = new EntityPackager(handle);
     const encoded = packager.encodeSingleton(foo);
     assert.deepEqual(foo, packager.decodeSingleton(encoded));
   });
 
   it('entity packaging supports zero and empty values', async () => {
-    const schema = manifest.schemas.Foo;
-    const entityClass = schema.entityClass();
+    const {entityClass, handle} = await setup();
     const foo = new entityClass({txt: '', lnk: '', num: 0, flg: false});
     Entity.identify(foo, 'te|st');
 
-    const packager = new EntityPackager(schema);
+    const packager = new EntityPackager(handle);
     const encoded = packager.encodeSingleton(foo);
     assert.deepEqual(foo, packager.decodeSingleton(encoded));
   });
 
   it('entity packaging supports empty entity', async () => {
-    const schema = manifest.schemas.Foo;
-    const entityClass = schema.entityClass();
+    const {entityClass, handle} = await setup();
     const foo = new entityClass({});
     Entity.identify(foo, 'te st');
 
-    const packager = new EntityPackager(schema);
+    const packager = new EntityPackager(handle);
     const encoded = packager.encodeSingleton(foo);
     assert.deepEqual(foo, packager.decodeSingleton(encoded));
   });
 
   it('entity packaging encodes collections', async () => {
-    const schema = manifest.schemas.Foo;
-    const entityClass = schema.entityClass();
+    const {entityClass, handle} = await setup();
 
     const make = (id, data) => {
       const foo = new entityClass(data);
@@ -85,7 +89,7 @@ describe('wasm', () => {
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
 
-    const packager = new EntityPackager(schema);
+    const packager = new EntityPackager(handle);
     const encoded = packager.encodeCollection([f1, f2, f3]);
 
     // Decoding of collections hasn't been implemented (yet?).
@@ -108,7 +112,7 @@ describe('wasm', () => {
     const verify = (schema, value) => {
       const entity = new (schema.entityClass())({foo: value});
       Entity.identify(entity, 'test');
-      assert.throws(() => new EntityPackager(schema).encodeSingleton(entity), 'not yet supported');
+      assert.throws(() => new EntityPackager(fakeHandle(schema)).encodeSingleton(entity), 'not yet supported');
     };
 
     const makeRef = entityType => new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(entityType), null);

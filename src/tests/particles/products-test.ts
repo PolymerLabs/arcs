@@ -16,6 +16,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 
 describe('products test', () => {
   const manifestFilename = './src/tests/particles/artifacts/products-test.recipes';
@@ -65,7 +66,7 @@ describe('products test', () => {
               // fix. It's particularly bad here as there's no guarantee that the backingStore
               // exists - should await ensureBackingStore() before accessing it.
               const reference = arc._stores[0]['_model'].getValue(content.model.items.models[0].id);
-              const store = arc._stores[0].backingStore;
+              const store = (arc._stores[0] as StorageProviderBase).backingStore;
               assert.equal(store.storageKey, reference.storageKey);
               assert.equal('Harry Potter', store['_model'].getValue(reference.id).rawData.name);
             }

@@ -46,6 +46,9 @@ public class PecPortManager {
   }
 
   private PECInnerPort createInnerPecPort(String pecId, String sessionId) {
+    if (ports.containsKey(pecId)) {
+      throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
+    }
     PECInnerPort pecInnerPort = portFactory.createPECInnerPort(pecId, sessionId);
     ports.put(pecId, pecInnerPort);
     return pecInnerPort;

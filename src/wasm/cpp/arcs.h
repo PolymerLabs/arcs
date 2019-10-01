@@ -16,6 +16,7 @@ using Dictionary = std::unordered_map<std::string, std::string>;
 
 class Handle;
 class Particle;
+template<typename T> class Ref;
 
 namespace internal {
 extern "C" {
@@ -29,6 +30,7 @@ extern void singletonClear(Particle* p, Handle* h);
 extern const char* collectionStore(Particle* p, Handle* h, const char* encoded);
 extern void collectionRemove(Particle* p, Handle* h, const char* encoded);
 extern void collectionClear(Particle* p, Handle* h);
+extern void dereference(Particle* p, Handle* h, const char* ref_id, size_t continuation_id);
 extern void render(Particle* p, const char* slotName, const char* template_str, const char* model);
 extern void serviceRequest(Particle* p, const char* call, const char* args, const char* tag);
 
@@ -57,7 +59,7 @@ public:
   std::string upTo(char sep);
   int getInt(char sep);
   std::string chomp(int len);
-  void validate(std::string token);
+  void validate(const std::string& token);
   template<typename T> void decode(T& val);
 
   static void decodeList(const char* str, std::function<void(const std::string&)> callback);
@@ -96,6 +98,7 @@ public:
   StringPrinter& operator=(const StringPrinter&) = delete;
 
   void addId(const std::string& id);
+  void add(const char* literal);
   template<typename T> void add(const char* prefix, const T& val);
   std::string result(const char* join);
 
@@ -170,7 +173,20 @@ public:
   static void set_id(T* entity, const std::string& id) {
     entity->_internal_id_ = id;
   }
+
+  // Ref-based versions of all of the above; implemented below the Ref class definition.
+  template<typename T> static Ref<T> clone_entity(const Ref<T>& ref);
+  template<typename T> static size_t hash_entity(const Ref<T>& ref);
+  template<typename T> static bool fields_equal(const Ref<T>& a, const Ref<T>& b);
+  template<typename T> static std::string entity_to_str(const Ref<T>& ref, const char* join);
+  template<typename T> static void decode_entity(Ref<T>* ref, const char* str);
+  template<typename T> static std::string encode_entity(const Ref<T>& ref);
+  template<typename T> static const std::string& get_id(const Ref<T>& ref);
+  template<typename T> static void set_id(Ref<T>* ref, const std::string& id);
 };
+
+// Wrapper type for user-provided dereference continuations.
+using DerefContinuation = std::function<void(const char*)>;
 
 }  // namespace internal
 
@@ -228,11 +244,16 @@ class Handle {
 public:
   virtual ~Handle() {}
 
+  const std::string& name() const { return name_; }
+
   // These are called by the runtime and should not be used directly by Particle implementations.
   virtual void sync(const char* model) = 0;
   virtual void update(const char* encoded1, const char* encoded2) = 0;
 
-  const std::string& name() const { return name_; }
+  // Trampoline function that exists to avoid having a Particle pointer in every Ref instance;
+  // Ref already has a pointer to this Handle, and we have the required Particle pointer here.
+  // This should not be used directly by Particle implementations, and is virtual for testing.
+  virtual void dereference(const std::string& ref_id, internal::DerefContinuation fn);
 
 protected:
   bool failForDirection(Direction bad_dir) const;
@@ -250,7 +271,7 @@ class Singleton : public Handle {
 public:
   void sync(const char* model) override {
     failForDirection(Out);
-    entity_ = T();
+    entity_ = T(this);
     internal::Accessor::decode_entity(&entity_, model);
   }
 
@@ -389,7 +410,7 @@ private:
   void add(const char* added) {
     failForDirection(Out);
     internal::StringDecoder::decodeList(added, [this](const std::string& str) {
-      std::unique_ptr<T> eptr(new T());
+      std::unique_ptr<T> eptr(new T(this));
       internal::Accessor::decode_entity(eptr.get(), str.c_str());
       entities_.erase(eptr->_internal_id_);  // emplace doesn't overwrite
       entities_.emplace(eptr->_internal_id_, std::move(eptr));
@@ -399,6 +420,148 @@ private:
   Map entities_;
 };
 
+// Arcs-style reference to an entity.
+template<typename T>
+class Ref {
+public:
+  // References are copyable and share a pointer to the underlying entity data.
+  Ref(Handle* handle = nullptr) : handle_(handle), dereferenced_(false),  entity_(new T()) {}
+
+  // Retrieve the referenced entity data from the backing store. The first time this is called,
+  // the given continuation will be executed *asynchronously* - i.e. after the calling function has
+  // completed. Care should be taken with values being captured by a continuation lambda. Subsequent
+  // calls will immediately execute the continuation with the previously retrieved entity data.
+  // Example usage:
+  //
+  //   // Given the class field: arcs::Singleton<arcs::Ref<arcs::Data>> data_
+  //   void onHandleUpdate(const std::string& name) override {
+  //     if (name == "data") {
+  //       data_.get().dereference([this] {
+  //         do_something_with(data_.get().entity());
+  //       });
+  //     }
+  //   }
+  //
+  // This method needs to be const because the object is returned as const from handles, but it does
+  // modify the internal state of this object to update a local copy of the retrieved entity data.
+  void dereference(std::function<void()> continuation) const {
+    if (dereferenced_) {
+      continuation();
+    } else if (handle_ != nullptr) {
+      auto wrapped = [this, fn = std::move(continuation)](const char* encoded) {
+        internal::Accessor::decode_entity(entity_.get(), encoded);
+        dereferenced_ = true;
+        fn();
+      };
+      // The handle simply bounces this to its owning particle, adding itself as a parameter.
+      handle_->dereference(_internal_id_, std::move(wrapped));
+    }
+  }
+
+  // Returns the underlying entity data. If this object has not been dereferenced yet,
+  // this will be an empty instance of the entity type T.
+  const T& entity() const {
+    return *entity_;
+  }
+
+  // Unlike the generated entity classes, arcs::fields_equal and operator== are equivalent for Refs.
+  bool operator==(const Ref<T>& other) const {
+    return _internal_id_ == other._internal_id_ && storage_key_ == other.storage_key_;
+  }
+
+  bool operator!=(const Ref<T>& other) const {
+    return !(*this == other);
+  }
+
+  // For STL containers.
+  friend bool operator<(const Ref<T>& a, const Ref<T>& b) {
+    int cmp = a._internal_id_.compare(b._internal_id_);
+    return (cmp != 0) ? (cmp < 0) : (a.storage_key_.compare(b.storage_key_) < 0);
+  }
+
+private:
+  std::string _internal_id_;
+  std::string storage_key_;
+  Handle* handle_;
+
+  // Mutable because dereference() needs to be const but still modifies this.
+  mutable bool dereferenced_;
+  std::shared_ptr<T> entity_;
+
+  friend class Singleton<Ref<T>>;
+  friend class Collection<Ref<T>>;
+  friend class internal::Accessor;
+};
+
+template<typename T>
+inline Ref<T> internal::Accessor::clone_entity(const Ref<T>& ref) {
+  return ref;
+}
+
+template<typename T>
+inline size_t internal::Accessor::hash_entity(const Ref<T>& ref) {
+  size_t h = 0;
+  internal::hash_combine(h, ref._internal_id_);
+  internal::hash_combine(h, ref.storage_key_);
+  return h;
+}
+
+template<typename T>
+inline bool internal::Accessor::fields_equal(const Ref<T>& a, const Ref<T>& b) {
+  return a == b;
+}
+
+template<typename T>
+inline std::string internal::Accessor::entity_to_str(const Ref<T>& ref, const char* unused) {
+  internal::StringPrinter printer;
+  printer.add("REF<", ref._internal_id_);
+  if (!ref.storage_key_.empty()) {
+    printer.add(":", ref.storage_key_);
+  }
+  printer.add(">");
+  return printer.result("");
+}
+
+template<typename T>
+inline void internal::Accessor::decode_entity(Ref<T>* ref, const char* str) {
+  if (str != nullptr) {
+    internal::StringDecoder decoder(str);
+    decoder.decode(ref->_internal_id_);
+    decoder.validate("|");
+    decoder.decode(ref->storage_key_);
+    decoder.validate("|");
+  }
+}
+
+template<typename T>
+inline std::string internal::Accessor::encode_entity(const Ref<T>& ref) {
+  internal::StringEncoder encoder;
+  encoder.encode("", ref._internal_id_);
+  encoder.encode("", ref.storage_key_);
+  return encoder.result();
+}
+
+template<typename T>
+inline const std::string& internal::Accessor::get_id(const Ref<T>& ref) {
+  return ref._internal_id_;
+}
+
+template<typename T>
+inline void internal::Accessor::set_id(Ref<T>* ref, const std::string& id) {
+  ref->_internal_id_ = id;
+}
+
+}  // namespace arcs
+
+// For STL unordered associative containers.
+template<typename T>
+struct std::hash<arcs::Ref<T>> {
+  size_t operator()(const arcs::Ref<T>& ref) const {
+    return arcs::hash_entity(ref);
+  }
+};
+
+namespace arcs {
 
 // --- Particle base class ---
 // TODO: port sync tracking and auto-render to the JS particle.
@@ -494,11 +657,29 @@ public:
   // Called by the runtime to update a handle.
   void update(Handle* handle);
 
+  // Called by handles on behalf of their contained reference objects. The runtime will
+  // retrieve the entity data for the reference and pass it to dereferenceResponse().
+  void dereference(Handle* handle, const std::string& ref_id, internal::DerefContinuation fn) {
+    continuations_.emplace(++continuation_id_, std::move(fn));
+    internal::dereference(this, handle, ref_id.c_str(), continuation_id_);
+  }
+
+  void dereferenceResponse(size_t continuation_id, const char* encoded) {
+    continuations_[continuation_id](encoded);
+    continuations_.erase(continuation_id);
+  }
+
 private:
   std::unordered_map<std::string, Handle*> handles_;
   std::unordered_set<Handle*> to_sync_;
   std::string auto_render_slot_;
+  std::unordered_map<size_t, internal::DerefContinuation> continuations_;
+  size_t continuation_id_ = 0;
 };
+
+inline void Handle::dereference(const std::string& ref_id, internal::DerefContinuation fn) {
+  particle_->dereference(this, ref_id, std::move(fn));
+}
 
 // Defines an exported function 'newParticleName()' that the runtime will call to create
 // particles inside the wasm container.

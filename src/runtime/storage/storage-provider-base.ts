@@ -19,6 +19,7 @@ import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../sto
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
 import {ClaimIsTag} from '../particle-claim.js';
+import {UnifiedStore} from '../arc.js';
 
 enum EventKind {
   change = 'Change'
@@ -107,7 +108,7 @@ export class ChangeEvent {
 /**
  * Docs TBD
  */
-export abstract class StorageProviderBase implements Comparable<StorageProviderBase>, Store {
+export abstract class StorageProviderBase implements Comparable<StorageProviderBase>, Store, UnifiedStore {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private nextLocalID: number;
   private readonly _type: Type;
@@ -197,7 +198,7 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
     }
   }
 
-  _compareTo(other: StorageProviderBase): number {
+  _compareTo(other: UnifiedStore): number {
     let cmp;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
@@ -249,7 +250,7 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
    */
   abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
-  abstract cloneFrom(store: StorageProviderBase | StorageStub);
+  abstract cloneFrom(store: UnifiedStore | StorageStub): void;
 
   // TODO(shans): remove this when it's possible to.
   abstract async ensureBackingStore();

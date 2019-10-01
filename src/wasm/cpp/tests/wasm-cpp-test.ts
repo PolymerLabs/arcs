@@ -12,8 +12,9 @@ import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {RozSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
-import {VolatileSingleton, VolatileCollection} from '../../../runtime/storage/volatile-storage.js';
+import {VolatileStorage, VolatileSingleton, VolatileCollection} from '../../../runtime/storage/volatile-storage.js';
 import {assertThrowsAsync} from '../../../runtime/testing/test-util.js';
+import {ReferenceType} from '../../../runtime/type.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -233,7 +234,16 @@ describe('wasm tests (C++)', () => {
     `), `Wasm particle failed to connect handle 'input'`);
   });
 
-  it('entity class API', async () => {
+  // Some wasm tests print out lists of test cases, and it is much more readable if these can be
+  // printed after the main test name.
+  function prefix(title, fn) {
+    it(title, async () => {
+      console.log('    »', title);
+      await fn();
+    });
+  }
+
+  prefix('entity class API', async () => {
     const {stores} = await setup(`
       import '${schemasFile}'
 
@@ -251,7 +261,7 @@ describe('wasm tests (C++)', () => {
     }
   });
 
-  it('special schema fields', async () => {
+  prefix('special schema fields', async () => {
     const {stores} = await setup(`
       import '${schemasFile}'
 
@@ -267,5 +277,113 @@ describe('wasm tests (C++)', () => {
     if (errors.length > 0) {
       assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
     }
+  });
+
+  prefix('reference class API', async () => {
+    const {stores} = await setup(`
+      import '${schemasFile}'
+
+      particle ReferenceClassApiTest in '${buildDir}/test-module.wasm'
+        out [Data] errors
+
+      recipe
+        ReferenceClassApiTest
+          errors -> h1
+      `);
+    const errStore = stores.get('errors') as VolatileCollection;
+    const errors = (await errStore.toList()).map(e => e.rawData.txt);
+    if (errors.length > 0) {
+      assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
+    }
+  });
+
+  it('reading from reference-typed handles', async () => {
+    const {arc, stores} = await setup(`
+      import '${schemasFile}'
+
+      particle InputReferenceHandlesTest in '${buildDir}/test-module.wasm'
+        in Reference<Data> sng
+        in [Reference<Data>] col
+        out [Data] res
+
+      recipe
+        InputReferenceHandlesTest
+          sng <- handle0
+          col <- handle1
+          res -> handle2
+      `);
+
+    const sng = stores.get('sng') as VolatileSingleton;
+    const col = stores.get('col') as VolatileCollection;
+    const res = stores.get('res') as VolatileCollection;
+    assert.instanceOf(sng.type, ReferenceType);
+    assert.instanceOf(col.type.getContainedType(), ReferenceType);
+
+    // onHandleSync tests the behaviour of uninitialised references.
+    assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
+      'empty_before <> {}',    // no id or entity data, both before and after dereferencing
+      'empty_after <> {}'
+    ]);
+    await res.clearItemsForTesting();
+
+    // onHandleUpdate tests the behaviour of populated references.
+    const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
+    const backingStore = await volatileEngine.baseStorageFor(sng.type, volatileEngine.baseStorageKey(sng.type));
+    await backingStore.store({id: 'id1', rawData: {txt: 'ok'}}, ['key1']);
+    await backingStore.store({id: 'id2', rawData: {num: 23}}, ['key2']);
+    const storageKey = backingStore.storageKey;
+
+    // Singleton
+    await sng.set({id: 'id1', storageKey});
+    await arc.idle;
+    assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
+      's::before <id1> {}',               // before dereferencing: contained entity is empty
+      's::after <id1> {id1}, txt: ok'     // after: entity is populated, ids should match
+    ]);
+    await res.clearItemsForTesting();
+
+    // Collection
+    await col.store({id: 'id1', storageKey}, ['key1a']);
+    await arc.idle;
+    assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
+      'c::before <id1> {}',               // ref to same entity as singleton; still empty in this handle
+      'c::after <id1> {id1}, txt: ok'
+    ]);
+    await res.clearItemsForTesting();
+
+    await col.store({id: 'id2', storageKey}, ['key2a']);
+    await arc.idle;
+    assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
+      'c::before <id1> {id1}, txt: ok',   // already populated by the previous deref
+      'c::after <id1> {id1}, txt: ok',
+      'c::before <id2> {}',
+      'c::after <id2> {id2}, num: 23'
+    ]);
+  });
+
+  it('writing to reference-typed handles', async () => {
+    const {arc, stores} = await setup(`
+      import '${schemasFile}'
+
+      particle OutputReferenceHandlesTest in '${buildDir}/test-module.wasm'
+        out Reference<Data> sng
+        out [Reference<Data>] col
+
+      recipe
+        OutputReferenceHandlesTest
+          sng -> handle0
+          col -> handle1
+      `);
+
+    const sng = stores.get('sng') as VolatileSingleton;
+    const col = stores.get('col') as VolatileCollection;
+    assert.instanceOf(sng.type, ReferenceType);
+    assert.instanceOf(col.type.getContainedType(), ReferenceType);
+
+    assert.deepStrictEqual(await sng.get(), {id: 'idX', rawData: {id: 'idX', storageKey: 'keyX'}});
+    assert.sameDeepMembers(await col.toList(), [
+      {id: 'idX', rawData: {id: 'idX', storageKey: 'keyX'}},
+      {id: 'idY', rawData: {id: 'idY', storageKey: 'keyY'}}
+    ]);
   });
 });
