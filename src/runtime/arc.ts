@@ -14,7 +14,7 @@ import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
-import {Runnable, Consumer} from './hot.js';
+import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './modality.js';
@@ -38,8 +38,9 @@ import {Runtime} from './runtime.js';
 import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
 import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {Store, StorageMode} from './storageNG/store.js';
+import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -67,39 +68,6 @@ type DeserializeArcOptions = Readonly<{
 }>;
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
-
-/**
- * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
- * We should be able to remove this once we've switched across to the NG stack.
- *
- * Note that for old-style stores, StorageStubs are used *sometimes* to represent storage which isn't activated. For new-style stores,
- * Store itself represents an inactive store, and needs to be activated using activate(). This will present some integration
- * challenges :)
- *
- * Note also that old-style stores use strings for Storage Keys, while NG storage uses storageNG/StorageKey subclasses. This provides
- * a simple test for determining whether a store is old or new.
- */
-export interface UnifiedStore {
-  id: string;
-  name: string;
-  source: string;
-  type: Type;
-  storageKey: string | StorageKey;
-  version?: number; // TODO(shans): This needs to be a version vector for new storage.
-  referenceMode: boolean;
-  _compareTo(other: UnifiedStore): number;
-  toString(tags: string[]): string; // TODO(shans): This shouldn't be called toString as toString doesn't take arguments.
-  // TODO(shans): toLiteral is currently used in _serializeStore, during recipe serialization. It's used when volatile
-  // stores need to be written out as resources into the manifest. Problem is, it expects a particular CRDT model shape;
-  // for new storage we probably need to extract the model from the store instead and have the CRDT directly produce a
-  // JSON representation for insertion into the serialization.
-  // tslint:disable-next-line no-any
-  toLiteral: () => Promise<any>;
-  cloneFrom(store: UnifiedStore): void;
-  modelForSynchronization(): {};
-  on(type: string, fn: Consumer<{}>, target: {}): void;
-  description: string;
-}
 
 export class Arc {
   private readonly _context: Manifest;

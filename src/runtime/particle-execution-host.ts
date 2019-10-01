@@ -10,9 +10,9 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {PECOuterPort, APIPort} from './api-channel.js';
+import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
-import {Arc, UnifiedStore} from './arc.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {StorageStub} from './storage-stub.js';
@@ -26,6 +26,7 @@ import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProvider
 import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
+import {Arc} from './arc.js';
 
 export type StartRenderOptions = {
   particle: Particle;

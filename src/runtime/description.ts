@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
-import {Arc, UnifiedStore} from './arc.js';
+import {Arc} from './arc.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';

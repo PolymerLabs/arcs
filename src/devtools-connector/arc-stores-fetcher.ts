@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc, UnifiedStore} from '../runtime/arc.js';
+import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {StorageStub} from '../runtime/storage-stub.js';
-import {StorageProviderBase, SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
+import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
 
 type Result = {
   name: string,
@@ -31,7 +32,7 @@ export class ArcStoresFetcher {
   private arc: Arc;
   private arcDevtoolsChannel: ArcDevtoolsChannel;
   private watchedHandles: Set<string> = new Set();
-  
+
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     this.arc = arc;
     this.arcDevtoolsChannel = arcDevtoolsChannel;
