@@ -14,7 +14,7 @@ import '../deps/golden-layout/src/css/goldenlayout-base.css.js';
 import '../deps/golden-layout/src/css/goldenlayout-light-theme.css.js';
 
 import './arcs-overview.js';
-import './arcs-bug-report.js';
+import './arcs-snapshot.js';
 import './arcs-stores.js';
 import './arcs-planning.js';
 import './arcs-communication-channel.js';
@@ -70,7 +70,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
         <div divider></div>
         <arcs-hot-reload></arcs-hot-reload>
         <div divider></div>
-        <arcs-bug-report></arcs-bug-report>
+        <arcs-snapshot></arcs-snapshot>
       </div>
     </header>
     <div id="main"></div>

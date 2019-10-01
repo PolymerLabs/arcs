@@ -13,9 +13,9 @@ import {MessengerMixin} from './arcs-shared.js';
 import '../deps/jszip/dist/jszip.js';
 
 /**
- * Saves/loads a bug report which contains debug messages sent to devtools.
+ * Saves/loads a snapshot which contains messages captured by devtools.
  */
-class ArcsBugReport extends MessengerMixin(PolymerElement) {
+class ArcsSnapshot extends MessengerMixin(PolymerElement) {
   static get template() {
     return html`
     <style include="shared-styles">
@@ -25,13 +25,14 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
       }
     </style>
     <div class="wrapper">
-      <input type="file" id="fileElem" style="display:none" on-change="_loadBugReport">
-      <button id="fileSelect">Load Bug Report</button>
-      <button type="button" on-click="_saveBugReport">Save Bug Report</button>
+      <iron-icon icon="image:photo-camera"></iron-icon>
+      <input type="file" id="fileElem" style="display:none" on-change="_load">
+      <button id="fileSelect">Load Snapshot</button>
+      <button type="button" on-click="_save">Take Snapshot</button>
     </div>`;
   }
 
-  static get is() { return 'arcs-bug-report'; }
+  static get is() { return 'arcs-snapshot'; }
 
   constructor() {
     super();
@@ -40,46 +41,51 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
 
   ready() {
     super.ready();
-    const fileElem = this.$.fileElem;
-    this.$.fileSelect.addEventListener('click', function(e) {
-      if (fileElem) {
-        fileElem.click();
-      }
-    }, false);
 
     const params = new URLSearchParams(window.location.search);
-    if (params.has('bugreport')) {
-      this.emitFilteredMessages([{ messageType: 'mode-bugreport', }]);
+    const hasSnapshot = params.has('snapshot');
+
+    this.$.fileSelect.addEventListener(
+      'click',
+      e => hasSnapshot ? this.$.fileElem.click() : window.location.href = '?snapshot',
+      false);
+
+    if (hasSnapshot) {
+      this.emitFilteredMessages([{messageType: 'mode-snapshot'}]);
     }
   }
 
-  onMessage(msg) {
-    switch (msg.messageType) {
-      case 'mode-bugreport':
-        const fileElem = this.$.fileElem;
-        if (fileElem) {
-          fileElem.click();
-        }
+  onMessage(message) {
+    switch (message.messageType) {
+      case 'mode-snapshot':
+         this.$.fileElem.click();
         return;
       default:
-        this.messages.push(msg);
         return;
     }
   }
 
-  _saveBugReport() {
+  onRawMessageBundle(messages) {
+    this.messages.push(...messages);
+  }
+
+  _save() {
     const zip = new JSZip();
-    const file = zip.file('bugreport.txt', JSON.stringify(this.messages));
-    file.generateAsync({type: 'blob'})
+    const file = zip.file('snapshot.txt', JSON.stringify(
+      this.messages.filter(message => message.messageType != 'mode-snapshot')));
+    file.generateAsync({type: 'blob', compression: "DEFLATE"})
       .then(function(blob) {
         const a = document.createElement('a');
-        a.download = `bugreport.zip`;
+        a.download = `arcs-snapshot.zip`;
         a.href = window.URL.createObjectURL(blob);
         a.click();
       });
   }
 
-  _loadBugReport(event) {
+  _load(event) {
+    // Clears all contents in devtools.
+    document.dispatchEvent(new CustomEvent('raw-messages', { detail: [{ messageType: 'page-refresh' }] }));
+
     const files = event.target.files;
     for (let i = 0; i < files.length; i++) {
       JSZip.loadAsync(files[i]).then(
@@ -96,11 +102,8 @@ class ArcsBugReport extends MessengerMixin(PolymerElement) {
 
   _handleLog(txt) {
     const messages = JSON.parse(txt);
-    console.log(messages);
-    this.emitFilteredMessages(messages);
-
-    // document.dispatchEvent(new CustomEvent('raw-messages', {detail: messages}));
+    document.dispatchEvent(new CustomEvent('raw-messages', {detail: messages}));
   }
 }
 
-window.customElements.define(ArcsBugReport.is, ArcsBugReport);
+window.customElements.define(ArcsSnapshot.is, ArcsSnapshot);

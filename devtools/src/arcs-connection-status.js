@@ -56,7 +56,7 @@ class ArcsConnectionStatus extends MessengerMixin(PolymerElement) {
       </div>
       <br>
       <div load>
-        <a href="?bugreport">Load a Bug Report</a>
+        <a href="?snapshot">Load a Snapshot</a>
       </div>
     </div>
 `;
@@ -87,7 +87,7 @@ class ArcsConnectionStatus extends MessengerMixin(PolymerElement) {
     }
 
     switch (msg.messageType) {
-      case 'mode-bugreport':
+      case 'mode-snapshot':
         this.disabled = true;
         this.onCancel();
         return;
