@@ -15,7 +15,7 @@ import {
   workspace,
 } from 'vscode';
 
-import {ClientWorkspace} from './workspace';
+import {ClientWorkspace} from './workspace.js';
 
 // Note: The commandId parameter must match the command field in package.json
 function clientCommands(context: ExtensionContext) {

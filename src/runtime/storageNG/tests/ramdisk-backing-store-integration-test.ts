@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {StorageMode, ProxyMessageType, ProxyMessage} from '../store.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {BackingStore} from '../backing-store.js';

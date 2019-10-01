@@ -9,7 +9,7 @@
  */
 
 import {Request, Response, NextFunction} from 'express';
-import {ExplorerProxy} from './explorer-proxy';
+import {ExplorerProxy} from './explorer-proxy.js';
 
 /**
  * Handler to the '/status' path showing the state of the server.

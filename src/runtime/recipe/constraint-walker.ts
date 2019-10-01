@@ -9,14 +9,14 @@
  */
 
 import {ConnectionConstraint} from './connection-constraint.js';
-import {Recipe} from './recipe';
+import {Recipe} from './recipe.js';
 import {RecipeWalker} from './recipe-walker.js';
 import {Descendant, Continuation} from './walker.js';
 
 export class ConstraintWalker extends RecipeWalker {
   // Optional handler
   onConstraint?(recipe: Recipe, constraint: ConnectionConstraint): Continuation<Recipe, [ConnectionConstraint]>;
-  
+
   onResult(result: Descendant<Recipe>) {
     super.onResult(result);
     const recipe: Recipe = result.result as Recipe;
