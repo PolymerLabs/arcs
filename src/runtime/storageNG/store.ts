@@ -15,6 +15,8 @@ import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
+import {UnifiedStore} from '../arc.js';
+import {Consumer} from '../hot.js';
 
 export {StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback};
 
@@ -26,8 +28,31 @@ type StoreConstructor = {
 // inactive - it will not connect to a driver, will not accept connections from
 // StorageProxy objects, and no data will be read or written.
 //
-// Calling 'activate() will generate an interactive store and return it.
-export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
+// Calling 'activate()' will generate an interactive store and return it.
+export class Store<T extends CRDTTypeRecord> implements StoreInterface<T>, UnifiedStore {
+  source: string;
+  _compareTo(other: UnifiedStore): number {
+    throw new Error('Method not implemented.');
+  }
+  toString(tags: string[]): string {
+    throw new Error('Method not implemented.');
+  }
+
+  // tslint:disable-next-line no-any
+  async toLiteral(): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
+  cloneFrom(store: UnifiedStore): void {
+    throw new Error('Method not implemented.');
+  }
+  modelForSynchronization(): {} {
+    throw new Error('Method not implemented.');
+  }
+  on(type: string, fn: Consumer<{}>, target: {}): void {
+    throw new Error('Method not implemented.');
+  }
+  description: string;
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: Type;
@@ -62,5 +87,10 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T> {
     const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode);
     this.exists = Exists.ShouldExist;
     return activeStore;
+  }
+
+  // TODO(shans): DELETEME once we've switched to this storage stack
+  get referenceMode() {
+    return this.mode === StorageMode.ReferenceMode;
   }
 }

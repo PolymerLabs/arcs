@@ -22,6 +22,7 @@ import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
+import {StorageKey} from '../storageNG/storage-key.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -36,7 +37,7 @@ export class Handle implements Comparable<Handle> {
   private _originalId: string | null = null;
   private _connections: HandleConnection[] = [];
   private _mappedType: Type | undefined = undefined;
-  private _storageKey: string | undefined = undefined;
+  private _storageKey: string | StorageKey | undefined = undefined;
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
@@ -183,7 +184,7 @@ export class Handle implements Comparable<Handle> {
     }
     this._id = id;
   }
-  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string, claims?: ClaimIsTag[]}) {
+  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string | StorageKey, claims?: ClaimIsTag[]}) {
     if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }
@@ -199,7 +200,7 @@ export class Handle implements Comparable<Handle> {
   set localName(name: string) { this._localName = name; }
   get connections() { return this._connections; } // HandleConnection*
   get storageKey() { return this._storageKey; }
-  set storageKey(key: string) { this._storageKey = key; }
+  set storageKey(key: string | StorageKey) { this._storageKey = key; }
   get pattern() { return this._pattern; }
   set pattern(pattern: string) { this._pattern = pattern; }
   get mappedType() { return this._mappedType; }

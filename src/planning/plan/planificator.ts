@@ -151,12 +151,18 @@ export class Planificator {
   }
 
   static constructSuggestionKey(arc: Arc, storageKeyBase?: string): KeyBase {
+    if (typeof arc.storageKey !== 'string') {
+      throw new Error(`Planner doesn't work with new-style storage yet!`);
+    }
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
     return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
   }
 
   static constructSearchKey(arc: Arc): KeyBase {
+    if (typeof arc.storageKey !== 'string') {
+      throw new Error(`Planner doesn't work with new-style storage yet!`);
+    }
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
     return keybase.childKeyForSearch(planificatorId);

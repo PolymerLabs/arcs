@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECOuterPort, APIPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
-import {Arc} from './arc.js';
+import {Arc, UnifiedStore} from './arc.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {StorageStub} from './storage-stub.js';
@@ -101,7 +101,7 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
+  instantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
 
@@ -111,7 +111,7 @@ export class ParticleExecutionHost {
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
 
-  reinstantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
+  reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     const apiPort = this.getPort(particle);
@@ -176,12 +176,12 @@ class PECOuterPortImpl extends PECOuterPort {
     }
   }
 
-  onInitializeProxy(handle: StorageProviderBase, callback: number) {
+  onInitializeProxy(handle: UnifiedStore, callback: number) {
     const target = {};
     handle.on('change', data => this.SimpleCallback(callback, data), target);
   }
 
-  async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
+  async onSynchronizeProxy(handle: UnifiedStore, callback: number) {
     const data = await handle.modelForSynchronization();
     this.SimpleCallback(callback, data);
   }
@@ -243,7 +243,8 @@ class PECOuterPortImpl extends PECOuterPort {
 
   async onGetBackingStore(callback: number, storageKey: string, type: Type) {
     if (!storageKey) {
-      storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey || 'volatile');
+      // XXX
+      storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey as string || 'volatile');
     }
     const store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
     // TODO(shans): THIS IS NOT SAFE!
