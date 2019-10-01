@@ -8,12 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc, UnifiedStore} from '../../runtime/arc.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 import {StorageStub} from '../../runtime/storage-stub.js';
+import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
 export class SearchTokensToHandles extends Strategy {
 

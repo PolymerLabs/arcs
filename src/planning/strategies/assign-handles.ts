@@ -10,11 +10,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {StorageStub} from '../../runtime/storage-stub.js';
-import {UnifiedStore} from '../../runtime/arc.js';
+import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {

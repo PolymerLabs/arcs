@@ -15,7 +15,7 @@ import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
-import {UnifiedStore} from '../arc.js';
+import {UnifiedStore} from './unified-store.js';
 import {Consumer} from '../hot.js';
 
 export {StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback};
@@ -29,11 +29,8 @@ type StoreConstructor = {
 // StorageProxy objects, and no data will be read or written.
 //
 // Calling 'activate()' will generate an interactive store and return it.
-export class Store<T extends CRDTTypeRecord> implements StoreInterface<T>, UnifiedStore {
-  source: string;
-  _compareTo(other: UnifiedStore): number {
-    throw new Error('Method not implemented.');
-  }
+export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements StoreInterface<T> {
+
   toString(tags: string[]): string {
     throw new Error('Method not implemented.');
   }
@@ -52,6 +49,8 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T>, Unifi
   on(type: string, fn: Consumer<{}>, target: {}): void {
     throw new Error('Method not implemented.');
   }
+
+  source: string;
   description: string;
   readonly storageKey: StorageKey;
   exists: Exists;
@@ -68,6 +67,7 @@ export class Store<T extends CRDTTypeRecord> implements StoreInterface<T>, Unifi
   ]);
 
   constructor(storageKey: StorageKey, exists: Exists, type: Type, id: string, name: string = '') {
+    super();
     this.storageKey = storageKey;
     this.exists = exists;
     this.type = type;

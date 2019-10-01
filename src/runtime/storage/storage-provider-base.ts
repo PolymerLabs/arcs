@@ -10,16 +10,16 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
-import {Comparable, compareNumbers, compareStrings} from '../recipe/comparable.js';
+import {compareNumbers, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageStub} from '../storage-stub.js';
-import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
+import {SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
 import {ClaimIsTag} from '../particle-claim.js';
-import {UnifiedStore} from '../arc.js';
+import {UnifiedStore} from '../storageNG/unified-store.js';
 
 enum EventKind {
   change = 'Change'
@@ -108,7 +108,7 @@ export class ChangeEvent {
 /**
  * Docs TBD
  */
-export abstract class StorageProviderBase implements Comparable<StorageProviderBase>, Store, UnifiedStore {
+export abstract class StorageProviderBase extends UnifiedStore implements Store {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private nextLocalID: number;
   private readonly _type: Type;
@@ -126,6 +126,7 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
   claims: ClaimIsTag[];
 
   protected constructor(type: Type, name: string, id: string, key: string) {
+    super();
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     this._type = type;
@@ -196,19 +197,6 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
     for (const callback of callbacks) {
       callback(details);
     }
-  }
-
-  _compareTo(other: UnifiedStore): number {
-    let cmp;
-    cmp = compareStrings(this.name, other.name);
-    if (cmp !== 0) return cmp;
-    cmp = compareNumbers(this.version, other.version);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.source, other.source);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.id, other.id);
-    if (cmp !== 0) return cmp;
-    return 0;
   }
 
   toString(handleTags?: string[]): string {
