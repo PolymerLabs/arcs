@@ -52,11 +52,11 @@ export class EntityPackager {
     const schema = handle.entityClass.schema;
     assert(schema.names.length > 0, 'At least one schema name is required for entity packaging');
 
-    let refType = null;
+    let refType: ReferenceType = null;
     if (handle.type instanceof ReferenceType) {
       refType = handle.type;
     } else if (handle.type.getContainedType() instanceof ReferenceType) {
-      refType = handle.type.getContainedType();
+      refType = handle.type.getContainedType() as ReferenceType;
     }
 
     this.encoder = new StringEncoder(schema);
@@ -687,7 +687,7 @@ export class WasmParticle extends Particle {
     }
     const refId = this.container.read(refIdPtr);
 
-    let ref;
+    let ref: Reference;
     if (handle instanceof Singleton) {
       ref = await handle.get() as Reference;
     } else if (handle instanceof Collection) {
