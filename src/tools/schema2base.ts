@@ -30,14 +30,7 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    const paths = {
-      root: '../..',
-      map: {
-        'https://$build/': `../../lib/build/`,
-        'https://$particles/': `../../../particles/`
-      }
-    };
-    Utils.init(paths.root, paths.map);
+    Utils.init('../..');
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
