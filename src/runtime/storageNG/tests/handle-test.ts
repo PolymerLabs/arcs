@@ -9,14 +9,14 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {VersionMap} from '../../crdt/crdt';
+import {VersionMap} from '../../crdt/crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
-import {Particle} from '../../particle';
+import {Particle} from '../../particle.js';
 import {EntityType} from '../../type.js';
 import {CollectionHandle, SingletonHandle} from '../handle.js';
-import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
+import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
 

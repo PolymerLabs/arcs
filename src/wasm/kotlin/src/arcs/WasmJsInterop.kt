@@ -152,6 +152,13 @@ fun serviceResponse(particlePtr: WasmAddress, callPtr: WasmString, responsePtr: 
 
 }
 
+@Retain
+@ExportForCppRuntime("_renderOutput")
+fun renderOutput(particlePtr: WasmAddress) {
+  particlePtr.toObject<Particle>()
+    .renderOutput()
+}
+
 @SymbolName("_singletonSet")
 external fun singletonSet(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
 
@@ -169,6 +176,9 @@ external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
 
 @SymbolName("_render")
 external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, templatePtr: WasmString, modelPtr: WasmString)
+
+@SymbolName("_onRenderOutput")
+external fun onRenderOutput(particlePtr: WasmAddress, templatePtr: WasmString, modelPtr: WasmString)
 
 @SymbolName("_serviceRequest")
 external fun serviceRequest(particlePtr: WasmAddress, callPtr: WasmString, argsPtr: WasmString, tagPtr: WasmString)

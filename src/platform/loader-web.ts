@@ -72,17 +72,12 @@ export class PlatformLoader extends PlatformLoaderBase {
     try {
       // import (execute) particle code
       importScripts(url);
-    } catch (x) {
-      // Note: This error not thrown here to ensure that defineParticle is
-      // deleted.
-      // TODO(jopra): Throwing should ensure that self is never used.
-      // Can this be simplified?
-      err = new Error(`Failed to load particle from '${path}'\n` + x);
-    }
-    // clean up
-    delete self['defineParticle'];
-    if (err) {
-      throw err;
+    } catch (e) {
+      e.message = `Error loading Particle from '${path}': ${e.message}`;
+      throw e;
+    } finally {
+      // clean up
+      delete self['defineParticle'];
     }
     return result;
   }

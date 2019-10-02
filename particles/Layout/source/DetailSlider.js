@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+/* global defineParticle */
 
-defineParticle(({DomParticle, resolver, html, log}) => {
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
 
@@ -98,7 +99,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
 
 `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

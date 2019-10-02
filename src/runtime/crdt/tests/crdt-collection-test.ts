@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {ChangeType, VersionMap} from '../crdt';
-import {CollectionOpTypes, CRDTCollection, CollectionOperation, simplifyFastForwardOp} from '../crdt-collection';
+import {ChangeType, VersionMap} from '../crdt.js';
+import {CollectionOpTypes, CRDTCollection, CollectionOperation, simplifyFastForwardOp} from '../crdt-collection.js';
 
 /** Creates an Add operation. */
 function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
@@ -260,7 +260,7 @@ describe('CRDTCollection', () => {
       addOp('five', 'b', {a: 1, b: 5}),
     ];
     set2AddOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
-    
+
     const {modelChange, otherChange} = set2.merge(set1.getData());
 
     // Check that add ops are produced (not a fast-forward op).
@@ -273,7 +273,7 @@ describe('CRDTCollection', () => {
   describe('fast-forward operations', () => {
     it('rejects fast-forward ops which begin in the future', () => {
       const set = new CRDTCollection<{id: string}>();
-      
+
       assert.isFalse(set.applyOperation({
         type: CollectionOpTypes.FastForward,
         added: [],
@@ -285,12 +285,12 @@ describe('CRDTCollection', () => {
 
     it('accepts (but does not apply) fast-forward ops which end in the past', () => {
       const set = new CRDTCollection<{id: string}>();
-      
+
       // Add some initial elements.
       assert.isTrue(set.applyOperation(addOp('one', 'me', {me: 1})));
       assert.isTrue(set.applyOperation(addOp('two', 'me', {me: 2})));
       assert.isTrue(set.applyOperation(addOp('three', 'me', {me: 3})));
-      
+
       // Check it accepts the operation (returns true), but does not add the new
       // element.
       assert.isTrue(set.applyOperation({
@@ -307,14 +307,14 @@ describe('CRDTCollection', () => {
 
     it('advances the clock', () => {
       const set = new CRDTCollection<{id: string}>();
-      
+
       // Add some initial elements.
       assert.isTrue(set.applyOperation(addOp('one', 'a', {a: 1})));
       assert.isTrue(set.applyOperation(addOp('two', 'a', {a: 2})));
       assert.isTrue(set.applyOperation(addOp('three', 'b', {b: 1})));
       assert.isTrue(set.applyOperation(addOp('four', 'c', {c: 1})));
       assert.deepEqual(set.getData().version, {a: 2, b: 1, c: 1});
-      
+
       assert.isTrue(set.applyOperation({
         type: CollectionOpTypes.FastForward,
         added: [],
@@ -328,7 +328,7 @@ describe('CRDTCollection', () => {
 
     it('can add elements', () => {
       const set = new CRDTCollection<{id: string}>();
-      
+
       // Add some initial elements.
       assert.isTrue(set.applyOperation(addOp('one', 'a', {a: 1})));
       assert.isTrue(set.applyOperation(addOp('two', 'b', {b: 1})));
@@ -344,7 +344,7 @@ describe('CRDTCollection', () => {
         oldClock: {a: 1, b: 1},
         newClock: {a: 1, b: 9},
       }));
-      
+
       // Model has since been updated.
       assert.isTrue(set.applyOperation(removeOp('two', 'a', {a: 1, b: 1})));
       assert.isTrue(set.applyOperation(addOp('three', 'a', {a: 2, b: 1})));
@@ -364,12 +364,12 @@ describe('CRDTCollection', () => {
 
     it('can remove elements', () => {
       const set = new CRDTCollection<{id: string}>();
-      
+
       // Add some initial elements.
       assert.isTrue(set.applyOperation(addOp('one', 'a', {a: 1})));
       assert.isTrue(set.applyOperation(addOp('two', 'a', {a: 2})));
       assert.isTrue(set.applyOperation(addOp('three', 'b', {b: 1})));
-      
+
       assert.isTrue(set.applyOperation({
         type: CollectionOpTypes.FastForward,
         added: [],

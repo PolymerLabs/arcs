@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {DeviceKey, Key, WrappedKey} from '../keys';
-import {KeyStorage} from '../manager';
+import {DeviceKey, Key, WrappedKey} from '../keys.js';
+import {KeyStorage} from '../manager.js';
 
 export interface TestableKey {
     // Visible For Testing

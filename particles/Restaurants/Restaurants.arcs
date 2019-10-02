@@ -3,12 +3,18 @@ import 'RestaurantDisplay.arcs'
 import 'Reservations.arcs'
 import '../List/List.arcs'
 import '../Profile/Geolocate.arcs'
+import '../Layout/Layout.arcs'
+
+import 'FavoriteFoodAnnotation.arcs'
 
 recipe Restaurants
   create #volatile as location
   create #volatile as restaurants
   create #volatile #selected as selected
+  slot 'rootslotid-root' as rootSlot
+  slot 'rootslotid-modal' as modalSlot
   Geolocate
+    consume root as rootSlot
     location = location
   RestaurantFind
     location = location
@@ -16,13 +22,15 @@ recipe Restaurants
   SelectableTiles
     list = restaurants
     selected = selected
+    consume root as rootSlot
+      provide tile as tileSlot
   TileMultiplexer
     list = restaurants
     hostedParticle = RestaurantTile
+    consume tile as tileSlot
   DetailSlider
     selected = selected
+    consume modal as modalSlot
   RestaurantDetail
     restaurant = selected
   description `find restaurants near ${RestaurantFind.location}`
-
-import 'FavoriteFoodAnnotation.arcs'

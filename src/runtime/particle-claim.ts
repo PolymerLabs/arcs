@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {HandleConnectionSpec} from './particle-spec';
-import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement} from './manifest-ast-nodes';
+import {HandleConnectionSpec} from './particle-spec.js';
+import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement} from './manifest-ast-nodes.js';
 
 /** The different types of trust claims that particles can make. */
 export enum ClaimType {
@@ -46,13 +46,13 @@ export class ClaimIsTag {
 
 export class ClaimDerivesFrom {
   readonly type: ClaimType.DerivesFrom = ClaimType.DerivesFrom;
-  
+
   constructor(readonly parentHandle: HandleConnectionSpec) {}
-  
+
   static fromASTNode(
       astNode: ParticleClaimDerivesFrom,
       handleConnectionMap: Map<string, HandleConnectionSpec>) {
-    
+
     // Convert handle names into HandleConnectionSpec objects.
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
   if (!parentHandle) {

@@ -11,8 +11,7 @@
 import {Arc} from '../arc.js';
 import {Action, GenerateParams} from './walker.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
-import {Direction} from '../manifest-ast-nodes.js';
-import {Handle} from './handle';
+import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';
 import {RecipeWalker} from './recipe-walker.js';

@@ -12,14 +12,16 @@ import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {StorageStub} from '../runtime/storage-stub.js';
-import {StorageProviderBase, SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
+import {StorageKey} from '../runtime/storageNG/storage-key.js';
+import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
 
 type Result = {
   name: string,
   tags: string[],
   id: string,
-  storage: string,
+  storage: string | StorageKey,
   type: Type,
   description: string,
   // tslint:disable-next-line: no-any
@@ -30,7 +32,7 @@ export class ArcStoresFetcher {
   private arc: Arc;
   private arcDevtoolsChannel: ArcDevtoolsChannel;
   private watchedHandles: Set<string> = new Set();
-  
+
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     this.arc = arc;
     this.arcDevtoolsChannel = arcDevtoolsChannel;
@@ -70,7 +72,7 @@ export class ArcStoresFetcher {
     };
   }
 
-  private async digestStores(stores: [StorageProviderBase | StorageStub, string[] | Set<string>][]) {
+  private async digestStores(stores: [UnifiedStore | StorageStub, string[] | Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({
@@ -87,7 +89,7 @@ export class ArcStoresFetcher {
   }
 
   // tslint:disable-next-line: no-any
-  private async dereference(store: StorageProviderBase | StorageStub): Promise<any> {
+  private async dereference(store: UnifiedStore | StorageStub): Promise<any> {
     if ((store as CollectionStorageProvider).toList) {
       return (store as CollectionStorageProvider).toList();
     } else if ((store as SingletonStorageProvider).get) {

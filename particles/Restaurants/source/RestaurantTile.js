@@ -8,7 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html}) => {
+/* global defineParticle */
+
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
 
@@ -133,7 +135,7 @@ defineParticle(({DomParticle, html}) => {
 
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -143,7 +145,9 @@ defineParticle(({DomParticle, html}) => {
     render({restaurant}) {
       return Object.assign({
         imgUrl: restaurant.photo,
-        starStyle: !restaurant.rating ? `visibility: hidden` : `width: ${Math.round(restaurant.rating / 5 * 100)}%`
+        starStyle: !restaurant.rating ? `visibility: hidden` : `width: ${Math.round(restaurant.rating / 5 * 100)}%`,
+        // TODO(sjmiles): subid required by renderer, not used in template (iirc, verify!)
+        subid: this.idFor(restaurant)
       }, restaurant);
     }
   };

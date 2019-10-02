@@ -9,17 +9,16 @@
  */
 
 import {PropagatedException} from '../../arc-exceptions.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
 import {Consumer} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
-import {Particle} from '../../particle';
+import {Particle} from '../../particle.js';
 import {Driver, Exists, ReceiveMethod, StorageDriverProvider} from '../drivers/driver-factory.js';
 import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode} from '../store.js';
-import {Type, ReferenceType, CountType} from '../../type.js';
+import {CountType} from '../../type.js';
 
 
 /**
@@ -28,8 +27,8 @@ import {Type, ReferenceType, CountType} from '../../type.js';
  *  - throw an exception
  *  - implement an obvious default
  *  - store the input
- * 
- * Ideally, the methods shouldn't actually do anything, (i.e. should always throw) 
+ *
+ * Ideally, the methods shouldn't actually do anything, (i.e. should always throw)
  * and should be overridden explicitly in testing.
  */
 
@@ -74,7 +73,7 @@ export class MockStorageKey extends StorageKey {
   toString() {
     return `${this.protocol}://`;
   }
-  
+
   childWithComponent(component: string): StorageKey {
     throw new Error('Method not implemented.');
   }

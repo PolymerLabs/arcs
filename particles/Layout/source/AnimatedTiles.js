@@ -111,10 +111,10 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         ['Charlie', 'Delta'].forEach(name => grid.insert({name, t: 1, l: 0}));
         this.setState({grid});
       }
-      // _debounce fires function after 100ms has elapsed since last invocation,
+      // debounce fires function after 100ms has elapsed since last invocation,
       // notion is that we `sweep` up dead tiles after 1s of idleness since last
       // add/remove operation
-      const sweeper = () => this._debounce('sweep', () => this.setState({sweep: true}), 1000);
+      const sweeper = () => this.debounce('sweep', () => this.setState({sweep: true}), 1000);
       grid.operate({insert, remove, sweep, unfreeze});
       if (insert || remove) {
         sweeper();
