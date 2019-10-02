@@ -4,6 +4,8 @@ schema Data
   URL lnk
   Boolean flg
 
+schema Empty
+
 schema RenderFlags
   Boolean template
   Boolean model
