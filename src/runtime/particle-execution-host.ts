@@ -22,7 +22,7 @@ import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Content} from './slot-consumer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
@@ -189,54 +189,54 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(callback, data);
   }
 
-  async onHandleGet(handle: StorageProviderBase, callback: number): Promise<void> {
+  async onHandleGet(handle: UnifiedStore, callback: number): Promise<void> {
     const data = await (handle as SingletonStorageProvider).get();
     this.SimpleCallback(callback, data);
   }
 
-  async onHandleToList(handle: StorageProviderBase, callback: number) {
+  async onHandleToList(handle: UnifiedStore, callback: number) {
     const data = await (handle as CollectionStorageProvider).toList();
     this.SimpleCallback(callback, data);
   }
 
-  onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
+  onHandleSet(handle: UnifiedStore, data: {}, particleId: string, barrier: string) {
     // TODO: Awaiting this promise causes tests to fail...
     floatingPromiseToAudit((handle as SingletonStorageProvider).set(data, particleId, barrier));
   }
 
-  onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
+  onHandleClear(handle: UnifiedStore, particleId: string, barrier: string) {
     // TODO: Awaiting this promise causes tests to fail...
     floatingPromiseToAudit((handle as SingletonStorageProvider).clear(particleId, barrier));
   }
 
-  async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
+  async onHandleStore(handle: UnifiedStore, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
     // TODO(shans): fix typing once we have types for Singleton/Collection/etc
     // tslint:disable-next-line: no-any
     await (handle as CollectionStorageProvider).store(data.value, data.keys, particleId);
     this.SimpleCallback(callback, {});
   }
 
-  async onHandleRemove(handle: StorageProviderBase, callback: number, data: {id: string, keys: string[]}, particleId) {
+  async onHandleRemove(handle: UnifiedStore, callback: number, data: {id: string, keys: string[]}, particleId) {
     // TODO(shans): fix typing once we have types for Singleton/Collection/etc
     // tslint:disable-next-line: no-any
     await (handle as CollectionStorageProvider).remove(data.id, data.keys, particleId);
     this.SimpleCallback(callback, {});
   }
 
-  async onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: [], particleId: string) {
+  async onHandleRemoveMultiple(handle: UnifiedStore, callback: number, data: [], particleId: string) {
     await (handle as CollectionStorageProvider).removeMultiple(data, particleId);
     this.SimpleCallback(callback, {});
   }
 
-  async onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean) {
+  async onHandleStream(handle: UnifiedStore, callback: number, pageSize: number, forward: boolean) {
     this.SimpleCallback(callback, await (handle as BigCollectionStorageProvider).stream(pageSize, forward));
   }
 
-  async onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number) {
+  async onStreamCursorNext(handle: UnifiedStore, callback: number, cursorId: number) {
     this.SimpleCallback(callback, await (handle as BigCollectionStorageProvider).cursorNext(cursorId));
   }
 
-  onStreamCursorClose(handle: StorageProviderBase, cursorId: number) {
+  onStreamCursorClose(handle: UnifiedStore, cursorId: number) {
     (handle as BigCollectionStorageProvider).cursorClose(cursorId);
   }
 

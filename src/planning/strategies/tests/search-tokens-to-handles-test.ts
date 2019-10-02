@@ -12,9 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
-
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {StorageProviderBase} from '../../../runtime/storage/storage-provider-base.js';
 
 describe('SearchTokensToHandles', () => {
   it('finds local handle by tags', async () => {
@@ -35,7 +33,7 @@ describe('SearchTokensToHandles', () => {
     `));
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    arc._registerStore((await arc.context.stores[0].castToStorageStub().inflate()) as StorageProviderBase, ['mything']);
+    arc._registerStore(await arc.context.stores[0].castToStorageStub().inflate(), ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

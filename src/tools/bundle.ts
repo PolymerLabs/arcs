@@ -14,7 +14,6 @@ import JSZip from 'jszip';
 
 import {Loader} from '../runtime/loader.js';
 import {Manifest} from '../runtime/manifest.js';
-import {StorageProviderBase} from '../runtime/storage/storage-provider-base.js';
 
 export type BundleEntry = {
   filePath: string,

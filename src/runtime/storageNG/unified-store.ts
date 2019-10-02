@@ -14,6 +14,8 @@ import {StorageKey} from './storage-key.js';
 import {Consumer} from '../hot.js';
 import {StorageStub} from '../storage-stub.js';
 import {assert} from '../../platform/assert-web.js';
+import {Store as OldStore} from '../store.js';
+import {PropagatedException} from '../arc-exceptions.js';
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -30,7 +32,7 @@ import {assert} from '../../platform/assert-web.js';
  * Once the old-style stores are deleted, this class can be merged into the new
  * Store class.
  */
-export abstract class UnifiedStore implements Comparable<UnifiedStore> {
+export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore {
   // Tags for all subclasses of UnifiedStore.
   protected abstract unifiedStoreType: 'Store' | 'StorageStub' | 'StorageProviderBase';
 
@@ -58,6 +60,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
     return await this.toLiteral();
   }
   on(fn: Consumer<{}>): void {}
+  off(fn: Consumer<{}>): void {}
 
   /**
    * Hack to cast this UnifiedStore to the old-style class StorageStub.
@@ -68,6 +71,12 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
     // Can't use instanceof; causes circular dependencies.
     assert(this.unifiedStoreType === 'StorageStub', 'Not a StorageStub!');
     return this as unknown as StorageStub;
+  }
+
+  // TODO: Delete this method when the old-style storage is deleted.
+  reportExceptionInHost(exception: PropagatedException): void {
+    // This class lives in the host, so it's safe to just rethrow the exception.
+    throw exception;
   }
 
   _compareTo(other: UnifiedStore): number {
