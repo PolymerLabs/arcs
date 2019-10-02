@@ -12,6 +12,8 @@ import {Comparable, compareStrings, compareNumbers} from '../recipe/comparable.j
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {Consumer} from '../hot.js';
+import {StorageStub} from '../storage-stub.js';
+import {assert} from '../../platform/assert-web.js';
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -29,9 +31,11 @@ import {Consumer} from '../hot.js';
  * Store class.
  */
 export abstract class UnifiedStore implements Comparable<UnifiedStore> {
+  // Tags for all subclasses of UnifiedStore.
+  protected abstract unifiedStoreType: 'Store' | 'StorageStub' | 'StorageProviderBase';
+
   abstract id: string;
   abstract name: string;
-  abstract source: string;
   abstract type: Type;
   // TODO: Once the old storage stack is gone, this should only be of type StorageKey.
   abstract storageKey: string | StorageKey;
@@ -44,10 +48,27 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
   // JSON representation for insertion into the serialization.
   // tslint:disable-next-line no-any
   abstract toLiteral(): Promise<any>;
-  abstract cloneFrom(store: UnifiedStore): void;
-  abstract modelForSynchronization(): {};
-  abstract on(fn: Consumer<{}>): void;
+
+  // TODO: These properties/methods do not belong on UnifiedStore. They should
+  // probably go on some other abstraction like UnifiedActiveStore or similar.
+  abstract source?: string;
   abstract description: string;
+  cloneFrom(store: UnifiedStore): void {}
+  async modelForSynchronization(): Promise<{}> {
+    return await this.toLiteral();
+  }
+  on(fn: Consumer<{}>): void {}
+
+  /**
+   * Hack to cast this UnifiedStore to the old-style class StorageStub.
+   * TODO: Fix all usages of this method to handle new-style stores, and then
+   * delete.
+   */
+  castToStorageStub(): StorageStub {
+    // Can't use instanceof; causes circular dependencies.
+    assert(this.unifiedStoreType === 'StorageStub', 'Not a StorageStub!');
+    return this as unknown as StorageStub;
+  }
 
   _compareTo(other: UnifiedStore): number {
     let cmp: number;
