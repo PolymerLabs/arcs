@@ -106,6 +106,13 @@ class DevtoolsArcInspector implements ArcInspector {
   public pecMessage(name: string, pecMsgBody: object, pecMsgCount: number, stackString: string) {
     if (!DevtoolsConnection.isConnected) return;
     
+    // Modifying pec messages is a problem as they are transmited to DevTools with a delay. If the
+    // object representing a message is modified, it appears as if a different messages travelled
+    // across the pec. We could have made a deep copy of the message object, but agreed that these
+    // objects should not be modified as a matter of principle. We are freezing them as a defensive
+    // measure, but only if DevTools is connected, as freezing has performance penalty.
+    deepFreeze(pecMsgBody);
+
     const stack = this._extractStackFrames(stackString);
     this.arcDevtoolsChannel.send({
       messageType: 'PecLog',
@@ -206,4 +213,15 @@ class DevtoolsArcInspector implements ArcInspector {
       }
     });
   }
+}
+
+function deepFreeze(object: object) {
+  for (const name of Object.getOwnPropertyNames(object)) {
+    const value = object[name];
+    if (value && typeof value === 'object') {
+      deepFreeze(value);
+    }
+  }
+
+  Object.freeze(object);
 }

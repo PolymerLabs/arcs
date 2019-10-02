@@ -169,6 +169,10 @@ export class SlotComposer {
     const slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
 
+    // Content object as received by the particle execution host is frozen.
+    // SlotComposer attach properties to this object, so we need to clone it at the top level.
+    content = {...content};
+
     slotConsumer.slotContext.onRenderSlot(slotConsumer, content, async (eventlet) => {
       slotConsumer.arc.pec.sendEvent(particle, slotName, eventlet);
       // This code is a temporary hack implemented in #2011 which allows to route UI events from
