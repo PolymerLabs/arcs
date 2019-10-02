@@ -67,7 +67,7 @@
   }
 
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
-    return {location: location(), ...data} as T;
+    return {...data, location: location()} as T;
   }
 }
 
@@ -728,7 +728,7 @@ Description
 ParticleHandleDescription
   = name:lowerIdent whiteSpace pattern:backquotedString eolWhiteSpace
   {
-    return toAstNode<AstNode.HandleDescription>({
+    return toAstNode<AstNode.ParticleHandleDescription>({
       kind: 'handle-description',
       name,
       pattern,
@@ -1103,7 +1103,7 @@ SchemaSpec
   = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?
   {
     return toAstNode<AstNode.SchemaSpec>({
-      kind: 'schema-spec',
+      kind: 'schema',
       names: names.map(name => name[1]).filter(name => name !== '*'),
       parents: optional(parents, parents => parents, []),
     });
@@ -1113,10 +1113,10 @@ SchemaAlias
   = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return toAstNode<AstNode.SchemaAlias>({
+      ...spec,
       kind: 'schema',
       items: optional(items, extractIndented, []),
-      alias,
-      ...spec
+      alias
     });
   }
 
@@ -1124,9 +1124,9 @@ Schema
   = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return toAstNode<AstNode.Schema>({
+      ...spec,
       kind: 'schema',
-      items: optional(items, extractIndented, []),
-      ...spec
+      items: optional(items, extractIndented, [])
     });
   }
 
