@@ -145,9 +145,9 @@ const arcTemplate = `
     <span id="kill">✘</span>
   </div>
   <div id="slots">
-    <div id="arc-toproot"></div>
-    <div id="arc-root"></div>
-    <div id="arc-modal"></div>
+    <div id="arc-toproot" slotid="rootslotid-toproot"></div>
+    <div id="arc-root" slotid="rootslotid-root"></div>
+    <div id="arc-modal" slotid="rootslotid-modal"></div>
     <div id="expand"/></div>
   </div>
   <span class="controls-container">
