@@ -22,13 +22,10 @@ import {assertThrowsAsync} from '../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromOutput, CheckIsFromStore} from '../particle-check.js';
 import {ProvideSlotConnectionSpec, HandleConnectionSpec} from '../particle-spec.js';
-
-async function assertRecipeParses(input: string, result: string) : Promise<void> {
-  // Strip common leading whitespace.
-  //result = result.replace(new Regex(`()^|\n)${result.match(/^ */)[0]}`), '$1'),
-  const target = (await Manifest.parse(result)).recipes[0].toString();
-  assert.deepEqual((await Manifest.parse(input)).recipes[0].toString(), target);
-}
+import {Flags} from '../flags.js';
+import {Store} from '../storageNG/store.js';
+import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {StorageStub} from '../storage-stub.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -2928,5 +2925,45 @@ resource SomeName
         assert.isDefined(result[1].fields.val);
       });
     });
+  });
+});
+
+describe('Manifest storage migration', () => {
+  async function parseStoreFromManifest() {
+    const manifest = await Manifest.parse(`
+store NobId of NobIdStore {Text nobId} in NobIdJson
+resource NobIdJson
+  start
+  [{"nobId": "12345"}]
+    `);
+    assert.lengthOf(manifest.stores, 1);
+    return manifest.stores[0];
+  }
+
+  afterEach(() => {
+    Flags.reset();
+  });
+
+  it('works with new storage stack', async () => {
+    Flags.useNewStorageStack = true;
+    const store = await parseStoreFromManifest();
+
+    assert.instanceOf(store, Store);
+    assert.strictEqual(store.name, 'NobId');
+    assert.instanceOf(store.storageKey, VolatileStorageKey);
+    const schema = store.type.getEntitySchema();
+    assert.sameMembers(schema.names, ['NobIdStore']);
+  });
+
+  it('works with old storage stack', async () => {
+    Flags.useNewStorageStack = false;
+    const store = await parseStoreFromManifest();
+
+    assert.instanceOf(store, StorageStub);
+    assert.strictEqual(store.name, 'NobId');
+    assert.typeOf(store.storageKey, 'string');
+    assert.isTrue((store.storageKey as string).startsWith('volatile://'));
+    const schema = store.type.getEntitySchema();
+    assert.sameMembers(schema.names, ['NobIdStore']);
   });
 });
