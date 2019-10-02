@@ -265,7 +265,8 @@ export class UiSlotComposer {
           containerSlotId: container.targetSlot.id,
         });
       }
-      // Set modality according to particle spec, unless already set by the particle.
+      // Set modality according to particle spec
+      // TODO(sjmiles): in the short term, Particle may also include modality hints in `content`
       const modality = particle.recipe.modality;
       if (!modality.all) {
         Object.assign(packet, {
