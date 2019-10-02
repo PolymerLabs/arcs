@@ -133,7 +133,7 @@ export class StorePanel extends HTMLElement {
     }
     await this.update(true);
     this.updateCallback = () => this.update(false);
-    store.on('change', this.updateCallback, this);
+    store.on(this.updateCallback);
   }
 
   interceptCtrlEnter(event) {
@@ -200,9 +200,9 @@ export class StorePanel extends HTMLElement {
     if (!this.saveBtn.classList.contains('enabled')) {
       return;
     }
-    this.store.off('change', this.updateCallback);
+    this.store.off(this.updateCallback);
     const ok = await this.writeToStore(this.contents.value.trim());
-    this.store.on('change', this.updateCallback, this);
+    this.store.on(this.updateCallback);
     if (ok) {
       this.saveBtn.classList.remove('enabled');
       this.update(true);
@@ -269,7 +269,7 @@ export class StorePanel extends HTMLElement {
 
   dispose() {
     if (this.updateCallback) {
-      this.store.off('change', this.updateCallback);
+      this.store.off(this.updateCallback);
     }
   }
 }

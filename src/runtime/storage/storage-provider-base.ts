@@ -21,10 +21,6 @@ import {Dictionary, Consumer} from '../hot.js';
 import {ClaimIsTag} from '../particle-claim.js';
 import {UnifiedStore} from '../storageNG/unified-store.js';
 
-enum EventKind {
-  change = 'Change'
-}
-
 // tslint:disable-next-line: no-any
 type Callback = Consumer<Dictionary<any>>;
 
@@ -109,8 +105,7 @@ export class ChangeEvent {
  * Docs TBD
  */
 export abstract class StorageProviderBase extends UnifiedStore implements Store {
-  private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
-  private nextLocalID: number;
+  private readonly listeners: Set<Callback> = new Set();
   private readonly _type: Type;
 
   protected readonly _storageKey: string;
@@ -130,13 +125,11 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     this._type = type;
-    this.listeners = new Map();
     this.name = name;
     this.version = 0;
     this.id = id;
     this.source = null;
     this._storageKey = key;
-    this.nextLocalID = 0;
   }
 
   enableReferenceMode(): void {
@@ -157,41 +150,20 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
   }
 
   // TODO: add 'once' which returns a promise.
-  on(kindStr: string, callback: Callback, target): void {
-    assert(target !== undefined, 'must provide a target to register a storage event handler');
-    const kind: EventKind = EventKind[kindStr];
-
-    const listeners = this.listeners.get(kind) || new Map();
-    listeners.set(callback, {target});
-    this.listeners.set(kind, listeners);
+  on(callback: Callback): void {
+    this.listeners.add(callback);
   }
 
-  off(kindStr: string, callback: Callback): void {
-    const kind: EventKind = EventKind[kindStr];
-    const listeners = this.listeners.get(kind);
-    if (listeners) {
-      listeners.delete(callback);
-    }
+  off(callback: Callback): void {
+    this.listeners.delete(callback);
   }
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
   /**
    * Propagate updates to change listeners.
-   *
-   * @param kindStr the type of event, only 'change' is supported.
-   * @param details details about the change
    */
-  protected async _fire(kindStr: 'change', details: ChangeEvent) {
-    const kind: EventKind = EventKind[kindStr];
-    const listenerMap = this.listeners.get(kind);
-    if (!listenerMap || listenerMap.size === 0) {
-      return;
-    }
-
-    const callbacks:Callback[] = [];
-    for (const [callback] of listenerMap.entries()) {
-      callbacks.push(callback);
-    }
+  protected async _fire(details: ChangeEvent) {
+    const callbacks = [...this.listeners];
     // Yield so that event firing is not re-entrant with mutation.
     await 0;
     for (const callback of callbacks) {

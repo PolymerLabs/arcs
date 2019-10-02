@@ -46,7 +46,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
   abstract toLiteral(): Promise<any>;
   abstract cloneFrom(store: UnifiedStore): void;
   abstract modelForSynchronization(): {};
-  abstract on(type: string, fn: Consumer<{}>, target: {}): void;
+  abstract on(fn: Consumer<{}>): void;
   abstract description: string;
 
   _compareTo(other: UnifiedStore): number {

@@ -67,7 +67,7 @@ export class PlanProducer {
     this.inspector = inspector;
     if (this.searchStore) {
       this.searchStoreCallback = () => this.onSearchChanged();
-      this.searchStore.on('change', this.searchStoreCallback, this);
+      this.searchStore.on(this.searchStoreCallback);
     }
     this.debug = debug;
     this.noSpecEx = noSpecEx;
@@ -123,7 +123,7 @@ export class PlanProducer {
 
   dispose() {
     if (this.searchStore) {
-      this.searchStore.off('change', this.searchStoreCallback);
+      this.searchStore.off(this.searchStoreCallback);
     }
   }
 

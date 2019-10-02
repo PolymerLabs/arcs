@@ -440,10 +440,10 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
       const version = this.version;
       await this.ensureBackingStore().then(async store => {
         const data = await store.get(this.value.id);
-        await this._fire('change', new ChangeEvent({data, version}));
+        await this._fire(new ChangeEvent({data, version}));
       });
     } else {
-      await this._fire('change', new ChangeEvent({data: data.value || null, version: this.version}));
+      await this._fire(new ChangeEvent({data: data.value || null, version: this.version}));
     }
   }
 
@@ -547,7 +547,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
 
     await this._persistChanges();
 
-    await this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
+    await this._fire(new ChangeEvent({data: value, version, originatorId, barrier}));
   }
 
   async clear(originatorId:string = null, barrier: string = null) {
@@ -568,7 +568,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     this.localModified = true;
     this.resolveInitialized();
     // TODO: do we need to fire an event here?
-    await this._fire('change', new ChangeEvent({data: this.referenceMode ? data : this.value, version: this.version}));
+    await this._fire(new ChangeEvent({data: this.referenceMode ? data : this.value, version: this.version}));
     await this._persistChanges();
   }
 
@@ -817,11 +817,11 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
         values.forEach(value => valueMap[value.id] = value);
         const addPrimitives = add.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
         const removePrimitives = remove.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
-        await this._fire('change', new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this.version}));
+        await this._fire(new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this.version}));
       });
 
     } else {
-      await this._fire('change', new ChangeEvent({add, remove, version: this.version}));
+      await this._fire(new ChangeEvent({add, remove, version: this.version}));
     }
   }
 
@@ -865,7 +865,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
     // 2. Notify listeners.
     items = items.filter(item => item.value);
-    await this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({remove: items, version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     items.forEach(item => {
@@ -900,7 +900,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     this.version++;
 
     // 2. Notify listeners.
-    await this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -933,7 +933,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     }
 
     // 2. Notify listeners.
-    await this._fire('change', new ChangeEvent({add: [{value, keys, effective}], version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({add: [{value, keys, effective}], version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -1596,11 +1596,11 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement ensureBackingStore');
   }
 
-  on(kindStr, callback, target) {
+  on(callback) {
     throw new Error('FirebaseBackingStore does not implement on');
   }
 
-  off(kindStr, callback) {
+  off(callback) {
     throw new Error('FirebaseBackingStore does not implement off');
   }
 

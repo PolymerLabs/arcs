@@ -28,7 +28,7 @@ export class CallbackTracker {
   events: Dictionary<any>[] = [];
 
   constructor(storageProvider: StorageProviderBase, public expectedEvents = 0) {
-    storageProvider.on('change', (val) => this.changeEvent(val), {});
+    storageProvider.on((val) => this.changeEvent(val));
   }
 
   // called for each change event

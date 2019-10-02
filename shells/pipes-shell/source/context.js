@@ -27,7 +27,7 @@ export const mirrorStore = async (sourceStore, contextStore) => {
     cloneStoreChange(contextStore, change);
   };
   cloneStore(sourceStore, contextStore);
-  sourceStore.on('change', change, {});
+  sourceStore.on(change);
 };
 
 const cloneStore = async (sourceStore, contextStore) => {

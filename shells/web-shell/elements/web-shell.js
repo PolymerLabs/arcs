@@ -193,7 +193,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       const store = launcherArc.findStoresByType(shareSchema.type.collectionOf()).pop();
       if (store) {
         this.state = {store: store};
-        store.on('change', info => this.state = {info}, this);
+        store.on(info => this.state = {info});
         return;
       }
     }

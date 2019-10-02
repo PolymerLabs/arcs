@@ -47,7 +47,7 @@ export class PlanningResult {
     this.store = store;
     if (this.store) {
       this.storeCallback = () => this.load();
-      this.store.on('change', this.storeCallback, this);
+      this.store.on(this.storeCallback);
     }
   }
 
@@ -86,10 +86,10 @@ export class PlanningResult {
 
   dispose() {
     this.changeCallbacks = [];
-    this.store.off('change', this.storeCallback);
+    this.store.off(this.storeCallback);
     this.store.dispose();
   }
-  
+
   static formatSerializableGenerations(generations): SerializableGeneration[] {
     // Make a copy of everything and assign IDs to recipes.
     const idMap = new Map(); // Recipe -> ID
