@@ -1,4 +1,4 @@
-package arcs.android.demo.service;
+package arcs.android.service;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -27,7 +27,6 @@ import arcs.api.UiBroker;
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
  * ArcsService to communicate with Arcs.
  */
-// TODO: this is generic Arcs service class, move outside demo.
 public class ArcsService extends IntentService {
   public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
   public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
@@ -43,7 +42,6 @@ public class ArcsService extends IntentService {
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
-  @Inject NotificationRenderer notificationRenderer;
 
   public ArcsService() {
     super(ArcsService.class.getSimpleName());
@@ -70,8 +68,6 @@ public class ArcsService extends IntentService {
     shellEnvironment.addReadyListener(recipes -> arcsReady = true);
 
     harnessController.init();
-
-    uiBroker.registerRenderer("notification", notificationRenderer);
   }
 
   @Override

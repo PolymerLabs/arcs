@@ -1,6 +1,6 @@
 package arcs.android.client;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -24,10 +24,12 @@ public class AndroidUiBroker extends UiBrokerImpl {
   private final PortableJsonParser jsonParser;
 
   @Inject
-  AndroidUiBroker(ArcsServiceBridge bridge, PortableJsonParser jsonParser) {
-    super(new HashMap<>());
+  AndroidUiBroker(
+      Map<String, UiRenderer> renderers, ArcsServiceBridge bridge, PortableJsonParser jsonParser) {
+    super(renderers);
     this.bridge = bridge;
     this.jsonParser = jsonParser;
+    this.renderers.forEach((modality, renderer) -> bridge.registerRenderer(modality, callback));
   }
 
   @Override

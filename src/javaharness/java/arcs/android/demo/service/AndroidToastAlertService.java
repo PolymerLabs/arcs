@@ -2,9 +2,11 @@ package arcs.android.demo.service;
 
 import android.content.Context;
 import android.widget.Toast;
+
+import javax.inject.Inject;
+
 import arcs.android.api.Annotations.AppContext;
 import arcs.demo.services.AlertService;
-import javax.inject.Inject;
 
 public class AndroidToastAlertService implements AlertService {
 

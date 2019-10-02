@@ -16,6 +16,7 @@ android_library(
         "//java/arcs/android/api",
         "//java/arcs/android/client",
         "//java/arcs/android/impl",
+        "//java/arcs/android/service",
         "//java/arcs/api:api-android",
         "//java/arcs/demo/particles:particles-android",
         "//java/arcs/demo/services:services-android",
