@@ -2,7 +2,7 @@
 // Defines a really simple particle that just prints out "Hello, world!"
 
 // Defines the Hello World particle, and links it to the JavaScript source code in file hello-world.js.
-particle HelloWorldParticle in 'hello-world.js'
+particle HelloWorldParticle in 'HelloWorld.js'
   // The "root" slot is a special slot provided by the system. It is where the main content gets rendered. This binds our particle to the root
   // slot so that it can render things to the screen.
   `consume Slot root
