@@ -11,7 +11,6 @@ import './file-pane.js';
 import './output-pane.js';
 import '../configuration/whitelisted.js';
 import {DevShellLoader} from './loader.js';
-import {createUiComposer} from './ui-composer.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';
 import {Arc} from '../../build/runtime/arc.js';
@@ -20,6 +19,8 @@ import {PecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
+import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
+import {SlotObserver} from '../lib/xen-renderer.js';
 
 import '../../build/services/ml5-service.js';
 import '../../build/services/random-service.js';
@@ -118,7 +119,9 @@ async function wrappedExecute() {
       continue;
     }
 
-    const slotComposer = createUiComposer(arcPanel.shadowRoot);
+    const slotComposer = new UiSlotComposer();
+    slotComposer.observeSlots(new SlotObserver(arcPanel.shadowRoot));
+
     const storage = new StorageProviderFactory(id);
     const arc = new Arc({
       id,
