@@ -20,7 +20,8 @@ import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
 
 /**
- * TODO: describe this class.
+ * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
+ * directly connected to the StorageProxy.
  */
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
@@ -46,9 +47,9 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.scheduler = new StorageProxyScheduler<T>();
   }
 
-  // TODO: get rid of this.
+  // TODO: remove this after migration.
   get pec():ParticleExecutionContext {
-    throw new Error('StorageProxyNG does not necessarily have a pec.');
+    throw new Error('StorageProxyNG does not have a pec.');
   }
 
   async idle(): Promise<void> {

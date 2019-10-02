@@ -38,7 +38,7 @@ export type StoreInterface<T extends CRDTTypeRecord> = {
   readonly mode: StorageMode;
 };
 
-// Interface common to an ActiveStore and the PEC.
+// Interface common to an ActiveStore and the PEC, used by the StorageProxy.
 export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
@@ -46,7 +46,7 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
 }
 
 export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
-  getStorageEndpoint(storageproxy: StorageProxy<T>): StorageCommunicationEndpoint<T>;
+  getStorageEndpoint(storageProxy: StorageProxy<T>): StorageCommunicationEndpoint<T>;
 }
 
 // A representation of an active store. Subclasses of this class provide specific

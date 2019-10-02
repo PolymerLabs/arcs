@@ -154,19 +154,19 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpoint(storageproxy: StorageProxyNG<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+  getStorageEndpoint(storageProxy: StorageProxyNG<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
     let id: Promise<number>;
     return {
       async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
         message.id = await id;
         return new Promise((resolve) =>
-          pec.apiPort.ProxyMessage(storageproxy, message, ret => resolve(ret)));
+          pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
       },
 
       setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
         id = new Promise<number>((resolve) =>
-          pec.apiPort.Register(storageproxy, x => storageproxy.onMessage(x), retId => resolve(retId)));
+          pec.apiPort.Register(storageProxy, x => storageProxy.onMessage(x), retId => resolve(retId)));
       },
       reportExceptionInHost(exception: PropagatedException): void {
         pec.apiPort.ReportExceptionInHost(exception);
