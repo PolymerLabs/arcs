@@ -14,14 +14,14 @@ import {Particle} from '../../particle.js';
 import {StorageProxy, StorageProxyScheduler, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';
-import {EntityType} from '../../type.js';
+import {EntityType, SingletonType} from '../../type.js';
 
 interface Entity {
   id: string;
 }
 
 function getStorageProxy(store: ActiveStore<CRDTSingletonTypeRecord<Entity>>): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
-  return new StorageProxy('id', new CRDTSingleton<Entity>(), store, EntityType.make([], {}));
+  return new StorageProxy('id', store, new SingletonType(EntityType.make([], {})));
 }
 
 function getNoOpStorageProxy(): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
