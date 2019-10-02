@@ -129,6 +129,7 @@ export interface ManifestStorageClaim extends BaseNode {
 }
 
 export interface ManifestStorageSource  extends BaseNode {
+  kind: 'manifest-storage-source';
   origin: string;
   source: string;
 }
@@ -415,10 +416,12 @@ export interface RecipeSlot extends BaseNode {
 
 export type ConnectionTarget = VerbConnectionTarget | TagConnectionTarget | NameConnectionTarget | ParticleConnectionTarget;
 
-export interface VerbConnectionTarget extends ConnectionTargetHandleComponents {
+export interface VerbConnectionTarget extends BaseNode {
   kind: 'connection-target',
   targetType: 'verb';
   verbs: VerbList;
+  param: string;
+  tags: TagList;
 }
 
 export interface TagConnectionTarget extends BaseNode {
@@ -427,19 +430,24 @@ export interface TagConnectionTarget extends BaseNode {
   tags: TagList;
 }
 
-export interface NameConnectionTarget extends ConnectionTargetHandleComponents {
+export interface NameConnectionTarget extends BaseNode {
   kind: 'connection-target',
   name: string;
   targetType: 'localName';
+  param: string;
+  tags: TagList;
 }
 
-export interface ParticleConnectionTarget extends ConnectionTargetHandleComponents {
+export interface ParticleConnectionTarget extends BaseNode {
   kind: 'connection-target',
   particle: string;
   targetType: 'particle';
+  param: string;
+  tags: TagList;
 }
 
 export interface ConnectionTargetHandleComponents extends BaseNode {
+  kind: 'connection-target-handle-components';
   param: string;
   tags: TagList;
 }
@@ -509,6 +517,7 @@ export interface SchemaInlineField extends BaseNode {
 }
 
 export interface SchemaSpec extends BaseNode {
+  kind: 'schema-spec',
   names: string[];
   parents: string[];
 }
@@ -577,6 +586,7 @@ export interface NameAndTagList extends BaseNode {
 }
 
 export interface Annotation extends BaseNode {
+  kind: 'annotation',
   triggerSet: Triggers,
   simpleAnnotation?: string
 };

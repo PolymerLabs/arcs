@@ -99,6 +99,7 @@ ManifestItem
 Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)?
   {
     return toAstNode<AstNode.Annotation>({
+      kind: 'annotation',
       triggerSet: triggerSet.map(trigger => trigger[1]),
       simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
     });
@@ -179,13 +180,13 @@ ManifestStorageSource
   = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
 
 ManifestStorageFileSource
-  = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({origin: 'file', source }) }
+  = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({kind: 'manifest-storage-source', origin: 'file', source }) }
 
 ManifestStorageResourceSource
-  = 'in' whiteSpace source:upperIdent { return toAstNode<AstNode.ManifestStorageResourceSource>({origin: 'resource', source }); }
+  = 'in' whiteSpace source:upperIdent { return toAstNode<AstNode.ManifestStorageResourceSource>({kind: 'manifest-storage-source', origin: 'resource', source }); }
 
 ManifestStorageStorageSource
-  = 'at' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageStorageSource>({origin: 'storage', source }); }
+  = 'at' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageStorageSource>({kind: 'manifest-storage-source', origin: 'storage', source }); }
 
 ManifestStorageItem
   = ManifestStorageDescription
@@ -932,6 +933,7 @@ ConnectionTargetHandleComponents
   = '.' param:lowerIdent? tags:(whiteSpace? TagList)?
   {
     return toAstNode<AstNode.ConnectionTargetHandleComponents>({
+      kind: 'connection-target-handle-components',
       param: optional(param, param => param, null),
       tags: optional(tags, tags => tags[1], []),
     });
@@ -1001,6 +1003,7 @@ NameAndTagList
    = name:lowerIdent tags:(whiteSpace TagList)?
    {
      return toAstNode<AstNode.NameAndTagList>({
+       kind: 'name-and-tag-list',
        name: name,
        tags: tags = optional(tags, list => list[1], [])
      });
@@ -1008,6 +1011,7 @@ NameAndTagList
    / whiteSpace name:lowerIdent
    {
      return toAstNode<AstNode.NameAndTagList>({
+       kind: 'name-and-tag-list',
        name: name,
        tags: []
      });
@@ -1015,6 +1019,7 @@ NameAndTagList
    / whiteSpace tags:TagList
    {
       return toAstNode<AstNode.NameAndTagList>({
+       kind: 'name-and-tag-list',
         name: tags[0],
         tags: tags
       });
@@ -1098,6 +1103,7 @@ SchemaSpec
   = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?
   {
     return toAstNode<AstNode.SchemaSpec>({
+      kind: 'schema-spec',
       names: names.map(name => name[1]).filter(name => name !== '*'),
       parents: optional(parents, parents => parents, []),
     });
