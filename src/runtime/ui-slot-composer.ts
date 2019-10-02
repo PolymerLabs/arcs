@@ -253,15 +253,10 @@ export class UiSlotComposer {
   delegateOutput(arc: Arc, particle: Particle, content) {
     const observer = this['slotObserver'];
     if (observer && content) {
-      // assemble a renderPacket to send to slot observer
-      const packet = {};
       // we scan connections for container and slotMap
       const connections = particle.getSlotConnections();
-      // build slot id map
-      const slotMap = {};
-      connections.forEach(({providedSlots}) => {
-        Object.values(providedSlots).forEach(({name, id}) => slotMap[name] = id);
-      });
+      // assemble a renderPacket to send to slot observer
+      const packet = {};
       // identify parent container
       const container = connections[0];
       if (container) {
@@ -277,6 +272,11 @@ export class UiSlotComposer {
           modality: modality.names.join(',')
         });
       }
+      // build slot id map
+      const slotMap = {};
+      connections.forEach(({providedSlots}) => {
+        Object.values(providedSlots).forEach(({name, id}) => slotMap[name] = id);
+      });
       // finalize packet
       const pid = particle.id.toString();
       Object.assign(packet, {
