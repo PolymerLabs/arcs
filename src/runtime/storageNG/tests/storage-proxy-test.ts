@@ -21,7 +21,7 @@ interface Entity {
 }
 
 function getStorageProxy(store: ActiveStore<CRDTSingletonTypeRecord<Entity>>): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
-  return new StorageProxy('id', new CRDTSingleton<Entity>(), store, EntityType.make([], {}), null /*pec*/);
+  return new StorageProxy('id', new CRDTSingleton<Entity>(), store, EntityType.make([], {}));
 }
 
 function getNoOpStorageProxy(): StorageProxy<CRDTSingletonTypeRecord<Entity>> {

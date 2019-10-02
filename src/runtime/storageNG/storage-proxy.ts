@@ -17,19 +17,18 @@ import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Type} from '../type.js';
 import {Handle} from './handle.js';
-import {ActiveStore, ProxyMessage, ProxyMessageType} from './store.js';
+import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
 
 /**
- * TODO: describe this class.
+ * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
+ * directly connected to the StorageProxy.
  */
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
-  private id: number;
   apiChannelId: string;
-  private store: ActiveStore<T>;
+  private store: StorageCommunicationEndpoint<T>;
   readonly type: Type;
-  pec: ParticleExecutionContext;
   private listenerAttached = false;
   private keepSynced = false;
   private synchronized = false;
@@ -39,15 +38,18 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   constructor(
       apiChannelId: string,
       crdt: CRDTModel<T>,
-      store: ActiveStore<T>,
-      type: Type,
-      pec: ParticleExecutionContext) {
+      storeProvider: StorageCommunicationEndpointProvider<T>,
+      type: Type) {
     this.apiChannelId = apiChannelId;
     this.crdt = crdt;
-    this.store = store;
+    this.store = storeProvider.getStorageEndpoint(this);
     this.type = type;
-    this.pec = pec;
     this.scheduler = new StorageProxyScheduler<T>();
+  }
+
+  // TODO: remove this after migration.
+  get pec(): ParticleExecutionContext {
+    throw new Error('StorageProxyNG does not have a pec.');
   }
 
   async idle(): Promise<void> {
@@ -71,7 +73,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
     // Attach an event listener to the backing store when the first readable handle is registered.
     if (!this.listenerAttached) {
-      this.id = this.store.on(x => this.onMessage(x));
+      this.store.setCallback(x => this.onMessage(x));
       this.listenerAttached = true;
     }
 
@@ -116,7 +118,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     const message: ProxyMessage<T> = {
       type: ProxyMessageType.Operations,
       operations: [op],
-      id: this.id
     };
     await this.store.onProxyMessage(message);
     this.notifyUpdate(op, oldData);
@@ -141,7 +142,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   async onMessage(message: ProxyMessage<T>): Promise<boolean> {
-    assert(message.id === this.id);
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
@@ -170,7 +170,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         break;
       }
       case ProxyMessageType.SyncRequest:
-        await this.store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: this.crdt.getData(), id: this.id});
+        await this.store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: this.crdt.getData()});
         break;
       default:
         throw new CRDTError(
@@ -214,13 +214,13 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   protected async requestSynchronization(): Promise<boolean> {
-    return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: this.id});
+    return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest});
   }
 }
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, null, null, null, null);
+    super(null, null, {getStorageEndpoint() {}} as ActiveStore<T>, null);
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});

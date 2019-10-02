@@ -27,6 +27,8 @@ import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
+import {ActiveStore, ProxyMessage} from './storageNG/store.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -236,6 +238,19 @@ class PECOuterPortImpl extends PECOuterPort {
 
   onStreamCursorClose(handle: StorageProviderBase, cursorId: number) {
     (handle as BigCollectionStorageProvider).cursorClose(cursorId);
+  }
+
+  async onRegister(store: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
+    const id = store.on(async data => {
+      this.SimpleCallback(messagesCallback, data);
+      return Promise.resolve(true);
+    });
+    this.SimpleCallback(idCallback, id);
+  }
+
+  async onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
+   const res = await store.onProxyMessage(message);
+   this.SimpleCallback(callback, res);
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {

@@ -20,6 +20,10 @@ import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
+import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
+import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
+import {PropagatedException} from './arc-exceptions.js';
 import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
@@ -36,7 +40,7 @@ export type InnerArcHandle = {
   loadRecipe(recipe: string): Promise<{error?: string}>;
 };
 
-export class ParticleExecutionContext {
+export class ParticleExecutionContext implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
   private readonly apiPort : PECInnerPort;
   private readonly particles = new Map<string, Particle>();
   private readonly pecId: Id;
@@ -148,6 +152,26 @@ export class ParticleExecutionContext {
 
   generateID() {
     return this.idGenerator.newChildId(this.pecId).toString();
+  }
+
+  getStorageEndpoint(storageProxy: StorageProxyNG<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+    const pec = this;
+    let id: Promise<number>;
+    return {
+      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
+        message.id = await id;
+        return new Promise((resolve) =>
+          pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
+      },
+
+      setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
+        id = new Promise<number>((resolve) =>
+          pec.apiPort.Register(storageProxy, x => storageProxy.onMessage(x), retId => resolve(retId)));
+      },
+      reportExceptionInHost(exception: PropagatedException): void {
+        pec.apiPort.ReportExceptionInHost(exception);
+      }
+    };
   }
 
   innerArcHandle(arcId: string, particleId: string): InnerArcHandle {

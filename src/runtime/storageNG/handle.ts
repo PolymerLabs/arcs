@@ -84,7 +84,7 @@ export abstract class Handle<T extends CRDTTypeRecord> {
 
     const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
     if (type instanceof EntityType) {
-      this.entityClass = type.entitySchema.entityClass(this.storageProxy.pec);
+      this.entityClass = type.entitySchema.entityClass();
     }
     this.clock = this.storageProxy.registerHandle(this);
   }
