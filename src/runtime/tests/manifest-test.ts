@@ -769,6 +769,56 @@ ${particleStr1}
     await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
+
+  it('SLANDLES resolves with dependent slandles', async () => {
+    const manifest = await Manifest.parse(`
+      particle Parent in 'parent.js'
+        \`consume Slot root
+          \`provide Slot mySlot
+
+      particle Child in 'child.js'
+        \`consume Slot childSlot
+
+      recipe SlandleRenderSlotsRecipe
+        Parent
+          root consume root
+            mySlot provide shared
+        Child
+          childSlot consume shared
+    `);
+    // verify particle spec
+    assert.lengthOf(manifest.particles, 2);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    recipe.normalize();
+    assert.lengthOf(recipe.handles, 2);
+    assert.isTrue(recipe.isResolved());
+  });
+
+  it('SLANDLES doesn\'t resolve mismatching dependencies dependent slandles', async () => {
+    const manifest = await Manifest.parse(`
+      particle Parent in 'parent.js'
+        \`consume Slot root
+          \`provide Slot mySlot
+
+      particle Child in 'child.js'
+        \`consume Slot childSlot
+
+      recipe SlandleRenderSlotsRecipe
+        Parent
+          root consume root
+        Child
+          childSlot consume shared
+    `);
+    // verify particle spec
+    assert.lengthOf(manifest.particles, 2);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    recipe.normalize();
+    assert.lengthOf(recipe.handles, 2);
+    assert.isFalse(recipe.isResolved());
+  });
+
   it('recipe slots with tags', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle in 'some-particle.js'

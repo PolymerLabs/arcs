@@ -586,9 +586,14 @@ ${this.activeRecipe.toString()}`;
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
-    // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
+    // TODO(mmandlis, jopra): Get rid of populating the missing local slot & slandle IDs here,
     // it should be done at planning stage.
-    slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
+    slots.forEach(slot => slot.id = slot.id || this.generateID('slot').toString());
+    handles.forEach(handle => {
+      if (handle.toSlot()) {
+        handle.id = handle.id || this.generateID('slandle').toString();
+      }
+    });
 
     for (const recipeHandle of handles) {
       const store = this.context.findStoreById(recipeHandle.id);

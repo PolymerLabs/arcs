@@ -926,8 +926,7 @@ ${e.message}
       }
     }
 
-    for (const [particle, item] of items.byParticle) {
-      for (const connectionItem of item.connections) {
+    const newConnection = (particle: Particle, connectionItem: AstNode.RecipeParticleConnection) => {
         let connection;
 
         if (connectionItem.param === '*') {
@@ -963,7 +962,12 @@ ${e.message}
             const handle = recipe.newHandle();
             handle.tags = [];
             handle.localName = connectionItem.target.name;
-            handle.fate = 'create';
+            if (connection.direction === '`consume' || connection.direction === '`provide') {
+              // TODO(jopra): This is something of a hack to catch users who have not forward-declared their slandles.
+              handle.fate = '`slot';
+            } else {
+              handle.fate = 'create';
+            }
             // TODO: item does not exist on handle.
             handle['item'] = {kind: 'handle'};
             entry = {item: handle['item'], handle};
@@ -1027,6 +1031,13 @@ ${e.message}
         if (targetHandle) {
           connection.connectToHandle(targetHandle);
         }
+
+        connectionItem.dependentConnections.forEach(item => newConnection(particle, item));
+    };
+
+    for (const [particle, item] of items.byParticle) {
+      for (const connectionItem of item.connections) {
+        newConnection(particle, connectionItem);
       }
 
       for (const slotConnectionItem of item.slotConnections) {

@@ -9,6 +9,7 @@
  */
 
 import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Handle} from '../../runtime/recipe/handle.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 /*
@@ -18,15 +19,15 @@ import {StrategizerWalker, Strategy} from '../strategizer.js';
 export class MatchFreeHandlesToConnections extends Strategy {
   async generate(inputParams) {
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onHandle(recipe, handle) {
+      onHandle(recipe: Recipe, handle: Handle) {
         if (handle.connections.length > 0) {
-          return;
+          return undefined;
         }
 
         const matchingConnections = recipe.getFreeConnections();
 
         return matchingConnections.map(({particle, connSpec}) => {
-          return (recipe, handle) => {
+          return (recipe: Recipe, handle: Handle) => {
             const cloneParticle = recipe.updateToClone({particle}).particle;
             const newConnection = cloneParticle.addConnectionName(connSpec.name);
             newConnection.connectToHandle(handle);

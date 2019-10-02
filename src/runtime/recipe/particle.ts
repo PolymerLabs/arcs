@@ -176,8 +176,7 @@ export class Particle implements Comparable<Particle> {
       return false;
     }
     const slandleConnections = Object.values(this.connections).filter(
-      connection => connection.type.isSlot()
-        || (connection.type.isCollectionType() && connection.type.getContainedType().isSlot())
+      connection => Boolean(connection.type.slandleType())
     );
     if (slandleConnections.length ===0 && this.spec.slotConnections.size > 0) {
       const fulfilledSlotConnections = this.getSlotConnections().filter(connection => connection.targetSlot !== undefined);
@@ -280,7 +279,7 @@ export class Particle implements Comparable<Particle> {
 
   getSlandleConnections(): SlotConnection[] {
     // TODO(jopra): Revisit when slots are removed.
-    return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.toSlotConnection()).filter(conn => conn)];
+    return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.direction === '`consume' && conn.toSlotConnection()).filter(conn => conn)];
   }
 
   getSlotConnections(): SlotConnection[] {

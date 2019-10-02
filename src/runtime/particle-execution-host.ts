@@ -298,7 +298,7 @@ class PECOuterPortImpl extends PECOuterPort {
     let recipe0 = manifest.recipes[0];
     if (recipe0) {
       for (const slot of recipe0.slots) {
-        slot.id = slot.id || `slotid-${arc.generateID()}`;
+        slot.id = slot.id || arc.generateID('slot').toString();
         if (slot.sourceConnection) {
           const particlelocalName = slot.sourceConnection.particle.localName;
           if (particlelocalName) {

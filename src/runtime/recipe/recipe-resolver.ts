@@ -38,6 +38,12 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
+    if (handle.fate === '`slot') {
+      return [];
+    }
+    if (handle.type.slandleType()) {
+      return [];
+    }
     const arc = this.arc;
     if (handle.connections.length === 0 ||
         (handle.id && handle.storageKey) || (!handle.type) ||
@@ -58,7 +64,6 @@ export class ResolveWalker extends RecipeWalker {
           mappable = arc.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
-        case '`slot':
         case '?':
           mappable = [];
           break;
@@ -77,7 +82,6 @@ export class ResolveWalker extends RecipeWalker {
           storeById = arc.context.findStoreById(handle.id);
           break;
         case 'create':
-        case '`slot':
         case '?':
           break;
         default:
@@ -108,7 +112,7 @@ export class ResolveWalker extends RecipeWalker {
       // Tracked at https://github.com/PolymerLabs/arcs/issues/3389
       return error('The only handles matching the requested type and tags are already present in this recipe');
     }
-    return mappable.map(store => ((recipe, updateHandle) => {
+    return mappable.map(store => ((recipe, updateHandle: Handle) => {
       updateHandle.mapToStorage(store);
       return 0;
     }));

@@ -1100,8 +1100,8 @@ describe('particle-api', () => {
 
     const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
-  slot '!${sessionId}:demo:inner2:1' as slot0
-  slot 'slotid-!${sessionId}:demo:inner2:2' as slot1
+  slot '!${sessionId}:demo:inner2:slot1' as slot0
+  slot '!${sessionId}:demo:inner2:slot2' as slot1
   A as particle0
     consume content as slot0
       provide detail as slot1
