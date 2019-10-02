@@ -90,7 +90,7 @@ export const SingleUserContext = class {
     if (observer) {
       this.observers[key] = null;
       //log(`UNobserving [${key}]`);
-      observer.store.off('change', observer.cb);
+      observer.store.off(observer.cb);
     }
   }
   async observeStore(store, key, cb) {
@@ -113,7 +113,7 @@ export const SingleUserContext = class {
             cb({data});
           }
         }
-        this.observers[key] = {key, store, cb: store.on('change', cb, this)};
+        this.observers[key] = {key, store, cb: store.on(cb)};
       }
     }
   }

@@ -150,7 +150,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     this.initialized = (async () => {
       const data = await targetStore.get();
       await this.process(data, false);
-      targetStore.on('change', details => this.process(details.data, true), this);
+      targetStore.on(details => this.process(details.data, true));
     })();
   }
 
@@ -180,7 +180,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
       const diff = setDiffCustom(oldModel, this.model, JSON.stringify);
       const add = diff.add.map(arcHandle => ({value: arcHandle}));
       const remove = diff.remove.map(arcHandle => ({value: arcHandle}));
-      await this._fire('change', new ChangeEvent({add, remove}));
+      await this._fire(new ChangeEvent({add, remove}));
     }
   }
 

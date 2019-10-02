@@ -10,7 +10,7 @@
 
 export const listenToStore = (store, onchange) => {
   // observe changes
-  store.on('change', onchange, store);
+  store.on(onchange);
   // record ability to stop observation
   return () => store.off(onchange);
 };

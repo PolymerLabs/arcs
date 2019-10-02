@@ -46,7 +46,7 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   modelForSynchronization(): {} {
     throw new Error('Method not implemented.');
   }
-  on(type: string, fn: Consumer<{}>, target: {}): void {
+  on(fn: Consumer<{}>): void {
     throw new Error('Method not implemented.');
   }
 

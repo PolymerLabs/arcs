@@ -77,7 +77,7 @@ describe('firebase', function() {
       const variable = await storage.construct('test0', barType, newStoreKey('variable')) as SingletonStorageProvider;
 
       let events = 0;
-      variable.on('change', () => events++, this);
+      variable.on(() => events++);
 
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
@@ -199,7 +199,7 @@ describe('firebase', function() {
       const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
 
       let events = 0;
-      collection.on('change', () => events++, this);
+      collection.on(() => events++);
 
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);

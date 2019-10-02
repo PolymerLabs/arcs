@@ -92,7 +92,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     const updatedCrdtModelLiteral = doc.model;
     const dataToFire = updatedCrdtModelLiteral.length === 0 ? null : updatedCrdtModelLiteral[0].value;
 
-    await this._fire('change', new ChangeEvent({data: dataToFire, version: this.version}));
+    await this._fire(new ChangeEvent({data: dataToFire, version: this.version}));
   }
 
   /** @inheritDoc */
@@ -255,7 +255,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     }
 
     // Notify Listeners
-    await this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({add: [item], version: this.version, originatorId}));
   }
 
   async removeMultiple(items, originatorId?: string): Promise<void> {
@@ -281,7 +281,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       return doc;
     });
 
-    await this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({remove: items, version: this.version, originatorId}));
   }
 
   /**
@@ -303,7 +303,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
         const effective = crdtmodel.remove(id, keys);
         // TODO(lindner): isolate side effects...
 
-        await this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
+        await this._fire(new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
       }
       doc.model = crdtmodel.toLiteral();
       return doc;
@@ -326,7 +326,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     // TODO(lindner): handle referenceMode
     // TODO(lindner): calculate added/removed keys from previousModel/model
     // TODO(lindner): fire change events here?
-    //   this._fire('change', new ChangeEvent({add, remove, version: this.version}));
+    //   this._fire(new ChangeEvent({add, remove, version: this.version}));
   }
 
   /**
