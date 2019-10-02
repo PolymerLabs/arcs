@@ -18,6 +18,7 @@ import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
+import {CRDTSingleton} from './crdt/crdt-singleton.js';
 
 
 export interface TypeLiteral extends Literal {
@@ -27,7 +28,7 @@ export interface TypeLiteral extends Literal {
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count';
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
 
 export abstract class Type {
   tag: Tag;
@@ -268,6 +269,26 @@ export class CountType extends Type {
 
   crdtInstanceConstructor() {
     return CRDTCount;
+  }
+}
+
+export class SingletonType<T extends Type> extends Type {
+  private readonly innerType: T;
+  constructor(type: T) {
+    super('Singleton');
+    this.innerType = type;
+  }
+
+  toLiteral(): TypeLiteral {
+    return {tag: 'Singleton'};
+  }
+
+  getContainedType(): T {
+    return this.innerType;
+  }
+
+  crdtInstanceConstructor() {
+    return CRDTSingleton;
   }
 }
 

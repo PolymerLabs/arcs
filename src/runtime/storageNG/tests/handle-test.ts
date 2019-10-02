@@ -14,7 +14,7 @@ import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTy
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
-import {EntityType} from '../../type.js';
+import {CollectionType, EntityType, SingletonType} from '../../type.js';
 import {CollectionHandle, SingletonHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
@@ -27,9 +27,8 @@ async function getCollectionHandle(particle?: MockParticle):
       'me',
       new StorageProxy(
           'id',
-          new CRDTCollection<{id: string}>(),
           new MockStore<CRDTCollectionTypeRecord<{id: string}>>(),
-          EntityType.make([], {})),
+          new CollectionType(EntityType.make([], {}))),
       IdGenerator.newSession(),
       fakeParticle,
       true,
@@ -50,9 +49,8 @@ async function getSingletonHandle(particle?: MockParticle):
       'me',
       new StorageProxy(
           'id',
-          new CRDTSingleton<{id: string}>(),
           new MockStore<CRDTSingletonTypeRecord<{id: string}>>(),
-          EntityType.make([], {})),
+          new SingletonType(EntityType.make([], {}))),
       IdGenerator.newSession(),
       fakeParticle,
       true,

@@ -15,7 +15,7 @@ import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperat
 import {Runnable} from '../hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
-import {Type} from '../type.js';
+import {EntityType, Type} from '../type.js';
 import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
 
@@ -37,12 +37,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   constructor(
       apiChannelId: string,
-      crdt: CRDTModel<T>,
       storeProvider: StorageCommunicationEndpointProvider<T>,
       type: Type) {
     this.apiChannelId = apiChannelId;
-    this.crdt = crdt;
     this.store = storeProvider.getStorageEndpoint(this);
+    this.crdt = new (type.crdtInstanceConstructor<T>())();
     this.type = type;
     this.scheduler = new StorageProxyScheduler<T>();
   }
@@ -220,7 +219,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, null, {getStorageEndpoint() {}} as ActiveStore<T>, null);
+    super(null, {getStorageEndpoint() {}} as ActiveStore<T>, EntityType.make([], {}));
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});
