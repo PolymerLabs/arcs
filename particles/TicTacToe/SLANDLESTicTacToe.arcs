@@ -1,0 +1,13 @@
+import 'particles/SLANDLESDebugShowBoard.arcs'
+import 'particles/SLANDLESDebugMakeBoard.arcs'
+
+recipe SLANDLESTicTacToeShowBoard
+  `slot 'rootslotid-root' as root
+  create as board
+  SLANDLESDebugShowBoard
+    board <- board
+    root consume root
+  SLANDLESDebugMakeBoard
+    board -> board
+    root consume root
+  description `boardy boardy boardy!`
