@@ -160,7 +160,15 @@ export class Loader {
    */
   unwrapParticle(particleWrapper): typeof Particle {
     assert(this.pec);
-    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: ClientReference.newClientReference(this.pec), html});
+    return particleWrapper({
+      Particle,
+      DomParticle,
+      SimpleParticle: DomParticle,
+      TransformationDomParticle,
+      MultiplexerDomParticle,
+      Reference: ClientReference.newClientReference(this.pec),
+      html
+    });
   }
 
   clone(): Loader {

@@ -10,14 +10,14 @@
 
  /* global defineParticle */
 
- defineParticle(({DomParticle, html}) => {
+ defineParticle(({SimpleParticle, html}) => {
 
     const template = html`
   <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
   <div slotid="greetingSlot"></div>
     `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

@@ -10,9 +10,9 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({SimpleParticle, html, log}) => {
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     update({randomArtist}) {
       if (randomArtist) {
         const entities = [

@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-defineParticle(({DomParticle, html}) => {   
-  return class extends DomParticle {
+defineParticle(({SimpleParticle, html}) => {
+  return class extends SimpleParticle {
     get template() {
       // You can set placeholders in your template like so: {{name}}. The render function is where these placeholders are overridden.
       // NOTE: Each placeholder needs to be enclosed inside its own HTML element (here, a <span>).

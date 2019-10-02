@@ -11,11 +11,11 @@
 'use strict';
 
 /* global defineParticle */
-defineParticle(({DomParticle, log}) => {
+defineParticle(({SimpleParticle, log}) => {
 
   const service = `http://xenonjs.com/services/http/php/tmdb.php`;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     update({query}, state) {
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.

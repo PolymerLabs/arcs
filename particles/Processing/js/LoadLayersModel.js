@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log, resolver}) => {
+defineParticle(({SimpleParticle, log, resolver}) => {
 
   importScripts(resolver(`$here/tf.js`));
 
-  return class extends self.TfMixin(DomParticle) {
+  return class extends self.TfMixin(SimpleParticle) {
     async update({modelSpec}) {
       if (modelSpec) {
         const model = await this.tf.loadLayersModel(modelSpec.location, modelSpec.options);

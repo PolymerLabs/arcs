@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log, resolver}) => {
+defineParticle(({SimpleParticle, html, log, resolver}) => {
   const template = html`
     <magenta-visualizer notes="{{notes}}"></magenta-visualizer>
   `;
@@ -30,12 +30,12 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       {pitch: 64, startTime: 5.5, endTime: 6.0},
       {pitch: 62, startTime: 6.0, endTime: 6.5},
       {pitch: 62, startTime: 6.5, endTime: 7.0},
-      {pitch: 60, startTime: 7.0, endTime: 8.0},  
+      {pitch: 60, startTime: 7.0, endTime: 8.0},
     ],
     totalTime: 8
   };
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

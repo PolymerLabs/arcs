@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, log, resolver}) => {
+defineParticle(({SimpleParticle, html, log, resolver}) => {
   const template = html`
   <button id="button-play" on-click="onPlay">Play</button>
 `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

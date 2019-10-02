@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log, resolver}) => {
+defineParticle(({SimpleParticle, log, resolver}) => {
 
   importScripts(resolver(`$here/tf.js`));
 
-  return class extends self.TfMixin(DomParticle) {
+  return class extends self.TfMixin(SimpleParticle) {
     async update({url}) {
       if (url) {
         log('Parsing labels file...');
