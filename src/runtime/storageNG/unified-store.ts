@@ -62,7 +62,11 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
    * delete.
    */
   castToStorageStub(): StorageStub {
-    return this as unknown as StorageStub;
+    if (this instanceof StorageStub) {
+      return this;
+    } else {
+      throw new Error('Not a StorageStub!');
+    }
   }
 
   _compareTo(other: UnifiedStore): number {
