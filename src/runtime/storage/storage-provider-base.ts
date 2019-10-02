@@ -105,6 +105,8 @@ export class ChangeEvent {
  * Docs TBD
  */
 export abstract class StorageProviderBase extends UnifiedStore implements Store {
+  protected unifiedStoreType: 'StorageProviderBase';
+
   private readonly listeners: Set<Callback> = new Set();
   private readonly _type: Type;
 

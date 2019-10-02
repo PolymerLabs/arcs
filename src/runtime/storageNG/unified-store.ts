@@ -12,8 +12,8 @@ import {Comparable, compareStrings, compareNumbers} from '../recipe/comparable.j
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {Consumer} from '../hot.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {StorageStub} from '../storage-stub.js';
+import {assert} from '../../platform/assert-web.js';
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -31,6 +31,9 @@ import {StorageStub} from '../storage-stub.js';
  * Store class.
  */
 export abstract class UnifiedStore implements Comparable<UnifiedStore> {
+  // Tags for all subclasses of UnifiedStore.
+  protected abstract unifiedStoreType: 'Store' | 'StorageStub' | 'StorageProviderBase';
+
   abstract id: string;
   abstract name: string;
   abstract type: Type;
@@ -54,7 +57,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
   async modelForSynchronization(): Promise<{}> {
     return await this.toLiteral();
   }
-  abstract on(fn: Consumer<{}>): void;
+  on(fn: Consumer<{}>): void {}
 
   /**
    * Hack to cast this UnifiedStore to the old-style class StorageStub.
@@ -62,11 +65,9 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
    * delete.
    */
   castToStorageStub(): StorageStub {
-    if (this instanceof StorageStub) {
-      return this;
-    } else {
-      throw new Error('Not a StorageStub!');
-    }
+    // Can't use instanceof; causes circular dependencies.
+    assert(this.unifiedStoreType === 'StorageStub', 'Not a StorageStub!');
+    return this as unknown as StorageStub;
   }
 
   _compareTo(other: UnifiedStore): number {

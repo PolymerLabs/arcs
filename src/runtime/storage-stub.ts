@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-
 import {compareStrings} from './recipe/comparable.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
@@ -20,6 +19,8 @@ import {UnifiedStore} from './storageNG/unified-store.js';
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
 // deflated rather than requiring this stub.
 export class StorageStub extends UnifiedStore {
+  protected unifiedStoreType: 'StorageStub' = 'StorageStub';
+
   constructor(public readonly type: Type,
               public readonly id: string,
               public readonly name: string,

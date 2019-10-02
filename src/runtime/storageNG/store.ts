@@ -30,6 +30,7 @@ type StoreConstructor = {
 //
 // Calling 'activate()' will generate an interactive store and return it.
 export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements StoreInterface<T> {
+  protected unifiedStoreType: 'Store' = 'Store';
 
   toString(tags: string[]): string {
     throw new Error('Method not implemented.');
