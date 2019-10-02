@@ -241,7 +241,10 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onRegister(store: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
-    const id = store.on(async data => {this.SimpleCallback(messagesCallback, data); return Promise.resolve(true);});
+    const id = store.on(async data => {
+      this.SimpleCallback(messagesCallback, data);
+      return Promise.resolve(true);
+    });
     this.SimpleCallback(idCallback, id);
   }
 
