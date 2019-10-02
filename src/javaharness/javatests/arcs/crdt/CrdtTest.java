@@ -2,12 +2,18 @@ package arcs.crdt;
 
 import java.util.Arrays;
 import java.util.Objects;
+import static org.junit.Assert.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 // The set of tests copied from src/runtime/crdt/tests/crdt-collection-test.ts
 // Please, keep in sync.
 
 @SuppressWarnings("unchecked")
-public class CollectionDataTest {
+@RunWith(JUnit4.class)
+public class CrdtTest {
+
   public static class Data implements Referenceable {
     public final String id;
 
@@ -31,131 +37,140 @@ public class CollectionDataTest {
     }
   }
 
-  public static void testInitiallyIsEmpty() {
+  @Test
+  public void testInitiallyIsEmpty() {
     // initially is empty
     CRDTCollection<Data> set = new CRDTCollection<>();
     verifySize(set, 0);
   }
 
-  public static void testTwoItemsSameActor() {
+  @Test
+  public void testTwoItemsSameActor() {
     // can add two different items from the same actor
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
 
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 2), "me"));
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 2), "me")));
 
     verifyIds(set, new String[] {"one", "two"});
   }
 
-  public static void testSameValueTwoActors() {
+  @Test
+  public void testSameValueTwoActors() {
     // can add the same value from two actors
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
-    assert set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("them", 1), "them"));
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("them", 1), "them")));
 
     verifyIds(set, new String[] {"one"});
   }
 
-  public static void testRejectAddsNotInSequence() {
+  @Test
+  public void testRejectAddsNotInSequence() {
     // rejects add operations not in sequence
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
-    assert !set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
+    assertTrue(!set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 0), "me"));
-    assert !set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 0), "me")));
+    assertFalse(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 1), "me"));
-    assert !set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 1), "me")));
+    assertFalse(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 3), "me"));
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 3), "me")));
   }
 
-  public static void testRemoveItem() {
+  @Test
+  public void testRemoveItem() {
     // can remove an item
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
     verifySize(set, 1);
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 1), "me"));
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 1), "me")));
     verifySize(set, 0);
   }
 
-  public static void testRejectRemoveIfVersionMismatch() {
+  @Test
+  public void testRejectRemoveIfVersionMismatch() {
     // rejects remove operations if version mismatch
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
-    assert !set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
+    assertFalse(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 2), "me"));
-    assert !set.applyOperation(
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 2), "me")));
+    assertFalse(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 0), "me"));
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 0), "me")));
   }
 
-  public static void testRejectRemoveNonexistent() {
+  @Test
+  public void testRejectRemoveNonexistent() {
     // rejects remove value not in collection
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
-    assert !set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
+    assertFalse(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, new Data("two"), VersionMap.of("me", 1), "me"));
+            CollectionOperation.Type.REMOVE, new Data("two"), VersionMap.of("me", 1), "me")));
   }
 
-  public static void testRejectRemoveTooOld() {
+  @Test
+  public void testRejectRemoveTooOld() {
     // rejects remove version too old
     CRDTCollection<Data> set = new CRDTCollection<>();
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
-    assert set.applyOperation(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("you", 1), "you"));
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("you", 1), "you")));
     // This succeeds because the op clock is up to date wrt to the value "one" (whose version is
     // me:1).
-    assert set.applyOperation(
+    assertTrue(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 1), "them"));
+            CollectionOperation.Type.REMOVE, new Data("one"), VersionMap.of("me", 1), "them")));
     // This fails because the op clock is not up to date wrt to the actor "you" (whose version is
     // you:1).
-    assert !set.applyOperation(
+    assertFalse(set.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, new Data("two"), VersionMap.of("me", 1), "them"));
+            CollectionOperation.Type.REMOVE, new Data("two"), VersionMap.of("me", 1), "them")));
   }
 
-  public static void testMergeModels() {
+  @Test
+  public void testMergeModels() {
     // can merge two models
     CRDTCollection<Data> set1 = new CRDTCollection<>();
-    assert set1.applyOperation(
+    assertTrue(set1.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me"));
-    assert set1.applyOperation(
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("me", 1), "me")));
+    assertTrue(set1.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 2), "me"));
+            CollectionOperation.Type.ADD, new Data("two"), VersionMap.of("me", 2), "me")));
     CRDTCollection<Data> set2 = new CRDTCollection<>();
-    assert set2.applyOperation(
+    assertTrue(set2.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("three"), VersionMap.of("you", 1), "you"));
-    assert set2.applyOperation(
+            CollectionOperation.Type.ADD, new Data("three"), VersionMap.of("you", 1), "you")));
+    assertTrue(set2.applyOperation(
         new CollectionOperation<>(
-            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("you", 2), "you"));
+            CollectionOperation.Type.ADD, new Data("one"), VersionMap.of("you", 2), "you")));
     MergeResult<?> result1 = set1.merge(set2.getData());
 
     CollectionData<Data> expectedSet1 = new CollectionData<>();
@@ -166,13 +181,17 @@ public class CollectionDataTest {
         "three", new VersionedValue<>(new Data("three"), VersionMap.of("you", 1)));
     expectedSet1.version = VersionMap.of("you", 2, "me", 2);
     CollectionChange<Data> modelChange1 = (CollectionChange<Data>) result1.modelChange;
-    assert modelChange1.changeType == ChangeType.MODEL
-        : "modelChange1.changeType should be ChangeType.MODEL";
-    assert collectionDeepEquals(
-            (CollectionData<Data>) modelChange1.modelPostChange.get(), expectedSet1)
-        : "Unexpected merge model change (1).";
-    assert changeDeepEquals(modelChange1, (CollectionChange<Data>) result1.otherChange)
-        : "modelChange1 must be equal otherChange1";
+    assertEquals(
+        "modelChange1.changeType should be ChangeType.MODEL",
+        ChangeType.MODEL,
+        modelChange1.changeType);
+    assertTrue(
+        "Unexpected merge model change (1).",
+        collectionDeepEquals(
+            (CollectionData<Data>) modelChange1.modelPostChange.get(), expectedSet1));
+    assertTrue(
+        "modelChange1 must be equal otherChange1",
+        changeDeepEquals(modelChange1, (CollectionChange<Data>) result1.otherChange));
 
     // Test removes also work in merge.
     set1.applyOperation(
@@ -189,33 +208,37 @@ public class CollectionDataTest {
         "three", new VersionedValue<>(new Data("three"), VersionMap.of("you", 1)));
     expectedSet2.version = VersionMap.of("you", 2, "me", 2);
     CollectionChange<Data> modelChange2 = (CollectionChange<Data>) result2.modelChange;
-    assert modelChange2.changeType == ChangeType.MODEL
-        : "modelChange2.changeType should be ChangeType.MODEL";
-    assert collectionDeepEquals(
-            (CollectionData<Data>) modelChange2.modelPostChange.get(), expectedSet2)
-        : "Unexpected merge model change (2).";
-    assert changeDeepEquals(modelChange2, (CollectionChange<Data>) result2.otherChange)
-        : "modelChange2 must be equal otherChange2";
+    assertEquals(
+        "modelChange2.changeType should be ChangeType.MODEL",
+        ChangeType.MODEL,
+        modelChange2.changeType);
+    assertTrue(
+        "Unexpected merge model change (2).",
+        collectionDeepEquals(
+            (CollectionData<Data>) modelChange2.modelPostChange.get(), expectedSet2));
+    assertTrue(
+        "modelChange2 must be equal otherChange2",
+        changeDeepEquals(modelChange2, (CollectionChange<Data>) result2.otherChange));
   }
 
   private static void verifySize(CRDTCollection<Data> set, int expectedSize) {
-    assert ((RawCollection<Data>) set.getParticleView()).size() == expectedSize
-        : "Expected size "
+    assertEquals(
+        "Expected size "
             + expectedSize
             + ", but got size "
-            + ((RawCollection<Data>) set.getParticleView()).size();
+            + ((RawCollection<Data>) set.getParticleView()).size(),
+        expectedSize,
+        ((RawCollection<Data>) set.getParticleView()).size());
   }
 
   private static void verifyIds(CRDTCollection<Data> set, String[] expectedIds) {
     String[] setIds =
         ((RawCollection<Data>) set.getParticleView())
             .stream().map(Data::getId).toArray(String[]::new);
-    assert Arrays.equals(setIds, expectedIds)
-        : "Expected ["
-            + String.join(",", expectedIds)
-            + "], but got ["
-            + String.join(",", setIds)
-            + "]";
+    assertArrayEquals(
+        "Expected [" + String.join(",", expectedIds) + "], got [" + String.join(",", setIds) + "]",
+        setIds,
+        expectedIds);
   }
 
   private static boolean collectionDeepEquals(
@@ -233,14 +256,12 @@ public class CollectionDataTest {
 
   private static boolean changeDeepEquals(
       CollectionChange<Data> change1, CollectionChange<Data> change2) {
-    assert change1.changeType == ChangeType.MODEL : "unsupported change type comparison";
+    assertEquals("unsupported change type comparison", ChangeType.MODEL, change1.changeType);
     return change1.changeType.equals(change2.changeType)
         && collectionDeepEquals(
             (CollectionData<Data>) change1.modelPostChange.get(),
             (CollectionData<Data>) change2.modelPostChange.get());
   }
-
-  private CollectionDataTest() {}
 }
 
 // Note: if/when adding more tests to this file, please, also update crdt-collection-test.ts
