@@ -16,6 +16,6 @@ export const event = async (msg, tid, bus) => {
   // find the arc from the tid in the message (not the tid for this request)
   const arc = await bus.getAsyncValue(msg.tid);
   if (arc) {
-    arc.pec.slotComposer.sendEvent(msg.pid, msg.eventlet)
+    arc.pec.slotComposer.sendEvent(msg.pid, msg.eventlet);
   }
 };
