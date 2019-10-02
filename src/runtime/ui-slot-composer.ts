@@ -229,11 +229,9 @@ export class UiSlotComposer {
     }
   }
 
-  sendEvent(particleId, eventlet) {
+  sendEvent(particleId: string, eventlet) {
     log('sendEvent:', particleId, eventlet);
-    const findConsumer = id => this.consumers.find(
-        consumer => consumer.consumeConn.particle.id.toString() === id);
-    const consumer = findConsumer(particleId.toString());
+    const consumer = this._findConsumer(particleId);
     if (consumer) {
       const particle = consumer.consumeConn.particle;
       const arc = consumer.arc;
@@ -247,6 +245,10 @@ export class UiSlotComposer {
     } else {
       warn('...found no consumer!');
     }
+  }
+
+  _findConsumer(id) {
+    return this.consumers.find(consumer => consumer.consumeConn.particle.id.toString() === id);
   }
 
   // TODO(sjmiles): needs factoring
