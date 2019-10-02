@@ -22,11 +22,13 @@ const Application = {
   },
   // handle packets that were not otherwised consumed
   receive(packet) {
+    const {content: slot} = packet;
     // TODO(sjmiles): UiParticles that do not implement `render` return no content(?)
-    if (packet.content) {
+    if (slot) {
+      const {model} = slot.content;
       // if we get a slot-render request for 'notification' modality, make a toast for it
-      if (packet.content.model.modality === 'notification') {
-        addToast(packet.content.model.text);
+      if (model.modality === 'notification') {
+        addToast(model.text);
       }
     }
   },
