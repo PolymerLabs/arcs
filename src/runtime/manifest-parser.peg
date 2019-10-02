@@ -728,7 +728,7 @@ Description
 ParticleHandleDescription
   = name:lowerIdent whiteSpace pattern:backquotedString eolWhiteSpace
   {
-    return toAstNode<AstNode.ParticleHandleDescription>({
+    return toAstNode<AstNode.HandleDescription>({
       kind: 'handle-description',
       name,
       pattern,

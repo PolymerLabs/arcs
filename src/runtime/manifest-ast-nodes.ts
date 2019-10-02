@@ -89,10 +89,17 @@ export function slandleType(arg: ParticleHandleConnection): SlotType | undefined
 }
 // END PARTICLE TYPES
 
+export interface HandleDescription extends BaseNode {
+  kind: 'handle-description';
+  name: string;
+  pattern: string;
+}
+
 export interface Description extends BaseNode {
   kind: 'description';
   name: 'pattern';
   description: Description[];
+  patterns: string[];
 }
 
 export interface HandleRef extends BaseNode {
