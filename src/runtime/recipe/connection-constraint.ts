@@ -159,7 +159,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
 
     return recipe.newObligation(this.from._clone(cloneMap), this.to._clone(cloneMap), this.direction);
   }
-    
+
   _compareTo(other: ConnectionConstraint): number {
     let cmp: number;
     if ((cmp = this.from._compareTo(other.from)) !== 0) return cmp;

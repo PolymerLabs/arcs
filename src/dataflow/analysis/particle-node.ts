@@ -105,7 +105,7 @@ export class ParticleOutput implements Edge {
     this.connectionName = connection.name;
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
-    
+
     this.modifier = FlowModifier.fromClaims(this, connection.spec.claims);
     this.derivesFrom = [];
   }
@@ -136,7 +136,7 @@ export class ParticleOutput implements Edge {
    * Returns the list of edges from which the given edge could have derived. The
    * given edge must be a particle output of a Reference type. The logic behind
    * which input/output edges could be the source of an output reference is
-   * described at go/arcs-dataflow-references. 
+   * described at go/arcs-dataflow-references.
    */
   private getEdgesCompatibleWithReference(): Edge[] {
     if (this.type.tag !== 'Reference') {
@@ -182,7 +182,7 @@ export function createParticleNodes(particles: Particle[]) {
 
 /**
  * Checks if the given type is a possible source of the given output reference.
- * 
+ *
  * @param canBeReference controls whether a reference type is allowed to be the
  *     source of the output reference
  */
@@ -217,7 +217,7 @@ function isTypeCompatibleWithReference(type: Type, target: ReferenceType, canBeR
  * Checks if the given schema field is a possible source of the given output
  * reference. Equivalent to isTypeCompatibleWithReference, except handles schema
  * fields, which have no proper types, instead of actual Type objects.
- * 
+ *
  * canBeReference is implicitly true when calling this method, because a schema
  * can only contain the target type via a reference (schemas can't contain whole
  * sub-entities).

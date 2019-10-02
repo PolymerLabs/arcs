@@ -26,8 +26,8 @@ describe('Sequence testing infrastructure', async () => {
   it('picks up a basic error in return values', async () => {
     const flowTest = new SequenceTest<BadClass>();
     flowTest.setTestConstructor(() => new BadClass());
-  
-    const input = flowTest.registerInput('input', 2, 
+
+    const input = flowTest.registerInput('input', 2,
         {type: ExpectedResponse.Constant, response: true});
     const total = flowTest.registerSensor('total');
 
@@ -35,7 +35,7 @@ describe('Sequence testing infrastructure', async () => {
     flowTest.setChanges(input, inputChanges);
 
     flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 3));
-    
+
     try {
       await flowTest.test();
       assert.fail();
@@ -46,8 +46,8 @@ describe('Sequence testing infrastructure', async () => {
   it('picks up a basic error in an async class', async () => {
     const flowTest = new SequenceTest<BadClass>();
     flowTest.setTestConstructor(() => new BadClass());
-  
-    const input = flowTest.registerInput('input', 2, 
+
+    const input = flowTest.registerInput('input', 2,
         {type: ExpectedResponse.Void});
     const total = flowTest.registerSensor('total');
 
@@ -55,7 +55,7 @@ describe('Sequence testing infrastructure', async () => {
     flowTest.setChanges(input, inputChanges);
 
     flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 3));
-    
+
     try {
       await flowTest.test();
       assert.fail();
@@ -66,8 +66,8 @@ describe('Sequence testing infrastructure', async () => {
   it('picks up a bad count of internal awaits', async () => {
     const flowTest = new SequenceTest<BadClass>();
     flowTest.setTestConstructor(() => new BadClass());
-  
-    const input = flowTest.registerInput('input', 1, 
+
+    const input = flowTest.registerInput('input', 1,
         {type: ExpectedResponse.Void});
     const total = flowTest.registerSensor('total');
 
@@ -75,7 +75,7 @@ describe('Sequence testing infrastructure', async () => {
     flowTest.setChanges(input, inputChanges);
 
     flowTest.setEndInvariant(total, (value) => assert.strictEqual(value, 1));
-    
+
     try {
       await flowTest.test();
       assert.fail();

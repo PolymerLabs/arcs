@@ -17,18 +17,18 @@ import {assert} from '../../../platform/chai-web.js';
 
 /**
  * These classes are intended to mimic firebase behaviour, including asynchrony.
- * 
+ *
  * It's OK for methods in these classes to throw an Error if they're not implemented
  * yet; it isn't OK for methods to have different behaviour to the firebase API apart
  * from this.
- * 
+ *
  * It's OK to add **simple** getXXXForTesting methods, to allow tests to "peek" at
- * stored values. It isn't OK to store complex chains of expectations ala gmock. 
+ * stored values. It isn't OK to store complex chains of expectations ala gmock.
  */
 class MockFirebaseDataSnapshot implements firebase.database.DataSnapshot {
   ref: MockFirebaseReference;
   key: string;
-  
+
   constructor(reference: MockFirebaseReference) {
     this.ref = reference;
   }
@@ -89,7 +89,7 @@ class MockFirebaseReference implements firebase.database.Reference {
 
   child(path: string): firebase.database.Reference {
     throw new Error('Method not implemented.');
-  }  
+  }
   onDisconnect(): firebase.database.OnDisconnect {
     throw new Error('Method not implemented.');
   }
@@ -172,15 +172,15 @@ class MockFirebaseReference implements firebase.database.Reference {
   limitToLast(limit: number): firebase.database.Query {
     throw new Error('Method not implemented.');
   }
-  off(eventType?: firebase.database.EventType, 
-      callback?: (a: firebase.database.DataSnapshot, b?: string) => void, 
+  off(eventType?: firebase.database.EventType,
+      callback?: (a: firebase.database.DataSnapshot, b?: string) => void,
       context?: {}): void {
     throw new Error('Method not implemented.');
   }
 
-  on(eventType: firebase.database.EventType, 
-     callback: (a: firebase.database.DataSnapshot, b?: string) => void, 
-     cancelCallbackOrContext?: {}, 
+  on(eventType: firebase.database.EventType,
+     callback: (a: firebase.database.DataSnapshot, b?: string) => void,
+     cancelCallbackOrContext?: {},
      context?: {}): (a: firebase.database.DataSnapshot, b?: string) => void {
     this.callbacks.push(callback);
     return callback;
@@ -243,7 +243,7 @@ class MockFirebaseDatabase implements firebase.database.Database {
   getValueForTesting(path: string) {
     return this.values[path].value;
   }
-    
+
   goOffline() {
     throw new Error('Method not implemented.');
   }
@@ -256,7 +256,7 @@ class MockFirebaseDatabase implements firebase.database.Database {
     }
     if (this.values[path] == undefined) {
       this.values[path] = {value: null};
-      this.refs[path] = []; 
+      this.refs[path] = [];
     }
     // CONFIRMED: ref() calls with the same path return
     // unique Reference objects when using the real firebase API.
@@ -317,7 +317,7 @@ class MockFirebaseApp implements firebase.app.App {
   }
   performance(): firebase.performance.Performance {
     throw new Error('Method not implemented.');
-  } 
+  }
 }
 
 class MockFirebaseAppCache extends FirebaseAppCache {
@@ -336,7 +336,7 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
-    
+
     return MockFirebaseStorageDriverProvider.newDriverForTesting<Data>(storageKey, exists);
   }
 

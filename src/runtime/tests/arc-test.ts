@@ -982,7 +982,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
-  
+
   it('registers and deregisters its own volatile storage', async () => {
     const id1 = ArcId.newForTest('test1');
     const id2 = ArcId.newForTest('test2');

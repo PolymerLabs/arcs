@@ -204,7 +204,7 @@ particle ShowProduct in 'show-product.js'
   consume item
   `;
     const restaurantsPlanificator = new Planificator(
-        await createArc({manifestString: restaurantsManifestString}, storageKey), 
+        await createArc({manifestString: restaurantsManifestString}, storageKey),
         createPlanningResult(productsPlanificator.arc, productsPlanificator.result.store),
         productsPlanificator.searchStore);
     assert.isTrue(restaurantsPlanificator.producer.result.contextual);

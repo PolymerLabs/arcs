@@ -36,14 +36,14 @@ function createChainOfEdges(...nodeIds: string[]) {
   }
 
   // Mark the first node in the chain as having ingress, so the whole chain is
-  // valid. 
+  // valid.
   nodes[0].ingress = true;
 
   return edges;
 }
 
 /**
- * Marks the nodes representing the given particles as having ingress. 
+ * Marks the nodes representing the given particles as having ingress.
  *
  * This is a convenient hack for constructing unit tests with the desired
  * properties. Normally only handles with the use, map or copy fates are
@@ -81,7 +81,7 @@ function markParticleInputsWithIngress(graph: FlowGraph, ...labels: string[]) {
 function addsTag(...tags: string[]): FlowModifier {
   const modifier = new FlowModifier();
   for (const tag of tags) {
-    modifier.tagOperations.set(tag, TagOperation.Add);  
+    modifier.tagOperations.set(tag, TagOperation.Add);
   }
   return modifier;
 }

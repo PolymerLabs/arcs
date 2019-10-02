@@ -112,7 +112,7 @@ class ArcsConnectionStatus extends MessengerMixin(PolymerElement) {
     if (onOk) {
       this.confirmable = true;
       this.onOk = onOk;
-      this.$.ok.focus();  
+      this.$.ok.focus();
     } else {
       this.confirmable = false;
     }

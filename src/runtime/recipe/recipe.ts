@@ -149,7 +149,7 @@ export class Recipe implements Cloneable<Recipe> {
     let idx = this._slots.indexOf(slot);
     assert(idx > -1);
     this._slots.splice(idx, 1);
-    
+
     for (const requires of this.requires) {
       idx = requires.slots.indexOf(slot);
       if (idx !== -1) {
@@ -190,7 +190,7 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   allRequiredSlotsPresent(options=undefined): boolean {
-    // All required slots and at least one consume slot for each particle must be present in order for the 
+    // All required slots and at least one consume slot for each particle must be present in order for the
     // recipe to be considered resolved.
     for (const particle of this.particles) {
       if (particle.spec.slotConnections.size === 0) {
@@ -702,7 +702,7 @@ export class Recipe implements Cloneable<Recipe> {
 
 export class RequireSection extends Recipe {
   public readonly parent: Recipe;
-  
+
   constructor(parent: Recipe, name?: string) {
     super(name);
     this.parent = parent;
@@ -715,7 +715,7 @@ export class RequireSection extends Recipe {
     }
     return slot;
   }
-  
+
   toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     if (nameMap == undefined) {
       nameMap = this._makeLocalNameMap();

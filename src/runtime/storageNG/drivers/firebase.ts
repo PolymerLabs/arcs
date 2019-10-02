@@ -71,9 +71,9 @@ export class FirebaseAppCache {
 // this driver maintains a 'tag' on each model it processes. This is
 // necessary to deal with the fact that incoming state updates
 // (which call remoteStateChanged) are not distinguishable in terms
-// of being local or remote; furthermore, when local, they are actually 
+// of being local or remote; furthermore, when local, they are actually
 // delivered just *before* the transaction reports success. This means
-// that a given version *might* be the just-about-to-succeed local 
+// that a given version *might* be the just-about-to-succeed local
 // update, or it *might* be some completely new state from firebase.
 // A randomly generated tag is used to provide this distinguishing
 // mark.
@@ -114,7 +114,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
       this.pendingModel = currentSnapshot.val().model || null;
       this.pendingVersion = currentSnapshot.val().version;
     }
-      
+
     this.reference = reference;
   }
 
@@ -128,7 +128,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
     }
     this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
   }
-  
+
   async send(model: Data, version: number) {
     this.nextTag = Math.random();
     // Locally cache nextTag and seenTag as this function can be
@@ -176,16 +176,16 @@ export class FirebaseDriver<Data> extends Driver<Data> {
 
 
 export class FirebaseStorageDriverProvider implements StorageDriverProvider {
-  
+
   willSupport(storageKey: StorageKey): boolean {
     return storageKey.protocol === 'firebase';
   }
-  
+
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
-    
+
     const driver = new FirebaseDriver<Data>(storageKey, exists);
     await driver.init();
     return driver;
@@ -197,15 +197,15 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
 }
 
 // Note that this will automatically register for any production code
-// that uses firebase drivers; but it won't automatically register in 
+// that uses firebase drivers; but it won't automatically register in
 // testing.
 //
 // If you want to test using the firebase driver you have three options.
 // (1) for (_slow_) manual testing, call FirebaseStorageDriverProvider.register()
 // somewhere at the beginning of your test; if you want to be hermetic,
 // call DriverFactory.clearRegistrationsForTesting() at the end.
-// (2) to use a mock firebase implementation and directly test the driver, 
-// construct your driver using 
+// (2) to use a mock firebase implementation and directly test the driver,
+// construct your driver using
 // FakeFirebaseStorageDriverProvider.newDriverForTesting(key, exists);
 // Note that key.databaseURL _must be_ test-url if you do this.
 // (3) you can also register the FakeFirebaseStorageDriverProvider with

@@ -24,7 +24,7 @@ type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
 export class BackingStore<T extends CRDTTypeRecord>  {
-  
+
   private stores: Dictionary<StoreRecord<T>> = {};
   private callbacks = new Map<number, MultiplexedProxyCallback<T>>();
   private nextCallbackId = 1;
@@ -40,21 +40,21 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     this.callbacks.set(this.nextCallbackId, callback);
     return this.nextCallbackId++;
   }
-  
+
   off(callback: number): void {
     this.callbacks.delete(callback);
   }
-  
+
   getLocalModel(muxId: string) {
     const store = this.stores[muxId];
 
     if (store == null) {
       this.stores[muxId] = {type: 'pending', promise: this.setupStore(muxId)};
-      return null;  
+      return null;
     }
     if (store.type === 'pending') {
       return null;
-    } else { 
+    } else {
       return store.store.localModel;
     }
   }

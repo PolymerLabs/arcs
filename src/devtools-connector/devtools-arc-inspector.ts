@@ -105,7 +105,7 @@ class DevtoolsArcInspector implements ArcInspector {
 
   public pecMessage(name: string, pecMsgBody: object, pecMsgCount: number, stackString: string) {
     if (!DevtoolsConnection.isConnected) return;
-    
+
     // Modifying pec messages is a problem as they are transmited to DevTools with a delay. If the
     // object representing a message is modified, it appears as if a different messages travelled
     // across the pec. We could have made a deep copy of the message object, but agreed that these
@@ -158,7 +158,7 @@ class DevtoolsArcInspector implements ArcInspector {
         const match = frameString.match(/^ {4}at (.*) \((.*)\)$/);
         const method = match ? match[1] : '<unknown>';
         let source = match ? match[2] : frameString.replace(/^ *at */, '');
-        
+
         const frame: StackFrame = {method};
         source = match[2].replace(/:[0-9]+$/, '');
         if (source.startsWith('http')) {

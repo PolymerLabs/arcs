@@ -27,7 +27,7 @@ describe('entity', () => {
     assert.isDefined(entity);
 
     const collectionType = new EntityType(schema).collectionOf();
-    
+
     const storage = await arc.createStore(collectionType) as StorageProviderBase;
     const handle = handleFor(storage, IdGenerator.newSession()) as Collection;
     await handle.store(entity);

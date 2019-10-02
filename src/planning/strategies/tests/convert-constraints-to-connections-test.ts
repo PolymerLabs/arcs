@@ -510,7 +510,7 @@ describe('ConvertConstraintsToConnections', () => {
     assert.strictEqual((recipe.obligations[0].from as InstanceEndPoint).instance, recipe.particles[0]);
     assert.strictEqual((recipe.obligations[0].to as InstanceEndPoint).instance, recipe.particles[1]);
   });
-  
+
   it(`connects particles together when there's extra things that can't connect`, async () => {
     const manifest = await Manifest.parse(`
     particle A

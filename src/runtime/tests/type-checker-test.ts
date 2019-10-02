@@ -254,7 +254,7 @@ describe('TypeChecker', () => {
       assert.strictEqual(a.variable.canReadSubset.entitySchema.name, 'Product');
       assert.strictEqual(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
     } else {
-      assert.fail('a should be a type variable with EntityType constraints'); 
+      assert.fail('a should be a type variable with EntityType constraints');
     }
   });
 

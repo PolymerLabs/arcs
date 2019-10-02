@@ -20,7 +20,7 @@ export interface Releaser {
  * sections that should not execute concurrently.
  *
  * Sample usage:
- * 
+ *
  * ```
  *   class SampleClass {
  *     private readonly mutex = new Mutex();
@@ -59,14 +59,14 @@ export class Mutex {
     const current: Promise<Releaser> = this.next.then(() => {
       // external code is awaiting the result of acquire
       this.depth++;
-      
+
       return () => {
         // external code is calling the releaser
         release();
         this.depth--;
       };
     });
-    
+
     this.next = new Promise<void>(resolve => {
       release = resolve;
     });

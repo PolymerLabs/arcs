@@ -61,7 +61,7 @@ describe('Firebase + Store Integration', async () => {
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 42, version: {from: 0, to: 27}});
-   
+
     const count2 = new CRDTCount();
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', value: 23, version: {from: 0, to: 15}});
 

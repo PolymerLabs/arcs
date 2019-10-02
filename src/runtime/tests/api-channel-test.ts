@@ -95,7 +95,7 @@ describe('API channel', function() {
       onRegister() {}
       onProxyMessage() {}
     }(port, arc);
-    
+
 
     outer = outerPort['_reg_'];
     inner = new class extends PECInnerPort {
@@ -115,7 +115,7 @@ describe('API channel', function() {
       onStop() {}
       onStopRender() {}
       onUIEvent() {}
-      
+
       constructor() {
         super(port);
       }

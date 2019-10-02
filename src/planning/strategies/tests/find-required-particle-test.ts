@@ -250,5 +250,5 @@ describe('FindRequiredParticles', () => {
     const recipe = results[0].result;
     assert.isFalse(recipe.isResolved(), 'recipe is resolved when it shouldn\'t be');
   });
-  
+
 });

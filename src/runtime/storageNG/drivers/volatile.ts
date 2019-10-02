@@ -76,7 +76,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
           break;
         }
       default:
-        throw new Error(`unknown Exists code ${exists}`); 
+        throw new Error(`unknown Exists code ${exists}`);
     }
     this.data.drivers.push(this);
   }
@@ -88,7 +88,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
       this.pendingModel = null;
     }
   }
-  
+
   async send(model: Data, version: number): Promise<boolean> {
     // This needs to contain an "empty" await, otherwise there's
     // a synchronous send / onReceive loop that can be established
@@ -107,11 +107,11 @@ export class VolatileDriver<Data> extends Driver<Data> {
     });
     return true;
   }
-  
+
   async write(key: StorageKey, value: Data): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  
+
   async read(key: StorageKey): Promise<Data> {
     throw new Error('Method not implemented.');
   }
@@ -124,7 +124,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
  */
 export class VolatileStorageDriverProvider implements StorageDriverProvider {
   private readonly arc: Arc;
-  
+
   constructor(arc: Arc) {
     this.arc = arc;
   }
@@ -132,7 +132,7 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
   willSupport(storageKey: StorageKey): boolean {
     return storageKey.protocol === 'volatile' && (storageKey as VolatileStorageKey).arcId.equal(this.arc.id);
   }
-  
+
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);

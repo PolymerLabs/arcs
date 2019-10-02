@@ -487,9 +487,9 @@ export class ParticleSpec {
               throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
             }
             if (handle.check) {
-              throw new Error(`Can't make multiple checks on the same input (${handleName}).`); 
+              throw new Error(`Can't make multiple checks on the same input (${handleName}).`);
             }
-            
+
             handle.check = createCheck(handle, check, this.handleConnectionMap);
             results.push(handle.check);
             break;

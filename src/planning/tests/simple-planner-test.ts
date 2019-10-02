@@ -259,7 +259,7 @@ describe('simple planner', () => {
     assert.lengthOf(manifest.recipes, 2);
     const planner = new SimplePlanner(manifest.recipes);
     assert.lengthOf(planner.recipesByTrigger, 1);
-    assert.equal(planner.recipesByTrigger[0].recipe, recipe);    
+    assert.equal(planner.recipesByTrigger[0].recipe, recipe);
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const resolved = await resolver.resolve(recipe);

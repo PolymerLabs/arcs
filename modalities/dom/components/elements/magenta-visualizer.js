@@ -78,7 +78,7 @@ class MagentaVisualizer extends Xen.Base {
         script.onload = () => resolve();
         script.onerror = (err) => reject(err);
         document.head.appendChild(script);
-    });    
+    });
   }
 
   initVisualizer(props) {

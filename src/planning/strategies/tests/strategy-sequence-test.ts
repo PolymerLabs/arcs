@@ -280,7 +280,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);    
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 });

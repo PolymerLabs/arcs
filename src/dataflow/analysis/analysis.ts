@@ -35,7 +35,7 @@ class CheckFailure {
  */
 class IngressFailure {
   constructor(readonly check: string) {}
-  
+
   getFailureMessage(graph: FlowGraph): string {
     return `'${this.check}' failed: no data ingress.`;
   }
@@ -45,7 +45,7 @@ class IngressFailure {
 export class ValidationResult {
   readonly checkFailures: CheckFailure[] = [];
   readonly ingressFailures: IngressFailure[] = [];
-  
+
   addCheckFailure(check: string, flow: Flow) {
     this.checkFailures.push(new CheckFailure(check, flow));
   }
@@ -103,7 +103,7 @@ export class EdgeExpression {
     const modifier = edge.modifier || new FlowModifier();
     const parentEdges = edge.start.inEdgesFromOutEdge(edge);
     if (parentEdges.length > 0) {
-      // Indicate that this edge inherits from its parents (and apply 
+      // Indicate that this edge inherits from its parents (and apply
       // modifiers).
       parentEdges.forEach(e => this.inheritFromEdge(e, modifier));
     }

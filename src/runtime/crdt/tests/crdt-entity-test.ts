@@ -38,10 +38,10 @@ describe('CRDTEntity', () => {
       tags: new CRDTCollection<{id: string, value: string}>()
     };
     const entity = new CRDTEntity(singletons, collections);
-   
+
     const value = {id: 'bob', value: 'bob'} as Referenceable;
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value, actor: 'me', clock: {'me': 1}}));
-    assert.deepEqual(entity.getParticleView(), 
+    assert.deepEqual(entity.getParticleView(),
       {singletons: {name: value}, collections: {tags: new Set<Referenceable>()}});
   });
 
@@ -53,7 +53,7 @@ describe('CRDTEntity', () => {
       tags: new CRDTCollection<{id: string, value: string}>()
     };
     const entity = new CRDTEntity(singletons, collections);
-  
+
     const value = {id: 'bob', value: 'bob'} as Referenceable;
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Clear, field: 'name', actor: 'me', clock: {'me': 1}}));
@@ -68,7 +68,7 @@ describe('CRDTEntity', () => {
       tags: new CRDTCollection<{id: string, value: string}>()
     };
     const entity = new CRDTEntity(singletons, collections);
-    
+
     const value = {id: 'bob', value: 'bob'} as Referenceable;
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: value, actor: 'me', clock: {'me': 1}}));
     assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<Referenceable>([value])}});
@@ -82,7 +82,7 @@ describe('CRDTEntity', () => {
       tags: new CRDTCollection<{id: string, value: string}>()
     };
     const entity = new CRDTEntity(singletons, collections);
-    
+
     const value = {id: 'bob', value: 'bob'} as Referenceable;
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: value, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Remove, field: 'tags', removed: value, actor: 'me', clock: {'me': 1}}));
@@ -96,7 +96,7 @@ describe('CRDTEntity', () => {
     };
     const collections = {
       tags: new CRDTCollection<{id: string, value: string}>(),
-      favoriteNumbers: new CRDTCollection<{id: string, value: string}>() 
+      favoriteNumbers: new CRDTCollection<{id: string, value: string}>()
     };
     const entity = new CRDTEntity(singletons, collections);
 
@@ -111,7 +111,7 @@ describe('CRDTEntity', () => {
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: tag, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'favoriteNumbers', added: favoriteNumber, actor: 'me', clock: {'me': 1}}));
     assert.deepEqual(entity.getParticleView(), {
-      singletons: {name, age}, 
+      singletons: {name, age},
       collections: {tags: new Set([tag]), favoriteNumbers: new Set([favoriteNumber])}
     });
   });

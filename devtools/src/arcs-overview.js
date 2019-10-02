@@ -161,7 +161,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         case 'recipe-instantiated': {
           for (const sc of m.slotConnections) {
             if (sc.consumed) {
-              
+
               this._slots.set(sc.consumed.id, {
                 id: sc.consumed.id,
                 label: sc.consumed.name,
@@ -172,7 +172,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                   id: sc.consumed.id
                 }
               });
-  
+
               const edgeId = `${sc.particleId}¯\\_(ツ)_/¯${sc.consumed.id}`;
               this._operations.set(edgeId, {
                 id: edgeId,
@@ -187,7 +187,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 color: {color: this._cssVar('--dark-green')}
               });
             }
-  
+
             for (const provided of sc.provided) {
               this._slots.set(provided.id, {
                 id: provided.id,
@@ -199,7 +199,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                   id: provided.id
                 }
               });
-  
+
               const edgeId = `${sc.particleId}¯\\_(ツ)_/¯${provided.id}`;
               this._operations.set(edgeId, {
                 id: edgeId,
@@ -214,7 +214,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 color: {color: this._cssVar('--dark-red')}
               });
             }
-          }          
+          }
           break;
         }
         case 'PecLog': {

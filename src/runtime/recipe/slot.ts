@@ -89,7 +89,7 @@ export class Slot implements Comparable<Slot> {
     }
     this._consumeConnections.forEach(connection => {
       const clonedConnection = cloneMap.get(connection);
-      
+
       if (clonedConnection && clonedConnection instanceof SlotConnection && clonedConnection.targetSlot == undefined) {
         clonedConnection.connectToSlot(slot);
       }

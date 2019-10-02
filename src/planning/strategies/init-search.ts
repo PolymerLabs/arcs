@@ -15,7 +15,7 @@ import {Strategy} from '../strategizer.js';
 
 export class InitSearch extends Strategy {
   _search;
-  
+
   constructor(arc, {search}) {
     super(arc, {search});
     this._search = search;

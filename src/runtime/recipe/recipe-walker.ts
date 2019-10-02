@@ -40,7 +40,7 @@ export class RecipeWalker extends Walker<Recipe> {
     if (this.onRecipe) {
       this.visit(this.onRecipe.bind(this));
     }
-    
+
     if (this.onParticle) {
       for (const particle of recipe.particles) {
         this.visit(this.onParticle.bind(this), particle);
