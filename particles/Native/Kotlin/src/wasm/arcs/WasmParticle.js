@@ -1,4 +1,4 @@
-defineParticle(({DomParticle, html, log, resolver}) => {
+defineParticle(({SimpleParticle, html, log, resolver}) => {
 
     /**
      * This looks a bit odd, because it has to fit into the auto-generated setup that Kotlin-native

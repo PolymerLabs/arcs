@@ -11,7 +11,7 @@
 
  /* global defineParticle */
 
- defineParticle(({DomParticle, html, log}) => {
+ defineParticle(({SimpleParticle, html, log}) => {
   const template = html`
  <div style="padding: 8px;">
   Captain's log, stardate <b>{{stardate}}</b>.
@@ -19,7 +19,7 @@
 </div>
    `;
 
-   return class extends DomParticle {
+   return class extends SimpleParticle {
     get template() {
       return template;
     }

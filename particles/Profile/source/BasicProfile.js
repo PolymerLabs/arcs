@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({SimpleParticle, html, resolver}) => {
 
   const host = `basic-profile`;
 
@@ -71,7 +71,7 @@ defineParticle(({DomParticle, html, resolver}) => {
 
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

@@ -10,8 +10,8 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
-  return class extends DomParticle {
+defineParticle(({SimpleParticle, html}) => {
+  return class extends SimpleParticle {
     get template() {
       return html`<div slotid="content"></div>`;
     }

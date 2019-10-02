@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html, resolver}) => {
+defineParticle(({SimpleParticle, log, html, resolver}) => {
 
   const template_ = html`
 <div>
@@ -25,7 +25,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
   const url = resolver(`MobileNet/../../assets/waltbird.jpg`);
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template_;
     }

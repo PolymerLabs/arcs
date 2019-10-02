@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html, resolver}) => {
+defineParticle(({SimpleParticle, log, html, resolver}) => {
 
   const template_ = html`
 <div>
@@ -27,7 +27,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
   const modelUrl = 'https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1';
   const labelUrl = resolver(`ImageClassifier/../../assets/ImageNetLabels.txt`);
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template_;
     }

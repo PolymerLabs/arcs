@@ -56,8 +56,8 @@ const template = html`
 });
 
 
-/*defineParticle(({DomParticle, html, resolver}) => {
-    return class extends DomParticle {
+/*defineParticle(({SimpleParticle, html, resolver}) => {
+    return class extends SimpleParticle {
 
         get template() {
             return 'Today\'s cat is <span>{{name}}</span>!';

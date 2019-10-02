@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-defineParticle(({DomParticle, html}) => {   
-  return class extends DomParticle {
+defineParticle(({SimpleParticle, html}) => {
+  return class extends SimpleParticle {
     get template() {
       return html`Hello <span>{{name}}</span>, aged <span>{{age}}</span>!`;
     }

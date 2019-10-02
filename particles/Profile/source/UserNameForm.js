@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({SimpleParticle, html}) => {
 
   const host = `user-name-form`;
 
@@ -43,7 +43,7 @@ defineParticle(({DomParticle, html}) => {
 
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

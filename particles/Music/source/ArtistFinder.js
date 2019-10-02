@@ -12,12 +12,12 @@
 'use strict';
 
 /* global defineParticle */
-defineParticle(({DomParticle, log}) => {
+defineParticle(({SimpleParticle, log}) => {
 
   /* global service */
   const service = 'https://kgsearch.googleapis.com/v1/entities:search?key=AIzaSyDVu27xQSI7fQ-_VvZpCH6sdVMe1mueN54&limit=1';
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return '&nbsp;';
     }

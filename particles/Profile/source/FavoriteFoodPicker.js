@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({SimpleParticle, html, resolver}) => {
 
   const notoPath = `/../assets/noto-emoji-128/emoji_u`;
   const allFoods = {
@@ -89,7 +89,7 @@ defineParticle(({DomParticle, html, resolver}) => {
 
   const nar = [];
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

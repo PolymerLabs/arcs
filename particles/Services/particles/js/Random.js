@@ -10,10 +10,10 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html, resolver}) => {
+defineParticle(({SimpleParticle, log, html, resolver}) => {
   const handleName = 'randomData';
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     /**
      * Sets the 'randomData' handle to a RandomData schema object
      * containing a number value fetched from the Random service.

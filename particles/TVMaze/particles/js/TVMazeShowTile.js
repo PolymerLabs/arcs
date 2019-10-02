@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({SimpleParticle, html, log}) => {
 
   // TODO(sjmiles): encode expected aspect-ratio using div-padding trick, this way the box will be properly sized
   // even if there is no image.
@@ -57,7 +57,7 @@ defineParticle(({DomParticle, html, log}) => {
     <div show-tile trigger$="{{trigger}}" style%="{{image}}"></div>
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }
