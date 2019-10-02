@@ -31,7 +31,7 @@ describe('Multiplexer', () => {
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
     const recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;
     const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowTwo\n    post <- v1\n    consume item as s1`;
-    const postsStub = context.stores[0];
+    const postsStub = context.stores[0].castToStorageStub();
     postsStub.model.push({
       id: '1',
       keys: ['key1'],

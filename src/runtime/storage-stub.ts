@@ -15,11 +15,12 @@ import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Type} from './type.js';
 import {VolatileStorageProvider} from './storage/volatile-storage.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
 // deflated rather than requiring this stub.
-export class StorageStub {
-  constructor(public readonly type: Type, 
+export class StorageStub extends UnifiedStore {
+  constructor(public readonly type: Type,
               public readonly id: string,
               public readonly name: string,
               public readonly storageKey: string,
@@ -31,7 +32,9 @@ export class StorageStub {
               public readonly version?: number,
               public readonly source?: string,
               public referenceMode: boolean = false,
-              public readonly model?: {}[]) {}
+              public readonly model?: {}[]) {
+    super();
+  }
 
   async inflate(storageProviderFactory?: StorageProviderFactory) {
     const factory = storageProviderFactory || this.storageProviderFactory;

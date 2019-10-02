@@ -1313,7 +1313,7 @@ ${particleStr1}
         return `${path} ${file}`;
       }
     }();
-        
+
     const manifest = await Manifest.load('somewhere/a', loader, {registry});
     assert(registry['somewhere/a path/b']);
   });
@@ -1367,7 +1367,7 @@ ${particleStr1}
     const manifest = await Manifest.load('the.manifest', loader);
     const storageStub = manifest.findStoreByName('Store0');
     assert(storageStub);
-    const store = await storageStub.inflate() as CollectionStorageProvider;
+    const store = await storageStub.castToStorageStub().inflate() as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
@@ -1412,7 +1412,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    const store = (await manifest.findStoreByName('Store0').inflate()) as CollectionStorageProvider;
+    const store = (await manifest.findStoreByName('Store0').castToStorageStub().inflate()) as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
@@ -2278,18 +2278,18 @@ resource SomeName
     const recipe = manifest.recipes[0];
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
   });
-  
+
   it('can parse recipes with a require section', async () => {
     const manifest = await Manifest.parse(`
       particle P1
         out S {} a
-        consume root 
+        consume root
           provide details
       particle P2
         in S {} b
           consume details
-      
-      recipe 
+
+      recipe
         require
           handle as h0
           slot as s0
@@ -2305,7 +2305,7 @@ resource SomeName
     const recipe = manifest.recipes[0];
     assert(recipe.requires.length === 1, 'could not parse require section');
   });
- 
+
   it('recipe resolution checks the require sections', async () => {
     const manifest = await Manifest.parse(`
 
@@ -2337,7 +2337,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
       assert.lengthOf(particle.trustClaims, 2);
-      
+
       const claim1 = particle.trustClaims.find(claim => claim.handle.name === 'output1');
       assert.isNotNull(claim1);
       assert.strictEqual((claim1.claims[0] as ClaimIsTag).tag, 'property1');
@@ -2357,7 +2357,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
       assert.lengthOf(particle.trustClaims, 1);
-      
+
       const claim = particle.trustClaims.find(claim => claim.handle.name === 'output1');
       assert.isNotNull(claim);
       assert.sameMembers((claim.claims as ClaimIsTag[]).map(claim => claim.tag), ['property1', 'property2']);
@@ -2393,7 +2393,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
       assert.strictEqual(particle.trustClaims.length, 1);
-      
+
       const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
       assert.isNotNull(claim);
       assert.sameMembers((claim.claims as ClaimDerivesFrom[]).map(claim => claim.parentHandle.name), ['input1', 'input2']);
@@ -2411,7 +2411,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustChecks);
       assert.lengthOf(particle.trustClaims, 1);
-      
+
       const claim = particle.trustClaims.find(claim => claim.handle.name === 'output1');
       assert.isNotNull(claim);
       assert.lengthOf(claim.claims, 5);
@@ -2424,7 +2424,7 @@ resource SomeName
       assert.lengthOf(derivesClaims, 2);
       assert.sameMembers(derivesClaims.map(claim => claim.parentHandle.name), ['input1', 'input2']);
     });
-    
+
     it('supports multiple check statements', async () => {
       const manifest = await Manifest.parse(`
         particle A
@@ -2437,7 +2437,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
       assert.lengthOf(particle.trustChecks, 2);
-      
+
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is property1');
       assert.strictEqual(check1.target.name, 'input1');
@@ -2461,7 +2461,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
       assert.lengthOf(particle.trustChecks, 2);
-      
+
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is from store MyStore');
       assert.strictEqual(check1.target.name, 'input1');
@@ -2487,7 +2487,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
       assert.lengthOf(particle.trustChecks, 2);
-      
+
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is from output output1');
       assert.strictEqual(check1.target.name, 'input1');
@@ -2509,7 +2509,7 @@ resource SomeName
       const particle = manifest.particles[0];
       assert.isEmpty(particle.trustClaims);
       assert.lengthOf(particle.trustChecks, 1);
-      
+
       const check = particle.trustChecks[0];
       assert.strictEqual(check.toManifestString(), 'check mySlot data is trusted');
       assert.isTrue(check.target instanceof ProvideSlotConnectionSpec);
@@ -2596,7 +2596,7 @@ resource SomeName
           [{"nobId": "12345"}]
       `);
       assert.lengthOf(manifest.stores, 1);
-      const store = manifest.stores[0];
+      const store = manifest.stores[0].castToStorageStub();
       assert.lengthOf(store.claims, 2);
       assert.strictEqual(store.claims[0].tag, 'property1');
       assert.strictEqual(store.claims[1].tag, 'property2');
@@ -2632,7 +2632,7 @@ resource SomeName
   modality dom
   consume parentSlot
     provide childSlot`;
-    
+
       const manifest = await Manifest.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
     });
@@ -2745,7 +2745,7 @@ resource SomeName
         assert.isEmpty(result[0].fields);
         assert.lengthOf(result[0].names, 1);
         assert.deepEqual(result[0].names, ['Foo']);
-    
+
       });
       it('handles a schema with fields', async () => {
         const manifest = await Manifest.parse(`
@@ -2828,9 +2828,9 @@ resource SomeName
         schema Foo
           Text name
           Number age
-        
+
         store FooStore of Foo in 'b'
-        
+
         particle Bar
           recipe Food
             Bar`;

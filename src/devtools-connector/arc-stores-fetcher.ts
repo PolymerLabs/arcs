@@ -11,7 +11,6 @@
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
-import {StorageStub} from '../runtime/storage-stub.js';
 import {SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
@@ -59,7 +58,7 @@ export class ArcStoresFetcher {
   }
 
   private async listStores() {
-    const find = (manifest: Manifest): [StorageStub, string[]][] => {
+    const find = (manifest: Manifest): [UnifiedStore, string[]][] => {
       let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
@@ -72,7 +71,7 @@ export class ArcStoresFetcher {
     };
   }
 
-  private async digestStores(stores: [UnifiedStore | StorageStub, string[] | Set<string>][]) {
+  private async digestStores(stores: [UnifiedStore, string[] | Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({
@@ -89,7 +88,7 @@ export class ArcStoresFetcher {
   }
 
   // tslint:disable-next-line: no-any
-  private async dereference(store: UnifiedStore | StorageStub): Promise<any> {
+  private async dereference(store: UnifiedStore): Promise<any> {
     if ((store as CollectionStorageProvider).toList) {
       return (store as CollectionStorageProvider).toList();
     } else if ((store as SingletonStorageProvider).get) {
