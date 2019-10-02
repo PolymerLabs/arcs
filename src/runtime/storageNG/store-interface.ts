@@ -73,16 +73,16 @@ export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInte
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
 
-  getStorageEndpoint(storageproxy: StorageProxy<T>): StorageCommunicationEndpoint<T> {
+  getStorageEndpoint() {
     const store = this;
     let id: number;
     return {
-      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
+      async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
         message.id = id!;
         return store.onProxyMessage(message);
       },
 
-      setCallback(callback: ProxyCallback<CRDTTypeRecord>) {
+      setCallback(callback: ProxyCallback<T>) {
         id = store.on(callback);
       },
       reportExceptionInHost(exception: PropagatedException): void {

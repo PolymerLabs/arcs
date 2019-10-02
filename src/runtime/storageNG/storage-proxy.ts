@@ -219,7 +219,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, null, null, null);
+    super(null, null, {getStorageEndpoint() {}} as ActiveStore<T>, null);
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});
