@@ -74,7 +74,6 @@ export function isTypeVariable(node: BaseNode): node is TypeVariable {
 export interface SlotType extends BaseNode {
   kind: 'slot-type';
   fields: SlotField[];
-  model: {formFactor: string, handle: string};
 }
 export function isSlotType(node: BaseNode): node is SlotType {
   return node.kind === 'slot-type';
