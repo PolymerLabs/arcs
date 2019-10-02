@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import javax.inject.Inject;
@@ -22,6 +23,7 @@ public class NotificationRenderer implements UiRenderer {
   private static final String DATA_FIELD = "data";
   private static final String TITLE_FIELD = "title";
   private static final String TEXT_FIELD = "text";
+  private static final String DEEPLINK_FIELD = "deeplink";
   private static final String HANDLER_FIELD = "handler";
   private static final String OUTPUT_SLOT_ID_FIELD = "outputSlotId";
   private static final String CHANNEL_ID = "ArcsNotification";
@@ -69,6 +71,15 @@ public class NotificationRenderer implements UiRenderer {
       PendingIntent pendingIntent =
           PendingIntent.getService(
               context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+      builder.setContentIntent(pendingIntent);
+    } else if (data.hasKey(DEEPLINK_FIELD)) {
+      String deeplink = data.getString(DEEPLINK_FIELD);
+
+      Intent notificationIntent = new Intent(Intent.ACTION_VIEW);
+      notificationIntent.setData(Uri.parse(deeplink));
+
+      PendingIntent pendingIntent =
+        PendingIntent.getActivity(context, 0, notificationIntent, 0);
       builder.setContentIntent(pendingIntent);
     }
 
