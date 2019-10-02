@@ -129,7 +129,7 @@ export interface ManifestStorageClaim extends BaseNode {
   tags: string[];
 }
 
-export interface ManifestStorageSource {
+export interface ManifestStorageSource  extends BaseNode {
   origin: string;
   source: string;
 }
@@ -174,7 +174,7 @@ export interface Particle extends BaseNode {
   modality?: string[];      // not used in RecipeParticle
   slots?: ParticleSlotConnection[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
-  hasParticleArgument?: boolean;  // not used in RecipeParticle
+  hasParticleHandleConnection?: boolean;  // not used in RecipeParticle
   trustChecks?: ParticleCheckStatement[];
   trustClaims?: ParticleClaimStatement[];
 
@@ -286,12 +286,6 @@ export interface ParticleHandleConnection extends BaseNode {
 
 export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;
 
-export interface ParticleHandleDescription extends BaseNode {
-  kind: 'handle-description';
-  name: string;
-  pattern: string;
-}
-
 export interface ParticleInterface extends BaseNode {
   kind: 'interface';
   verb: string;
@@ -325,7 +319,7 @@ export interface ParticleProvidedSlotHandle extends BaseNode {
 
 export interface ParticleRef extends BaseNode {
   kind: 'particle-ref';
-  name: string;
+  name?: string;
   verbs: VerbList;
   tags: TagList;
 }
@@ -335,8 +329,8 @@ export interface RecipeNode extends BaseNode {
   name: string;
   verbs: VerbList;
   items: RecipeItem[];
-  annotation: Annotation;
-  triggers: Triggers;
+  annotation?: string; // simpleAnnotation
+  triggers?: Triggers;
 }
 
 export interface RecipeParticle extends BaseNode {
@@ -351,8 +345,6 @@ export interface RequireHandleSection extends BaseNode {
   kind: 'requireHandle';
   name: string;
   ref: HandleRef;
-  // TODO: remove fates
-  fate: Fate;
 }
 
 export interface RecipeRequire extends BaseNode {
@@ -422,32 +414,28 @@ export interface RecipeSlot extends BaseNode {
   name: string|null;
 }
 
-export interface ConnectionTarget extends BaseNode {
-  kind: 'connection-target';
-  targetType: 'verb'|'tag'|'localName'|'particle';
+export type ConnectionTarget = VerbConnectionTarget | TagConnectionTarget | NameConnectionTarget | ParticleConnectionTarget;
 
-  name?: string;      // Only in NameConnectionTarget
-  particle?: string;  // Only in ParticleConnectionTarget
-
-  verbs?: VerbList;
-  param: string;    // from ConnectionTargetHandleComponents
-  tags?: TagList;   // from ConnectionTargetHandleComponents
-}
-
-export interface VerbConnectionTarget extends BaseNode {
+export interface VerbConnectionTarget extends ConnectionTargetHandleComponents {
+  kind: 'connection-target',
   targetType: 'verb';
+  verbs: VerbList;
 }
 
 export interface TagConnectionTarget extends BaseNode {
+  kind: 'connection-target',
   targetType: 'tag';
+  tags: TagList;
 }
 
-export interface NameConnectionTarget extends BaseNode {
+export interface NameConnectionTarget extends ConnectionTargetHandleComponents {
+  kind: 'connection-target',
   name: string;
   targetType: 'localName';
 }
 
-export interface ParticleConnectionTarget extends BaseNode {
+export interface ParticleConnectionTarget extends ConnectionTargetHandleComponents {
+  kind: 'connection-target',
   particle: string;
   targetType: 'particle';
 }
@@ -584,13 +572,17 @@ export interface TypeName extends BaseNode {
   name: string;
 }
 
-export interface NameAndTagList {
+export interface NameAndTagList extends BaseNode {
   name: string;
   tags: TagList;
 }
 
+export interface Annotation extends BaseNode {
+  triggerSet: Triggers,
+  simpleAnnotation?: string
+};
+
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
-export type Annotation = string;
 export type Triggers = [string, string][][];
 export type Indent = number;
 export type LocalName = string;

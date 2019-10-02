@@ -753,7 +753,7 @@ ${e.message}
         handle.localName = item.name;
         items.byName.set(item.name, {item, handle});
       }
-      handle.fate = item.fate ? item.fate : null;
+      handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
       items.byHandle.set(handle, item);
     }
 
