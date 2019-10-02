@@ -32,7 +32,7 @@ public:
       bar_.store(&copy);  // pass as pointer; 'copy' will be updated with a new internal id
 
       // Basic printf-style logging; note the c_str() for std::string variables
-      console("Product copied; new id is %s\n", copy._internal_id().c_str());
+      console("Product copied; new id is %s\n", arcs::entity_to_str(copy).c_str());
 
       num_clicks_++;
       renderSlot("root", false, true);  // update display
