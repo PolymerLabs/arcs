@@ -8,12 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Xen} from '../lib/components/xen.js';
-import {logFactory} from '../../build/runtime/log-factory.js';
+import {logsFactory} from '../../build/runtime/log-factory.js';
 import IconStyles from '../../modalities/dom/components/icons.css.js';
 
-const log = logFactory('Renderer', 'tomato');
-//const warn = logFactory('Renderer', 'tomato', 'warn');
-//const groupCollapsed = logFactory('Renderer', 'tomato', 'groupCollapsed');
+const {log} = logsFactory('Renderer', 'tomato');
 
 const slotId = id => `[slotid="${queryId(id)}"]`;
 const queryId = id => `${id.replace(/[:!]/g, '_')}`;
@@ -99,8 +97,6 @@ export const SlotObserver = class {
     if (isEmptySlot(slot)) {
       // empty, just pretend it rendered
       success = true;
-    } else if (slot.model && slot.model.json) {
-      success = await this.renderDataSlot(slot);
     } else {
       success = await this.renderXenSlot(slot);
     }
@@ -115,18 +111,8 @@ export const SlotObserver = class {
     // }
     return success;
   }
-  async renderDataSlot(slot) {
-    const data = document.querySelector(slotId('droot'));
-    if (data) {
-      data.innerHTML += `<pre style="white-space: pre-wrap;">${slot.model.json}</pre>`;
-    }
-    // groupCollapsed('got output data');
-    // log(slot.model.json);
-    // console.groupEnd();
-    return true;
-  }
   async renderXenSlot(output) {
-    const {outputSlotId, containerSlotName, containerSlotId, slotMap, model} = output;
+    const {outputSlotId, containerSlotName, containerSlotId, slotMap, content: {model}} = output;
     const root = this.root || document.body;
     let slotNode;
     const data = model || Object;
@@ -186,12 +172,12 @@ export const SlotObserver = class {
   }
 };
 
-export const attachRenderer = (composer, containers) => {
-  return composer.slotObserver = new SlotObserver(composer.root);
-};
+// export const attachRenderer = (composer, containers) => {
+//   return composer.slotObserver = new SlotObserver(composer.root);
+// };
 
-const isEmptySlot = slot =>
-  (!slot.template || slot.template === '') && (!slot.model || !Object.keys(slot.model).length);
+const isEmptySlot = ({content}) =>
+  (!content.template || content.template === '') && (!content.model || !Object.keys(content.model).length);
 
 const deepQuerySelector = (root, selector) => {
   const find = (element, selector) => {
@@ -210,7 +196,7 @@ const deepQuerySelector = (root, selector) => {
 };
 
 const stampDom = (output, slotNode, slotId, dispatch) => {
-  const {template, particle: {name}, slotMap} = output;
+  const {content: {template}, particle: {name}, slotMap} = output;
   // create container node
   const container = slotNode.appendChild(document.createElement('div'));
   container.id = slotId;

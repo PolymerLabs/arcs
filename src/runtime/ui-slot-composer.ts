@@ -249,9 +249,13 @@ export class UiSlotComposer {
     }
   }
 
+  // TODO(sjmiles): needs factoring
   delegateOutput(arc: Arc, particle: Particle, content) {
     const observer = this['slotObserver'];
     if (observer && content) {
+      // assemble a renderPacket to send to slot observer
+      const packet = {};
+      // we scan connections for container and slotMap
       const connections = particle.getSlotConnections();
       // build slot id map
       const slotMap = {};
@@ -261,29 +265,34 @@ export class UiSlotComposer {
       // identify parent container
       const container = connections[0];
       if (container) {
-        Object.assign(content, {
+        Object.assign(packet, {
           containerSlotName: container.targetSlot.name,
           containerSlotId: container.targetSlot.id,
         });
       }
-      if (!content.modality) {
-        // Set modality according to particle spec, unless already set by the particle.
-        const modality = particle.recipe.modality;
-        if (!modality.all) {
-          Object.assign(content, {
-            modality: modality.names.join(',')
-          });
-        }
+      // Set modality according to particle spec, unless already set by the particle.
+      const modality = particle.recipe.modality;
+      if (!modality.all) {
+        Object.assign(packet, {
+          modality: modality.names.join(',')
+        });
       }
-      Object.assign(content, {
-        particle,
+      // finalize packet
+      const pid = particle.id.toString();
+      Object.assign(packet, {
+        particle: {
+          name: particle.name,
+          id: pid
+        },
         slotMap,
-        outputSlotId: particle.id.toString(),
+        // TODO(sjmiles): there is no clear concept for a particle's output channel, so there is no proper ID
+        // to use. The `particle.id` works for now, but it probably should be a combo of `particle.id` and the
+        // consumed slot id (neither of which are unique by themselves).
+        outputSlotId: pid,
+        content
       });
-      //
       //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');
-      observer.observe(content, arc);
+      observer.observe(packet, arc);
     }
   }
-
 }
