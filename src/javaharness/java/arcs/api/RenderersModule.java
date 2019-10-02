@@ -1,4 +1,4 @@
-package arcs.demo.ui;
+package arcs.api;
 
 import arcs.api.UiBroker;
 import arcs.api.UiBrokerImpl;
@@ -19,20 +19,6 @@ public abstract class RenderersModule {
 
   @Multibinds
   abstract Map<String, UiRenderer> provideRenderers();
-
-  @Provides
-  @IntoMap
-  @StringKey("log")
-  static UiRenderer provideLogRenderer(LogRenderer logRenderer) {
-    return logRenderer;
-  }
-
-  @Provides
-  @IntoMap
-  @StringKey("alert")
-  static UiRenderer provideAlertRenderer(AlertRenderer alertRenderer) {
-    return alertRenderer;
-  }
 
   @Binds
   @Singleton

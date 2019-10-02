@@ -1,21 +1,19 @@
-package arcs.android.demo.service;
+package arcs.android.service;
 
 import android.content.Context;
 import android.webkit.WebView;
-import arcs.android.api.Annotations.AppContext;
-import arcs.android.impl.AndroidHarnessModule;
-import arcs.demo.particles.ParticlesModule;
-import arcs.demo.ui.RenderersModule;
-import dagger.BindsInstance;
-import dagger.Component;
+
 import javax.inject.Singleton;
 
+import arcs.android.api.Annotations.AppContext;
+import arcs.android.impl.AndroidHarnessModule;
+import arcs.api.ParticlesModule;
+import arcs.api.RenderersModule;
+import dagger.BindsInstance;
+import dagger.Component;
+
 @Singleton
-@Component(modules = {
-    AndroidHarnessModule.class,
-    ParticlesModule.class,
-    RenderersModule.class,
-    ArcsServiceModule.class})
+@Component(modules = {AndroidHarnessModule.class, ParticlesModule.class, RenderersModule.class})
 public interface ArcsServiceComponent {
 
   void inject(ArcsService arcsService);

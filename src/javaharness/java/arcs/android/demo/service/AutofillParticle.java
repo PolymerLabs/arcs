@@ -1,12 +1,13 @@
 package arcs.android.demo.service;
 
 import android.app.assist.AssistStructure.ViewNode;
+
+import java.util.Map;
+
 import arcs.api.Collection;
 import arcs.api.Handle;
 import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
-
-import java.util.Map;
 
 public class AutofillParticle extends ParticleBase {
 
@@ -37,5 +38,7 @@ public class AutofillParticle extends ParticleBase {
   }
 
   @Override
-  public boolean providesSlot() { return true; }
+  public boolean providesSlot() {
+    return true;
+  }
 }

@@ -29,7 +29,7 @@ public class ArcsAutofillService extends AutofillService {
 
   @Inject Arcs arcs;
   @Inject UiBroker uiBroker;
-  @Inject AutofillRenderer autofillRenderer;
+  AutofillRenderer autofillRenderer;
 
   @Override
   public void onCreate() {
@@ -40,7 +40,7 @@ public class ArcsAutofillService extends AutofillService {
         .build()
         .inject(this);
 
-    uiBroker.registerRenderer("autofill", autofillRenderer);
+    autofillRenderer = ((AutofillRenderer) uiBroker.getRenderer("autofill"));
   }
 
   @Override

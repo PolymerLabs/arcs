@@ -37,4 +37,7 @@ public abstract class AndroidClientModule {
   @Binds
   @Singleton
   public abstract UiBroker provideUiBroker(AndroidUiBroker impl);
+
+  @Binds
+  public abstract ArcsServiceStarter provideArcsServiceStarter(ArcsServiceStarterImpl impl);
 }

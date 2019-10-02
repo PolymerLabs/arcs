@@ -13,6 +13,7 @@ android_library(
     deps = [
         "//java/arcs/android/api",
         "//java/arcs/android/impl",
+        "//java/arcs/android/service",
         "//java/arcs/api:api-android",
         "@com_google_dagger",
         "@javax_inject_source//jar",

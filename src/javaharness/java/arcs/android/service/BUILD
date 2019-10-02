@@ -1,23 +1,20 @@
 package(default_visibility = [
-    "//java/arcs/android/demo/app:__subpackages__",
-    "//javatests/android/arcs/demo:__subpackages__",
+    "//java/arcs/android:__subpackages__",
+    "//javatests/arcs/android/service:__subpackages__",
 ])
 
 licenses(["notice"])
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
 
 android_library(
-    name = "ui",
-    srcs = glob(["**/*.java"]),
+    name = "service",
+    srcs = glob(["*.java"]),
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
         "//java/arcs/android/api",
         "//java/arcs/android/impl",
-        "//java/arcs/android/client",
-        "//java/arcs/android/demo/service",
-        "//java/arcs/android/service",
         "//java/arcs/api:api-android",
         "@com_google_dagger",
         "@flogger//jar",

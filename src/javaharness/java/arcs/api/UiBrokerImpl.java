@@ -7,11 +7,19 @@ import javax.inject.Inject;
 
 public class UiBrokerImpl implements UiBroker {
 
-  private final Map<String, UiRenderer> renderers = new HashMap<>();
+  protected final Map<String, UiRenderer> renderers = new HashMap<>();
 
   @Inject
   public UiBrokerImpl(Map<String, UiRenderer> renderers) {
     this.renderers.putAll(renderers);
+  }
+
+  @Override
+  public UiRenderer getRenderer(String modality) {
+    if (!renderers.containsKey(modality)) {
+      throw new IllegalArgumentException("No renderer for modality " + modality);
+    }
+    return renderers.get(modality);
   }
 
   @Override

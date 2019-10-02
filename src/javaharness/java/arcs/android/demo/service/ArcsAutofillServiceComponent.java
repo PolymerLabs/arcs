@@ -1,14 +1,16 @@
 package arcs.android.demo.service;
 
 import android.content.Context;
+
+import javax.inject.Singleton;
+
 import arcs.android.api.Annotations.AppContext;
 import arcs.android.client.AndroidClientModule;
 import dagger.BindsInstance;
 import dagger.Component;
-import javax.inject.Singleton;
 
 @Singleton
-@Component(modules = {AndroidClientModule.class, ArcsServiceModule.class})
+@Component(modules = {AndroidClientModule.class, AndroidDemoServiceModule.class})
 public interface ArcsAutofillServiceComponent {
 
   void inject(ArcsAutofillService arcsAutofillService);

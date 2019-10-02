@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Button;
-import arcs.android.demo.service.ArcsService;
+import arcs.android.service.ArcsService;
 
 /**
  * Main class for the Bazel Android "Hello, World" app.

@@ -1,11 +1,13 @@
-package arcs.android.demo.service;
+package arcs.android.client;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import arcs.android.api.Annotations.AppContext;
-import arcs.android.client.ArcsServiceStarter;
+
 import javax.inject.Inject;
+
+import arcs.android.api.Annotations.AppContext;
+import arcs.android.service.ArcsService;
 
 public class ArcsServiceStarterImpl implements ArcsServiceStarter {
 
