@@ -424,7 +424,7 @@ export interface RecipeSlot extends BaseNode {
 export type ConnectionTarget = VerbConnectionTarget | TagConnectionTarget | NameConnectionTarget | ParticleConnectionTarget;
 
 export interface VerbConnectionTarget extends BaseNode {
-  kind: 'connection-target',
+  kind: 'connection-target';
   targetType: 'verb';
   verbs: VerbList;
   param: string;
@@ -432,13 +432,13 @@ export interface VerbConnectionTarget extends BaseNode {
 }
 
 export interface TagConnectionTarget extends BaseNode {
-  kind: 'connection-target',
+  kind: 'connection-target';
   targetType: 'tag';
   tags: TagList;
 }
 
 export interface NameConnectionTarget extends BaseNode {
-  kind: 'connection-target',
+  kind: 'connection-target';
   name: string;
   targetType: 'localName';
   param: string;
@@ -446,7 +446,7 @@ export interface NameConnectionTarget extends BaseNode {
 }
 
 export interface ParticleConnectionTarget extends BaseNode {
-  kind: 'connection-target',
+  kind: 'connection-target';
   particle: string;
   targetType: 'particle';
   param: string;
@@ -524,7 +524,7 @@ export interface SchemaInlineField extends BaseNode {
 }
 
 export interface SchemaSpec extends BaseNode {
-  kind: 'schema',
+  kind: 'schema';
   names: string[];
   parents: string[];
 }
@@ -593,10 +593,10 @@ export interface NameAndTagList extends BaseNode {
 }
 
 export interface Annotation extends BaseNode {
-  kind: 'annotation',
-  triggerSet: Triggers,
-  simpleAnnotation?: string
-};
+  kind: 'annotation';
+  triggerSet: Triggers;
+  simpleAnnotation?: string;
+}
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Triggers = [string, string][][];
