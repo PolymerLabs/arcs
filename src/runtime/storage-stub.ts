@@ -10,11 +10,11 @@
 import {assert} from '../platform/assert-web.js';
 import {compareStrings} from './recipe/comparable.js';
 import {ClaimIsTag} from './particle-claim.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Type} from './type.js';
 import {VolatileStorageProvider} from './storage/volatile-storage.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
+import {ProxyCallback} from './storageNG/store.js';
 
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
 // deflated rather than requiring this stub.
@@ -36,6 +36,15 @@ export class StorageStub extends UnifiedStore {
               public readonly model?: {}[]) {
     super();
   }
+
+  // No-op implementations for `on` and `off`.
+  // TODO: These methods should not live on UnifiedStore; they only work on
+  // active stores (e.g. StorageProviderBase). Move them to a new
+  // UnifiedActiveStore interface.
+  on(callback: ProxyCallback<null>): number {
+    return -1;
+  }
+  off(callback: number): void {}
 
   async inflate(storageProviderFactory?: StorageProviderFactory) {
     const factory = storageProviderFactory || this.storageProviderFactory;
@@ -107,7 +116,7 @@ export class StorageStub extends UnifiedStore {
     return results.join('\n');
   }
 
-  _compareTo(other: StorageProviderBase): number {
+  _compareTo(other: UnifiedStore): number {
     let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;

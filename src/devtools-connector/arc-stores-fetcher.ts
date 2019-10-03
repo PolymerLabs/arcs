@@ -46,13 +46,16 @@ export class ArcStoresFetcher {
     for (const store of this.arc._stores) {
       if (!this.watchedHandles.has(store.id)) {
         this.watchedHandles.add(store.id);
-        store.on(async () => this.arcDevtoolsChannel.send({
-          messageType: 'store-value-changed',
-          messageBody: {
-            id: store.id.toString(),
-            value: await this.dereference(store)
-          }
-        }));
+        store.on(async () => {
+          this.arcDevtoolsChannel.send({
+            messageType: 'store-value-changed',
+            messageBody: {
+              id: store.id.toString(),
+              value: await this.dereference(store)
+            }
+          });
+          return true;
+        });
       }
     }
   }

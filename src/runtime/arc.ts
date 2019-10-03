@@ -738,7 +738,10 @@ ${this.activeRecipe.toString()}`;
     this.storeTags.set(store, new Set(tags));
 
     this.storageKeys[store.id] = store.storageKey;
-    store.on(() => this._onDataChange());
+    store.on(async () => {
+      this._onDataChange();
+      return true;
+    });
 
     Runtime.getRuntime().registerStore(store, tags);
   }

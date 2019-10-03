@@ -28,7 +28,10 @@ export class CallbackTracker {
   events: Dictionary<any>[] = [];
 
   constructor(storageProvider: UnifiedStore, public expectedEvents = 0) {
-    storageProvider.on((val) => this.changeEvent(val));
+    storageProvider.on(async val => {
+      this.changeEvent(val);
+      return true;
+    });
   }
 
   // called for each change event

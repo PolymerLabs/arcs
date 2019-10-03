@@ -51,7 +51,7 @@ export class PlanProducer {
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
   searchStore?: SingletonStorageProvider;
-  searchStoreCallback: Consumer<{}>;
+  searchStoreCallbackId: number;
   debug: boolean;
   noSpecEx: boolean;
   inspector?: PlannerInspector;
@@ -66,8 +66,10 @@ export class PlanProducer {
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {
-      this.searchStoreCallback = () => this.onSearchChanged();
-      this.searchStore.on(this.searchStoreCallback);
+      this.searchStoreCallbackId = this.searchStore.on(async () => {
+        await this.onSearchChanged();
+        return true;
+      });
     }
     this.debug = debug;
     this.noSpecEx = noSpecEx;
@@ -123,11 +125,12 @@ export class PlanProducer {
 
   dispose() {
     if (this.searchStore) {
-      this.searchStore.off(this.searchStoreCallback);
+      this.searchStore.off(this.searchStoreCallbackId);
     }
   }
 
   async produceSuggestions(options: SuggestionOptions = {}) {
+    console.log(`produceSuggestions()`);
     if (options.cancelOngoingPlanning && this.isPlanning) {
       this._cancelPlanning();
     }

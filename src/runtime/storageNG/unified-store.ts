@@ -16,6 +16,7 @@ import {StorageStub} from '../storage-stub.js';
 import {assert} from '../../platform/assert-web.js';
 import {Store as OldStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
+import {ProxyCallback} from './store.js';
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -59,8 +60,10 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   async modelForSynchronization(): Promise<{}> {
     return await this.toLiteral();
   }
-  on(fn: Consumer<{}>): void {}
-  off(fn: Consumer<{}>): void {}
+
+  // TODO: Make this match the type of the `on` method in ActiveStore.
+  abstract on(callback: ProxyCallback<null>): number;
+  abstract off(callback: number): void;
 
   /**
    * Hack to cast this UnifiedStore to the old-style class StorageStub.
