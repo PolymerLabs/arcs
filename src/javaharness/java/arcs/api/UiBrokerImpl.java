@@ -7,6 +7,8 @@ import javax.inject.Inject;
 
 public class UiBrokerImpl implements UiBroker {
 
+  private static final String MODALITY_FIELD = "modality";
+
   protected final Map<String, UiRenderer> renderers = new HashMap<>();
 
   @Inject
@@ -28,10 +30,10 @@ public class UiBrokerImpl implements UiBroker {
   }
 
   @Override
-  public boolean render(PortableJson content) {
+  public boolean render(PortableJson packet) {
     String[] names = null;
-    if (content.getObject("data").hasKey("modality")) {
-      String modality = content.getObject("data").getString("modality");
+    if (packet.hasKey(MODALITY_FIELD)) {
+      String modality = packet.getString(MODALITY_FIELD);
       names = modality.split(",");
     } else {
       names = renderers.keySet().toArray(new String[renderers.size()]);
@@ -43,7 +45,7 @@ public class UiBrokerImpl implements UiBroker {
     boolean rendered = false;
     for (int i = 0; i < names.length; ++i) {
       if (renderers.containsKey(names[i])) {
-        rendered |= renderers.get(names[i]).render(content);
+        rendered |= renderers.get(names[i]).render(packet);
       }
     }
     return rendered;

@@ -20,7 +20,6 @@ import arcs.api.UiRenderer;
 @Singleton
 public class NotificationRenderer implements UiRenderer {
 
-  private static final String DATA_FIELD = "data";
   private static final String TITLE_FIELD = "title";
   private static final String TEXT_FIELD = "text";
   private static final String HANDLER_FIELD = "handler";
@@ -44,10 +43,10 @@ public class NotificationRenderer implements UiRenderer {
   }
 
   @Override
-  public boolean render(PortableJson content) {
-    PortableJson data = content.getObject(DATA_FIELD);
-    String title = data.getString(TITLE_FIELD);
-    String text = data.getString(TEXT_FIELD);
+  public boolean render(PortableJson packet) {
+    PortableJson content = packet.getObject("content");
+    String title = content.getString(TITLE_FIELD);
+    String text = content.getString(TEXT_FIELD);
 
     Log.d(TAG, "Notification rendering: " + title + "(" + text + ")");
     Notification.Builder builder =
@@ -57,10 +56,10 @@ public class NotificationRenderer implements UiRenderer {
             .setContentText(text)
             .setAutoCancel(true);
 
-    String outputSlotId = data.getString(OUTPUT_SLOT_ID_FIELD);
+    String outputSlotId = packet.getString(OUTPUT_SLOT_ID_FIELD);
     // TODO(mmandlis): refactor to a generic method usable by other renderers as well.
-    if (data.hasKey(HANDLER_FIELD)) {
-      String handler = data.getString(HANDLER_FIELD);
+    if (content.hasKey(HANDLER_FIELD)) {
+      String handler = content.getString(HANDLER_FIELD);
 
       Intent notificationIntent = new Intent(context, ArcsService.class);
       notificationIntent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
