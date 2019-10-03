@@ -57,17 +57,20 @@ export abstract class Schema2Base {
     fs.closeSync(outFile);
   }
 
-  /** Collect declared schemas along with any inlined in particle connections. */
+  /**
+   * Collect declared schemas along with any inlined in particle connections.
+   * Generated entities come from the  particle and connection name.
+   * @param manifest Manifest expended by loader.
+   * @return Dictionary<Schema> target schemas for code generation.
+   */
   private collectSchemas(manifest: Manifest): Dictionary<Schema> {
     const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.particles) {
+    for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
+        const name = [particle.name, connection.name].filter((x) => !!x).join('_');
+        console.log('target name?', name);
+        schemas[name] = schema;
       }
     }
     return schemas;
