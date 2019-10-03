@@ -51,7 +51,7 @@ public class DeviceClientImpl implements DeviceClient {
         deliverPecMessage(content.getObject(FIELD_DATA));
         break;
       case MESSAGE_OUTPUT:
-        if (!uiBroker.render(content)) {
+        if (!uiBroker.render(content.getObject(FIELD_DATA))) {
           logger.warning(
               "Skipped rendering content for "
                   + content.getObject("data").getString("containerSlotName"));
