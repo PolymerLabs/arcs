@@ -10,9 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
-import {compareNumbers, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
-import {StorageStub} from '../storage-stub.js';
 import {SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
@@ -52,7 +50,7 @@ export interface CollectionStorageProvider extends StorageProviderBase, Collecti
  */
 export interface BigCollectionStorageProvider extends StorageProviderBase, BigCollectionStore {
   cursorVersion(cursorId: number);
-  cloneFrom(store: StorageProviderBase | StorageStub);
+  cloneFrom(store: UnifiedStore);
   clearItemsForTesting(): void;
 }
 
@@ -212,7 +210,7 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
    */
   abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
-  abstract cloneFrom(store: UnifiedStore | StorageStub): void;
+  abstract cloneFrom(store: UnifiedStore): void;
 
   // TODO(shans): remove this when it's possible to.
   abstract async ensureBackingStore();

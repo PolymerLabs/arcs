@@ -19,7 +19,6 @@ import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {Loader} from './loader.js';
-import {StorageStub} from './storage-stub.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
@@ -132,8 +131,7 @@ export class Runtime {
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
   registerStore(store: UnifiedStore, tags: string[]): void {
     if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
-      // tslint:disable-next-line: no-any
-      this.context['_addStore']((store as any) as StorageStub, tags);
+      this.context['_addStore'](store, tags);
     }
   }
 
