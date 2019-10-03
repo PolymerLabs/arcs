@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-  
+
 import {Id} from './id.js';
 import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
 import {Schema} from './schema.js';
@@ -211,7 +211,7 @@ export abstract class Type {
   /**
    * Clone a type object.
    * When cloning multiple types, variables that were associated with the same name
-   * before cloning should still be associated after cloning. To maintain this 
+   * before cloning should still be associated after cloning. To maintain this
    * property, create a Map() and pass it into all clone calls in the group.
    */
   clone(variableMap: Map<string, Type>) {
@@ -426,7 +426,7 @@ export class TypeVariable extends Type {
       return new TypeVariable(newTypeVariable);
     }
   }
-  
+
   _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): TypeVariable {
     if (variableMap.has(this.variable)) {
       return new TypeVariable(variableMap.get(this.variable) as TypeVariableInfo);

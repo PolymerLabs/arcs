@@ -18,11 +18,11 @@ describe('Mutex', () => {
     const mutex = new Mutex();
 
     assert.isFalse(mutex.locked, 'unlocked before beginning');
-    
+
     // Simulate two simultaneous sections
     const lock1 = mutex.acquire();
     assert.isFalse(mutex.locked, 'unlocked after acquiring lock1');
-    
+
     const lock2 = mutex.acquire();
     assert.isFalse(mutex.locked, 'unlocked after acquiring lock2');
 
@@ -42,7 +42,7 @@ describe('Mutex', () => {
   it('correctly executes many concurrent tasks', async () => {
     const mutex = new Mutex();
     const results: string[] = [];
-    
+
     const runTask = async (name: string, startDelay: number, critDelay: number) => {
       results.push(name + ' begin');
       await delay(startDelay);
@@ -85,4 +85,4 @@ describe('Mutex', () => {
   });
 });
 
-    
+

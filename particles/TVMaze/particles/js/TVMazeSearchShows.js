@@ -11,13 +11,13 @@
 'use strict';
 
 /* global defineParticle */
-defineParticle(({DomParticle, log}) => {
+defineParticle(({SimpleParticle, log}) => {
 
   const service = `https://api.tvmaze.com`;
   /* global service */
   //importScripts(resolver('TVMazeSearchShows/TvMaze.js'));
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return '&nbsp;'; //html`Searching`;
     }

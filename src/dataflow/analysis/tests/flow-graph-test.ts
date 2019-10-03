@@ -210,7 +210,7 @@ describe('FlowGraph', () => {
     assert.strictEqual(slot1.inEdges[0].edgeId, 'E0');
     assert.strictEqual(slot1.inEdges[0].start.nodeId, 'P0');
     assert.deepEqual(slot1.inEdges[0].modifier, FlowModifier.parse('+edge:E0', '+node:P0'));
-    
+
     const slot2 = checkDefined(graph.slots[1]);
     assert.isEmpty(slot2.outEdges);
     assert.lengthOf(slot2.inEdges, 1);

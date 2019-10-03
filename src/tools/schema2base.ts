@@ -43,7 +43,7 @@ export abstract class Schema2Base {
 
     // Collect declared schemas along with any inlined in particle connections.
     const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);    
+    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
     for (const particle of manifest.particles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();

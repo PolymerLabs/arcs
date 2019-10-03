@@ -62,9 +62,9 @@ describe('Store Sequence', async () => {
       return activeStore;
     });
 
-    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, 
+    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3,
       {type: ExpectedResponse.Constant, response: true});
-    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
+    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void});
 
     const send = sequenceTest.registerOutput('driver.send',
       {
@@ -116,7 +116,7 @@ describe('Store Sequence', async () => {
   });
 
   // Tests 3 operation updates happening synchronously with 2 model updates from the driver
-  it('applies 3 operations and 2 models simultaneously', async function() {    
+  it('applies 3 operations and 2 models simultaneously', async function() {
     this.timeout(40000);
 
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
@@ -130,7 +130,7 @@ describe('Store Sequence', async () => {
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: true});
-    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
+    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void});
 
     const meCount = sequenceTest.registerVariable(0);
 
@@ -179,7 +179,7 @@ describe('Store Sequence', async () => {
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore1 = await store1.activate();
-  
+
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
       const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
@@ -232,7 +232,7 @@ describe('Store Sequence', async () => {
       const storageKey = new FirebaseStorageKey('test', 'test.domain', 'testKey', 'foo');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore1 = await store1.activate();
-  
+
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
       const activeStore2 = await store2.activate();
       sequenceTest.setVariable(store1V, activeStore1);
@@ -284,7 +284,7 @@ describe('Store Sequence', async () => {
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'an-id');
       const activeStore1 = await store1.activate();
-  
+
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, new CountType(), 'an-id');
       const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};

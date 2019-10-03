@@ -51,12 +51,13 @@ describe('DevtoolsArcInspector', () => {
     const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
       m.messageType === 'PecLog' && m.messageBody.name === 'InstantiateParticle').messageBody;
 
-    // Type is a complex object to reproduce, let's skip asserting on it.
-    delete instantiateParticleCall.pecMsgBody.spec.args[0].type;
+    // Type on the particle spec is a complex object to reproduce, let's skip asserting on it.
+    const pecMsgBody = JSON.parse(JSON.stringify(instantiateParticleCall.pecMsgBody));
+    delete pecMsgBody.spec.args[0].type;
 
     const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
 
-    assert.deepEqual(instantiateParticleCall.pecMsgBody, {
+    assert.deepEqual(pecMsgBody, {
       id: `!${sessionId}:demo:particle1`,
       identifier: `!${sessionId}:demo:particle1`,
       stores: {
@@ -65,7 +66,6 @@ describe('DevtoolsArcInspector', () => {
       spec: {
         name: 'P',
         description: {},
-        implBlobUrl: undefined,
         implFile: 'p.js',
         modality: ['dom'],
         slotConnections: [],

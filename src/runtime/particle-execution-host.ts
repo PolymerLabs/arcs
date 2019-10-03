@@ -22,7 +22,7 @@ import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Content} from './slot-consumer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
@@ -179,12 +179,12 @@ class PECOuterPortImpl extends PECOuterPort {
     }
   }
 
-  onInitializeProxy(handle: UnifiedStore, callback: number) {
+  onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};
     handle.on(data => this.SimpleCallback(callback, data));
   }
 
-  async onSynchronizeProxy(handle: UnifiedStore, callback: number) {
+  async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
     const data = await handle.modelForSynchronization();
     this.SimpleCallback(callback, data);
   }

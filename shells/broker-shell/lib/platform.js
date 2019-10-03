@@ -43,8 +43,8 @@ export const connectToPlatform = async Application => {
   // uiBroker communicates with the ui surface
   const uiBroker = {
     render(packet) {
-      const {content} = packet;
-      switch (content.model && content.model.modality) {
+      const {content: slot} = packet;
+      switch (slot.content.model && slot.content.model.modality) {
         case 'notification':
           // delegate to Application
           Application.receive(packet);
@@ -61,7 +61,7 @@ export const connectToPlatform = async Application => {
     // locate the renderer
     const {renderer} = renderSurface;
     // extract packet data
-    const {content, tid} = packet;
+    const {content: slot, tid} = packet;
     // attach an event dispatcher
     if (!tid) {
       console.warn('slot packet missing `tid`: so events are not supported');
@@ -71,7 +71,7 @@ export const connectToPlatform = async Application => {
       };
     }
     // send message to renderer
-    renderer.render(content);
+    renderer.render(slot);
   };
   // forward toast events to application
   renderToasts.onclick = toast => Application.notificationClick(toast);

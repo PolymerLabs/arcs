@@ -21,6 +21,10 @@ import arcs.api.UiRenderer;
 @Singleton
 public class AutofillRenderer implements UiRenderer {
 
+  private static final String CONTAINER_SLOT_ID_FIELD = "containerSlotId";
+  private static final String CONTENT_FIELD = "content";
+  private static final String CANDIDATE_FIELD = "candidate";
+
   public static class SlotInfo {
     final AutofillId autofillId;
     final Consumer<FillResponse> callback;
@@ -40,9 +44,8 @@ public class AutofillRenderer implements UiRenderer {
   }
 
   @Override
-  public boolean render(PortableJson content) {
-    PortableJson data = content.getObject("data");
-    String slotId = data.getString("containerSlotId");
+  public boolean render(PortableJson packet) {
+    String slotId = packet.getString(CONTAINER_SLOT_ID_FIELD);
     SlotInfo slotInfo = slotById.get(slotId);
 
     if (slotInfo == null) {
@@ -50,7 +53,8 @@ public class AutofillRenderer implements UiRenderer {
     }
 
     // Trigger autofill callback.
-    String suggestion = data.getString("candidate");
+    PortableJson content = packet.getObject(CONTENT_FIELD);
+    String suggestion = content.getString(CANDIDATE_FIELD);
     Dataset.Builder dataset = new Dataset.Builder();
     dataset.setValue(
         slotInfo.autofillId, AutofillValue.forText(suggestion), createRemoteView(suggestion));

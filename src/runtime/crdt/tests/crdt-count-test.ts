@@ -59,7 +59,7 @@ describe('CRDTCount', () => {
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', value: 4, version: {from: 0, to: 1}});
     const {modelChange, otherChange} = count1.merge(count2.getData());
     assert.strictEqual(count1.getParticleView(), 11);
-    
+
     if (modelChange.changeType === ChangeType.Operations) {
       assert.strictEqual(modelChange.operations.length, 1);
       assert.deepEqual(modelChange.operations[0], {actor: 'them', value: 4, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
@@ -72,12 +72,12 @@ describe('CRDTCount', () => {
       assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 7, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
 
       assert.isTrue(count2.applyOperation(otherChange.operations[0]));
-      assert.deepEqual(count1.getData(), count2.getData());  
+      assert.deepEqual(count1.getData(), count2.getData());
     } else {
       assert.fail('modelChange.changeType should be ChangeType.Operations');
     }
   });
-  
+
   it('merges two models with counts from the same actor', () => {
     const count1 = new CRDTCount();
     const count2 = new CRDTCount();
@@ -85,7 +85,7 @@ describe('CRDTCount', () => {
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 4, version: {from: 0, to: 1}});
     const {modelChange, otherChange} = count1.merge(count2.getData());
     assert.strictEqual(count1.getParticleView(), 7);
-    
+
     if (modelChange.changeType === ChangeType.Operations) {
       assert.strictEqual(modelChange.operations.length, 0);
     } else {
@@ -133,7 +133,7 @@ describe('CRDTCount', () => {
 
     const {modelChange, otherChange} = count1.merge(count2.getData());
     assert.strictEqual(count1.getParticleView(), 59); // expect 5 / 6 / 12 / 22 / 14
-    
+
     if (modelChange.changeType === ChangeType.Operations) {
       assert.strictEqual(modelChange.operations.length, 2);
       assert.deepEqual(modelChange.operations[0], {actor: 'b', value: 5, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
@@ -145,7 +145,7 @@ describe('CRDTCount', () => {
       assert.strictEqual(otherChange.operations.length, 2);
       assert.deepEqual(otherChange.operations[0], {actor: 'c', value: 3, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});
       assert.deepEqual(otherChange.operations[1], {actor: 'a', value: 6, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
-  
+
       assert.isTrue(count2.applyOperation(otherChange.operations[0]));
       assert.isTrue(count2.applyOperation(otherChange.operations[1]));
       assert.deepEqual(count1.getData(), count2.getData());

@@ -189,7 +189,7 @@ describe('RecipeIndex', () => {
     `);
 
     const recipe = checkDefined(index.recipes.find(r => r.name === 'C'), 'missing recipe C');
-    
+
     const handle = recipe.handles[0];
 
     assert.deepEqual(['A'], index.findHandleMatch(handle, ['map']).map(h => h.recipe.name));

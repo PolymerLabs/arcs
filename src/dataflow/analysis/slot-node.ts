@@ -18,7 +18,7 @@ export class SlotNode extends Node {
   // TODO: These should be inout edges, because slots can bubble up user events back to these same particles.
   readonly inEdges: SlotInput[] = [];
   readonly outEdges: readonly Edge[] = [];
-  
+
   readonly nodeId: string;
 
   // Optional check on the data entering this slot. The check is defined by the particle which provided this slot.

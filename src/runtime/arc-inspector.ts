@@ -30,7 +30,7 @@ export interface ArcInspector {
 
   /**
    * Notifies of a recipe instantiated in the arc.
-   * 
+   *
    * @param particles particles instantiated in the arc
    * @param activeRecipe resulting active recipe that the arc holds
    */

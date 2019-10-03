@@ -11,20 +11,20 @@
 'use strict';
 
 /* global defineParticle */
-defineParticle(({DomParticle}) => {
+defineParticle(({SimpleParticle}) => {
 
   /* global service */
   //importScripts(resolver('TVMazeFindShow/TvMaze.js'));
   const service = `https://api.tvmaze.com`;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     // get template() {
     //   return ' ';
     // }
     update({episodes, show}, state) {
       // If we are asynchronously populating episodes, wait until this is done before
       // handling additional updates.
-      // TODO(sjmiles): Maybe generalize this notion into DomParticle?
+      // TODO(sjmiles): Maybe generalize this notion into SimpleParticle?
       if (!state.recieving) {
         if (show && show.showid !== state.showid) {
           state.count = 0;

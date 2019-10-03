@@ -26,7 +26,7 @@ describe('Firebase Driver', async () => {
 
   it('can be multiply instantiated against the same storage location', async () => {
     const firebaseKey = new MockFirebaseStorageKey('test-location');
-    
+
     const firebase1 = await MockFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate);
     const firebase2 = await MockFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldExist);
   });
@@ -34,7 +34,7 @@ describe('Firebase Driver', async () => {
   it('treats keys constructed separately as the same if the details are the same', async () => {
     const key1 = new MockFirebaseStorageKey('test-location');
     const key2 = new MockFirebaseStorageKey('test-location');
-    
+
     const firebase1 = await MockFirebaseStorageDriverProvider.newDriverForTesting(key1, Exists.ShouldCreate);
     const firebase2 = await MockFirebaseStorageDriverProvider.newDriverForTesting(key2, Exists.ShouldExist);
   });
@@ -48,7 +48,7 @@ describe('Firebase Driver', async () => {
   it(`can't be instantiated as ShouldCreate if the storage location already exists`, async () => {
     const firebaseKey = new MockFirebaseStorageKey('test-location');
     const firebase1 = await MockFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate);
-    
+
     await assertThrowsAsync(
       () => MockFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate), `location already exists`);
   });

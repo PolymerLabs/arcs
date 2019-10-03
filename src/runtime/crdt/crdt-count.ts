@@ -18,7 +18,7 @@ export type CountData = {values: Dictionary<number>, version: VersionMap};
 type VersionInfo = {from: number, to: number};
 
 export enum CountOpTypes {Increment, MultiIncrement}
-export type CountOperation = {type: CountOpTypes.MultiIncrement, value: number, actor: string, version: VersionInfo} | 
+export type CountOperation = {type: CountOpTypes.MultiIncrement, value: number, actor: string, version: VersionInfo} |
                              {type: CountOpTypes.Increment, actor: string, version: VersionInfo};
 
 export interface CRDTCountTypeRecord extends CRDTTypeRecord {

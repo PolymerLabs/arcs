@@ -432,7 +432,7 @@ ${this.activeRecipe.toString()}`;
     });
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
-      const store: UnifiedStore = await storeStub.castToStorageStub().inflate();
+      const store = await storeStub.castToStorageStub().inflate();
       arc._registerStore(store, tags);
     }));
     const recipe = manifest.activeRecipe.clone();
@@ -624,12 +624,12 @@ ${this.activeRecipe.toString()}`;
           // tslint:disable-next-line: no-any
           await (newStore as any).set(particleClone);
         } else if (['copy', 'map'].includes(recipeHandle.fate)) {
-          const copiedStoreRef = this.context.findStoreById(recipeHandle.id) as StorageStub;
-          const copiedStore = await copiedStoreRef.inflate(this.storageProviderFactory);
+          const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
+          const copiedStore = await copiedStoreRef.castToStorageStub().inflate(this.storageProviderFactory);
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
-          this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef as StorageStub));
+          this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
           newStore.name = copiedStore.name && `Copy of ${copiedStore.name}`;
           const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
@@ -821,7 +821,7 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id: string): UnifiedStore | StorageStub {
+  findStoreById(id: string): UnifiedStore {
     const store = this.storesById.get(id);
     if (store == null) {
       return this._context.findStoreById(id);
@@ -829,14 +829,14 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  findStoreTags(store: UnifiedStore | StorageStub): Set<string> {
+  findStoreTags(store: UnifiedStore): Set<string> {
     if (this.storeTags.has(store as UnifiedStore)) {
       return this.storeTags.get(store as UnifiedStore);
     }
-    return this._context.findStoreTags(store as StorageStub);
+    return this._context.findStoreTags(store);
   }
 
-  getStoreDescription(store: StorageProviderBase): string {
+  getStoreDescription(store: UnifiedStore): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }

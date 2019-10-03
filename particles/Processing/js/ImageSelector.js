@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, resolver, log}) => {
+defineParticle(({SimpleParticle, html, resolver, log}) => {
 
   const template_ = html`
     <div style="padding: 16px;">
@@ -25,7 +25,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 
   const defaultImage = resolver(`https://$particles/Services/assets/waltbird.jpg`);
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template_;
     }

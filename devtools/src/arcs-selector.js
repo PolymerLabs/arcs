@@ -262,9 +262,9 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
             messagesToForward.push(msg);
           }
         }
-      }  
+      }
     }
-    if (messagesToForward.length) this.emitFilteredMessages(messagesToForward);  
+    if (messagesToForward.length) this.emitFilteredMessages(messagesToForward);
   }
 
   _arcSelected(e) {

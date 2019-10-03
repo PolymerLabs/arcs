@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// The JavaScript code for the Hello World particle. This is mostly boilerplate for defining a new particle using the DomParticle class, which
+// The JavaScript code for the Hello World particle. This is mostly boilerplate for defining a new particle using the SimpleParticle class, which
 // is a subclass of Particle that provides convenient methods for rendering to the DOM. (There are other more basic ways to render to the DOM,
-// but DomParticle provides a nice abstraction for it, similar to React).
+// but SimpleParticle provides a nice abstraction for it, similar to React).
 
 defineParticle(({SimpleParticle, html}) => {
   return class extends SimpleParticle {

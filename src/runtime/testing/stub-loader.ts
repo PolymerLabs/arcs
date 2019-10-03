@@ -18,7 +18,7 @@ import {Dictionary} from '../hot.js';
 export class StubLoader extends Loader {
   _fileMap: Dictionary<string>;
   _cannedResponse: string;
- 
+
   constructor(fileMap: Dictionary<string>) {
     super();
     this._fileMap = fileMap;

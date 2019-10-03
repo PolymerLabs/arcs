@@ -11,7 +11,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({SimpleParticle, html, log}) => {
   const MIN_STARDATE = 1000;
   const MAX_STARDATE = 9999;
   // Via https://nasa.tumblr.com/post/150044040289/top-10-star-trek-planets-chosen-by-our-scientists
@@ -20,7 +20,7 @@ defineParticle(({DomParticle, html, log}) => {
     'Wolf 359', 'Eminar VII', 'Remus', 'Janus VI', 'Earth'
   ];
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
 
     /**
      * @inheritDoc

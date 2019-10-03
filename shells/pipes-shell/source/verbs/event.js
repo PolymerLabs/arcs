@@ -16,15 +16,6 @@ export const event = async (msg, tid, bus) => {
   // find the arc from the tid in the message (not the tid for this request)
   const arc = await bus.getAsyncValue(msg.tid);
   if (arc) {
-    // find the particle from the pid in the message
-    const particle = arc.activeRecipe.particles.find(
-      particle => String(particle.id) === msg.pid
-    );
-    if (particle) {
-      log('firing PEC event for', particle.name);
-      // TODO(sjmiles): we need `arc` and `particle` here even though
-      // the two are bound together, figure out how to simplify
-      arc.pec.sendEvent(particle, /*slotName*/'', msg.eventlet);
-    }
+    arc.pec.slotComposer.sendEvent(msg.pid, msg.eventlet);
   }
 };

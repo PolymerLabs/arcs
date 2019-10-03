@@ -457,13 +457,13 @@ export class RecipeUtil {
   static constructImmediateValueHandle(
       connection: HandleConnection, particleSpec: ParticleSpec, id: Id): Handle {
     assert(connection.type instanceof InterfaceType);
-    
+
     if (!(connection.type instanceof InterfaceType) ||
         !connection.type.interfaceInfo.restrictType(particleSpec)) {
       // Type of the connection does not match the ParticleSpec.
       return null;
     }
-    
+
     // The connection type may have type variables:
     // E.g. if connection shape requires `in ~a *`
     //      and particle has `in Entity input`

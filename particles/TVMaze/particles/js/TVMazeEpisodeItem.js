@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html, resolver, log}) => {
+defineParticle(({SimpleParticle, html, resolver, log}) => {
 
   const host = `tv-maze-episode-item`;
 
@@ -34,7 +34,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     </div>
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

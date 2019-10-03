@@ -15,31 +15,31 @@ import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 /**
  * ..:: Read Before Modifying ::..
- * 
+ *
  * ObjectExplorer is implemented to work well within an IronList,
  * which efficiently displays large collections by recycling DOM.
- * 
+ *
  * The above constraint means that we CANNOT do following:
  *   - Call functions from the template.
  *     E.g. <span>[[_helperFunction(item)]]</span>
  *   - Store information on DOM elements.
  *     E.g. information about state of expansion needs to be in the data model.
- * 
+ *
  * These constraints forced the implementation to use a helper data structure,
  * referenced by the 'data' property, which contains contents the displayed object
  * as well as additional metadata, such as which nodes are expanded in the UI.
  * It can be computed automatically if the 'object' property is provided, or it
  * can be provided directly.
- * 
+ *
  * ..:: Read Before Using ::..
- * 
+ *
  * There are 2 parallel APIs to the ObjectExplorer.
- * 
+ *
  * 1) When using as a standalone custom element:
- *   
+ *
  *   Pass the object to explore through an 'object' attribute:
  *     <object-explorer object="[[objectToExplore]]"></object-explorer>
- * 
+ *
  *   Changes to the underlying object will not be picked up automatically,
  *   developer needs to call this.$.explorer.refresh() explicitly.
  *
@@ -50,34 +50,34 @@ import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
  *
  *   searchParams must be null or an object of the form {phrase, regex}, with
  *   exactly one of those fields set to a non-empty string.
- * 
+ *
  * 2) When using inside an IronList:
- * 
+ *
  *   There is more data in your list than actual DOM elements, so you need to
  *   prepare the underlying ObjectExplorer data structure yourself. You co do it
  *   with a ObjectExplorer.prepareData static method and pass the result into
  *   a 'data' attribute of the object-explorer.
- * 
+ *
  *   this.items = objects.map(obj => ObjectExplorer.prepareData(obj));
- * 
+ *
  *   <iron-list items="[[items]]">
  *     <object-explorer data="[[item]]"></object-explorer>
  *   </iron-list>
- * 
+ *
  *   To perform a search, we need to manually trigger search change in the underlying
  *   data model, as there is more data than ObjectExplorer DOM elements. We do it with
  *   ObjectExplorer.find(data, params) method.
- *     
+ *
  *     this.items.forEach(item => ObjectExplorer.find(item, searchParams));
- * 
+ *
  *   As the ObjectExplorer DOM elements have not been notified of the underlying data
  *   changes, we need to also notify them manually. We can do it by setting a 'find'
  *   attribute.
- * 
+ *
  *     for (const explorer of this.shadowRoot.querySelectorAll('iron-list object-explorer')) {
  *       explorer.find = params;
  *     }
- * 
+ *
  *   When in doubt, talk to piotrswigon@github / piotrs@google.
  */
 export class ObjectExplorer extends PolymerElement {
@@ -238,7 +238,7 @@ export class ObjectExplorer extends PolymerElement {
           isArray,
           meta: isArray ? `Array(${ref.length})` : ref.constructor.name,
           folded: isArray ? `Array(${entries.length})` : `{${entries.length > 0 ? '…' : ''}}`,
-          props: entries.map(([key, value]) => this.prepareData(value, key)),  
+          props: entries.map(([key, value]) => this.prepareData(value, key)),
         });
         Object.assign(data, this._expandedDependentProps(data));
         break;
@@ -256,7 +256,7 @@ export class ObjectExplorer extends PolymerElement {
 
   /**
    * Modifies the given 'data' object to reflect search query in the 'params' argument.
-   * 
+   *
    * @param data the structure to modify
    * @param params query for searching through the 'data' object. Must be null or an object of the
    *          form {phrase, regex}, with exactly one of those fields set to a non-empty string.
@@ -273,7 +273,7 @@ export class ObjectExplorer extends PolymerElement {
     }
     return this._findInternal(data, localParams);
   }
-  
+
   static _findInternal(data, params) {
     // As _onFindChanged is called on object explorer in the order
     // from leafs to the root, this allows to skip O(n^2).
@@ -289,11 +289,11 @@ export class ObjectExplorer extends PolymerElement {
       for (const inner of data.props) {
         foundInside = this._findInternal(inner, params) || foundInside;
       }
-      data.found = foundInKey || foundInside; 
+      data.found = foundInKey || foundInside;
     } else {
       const [displayValue, foundInValue] = this._highlight(String(data.value), params);
       data.displayValue = displayValue;
-      data.found = foundInKey || foundInValue; 
+      data.found = foundInKey || foundInValue;
     }
     data.foundPhrase = params.phrase;
     data.foundRegex = params.regex;
@@ -369,7 +369,7 @@ export class ObjectExplorer extends PolymerElement {
 
     if (prevData.expanded) {
       newData.expanded = true;
-      Object.assign(newData, this._expandedDependentProps(newData));  
+      Object.assign(newData, this._expandedDependentProps(newData));
     }
 
     // Iteration over keys works well for objects, but is not ideal for arrays.

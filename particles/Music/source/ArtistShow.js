@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({SimpleParticle, html}) => {
 
   const template = html`
 
@@ -83,7 +83,7 @@ defineParticle(({DomParticle, html}) => {
 <div slotid="extrasForArtist"></div> -->
 
   `;
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

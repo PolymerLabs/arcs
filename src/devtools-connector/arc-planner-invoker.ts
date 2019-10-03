@@ -47,7 +47,7 @@ class InitialRecipe extends Strategy {
 export class ArcPlannerInvoker {
   private arc: Arc;
   private recipeIndex: RecipeIndex;
-  
+
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     this.arc = arc;
 
@@ -166,11 +166,11 @@ export class ArcPlannerInvoker {
   extractDerivation(result: Descendant<Recipe>): string[] {
     const found: string[] = [];
     for (const deriv of result.derivation || []) {
-      if (!deriv.parent && deriv.strategy.constructor !== InitialRecipe) { 
+      if (!deriv.parent && deriv.strategy.constructor !== InitialRecipe) {
         found.push(deriv.strategy.constructor.name);
       } else if (deriv.parent) {
         const childDerivs = this.extractDerivation(deriv.parent);
-      
+
         for (const childDeriv of childDerivs) {
           found.push(childDeriv
               ? `${childDeriv} -> ${deriv.strategy.constructor.name}`
@@ -192,7 +192,7 @@ export class ArcPlannerInvoker {
       predicate: extracted => manifest => !!(manifest.particles.find(p => p.name === extracted))
     }, {
       pattern: /Could not resolve type reference to type name '([A-Z][A-Za-z0-9_]*)'\n/,
-      predicate: extracted => manifest => !!(manifest.schemas[extracted])      
+      predicate: extracted => manifest => !!(manifest.schemas[extracted])
     }];
 
     for (const {pattern, predicate} of errorTypes) {

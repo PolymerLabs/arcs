@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({SimpleParticle, log}) => {
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
   };
 
 });

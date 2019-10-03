@@ -29,6 +29,7 @@ import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {UnifiedStore} from '../storageNG/unified-store.js';
 
 async function setup(storageKeyPrefix: string) {
   const loader = new Loader();
@@ -53,7 +54,7 @@ async function setup(storageKeyPrefix: string) {
   };
 }
 
-function getSingletonHandle(store: StorageProviderBase): Singleton {
+function getSingletonHandle(store: UnifiedStore): Singleton {
   return handleFor(store, IdGenerator.newSession()) as Singleton;
 }
 
@@ -83,8 +84,8 @@ describe('Arc ' + storageKeyPrefix, () => {
     }
 
     const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
-    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as StorageProviderBase;
-    const barStore = await arc.createStore(Bar.type, undefined, 'test:2') as StorageProviderBase;
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     await getSingletonHandle(fooStore).set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
@@ -982,7 +983,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
-  
+
   it('registers and deregisters its own volatile storage', async () => {
     const id1 = ArcId.newForTest('test1');
     const id2 = ArcId.newForTest('test2');

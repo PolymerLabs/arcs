@@ -13,13 +13,13 @@ import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
 import {KeyBase} from '../../runtime/storage/key-base.js';
-import {StorageProviderBase, SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EntityType} from '../../runtime/type.js';
 import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {PlannerInspector, PlannerInspectorFactory, InspectablePlanner} from '../planner-inspector.js';
+import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
 
 const planificatorId = 'plans';
 
@@ -135,18 +135,14 @@ export class Planificator {
   private _listenToArcStores() {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.arc.context.allStores.forEach(store => {
-      if (store instanceof StorageProviderBase) {
-        store.on(this.dataChangeCallback);
-      }
+      store.on(this.dataChangeCallback);
     });
   }
 
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
     this.arc.context.allStores.forEach(store => {
-      if (store instanceof StorageProviderBase) {
-        store.off(this.dataChangeCallback);
-      }
+      store.off(this.dataChangeCallback);
     });
   }
 

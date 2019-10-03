@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({SimpleParticle, html, log}) => {
 
   const template = html`
   <style>
@@ -15,7 +15,7 @@ defineParticle(({DomParticle, html, log}) => {
     display: grid;
     grid-template-rows: 1fr 1fr 1fr;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 2vw; 
+    grid-gap: 2vw;
   }
 
   .grid div {
@@ -33,7 +33,7 @@ defineParticle(({DomParticle, html, log}) => {
     </div>
   </div>`;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }
