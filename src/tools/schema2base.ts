@@ -59,7 +59,7 @@ export abstract class Schema2Base {
 
   /**
    * Collect declared schemas along with any inlined in particle connections.
-   * Generated entities come from the  particle and connection name.
+   * Generated entities come from the particle and connection name.
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
