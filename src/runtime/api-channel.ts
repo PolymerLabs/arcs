@@ -28,6 +28,7 @@ import {MessagePort} from './message-channel.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyCallback, ProxyMessage} from './storageNG/store.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -480,18 +481,22 @@ export abstract class PECOuterPort extends APIPort {
   StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
 
   abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
-  abstract onInitializeProxy(handle: UnifiedStore, callback: number);
-  abstract onSynchronizeProxy(handle: UnifiedStore, callback: number);
-  abstract onHandleGet(handle: UnifiedStore, callback: number);
-  abstract onHandleToList(handle: UnifiedStore, callback: number);
-  abstract onHandleSet(handle: UnifiedStore, data: {}, particleId: string, barrier: string);
-  abstract onHandleClear(handle: UnifiedStore, particleId: string, barrier: string);
-  abstract onHandleStore(handle: UnifiedStore, callback: number, data: {value: {}, keys: string[]}, particleId: string);
-  abstract onHandleRemove(handle: UnifiedStore, callback: number, data: {}, particleId: string);
-  abstract onHandleRemoveMultiple(handle: UnifiedStore, callback: number, data: {}, particleId: string);
-  abstract onHandleStream(handle: UnifiedStore, callback: number, pageSize: number, forward: boolean);
-  abstract onStreamCursorNext(handle: UnifiedStore, callback: number, cursorId: number);
-  abstract onStreamCursorClose(handle: UnifiedStore, cursorId: number);
+
+  // TODO: Delete these when the old storage code is deleted. They won't be
+  // needed anymore.
+  abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
+  abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
+  abstract onHandleGet(handle: StorageProviderBase, callback: number);
+  abstract onHandleToList(handle: StorageProviderBase, callback: number);
+  abstract onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string);
+  abstract onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string);
+  abstract onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string);
+  abstract onHandleRemove(handle: StorageProviderBase, callback: number, data: {}, particleId: string);
+  abstract onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: {}, particleId: string);
+  abstract onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean);
+  abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
+  abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
+
   abstract onRegister(handle: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
