@@ -14,8 +14,7 @@
 
   return class extends SimpleParticle {
     update({move, gameState}, {}) {
-      // If the move is reset or start, reset the gameState
-      if (move && (move.move == 'start' || move.move == 'reset')) {
+      if (!gameState) {
         const gs = {
           board: ',,,,,,,,',
           gameOver: false,
@@ -25,68 +24,107 @@
           gameStarted: true
         };
         this.updateSingleton('gameState', gs);
-      }
-      if (move && gameState && gameState.lastMove != move.move) {
-        // Get the old gameState values to update.
-        let newBoard = gameState.board;
-        let newGameOver = gameState.gameOver;
-        let newWinnerAvatar = gameState.winnerAvatar;
-        let newCurrentPlayer = gameState.currentPlayer;
-
-        // Get the board and move in a usable state
+      } else if (move) {
         const arr = gameState.board.split(`,`);
         const mv = parseInt(move.move, 10) - 1;
-        
+        let newCurrentPlayer = gameState.currentPlayer;
+        let newLastMove = gameState.lastMove;
+        console.log(`I've got a move!`, move.move);
+
         // If the move is valid
         if (arr[mv] == ``) {
 
           // Apply move
           arr[mv] = move.playerAvatar;
-          newBoard = arr.join();
-
-          // Define all the possible winning sequences
-          const winningSequences = [
-            [0, 1, 2], 
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6]
-          ];
-
-          // Check if the game is tied
-          newGameOver = true;
-          for (const cell of arr) {
-            if (cell == '') {
-              newGameOver = false;
-              break;
-            }
-          }
-          
-          // Check if the game has been won
-          for (const ws of winningSequences) {
-            if (arr[ws[0]] !== '' && arr[ws[0]] === arr[ws[1]] && arr[ws[1]] == arr[ws[2]]) {
-              newGameOver = true;
-              newWinnerAvatar = arr[ws[0]];
-              break;
-            }
-          }
-          
+          //newBoard = arr.join();
           newCurrentPlayer = newCurrentPlayer % 2 + 1;
-        } 
-        // Update gameState
+          newLastMove = move.move;
+        }
         const gs = {
-          board: newBoard,
-          gameOver: newGameOver,
-          winnerAvatar: newWinnerAvatar,
+          board: arr.join(),
+          gameOver: false,
+          winnerAvatar: null,
           currentPlayer: newCurrentPlayer,
-          lastMove: move.move,
-          gameStarted: gameState.gameStarted
+          lastMove: newLastMove,
+          gameStarted: true
         };
         this.updateSingleton('gameState', gs);
+
       }
+    //   // If the move is reset or start, reset the gameState
+    //   if (move && (move.move == 'start' || move.move == 'reset')) {
+    //     const gs = {
+    //       board: ',,,,,,,,',
+    //       gameOver: false,
+    //       winnerAvatar: null,
+    //       currentPlayer: 1,
+    //       lastMove: '',
+    //       gameStarted: true
+    //     };
+    //     this.updateSingleton('gameState', gs);
+    //   }
+    //   if (move && gameState && gameState.lastMove != move.move) {
+    //     // Get the old gameState values to update.
+    //     let newBoard = gameState.board;
+    //     let newGameOver = gameState.gameOver;
+    //     let newWinnerAvatar = gameState.winnerAvatar;
+    //     let newCurrentPlayer = gameState.currentPlayer;
+
+    //     // Get the board and move in a usable state
+    //     const arr = gameState.board.split(`,`);
+    //     const mv = parseInt(move.move, 10) - 1;
+        
+    //     // If the move is valid
+    //     if (arr[mv] == ``) {
+
+    //       // Apply move
+    //       arr[mv] = move.playerAvatar;
+    //       newBoard = arr.join();
+
+    //       // Define all the possible winning sequences
+    //       const winningSequences = [
+    //         [0, 1, 2], 
+    //         [3, 4, 5],
+    //         [6, 7, 8],
+    //         [0, 3, 6],
+    //         [1, 4, 7],
+    //         [2, 5, 8],
+    //         [0, 4, 8],
+    //         [2, 4, 6]
+    //       ];
+
+    //       // Check if the game is tied
+    //       newGameOver = true;
+    //       for (const cell of arr) {
+    //         if (cell == '') {
+    //           newGameOver = false;
+    //           break;
+    //         }
+    //       }
+          
+    //       // Check if the game has been won
+    //       for (const ws of winningSequences) {
+    //         if (arr[ws[0]] !== '' && arr[ws[0]] === arr[ws[1]] && arr[ws[1]] == arr[ws[2]]) {
+    //           newGameOver = true;
+    //           newWinnerAvatar = arr[ws[0]];
+    //           break;
+    //         }
+    //       }
+          
+    //       newCurrentPlayer = newCurrentPlayer % 2 + 1;
+    //     } 
+    //     // Update gameState
+    //     const gs = {
+    //       board: newBoard,
+    //       gameOver: newGameOver,
+    //       winnerAvatar: newWinnerAvatar,
+    //       currentPlayer: newCurrentPlayer,
+    //       lastMove: move.move,
+    //       gameStarted: gameState.gameStarted
+    //     };
+    //     this.updateSingleton('gameState', gs);
+    //   }
+    // }
     }
   };
 });

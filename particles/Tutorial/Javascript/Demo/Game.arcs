@@ -49,6 +49,7 @@ particle Congratulations in './source/Congratulations.js'
   consume congratulationsSlot
 
 recipe GameDemoRecipe
+  create as move
   Main
     consume root 
       provide playerSlot as getPlayers
