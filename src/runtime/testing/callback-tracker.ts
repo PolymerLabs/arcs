@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Dictionary} from '../hot.js';
+import {UnifiedStore} from '../storageNG/unified-store.js';
 
 /**
  * Simple class to verify callbacks used in the Arcs storage APIs.
@@ -27,7 +27,7 @@ export class CallbackTracker {
   // tslint:disable-next-line: no-any
   events: Dictionary<any>[] = [];
 
-  constructor(storageProvider: StorageProviderBase, public expectedEvents = 0) {
+  constructor(storageProvider: UnifiedStore, public expectedEvents = 0) {
     storageProvider.on((val) => this.changeEvent(val));
   }
 

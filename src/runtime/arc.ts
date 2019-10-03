@@ -836,7 +836,7 @@ ${this.activeRecipe.toString()}`;
     return this._context.findStoreTags(store as StorageStub);
   }
 
-  getStoreDescription(store: StorageProviderBase): string {
+  getStoreDescription(store: UnifiedStore): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }

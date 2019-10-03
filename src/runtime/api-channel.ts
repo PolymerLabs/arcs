@@ -20,7 +20,6 @@ import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import {Content} from './slot-consumer.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
@@ -29,6 +28,7 @@ import {MessagePort} from './message-channel.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyCallback, ProxyMessage} from './storageNG/store.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -481,8 +481,11 @@ export abstract class PECOuterPort extends APIPort {
   StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
 
   abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
-  abstract onInitializeProxy(handle: UnifiedStore, callback: number);
-  abstract onSynchronizeProxy(handle: UnifiedStore, callback: number);
+
+  // TODO: Delete these when the old storage code is deleted. They won't be
+  // needed anymore.
+  abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
+  abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
   abstract onHandleGet(handle: StorageProviderBase, callback: number);
   abstract onHandleToList(handle: StorageProviderBase, callback: number);
   abstract onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string);
@@ -493,6 +496,7 @@ export abstract class PECOuterPort extends APIPort {
   abstract onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean);
   abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
   abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
+
   abstract onRegister(handle: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
