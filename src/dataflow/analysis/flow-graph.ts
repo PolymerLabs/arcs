@@ -26,7 +26,7 @@ export class FlowGraph {
   readonly handles: HandleNode[];
   readonly slots: SlotNode[];
   readonly nodes: Node[];
-  
+
   /** Maps from edge ID to Edge. */
   readonly edgeMap: Map<string, Edge> = new Map();
 
@@ -62,7 +62,7 @@ export class FlowGraph {
       const particleNode = particleNodes.get(connection.particle);
       const handleNode = handleNodes.get(connection.handle);
       this.handleSpecMap.set(connection.spec, handleNode);
-      
+
       // Function to construct a new edge in the graph.
       const addEdgeWithDirection = (direction: 'in' | 'out') => {
         const edgeId = 'E' + edgeIdCounter++;
@@ -106,7 +106,7 @@ export class FlowGraph {
       if (edge instanceof ParticleInput && edge.connectionSpec.check) {
         edge.check = this.createFlowCheck(edge.connectionSpec.check);
       }
-      
+
       // Compute the list of 'derived from' edges for all out-edges. This must
       // also be done in a separate pass since we can't guarantee the ordering
       // in which the edges were created.

@@ -213,7 +213,7 @@ export class FlowModifier {
 
   toUniqueString(): string {
     const elements: string[] = [];
-    // The edgeIds list is ordered, but for de-duping we still want to sort them. 
+    // The edgeIds list is ordered, but for de-duping we still want to sort them.
     for (const edgeId of this.edgeIds.asSet()) {
       elements.push('+edge:' + edgeId);
     }
@@ -249,7 +249,7 @@ export type FlowCondition = {
 };
 
 /** An equivalent of a particle Check statement, used internally by FlowGraph. Either a FlowCondition, or a boolean expression. */
-export type FlowCheck = 
+export type FlowCheck =
     (FlowCondition | {operator: 'or' | 'and', children: readonly FlowCheck[]})
     /** Optional Check object from which this FlowCheck was constructed. */
     & {originalCheck?: Check};

@@ -351,7 +351,7 @@ ${recipesManifest}`);
     assert.strictEqual(recipe.particles[0].getSlotConnectionByName('foo').providedSlots.bar, recipe.particles[1].getSlotConnectionByName('bar').targetSlot);
     assert.strictEqual(recipe.slots[0].consumeConnections[0], recipe.particles[1].getSlotConnectionByName('bar'));
     assert.strictEqual(recipe.slots[0].sourceConnection, recipe.particles[0].getSlotConnectionByName('foo'));
-    
+
     generated = [{result: manifest.recipes[2], score: 1}];
     results = await mrv.generateFrom(generated);
     recipe = results[0].result;
@@ -408,7 +408,7 @@ ${recipesManifest}`);
   assert.strictEqual(recipe.slots[0].sourceConnection, recipe.particles[0].getSlotConnectionByName('foo'));
   assert.strictEqual(recipe.particles[0].getSlotConnectionByName('foo').providedSlots.bar, recipe.particles[2].getSlotConnectionByName('bar').targetSlot);
   assert.strictEqual(recipe.slots[0].consumeConnections[1], recipe.particles[2].getSlotConnectionByName('bar'));
-  
+
   generated = [{result: manifest.recipes[2], score: 1}];
   results = await mrv.generateFrom(generated);
   recipe = results[0].result;

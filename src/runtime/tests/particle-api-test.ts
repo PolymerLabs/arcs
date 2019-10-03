@@ -809,7 +809,7 @@ describe('particle-api', () => {
         });
       `
     });
-    
+
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
@@ -820,7 +820,7 @@ describe('particle-api', () => {
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
-    
+
     await arc.instantiate(recipe);
 
     await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
@@ -860,7 +860,7 @@ describe('particle-api', () => {
         });
       `
     });
-    
+
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
@@ -871,7 +871,7 @@ describe('particle-api', () => {
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
-    
+
     await arc.instantiate(recipe);
 
     await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
@@ -911,7 +911,7 @@ describe('particle-api', () => {
         });
       `
     });
-    
+
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
@@ -922,7 +922,7 @@ describe('particle-api', () => {
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
-    
+
     await arc.instantiate(recipe);
 
     await arc.idle;

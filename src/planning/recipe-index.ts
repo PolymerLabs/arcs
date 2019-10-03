@@ -232,7 +232,7 @@ export class RecipeIndex {
   }
 
   /**
-   * Given a particle and a slot spec for a slot that particle could provide, find consume slot connections that 
+   * Given a particle and a slot spec for a slot that particle could provide, find consume slot connections that
    * could be connected to the potential slot.
    */
   findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvideSlotConnectionSpec): ConsumeSlotConnectionMatch[] {
@@ -269,7 +269,7 @@ export class RecipeIndex {
     }
     return consumeConns;
   }
-  
+
   findProvidedSlot(particle: Particle, slotSpec: ConsumeSlotConnectionSpec): Slot[] {
     this.ensureReady();
 
@@ -327,7 +327,7 @@ export class RecipeIndex {
     if (!slotHandleConn.handle) {
       throw new Error(`Unexpected empty Handle`);
     }
-      
+
     switch (slotHandleConn.handle.fate) {
       case 'create':
         // matching handle not defined or its fate is 'create' or '?'.

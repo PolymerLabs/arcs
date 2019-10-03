@@ -35,6 +35,9 @@
       ]
     ],
 
+    "no-trailing-spaces": 1,
+    "eol-last": 1,
+
     // Things we do, but probably shouldn't.
     "no-console": "off",
     "no-throw-literal": "off",
@@ -62,8 +65,6 @@
     "spaced-comment": "off",
     "block-spacing": "off",
     "no-constant-condition": "off",
-    "no-trailing-spaces": "off",
-    "eol-last": "off",
     "max-len": "off",
     "comma-dangle": "off",
     "linebreak-style": "off",

@@ -180,7 +180,7 @@ export class ConvertConstraintsToConnections extends Strategy {
         }
 
         const shape = RecipeUtil.makeShape([...particles.values()], [...handles.values()], map);
-        
+
         const results = RecipeUtil.find(recipe, shape);
 
         const processedResults = results.filter(match => {

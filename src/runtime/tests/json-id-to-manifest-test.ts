@@ -52,7 +52,7 @@ describe('JsonldToManifest', () => {
     it('works on objects without @graph', async () => {
       const schema = await getSchema();
       const valids = JSON.parse(schema)['@graph'];
-      
+
       for (const obj of valids) {
         const str = JSON.stringify(obj);
         const manifest = JsonldToManifest.convert(str, {'@id': 'schema:Thing'});

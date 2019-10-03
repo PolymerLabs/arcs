@@ -23,7 +23,7 @@ export class MapSlots extends Strategy {
 
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
-        const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc); 
+        const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
           return undefined;
@@ -31,8 +31,8 @@ export class MapSlots extends Strategy {
 
         // If there are any local slots, prefer them over remote slots.
         // TODO: There should not be any preference over local slots vs. remote slots.
-        // Strategies should be responsible for making all possible recipes. Ranking of 
-        // recipes is done later. 
+        // Strategies should be responsible for making all possible recipes. Ranking of
+        // recipes is done later.
         const slotList = local.length > 0 ? local : remote;
         return slotList.map(slot => ((recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) => {
           const newSlotConnection = particle.addSlotConnection(slotSpec.name);
@@ -42,7 +42,7 @@ export class MapSlots extends Strategy {
       }
 
       // TODO: this deals with cases where a SlotConnection has been
-      // created during parsing, so that provided slots inside the 
+      // created during parsing, so that provided slots inside the
       // connection can be connected to consume connections.
       // Long term, we shouldn't have to do this, so we won't need
       // to deal with the case of a disconnected SlotConnection.

@@ -98,7 +98,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
 
     this.model.values = merged;
     this.model.version = newClock;
-    
+
     const modelChange: CollectionChange<T> = {
       changeType: ChangeType.Model,
       modelPostChange: this.model

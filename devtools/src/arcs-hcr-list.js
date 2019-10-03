@@ -160,7 +160,7 @@ class ArcsHcrList extends MessengerMixin(PolymerElement) {
           if (this.particleSources.size > before && this.websocket != null) {
             const files = JSON.stringify([...this.particleSources]);
             this.websocket.send(files);
-          } 
+          }
           break;
         }
       }

@@ -71,7 +71,7 @@ export class FilterInput extends mixinBehaviors([IronA11yKeysBehavior], PolymerE
       'ctrl+esc': '_clear',
       'ctrl+x': '_regex'
     };
-  } 
+  }
 
   static get observers() {
     return ['_onSearchChanged(searchTextInput, searchRegexInput)'];

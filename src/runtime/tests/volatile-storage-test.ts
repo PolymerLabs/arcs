@@ -80,7 +80,7 @@ describe('volatile', () => {
 
       const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
-      
+
       const result = await var1.get();
       assert.strictEqual('underlying', result.value);
 
@@ -102,7 +102,7 @@ describe('volatile', () => {
 
       const var1 = await storage.construct('test0', new ReferenceType(barType), storeKey) as SingletonStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
-      
+
       const result = await var1.get();
       assert.strictEqual('underlying', result.storageKey);
 
@@ -111,7 +111,7 @@ describe('volatile', () => {
     });
   });
 
-  
+
   describe('collection', () => {
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
@@ -189,12 +189,12 @@ describe('volatile', () => {
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-  
+
       const collection1 = await storage.construct('test0', barType.collectionOf(), storeKey) as CollectionStorageProvider;
-  
+
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
-      
+
       let result = await collection1.get('id1');
       assert.strictEqual('value1', result.value);
       result = await collection1.get('id2');
@@ -226,16 +226,16 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-  
+
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-  
+
       const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), storeKey) as CollectionStorageProvider;
-  
+
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
-      
+
       let result = await collection1.get('id1');
       assert.strictEqual('value1', result.storageKey);
       result = await collection1.get('id2');
@@ -243,7 +243,7 @@ describe('volatile', () => {
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
-    }); 
+    });
   });
 
   describe('big collection', () => {
@@ -327,7 +327,7 @@ describe('volatile', () => {
       const cid2 = await col.stream(20);
       assert.strictEqual(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
-      
+
       await checkNext(col, cid1, ['x09', 'o10', 'p07', 'q04']);
       await checkDone(col, cid1);
       await checkDone(col, cid2);
@@ -370,7 +370,7 @@ describe('volatile', () => {
       const cid2 = await col.stream(20, false);
       assert.strictEqual(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['f11', 'q04', 'p07', 'x09', 'g08', 'h05', 'z03', 'i02', 'r01']);
-      
+
       await checkNext(col, cid1, ['h05', 'z03', 'i02', 'r01']);
       await checkDone(col, cid1);
       await checkDone(col, cid2);

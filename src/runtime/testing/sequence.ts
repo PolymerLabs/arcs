@@ -82,17 +82,17 @@ interface Sensor {
 /**
  * Sequence testing utility. Takes a set of events with asynchronous effect across one or more inputs,
  * generates the full set of possible orderings, and tests each one.
- * 
+ *
  * NOTE: Do not use this utility in unit tests! Sequence tests are not unit tests
  * and can not replace unit testing.
- * 
+ *
  * NOTE: If sequence testing turns up a failure case, you MUST REPRODUCE that failure case with
  * a unit test as part of the patch that fixes the issue. This guards against regressions more
  * cleanly than relying on the sequence tests directly.
- * 
+ *
  * Recommended location: in a file called ${thing}-sequence-test.ts, alongside the
  * unit tests that are in ${thing}-test.ts.
- * 
+ *
  * Basic Usage:
  * (1) construct a SequenceTest object
  * (2) specify how to construct the object under test with setTestConstructor()
@@ -101,13 +101,13 @@ interface Sensor {
  * (5) provide a set of events for each input with setChanges()
  * (6) provide some end invariants with setEndInvariant()
  * (7) run sequenceTest.test()
- * 
+ *
  * Note that any per-ordering state needs to be mediated by the SequenceTest object, as if you try and
  * keep state directly in your sequence test then it won't reset between orderings. You can:
  * (a) register a per-ordering variable with sequenceTest.registerVariable()
  * (b) set its value with sequenceTest.setVariable()
  * (C) query the current value with sequenceTest.getVariable()
- * 
+ *
  * See storageNG/tests/store-sequence-test.ts for some fairly comprehensive examples of sequence testing
  * in practise.
  */
@@ -135,7 +135,7 @@ export class SequenceTest<T> {
   /**
    * Register an input for the object under test. An input is a function that will be provided
    * with a series of data updates.
-   * 
+   *
    * @param name the function name to invoke in order to provide input
    * @param asyncCount the maximum number of internal awaits within the function (including
    *                   child functions)
@@ -154,7 +154,7 @@ export class SequenceTest<T> {
    * Register an output for the object under test. An output is a function that will be
    * invoked as the object is fed changes. The parameters provided to the output can be
    * inspected as part of the test.
-   * 
+   *
    * @param name the function name to replace or register with. Note that dotted syntax can
    *             be used to register outputs on sub-objects.
    * @param response either {type: Void} (the function won't return a value),
@@ -174,18 +174,18 @@ export class SequenceTest<T> {
    * @param variable if behavior is Register and a valid variable id is provided here, then
    *                 the result of invoking the registration function will be stored in that
    *                 variable.
-   * 
+   *
    * Example: if a 'onOutput' function on the object under test is invoked by the object, and
    * you want to replace it with something that always returns void:
    * sequenceTest.registerOutput('onOutput', {type: Void}, SequenceOutput.Replace);
-   * 
+   *
    * If a 'registerOutputHandler function exists on the object under test, which is used to
    * register callbacks on the object, and you want to register a callback:
    * sequenceTest.registerOutput('registerOutputHandler', {type: Void}, SequenceOutput.Register, outputID);
    * Note that functions that register callbacks often return some kind of identifier that can
    * be used to refer to the callback later. In this example, that value will be stored in the
    * variable 'outputID'.
-   *  
+   *
    * If the object under test has a property 'foo' with an output function 'bar' that you want
    * to replace:
    * sequenceTest.registerOutput('foo.bar', {type: Void}, SequenceOutput.Replace);
@@ -202,7 +202,7 @@ export class SequenceTest<T> {
   /**
    * Register a sensor for the object under test. Sensors are values that will change as the object
    * is tested, and can be accessed as part of invariant specification.
-   * 
+   *
    * @param name the name of the field to read.
    */
   registerSensor(name: string) {
@@ -213,7 +213,7 @@ export class SequenceTest<T> {
 
   /**
    * Register a variable. Variable values are reset before each ordering is tested.
-   * 
+   *
    * @param initialValue either the initial value of the variable, or a function that generates
    *                     that value.
    * @param initializerIsFunction True if the initial value is a function.
@@ -230,7 +230,7 @@ export class SequenceTest<T> {
 
   /**
    * Retrieve the current value of a variable. Use inside closures (e.g. in an onOutput or
-   * checkResponse closure) to provide access to data that varies depending on ordering. 
+   * checkResponse closure) to provide access to data that varies depending on ordering.
    */
   getVariable(id: string): any {
     return this.variables.get(id).value;
@@ -252,7 +252,7 @@ export class SequenceTest<T> {
 
   /**
    * Set a sequence of changes for an input.
-   * 
+   *
    * @param id The input to register changes on.
    * @param changes A list of changes. Each change may have:
    *  - input: the input value to provide for this event.
@@ -262,14 +262,14 @@ export class SequenceTest<T> {
    *  - variable: a dictionary of id: value that updates the current value of variables
    */
   setChanges(id: string, changes: SequenceChange[]) {
-    this.changes[id] = changes.map(({input, inputFn, output, variable}) => 
+    this.changes[id] = changes.map(({input, inputFn, output, variable}) =>
       ({input, inputFn, output, variable, id})
     );
   }
 
   /**
    * set an end invariant for a given sensor.
-   * 
+   *
    * @param id The sensor to set an end invariant on
    * @param test a function that takes the final sensor value and asserts properties
    */
@@ -321,7 +321,7 @@ export class SequenceTest<T> {
         throw new Error(`name ${name} invalid for ${initialObj}`);
       }
     }
-    
+
     return {object: obj, name: parts[parts.length - 1]};
   }
 
@@ -357,36 +357,36 @@ export class SequenceTest<T> {
           this.setVariable(output.variable, result);
         }
       }
-    }  
+    }
   }
 
   /*
    * This generator produces all interleavings of a list of ordered lists
    * of choices. The orderings in each list can't be violated but each item
    * can be chosen from any list.
-   * 
+   *
    * For example, if the list of ordered lists is [[a,b,c], [d,e], [f]] then
    * the first choice can be a, d, or f. Then:
    * - if the first choice was a, the second choice could be b, d or f.
    * - if the first choice was d, the second choice could be a, e or f.
    * - if the first choice was f, the second choice could be a or d.
-   * 
+   *
    * This function doesn't care what the actual choices are, it just returns
-   * information representing the possible orderings. As input it takes: 
+   * information representing the possible orderings. As input it takes:
    * - length: total number of choices across all lists (6 in our example above).
    * - amounts: the number of choices in each list ([3, 2, 1] in our example above)
    *
    * As output, the generator will return a list of indexes into the list of lists;
    * the represent "choose from this list next".
-   * 
-   * However! As an implementation detail, it turns out to be *way* easier to 
+   *
+   * However! As an implementation detail, it turns out to be *way* easier to
    * iteratively generate these outputs if exhausted lists (i.e. those with all
    * inputs selected) are removed from the lists of lists, and future output indexes
    * take this into account.
-   * 
+   *
    * So you'd expect the interleaving adbefc to be output as [0,1,0,1,2,0]. But
    * you'd be wrong. After the second '1', there's no choices left in [d,e], so
-   * it gets dropped from the list of lists and the next choice is between 0 (c) 
+   * it gets dropped from the list of lists and the next choice is between 0 (c)
    * or 1 (f). This means that adbefc is in fact represented as [0,1,0,1,1,0].
    *
    * If you're curious, the reason for this is that by dropping exhausted inputs
@@ -493,7 +493,7 @@ export class SequenceTest<T> {
    *
    * Uses interleavings_raw to generate all the permutations of choice of the next stage in each input
    * until all stages are exhausted.
-   * 
+   *
    * The algorithm then inserts wait states based on the number of internal awaits listed against
    * each input.
    */
@@ -583,7 +583,7 @@ export class SequenceTest<T> {
         }
         return `(${this.inputs.get(a.change.id).name})`;
       }).join(', ');
-      
+
       this.resetResults();
       this.resetVariables();
       let obj = this.prepareFunction();
@@ -669,7 +669,7 @@ export class SequenceTest<T> {
       }
     }
 
-    
+
     console.log(`${permutationCount} permutations tested`);
   }
 }

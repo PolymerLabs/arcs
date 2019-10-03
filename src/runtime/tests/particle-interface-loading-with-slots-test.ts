@@ -46,7 +46,7 @@ describe('particle interface loading with slots', () => {
 
     return {manifest, recipe, slotComposer, arc};
   }
-  
+
   async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionStorageProvider> {
     await arc.instantiate(recipe);
     const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as CollectionStorageProvider;

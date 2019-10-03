@@ -100,7 +100,7 @@ export class SlotConsumer {
   onContainerUpdate(newContainer, originalContainer): void {
     assert(this.slotContext instanceof ProvidedSlotContext, 'Container can only be updated in non-hosted context');
     const context = this.slotContext as ProvidedSlotContext;
-    
+
     if (newContainer !== originalContainer) {
       const contextContainerBySubId = new Map();
       if (context && context.spec.isSet) {

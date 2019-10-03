@@ -64,7 +64,7 @@ describe('firebase-ng-driver', function() {
       driver2.registerReceiver((model: number, version: number) => {
         assert.strictEqual(model, 13);
         assert.strictEqual(version, 1);
-        resolve(); 
+        resolve();
       });
     });
 

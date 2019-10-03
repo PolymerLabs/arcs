@@ -569,10 +569,10 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
  * NoOpStorageProxy is an implementation of StorageProxy that does no operations. It silently
  * absorbs and throws away all changes without creating any logging, warnings or any other visible
  * behaviors or persistent changes.
- * 
+ *
  * It is aimed to be used by disabled particles to finish their job without causing any post-disabled
  * async errors, etc.
- * 
+ *
  * TODO(sherrypra): Add a unit test to ensure this stays in sync with the real storage APIs
  */
 export class NoOpStorageProxy extends StorageProxy implements CollectionStore, BigCollectionStore, SingletonStore {

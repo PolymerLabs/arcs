@@ -177,7 +177,7 @@ ${recipeManifest}
 
       const result = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
       assert.isTrue(result.isResolved());
-      
+
       const actionSlots = result.slots.filter(s => s.name === 'action');
       assert.lengthOf(actionSlots, 1);
       assert.deepEqual(actionSlots[0].tags, tags);

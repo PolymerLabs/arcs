@@ -20,7 +20,7 @@ export class Match {
   // The definition of a matching trigger is embodied in this function.
   // This first implementation matches if every key-value pair in the trigger
   // is present in the request. The request may contain other pairs, and the
-  // order of the matching pairs need not be the same as the order in the trigger. 
+  // order of the matching pairs need not be the same as the order in the trigger.
   matches(request: [string, string][]): boolean {
     if (this.trigger.length > request.length) return false;
     for (const pair of this.trigger) {

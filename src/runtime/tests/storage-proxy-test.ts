@@ -31,7 +31,7 @@ class TestSingleton {
   _stored = null;
   _version = 0;
   _listeners = [];
-  
+
   constructor(type, name: string) {
     this.type = type;
     this.name = name;
@@ -80,7 +80,7 @@ class TestCollection {
   _listeners = [];
   _nextKey = 0;
   _arcId;
-  
+
   constructor(type, name, arcId) {
     this.type = type;
     this.name = name;
@@ -128,7 +128,7 @@ class TestCollection {
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
       const item = {value: {id, storageKey: `volatile://${this._arcId}^^volatile-Thing {Text value}`}, effective, keys};
-      // Hard coding the storageKey here is a bit cheeky, but the TestEngine class 
+      // Hard coding the storageKey here is a bit cheeky, but the TestEngine class
       // enforces the schema and arcID is plumbed through.
       const event = {remove: [item], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
@@ -195,7 +195,7 @@ class TestEngine {
   _scheduler = new StorageProxyScheduler();
   _arcId: ArcId;
   _idGenerator = IdGenerator.newSession();
-  
+
   constructor(arcId: string) {
     this._arcId = ArcId.newForTest(arcId);
   }
@@ -647,17 +647,17 @@ describe('storage-proxy', () => {
     const particle = engine.newParticle();
     const fooProxy = engine.newProxy(fooStore);
     const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, CAN_WRITE) as Singleton;
-  
+
     // Set up sync with an initial value.
     fooStore.set(engine.newEntity('start'));
     fooProxy.register(particle, fooHandle);
     engine.sendSync(fooStore);
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:start');
-  
+
     // Reading the inner-pec handle should return the local copy and not call the backing store.
     await fooHandle.get();
     await engine.verify();
-  
+
     // Write to handle modifies the model directly, dispatches update and store write.
     const changed = engine.newEntity('changed');
     await fooHandle.set(changed);
@@ -668,7 +668,7 @@ describe('storage-proxy', () => {
     await fooHandle.get();
     await engine.verify();
 
-    // Update the backing store with a concurrent write. This should not surface 
+    // Update the backing store with a concurrent write. This should not surface
     // in the handle.
     fooStore.set(engine.newEntity('concurrent'));
     await engine.verify();
