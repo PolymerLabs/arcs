@@ -41,19 +41,8 @@ export abstract class Schema2Base {
 
     const srcPath = `${process.cwd()}/${src}`;
     const manifest = await Utils.parse(`import '${srcPath}'`);
+    const schemas = this.collectSchemas(manifest);
 
-    // Collect declared schemas along with any inlined in particle connections.
-    const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.particles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
-      }
-    }
     if (Object.keys(schemas).length === 0) {
       console.warn(`No schemas found in '${src}'`);
       return;
@@ -66,6 +55,22 @@ export abstract class Schema2Base {
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
+  }
+
+  /** Collect declared schemas along with any inlined in particle connections. */
+  private collectSchemas(manifest: Manifest): Dictionary<Schema> {
+    const schemas: Dictionary<Schema> = {};
+    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
+    for (const particle of manifest.particles) {
+      for (const connection of particle.connections) {
+        const schema = connection.type.getEntitySchema();
+        const name = schema && schema.names && schema.names[0];
+        if (name && !(name in schemas)) {
+          schemas[name] = schema;
+        }
+      }
+    }
+    return schemas;
   }
 
   protected processSchema(schema: Schema, processField: (field: string, typeChar: string) => void): number {
