@@ -69,7 +69,6 @@ export abstract class Schema2Base {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
         const name = [particle.name, connection.name].filter((x) => !!x).join('_');
-        console.log('target name?', name);
         schemas[name] = schema;
       }
     }
