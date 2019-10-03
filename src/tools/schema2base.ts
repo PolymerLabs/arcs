@@ -16,7 +16,9 @@ import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 
 export abstract class Schema2Base {
-  constructor(readonly opts: minimist.ParsedArgs) {}
+  constructor(readonly opts: minimist.ParsedArgs) {
+    Utils.init('../..');
+  }
 
   async call() {
     fs.mkdirSync(this.opts.outdir, {recursive: true});
@@ -30,7 +32,6 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    Utils.init('../..');
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
