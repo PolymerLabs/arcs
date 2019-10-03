@@ -25,7 +25,8 @@ defineParticle(({UiParticle, html, log}) => {
       this.output({
         modality: 'notification',
         title: `Hello`,
-        text: `Notification was clicked`
+        text: `Notification was clicked`,
+        deeplink: `https://play.google.com/store/apps/details?id=com.google.android.apps.cultural`
       });
     }
   };
