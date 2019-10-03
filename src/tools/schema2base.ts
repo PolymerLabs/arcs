@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
 import {Schema} from '../runtime/schema.js';
+import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 
@@ -38,78 +39,65 @@ export abstract class Schema2Base {
       return;
     }
 
-    const manifest = await Utils.parse(`import '${src}'`);
+    const srcPath = `${process.cwd()}/${src}`;
+    const manifest = await Utils.parse(`import '${srcPath}'`);
+    const schemas = Schema2Base.collectSchemas(manifest);
 
-    // Collect declared schemas along with any inlined in particle connections.
-    const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.allParticles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
-      }
-    }
     if (Object.keys(schemas).length === 0) {
       console.warn(`No schemas found in '${src}'`);
       return;
     }
 
-    // Collect inline schema fields. These will be output first so they're defined
-    // prior to use in their containing entity classes.
-    const inlineSchemas: Dictionary<Schema> = {};
-    for (const schema of Object.values(schemas)) {
-      for (const [field, descriptor] of Object.entries(schema.fields)) {
-        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-          const name = this.inlineSchemaName(field, descriptor);
-          if (!(name in inlineSchemas)) {
-            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
-          }
-         }
-      }
-    }
-
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const dict of [inlineSchemas, schemas]) {
-      for (const [name, schema] of Object.entries(dict)) {
-        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
-      }
+    for (const [name, schema] of Object.entries(schemas)) {
+      fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
 
-  protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
+  /**
+   * Collect declared schemas along with any inlined in particle connections.
+   * Generated entities come from the particle and connection name.
+   * @param manifest Manifest expended by loader.
+   * @return Dictionary<Schema> target schemas for code generation.
+   */
+  private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
+    const schemas: Dictionary<Schema> = {};
+    for (const particle of manifest.allParticles) {
+      for (const connection of particle.connections) {
+        const schema = connection.type.getEntitySchema();
+        const name = [particle.name, connection.name].filter((x) => !!x).join('_');
+        schemas[name] = schema;
+      }
+    }
+    return schemas;
+  }
+
+  protected processSchema(schema: Schema, processField: (field: string, typeChar: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
       switch (this.typeSummary(descriptor)) {
         case 'schema-primitive:Text':
-          processField(field, 'T', null);
+          processField(field, 'T');
           break;
 
         case 'schema-primitive:URL':
-          processField(field, 'U', null);
+          processField(field, 'U');
           break;
 
         case 'schema-primitive:Number':
-          processField(field, 'N', null);
+          processField(field, 'N');
           break;
 
         case 'schema-primitive:Boolean':
-          processField(field, 'B', null);
-          break;
-
-        case 'schema-reference':
-          processField(field, 'R', this.inlineSchemaName(field, descriptor));
+          processField(field, 'B');
           break;
 
         default:
-          console.log(`Schema type for field '${field}' is not yet supported:`);
+          console.error(`Schema type for field '${field}' is not yet supported:`);
           console.dir(descriptor, {depth: null});
           process.exit(1);
       }
@@ -128,18 +116,6 @@ export abstract class Schema2Base {
       default:
         return descriptor.kind;
     }
-  }
-
-  private inlineSchemaName(field, descriptor) {
-    let name = descriptor.schema.name;
-    if (!name && descriptor.schema.names && descriptor.schema.names.length > 0) {
-      name = descriptor.schema.names[0];
-    }
-    if (!name) {
-      console.log(`Unnamed inline schemas (field '${field}') are not yet supported`);
-      process.exit(1);
-    }
-    return name;
   }
 
   abstract outputName(baseName: string): string;
