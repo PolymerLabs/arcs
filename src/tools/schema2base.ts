@@ -41,7 +41,7 @@ export abstract class Schema2Base {
 
     const srcPath = `${process.cwd()}/${src}`;
     const manifest = await Utils.parse(`import '${srcPath}'`);
-    const schemas = this.collectSchemas(manifest);
+    const schemas = Schema2Base.collectSchemas(manifest);
 
     if (Object.keys(schemas).length === 0) {
       console.warn(`No schemas found in '${src}'`);
@@ -63,7 +63,7 @@ export abstract class Schema2Base {
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
-  private collectSchemas(manifest: Manifest): Dictionary<Schema> {
+  private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
     const schemas: Dictionary<Schema> = {};
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
