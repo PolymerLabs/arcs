@@ -66,10 +66,7 @@ export class PlanProducer {
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {
-      this.searchStoreCallbackId = this.searchStore.on(async () => {
-        await this.onSearchChanged();
-        return true;
-      });
+      this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
     this.debug = debug;
     this.noSpecEx = noSpecEx;
@@ -88,20 +85,20 @@ export class PlanProducer {
     this.stateChangedCallbacks.push(callback);
   }
 
-  async onSearchChanged() {
+  async onSearchChanged(): Promise<boolean> {
     const values = await this.searchStore.get() || [];
     const arcId = this.arc.id.idTreeAsString();
     const value = values.find(value => value.arc === arcId);
     if (!value) {
-      return;
+      return false;
     }
     if (value.search === this.search) {
-      return;
+      return false;
     }
     this.search = value.search;
     if (!this.search) {
       // search string turned empty, no need to replan, going back to contextual suggestions.
-      return;
+      return false;
     }
     const  options: SuggestionOptions = {
         // If we're searching but currently only have contextual suggestions,
@@ -121,6 +118,7 @@ export class PlanProducer {
       }
     }
     await this.produceSuggestions(options);
+    return true;
   }
 
   dispose() {
@@ -130,7 +128,6 @@ export class PlanProducer {
   }
 
   async produceSuggestions(options: SuggestionOptions = {}) {
-    console.log(`produceSuggestions()`);
     if (options.cancelOngoingPlanning && this.isPlanning) {
       this._cancelPlanning();
     }

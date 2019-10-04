@@ -28,16 +28,14 @@ export class CallbackTracker {
   events: Dictionary<any>[] = [];
 
   constructor(storageProvider: UnifiedStore, public expectedEvents = 0) {
-    storageProvider.on(async val => {
-      this.changeEvent(val);
-      return true;
-    });
+    storageProvider.on(async val => this.changeEvent(val));
   }
 
   // called for each change event
   // tslint:disable-next-line: no-any
-  public changeEvent(c: Dictionary<any>): void {
+  public changeEvent(c: Dictionary<any>): boolean {
     this.events.push(c);
+    return true;
   }
 
   /**
