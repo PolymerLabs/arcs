@@ -87,7 +87,7 @@ export class UiParticleBase extends Particle {
   /**
    * Override to return a dictionary to map into the template.
    */
-  render(stateArgs?): RenderModel {
+  render(...args): RenderModel {
     return {};
   }
 
