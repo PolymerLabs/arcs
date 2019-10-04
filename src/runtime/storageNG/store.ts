@@ -53,7 +53,11 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     throw new Error('Method not implemented.');
   }
 
-  on(fn: Consumer<{}>): void {
+  on(callback: ProxyCallback<null>): number {
+    throw new Error('Method not implemented.');
+  }
+
+  off(callbackId: number) {
     throw new Error('Method not implemented.');
   }
 

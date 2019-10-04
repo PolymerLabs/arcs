@@ -20,6 +20,7 @@ import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
+import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
 const planificatorId = 'plans';
 
@@ -50,6 +51,7 @@ export class Planificator {
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
+  storeCallbackIds: Map<UnifiedStore, number>;
   search: string|null = null;
   searchStore: SingletonStorageProvider;
   inspector: PlannerInspector|undefined;
@@ -134,15 +136,21 @@ export class Planificator {
 
   private _listenToArcStores() {
     this.arc.onDataChange(this.dataChangeCallback, this);
-    this.arc.context.allStores.forEach(store => {
-      store.on(this.dataChangeCallback);
+    this.storeCallbackIds = new Map();
+    this.arc.context.allStores.map(store => {
+      const callbackId = store.on(async () => {
+        this.replanQueue.addChange();
+        return true;
+      });
+      this.storeCallbackIds.set(store, callbackId);
     });
   }
 
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
     this.arc.context.allStores.forEach(store => {
-      store.off(this.dataChangeCallback);
+      const callbackId = this.storeCallbackIds.get(store);
+      store.off(callbackId);
     });
   }
 

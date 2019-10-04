@@ -738,7 +738,7 @@ ${this.activeRecipe.toString()}`;
     this.storeTags.set(store, new Set(tags));
 
     this.storageKeys[store.id] = store.storageKey;
-    store.on(() => this._onDataChange());
+    store.on(async () => this._onDataChange());
 
     Runtime.getRuntime().registerStore(store, tags);
   }
@@ -750,10 +750,11 @@ ${this.activeRecipe.toString()}`;
     tags.forEach(tag => storeTags.add(tag));
   }
 
-  _onDataChange(): void {
+  _onDataChange(): boolean {
     for (const callback of this.dataChangeCallbacks.values()) {
       callback();
     }
+    return true;
   }
 
   onDataChange(callback: Runnable, registration: object): void {

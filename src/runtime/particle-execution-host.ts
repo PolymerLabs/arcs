@@ -181,7 +181,7 @@ class PECOuterPortImpl extends PECOuterPort {
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};
-    handle.on(data => this.SimpleCallback(callback, data));
+    handle.legacyOn(data => this.SimpleCallback(callback, data));
   }
 
   async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {

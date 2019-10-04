@@ -1596,7 +1596,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement ensureBackingStore');
   }
 
-  on(callback) {
+  on(callback): number {
     throw new Error('FirebaseBackingStore does not implement on');
   }
 
