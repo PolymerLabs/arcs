@@ -26,6 +26,7 @@ public:
     RUN(test_stl_vector);
     RUN(test_stl_set);
     RUN(test_stl_unordered_set);
+    RUN(test_empty_schema);
   }
 
   void test_field_methods() {
@@ -486,6 +487,53 @@ public:
       "{}, num: 45, txt: woop"
     };
     CHECK_UNORDERED(s, converter, expected);
+  }
+
+  void test_empty_schema() {
+    arcs::Empty e1, e2;
+
+    EQUAL(Accessor::get_id(e1), "");
+    EQUAL(e1, e2);
+    NOT_LESS(e1, e2);
+    NOT_LESS(e2, e1);
+    IS_TRUE(arcs::fields_equal(e1, e2));
+    EQUAL(hash(e1), hash(e2));
+    EQUAL(arcs::entity_to_str(e1), "{}");
+
+    Accessor::set_id(&e1, "id");
+    EQUAL(Accessor::get_id(e1), "id");
+    NOT_EQUAL(e1, e2);
+    NOT_LESS(e1, e2);
+    LESS(e2, e1);
+    IS_TRUE(arcs::fields_equal(e1, e2));
+    NOT_EQUAL(hash(e1), hash(e2));
+    EQUAL(arcs::entity_to_str(e1), "{id}");
+
+    Accessor::set_id(&e2, "id");
+    EQUAL(e1, e2);
+    NOT_LESS(e1, e2);
+    NOT_LESS(e2, e1);
+    IS_TRUE(arcs::fields_equal(e1, e2));
+    EQUAL(hash(e1), hash(e2));
+
+    arcs::Empty e3 = arcs::clone_entity(e1);
+    EQUAL(arcs::entity_to_str(e3), "{}");
+
+    auto converter = [](const arcs::Empty& e) {
+      return arcs::entity_to_str(e);
+    };
+    std::vector<std::string> expected = {"{id}", "{}"};
+
+    std::set<arcs::Empty> s1;
+    s1.insert(std::move(e1));
+    s1.insert(std::move(e3));
+    CHECK_UNORDERED(s1, converter, expected);
+
+    std::unordered_set<arcs::Empty> s2;
+    arcs::Empty e4;
+    s2.insert(std::move(e2));
+    s2.insert(std::move(e4));
+    CHECK_UNORDERED(s2, converter, expected);
   }
 };
 

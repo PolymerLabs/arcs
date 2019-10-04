@@ -115,6 +115,10 @@ export class Schema2Cpp extends Schema2Base {
                     `  printer.add("${field}: ", entity.${field}_);`);
     });
 
+    if (fieldCount === 0) {
+      equals.push('true');
+    }
+
     return `\
 
 namespace arcs {
