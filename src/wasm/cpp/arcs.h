@@ -346,10 +346,9 @@ public:
   void update(const char* added, const char* removed) override {
     add(added);
     internal::StringDecoder::decodeList(removed, [this](const std::string& str) {
-      // TODO: just get the id, no need to decode the full entity
-      T entity;
-      internal::Accessor::decode_entity(&entity, str.c_str());
-      entities_.erase(entity._internal_id_);
+      std::string id;
+      internal::StringDecoder(str.c_str()).decode(id);
+      entities_.erase(id);
     });
   }
 
