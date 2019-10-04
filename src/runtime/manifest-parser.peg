@@ -180,7 +180,7 @@ ManifestStorageSource
   = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
 
 ManifestStorageFileSource
-  = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({kind: 'manifest-storage-source', origin: 'file', source }) }
+  = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({kind: 'manifest-storage-source', origin: 'file', source }); }
 
 ManifestStorageResourceSource
   = 'in' whiteSpace source:upperIdent { return toAstNode<AstNode.ManifestStorageResourceSource>({kind: 'manifest-storage-source', origin: 'resource', source }); }
@@ -478,7 +478,7 @@ ParticleCheckIsFromStore
   }
 
 StoreReference
-  = name:upperIdent { return toAstNode<AstNode.StoreReference>({kind: 'store-reference', type: 'name', store: name}) }
+  = name:upperIdent { return toAstNode<AstNode.StoreReference>({kind: 'store-reference', type: 'name', store: name}); }
   / id:id { return toAstNode<AstNode.StoreReference>({kind: 'store-reference', type: 'id', store: id}); }
 
 ParticleHandleConnection
