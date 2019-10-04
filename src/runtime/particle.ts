@@ -40,6 +40,7 @@ export class Particle {
   private _idle: Promise<void> = Promise.resolve();
   private _idleResolver: Runnable;
   private _busy = 0;
+  private _handlesToSync: number;
 
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
   private capabilities: Capabilities;
@@ -54,6 +55,12 @@ export class Particle {
   }
 
   /**
+   * Called after handles are synced, override to provide initial processing.
+   */
+  protected ready() {
+  }
+
+  /**
    * This sets the capabilities for this particle.  This can only
    * be called once.
    */
@@ -65,10 +72,10 @@ export class Particle {
     this.capabilities = capabilities || {};
   }
 
-  private async invokeSafely(fun: (p: this) => Promise<void>, err: Consumer<Error>) {
+  protected async invokeSafely(fun: (p: this) => Promise<any>, err: Consumer<Error>) {
     try {
       this.startBusy();
-      await fun(this);
+      return await fun(this);
     } catch (e) {
       err(e);
     } finally {
@@ -79,6 +86,11 @@ export class Particle {
   async callSetHandles(handles: ReadonlyMap<string, Handle>, onException: Consumer<Error>) {
     this.handles = handles;
     await this.invokeSafely(async p => p.setHandles(handles), onException);
+    this._handlesToSync = this._countInputHandles(handles);
+    if (!this._handlesToSync) {
+      // onHandleSync is called IFF there are input handles, otherwise we are ready now
+      this.ready();
+    }
   }
 
   /**
@@ -92,8 +104,22 @@ export class Particle {
   protected async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
   }
 
+  private _countInputHandles(handles: ReadonlyMap<string, Handle>): number {
+    let count = 0;
+    for (const [name, handle] of handles) {
+      if (handle["canRead"]) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   async callOnHandleSync(handle: Handle, model, onException: Consumer<Error>) {
     await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
+    // once we've synced each readable handle once, we are ready to start
+    if (--this._handlesToSync === 0) {
+      this.ready();
+    }
   }
 
   /**
