@@ -42,7 +42,7 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
     const store = await arc.createStore(manifest.schemas.Bar.type) as SingletonStorageProvider;
     let version = 0;
-    store.on(() => version++);
+    store.legacyOn(() => version++);
     assert.strictEqual(version, 0);
     const bar1 = {id: 'an id', value: 'a Bar'};
     await store.set(bar1);
@@ -58,7 +58,7 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
     const barStore = await arc.createStore(manifest.schemas.Bar.type.collectionOf()) as CollectionStorageProvider;
     let version = 0;
-    barStore.on(({add: [{effective}]}) => {if (effective) version++;});
+    barStore.legacyOn(({add: [{effective}]}) => {if (effective) version++;});
     assert.strictEqual(barStore.version, 0);
     const bar1 = {id: 'an id', value: 'a Bar'};
     await barStore.store(bar1, ['key1']);

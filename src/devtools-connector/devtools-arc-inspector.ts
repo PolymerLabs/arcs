@@ -79,9 +79,9 @@ class DevtoolsArcInspector implements ArcInspector {
     });
   }
 
-  public recipeInstantiated(particles: Particle[], activeRecipe: string) {
+  public async recipeInstantiated(particles: Particle[], activeRecipe: string) {
     if (!DevtoolsConnection.isConnected) return;
-    this.storesFetcher.onRecipeInstantiated();
+    await this.storesFetcher.onRecipeInstantiated();
 
     type TruncatedSlot = {id: string, name: string};
     const truncate = ({id, name}: Slot) => ({id, name});

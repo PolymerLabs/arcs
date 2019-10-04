@@ -34,7 +34,7 @@ export interface ArcInspector {
    * @param particles particles instantiated in the arc
    * @param activeRecipe resulting active recipe that the arc holds
    */
-  recipeInstantiated(particles: Particle[], activeRecipe: string): void;
+  recipeInstantiated(particles: Particle[], activeRecipe: string): Promise<void>;
 
   /**
    * Notifies of a message exchanged over the Particle Execution Context.

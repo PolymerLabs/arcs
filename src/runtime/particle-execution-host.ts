@@ -181,7 +181,7 @@ class PECOuterPortImpl extends PECOuterPort {
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};
-    handle.on(data => this.SimpleCallback(callback, data));
+    handle.legacyOn(data => this.SimpleCallback(callback, data));
   }
 
   async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
@@ -353,9 +353,9 @@ class PECOuterPortImpl extends PECOuterPort {
             // in Arc.deserialize.
             for (const store of manifest.stores) {
               if (store instanceof StorageStub) {
-                this.arc._registerStore(await store.inflate(), []);
+                await this.arc._registerStore(await store.inflate(), []);
               } else {
-                this.arc._registerStore(store, []);
+                await this.arc._registerStore(store, []);
               }
             }
             // TODO: Awaiting this promise causes tests to fail...

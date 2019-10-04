@@ -16,7 +16,6 @@ import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
 import {UnifiedStore} from './unified-store.js';
-import {Consumer} from '../hot.js';
 
 export {
   ActiveStore,
@@ -29,7 +28,12 @@ export {
 };
 
 type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode): Promise<ActiveStore<T>>;
+  construct<T extends CRDTTypeRecord>(
+      storageKey: StorageKey,
+      exists: Exists,
+      type: Type,
+      mode: StorageMode,
+      baseStore: Store<T>): Promise<ActiveStore<T>>;
 };
 
 // A representation of a store. Note that initially a constructed store will be
@@ -44,19 +48,6 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     throw new Error('Method not implemented.');
   }
 
-  // tslint:disable-next-line no-any
-  async toLiteral(): Promise<any> {
-    throw new Error('Method not implemented.');
-  }
-
-  cloneFrom(store: UnifiedStore): void {
-    throw new Error('Method not implemented.');
-  }
-
-  on(fn: Consumer<{}>): void {
-    throw new Error('Method not implemented.');
-  }
-
   source: string;
   description: string;
   readonly storageKey: StorageKey;
@@ -68,9 +59,11 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   readonly version: number = 0; // TODO(shans): Needs to become the version vector, and is also probably only available on activated storage?
   modelConstructor: new () => CRDTModel<T>;
 
+  private activeStore: ActiveStore<T> | null;
+
   static readonly constructors = new Map<StorageMode, StoreConstructor>([
     [StorageMode.Direct, DirectStore],
-    [StorageMode.ReferenceMode, ReferenceModeStore]
+    [StorageMode.ReferenceMode, ReferenceModeStore as StoreConstructor]
   ]);
 
   constructor(storageKey: StorageKey, exists: Exists, type: Type, id: string, name: string = '') {
@@ -84,6 +77,10 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   }
 
   async activate(): Promise<ActiveStore<T>> {
+    if (this.activeStore) {
+      return this.activeStore;
+    }
+
     if (Store.constructors.get(this.mode) == null) {
       throw new Error(`StorageMode ${this.mode} not yet implemented`);
     }
@@ -91,8 +88,9 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     if (constructor == null) {
       throw new Error(`No constructor registered for mode ${this.mode}`);
     }
-    const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode);
+    const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode, this);
     this.exists = Exists.ShouldExist;
+    this.activeStore = activeStore;
     return activeStore;
   }
 

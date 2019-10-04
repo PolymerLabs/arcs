@@ -17,7 +17,8 @@ import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../sto
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
 import {ClaimIsTag} from '../particle-claim.js';
-import {UnifiedStore} from '../storageNG/unified-store.js';
+import {UnifiedStore, UnifiedActiveStore} from '../storageNG/unified-store.js';
+import {ProxyCallback} from '../storageNG/store.js';
 
 // tslint:disable-next-line: no-any
 type Callback = Consumer<Dictionary<any>>;
@@ -50,7 +51,7 @@ export interface CollectionStorageProvider extends StorageProviderBase, Collecti
  */
 export interface BigCollectionStorageProvider extends StorageProviderBase, BigCollectionStore {
   cursorVersion(cursorId: number);
-  cloneFrom(store: UnifiedStore);
+  cloneFrom(store: UnifiedActiveStore);
   clearItemsForTesting(): void;
 }
 
@@ -102,10 +103,12 @@ export class ChangeEvent {
 /**
  * Docs TBD
  */
-export abstract class StorageProviderBase extends UnifiedStore implements Store {
+export abstract class StorageProviderBase extends UnifiedStore implements Store, UnifiedActiveStore {
   protected unifiedStoreType: 'StorageProviderBase';
 
-  private readonly listeners: Set<Callback> = new Set();
+  private readonly legacyListeners: Set<Callback> = new Set();
+  private nextCallbackId = 0;
+  private readonly listeners: Map<number, ProxyCallback<null>> = new Map();
   private readonly _type: Type;
 
   protected readonly _storageKey: string;
@@ -136,6 +139,13 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
     this.referenceMode = true;
   }
 
+  // Required to implement interface UnifiedActiveStore. Each
+  // StorageProviderBase instance is both a UnifiedStore and a
+  // UnifiedActiveStore.
+  get baseStore(): StorageProviderBase {
+    return this;
+  }
+
   get storageKey(): string {
     return this._storageKey;
   }
@@ -149,13 +159,31 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
     throw exception;
   }
 
-  // TODO: add 'once' which returns a promise.
-  on(callback: Callback): void {
-    this.listeners.add(callback);
+  on(callback: ProxyCallback<null>): number {
+    const id = this.nextCallbackId++;
+    this.listeners.set(id, callback);
+    return id;
   }
 
-  off(callback: Callback): void {
-    this.listeners.delete(callback);
+  off(callbackId: number): void {
+    this.listeners.delete(callbackId);
+  }
+
+  // Equivalent to `on`, but for the old storage stack. Callers should be
+  // migrated to the new API (unless they're going to be deleted).
+  legacyOn(callback: Callback): void {
+    this.legacyListeners.add(callback);
+  }
+
+  // Equivalent to `off`, but for the old storage stack. Callers should be
+  // migrated to the new API (unless they're going to be deleted).
+  legacyOff(callback: Callback): void {
+    this.legacyListeners.delete(callback);
+  }
+
+  async activate(): Promise<UnifiedActiveStore> {
+    // All StorageProviderBase instances are already active.
+    return this;
   }
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
@@ -163,11 +191,17 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
    * Propagate updates to change listeners.
    */
   protected async _fire(details: ChangeEvent) {
-    const callbacks = [...this.listeners];
+    const callbacks = [...this.listeners.values()];
+    const legacyCallbacks = [...this.legacyListeners];
     // Yield so that event firing is not re-entrant with mutation.
     await 0;
-    for (const callback of callbacks) {
+    for (const callback of legacyCallbacks) {
       callback(details);
+    }
+    for (const callback of callbacks) {
+      // HACK: This callback expects a ProxyMessage, which we don't actually
+      // have here. Just pass null, what could go wrong!
+      await callback(null);
     }
   }
 
@@ -210,7 +244,7 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store 
    */
   abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
-  abstract cloneFrom(store: UnifiedStore): void;
+  abstract cloneFrom(store: UnifiedActiveStore): Promise<void>;
 
   // TODO(shans): remove this when it's possible to.
   abstract async ensureBackingStore();

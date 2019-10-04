@@ -36,7 +36,7 @@ export class PlanningResult {
   generations: SerializableGeneration[] = [];
   contextual = true;
   store?: SingletonStorageProvider;
-  private storeCallback: Consumer<{}>;
+  private storeCallbackId: number;
   private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
@@ -46,8 +46,7 @@ export class PlanningResult {
     assert(envOptions.loader, `loader cannot be null`);
     this.store = store;
     if (this.store) {
-      this.storeCallback = () => this.load();
-      this.store.on(this.storeCallback);
+      this.storeCallbackId = this.store.on(() => this.load());
     }
   }
 
@@ -86,7 +85,7 @@ export class PlanningResult {
 
   dispose() {
     this.changeCallbacks = [];
-    this.store.off(this.storeCallback);
+    this.store.off(this.storeCallbackId);
     this.store.dispose();
   }
 
