@@ -1,7 +1,6 @@
 schema Person
   Text name
   Text avatar
-  Boolean myTurn
 
 schema GameState
   Boolean gameOver

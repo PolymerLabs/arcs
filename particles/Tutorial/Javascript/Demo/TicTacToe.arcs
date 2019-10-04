@@ -7,6 +7,8 @@ particle TicTacToeBoard in './source/TicTacToeBoard.js'
 
 particle MoveApplier in './source/MoveApplier.js'
   in Move move
+  inout Move {Text move} humanMove
+  inout Move {Text move} computerMove
   inout GameState gameState
 
 particle RandomComputer in './source/RandomComputer.js'

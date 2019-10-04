@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, html}) => {   
+defineParticle(({SimpleParticle, html}) => {
 
 const template = html`
   <style>
@@ -22,12 +22,20 @@ const template = html`
       grid-column-gap: 0px;
     }
 
-    .butt {
+    .valid-butt {
       border: 1px outset blue;
-      background-color: lightBlue;
       height: 50px;
       width: 50px;
       cursor: pointer;
+      background-color: lightblue;
+    }
+
+    .invalid-butt {
+      border: 1px outset blue;
+      height: 50px;
+      width: 50px;
+      cursor: pointer;
+      background-color: lightslategray;
     }
 
     .butt:hover {
@@ -39,7 +47,7 @@ const template = html`
       <div class="grid-container">{{buttons}}</div>
   </div>
   <template button>
-    <button class="butt" type="button" on-click="onClick" value={{value}}>
+    <button class={{buttonClass}} type="button" on-click="onClick" value={{value}} \>
       <span>{{spot}}</span>
     </button>
   </template>
@@ -61,20 +69,24 @@ const template = html`
         return {
           buttons: {
             $template: 'button',
-            models: arr.map((spot, index) => ({spot: spot, value: index +1}))
-          },
+            models: arr.map((spot, index) => ({
+              spot: spot,
+              value: index +1,
+              buttonClass: gameState.currentPlayer == 0 ? 'valid-butt' : 'invalid-butt'
+            }))
+          }
         };
       }
-      // If the gameState does not exist yet, the game has not been 
+      // If the gameState does not exist yet, the game has not been
       // initialised, so return nothing.
       return {};
     }
-    
-    // The board acts as the human mover. When the human clicks on the 
+
+    // The board acts as the human mover. When the human clicks on the
     // board, the move should update accordingly.
     onClick(e) {
-      this.updateSingleton(`humanMove`, {move: e.data.value});
+      this.set(`humanMove`, {move: e.data.value});
     }
-    
+
   };
 });

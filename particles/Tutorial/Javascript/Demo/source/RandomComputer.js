@@ -16,7 +16,6 @@ defineParticle(({SimpleParticle, html}) => {
 
     update({gameState}) {
       if (gameState) {
-        
         const emptyCells = [];
         const board = gameState.board.split(`,`);
         // Determine which cells are empty.
@@ -25,9 +24,9 @@ defineParticle(({SimpleParticle, html}) => {
             emptyCells.push((i + 1).toString());
           }
         }
-        // Select a random empty cell.
+
         const selection = Math.floor(Math.random() * emptyCells.length);
-        this.updateSingleton('computerMove', {move: emptyCells[selection]});
+        setTimeout(() => this.set('computerMove', {move: emptyCells[selection]}), 4000);
       }
     }
   };

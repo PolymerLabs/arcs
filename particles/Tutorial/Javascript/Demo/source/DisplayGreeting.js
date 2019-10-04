@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, html}) => {   
+defineParticle(({SimpleParticle, html}) => {
 
 const template = html`
   Hello, <span>{{name}}</span>! Today you are playing as <span>{{avatar}}</span> against the computer. To begin, please click on a cell to make your first move.
@@ -24,13 +24,12 @@ const template = html`
     }
 
     shouldRender({player}) {
-      // Here we check that the players is defined.
       return player;
     }
 
     render({player}) {
       return {name: player.name, avatar: player.avatar};
     }
-    
+
   };
 });

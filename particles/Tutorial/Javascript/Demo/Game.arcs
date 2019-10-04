@@ -3,92 +3,55 @@
 import 'TicTacToe.arcs'
 import 'GameSchemas.arcs'
 
-resource PlayerData
-  start
-  [
-    {"name": "Computer", "avatar": "🤖"}
-  ]
-
-// This data store contains a list of entities rather than a single entity, 
-// and is backed by the Person resource defined in DemoSchemas.arcs.
-store Players of [Person] in PlayerData
-
-particle Main in './source/Main.js'
-  consume root
-    provide playerSlot
-    provide greetingSlot
-    provide cellSlot
-    provide congratulationsSlot
-
 particle Game in './source/Game.js'
-  inout Person playerOne
-  inout Person playerTwo
+  inout Person humanPlayer
+  inout Person computerPlayer
   in GameState {gameOver} gameState
   in Move {Text move} humanMove
   in Move {Text move} computerMove
   inout Move move
-  check playerOne is private
-  check playerTwo is private
+  check humanPlayer is private
+  check computerPlayer is private
+  consume root
+    provide playerSlot
+    provide greetingSlot
+    provide cellSlot
 
-particle GetPlayers in './source/GetPlayers.js'
-  out Person playerOne
-  out Person playerTwo
-  consume playerSlot
-  claim playerOne is private
-  claim playerTwo is private
-
-particle DisplayGreeting in './source/DisplayGreeting.js'
+particle DisplayHumanGreeting in './source/DisplayGreeting.js'
   in Person player
   consume greetingSlot
 
-particle Congratulations in './source/Congratulations.js'
-  in Person playerOne
-  in Person playerTwo
-  out Move {move} humanMove
-  in GameState {gameOver, winnerAvatar} gameState
-  consume congratulationsSlot
-
 recipe GameDemoRecipe
-  create as move
-  Main
-    consume root 
-      provide playerSlot as getPlayers
-      provide greetingSlot as greeting
-      provide cellSlot as board
-      provide congratulationsSlot as congratulations
-
-  GetPlayers
-    playerOne -> playerOne
-    playerTwo -> playerTwo
-    consume playerSlot as getPlayers
-
-  MoveApplier
-    move <- move
-    gameState <-> gameState
+  create #volatile #move as move
+  create #volatile #humanMove as humanMove
+  create #volatile #computerMove as computerMove
+  create #volatile as gameState  
 
   Game
+    consume root 
+      provide greetingSlot as greeting
+      provide cellSlot as board
     gameState <- gameState
-    playerOne <-> playerOne
-    playerTwo <-> playerTwo
+    humanPlayer <-> humanPlayer
+    computerPlayer <-> computerPlayer
     humanMove <- humanMove
     computerMove <- computerMove
     move <-> move
 
-  DisplayGreeting
-    player = playerOne
+  MoveApplier
+    move <- move
+    humanMove <-> humanMove
+    computerMove <-> computerMove
+    gameState <-> gameState
+
+  DisplayHumanGreeting
+    player = humanPlayer
     consume greetingSlot as greeting
 
   TicTacToeBoard
     gameState <- gameState
     humanMove -> humanMove
     consume boardSlot as board
-
-  Congratulations
-    gameState <- gameState
-    playerOne <- playerOne
-    playerTwo <- playerTwo
-    humanMove -> humanMove
-    consume congratulationsSlot as congratulations
 
   RandomComputer
     computerMove -> computerMove
