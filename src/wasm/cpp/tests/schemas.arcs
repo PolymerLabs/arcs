@@ -1,5 +1,4 @@
 schema Foo
-  Text dummy
 
 schema Data
   Number num
