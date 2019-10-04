@@ -50,5 +50,3 @@ bazel-arcs
 **/.aswb/**
 .gradle
 *.iml
-.*
-!/.gitignore
