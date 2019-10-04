@@ -434,7 +434,7 @@ ${this.activeRecipe.toString()}`;
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
       const store = await storeStub.castToStorageStub().inflate();
-      arc._registerStore(store, tags);
+      await arc._registerStore(store, tags);
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
@@ -552,7 +552,7 @@ ${this.activeRecipe.toString()}`;
 
     for (const v of storeMap.values()) {
       // FIXME: Tags
-      arc._registerStore(v, []);
+      await arc._registerStore(v, []);
     }
     return arc;
   }
@@ -663,7 +663,7 @@ ${this.activeRecipe.toString()}`;
         if (typeof storageKey === 'string') {
           const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
           assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
-          this._registerStore(store, recipeHandle.tags);
+          await this._registerStore(store, recipeHandle.tags);
         } else {
           throw new Error('Need to implement storageNG code path here!');
         }
