@@ -57,7 +57,7 @@ export class Particle {
   /**
    * Called after handles are synced, override to provide initial processing.
    */
-  protected ready() {
+  protected ready(): void {
   }
 
   /**
@@ -72,6 +72,7 @@ export class Particle {
     this.capabilities = capabilities || {};
   }
 
+  // tslint:disable-next-line: no-any
   protected async invokeSafely(fun: (p: this) => Promise<any>, err: Consumer<Error>) {
     try {
       this.startBusy();
@@ -107,7 +108,7 @@ export class Particle {
   private _countInputHandles(handles: ReadonlyMap<string, Handle>): number {
     let count = 0;
     for (const [name, handle] of handles) {
-      if (handle["canRead"]) {
+      if (handle.canRead) {
         count++;
       }
     }
@@ -116,7 +117,7 @@ export class Particle {
 
   async callOnHandleSync(handle: Handle, model, onException: Consumer<Error>) {
     await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
-    // once we've synced each readable handle once, we are ready to start
+    // once we've synced each readable handle, we are ready to start
     if (--this._handlesToSync === 0) {
       this.ready();
     }
