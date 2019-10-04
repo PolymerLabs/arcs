@@ -9,7 +9,7 @@
  */
 
 import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
-import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback} from './store.js';
+import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback, Store} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver-factory.js';
 import {Type} from '../type.js';
@@ -33,7 +33,8 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     public storageKey: StorageKey,
     private exists: Exists,
     private type: Type,
-    private mode: StorageMode) {
+    private mode: StorageMode,
+    private baseStore: Store<T>) {
   }
 
   on(callback: MultiplexedProxyCallback<T>): number {
@@ -60,7 +61,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   }
 
   private async setupStore(muxId: string): Promise<{type: 'record', store: DirectStore<T>, id: number}> {
-    const store = await DirectStore.construct<T>(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode);
+    const store = await DirectStore.construct<T>(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode, this.baseStore);
     const id = store.on(msg => this.processStoreCallback(muxId, msg));
     const record: StoreRecord<T> = {store, id, type: 'record'};
     this.stores[muxId] = record;
@@ -80,8 +81,8 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     return store.onProxyMessage(message);
   }
 
-  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode) {
-    return new BackingStore<T>(storageKey, exists, type, mode);
+  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
+    return new BackingStore<T>(storageKey, exists, type, mode, baseStore);
   }
 
   async idle() {

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {StorageMode, ProxyMessageType, ProxyMessage} from '../store.js';
+import {StorageMode, ProxyMessageType, ProxyMessage, Store} from '../store.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';
@@ -38,7 +38,9 @@ describe('RamDisk + Backing Store Integration', async () => {
   it('will allow storage of a number of objects', async () => {
     const runtime = new Runtime();
     const storageKey = new RamDiskStorageKey('unique');
-    const store = await BackingStore.construct<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), StorageMode.Backing);
+    const baseStore = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, new CountType(), 'base-store-id');
+    const store = await BackingStore.construct<CRDTCountTypeRecord>(
+        storageKey, Exists.ShouldCreate, new CountType(), StorageMode.Backing, baseStore);
 
     const count1 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});

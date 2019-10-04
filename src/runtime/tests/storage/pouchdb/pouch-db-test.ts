@@ -72,7 +72,7 @@ describe('pouchdb for ' + testUrl, () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
       const variable = await storage.construct('test0', barType, newStoreKey('variable')) as PouchDbSingleton;
-      const callbackTracker = new CallbackTracker(variable, 1);
+      const callbackTracker = await CallbackTracker.create(variable, 1);
 
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
@@ -90,7 +90,7 @@ describe('pouchdb for ' + testUrl, () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
       const var1 = await storage.construct('test0', barType, key) as PouchDbSingleton;
-      const var1Callbacks = new CallbackTracker(var1, 2);
+      const var1Callbacks = await CallbackTracker.create(var1, 2);
 
       assert.isNotNull(var1);
       const var2 = await storage.connect(
@@ -99,7 +99,7 @@ describe('pouchdb for ' + testUrl, () => {
         key
       ) as PouchDbSingleton;
       assert.isNotNull(var2);
-      const var2Callbacks = new CallbackTracker(var2, 2);
+      const var2Callbacks = await CallbackTracker.create(var2, 2);
 
       await var1.set({id: 'id1', value: 'value1'});
       await var2.set({id: 'id2', value: 'value2'});
@@ -276,7 +276,7 @@ describe('pouchdb for ' + testUrl, () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collectionRemoveMultiple');
       const collection = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
-      const collectionCallbacks = new CallbackTracker(collection, 3);
+      const collectionCallbacks = await CallbackTracker.create(collection, 3);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -298,7 +298,7 @@ describe('pouchdb for ' + testUrl, () => {
       const key1 = newStoreKey('colPtr');
 
       const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), key1) as PouchDbCollection;
-      const callbackTracker = new CallbackTracker(collection1, 2);
+      const callbackTracker = await CallbackTracker.create(collection1, 2);
 
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);

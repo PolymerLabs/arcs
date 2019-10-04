@@ -102,12 +102,12 @@ export class VolatileStorage extends StorageBase {
 
   async _construct(id, type, keyFragment) {
     const key = this.constructKey(keyFragment);
-    // TODO(shanestephens): should pass in factory, not 'this' here.
-    const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key);
-    if (this._memoryMap[key] !== undefined) {
-      return null;
+    let provider = this._memoryMap[key];
+    if (!provider) {
+      // TODO(shanestephens): should pass in factory, not 'this' here.
+      provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key);
+      this._memoryMap[key] = provider;
     }
-    this._memoryMap[key] = provider;
     return provider;
   }
 

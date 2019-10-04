@@ -353,9 +353,9 @@ class PECOuterPortImpl extends PECOuterPort {
             // in Arc.deserialize.
             for (const store of manifest.stores) {
               if (store instanceof StorageStub) {
-                this.arc._registerStore(await store.inflate(), []);
+                await this.arc._registerStore(await store.inflate(), []);
               } else {
-                this.arc._registerStore(store, []);
+                await this.arc._registerStore(store, []);
               }
             }
             // TODO: Awaiting this promise causes tests to fail...

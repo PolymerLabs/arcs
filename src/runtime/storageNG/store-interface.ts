@@ -14,6 +14,8 @@ import {Type} from '../type.js';
 import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
+import {UnifiedActiveStore} from './unified-store.js';
+import {Store} from './store.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -51,21 +53,38 @@ export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> 
 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
-export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
+export abstract class ActiveStore<T extends CRDTTypeRecord>
+    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T>, UnifiedActiveStore {
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: Type;
   readonly mode: StorageMode;
+  readonly baseStore: Store<T>;
 
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode) {
+  // TODO: Lots of these params can be pulled from baseStore.
+  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
     this.storageKey = storageKey;
     this.exists = exists;
     this.type = type;
     this.mode = mode;
+    this.baseStore = baseStore;
   }
 
   async idle() {
     return Promise.resolve();
+  }
+
+  // tslint:disable-next-line no-any
+  async toLiteral(): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
+  async cloneFrom(store: UnifiedActiveStore): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  async modelForSynchronization(): Promise<{}> {
+    return this.toLiteral();
   }
 
   abstract on(callback: ProxyCallback<T>): number;
