@@ -1,8 +1,12 @@
+schema Foo
+  Text dummy
+
 schema Data
   Number num
   Text txt
   URL lnk
   Boolean flg
+  Reference<Foo> ref
 
 schema Empty
 

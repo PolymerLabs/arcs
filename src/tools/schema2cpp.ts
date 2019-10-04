@@ -26,12 +26,12 @@ const keywords = [
   'xor', 'xor_eq'
 ];
 
-// type-char to [cpp-type, is-string]
 const typeMap = {
-  'T': ['std::string', true],
-  'U': ['URL', true],
-  'N': ['double', false],
-  'B': ['bool', false],
+  'T': {type: () => 'std::string',    returnByRef: true,  setByRef: true,  useCompare: true},
+  'U': {type: () => 'URL',            returnByRef: true,  setByRef: true,  useCompare: true},
+  'N': {type: () => 'double',         returnByRef: false, setByRef: false, useCompare: false},
+  'B': {type: () => 'bool',           returnByRef: false, setByRef: false, useCompare: false},
+  'R': {type: name => `Ref<${name}>`, returnByRef: false, setByRef: true,  useCompare: false},
 };
 
 export class Schema2Cpp extends Schema2Base {
@@ -65,10 +65,11 @@ export class Schema2Cpp extends Schema2Base {
     const encode: string[] = [];
     const toString: string[] = [];
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string) => {
-      const type = typeMap[typeChar][0];
-      const isString = typeMap[typeChar][1];
-      const [ref1, ref2] = isString ? ['const ', '&'] : ['', ''];
+    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
+      const typeInfo = typeMap[typeChar];
+      const type = typeInfo.type(refName);
+      const [r1, r2] = typeInfo.returnByRef ? ['const ', '&'] : ['', ''];
+      const [s1, s2] = typeInfo.setByRef ? ['const ', '&'] : ['', ''];
       const fixed = (keywords.includes(field) ? '_' : '') + field;
       const valid = `${field}_valid_`;
 
@@ -76,8 +77,8 @@ export class Schema2Cpp extends Schema2Base {
                   `bool ${valid} = false;`,
                   ``);
 
-      api.push(`${ref1}${type}${ref2} ${fixed}() const { return ${field}_; }`,
-               `void set_${field}(${ref1}${type}${ref2} value) { ${field}_ = value; ${valid} = true; }`,
+      api.push(`${r1}${type}${r2} ${fixed}() const { return ${field}_; }`,
+               `void set_${field}(${s1}${type}${s2} value) { ${field}_ = value; ${valid} = true; }`,
                `void clear_${field}() { ${field}_ = ${type}(); ${valid} = false; }`,
                `bool has_${field}() const { return ${valid}; }`,
                ``);
@@ -92,7 +93,7 @@ export class Schema2Cpp extends Schema2Base {
 
       less.push(`if (a.${valid} != b.${valid}) {`,
                 `  return !a.${valid};`);
-      if (isString) {
+      if (typeInfo.useCompare) {
         less.push(`} else {`,
                   `  cmp = a.${field}_.compare(b.${field}_);`,
                   `  if (cmp != 0) return cmp < 0;`,

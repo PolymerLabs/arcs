@@ -61,6 +61,7 @@ public:
   std::string chomp(int len);
   void validate(const std::string& token);
   template<typename T> void decode(T& val);
+  template<typename T> void decode(Ref<T>& ref) {}  // TODO
 
   static void decodeList(const char* str, std::function<void(const std::string&)> callback);
   static Dictionary decodeDictionary(const char* str);
@@ -79,6 +80,7 @@ public:
   StringEncoder& operator=(const StringEncoder&) = delete;
 
   template<typename T> void encode(const char* prefix, const T& val);
+  template<typename T> void encode(const char* prefix, const Ref<T>& ref) {}  // TODO
   std::string result();
 
   static std::string encodeDictionary(const Dictionary& dict);
@@ -100,6 +102,7 @@ public:
   void addId(const std::string& id);
   void add(const char* literal);
   template<typename T> void add(const char* prefix, const T& val);
+  template<typename T> void add(const char* prefix, const Ref<T>& ref);
   std::string result(const char* join);
 
 private:
@@ -174,7 +177,15 @@ public:
     entity->_internal_id_ = id;
   }
 
-  // Ref-based versions of all of the above; implemented below the Ref class definition.
+  template<typename T>
+  static Ref<T> make_ref(const std::string& id, const std::string& key) {
+    Ref<T> ref;
+    ref._internal_id_ = id;
+    ref.storage_key_ = key;
+    return ref;
+  }
+
+  // Ref-based versions of the above; implemented below the Ref class definition.
   template<typename T> static Ref<T> clone_entity(const Ref<T>& ref);
   template<typename T> static size_t hash_entity(const Ref<T>& ref);
   template<typename T> static bool fields_equal(const Ref<T>& a, const Ref<T>& b);
@@ -422,9 +433,14 @@ private:
 // Arcs-style reference to an entity.
 template<typename T>
 class Ref {
+  struct Payload {
+    T entity;
+    bool dereferenced = false;
+  };
+
 public:
   // References are copyable and share a pointer to the underlying entity data.
-  Ref(Handle* handle = nullptr) : handle_(handle), dereferenced_(false),  entity_(new T()) {}
+  Ref(Handle* handle = nullptr) : handle_(handle), payload_(new Payload()) {}
 
   // Retrieve the referenced entity data from the backing store. The first time this is called,
   // the given continuation will be executed *asynchronously* - i.e. after the calling function has
@@ -444,12 +460,12 @@ public:
   // This method needs to be const because the object is returned as const from handles, but it does
   // modify the internal state of this object to update a local copy of the retrieved entity data.
   void dereference(std::function<void()> continuation) const {
-    if (dereferenced_) {
+    if (payload_->dereferenced) {
       continuation();
     } else if (handle_ != nullptr) {
       auto wrapped = [this, fn = std::move(continuation)](const char* encoded) {
-        internal::Accessor::decode_entity(entity_.get(), encoded);
-        dereferenced_ = true;
+        internal::Accessor::decode_entity(&payload_->entity, encoded);
+        payload_->dereferenced = true;
         fn();
       };
       // The handle simply bounces this to its owning particle, adding itself as a parameter.
@@ -457,10 +473,14 @@ public:
     }
   }
 
+  bool is_dereferenced() const {
+    return payload_->dereferenced;
+  }
+
   // Returns the underlying entity data. If this object has not been dereferenced yet,
   // this will be an empty instance of the entity type T.
   const T& entity() const {
-    return *entity_;
+    return payload_->entity;
   }
 
   // Unlike the generated entity classes, arcs::fields_equal and operator== are equivalent for Refs.
@@ -482,10 +502,7 @@ private:
   std::string _internal_id_;
   std::string storage_key_;
   Handle* handle_;
-
-  // Mutable because dereference() needs to be const but still modifies this.
-  mutable bool dereferenced_;
-  std::shared_ptr<T> entity_;
+  std::shared_ptr<Payload> payload_;
 
   friend class Singleton<Ref<T>>;
   friend class Collection<Ref<T>>;
@@ -515,7 +532,10 @@ inline std::string internal::Accessor::entity_to_str(const Ref<T>& ref, const ch
   internal::StringPrinter printer;
   printer.add("REF<", ref._internal_id_);
   if (!ref.storage_key_.empty()) {
-    printer.add(":", ref.storage_key_);
+    printer.add("|", ref.storage_key_);
+  }
+  if (ref.is_dereferenced()) {
+    printer.add("|", entity_to_str(ref.entity(), ", "));
   }
   printer.add(">");
   return printer.result("");
@@ -548,6 +568,11 @@ inline const std::string& internal::Accessor::get_id(const Ref<T>& ref) {
 template<typename T>
 inline void internal::Accessor::set_id(Ref<T>* ref, const std::string& id) {
   ref->_internal_id_ = id;
+}
+
+template<typename T>
+inline void internal::StringPrinter::add(const char* prefix, const Ref<T>& ref) {
+  parts_.push_back(prefix + entity_to_str(ref));
 }
 
 }  // namespace arcs

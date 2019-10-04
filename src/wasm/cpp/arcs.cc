@@ -172,11 +172,6 @@ void StringDecoder::validate(const std::string& token) {
   }
 }
 
-template<typename T>
-void StringDecoder::decode(T& val) {
-  static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
-}
-
 template<>
 void StringDecoder::decode(std::string& text) {
   int len = getInt(':');
@@ -220,11 +215,6 @@ Dictionary StringDecoder::decodeDictionary(const char* str) {
 }
 
 // StringEncoder
-template<typename T>
-void StringEncoder::encode(const char* prefix, const T& val) {
-  static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
-}
-
 template<>
 void StringEncoder::encode(const char* prefix, const std::string& str) {
   str_ += prefix + std::to_string(str.size()) + ":" + str + "|";
@@ -263,11 +253,6 @@ void StringPrinter::addId(const std::string& id) {
 
 void StringPrinter::add(const char* literal) {
   parts_.push_back(literal);
-}
-
-template<typename T>
-void StringPrinter::add(const char* prefix, const T& val) {
-  static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
 }
 
 template<>

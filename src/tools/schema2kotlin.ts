@@ -22,12 +22,12 @@ const keywords = [
   'suspend', 'tailrec', 'vararg', 'field', 'it'
 ];
 
-// type-char to [kotlin-type, default-value, decode-function]
 const typeMap = {
-  'T': ['String', '""', 'decodeText()'],
-  'U': ['String', '""', 'decodeText()'],
-  'N': ['Double', '0.0', 'decodeNum()'],
-  'B': ['Boolean', 'false', 'decodeBool()'],
+  'T': {type: 'String',  defaultVal: '""',    decodeFn: 'decodeText()'},
+  'U': {type: 'String',  defaultVal: '""',    decodeFn: 'decodeText()'},
+  'N': {type: 'Double',  defaultVal: '0.0',   decodeFn: 'decodeNum()'},
+  'B': {type: 'Boolean', defaultVal: 'false', decodeFn: 'decodeBool()'},
+  'R': {type: '',        defaultVal: '',      decodeFn: ''},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -57,17 +57,20 @@ package arcs
     const encode: string[] = [];
     const decode: string[] = [];
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string) => {
-      const type = typeMap[typeChar][0];
-      const defaultVal = typeMap[typeChar][1];
-      const decodeType = typeMap[typeChar][2];
+    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
+      if (typeChar === 'R') {
+        console.log('TODO: support reference types in kotlin');
+        process.exit(1);
+      }
+
+      const {type, defaultVal, decodeFn} = typeMap[typeChar];
       const fixed = field + (keywords.includes(field) ? '_' : '');
 
       fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
 
       decode.push(`"${field}" -> {`,
                   `  decoder.validate("${typeChar}")`,
-                  `  this.${fixed} = decoder.${decodeType}`,
+                  `  this.${fixed} = decoder.${decodeFn}`,
                   `}`,
       );
 

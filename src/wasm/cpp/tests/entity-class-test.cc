@@ -6,8 +6,16 @@
 using arcs::internal::Accessor;
 
 template<typename T>
-size_t hash(const T& d) {
+static size_t hash(const T& d) {
   return std::hash<T>()(d);
+}
+
+static arcs::Ref<arcs::Foo> make_ref(const std::string& id, const std::string& key) {
+  return Accessor::make_ref<arcs::Foo>(id, key);
+}
+
+static auto converter() {
+  return [](const arcs::Data& d) { return arcs::entity_to_str(d); };
 }
 
 
@@ -20,6 +28,7 @@ public:
     RUN(test_text_field_equality);
     RUN(test_url_field_equality);
     RUN(test_boolean_field_equality);
+    RUN(test_reference_field_equality);
     RUN(test_entity_equality);
     RUN(test_clone_entity);
     RUN(test_entity_to_str);
@@ -75,6 +84,19 @@ public:
     d.set_flg(false);
     IS_TRUE(d.has_flg());
     IS_FALSE(d.flg());
+
+    arcs::Ref<arcs::Foo> empty;
+    arcs::Ref<arcs::Foo> populated = make_ref("id", "key");
+    IS_FALSE(d.has_ref());
+    EQUAL(d.ref(), empty);
+    d.set_ref(populated);
+    IS_TRUE(d.has_ref());
+    EQUAL(d.ref(), populated);
+    d.clear_ref();
+    IS_FALSE(d.has_ref());
+    d.set_ref(empty);
+    IS_TRUE(d.has_ref());
+    EQUAL(d.ref(), empty);
   }
 
   void test_id_equality() {
@@ -262,6 +284,47 @@ public:
     NOT_LESS(d2, d1);
   }
 
+  void test_reference_field_equality() {
+    arcs::Data d1, d2;
+    arcs::Ref<arcs::Foo> empty;
+
+    // unset vs default value
+    d2.set_ref({});
+    NOT_EQUAL(d1, d2);
+    LESS(d1, d2);
+    NOT_LESS(d2, d1);
+
+    // unset vs other value
+    d2.set_ref(make_ref("id1", "key1"));
+    NOT_EQUAL(d1, d2);
+    LESS(d1, d2);
+    NOT_LESS(d2, d1);
+
+    // default vs default
+    d1.set_ref(empty);
+    d2.set_ref(empty);
+    EQUAL(d1, d2);
+    NOT_LESS(d1, d2);
+    NOT_LESS(d2, d1);
+
+    // value vs value
+    d1.set_ref(make_ref("id5", "key5"));
+    d2.set_ref(make_ref("id7", "key7"));
+    NOT_EQUAL(d1, d2);
+    LESS(d1, d2);
+    NOT_LESS(d2, d1);
+
+    d1.set_ref(make_ref("id7", "key7"));
+    EQUAL(d1, d2);
+    NOT_LESS(d1, d2);
+    NOT_LESS(d2, d1);
+
+    d2.set_ref(make_ref("id3", "key3"));
+    NOT_EQUAL(d1, d2);
+    NOT_LESS(d1, d2);
+    LESS(d2, d1);
+  }
+
   void test_entity_equality() {
     arcs::Data d1, d2;
 
@@ -357,6 +420,9 @@ public:
     IS_TRUE(arcs::fields_equal(d2, src));
     EQUAL(hash(d2), hash(src));
 
+    // Cloned references should still refer to the same underlying entity.
+    EQUAL(&(d2.ref().entity()), &(src.ref().entity()));
+
     // Cloning doesn't include the internal id.
     Accessor::set_id(&src, "id");
     arcs::Data d3 = arcs::clone_entity(src);
@@ -378,7 +444,8 @@ public:
 
     Accessor::set_id(&d, "id");
     d.clear_flg();
-    EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo");
+    d.set_ref(make_ref("i12", "k34"));
+    EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo, ref: REF<i12|k34>");
   }
 
   void test_stl_vector() {
@@ -392,15 +459,12 @@ public:
     v.push_back(std::move(d2));
     v.push_back(std::move(d3));
 
-    auto converter = [](const arcs::Data& d) {
-      return arcs::entity_to_str(d);
-    };
     std::vector<std::string> expected = {
       "{}, num: 12",
       "{}, num: 12",
       "{id}"
     };
-    CHECK_ORDERED(v, converter, expected);
+    CHECK_ORDERED(v, converter(), expected);
   }
 
   void test_stl_set() {
@@ -435,15 +499,12 @@ public:
     s.insert(std::move(d4));
     s.insert(std::move(d5));
 
-    auto converter = [](const arcs::Data& d) {
-      return arcs::entity_to_str(d);
-    };
     std::vector<std::string> expected = {
       "{id}, flg: false",
       "{id}, num: 45, txt: woop",
       "{}, num: 45, txt: woop"
     };
-    CHECK_UNORDERED(s, converter, expected);
+    CHECK_UNORDERED(s, converter(), expected);
   }
 
   void test_stl_unordered_set() {
@@ -478,15 +539,12 @@ public:
     s.insert(std::move(d4));
     s.insert(std::move(d5));
 
-    auto converter = [](const arcs::Data& d) {
-      return arcs::entity_to_str(d);
-    };
     std::vector<std::string> expected = {
       "{id}, flg: false",
       "{id}, num: 45, txt: woop",
       "{}, num: 45, txt: woop"
     };
-    CHECK_UNORDERED(s, converter, expected);
+    CHECK_UNORDERED(s, converter(), expected);
   }
 
   void test_empty_schema() {
