@@ -9,11 +9,11 @@
  */
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
-import {UiSimpleParticle, RenderModel} from './ui-simple-particle.js';
+import {UiParticleBase, RenderModel} from './ui-particle-base.js';
 import {Handle, Collection, Singleton} from './handle.js';
 import {Runnable} from './hot.js';
 
-export interface UiStatefulParticle extends UiSimpleParticle {
+export interface UiStatefulParticle extends UiParticleBase {
   // add type info for XenState members here
   _invalidate(): void;
 }
@@ -28,7 +28,7 @@ export interface UiParticle extends UiStatefulParticle {
  */
 // TODO(sjmiles): seems like this is really `UiStatefulParticle` but it's
 // used so often, I went with the simpler name
-export class UiParticle extends XenStateMixin(UiSimpleParticle) {
+export class UiParticle extends XenStateMixin(UiParticleBase) {
   /**
    * Override if necessary, to do things when props change.
    * Avoid if possible, use `update` instead.
