@@ -44,26 +44,15 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   abstract storageKey: string | StorageKey;
   abstract version?: number; // TODO(shans): This needs to be a version vector for new storage.
   abstract referenceMode: boolean;
+
   abstract toString(tags?: string[]): string; // TODO(shans): This shouldn't be called toString as toString doesn't take arguments.
-  // TODO(shans): toLiteral is currently used in _serializeStore, during recipe serialization. It's used when volatile
-  // stores need to be written out as resources into the manifest. Problem is, it expects a particular CRDT model shape;
-  // for new storage we probably need to extract the model from the store instead and have the CRDT directly produce a
-  // JSON representation for insertion into the serialization.
-  // tslint:disable-next-line no-any
-  abstract toLiteral(): Promise<any>;
+
+  abstract activate(): Promise<UnifiedActiveStore>;
 
   // TODO: These properties/methods do not belong on UnifiedStore. They should
   // probably go on some other abstraction like UnifiedActiveStore or similar.
   abstract source?: string;
   abstract description: string;
-  cloneFrom(store: UnifiedStore): void {}
-  async modelForSynchronization(): Promise<{}> {
-    return await this.toLiteral();
-  }
-
-  // TODO: Make this match the type of the `on` method in ActiveStore.
-  abstract on(callback: ProxyCallback<null>): number;
-  abstract off(callback: number): void;
 
   /**
    * Hack to cast this UnifiedStore to the old-style class StorageStub.
@@ -94,4 +83,23 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     if (cmp !== 0) return cmp;
     return 0;
   }
+}
+
+export interface UnifiedActiveStore {
+  /** The UnifiedStore instance from which this store was activated. */
+  readonly baseStore: UnifiedStore;
+
+  // TODO(shans): toLiteral is currently used in _serializeStore, during recipe serialization. It's used when volatile
+  // stores need to be written out as resources into the manifest. Problem is, it expects a particular CRDT model shape;
+  // for new storage we probably need to extract the model from the store instead and have the CRDT directly produce a
+  // JSON representation for insertion into the serialization.
+  // tslint:disable-next-line no-any
+  toLiteral(): Promise<any>;
+
+  cloneFrom(store: UnifiedActiveStore): Promise<void>;
+  modelForSynchronization(): Promise<{}>;
+
+  // TODO: Make this match the type of the `on` method in ActiveStore.
+  on(callback: ProxyCallback<null>): number;
+  off(callback: number): void;
 }

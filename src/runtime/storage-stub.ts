@@ -13,7 +13,7 @@ import {ClaimIsTag} from './particle-claim.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Type} from './type.js';
 import {VolatileStorageProvider} from './storage/volatile-storage.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {UnifiedStore, UnifiedActiveStore} from './storageNG/unified-store.js';
 import {ProxyCallback} from './storageNG/store.js';
 
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
@@ -45,6 +45,10 @@ export class StorageStub extends UnifiedStore {
     return -1;
   }
   off(callback: number): void {}
+
+  async activate(): Promise<UnifiedActiveStore> {
+    return this.inflate();
+  }
 
   async inflate(storageProviderFactory?: StorageProviderFactory) {
     const factory = storageProviderFactory || this.storageProviderFactory;

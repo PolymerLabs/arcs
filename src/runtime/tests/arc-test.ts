@@ -598,7 +598,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as SingletonStorageProvider;
-    const fooStoreCallbacks = new CallbackTracker(fooStore, 1);
+    const fooStoreCallbacks = await CallbackTracker.create(fooStore, 1);
 
     await getSingletonHandle(fooStore).set(new Foo({value: 'a Foo'}));
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']) as SingletonStorageProvider;
@@ -837,7 +837,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       : storageKeyPrefix + `${id}/arc-info`;
 
     const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as SingletonStorageProvider;
-    const callbackTracker = new CallbackTracker(store, 0);
+    const callbackTracker = await CallbackTracker.create(store, 0);
 
     assert.isNotNull(store, 'got a valid store');
     const data = await store.get();
