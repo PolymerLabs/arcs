@@ -14,6 +14,7 @@ import {Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
+import {HandleConnectionSpec} from '../runtime/particle-spec.js';
 
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
@@ -81,25 +82,69 @@ export abstract class Schema2Base {
   }
 
   /**
+   * Collects schemas from the manfiest.
+   *
+   * Includes schemas that have no names (anonymous) or schemas with multiple aliases
+   *
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
   private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
-    const schemas: Dictionary<Schema> = {};
-    for (const particle of manifest.allParticles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
+    /** Helper function: produce a new name for a schema found in the manifest. */
+    const mangleDuplicateName = <T>(collection: Dictionary<T>, name: string): string => {
+      let candidate = name;
+      while (candidate in collection) candidate += '_';
+      return candidate;
+    };
+
+    /** Helper function: Schema is unique if it has a unique name or a unique set of fields. */
+    const isUniqueSchema = (collection: Dictionary<Schema>, candidate: Schema, name: string): boolean => {
+      return !(name in collection) && !Object.values(collection).some((val) => candidate.equals(val));
+    };
+
+    /** Helper function: Include a schema in the final set if it: (is an alias OR is anonymous) AND is a unique schema */
+    const combineWithNewName = (acc: Dictionary<Schema>, schema: Schema) => (name: string) => {
+      const tmpName = name || Schema2Base.nameAnonymousSchema(schema);
+      if (isUniqueSchema(acc, schema, tmpName)) {
+        const newName = mangleDuplicateName(acc, tmpName);
+        acc[newName] = schema;
       }
-    }
+    };
+
+    const schemas: Dictionary<Schema> = manifest.allSchemas
+      .reduce((acc: Dictionary<Schema>, schema: Schema) => {
+        const keys: string[] = schema.names;
+        if (keys.length === 0) {
+          keys.push('');
+        }
+        keys.forEach(combineWithNewName(acc, schema));
+        return acc;
+      }, {});
+
+    manifest.allParticles
+      .map((particle): HandleConnectionSpec[] => particle.connections)
+      .reduce((acc, val) => acc.concat(val), [])  // equivalent to .flat()
+      .forEach((connection: HandleConnectionSpec) => {
+        const schema: Schema = connection.type.getEntitySchema();
+        schema.names.forEach(combineWithNewName(schemas, schema));
+      });
+
     return schemas;
   }
 
+  // TODO(alxr) Would like to discuss with someone more knowledge than I about what
+  //  schemas are collected by manifest.allSchemas
+  private static nameAnonymousSchema(schema: Schema): string {
+    return ['Anon',
+      ...Object.values(schema.fields)
+        .filter(field => field.kind === 'schema-primitive')
+        .map((field): string => field.type)
+        .sort((a: string, b: string) => a.localeCompare(b))
+    ].join('_');
+  }
+
   protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
+                          processField: (field: string, typeChar: string, refName: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
@@ -159,7 +204,10 @@ export abstract class Schema2Base {
   }
 
   abstract outputName(baseName: string): string;
+
   abstract fileHeader(outName: string): string;
+
   abstract fileFooter(): string;
+
   abstract entityClass(name: string, schema: Schema): string;
 }
