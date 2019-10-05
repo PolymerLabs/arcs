@@ -39,8 +39,7 @@ export abstract class Schema2Base {
       return;
     }
 
-    const srcPath = `${process.cwd()}/${src}`;
-    const manifest = await Utils.parse(`import '${srcPath}'`);
+    const manifest = await Utils.parse(`import '${src}'`);
     const schemas = Schema2Base.collectSchemas(manifest);
 
     if (Object.keys(schemas).length === 0) {
@@ -48,18 +47,40 @@ export abstract class Schema2Base {
       return;
     }
 
+    const inlineSchemas = Schema2Base.collectInlineSchemas(schemas);
+
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const [name, schema] of Object.entries(schemas)) {
-      fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
+    for (const dict of [inlineSchemas, schemas]) {
+      for (const [name, schema] of Object.entries(dict)) {
+        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
+      }
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
 
   /**
-   * Collect declared schemas along with any inlined in particle connections.
-   * Generated entities come from the particle and connection name.
+   * Collect inline schema fields. These will be output first so they're defined
+   * prior to use in their containing entity classes.
+   * @param schemas
+   */
+  private static collectInlineSchemas(schemas: Dictionary<Schema>): Dictionary<Schema> {
+    const inlineSchemas: Dictionary<Schema> = {};
+    for (const schema of Object.values(schemas)) {
+      for (const [field, descriptor] of Object.entries(schema.fields)) {
+        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
+          const name = Schema2Base.inlineSchemaName(field, descriptor);
+          if (!(name in inlineSchemas)) {
+            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
+          }
+        }
+      }
+    }
+    return inlineSchemas;
+  }
+
+  /**
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
@@ -68,36 +89,43 @@ export abstract class Schema2Base {
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
-        const name = [particle.name, connection.name].filter((x) => !!x).join('_');
-        schemas[name] = schema;
+        const name = schema && schema.names && schema.names[0];
+        if (name && !(name in schemas)) {
+          schemas[name] = schema;
+        }
       }
     }
     return schemas;
   }
 
-  protected processSchema(schema: Schema, processField: (field: string, typeChar: string) => void): number {
+  protected processSchema(schema: Schema,
+      processField: (field: string, typeChar: string, refName: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
       switch (this.typeSummary(descriptor)) {
         case 'schema-primitive:Text':
-          processField(field, 'T');
+          processField(field, 'T', null);
           break;
 
         case 'schema-primitive:URL':
-          processField(field, 'U');
+          processField(field, 'U', null);
           break;
 
         case 'schema-primitive:Number':
-          processField(field, 'N');
+          processField(field, 'N', null);
           break;
 
         case 'schema-primitive:Boolean':
-          processField(field, 'B');
+          processField(field, 'B', null);
+          break;
+
+        case 'schema-reference':
+          processField(field, 'R', Schema2Base.inlineSchemaName(field, descriptor));
           break;
 
         default:
-          console.error(`Schema type for field '${field}' is not yet supported:`);
+          console.log(`Schema type for field '${field}' is not yet supported:`);
           console.dir(descriptor, {depth: null});
           process.exit(1);
       }
@@ -116,6 +144,18 @@ export abstract class Schema2Base {
       default:
         return descriptor.kind;
     }
+  }
+
+  private static inlineSchemaName(field, descriptor) {
+    let name = descriptor.schema.name;
+    if (!name && descriptor.schema.names && descriptor.schema.names.length > 0) {
+      name = descriptor.schema.names[0];
+    }
+    if (!name) {
+      console.log(`Unnamed inline schemas (field '${field}') are not yet supported`);
+      process.exit(1);
+    }
+    return name;
   }
 
   abstract outputName(baseName: string): string;
