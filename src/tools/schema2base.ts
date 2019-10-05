@@ -32,7 +32,6 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    Utils.init('../..');
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
@@ -48,19 +47,7 @@ export abstract class Schema2Base {
       return;
     }
 
-    // Collect inline schema fields. These will be output first so they're defined
-    // prior to use in their containing entity classes.
-    const inlineSchemas: Dictionary<Schema> = {};
-    for (const schema of Object.values(schemas)) {
-      for (const [field, descriptor] of Object.entries(schema.fields)) {
-        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-          const name = this.inlineSchemaName(field, descriptor);
-          if (!(name in inlineSchemas)) {
-            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
-          }
-         }
-      }
-    }
+    const inlineSchemas = Schema2Base.collectInlineSchemas(schemas);
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
@@ -74,13 +61,30 @@ export abstract class Schema2Base {
   }
 
   /**
-   * Collect declared schemas along with any inlined in particle connections.
-   * Generated entities come from the particle and connection name.
+   * Collect inline schema fields. These will be output first so they're defined
+   * prior to use in their containing entity classes.
+   * @param schemas
+   */
+  private static collectInlineSchemas(schemas: Dictionary<Schema>): Dictionary<Schema> {
+    const inlineSchemas: Dictionary<Schema> = {};
+    for (const schema of Object.values(schemas)) {
+      for (const [field, descriptor] of Object.entries(schema.fields)) {
+        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
+          const name = Schema2Base.inlineSchemaName(field, descriptor);
+          if (!(name in inlineSchemas)) {
+            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
+          }
+        }
+      }
+    }
+    return inlineSchemas;
+  }
+
+  /**
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
   private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
-    // Collect declared schemas along with any inlined in particle connections.
     const schemas: Dictionary<Schema> = {};
     manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
     for (const particle of manifest.allParticles) {
@@ -92,13 +96,6 @@ export abstract class Schema2Base {
         }
       }
     }
-    // for (const particle of manifest.allParticles) {
-    //   for (const connection of particle.connections) {
-    //     const schema = connection.type.getEntitySchema();
-    //     const name = [particle.name, connection.name].filter((x) => !!x).join('_');
-    //     schemas[name] = schema;
-    //   }
-    // }
     return schemas;
   }
 
@@ -125,7 +122,7 @@ export abstract class Schema2Base {
           break;
 
         case 'schema-reference':
-          processField(field, 'R', this.inlineSchemaName(field, descriptor));
+          processField(field, 'R', Schema2Base.inlineSchemaName(field, descriptor));
           break;
 
         default:
@@ -150,7 +147,7 @@ export abstract class Schema2Base {
     }
   }
 
-  private inlineSchemaName(field, descriptor) {
+  private static inlineSchemaName(field, descriptor) {
     let name = descriptor.schema.name;
     if (!name && descriptor.schema.names && descriptor.schema.names.length > 0) {
       name = descriptor.schema.names[0];
