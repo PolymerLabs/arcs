@@ -14,6 +14,7 @@ import {Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
+import {HandleConnectionSpec} from '../runtime/particle-spec.js';
 
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
@@ -85,22 +86,53 @@ export abstract class Schema2Base {
    * @return Dictionary<Schema> target schemas for code generation.
    */
   private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
-    const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.allParticles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
+
+    const mangleDuplicateName = <T> (collection: Dictionary<T>, name: string): string => {
+      let candidate = name;
+      while (candidate in collection) {
+        candidate += '_';
       }
-    }
+      return candidate;
+    };
+
+    // TODO(alxr) Would like to discuss with someone more knowledge than I about what
+    //  schemas are collected by manifest.allSchemas
+    const nameAnonSchemaName = (schema: Schema): string => {
+      return ['Anon',
+        ...Object.values(schema.fields)
+          .filter(field => field.kind === 'schema-primitive')
+          .map((field): string => field.type)
+          .sort((a: string, b: string) => a.localeCompare(b))
+      ].join('_');
+    };
+
+    const combineWithNewName = (acc: Dictionary<Schema>, schema: Schema) => (name: string) => {
+      const tmpName = name || nameAnonSchemaName(schema);
+      const newName = mangleDuplicateName(acc, tmpName);
+      acc[newName] = schema;
+    };
+
+    const schemas: Dictionary<Schema> = manifest.allSchemas
+      .reduce((acc: Dictionary<Schema>, schema: Schema) => {
+        const keys: string[] = schema.names;
+        if (keys.length === 0) {
+          keys.push('');
+        }
+        keys.forEach(combineWithNewName(acc, schema));
+        return acc;
+      }, {});
+
+    manifest.allParticles
+      .flatMap((particle): HandleConnectionSpec[] => particle.connections)
+      .forEach((connection: HandleConnectionSpec) => {
+        const schema = connection.type.getEntitySchema();
+        schema.names.forEach(combineWithNewName(schemas, schema));
+      });
     return schemas;
   }
 
   protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
+                          processField: (field: string, typeChar: string, refName: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
@@ -160,7 +192,10 @@ export abstract class Schema2Base {
   }
 
   abstract outputName(baseName: string): string;
+
   abstract fileHeader(outName: string): string;
+
   abstract fileFooter(): string;
+
   abstract entityClass(name: string, schema: Schema): string;
 }
