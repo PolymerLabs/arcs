@@ -74,6 +74,11 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     return this._props;
   }
 
+  _shouldUpdate() {
+    // do not update() unless all handles are sync'd
+    return this._handlesToSync <= 0;
+  }
+
   _update(...args): void {
     /*const updateDirective =*/ this.update(...args);
     if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
