@@ -14,7 +14,7 @@ class CapturePerson extends ParticleBase {
     super.setHandles(handleByName);
     ((Collection) getHandle("people"))
         .toList()
-        .then(
+        .thenAccept(
             model -> {
               generatePerson(model == null ? 0 : (model.getLength() + 1));
             });

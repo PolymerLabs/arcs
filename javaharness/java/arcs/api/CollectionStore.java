@@ -1,7 +1,9 @@
 package arcs.api;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface CollectionStore extends Store {
-  PortablePromise<PortableJson> get(String id);
+  CompletableFuture<PortableJson> get(String id);
 
   void store(PortableJson value, String[] keys, String particleId);
 
@@ -9,5 +11,5 @@ public interface CollectionStore extends Store {
 
   void remove(String id, String[] keys, String particleId);
 
-  PortablePromise<PortableJson> toList();
+  CompletableFuture<PortableJson> toList();
 }

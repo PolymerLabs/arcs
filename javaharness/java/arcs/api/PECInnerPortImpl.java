@@ -52,7 +52,6 @@ public class PECInnerPortImpl implements PECInnerPort {
   private final ParticleExecutionContext pec;
   private final ThingMapper mapper;
   private final PortableJsonParser jsonParser;
-  private final PortablePromiseFactory promiseFactory;
   private final IdGenerator idGenerator;
 
   public PECInnerPortImpl(
@@ -60,14 +59,12 @@ public class PECInnerPortImpl implements PECInnerPort {
       String sessionId,
       ArcsEnvironment environment,
       ParticleExecutionContext pec,
-      PortableJsonParser jsonParser,
-      PortablePromiseFactory promiseFactory) {
+      PortableJsonParser jsonParser) {
     this.id = id;
     this.environment = environment;
     this.pec = pec;
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
-    this.promiseFactory = promiseFactory;
     this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
   }
 
@@ -127,8 +124,7 @@ public class PECInnerPortImpl implements PECInnerPort {
                 TypeFactory.typeFromJson(messageBody.getObject(HANDLE_TYPE_FIELD)),
                 messageBody.getString(HANDLE_NAME_FIELD),
                 this,
-                jsonParser,
-                promiseFactory);
+                jsonParser);
         mapper.establishThingMapping(identifier, new Thing<>(storageProxy));
         break;
       case SIMPLE_CALLBACK_MSG:
