@@ -4,21 +4,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 // copied from storage-proxy.ts
 public class StorageProxyScheduler {
   private boolean scheduled = false;
   private Map<Particle, Map<Handle, List<Args>>> queues = new HashMap<>();
-  private PortablePromise.Resolver<?> idleResolver;
-  private PortablePromise<Void> idle;
-  private PortablePromiseFactory promiseFactory;
+  private Runnable idleResolver;
+  private CompletableFuture<Void> idle;
 
   private static final Logger LOGGER = Logger.getLogger(StorageProxyScheduler.class.getName());
-
-  StorageProxyScheduler(PortablePromiseFactory promiseFactory) {
-    this.promiseFactory = promiseFactory;
-  }
 
   public static class Args {
     String kind;
@@ -52,18 +48,19 @@ public class StorageProxyScheduler {
 
   private void updateIdle() {
     if (idleResolver != null && !busy()) {
-      idleResolver.resolve(null);
+      idleResolver.run();
       idle = null;
       idleResolver = null;
     }
   }
 
-  public PortablePromise<Void> isIdle() {
+  public CompletableFuture<Void> isIdle() {
     if (!busy()) {
-      return promiseFactory.newPromise(null);
+      return CompletableFuture.completedFuture(null);
     }
     if (idle == null) {
-      idle = promiseFactory.newPromise((resolver, rejecter) -> idleResolver = resolver);
+      idle = new CompletableFuture<>();
+      idleResolver = () -> idle.complete(null);
     }
     return idle;
   }
@@ -73,9 +70,8 @@ public class StorageProxyScheduler {
       return;
     }
     scheduled = true;
-    promiseFactory
-        .newPromise(null)
-        .then(
+    CompletableFuture.completedFuture(null)
+        .thenAccept(
             Void -> {
               scheduled = false;
               dispatch();

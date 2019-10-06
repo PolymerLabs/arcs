@@ -1,6 +1,7 @@
 package arcs.api;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class Collection extends Handle {
   private final CollectionStore collectionStore;
@@ -43,14 +44,14 @@ public class Collection extends Handle {
     }
   }
 
-  public PortablePromise<PortableJson> get(String id) {
+  public CompletableFuture<PortableJson> get(String id) {
     if (!canRead) {
       throw new AssertionError("Handle not readable");
     }
     return collectionStore.get(id);
   }
 
-  public PortablePromise<PortableJson> toList() {
+  public CompletableFuture<PortableJson> toList() {
     if (!canRead) {
       throw new AssertionError("Handle not readable");
     }

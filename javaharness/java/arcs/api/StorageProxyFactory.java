@@ -6,10 +6,9 @@ public class StorageProxyFactory {
       Type type,
       String name,
       PECInnerPort port,
-      PortableJsonParser jsonParser,
-      PortablePromiseFactory promiseFactory) {
+      PortableJsonParser jsonParser) {
     if (type.isCollection()) {
-      return new CollectionProxy(id, type, port, name, jsonParser, promiseFactory);
+      return new CollectionProxy(id, type, port, name, jsonParser);
     }
     // TODO: Uncomment when SingletonProxy is implemented.
     // return new SingletonProxy(id, type, port, name);

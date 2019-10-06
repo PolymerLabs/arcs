@@ -19,7 +19,6 @@ public abstract class StorageProxy implements Store {
   protected List<PortableJson> updates = new ArrayList<>();
   protected PECInnerPort port;
   protected PortableJsonParser jsonParser;
-  protected PortablePromiseFactory promiseFactory;
   protected StorageProxyScheduler scheduler;
 
   private static final Logger logger = Logger.getLogger(StorageProxy.class.getName());
@@ -34,15 +33,13 @@ public abstract class StorageProxy implements Store {
       Type type,
       PECInnerPort port,
       String name,
-      PortableJsonParser jsonParser,
-      PortablePromiseFactory promiseFactory) {
+      PortableJsonParser jsonParser) {
     this.id = id;
     this.port = port;
     this.type = type;
     this.name = name;
     this.jsonParser = jsonParser;
-    this.promiseFactory = promiseFactory;
-    this.scheduler = new StorageProxyScheduler(promiseFactory);
+    this.scheduler = new StorageProxyScheduler();
   }
 
   abstract PortableJson getModelForSync();
