@@ -82,20 +82,27 @@ export abstract class Schema2Base {
   }
 
   /**
+   * Collects schemas from the manfiest.
+   *
+   * Includes schemas that have no names (anonymous) or schemas with multiple aliases
+   *
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
   private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
+    /** Helper function: produce a new name for a schema found in the manifest. */
     const mangleDuplicateName = <T>(collection: Dictionary<T>, name: string): string => {
       let candidate = name;
       while (candidate in collection) candidate += '_';
       return candidate;
     };
 
+    /** Helper function: Schema is unique if it has a unique name or a unique set of fields. */
     const isUniqueSchema = (collection: Dictionary<Schema>, candidate: Schema, name: string): boolean => {
       return !(name in collection) && !Object.values(collection).some((val) => candidate.equals(val));
     };
 
+    /** Helper function: Include a schema in the final set if it: (is an alias OR is anonymous) AND is a unique schema */
     const combineWithNewName = (acc: Dictionary<Schema>, schema: Schema) => (name: string) => {
       const tmpName = name || Schema2Base.nameAnonymousSchema(schema);
       if (isUniqueSchema(acc, schema, tmpName)) {
@@ -121,6 +128,7 @@ export abstract class Schema2Base {
         const schema: Schema = connection.type.getEntitySchema();
         schema.names.forEach(combineWithNewName(schemas, schema));
       });
+
     return schemas;
   }
 
