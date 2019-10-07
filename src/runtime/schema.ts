@@ -19,10 +19,21 @@ import {Referenceable} from './crdt/crdt-collection.js';
 import {Singleton} from './handle.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 
+export interface Field {
+  // tslint:disable-next-line:no-any
+  types?: any[];
+  // tslint:disable-next-line:no-any
+  model?: any;
+  // tslint:disable-next-line:no-any
+  location?: any;
+  schema?: Field;
+  kind: string;
+  type: string;
+}
+
 export class Schema {
   readonly names: string[];
-  // tslint:disable-next-line: no-any
-  readonly fields: Dictionary<any>;
+  readonly fields: Dictionary<Field>;
   description: Dictionary<string> = {};
   isAlias: boolean;
 
@@ -89,12 +100,12 @@ export class Schema {
     return this.names[0];
   }
 
-  static typesEqual(fieldType1, fieldType2): boolean {
+  static typesEqual(fieldType1: Field, fieldType2: Field): boolean {
     // TODO: structural check instead of stringification.
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
-  static _typeString(type): string {
+  static _typeString(type: Field): string {
     switch (type.kind) {
       case 'schema-primitive':
         return type.type;

@@ -7,8 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base} from './schema2base.js';
-import {Schema} from '../runtime/schema.js';
+import {EntityData, Schema2Base} from './schema2base.js';
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
@@ -52,7 +51,7 @@ package arcs
     return '';
   }
 
-  entityClass(name: string, schema: Schema): string {
+  entityClass({name, schema}: EntityData): string {
     const fields: string[] = [];
     const encode: string[] = [];
     const decode: string[] = [];
