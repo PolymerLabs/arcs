@@ -15,6 +15,7 @@ android_library(
     ],
     assets_dir = "pipes-shell/web/deploy/dist",
     manifest = "AndroidManifest.xml",
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//javaharness/java/arcs/api:api-android",
         "@com_google_dagger",
