@@ -86,30 +86,22 @@ export abstract class Schema2Base {
    * @return Dictionary<Schema> target schemas for code generation.
    */
   private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
-
-    const mangleDuplicateName = <T> (collection: Dictionary<T>, name: string): string => {
+    const mangleDuplicateName = <T>(collection: Dictionary<T>, name: string): string => {
       let candidate = name;
-      while (candidate in collection) {
-        candidate += '_';
-      }
+      while (candidate in collection) candidate += '_';
       return candidate;
     };
 
-    // TODO(alxr) Would like to discuss with someone more knowledge than I about what
-    //  schemas are collected by manifest.allSchemas
-    const nameAnonSchemaName = (schema: Schema): string => {
-      return ['Anon',
-        ...Object.values(schema.fields)
-          .filter(field => field.kind === 'schema-primitive')
-          .map((field): string => field.type)
-          .sort((a: string, b: string) => a.localeCompare(b))
-      ].join('_');
+    const isUniqueSchema = (collection: Dictionary<Schema>, candidate: Schema, name: string): boolean => {
+      return !(name in collection) && !Object.values(collection).some((val) => candidate.equals(val));
     };
 
     const combineWithNewName = (acc: Dictionary<Schema>, schema: Schema) => (name: string) => {
-      const tmpName = name || nameAnonSchemaName(schema);
-      const newName = mangleDuplicateName(acc, tmpName);
-      acc[newName] = schema;
+      const tmpName = name || Schema2Base.nameAnonymousSchema(schema);
+      if (isUniqueSchema(acc, schema, tmpName)) {
+        const newName = mangleDuplicateName(acc, tmpName);
+        acc[newName] = schema;
+      }
     };
 
     const schemas: Dictionary<Schema> = manifest.allSchemas
@@ -123,12 +115,24 @@ export abstract class Schema2Base {
       }, {});
 
     manifest.allParticles
-      .flatMap((particle): HandleConnectionSpec[] => particle.connections)
+      .map((particle): HandleConnectionSpec[] => particle.connections)
+      .reduce((acc, val) => acc.concat(val), [])  // equivalent to .flat()
       .forEach((connection: HandleConnectionSpec) => {
-        const schema = connection.type.getEntitySchema();
+        const schema: Schema = connection.type.getEntitySchema();
         schema.names.forEach(combineWithNewName(schemas, schema));
       });
     return schemas;
+  }
+
+  // TODO(alxr) Would like to discuss with someone more knowledge than I about what
+  //  schemas are collected by manifest.allSchemas
+  private static nameAnonymousSchema(schema: Schema): string {
+    return ['Anon',
+      ...Object.values(schema.fields)
+        .filter(field => field.kind === 'schema-primitive')
+        .map((field): string => field.type)
+        .sort((a: string, b: string) => a.localeCompare(b))
+    ].join('_');
   }
 
   protected processSchema(schema: Schema,
