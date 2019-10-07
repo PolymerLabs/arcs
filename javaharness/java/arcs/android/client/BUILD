@@ -10,6 +10,7 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 android_library(
     name = "client",
     srcs = glob(["*.java"]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//javaharness/java/arcs/android/api",
         "//javaharness/java/arcs/android/impl",
