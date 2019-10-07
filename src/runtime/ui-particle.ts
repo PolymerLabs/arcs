@@ -9,11 +9,11 @@
  */
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
-import {UiSimpleParticle, RenderModel} from './ui-simple-particle.js';
+import {UiParticleBase, RenderModel} from './ui-particle-base.js';
 import {Handle, Collection, Singleton} from './handle.js';
 import {Runnable} from './hot.js';
 
-export interface UiStatefulParticle extends UiSimpleParticle {
+export interface UiStatefulParticle extends UiParticleBase {
   // add type info for XenState members here
   _invalidate(): void;
 }
@@ -28,7 +28,7 @@ export interface UiParticle extends UiStatefulParticle {
  */
 // TODO(sjmiles): seems like this is really `UiStatefulParticle` but it's
 // used so often, I went with the simpler name
-export class UiParticle extends XenStateMixin(UiSimpleParticle) {
+export class UiParticle extends XenStateMixin(UiParticleBase) {
   /**
    * Override if necessary, to do things when props change.
    * Avoid if possible, use `update` instead.
@@ -48,13 +48,6 @@ export class UiParticle extends XenStateMixin(UiSimpleParticle) {
   }
 
   /**
-   * Override to return a dictionary to map into the template.
-   */
-  render(...args): RenderModel {
-    return {};
-  }
-
-  /**
    * Copy values from `state` into the particle's internal state,
    * triggering an update cycle unless currently updating.
    */
@@ -71,7 +64,7 @@ export class UiParticle extends XenStateMixin(UiSimpleParticle) {
 
   /**
    * Syntactic sugar: `this.state = {state}` is equivalent to `this.setState(state)`.
-   * This is actually a merge, not an assignment.
+   * This is a merge, not an assignment.
    */
   set state(state) {
     this.setState(state);
@@ -81,9 +74,13 @@ export class UiParticle extends XenStateMixin(UiSimpleParticle) {
     return this._props;
   }
 
+  _shouldUpdate() {
+    // do not update() unless all handles are sync'd
+    return this._handlesToSync <= 0;
+  }
+
   _update(...args): void {
-    this.update(...args);
-    //
+    /*const updateDirective =*/ this.update(...args);
     if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
       this.relevance = 1; // TODO: improve relevance signal.
       this.renderOutput(...args);
@@ -105,24 +102,12 @@ export class UiParticle extends XenStateMixin(UiSimpleParticle) {
     return setTimeout(done, 10);
   }
 
-  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
-    this.configureHandles(handles);
-    this.handles = handles;
-    // TODO(sjmiles): we must invalidate at least once, is there a way to know
-    // whether handleSync/update will be called?
+  ready() {
+    // ensure we `update()` at least once
     this._invalidate();
   }
 
-  /**
-   * This is called once during particle setup. Override to control sync and update
-   * configuration on specific handles (via their configure() method).
-   * `handles` is a map from names to handle instances.
-   */
-  configureHandles(handles: ReadonlyMap<string, Handle>): void {
-    // Example: handles.get('foo').configure({keepSynced: false});
-  }
-
-  async onHandleSync(handle: Handle, model: RenderModel): Promise<void> {
+  async onHandleSync(handle: Handle, model): Promise<void> {
     this._setProperty(handle.name, model);
   }
 

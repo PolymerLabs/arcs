@@ -11,8 +11,6 @@
 import {Entity} from './entity.js';
 import {BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
-//import {SlotProxy} from './slot-proxy.js';
-//import {Content} from './slot-consumer.js';
 
 export interface UiParticleConfig {
   handleNames: string[];
@@ -24,7 +22,7 @@ export type RenderModel = object;
 /**
  * Particle that can render and process events.
  */
-export class UiSimpleParticle extends Particle {
+export class UiParticleBase extends Particle {
   private currentSlotName: string | undefined;
 
   /**
@@ -89,7 +87,7 @@ export class UiSimpleParticle extends Particle {
   /**
    * Override to return a dictionary to map into the template.
    */
-  render(stateArgs?): RenderModel {
+  render(...args): RenderModel {
     return {};
   }
 

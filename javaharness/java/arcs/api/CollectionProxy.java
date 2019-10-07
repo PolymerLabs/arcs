@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class CollectionProxy extends StorageProxy implements CollectionStore {
@@ -23,9 +24,8 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
       Type type,
       PECInnerPort port,
       String name,
-      PortableJsonParser jsonParser,
-      PortablePromiseFactory promiseFactory) {
-    super(id, type, port, name, jsonParser, promiseFactory);
+      PortableJsonParser jsonParser) {
+    super(id, type, port, name, jsonParser);
   }
 
   @Override
@@ -107,24 +107,24 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
   }
 
   @Override
-  public PortablePromise<PortableJson> get(String id) {
+  public CompletableFuture<PortableJson> get(String id) {
     if (syncState == SyncState.FULL) {
-      return promiseFactory.newPromise(model.getData().getValue(id).value.value);
+      return CompletableFuture.completedFuture(model.getData().getValue(id).value.value);
     } else {
-      return promiseFactory.newPromise(
-          (resolver, rejecter) ->
-              port.handleToList(
-                  this,
-                  result -> {
-                    PortableJson entity = null;
-                    for (int i = 0; i < result.getLength(); ++i) {
-                      if (id.equals(result.getObject(i).getString("id"))) {
-                        entity = result.getObject(i);
-                        break;
-                      }
-                    }
-                    resolver.resolve(entity);
-                  }));
+      CompletableFuture<PortableJson> future = new CompletableFuture<>();
+      port.handleToList(
+          this,
+          result -> {
+            PortableJson entity = null;
+            for (int i = 0; i < result.getLength(); ++i) {
+            if (id.equals(result.getObject(i).getString("id"))) {
+              entity = result.getObject(i);
+              break;
+            }
+          }
+          future.complete(entity);
+      });
+      return future;
     }
   }
 
@@ -232,13 +232,13 @@ public class CollectionProxy extends StorageProxy implements CollectionStore {
   }
 
   @Override
-  public PortablePromise<PortableJson> toList() {
+  public CompletableFuture<PortableJson> toList() {
     if (syncState == SyncState.FULL) {
-      return promiseFactory.newPromise(thisModelToList());
+      return CompletableFuture.completedFuture(thisModelToList());
     } else {
-      return promiseFactory.newPromise(
-          (PortablePromise.Resolver<PortableJson> resolver, PortablePromise.Rejector<?> rejecter) ->
-              port.handleToList(this, resolver));
+      CompletableFuture<PortableJson> future = new CompletableFuture<>();
+      port.handleToList(this, result -> future.complete(result));
+      return future;
     }
   }
 

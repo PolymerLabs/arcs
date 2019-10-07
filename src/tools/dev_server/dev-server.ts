@@ -14,15 +14,17 @@ import minimist from 'minimist';
 import morgan from 'morgan';
 
 import {status} from './status-handler.js';
-import {ExplorerProxy} from './explorer-proxy.js';
+import {ExplorerProxy, green, bold} from './explorer-proxy.js';
 import {HotReloadServer} from './hot-reload-server.js';
+
 
 // ALDS - Arcs Local Development Server.
 //
 // It consists of 2 components:
 // * Web Server serving static files from the root directory.
-// * WebSocket proxy for exchangin messages between Arcs Runtime and Arcs Explorer.
+// * WebSocket proxy for exchanging messages between Arcs Runtime and Arcs Explorer.
 // There are many plans for extending this list for various development features.
+
 
 async function launch() {
   const options = minimist(process.argv.slice(2), {
@@ -50,7 +52,10 @@ async function launch() {
   proxy.listen(server, explorePort);
   hotReloadServer.start();
 
-  console.log(`ALDS Started.\nWeb server port: ${port}\nExplorer port: ${explorePort}\nHotReload port: ${hotReloadPort}`);
+  console.log(`${green(bold('ALDS Started.'))}\n\nWeb server port: ${port}\nExplorer port: ${explorePort}\nHotReload port: ${hotReloadPort}`);
+  console.log(`\n${green('Next, try visiting:')}`);
+  console.log(`- An Arcs shell (web-shell, dev-shell, or pipes-shell)`);
+  console.log(`- https://live.arcs.dev/devtools/`);
 }
 
 void launch();
