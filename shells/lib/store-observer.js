@@ -70,20 +70,20 @@ export class StoreObserver {
     await forEachEntity(this.store, value => this.remove(value));
   }
   async onChange(change) {
-    StoreObserver.working();
     this.log('onChange', change);
     if (change) {
+      StoreObserver.working();
       const {add, remove, data} = change;
       if (data) {
         this.add(data);
       }
       if (add) {
-        for (let i=0, record; (record=add[i]); i++) {
+        for (const record in add) {
           await this.add(record.value);
         }
       }
       if (remove) {
-        for (let i=0, record; (record=remove[i]); i++) {
+        for (const record in remove) {
           await this.remove(record.value);
         }
       }
