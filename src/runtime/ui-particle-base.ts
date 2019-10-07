@@ -95,14 +95,14 @@ export class UiParticleBase extends Particle {
   }
 
   /**
-   * invoke async function `task` with Particle busy-guard
+   * Invoke async function `task` with Particle busy-guard.
    */
   async await(task: (p: this) => Promise<any>) {
     return await this.invokeSafely(task, err => { throw(err); });
   }
 
   /**
-   * Set handle value. Value can be an Entity or a POJO (or an Array of such values, for a Collection)
+   * Set a singleton value. Value can be an Entity or a POJO.
    */
   async set(handleName: string, value: Entity | {}): Promise<void> {
     await this.await(p => p._set(handleName, value));
@@ -120,7 +120,7 @@ export class UiParticleBase extends Particle {
   }
 
   /**
-   * Add to a collection. Value can be an Entity or a POJO (or an Array of such values)
+   * Add to a collection. Value can be an Entity or a POJO (or an Array of such values).
    */
   async add(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const handle = this._requireHandle(handleName);
@@ -138,7 +138,7 @@ export class UiParticleBase extends Particle {
   }
 
   /**
-   * Remove from a collection. Value can be an Entity or a POJO (or an Array of such values)
+   * Remove from a collection. Value can be an Entity or a POJO (or an Array of such values).
    */
   async remove(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const handle = this._requireHandle(handleName);
