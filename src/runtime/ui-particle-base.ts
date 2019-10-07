@@ -128,6 +128,9 @@ export class UiParticleBase extends Particle {
           this.add(handleName, value);
         }
       }
+      else {
+        throw new Error(`Cannot set non-Collection/non-Singleton handle [${handleName}]`);
+      }
     }
   }
 
