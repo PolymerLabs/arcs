@@ -13,8 +13,9 @@ import {Server} from 'http';
 import {Consumer} from '../../runtime/hot.js';
 
 const reset = `\x1b[0m`;
-const green = (text: string) => `\x1b[32m${text}${reset}`;
-const red = (text: string) => `\x1b[31m${text}${reset}`;
+export const green = (text: string) => `\x1b[32m${text}${reset}`;
+export const red = (text: string) => `\x1b[31m${text}${reset}`;
+export const bold = (text: string) => `\x1b[1m${text}${reset}`;
 
 /**
  * Explorer Proxy is opening 2 WebSocket connections: one for the Arcs Runtime
