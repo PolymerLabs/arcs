@@ -107,7 +107,7 @@ export class UiParticleBase extends Particle {
   async set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     await this.await(p => p._set(handleName, value));
   }
-  async _set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+  private async _set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const handle = this.handles.get(handleName);
     if (!handle) {
       throw new Error(`Could not find handle [${handleName}]`);
