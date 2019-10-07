@@ -98,7 +98,7 @@ export class UiParticleBase extends Particle {
    * Invoke async function `task` with Particle busy-guard.
    */
   async await(task: (p: this) => Promise<any>) {
-    return await this.invokeSafely(task, err => { throw(err); });
+    return await this.invokeSafely(task, err => { throw err; });
   }
 
   /**
@@ -152,7 +152,7 @@ export class UiParticleBase extends Particle {
     this.await(p => Promise.all(
       data.map(async value => {
         if (value instanceof Entity) {
-          handle.remove(value)
+          handle.remove(value);
         }
       }
     )));
