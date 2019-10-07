@@ -243,6 +243,8 @@ export class UiSimpleParticle extends Particle {
           await this.appendRawDataToHandle(name, value);
         }
       }
+    } else {
+      throw new Error(`Handle ${handleName} does not exist in this context`);
     }
   }
 
