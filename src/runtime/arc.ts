@@ -413,7 +413,7 @@ ${this.activeRecipe.toString()}`;
       key = this.storageKey.childKeyForArcInfo();
     }
     const arcInfoType = new ArcType();
-    const store = await storage.connectOrConstruct('store', arcInfoType, key.toString()) as SingletonStorageProvider;
+    const store = await storage.establishBaseStorageProviderConnection('store', arcInfoType, key.toString()) as SingletonStorageProvider;
     store.referenceMode = false;
     // TODO: storage refactor: make sure set() is available here (or wrap store in a Handle-like adaptor).
     await store.set(arcInfoType.newInstance(this.id, serialization));

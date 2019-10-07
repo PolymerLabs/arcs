@@ -8,38 +8,38 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
-import {VolatileStorage} from './volatile-storage.js';
-import {SyntheticStorage} from './synthetic-storage.js';
-import {Id} from '../id.js';
-import {Type} from '../type.js';
-import {KeyBase} from './key-base.js';
-import {Dictionary} from '../hot.js';
-import {Mutex} from '../mutex.js';
+import { StorageBase, StorageProviderBase } from './storage-provider-base.js';
+import { VolatileStorage } from './volatile-storage.js';
+import { SyntheticStorage } from './synthetic-storage.js';
+import { Id } from '../id.js';
+import { Type } from '../type.js';
+import { KeyBase } from './key-base.js';
+import { Dictionary } from '../hot.js';
+import { Mutex } from '../mutex.js';
 
 // TODO(sjmiles): StorageProviderFactory.register can be used
 // to install additional providers, as long as it's invoked
 // before any StorageProviderFactory objects are constructed.
 
 const providers = {
-  volatile: {storage: VolatileStorage, isPersistent: false},
-  synthetic: {storage: SyntheticStorage, isPersistent: false}
+  volatile: { storage: VolatileStorage, isPersistent: false },
+  synthetic: { storage: SyntheticStorage, isPersistent: false }
 };
 
 export class StorageProviderFactory {
-  static register(name: string, instance: {storage: Function, isPersistent: boolean}) {
+  static register(name: string, instance: { storage: Function, isPersistent: boolean }) {
     providers[name] = instance;
   }
 
-  private _storageInstances: Dictionary<{storage: StorageBase, isPersistent: boolean}>;
+  private _storageInstances: Dictionary<{ storage: StorageBase, isPersistent: boolean }>;
 
   private readonly mutexMap: Map<string, Mutex> = new Map<string, Mutex>();
 
   constructor(private readonly arcId: Id) {
     this._storageInstances = {};
     Object.keys(providers).forEach(name => {
-      const {storage, isPersistent} = providers[name];
-      this._storageInstances[name] = {storage: new storage(arcId, this), isPersistent};
+      const { storage, isPersistent } = providers[name];
+      this._storageInstances[name] = { storage: new storage(arcId, this), isPersistent };
     });
   }
 
@@ -62,12 +62,12 @@ export class StorageProviderFactory {
     return key && this.getInstance(key).isPersistent;
   }
 
-  async construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase> {
+  async construct(id: string, type: Type, keyFragment: string): Promise<StorageProviderBase> {
     // TODO(shans): don't use reference mode once adapters are implemented
     return await this._storageForKey(keyFragment).construct(id, type, keyFragment);
   }
 
-  async connect(id: string, type: Type, key: string) : Promise<StorageProviderBase> {
+  async connect(id: string, type: Type, key: string): Promise<StorageProviderBase> {
     // TODO(shans): don't use reference mode once adapters are implemented
     return await this._storageForKey(key).connect(id, type, key);
   }
@@ -79,7 +79,7 @@ export class StorageProviderFactory {
     return this.mutexMap.get(key).acquire();
   }
 
-  async connectOrConstruct(id: string, type: Type, key: string) : Promise<StorageProviderBase> {
+  async establishBaseStorageProviderConnection(id: string, type: Type, key: string): Promise<StorageProviderBase> {
     const storage = this._storageForKey(key);
     const release = await this._acquireMutexForKey(key);
     try {
@@ -93,15 +93,15 @@ export class StorageProviderFactory {
     }
   }
 
-  async baseStorageFor(type: Type, keyString: string) : Promise<StorageProviderBase> {
+  async baseStorageFor(type: Type, keyString: string): Promise<StorageProviderBase> {
     return await this._storageForKey(keyString).baseStorageFor(type, keyString);
   }
 
-  baseStorageKey(type: Type, keyString: string) : string {
+  baseStorageKey(type: Type, keyString: string): string {
     return this._storageForKey(keyString).baseStorageKey(type, keyString);
   }
 
-  parseStringAsKey(s: string) : KeyBase {
+  parseStringAsKey(s: string): KeyBase {
     return this._storageForKey(s).parseStringAsKey(s);
   }
 
