@@ -14,7 +14,7 @@ import {Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
-import {HandleConnectionSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
@@ -82,7 +82,7 @@ export abstract class Schema2Base {
   }
 
   /**
-   * Collects schemas from the manfiest.
+   * Collects schemas from the manifest.
    *
    * Includes schemas that have no names (anonymous) or schemas with multiple aliases
    *
@@ -111,22 +111,20 @@ export abstract class Schema2Base {
       }
     };
 
-    const schemas: Dictionary<Schema> = manifest.allSchemas
-      .reduce((acc: Dictionary<Schema>, schema: Schema) => {
-        const keys: string[] = schema.names;
-        if (keys.length === 0) {
-          keys.push('');
-        }
-        keys.forEach(combineWithNewName(acc, schema));
-        return acc;
-      }, {});
+    const schemas: Dictionary<Schema> = {};
 
     manifest.allParticles
-      .map((particle): HandleConnectionSpec[] => particle.connections)
+      .map((particle: ParticleSpec): HandleConnectionSpec[] => particle.connections)
       .reduce((acc, val) => acc.concat(val), [])  // equivalent to .flat()
       .forEach((connection: HandleConnectionSpec) => {
         const schema: Schema = connection.type.getEntitySchema();
-        schema.names.forEach(combineWithNewName(schemas, schema));
+        if (schema) {
+          const keys = schema.names;
+          if (keys.length === 0) {
+            keys.push('');
+          }
+          keys.forEach(combineWithNewName(schemas, schema));
+        }
       });
 
     return schemas;
