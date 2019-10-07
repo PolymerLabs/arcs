@@ -78,12 +78,12 @@ export class StoreObserver {
         this.add(data);
       }
       if (add) {
-        for (const record in add) {
+        for (const record of add) {
           await this.add(record.value);
         }
       }
       if (remove) {
-        for (const record in remove) {
+        for (const record of remove) {
           await this.remove(record.value);
         }
       }
