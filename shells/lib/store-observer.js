@@ -72,18 +72,20 @@ export class StoreObserver {
   async onChange(change) {
     StoreObserver.working();
     this.log('onChange', change);
-    const {add, remove, data} = change;
-    if (data) {
-      this.add(data);
-    }
-    if (add) {
-      for (let i=0, record; (record=add[i]); i++) {
-        await this.add(record.value);
+    if (change) {
+      const {add, remove, data} = change;
+      if (data) {
+        this.add(data);
       }
-    }
-    if (remove) {
-      for (let i=0, record; (record=remove[i]); i++) {
-        await this.remove(record.value);
+      if (add) {
+        for (let i=0, record; (record=add[i]); i++) {
+          await this.add(record.value);
+        }
+      }
+      if (remove) {
+        for (let i=0, record; (record=remove[i]); i++) {
+          await this.remove(record.value);
+        }
       }
     }
   }
