@@ -14,7 +14,7 @@ import minimist from 'minimist';
 import morgan from 'morgan';
 
 import {status} from './status-handler.js';
-import {ExplorerProxy} from './explorer-proxy.js';
+import {ExplorerProxy, green, bold} from './explorer-proxy.js';
 import {HotReloadServer} from './hot-reload-server.js';
 
 
