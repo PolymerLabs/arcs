@@ -104,10 +104,10 @@ export class UiParticleBase extends Particle {
   /**
    * Set handle value. Value can be an Entity or a POJO (or an Array of such values, for a Collection)
    */
-  async set(handleName, value: Entity | Object | [Entity] | [Object]) {
+  async set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     await this.await(p => p._set(handleName, value));
   }
-  async _set(handleName, value: Entity | Object | [Entity] | [Object]) {
+  async _set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const handle = this.handles.get(handleName);
     if (!handle) {
       throw new Error(`Could not find handle [${handleName}]`);
@@ -134,7 +134,7 @@ export class UiParticleBase extends Particle {
   /**
    * Add to a collection. Value can be an Entity or a POJO (or an Array of such values)
    */
-  async add(handleName, value: Entity | Object | [Entity] | [Object]) {
+  async add(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const handle = this.handles.get(handleName);
     if (!handle) {
       throw new Error(`Could not find handle [${handleName}]`);
@@ -154,7 +154,7 @@ export class UiParticleBase extends Particle {
   /**
    * Remove from a collection. Value can be an Entity or a POJO (or an Array of such values)
    */
-  async remove(handleName, value: Entity | Object | [Entity] | [Object]) {
+  async remove(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const handle = this.handles.get(handleName);
     if (!handle) {
       throw new Error(`Could not find handle [${handleName}]`);
