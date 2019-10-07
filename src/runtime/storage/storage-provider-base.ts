@@ -10,19 +10,15 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
-import {Comparable, compareNumbers, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
-import {StorageStub} from '../storage-stub.js';
-import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
+import {SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
 import {ClaimIsTag} from '../particle-claim.js';
-
-enum EventKind {
-  change = 'Change'
-}
+import {UnifiedStore, UnifiedActiveStore} from '../storageNG/unified-store.js';
+import {ProxyCallback} from '../storageNG/store.js';
 
 // tslint:disable-next-line: no-any
 type Callback = Consumer<Dictionary<any>>;
@@ -55,7 +51,7 @@ export interface CollectionStorageProvider extends StorageProviderBase, Collecti
  */
 export interface BigCollectionStorageProvider extends StorageProviderBase, BigCollectionStore {
   cursorVersion(cursorId: number);
-  cloneFrom(store: StorageProviderBase | StorageStub);
+  cloneFrom(store: UnifiedActiveStore);
   clearItemsForTesting(): void;
 }
 
@@ -107,9 +103,12 @@ export class ChangeEvent {
 /**
  * Docs TBD
  */
-export abstract class StorageProviderBase implements Comparable<StorageProviderBase>, Store {
-  private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
-  private nextLocalID: number;
+export abstract class StorageProviderBase extends UnifiedStore implements Store, UnifiedActiveStore {
+  protected unifiedStoreType: 'StorageProviderBase';
+
+  private readonly legacyListeners: Set<Callback> = new Set();
+  private nextCallbackId = 0;
+  private readonly listeners: Map<number, ProxyCallback<null>> = new Map();
   private readonly _type: Type;
 
   protected readonly _storageKey: string;
@@ -125,20 +124,26 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
   claims: ClaimIsTag[];
 
   protected constructor(type: Type, name: string, id: string, key: string) {
+    super();
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     this._type = type;
-    this.listeners = new Map();
     this.name = name;
     this.version = 0;
     this.id = id;
     this.source = null;
     this._storageKey = key;
-    this.nextLocalID = 0;
   }
 
   enableReferenceMode(): void {
     this.referenceMode = true;
+  }
+
+  // Required to implement interface UnifiedActiveStore. Each
+  // StorageProviderBase instance is both a UnifiedStore and a
+  // UnifiedActiveStore.
+  get baseStore(): StorageProviderBase {
+    return this;
   }
 
   get storageKey(): string {
@@ -154,60 +159,50 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
     throw exception;
   }
 
-  // TODO: add 'once' which returns a promise.
-  on(kindStr: string, callback: Callback, target): void {
-    assert(target !== undefined, 'must provide a target to register a storage event handler');
-    const kind: EventKind = EventKind[kindStr];
-
-    const listeners = this.listeners.get(kind) || new Map();
-    listeners.set(callback, {target});
-    this.listeners.set(kind, listeners);
+  on(callback: ProxyCallback<null>): number {
+    const id = this.nextCallbackId++;
+    this.listeners.set(id, callback);
+    return id;
   }
 
-  off(kindStr: string, callback: Callback): void {
-    const kind: EventKind = EventKind[kindStr];
-    const listeners = this.listeners.get(kind);
-    if (listeners) {
-      listeners.delete(callback);
-    }
+  off(callbackId: number): void {
+    this.listeners.delete(callbackId);
+  }
+
+  // Equivalent to `on`, but for the old storage stack. Callers should be
+  // migrated to the new API (unless they're going to be deleted).
+  legacyOn(callback: Callback): void {
+    this.legacyListeners.add(callback);
+  }
+
+  // Equivalent to `off`, but for the old storage stack. Callers should be
+  // migrated to the new API (unless they're going to be deleted).
+  legacyOff(callback: Callback): void {
+    this.legacyListeners.delete(callback);
+  }
+
+  async activate(): Promise<UnifiedActiveStore> {
+    // All StorageProviderBase instances are already active.
+    return this;
   }
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
   /**
    * Propagate updates to change listeners.
-   *
-   * @param kindStr the type of event, only 'change' is supported.
-   * @param details details about the change
    */
-  protected async _fire(kindStr: 'change', details: ChangeEvent) {
-    const kind: EventKind = EventKind[kindStr];
-    const listenerMap = this.listeners.get(kind);
-    if (!listenerMap || listenerMap.size === 0) {
-      return;
-    }
-
-    const callbacks:Callback[] = [];
-    for (const [callback] of listenerMap.entries()) {
-      callbacks.push(callback);
-    }
+  protected async _fire(details: ChangeEvent) {
+    const callbacks = [...this.listeners.values()];
+    const legacyCallbacks = [...this.legacyListeners];
     // Yield so that event firing is not re-entrant with mutation.
     await 0;
-    for (const callback of callbacks) {
+    for (const callback of legacyCallbacks) {
       callback(details);
     }
-  }
-
-  _compareTo(other: StorageProviderBase): number {
-    let cmp;
-    cmp = compareStrings(this.name, other.name);
-    if (cmp !== 0) return cmp;
-    cmp = compareNumbers(this.version, other.version);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.source, other.source);
-    if (cmp !== 0) return cmp;
-    cmp = compareStrings(this.id, other.id);
-    if (cmp !== 0) return cmp;
-    return 0;
+    for (const callback of callbacks) {
+      // HACK: This callback expects a ProxyMessage, which we don't actually
+      // have here. Just pass null, what could go wrong!
+      await callback(null);
+    }
   }
 
   toString(handleTags?: string[]): string {
@@ -249,7 +244,7 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
    */
   abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
-  abstract cloneFrom(store: StorageProviderBase | StorageStub);
+  abstract cloneFrom(store: UnifiedActiveStore): Promise<void>;
 
   // TODO(shans): remove this when it's possible to.
   abstract async ensureBackingStore();

@@ -20,7 +20,7 @@ import {Relevance} from '../relevance.js';
 import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
-import {Id, ArcId, IdGenerator} from '../id.js';
+import {ArcId, IdGenerator} from '../id.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();

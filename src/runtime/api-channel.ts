@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
 import {Arc} from './arc.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 import {ArcInspector} from './arc-inspector.js';
 import {Handle} from './handle.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -20,12 +20,15 @@ import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import {Content} from './slot-consumer.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
+import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
+import {ActiveStore, ProxyCallback, ProxyMessage} from './storageNG/store.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -466,9 +469,9 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  DefineHandle(@RedundantInitializer store: StorageProviderBase, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
-  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
+  DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
+  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
   ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
@@ -478,6 +481,9 @@ export abstract class PECOuterPort extends APIPort {
   StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
 
   abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
+
+  // TODO: Delete these when the old storage code is deleted. They won't be
+  // needed anymore.
   abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
   abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
   abstract onHandleGet(handle: StorageProviderBase, callback: number);
@@ -491,16 +497,19 @@ export abstract class PECOuterPort extends APIPort {
   abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
   abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
 
+  abstract onRegister(handle: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onProxyMessage(handle: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
+
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
-  GetBackingStoreCallback(@Initializer store: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  GetBackingStoreCallback(@Initializer store: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
-  CreateHandleCallback(@Initializer handle: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
+  CreateHandleCallback(@Initializer handle: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
@@ -558,6 +567,12 @@ export abstract class PECInnerPort extends APIPort {
   HandleStream(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<number>, @Direct pageSize: number, @Direct forward: boolean) {}
   StreamCursorNext(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<CursorNextValue>, @Direct cursorId: string) {}
   StreamCursorClose(@Mapped handle: StorageProxy, @Direct cursorId: string) {}
+  Register(@Mapped handle: StorageProxyNG<CRDTTypeRecord>,
+           @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
+           @LocalMapped idCallback: Consumer<number>): void  {}
+  ProxyMessage(@Mapped handle: StorageProxyNG<CRDTTypeRecord>,
+               @Direct message: ProxyMessage<CRDTTypeRecord>,
+               @LocalMapped callback: Consumer<Promise<boolean>>): void  {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 

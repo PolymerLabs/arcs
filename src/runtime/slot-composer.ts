@@ -112,7 +112,7 @@ export class SlotComposer {
     assert(transformationSlotConsumer,
         `Transformation particle ${transformationParticle.name} with consumed ${transformationSlotName} not found`);
 
-    const hostedSlotId = innerArc.generateID().toString();
+    const hostedSlotId = innerArc.generateID('slot').toString();
     this._contexts.push(new HostedSlotContext(hostedSlotId, transformationSlotConsumer, storeId));
     return hostedSlotId;
   }
@@ -168,6 +168,10 @@ export class SlotComposer {
   renderSlot(particle: Particle, slotName: string, content: Content) {
     const slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
+
+    // Content object as received by the particle execution host is frozen.
+    // SlotComposer attach properties to this object, so we need to clone it at the top level.
+    content = {...content};
 
     slotConsumer.slotContext.onRenderSlot(slotConsumer, content, async (eventlet) => {
       slotConsumer.arc.pec.sendEvent(particle, slotName, eventlet);

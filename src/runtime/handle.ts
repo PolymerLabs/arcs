@@ -20,7 +20,7 @@ import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './stor
 import {IdGenerator, Id} from './id.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Handle as HandleNG} from './storageNG/handle.js';
-import {CRDTTypeRecord} from './crdt/crdt';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 // While transitioning to the NG storage stack, we define Handle as either the
 // "old" handle (before migration) or the NG handle. After migration the handle

@@ -36,7 +36,7 @@ export class IdGenerator {
   static createWithSessionIdForTesting(sessionId: string) {
     return new IdGenerator(sessionId);
   }
-  
+
   newArcId(name: string): ArcId {
     return ArcId._newArcIdInternal(this._currentSessionId, name);
   }

@@ -8,7 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html}) => {
+/* global defineParticle */
+
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
 <style>
@@ -150,7 +152,7 @@ defineParticle(({DomParticle, html}) => {
   const services = `https://xenonjs.com/services/http/php`;
   const detailsService =`${services}/place-details.php`;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

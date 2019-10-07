@@ -101,7 +101,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
         });
       }
 
-      await this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
+      await this._fire(new ChangeEvent({data: newvalue, version: this.version}));
     }
   }
 
@@ -262,7 +262,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
     this.bumpVersion();
 
     const data = this.referenceMode ? value : stored.value;
-    await this._fire('change', new ChangeEvent({data, version: this.version, originatorId, barrier}));
+    await this._fire(new ChangeEvent({data, version: this.version, originatorId, barrier}));
   }
 
   /**
@@ -294,11 +294,11 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
           console.log('PouchDbSingleton.onRemoteSynced: possible race condition for id=' + value.id);
           return;
         }
-        await this._fire('change', new ChangeEvent({data, version: this.version}));
+        await this._fire(new ChangeEvent({data, version: this.version}));
       });
     } else {
       if (value != null) {
-        await this._fire('change', new ChangeEvent({data: value, version: this.version}));
+        await this._fire(new ChangeEvent({data: value, version: this.version}));
       }
     }
   }

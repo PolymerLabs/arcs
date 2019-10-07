@@ -14,7 +14,6 @@ import JSZip from 'jszip';
 
 import {Loader} from '../runtime/loader.js';
 import {Manifest} from '../runtime/manifest.js';
-import {StorageProviderBase} from '../runtime/storage/storage-provider-base.js';
 
 export type BundleEntry = {
   filePath: string,
@@ -70,10 +69,10 @@ export async function bundleListing(...entryPoints: string[]): Promise<BundleEnt
       ? ep
       // All the paths handled by Arcs use Web/POSIX separators.
       : path.resolve(process.cwd(), ep).split(path.sep).join('/'));
-  
+
   const loader = new Loader();
   const entryManifests = await Promise.all(entryPoints.map(ep => Manifest.load(ep, loader)));
-  
+
   const filePathsSet = new Set<string>();
   entryManifests.forEach(m => collectDependencies(m, filePathsSet));
   const filePaths = [...filePathsSet].sort();

@@ -19,7 +19,7 @@ import {Particle} from '../runtime/recipe/particle.js';
 export class HotCodeReloader {
   private arc: Arc;
   private arcDevtoolsChannel: ArcDevtoolsChannel;
-  
+
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     this.arc = arc;
     this.arcDevtoolsChannel = arcDevtoolsChannel;

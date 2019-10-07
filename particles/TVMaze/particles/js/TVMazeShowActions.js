@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({SimpleParticle, html}) => {
 
   const host = `tvmaze-show-actions`;
 
@@ -41,7 +41,7 @@ defineParticle(({DomParticle, html}) => {
     </div>
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

@@ -809,7 +809,7 @@ describe('particle-api', () => {
         });
       `
     });
-    
+
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
@@ -820,7 +820,7 @@ describe('particle-api', () => {
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
-    
+
     await arc.instantiate(recipe);
 
     await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
@@ -860,7 +860,7 @@ describe('particle-api', () => {
         });
       `
     });
-    
+
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
@@ -871,7 +871,7 @@ describe('particle-api', () => {
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
-    
+
     await arc.instantiate(recipe);
 
     await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
@@ -911,7 +911,7 @@ describe('particle-api', () => {
         });
       `
     });
-    
+
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
@@ -922,7 +922,7 @@ describe('particle-api', () => {
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
-    
+
     await arc.instantiate(recipe);
 
     await arc.idle;
@@ -1100,8 +1100,8 @@ describe('particle-api', () => {
 
     const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
-  slot '!${sessionId}:demo:inner2:1' as slot0
-  slot 'slotid-!${sessionId}:demo:inner2:2' as slot1
+  slot '!${sessionId}:demo:inner2:slot1' as slot0
+  slot '!${sessionId}:demo:inner2:slot2' as slot1
   A as particle0
     consume content as slot0
       provide detail as slot1

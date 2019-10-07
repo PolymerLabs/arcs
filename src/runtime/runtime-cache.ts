@@ -15,7 +15,7 @@ class CacheKey<K, V> {
   }
 }
 
-export class RuntimeCacheService { 
+export class RuntimeCacheService {
 
   private map = new Map<string, unknown>();
   private nextID = 0;

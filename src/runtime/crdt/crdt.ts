@@ -27,7 +27,7 @@ export interface CRDTConsumerType {}
 //  - the external (particle-facing) data representation of the model
 // These type parameters are wrapped up into a single CRDTTypeRecord interface
 // that can be extended as a unit by CRDT implementation. This allows users
-// of CRDT classes to be generic on a single type parameter. 
+// of CRDT classes to be generic on a single type parameter.
 //
 // Note that this interface and its subclasses are intended never to be
 // implemented; instead they are a convenient way of associating the set of types
@@ -39,9 +39,9 @@ export interface CRDTTypeRecord {
 }
 
 // A CRDT model can:
-//  - merge with other models. This produces a 2-sided delta 
+//  - merge with other models. This produces a 2-sided delta
 //    (change from this model to merged model, change from other model to merged model).
-//    Note that merge updates the model it is invoked on; the modelChange return value is 
+//    Note that merge updates the model it is invoked on; the modelChange return value is
 //    a record of a change that has already been applied.
 //  - apply an operation. This might fail (e.g. if the operation is out-of-order), in which case
 //    applyOperation() will return false.
@@ -52,7 +52,7 @@ export interface CRDTTypeRecord {
 // This is a serious error and will result in merge throwing a CRDTError.
 export interface CRDTModel<T extends CRDTTypeRecord> {
   merge(other: T['data']): {modelChange: CRDTChange<T>, otherChange: CRDTChange<T>};
-  // note that the object-access syntax here & below is in fact a type-level action; op is constrained to 
+  // note that the object-access syntax here & below is in fact a type-level action; op is constrained to
   // be of the type of the operation field in T, which extends CRDTTypeRecord.
   applyOperation(op: T['operation']): boolean;
   getData(): T['data'];

@@ -23,7 +23,7 @@ class TestPlanProducer extends PlanProducer {
   constructor(arc: Arc) {
     super(arc, new PlanningResult({context: arc.context, loader: arc.loader}));
   }
-  
+
   async produceSuggestions(options = {}) {
     this.isPlanning = true;
     ++this.produceSuggestionsCalled;

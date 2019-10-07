@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, resolver, log}) => {
+defineParticle(({SimpleParticle, resolver, log}) => {
 
   importScripts(resolver(`$here/tf.js`));
 
-  return class extends self.TfMixin(DomParticle) {
+  return class extends self.TfMixin(SimpleParticle) {
     async update({images, size, options}) {
       if (images && size) {
         log('Resizing...');

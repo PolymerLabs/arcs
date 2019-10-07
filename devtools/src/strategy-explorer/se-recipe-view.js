@@ -89,7 +89,7 @@ Polymer({
         this.strategyString = '';
         return;
       }
-      
+
       this.set('shownRecipe.description', this.diffHtml(recipe.description || '', this.pinnedDescription || ''));
       this.set('shownRecipe.hash', this.diffHtml(recipe.hash, this.pinnedHash));
       this.set('shownRecipe.result', this.diffHtml(

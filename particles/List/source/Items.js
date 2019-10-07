@@ -8,7 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, log}) => {
+/* global defineParticle */
+
+defineParticle(({UiParticle, html, log}) => {
 
   const template = html`
 <style>
@@ -47,14 +49,14 @@ defineParticle(({DomParticle, html, log}) => {
 
 <template items>
   <div item selected$="{{selected}}">
-    <div slotid="item" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
-    <div slotid="annotation" subid$="{{id}}"></div>
+    <div slotid$="{{item_slot}}" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
+    <div slotid$="{{annotation_slot}}" subid$="{{id}}"></div>
   </div>
 </template>
 
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -62,11 +64,12 @@ defineParticle(({DomParticle, html, log}) => {
       return Boolean(list);
     }
     render({list, selected}) {
-      const selectedId = selected && this.idFor(selected);
-      const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
-      const models = sorted.map(item => this.renderItem(item, selectedId === this.idFor(item)));
+      const selectedId = selected && selected.id;
+      //const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+      const filtered = list;
+      const models = filtered.map(item => this.renderItem(item, selectedId === this.idFor(item)));
       return {
-        haveItems: models.length > 0,
+        hasItems: models.length > 0,
         items: {
           $template: 'items',
           models
@@ -80,7 +83,7 @@ defineParticle(({DomParticle, html, log}) => {
       };
     }
     onSelect(e) {
-      const item = this._props.list.find(i => this.idFor(i) === e.data.key);
+      const item = this.props.list.find(i => this.idFor(i) === e.data.key);
       this.handles.get('selected').set(item);
     }
   };

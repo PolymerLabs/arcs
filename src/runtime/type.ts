@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-  
+
 import {Id} from './id.js';
 import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
 import {Schema} from './schema.js';
@@ -18,6 +18,7 @@ import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
+import {CRDTSingleton} from './crdt/crdt-singleton.js';
 
 
 export interface TypeLiteral extends Literal {
@@ -27,7 +28,7 @@ export interface TypeLiteral extends Literal {
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count';
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
 
 export abstract class Type {
   tag: Tag;
@@ -210,7 +211,7 @@ export abstract class Type {
   /**
    * Clone a type object.
    * When cloning multiple types, variables that were associated with the same name
-   * before cloning should still be associated after cloning. To maintain this 
+   * before cloning should still be associated after cloning. To maintain this
    * property, create a Map() and pass it into all clone calls in the group.
    */
   clone(variableMap: Map<string, Type>) {
@@ -268,6 +269,26 @@ export class CountType extends Type {
 
   crdtInstanceConstructor() {
     return CRDTCount;
+  }
+}
+
+export class SingletonType<T extends Type> extends Type {
+  private readonly innerType: T;
+  constructor(type: T) {
+    super('Singleton');
+    this.innerType = type;
+  }
+
+  toLiteral(): TypeLiteral {
+    return {tag: 'Singleton'};
+  }
+
+  getContainedType(): T {
+    return this.innerType;
+  }
+
+  crdtInstanceConstructor() {
+    return CRDTSingleton;
   }
 }
 
@@ -405,7 +426,7 @@ export class TypeVariable extends Type {
       return new TypeVariable(newTypeVariable);
     }
   }
-  
+
   _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): TypeVariable {
     if (variableMap.has(this.variable)) {
       return new TypeVariable(variableMap.get(this.variable) as TypeVariableInfo);

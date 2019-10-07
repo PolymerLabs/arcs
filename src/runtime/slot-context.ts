@@ -44,10 +44,10 @@ export abstract class SlotContext {
 
 /**
  * Represents a slot created by a transformation particle in the inner arc.
- * 
+ *
  * Render calls for that slot are routed to the transformation particle,
  * which receives them as innerArcRender calls.
- * 
+ *
  * TODO:
  * Today startRender/stopRender calls for particles rendering into this slot are governed by the
  * availability of the container on the transformation particle. This should be optional and only

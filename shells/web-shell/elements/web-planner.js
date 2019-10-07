@@ -49,16 +49,20 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       debug: config.plannerDebug,
       inspectorFactory: devtoolsPlannerInspectorFactory
     };
+    this._suggestionsChanged(null, []);
     const planificator = await Planificator.create(arc, options);
-    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(planificator, suggestions));
+    // TODO(sjmiles): initialize listener with empty suggestions so it doesn't have to figure out
+    // that we reset Planificator (Planificator does not notify if it generates no suggestions the first time).
+    planificator.registerVisibleSuggestionsChangedCallback(
+        suggestions => this._suggestionsChanged(planificator, suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
     window.planificator = planificator; // for debugging only
     return planificator;
   }
   _suggestionsChanged(planificator, suggestions) {
     // TODO(sjmiles): maybe have @mmandlis do this at planner, also note that
-    // suggestion.versionByStore is avaialble for validation against arc.getVersionByStore()
-    suggestions.arcid = planificator.arc.id.toString();
+    // suggestion.versionByStore is available for validation against arc.getVersionByStore()
+    suggestions.arcid = planificator ? planificator.arc.id.toString() : '';
     log('suggestionsChanged', suggestions.arcid);
     this.fire('suggestions', suggestions);
   }

@@ -26,7 +26,7 @@ export class HandleNode extends Node {
     this.storeId = handle.id;
 
     // Handles with the 'use', 'map' or 'copy' fate can come from sources
-    // external to the recipe, and so should be treated as ingress. 
+    // external to the recipe, and so should be treated as ingress.
     if (handle.fate !== 'create') {
       this.ingress = true;
     }

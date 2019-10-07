@@ -21,9 +21,9 @@ describe('IdGenerator', () => {
       const randomValue = 0.5;
       const oldRandomNext = Random.next;
       Random.next = () => randomValue;
-  
+
       const idGenerator = IdGenerator.newSession();
-  
+
       const sessionId = randomValue * 2 ** 50 + '';
       assert.strictEqual(idGenerator.currentSessionIdForTesting, sessionId);
       Random.next = oldRandomNext;
@@ -42,7 +42,7 @@ describe('IdGenerator', () => {
       const childId = idGenerator.newChildId(parentId);
       assert.strictEqual(childId.root, 'sessionId');
     });
-    
+
     it('appends subcomponents when creating child IDs', () => {
       const parentId = createId('root', ['x', 'y']);
       const childId = idGenerator.newChildId(parentId, 'z');

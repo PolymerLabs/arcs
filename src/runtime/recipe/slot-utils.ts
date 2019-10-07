@@ -23,7 +23,7 @@ export class SlotUtils {
     if (clonedSlot) {
       return clonedSlot;
     }
-    
+
     if (selectedSlot.id) {
       clonedSlot = recipe.findSlotByID(selectedSlot.id);
     }
@@ -49,7 +49,7 @@ export class SlotUtils {
     if (!slotConnection.targetSlot) {
       throw new Error('missing targetSlot');
     }
-    
+
     assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id === slotConnection.targetSlot.id),
             `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
     slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
@@ -100,7 +100,7 @@ export class SlotUtils {
 
   static specMatch(slotSpec, providedSlotSpec) {
     return slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
-            providedSlotSpec &&      
+            providedSlotSpec &&
             slotSpec.isSet === providedSlotSpec.isSet;
   }
 
@@ -118,14 +118,14 @@ export class SlotUtils {
 
   static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn?: SlotConnection, provideSlot?: Slot) {
     const consumeTags: string[] = ([] as string[]).concat(
-      consumeSlotSpec.tags || [], 
-      consumeSlotConn ? consumeSlotConn.tags : [], 
+      consumeSlotSpec.tags || [],
+      consumeSlotConn ? consumeSlotConn.tags : [],
       consumeSlotConn && consumeSlotConn.targetSlot ? consumeSlotConn.targetSlot.tags : []
     );
 
     const provideTags = ([] as string[]).concat(
-      provideSlotSpec.tags || [], 
-      provideSlot ? provideSlot.tags : [], 
+      provideSlotSpec.tags || [],
+      provideSlot ? provideSlot.tags : [],
       provideSlot ? provideSlot.name : (provideSlotSpec.name ? provideSlotSpec.name : [])
     );
 
@@ -149,9 +149,9 @@ export class SlotUtils {
         conn.disconnectFromSlot();
         SlotUtils.connectSlotConnection(conn, newSlot);
       }
-      
+
     }
-    
+
     return true;
   }
 }

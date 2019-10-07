@@ -17,7 +17,7 @@ import {portIndustry} from '../pec-port.js';
 const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
-export const runArc = async (msg, tid, bus, runtime, env) => {
+export const runArc = async (msg, bus, runtime, env) => {
   const {recipe, arcId, storageKeyPrefix, pecId, particleId, particleName, providedSlotId} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
@@ -38,7 +38,8 @@ export const runArc = async (msg, tid, bus, runtime, env) => {
     observe: (content, arc) => {
       delete content.particle;
       bus.send({message: 'output', data: content});
-    }
+    },
+    dispose: () => null
   };
 
   // optionally instantiate recipe
@@ -111,4 +112,13 @@ const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) =>
     }
   }
   return plan;
+};
+
+export const stopArc = async ({arcId}, runtime) => {
+  runtime.stop(arcId);
+};
+
+export const uiEvent = async ({particleId, eventlet}, runtime) => {
+  const arc = runtime.findArcByParticleId(particleId);
+  arc.pec.slotComposer.sendEvent(particleId, eventlet);
 };

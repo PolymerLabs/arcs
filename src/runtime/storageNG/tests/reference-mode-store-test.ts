@@ -19,10 +19,12 @@ import {CRDTCollection, CollectionOpTypes, CollectionData, CollectionOperation} 
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {CountType, CollectionType, EntityType} from '../../type.js';
 import {Schema} from '../../schema.js';
+import {CRDTTypeRecord} from '../../crdt/crdt.js';
 
 /* eslint-disable no-async-promise-executor */
 
 let testKey: ReferenceModeStorageKey;
+let baseStore: Store<CRDTTypeRecord>;
 
 class MyEntityModel extends CRDTEntity<{name: {id: string}, age: {id: string, value: number}}, {}> {
   constructor() {
@@ -45,6 +47,7 @@ describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
+    baseStore = new Store(testKey, Exists.ShouldCreate, new CountType(), 'base-store-id');
     DriverFactory.clearRegistrationsForTesting();
   });
 
@@ -74,9 +77,9 @@ describe('Reference Mode Store', async () => {
   it('will propagate model updates from proxies to drivers', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
-    const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;    
+    const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     let capturedModel: CollectionData<Reference> = null;
     driver.send = async model => {capturedModel = model; return true;};
 
@@ -107,9 +110,9 @@ describe('Reference Mode Store', async () => {
   it('will apply and propagate operation updates from proxies to drivers', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
-    const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;    
+    const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     let capturedModel: CollectionData<Reference> = null;
     driver.send = async model => {capturedModel = model; return true;};
 
@@ -142,9 +145,9 @@ describe('Reference Mode Store', async () => {
   it('will respond to a model request from a proxy with a model', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
-    const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;    
+    const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     driver.send = async model => true;
 
     const collection = new MyEntityCollection();
@@ -175,15 +178,15 @@ describe('Reference Mode Store', async () => {
         return false;
       });
 
-      await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});    
+      await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});
     });
   });
 
   it('will only send a model response to the requesting proxy', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
-    
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
+
     return new Promise(async (resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
@@ -204,7 +207,7 @@ describe('Reference Mode Store', async () => {
   it('will propagate updates from drivers to proxies', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
     const collection = new MyEntityCollection();
     const entity = new MyEntity();
@@ -212,7 +215,7 @@ describe('Reference Mode Store', async () => {
     entity.id = 'an-id';
     entity.name = {id: 'bob'};
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
-  
+
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {me: 1}};
     referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
@@ -234,7 +237,7 @@ describe('Reference Mode Store', async () => {
         }
         throw new Error();
       });
-  
+
       const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
       await driver.receiver(referenceCollection.getData(), 1);
     });
@@ -244,7 +247,7 @@ describe('Reference Mode Store', async () => {
   it.skip(`won't send an update to the driver after driver-originated messages`, async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {me: 1}};
@@ -254,14 +257,14 @@ describe('Reference Mode Store', async () => {
     driver.send = async model => {throw new Error('Should not be invoked');};
 
     // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
-    // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send(). 
+    // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
     await driver.receiver(referenceCollection.getData(), 1);
   });
 
   it('will resend failed driver updates after merging', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
     // local model from proxy
     const collection = new MyEntityCollection();
@@ -303,7 +306,7 @@ describe('Reference Mode Store', async () => {
   it('resolves a combination of messages from the proxy and the driver', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
     const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     let lastModel = null;
@@ -341,14 +344,14 @@ describe('Reference Mode Store', async () => {
   it('holds onto a container update until the relevant backing data arrives', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType);
+    const activeStore = await ReferenceModeStore.construct(testKey, Exists.ShouldCreate, collectionType, /* mode= */ null, baseStore);
 
     const actor = activeStore['crdtKey'];
-    
+
     const referenceCollection = new ReferenceCollection();
     const reference: Reference = {storageKey: new MockHierarchicalStorageKey(''), id: 'an-id', version: {[actor]: 1}};
     referenceCollection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: reference});
-  
+
     return new Promise(async (resolve, reject) => {
       let backingStoreSent = false;
       activeStore.on(async message => {
@@ -368,14 +371,14 @@ describe('Reference Mode Store', async () => {
       assert(activeStore.backingStore['stores']['an-id'].type === 'pending');
       await activeStore.backingStore['stores']['an-id']['promise'];
       const store = activeStore.backingStore['stores']['an-id']['store'] as DirectStore<CRDTEntityTypeRecord<{name: {id: string}, age: {id: string, value: number}}, {}>>;
-      
+
       const entityCRDT = new MyEntityModel();
       entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
       entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
-      
+
       await store.onReceive(entityCRDT.getData(), 1);
     });
 
-    
+
   });
 });

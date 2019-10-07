@@ -9,14 +9,13 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-
 import {Arc} from './arc.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
-import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
-import {StorageStub} from './storage-stub.js';
+import {CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Dictionary} from './hot.js';
@@ -40,7 +39,7 @@ export class Description {
     const storeDescById: {[id: string]: string} = {};
     for (const {id} of plan.handles) {
       const store = arc.findStoreById(id);
-      if (store && store instanceof StorageProviderBase) {
+      if (store) {
         storeDescById[id] = arc.getStoreDescription(store);
       }
     }
@@ -60,7 +59,7 @@ export class Description {
     const storeDescById: {[id: string]: string} = {};
     for (const {id} of arc.activeRecipe.handles) {
       const store = arc.findStoreById(id);
-      if (store && store instanceof StorageProviderBase) {
+      if (store) {
         storeDescById[id] = arc.getStoreDescription(store);
       }
     }
@@ -155,8 +154,8 @@ export class Description {
     return {};
   }
 
-  private static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue|undefined> {
-    if (!store || (store instanceof StorageStub)) {
+  private static async _prepareStoreValue(store: UnifiedStore): Promise<DescriptionValue|undefined> {
+    if (!store) {
       return undefined;
     }
     if (store.type instanceof CollectionType) {

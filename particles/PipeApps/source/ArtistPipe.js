@@ -10,9 +10,9 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({SimpleParticle, log}) => {
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return `<span></span>`;
     }

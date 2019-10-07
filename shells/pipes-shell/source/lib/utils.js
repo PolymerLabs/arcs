@@ -70,7 +70,7 @@ export const marshalOutput = async arc => {
       const change = ({data}) => {
         resolve(data);
       };
-      store.on('change', change, {});
+      store.on(change);
     }
   });
 };

@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html, resolver}) => {
+defineParticle(({SimpleParticle, log, html, resolver}) => {
 
   const template = html`
 
@@ -21,7 +21,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

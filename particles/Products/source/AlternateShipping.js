@@ -10,13 +10,13 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
     <div hidden="{{hidden}}" style="padding: 4px 0;">Alternate stores that can ship to you in time: <span>{{alternatives}}</span></div>
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

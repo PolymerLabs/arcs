@@ -20,7 +20,7 @@
 goog.module('arcs.j2clparticle');
 const J2clParticle = goog.require('arcs.J2clParticle');
 
-/** 
+/**
  * @param {!Capabilities} Capabilities
  * @return {!function(new:DomParticleInterface)}
  */
@@ -41,7 +41,7 @@ const Particle = Capabilities => {
             log(str) { return Capabilities.log(str); }
         }
 
-        // reparent J2ClParticle from "Object" to DomParticle       
+        // reparent J2ClParticle from "Object" to DomParticle
         Reflect.setPrototypeOf(J2clParticle.prototype, DomParticle.prototype);
         Reflect.setPrototypeOf(J2clParticle, DomParticle);
         return delegate;

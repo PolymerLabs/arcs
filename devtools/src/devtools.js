@@ -51,7 +51,7 @@
       for (const msg of msgQueue) fire(msg);
       msgQueue.length = 0;
     };
-    
+
     if (w._msgRaceConditionGuard) {
       // arcs-communication-channel.js loaded first (likely in extension mode),
       // let's let it know we are ready to receive events.

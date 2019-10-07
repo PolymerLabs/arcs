@@ -20,20 +20,21 @@ import {Exists} from './drivers/driver-factory.js';
 import {Type, CollectionType, ReferenceType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
+import {Store} from './store.js';
 
 export type Reference = {id: string, storageKey: StorageKey, version: VersionMap};
 export class ReferenceCollection extends CRDTCollection<Reference> {}
-export class ReferenceSingleton extends CRDTSingleton<Reference> {} 
+export class ReferenceSingleton extends CRDTSingleton<Reference> {}
 
 export type ReferenceModeOperation<T extends Referenceable> = CRDTSingletonTypeRecord<T>['operation'] | CRDTCollectionTypeRecord<T>['operation'];
 
 enum ReferenceModeUpdateSource {Container, BackingStore, StorageProxy}
 
-type PreEnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> = 
+type PreEnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> =
   {from: ReferenceModeUpdateSource.StorageProxy, message: ProxyMessage<Container>} |
   {from: ReferenceModeUpdateSource.BackingStore, message: ProxyMessage<Entity>, muxId: string} |
   {from: ReferenceModeUpdateSource.Container, message: ProxyMessage<RefContainer>};
-type EnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> = 
+type EnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> =
   PreEnqueuedMessage<Container, Entity, RefContainer> & {promise: Consumer<boolean>};
 
 type BlockableRunnable = {fn: Runnable, block?: string};
@@ -59,9 +60,9 @@ export class ReferenceModeStorageKey extends StorageKey {
 /**
  * ReferenceModeStores adapt between a collection (CRDTCollection or CRDTSingleton) of entities from the perspective of their public API,
  * and a collection of references + a backing store of entity CRDTs from an internal storage perspective.
- * 
+ *
  * ReferenceModeStores maintain a queue of incoming updates (the receiveQueue) and process them one at a time. When possible, the results
- * of this processing are immediately sent upwards (to connected StorageProxies) and downwards (to storage). However, there are a few 
+ * of this processing are immediately sent upwards (to connected StorageProxies) and downwards (to storage). However, there are a few
  * caveats:
  * - incoming operations and models from StorageProxies may require several writes to storage - one for each modified entity, and one
  *   to the container store. These are processed serially, so that a container doesn't get updated if backing store modifications fail.
@@ -69,9 +70,9 @@ export class ReferenceModeStorageKey extends StorageKey {
  *   The holdQueue ensures that these blocks are tracked and processed appropriately.
  * - updates should always be sent in order, so a blocked send should block subsequent sends too. The pendingSends queue ensures that all
  *   outgoing updates are sent in the correct order.
- * 
+ *
  */
-export class ReferenceModeStore<Entity extends Referenceable, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>, 
+export class ReferenceModeStore<Entity extends Referenceable, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>,
                                 ReferenceContainer extends CRDTSingletonTypeRecord<Reference> | CRDTCollectionTypeRecord<Reference>,
                                 Container extends CRDTSingletonTypeRecord<Entity> | CRDTCollectionTypeRecord<Entity>> extends ActiveStore<Container> {
 
@@ -121,16 +122,18 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   private holdQueue: HoldQueue = new HoldQueue();
 
   /*
-   * An incrementing ID to uniquely identify each blocked send. 
+   * An incrementing ID to uniquely identify each blocked send.
    */
   private blockCounter = 0;
 
   static async construct<Entity extends Referenceable, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>,
                          ReferenceContainer extends CRDTSingletonTypeRecord<Reference> | CRDTCollectionTypeRecord<Reference>,
                          Container extends CRDTSingletonTypeRecord<Entity> | CRDTCollectionTypeRecord<Entity>>(
-      storageKey: ReferenceModeStorageKey, exists: Exists, type: Type) {
-    const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(storageKey, exists, type, StorageMode.ReferenceMode);
-    result.backingStore = await BackingStore.construct(storageKey.backingKey, exists, type.getContainedType(), StorageMode.Backing);
+      storageKey: ReferenceModeStorageKey, exists: Exists, type: Type, unusedMode: StorageMode, baseStore: Store<CRDTTypeRecord>) {
+    const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(
+        storageKey, exists, type, StorageMode.ReferenceMode, baseStore as unknown as Store<Container>);
+    result.backingStore = await BackingStore.construct(
+        storageKey.backingKey, exists, type.getContainedType(), StorageMode.Backing, baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>);
     let refType: Type;
     if (type.isCollectionType()) {
       refType = new CollectionType(new ReferenceType(type.getContainedType()));
@@ -138,7 +141,8 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       // TODO(shans) probably need a singleton type here now.
       refType = new ReferenceType(type.getContainedType());
     }
-    result.containerStore = await DirectStore.construct(storageKey.storageKey, exists, type, StorageMode.Direct);
+    result.containerStore = await DirectStore.construct(
+        storageKey.storageKey, exists, type, StorageMode.Direct, baseStore as unknown as Store<ReferenceContainer>);
     result.registerStoreCallbacks();
     return result;
   }
@@ -162,10 +166,10 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   }
 
   /**
-   * Messages are enqueued onto an object-wide queue and processed in order. 
+   * Messages are enqueued onto an object-wide queue and processed in order.
    * Internally, each handler (handleContainerStore, handleBackingStore, handleProxyMessage)
    * should not return until the response relevant to the message has been received.
-   * 
+   *
    * When handling proxy messages, this implies 2 rounds of update - first the backing
    * store needs to be updated, and once that has completed then the container store needs
    * to be updated.
@@ -221,16 +225,16 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
 
   /**
    * Handle an update from the container store.
-   * 
+   *
    * Operations and Models either enqueue an immediate send (if all referenced entities
    * are available in the backing store) or enqueue a blocked send (if some referenced
    * entities are not yet present).
-   * 
+   *
    * Note that the blocking mechanism isn't version-aware, so removes followed by
    * adds may not correctly sync. If this turns out to be a problem then we can
    * add version information to references and update the blocking store to gate
    * on a version as well as presence.
-   * 
+   *
    * Sync requests are propagated upwards to the storage proxy.
    */
   private async handleContainerStore(message: ProxyMessage<ReferenceContainer>) {
@@ -241,13 +245,13 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
           let getEntity: () => (Entity | null);
 
           if (reference) {
-            const entityCRDT = this.backingStore.getLocalModel(reference.id);            
+            const entityCRDT = this.backingStore.getLocalModel(reference.id);
             if (!entityCRDT) {
               this.enqueueBlockingSend([reference], () => {
                 const entityCRDT = this.backingStore.getLocalModel(reference.id);
                 const getEntity = () => this.entityFromModel(entityCRDT.getData(), reference.id);
                 const upstreamOp = this.updateOp<Reference, Entity>(operation, getEntity);
-                void this.send({type: ProxyMessageType.Operations, operations: [upstreamOp]});      
+                void this.send({type: ProxyMessageType.Operations, operations: [upstreamOp]});
               });
               break;
             }
@@ -291,10 +295,10 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
 
   /**
    * Handle an update from the backing store.
-   * 
+   *
    * Model and Operation updates are routed directly to the holdQueue, where they may unblock
    * pending sends but will not have any other action.
-   * 
+   *
    * Syncs should never occur as operation/model updates to the backing store are generated
    * by this ReferenceModeStore object and hence should never be out-of-order.
    */
@@ -316,7 +320,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
 
   /**
    * Handle an update from an upstream StorageProxy.
-   * 
+   *
    * Model and Operation updates apply first to the backing store, then to the container store.
    * Backing store updates should never fail as updates are locally generated.
    * For Operations:
@@ -324,8 +328,8 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
    * - If the container store update fails, then a `false` return value ensures that the upstream proxy
    *   will request a sync.
    * Model updates should not fail.
-   * 
-   * Sync requests are handled by directly constructing and sending a model 
+   *
+   * Sync requests are handled by directly constructing and sending a model
    */
   private async handleProxyMessage(message: ProxyMessage<Container>): Promise<boolean> {
     switch (message.type) {
@@ -357,7 +361,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
           backingStoreReceipts.push(this.updateBackingStore(value).then(success => {
             if (success) {
               const entityVersion = this.backingStore.getLocalModel(id).getData().version;
-              newValues[id] = {value: {id, storageKey: this.backingStore.storageKey, version: entityVersion}, version};    
+              newValues[id] = {value: {id, storageKey: this.backingStore.storageKey, version: entityVersion}, version};
             }
             return success;
           }));
@@ -376,7 +380,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
         } else {
           this.enqueueBlockingSend(pendingIds, send);
         }
-        
+
         break;
       }
       default:
@@ -418,7 +422,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
         send.fn();
       }
     }
-  } 
+  }
 
   /**
    * Convert the provided entity to a CRDT Model of the entity. This requires synthesizing
@@ -489,8 +493,8 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   }
 
   /**
-   * Returns a function that can construct a CRDTModel of a Container of Entities based off the 
-   * provided Container of References. Any referenced IDs that are not yet available in the backing 
+   * Returns a function that can construct a CRDTModel of a Container of Entities based off the
+   * provided Container of References. Any referenced IDs that are not yet available in the backing
    * store are returned in the pendingIds list. The returned function should not be invoked until
    * all references in pendingIds have valid backing in the backing store.
    */
@@ -594,7 +598,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   private operationElement<T extends Referenceable>(operation: ReferenceModeOperation<T>): T | null {
     return this.processOp(addOp => addOp.added, removeOp => removeOp.removed, setOp => setOp.value, clearOp => null, operation);
   }
-  
+
   /**
    * Update the provided operation's element using the provided producer.
    */
@@ -623,13 +627,13 @@ function versionIsLarger(larger: VersionMap, smaller: VersionMap) {
 
 class HoldQueue {
   queue: Dictionary<HoldRecord[]> = {};
-  
+
   enqueue(entities: {id: string, version: VersionMap}[], onRelease: Runnable) {
     const ids = {};
     for (const {id, version} of entities) {
       ids[id] = version;
     }
-    const holdRecord = {ids, onRelease}; 
+    const holdRecord = {ids, onRelease};
     for (const entity of entities) {
       if (!this.queue[entity.id]) {
         this.queue[entity.id] = [];

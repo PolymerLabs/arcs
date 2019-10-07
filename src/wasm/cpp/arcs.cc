@@ -13,6 +13,7 @@ EM_JS(void, singletonClear, (Particle* p, Handle* h), {})
 EM_JS(const char*, collectionStore, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionRemove, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionClear, (Particle* p, Handle* h), {})
+EM_JS(void, dereference, (Particle* p, Handle* h, const char* ref_id, size_t continuation_id), {})
 EM_JS(void, render, (Particle* p, const char* slotName, const char* template_str, const char* model), {})
 EM_JS(void, serviceRequest, (Particle* p, const char* call, const char* args, const char* tag), {})
 EM_JS(const char*, resolveUrl, (const char* url), {})
@@ -41,6 +42,11 @@ EMSCRIPTEN_KEEPALIVE
 void updateHandle(Particle* particle, Handle* handle, const char* encoded1, const char* encoded2) {
   handle->update(encoded1, encoded2);
   particle->update(handle);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void dereferenceResponse(Particle* particle, size_t continuation_id, const char* encoded) {
+  particle->dereferenceResponse(continuation_id, encoded);
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -160,15 +166,10 @@ std::string StringDecoder::chomp(int len) {
   return token;
 }
 
-void StringDecoder::validate(std::string token) {
+void StringDecoder::validate(const std::string& token) {
   if (chomp(token.size()) != token) {
     error("Packaged entity decoding failed in validate()\n");
   }
-}
-
-template<typename T>
-void StringDecoder::decode(T& val) {
-  static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
 }
 
 template<>
@@ -214,11 +215,6 @@ Dictionary StringDecoder::decodeDictionary(const char* str) {
 }
 
 // StringEncoder
-template<typename T>
-void StringEncoder::encode(const char* prefix, const T& val) {
-  static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
-}
-
 template<>
 void StringEncoder::encode(const char* prefix, const std::string& str) {
   str_ += prefix + std::to_string(str.size()) + ":" + str + "|";
@@ -255,9 +251,8 @@ void StringPrinter::addId(const std::string& id) {
   parts_.push_back("{" + id + "}");
 }
 
-template<typename T>
-void StringPrinter::add(const char* prefix, const T& val) {
-  static_assert(sizeof(T) == 0, "Unsupported type for entity fields");
+void StringPrinter::add(const char* literal) {
+  parts_.push_back(literal);
 }
 
 template<>

@@ -128,7 +128,7 @@ export class UiSlotComposer {
     // who renderered the slot (i.e. the dom node or other container). The renderer identifies these
     // slots by entity-id (`subid`) instead. But `subid` is not unique, we need more information to
     // locate the output slot, so we embed the muxed-slot's id into our output-slot-id.
-    const hostedSlotId = `${slotConsumer.slotContext.id}___${innerArc.generateID()}`;
+    const hostedSlotId = `${slotConsumer.slotContext.id}___${innerArc.generateID('slot')}`;
     //this._contexts.push(new HostedSlotContext(hostedSlotId, slotConsumer, storeId));
     return hostedSlotId;
   }
@@ -142,7 +142,6 @@ export class UiSlotComposer {
 
   async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
     const newConsumers = <SlotConsumer[]>[];
-
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       p.getSlandleConnections().forEach(cs => {
@@ -150,14 +149,12 @@ export class UiSlotComposer {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;
         }
-
         const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, this._containerKind);
         const providedContexts = slotConsumer.createProvidedContexts();
         this._contexts = this._contexts.concat(providedContexts);
         newConsumers.push(slotConsumer);
       });
     });
-
     // Set context for each of the slots.
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
@@ -170,17 +167,13 @@ export class UiSlotComposer {
         context['addSlotConsumer'](consumer);
       }
     });
-
     // Calculate the Descriptions only once per-Arc
     const allArcs = this.consumers.map(consumer => consumer.arc);
     const uniqueArcs = [...new Set(allArcs).values()];
-
     // get arc -> description
     const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
-
     // create a mapping from the zipped uniqueArcs and descriptions
     const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
-
     // ... and apply to each consumer
     for (const consumer of this.consumers) {
       consumer.description = consumerByArc.get(consumer.arc);
@@ -236,48 +229,73 @@ export class UiSlotComposer {
     }
   }
 
-  sendEvent(particleId, eventlet) {
-    // TODO(sjmiles): `arc` is bound to `this` in arc.ts specifically for use here, simplify
-    const arc = this['arc'];
-    if (arc) {
-      const particle = arc.activeRecipe.particles.find(
-        particle => String(particle.id) === String(particleId)
-      );
-      if (particle) {
+  sendEvent(particleId: string, eventlet) {
+    log('sendEvent:', particleId, eventlet);
+    const consumer = this._findConsumer(particleId);
+    if (consumer) {
+      const particle = consumer.consumeConn.particle;
+      const arc = consumer.arc;
+      if (arc) {
+        //log('firing PEC event for', particle.name);
         // TODO(sjmiles): we need `arc` and `particle` here even though
         // the two are bound together, simplify
-        //log('firing PEC event for', particle.name);
+        log('... found consumer, particle, and arc to delegate sendEvent');
         arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
       }
+    } else {
+      warn('...found no consumer!');
     }
   }
 
+  _findConsumer(id) {
+    return this.consumers.find(consumer => consumer.consumeConn.particle.id.toString() === id);
+  }
+
+  // TODO(sjmiles): needs factoring
   delegateOutput(arc: Arc, particle: Particle, content) {
     const observer = this['slotObserver'];
     if (observer && content) {
+      // we scan connections for container and slotMap
       const connections = particle.getSlotConnections();
+      // assemble a renderPacket to send to slot observer
+      const packet = {};
+      // identify parent container
+      const container = connections[0];
+      if (container) {
+        Object.assign(packet, {
+          containerSlotName: container.targetSlot.name,
+          containerSlotId: container.targetSlot.id,
+        });
+      }
+      // Set modality according to particle spec
+      // TODO(sjmiles): in the short term, Particle may also include modality hints in `content`
+      const modality = particle.recipe.modality;
+      if (!modality.all) {
+        Object.assign(packet, {
+          modality: modality.names.join(',')
+        });
+      }
       // build slot id map
       const slotMap = {};
       connections.forEach(({providedSlots}) => {
         Object.values(providedSlots).forEach(({name, id}) => slotMap[name] = id);
       });
-      // identify parent container
-      const container = connections[0];
-      if (container) {
-        Object.assign(content, {
-          containerSlotName: container.targetSlot.name,
-          containerSlotId: container.targetSlot.id
-        });
-      }
-      Object.assign(content, {
-        particle,
+      // finalize packet
+      const pid = particle.id.toString();
+      Object.assign(packet, {
+        particle: {
+          name: particle.name,
+          id: pid
+        },
         slotMap,
-        outputSlotId: particle.id.toString(),
+        // TODO(sjmiles): there is no clear concept for a particle's output channel, so there is no proper ID
+        // to use. The `particle.id` works for now, but it probably should be a combo of `particle.id` and the
+        // consumed slot id (neither of which are unique by themselves).
+        outputSlotId: pid,
+        content
       });
-      //
       //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');
-      observer.observe(content, arc);
+      observer.observe(packet, arc);
     }
   }
-
 }

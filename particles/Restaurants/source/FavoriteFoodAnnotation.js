@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({UiParticle, html, log}) => {
 
   const template = html`
 
@@ -45,7 +45,7 @@ defineParticle(({DomParticle, html, log}) => {
 
     `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -63,7 +63,7 @@ defineParticle(({DomParticle, html, log}) => {
     render({restaurant}, {foods, name}) {
       foods.forEach(food => food.owner = name);
       return {
-        subId: this.idFor(restaurant),
+        subid: this.idFor(restaurant),
         items: {
           $template: 'have-favorite-food',
           models: foods

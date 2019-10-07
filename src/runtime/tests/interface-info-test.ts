@@ -50,7 +50,7 @@ describe('interface', () => {
 
     const handleName = iface.handleConnections[0].name as TypeVariable;
     const slotName = iface.slots[0].name as TypeVariable;
-    
+
     assert.instanceOf(handleName, TypeVariable);
     assert.instanceOf(slotName, TypeVariable);
 

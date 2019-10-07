@@ -17,7 +17,7 @@ import {assert} from '../../platform/chai-web.js';
 describe('Particle definitions', () => {
   const loader = new Loader();
   const filenames = glob.sync('particles/**/*.arcs');
-  
+
   filenames
     .forEach(filename => {
       // skip experimental Native partices for now as they need a heavyweight build step

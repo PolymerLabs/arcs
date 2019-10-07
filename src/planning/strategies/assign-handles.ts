@@ -10,10 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {StorageStub} from '../../runtime/storage-stub.js';
+import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {
@@ -96,8 +94,8 @@ export class AssignHandles extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags: string[], counts): Map<StorageProviderBase | StorageStub, string> {
-    const stores: Map<StorageProviderBase | StorageStub, string> = new Map();
+  getMappableStores(fate, type, tags: string[], counts): Map<UnifiedStore, string> {
+    const stores: Map<UnifiedStore, string> = new Map();
 
     if (fate === 'use' || fate === '?') {
       this.arc.findStoresByType(type, {tags}).forEach(store => stores.set(store, 'use'));

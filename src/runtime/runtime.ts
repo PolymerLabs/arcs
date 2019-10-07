@@ -13,18 +13,17 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 import {RuntimeCacheService} from './runtime-cache.js';
-import {Id, IdGenerator} from './id.js';
+import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
-import {Handle} from './recipe/handle.js';
 import {SlotComposer} from './slot-composer.js';
 import {Loader} from './loader.js';
-import {StorageStub} from './storage-stub.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {VolatileMemory} from './storageNG/drivers/volatile.js';
+import {StorageKey} from './storageNG/storage-key.js';
 
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
@@ -87,11 +86,20 @@ export class Runtime {
 
   }
 
-  newArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
+  // TODO(shans): Clean up once old storage is removed.
+  // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
+  // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
+  // How best to provide default storage to an arc given whatever we decide?
+  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     const id = IdGenerator.newSession().newArcId(name);
-    const storageKey = storageKeyPrefix + id.toString();
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
+    if (typeof storageKeyPrefix === 'string') {
+      const storageKey = storageKeyPrefix + id.toString();
+      return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
+    } else {
+      const storageKey = storageKeyPrefix(id);
+      return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
+    }
   }
 
   // Stuff the shell needs
@@ -116,16 +124,23 @@ export class Runtime {
     this.arcById.delete(name);
   }
 
-  // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: StorageProviderBase, tags: string[]): void {
-    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
-      // tslint:disable-next-line: no-any
-      this.context['_addStore']((store as any) as StorageStub, tags);
-    }
-    // TODO: clear stores, when arc is being disposed.
+  findArcByParticleId(particleId: string): Arc {
+    return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
   }
 
-  unregisterStore(storeId: string) {
+  // TODO: This is a temporary method to allow sharing stores with other Arcs.
+  registerStore(store: UnifiedStore, tags: string[]): void {
+    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
+      this.context['_addStore'](store, tags);
+    }
+  }
+
+  // Temporary method to allow sharing stores with other Arcs.
+  unregisterStore(storeId: string, tags: string[]) {
+    // #shared tag indicates that a store was made available to all arcs.
+    if (!tags.includes('shared')) {
+      return;
+    }
     const index = this.context.stores.findIndex(store => store.id === storeId);
     if (index >= 0) {
       const store = this.context.stores[index];

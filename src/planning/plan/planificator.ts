@@ -13,13 +13,14 @@ import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
 import {KeyBase} from '../../runtime/storage/key-base.js';
-import {StorageProviderBase, SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EntityType} from '../../runtime/type.js';
 import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {PlannerInspector, PlannerInspectorFactory, InspectablePlanner} from '../planner-inspector.js';
+import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
+import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
 const planificatorId = 'plans';
 
@@ -50,6 +51,7 @@ export class Planificator {
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
+  storeCallbackIds: Map<UnifiedStore, number>;
   search: string|null = null;
   searchStore: SingletonStorageProvider;
   inspector: PlannerInspector|undefined;
@@ -134,29 +136,37 @@ export class Planificator {
 
   private _listenToArcStores() {
     this.arc.onDataChange(this.dataChangeCallback, this);
-    this.arc.context.allStores.forEach(store => {
-      if (store instanceof StorageProviderBase) {
-        store.on('change', this.dataChangeCallback, this);
-      }
+    this.storeCallbackIds = new Map();
+    this.arc.context.allStores.forEach(async store => {
+      const callbackId = (await store.activate()).on(async () => {
+        this.replanQueue.addChange();
+        return true;
+      });
+      this.storeCallbackIds.set(store, callbackId);
     });
   }
 
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
-    this.arc.context.allStores.forEach(store => {
-      if (store instanceof StorageProviderBase) {
-        store.off('change', this.dataChangeCallback);
-      }
+    this.arc.context.allStores.forEach(async store => {
+      const callbackId = this.storeCallbackIds.get(store);
+      (await store.activate()).off(callbackId);
     });
   }
 
   static constructSuggestionKey(arc: Arc, storageKeyBase?: string): KeyBase {
+    if (typeof arc.storageKey !== 'string') {
+      throw new Error(`Planner doesn't work with new-style storage yet!`);
+    }
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
     return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
   }
 
   static constructSearchKey(arc: Arc): KeyBase {
+    if (typeof arc.storageKey !== 'string') {
+      throw new Error(`Planner doesn't work with new-style storage yet!`);
+    }
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
     return keybase.childKeyForSearch(planificatorId);

@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlatformLoader} from '../../../build/platform/loader-web.js';
-import {Utils} from '../../shells/lib/utils.js';
+import {PlatformLoader} from '../../build/platform/loader-web.js';
+import {Utils} from '../lib/utils.js';
 
 export class DevShellLoader extends PlatformLoader {
   constructor(fileMap) {

@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({SimpleParticle, html, resolver}) => {
 
   const tmpl = html`
   <div style="padding: 16px;">
@@ -20,12 +20,12 @@ defineParticle(({DomParticle, html, resolver}) => {
     <h4>Input the path/to/labels.txt</h4>
     <input style="width: 80%; padding: 8px;" value="{{inputLabelsUrl}}" on-change="onLabelsChange">
     <button on-click="onSubmit">Submit</button>
-    
+
     <div slotid="resultsView"></div>
   </div>
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return tmpl;
     }

@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({SimpleParticle, html, log}) => {
 
   const template = html`
     <style>
@@ -69,7 +69,7 @@ defineParticle(({DomParticle, html, log}) => {
     </div>
   `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

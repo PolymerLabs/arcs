@@ -10,9 +10,9 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {PECOuterPort, APIPort} from './api-channel.js';
+import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
-import {Arc} from './arc.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {StorageStub} from './storage-stub.js';
@@ -22,10 +22,13 @@ import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Content} from './slot-consumer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
+import {Arc} from './arc.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
+import {ActiveStore, ProxyMessage} from './storageNG/store.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -101,7 +104,7 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
+  instantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
 
@@ -111,7 +114,7 @@ export class ParticleExecutionHost {
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
 
-  reinstantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
+  reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     const apiPort = this.getPort(particle);
@@ -178,7 +181,7 @@ class PECOuterPortImpl extends PECOuterPort {
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};
-    handle.on('change', data => this.SimpleCallback(callback, data), target);
+    handle.legacyOn(data => this.SimpleCallback(callback, data));
   }
 
   async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
@@ -237,13 +240,27 @@ class PECOuterPortImpl extends PECOuterPort {
     (handle as BigCollectionStorageProvider).cursorClose(cursorId);
   }
 
+  async onRegister(store: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
+    const id = store.on(async data => {
+      this.SimpleCallback(messagesCallback, data);
+      return Promise.resolve(true);
+    });
+    this.SimpleCallback(idCallback, id);
+  }
+
+  async onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
+   const res = await store.onProxyMessage(message);
+   this.SimpleCallback(callback, res);
+  }
+
   onIdle(version: number, relevance: Map<Particle, number[]>) {
     this.arc.pec.resolveIfIdle(version, relevance);
   }
 
   async onGetBackingStore(callback: number, storageKey: string, type: Type) {
     if (!storageKey) {
-      storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey || 'volatile');
+      // XXX
+      storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey as string || 'volatile');
     }
     const store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
     // TODO(shans): THIS IS NOT SAFE!
@@ -296,7 +313,7 @@ class PECOuterPortImpl extends PECOuterPort {
     let recipe0 = manifest.recipes[0];
     if (recipe0) {
       for (const slot of recipe0.slots) {
-        slot.id = slot.id || `slotid-${arc.generateID()}`;
+        slot.id = slot.id || arc.generateID('slot').toString();
         if (slot.sourceConnection) {
           const particlelocalName = slot.sourceConnection.particle.localName;
           if (particlelocalName) {
@@ -336,9 +353,9 @@ class PECOuterPortImpl extends PECOuterPort {
             // in Arc.deserialize.
             for (const store of manifest.stores) {
               if (store instanceof StorageStub) {
-                this.arc._registerStore(await store.inflate(), []);
+                await this.arc._registerStore(await store.inflate(), []);
               } else {
-                this.arc._registerStore(store, []);
+                await this.arc._registerStore(store, []);
               }
             }
             // TODO: Awaiting this promise causes tests to fail...

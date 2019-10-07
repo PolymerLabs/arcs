@@ -12,8 +12,8 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, log}) => {
-  return class extends DomParticle {
+defineParticle(({SimpleParticle, log}) => {
+  return class extends SimpleParticle {
     async onHandleUpdate(handle, update) {
       if (handle.name !== 'uniqueShows') {
         super.onHandleUpdate(handle, update);

@@ -28,7 +28,7 @@ export class AbstractDevtoolsChannel {
   private debouncedMessages: DevtoolsMessage[] = [];
   private messageListeners: Map<string, DevtoolsListener[]> = new Map();
   private timer = null;
-  
+
   constructor() {
   }
 

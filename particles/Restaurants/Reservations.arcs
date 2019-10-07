@@ -38,6 +38,13 @@ particle ReservationMultiAnnotation in 'source/ReservationAnnotation.js'
   inout Event event
   consume annotation
 
+// TODO(sjmiles): below leaves out definition of the
+// list of restaurants to bind to annotators, but
+// Coalescer seems to Do The Right Thing.
+// Ideally we could identify things about the list
+// we want (i.e. via `use`), but it doesn't coalesce
+// when I do that.
+
 recipe MakeReservations
   use as restaurants
   use #selected as restaurant
@@ -48,6 +55,7 @@ recipe MakeReservations
   Calendar
     event = event
     descriptions = calendarDescriptions
+    consume action as toproot
   // top-of-frame event editor
   ReservationForm
     restaurant = restaurant
@@ -60,10 +68,10 @@ recipe MakeReservations
     hostedParticle = ReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   DetailReservationForm
-     restaurant = restaurant
-     event = event
-     consume detailAction
-       provide annotation as detailAnnotation
+    restaurant = restaurant
+    event = event
+    consume detailAction
+      provide annotation as detailAnnotation
   ReservationAnnotation
     restaurant = restaurant
     event = event

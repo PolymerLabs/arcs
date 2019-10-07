@@ -11,7 +11,7 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, html, log, resolver}) => {
+defineParticle(({DomParticle, html, log, resolver}) => {
   function importLibrary(filename) {
     importScripts(resolver(`GamePane/${filename}`));
   }
@@ -306,7 +306,7 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
       '%cGamePane',
       `background: #ff69b4; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
 
-  return class extends SimpleParticle {
+  return class extends DomParticle {
     get template() {
       return template;
     }
@@ -364,7 +364,7 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
       }
     }
     buildRenderRecipe(renderParticle, gameId) {
-      return SimpleParticle
+      return DomParticle
           .buildManifest`
 ${renderParticle}
 

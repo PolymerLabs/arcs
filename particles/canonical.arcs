@@ -16,11 +16,9 @@ import 'Magenta/Visualizer.arcs'
 // for ArcMetaShare
 import 'Arcs/schemas/ArcMeta.arcs'
 
-// Uncomment to enable Javascript or Kotlin tutorial recipes. See Tutorial/tutorial.md for details.
-// import 'Tutorial/Javascript/Tutorial.arcs'
-// import 'Tutorial/Kotlin/Tutorial.arcs'
+import 'Tutorial/Javascript/Tutorial.arcs'
+import 'Tutorial/Kotlin/Tutorial.arcs'
 
 import 'TicTacToe/TicTacToe.arcs'
-// Uncomment to enable native particle recipes
 import 'Native/native.arcs'
 

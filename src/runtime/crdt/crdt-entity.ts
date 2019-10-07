@@ -19,8 +19,8 @@ type Identified = Dictionary<Referenceable>;
 // All Entity CRDT types are based around a dictionary of singleton fields and a dictionary of collection fields.
 // The CRDT is composed of CRDTSingleton and CRDTCollection objects, one for each field.
 // The raw view contains the single value from each CRDTSingleton (or null) and a set of the values from each
-// CRDTCollection. 
-type RawEntity<S extends Identified, C extends Identified> = 
+// CRDTCollection.
+type RawEntity<S extends Identified, C extends Identified> =
 {
   singletons: S,
   collections: {[P in keyof C]: Set<C[P]>}
@@ -35,7 +35,7 @@ export type SingletonEntityModel<S extends Identified> = {[P in keyof S]: CRDTSi
 export type CollectionEntityModel<S extends Identified> = {[P in keyof S]: CRDTCollection<S[P]>};
 
 // The data view of an entity.
-export type EntityData<S extends Identified, C extends Identified> = 
+export type EntityData<S extends Identified, C extends Identified> =
   {
     singletons: SingletonEntityData<S>,
     collections: CollectionEntityData<C>,
@@ -43,7 +43,7 @@ export type EntityData<S extends Identified, C extends Identified> =
   };
 
 // The internal model of an entity.
-export type EntityInternalModel<S extends Identified, C extends Identified> = 
+export type EntityInternalModel<S extends Identified, C extends Identified> =
   {
     singletons: SingletonEntityModel<S>,
     collections: CollectionEntityModel<C>,
@@ -55,7 +55,7 @@ export enum EntityOpTypes {Set, Clear, Add, Remove}
 type SetOp<Singleton, Field extends keyof Singleton> = {type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, clock: VersionMap};
 type AddOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Add, field: Field, added: Collection[Field], actor: string, clock: VersionMap};
 type RemoveOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Remove, field: Field, removed: Collection[Field], actor: string, clock: VersionMap};
-export type EntityOperation<S, C> = 
+export type EntityOperation<S, C> =
   SetOp<S, keyof S> |
   {type: EntityOpTypes.Clear, field: keyof S, actor: string, clock: VersionMap} |
   AddOp<C, keyof C> |
@@ -76,7 +76,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
   // can't be returned from a function if they have private or protected members because of
   // TS4094 (see e.g. https://github.com/Microsoft/TypeScript/issues/30355 for Microsoft's take on the issue)
   model: EntityInternalModel<S, C>;
-  
+
   constructor(singletons: SingletonEntityModel<S>, collections: CollectionEntityModel<C>) {
     this.model = {singletons, collections, version: {}};
   }
@@ -87,7 +87,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
     let allOps = true;
     for (const singleton of Object.keys(this.model.singletons)) {
       singletonChanges[singleton] = this.model.singletons[singleton].merge(other.singletons[singleton]);
-      if (singletonChanges[singleton].modelChange.changeType === ChangeType.Model || 
+      if (singletonChanges[singleton].modelChange.changeType === ChangeType.Model ||
           singletonChanges[singleton].otherChange.changeType === ChangeType.Model) {
         allOps = false;
       }
@@ -143,9 +143,9 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
             op = {...operation, type: EntityOpTypes.Remove, field: collection};
           }
           otherOps.push(op);
-        }     
+        }
       }
-      return {modelChange: {changeType: ChangeType.Operations, operations: modelOps}, 
+      return {modelChange: {changeType: ChangeType.Operations, operations: modelOps},
               otherChange: {changeType: ChangeType.Operations, operations: otherOps}};
     } else {
       // need to map this.model to get the data out.
@@ -203,7 +203,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
     });
     Object.keys(this.model.collections).forEach(collection => {
       collections[collection] = this.model.collections[collection].getData();
-    });      
+    });
     return {singletons, collections, version: this.model.version} as EntityData<S, C>;
   }
 

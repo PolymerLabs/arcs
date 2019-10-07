@@ -39,14 +39,14 @@ function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
   return (t instanceof Type) ? t.toLiteral() : t;
 }
 
-export function isRoot({name, tags, id, type}: {name: string, tags: string[], id?: string, type?: Type}): boolean {
+export function isRoot({name, tags, id, type, fate}: {name: string, tags: string[], id?: string, type?: Type, fate?: string}): boolean {
   const rootNames: string[] = [
     'root',
     'toproot',
     'modal'
   ];
 
-  if (type && !type.slandleType()) {
+  if ((fate && fate !== '`slot') || (type && !type.slandleType())) {
     // If this is a handle that is not a Slandle, it cannot be a root slot.
     return false;
   }
@@ -113,9 +113,9 @@ export class HandleConnectionSpec {
       isRequired: !this.isOptional, // TODO: Remove duplicated data isRequired vs isOptional (prefer isOptional)
       isSet,
       type: slotType,
-      handles: [slotInfo.handle],
+      handles: slotInfo.handle ? [slotInfo.handle] : [],
       formFactor: slotInfo.formFactor,
-      provideSlotConnections: [],
+      provideSlotConnections: this.dependentConnections.map(conn => conn.toSlotConnectionSpec()),
     };
   }
 
@@ -487,9 +487,9 @@ export class ParticleSpec {
               throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
             }
             if (handle.check) {
-              throw new Error(`Can't make multiple checks on the same input (${handleName}).`); 
+              throw new Error(`Can't make multiple checks on the same input (${handleName}).`);
             }
-            
+
             handle.check = createCheck(handle, check, this.handleConnectionMap);
             results.push(handle.check);
             break;

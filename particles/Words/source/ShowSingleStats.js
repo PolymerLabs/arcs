@@ -9,7 +9,7 @@
  */
 'use strict';
 
-defineParticle(({DomParticle, html, log, resolver}) => {
+defineParticle(({SimpleParticle, html, log, resolver}) => {
   function importLibrary(clazzType, filename) {
     // TODO(wkorman): The use of a `cdn` url below is a surprising workaround to
     // allow code sharing with the main Words game logic. This particle runs,
@@ -253,7 +253,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
 </template>
     `;
 
-  return class extends DomParticle {
+  return class extends SimpleParticle {
     get template() {
       return template;
     }

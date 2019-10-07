@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const host = `playlist-item`;
 
@@ -59,7 +59,7 @@ defineParticle(({DomParticle, html}) => {
     </a>
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

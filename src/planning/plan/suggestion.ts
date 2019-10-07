@@ -244,8 +244,7 @@ export class Suggestion {
       }
     };
     const slandles = this.plan.handles.filter(
-      handle => handle.type.isSlot()
-    || handle.type.isCollectionType() && handle.type.collectionType.isSlot()
+      handle => handle.fate === '`slot'
     ).length;
     if (slandles + this.plan.slots.length === 0) {
       logReason(`No slots`);

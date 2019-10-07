@@ -55,7 +55,7 @@ describe('Store', async () => {
     const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
 
-    const driver = activeStore['driver'] as MockDriver<CountData>;    
+    const driver = activeStore['driver'] as MockDriver<CountData>;
     let capturedModel: CountData = null;
     driver.send = async model => {capturedModel = model; return true;};
 
@@ -85,7 +85,7 @@ describe('Store', async () => {
     assert.isTrue(result);
 
     count.applyOperation(operation);
-     
+
     assert.deepEqual(capturedModel, count.getData());
   });
 
@@ -121,7 +121,7 @@ describe('Store', async () => {
         throw new Error();
       });
 
-      const result = activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});    
+      const result = activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});
     });
   });
 
@@ -130,7 +130,7 @@ describe('Store', async () => {
 
     const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
     const activeStore = await store.activate();
-    
+
     return new Promise((resolve, reject) => {
       // requesting store
       const id1 = activeStore.on(async proxyMessage => {
@@ -162,14 +162,14 @@ describe('Store', async () => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.strictEqual(proxyMessage.operations.length, 1);
           assert.strictEqual(proxyMessage.id, id);
-          assert.deepEqual(proxyMessage.operations[0], {type: CountOpTypes.MultiIncrement, value: 1, actor: 'me', 
+          assert.deepEqual(proxyMessage.operations[0], {type: CountOpTypes.MultiIncrement, value: 1, actor: 'me',
             version: {from: 0, to: 1}});
           resolve(true);
           return true;
         }
         throw new Error();
       });
-  
+
       const driver = activeStore['driver'] as MockDriver<CountData>;
       driver.receiver(count.getData(), 1);
     });
@@ -188,7 +188,7 @@ describe('Store', async () => {
     driver.send = async model => {throw new Error('Should not be invoked');};
 
     // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
-    // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send(). 
+    // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
     await driver.receiver(remoteCount.getData(), 1);
   });
 
@@ -201,7 +201,7 @@ describe('Store', async () => {
     // local count from proxy
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
-  
+
     // conflicting remote count from store
     const remoteCount = new CRDTCount();
     remoteCount.applyOperation({type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}});
@@ -225,7 +225,7 @@ describe('Store', async () => {
     assert.deepEqual(capturedModel, count.getData());
   });
 
-  
+
   it('resolves a combination of messages from the proxy and the driver', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
     const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');

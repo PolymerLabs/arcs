@@ -40,7 +40,7 @@ describe('RecipeResolver', () => {
     const recipe = manifest.recipes[0];
     const arc = createArc(manifest);
     const resolver = new RecipeResolver(arc);
-    
+
     // Initially the recipe should not be normalized (after which it's srozen).
     assert.isFalse(Object.isFrozen(recipe));
     const result = await resolver.resolve(recipe);

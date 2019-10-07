@@ -9,7 +9,7 @@
  */
 
 import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
-import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback} from './store.js';
+import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback, Store} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver-factory.js';
 import {Type} from '../type.js';
@@ -24,7 +24,7 @@ type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
 export class BackingStore<T extends CRDTTypeRecord>  {
-  
+
   private stores: Dictionary<StoreRecord<T>> = {};
   private callbacks = new Map<number, MultiplexedProxyCallback<T>>();
   private nextCallbackId = 1;
@@ -33,34 +33,35 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     public storageKey: StorageKey,
     private exists: Exists,
     private type: Type,
-    private mode: StorageMode) {
+    private mode: StorageMode,
+    private baseStore: Store<T>) {
   }
 
   on(callback: MultiplexedProxyCallback<T>): number {
     this.callbacks.set(this.nextCallbackId, callback);
     return this.nextCallbackId++;
   }
-  
+
   off(callback: number): void {
     this.callbacks.delete(callback);
   }
-  
+
   getLocalModel(muxId: string) {
     const store = this.stores[muxId];
 
     if (store == null) {
       this.stores[muxId] = {type: 'pending', promise: this.setupStore(muxId)};
-      return null;  
+      return null;
     }
     if (store.type === 'pending') {
       return null;
-    } else { 
+    } else {
       return store.store.localModel;
     }
   }
 
   private async setupStore(muxId: string): Promise<{type: 'record', store: DirectStore<T>, id: number}> {
-    const store = await DirectStore.construct<T>(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode);
+    const store = await DirectStore.construct<T>(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode, this.baseStore);
     const id = store.on(msg => this.processStoreCallback(muxId, msg));
     const record: StoreRecord<T> = {store, id, type: 'record'};
     this.stores[muxId] = record;
@@ -80,8 +81,8 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     return store.onProxyMessage(message);
   }
 
-  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode) {
-    return new BackingStore<T>(storageKey, exists, type, mode);
+  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
+    return new BackingStore<T>(storageKey, exists, type, mode, baseStore);
   }
 
   async idle() {

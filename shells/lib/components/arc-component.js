@@ -10,10 +10,10 @@
 
 import {Xen} from './xen.js';
 import {ArcHost} from './arc-host.js';
-import {DomSlotComposer} from './dom-slot-composer.js';
-import {logFactory} from '../../../build/platform/log-web.js';
+import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 
-const log = logFactory('ArcComponent', '#cb23a6');
+const {log, warn} = logsFactory('ArcComponent', '#cb23a6');
 
 // TODO(sjmiles): custom elements must derive from HTMLElement. Because we want to choose whether to make this an
 // element or not (flexible derivation), we implement as a mixin.
@@ -27,9 +27,6 @@ export const ArcComponentMixin = Base => class extends Base {
   propChanged(name) {
     return (this.props[name] !== this._lastProps[name]);
   }
-  //fire(name, value) {
-    // TODO(sjmiles): Implement generic event thingie here? Maybe build into XenState? A different mixin? Be abstract?
-  //}
   update(props, state) {
     if (this.propChanged('config')) {
       if (state.host) {
@@ -59,9 +56,15 @@ export const ArcComponentMixin = Base => class extends Base {
       if (config.suggestionContainer) {
         containers.suggestions = config.suggestionContainer;
       }
-      composer = new DomSlotComposer({containers});
+      composer = new UiSlotComposer(/*{containers}*/);
+      // TODO(sjmiles): slotObserver could be late attached or we could attach
+      // a thunk that dispatches to an actual broker configured elsewhere.
+      composer.slotObserver = config.broker || this.createBroker();
     }
     return new ArcHost(context, storage, composer);
+  }
+  createBroker() {
+    return null;
   }
   spawnArc(host, config) {
     // awaitState blocks re-entry until the async function has returned

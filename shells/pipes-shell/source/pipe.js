@@ -18,7 +18,7 @@ import {requireIngestionArc} from './ingestion-arc.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
-import {runArc} from './verbs/run-arc.js';
+import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
@@ -31,6 +31,8 @@ import 'https://$particles/PipeApps/Ingestion.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
+import 'https://$particles/Restaurants/Restaurants.arcs'
+import 'https://$particles/Notification/Notification.arcs'
 `;
 
 export const initPipe = async (client, paths, storage) => {
@@ -68,10 +70,16 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
     },
-    // TODO: eventually this should replace `spawn`. currently adding a parallel
-    // API call, to not affect existing demos.
+    // TODO: consolidate runArc and uiEvent with spawn and event, as well as
+    // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, tid, bus, runtime, env);
+      return await runArc(msg, bus, runtime, env);
+    },
+    uiEvent: async (msg, tid, bus) => {
+      return await uiEvent(msg, runtime);
+    },
+    stopArc: async (msg, tid, bus) => {
+      return await stopArc(msg, runtime);
     },
     // TODO(sjmiles): below here are "live context" tools (remove when other context options are viable)
     ingest: async (msg, tid, bus) => {

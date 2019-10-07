@@ -30,7 +30,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
 
       const success = Object.keys(model).map(tokenKey => {
         const tokens = this._initSubTokens(model[tokenKey], particleDesc);
-        
+
         return tokens.map(token => {
           const tokenValue = this.tokenToString(token);
           if (tokenValue == undefined) {

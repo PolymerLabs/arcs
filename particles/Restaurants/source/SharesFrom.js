@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({UiParticle, log}) => {
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     update({shares, names}) {
       log(shares, names);
       this.updateDescription(shares && shares[0], names);

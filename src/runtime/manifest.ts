@@ -32,13 +32,13 @@ import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
-import {StorageStub} from './storage-stub.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
+import {StorageStub} from './storage-stub.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -111,9 +111,9 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores: StorageStub[] = [];
+  private _stores: UnifiedStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
-  storeTags: Map<StorageStub, string[]> = new Map();
+  storeTags: Map<UnifiedStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
@@ -180,7 +180,7 @@ export class Manifest {
   get fileName() {
     return this._fileName;
   }
-  get stores(): StorageStub[] {
+  get stores(): UnifiedStore[] {
     return this._stores;
   }
   get allStores() {
@@ -205,17 +205,17 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type: Type, name: string, id: string, tags: string[], claims?: ClaimIsTag[], storageKey?: string) : Promise<StorageProviderBase | StorageStub> {
-    return this.newStorageStub(type, name, id, storageKey, tags, null, claims);
+  async createStore(type: Type, name: string, id: string, tags: string[], claims?: ClaimIsTag[], storageKey?: string) : Promise<UnifiedStore> {
+    return this.newStore(type, name, id, storageKey, tags, null, claims);
   }
 
-  _addStore(store: StorageStub, tags: string[]) {
+  _addStore(store: UnifiedStore, tags: string[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
     return store;
   }
 
-  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[],
+  newStore(type: Type, name: string, id: string, storageKey: string, tags: string[],
                  originalId: string, claims: ClaimIsTag[], description?: string, version?: number,
                  source?: string, referenceMode?: boolean, model?: {}[]) {
     if (source) {
@@ -270,16 +270,16 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store: StorageStub) : Set<string> {
+  findStoreTags(store: UnifiedStore) : Set<string> {
     return new Set(this._find(manifest => manifest.storeTags.get(store)));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
   }
-  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): StorageStub[] {
+  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): UnifiedStore[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store: StorageStub) {
+    function typePredicate(store: UnifiedStore) {
       const resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
         return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
@@ -296,7 +296,7 @@ export class Manifest {
 
       return TypeChecker.compareTypes({type: store.type}, {type});
     }
-    function tagPredicate(manifest: Manifest, store: StorageStub) {
+    function tagPredicate(manifest: Manifest, store: UnifiedStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
 
@@ -753,7 +753,7 @@ ${e.message}
         handle.localName = item.name;
         items.byName.set(item.name, {item, handle});
       }
-      handle.fate = item.fate ? item.fate : null;
+      handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
       items.byHandle.set(handle, item);
     }
 
@@ -926,8 +926,7 @@ ${e.message}
       }
     }
 
-    for (const [particle, item] of items.byParticle) {
-      for (const connectionItem of item.connections) {
+    const newConnection = (particle: Particle, connectionItem: AstNode.RecipeParticleConnection) => {
         let connection;
 
         if (connectionItem.param === '*') {
@@ -963,7 +962,12 @@ ${e.message}
             const handle = recipe.newHandle();
             handle.tags = [];
             handle.localName = connectionItem.target.name;
-            handle.fate = 'create';
+            if (connection.direction === '`consume' || connection.direction === '`provide') {
+              // TODO(jopra): This is something of a hack to catch users who have not forward-declared their slandles.
+              handle.fate = '`slot';
+            } else {
+              handle.fate = 'create';
+            }
             // TODO: item does not exist on handle.
             handle['item'] = {kind: 'handle'};
             entry = {item: handle['item'], handle};
@@ -1027,6 +1031,13 @@ ${e.message}
         if (targetHandle) {
           connection.connectToHandle(targetHandle);
         }
+
+        connectionItem.dependentConnections.forEach(item => newConnection(particle, item));
+    };
+
+    for (const [particle, item] of items.byParticle) {
+      for (const connectionItem of item.connections) {
+        newConnection(particle, connectionItem);
       }
 
       for (const slotConnectionItem of item.slotConnections) {
@@ -1107,7 +1118,7 @@ ${e.message}
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
-      return manifest.newStorageStub(type, name, id, item.source, tags, originalId, claims, item.description, item.version);
+      return manifest.newStore(type, name, id, item.source, tags, originalId, claims, item.description, item.version);
     }
 
     let json: string;
@@ -1201,7 +1212,7 @@ ${e.message}
     }
     const version = item.version || 0;
     const storageKey = (manifest.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
-    return manifest.newStorageStub(
+    return manifest.newStore(
         type, name, id, storageKey, tags, originalId, claims, item.description, version, item.source, referenceMode, model);
   }
 

@@ -68,7 +68,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
 
   constructor() {
     super();
-    this.reset();    
+    this.reset();
   }
 
   reset() {

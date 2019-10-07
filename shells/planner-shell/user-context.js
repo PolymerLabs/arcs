@@ -127,7 +127,7 @@ export class UserContext {
   // async updateFriends({storage, userid, context}, state) {
   //   if (state.friendsStore) {
   //     log('discarding old PROFILE_friends');
-  //     state.friendsStore.off('change', state.friendsStoreCb);
+  //     state.friendsStore.off(state.friendsStoreCb);
   //     state.friendsStore = null;
   //   }
   //   const friendsStore = await context.findStoreById('PROFILE_friends');
@@ -137,7 +137,7 @@ export class UserContext {
   //     // get current data
   //     const friends = await friendsStore.toList();
   //     // listen for changes
-  //     friendsStore.on('change', friendsStoreCb, this);
+  //     friendsStore.on(friendsStoreCb);
   //     // process friends already in store
   //     this.onFriendsChange(storage, context, {add: friends.map(f => ({value: f}))});
   //     this.state = {friendsStore, friendsStoreCb};

@@ -139,7 +139,7 @@ describe('types', () => {
       deepEqual(iface, Type.fromLiteral(iface.toLiteral()));
       deepEqual(iface, iface.clone(new Map()));
     });
-    
+
     it('Slot', async () => {
       const slot = SlotType.make('f', 'h');
       deepEqual(slot.toLiteral(), {tag: 'Slot', data: {formFactor: 'f', handle: 'h'}});

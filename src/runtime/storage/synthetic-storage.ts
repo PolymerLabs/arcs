@@ -150,7 +150,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     this.initialized = (async () => {
       const data = await targetStore.get();
       await this.process(data, false);
-      targetStore.on('change', details => this.process(details.data, true), this);
+      targetStore.legacyOn(details => this.process(details.data, true));
     })();
   }
 
@@ -169,14 +169,18 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     this.model = [];
     for (const handle of handles || []) {
       if (this.storageFactory.isPersistent(handle.storageKey)) {
-        this.model.push(new ArcHandle(handle.id, handle.storageKey, handle.mappedType, handle.tags));
+        if (typeof handle.storageKey === 'string') {
+          this.model.push(new ArcHandle(handle.id, handle.storageKey, handle.mappedType, handle.tags));
+        } else {
+          throw new Error(`Can't use old storage stack with NG StorageKey objects`);
+        }
       }
     }
     if (fireEvent) {
       const diff = setDiffCustom(oldModel, this.model, JSON.stringify);
       const add = diff.add.map(arcHandle => ({value: arcHandle}));
       const remove = diff.remove.map(arcHandle => ({value: arcHandle}));
-      await this._fire('change', new ChangeEvent({add, remove}));
+      await this._fire(new ChangeEvent({add, remove}));
     }
   }
 

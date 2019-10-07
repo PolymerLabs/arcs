@@ -66,7 +66,7 @@ export class HotReloadServer {
             console.log(`Watching: ${local}`);
           }
           this.filesToWatch.push(file);
-          
+
           let watcher;
           if (local.endsWith('.wasm')) {
             watcher = this.chokidar.watch(local, {

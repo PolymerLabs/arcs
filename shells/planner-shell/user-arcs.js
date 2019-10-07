@@ -75,7 +75,7 @@ export class UserArcs {
   async foundArcsStore(store) {
     log('foundArcsStore', Boolean(store));
     await this.publishInitialChanges(this.listeners);
-    store.on('change', changes => this.arcsStoreChange(changes), this);
+    store.on(changes => this.arcsStoreChange(changes));
   }
   arcsStoreChange(changes) {
     this.publish(changes, this.listeners);

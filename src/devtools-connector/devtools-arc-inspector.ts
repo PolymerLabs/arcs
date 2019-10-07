@@ -79,9 +79,9 @@ class DevtoolsArcInspector implements ArcInspector {
     });
   }
 
-  public recipeInstantiated(particles: Particle[], activeRecipe: string) {
+  public async recipeInstantiated(particles: Particle[], activeRecipe: string) {
     if (!DevtoolsConnection.isConnected) return;
-    this.storesFetcher.onRecipeInstantiated();
+    await this.storesFetcher.onRecipeInstantiated();
 
     type TruncatedSlot = {id: string, name: string};
     const truncate = ({id, name}: Slot) => ({id, name});
@@ -105,7 +105,14 @@ class DevtoolsArcInspector implements ArcInspector {
 
   public pecMessage(name: string, pecMsgBody: object, pecMsgCount: number, stackString: string) {
     if (!DevtoolsConnection.isConnected) return;
-    
+
+    // Modifying pec messages is a problem as they are transmited to DevTools with a delay. If the
+    // object representing a message is modified, it appears as if a different messages travelled
+    // across the pec. We could have made a deep copy of the message object, but agreed that these
+    // objects should not be modified as a matter of principle. We are freezing them as a defensive
+    // measure, but only if DevTools is connected, as freezing has performance penalty.
+    deepFreeze(pecMsgBody);
+
     const stack = this._extractStackFrames(stackString);
     this.arcDevtoolsChannel.send({
       messageType: 'PecLog',
@@ -151,7 +158,7 @@ class DevtoolsArcInspector implements ArcInspector {
         const match = frameString.match(/^ {4}at (.*) \((.*)\)$/);
         const method = match ? match[1] : '<unknown>';
         let source = match ? match[2] : frameString.replace(/^ *at */, '');
-        
+
         const frame: StackFrame = {method};
         source = match[2].replace(/:[0-9]+$/, '');
         if (source.startsWith('http')) {
@@ -206,4 +213,15 @@ class DevtoolsArcInspector implements ArcInspector {
       }
     });
   }
+}
+
+function deepFreeze(object: object) {
+  for (const name of Object.getOwnPropertyNames(object)) {
+    const value = object[name];
+    if (value && typeof value === 'object') {
+      deepFreeze(value);
+    }
+  }
+
+  Object.freeze(object);
 }

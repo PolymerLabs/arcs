@@ -15,7 +15,7 @@ import {Relevance} from '../runtime/relevance.js';
 
 export class Speculator {
   private speculativeArcs: Arc[] = [];
-  
+
   async speculate(arc: Arc, plan: Recipe, hash: string): Promise<{speculativeArc: Arc, relevance: Relevance}|null> {
     assert(plan.isResolved(), `Cannot speculate on an unresolved plan: ${plan.toString({showUnresolved: true})}`);
     const speculativeArc = await arc.cloneForSpeculativeExecution();

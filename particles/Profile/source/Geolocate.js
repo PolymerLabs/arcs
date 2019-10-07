@@ -8,24 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html}) => {
+ /* global defineParticle */
 
-  const host = `geolocate`;
+defineParticle(({UiParticle, html}) => {
 
   const template = html`
 
-<div ${host}>
   <style>
-    [${host}] {
+    :host {
       display: none;
     }
   </style>
-   <geo-location on-coords="onCoords"></geo-location>
-</div>
+  
+  <geo-location on-coords="onCoords"></geo-location>
 
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

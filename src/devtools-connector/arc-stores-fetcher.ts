@@ -11,15 +11,16 @@
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
-import {StorageStub} from '../runtime/storage-stub.js';
-import {StorageProviderBase, SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
+import {StorageKey} from '../runtime/storageNG/storage-key.js';
+import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
 
 type Result = {
   name: string,
   tags: string[],
   id: string,
-  storage: string,
+  storage: string | StorageKey,
   type: Type,
   description: string,
   // tslint:disable-next-line: no-any
@@ -30,7 +31,7 @@ export class ArcStoresFetcher {
   private arc: Arc;
   private arcDevtoolsChannel: ArcDevtoolsChannel;
   private watchedHandles: Set<string> = new Set();
-  
+
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     this.arc = arc;
     this.arcDevtoolsChannel = arcDevtoolsChannel;
@@ -41,23 +42,26 @@ export class ArcStoresFetcher {
     }));
   }
 
-  onRecipeInstantiated() {
+  async onRecipeInstantiated() {
     for (const store of this.arc._stores) {
       if (!this.watchedHandles.has(store.id)) {
         this.watchedHandles.add(store.id);
-        store.on('change', async () => this.arcDevtoolsChannel.send({
-          messageType: 'store-value-changed',
-          messageBody: {
-            id: store.id.toString(),
-            value: await this.dereference(store)
-          }
-        }), this);
+        (await store.activate()).on(async () => {
+          this.arcDevtoolsChannel.send({
+            messageType: 'store-value-changed',
+            messageBody: {
+              id: store.id.toString(),
+              value: await this.dereference(store)
+            }
+          });
+          return true;
+        });
       }
     }
   }
 
   private async listStores() {
-    const find = (manifest: Manifest): [StorageStub, string[]][] => {
+    const find = (manifest: Manifest): [UnifiedStore, string[]][] => {
       let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
@@ -70,7 +74,7 @@ export class ArcStoresFetcher {
     };
   }
 
-  private async digestStores(stores: [StorageProviderBase | StorageStub, string[] | Set<string>][]) {
+  private async digestStores(stores: [UnifiedStore, string[] | Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({
@@ -87,7 +91,7 @@ export class ArcStoresFetcher {
   }
 
   // tslint:disable-next-line: no-any
-  private async dereference(store: StorageProviderBase | StorageStub): Promise<any> {
+  private async dereference(store: UnifiedStore): Promise<any> {
     if ((store as CollectionStorageProvider).toList) {
       return (store as CollectionStorageProvider).toList();
     } else if ((store as SingletonStorageProvider).get) {

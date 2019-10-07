@@ -382,7 +382,7 @@ ${this._slotsToManifestString()}`;
       return false;
     }
     // TODO: FIXME direction subsetting?
-    
+
     if (InterfaceInfo.mustMatch(interfaceHandleConnection.direction)
         && interfaceHandleConnection.direction !== 'any'
         && particleHandleConnection.direction !== 'any'
@@ -428,7 +428,7 @@ ${this._slotsToManifestString()}`;
   restrictType(particleSpec: ParticleSpec): boolean {
     return this._restrictThis(particleSpec);
   }
-  
+
   _restrictThis(particleSpec: ParticleSpec): boolean {
     const handleConnectionMatches = this.handleConnections.map(h => particleSpec.handleConnections.map(c => ({match: c, result: InterfaceInfo.handleConnectionsMatch(h, c)}))
                               .filter(a => a.result !== false)
