@@ -9,7 +9,7 @@
  */
 
 import {Entity} from './entity.js';
-import {BigCollection, Collection, Singleton} from './handle.js';
+import {Handle, BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 
 export interface UiParticleConfig {
@@ -104,89 +104,80 @@ export class UiParticleBase extends Particle {
   /**
    * Set handle value. Value can be an Entity or a POJO (or an Array of such values, for a Collection)
    */
-  async set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+  async set(handleName: string, value: Entity | {}): Promise<void> {
     await this.await(p => p._set(handleName, value));
   }
-  private async _set(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (!handle) {
-      throw new Error(`Could not find handle [${handleName}]`);
-    } else {
-      if (handle instanceof Singleton) {
-        if (Array.isArray(value)) {
-          throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
-        }
-        const entity = (value instanceof Entity) ? value : new (handle.entityClass)(value);
-        return await handle['set'](entity);
-      }
-      else if (handle instanceof Collection) {
-        await this.clear(name);
-        if (value instanceof Entity) {
-          await handle.remove(value);
-          await handle.store(value);
-        } else {
-          this.add(handleName, value);
-        }
-      }
-      else {
-        throw new Error(`Cannot set non-Collection/non-Singleton handle [${handleName}]`);
-      }
+  private async _set(handleName: string, value: Entity | {}): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Singleton)) {
+      throw new Error(`Cannot set non-Singleton handle [${handleName}]`);
     }
+    if (Array.isArray(value)) {
+      throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
+    }
+    const entity = (value instanceof Entity) ? value : new (handle.entityClass)(value);
+    return await handle.set(entity);
   }
 
   /**
    * Add to a collection. Value can be an Entity or a POJO (or an Array of such values)
    */
-  async add(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (!handle) {
-      throw new Error(`Could not find handle [${handleName}]`);
-    } else {
-      if (!(handle instanceof Collection)) {
-        throw new Error(`Cannot add to non-Collection handle [${handleName}]`);
-      } else {
-        const data = Array.isArray(value) ? value : [value];
-        const entityClass = handle.entityClass;
-        this.await(p => Promise.all(data.map(
-          value => handle.store(value instanceof Entity ? value : new entityClass(value)))
-        ));
-      }
+  async add(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Collection)) {
+      throw new Error(`Cannot add to non-Collection handle [${handleName}]`);
     }
+    const entityClass = handle.entityClass;
+    const data = Array.isArray(value) ? value : [value];
+    // remove pre-existing Entities (we will then re-add them, which is the mutation cycle)
+    this._remove(handle, value);
+    // add (store) Entities, or Entities created from values
+    this.await(p => Promise.all(data.map(
+      value => handle.store(value instanceof Entity ? value : new entityClass(value)))
+    ));
   }
 
   /**
    * Remove from a collection. Value can be an Entity or a POJO (or an Array of such values)
    */
-  async remove(handleName, value: Entity | {} | [Entity] | [{}]): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (!handle) {
-      throw new Error(`Could not find handle [${handleName}]`);
-    } else {
-      if (!(handle instanceof Collection)) {
-        throw new Error(`Cannot remove from a non-Collection handle [${handleName}]`);
-      } else {
-        const data = Array.isArray(value) ? value : [value];
-        this.await(p => Promise.all(
-          data.map(async value => {
-            if (value instanceof Entity) {
-              handle.remove(value)
-            }
-          }
-        )));
-      }
+  async remove(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Collection)) {
+      throw new Error(`Cannot remove from a non-Collection handle [${handleName}]`);
     }
+    this._remove(handle, value);
+  }
+  private async _remove(handle: Collection, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+    const data = Array.isArray(value) ? value : [value];
+    this.await(p => Promise.all(
+      data.map(async value => {
+        if (value instanceof Entity) {
+          handle.remove(value)
+        }
+      }
+    )));
   }
 
   /**
    * Remove all entities from named handle.
    */
   async clear(handleName: string): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (handle instanceof Singleton || handle instanceof Collection) {
-      return this.await(p => handle.clear());
-    } else {
-      throw new Error('Singleton/Collection required');
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Singleton) && !(handle instanceof Collection)) {
+      throw new Error('Can only clear Singleton or Collection handles');
     }
+    return this.await(p => handle.clear());
+  }
+
+  /**
+   * Return the named handle or throw.
+   */
+  private _requireHandle(handleName): Handle {
+    const handle = this.handles.get(handleName);
+    if (!handle) {
+      throw new Error(`Could not find handle [${handleName}]`);
+    }
+    return handle;
   }
 
   /**
