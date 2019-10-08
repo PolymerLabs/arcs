@@ -2,7 +2,6 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.inject.Inject;
 
 public class UiBrokerImpl implements UiBroker {

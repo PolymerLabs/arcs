@@ -113,7 +113,9 @@ public class ArcData {
           arcData.particle.setId(idGenerator.newChildId(arcId, "particle").toString());
         }
         arcData.providedSlotId =
-            arcData.particle.providesSlot() ? idGenerator.newChildId(arcId, "slotId").toString() : null;
+            arcData.particle.providesSlot()
+                ? idGenerator.newChildId(arcId, "slotId").toString()
+                : null;
       }
       arcData.sessionId = idGenerator.getSessionId();
 
