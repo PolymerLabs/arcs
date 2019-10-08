@@ -16,6 +16,11 @@ import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 
+export interface EntityData {
+  name: string;
+  schema: Schema;
+}
+
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
     Utils.init('../..');
@@ -54,7 +59,7 @@ export abstract class Schema2Base {
     fs.writeSync(outFile, this.fileHeader(outName));
     for (const dict of [inlineSchemas, schemas]) {
       for (const [name, schema] of Object.entries(dict)) {
-        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
+        fs.writeSync(outFile, this.entityClass({name, schema}).replace(/ +\n/g, '\n'));
       }
     }
     fs.writeSync(outFile, this.fileFooter());
@@ -207,5 +212,5 @@ export abstract class Schema2Base {
 
   abstract fileFooter(): string;
 
-  abstract entityClass(name: string, schema: Schema): string;
+  abstract entityClass(data: EntityData): string;
 }
