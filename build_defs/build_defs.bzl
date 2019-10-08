@@ -100,7 +100,7 @@ def arcs_manifest(name, srcs, deps = []):
 
 def arcs_kt_particle(name, srcs, deps = []):
     """Declares kotlin library targets for Kotlin particle sources."""
-    _android_and_wasm_library(name, srcs, deps)
+    _android_and_wasm_library(name, srcs, ["//src/wasm/kotlin:arcs"] + deps)
 
 def arcs_kt_wasm_binary(name, deps):
     """Performs final compilation of wasm and bundling if necessary."""
