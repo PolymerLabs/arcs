@@ -153,15 +153,20 @@ export const SlotObserver = class {
           node = stampDom(output, slotNode, domOutputSlotId, dispatcher);
         }
         if (node && node.xen) {
+          // `data` is likely frozen, so we need to create a clone before modifying
+          let local = data;
           // TODO(sjmiles): hackity hack hack
           if (data && data.items && data.items.models) {
             const slotModel = {};
             Object.keys(slotMap).forEach(key => {
               slotModel[`${key}_slot`] = queryId(slotMap[key]);
             });
-            data.items.models.forEach(model => Object.assign(model, slotModel));
+            local = Object.assign({}, data);
+            local.items = Object.assign({}, local.items);
+            //data.items.models.forEach(model => Object.assign(model, slotModel));
+            local.items.models = local.items.models.map(model => Object.create(slotModel, model));
           }
-          node.xen.set(data);
+          node.xen.set(local);
         }
         return true;
       }
