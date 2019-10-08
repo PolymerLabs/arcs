@@ -128,7 +128,7 @@ export class UiParticleBase extends Particle {
     const data = Array.isArray(value) ? value : [value];
     return this.await(async p => {
       // remove pre-existing Entities (we will then re-add them, which is the mutation cycle)
-      await this._remove(handle, value);
+      await this._remove(handle, data);
       // add (store) Entities, or Entities created from values
       await Promise.all(data.map(
         value => handle.store(this._requireEntity(value, entityClass))
