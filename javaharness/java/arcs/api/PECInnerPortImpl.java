@@ -139,7 +139,10 @@ public class PECInnerPortImpl implements PECInnerPort {
           String particleId = messageBody.getString(PARTICLE_FIELD);
           Particle particle = mapper.thingForIdentifier(particleId).getParticle();
           String slotName = messageBody.getString(SLOT_NAME_FIELD);
-          logger.info("Unexpected StartRender call for particle " + particle.getName() + " slot " + slotName);
+          logger.info(
+              "Unexpected StartRender call for particle "
+              + particle.getName() + " slot " + slotName
+              );
           break;
         }
       case STOP_RENDER_MSG:
@@ -147,7 +150,10 @@ public class PECInnerPortImpl implements PECInnerPort {
           String particleId = messageBody.getString(PARTICLE_FIELD);
           Particle particle = mapper.thingForIdentifier(particleId).getParticle();
           String slotName = messageBody.getString(SLOT_NAME_FIELD);
-          logger.info("Unexpected StopRender call for particle " + particle.getName() + " slot " + slotName);
+          logger.info(
+              "Unexpected StopRender call for particle "
+              + particle.getName() + " slot " + slotName
+              );
           break;
         }
       case STOP_MSG:
