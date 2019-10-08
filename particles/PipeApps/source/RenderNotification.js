@@ -12,32 +12,29 @@
 
 defineParticle(({UiParticle, html, log}) => {
 
-  const notification = {
-    modality: 'notification',
-    title: `Hello`,
-    text: `I'm a notification.`,
-    handler: `onNotificationClick`
-  };
-
-  const clickNotification = {
-    modality: 'notification',
-    title: `Hello`,
-    text: `Notification was clicked`
-  };
-
   return class extends UiParticle {
-    renderOutput(inputs, state) {
-      if (!state.notified) {
-        state.notified = true;
-        this.output(notification);
-      }
-      if (state.clicked) {
-        state.clicked = false;
-        this.output(clickNotification);
-      }
+    setHandles(handles) {
+      this.output({
+        modality: 'notification',
+        title: `Hello`,
+        text: `I'm a notification.`,
+        taphandler: `onNotificationTap`,
+        dismissHandler: `onNotificationDismiss`
+      });
     }
-    onNotificationClick(event) {
-      this.state = {clicked: true};
+    onNotificationTap(event) {
+      this.output({
+        modality: 'notification',
+        title: `Tapped`,
+        text: `Notification was tapped`
+      });
+    }
+    onNotificationDismiss(event) {
+      this.output({
+        modality: 'notification',
+        title: `Dismissed`,
+        text: `Notification was dismissed`
+      });
     }
   };
 });

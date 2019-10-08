@@ -20,9 +20,12 @@ import arcs.api.UiRenderer;
 @Singleton
 public class NotificationRenderer implements UiRenderer {
 
+  private static final int REQUEST_CODE_TAP = 0;
+  private static final int REQUEST_CODE_DISMISS = 1;
   private static final String TITLE_FIELD = "title";
   private static final String TEXT_FIELD = "text";
-  private static final String HANDLER_FIELD = "handler";
+  private static final String TAP_HANDLER_FIELD = "tapHandler";
+  private static final String DISMISS_HANDLER_FIELD = "dismissHandler";
   private static final String OUTPUT_SLOT_ID_FIELD = "outputSlotId";
   private static final String CHANNEL_ID = "ArcsNotification";
 
@@ -57,20 +60,52 @@ public class NotificationRenderer implements UiRenderer {
             .setAutoCancel(true);
 
     String outputSlotId = packet.getString(OUTPUT_SLOT_ID_FIELD);
+    Intent intent1 = null;
+    Intent intent2 = null;
     // TODO(mmandlis): refactor to a generic method usable by other renderers as well.
-    if (content.hasKey(HANDLER_FIELD)) {
-      String handler = content.getString(HANDLER_FIELD);
+    if (content.hasKey(TAP_HANDLER_FIELD)) {
+      Log.d("Arcs", "1");
+      String handler = content.getString(TAP_HANDLER_FIELD);
 
-      Intent notificationIntent = new Intent(context, ArcsService.class);
-      notificationIntent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
-      notificationIntent.putExtra(
-          ArcsService.INTENT_EVENT_DATA_FIELD,
-          jsonParser.stringify(jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
+      Intent intent = new Intent(context, ArcsService.class);
+      intent.setAction(outputSlotId);
+      intent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
+      intent.putExtra(
+        ArcsService.INTENT_EVENT_DATA_FIELD,
+        jsonParser.stringify(jsonParser.emptyObject().put(TAP_HANDLER_FIELD, handler)));
       PendingIntent pendingIntent =
-          PendingIntent.getService(
-              context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent.getService(
+          context, REQUEST_CODE_TAP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
       builder.setContentIntent(pendingIntent);
+
+      intent1 = intent;
+      Log.d("Arcs", "1 " + intent1);
     }
+
+    if (content.hasKey(DISMISS_HANDLER_FIELD)) {
+      Log.d("Arcs", "2");
+      String handler = content.getString(DISMISS_HANDLER_FIELD);
+
+      Intent intent = new Intent(context, ArcsService.class);
+      intent.setAction(outputSlotId);
+      intent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
+      intent.putExtra(
+        ArcsService.INTENT_EVENT_DATA_FIELD,
+        jsonParser.stringify(jsonParser.emptyObject().put(DISMISS_HANDLER_FIELD, handler)));
+      PendingIntent pendingIntent =
+        PendingIntent.getService(
+          context, REQUEST_CODE_DISMISS, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+      builder.setDeleteIntent(pendingIntent);
+
+      intent2 = intent;
+      Log.d("Arcs", "2 " + intent2);
+    }
+
+    if (intent1 != null && intent2 != null ) {
+      Log.d("Arcs", "3 " );
+      Log.d("Arcs", "equals: " + intent1.filterEquals(intent2));
+    }
+
 
     NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
     // TODO: Let particle control the notification id, in case it features multiple notifications.

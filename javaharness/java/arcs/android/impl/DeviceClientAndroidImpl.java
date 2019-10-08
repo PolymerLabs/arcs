@@ -23,6 +23,7 @@ public class DeviceClientAndroidImpl extends DeviceClientImpl {
   @JavascriptInterface
   @Override
   public void receive(String json) {
+    Log.d("Arcs", "111 Receiving: " + json);
     try {
       super.receive(json);
     } catch (Throwable e) {

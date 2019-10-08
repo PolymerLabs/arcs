@@ -54,7 +54,7 @@ export class UiParticleBase extends Particle {
 
   renderOutput(...args): void {
     const renderModel = this.render(...args);
-    if (renderModel) {
+    if (Object.keys(renderModel).length > 0) {
       this.renderModel(renderModel);
     }
   }

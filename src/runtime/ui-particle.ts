@@ -142,6 +142,10 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
   }
 
   fireEvent(slotName: string, {handler, data}) {
+    console.info("fjldsjflkdsjklfjdsklfjd");
+    console.info(slotName);
+    console.info(handler);
+    console.info(data);
     if (this[handler]) {
       // TODO(sjmiles): remove deprecated `this._state` parameter
       this[handler]({data}, this._state);
