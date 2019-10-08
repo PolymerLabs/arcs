@@ -50,3 +50,6 @@ bazel-arcs
 **/.aswb/**
 .gradle
 *.iml
+**/.project
+**/.classpath
+**/.settings
