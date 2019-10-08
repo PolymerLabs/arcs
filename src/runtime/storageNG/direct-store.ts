@@ -13,7 +13,7 @@ import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../c
 import {Type} from '../type.js';
 import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
-import {ActiveStore, ProxyCallback, StorageMode, ProxyMessageType, ProxyMessage} from './store-interface.js';
+import {ActiveStore, ProxyCallback, StorageMode, ProxyMessageType, ProxyMessage, StoreConstructorOptions} from './store-interface.js';
 import {noAwait} from '../util.js';
 import {Store} from './store.js';
 
@@ -33,8 +33,8 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   /*
    * This class should only ever be constructed via the static construct method
    */
-  private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
-    super(storageKey, exists, type, mode, baseStore);
+  private constructor(options: StoreConstructorOptions<T>) {
+    super(options);
   }
 
   async idle() {
@@ -68,12 +68,12 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     }
   }
 
-  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
-    const me = new DirectStore<T>(storageKey, exists, type, mode, baseStore);
-    me.localModel = new (type.crdtInstanceConstructor<T>())();
-    me.driver = await DriverFactory.driverInstance(storageKey, exists);
+  static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {
+    const me = new DirectStore<T>(options);
+    me.localModel = new (options.type.crdtInstanceConstructor<T>())();
+    me.driver = await DriverFactory.driverInstance(options.storageKey, options.exists);
     if (me.driver == null) {
-      throw new CRDTError(`No driver exists to support storage key ${storageKey}`);
+      throw new CRDTError(`No driver exists to support storage key ${options.storageKey}`);
     }
     me.driver.registerReceiver(me.onReceive.bind(me));
     return me;

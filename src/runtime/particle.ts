@@ -42,7 +42,7 @@ export class Particle {
   private _busy = 0;
 
   protected _handlesToSync: number;
-  
+
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
   private capabilities: Capabilities;
 
