@@ -10,6 +10,7 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 android_library(
     name = "api",
     srcs = glob(["*.java"]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     idl_srcs = glob(["*.aidl"]),
     idl_import_root = "."
 )
