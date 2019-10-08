@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Entity} from './entity.js';
+import {Entity, EntityClass} from './entity.js';
 import {Handle, BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 
@@ -97,6 +97,7 @@ export class UiParticleBase extends Particle {
   /**
    * Invoke async function `task` with Particle busy-guard.
    */
+  // tslint:disable-next-line: no-any
   async await(task: (p: this) => Promise<any>) {
     return await this.invokeSafely(task, err => { throw err; });
   }
@@ -105,9 +106,6 @@ export class UiParticleBase extends Particle {
    * Set a singleton value. Value can be an Entity or a POJO.
    */
   async set(handleName: string, value: Entity | {}): Promise<void> {
-    await this.await(p => p._set(handleName, value));
-  }
-  private async _set(handleName: string, value: Entity | {}): Promise<void> {
     const handle = this._requireHandle(handleName);
     if (!(handle instanceof Singleton)) {
       throw new Error(`Cannot set non-Singleton handle [${handleName}]`);
@@ -115,8 +113,7 @@ export class UiParticleBase extends Particle {
     if (Array.isArray(value)) {
       throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
     }
-    const entity = (value instanceof Entity) ? value : new (handle.entityClass)(value);
-    return await handle.set(entity);
+    return this.await(async p => await handle.set(this._requireEntity(value, handle.entityClass)));
   }
 
   /**
@@ -129,12 +126,18 @@ export class UiParticleBase extends Particle {
     }
     const entityClass = handle.entityClass;
     const data = Array.isArray(value) ? value : [value];
-    // remove pre-existing Entities (we will then re-add them, which is the mutation cycle)
-    this._remove(handle, value);
-    // add (store) Entities, or Entities created from values
-    this.await(p => Promise.all(data.map(
-      value => handle.store(value instanceof Entity ? value : new entityClass(value)))
-    ));
+    return this.await(async p => {
+      // remove pre-existing Entities (we will then re-add them, which is the mutation cycle)
+      await this._remove(handle, value);
+      // add (store) Entities, or Entities created from values
+      await Promise.all(data.map(
+        value => handle.store(this._requireEntity(value, entityClass))
+      ));
+    });
+  }
+
+  private _requireEntity(value: Entity | {}, entityClass: EntityClass): Entity {
+    return (value instanceof Entity) ? value : new (entityClass)(value);
   }
 
   /**
@@ -145,14 +148,14 @@ export class UiParticleBase extends Particle {
     if (!(handle instanceof Collection)) {
       throw new Error(`Cannot remove from a non-Collection handle [${handleName}]`);
     }
-    this._remove(handle, value);
+    return this._remove(handle, value);
   }
   private async _remove(handle: Collection, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const data = Array.isArray(value) ? value : [value];
-    this.await(p => Promise.all(
+    return this.await(async p => Promise.all(
       data.map(async value => {
         if (value instanceof Entity) {
-          handle.remove(value);
+          await handle.remove(value);
         }
       }
     )));
@@ -184,15 +187,10 @@ export class UiParticleBase extends Particle {
    * Return array of Entities dereferenced from array of Share-Type Entities
    */
   async derefShares(shares): Promise<Entity[]> {
-    let entities = [];
-    this.startBusy();
-    try {
+    return this.await(async p => {
       const derefPromises = shares.map(async share => share.ref.dereference());
-      entities = await Promise.all(derefPromises);
-    } finally {
-      this.doneBusy();
-    }
-    return entities;
+      return await Promise.all(derefPromises);
+    });
   }
 
   /**
@@ -201,9 +199,8 @@ export class UiParticleBase extends Particle {
   async boxQuery(box, userid): Promise<{}[]> {
     if (!box) {
       return [];
-    } else {
-      const matches = box.filter(item => userid === item.fromKey);
-      return await this.derefShares(matches);
     }
+    const matches = box.filter(item => userid === item.fromKey);
+    return await this.derefShares(matches);
   }
 }
