@@ -10,7 +10,7 @@
 
 import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet, SingletonOperationClear} from '../crdt/crdt-singleton.js';
 import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection, CollectionOperationAdd, CollectionOperationRemove} from '../crdt/crdt-collection.js';
-import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode} from './store-interface.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
 import {BackingStore} from './backing-store.js';
 import {CRDTEntityTypeRecord, CRDTEntity, EntityData} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
@@ -129,11 +129,16 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   static async construct<Entity extends Referenceable, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>,
                          ReferenceContainer extends CRDTSingletonTypeRecord<Reference> | CRDTCollectionTypeRecord<Reference>,
                          Container extends CRDTSingletonTypeRecord<Entity> | CRDTCollectionTypeRecord<Entity>>(
-      storageKey: ReferenceModeStorageKey, exists: Exists, type: Type, unusedMode: StorageMode, baseStore: Store<CRDTTypeRecord>) {
-    const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(
-        storageKey, exists, type, StorageMode.ReferenceMode, baseStore as unknown as Store<Container>);
-    result.backingStore = await BackingStore.construct(
-        storageKey.backingKey, exists, type.getContainedType(), StorageMode.Backing, baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>);
+      options: StoreConstructorOptions<Container> & {storageKey: ReferenceModeStorageKey}) {
+    const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(options);
+    const {storageKey, type} = options;
+    result.backingStore = await BackingStore.construct({
+      storageKey: storageKey.backingKey,
+      type: type.getContainedType(),
+      mode: StorageMode.Backing,
+      exists: options.exists,
+      baseStore: options.baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>,
+    });
     let refType: Type;
     if (type.isCollectionType()) {
       refType = new CollectionType(new ReferenceType(type.getContainedType()));
@@ -141,8 +146,13 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       // TODO(shans) probably need a singleton type here now.
       refType = new ReferenceType(type.getContainedType());
     }
-    result.containerStore = await DirectStore.construct(
-        storageKey.storageKey, exists, type, StorageMode.Direct, baseStore as unknown as Store<ReferenceContainer>);
+    result.containerStore = await DirectStore.construct({
+      storageKey: storageKey.storageKey,
+      type,
+      mode: StorageMode.Direct,
+      exists: options.exists,
+      baseStore: options.baseStore as unknown as Store<ReferenceContainer>
+    });
     result.registerStoreCallbacks();
     return result;
   }

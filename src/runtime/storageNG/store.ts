@@ -12,7 +12,7 @@ import {CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type} from '../type.js';
 import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
-import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store-interface.js';
+import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
 import {UnifiedStore} from './unified-store.js';
@@ -25,15 +25,6 @@ export {
   StorageCommunicationEndpoint,
   StorageCommunicationEndpointProvider,
   StorageMode
-};
-
-type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(
-      storageKey: StorageKey,
-      exists: Exists,
-      type: Type,
-      mode: StorageMode,
-      baseStore: Store<T>): Promise<ActiveStore<T>>;
 };
 
 // A representation of a store. Note that initially a constructed store will be
@@ -88,7 +79,13 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     if (constructor == null) {
       throw new Error(`No constructor registered for mode ${this.mode}`);
     }
-    const activeStore = await constructor.construct<T>(this.storageKey, this.exists, this.type, this.mode, this);
+    const activeStore = await constructor.construct<T>({
+      storageKey: this.storageKey,
+      exists: this.exists,
+      type: this.type,
+      mode: this.mode,
+      baseStore: this,
+    });
     this.exists = Exists.ShouldExist;
     this.activeStore = activeStore;
     return activeStore;
