@@ -35,12 +35,14 @@ import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
 import {Runtime} from './runtime.js';
-import {VolatileMemory, VolatileStorageDriverProvider} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
-import {UnifiedStore, UnifiedActiveStore} from './storageNG/unified-store.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
+import {Flags} from './flags.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -711,16 +713,22 @@ ${this.activeRecipe.toString()}`;
     // TODO(sjmiles): use `volatile` for volatile stores
     const hasVolatileTag = (tags: string[]) => tags && tags.includes('volatile');
     if (storageKey == undefined || hasVolatileTag(tags)) {
-      storageKey = 'volatile';
+      storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(this.id, id) : 'volatile';
     }
 
-    let store: UnifiedStore;
-    if (typeof storageKey === 'string') {
+    let store: StorageProviderBase | Store<CRDTTypeRecord>;
+    if (Flags.useNewStorageStack) {
+      if (typeof storageKey === 'string') {
+        throw new Error(`Can't use string storage keys with the new storage stack.`);
+      }
+      store = new Store(storageKey, Exists.ShouldCreate, type, id, name);
+    } else {
+      if (typeof storageKey !== 'string') {
+        throw new Error(`Can't use new-style storage keys with the old storage stack.`);
+      }
       store = await this.storageProviderFactory.construct(id, type, storageKey);
       assert(store, `failed to create store with id [${id}]`);
       store.name = name;
-    } else {
-      store = new Store(storageKey, Exists.ShouldCreate, type, id, name);
     }
     await this._registerStore(store, tags);
     return store;

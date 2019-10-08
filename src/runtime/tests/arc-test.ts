@@ -28,10 +28,16 @@ import {ArcType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.js';
 import {UnifiedStore} from '../storageNG/unified-store.js';
+import {Flags} from '../flags.js';
+import {StorageKey} from '../storageNG/storage-key.js';
+import {Store} from '../storageNG/store.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {DirectStore} from '../storageNG/direct-store.js';
+import {VolatileStorageProvider, VolatileSingleton} from '../storage/volatile-storage.js';
 
-async function setup(storageKeyPrefix: string) {
+async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) {
   const loader = new Loader();
   const manifest = await Manifest.parse(`
     import 'src/runtime/tests/artifacts/test-particles.manifest'
@@ -1007,3 +1013,57 @@ describe('Arc ' + storageKeyPrefix, () => {
   });
 });
 }); // forEach storageKeyPrefix
+
+describe('Arc storage migration', () => {
+  describe('when new storage enabled', () => {
+    beforeEach(() => {
+      Flags.useNewStorageStack = true;
+    });
+
+    afterEach(() => {
+      Flags.reset();
+    });
+
+    it('supports new StorageKey type', async () => {
+      const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
+      const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+      assert.instanceOf(fooStore, Store);
+      const activeStore = await fooStore.activate();
+      assert.instanceOf(activeStore, DirectStore);
+      const directStore = activeStore as DirectStore<CRDTTypeRecord>;
+      assert.instanceOf(directStore.driver, VolatileDriver);
+    });
+
+    it('rejects old string storage keys', async () => {
+      const {arc, Foo} = await setup('volatile://');
+      assertThrowsAsync(async () => {
+        await arc.createStore(Foo.type, undefined, 'test:1');
+      }, `Can't use string storage keys with the new storage stack.`);
+    });
+  });
+
+  describe('when new storage disabled', () => {
+    beforeEach(() => {
+      Flags.useNewStorageStack = false;
+    });
+
+    afterEach(() => {
+      Flags.reset();
+    });
+
+    it('supports old string storage keys', async () => {
+      const {arc, Foo} = await setup('volatile://');
+      const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+      assert.instanceOf(fooStore, StorageProviderBase);
+      assert.instanceOf(fooStore, VolatileStorageProvider);
+      assert.instanceOf(fooStore, VolatileSingleton);
+    });
+
+    it('rejects new StorageKey type', async () => {
+      const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
+      assertThrowsAsync(async () => {
+        await arc.createStore(Foo.type, undefined, 'test:1');
+      }, `Can't use new-style storage keys with the old storage stack.`);
+    });
+  });
+});
