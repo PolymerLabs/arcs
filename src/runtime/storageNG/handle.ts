@@ -178,6 +178,11 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
 
   async onUpdate(op: CollectionOperation<T>, oldData: Set<T>, version: VersionMap): Promise<void> {
     this.clock = version;
+    // FastForward cannot be expressed in terms of ordered added/removed, so pass a full model to
+    // the particle.
+    if (op.type === CollectionOpTypes.FastForward) {
+      return this.onSync();
+    }
     // Pass the change up to the particle.
     const update: {added?: T, removed?: T, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {

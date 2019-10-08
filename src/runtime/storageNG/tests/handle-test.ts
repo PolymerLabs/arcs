@@ -126,6 +126,20 @@ describe('CollectionHandle', async () => {
         particle.lastUpdate, {removed: {id: 'id'}, originator: false});
   });
 
+  it('notifies particle of fast forward ops', async () => {
+    const particle: MockParticle = new MockParticle();
+    const handle = await getCollectionHandle(particle);
+    const op: CollectionOperation<{id: string}> = {
+      type: CollectionOpTypes.FastForward,
+      added: [],
+      removed: [{id: 'id'}],
+      oldClock: {'actor': 1},
+      newClock: {'actor': 1}
+    };
+    await handle.onUpdate(op, new Set(), {'actor': 1, 'other': 2});
+    assert.isTrue(particle.onSyncCalled);
+  });
+
   it('stores new version map', async () => {
     const handle = await getCollectionHandle();
 
