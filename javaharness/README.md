@@ -36,3 +36,14 @@ from the repo root):
 You will need to re-run `build.sh` whenever the Runtime or pipes-shell code
 changes. If only the Java has changed, you can just run bazel directly (via
 command line or via Android Studio).
+
+## Troubleshooting
+
+* If you see issues about a missing `@androidsdk` repo, you should double-check
+  that your `ANDROID_HOME` environment variable is set correctly. You can also
+  try running:
+  ```bash
+  bazel clean --expunge
+  ```
+* If you see errors concerning `pipes-shell`, make sure you've run `build.sh`,
+  and check that the symlink points to the right place.
