@@ -44,10 +44,7 @@ export class FirebaseStorageKey extends StorageKey {
     if (!match) {
       throw new Error(`Not a valid FirebaseStorageKey: ${key}.`);
     }
-    const projectId = match[1];
-    const domain = match[2];
-    const apiKey = match[3];
-    const location = match[4];
+    const [_, projectId, domain, apiKey, location] = match;
     return new FirebaseStorageKey(projectId, domain, apiKey, location);
   }
 }

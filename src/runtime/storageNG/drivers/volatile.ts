@@ -38,9 +38,8 @@ export class VolatileStorageKey extends StorageKey {
     if (!match) {
       throw new Error(`Not a valid VolatileStorageKey: ${key}.`);
     }
-    const arcId = ArcId.fromString(match[1]);
-    const unique = match[2];
-    return new VolatileStorageKey(arcId, unique);
+    const [_, arcId, unique] = match;
+    return new VolatileStorageKey(ArcId.fromString(arcId), unique);
   }
 }
 
