@@ -26,7 +26,7 @@ defineParticle(({SimpleParticle, html, log}) => {
         log(`will update in ${dur}s`);
         state.async = setTimeout(() => {
           const json = JSON.stringify(`The time is now ${new Date().toLocaleTimeString()}`);
-          this.updateSingleton('output', {json});
+          this.set('output', {json});
           log(`set output to`, json);
           this.setState({async: null, json});
         }, dur*1000) + 1;

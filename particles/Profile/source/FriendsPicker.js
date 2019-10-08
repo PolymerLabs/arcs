@@ -159,7 +159,7 @@ defineParticle(({SimpleParticle, html, resolver, log}) => {
       if (value) {
         const friend = this.props.friends.find(f => f.publicKey === value);
         if (!friend) {
-          this.appendRawDataToHandle('friends', [{publicKey: value}]);
+          this.add('friends', [{publicKey: value}]);
         }
       }
     }

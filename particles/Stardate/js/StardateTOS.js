@@ -30,8 +30,8 @@ defineParticle(({SimpleParticle, html, log}) => {
       if (randomTime && randomPlanet) {
         const {stardate, destination} = this._computeStardate(randomTime.next, randomPlanet.next);
 
-        this.updateSingleton('stardate', {date: stardate});
-        this.updateSingleton('destination', {name: destination});
+        this.set('stardate', {date: stardate});
+        this.set('destination', {name: destination});
       }
     }
 

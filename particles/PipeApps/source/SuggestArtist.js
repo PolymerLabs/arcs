@@ -19,7 +19,7 @@ defineParticle(({SimpleParticle}) => {
     render({artist}) {
       if (artist) {
         const json = JSON.stringify(artist);
-        this.updateSingleton('suggestion', {json});
+        this.set('suggestion', {json});
         return {json};
       }
     }

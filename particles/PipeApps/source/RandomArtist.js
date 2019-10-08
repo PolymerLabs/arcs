@@ -21,7 +21,7 @@ defineParticle(({SimpleParticle, html, log}) => {
           {type: 'artist', name: 'Metallica', source: 'com.unknown'}
         ];
         const artist = entities[Math.floor(randomArtist.next * entities.length)];
-        this.updateSingleton('artist', artist);
+        this.set('artist', artist);
       }
     }
   };

@@ -693,16 +693,16 @@ defineParticle(({SimpleParticle, html, resolver, log}) => {
           highestScore})].`);
     }
     setMove(move) {
-      this.updateSingleton('move', move);
+      this.set('move', move);
       return move;
     }
     setBoard(board) {
       // TODO(wkorman): See if we can preserve id and reuse existing instance.
-      this.updateSingleton('board', board);
+      this.set('board', board);
       return board;
     }
     setStats(stats) {
-      this.updateSingleton('stats', stats);
+      this.set('stats', stats);
       return stats;
     }
     //
@@ -720,7 +720,7 @@ defineParticle(({SimpleParticle, html, resolver, log}) => {
         renderRecipe: this.buildRenderRecipe(props.renderParticle, tileBoard.gameId),
         renderParticleSpec: state.renderParticleSpec
       };
-      const newPost = this.updateSingleton('post', postValues);
+      const newPost = this.set('post', postValues);
       for (let i = props.posts.length - 1; i >= 0; i--) {
         this.handles.get('posts').remove(props.posts[i]);
       }
