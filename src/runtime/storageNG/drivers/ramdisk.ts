@@ -28,6 +28,15 @@ export class RamDiskStorageKey extends StorageKey {
   childWithComponent(component: string) {
     return new RamDiskStorageKey(`${this.unique}/${component}`);
   }
+
+  static fromString(key: string): RamDiskStorageKey {
+    const match = key.match(/^ramdisk:\/\/(.*)$/);
+    if (!match) {
+      throw new Error(`Not a valid RamDiskStorageKey: ${key}.`);
+    }
+    const unique = match[1];
+    return new RamDiskStorageKey(unique);
+  }
 }
 
 /**

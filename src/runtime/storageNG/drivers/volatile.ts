@@ -32,6 +32,15 @@ export class VolatileStorageKey extends StorageKey {
   childWithComponent(component: string) {
     return new VolatileStorageKey(this.arcId, `${this.unique}/${component}`);
   }
+
+  static fromString(key: string): VolatileStorageKey {
+    const match = key.match(/^volatile:\/\/([^/]+)\/(.*)$/);
+    if (!match) {
+      throw new Error(`Not a valid VolatileStorageKey: ${key}.`);
+    }
+    const [_, arcId, unique] = match;
+    return new VolatileStorageKey(ArcId.fromString(arcId), unique);
+  }
 }
 
 export class VolatileMemory {
