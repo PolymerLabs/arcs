@@ -161,11 +161,12 @@ export const SlotObserver = class {
               slotModel[`${key}_slot`] = queryId(slotMap[key]);
             });
             // `data` may be deeply frozen, so we need to create clones before modifying
-            local = Object.assign({}, data);
-            local.items = Object.assign({}, local.items);
+            local = {...data};
+            local.items = {...local.items};
             // attach the slot(Map)Model to each item
             local.items.models = local.items.models.map(
-              model => Object.assign(Object.create(model), slotModel));
+              model => Object.assign(Object.create(model), slotModel)
+            );
           }
           node.xen.set(local);
         }
