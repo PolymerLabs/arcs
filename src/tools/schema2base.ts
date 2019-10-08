@@ -89,7 +89,7 @@ export abstract class Schema2Base {
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
-  private static collectSchemas(manifest: Manifest): Dictionary<Schema> {
+  public static collectSchemas(manifest: Manifest): Dictionary<Schema> {
     /** Helper function: produce a new name for a schema found in the manifest. */
     const mangleDuplicateName = <T>(collection: Dictionary<T>, name: string): string => {
       let candidate = name;
@@ -119,7 +119,7 @@ export abstract class Schema2Base {
       .forEach((connection: HandleConnectionSpec) => {
         const schema: Schema = connection.type.getEntitySchema();
         if (schema) {
-          const keys = schema.names;
+          const keys: string[] = schema.names;
           if (keys.length === 0) {
             keys.push('');
           }
