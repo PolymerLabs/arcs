@@ -434,7 +434,7 @@ ${this.activeRecipe.toString()}`;
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
       const store = await storeStub.activate();
-      await arc._registerStore(store, tags);
+      await arc._registerStore(store.baseStore, tags);
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
