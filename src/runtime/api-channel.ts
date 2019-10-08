@@ -468,6 +468,17 @@ export abstract class PECOuterPort extends APIPort {
     }
   }
 
+  async _processMessage(e) {
+    // Modifying pec messages on the host side is a problem as they can be transmited to DevTools
+    // with a delay. If the object representing a message is modified, it appears as if a different
+    // messages travelled across the pec. We could have made a deep copy of the message object, but
+    // agreed that these objects should not be modified as a matter of principle. We are freezing
+    // them as a defensive measure. This has some performance penalty, so it could potentially be
+    // disabled in the future for production builds.
+    deepFreeze(e.data);
+    await super._processMessage(e);
+  }
+
   @NoArgs Stop() {}
   DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(Type) type: Type, @Direct name: string) {}
   InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
@@ -604,4 +615,15 @@ export abstract class PECInnerPort extends APIPort {
   onDevToolsConnected() {
     this.attachStack = true;
   }
+}
+
+function deepFreeze(object: object) {
+  for (const name of Object.getOwnPropertyNames(object)) {
+    const value = object[name];
+    if (value && typeof value === 'object') {
+      deepFreeze(value);
+    }
+  }
+
+  Object.freeze(object);
 }
