@@ -78,7 +78,6 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   flowcheck: runScriptSteps('flowcheck'),
   run: [peg, build, runScript],
   licenses: [build],
-  install: [install],
   default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
 };
 
@@ -152,40 +151,14 @@ function getOptionalDependencies(deps: string[], prefix): any[] {
   if (!globalOptions.install) {
     throw new class MissingDeps extends Error {
       constructor() {
-        super(`${prefix} requires extra dependencies: re-run with '--install' or use\n` +
-              `       'tools/sigh install ${missing.join(' ')}' to install manually\n`);
+        super(`${prefix} requires extra dependencies: re-run with '--install'\n`);
       }
     }();
   }
-  if (!install(missing)) {
+  if (!saneSpawn('npm', ['install', '--no-save', ...missing], {logCmd: true})) {
     throw new Error('Failed to install optional dependencies');
   }
   return deps.map(dep => require(dep));
-}
-
-function install(args: string[]): boolean {
-  // So... npm install *automatically removes* packages previously installed with --no-save,
-  // and there is no option to prevent that. The workaround is to track which of our optional
-  // dependencies have already been installed, and specify all of them each time a new one is
-  // added. See https://npm.community/t/npm-removes-packages-on-install/9432.
-  const trackingFile = '.sighdeps';
-  let installed = [];
-  if (fs.existsSync(trackingFile)) {
-    const contents = fs.readFileSync(trackingFile, 'utf-8').trim();
-    if (contents) {
-      installed = contents.split('\n');
-    }
-  }
-
-  const sighDeps = require('../package.json').sighDependencies;
-  args = args.map(x => (x in sighDeps) ? `${x}@${sighDeps[x]}` : x);
-  const modules = [...new Set([...args, ...installed])];
-  if (!saneSpawn('npm', ['install', '--no-save', ...modules], {logCmd: true})) {
-    return false;
-  }
-
-  fs.writeFileSync(trackingFile, modules.join('\n') + '\n');
-  return true;
 }
 
 function* findProjectFiles(dir: string, exclude: RegExp|null, include: RegExp|((path: string) => boolean)): Iterable<string> {

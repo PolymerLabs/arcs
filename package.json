@@ -10,7 +10,6 @@
   "main": "dist/index.es.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
-    "sigh-install": "cross-env tools/sigh install",
     "test-with-start": "run-p --print-name --race start test",
     "test": "run-s --print-name --continue-on-error test-no-web test-wdio-shells",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-extension",
@@ -106,12 +105,6 @@
     "sourcemapped-stacktrace": "^1.1.9",
     "typescript": "^3.5.3",
     "ws": "~6.0.0"
-  },
-  "sighDependencies": {
-    "chokidar": "^3.0.2",
-    "request": "^2.88.0",
-    "vscode-jsonrpc": "^4.0.0",
-    "vscode-languageserver": "^5.2.1"
   },
   "repository": {
     "type": "git",
