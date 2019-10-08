@@ -38,6 +38,18 @@ export class FirebaseStorageKey extends StorageKey {
   childWithComponent(component: string) {
     return new FirebaseStorageKey(this.projectId, this.domain, this.apiKey, `${this.location}/${component}`);
   }
+
+  static fromString(key: string): FirebaseStorageKey {
+    const match = key.match(/^firebase:\/\/([^.]+)\.([^:]+):([^/]+)\/(.*)$/);
+    if (!match) {
+      throw new Error(`Not a valid FirebaseStorageKey: ${key}.`);
+    }
+    const projectId = match[1];
+    const domain = match[2];
+    const apiKey = match[3];
+    const location = match[4];
+    return new FirebaseStorageKey(projectId, domain, apiKey, location);
+  }
 }
 
 export class FirebaseAppCache {
