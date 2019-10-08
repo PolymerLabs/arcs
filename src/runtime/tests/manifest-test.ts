@@ -1367,7 +1367,7 @@ ${particleStr1}
     const manifest = await Manifest.load('the.manifest', loader);
     const storageStub = manifest.findStoreByName('Store0');
     assert(storageStub);
-    const store = await storageStub.castToStorageStub().inflate() as CollectionStorageProvider;
+    const store = await storageStub.activate() as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
@@ -1412,7 +1412,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    const store = (await manifest.findStoreByName('Store0').castToStorageStub().inflate()) as CollectionStorageProvider;
+    const store = (await manifest.findStoreByName('Store0').activate()) as CollectionStorageProvider;
     assert(store);
 
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
