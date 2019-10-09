@@ -1054,12 +1054,12 @@ describe('particle-api', () => {
 
             const innerArc = await this.constructInnerArc();
             const hostedSlotId = await innerArc.createSlot(this, 'root');
-      
+
             const {providedSlotIds} = await innerArc.loadRecipe(\`
               particle A in 'A.js'
                 consume content
                   provide detail
-  
+
               recipe
                 slot '\` + hostedSlotId + \`' as hosted
                 A as a
@@ -1069,14 +1069,14 @@ describe('particle-api', () => {
             await innerArc.loadRecipe(\`
               particle B in 'B.js'
                 consume detail
-              
+
               recipe
                 slot '\` + providedSlotIds['a.detail'] + \`' as detail
                 B
                   consume detail as detail
             \`);
           }
-      
+
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
@@ -1108,5 +1108,76 @@ describe('particle-api', () => {
   B as particle1
     consume detail as slot1`,
     'Particle B should consume the detail slot provided by particle A');
+  });
+
+  describe('test `set` variations', () => {
+    it('tries to `set` things', async () => {
+      const loader = new StubLoader({
+        manifest: `
+          particle TestParticle in 'test-particle.js'
+            // TODO(sjmiles): file issue: bad syntax below results in an error suggesting
+            // that "in" is a bad token, which is misleading (the type decl is bad)
+            //in Stuff [{Text value}] stuff
+            out [Stuff {Text value}] stuff
+            out Thing {Text value} thing
+            out Thing2 {Text value} thing2
+          recipe
+            // TODO(sjmiles): 'create with id' parses but doesn't work
+            create 'stuff-store' as stuff
+            create as thing
+            create as thing2
+            TestParticle
+              stuff = stuff
+              thing = thing
+              thing2 = thing2
+        `,
+        'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+          // TODO(sjmiles): update should never be async
+          async update() {
+            try {
+              // TODO(sjmiles): await here because in spite of note above because
+              // otherwise I couldn't figure out how to capture the exception
+              await this.set('stuff', {value: 'OopsStuffIsCollection'});
+            } catch(x) {
+              // TODO(sjmiles): this is a dumb way to measure failure, since
+              // 'no value in thing' could mean the exception didn't fire *or*
+              // the set didn't work. But it does signal success properly.
+              this.set('thing', {value: 'FooBar'});
+            }
+            //
+            try {
+              await this.set('thing2', [1, 2, 3]);
+            } catch(x) {
+              const entityClass = this.handles.get('thing2').entityClass;
+              this.set('thing2', new entityClass({value: 'FooBar'}));
+            }
+          }
+        });`
+      });
+      //
+      const runtime = new Runtime(loader, FakeSlotComposer);
+      const arc = runtime.runArc('test-arc', 'volatile://');
+      const manifest = await Manifest.load('manifest', loader);
+      const [recipe] = manifest.recipes;
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      await arc.idle;
+      //
+      // TODO(sjmiles): deref by index is brittle, but I couldn't attach an id
+      // and searching by type or tags is hard (?)
+      //
+      const getSingletonData = async index => {
+        const store = arc._stores[index] as SingletonStorageProvider;
+        assert.isNotNull(store, `failed to find store[${index}]`);
+        const data = await store.get();
+        assert.isNotNull(data, `store[${index}] was empty`);
+        return data;
+      }
+      //
+      const thingData = await getSingletonData(1);
+      assert.equal(thingData.rawData.value, 'FooBar', 'failed to set a POJO');
+      const thing2Data = await getSingletonData(2);
+      assert.equal(thing2Data.rawData.value, 'FooBar', 'failed to set an Entity');
+    });
   });
 });
