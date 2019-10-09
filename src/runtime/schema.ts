@@ -24,6 +24,8 @@ export interface Field {
   types?: any[];
   // tslint:disable-next-line:no-any
   model?: any;
+  // tslint:disable-next-line:no-any
+  location?: any;
   schema?: Field;
   kind: string;
   type: string;
@@ -38,7 +40,7 @@ export class Schema {
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
-  constructor(names: string[], fields: Dictionary<Field>, description?) {
+  constructor(names: string[], fields: Dictionary<any>, description?) {
     this.names = names;
     this.fields = {};
     for (const [name, field] of Object.entries(fields)) {
