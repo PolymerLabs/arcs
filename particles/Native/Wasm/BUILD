@@ -29,13 +29,8 @@ arcs_kt_particle(
 
 arcs_kt_particle(
     name = "test_particle_lib",
-    srcs = [
-        "source/TestParticle.kt",
- 
-    ],
-    deps = [    
-        ":wasm_schemas",
-    ]
+    srcs = ["source/TestParticle.kt",],
+    deps = [":wasm_schemas",]
 )
 
 arcs_kt_wasm_binary(

@@ -19,6 +19,7 @@ import {Schema} from '../schema.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
+import {HandleConnectionSpec} from '../particle-spec.js';
 
 // Modifies the schema in-place.
 function deleteLocations(schema: Schema): Schema {
@@ -443,4 +444,86 @@ describe('schema', () => {
     assert.strictEqual(schema.fields.age.type, 'Number');
     assert.strictEqual(schema.fields.custom.type, 'Bytes');
   });
+
+
+  const partialOrderGreaterThan = (testCase) => {
+    const [caseName, first, second] = testCase;
+    it(`partially orders entities: ${caseName}`, () => {
+      assert.isTrue(first.isMoreSpecificThan(second));
+      assert.isFalse(second.isMoreSpecificThan(first));
+    });
+  };
+
+  const notPartialOrdered = (testCase) => {
+    const [caseName, first, second] = testCase;
+    it(`determines entities have no overlap: ${caseName}`, () => {
+      assert.isFalse(first.isMoreSpecificThan(second));
+      assert.isFalse(second.isMoreSpecificThan(first));
+    });
+  };
+
+  const partiallyOrderedTestCases = async () => {
+    const manifest = await Manifest.parse(`
+    particle Foo
+      inout Data Thing {Text t, Number n} input1
+      in Object Data Thing {Text t, Number n, Bytes b} input2
+      out [* {Number n, Bytes b}] output1
+      out [Object {Number n, Bytes b}] output2`);
+
+    const particle = manifest.particles[0];
+    const schema = (conn: HandleConnectionSpec): Schema => conn.type.getEntitySchema();
+    const input1 = schema(particle.connections[0]);
+    const input2 = schema(particle.connections[1]);
+    const output1 = schema(particle.connections[2]);
+    const output2 = schema(particle.connections[3]);
+
+    [
+      ['input2  > input1   | in and inout type', input2, input1],
+      ['input2  > output2  | in and out type', input2, output2],
+      ['input2  > output2  | anonymous type', input2, output1],
+      ['output2  > output1 | same type, anonymous is smaller', output2, output1]
+    ]
+      .forEach(partialOrderGreaterThan);
+
+    [
+      ['input1 /> output2 | adjacent types', input1, output2],
+      ['input1 /> output1 | adjacent types, one anonymous', input1, output1],
+    ]
+      .forEach(notPartialOrdered);
+  };
+
+  void partiallyOrderedTestCases();
+
+  it('represent anonymous schema names in a comparable way', async () => {
+    const manifest = await Manifest.parse(`
+    particle Foo
+      in * {Text t, Number n} input1
+      in [* {Number n, Bytes b, Text t}] input2
+      out [* {Number n, Bytes b}] output1
+      out * {Number n, Bytes b} output2`);
+
+    const particle = manifest.particles[0];
+    const schema = (conn: HandleConnectionSpec): Schema => conn.type.getEntitySchema();
+    particle.connections
+      .map(schema)
+      .forEach((s: Schema) => assert.deepEqual(s.names, []));
+  });
+
+  function testPoorAnonConstruction() {
+    const attempts = 5;
+    const nullTypes = ['', null, undefined];
+
+    for (const empty of nullTypes) {
+      const testSchemas = [...new Array(attempts).keys()]
+        .map((i: number) => new Array(i).fill(empty))
+        .map((names: string[]) => new Schema(names, {}));
+
+      it(`are robust to poor construction of anonymous types: '${empty}' construction`, () => {
+        testSchemas.forEach(schema => assert.deepEqual(schema.names, []));
+      });
+    }
+  }
+
+  testPoorAnonConstruction();
+
 });

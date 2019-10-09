@@ -16,6 +16,7 @@ script:
   - npm --prefix=server test
   - bazel test --noshow_progress --noshow_loading_progress --test_output=errors //src/wasm/... //src/tests/...
   - bazel build --noshow_progress --noshow_loading_progress //particles/Native/Wasm:all
+  - bazel build --noshow_progress --noshow_loading_progress //particles/Tutorial/Kotlin:all
 
 cache: npm
 
