@@ -101,11 +101,6 @@ export class ParticleExecutionHost {
   }
 
   sendEvent(particle, slotName, event): void {
-    console.log("here");
-    console.log(particle);
-    console.log(slotName);
-    console.log(event);
-
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 

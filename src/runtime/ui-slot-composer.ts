@@ -239,8 +239,7 @@ export class UiSlotComposer {
         //log('firing PEC event for', particle.name);
         // TODO(sjmiles): we need `arc` and `particle` here even though
         // the two are bound together, simplify
-        log('... YYY found consumer, particle, and arc to delegate sendEvent');
-        debugger;
+        log('... found consumer, particle, and arc to delegate sendEvent');
         arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
       }
     } else {

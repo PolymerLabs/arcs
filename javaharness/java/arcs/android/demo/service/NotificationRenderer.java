@@ -24,7 +24,7 @@ public class NotificationRenderer implements UiRenderer {
   private static final int REQUEST_CODE_DISMISS = 1;
   private static final String TITLE_FIELD = "title";
   private static final String TEXT_FIELD = "text";
-  private static final String TAP_HANDLER_FIELD = "tapHandler";
+  private static final String TAP_HANDLER_FIELD = "handler";
   private static final String DISMISS_HANDLER_FIELD = "dismissHandler";
   private static final String OUTPUT_SLOT_ID_FIELD = "outputSlotId";
   private static final String CHANNEL_ID = "ArcsNotification";

@@ -119,7 +119,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       }
 
       onUIEvent(particle: Particle, slotName: string, event: {}) {
-        console.log("here");
         particle.fireEvent(slotName, event);
       }
 
