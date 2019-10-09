@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
-import {Field, Schema} from '../runtime/schema.js';
+import {Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
@@ -145,29 +145,33 @@ export abstract class Schema2Base {
 
   public static buildTypeGraph(entries: Iterable<FieldEntry>): TypeGraph {
     const graph = new TypeGraphImpl();
-    const makeName = (entry: FieldEntry): string => `${entry.particleName}_${entry.connectionName}`;
     const directionRank = {
-      'in': -1,
+      'in': 1,
       'inout': 0,
-      'out': 1,
+      'out': -1,
     };
+    const makeName = (entry: FieldEntry): string => `${entry.particleName}_${entry.connectionName}`;
+    const isHandleDirection = (e: FieldEntry): boolean => Object.keys(directionRank).includes(e.direction);
 
     for (const entry of entries) {
       const name = makeName(entry);
       graph.addNode(name, entry);
-
-      graph.nodesByParticle[entry.particleName]
-        .filter((e: FieldEntry) => Object.keys(directionRank).includes(e.direction) && name !== makeName(e))
-        .sort((a, b) => directionRank[a.direction] - directionRank[b.direction])
-        .forEach((e: FieldEntry) => {
-          if (e.schema.isMoreSpecificThan(entry.schema)) {
-            graph.addEdge(name, makeName(e));
-          }
-        });
     }
+    for (const particleEntries of Object.values(graph.nodesByParticle)) {
+      for (const e0 of particleEntries) {
+        for (const e1 of particleEntries) {
+          if (!isHandleDirection(e0) || !isHandleDirection(e1)) {
+            continue;
+          }
+          const source = makeName(e0);
+          const name = makeName(e1);
+          if (source !== name && e0.schema.isMoreSpecificThan(e1.schema)) {
+            graph.addEdge(source, name);
+          }
 
-    console.log(graph.nodes);
-    console.log(graph.edges);
+        }
+      }
+    }
 
     return graph;
   }
