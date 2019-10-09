@@ -374,9 +374,27 @@ ${recipeManifest}
     `));
 
     const schema = manifest.findSchemaByName('Foo');
-    await manifest.createStore(schema.type.collectionOf(), 'Test1', 'test-1', ['tag1']);
-    await manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-2', ['tag2']);
-    await manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-3', []);
+    manifest.newStore({
+      type: schema.type.collectionOf(),
+      name: 'Test1',
+      id: 'test-1',
+      storageKey: 'storage-key-1',
+      tags: ['tag1'],
+    });
+    manifest.newStore({
+      type: schema.type.collectionOf(),
+      name: 'Test2',
+      id: 'test-2',
+      storageKey: 'storage-key-2',
+      tags: ['tag2'],
+    });
+    manifest.newStore({
+      type: schema.type.collectionOf(),
+      name: 'Test2',
+      id: 'test-3',
+      storageKey: 'storage-key-3',
+      tags: [],
+    });
 
     const arc = StrategyTestHelper.createTestArc(manifest);
 
