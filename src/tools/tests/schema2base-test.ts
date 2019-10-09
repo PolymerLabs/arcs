@@ -10,18 +10,39 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Schema2Base} from '../schema2base.js';
+import {Schema2Base, TypeGraph, EntityData} from '../schema2base.js';
 import {Dictionary} from '../../runtime/hot.js';
 import {Schema} from '../../runtime/schema.js';
 
+
+class Schema2Mock extends Schema2Base {
+  entityClass(data: EntityData): string {
+    return '';
+  }
+
+  fileFooter(): string {
+    return '';
+  }
+
+  fileHeader(outName: string): string {
+    return '';
+  }
+
+  outputName(baseName: string): string {
+    return '';
+  }
+
+}
+
 describe('schema2base', () => {
-  const testManifest = <T> (apply: (m: Manifest) => T) => async (manifest: string, expected: T) => {
-    const man = await Manifest.parse(manifest);
-    const actual: T = apply(man);
-    assert.deepEqual(actual, expected);
-  };
- describe('collectSchemas', () => {
-   const testCollectSchemas = testManifest(Schema2Base.collectSchemas);
-  it('', () => {});
+  describe('buildTypeGraph', () => {
+  it('builds a simple graph', async () => {
+    const m = await Manifest.parse(`
+    particle Accessor
+        in Coordinate {Number x, Number y} input1
+        out XPosition {Number x} output1`);
+    const entries = Schema2Base.collectFieldEntries(m);
+    return Schema2Base.buildTypeGraph(entries);
+  });
  });
 });

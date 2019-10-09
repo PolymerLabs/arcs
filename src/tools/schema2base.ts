@@ -10,15 +10,62 @@
 import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
-import {Schema} from '../runtime/schema.js';
+import {Field, Schema} from '../runtime/schema.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
+import {Direction} from '../runtime/manifest-ast-nodes.js';
 
 export interface EntityData {
   name: string;
   schema: Schema;
+}
+
+export interface FieldEntry {
+  particleName: string;
+  schema: Schema;
+  direction: Direction;
+  connectionName: string;
+}
+
+export interface TypeGraph {
+  nodes: Dictionary<FieldEntry>;
+  edges: Dictionary<string[]>;
+}
+
+class TypeGraphImpl implements TypeGraph {
+  edges: Dictionary<string[]>;
+  nodes: Dictionary<FieldEntry>;
+
+  constructor() {
+    this.edges = {};
+    this.nodes = {};
+  }
+
+  public addNode(name: string, entry: FieldEntry) {
+    if (!this.contains(name)) {
+      this.nodes[name] = entry;
+      this.edges[name] = [];
+    }
+  }
+
+  public contains(name: string): boolean {
+    return this.nodes[name] !== undefined;
+  }
+
+  public addEdge(source: string, dest: string) {
+    if (!this.contains(source)) {
+      throw new Error(`${source} must be added to nodes set first!`);
+    }
+    if (!this.contains(dest)) {
+      throw new Error(`${dest} must be added to nodes set first!`);
+    }
+    // Add edge only once
+    if (!(this.edges[source].includes(dest))) {
+      this.edges[source].push(dest);
+    }
+  }
 }
 
 export abstract class Schema2Base {
@@ -55,6 +102,9 @@ export abstract class Schema2Base {
 
     const inlineSchemas = Schema2Base.collectInlineSchemas(schemas);
 
+    const entries = Schema2Base.collectFieldEntries(manifest);
+    const typeGraph = Schema2Base.buildTypeGraph(entries);
+
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
     for (const dict of [inlineSchemas, schemas]) {
@@ -64,6 +114,54 @@ export abstract class Schema2Base {
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
+  }
+
+  public static* collectFieldEntries(manifest: Manifest): Iterable<FieldEntry> {
+    for (const particle of manifest.allParticles) {
+     for (const connection of particle.connections) {
+       const schema: Schema = connection.type.getEntitySchema();
+       if (!schema) {
+         continue;
+       }
+       yield {
+         particleName: particle.name,
+         schema,
+         direction: connection.direction,
+         connectionName: connection.name,
+       };
+     }
+    }
+  }
+
+
+  public static buildTypeGraph(entries: Iterable<FieldEntry>): TypeGraph {
+    const graph = new TypeGraphImpl();
+    const makeName = (entry: FieldEntry): string => `${entry.particleName}_${entry.connectionName}`;
+    const directionRank = {
+      'in': -1,
+      'inout': 0,
+      'out': 1,
+    };
+
+    for (const entry of entries) {
+      const name = makeName(entry);
+      graph.addNode(name, entry);
+
+      Object.values(graph.nodes)
+        .filter((e: FieldEntry) => e.particleName === entry.particleName &&
+          Object.keys(directionRank).includes(e.direction) && name !== makeName(e))
+        .sort((a, b) => directionRank[a.direction] - directionRank[b.direction])
+        .forEach((e: FieldEntry) => {
+          if (e.schema.isMoreSpecificThan(entry.schema)) {
+            graph.addEdge(name, makeName(e));
+          }
+        });
+    }
+
+    console.log(graph.nodes);
+    console.log(graph.edges);
+
+    return graph;
   }
 
   /**
