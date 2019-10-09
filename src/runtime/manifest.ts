@@ -39,6 +39,12 @@ import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {StorageStub} from './storage-stub.js';
+import {Flags} from './flags.js';
+import {Store} from './storageNG/store.js';
+import {StorageKey} from './storageNG/storage-key.js';
+import {Exists} from './storageNG/drivers/driver-factory.js';
+import {StorageKeyParser} from './storageNG/storage-key-parser.js';
+import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -145,6 +151,9 @@ export class Manifest {
     return this._id;
   }
   get storageProviderFactory() {
+    if (Flags.useNewStorageStack) {
+      throw new Error('Not present in the new storage stack.');
+    }
     if (this._storageProviderFactory == undefined) {
       this._storageProviderFactory = new StorageProviderFactory(this.id);
     }
@@ -216,7 +225,7 @@ export class Manifest {
       type: Type,
       name: string,
       id: string,
-      storageKey: string,
+      storageKey: string | StorageKey,
       tags: string[],
       claims?: ClaimIsTag[],
       originalId?: string,
@@ -229,19 +238,33 @@ export class Manifest {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
     }
-    const store = new StorageStub(
-        opts.type,
-        opts.id,
-        opts.name,
-        opts.storageKey,
-        this.storageProviderFactory,
-        opts.originalId,
-        opts.claims,
-        opts.description,
-        opts.version,
-        opts.source,
-        opts.referenceMode,
-        opts.model);
+    let store: UnifiedStore;
+    if (Flags.useNewStorageStack) {
+      let storageKey = opts.storageKey;
+      if (typeof storageKey === 'string') {
+        storageKey = StorageKeyParser.parse(storageKey);
+      }
+      // TODO: Need to handle all of the additional options (claims, source,
+      // description, etc.)
+      store = new Store(storageKey, Exists.ShouldCreate, opts.type, opts.id, opts.name);
+    } else {
+      if (opts.storageKey instanceof StorageKey) {
+        throw new Error(`Can't use new-style storage keys with the old storage stack.`);
+      }
+      store = new StorageStub(
+          opts.type,
+          opts.id,
+          opts.name,
+          opts.storageKey,
+          this.storageProviderFactory,
+          opts.originalId,
+          opts.claims,
+          opts.description,
+          opts.version,
+          opts.source,
+          opts.referenceMode,
+          opts.model);
+    }
     return this._addStore(store, opts.tags);
   }
 
@@ -335,8 +358,8 @@ export class Manifest {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
 
-  generateID(): Id {
-    return this._idGenerator.newChildId(this.id);
+  generateID(subcomponent?: string): Id {
+    return this._idGenerator.newChildId(this.id, subcomponent);
   }
 
   static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
@@ -1117,6 +1140,14 @@ ${e.message}
     return null;
   }
 
+  private createVolatileStorageKey(): string | VolatileStorageKey {
+    if (Flags.useNewStorageStack) {
+      return new VolatileStorageKey(this.id, this.generateID('volatile').toString());
+    } else {
+      return (this.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
+    }
+  }
+
   private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader) {
     const name = item.name;
     let id = item.id;
@@ -1241,12 +1272,11 @@ ${e.message}
       model = entities.map(value => ({id: value.id, value}));
     }
     const version = item.version || 0;
-    const storageKey = (manifest.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
     return manifest.newStore({
         type,
         name,
         id,
-        storageKey,
+        storageKey: manifest.createVolatileStorageKey(),
         tags,
         originalId,
         claims,
