@@ -12,27 +12,44 @@ import {assert} from '../../platform/chai-web.js';
 import {StringDecoder} from '../wasm.js';
 
 //  <value> depends on the field type:
-//    Text       <name>:T<length>:<text>
-//    URL        <name>:U<length>:<text>
-//    Number     <name>:N<number>:
-//    Boolean    <name>:B<zero-or-one>
+//    Text       T<length>:<text>
+//    URL        U<length>:<text>
+//    Number     N<number>:
+//    Boolean    B<zero-or-one>
 //<size>:<key-len>:<key><value-len>:<value><key-len>:<key><value-len>:<value>
 
 describe('wasm::StringDecoder', () => {
-  it('decodes encoded values in dictionaries', () => {
+  it('decodes string values in dictionary', () => {
+    const dec = new StringDecoder();
+    const enc = '1:3:foo3:bar';
+    const dic = dec.decodeDictionary(enc);
+    //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
+    assert.deepEqual(dic, {foo: "bar"});
+  });
+  it('decodes encoded values in dictionary', () => {
     const dec = new StringDecoder();
     const enc = '1:3:fooT3:bar';
     const dic = dec.decodeDictionary(enc);
-    assert.isNotNull(dic);
+    //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
+    assert.deepEqual(dic, {foo: "bar"});
   });
   it('decodes nested dictionaries', () => {
     const dec = new StringDecoder();
-    const enc = '1:3:fooT3:bar';
-    const nestedEnc = `1:3:fooD${enc.length}:${enc}`;
-    const nestedEnc2 = `1:3:fooD${nestedEnc.length}:${nestedEnc}`;
-    const dic = dec.decodeDictionary(nestedEnc2);
-    console.log(`${nestedEnc2} =>`);
-    console.log(JSON.stringify(dic, null, '  '));
-    assert.isNotNull(dic);
+    const base = '1:3:fooT3:bar';
+    const nestedEnc = `1:3:fooD${base.length}:${base}`;
+    const enc = `1:3:fooD${nestedEnc.length}:${nestedEnc}`;
+    const dic = dec.decodeDictionary(enc);
+    //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
+    assert.deepEqual<{}>(dic, {foo: {foo: {foo: 'bar'}}});
+  });
+  it('decodes complex dictionary', () => {
+    const dec = new StringDecoder();
+    const data = '2:okB13:numN42:3:fooT3:bar';
+    const base = `3:${data}`;
+    const nestedEnc = `4:${data}3:bazD${base.length}:${base}`;
+    const enc = `2:3:zotT3:zoo3:fooD${nestedEnc.length}:${nestedEnc}`;
+    const dic = dec.decodeDictionary(enc);
+    //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
+    assert.deepEqual<{}>(dic, {zot: "zoo", foo: {ok: true, num: 42, foo: "bar", baz: {ok: true, num: 42, foo: 'bar'}}});
   });
 });
