@@ -26,7 +26,7 @@ describe('wasm::StringDecoder', () => {
     //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
     assert.deepEqual(dic, {foo: "bar"});
   });
-  it('decodes encoded values in dictionary', () => {
+  it('decodes type-coded values in dictionary', () => {
     const dec = new StringDecoder();
     const enc = '1:3:fooT3:bar';
     const dic = dec.decodeDictionary(enc);
