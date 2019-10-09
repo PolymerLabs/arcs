@@ -37,16 +37,25 @@ export interface TypeGraph {
 class TypeGraphImpl implements TypeGraph {
   edges: Dictionary<string[]>;
   nodes: Dictionary<FieldEntry>;
+  nodesByParticle: Dictionary<FieldEntry[]>;
 
   constructor() {
     this.edges = {};
     this.nodes = {};
+    this.nodesByParticle = {};
   }
 
   public addNode(name: string, entry: FieldEntry) {
     if (!this.contains(name)) {
       this.nodes[name] = entry;
       this.edges[name] = [];
+
+      const particleName = entry.particleName;
+      if (this.nodesByParticle[particleName] === undefined) {
+        this.nodesByParticle[particleName] = [entry];
+      } else {
+        this.nodesByParticle[particleName].push(entry);
+      }
     }
   }
 
@@ -147,9 +156,8 @@ export abstract class Schema2Base {
       const name = makeName(entry);
       graph.addNode(name, entry);
 
-      Object.values(graph.nodes)
-        .filter((e: FieldEntry) => e.particleName === entry.particleName &&
-          Object.keys(directionRank).includes(e.direction) && name !== makeName(e))
+      graph.nodesByParticle[entry.particleName]
+        .filter((e: FieldEntry) => Object.keys(directionRank).includes(e.direction) && name !== makeName(e))
         .sort((a, b) => directionRank[a.direction] - directionRank[b.direction])
         .forEach((e: FieldEntry) => {
           if (e.schema.isMoreSpecificThan(entry.schema)) {
