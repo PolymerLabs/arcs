@@ -1,5 +1,5 @@
-
 licenses(["notice"])
+
 package(default_visibility = ["//javaharness/java/arcs:__subpackages__"])
 
 load(
@@ -13,7 +13,6 @@ filegroup(
     name = "pipes-shell-dist",
     srcs = glob(
         ["pipes-shell/web/deploy/dist/**/*"],
-        exclude = glob(["pipes-shell/web/deploy/dist/**/*.html"]),
     ),
 )
 

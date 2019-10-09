@@ -153,15 +153,22 @@ export const SlotObserver = class {
           node = stampDom(output, slotNode, domOutputSlotId, dispatcher);
         }
         if (node && node.xen) {
-          // TODO(sjmiles): hackity hack hack
+          let local = data;
+          // TODO(sjmiles): this solution to local slot problem under multiplexer is inefficient
           if (data && data.items && data.items.models) {
             const slotModel = {};
             Object.keys(slotMap).forEach(key => {
               slotModel[`${key}_slot`] = queryId(slotMap[key]);
             });
-            data.items.models.forEach(model => Object.assign(model, slotModel));
+            // `data` may be deeply frozen, so we need to create clones before modifying
+            local = {...data};
+            local.items = {...local.items};
+            // attach the slot(Map)Model to each item
+            local.items.models = local.items.models.map(
+              model => Object.assign(Object.create(model), slotModel)
+            );
           }
-          node.xen.set(data);
+          node.xen.set(local);
         }
         return true;
       }

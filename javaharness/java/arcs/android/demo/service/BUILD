@@ -12,6 +12,7 @@ android_library(
     srcs = glob(["*.java"]),
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//javaharness/java/arcs/android/api",
         "//javaharness/java/arcs/android/client",

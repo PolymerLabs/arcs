@@ -48,7 +48,13 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   constructor() {
-    super(new MockStorageKey(), Exists.ShouldCreate, new CountType(), StorageMode.Direct, /* baseStore= */ null);
+    super({
+      storageKey: new MockStorageKey(),
+      exists: Exists.ShouldCreate,
+      type: new CountType(),
+      mode: StorageMode.Direct,
+      baseStore: null,
+    });
   }
   on(callback: ProxyCallback<T>): number {
     return 1;

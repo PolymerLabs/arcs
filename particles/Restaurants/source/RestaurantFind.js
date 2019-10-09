@@ -53,7 +53,7 @@ defineParticle(({UiParticle}) => {
         name: p.name,
         icon: p.icon,
         address: p.vicinity,
-        rating: p.rating,
+        rating: Math.round(p.rating*100)/100,
         identifier: p.place_id,
         photo
       };

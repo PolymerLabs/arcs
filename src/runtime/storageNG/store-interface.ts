@@ -40,6 +40,18 @@ export type StoreInterface<T extends CRDTTypeRecord> = {
   readonly mode: StorageMode;
 };
 
+export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
+  storageKey: StorageKey,
+  exists: Exists,
+  type: Type,
+  mode: StorageMode,
+  baseStore: Store<T>,
+};
+
+export type StoreConstructor = {
+  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<ActiveStore<T>>;
+};
+
 // Interface common to an ActiveStore and the PEC, used by the StorageProxy.
 export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
@@ -62,12 +74,12 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly baseStore: Store<T>;
 
   // TODO: Lots of these params can be pulled from baseStore.
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
-    this.storageKey = storageKey;
-    this.exists = exists;
-    this.type = type;
-    this.mode = mode;
-    this.baseStore = baseStore;
+  constructor(options: StoreConstructorOptions<T>) {
+    this.storageKey = options.storageKey;
+    this.exists = options.exists;
+    this.type = options.type;
+    this.mode = options.mode;
+    this.baseStore = options.baseStore;
   }
 
   async idle() {

@@ -43,10 +43,13 @@ bazel-genfiles
 bazel-javaharness
 bazel-out
 bazel-testlogs
-bazel-arcs
+bazel-arcs*
 .bazelrc
 .ijwb
 .sighdeps
 **/.aswb/**
 .gradle
 *.iml
+**/.project
+**/.classpath
+**/.settings

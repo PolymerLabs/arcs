@@ -7,6 +7,7 @@ import arcs.api.Handle;
 import arcs.api.ParticleBase;
 import arcs.api.PortableJson;
 
+@SuppressWarnings("FutureReturnValueIgnored")
 class CapturePerson extends ParticleBase {
 
   @Override

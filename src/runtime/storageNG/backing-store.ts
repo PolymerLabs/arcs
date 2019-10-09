@@ -8,16 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
-import {ActiveStore, StorageMode, ProxyMessage, ProxyCallback, Store} from './store.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {ProxyMessage} from './store.js';
 import {StorageKey} from './storage-key.js';
-import {Exists} from './drivers/driver-factory.js';
-import {Type} from '../type.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary} from '../hot.js';
+import {StoreConstructorOptions} from './store-interface.js';
 
 export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>, muxId: string) => Promise<boolean>;
-
 
 type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, id: number} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, id: number}>};
 /**
@@ -25,16 +23,16 @@ type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore
  */
 export class BackingStore<T extends CRDTTypeRecord>  {
 
+  storageKey: StorageKey;
+
   private stores: Dictionary<StoreRecord<T>> = {};
   private callbacks = new Map<number, MultiplexedProxyCallback<T>>();
   private nextCallbackId = 1;
+  private options: StoreConstructorOptions<T>;
 
-  private constructor(
-    public storageKey: StorageKey,
-    private exists: Exists,
-    private type: Type,
-    private mode: StorageMode,
-    private baseStore: Store<T>) {
+  private constructor(options: StoreConstructorOptions<T>) {
+    this.storageKey = options.storageKey;
+    this.options = options;
   }
 
   on(callback: MultiplexedProxyCallback<T>): number {
@@ -61,7 +59,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   }
 
   private async setupStore(muxId: string): Promise<{type: 'record', store: DirectStore<T>, id: number}> {
-    const store = await DirectStore.construct<T>(this.storageKey.childWithComponent(muxId), this.exists, this.type, this.mode, this.baseStore);
+    const store = await DirectStore.construct<T>({...this.options, storageKey: this.storageKey.childWithComponent(muxId)});
     const id = store.on(msg => this.processStoreCallback(muxId, msg));
     const record: StoreRecord<T> = {store, id, type: 'record'};
     this.stores[muxId] = record;
@@ -81,8 +79,8 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     return store.onProxyMessage(message);
   }
 
-  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, baseStore: Store<T>) {
-    return new BackingStore<T>(storageKey, exists, type, mode, baseStore);
+  static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {
+    return new BackingStore<T>(options);
   }
 
   async idle() {

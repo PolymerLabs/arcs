@@ -33,7 +33,7 @@ describe('SearchTokensToHandles', () => {
     `));
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    await arc._registerStore(await arc.context.stores[0].castToStorageStub().inflate(), ['mything']);
+    await arc._registerStore(arc.context.stores[0], ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
