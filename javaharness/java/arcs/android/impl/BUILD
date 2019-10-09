@@ -11,11 +11,11 @@ android_library(
     name = "impl",
     srcs = glob(["**/*.java"]),
     assets = [
-        "//javaharness/java/arcs:pipes-shell-dist",
+        "//shells/pipes-shell:pipes_shell_web",
     ],
-    assets_dir = "pipes-shell/web/deploy/dist",
-    manifest = "AndroidManifest.xml",
+    assets_dir = "pipes_shell_web_dist",
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
+    manifest = "AndroidManifest.xml",
     deps = [
         "//javaharness/java/arcs/api:api-android",
         "@com_google_dagger",
