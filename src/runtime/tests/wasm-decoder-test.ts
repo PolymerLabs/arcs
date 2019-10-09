@@ -24,14 +24,14 @@ describe('wasm::StringDecoder', () => {
     const enc = '1:3:foo3:bar';
     const dic = dec.decodeDictionary(enc);
     //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
-    assert.deepEqual(dic, {foo: "bar"});
+    assert.deepEqual(dic, {foo: 'bar'});
   });
   it('decodes type-coded values in dictionary', () => {
     const dec = new StringDecoder();
     const enc = '1:3:fooT3:bar';
     const dic = dec.decodeDictionary(enc);
     //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
-    assert.deepEqual(dic, {foo: "bar"});
+    assert.deepEqual(dic, {foo: 'bar'});
   });
   it('decodes nested dictionaries', () => {
     const dec = new StringDecoder();
@@ -50,6 +50,6 @@ describe('wasm::StringDecoder', () => {
     const enc = `2:3:zotT3:zoo3:fooD${nestedEnc.length}:${nestedEnc}`;
     const dic = dec.decodeDictionary(enc);
     //console.log(`${enc} => ${JSON.stringify(dic, null, '  ')}`);
-    assert.deepEqual<{}>(dic, {zot: "zoo", foo: {ok: true, num: 42, foo: "bar", baz: {ok: true, num: 42, foo: 'bar'}}});
+    assert.deepEqual<{}>(dic, {zot: 'zoo', foo: {ok: true, num: 42, foo: 'bar', baz: {ok: true, num: 42, foo: 'bar'}}});
   });
 });

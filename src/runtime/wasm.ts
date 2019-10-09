@@ -252,11 +252,12 @@ export class StringDecoder {
       case 'B':
         return Boolean(this.chomp(1) === '1');
 
-      case 'D':
+      case 'D': {
         const len = Number(this.upTo(':'));
         const dictionary = this.chomp(len);
         return this.decodeDictionary(dictionary);
-
+      }
+      
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
     }
