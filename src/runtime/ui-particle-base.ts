@@ -141,9 +141,9 @@ export class UiParticleBase extends Particle {
   }
 
   /**
-   * Remove from a collection. Value can be an Entity or a POJO (or an Array of such values).
+   * Remove from a collection. Value must be an Entity or an array of Entities.
    */
-  async remove(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+  async remove(handleName: string, value: Entity | [Entity]): Promise<void> {
     const handle = this._requireHandle(handleName);
     if (!(handle instanceof Collection)) {
       throw new Error(`Cannot remove from a non-Collection handle [${handleName}]`);
