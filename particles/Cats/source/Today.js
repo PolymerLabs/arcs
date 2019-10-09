@@ -14,7 +14,7 @@ defineParticle(({UiParticle}) => {
   return class extends UiParticle {
 
     update(props, state) {
-      this.updateSingleton('today', {day: new Date().getDate()});
+      this.set('today', {day: new Date().getDate()});
     }
 
   };

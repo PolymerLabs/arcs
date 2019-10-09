@@ -40,7 +40,7 @@ defineParticle(({SimpleParticle, html, resolver, log}) => {
     }
     onSubmit() {
       const url = resolver(this.state.inputUrl);
-      this.updateSingleton('image', {url});
+      this.set('image', {url});
       this.setState({url});
     }
   };

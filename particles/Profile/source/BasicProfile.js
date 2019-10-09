@@ -10,63 +10,59 @@
 
 defineParticle(({SimpleParticle, html, resolver}) => {
 
-  const host = `basic-profile`;
-
   const template = html`
 
-<div ${host}>
-  <style>
-    [${host}] {
-      display: flex;
-      flex-direction: column;
-      min-height: calc(100vh);
-    }
-    [${host}] [center] {
-      text-align: center;
-    }
-    [${host}] > [top] {
-      padding: 16px 16px 32px 16px;
-      min-width: 160px;
-      box-sizing: border-box;
-    }
-    [${host}] > [bottom] {
-      flex: 1;
-      border-top: 1px solid silver;
-      padding: 16px 16px 32px 16px;
-    }
-    [${host}] > [top] > [title] {
-      text-align: left;
-      padding-bottom: 16px;
-    }
-    [${host}] > [top] > [avatar] {
-      display: inline-block;
-    }
-    [${host}] > [top] > [avatar] img {
-      width: 156px;
-      height: 156px;
-      border: 1px solid black;
-      border-radius: 50%;
-    }
-    [${host}] > [top] > [name] {
-      padding-top: 32px;
-    }
-  </style>
+<style>
+  :host {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh);
+  }
+  :host > [center] {
+    text-align: center;
+  }
+  :host > [top] {
+    padding: 16px 16px 32px 16px;
+    min-width: 160px;
+    box-sizing: border-box;
+  }
+  :host > [bottom] {
+    flex: 1;
+    border-top: 1px solid silver;
+    padding: 16px 16px 32px 16px;
+  }
+  :host > [top] > [title] {
+    text-align: left;
+    padding-bottom: 16px;
+  }
+  :host > [top] > [avatar] {
+    display: inline-block;
+  }
+  :host > [top] > [avatar] img {
+    width: 156px;
+    height: 156px;
+    border: 1px solid black;
+    border-radius: 50%;
+  }
+  :host > [top] > [name] {
+    padding-top: 32px;
+  }
+</style>
 
-  <div top center>
-    <div title>My profile</div>
-    <div avatar>
-      <firebase-upload on-upload="onUpload">
-        <img src="{{avatar}}">
-      </firebase-upload>
-    </div>
-    <div name center>
-      <div slotid="userName"></div>
-    </div>
+<div top center>
+  <div title>My profile</div>
+  <div avatar>
+    <firebase-upload on-upload="onUpload">
+      <img src="{{avatar}}">
+    </firebase-upload>
   </div>
-  <div bottom>
-    <div title>My friends</div>
-    <div slotid="friends"></div>
+  <div name center>
+    <div slotid="userName"></div>
   </div>
+</div>
+<div bottom>
+  <div title>My friends</div>
+  <div slotid="friends"></div>
 </div>
 
   `;
@@ -77,11 +73,11 @@ defineParticle(({SimpleParticle, html, resolver}) => {
     }
     render({avatar}) {
       return {
-        avatar: avatar && avatar.url || resolver(`https://$shells/assets/avatars/user (0).png`)
+        avatar: avatar && avatar.url || resolver(`https://$particles/Profile/assets/user.png`)
       };
     }
     onUpload(e) {
-      this.updateSingleton('avatar', {url: e.data.value.url});
+      this.set('avatar', {url: e.data.value.url});
     }
   };
 

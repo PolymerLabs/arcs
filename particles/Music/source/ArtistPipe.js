@@ -18,7 +18,7 @@ defineParticle(({SimpleParticle, log}) => {
     }
     update({pipe, find}, state) {
       if (this.pipeIsValid(pipe)) {
-        this.updateSingleton('find', {
+        this.set('find', {
           name: pipe.name
         });
       }

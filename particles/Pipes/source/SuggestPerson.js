@@ -19,7 +19,7 @@ defineParticle(({UiParticle, html, log}) => {
     update({recentEntities}, state) {
       if (recentEntities) {
         const json = this.query(recentEntities);
-        this.updateSingleton('suggestion', {json});
+        this.set('suggestion', {json});
       }
     }
     query(entities) {

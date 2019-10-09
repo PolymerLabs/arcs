@@ -1054,12 +1054,12 @@ describe('particle-api', () => {
 
             const innerArc = await this.constructInnerArc();
             const hostedSlotId = await innerArc.createSlot(this, 'root');
-      
+
             const {providedSlotIds} = await innerArc.loadRecipe(\`
               particle A in 'A.js'
                 consume content
                   provide detail
-  
+
               recipe
                 slot '\` + hostedSlotId + \`' as hosted
                 A as a
@@ -1069,14 +1069,14 @@ describe('particle-api', () => {
             await innerArc.loadRecipe(\`
               particle B in 'B.js'
                 consume detail
-              
+
               recipe
                 slot '\` + providedSlotIds['a.detail'] + \`' as detail
                 B
                   consume detail as detail
             \`);
           }
-      
+
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,

@@ -40,8 +40,8 @@ defineParticle(({UiParticle}) => {
       // cap # of results
       //const results = (places.results || []).slice(0, 5);
       const restaurants = results.map(p => this.placeToEntity(p));
-      await this.clearHandle('restaurants');
-      this.appendRawDataToHandle('restaurants', restaurants);
+      await this.clear('restaurants');
+      this.add('restaurants', restaurants);
       this.setState({count: results.length});
     }
     placeToEntity(p) {

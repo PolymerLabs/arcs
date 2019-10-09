@@ -16,7 +16,7 @@ defineParticle(({UiParticle, log}) => {
     update({today, allCats}) {
       if (today) {
         const cat = allCats[Math.floor(Math.random()*31)];
-        this.updateSingleton('cat', cat);
+        this.set('cat', cat);
         log(cat);
       }
     }

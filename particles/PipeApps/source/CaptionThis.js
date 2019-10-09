@@ -37,7 +37,7 @@ defineParticle(({SimpleParticle, html, log}) => {
                   x.entities.join(','))) || '')
           .join(' ') ||
           '');
-      this.updateSingleton('output', {json});
+      this.set('output', {json});
       this.doneBusy();
     }
   };

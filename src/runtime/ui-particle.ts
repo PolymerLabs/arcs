@@ -9,8 +9,8 @@
  */
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
-import {UiParticleBase, RenderModel} from './ui-particle-base.js';
-import {Handle, Collection, Singleton} from './handle.js';
+import {UiParticleBase} from './ui-particle-base.js';
+import {Handle} from './handle.js';
 import {Runnable} from './hot.js';
 
 export interface UiStatefulParticle extends UiParticleBase {

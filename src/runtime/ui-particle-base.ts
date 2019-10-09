@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Entity} from './entity.js';
-import {BigCollection, Collection, Singleton} from './handle.js';
+import {Entity, EntityClass} from './entity.js';
+import {Handle, BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 
 export interface UiParticleConfig {
@@ -46,22 +46,6 @@ export class UiParticleBase extends Particle {
   }
 
   /**
-   * Override to return a String defining primary markup for the given slot name.
-   */
-  // getTemplate(slotName: string): string {
-  //   // TODO: only supports a single template for now. add multiple templates support.
-  //   return this.template;
-  // }
-
-  /**
-   * Override to return a String defining the name of the template for the given slot name.
-   */
-  // getTemplateName(slotName: string): string {
-  //   // TODO: only supports a single template for now. add multiple templates support.
-  //   return `default`;
-  // }
-
-  /**
    * Override to return false if the Particle isn't ready to `render()`
    */
   shouldRender(...args): boolean {
@@ -91,18 +75,6 @@ export class UiParticleBase extends Particle {
     return {};
   }
 
-  protected _getStateArgs() {
-    return [];
-  }
-
-  // forceRenderTemplate(slotName: string = ''): void {
-  //   this.slotProxiesByName.forEach((slot: SlotProxy, name: string) => {
-  //     if (!slotName || (name === slotName)) {
-  //       slot.requestedContentTypes.add('template');
-  //     }
-  //   });
-  // }
-
   fireEvent(slotName: string, {handler, data}): void {
     if (this[handler]) {
       this[handler]({data});
@@ -123,140 +95,102 @@ export class UiParticleBase extends Particle {
   }
 
   /**
+   * Invoke async function `task` with Particle busy-guard.
+   */
+  // tslint:disable-next-line: no-any
+  async await(task: (p: this) => Promise<any>) {
+    return await this.invokeSafely(task, err => { throw err; });
+  }
+
+  /**
+   * Set a singleton value. Value can be an Entity or a POJO.
+   */
+  async set(handleName: string, value: Entity | {}): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Singleton)) {
+      throw new Error(`Cannot set non-Singleton handle [${handleName}]`);
+    }
+    if (Array.isArray(value)) {
+      throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
+    }
+    return this.await(async p => await handle.set(this._requireEntity(value, handle.entityClass)));
+  }
+
+  /**
+   * Add to a collection. Value can be an Entity or a POJO (or an Array of such values).
+   */
+  async add(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Collection)) {
+      throw new Error(`Cannot add to non-Collection handle [${handleName}]`);
+    }
+    const entityClass = handle.entityClass;
+    const data = Array.isArray(value) ? value : [value];
+    return this.await(async p => {
+      // remove pre-existing Entities (we will then re-add them, which is the mutation cycle)
+      await this._remove(handle, data);
+      // add (store) Entities, or Entities created from values
+      await Promise.all(data.map(
+        value => handle.store(this._requireEntity(value, entityClass))
+      ));
+    });
+  }
+
+  private _requireEntity(value: Entity | {}, entityClass: EntityClass): Entity {
+    return (value instanceof Entity) ? value : new (entityClass)(value);
+  }
+
+  /**
+   * Remove from a collection. Value must be an Entity or an array of Entities.
+   */
+  async remove(handleName: string, value: Entity | [Entity]): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Collection)) {
+      throw new Error(`Cannot remove from a non-Collection handle [${handleName}]`);
+    }
+    return this._remove(handle, value);
+  }
+  private async _remove(handle: Collection, value: Entity | {} | [Entity] | [{}]): Promise<void> {
+    const data = Array.isArray(value) ? value : [value];
+    return this.await(async p => Promise.all(
+      data.map(async value => {
+        if (value instanceof Entity) {
+          await handle.remove(value);
+        }
+      }
+    )));
+  }
+
+  /**
    * Remove all entities from named handle.
    */
-  async clearHandle(handleName: string): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (handle instanceof Singleton || handle instanceof Collection) {
-      await handle.clear();
-    } else {
-      throw new Error('Singleton/Collection required');
+  async clear(handleName: string): Promise<void> {
+    const handle = this._requireHandle(handleName);
+    if (!(handle instanceof Singleton) && !(handle instanceof Collection)) {
+      throw new Error('Can only clear Singleton or Collection handles');
     }
+    return this.await(p => handle.clear());
   }
 
   /**
-   * Merge entities from Array into named handle.
+   * Return the named handle or throw.
    */
-  async mergeEntitiesToHandle(handleName: string, entities: Entity[]): Promise<void> {
-    const idMap = {};
+  private _requireHandle(handleName): Handle {
     const handle = this.handles.get(handleName);
-    if (handle instanceof Collection) {
-      const handleEntities = await handle.toList();
-      handleEntities.forEach(entity => idMap[entity.id] = entity);
-      for (const entity of entities) {
-        if (!idMap[this.idFor(entity)]) {
-          await handle.store(entity);
-        }
-      }
-    } else {
-      throw new Error('Collection required');
+    if (!handle) {
+      throw new Error(`Could not find handle [${handleName}]`);
     }
-  }
-
-  /**
-   * Append entities from Array to named handle.
-   */
-  async appendEntitiesToHandle(handleName: string, entities: Entity[]): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (handle) {
-      if (handle instanceof Collection || handle instanceof BigCollection) {
-        await Promise.all(entities.map(entity => handle.store(entity)));
-      } else {
-        throw new Error('Collection required');
-      }
-    }
-  }
-
-  /**
-   * Create an entity from each rawData, and append to named handle.
-   */
-  async appendRawDataToHandle(handleName: string, rawDataArray): Promise<void> {
-    const handle = this.handles.get(handleName);
-    if (handle && handle.entityClass) {
-      if (handle instanceof Collection || handle instanceof BigCollection) {
-        const entityClass = handle.entityClass;
-        await Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
-      } else {
-        throw new Error('Collection required');
-      }
-    }
-  }
-
-  /**
-   * Modify value of named handle. A new entity is created
-   * from `rawData` (`new [EntityClass](rawData)`).
-   */
-  async updateSingleton(handleName: string, rawData) {
-    const handle = this.handles.get(handleName);
-    if (handle && handle.entityClass) {
-      if (handle instanceof Singleton) {
-        const entity = new handle.entityClass(rawData);
-        await handle.set(entity);
-        return entity;
-      } else {
-        throw new Error('Singleton required');
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Modify or insert `entity` into named handle.
-   * Modification is done by removing the old entity and reinserting the new one.
-   */
-  async updateCollection(handleName: string, entity: Entity): Promise<void> {
-    // Set the entity into the right place in the set. If we find it
-    // already present replace it, otherwise, add it.
-    // TODO(dstockwell): Replace this with happy entity mutation approach.
-    const handle = this.handles.get(handleName);
-    if (handle) {
-      if (handle instanceof Collection || handle instanceof BigCollection) {
-        await handle.remove(entity);
-        await handle.store(entity);
-      } else {
-        throw new Error('Collection required');
-      }
-    }
-  }
-
-  // TODO(sjmiles): experimental: high-level handle set
-  // if handleName is an Singleton, then
-  // - value can be a POJO or an Entity, value is `set`
-  // if handleName is a Collection, then
-  // - values must be an array of POJO
-  // ^ needs more cases!
-  async set(handleName, value) {
-    const handle = this.handles.get(handleName);
-    if (handle) {
-      // TODO(sjmiles): cannot test class of `handle` because I have no
-      // references to those classes, i.e. `handle is Singleton`, throws
-      // because Singleton is undefined.
-      if (handle.type['isEntity']) {
-        const entity = value.entityClass ? value : new (handle.entityClass)(value);
-        return await handle['set'](entity);
-      }
-      else if (handle.type['isCollection']) {
-        if (Array.isArray(value)) {
-          await this.clearHandle(name);
-          await this.appendRawDataToHandle(name, value);
-        }
-      }
-    }
+    return handle;
   }
 
   /**
    * Return array of Entities dereferenced from array of Share-Type Entities
    */
   async derefShares(shares): Promise<Entity[]> {
-    let entities = [];
-    this.startBusy();
-    try {
+    return this.await(async p => {
       const derefPromises = shares.map(async share => share.ref.dereference());
-      entities = await Promise.all(derefPromises);
-    } finally {
-      this.doneBusy();
-    }
-    return entities;
+      return await Promise.all(derefPromises);
+    });
   }
 
   /**
@@ -265,9 +199,8 @@ export class UiParticleBase extends Particle {
   async boxQuery(box, userid): Promise<{}[]> {
     if (!box) {
       return [];
-    } else {
-      const matches = box.filter(item => userid === item.fromKey);
-      return await this.derefShares(matches);
     }
+    const matches = box.filter(item => userid === item.fromKey);
+    return await this.derefShares(matches);
   }
 }

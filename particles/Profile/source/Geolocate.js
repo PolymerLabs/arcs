@@ -19,7 +19,7 @@ defineParticle(({UiParticle, html}) => {
       display: none;
     }
   </style>
-  
+
   <geo-location on-coords="onCoords"></geo-location>
 
   `;
@@ -29,7 +29,7 @@ defineParticle(({UiParticle, html}) => {
       return template;
     }
     onCoords(e) {
-      this.updateSingleton('location', e.data.value);
+      this.set('location', e.data.value);
     }
   };
 

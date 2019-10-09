@@ -127,7 +127,7 @@ defineParticle(({UiParticle, html, log, resolver}) => {
     }
     onInput({data: {value}}) {
       this.setState({nextDisabled: value == ''});
-      this.updateSingleton('key', {key: value});
+      this.set('key', {key: value});
     }
   };
 

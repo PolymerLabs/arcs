@@ -13,13 +13,14 @@ import {fs} from '../platform/fs-web.js';
 import {vm} from '../platform/vm-web.js';
 
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
-import {DomParticle} from './dom-particle.js';
-import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
+import {ClientReference} from './reference.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
-import {ClientReference} from './reference.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
+import {DomParticle} from './dom-particle.js';
+import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
+import {UiParticle} from './ui-particle.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
@@ -163,7 +164,7 @@ export class Loader {
     return particleWrapper({
       Particle,
       DomParticle,
-      SimpleParticle: DomParticle,
+      SimpleParticle: UiParticle,
       TransformationDomParticle,
       MultiplexerDomParticle,
       Reference: ClientReference.newClientReference(this.pec),

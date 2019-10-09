@@ -64,7 +64,7 @@ defineParticle(({SimpleParticle, resolver, html}) => {
       this.commit(e.data.value);
     }
     commit(text) {
-      this.updateSingleton('query', {query: text || ''});
+      this.set('query', {query: text || ''});
     }
     render(props, state) {
       return state;
