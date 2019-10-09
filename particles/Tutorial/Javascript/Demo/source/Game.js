@@ -29,7 +29,7 @@ defineParticle(({SimpleParticle, html}) => {
     render({gameState, humanMove, computerMove, humanPlayer, computerPlayer, move}) {
       const toReturn = {hideCongrats: true};
       if (!move) {
-        this.set('move', {move: 'start'});
+        this.set('move', {move: 'reset'});
       }
 
       if (!humanPlayer) {
@@ -45,10 +45,14 @@ defineParticle(({SimpleParticle, html}) => {
         if (gameState.lastMove == move.move && !gameState.gameOver) {
           if (gameState.currentPlayer == 0) {
             toReturn.turnMessage = `It is your move, ${humanPlayer.name}.`;
-            this.set('move', {move: humanMove.move, playerAvatar: humanPlayer.avatar});
+            if (humanMove.move != '') {
+              this.set('move', {move: humanMove.move, playerAvatar: humanPlayer.avatar});
+            }
           } else if (gameState.currentPlayer == 1) {
             toReturn.turnMessage = `It is ${computerPlayer.avatar}'s move, please wait.`;
-            this.set('move', {move: computerMove.move, playerAvatar: computerPlayer.avatar});
+            if (computerMove != '') {
+              this.set('move', {move: computerMove.move, playerAvatar: computerPlayer.avatar});
+            }
           }
         }
       }

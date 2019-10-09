@@ -16,6 +16,9 @@ defineParticle(({SimpleParticle, html}) => {
 
     update({gameState}) {
       if (gameState) {
+        if (gameState.move == 'reset') {
+          this.set('computerMove', {move: ''});
+        }
         const emptyCells = [];
         const board = gameState.board.split(`,`);
         // Determine which cells are empty.

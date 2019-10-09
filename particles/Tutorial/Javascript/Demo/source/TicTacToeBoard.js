@@ -34,11 +34,11 @@ const template = html`
       border: 1px outset blue;
       height: 50px;
       width: 50px;
-      cursor: pointer;
+      cursor: not-allowed;
       background-color: lightslategray;
     }
 
-    .butt:hover {
+    .valid-butt:hover {
       background-color: blue;
       color: white;
     }
@@ -63,23 +63,24 @@ const template = html`
     }
 
     render({gameState}) {
-      if (gameState) {
-        const arr = gameState.board.split(`,`);
-        // Return the values that should be filled into the board
-        return {
-          buttons: {
-            $template: 'button',
-            models: arr.map((spot, index) => ({
-              spot: spot,
-              value: index +1,
-              buttonClass: gameState.currentPlayer == 0 ? 'valid-butt' : 'invalid-butt'
-            }))
-          }
-        };
+      if (!gameState) {
+        return {};
       }
-      // If the gameState does not exist yet, the game has not been
-      // initialised, so return nothing.
-      return {};
+      if (gameState.move == 'reset') {
+        this.set('humanMove', {move: ''});
+      }
+      const arr = gameState.board.split(`,`);
+      // Return the values that should be filled into the board
+      return {
+        buttons: {
+          $template: 'button',
+          models: arr.map((spot, index) => ({
+            spot: spot,
+            value: index +1,
+            buttonClass: gameState.currentPlayer == 0 ? 'valid-butt' : 'invalid-butt'
+          }))
+        }
+      };
     }
 
     // The board acts as the human mover. When the human clicks on the

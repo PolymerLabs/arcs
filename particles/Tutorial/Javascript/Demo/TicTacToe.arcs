@@ -1,17 +1,17 @@
 import 'GameSchemas.arcs'
 
 particle TicTacToeBoard in './source/TicTacToeBoard.js'
-  in GameState {Text board} gameState
-  out Move {Text move} humanMove
+  in GameState {board} gameState
+  out Move {move} humanMove
   consume boardSlot
 
 particle MoveApplier in './source/MoveApplier.js'
   in Move move
-  inout Move {Text move} humanMove
-  inout Move {Text move} computerMove
+  inout Move {move} humanMove
+  inout Move {move} computerMove
   inout GameState gameState
 
 particle RandomComputer in './source/RandomComputer.js'
-  out Move {Text move} computerMove
-  in GameState {Text board} gameState
+  out Move {move} computerMove
+  in GameState {board} gameState
 

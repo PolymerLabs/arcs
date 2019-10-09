@@ -24,7 +24,7 @@
   ];
 
   return class extends SimpleParticle {
-    update({move, gameState}, {}) {
+    update({move, gameState}) {
       if (!gameState || (move && move.move == 'reset' && gameState.lastMove != 'reset')) {
         const gs = {
           board: ',,,,,,,,',
@@ -85,8 +85,8 @@
             lastMove: move.move,
             gameStarted: gameState.gameStarted
           };
-          this.set('humanMove', {move: ''});
-          this.set('computerMove', {move: ''});
+          //this.set('humanMove', {move: ''});
+          //this.set('computerMove', {move: ''});
           this.set('gameState', gs);
         }
       }

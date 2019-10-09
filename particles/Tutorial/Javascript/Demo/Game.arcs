@@ -4,12 +4,12 @@ import 'TicTacToe.arcs'
 import 'GameSchemas.arcs'
 
 particle Game in './source/Game.js'
-  inout Person humanPlayer
-  inout Person computerPlayer
+  inout Person {name, avatar} humanPlayer
+  inout Person {name, avatar} computerPlayer
   in GameState {gameOver} gameState
-  in Move {Text move} humanMove
-  in Move {Text move} computerMove
-  inout Move move
+  in Move {move} humanMove
+  in Move {move} computerMove
+  inout Move {move, playerAvatar} move
   check humanPlayer is private
   check computerPlayer is private
   consume root
@@ -18,7 +18,7 @@ particle Game in './source/Game.js'
     provide cellSlot
 
 particle DisplayHumanGreeting in './source/DisplayGreeting.js'
-  in Person player
+  in Person {name} player
   consume greetingSlot
 
 recipe GameDemoRecipe
