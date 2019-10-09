@@ -28,11 +28,12 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 //
 //  <singleton> = <id-length>:<id>|<name>:<value>|<name>:<value>| ... |
 //  <value> depends on the field type:
-//    Text       <name>:T<length>:<text>
-//    URL        <name>:U<length>:<text>
-//    Number     <name>:N<number>:
-//    Boolean    <name>:B<zero-or-one>
-//
+//    Text         T<length>:<text>
+//    URL          U<length>:<text>
+//    Number       N<number>:
+//    Boolean      B<zero-or-one>
+//    Dictionary   D<length>:<dictionary format>
+
 //  <collection> = <num-entities>:<length>:<encoded><length>:<encoded> ...
 //
 //  <reference> = <length>:<id>|<length>:<storage-key>|
@@ -152,7 +153,7 @@ class StringEncoder {
   }
 }
 
-class StringDecoder {
+export class StringDecoder {
   str: string;
   constructor(readonly schema: Schema = null,
               readonly referenceType: ReferenceType = null,
@@ -192,8 +193,10 @@ class StringDecoder {
     while (num--) {
       const klen = Number(this.upTo(':'));
       const key = this.chomp(klen);
-      const vlen = Number(this.upTo(':'));
-      dict[key] = this.chomp(vlen);
+      const typeChar = this.chomp(1);
+      dict[key] = this.decodeValue(typeChar);
+      //const vlen = Number(this.upTo(':'));
+      //dict[key] = this.chomp(vlen);
     }
     return dict;
   }
@@ -236,6 +239,11 @@ class StringDecoder {
 
       case 'B':
         return Boolean(this.chomp(1) === '1');
+
+      case 'D':
+        const len = Number(this.upTo(':'));
+        const dictionary = this.chomp(len);
+        return this.decodeDictionary(dictionary);
 
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
