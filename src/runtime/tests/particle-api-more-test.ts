@@ -51,6 +51,47 @@ describe('ui-particle-api', () => {
 
   describe('high-level handle operations', () => {
 
+    it('traps bad handle names', async () => {
+      const loader = new StubLoader({
+        manifest: `
+          particle TestParticle in 'test-particle.js'
+            out Result {Boolean ok} result
+          recipe
+            create as result
+            TestParticle
+              result = result
+        `,
+        'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+          // TODO(sjmiles): normally update should never be async
+          async update() {
+            try {
+              // set a non-existent handle
+              await this.set('notreal', {value: 'FooBar'});
+            } catch(x) {
+              try {
+                await this.add('notreal', {value: 'FooBar'});
+              } catch(x) {
+                try {
+                  await this.remove('notreal');
+                } catch(x) {
+                  try {
+                    await this.clear('notreal');
+                  } catch(x) {
+                    await this.set('result', {ok: true});
+                  }
+                }
+              }
+            }
+          }
+        });`
+      });
+      //
+      const arc = await spawnTestArc(loader);
+      //
+      const resultData = await getSingletonData(arc, 0);
+      assert.ok(resultData.ok, 'failed to throw on bad handle name');
+    });
+
     it('can `set` things', async () => {
       const loader = new StubLoader({
         manifest: `
@@ -79,7 +120,7 @@ describe('ui-particle-api', () => {
               result2 = result2
         `,
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): update should never be async
+          // TODO(sjmiles): normally update should never be async
           async update() {
             // set a Singleton with a POJO
             this.set('thing', {value: 'FooBar'});
@@ -133,7 +174,7 @@ describe('ui-particle-api', () => {
               thing = thing
         `,
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): update should never be async
+          // TODO(sjmiles): normally update should never be async
           async update() {
             // add a POJO to a Collection
             this.add('stuff', {value: 'FooBarPojo'});
@@ -185,7 +226,7 @@ describe('ui-particle-api', () => {
               thing = thing
         `,
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): update should never be async
+          // TODO(sjmiles): normally update should never be async
           async update(inputs, state) {
             if (!state.tested) {
               state.tested = true;
