@@ -515,7 +515,7 @@ describe('schema', () => {
 
     for (const empty of nullTypes) {
       const testSchemas = [...new Array(attempts).keys()]
-        .map((i: number) => new Array(i).fill(''))
+        .map((i: number) => new Array(i).fill(empty))
         .map((names: string[]) => new Schema(names, {}));
 
       it(`are robust to poor construction of anonymous types: '${empty}' construction`, () => {
