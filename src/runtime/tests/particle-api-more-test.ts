@@ -26,7 +26,7 @@ const getSingletonData = async (arc, index) => {
   assert.ok(data, `store[${index}] was empty`);
   assert.ok(data.rawData, `store[${index}].rawData was empty`);
   return data.rawData;
-}
+};
 
 const getCollectionData = async (arc, index) => {
   const store = arc._stores[index] as CollectionStorageProvider;
@@ -34,7 +34,7 @@ const getCollectionData = async (arc, index) => {
   const data = await store.toList();
   assert.ok(data, `store[${index}] was empty`);
   return data;
-}
+};
 
 const spawnTestArc = async (loader) => {
   const runtime = new Runtime(loader, FakeSlotComposer);
@@ -45,7 +45,7 @@ const spawnTestArc = async (loader) => {
   await arc.instantiate(recipe);
   await arc.idle;
   return arc;
-}
+};
 
 describe('ui-particle-api', () => {
 
@@ -163,7 +163,7 @@ describe('ui-particle-api', () => {
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.rawData.value).sort());
       const expected = `["FooBarE0","FooBarE1","FooBarEntity","FooBarP0","FooBarP1","FooBarPojo"]`;
-      assert.equal(list, expected, 'Collection incorrect after adds')
+      assert.equal(list, expected, 'Collection incorrect after adds');
       const resultData = await getSingletonData(arc, 0);
       assert.ok(resultData.ok, 'failed to throw on adding a value to a Singleton');
     });
@@ -208,7 +208,7 @@ describe('ui-particle-api', () => {
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.rawData.value).sort());
       const expected = `["FooBarP3"]`;
-      assert.equal(list, expected, 'Collection incorrect after removes')
+      assert.equal(list, expected, 'Collection incorrect after removes');
     });
 
   });
