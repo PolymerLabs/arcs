@@ -1,6 +1,5 @@
 package arcs.api;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -27,9 +26,13 @@ public interface Particle {
 
   // These APIs are copied from ui-particle.js
   // TODO: Consider adding a similar layer of abstraction, if needed.
-  default String getTemplate(String slotName) { return ""; }
+  default String getTemplate(String slotName) {
+    return "";
+  }
 
-  default String getModel() { return ""; }
+  default String getModel() {
+    return "";
+  }
 
   void setOutput(Consumer<PortableJson> output);
 
@@ -37,5 +40,7 @@ public interface Particle {
 
   // Particle doesn't know its spec until it is instantiated. This is a helper method
   // indicates to Arcs whether provided slot ID mapping needs to be created with the Renderer.
-  default boolean providesSlot() { return false; }
+  default boolean providesSlot() {
+    return false;
+  }
 }

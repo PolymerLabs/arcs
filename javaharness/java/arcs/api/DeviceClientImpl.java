@@ -1,7 +1,6 @@
 package arcs.api;
 
 import java.util.logging.Logger;
-
 import javax.inject.Inject;
 
 public class DeviceClientImpl implements DeviceClient {
