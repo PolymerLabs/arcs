@@ -16,8 +16,8 @@ import {Runtime} from '../runtime.js';
 import {SingletonStorageProvider, CollectionStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 
 //
-// TODO(sjmiles): deref by index is brittle, but I couldn't attach an id
-// and searching by type or tags is hard (?)
+// TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
+// doesn't end up on the store, and searching by type or tags is hard (?)
 //
 const getSingletonData = async (arc, index) => {
   const store = arc._stores[index] as SingletonStorageProvider;
@@ -34,6 +34,17 @@ const getCollectionData = async (arc, index) => {
   const data = await store.toList();
   assert.ok(data, `store[${index}] was empty`);
   return data;
+}
+
+const spawnTestArc = async (loader) => {
+  const runtime = new Runtime(loader, FakeSlotComposer);
+  const arc = runtime.runArc('test-arc', 'volatile://');
+  const manifest = await Manifest.load('manifest', loader);
+  const [recipe] = manifest.recipes;
+  recipe.normalize();
+  await arc.instantiate(recipe);
+  await arc.idle;
+  return arc;
 }
 
 describe('ui-particle-api', () => {
@@ -93,13 +104,7 @@ describe('ui-particle-api', () => {
         });`
       });
       //
-      const runtime = new Runtime(loader, FakeSlotComposer);
-      const arc = runtime.runArc('test-arc', 'volatile://');
-      const manifest = await Manifest.load('manifest', loader);
-      const [recipe] = manifest.recipes;
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      await arc.idle;
+      const arc = await spawnTestArc(loader);
       //
       const thingData = await getSingletonData(arc, 3);
       assert.equal(thingData.value, 'FooBar', 'failed to set a POJO');
@@ -153,13 +158,7 @@ describe('ui-particle-api', () => {
         });`
       });
       //
-      const runtime = new Runtime(loader, FakeSlotComposer);
-      const arc = runtime.runArc('test-arc', 'volatile://');
-      const manifest = await Manifest.load('manifest', loader);
-      const [recipe] = manifest.recipes;
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      await arc.idle;
+      const arc = await spawnTestArc(loader);
       //
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.rawData.value).sort());
@@ -204,13 +203,7 @@ describe('ui-particle-api', () => {
         });`
       });
       //
-      const runtime = new Runtime(loader, FakeSlotComposer);
-      const arc = runtime.runArc('test-arc', 'volatile://');
-      const manifest = await Manifest.load('manifest', loader);
-      const [recipe] = manifest.recipes;
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      await arc.idle;
+      const arc = await spawnTestArc(loader);
       //
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.rawData.value).sort());
