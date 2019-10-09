@@ -493,4 +493,19 @@ describe('schema', () => {
   };
 
   void partiallyOrderedTestCases();
+
+  it('represent anonymous schema names in a comparable way', async () => {
+    const manifest = await Manifest.parse(`
+    particle Foo
+      in * {Text t, Number n} input1
+      in [* {Number n, Bytes b, Text t}] input2
+      out [* {Number n, Bytes b}] output1
+      out * {Number n, Bytes b} output2`);
+
+    const particle = manifest.particles[0];
+    const schema = (conn: HandleConnectionSpec): Schema => conn.type.getEntitySchema();
+    particle.connections
+      .map(schema)
+      .forEach((s: Schema) => assert.deepEqual(s.names, []));
+  });
 });
