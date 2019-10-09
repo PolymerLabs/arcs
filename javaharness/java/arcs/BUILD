@@ -13,6 +13,10 @@ filegroup(
     name = "pipes-shell-dist",
     srcs = glob(
         ["pipes-shell/web/deploy/dist/**/*"],
+        # The pipes-shell and the Arcs runtime MUST be in place.
+        # Otherwise all webview-based runtime services/bus/devtools
+        # would malfunction.
+        allow_empty = False,
     ),
 )
 
