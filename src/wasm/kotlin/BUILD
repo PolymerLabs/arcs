@@ -1,6 +1,7 @@
 load("//build_defs/kotlin_native:build_defs.bzl", "kt_wasm_library")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
+licenses(["notice"])
 
 kt_jvm_library(
     name = "arcs",
