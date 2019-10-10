@@ -19,7 +19,7 @@
     "test-health": "cross-env tools/sigh health",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix server run test:licenses",
-    "start": "cross-env tools/sigh devServer --port $npm_package_config_port",
+    "start": "cross-env tools/sigh devServer --install --port $npm_package_config_port",
     "test-wdio-shells": "wdio --baseUrl http://localhost:8786/ shells/tests/wdio.conf.js",
     "build:rollup": "rollup -c --sourcemap",
     "watch:rollup": "rollup -c --sourcemap --watch",
