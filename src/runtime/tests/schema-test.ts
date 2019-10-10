@@ -511,7 +511,7 @@ describe('schema', () => {
 
   function testPoorAnonConstruction() {
     const attempts = 5;
-    const nullTypes = ['', null, undefined];
+    const nullTypes = ['', ' ', null, undefined];
 
     for (const empty of nullTypes) {
       const testSchemas = [...new Array(attempts).keys()]
