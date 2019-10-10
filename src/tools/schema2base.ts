@@ -234,11 +234,7 @@ export abstract class Schema2Base {
       .forEach((connection: HandleConnectionSpec) => {
         const schema: Schema = connection.type.getEntitySchema();
         if (schema) {
-          const keys: string[] = schema.names;
-          if (keys.length === 0) {
-            keys.push('');
-          }
-          keys.forEach(combineWithNewName(schemas, schema));
+          schema.names.forEach(combineWithNewName(schemas, schema));
         }
       });
 
