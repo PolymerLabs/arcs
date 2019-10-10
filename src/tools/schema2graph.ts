@@ -90,7 +90,7 @@ class Builder {
   }
 }
 
-export function nameFromEntry(entry: FieldEntry) {
+export function nameFromEntry(entry: FieldEntry): string {
   return `${entry.particleName}_${entry.connectionName}`;
 }
 
