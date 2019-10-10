@@ -99,8 +99,7 @@ status "5.2. Updating PATH"
 append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
 
 status "5.3. Set up the .bazelrc file"
-(cd $ROOT && append_once "build --define=repo_root=$(pwd)" .bazelrc)
-
+(cd $ROOT && ./tools/add_repo_root.sh)
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
 echo "node --version"
