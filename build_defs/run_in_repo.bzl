@@ -25,9 +25,9 @@ def _write_shell_script(ctx, run_script):
     if "repo_root" not in ctx.var:
         fail(
             "\n*****\n" +
-            "repo_root is not defined. Run the following command from the root " +
-            "of your workspace:\n\n" +
-            "echo \"build --define=repo_root=$(pwd)\" >> .bazelrc\n" +
+            "repo_root is not defined. Run the following script to add the " +
+            "right value to your .bazelrc file:\n\n" +
+            "./tools/add_repo_root.sh\n" +
             "*****\n\n",
         )
     repo_root = ctx.var["repo_root"]
