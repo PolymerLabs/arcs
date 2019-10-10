@@ -15,7 +15,7 @@ import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
-import {UnifiedStore} from './unified-store.js';
+import {UnifiedStore, StoreInfo} from './unified-store.js';
 
 export {
   ActiveStore,
@@ -35,18 +35,9 @@ export {
 export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements StoreInterface<T> {
   protected unifiedStoreType: 'Store' = 'Store';
 
-  toString(tags: string[]): string {
-    throw new Error('Method not implemented.');
-  }
-
-  source: string;
-  description: string;
   readonly storageKey: StorageKey;
   exists: Exists;
-  readonly type: Type;
   readonly mode: StorageMode;
-  readonly id: string;
-  readonly name: string;
   readonly version: number = 0; // TODO(shans): Needs to become the version vector, and is also probably only available on activated storage?
   modelConstructor: new () => CRDTModel<T>;
 
@@ -57,14 +48,11 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     [StorageMode.ReferenceMode, ReferenceModeStore as StoreConstructor]
   ]);
 
-  constructor(opts: {storageKey: StorageKey, exists: Exists, type: Type, id: string, name?: string}) {
-    super();
+  constructor(opts: StoreInfo & {storageKey: StorageKey, exists: Exists}) {
+    super(opts);
     this.storageKey = opts.storageKey;
     this.exists = opts.exists;
-    this.type = opts.type;
     this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
-    this.id = opts.id;
-    this.name = opts.name || '';
   }
 
   async activate(): Promise<ActiveStore<T>> {

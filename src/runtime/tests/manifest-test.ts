@@ -1678,8 +1678,8 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
     };
     verify(manifest);
-    assert.strictEqual(manifest.stores[0].toString([]),
-                 (await Manifest.parse(manifest.stores[0].toString([]), {loader})).toString());
+    assert.strictEqual(manifest.stores[0].toManifestString([]),
+                 (await Manifest.parse(manifest.stores[0].toManifestString([]), {loader})).toString());
     verify(await Manifest.parse(manifest.toString(), {loader}));
   });
   it('can parse a manifest containing resources', async () => {
@@ -2026,8 +2026,8 @@ resource SomeName
     const [validRecipe] = manifest.recipes;
     assert.isTrue(validRecipe.normalize());
     assert.isTrue(validRecipe.isResolved());
-    assert.strictEqual(manifest.stores[0].toString([]),
-                 (await Manifest.parse(manifest.stores[0].toString([]))).toString());
+    assert.strictEqual(manifest.stores[0].toManifestString([]),
+                 (await Manifest.parse(manifest.stores[0].toManifestString([]))).toString());
   });
 
   it('can process a schema alias', async () => {

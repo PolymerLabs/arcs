@@ -19,7 +19,7 @@ import {ModelValue} from './storage/crdt-collection-model.js';
  * without knowing whether you are talking to a storage provider or proxy.
  */
 export interface Store {
-  name: string;
+  readonly name: string;
   readonly id: string;
   readonly type: Type;
   readonly pec?: ParticleExecutionContext;
