@@ -21,20 +21,19 @@ import {ProxyCallback} from './storageNG/store.js';
 export class StorageStub extends UnifiedStore {
   protected unifiedStoreType: 'StorageStub' = 'StorageStub';
 
-  constructor(public readonly type: Type,
-              public readonly id: string,
-              public readonly name: string,
+  constructor(type: Type,
+              id: string,
+              name: string,
               public readonly storageKey: string,
               public readonly storageProviderFactory: StorageProviderFactory,
-              public readonly originalId: string,
-                /** Trust tags claimed by this data store. */
-              public readonly claims: ClaimIsTag[],
-              public readonly description: string,
+              originalId: string,
+              claims: ClaimIsTag[],
+              description: string,
               public readonly version?: number,
-              public readonly source?: string,
+              source?: string,
               public referenceMode: boolean = false,
               public readonly model?: {}[]) {
-    super();
+    super({type, id, name, originalId, claims, description, source});
   }
 
   // No-op implementations for `on` and `off`.
@@ -65,10 +64,7 @@ export class StorageStub extends UnifiedStore {
       this.referenceMode = store.referenceMode;
     }
 
-    store.originalId = this.originalId;
-    store.name = this.name;
-    store.source = this.source;
-    store.description = this.description;
+    store.storeInfo = {...this.storeInfo};
     if (this.isBackedByManifest()) {
       await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
     }
@@ -81,43 +77,6 @@ export class StorageStub extends UnifiedStore {
 
   isBackedByManifest(): boolean {
     return (this.version !== undefined && !!this.model);
-  }
-
-  toString(handleTags: string[]): string {
-    const results: string[] = [];
-    const handleStr: string[] = [];
-    handleStr.push(`store`);
-    if (this.name) {
-      handleStr.push(`${this.name}`);
-    }
-    handleStr.push(`of ${this.type.toString()}`);
-    if (this.id) {
-      handleStr.push(`'${this.id}'`);
-    }
-    if (this.originalId) {
-      handleStr.push(`!!${this.originalId}`);
-    }
-    if (this.version !== undefined) {
-      handleStr.push(`@${this.version}`);
-    }
-    if (handleTags && handleTags.length) {
-      handleStr.push(`${handleTags.join(' ')}`);
-    }
-    if (this.source) {
-      handleStr.push(`in '${this.source}'`);
-    } else if (this.storageKey) {
-      handleStr.push(`at '${this.storageKey}'`);
-    }
-    // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
-    // serialized here too - could it ever be part of StorageStub?
-    results.push(handleStr.join(' '));
-    if (this.claims.length > 0) {
-      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
-    }
-    if (this.description) {
-      results.push(`  description \`${this.description}\``);
-    }
-    return results.join('\n');
   }
 
   _compareTo(other: UnifiedStore): number {

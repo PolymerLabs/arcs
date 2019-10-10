@@ -244,8 +244,7 @@ export class Manifest {
       if (typeof storageKey === 'string') {
         storageKey = StorageKeyParser.parse(storageKey);
       }
-      // TODO: Need to handle all of the additional options (claims, source,
-      // description, etc.)
+      // TODO: Need to handle additional options: version, model.
       store = new Store({...opts, storageKey, exists: Exists.ShouldCreate});
     } else {
       if (opts.storageKey instanceof StorageKey) {
@@ -1322,7 +1321,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toString(this.storeTags.get(store).map(a => `#${a}`)));
+      results.push(store.toManifestString(this.storeTags.get(store).map(a => `#${a}`)));
     });
 
     return results.join('\n');

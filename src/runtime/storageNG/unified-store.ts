@@ -11,12 +11,12 @@
 import {Comparable, compareStrings, compareNumbers} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
-import {Consumer} from '../hot.js';
 import {StorageStub} from '../storage-stub.js';
 import {assert} from '../../platform/assert-web.js';
 import {Store as OldStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ProxyCallback} from './store.js';
+import {ClaimIsTag} from '../particle-claim.js';
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -37,22 +37,28 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   // Tags for all subclasses of UnifiedStore.
   protected abstract unifiedStoreType: 'Store' | 'StorageStub' | 'StorageProviderBase';
 
-  abstract id: string;
-  abstract name: string;
-  abstract type: Type;
-  // TODO: Once the old storage stack is gone, this should only be of type StorageKey.
+  // TODO: Once the old storage stack is gone, this should only be of type
+  // StorageKey, and can be moved into StoreInfo.
   abstract storageKey: string | StorageKey;
   abstract version?: number; // TODO(shans): This needs to be a version vector for new storage.
   abstract referenceMode: boolean;
 
-  abstract toString(tags?: string[]): string; // TODO(shans): This shouldn't be called toString as toString doesn't take arguments.
+  storeInfo: StoreInfo;
+
+  constructor(storeInfo: StoreInfo) {
+    this.storeInfo = storeInfo;
+  }
+
+  // Series of StoreInfo getters to make migration easier.
+  get id() { return this.storeInfo.id; }
+  get name() { return this.storeInfo.name; }
+  get type() { return this.storeInfo.type; }
+  get originalId() { return this.storeInfo.originalId; }
+  get source() { return this.storeInfo.source; }
+  get description() { return this.storeInfo.description; }
+  get claims() { return this.storeInfo.claims; }
 
   abstract activate(): Promise<UnifiedActiveStore>;
-
-  // TODO: These properties/methods do not belong on UnifiedStore. They should
-  // probably go on some other abstraction like UnifiedActiveStore or similar.
-  abstract source?: string;
-  abstract description: string;
 
   /**
    * Hack to cast this UnifiedStore to the old-style class StorageStub.
@@ -83,6 +89,45 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     if (cmp !== 0) return cmp;
     return 0;
   }
+
+  // TODO: Make these tags live inside StoreInfo.
+  toManifestString(handleTags: string[]): string {
+    const results: string[] = [];
+    const handleStr: string[] = [];
+    handleStr.push(`store`);
+    if (this.name) {
+      handleStr.push(`${this.name}`);
+    }
+    handleStr.push(`of ${this.type.toString()}`);
+    if (this.id) {
+      handleStr.push(`'${this.id}'`);
+    }
+    if (this.originalId) {
+      handleStr.push(`!!${this.originalId}`);
+    }
+    if (this.version !== undefined) {
+      handleStr.push(`@${this.version}`);
+    }
+    if (handleTags && handleTags.length) {
+      handleStr.push(`${handleTags.join(' ')}`);
+    }
+    if (this.source) {
+      handleStr.push(`in '${this.source}'`);
+    } else if (this.storageKey) {
+      handleStr.push(`at '${this.storageKey}'`);
+    }
+    // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
+    // serialized here too - could it ever be part of StorageStub?
+    results.push(handleStr.join(' '));
+    if (this.claims.length > 0) {
+      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
+    }
+    if (this.description) {
+      results.push(`  description \`${this.description}\``);
+    }
+    return results.join('\n');
+  }
+
 }
 
 export interface UnifiedActiveStore {
@@ -103,3 +148,16 @@ export interface UnifiedActiveStore {
   on(callback: ProxyCallback<null>): number;
   off(callback: number): void;
 }
+
+/** Assorted properties about a store. */
+export type StoreInfo = {
+  readonly id: string;
+  name?: string;  // TODO: Find a way to make this readonly.
+  readonly type: Type;
+  readonly originalId?: string;
+  readonly source?: string;
+  readonly description?: string;
+
+  /** Trust tags claimed by this data store. */
+  readonly claims?: ClaimIsTag[];
+};

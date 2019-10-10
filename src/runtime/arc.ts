@@ -634,7 +634,7 @@ ${this.activeRecipe.toString()}`;
           const activeStore = await newStore.activate();
           await activeStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
-          newStore.name = copiedStore.name && `Copy of ${copiedStore.name}`;
+          newStore.storeInfo.name = copiedStore.name && `Copy of ${copiedStore.name}`;
           const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
@@ -728,7 +728,7 @@ ${this.activeRecipe.toString()}`;
       }
       store = await this.storageProviderFactory.construct(id, type, storageKey);
       assert(store, `failed to create store with id [${id}]`);
-      store.name = name;
+      store.storeInfo.name = name;
     }
     await this._registerStore(store, tags);
     return store;
@@ -870,7 +870,7 @@ ${this.activeRecipe.toString()}`;
     const results: string[] = [];
     const stores = [...this.storesById.values()].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toString([...this.storeTags.get(store)]));
+      results.push(store.toManifestString([...this.storeTags.get(store)]));
     });
 
     // TODO: include stores entities
