@@ -120,8 +120,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
   name: string;
   source: string|null;
   description: string;
-  /** Trust tags claimed by this data store. */
-  claims: ClaimIsTag[];
 
   protected constructor(type: Type, name: string, id: string, key: string) {
     super();
@@ -223,9 +221,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
       handleStr.push(`in '${this.source}'`);
     }
     results.push(handleStr.join(' '));
-    if (this.claims && this.claims.length > 0) {
-      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
-    }
     if (this.description) {
       results.push(`  description \`${this.description}\``);
     }
