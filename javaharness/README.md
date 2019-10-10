@@ -25,17 +25,11 @@ Before this will actually work, you will need to build pipes-shell
 
 ## Building
 
-The javaharness depends on pipes-shell, which needs to be webpacked before the
-Java code can be built/run with bazel. Instructions are in `build.sh` (run it
-from the repo root):
-
-```bash
-./javaharness/build.sh
-```
-
-You will need to re-run `build.sh` whenever the Runtime or pipes-shell code
-changes. If only the Java has changed, you can just run bazel directly (via
-command line or via Android Studio).
+The javaharness depends on pipes-shell and the Arcs runtime, which need to be
+webpacked before they can be used by the Android app. Thankfully bazel will
+automatically re-run webpack for you whenever those sources change. All you need
+to do is run the usual bazel mobile-install command (or build in Android Studio)
+and everything that needs to be rebuilt should be.
 
 ## Troubleshooting
 
@@ -45,5 +39,3 @@ command line or via Android Studio).
   ```bash
   bazel clean --expunge
   ```
-* If you see errors concerning `pipes-shell`, make sure you've run `build.sh`,
-  and check that the symlink points to the right place.
