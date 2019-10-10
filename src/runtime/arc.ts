@@ -721,7 +721,7 @@ ${this.activeRecipe.toString()}`;
       if (typeof storageKey === 'string') {
         throw new Error(`Can't use string storage keys with the new storage stack.`);
       }
-      store = new Store(storageKey, Exists.ShouldCreate, type, id, name);
+      store = new Store({storageKey, exists: Exists.ShouldCreate, type, id, name});
     } else {
       if (typeof storageKey !== 'string') {
         throw new Error(`Can't use new-style storage keys with the old storage stack.`);
