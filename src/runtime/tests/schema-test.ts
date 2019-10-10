@@ -508,22 +508,4 @@ describe('schema', () => {
       .map(schema)
       .forEach((s: Schema) => assert.deepEqual(s.names, []));
   });
-
-  function testPoorAnonConstruction() {
-    const attempts = 5;
-    const nullTypes = ['', null, undefined];
-
-    for (const empty of nullTypes) {
-      const testSchemas = [...new Array(attempts).keys()]
-        .map((i: number) => new Array(i).fill(empty))
-        .map((names: string[]) => new Schema(names, {}));
-
-      it(`are robust to poor construction of anonymous types: '${empty}' construction`, () => {
-        testSchemas.forEach(schema => assert.deepEqual(schema.names, []));
-      });
-    }
-  }
-
-  testPoorAnonConstruction();
-
 });
