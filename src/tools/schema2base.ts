@@ -48,7 +48,7 @@ export abstract class Schema2Base {
     }
 
     const manifest = await Utils.parse(`import '${src}'`);
-    const schemas = Schema2Base.collectSchemas(manifest);
+    const schemas = this.collectSchemas(manifest);
 
     if (Object.keys(schemas).length === 0) {
       console.warn(`No schemas found in '${src}'`);
@@ -71,8 +71,6 @@ export abstract class Schema2Base {
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
-
-
 
 
   /**
@@ -103,7 +101,7 @@ export abstract class Schema2Base {
    * @param manifest Manifest expended by loader.
    * @return Dictionary<Schema> target schemas for code generation.
    */
-  public static collectSchemas(manifest: Manifest): Dictionary<Schema> {
+  public  collectSchemas(manifest: Manifest): Dictionary<Schema> {
     /** Helper function: produce a new name for a schema found in the manifest. */
     const mangleDuplicateName = <T>(collection: Dictionary<T>, name: string): string => {
       let candidate = name;
