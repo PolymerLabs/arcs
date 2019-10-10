@@ -57,14 +57,14 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     [StorageMode.ReferenceMode, ReferenceModeStore as StoreConstructor]
   ]);
 
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, id: string, name: string = '') {
+  constructor(opts: {storageKey: StorageKey, exists: Exists, type: Type, id: string, name?: string}) {
     super();
-    this.storageKey = storageKey;
-    this.exists = exists;
-    this.type = type;
-    this.mode = storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
-    this.id = id;
-    this.name = name;
+    this.storageKey = opts.storageKey;
+    this.exists = opts.exists;
+    this.type = opts.type;
+    this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
+    this.id = opts.id;
+    this.name = opts.name || '';
   }
 
   async activate(): Promise<ActiveStore<T>> {

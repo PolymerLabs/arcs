@@ -56,7 +56,7 @@ describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
-    baseStore = new Store(testKey, Exists.ShouldCreate, new CountType(), 'base-store-id');
+    baseStore = new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'base-store-id'});
     DriverFactory.clearRegistrationsForTesting();
   });
 
@@ -65,7 +65,7 @@ describe('Reference Mode Store', async () => {
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
-    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
+    const store = new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'an-id'});
     try {
       await store.activate();
       assert.fail('store.activate() should not have succeeded');
@@ -77,7 +77,7 @@ describe('Reference Mode Store', async () => {
   it('will construct ReferenceMode stores when required', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
+    const store = new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'an-id'});
     const activeStore = await store.activate();
 
     assert.equal(activeStore.constructor, ReferenceModeStore);
