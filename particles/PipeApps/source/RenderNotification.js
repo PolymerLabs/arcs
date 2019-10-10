@@ -13,6 +13,14 @@
 defineParticle(({UiParticle, html, log}) => {
 
   return class extends UiParticle {
+    // Base class default rendering includes {template, model}, which is
+    // irrelevant for this particle's modality.
+    // TODO: stop overriding this method, once default rendering is skipped for
+    // undefined templates.
+    shouldRender() {
+      return false;
+    }
+
     setHandles(handles) {
       this.output({
         modality: 'notification',
@@ -21,6 +29,7 @@ defineParticle(({UiParticle, html, log}) => {
         handler: `onNotificationClick`
       });
     }
+
     onNotificationClick(event) {
       this.output({
         modality: 'notification',
