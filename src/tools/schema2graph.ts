@@ -23,6 +23,7 @@ export interface TypeLattice {
   nodes: Dictionary<FieldEntry>;
   edges: Dictionary<string[]>;
   nodesByParticle: Dictionary<FieldEntry[]>;
+  contains(name: string): boolean;
 }
 
 class Builder {
@@ -68,7 +69,9 @@ class Builder {
     const isHandleDirection = (e: FieldEntry): boolean => allowedDirections.includes(e.direction);
 
     for (const entry of entries) {
-      graph.addNode(entry);
+      if (isHandleDirection(entry)) {
+        graph.addNode(entry);
+      }
     }
     for (const particleEntries of Object.values(graph.nodesByParticle)) {
       for (const e0 of particleEntries) {
