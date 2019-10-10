@@ -10,9 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Schema2Base, TypeGraph, EntityData} from '../schema2base.js';
-import {Dictionary} from '../../runtime/hot.js';
-import {Schema} from '../../runtime/schema.js';
+import {Schema2Base, EntityData} from '../schema2base.js';
 
 
 class Schema2Mock extends Schema2Base {
@@ -31,7 +29,6 @@ class Schema2Mock extends Schema2Base {
   outputName(baseName: string): string {
     return '';
   }
-
 }
 
 describe('schema2base', () => {
@@ -41,8 +38,6 @@ describe('schema2base', () => {
     particle Accessor
         in Coordinate {Number x, Number y} input1
         out XPosition {Number x} output1`);
-    const entries = Schema2Base.collectFieldEntries(m);
-    return Schema2Base.buildTypeGraph(entries);
   });
  });
 });

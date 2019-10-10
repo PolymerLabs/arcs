@@ -29,12 +29,13 @@ export interface FieldEntry {
   connectionName: string;
 }
 
-export interface TypeGraph {
+export interface TypeLattice {
   nodes: Dictionary<FieldEntry>;
   edges: Dictionary<string[]>;
+  nodesByParticle: Dictionary<FieldEntry[]>;
 }
 
-class TypeGraphImpl implements TypeGraph {
+class TypeGraph implements TypeLattice {
   edges: Dictionary<string[]>;
   nodes: Dictionary<FieldEntry>;
   nodesByParticle: Dictionary<FieldEntry[]>;
@@ -45,7 +46,12 @@ class TypeGraphImpl implements TypeGraph {
     this.nodesByParticle = {};
   }
 
-  public addNode(name: string, entry: FieldEntry) {
+  public makeName(entry: FieldEntry): string {
+    return `${entry.particleName}_${entry.connectionName}`;
+  }
+
+  public addNode(entry: FieldEntry) {
+    const name = this.makeName(entry);
     if (!this.contains(name)) {
       this.nodes[name] = entry;
       this.edges[name] = [];
@@ -75,7 +81,71 @@ class TypeGraphImpl implements TypeGraph {
       this.edges[source].push(dest);
     }
   }
+
+  // tslint:disable-next-line:variable-name
+  public static Builder = class Builder {
+    manifestData: Iterable<FieldEntry> = null;
+
+    public from(manifest: Manifest): Builder {
+      this.manifestData =  this.parse(manifest);
+      return this;
+    }
+
+    public to(graph: TypeGraph) {
+      if (this.manifestData === null) {
+        throw new Error('Call `from` on a manifest first!');
+      }
+      this.buildGraph(this.manifestData, graph);
+    }
+
+    public build(): TypeLattice {
+      const graph = new TypeGraph();
+      this.to(graph);
+      return graph;
+    }
+
+    protected* parse(manifest: Manifest): Iterable<FieldEntry> {
+      for (const particle of manifest.allParticles) {
+        for (const connection of particle.connections) {
+          const schema: Schema = connection.type.getEntitySchema();
+          if (!schema) {
+            continue;
+          }
+          yield {
+            particleName: particle.name,
+            schema,
+            direction: connection.direction,
+            connectionName: connection.name,
+          };
+        }
+      }
+    }
+
+    protected buildGraph(entries: Iterable<FieldEntry>, graph: TypeGraph) {
+      const allowedDirections = ['in', 'inout', 'out'];
+      const isHandleDirection = (e: FieldEntry): boolean => allowedDirections.includes(e.direction);
+
+      for (const entry of entries) {
+        graph.addNode(entry);
+      }
+      for (const particleEntries of Object.values(graph.nodesByParticle)) {
+        for (const e0 of particleEntries) {
+          for (const e1 of particleEntries) {
+            if (!isHandleDirection(e0) || !isHandleDirection(e1)) {
+              continue;
+            }
+            const source = graph.makeName(e0);
+            const name = graph.makeName(e1);
+            if (source !== name && e0.schema.isMoreSpecificThan(e1.schema)) {
+              graph.addEdge(source, name);
+            }
+          }
+        }
+      }
+    }
+  };
 }
+
 
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
@@ -109,10 +179,11 @@ export abstract class Schema2Base {
       return;
     }
 
-    const inlineSchemas = Schema2Base.collectInlineSchemas(schemas);
+    const inlineSchemas = this.collectInlineSchemas(schemas);
 
-    const entries = Schema2Base.collectFieldEntries(manifest);
-    const typeGraph = Schema2Base.buildTypeGraph(entries);
+    const graph: TypeLattice = new TypeGraph.Builder()
+      .from(manifest)
+      .build();
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
@@ -125,63 +196,15 @@ export abstract class Schema2Base {
     fs.closeSync(outFile);
   }
 
-  public static* collectFieldEntries(manifest: Manifest): Iterable<FieldEntry> {
-    for (const particle of manifest.allParticles) {
-     for (const connection of particle.connections) {
-       const schema: Schema = connection.type.getEntitySchema();
-       if (!schema) {
-         continue;
-       }
-       yield {
-         particleName: particle.name,
-         schema,
-         direction: connection.direction,
-         connectionName: connection.name,
-       };
-     }
-    }
-  }
 
 
-  public static buildTypeGraph(entries: Iterable<FieldEntry>): TypeGraph {
-    const graph = new TypeGraphImpl();
-    const directionRank = {
-      'in': 1,
-      'inout': 0,
-      'out': -1,
-    };
-    const makeName = (entry: FieldEntry): string => `${entry.particleName}_${entry.connectionName}`;
-    const isHandleDirection = (e: FieldEntry): boolean => Object.keys(directionRank).includes(e.direction);
-
-    for (const entry of entries) {
-      const name = makeName(entry);
-      graph.addNode(name, entry);
-    }
-    for (const particleEntries of Object.values(graph.nodesByParticle)) {
-      for (const e0 of particleEntries) {
-        for (const e1 of particleEntries) {
-          if (!isHandleDirection(e0) || !isHandleDirection(e1)) {
-            continue;
-          }
-          const source = makeName(e0);
-          const name = makeName(e1);
-          if (source !== name && e0.schema.isMoreSpecificThan(e1.schema)) {
-            graph.addEdge(source, name);
-          }
-
-        }
-      }
-    }
-
-    return graph;
-  }
 
   /**
    * Collect inline schema fields. These will be output first so they're defined
    * prior to use in their containing entity classes.
    * @param schemas
    */
-  private static collectInlineSchemas(schemas: Dictionary<Schema>): Dictionary<Schema> {
+  private collectInlineSchemas(schemas: Dictionary<Schema>): Dictionary<Schema> {
     const inlineSchemas: Dictionary<Schema> = {};
     for (const schema of Object.values(schemas)) {
       for (const [field, descriptor] of Object.entries(schema.fields)) {
