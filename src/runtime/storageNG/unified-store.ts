@@ -90,6 +90,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     return 0;
   }
 
+  // TODO: Make these tags live inside StoreInfo.
   toManifestString(handleTags: string[]): string {
     const results: string[] = [];
     const handleStr: string[] = [];
