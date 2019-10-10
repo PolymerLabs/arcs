@@ -454,9 +454,9 @@ describe('schema', () => {
       out * {Number n, Bytes b} output2`);
 
     const particle = manifest.particles[0];
-    const schema = (conn: HandleConnectionSpec): Schema => conn.type.getEntitySchema();
+
     particle.connections
-      .map(schema)
+      .map((conn: HandleConnectionSpec): Schema => conn.type.getEntitySchema())
       .forEach((s: Schema) => assert.deepEqual(s.names, []));
   });
 });
