@@ -649,6 +649,7 @@ describe('particle-api', () => {
     await inputsHandle.add(new inputsHandle.entityClass({value: 'hello'}));
     await inputsHandle.add(new inputsHandle.entityClass({value: 'world'}));
     const resultsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:2');
+    const resultsHandle = await collectionHandleForTest(arc, resultsStore);
     const inspector = new util.ResultInspector(arc, resultsStore, 'value');
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
@@ -656,10 +657,8 @@ describe('particle-api', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
+    assert.sameMembers((await resultsHandle.toList()).map(item => item.value), ['done', 'done', 'HELLO', 'WORLD']);
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
-
-    // TODO: how do i listen to inner arc's outStore handle-changes?
-    // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
 
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const innerArcStores = innerArc.findStoresByType(result.type);
