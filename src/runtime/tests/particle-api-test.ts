@@ -23,6 +23,7 @@ import {Runtime} from '../runtime.js';
 import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
 import {SingletonStorageProvider, CollectionStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {collectionHandleForTest} from '../testing/handle-for-test.js';
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
@@ -145,13 +146,14 @@ describe('particle-api', () => {
     });
 
     const result = arc.context.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle') as CollectionStorageProvider;
+    const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle');
+    const resultHandle = await collectionHandleForTest(arc, resultStore);
     const recipe = arc.context.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
-    const values = (await resultStore.toList()).map(item => item.rawData.value);
-    assert.deepEqual(values, ['two']);
+    const values = await resultHandle.toList();
+    assert.deepEqual(values, [{value: 'two'}]);
   });
 
   it('contains a constructInnerArc call', async () => {
@@ -642,10 +644,12 @@ describe('particle-api', () => {
     });
 
     const result = arc.context.findSchemaByName('Result').entityClass();
-    const inputsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-    await inputsStore.store({id: '1', rawData: {value: 'hello'}}, ['key1']);
-    await inputsStore.store({id: '2', rawData: {value: 'world'}}, ['key2']);
+    const inputsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:1');
+    const inputsHandle = await collectionHandleForTest(arc, inputsStore);
+    await inputsHandle.add(new inputsHandle.entityClass({value: 'hello'}));
+    await inputsHandle.add(new inputsHandle.entityClass({value: 'world'}));
     const resultsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:2');
+    const resultsHandle = await collectionHandleForTest(arc, resultsStore);
     const inspector = new util.ResultInspector(arc, resultsStore, 'value');
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
@@ -653,10 +657,8 @@ describe('particle-api', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
+    assert.sameMembers((await resultsHandle.toList()).map(item => item.value), ['done', 'done', 'HELLO', 'WORLD']);
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
-
-    // TODO: how do i listen to inner arc's outStore handle-changes?
-    // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
 
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const innerArcStores = innerArc.findStoresByType(result.type);
