@@ -1,28 +1,42 @@
 // Tutorial Demo
 // Shows how to use Arcs features to create a tic-tac-toe game.
-import 'TicTacToe.arcs'
 import 'GameSchemas.arcs'
 
 particle Game in './source/Game.js'
   inout Person {name, avatar} humanPlayer
   inout Person {name, avatar} computerPlayer
   in GameState {gameOver} gameState
-  in Move {move} humanMove
-  in Move {move} computerMove
+  inout Move {move} humanMove
+  inout Move {move} computerMove
   inout Move {move, playerAvatar} move
   check humanPlayer is private
   check computerPlayer is private
   consume root
     provide playerSlot
     provide greetingSlot
-    provide cellSlot
+    provide gameSlot
 
 particle DisplayHumanGreeting in './source/DisplayGreeting.js'
   in Person {name} player
   consume greetingSlot
 
+particle TicTacToeBoard in './source/TicTacToeBoard.js'
+  in GameState {board, currentPlayer} gameState
+  out Move {move} humanMove
+  consume boardSlot
+
+particle MoveApplier in './source/MoveApplier.js'
+  in Move move
+  inout GameState gameState
+
+particle RandomComputer in './source/RandomComputer.js'
+  out Move {move} computerMove
+  in GameState {board, currentPlayer} gameState
+
+
+
 recipe GameDemoRecipe
-  create #volatile #move as move
+  create #volatile as move
   create #volatile #humanMove as humanMove
   create #volatile #computerMove as computerMove
   create #volatile as gameState  
@@ -30,31 +44,29 @@ recipe GameDemoRecipe
   Game
     consume root 
       provide greetingSlot as greeting
-      provide cellSlot as board
-    gameState <- gameState
-    humanPlayer <-> humanPlayer
-    computerPlayer <-> computerPlayer
-    humanMove <- humanMove
-    computerMove <- computerMove
-    move <-> move
+      provide gameSlot as board
+    gameState = gameState
+    humanPlayer = humanPlayer
+    computerPlayer = computerPlayer
+    humanMove = humanMove
+    computerMove = computerMove
+    move = move
 
   MoveApplier
-    move <- move
-    humanMove <-> humanMove
-    computerMove <-> computerMove
-    gameState <-> gameState
+    move = move
+    gameState = gameState
 
   DisplayHumanGreeting
     player = humanPlayer
     consume greetingSlot as greeting
 
   TicTacToeBoard
-    gameState <- gameState
-    humanMove -> humanMove
+    gameState = gameState
+    humanMove = humanMove
     consume boardSlot as board
 
   RandomComputer
-    computerMove -> computerMove
-    gameState <- gameState
+    computerMove = computerMove
+    gameState = gameState
 
   description `Javascript Tutorial TicTacToe Demo`

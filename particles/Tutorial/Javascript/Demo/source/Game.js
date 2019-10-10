@@ -11,7 +11,7 @@
 'use strict';
 
 /* global defineParticle */
-defineParticle(({SimpleParticle, html}) => {
+defineParticle(({SimpleParticle, html, log}) => {
 
   return class extends SimpleParticle {
 
@@ -21,58 +21,73 @@ defineParticle(({SimpleParticle, html}) => {
       <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
       <div slotid="greetingSlot"></div>
       <span>{{turnMessage}}</span>
-      <div slotid="cellSlot"></div>
-      <div hidden={{hideCongrats}}><span>{{startmsg}}</span> Please hit reset to start a new game. <button on-click="reset">Reset</button></div>
+      <div slotid="gameSlot"></div>
+      <div hidden={{hideCongrats}}><span>{{congrats}}</span></div>
     `;
+    }
+
+    shouldRender({gameState}) {
+      return gameState;
     }
 
     render({gameState, humanMove, computerMove, humanPlayer, computerPlayer, move}) {
       const toReturn = {hideCongrats: true};
       if (!move) {
         this.set('move', {move: 'reset'});
+        return;
       }
 
       if (!humanPlayer) {
         this.set('humanPlayer', {name: 'Human', avatar: '🧑'});
+        return;
       }
 
       if (!computerPlayer) {
         this.set('computerPlayer', {name: 'Computer', avatar: '🤖'});
+        return;
       }
 
-      if (humanMove && computerMove && move && humanPlayer && computerPlayer && gameState) {
-        // If the move has been applied, and the game isn't over
-        if (gameState.lastMove == move.move && !gameState.gameOver) {
-          if (gameState.currentPlayer == 0) {
-            toReturn.turnMessage = `It is your move, ${humanPlayer.name}.`;
-            if (humanMove.move != '') {
-              this.set('move', {move: humanMove.move, playerAvatar: humanPlayer.avatar});
-            }
-          } else if (gameState.currentPlayer == 1) {
-            toReturn.turnMessage = `It is ${computerPlayer.avatar}'s move, please wait.`;
-            if (computerMove != '') {
-              this.set('move', {move: computerMove.move, playerAvatar: computerPlayer.avatar});
-            }
+      // If the move has been applied, and the game isn't over
+      if (gameState.lastMove == move.move && !gameState.gameOver) {
+
+        if (gameState.currentPlayer == 0) {
+          toReturn.turnMessage = `It is your move, ${humanPlayer.name}.`;
+          if (humanMove && humanMove.move != move.move) {
+            this.set('move', {move: humanMove.move, playerAvatar: humanPlayer.avatar});
+            this.set('humanMove', {move: ''});
+          }
+        }
+
+        if (gameState.currentPlayer == 1) {
+          toReturn.turnMessage = `It is ${computerPlayer.avatar}'s move, please wait.`;
+          if (computerMove && computerMove.move != move.move) {
+            this.set('move', {move: computerMove.move, playerAvatar: computerPlayer.avatar});
+            this.set('computerMove', {move: ''});
           }
         }
       }
 
-      // If the game is over
-      if (humanPlayer && computerPlayer && gameState && gameState.gameOver) {
+      if (gameState.gameOver) {
+        if (humanMove && humanMove.move == 'reset') {
+          this.set('move', {move: 'reset'});
+          this.set('humanMove', {move: ''});
+          this.set('computerMove', {move: ''});
+          return;
+        }
+
+        // Set congratulations message based on winner
         toReturn.hideCongrats = false;
         if (gameState.winnerAvatar !== null) {
           if (gameState.winnerAvatar == humanPlayer.avatar) {
-            toReturn.startmsg = `Congratulations ${humanPlayer.name}, you won!`;
+            toReturn.congrats = `Congratulations ${humanPlayer.name}, you won!`;
           } else {
-            toReturn.startmsg = `Better luck next time... ${computerPlayer.avatar} won.`;
+            toReturn.congrats = `Better luck next time... ${computerPlayer.avatar} won.`;
           }
+        } else {
+          toReturn.congrats = `It's a tie!`;
         }
       }
       return toReturn;
-    }
-
-    reset() {
-      this.set('move', {move: 'reset'});
     }
 
     onNameInputChange(e) {

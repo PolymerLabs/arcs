@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, html}) => {
+defineParticle(({SimpleParticle, html, log}) => {
 
 const template = html`
   <style>
@@ -51,27 +51,33 @@ const template = html`
       <span>{{spot}}</span>
     </button>
   </template>
+  <div hidden={{hideReset}}> Please hit reset to start a new game. <button on-click="reset">Reset</button></div>
 `;
 
+let myTurn = false;
+
   return class extends SimpleParticle {
+
     get template() {
       return template;
     }
 
     shouldRender({gameState}) {
-      return gameState && gameState.gameStarted;
+      return gameState;
     }
 
     render({gameState}) {
-      if (!gameState) {
-        return {};
+
+      if (gameState.currentPlayer == 0) {
+        myTurn = true;
+      } else {
+        myTurn = false;
       }
-      if (gameState.move == 'reset') {
-        this.set('humanMove', {move: ''});
-      }
+
       const arr = gameState.board.split(`,`);
       // Return the values that should be filled into the board
       return {
+        hideReset: !gameState.gameOver,
         buttons: {
           $template: 'button',
           models: arr.map((spot, index) => ({
@@ -83,10 +89,14 @@ const template = html`
       };
     }
 
-    // The board acts as the human mover. When the human clicks on the
-    // board, the move should update accordingly.
+    reset() {
+      this.set('humanMove', {move: 'reset'});
+    }
+
     onClick(e) {
-      this.set(`humanMove`, {move: e.data.value});
+      if (myTurn) {
+        this.set(`humanMove`, {move: e.data.value});
+      }
     }
 
   };

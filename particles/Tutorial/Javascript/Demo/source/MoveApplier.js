@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- /* global defineParticle */
+/* global defineParticle */
 
- defineParticle(({SimpleParticle, html}) => {
+defineParticle(({SimpleParticle}) => {
 
   const winningSequences = [
     [0, 1, 2],
@@ -32,63 +32,50 @@
           winnerAvatar: null,
           currentPlayer: Math.floor(Math.random() * 2),
           lastMove: 'reset',
-          gameStarted: true
         };
         this.set('gameState', gs);
-        this.set('humanMove', {move: ''});
-        this.set('computerMove', {move: ''});
-      } else if (move) {
+        return;
+      }
+
+      if (move && move.move != gameState.lastMove) {
+        const gs = {
+          board: gameState.board,
+          gameOver: gameState.gameOver,
+          winnerAvatar: gameState.winnerAvatar,
+          currentPlayer: gameState.currentPlayer,
+          lastMove: move.move,
+        };
+
         const arr = gameState.board.split(`,`);
         const mv = parseInt(move.move, 10) - 1;
-        // If the move is valid
+
+        // If the move is valid, apply move
         if (arr[mv] == ``) {
-          // Apply move
           arr[mv] = move.playerAvatar;
-
-          // Check if the game is tied
-          let newGameOver = true;
-          for (const cell of arr) {
-            if (cell == '') {
-              newGameOver = false;
-              break;
-            }
-          }
-
-          // Check if the game has been won
-          let newWinnerAvatar = null;
-          for (const ws of winningSequences) {
-            if (arr[ws[0]] !== '' && arr[ws[0]] === arr[ws[1]] && arr[ws[1]] == arr[ws[2]]) {
-              newGameOver = true;
-              newWinnerAvatar = arr[ws[0]];
-              break;
-            }
-          }
-
-          const gs = {
-            board: arr.join(),
-            gameOver: newGameOver,
-            winnerAvatar: newWinnerAvatar,
-            currentPlayer: (gameState.currentPlayer + 1) % 2,
-            lastMove: move.move,
-            gameStarted: true
-          };
-          this.set('humanMove', {move: ''});
-          this.set('computerMove', {move: ''});
-          this.set('gameState', gs);
-
-        } else if (move.move != gameState.lastMove) {
-          const gs = {
-            board: gameState.board,
-            gameOver: gameState.gameOver,
-            winnerAvatar: gameState.winnerAvatar,
-            currentPlayer: gameState.currentPlayer,
-            lastMove: move.move,
-            gameStarted: gameState.gameStarted
-          };
-          //this.set('humanMove', {move: ''});
-          //this.set('computerMove', {move: ''});
-          this.set('gameState', gs);
+          gs.board = arr.join();
+          gs.currentPlayer = (gameState.currentPlayer + 1) % 2;
         }
+
+        // Check if the game is tied
+        gs.gameOver = true;
+        for (const cell of arr) {
+          if (cell == '') {
+            gs.gameOver = false;
+            break;
+          }
+        }
+
+        // Check if the game has been won
+        for (const ws of winningSequences) {
+          if (arr[ws[0]] !== '' && arr[ws[0]] === arr[ws[1]] && arr[ws[1]] == arr[ws[2]]) {
+            gs.gameOver = true;
+            gs.winnerAvatar = arr[ws[0]];
+            break;
+          }
+        }
+
+        this.set('gameState', gs);
+        return;
       }
     }
   };
