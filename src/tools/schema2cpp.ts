@@ -53,7 +53,7 @@ export class Schema2Cpp extends Schema2Base {
     return '\n#endif\n';
   }
 
-  entityClass({name, schema}: EntityData): string {
+  entityClass({name, entry}: EntityData): string {
     const fields: string[] = [];
     const api: string[] = [];
     const clone: string[] = [];
@@ -64,7 +64,7 @@ export class Schema2Cpp extends Schema2Base {
     const encode: string[] = [];
     const toString: string[] = [];
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
+    const fieldCount = this.processSchema(entry, (field: string, typeChar: string, refName: string) => {
       const typeInfo = typeMap[typeChar];
       const type = typeInfo.type(refName);
       const [r1, r2] = typeInfo.returnByRef ? ['const ', '&'] : ['', ''];

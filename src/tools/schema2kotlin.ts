@@ -51,12 +51,12 @@ package arcs
     return '';
   }
 
-  entityClass({name, schema}: EntityData): string {
+  entityClass({name, entry}: EntityData): string {
     const fields: string[] = [];
     const encode: string[] = [];
     const decode: string[] = [];
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
+    const fieldCount = this.processSchema(entry, (field: string, typeChar: string, refName: string) => {
       if (typeChar === 'R') {
         console.log('TODO: support reference types in kotlin');
         process.exit(1);

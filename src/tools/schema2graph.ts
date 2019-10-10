@@ -76,8 +76,8 @@ class Builder {
           if (!isHandleDirection(e0) || !isHandleDirection(e1)) {
             continue;
           }
-          const source = graph.makeName(e0);
-          const name = graph.makeName(e1);
+          const source = nameFromEntry(e0);
+          const name = nameFromEntry(e1);
           if (source !== name && e0.schema.isMoreSpecificThan(e1.schema)) {
             graph.addEdge(source, name);
           }
@@ -85,6 +85,10 @@ class Builder {
       }
     }
   }
+}
+
+export function nameFromEntry(entry: FieldEntry) {
+  return `${entry.particleName}_${entry.connectionName}`;
 }
 
 export class TypeGraph implements TypeLattice {
@@ -101,12 +105,8 @@ export class TypeGraph implements TypeLattice {
     this.nodesByParticle = {};
   }
 
-  public makeName(entry: FieldEntry): string {
-    return `${entry.particleName}_${entry.connectionName}`;
-  }
-
   public addNode(entry: FieldEntry) {
-    const name = this.makeName(entry);
+    const name = nameFromEntry(entry);
     if (!this.contains(name)) {
       this.nodes[name] = entry;
       this.edges[name] = [];
