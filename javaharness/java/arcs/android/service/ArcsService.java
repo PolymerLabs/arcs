@@ -9,6 +9,7 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import java.util.List;
 import javax.inject.Inject;
 
 import arcs.android.api.IArcsService;
@@ -31,6 +32,13 @@ public class ArcsService extends IntentService {
   public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
   public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
 
+  private static final String MESSAGE_FIELD = "message";
+  private static final String STOP_ARC_MESSAGE = "stopArc";
+  private static final String ARC_ID_FIELD = "arcId";
+  private static final String PEC_ID_FIELD = "pecId";
+  private static final String UI_EVENT_MESSAGE = "uiEvent";
+  private static final String PARTICLE_ID_FIELD = "particleId";
+  private static final String EVENTLET_FIELD = "eventlet";
   private static final String TAG = "Arcs";
 
   private WebView arcsWebView;
@@ -98,9 +106,9 @@ public class ArcsService extends IntentService {
           String arcId,
           String pecId,
           String recipe,
-          String particleId,
-          String particleName,
-          String providedSlotId,
+          List<String> particleIds,
+          List<String> particleNames,
+          List<String> providedSlotIds,
           IRemotePecCallback callback) {
         RemotePecPort remotePecPort =
             new RemotePecPort(
@@ -114,17 +122,21 @@ public class ArcsService extends IntentService {
                 jsonParser);
         pecPortManager.addRemotePecPort(pecId, remotePecPort);
 
-        runWhenReady(
-            () ->
-                arcs.runArc(
-                    new ArcData.Builder()
-                        .setArcId(arcId)
-                        .setPecId(pecId)
-                        .setRecipe(recipe)
-                        .setParticleId(particleId)
-                        .setParticleName(particleName)
-                        .setProvidedSlotId(providedSlotId)
-                        .build()));
+        runWhenReady(() -> {
+            ArcData.Builder arcDataBuilder = new ArcData.Builder()
+              .setArcId(arcId)
+              .setPecId(pecId)
+              .setRecipe(recipe);
+            for (int i = 0; i < particleIds.size(); ++i) {
+              arcDataBuilder.addParticleData(
+                  new ArcData.ParticleData()
+                      .setId(particleIds.get(i))
+                      .setName(particleNames.get(i))
+                      .setProvidedSlotId(providedSlotIds.get(i)));
+            }
+
+            arcs.runArc(arcDataBuilder.build());
+        });
       }
 
       @Override
@@ -133,7 +145,10 @@ public class ArcsService extends IntentService {
             () ->
                 shellEnvironment.sendMessageToArcs(
                     jsonParser.stringify(
-                        jsonParser.emptyObject().put("message", "stopArc").put("arcId", arcId))));
+                        jsonParser
+                            .emptyObject()
+                            .put(MESSAGE_FIELD, STOP_ARC_MESSAGE)
+                            .put(ARC_ID_FIELD, arcId))));
         pecPortManager.removePecPort(pecId);
       }
 
@@ -169,9 +184,9 @@ public class ArcsService extends IntentService {
         jsonParser.stringify(
             jsonParser
                 .emptyObject()
-                .put("message", "uiEvent")
-                .put("particleId", referenceId)
-                .put("eventlet", jsonParser.parse(eventlet))));
+                .put(MESSAGE_FIELD, UI_EVENT_MESSAGE)
+                .put(PARTICLE_ID_FIELD, referenceId)
+                .put(EVENTLET_FIELD, jsonParser.parse(eventlet))));
   }
 
   private void runWhenReady(Runnable runnable) {

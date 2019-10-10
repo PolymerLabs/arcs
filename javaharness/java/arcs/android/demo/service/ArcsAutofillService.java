@@ -62,7 +62,7 @@ public class ArcsAutofillService extends AutofillService {
     ArcData arcData = arcs.runArc("AndroidAutofill", autofillParticle);
 
     autofillRenderer.addCallback(
-        arcData.getProvidedSlotId(),
+        arcData.getParticleList().get(0).getProvidedSlotId(),
         node.get().getAutofillId(),
         fillResponse -> {
           callback.onSuccess(fillResponse);

@@ -18,7 +18,7 @@ const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
 export const runArc = async (msg, bus, runtime, env) => {
-  const {recipe, arcId, storageKeyPrefix, pecId, particleId, particleName, providedSlotId} = msg;
+  const {recipe, arcId, storageKeyPrefix, pecId, particles} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
     warn(`arcId must be provided.`);
@@ -43,13 +43,13 @@ export const runArc = async (msg, bus, runtime, env) => {
   };
 
   // optionally instantiate recipe
-  if (action && await instantiateRecipe(arc, action, particleId, particleName, providedSlotId)) {
+  if (action && await instantiateRecipe(arc, action, particles || [])) { 
     log(`successfully instantiated ${recipe} in ${arc}`);
   }
   return arc;
 };
 
-const instantiateRecipe = async (arc, recipe, particleId, particleName, providedSlotId) => {
+const instantiateRecipe = async (arc, recipe, particles) => {
   let plan = await Utils.resolve(arc, recipe);
   if (!plan) {
     warn(`failed to resolve recipe ${recipe}`);
@@ -57,13 +57,20 @@ const instantiateRecipe = async (arc, recipe, particleId, particleName, provided
   }
   if (RecipeUtil.matchesRecipe(arc.activeRecipe, plan)) {
     log(`recipe ${recipe} is already instantiated in ${arc}`);
-    return reinstantiateParticle(arc, particleId, particleName);
+    for (const particle of particles) {
+      if (!reinstantiateParticle(arc, particle.id, particle.name)) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  plan = updateParticleInPlan(plan, particleId, particleName, providedSlotId);
-  if (!plan) {
-    warn(`failed updating particle id '${particleId}', name ${particleName} in recipe ${recipe}`);
-    return false;
+  for (const particle of particles) {
+    plan = updateParticleInPlan(plan, particle.id, particle.name, particle.providedSlotId);
+    if (!plan) {
+      warn(`failed updating particle id '${particle.id}', name ${particle.name} in recipe ${recipe}`);
+      return false;
+    }
   }
 
   await arc.instantiate(plan);
