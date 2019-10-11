@@ -145,6 +145,11 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
 
   static get properties() {
     return {
+      active: {
+        type: Boolean,
+        observer: '_onActiveChanged',
+        reflectToAttribute: true
+      },
       searchParams: {
         type: Object,
         observer: '_onSearchChanged'
@@ -325,6 +330,13 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     }
 
     event.stopPropagation();
+  }
+
+  _onActiveChanged(active) {
+    if (active) {
+      // Iron-list needs to be notified that the panel got shown, so that it draws itself.
+      this.$.list.fire('iron-resize');
+    }
   }
 }
 
