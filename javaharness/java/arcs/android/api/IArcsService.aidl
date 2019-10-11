@@ -16,6 +16,7 @@ interface IArcsService {
       String arcId,
       String pecId,
       String recipe,
+      // TODO: use Parcelable for ParticleData (and/or the entire ArcData).
       in List<String> particleIds,
       in List<String> particleNames,
       in List<String> providedSlotIds,

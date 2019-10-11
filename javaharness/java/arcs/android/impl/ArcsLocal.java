@@ -35,8 +35,7 @@ public class ArcsLocal implements Arcs {
   @Override
   public void runArc(ArcData arcData) {
     PECInnerPort pecInnerPort = null;
-    for (int i = 0; i < arcData.getParticleList().size(); ++i) {
-      ArcData.ParticleData particleData = arcData.getParticleList().get(i);
+    for (ArcData.ParticleData particleData : arcData.getParticleList()) {
       if (particleData.getParticle() != null) {
         if (pecInnerPort == null) {
           pecInnerPort =
