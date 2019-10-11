@@ -19,6 +19,7 @@ import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
+import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
 
 
 export interface TypeLiteral extends Literal {
@@ -256,6 +257,10 @@ export abstract class Type {
   crdtInstanceConstructor<T extends CRDTTypeRecord>(): (new () => CRDTModel<T>) | null {
     return null;
   }
+
+  handleConstructor<T extends CRDTTypeRecord>() {
+    return null;
+  }
 }
 
 export class CountType extends Type {
@@ -289,6 +294,10 @@ export class SingletonType<T extends Type> extends Type {
 
   crdtInstanceConstructor() {
     return CRDTSingleton;
+  }
+
+  handleConstructor<T>() {
+    return SingletonHandle;
   }
 }
 
@@ -552,6 +561,10 @@ export class CollectionType<T extends Type> extends Type {
 
   crdtInstanceConstructor() {
     return CRDTCollection;
+  }
+
+  handleConstructor<T>() {
+    return CollectionHandle;
   }
 }
 
