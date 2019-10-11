@@ -257,7 +257,7 @@ export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSinglet
   }
 }
 
-export function handleFor<T extends CRDTTypeRecord>(key: string,
+export function handleNGFor<T extends CRDTTypeRecord>(key: string,
       storageProxy: StorageProxy<T>,
       idGenerator: IdGenerator,
       particle: Particle,

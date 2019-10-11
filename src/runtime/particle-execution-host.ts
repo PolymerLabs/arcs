@@ -28,7 +28,7 @@ import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
+import {ActiveStore, ProxyMessage} from './storageNG/store.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -109,7 +109,7 @@ export class ParticleExecutionHost {
     const apiPort = this.choosePortForParticle(particle);
 
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store instanceof Store);
+      apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
@@ -119,7 +119,7 @@ export class ParticleExecutionHost {
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store instanceof Store);
+      apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
     apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
   }

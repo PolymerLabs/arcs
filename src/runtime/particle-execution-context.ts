@@ -20,7 +20,7 @@ import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
-import {Handle as HandleNG, handleFor as handleNGFor} from './storageNG/handle.js';
+import {Handle as HandleNG, handleNGFor} from './storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
@@ -31,6 +31,7 @@ import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
 import {Store} from './store.js';
+import {Flags} from './flags.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -59,23 +60,31 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
     this.apiPort = new class extends PECInnerPort {
 
-      onDefineHandle(identifier: string, type: Type, name: string, isNG: boolean) {
-        if (isNG) {
+      onDefineHandle(identifier: string, type: Type, name: string) {
+        if (Flags.useNewStorageStack) {
           return new StorageProxyNG(identifier, pec, type);
         }
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }
 
       onGetBackingStoreCallback(callback: (proxy: StorageProxy, key: string) => void, type: Type, name: string, id: string, storageKey: string) {
-        // TODO create NG StorageProxy.
-        const proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
-        proxy.storageKey = storageKey;
+        let proxy;
+        if (Flags.useNewStorageStack) {
+          proxy = new StorageProxyNG(id, pec, type);
+        } else {
+          proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
+          proxy.storageKey = storageKey;
+        }
         return [proxy, () => callback(proxy, storageKey)];
       }
 
       onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string) {
-        // TODO create NG StorageProxy.
-        const proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
+        let proxy;
+        if (Flags.useNewStorageStack) {
+          proxy = new StorageProxyNG(id, pec, type);
+        } else {
+          proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
+        }
         return [proxy, () => callback(proxy)];
       }
 
@@ -350,8 +359,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       this.apiPort.ReportExceptionInHost(exc);
     });
     registerList.forEach(({proxy, particle, handle}) => {
-      if (proxy instanceof StorageProxy) proxy.register(particle, handle);
-      if (proxy instanceof StorageProxyNG) proxy.registerHandle(handle as HandleNG<CRDTTypeRecord>);
+      if (proxy instanceof StorageProxy) {
+        proxy.register(particle, handle);
+      } else if (proxy instanceof StorageProxyNG) {
+        proxy.registerHandle(handle as HandleNG<CRDTTypeRecord>);
+      } else {
+        throw new Error('Expecting a StorageProxy');
+      }
     });
     const idx = this.pendingLoads.indexOf(p);
     this.pendingLoads.splice(idx, 1);
