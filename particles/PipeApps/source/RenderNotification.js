@@ -32,7 +32,7 @@ defineParticle(({UiParticle, html, log}) => {
         this.output(notification);
       }
       if (state.clicked) {
-        state.clicked = true;
+        state.clicked = false;
         this.output(clickNotification);
       }
     }
