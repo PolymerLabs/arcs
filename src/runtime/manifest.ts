@@ -677,7 +677,7 @@ ${e.message}
       Object.assign(fields, result.fields);
       names.push(...result.names);
     }
-    names = [names[0], ...names.filter(name => name !== names[0])];
+    names = [...new Set(names)];
     const name = schemaItem.alias || names[0];
     if (!name) {
       throw new ManifestError(
