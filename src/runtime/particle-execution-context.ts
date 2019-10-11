@@ -326,11 +326,12 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     let handle;
     if (proxy instanceof StorageProxyNG) {
       handle = handleNGFor(
-          id /*key*/,
+          id,
           proxy,
           this.idGenerator,
           particle,
-          connSpec.isInput, connSpec.isOutput,
+          connSpec.isInput,
+          connSpec.isOutput,
           name);
     } else {
       handle = handleFor(proxy, this.idGenerator, name, id, connSpec.isInput, connSpec.isOutput);
