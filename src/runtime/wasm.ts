@@ -28,22 +28,28 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 //
 //  <singleton> = <id-length>:<id>|<name>:<value>|<name>:<value>| ... |
 //  <value> depends on the field type:
-//    Text       <name>:T<length>:<text>
-//    URL        <name>:U<length>:<text>
-//    Number     <name>:N<number>:
-//    Boolean    <name>:B<zero-or-one>
+//    Text         T<length>:<text>
+//    URL          U<length>:<text>
+//    Number       N<number>:
+//    Boolean      B<zero-or-one>
+//    Dictionary   D<length>:<dictionary format>
 //
 //  <collection> = <num-entities>:<length>:<encoded><length>:<encoded> ...
 //
 //  <reference> = <length>:<id>|<length>:<storage-key>|
+//
+// The encoder classes also supports two "Dictionary" formats of key:value string pairs.
+//
+// The first format supports only string-type values:
+//   <size>:<key-len>:<key><value-len>:<value><key-len>:<key><value-len>:<value>...
+// alternate format supports typed-values using <value> syntax defined above
+//   <size>:<key-len>:<key><value><key-len>:<key><value>...
 //
 // Examples:
 //   Singleton:   4:id05|txt:T3:abc|lnk:U10:http://def|num:N37:|flg:B1|
 //   Collection:  3:29:4:id12|txt:T4:qwer|num:N9.2:|18:6:id2670|num:N-7:|15:5:id501|flg:B0|
 //   Reference:   5:id461|65:volatile://!684596363489092:example^^volatile-Result {Text value}|
 //
-// The encoder classes also support a "Dictionary" format of key:value string pairs:
-//   <size>:<key-len>:<key><value-len>:<value><key-len>:<key><value-len>:<value>...
 export class EntityPackager {
   private encoder: StringEncoder;
   private decoder: StringDecoder;
@@ -152,7 +158,7 @@ class StringEncoder {
   }
 }
 
-class StringDecoder {
+export class StringDecoder {
   str: string;
   constructor(readonly schema: Schema = null,
               readonly referenceType: ReferenceType = null,
@@ -192,8 +198,17 @@ class StringDecoder {
     while (num--) {
       const klen = Number(this.upTo(':'));
       const key = this.chomp(klen);
-      const vlen = Number(this.upTo(':'));
-      dict[key] = this.chomp(vlen);
+      // TODO(sjmiles): be backward compatible with encoders that only encode string values
+      const typeChar = this.chomp(1);
+      // if typeChar is a digit, it's part of a length specifier
+      if (typeChar >= '0' && typeChar <= '9') {
+        const vlen = Number(`${typeChar}${this.upTo(':')}`);
+        dict[key] = this.chomp(vlen);
+      }
+      // otherwise typeChar is value-type specifier
+      else {
+        dict[key] = this.decodeValue(typeChar);
+      }
     }
     return dict;
   }
@@ -237,6 +252,12 @@ class StringDecoder {
       case 'B':
         return Boolean(this.chomp(1) === '1');
 
+      case 'D': {
+        const len = Number(this.upTo(':'));
+        const dictionary = this.chomp(len);
+        return this.decodeDictionary(dictionary);
+      }
+      
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
     }
