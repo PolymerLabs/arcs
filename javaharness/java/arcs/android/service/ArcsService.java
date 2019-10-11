@@ -81,6 +81,7 @@ public class ArcsService extends IntentService {
   @Override
   public void onDestroy() {
     Log.d(TAG, "onDestroy()");
+    harnessController.deInit();
     super.onDestroy();
   }
 
