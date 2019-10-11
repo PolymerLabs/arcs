@@ -12,30 +12,32 @@
 
 defineParticle(({UiParticle, html, log}) => {
 
+  const notification = {
+    modality: 'notification',
+    title: `Hello`,
+    text: `I'm a notification.`,
+    handler: `onNotificationClick`
+  };
+
+  const clickNotification = {
+    modality: 'notification',
+    title: `Hello`,
+    text: `Notification was clicked`
+  };
+
   return class extends UiParticle {
-    // Base class default rendering includes {template, model}, which is
-    // irrelevant for this particle's modality.
-    // TODO: stop overriding this method, once default rendering is skipped for
-    // undefined templates.
-    shouldRender() {
-      return false;
+    renderOutput(inputs, state) {
+      if (!state.notified) {
+        state.notified = true;
+        this.output(notification);
+      }
+      if (state.clicked) {
+        state.clicked = true;
+        this.output(clickNotification);
+      }
     }
-
-    setHandles(handles) {
-      this.output({
-        modality: 'notification',
-        title: `Hello`,
-        text: `I'm a notification.`,
-        handler: `onNotificationClick`
-      });
-    }
-
     onNotificationClick(event) {
-      this.output({
-        modality: 'notification',
-        title: `Hello`,
-        text: `Notification was clicked`
-      });
+      this.state = {clicked: true};
     }
   };
 });
