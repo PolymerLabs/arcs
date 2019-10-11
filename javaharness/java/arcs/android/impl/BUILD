@@ -18,6 +18,7 @@ android_library(
     manifest = "AndroidManifest.xml",
     deps = [
         "//javaharness/java/arcs/api:api-android",
+        "@com_google_auto_value",
         "@com_google_dagger",
         "@flogger//jar",
         "@flogger_system_backend//jar",
