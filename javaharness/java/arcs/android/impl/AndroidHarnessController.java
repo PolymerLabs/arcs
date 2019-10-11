@@ -34,6 +34,14 @@ public class AndroidHarnessController implements HarnessController {
     }
   }
 
+  @Override
+  public void deInit() {
+    if (webView != null) {
+      // Clean up content/context thus the host devServer can be aware of the disconnection.
+      webView.loadUrl("about:blank");
+    }
+  }
+
   private void setWebViewSettings() {
     WebSettings arcsSettings = webView.getSettings();
     arcsSettings.setDatabaseEnabled(true);
