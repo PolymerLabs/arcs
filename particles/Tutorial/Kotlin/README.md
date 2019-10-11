@@ -11,10 +11,9 @@ To start off with, we’re going to need two files, an Arcs manifest file (.arcs
 
 Don’t worry if you don’t understand everything at the moment, we’ll be going over all of this in more detail throughout this tutorial. Let’s walk through these files line by line, starting with the .arcs file. You should create this file in your folder. By convention, .arcs files are camel case, so it should be called `HelloWorld.arcs` or something similar.
 ```
-// The file begins by defining our particle. We can see the
-// particle is implemented in HelloWorld.js, and therefore
-// can assume it is a Javascript implementation.
-particle HelloWorldParticle in 'HelloWorld.js'
+// The file begins by defining our particle. Based on the file
+// path, We can assume the particle is implemented in kotlin.
+particle HelloWorldParticle in 'HelloWorld.wasm'
   // Notice the tab that starts this line. Whitespace matters
   // in the Arcs manifest language, so this is very important.
   // Don't worry about what this line does at the moment, we'll
@@ -32,21 +31,48 @@ recipe HelloWorldRecipe
   description `Tutorial 1: Hello World`
 ```
 
-Alright, we’ve got our Arcs manifest file set. Now onto the Javascript. Just like the .arcs file, this should be in your HelloWorld folder. We set the file name in the .arcs file above to be `HelloWorld.js`.
+Alright, we’ve got our Arcs manifest file set. Now onto the Kotlin. Just like the .arcs file, this should be in your HelloWorld folder. We set the file name in the .arcs file above to be `HelloWorld.kt`.
 
-```javascript
-// To define a particle that interacts with the DOM, we use this boilerplate.
-defineParticle(({DomParticle, html}) => {
- return class extends DomParticle {
-   // Getter function which returns static HTML to display. In later tutorials 
-   // we'll see how to use the templating functionality this provides.
-   get template() {
-     // You can use the html helper like so to render HTML:
-     return html`<b>Hello, world!</b>`;
-   }
- };
-});
+```kotlin
+package arcs.tutorials
+
+// We start with the required imports.
+import arcs.Particle
+import arcs.WasmAddress
+import kotlin.native.internal.ExportForCppRuntime
+
+// We define the HelloWorldParticle class to be a child
+// of the Particle class.
+class HelloWorldParticle : Particle() {
+    // Set the template to be "Hello, world!" as this is what we want
+    // to display.
+    override fun getTemplate(slotName: String): String {
+        return "<b>Hello, world!</b>"
+    }
+}
+
+// Here is the boilerplate to ensure a function to instantiate a particle is
+// available outside the wasm modue.
+@Retain
+@ExportForCppRuntime("_newHelloWorldParticle")
+fun constructHelloWorldParticle(): WasmAddress {
+    return HelloWorldParticle().toWasmAddress()
+}
 ```
+
+Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. Here's an example Bazel BUILD file for HelloWorld:
+
+```BUILD
+// Required imports
+load("//build_defs:build_defs.bzl", "arcs_kt_binary")
+
+// Arcs Kotlin particle build rule
+arcs_kt_binary(
+    name = "HelloWorld",
+    srcs = ["HelloWorld.kt"],
+)
+```
+run the build file by running `bazel build particles/HelloWorld:all` from the root arcs folder.
 
 Once you have Arcs on your computer, run `npm start` in command line, then navigate to [http://localhost:8786/shells/dev-shell/?m=https://$particles/HelloWorld/HelloWorld.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/HelloWorld/HelloWorld.arcs)
 

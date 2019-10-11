@@ -1,5 +1,7 @@
-package arcs
+package arcs.tutorials
 
+import arcs.Particle
+import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -14,12 +16,10 @@ class BasicTemplateParticle : Particle() {
     }
 
     override fun getTemplate(slotName: String): String {
-        return """<b>Hello, <span>{{name}}</span>!</b>"""
+        return "<b>Hello, <span>{{name}}</span>!</b>"
     }
 }
 
 @Retain
 @ExportForCppRuntime("_newBasicTemplateParticle")
-fun constructBasicTemplateParticle(): WasmAddress {
-    return BasicTemplateParticle().toWasmAddress()
-}
+fun constructBasicTemplateParticle(): WasmAddress = BasicTemplateParticle().toWasmAddress()
