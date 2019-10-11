@@ -8,22 +8,31 @@ import android.webkit.WebViewClient;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
+import arcs.api.RuntimeSettings;
+import java.util.logging.Logger;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class AndroidHarnessController implements HarnessController {
+  private static final Logger logger =
+      Logger.getLogger(AndroidHarnessController.class.getName());
 
   private ArcsEnvironment environment;
   private DeviceClient deviceClient;
   private WebView webView;
+  // Fetches the up-to-date properties on every get().
+  private Provider<RuntimeSettings> runtimeSettings;
 
   @Inject
   AndroidHarnessController(
       ArcsEnvironment environment,
       DeviceClient deviceClient,
-      WebView webView) {
+      WebView webView,
+      Provider<RuntimeSettings> runtimeSettings) {
     this.environment = environment;
     this.deviceClient = deviceClient;
     this.webView = webView;
+    this.runtimeSettings = runtimeSettings;
   }
 
   @Override
@@ -60,15 +69,21 @@ public class AndroidHarnessController implements HarnessController {
         return super.shouldInterceptRequest(view, request);
       }
     });
-    webView.loadUrl("file:///android_asset/index.html?log");
 
-    // TODO: add a boolean flag to controll these.
+    RuntimeSettings settings = runtimeSettings.get();
 
-    // Uncomment this to view Arcs in devtools extension:
-    // webView.loadUrl("file:///android_asset/index.html?explore-proxy");
-    // Uncomment this to load pipes-shell from localhost and to view Arcs in devtools extension:
-    // webView.loadUrl("http://localhost:8786/shells/pipes-shell/web/deploy/dist/?log=2&explore-proxy");
-    // Also add to <application> in service/AndroidManifest.xml:
+    // If using any of the host shells, i.e. pipe-shells at the host:
+    // http://localhost:8786/shells/pipes-shell/web/deploy/dist/?
+    // adding the following attribute to allow HTTP connection(s) at
+    // <application> in service/AndroidManifest.xml:
     //    android:usesCleartextTraffic="true"
+    String url = settings.shellUrl();
+    url += "log=" + settings.logLevel();
+    if (settings.useDevServerProxy()) {
+      url += "&explore-proxy";
+    }
+
+    logger.info("runtime url: " + url);
+    webView.loadUrl(url);
   }
 }

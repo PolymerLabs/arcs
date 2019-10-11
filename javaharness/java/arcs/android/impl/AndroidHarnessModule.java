@@ -4,6 +4,7 @@ import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
 import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
+import arcs.api.RuntimeSettings;
 import arcs.api.ShellApi;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import dagger.Binds;
@@ -32,4 +33,7 @@ public abstract class AndroidHarnessModule {
 
   @Binds
   public abstract HarnessController providesHarnessController(AndroidHarnessController impl);
+
+  @Binds
+  public abstract RuntimeSettings providesRuntimeSettings(RuntimeSettingsAndroidJsImpl impl);
 }
