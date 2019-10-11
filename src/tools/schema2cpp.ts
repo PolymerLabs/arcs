@@ -7,8 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base} from './schema2base.js';
-import {Schema} from '../runtime/schema.js';
+import {Schema2Base, EntityData} from './schema2base.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -54,7 +53,7 @@ export class Schema2Cpp extends Schema2Base {
     return '\n#endif\n';
   }
 
-  entityClass(name: string, schema: Schema): string {
+  entityClass({name, entry}: EntityData): string {
     const fields: string[] = [];
     const api: string[] = [];
     const clone: string[] = [];
@@ -65,7 +64,7 @@ export class Schema2Cpp extends Schema2Base {
     const encode: string[] = [];
     const toString: string[] = [];
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
+    const fieldCount = this.processSchema(entry, (field: string, typeChar: string, refName: string) => {
       const typeInfo = typeMap[typeChar];
       const type = typeInfo.type(refName);
       const [r1, r2] = typeInfo.returnByRef ? ['const ', '&'] : ['', ''];

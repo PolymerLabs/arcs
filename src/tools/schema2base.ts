@@ -10,12 +10,18 @@
 import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
-import {Schema} from '../runtime/schema.js';
-import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
+import {FieldEntry, nameFromEntry, TypeGraph, TypeLattice} from './schema2graph.js';
+
+export interface EntityData {
+  name: string;
+  entry: FieldEntry;
+}
 
 export abstract class Schema2Base {
-  constructor(readonly opts: minimist.ParsedArgs) {}
+  constructor(readonly opts: minimist.ParsedArgs) {
+    Utils.init('../..');
+  }
 
   async call() {
     fs.mkdirSync(this.opts.outdir, {recursive: true});
@@ -29,60 +35,37 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    Utils.init('../..');
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
+
     if (this.opts.update && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > fs.statSync(src).mtimeMs) {
       return;
     }
 
     const manifest = await Utils.parse(`import '${src}'`);
+    const graph: TypeLattice = new TypeGraph.Builder()
+      .from(manifest)
+      .build();
 
-    // Collect declared schemas along with any inlined in particle connections.
-    const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.allParticles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
-      }
-    }
-    if (Object.keys(schemas).length === 0) {
-      console.warn(`No schemas found in '${src}'`);
+    if (Object.keys(graph.nodes).length === 0) {
+      console.warn(`No entities found in '${src}'`);
       return;
-    }
-
-    // Collect inline schema fields. These will be output first so they're defined
-    // prior to use in their containing entity classes.
-    const inlineSchemas: Dictionary<Schema> = {};
-    for (const schema of Object.values(schemas)) {
-      for (const [field, descriptor] of Object.entries(schema.fields)) {
-        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-          const name = this.inlineSchemaName(field, descriptor);
-          if (!(name in inlineSchemas)) {
-            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
-          }
-         }
-      }
     }
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const dict of [inlineSchemas, schemas]) {
-      for (const [name, schema] of Object.entries(dict)) {
-        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
-      }
+    for (const [name, entry] of Object.entries(graph.nodes)) {
+      // TODO(alxr): Generate classes from graphs, not from schemas
+        fs.writeSync(outFile, this.entityClass({name, entry}).replace(/ +\n/g, '\n'));
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
 
-  protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
+  protected processSchema(entry: FieldEntry,
+                          processField: (field: string, typeChar: string, refName: string) => void): number {
+    const schema = entry.schema;
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
@@ -104,7 +87,8 @@ export abstract class Schema2Base {
           break;
 
         case 'schema-reference':
-          processField(field, 'R', this.inlineSchemaName(field, descriptor));
+          // TODO(alxr): Is this a good naming approach?
+          processField(field, 'R', nameFromEntry(entry));
           break;
 
         default:
@@ -129,20 +113,11 @@ export abstract class Schema2Base {
     }
   }
 
-  private inlineSchemaName(field, descriptor) {
-    let name = descriptor.schema.name;
-    if (!name && descriptor.schema.names && descriptor.schema.names.length > 0) {
-      name = descriptor.schema.names[0];
-    }
-    if (!name) {
-      console.log(`Unnamed inline schemas (field '${field}') are not yet supported`);
-      process.exit(1);
-    }
-    return name;
-  }
-
   abstract outputName(baseName: string): string;
+
   abstract fileHeader(outName: string): string;
+
   abstract fileFooter(): string;
-  abstract entityClass(name: string, schema: Schema): string;
+
+  abstract entityClass(data: EntityData): string;
 }

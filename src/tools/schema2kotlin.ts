@@ -7,8 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base} from './schema2base.js';
-import {Schema} from '../runtime/schema.js';
+import {EntityData, Schema2Base} from './schema2base.js';
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
@@ -52,12 +51,12 @@ package arcs
     return '';
   }
 
-  entityClass(name: string, schema: Schema): string {
+  entityClass({name, entry}: EntityData): string {
     const fields: string[] = [];
     const encode: string[] = [];
     const decode: string[] = [];
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
+    const fieldCount = this.processSchema(entry, (field: string, typeChar: string, refName: string) => {
       if (typeChar === 'R') {
         console.log('TODO: support reference types in kotlin');
         process.exit(1);
