@@ -13,6 +13,7 @@ import minimist from 'minimist';
 import {Schema} from '../runtime/schema.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
+import {Manifest} from '../runtime/manifest.js';
 
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
@@ -30,17 +31,8 @@ export abstract class Schema2Base {
     }
   }
 
-  private async processFile(src: string) {
-    const outName = this.opts.outfile || this.outputName(path.basename(src));
-    const outPath = path.join(this.opts.outdir, outName);
-    console.log(outPath);
-    if (this.opts.update && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > fs.statSync(src).mtimeMs) {
-      return;
-    }
-
-    const manifest = await Utils.parse(`import '${src}'`);
-
-    // Collect declared schemas along with any inlined in particle connections.
+  /** Collect declared schemas along with any inlined in particle connections. */
+  private collectSchemas(manifest: Manifest): Dictionary<Schema> {
     const schemas: Dictionary<Schema> = {};
     manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
     for (const particle of manifest.allParticles) {
@@ -52,13 +44,14 @@ export abstract class Schema2Base {
         }
       }
     }
-    if (Object.keys(schemas).length === 0) {
-      console.warn(`No schemas found in '${src}'`);
-      return;
-    }
+    return schemas;
+  }
 
-    // Collect inline schema fields. These will be output first so they're defined
-    // prior to use in their containing entity classes.
+  /**
+   * Collect inline schema fields. These will be output first so they're defined
+   * prior to use in their containing entity classes.
+   */
+  private collectInlineSchemas(schemas: Dictionary<Schema>): Dictionary<Schema> {
     const inlineSchemas: Dictionary<Schema> = {};
     for (const schema of Object.values(schemas)) {
       for (const [field, descriptor] of Object.entries(schema.fields)) {
@@ -67,9 +60,31 @@ export abstract class Schema2Base {
           if (!(name in inlineSchemas)) {
             inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
           }
-         }
+        }
       }
     }
+
+    return inlineSchemas;
+  }
+
+  private async processFile(src: string) {
+    const outName = this.opts.outfile || this.outputName(path.basename(src));
+    const outPath = path.join(this.opts.outdir, outName);
+    console.log(outPath);
+    if (this.opts.update && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > fs.statSync(src).mtimeMs) {
+      return;
+    }
+
+    const manifest = await Utils.parse(`import '${src}'`);
+
+    const schemas = this.collectSchemas(manifest);
+
+    if (Object.keys(schemas).length === 0) {
+      console.warn(`No schemas found in '${src}'`);
+      return;
+    }
+
+    const inlineSchemas = this.collectInlineSchemas(schemas);
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
