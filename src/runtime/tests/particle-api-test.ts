@@ -22,8 +22,8 @@ import {EntityType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
-import {SingletonStorageProvider, CollectionStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
-import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
@@ -80,7 +80,8 @@ describe('particle-api', () => {
     });
 
     const data = arc.context.findSchemaByName('Data').entityClass();
-    const fooStore = await arc.createStore(data.type, 'foo', 'test:0') as SingletonStorageProvider;
+    const fooStore = await arc.createStore(data.type, 'foo', 'test:0');
+    const fooHandle = await singletonHandleForTest(arc, fooStore);
     const resStore = await arc.createStore(data.type.collectionOf(), 'res', 'test:1');
     const inspector = new util.ResultInspector(arc, resStore, 'value');
     const recipe = arc.context.recipes[0];
@@ -92,22 +93,22 @@ describe('particle-api', () => {
     await inspector.verify('sync:null');
 
     // Drop event 2; desync is triggered by v3.
-    await fooStore.set({id: 'id1', rawData: {value: 'v1'}});
+    await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
     const fireFn = fooStore['_fire'];
     fooStore['_fire'] = async () => {};
-    await fooStore.set({id: 'id2', rawData: {value: 'v2'}});
+    await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
     fooStore['_fire'] = fireFn;
-    await fooStore.set({id: 'id3', rawData: {value: 'v3'}});
+    await fooHandle.set(new fooHandle.entityClass({value: 'v3'}));
     await inspector.verify('update:{"data":{"value":"v1"},"oldData":null}',
                            'desync',
                            'sync:{"value":"v3"}');
 
     // Check it includes the previous value (v3) in updates.
-    await fooStore.set({id: 'id4', rawData: {value: 'v4'}});
+    await fooHandle.set(new fooHandle.entityClass({value: 'v4'}));
     await inspector.verify('update:{"data":{"value":"v4"},"oldData":{"value":"v3"}}');
 
     // Check clearing the store.
-    await fooStore.clear();
+    await fooHandle.clear();
     await inspector.verify('update:{"data":null,"oldData":{"value":"v4"}}');
   });
 

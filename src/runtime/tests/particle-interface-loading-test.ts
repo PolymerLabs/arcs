@@ -20,6 +20,7 @@ import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
 import {Direction} from '../manifest-ast-nodes.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
+import {singletonHandleForTest} from '../testing/handle-for-test.js';
 
 describe('particle interface loading', () => {
 
@@ -143,10 +144,15 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
 
-    const store = arc.findStoresByType(fooType)[0] as SingletonStorageProvider;
-    await store.set({id: 'id', rawData: {value: 'a foo'}});
+    const fooStore = arc.findStoresByType(fooType)[0];
+    const fooHandle = await singletonHandleForTest(arc, fooStore);
+    await fooHandle.set(new fooHandle.entityClass({value: 'a foo'}));
 
-    await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
+    await arc.idle;
+
+    const barStore = arc.findStoresByType(barType)[0];
+    const barHandle = await singletonHandleForTest(arc, barStore);
+    assert.deepEqual(await barHandle.get(), {value: 'a foo1'});
   });
 
   it('updates transformation particle on inner handle', async () => {

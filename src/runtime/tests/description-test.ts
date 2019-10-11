@@ -17,10 +17,11 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
-import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
+import {CollectionStorageProvider, SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
 import {ArcId, IdGenerator} from '../id.js';
+import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
@@ -115,8 +116,8 @@ recipe
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
     const arc = createTestArc(recipe, manifest);
-    const fooStore: SingletonStorageProvider = await arc.createStore(fooType, undefined, 'test:1') as SingletonStorageProvider;
-    const foosStore = await arc.createStore(fooType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
+    const fooStore = await singletonHandleForTest(arc, await arc.createStore(fooType, undefined, 'test:1'));
+    const foosStore = await collectionHandleForTest(arc, await arc.createStore(fooType.collectionOf(), undefined, 'test:2'));
     return {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore};
   }
 
@@ -134,20 +135,20 @@ ${recipeManifest}
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
       // Add value to a singleton handle.
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
       description = await test.verifySuggestion({arc}, 'Read from foo-name and populate foo list.');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
       // Add values to a collection handle.
-      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
       description = await test.verifySuggestion({arc}, 'Read from foo-name and populate foo list (foo-1, foo-2).');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
       // Add more values to the collection handle.
-      await foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
+      await foosStore.add(new foosStore.entityClass({name: 'foo-name', fooValue: 'foo-3'}));
       await test.verifySuggestion({arc}, 'Read from foo-name and populate foo list (foo-1 plus 2 other items).');
     });
   });
@@ -168,16 +169,16 @@ ${recipeManifest}
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-out-foos');
 
       // Add value to a singleton handle.
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
       description = await test.verifySuggestion({arc}, 'Read from my-in-foo (foo-name) and populate my-out-foos.');
 
       // Add values to a collection handle.
-      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key22']);
-      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key33']);
+      await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
       description = await test.verifySuggestion({arc}, 'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).');
 
       // Add more values to the collection handle.
-      await foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
+      await foosStore.add(new foosStore.entityClass({name: 'foo-name', fooValue: 'foo-3'}));
       description = await test.verifySuggestion({arc},
           'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -216,8 +217,7 @@ ${recipeManifest}
       assert.isTrue(recipe.isResolved());
 
       const arc = createTestArc(recipe, manifest);
-      const foosStore = await arc.createStore(fooType.bigCollectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-      const fooStore = await arc.createStore(fooType, undefined, 'test:2') as SingletonStorageProvider;
+      const foosStore = await arc.createStore(fooType.bigCollectionOf(), undefined, 'test:1') as BigCollectionStorageProvider;
 
       // BigCollections don't trigger sync/update events when new values are added to the backing
       // store. Pre-populate the store to check the suggestion reads in the first one.
@@ -244,9 +244,9 @@ ${recipeManifest}
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
 
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
       description = await test.verifySuggestion({arc},
           'Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -268,9 +268,9 @@ ${recipeManifest}
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
 
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
       description = await test.verifySuggestion({arc},
           'Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
@@ -289,9 +289,9 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
 
       const description = await test.verifySuggestion({arc},
           'Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].');
@@ -323,9 +323,9 @@ ${recipeManifest}
       assert.strictEqual(description.getHandleDescription(oBFooHandle), 'best-new-foo');
       assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-foos');
 
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await foosStore.add(new foosStore.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
       description = await test.verifySuggestion({arc}, 'Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'best-new-foo');
       assert.strictEqual(description.getHandleDescription(oBFooHandle), 'best-new-foo');
@@ -473,7 +473,7 @@ recipe
     `));
 
       // Add values to both Foo handles
-      await fooStore.set({id: 1, rawData: {name: 'the-FOO'}});
+      await fooStore.set(new fooStore.entityClass({name: 'the-FOO'}));
       const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3') as SingletonStorageProvider;
       await fooStore2.set({id: 2, rawData: {name: 'another-FOO'}});
       const description = await test.verifySuggestion({arc},
@@ -660,7 +660,7 @@ recipe
       await test.verifySuggestion({arc}, 'Populate foo.');
 
       // Add value to a singleton handle.
-      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
       await test.verifySuggestion({arc}, 'Populate foo-name.');
     });
   });
@@ -811,7 +811,7 @@ recipe
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     const arc = createTestArc(recipe, manifest);
-    const fooStore = await arc.createStore(fooType, undefined, 'test:1') as SingletonStorageProvider;
+    const fooStore = await singletonHandleForTest(arc, await arc.createStore(fooType, undefined, 'test:1'));
     const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');
 
     return {
@@ -819,7 +819,7 @@ recipe
       recipe,
       fooStore,
       DescriptionType: (descriptionStore.type.getContainedType() as EntityType).entitySchema.entityClass(),
-      descriptionHandle: handleFor(descriptionStore, IdGenerator.newSession()) as Collection,
+      descriptionHandle: await collectionHandleForTest(arc, descriptionStore),
     };
   }
 
@@ -835,22 +835,22 @@ recipe
       await test.verifySuggestion({arc}, 'Hello world.');
 
       // Particle (dynamic) description handle (override static description).
-      await descriptionHandle.store(new DescriptionType({key: 'pattern', value: 'Return my foo'}));
+      await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'Return my foo'}));
       await test.verifySuggestion({arc}, 'Return my foo.');
 
       // Particle description handle with handle connections.
-      await descriptionHandle.store(new DescriptionType({key: 'pattern', value: 'Return my temporary foo'}));
-      await descriptionHandle.store(new DescriptionType({key: 'pattern', value: 'Return my ${ofoo}'}));
+      await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'Return my temporary foo'}));
+      await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'Return my ${ofoo}'}));
       const ofooDesc = new DescriptionType({key: 'ofoo', value: 'best-foo'});
-      await descriptionHandle.store(ofooDesc);
+      await descriptionHandle.add(ofooDesc);
       await test.verifySuggestion({arc}, 'Return my best-foo.');
 
       // Add value to connection's handle.
-      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FO4'}});
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FO4'}));
       await test.verifySuggestion({arc}, 'Return my best-foo (foo-name).');
 
       // Remove connection's description.
-      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
       await descriptionHandle.remove(ofooDesc);
       await test.verifySuggestion({arc}, 'Return my foo-name.');
     });
@@ -875,7 +875,7 @@ recipe
       await test.verifySuggestion({arc}, 'Here it is: hello world.');
 
       // Particle (dynamic) description handle (override static description).
-      await descriptionHandle.store(new DescriptionType({key: 'pattern', value: 'dynamic B description'}));
+      await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'dynamic B description'}));
       await test.verifySuggestion({arc}, 'Here it is: dynamic B description.');
     });
   });
@@ -883,12 +883,12 @@ recipe
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
       const {arc, recipe, fooStore, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
-      await descriptionHandle.store(new DescriptionType({key: 'pattern', value: 'return my ${ofoo} (text)'}));
-      await descriptionHandle.store(new DescriptionType({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
-      await descriptionHandle.store(new DescriptionType({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
+      await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'return my ${ofoo} (text)'}));
+      await descriptionHandle.add(new DescriptionType({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
+      await descriptionHandle.add(new DescriptionType({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
       await test.verifySuggestion({arc}, `Return my foo (${test.name}).`);
 
-      await fooStore.set({id: 5, rawData: {name: 'foo-name'}});
+      await fooStore.set(new fooStore.entityClass({name: 'foo-name'}));
       await test.verifySuggestion({arc}, `Return my foo-name (${test.name}).`);
     });
   });
