@@ -39,5 +39,11 @@ export interface ArcInspector {
   /**
    * Notifies of a message exchanged over the Particle Execution Context.
    */
-  pecMessage(methodName: string, body: object, pecMsgCount: number, stackString: string): void;
+  pecMessage(
+      methodName: string,
+      body: object,
+      pecMsgCount: number,
+      pecType: string,
+      pecId: string,
+      stackString: string): void;
 }
