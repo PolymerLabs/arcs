@@ -11,17 +11,34 @@ import {Schema} from '../runtime/schema.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Manifest} from '../runtime/manifest.js';
+import {ParticleSpec} from '../runtime/particle-spec.js';
 
 // ------ new stuff ----------
 
 class Node {
-  name: string;                  // == names[0] or the internal alias if names.length > 1             
-  names: string[] = [];          // if 1: only instance of this schema, use name directly; if >1, dupes exist, generate internal class and create aliases
-  descendants = new Set<Node>(); // all schemas that can be sliced to this one
-  children: Node[] = null;       // immediate descedants, will be non-null but empty if no children
-  parents: Node[] = null;        // inverse of children, will be left null if no parents
-  sharesParent = false;          // true if any other schema has the same parent as this
-  output = false;                // guards against generating classes twice
+  /** name == names[0] or the internal alias if names.length > 1 */
+  name: string;
+
+  /**
+   * if 1: only instance of this schema, use name directly
+   * if >1: dupes exist, generate internal class and create aliases
+   */
+  names: string[] = [];
+
+  /** all schemas that can be sliced to this one */
+  descendants = new Set<Node>();
+
+  /** immediate descendants, will be non-null but empty if no children */
+  children: Node[] = null;
+
+  /** inverse of children, will be left null if no parents */
+  parents: Node[] = null;
+
+  /** true if any other schema has the same parent as this */
+  sharesParent = false;
+
+  /** guards against generating classes twice */
+  output = false;
 
   constructor(readonly schema: Schema, name: string) {
     this.name = name;
@@ -37,7 +54,7 @@ function go(manifest) {
   }
 }
 
-function buildGraph(particle) {
+function buildGraph(particle: ParticleSpec): Node[] {
   const nodes: Node[] = [];
 
   // first pass to establish nodes for each unique schema, with descendants field populated
@@ -73,7 +90,7 @@ function buildGraph(particle) {
       if (a.names[0] < b.names[0]) return -1;
       if (a.names[0] > b.names[0]) return 1;
       return 0;
-    })
+    });
     console.log();
     const show = a => (a || []).map(x => x.names[0]);
     for (const n of nodes) {
@@ -138,8 +155,6 @@ function generate(name, node) {
 }
 
 // ------ end new stuff ----------
-
-
 
 export interface FieldEntry {
   particleName: string;
