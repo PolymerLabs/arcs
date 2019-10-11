@@ -62,36 +62,24 @@ public class NotificationRenderer implements UiRenderer {
     String outputSlotId = packet.getString(OUTPUT_SLOT_ID_FIELD);
     // TODO(mmandlis): refactor to a generic method usable by other renderers as well.
     if (content.hasKey(TAP_HANDLER_FIELD)) {
-      // Construct intent for notification tap.
+      // Construct pendingIntent for notification tap.
       String handler = content.getString(TAP_HANDLER_FIELD);
-
-      Intent intent = new Intent(context, ArcsService.class);
-      intent.setAction(outputSlotId);
-      intent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
-      intent.putExtra(
-        ArcsService.INTENT_EVENT_DATA_FIELD,
-        jsonParser.stringify(
-          jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
-      PendingIntent pendingIntent =
-        PendingIntent.getService(
-          context, REQUEST_CODE_TAP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+      PendingIntent pendingIntent = PendingIntent.getService(
+        context,
+        REQUEST_CODE_TAP,
+        getNotificationIntent(outputSlotId, handler),
+        PendingIntent.FLAG_UPDATE_CURRENT);
       builder.setContentIntent(pendingIntent);
     }
 
     if (content.hasKey(DISMISS_HANDLER_FIELD)) {
-      // Construct intent for notification dismiss.
+      // Construct pendingIntent for notification dismiss.
       String handler = content.getString(DISMISS_HANDLER_FIELD);
-
-      Intent intent = new Intent(context, ArcsService.class);
-      intent.setAction(outputSlotId);
-      intent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
-      intent.putExtra(
-        ArcsService.INTENT_EVENT_DATA_FIELD,
-        jsonParser.stringify(
-          jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
-      PendingIntent pendingIntent =
-        PendingIntent.getService(
-          context, REQUEST_CODE_DISMISS, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+      PendingIntent pendingIntent = PendingIntent.getService(
+        context,
+        REQUEST_CODE_DISMISS,
+        getNotificationIntent(outputSlotId, handler),
+        PendingIntent.FLAG_UPDATE_CURRENT);
       builder.setDeleteIntent(pendingIntent);
     }
 
@@ -100,5 +88,17 @@ public class NotificationRenderer implements UiRenderer {
     notificationManager.notify(outputSlotId.hashCode(), builder.build());
 
     return true;
+  }
+
+  private Intent getNotificationIntent(String outputSlotId, String handler) {
+    Intent intent = new Intent(context, ArcsService.class);
+    intent.setAction(outputSlotId);
+    intent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
+    intent.putExtra(
+      ArcsService.INTENT_EVENT_DATA_FIELD,
+      jsonParser.stringify(
+        jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
+
+    return intent;
   }
 }
