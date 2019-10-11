@@ -35,9 +35,11 @@ public class ArcsAndroid implements Arcs {
   public void runArc(ArcData arcData) {
     PECInnerPort pecInnerPort =
         pecPortManager.getOrCreateInnerPort(arcData.getPecId(), arcData.getSessionId());
-    if (arcData.getParticle() != null) {
-      pecInnerPort.mapParticle(arcData.getParticle());
-    }
+    arcData.getParticleList().forEach(particleData -> {
+      if (particleData.getParticle() != null) {
+        pecInnerPort.mapParticle(particleData.getParticle());
+      }
+    });
 
     bridge.startArc(arcData, createPecCallback(pecInnerPort));
   }

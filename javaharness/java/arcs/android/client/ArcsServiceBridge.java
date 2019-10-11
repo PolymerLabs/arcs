@@ -42,16 +42,25 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
   }
 
   void startArc(ArcData arcData, IRemotePecCallback callback) {
-    runServiceMethod(
-        service ->
-            service.startArc(
-                arcData.getArcId(),
-                arcData.getPecId(),
-                arcData.getRecipe(),
-                arcData.getParticleId(),
-                arcData.getParticleName(),
-                arcData.getProvidedSlotId(),
-                callback));
+    runServiceMethod(service -> {
+      List<String> particleIds = new ArrayList<>();
+      List<String> particleNames = new ArrayList<>();
+      List<String> providedSlots = new ArrayList<>();
+      arcData.getParticleList().forEach(particleData -> {
+        particleIds.add(particleData.getId());
+        particleNames.add(particleData.getName());
+        providedSlots.add(particleData.getProvidedSlotId());
+      });
+
+      service.startArc(
+          arcData.getArcId(),
+          arcData.getPecId(),
+          arcData.getRecipe(),
+          particleIds,
+          particleNames,
+          providedSlots,
+          callback);
+    });
   }
 
   public void stopArc(String arcId, String pecId) {
