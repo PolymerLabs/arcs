@@ -13,25 +13,27 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
-import {SingletonStorageProvider, CollectionStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {Arc} from '../arc.js';
+import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
 // doesn't end up on the store, and searching by type or tags is hard (?)
 //
-const getSingletonData = async (arc, index) => {
-  const store = arc._stores[index] as SingletonStorageProvider;
+const getSingletonData = async (arc: Arc, index: number) => {
+  const store = arc._stores[index];
   assert.ok(store, `failed to find store[${index}]`);
-  const data = await store.get();
+  const handle = await singletonHandleForTest(arc, store);
+  const data = await handle.get();
   assert.ok(data, `store[${index}] was empty`);
-  assert.ok(data.rawData, `store[${index}].rawData was empty`);
-  return data.rawData;
+  return data;
 };
 
-const getCollectionData = async (arc, index) => {
-  const store = arc._stores[index] as CollectionStorageProvider;
+const getCollectionData = async (arc: Arc, index: number) => {
+  const store = arc._stores[index];
   assert.ok(store, `failed to find store[${index}]`);
-  const data = await store.toList();
+  const handle = await collectionHandleForTest(arc, store);
+  const data = await handle.toList();
   assert.ok(data, `store[${index}] was empty`);
   return data;
 };
@@ -202,7 +204,7 @@ describe('ui-particle-api', () => {
       const arc = await spawnTestArc(loader);
       //
       const thingData = await getCollectionData(arc, 1);
-      const list = JSON.stringify(thingData.map(thing => thing.rawData.value).sort());
+      const list = JSON.stringify(thingData.map(thing => thing.value).sort());
       const expected = `["FooBarE0","FooBarE1","FooBarEntity","FooBarP0","FooBarP1","FooBarPojo"]`;
       assert.equal(list, expected, 'Collection incorrect after adds');
       const resultData = await getSingletonData(arc, 0);
@@ -247,11 +249,9 @@ describe('ui-particle-api', () => {
       const arc = await spawnTestArc(loader);
       //
       const thingData = await getCollectionData(arc, 1);
-      const list = JSON.stringify(thingData.map(thing => thing.rawData.value).sort());
+      const list = JSON.stringify(thingData.map(thing => thing.value).sort());
       const expected = `["FooBarP3"]`;
       assert.equal(list, expected, 'Collection incorrect after removes');
     });
-
   });
-
 });
