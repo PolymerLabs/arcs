@@ -1,0 +1,12 @@
+directories:
+  java/arcs
+  javatests/arcs
+
+targets:
+  //java/...
+  //javatests/...
+
+additional_languages:
+  kotlin
+
+android_sdk_platform: android-29
