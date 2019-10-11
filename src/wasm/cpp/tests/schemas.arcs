@@ -22,3 +22,11 @@ schema ServiceResponse
 schema SpecialFields
   Text for
   Number internal_id
+
+particle Dummy
+  in Foo foo
+  in Data data
+  in Empty empty
+  in RenderFlags render_flags
+  in ServiceResponse service_response
+  in SpecialFields special_fields

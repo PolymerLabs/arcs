@@ -44,6 +44,7 @@ export abstract class Schema2Base {
     }
 
     const manifest = await Utils.parse(`import '${src}'`);
+
     const graph: TypeLattice = new TypeGraph.Builder()
       .from(manifest)
       .build();
