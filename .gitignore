@@ -44,7 +44,6 @@ bazel-javaharness
 bazel-out
 bazel-testlogs
 bazel-arcs*
-bazel-storage
 bazel-src*
 .bazelrc
 .ijwb
