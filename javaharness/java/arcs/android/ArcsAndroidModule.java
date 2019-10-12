@@ -39,7 +39,7 @@ public abstract class ArcsAndroidModule {
 
   @Singleton
   @Binds
-  public abstract RuntimeSettings providesRuntimeSettings(RuntimeSettingsAndroidJsImpl impl);
+  public abstract RuntimeSettings providesRuntimeSettings(AndroidRuntimeSettingsImpl impl);
 
   @Singleton
   @Provides
