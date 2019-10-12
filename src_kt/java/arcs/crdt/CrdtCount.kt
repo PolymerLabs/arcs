@@ -15,10 +15,15 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
   fun forActor(actor: Actor) = Scoped(actor)
 
   inner class Scoped(private val actor: Actor) {
+    private var currentVersion = _data.versionMap[actor] ?: 0
+    private var nextVersion = currentVersion + 1
+
+    fun withCurrentVersion(version: Int) = apply { nextVersion = version }
+    fun withNextVersion(version: Int) = apply { nextVersion = version }
+
     operator fun plusAssign(delta: Int) {
-      val currentVersion = _data.versionMap[actor] ?: 0
       applyOperation(
-        Operation.MultiIncrement(actor, currentVersion to currentVersion + 1, delta)
+        Operation.MultiIncrement(actor, currentVersion to nextVersion, delta)
       )
     }
   }

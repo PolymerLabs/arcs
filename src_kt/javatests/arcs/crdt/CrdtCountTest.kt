@@ -8,6 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+/** Tests for [CrdtCount]. */
 @RunWith(JUnit4::class)
 class CrdtCountTest {
   lateinit var alice: CrdtCount
@@ -87,5 +88,62 @@ class CrdtCountTest {
 
     bob.applyChanges(results.otherChange)
     assertThat(bob.consumerView).isEqualTo(20)
+  }
+
+  @Test
+  fun merges_two_counts_with_increments_from_the_same_actor() {
+    alice.forActor("alice") += 7
+    bob.merge(alice.data)
+    bob.forActor("alice") += 13
+
+    // merge bob into alice
+    val results = alice.merge(bob.data)
+
+    assertThat(alice.consumerView).isEqualTo(20)
+
+    assertThat(results.modelChange).isInstanceOf(CrdtChange.Operations::class.java)
+    assertThat((results.modelChange as CrdtChange.Operations)[0])
+      .isEqualTo(CrdtCount.Operation.MultiIncrement("alice", 1 to 2, 13))
+
+    assertThat(results.otherChange).isInstanceOf(CrdtChange.Operations::class.java)
+    // We already merged alice into bob.
+    assertThat((results.otherChange as CrdtChange.Operations)).isEmpty()
+
+    bob.applyChanges(results.otherChange)
+    assertThat(bob.consumerView).isEqualTo(20)
+  }
+
+  @Test(expected = CrdtException::class)
+  fun throws_on_divergent_models() {
+    alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
+    bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 13))
+
+    alice.merge(bob.data)
+  }
+
+  @Test(expected = CrdtException::class)
+  fun throws_on_apparent_decrement() {
+    alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
+    bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 2, 3))
+
+    alice.merge(bob.data)
+  }
+
+  @Test
+  fun merges_several_actors() {
+    alice.forActor("a") += 6
+    alice.forActor("c").withNextVersion(2) += 12
+    alice.forActor("d") += 22
+    alice.forActor("e") += 4
+    bob.forActor("b") += 5
+    bob.forActor("c") += 9
+    bob.forActor("d") += 22
+    bob.forActor("e").withNextVersion(2) += 14
+
+    val results = alice.merge(bob.data)
+    assertThat(alice.consumerView).isEqualTo(59)
+
+    bob.applyChanges(results.otherChange)
+    assertThat(bob.consumerView).isEqualTo(59)
   }
 }
