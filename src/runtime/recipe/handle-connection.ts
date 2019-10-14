@@ -146,6 +146,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     const slandle: SlotConnection = new SlotConnection(this.name, this.particle);
     slandle.tags = this.tags;
     slandle.targetSlot = this.handle && this.handle.toSlot();
+    slandle.targetSlot.name = slandle.targetSlot.name || this.name;
     if (this.spec) {
       this.spec.dependentConnections.forEach(connSpec => {
         const conn = this.particle.getConnectionByName(connSpec.name);
