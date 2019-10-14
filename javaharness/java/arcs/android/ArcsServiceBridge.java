@@ -1,6 +1,8 @@
 package arcs.android;
 
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -10,19 +12,17 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.ArcsMessageSender;
 
-public class ArcsServiceBridge implements ServiceConnection {
+public class ArcsServiceBridge {
 
-  private final ArcsServiceStarter arcsServiceStarter;
+  private final Context context;
+  private final Executor executor;
   private IArcsService arcsService; // Access via connectToArcsService.
   private List<CompletableFuture<IArcsService>> waitingFutures = new ArrayList<>();
-  private Executor executor = Executors.newCachedThreadPool();
 
   /**
    * Callback to run when the service is connected. This is a workaround so that we can deal with
@@ -34,13 +34,12 @@ public class ArcsServiceBridge implements ServiceConnection {
   }
 
   @Inject
-  ArcsServiceBridge(ArcsServiceStarter arcsServiceStarter, ArcsMessageSender arcsMessageSender) {
-    this.arcsServiceStarter = arcsServiceStarter;
-
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
+  ArcsServiceBridge(Context context, Executor executor) {
+    this.context = context;
+    this.executor = executor;
   }
 
-  void startArc(ArcData arcData, IRemotePecCallback callback) {
+  public void startArc(ArcData arcData, IRemotePecCallback callback) {
     runServiceMethod(service -> {
       List<String> particleIds = new ArrayList<>();
       List<String> particleNames = new ArrayList<>();
@@ -70,7 +69,7 @@ public class ArcsServiceBridge implements ServiceConnection {
     runServiceMethod(service -> service.registerRenderer(modality, callback));
   }
 
-  private void sendMessageToArcs(String message) {
+  public void sendMessageToArcs(String message) {
     runServiceMethod(service -> service.sendMessageToArcs(message));
   }
 
@@ -99,7 +98,22 @@ public class ArcsServiceBridge implements ServiceConnection {
     waitingFutures.add(future);
 
     // Start up the ArcsService.
-    arcsServiceStarter.start(this);
+    Intent intent = new Intent(context, ArcsService.class);
+    context.bindService(intent, new ServiceConnection() {
+      @Override
+      public void onServiceConnected(ComponentName name, IBinder service) {
+        arcsService = IArcsService.Stub.asInterface(service);
+        for (CompletableFuture<IArcsService> future : waitingFutures) {
+          future.complete(arcsService);
+        }
+        waitingFutures.clear();
+      }
+
+      @Override
+      public void onServiceDisconnected(ComponentName name) {
+        arcsService = null;
+      }
+    }, Context.BIND_AUTO_CREATE);
 
     // Block until the future completes.
     try {
@@ -107,26 +121,5 @@ public class ArcsServiceBridge implements ServiceConnection {
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private CompletableFuture<IArcsService> connectToArcsService() {
-    if (arcsService != null) {
-      return CompletableFuture.completedFuture(arcsService);
-    }
-    return CompletableFuture.supplyAsync(this::connectToArcsServiceSync, executor);
-  }
-
-  @Override
-  public void onServiceConnected(ComponentName name, IBinder binder) {
-    arcsService = IArcsService.Stub.asInterface(binder);
-    for (CompletableFuture<IArcsService> future : waitingFutures) {
-      future.complete(arcsService);
-    }
-    waitingFutures.clear();
-  }
-
-  @Override
-  public void onServiceDisconnected(ComponentName name) {
-    arcsService = null;
   }
 }

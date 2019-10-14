@@ -8,7 +8,7 @@ package(default_visibility = [
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 android_library(
-    name = "crdt-android",
+    name = "crdt",
     srcs = glob([
         "*.java",
     ]),

@@ -19,7 +19,6 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Arcs;
-import arcs.api.UiBroker;
 
 /**
  * Demo implementation of an {@link AutofillService} for Arcs. This service retrieves Autofill
@@ -27,8 +26,10 @@ import arcs.api.UiBroker;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject Arcs arcs;
-  @Inject UiBroker uiBroker;
+  @Inject
+  Arcs arcs;
+
+  @Inject
   AutofillRenderer autofillRenderer;
 
   @Override
@@ -37,7 +38,7 @@ public class ArcsAutofillService extends AutofillService {
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
-    autofillRenderer = ((AutofillRenderer) uiBroker.getRenderer("autofill"));
+    arcs.registerRenderer("autofill", autofillRenderer);
   }
 
   @Override

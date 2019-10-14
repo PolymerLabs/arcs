@@ -14,32 +14,22 @@ import android.webkit.WebViewClient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
-import arcs.api.ArcsMessageSender;
+import arcs.api.ArcsEnvironment;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RuntimeSettings;
+import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 /**
- * Android WebView based environment for Arcs runtime.
+ * Android implementation of {@link ArcsEnvironment}.
  */
-@Singleton
-public class AndroidArcsEnvironment {
-
-  /** Called by ArcsEnvironment when the Arcs runtime is ready. */
-  interface ReadyListener {
-    void onReady(List<String> recipes);
-  }
-
-  private static final Logger logger =
-    Logger.getLogger(AndroidArcsEnvironment.class.getName());
+public class AndroidArcsEnvironment implements ArcsEnvironment {
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -52,37 +42,44 @@ public class AndroidArcsEnvironment {
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
 
+  private final List<ReadyListener> readyListeners = new ArrayList<>();
+  private final Context context;
   private final PortableJsonParser jsonParser;
   private final PecPortManager pecPortManager;
   private final UiBroker uiBroker;
-  // Fetches the up-to-date properties on every get().
-  private final Provider<RuntimeSettings> runtimeSettings;
-  private final Handler uiThreadHandler;
-  private final List<ReadyListener> readyListeners = new ArrayList<>();
-
+  private final ShellApi shellApi;
   private WebView webView;
+  // Fetches the up-to-date properties on every get().
+  private Provider<RuntimeSettings> runtimeSettings;
 
   @Inject
-  AndroidArcsEnvironment(
+  public AndroidArcsEnvironment(
+    Context context,
     PortableJsonParser jsonParser,
     PecPortManager pecPortManager,
     UiBroker uiBroker,
-    ArcsMessageSender arcsMessageSender,
+    ShellApi shellApi,
     Provider<RuntimeSettings> runtimeSettings) {
+    this.context = context;
     this.jsonParser = jsonParser;
     this.pecPortManager = pecPortManager;
     this.uiBroker = uiBroker;
+    this.shellApi = shellApi;
     this.runtimeSettings = runtimeSettings;
-    this.uiThreadHandler = new Handler(Looper.getMainLooper());
-
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
-  void addReadyListener(ReadyListener listener) {
+  @Override
+  public void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
   }
 
-  void init(Context context) {
+  @Override
+  public void fireReadyEvent(List<String> recipes) {
+    readyListeners.forEach(listener -> listener.onReady(recipes));
+  }
+
+  @Override
+  public void init() {
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -110,6 +107,8 @@ public class AndroidArcsEnvironment {
 
     webView.addJavascriptInterface(this, "DeviceClient");
 
+    shellApi.attachProxy(this::sendMessageToArcs);
+
     RuntimeSettings settings = runtimeSettings.get();
     // If using any of the host shells, i.e. pipe-shells at the host:
     // http://localhost:8786/shells/pipes-shell/web/deploy/dist/?
@@ -124,30 +123,13 @@ public class AndroidArcsEnvironment {
 
     Log.i("Arcs", "runtime url: " + url);
     webView.loadUrl(url);
-
   }
 
-  void destroy() {
-    if (webView != null) {
-      // Clean up content/context thus the host devServer can be aware of the disconnection.
-      webView.loadUrl("about:blank");
-    }
-  }
+  @Override
+  public void reset() {}
 
-  private void sendMessageToArcs(String json) {
-    String escapedEnvelope = json.replace("\\\"", "\\\\\"");
-
-    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
-
-    if (webView != null) {
-      // evaluateJavascript runs asynchronously by default
-      // and must be used from the UI thread
-      uiThreadHandler.post(
-        () -> webView.evaluateJavascript(script, (String unused) -> {}));
-    } else {
-      Log.e("Arcs", "webView is null");
-    }
-  }
+  @Override
+  public void destroy() {}
 
   @JavascriptInterface
   public void receive(String json) {
@@ -155,35 +137,34 @@ public class AndroidArcsEnvironment {
     String message = content.getString(FIELD_MESSAGE);
     switch (message) {
       case MESSAGE_READY:
-        logger.info("logger: Received 'ready' message");
         fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
         break;
       case MESSAGE_DATA:
-        logger.warning("logger: Received deprecated 'data' message");
         break;
       case MESSAGE_PEC:
-        deliverPecMessage(content.getObject(FIELD_DATA));
+        PortableJson data = content.getObject(FIELD_DATA);
+        String pecId = data.getString(FIELD_PEC_ID);
+        String sessionId =
+          data.hasKey(FIELD_SESSION_ID) ? data.getString(FIELD_SESSION_ID) : null;
+        pecPortManager.deliverPecMessage(pecId, sessionId, data);
         break;
       case MESSAGE_OUTPUT:
-        if (!uiBroker.render(content.getObject(FIELD_DATA))) {
-          logger.warning(
-            "Skipped rendering content for "
-              + content.getObject("data").getString("containerSlotName"));
-        }
+        uiBroker.render(content.getObject(FIELD_DATA));
         break;
       default:
         throw new AssertionError("Received unsupported message: " + message);
     }
   }
 
-  private void deliverPecMessage(PortableJson message) {
-    String pecId = message.getString(FIELD_PEC_ID);
-    String sessionId =
-      message.hasKey(FIELD_SESSION_ID) ? message.getString(FIELD_SESSION_ID) : null;
-    pecPortManager.deliverPecMessage(pecId, sessionId, message);
-  }
+  private void sendMessageToArcs(String msg) {
+    String escapedEnvelope = msg.replace("\\\"", "\\\\\"");
+    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
 
-  private void fireReadyEvent(List<String> recipes) {
-    readyListeners.forEach(listener -> listener.onReady(recipes));
+    if (webView != null) {
+      new Handler(Looper.getMainLooper())
+        .post(() -> webView.evaluateJavascript(script, (String unused) -> {}));
+    } else {
+      Log.e("Arcs", "webView is null");
+    }
   }
 }

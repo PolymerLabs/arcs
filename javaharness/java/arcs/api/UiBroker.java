@@ -1,9 +1,48 @@
 package arcs.api;
 
-public interface UiBroker {
-  boolean render(PortableJson content);
+import java.util.HashMap;
+import java.util.Map;
 
-  UiRenderer getRenderer(String modality);
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-  void registerRenderer(String modality, UiRenderer renderer);
+@Singleton
+public class UiBroker {
+
+  private static final String MODALITY_FIELD = "modality";
+
+  private final Map<String, UiRenderer> renderers = new HashMap<>();
+
+  private final PortableJsonParser jsonParser;
+
+  @Inject
+  UiBroker(PortableJsonParser jsonParser) {
+    this.jsonParser = jsonParser;
+  }
+
+  public void registerRenderer(String modality, UiRenderer renderer) {
+    renderers.put(modality, renderer);
+  }
+
+  public boolean render(PortableJson packet) {
+    String[] names;
+    if (packet.hasKey(MODALITY_FIELD)) {
+      String modality = packet.getString(MODALITY_FIELD);
+      names = modality.split(",");
+    } else {
+      names = renderers.keySet().toArray(new String[renderers.size()]);
+    }
+    if (names.length == 0) {
+      throw new AssertionError("No renderers for content");
+    }
+
+    boolean rendered = false;
+
+    for (int i = 0; i < names.length; ++i) {
+      if (renderers.containsKey(names[i])) {
+        rendered |= renderers.get(names[i]).render(packet);
+      }
+    }
+    return rendered;
+  }
 }

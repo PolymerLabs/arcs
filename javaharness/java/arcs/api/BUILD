@@ -8,13 +8,13 @@ package(default_visibility = [
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 android_library(
-    name = "api-android",
+    name = "api",
     srcs = glob([
         "*.java",
     ]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
-        "//javaharness/java/arcs/crdt:crdt-android",
+        "//javaharness/java/arcs/crdt",
         "@com_google_dagger",
         "@javax_inject_source//jar",
         "@org_json//jar",

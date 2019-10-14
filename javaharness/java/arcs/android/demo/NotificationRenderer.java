@@ -9,14 +9,12 @@ import android.content.Intent;
 import android.util.Log;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-import arcs.android.Annotations;
+import arcs.android.ArcsService;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiRenderer;
 
-@Singleton
 public class NotificationRenderer implements UiRenderer {
 
   public static final String MESSAGE_FIELD = "message";
@@ -42,7 +40,7 @@ public class NotificationRenderer implements UiRenderer {
   private static final String TAG = NotificationRenderer.class.getSimpleName();
 
   @Inject
-  NotificationRenderer(@Annotations.AppContext Context context, PortableJsonParser jsonParser) {
+  NotificationRenderer(Context context, PortableJsonParser jsonParser) {
     this.context = context;
     this.jsonParser = jsonParser;
 

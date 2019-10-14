@@ -17,7 +17,7 @@ abstract class StorageProxy implements Store {
   protected SyncState syncState = SyncState.NONE;
   protected Map<Handle, Particle> observers = new HashMap<>();
   protected List<PortableJson> updates = new ArrayList<>();
-  protected PecInnerPort port;
+  protected PecPort port;
   protected PortableJsonParser jsonParser;
   protected StorageProxyScheduler scheduler;
 
@@ -31,7 +31,7 @@ abstract class StorageProxy implements Store {
   protected StorageProxy(
       String id,
       Type type,
-      PecInnerPort port,
+      PecPort port,
       String name,
       PortableJsonParser jsonParser) {
     this.id = id;

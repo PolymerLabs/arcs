@@ -78,11 +78,6 @@ public interface Arcs {
 
   void stopArc(ArcData arcData);
 
-  void sendMessageToArcs(String message);
+  void registerRenderer(String modality, UiRenderer renderer);
 
-  UiBroker getUiBroker();
-
-  default void registerRenderer(String modality, UiRenderer renderer) {
-    getUiBroker().registerRenderer(modality, renderer);
-  }
 }

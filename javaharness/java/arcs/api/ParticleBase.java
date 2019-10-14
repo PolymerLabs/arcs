@@ -1,5 +1,7 @@
 package arcs.api;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -44,14 +46,21 @@ public class ParticleBase implements Particle {
     // TODO: Should be async.
     // TODO: add startBusy & doneBusy support.
     // TODO: Add errors parameter.
+    Log.d("Arcs", "setHandles " + handleByName.size());
+    for (String key : handleByName.keySet()) {
+      Log.d("Arcs", "setHandles for key " + key);
+    }
     this.handleByName = handleByName;
   }
 
   @Override
   public Handle getHandle(String id) {
+    Log.d("Arcs", "getHandle for " + id);
     if (!this.handleByName.containsKey(id)) {
       throw new AssertionError("Handle " + id + "does not exist");
     }
+
+    Log.d("Arcs", "getHandle");
     return this.handleByName.get(id);
   }
 

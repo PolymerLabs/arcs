@@ -1,11 +1,12 @@
 package arcs.api;
 
-public class StorageProxyFactory {
+class StorageProxyFactory {
+
   static StorageProxy newProxy(
       String id,
       Type type,
       String name,
-      PecInnerPort port,
+      PecPort port,
       PortableJsonParser jsonParser) {
     if (type.isCollection()) {
       return new CollectionProxy(id, type, port, name, jsonParser);

@@ -10,7 +10,7 @@ public class ArcsDemoApplication extends Application {
   public void onCreate() {
     super.onCreate();
     component = DaggerArcsDemoApplicationComponent.builder()
-      .appContext(this)
+      .context(this)
       .build();
   }
 

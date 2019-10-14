@@ -19,15 +19,22 @@ import arcs.api.PortableJsonParser;
 public class AutofillDemoActivity extends Activity {
 
   private static final int REQUEST_CODE_AUTOFILL_SET = 1;
+
+  @Inject
+  Arcs arcs;
+
+  @Inject
+  PortableJsonParser jsonParser;
+
   private AutofillManager autofillManager;
-  @Inject Arcs arcs;
-  @Inject PortableJsonParser jsonParser;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
+
+    autofillManager = getSystemService(AutofillManager.class);
 
     setContentView(R.layout.autofill_demo);
 
