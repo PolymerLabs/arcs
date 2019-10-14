@@ -67,8 +67,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }
 
-      onGetBackingStoreCallback(callback: (proxy: StorageProxy, key: string) => void, type: Type, name: string, id: string, storageKey: string) {
-        let proxy;
+      onGetBackingStoreCallback(
+          callback: (proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>, key: string) => void,
+          type: Type,
+          name: string,
+          id: string,
+          storageKey: string) {
+        let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
         if (Flags.useNewStorageStack) {
           proxy = new StorageProxyNG(id, pec, type);
         } else {
@@ -78,8 +83,12 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return [proxy, () => callback(proxy, storageKey)];
       }
 
-      onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string) {
-        let proxy;
+      onCreateHandleCallback(
+          callback: (proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>) => void,
+          type: Type,
+          name: string,
+          id: string) {
+        let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
         if (Flags.useNewStorageStack) {
           proxy = new StorageProxyNG(id, pec, type);
         } else {
