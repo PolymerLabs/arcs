@@ -155,3 +155,17 @@ http_archive(
     strip_prefix = "rules_android-0.1.1",
     urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
 )
+
+AUTO_VALUE_VERSION = "1.7"
+
+maven_jar(
+    name = "autovalue",
+    artifact = "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
+    sha1 = "fe8387764ed19460eda4f106849c664f51c07121",
+)
+
+maven_jar(
+    name = "autovalue_annotations",
+    artifact = "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
+    sha1 = "5be124948ebdc7807df68207f35a0f23ce427f29",
+)
