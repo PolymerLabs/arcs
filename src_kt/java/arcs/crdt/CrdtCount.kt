@@ -12,6 +12,7 @@
 package arcs.crdt
 
 import arcs.crdt.internal.Actor
+import arcs.crdt.internal.Version
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing an increasing [Int] value. */
@@ -26,11 +27,11 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
   fun forActor(actor: Actor) = Scoped(actor)
 
   inner class Scoped(private val actor: Actor) {
-    private var currentVersion = _data.versionMap[actor] ?: 0
+    private var currentVersion = _data.versionMap[actor]
     private var nextVersion = currentVersion + 1
 
-    fun withCurrentVersion(version: Int) = apply { nextVersion = version }
-    fun withNextVersion(version: Int) = apply { nextVersion = version }
+    fun withCurrentVersion(version: Version) = apply { nextVersion = version }
+    fun withNextVersion(version: Version) = apply { nextVersion = version }
 
     operator fun plusAssign(delta: Int) {
       applyOperation(
@@ -45,8 +46,8 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
 
     other.values.forEach { (actor, otherValue) ->
       val myValue = _data.values[actor] ?: 0
-      val myVersion = _data.versionMap[actor] ?: 0
-      val otherVersion = other.versionMap[actor] ?: 0
+      val myVersion = _data.versionMap[actor]
+      val otherVersion = other.versionMap[actor]
 
       if (myValue > otherValue) {
         if (otherVersion >= myVersion) {
@@ -74,14 +75,14 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
       }
 
       otherChanges +=
-        Operation.MultiIncrement(actor, 0 to (_data.versionMap[actor] ?: 0), myValue)
+        Operation.MultiIncrement(actor, 0 to _data.versionMap[actor], myValue)
     }
 
     return MergeChanges(myChanges, otherChanges)
   }
 
   override fun applyOperation(op: Operation): Boolean {
-    val myVersionForActor = _data.versionMap[op.actor] ?: 0
+    val myVersionForActor = _data.versionMap[op.actor]
 
     if (op.version.from != myVersionForActor) return false
 
