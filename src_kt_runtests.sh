@@ -12,7 +12,9 @@ bazel build \
   //java/... //javatests/...
 TEST_RESULT=$?
 if [$TEST_RESULT != 1];
-then exit ${TEST_RESULT};
+then
+  cd -
+  exit ${TEST_RESULT};
 fi
 
 echo "Testing src_kt"
