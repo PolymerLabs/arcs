@@ -11,9 +11,9 @@ bazel build \
   --incompatible_depset_is_not_iterable=false \
   //java/... //javatests/...
 TEST_RESULT=$?
-if [$TEST_RESULT != 1]
-  exit ${TEST_RESULT}
-endif
+if [$TEST_RESULT != 1];
+then exit ${TEST_RESULT};
+fi
 
 echo "Testing src_kt"
 bazel test \
@@ -26,4 +26,4 @@ TEST_RESULT=$?
 
 # Change back to the previous directory.
 cd -
-exit ${TEST_RESULT}
+exit $TEST_RESULT
