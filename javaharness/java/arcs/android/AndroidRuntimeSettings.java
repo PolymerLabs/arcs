@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 /** For Javascript-based Arcs runtime. */
-public final class AndroidRuntimeSettings implements RuntimeSettings {
+final class AndroidRuntimeSettings implements RuntimeSettings {
   // Equivalent to &log parameter
   private static final String LOG_LEVEL_PROPERTY = "debug.arcs.runtime.log";
   // Equivalent to &explore-proxy parameter

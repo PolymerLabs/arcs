@@ -7,10 +7,8 @@ import org.json.JSONObject;
 import java.util.Collection;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /** Portable JSON parser. */
-@Singleton
 public class PortableJsonParser {
 
   @Inject

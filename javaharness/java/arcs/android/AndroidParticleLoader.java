@@ -5,7 +5,7 @@ import javax.inject.Inject;
 import arcs.api.Particle;
 import arcs.api.ParticleLoader;
 
-public class AndroidParticleLoader implements ParticleLoader {
+final class AndroidParticleLoader implements ParticleLoader {
 
   @Inject
   AndroidParticleLoader() {}

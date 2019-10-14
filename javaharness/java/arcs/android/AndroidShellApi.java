@@ -4,7 +4,7 @@ import javax.inject.Inject;
 
 import arcs.api.ShellApi;
 
-public class AndroidShellApi implements ShellApi {
+final class AndroidShellApi implements ShellApi {
 
   Proxy proxy;
 

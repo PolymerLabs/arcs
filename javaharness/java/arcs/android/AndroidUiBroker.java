@@ -1,40 +1,48 @@
 package arcs.android;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
 
-import arcs.android.IRemoteOutputCallback;
 import arcs.api.PortableJson;
-import arcs.api.PortableJsonParser;
-import arcs.api.UiBrokerImpl;
+import arcs.api.UiBroker;
 import arcs.api.UiRenderer;
 
-public class AndroidUiBroker extends UiBrokerImpl {
-  private final IRemoteOutputCallback callback =
-      new IRemoteOutputCallback.Stub() {
-        @Override
-        public void onOutput(String output) {
-          PortableJson json = jsonParser.parse(output);
-          render(json);
-        }
-      };
+public class AndroidUiBroker implements UiBroker {
 
-  private final ArcsServiceBridge bridge;
-  private final PortableJsonParser jsonParser;
+  private static final String MODALITY_FIELD = "modality";
+
+  private final Map<String, UiRenderer> renderers = new HashMap<>();
 
   @Inject
-  AndroidUiBroker(
-      Map<String, UiRenderer> renderers, ArcsServiceBridge bridge, PortableJsonParser jsonParser) {
-    super(renderers);
-    this.bridge = bridge;
-    this.jsonParser = jsonParser;
-    this.renderers.forEach((modality, renderer) -> bridge.registerRenderer(modality, callback));
-  }
+  AndroidUiBroker() {}
 
   @Override
   public void registerRenderer(String modality, UiRenderer renderer) {
-    super.registerRenderer(modality, renderer);
-    bridge.registerRenderer(modality, callback);
+    renderers.put(modality, renderer);
+  }
+
+  @Override
+  public boolean render(PortableJson packet) {
+    String[] names;
+    if (packet.hasKey(MODALITY_FIELD)) {
+      String modality = packet.getString(MODALITY_FIELD);
+      names = modality.split(",");
+    } else {
+      names = renderers.keySet().toArray(new String[renderers.size()]);
+    }
+    if (names.length == 0) {
+      throw new AssertionError("No render for content");
+    }
+
+    boolean rendered = false;
+
+    for (int i = 0; i < names.length; ++i) {
+      if (renderers.containsKey(names[i])) {
+        rendered |= renderers.get(names[i]).render(packet);
+      }
+    }
+    return rendered;
   }
 }

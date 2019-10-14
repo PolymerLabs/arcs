@@ -30,23 +30,6 @@ public interface Arcs {
     return arcData;
   }
 
-  default ArcData runArc(String recipe, List<? extends Particle> particles) {
-    ArcData.Builder builder = new ArcData.Builder().setRecipe(recipe);
-    particles.forEach(particle -> builder.addParticleData(
-        new ArcData.ParticleData().setParticle(particle)
-    ));
-    ArcData arcData = builder.build();
-    runArc(arcData);
-    return arcData;
-  }
-
-  default ArcData runArc(String recipe, String arcId, String pecId) {
-    ArcData arcData =
-        new ArcData.Builder().setRecipe(recipe).setArcId(arcId).setPecId(pecId).build();
-    runArc(arcData);
-    return arcData;
-  }
-
   default ArcData runArc(String recipe, String arcId, String pecId, Particle particle) {
     ArcData arcData =
         new ArcData.Builder()

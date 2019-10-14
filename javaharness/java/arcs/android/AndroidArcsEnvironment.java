@@ -29,7 +29,7 @@ import arcs.api.UiBroker;
 /**
  * Android implementation of {@link ArcsEnvironment}.
  */
-public class AndroidArcsEnvironment implements ArcsEnvironment {
+final class AndroidArcsEnvironment implements ArcsEnvironment {
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -48,6 +48,7 @@ public class AndroidArcsEnvironment implements ArcsEnvironment {
   private final PecPortManager pecPortManager;
   private final UiBroker uiBroker;
   private final ShellApi shellApi;
+  private final Handler uiThreadHandler;
   private WebView webView;
   // Fetches the up-to-date properties on every get().
   private Provider<RuntimeSettings> runtimeSettings;
@@ -66,6 +67,8 @@ public class AndroidArcsEnvironment implements ArcsEnvironment {
     this.uiBroker = uiBroker;
     this.shellApi = shellApi;
     this.runtimeSettings = runtimeSettings;
+
+    this.uiThreadHandler = new Handler(Looper.getMainLooper());
   }
 
   @Override
@@ -161,8 +164,10 @@ public class AndroidArcsEnvironment implements ArcsEnvironment {
     String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
 
     if (webView != null) {
-      new Handler(Looper.getMainLooper())
-        .post(() -> webView.evaluateJavascript(script, (String unused) -> {}));
+      // evaluateJavascript runs asynchronously by default
+      // and must be used from the UI thread
+      uiThreadHandler.post(
+        () -> webView.evaluateJavascript(script, (String unused) -> {}));
     } else {
       Log.e("Arcs", "webView is null");
     }
