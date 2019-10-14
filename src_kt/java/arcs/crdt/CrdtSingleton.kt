@@ -4,22 +4,25 @@ import arcs.crdt.internal.Actor
 import arcs.crdt.internal.Referencable
 import arcs.crdt.internal.VersionMap
 
+/**
+ * TODO: Implement me.
+ */
 class CrdtSingleton<T : Referencable> : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.Operation<T>, T?> {
   override val data: Data<T>
-    get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    get() = TODO("not implemented")
   override val consumerView: T?
-    get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    get() = TODO("not implemented")
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    TODO("not implemented")
   }
 
   override fun applyOperation(op: Operation<T>): Boolean {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    TODO("not implemented")
   }
 
   override fun updateData(newData: Data<T>) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    TODO("not implemented")
   }
 
   data class Data<T : Referencable> internal constructor(
