@@ -21,45 +21,45 @@ class CrdtCountTest {
   }
 
   @Test
-  fun count_initializes_to_zero() {
+  fun countInitializesToZero() {
     assertThat(alice.consumerView).isEqualTo(0)
   }
 
   @Test
-  fun can_apply_an_increment_op() {
+  fun canApplyAnIncrementOp() {
     assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
     assertThat(alice.consumerView).isEqualTo(1)
   }
 
   @Test
-  fun can_apply_an_increment_op_with_plusEquals() {
+  fun canApplyAnIncrementOp_withPlusEquals() {
     alice.forActor("alice") += 5
     assertThat(alice.consumerView).isEqualTo(5)
   }
 
   @Test
-  fun can_apply_two_increment_ops_from_different_actors() {
+  fun canApplyTwoIncrementOps_fromDifferentActors() {
     assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
     assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("bob", 0 to 1)))
     assertThat(alice.consumerView).isEqualTo(2)
   }
 
   @Test
-  fun can_apply_two_increment_ops_from_same_actor() {
+  fun canApplyTwoIncrementOps_fromSameActor() {
     assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
     assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 1 to 2)))
     assertThat(alice.consumerView).isEqualTo(2)
   }
 
   @Test
-  fun can_not_apply_two_increment_ops_from_same_actor_with_same_versions() {
+  fun canNotApplyTwoIncrementOps_fromSameActor_withSameVersions() {
     assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
     assertFalse(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
     assertThat(alice.consumerView).isEqualTo(1)
   }
 
   @Test
-  fun can_apply_a_multiincrement_op() {
+  fun canApplyAMultiincrementOp() {
     assertTrue(
       alice.applyOperation(
         CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 10)
@@ -69,7 +69,7 @@ class CrdtCountTest {
   }
 
   @Test
-  fun merges_two_counts_with_increments_from_different_actors() {
+  fun mergesTwoCounts_withIncrementsFromDifferentActors() {
     alice.forActor("alice") += 7
     bob.forActor("bob") += 13
 
@@ -91,7 +91,7 @@ class CrdtCountTest {
   }
 
   @Test
-  fun merges_two_counts_with_increments_from_the_same_actor() {
+  fun mergesTwoCounts_withIncrementsFromTheSameActor() {
     alice.forActor("alice") += 7
     bob.merge(alice.data)
     bob.forActor("alice") += 13
@@ -114,7 +114,7 @@ class CrdtCountTest {
   }
 
   @Test(expected = CrdtException::class)
-  fun throws_on_divergent_models() {
+  fun throwsOnDivergentModels() {
     alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
     bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 13))
 
@@ -122,7 +122,7 @@ class CrdtCountTest {
   }
 
   @Test(expected = CrdtException::class)
-  fun throws_on_apparent_decrement() {
+  fun throwsOnApparentDecrement() {
     alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
     bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 2, 3))
 
@@ -130,7 +130,7 @@ class CrdtCountTest {
   }
 
   @Test
-  fun merges_several_actors() {
+  fun mergesSeveralActors() {
     alice.forActor("a") += 6
     alice.forActor("c").withNextVersion(2) += 12
     alice.forActor("d") += 22
