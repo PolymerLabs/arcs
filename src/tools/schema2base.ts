@@ -34,7 +34,10 @@ export abstract class Schema2Base {
   /** Collect declared schemas along with any inlined in particle connections. */
   private collectSchemas(manifest: Manifest): Dictionary<Schema> {
     const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
+    manifest.allSchemas.forEach(schema => {
+      const name = schema && schema.names && schema.names[0] || this.nameAnonymousSchema(schema);
+      schemas[name] = schema;
+    });
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
@@ -70,7 +73,7 @@ export abstract class Schema2Base {
 
   /** Quick-and-dirty name mangling for anonymous schemas. TODO(alxr): suggestions welcome */
   private nameAnonymousSchema(schema: Schema): string {
-    const fieldStrings = schema.fields
+    const fieldStrings = Object.values(schema.fields)
       .map(f => Schema._typeString(f))
       .map(ts => {
         return ts
