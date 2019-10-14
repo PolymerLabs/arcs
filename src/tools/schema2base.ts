@@ -38,7 +38,7 @@ export abstract class Schema2Base {
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
+        const name = schema && schema.names && schema.names[0] || this.nameAnonymousSchema(schema);
         if (name && !(name in schemas)) {
           schemas[name] = schema;
         }
@@ -46,6 +46,7 @@ export abstract class Schema2Base {
     }
     return schemas;
   }
+
 
   /**
    * Collect inline schema fields. These will be output first so they're defined
@@ -65,6 +66,24 @@ export abstract class Schema2Base {
     }
 
     return inlineSchemas;
+  }
+
+  /** Quick-and-dirty name mangling for anonymous schemas. TODO(alxr): suggestions welcome */
+  private nameAnonymousSchema(schema: Schema): string {
+    const fieldStrings = schema.fields
+      .map(f => Schema._typeString(f))
+      .map(ts => {
+        return ts
+          .replace(/[()]/g, '__')       // Unions  --> __fieldOrfieldOrfield__
+          .replace('or', 'Or')
+          .replace(',', '_')            // Tuples --> field_field_filed
+          .replace('Reference<', 'Ref') // References --> RefField
+          .replace(/[{}]/g, '___')        // Inline --> ___field_field_field___
+          .replace(/[[\]]/g, '____')    // Collections --> _____field_____
+          .replace(/[.,/#!$%^&*;:{}<>=\-`~()\s]/g, ''); // Remove punctuation (except `_`).
+      });
+
+    return ['Anon', ...fieldStrings].join('');
   }
 
   private async processFile(src: string) {
