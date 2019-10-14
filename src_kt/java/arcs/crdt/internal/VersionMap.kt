@@ -22,6 +22,16 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
 
   private val backingMap = HashMap(initialData)
 
+  /** The number of entries in the [VersionMap]. */
+  val size: Int
+    get() = backingMap.size
+
+  /** Returns whether or not this [VersionMap] is empty. */
+  fun isEmpty(): Boolean = backingMap.isEmpty()
+
+  /** Returns whether or not this [VersionMap] contains items. */
+  fun isNotEmpty(): Boolean = !isEmpty()
+
   /**
    * Gets a the current [Version] for a given [Actor], or [DEFAULT_VERSION] if no value has been
    * set.
@@ -50,7 +60,9 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
 
   /**
    * Merges this [VersionMap] with another [VersionMap] by taking the maximum version values for the
-   * union of all [Actor]s.
+   * union of all [Actor]s and returns the merged result.
+   *
+   * **Note:** Does not modify either object.
    */
   infix fun mergeWith(other: VersionMap): VersionMap {
     val result = VersionMap(backingMap)
