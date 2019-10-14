@@ -20,9 +20,9 @@ public final class RuntimeSettingsAndroidJsImpl implements RuntimeSettings {
 
   // Default settings:
   // Logs the most information, loads the on-device pipes-shell
-  // and connects to Arcs Local Development Server (ALDS)
+  // and not uses ALDS proxy.
   private static final int DEFAULT_LOG_LEVEL = 2;
-  private static final boolean DEFAULT_USE_DEV_SERVER = true;
+  private static final boolean DEFAULT_USE_DEV_SERVER = false;
   private static final String DEFAULT_SHELL_URL = "file:///android_asset/index.html?";
 
   private static final Logger logger = Logger.getLogger(
