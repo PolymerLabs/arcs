@@ -1,16 +1,12 @@
 package arcs.api;
 
-import android.util.Log;
-
 import javax.inject.Inject;
 
 @javax.inject.Singleton
 class HandleFactory {
 
   @Inject
-  HandleFactory() {
-    Log.d("Arcs", "handle factory + " + this);
-  }
+  HandleFactory() {}
 
   public Handle handleFor(
     StorageProxy storage,

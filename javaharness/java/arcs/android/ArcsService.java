@@ -50,8 +50,8 @@ public class ArcsService extends Service {
         .build()
         .inject(this);
 
+    environment.init();
     environment.addReadyListener(recipes -> arcsReady = true);
-    environment.init(this);
   }
 
   @Override

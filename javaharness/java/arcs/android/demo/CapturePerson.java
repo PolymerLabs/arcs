@@ -1,7 +1,5 @@
 package arcs.android.demo;
 
-import android.util.Log;
-
 import java.util.Map;
 
 import arcs.api.Collection;
@@ -14,7 +12,6 @@ class CapturePerson extends ParticleBase {
 
   @Override
   public void setHandles(Map<String, Handle> handleByName) {
-    Log.d("Arcs", "capture entity set handlers");
     super.setHandles(handleByName);
     ((Collection) getHandle("people"))
         .toList()
@@ -23,7 +20,6 @@ class CapturePerson extends ParticleBase {
   }
 
   public void generatePerson(int index) {
-    Log.d("Arcs", "generate person " + index);
     PortableJson person =
         jsonParser
             .emptyObject()
