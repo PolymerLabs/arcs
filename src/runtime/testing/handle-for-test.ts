@@ -17,6 +17,7 @@ import {handleFor, Singleton, Storable, Collection} from '../handle.js';
 import {Referenceable, CRDTCollectionTypeRecord} from '../crdt/crdt-collection.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
+import {Manifest} from '../manifest.js';
 
 /**
  * Creates a singleton handle for a store for testing purposes. Returns an
@@ -24,18 +25,18 @@ import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
  */
 // TODO: Can we correctly type the result here?
 // tslint:disable-next-line: no-any
-export async function singletonHandleForTest(arc: Arc, store: UnifiedStore): Promise<SingletonHandle<any>> {
+export async function singletonHandleForTest(arcOrManifest: Arc | Manifest, store: UnifiedStore): Promise<SingletonHandle<any>> {
   if (Flags.useNewStorageStack) {
     return new SingletonHandle(
-      arc.generateID('test-handle').toString(),
-      await createStorageProxyForTest<CRDTSingletonTypeRecord<Referenceable>>(arc, store),
-      arc.idGeneratorForTesting,
+      arcOrManifest.generateID('test-handle').toString(),
+      await createStorageProxyForTest<CRDTSingletonTypeRecord<Referenceable>>(arcOrManifest, store),
+      arcOrManifest.idGeneratorForTesting,
       /* particle= */ null, // TODO: We don't have a particle here.
       /* canRead= */ true,
       /* canWrite= */ true,
       /* name?= */ null);
   } else {
-    const handle = handleFor(store, arc.idGeneratorForTesting);
+    const handle = handleFor(store, arcOrManifest.idGeneratorForTesting);
     if (handle instanceof Singleton) {
       // tslint:disable-next-line: no-any
       return handle as unknown as SingletonHandle<any>;
@@ -51,18 +52,18 @@ export async function singletonHandleForTest(arc: Arc, store: UnifiedStore): Pro
  */
 // TODO: Can we correctly type the result here?
 // tslint:disable-next-line: no-any
-export async function collectionHandleForTest(arc: Arc, store: UnifiedStore): Promise<CollectionHandle<any>> {
+export async function collectionHandleForTest(arcOrManifest: Arc | Manifest, store: UnifiedStore): Promise<CollectionHandle<any>> {
   if (Flags.useNewStorageStack) {
     return new CollectionHandle(
-      arc.generateID('test-handle').toString(),
-      await createStorageProxyForTest<CRDTCollectionTypeRecord<Referenceable>>(arc, store),
-      arc.idGeneratorForTesting,
+      arcOrManifest.generateID('test-handle').toString(),
+      await createStorageProxyForTest<CRDTCollectionTypeRecord<Referenceable>>(arcOrManifest, store),
+      arcOrManifest.idGeneratorForTesting,
       /* particle= */ null, // TODO: We don't have a particle here.
       /* canRead= */ true,
       /* canWrite= */ true,
       /* name?= */ null);
   } else {
-    const handle = handleFor(store, arc.idGeneratorForTesting);
+    const handle = handleFor(store, arcOrManifest.idGeneratorForTesting);
     if (handle instanceof Collection) {
       return collectionHandleWrapper(handle);
     } else {
@@ -71,12 +72,13 @@ export async function collectionHandleForTest(arc: Arc, store: UnifiedStore): Pr
   }
 }
 
-async function createStorageProxyForTest<T extends CRDTTypeRecord>(arc: Arc, store: UnifiedStore): Promise<StorageProxy<T>> {
+async function createStorageProxyForTest<T extends CRDTTypeRecord>(
+    arcOrManifest: Arc | Manifest, store: UnifiedStore): Promise<StorageProxy<T>> {
   const activeStore = await store.activate();
   if (!(activeStore instanceof ActiveStore)) {
     throw new Error('Expected an ActiveStore.');
   }
-  return new StorageProxy(arc.generateID('test-proxy').toString(), activeStore, store.type);
+  return new StorageProxy(arcOrManifest.generateID('test-proxy').toString(), activeStore, store.type);
 }
 
 /**

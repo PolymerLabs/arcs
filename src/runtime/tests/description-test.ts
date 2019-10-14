@@ -12,15 +12,14 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Description} from '../description.js';
-import {handleFor, Collection} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
-import {CollectionStorageProvider, SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
-import {ArcId, IdGenerator} from '../id.js';
+import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
@@ -418,23 +417,23 @@ recipe
       assert.isTrue(recipe.isResolved());
 
       const arc = createTestArc(recipe, manifest);
-      const fooStore1 = await arc.createStore(fooType.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-      const fooStore2 = await arc.createStore(fooType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
+      const fooStore1 = await collectionHandleForTest(arc, await arc.createStore(fooType.collectionOf(), undefined, 'test:1'));
+      const fooStore2 = await collectionHandleForTest(arc, await arc.createStore(fooType.collectionOf(), undefined, 'test:2'));
 
       let description = await test.verifySuggestion({arc}, 'Write to X-foo and write to X-foo.');
       assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
       assert.strictEqual(description.getHandleDescription(recipe.handles[1]), 'X-foo');
 
       // Add values to the second handle.
-      await fooStore2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key1']);
-      await fooStore2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key2']);
+      await fooStore2.add(new fooStore2.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
+      await fooStore2.add(new fooStore2.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
       description = await test.verifySuggestion({arc}, 'Write to X-foo and write to X-foo (foo-1, foo-2).');
       assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
       assert.strictEqual(description.getHandleDescription(recipe.handles[1]), 'X-foo');
 
       // Add values to the first handle also.
-      await fooStore1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}}, ['key3']);
-      await fooStore1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}}, ['key4']);
+      await fooStore1.add(new fooStore1.entityClass({name: 'foo-3', fooValue: 'foo-value-3'}));
+      await fooStore1.add(new fooStore1.entityClass({name: 'foo-4', fooValue: 'foo-value-4'}));
       description = await test.verifySuggestion({arc}, 'Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).');
       assert.strictEqual(description.getHandleDescription(recipe.handles[0]), 'X-foo');
       assert.strictEqual(description.getHandleDescription(recipe.handles[1]), 'X-foo');
@@ -474,8 +473,8 @@ recipe
 
       // Add values to both Foo handles
       await fooStore.set(new fooStore.entityClass({name: 'the-FOO'}));
-      const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3') as SingletonStorageProvider;
-      await fooStore2.set({id: 2, rawData: {name: 'another-FOO'}});
+      const fooStore2 = await singletonHandleForTest(arc, await arc.createStore(fooStore.type, undefined, 'test:3'));
+      await fooStore2.set(new fooStore2.entityClass({name: 'another-FOO'}));
       const description = await test.verifySuggestion({arc},
           'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'b-foo');
@@ -538,10 +537,10 @@ recipe
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
       const arc = createTestArc(recipe, manifest);
-      const store = await arc.createStore(scriptDateType, undefined, 'test:1') as SingletonStorageProvider;
+      const store = await singletonHandleForTest(arc, await arc.createStore(scriptDateType, undefined, 'test:1'));
       await test.verifySuggestion({arc}, 'Stardate .');
 
-      await store.set({id: 1, rawData: {date: 'June 31'}});
+      await store.set(new store.entityClass({date: 'June 31'}));
       await test.verifySuggestion({arc}, 'Stardate June 31.');
     });
   });
@@ -573,8 +572,8 @@ recipe
         assert.isTrue(recipe.isResolved());
 
         const arc = createTestArc(recipe, manifest);
-        const tStore = await arc.createStore(myBESTType, undefined, 'test:1') as SingletonStorageProvider;
-        const tsStore = await arc.createStore(myBESTType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
+        const tStore = await singletonHandleForTest(arc, await arc.createStore(myBESTType, undefined, 'test:1'));
+        const tsStore = await collectionHandleForTest(arc, await arc.createStore(myBESTType.collectionOf(), undefined, 'test:2'));
 
         const description = await test.verifySuggestion({arc}, 'Make my best type list from my best type.');
         const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 't').handle;
@@ -583,12 +582,12 @@ recipe
         assert.strictEqual(description.getHandleDescription(tsRecipeHandle), 'my best type list');
 
         // Add values to handles.
-        await tStore.set({id: 1, rawData: {property: 'value1'}});
-        await tsStore.store({id: 2, rawData: {property: 'value2'}}, ['key2']);
+        await tStore.set(new tStore.entityClass({property: 'value1'}));
+        await tsStore.add(new tsStore.entityClass({property: 'value2'}));
         await test.verifySuggestion({arc}, 'Make my best type list (1 items) from my best type.');
 
-        await tsStore.store({id: 3, rawData: {property: 'value3'}}, ['key3']);
-        await tsStore.store({id: 4, rawData: {property: 'value4'}}, ['key4']);
+        await tsStore.add(new tsStore.entityClass({property: 'value3'}));
+        await tsStore.add(new tsStore.entityClass({property: 'value4'}));
         await test.verifySuggestion({arc}, 'Make my best type list (3 items) from my best type.');
     });
   });
