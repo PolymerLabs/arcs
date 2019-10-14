@@ -109,6 +109,21 @@ class VersionMapTest {
   }
 
   @Test
+  fun mergeWith_doesNotModifyReceiverNorArgument() {
+    val a = VersionMap()
+    val b = VersionMap()
+
+    a["alice"]++
+    b["bob"]++
+
+    val merged = a mergeWith b
+    assertThat("bob" !in a).isTrue()
+    assertThat(a["bob"]).isEqualTo(0)
+    assertThat("alice" !in b).isTrue()
+    assertThat(b["alice"]).isEqualTo(0)
+  }
+
+  @Test
   fun equals_returnsTrueWhenMapsAreEqual() {
     val a = VersionMap()
     val b = VersionMap()
