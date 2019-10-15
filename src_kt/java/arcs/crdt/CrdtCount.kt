@@ -99,7 +99,7 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
     private var currentVersion = _data.versionMap[actor]
     private var nextVersion = currentVersion + 1
 
-    fun withCurrentVersion(version: Version) = apply { nextVersion = version }
+    fun withCurrentVersion(version: Version) = apply { currentVersion = version }
     fun withNextVersion(version: Version) = apply { nextVersion = version }
 
     operator fun plusAssign(delta: Int) {

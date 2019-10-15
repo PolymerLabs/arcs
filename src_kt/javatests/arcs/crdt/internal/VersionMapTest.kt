@@ -94,7 +94,7 @@ class VersionMapTest {
 
     a = VersionMap()
     b = VersionMap(a)
-    assertThat(a isDominatedBy  b).isFalse()
+    assertThat(a isDominatedBy b).isFalse()
   }
 
   @Test
