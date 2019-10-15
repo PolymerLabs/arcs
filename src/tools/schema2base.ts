@@ -75,7 +75,7 @@ export abstract class Schema2Base {
   private nameAnonymousSchema(schema: Schema): string {
     const fieldStrings = Object.entries(schema.fields)
       .map(([name, field]) => Schema._typeString(field) + name)
-      .sort((a, b) => a.localeCompare(b))
+      .sort((a, b) => a.localeCompare(b))  // TODO(alxr): Does field order matter?
       .map(ts => {
         return ts
           .replace('(', '__')       // Unions  --> __fieldorfieldorfield
