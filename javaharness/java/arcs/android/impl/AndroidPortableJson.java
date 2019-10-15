@@ -9,15 +9,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-class PortableJsonAndroidImpl implements PortableJson {
+class AndroidPortableJson implements PortableJson {
 
   private Object jsonObject;
 
-  PortableJsonAndroidImpl(JSONObject jsonObject) {
+  AndroidPortableJson(JSONObject jsonObject) {
     this.jsonObject = jsonObject;
   }
 
-  PortableJsonAndroidImpl(JSONArray jsonObject) {
+  AndroidPortableJson(JSONArray jsonObject) {
     this.jsonObject = jsonObject;
   }
 
@@ -96,8 +96,8 @@ class PortableJsonAndroidImpl implements PortableJson {
     return array(x -> {
       JSONObject obj = x.optJSONObject(index);
       return obj == null
-          ? new PortableJsonAndroidImpl(x.getJSONArray(index))
-          : new PortableJsonAndroidImpl(obj);
+          ? new AndroidPortableJson(x.getJSONArray(index))
+          : new AndroidPortableJson(obj);
     });
   }
 
@@ -106,8 +106,8 @@ class PortableJsonAndroidImpl implements PortableJson {
     return object(x -> {
       JSONObject obj = x.optJSONObject(key);
       return obj == null
-          ? new PortableJsonAndroidImpl(x.getJSONArray(key))
-          : new PortableJsonAndroidImpl(obj);
+          ? new AndroidPortableJson(x.getJSONArray(key))
+          : new AndroidPortableJson(obj);
     });
   }
 
@@ -186,7 +186,7 @@ class PortableJsonAndroidImpl implements PortableJson {
 
   @Override
   public PortableJson put(String key, PortableJson obj) {
-    object(x -> x.put(key, ((PortableJsonAndroidImpl) obj).getRawObj()));
+    object(x -> x.put(key, ((AndroidPortableJson) obj).getRawObj()));
     return this;
   }
 
@@ -216,7 +216,7 @@ class PortableJsonAndroidImpl implements PortableJson {
 
   @Override
   public PortableJson put(int index, PortableJson obj) {
-    array(x -> x.put(index, ((PortableJsonAndroidImpl) obj).getRawObj()));
+    array(x -> x.put(index, ((AndroidPortableJson) obj).getRawObj()));
     return this;
   }
 
@@ -227,21 +227,21 @@ class PortableJsonAndroidImpl implements PortableJson {
 
   @Override
   public boolean equals(Object other) {
-    if (!(other instanceof PortableJsonAndroidImpl)) {
+    if (!(other instanceof AndroidPortableJson)) {
       return false;
     }
-    return stringify().equals(((PortableJsonAndroidImpl) other).stringify());
+    return stringify().equals(((AndroidPortableJson) other).stringify());
   }
 
   // TODO: Can we unify getObject and getArray?
   @Override
   public PortableJson getArray(String key) {
-    return object(x -> new PortableJsonAndroidImpl(x.getJSONArray(key)));
+    return object(x -> new AndroidPortableJson(x.getJSONArray(key)));
   }
 
   @Override
   public PortableJson getArray(int index) {
-    return array(x -> new PortableJsonAndroidImpl(x.getJSONArray(index)));
+    return array(x -> new AndroidPortableJson(x.getJSONArray(index)));
   }
 
   Object getRawObj() {

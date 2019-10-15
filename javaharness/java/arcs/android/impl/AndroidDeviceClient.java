@@ -9,10 +9,10 @@ import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
 import javax.inject.Inject;
 
-public class DeviceClientAndroidImpl extends DeviceClientImpl {
+public class AndroidDeviceClient extends DeviceClientImpl {
 
   @Inject
-  public DeviceClientAndroidImpl(
+  public AndroidDeviceClient(
       PortableJsonParser jsonParser,
       ArcsEnvironment environment,
       PecPortManager pecPortManager,
