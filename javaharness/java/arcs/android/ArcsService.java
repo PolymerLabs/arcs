@@ -11,16 +11,15 @@ import java.util.List;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.Arcs;
-import arcs.api.ArcsMessageSender;
-import arcs.api.PecInnerPortProxy;
+import arcs.api.Constants;
+import arcs.api.PecPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
- * ArcsService to communicate with Arcs.
+ * ArcsService to communicate with Constants.
  */
 public class ArcsService extends IntentService {
 
@@ -37,10 +36,17 @@ public class ArcsService extends IntentService {
   private WebView arcsWebView;
   private boolean arcsReady;
 
-  @Inject Arcs arcs;
-  @Inject AndroidArcsEnvironment environment;
-  @Inject ArcsMessageSender arcsMessageSender;
-  @Inject PecPortManager pecPortManager;
+  @Inject
+  PortableJsonParser jsonParser;
+
+  @Inject
+  AndroidArcsEnvironment environment;
+
+  @Inject
+  ShellApi shellApi;
+
+  @Inject
+  PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
 
@@ -51,12 +57,11 @@ public class ArcsService extends IntentService {
     Log.d(TAG, "onCreate()");
 
     DaggerArcsServiceComponent.builder()
-        .appContext(getApplicationContext())
         .build()
         .inject(this);
 
-    environment.init();
     environment.addReadyListener(recipes -> arcsReady = true);
+    environment.init(this);
   }
 
   @Override
@@ -180,27 +185,27 @@ public class ArcsService extends IntentService {
   private String constructRunArcRequest(ArcData arcData) {
     PortableJson request = jsonParser
       .emptyObject()
-      .put(Arcs.MESSAGE_FIELD, Arcs.RUN_ARC_MESSAGE)
-      .put(Arcs.ARC_ID_FIELD, arcData.getArcId())
-      .put(Arcs.PEC_ID_FIELD, arcData.getPecId())
-      .put(Arcs.RECIPE_FIELD, arcData.getRecipe());
+      .put(Constants.MESSAGE_FIELD, Constants.RUN_ARC_MESSAGE)
+      .put(Constants.ARC_ID_FIELD, arcData.getArcId())
+      .put(Constants.PEC_ID_FIELD, arcData.getPecId())
+      .put(Constants.RECIPE_FIELD, arcData.getRecipe());
     PortableJson particles = jsonParser.emptyArray();
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getName() != null && particleData.getId() != null) {
         PortableJson particleJson =
           jsonParser
             .emptyObject()
-            .put(Arcs.PARTICLE_ID_FIELD, particleData.getId())
-            .put(Arcs.PARTICLE_NAME_FIELD, particleData.getName());
+            .put(Constants.PARTICLE_ID_FIELD, particleData.getId())
+            .put(Constants.PARTICLE_NAME_FIELD, particleData.getName());
         if (particleData.getProvidedSlotId() != null) {
-          particleJson.put(Arcs.PROVIDED_SLOT_ID_FIELD, particleData.getProvidedSlotId());
+          particleJson.put(Constants.PROVIDED_SLOT_ID_FIELD, particleData.getProvidedSlotId());
         }
         particles.put(0, particleJson);
       }
     });
 
     if (particles.getLength() > 0) {
-      request.put(Arcs.PARTICLES_FIELD, particles);
+      request.put(Constants.PARTICLES_FIELD, particles);
     }
     return jsonParser.stringify(request);
   }
@@ -209,9 +214,9 @@ public class ArcsService extends IntentService {
     return jsonParser.stringify(
       jsonParser
         .emptyObject()
-        .put(Arcs.MESSAGE_FIELD, Arcs.STOP_ARC_MESSAGE)
-        .put(Arcs.ARC_ID_FIELD, arcData.getArcId())
-        .put(Arcs.PEC_ID_FIELD, arcData.getPecId()));
+        .put(Constants.MESSAGE_FIELD, Constants.STOP_ARC_MESSAGE)
+        .put(Constants.ARC_ID_FIELD, arcData.getArcId())
+        .put(Constants.PEC_ID_FIELD, arcData.getPecId()));
   }
 
   private void runWhenReady(Runnable runnable) {

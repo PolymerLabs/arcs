@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.Arcs;
+import arcs.api.Particle;
 import arcs.api.PecPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
@@ -25,10 +25,11 @@ import arcs.api.PortableJsonParser;
 import arcs.api.ShellApi;
 import arcs.api.UiRenderer;
 
-// This class implements Arcs API for callers accessing Arcs via Android service.
-public class ArcsAndroid implements Arcs {
+// This class implements Arcs API for clients to access Arcs via Android service.
+public class AndroidArcsClient {
 
-  private final Context context;
+  private static final String TAG = "Arcs";
+
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final ShellApi shellApi;
@@ -38,12 +39,10 @@ public class ArcsAndroid implements Arcs {
   private Queue<Consumer<IArcsService>> pendingCalls = new ArrayDeque<>();
 
   @Inject
-  ArcsAndroid(
-      Context context,
+  AndroidArcsClient(
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
       ShellApi shellApi) {
-    this.context = context;
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
     this.shellApi = shellApi;
@@ -52,7 +51,45 @@ public class ArcsAndroid implements Arcs {
     this.shellApi.attachProxy(this::sendMessageToArcs);
   }
 
-  @Override
+  public void connect(Context context) {
+    Intent intent = new Intent(context, ArcsService.class);
+    context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  public void disconnect(Context context) {
+    context.unbindService(serviceConnection);
+
+    pendingCalls.clear();
+  }
+
+  public ArcData runArc(String recipe) {
+    ArcData arcData = new ArcData.Builder().setRecipe(recipe).build();
+    runArc(arcData);
+    return arcData;
+  }
+
+  public ArcData runArc(String recipe, Particle particle) {
+    ArcData arcData =
+      new ArcData.Builder()
+        .setRecipe(recipe)
+        .addParticleData(new ArcData.ParticleData().setParticle(particle))
+        .build();
+    runArc(arcData);
+    return arcData;
+  }
+
+  public ArcData runArc(String recipe, String arcId, String pecId, Particle particle) {
+    ArcData arcData =
+      new ArcData.Builder()
+        .setRecipe(recipe)
+        .setArcId(arcId)
+        .setPecId(pecId)
+        .addParticleData(new ArcData.ParticleData().setParticle(particle))
+        .build();
+    runArc(arcData);
+    return arcData;
+  }
+
   public void runArc(ArcData arcData) {
     PecPort pecPort =
         pecPortManager.getOrCreatePecPort(arcData.getPecId(), arcData.getSessionId());
@@ -92,7 +129,6 @@ public class ArcsAndroid implements Arcs {
     });
   }
 
-  @Override
   public void stopArc(ArcData arcData) {
     executeArcsServiceCall(iArcsService -> {
       try {
@@ -103,7 +139,6 @@ public class ArcsAndroid implements Arcs {
     });
   }
 
-  @Override
   public void registerRenderer(String modality, UiRenderer renderer) {
     executeArcsServiceCall(iArcsService -> {
       try {
@@ -138,21 +173,18 @@ public class ArcsAndroid implements Arcs {
    */
   private void executeArcsServiceCall(Consumer<IArcsService> code) {
     if (arcsService != null) {
-      Log.d("Arcs", "Executing ArcsService call.");
+      Log.d(TAG, "Executing ArcsService call.");
       code.accept(arcsService);
     } else {
-      Log.d("Arcs", "Enqueuing ArcsService call");
+      Log.d(TAG, "Enqueuing ArcsService call");
       pendingCalls.offer(code);
-      Intent intent = new Intent(context, ArcsService.class);
-      context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
   }
 
   class HelperServiceConnection implements ServiceConnection {
-
     @Override
     public void onServiceConnected(ComponentName className, IBinder service) {
-      Log.d("Arcs", "ArcsService.onServiceConnected");
+      Log.d(TAG, "ArcsService.onServiceConnected");
 
       arcsService = IArcsService.Stub.asInterface(service);
       for (Consumer<IArcsService> call = pendingCalls.poll();
@@ -163,7 +195,7 @@ public class ArcsAndroid implements Arcs {
 
     @Override
     public void onServiceDisconnected(ComponentName className) {
-      Log.d("Arcs", "ArcsService.onServiceDisconnected");
+      Log.d(TAG, "ArcsService.onServiceDisconnected");
       arcsService = null;
     }
   }

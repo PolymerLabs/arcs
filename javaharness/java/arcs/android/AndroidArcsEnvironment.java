@@ -17,8 +17,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
-import arcs.api.ArcsEnvironment;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
@@ -27,9 +27,14 @@ import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 /**
- * Android implementation of {@link ArcsEnvironment}.
+ * Android environment hosting Arcs runtime.
  */
-final class AndroidArcsEnvironment implements ArcsEnvironment {
+@Singleton
+final class AndroidArcsEnvironment {
+
+  interface ReadyListener {
+    void onReady(List<String> recipes);
+  }
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -43,7 +48,6 @@ final class AndroidArcsEnvironment implements ArcsEnvironment {
   private static final String FIELD_SESSION_ID = "sessionId";
 
   private final List<ReadyListener> readyListeners = new ArrayList<>();
-  private final Context context;
   private final PortableJsonParser jsonParser;
   private final PecPortManager pecPortManager;
   private final UiBroker uiBroker;
@@ -55,13 +59,11 @@ final class AndroidArcsEnvironment implements ArcsEnvironment {
 
   @Inject
   public AndroidArcsEnvironment(
-    Context context,
     PortableJsonParser jsonParser,
     PecPortManager pecPortManager,
     UiBroker uiBroker,
     ShellApi shellApi,
     Provider<RuntimeSettings> runtimeSettings) {
-    this.context = context;
     this.jsonParser = jsonParser;
     this.pecPortManager = pecPortManager;
     this.uiBroker = uiBroker;
@@ -71,18 +73,15 @@ final class AndroidArcsEnvironment implements ArcsEnvironment {
     this.uiThreadHandler = new Handler(Looper.getMainLooper());
   }
 
-  @Override
   public void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
   }
 
-  @Override
   public void fireReadyEvent(List<String> recipes) {
     readyListeners.forEach(listener -> listener.onReady(recipes));
   }
 
-  @Override
-  public void init() {
+  public void init(Context context) {
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -128,10 +127,8 @@ final class AndroidArcsEnvironment implements ArcsEnvironment {
     webView.loadUrl(url);
   }
 
-  @Override
   public void reset() {}
 
-  @Override
   public void destroy() {}
 
   @JavascriptInterface

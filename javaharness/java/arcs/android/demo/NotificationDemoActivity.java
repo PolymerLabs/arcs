@@ -5,14 +5,13 @@ import android.os.Bundle;
 
 import javax.inject.Inject;
 
-import arcs.api.Arcs;
-import arcs.api.UiBroker;
+import arcs.android.AndroidArcsClient;
 
 /** Notification demo activity. */
 public class NotificationDemoActivity extends Activity {
 
   @Inject
-  Arcs arcs;
+  AndroidArcsClient arcsClient;
 
   @Inject
   NotificationRenderer notificationRenderer;
@@ -23,14 +22,21 @@ public class NotificationDemoActivity extends Activity {
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
-    arcs.registerRenderer("notification", notificationRenderer);
+    arcsClient.connect(this);
+    arcsClient.registerRenderer("notification", notificationRenderer);
 
     setContentView(R.layout.notification_demo);
 
     findViewById(R.id.send_notification_btn).setOnClickListener(v -> sendNotification());
   }
 
+  @Override
+  public void onDestroy() {
+    arcsClient.disconnect(this);
+    super.onDestroy();
+  }
+
   private void sendNotification() {
-    arcs.runArc("NotificationTest");
+    arcsClient.runArc("NotificationTest");
   }
 }

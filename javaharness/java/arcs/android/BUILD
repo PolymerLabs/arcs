@@ -17,6 +17,7 @@ android_library(
     assets = [
         "//shells/pipes-shell:pipes_shell_web",
     ],
+    exports_manifest = 1,
     assets_dir = "pipes_shell_web_dist",
     resource_files = glob(["res/**"]),
     deps = [

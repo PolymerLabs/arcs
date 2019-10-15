@@ -1,5 +1,8 @@
 package arcs.android;
 
+import arcs.android.IRemoteOutputCallback;
+import arcs.android.IRemotePecCallback;
+
 import java.util.List;
 
 /**

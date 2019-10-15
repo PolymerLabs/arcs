@@ -3,7 +3,6 @@ package arcs.android.demo;
 import android.content.Context;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
-import android.util.Log;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
@@ -43,7 +42,6 @@ public class AutofillRenderer implements UiRenderer {
 
   @Override
   public boolean render(PortableJson packet) {
-    Log.d("Arcs", "render called here");
     String slotId = packet.getString(CONTAINER_SLOT_ID_FIELD);
     SlotInfo slotInfo = slotById.get(slotId);
 

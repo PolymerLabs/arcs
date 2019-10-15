@@ -2,8 +2,6 @@ package arcs.android;
 
 import javax.inject.Singleton;
 
-import arcs.api.Arcs;
-import arcs.api.ArcsEnvironment;
 import arcs.api.ParticleLoader;
 import arcs.api.PecPortManager;
 import arcs.api.RuntimeSettings;
@@ -14,11 +12,6 @@ import dagger.Module;
 
 @Module
 public abstract class ArcsAndroidModule {
-
-  @Singleton
-  @Binds
-  public abstract ArcsEnvironment provideArcsEnvironment(
-      AndroidArcsEnvironment impl);
 
   @Singleton
   @Binds
@@ -39,11 +32,6 @@ public abstract class ArcsAndroidModule {
   @Binds
   public abstract PecPortManager providePecPortManager(
     AndroidPecPortManager androidPecPortManager);
-
-  @Singleton
-  @Binds
-  public abstract Arcs provideArcs(
-    ArcsAndroid android);
 
   @Singleton
   @Binds
