@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
-import {Handle, handleFor} from './handle.js';
+import {Handle, unifiedHandleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
@@ -20,7 +20,7 @@ import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
-import {Handle as HandleNG, handleNGFor} from './storageNG/handle.js';
+import {Handle as HandleNG} from './storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
@@ -205,7 +205,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       async createHandle(type: Type, name: string, hostParticle?: Particle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
-            const handle = handleFor(proxy, pec.idGenerator, name, particleId);
+            const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId});
             resolve(handle);
             if (hostParticle) {
               proxy.register(hostParticle, handle);
@@ -341,19 +341,15 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy: UnifiedStorageProxy,
                        handleMap, registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[]) {
     const connSpec = spec.handleConnectionMap.get(name);
-    let handle;
-    if (proxy instanceof StorageProxyNG) {
-      handle = handleNGFor(
-          id,
-          proxy,
-          this.idGenerator,
-          particle,
-          connSpec.isInput,
-          connSpec.isOutput,
-          name);
-    } else {
-      handle = handleFor(proxy, this.idGenerator, name, id, connSpec.isInput, connSpec.isOutput);
-    }
+    const handle = unifiedHandleFor({
+      proxy,
+      idGenerator: this.idGenerator,
+      name,
+      particleId: id,
+      particle,
+      canRead: connSpec.isInput,
+      canWrite: connSpec.isOutput,
+    });
     handleMap.set(name, handle);
 
     // Defer registration of handles with proxies until after particles have a chance to
