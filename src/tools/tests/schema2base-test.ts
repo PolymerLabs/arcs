@@ -57,9 +57,6 @@ describe('schema2base', () => {
 
   it('creates names for anonymous schemas (0 names)', async () => {
     await overwriteInput(`\
-  alias schema * as MySchema
-    Text value
-    
   particle Foo
     in * {Number n} input0
     in * {Number n} input1
@@ -79,9 +76,9 @@ describe('schema2base', () => {
     assert.isNotEmpty(mock.entityArgs);
 
     const names = mock.entityArgs.map(arg => arg[0]);
-    assert.equal(names.length, 8);
+    assert.equal(names.length, 10);
     assert.includeDeepOrderedMembers(names,
-      ['AnonTextvalue', 'AnonNumbern', 'AnonNumberx', 'Anon__URLorTextu', 'Anon__Number_Numbercoordinate',
-        'AnonNumbernURLu', 'AnonTexttURLu', 'AnonTextt']);
+      ['Foo_input0', 'Foo_input1', 'Foo_input2', 'Foo_union', 'Foo_tuple', 'Foo_nested0', 'Foo_nested1',
+        'Foo_collection0', 'Foo_collection1', 'Foo_collection2']);
   });
 });

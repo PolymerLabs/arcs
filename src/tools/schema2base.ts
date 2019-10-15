@@ -34,22 +34,18 @@ export abstract class Schema2Base {
   /** Collect declared schemas along with any inlined in particle connections. */
   private collectSchemas(manifest: Manifest): Dictionary<Schema> {
     const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => {
-      const name = schema && schema.names && schema.names[0] || this.nameAnonymousSchema(schema);
-      if (!(name in schemas)) {
-        schemas[name] = schema;
-      }
-    });
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
         if (!schema) {
           continue;
         }
-        const name = schema.names && schema.names[0] || this.nameAnonymousSchema(schema); // `${particle.name}_${connection.name}`;
-        if (!(name in schemas)) {
-          schemas[name] = schema;
+        // TODO(alxr): now that names is a set, what order will these be in?
+        let name = schema.names && schema.names[0] || `${particle.name}_${connection.name}`;
+        if (name in schemas) {
+          name = `${particle.name}_${connection.name}`;
         }
+        schemas[name] = schema;
       }
     }
     return schemas;
@@ -74,21 +70,6 @@ export abstract class Schema2Base {
     }
 
     return inlineSchemas;
-  }
-
-  /** Quick-and-dirty name mangling for anonymous schemas. TODO(alxr): suggestions welcome */
-  private nameAnonymousSchema(schema: Schema): string {
-    const fieldStrings = Object.entries(schema.fields)
-      .map(([name, field]) => Schema._typeString(field) + name)
-      .sort((a, b) => a.localeCompare(b))  // TODO(alxr): Does field order matter?
-      .map(ts => {
-        return ts
-          .replace('(', '__')       // Unions  --> __fieldorfieldorfield
-          .replace(',', '_')        // Tuples --> __field_field_filed
-          .replace(/[.,/#!$%^&*;:{}<>=\-`~()\s]/g, ''); // Remove punctuation (except `_`).
-      });
-
-    return ['Anon', ...fieldStrings].join('');
   }
 
   private async processFile(src: string) {
