@@ -3,8 +3,8 @@ package arcs.api;
 import java.util.function.Consumer;
 
 /**
- * A proxy which receives PEC messages and forwards them to a real
- * PecInnerPort implementation that lives elsewhere (e.g. in another Android service).
+ * A proxy PEC port implementation. It receives PEC messages and forwards them to a real
+ * {@code PECInnerPort} implementation that lives elsewhere (e.g. in another Android service).
  */
 public class PecInnerPortProxy {
 

@@ -21,7 +21,7 @@ import arcs.api.UiBroker;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
- * ArcsService to communicate with Constants.
+ * ArcsService to communicate with Arcs.
  */
 public class ArcsService extends IntentService {
 
