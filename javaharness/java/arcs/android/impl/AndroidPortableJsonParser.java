@@ -8,22 +8,22 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-class PortableJsonParserAndroidImpl implements PortableJsonParser {
+class AndroidPortableJsonParser implements PortableJsonParser {
 
   @Inject
-  public PortableJsonParserAndroidImpl() {}
+  public AndroidPortableJsonParser() {}
 
   @Override
   public PortableJson parse(String json) {
     if (json.trim().startsWith("{")) {
       try {
-        return new PortableJsonAndroidImpl(new JSONObject(json));
+        return new AndroidPortableJson(new JSONObject(json));
       } catch (JSONException e) {
         throw new RuntimeException(e);
       }
     } else if (json.trim().startsWith("[")) {
       try {
-        return new PortableJsonAndroidImpl(new JSONArray(json));
+        return new AndroidPortableJson(new JSONArray(json));
       } catch (JSONException e) {
         throw new RuntimeException(e);
       }
@@ -33,17 +33,17 @@ class PortableJsonParserAndroidImpl implements PortableJsonParser {
 
   @Override
   public String stringify(PortableJson json) {
-    return ((PortableJsonAndroidImpl) json).stringify();
+    return ((AndroidPortableJson) json).stringify();
   }
 
   @Override
   public PortableJson emptyObject() {
-    return new PortableJsonAndroidImpl(new JSONObject());
+    return new AndroidPortableJson(new JSONObject());
   }
 
   @Override
   public PortableJson emptyArray() {
-    return new PortableJsonAndroidImpl(new JSONArray());
+    return new AndroidPortableJson(new JSONArray());
   }
 
   @Override

@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 /** For Javascript-based Arcs runtime. */
-public final class RuntimeSettingsAndroidJsImpl implements RuntimeSettings {
+public final class AndroidRuntimeSettings implements RuntimeSettings {
   // Equivalent to &log parameter
   private static final String LOG_LEVEL_PROPERTY = "debug.arcs.runtime.log";
   // Equivalent to &explore-proxy parameter
@@ -26,7 +26,7 @@ public final class RuntimeSettingsAndroidJsImpl implements RuntimeSettings {
   private static final String DEFAULT_SHELL_URL = "file:///android_asset/index.html?";
 
   private static final Logger logger = Logger.getLogger(
-      RuntimeSettingsAndroidJsImpl.class.getName());
+      AndroidRuntimeSettings.class.getName());
 
   @AutoValue
   abstract static class Settings {
@@ -35,7 +35,7 @@ public final class RuntimeSettingsAndroidJsImpl implements RuntimeSettings {
     abstract String shellUrl();
 
     static Builder builder() {
-      return new AutoValue_RuntimeSettingsAndroidJsImpl_Settings.Builder();
+      return new AutoValue_AndroidRuntimeSettings_Settings.Builder();
     }
 
     @AutoValue.Builder
@@ -51,7 +51,7 @@ public final class RuntimeSettingsAndroidJsImpl implements RuntimeSettings {
   private final Settings settings;
 
   @Inject
-  public RuntimeSettingsAndroidJsImpl() {
+  public AndroidRuntimeSettings() {
     settings = Settings.builder()
         .setLogLevel(
             getProperty(LOG_LEVEL_PROPERTY, Integer::valueOf, DEFAULT_LOG_LEVEL))

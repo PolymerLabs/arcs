@@ -17,7 +17,7 @@ import dagger.Module;
 public abstract class AndroidCommonModule {
 
   @Binds
-  abstract PortableJsonParser providesPortableJsonParser(PortableJsonParserAndroidImpl impl);
+  abstract PortableJsonParser providesPortableJsonParser(AndroidPortableJsonParser impl);
 
   @Binds
   public abstract PECInnerPortFactory providesPECInnerPortFactory(PECInnerPortFactoryImpl impl);

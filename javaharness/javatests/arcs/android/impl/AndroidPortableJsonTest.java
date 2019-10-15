@@ -11,11 +11,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class PortableJsonAndroidImplTest {
+public class AndroidPortableJsonTest {
   // TODO(cromwellian): use dependendency injection to make these tests run on all platforms
   @Test
   public void testEmpty() {
-    PortableJsonParser parser = new PortableJsonParserAndroidImpl();
+    PortableJsonParser parser = new AndroidPortableJsonParser();
     PortableJson obj = parser.emptyObject();
     PortableJson arr = parser.emptyArray();
     assertEquals(0, obj.keys().size());
@@ -24,7 +24,7 @@ public class PortableJsonAndroidImplTest {
 
   @Test
   public void testObject() {
-    PortableJsonParser parser = new PortableJsonParserAndroidImpl();
+    PortableJsonParser parser = new AndroidPortableJsonParser();
     PortableJson obj = parser.emptyObject();
     String str = "string";
     int i = 123;
@@ -61,7 +61,7 @@ public class PortableJsonAndroidImplTest {
   @Test
   public void testArray() {
     System.err.println("Hello");
-    PortableJsonParser parser = new PortableJsonParserAndroidImpl();
+    PortableJsonParser parser = new AndroidPortableJsonParser();
     PortableJson obj = parser.emptyArray();
     String str = "string";
     int i = 123;

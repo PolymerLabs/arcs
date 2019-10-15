@@ -25,7 +25,7 @@ public abstract class AndroidHarnessModule {
 
   @Singleton
   @Binds
-  public abstract DeviceClient provideAndroidDeviceClient(DeviceClientAndroidImpl impl);
+  public abstract DeviceClient provideAndroidDeviceClient(AndroidDeviceClient impl);
 
   @Binds
   @Singleton
@@ -35,5 +35,5 @@ public abstract class AndroidHarnessModule {
   public abstract HarnessController providesHarnessController(AndroidHarnessController impl);
 
   @Binds
-  public abstract RuntimeSettings providesRuntimeSettings(RuntimeSettingsAndroidJsImpl impl);
+  public abstract RuntimeSettings providesRuntimeSettings(AndroidRuntimeSettings impl);
 }
