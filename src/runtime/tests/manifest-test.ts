@@ -2597,7 +2597,7 @@ resource SomeName
           [{"nobId": "12345"}]
       `);
       assert.lengthOf(manifest.stores, 1);
-      const store = manifest.stores[0].castToStorageStub();
+      const store = manifest.stores[0];
       assert.lengthOf(store.claims, 2);
       assert.strictEqual(store.claims[0].tag, 'property1');
       assert.strictEqual(store.claims[1].tag, 'property2');
