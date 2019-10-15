@@ -19,12 +19,17 @@ typealias Version = Int
 /** Vector clock implementation. */
 class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
   constructor(initialData: VersionMap) : this(initialData.backingMap)
+  constructor(vararg initialData: Pair<Actor, Version>) : this(mapOf(*initialData))
 
   private val backingMap = HashMap(initialData)
 
   /** The number of entries in the [VersionMap]. */
   val size: Int
     get() = backingMap.size
+
+  /** All distinct [Actor]s represented in the [VersionMap]. */
+  val actors: Set<Actor>
+    get() = backingMap.keys
 
   /** Returns whether or not this [VersionMap] is empty. */
   fun isEmpty(): Boolean = backingMap.isEmpty()
@@ -59,6 +64,13 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     other.backingMap.all { this[it.key] >= it.value }
 
   /**
+   * Determines whether or not this [VersionMap] is 'dominated by' another.
+   *
+   * See [dominates] for more details.
+   */
+  infix fun isDominatedBy(other: VersionMap): Boolean = !(this dominates other)
+
+  /**
    * Merges this [VersionMap] with another [VersionMap] by taking the maximum version values for the
    * union of all [Actor]s and returns the merged result.
    *
@@ -70,6 +82,20 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     return result
   }
 
+  /**
+   * Subtracts the other [VersionMap] from the receiver and returns the actor-by-actor difference
+   * in a new [VersionMap].
+   */
+  operator fun minus(other: VersionMap): VersionMap {
+    // Return an empty result if the other map is newer than this one.
+    if (this isDominatedBy other) return VersionMap()
+
+    return VersionMap(
+      backingMap.mapValues { (actor, version) -> version - other[actor] }
+        .filter { it.value > 0 }
+    )
+  }
+
   override fun equals(other: Any?): Boolean {
     return other is VersionMap &&
       other.backingMap.size == backingMap.size &&
@@ -79,6 +105,10 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
   // TODO: better method for calculating hashcode. This implementation is just so we have
   //  **something**.
   override fun hashCode(): Int = backingMap.entries.sortedBy { it.key }.joinToString().hashCode()
+
+  override fun toString(): String =
+    backingMap.entries
+      .sortedBy { it.key }.joinToString(prefix = "{", postfix = "}") { "${it.key}: ${it.value}" }
 
   companion object {
     /** Default starting version for any actor. */

@@ -103,8 +103,10 @@ data class MergeChanges<Data : CrdtData, Op : CrdtOperation>(
  */
 sealed class CrdtChange<Data : CrdtData, Op : CrdtOperation> {
   /** Representation of a change as a series of [CrdtOperation]s. */
-  class Operations<Data : CrdtData, Op : CrdtOperation>
-    : CrdtChange<Data, Op>(), MutableList<Op> by mutableListOf()
+  data class Operations<Data : CrdtData, Op : CrdtOperation>(
+    /** Series of [Op]s required to complete the [CrdtChange]. */
+    val ops: MutableList<Op> = mutableListOf()
+  ) : CrdtChange<Data, Op>(), MutableList<Op> by ops
 
   /**
    * Representation of a change where a series of [CrdtOperation]s is not possible - contains the

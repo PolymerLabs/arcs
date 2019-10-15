@@ -26,20 +26,6 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
 
   fun forActor(actor: Actor) = Scoped(actor)
 
-  inner class Scoped(private val actor: Actor) {
-    private var currentVersion = _data.versionMap[actor]
-    private var nextVersion = currentVersion + 1
-
-    fun withCurrentVersion(version: Version) = apply { nextVersion = version }
-    fun withNextVersion(version: Version) = apply { nextVersion = version }
-
-    operator fun plusAssign(delta: Int) {
-      applyOperation(
-        Operation.MultiIncrement(actor, currentVersion to nextVersion, delta)
-      )
-    }
-  }
-
   override fun merge(other: Data): MergeChanges<Data, Operation> {
     val myChanges = CrdtChange.Operations<Data, Operation>()
     val otherChanges = CrdtChange.Operations<Data, Operation>()
@@ -107,6 +93,22 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
   override fun updateData(newData: Data) {
     _data = newData
   }
+
+  /** Scoped access to this [CrdtCount], where all ops will be marked as performed by [actor]. */
+  inner class Scoped(private val actor: Actor) {
+    private var currentVersion = _data.versionMap[actor]
+    private var nextVersion = currentVersion + 1
+
+    fun withCurrentVersion(version: Version) = apply { currentVersion = version }
+    fun withNextVersion(version: Version) = apply { nextVersion = version }
+
+    operator fun plusAssign(delta: Int) {
+      applyOperation(
+        Operation.MultiIncrement(actor, currentVersion to nextVersion, delta)
+      )
+    }
+  }
+
 
   /** Internal representation of the count information. */
   data class Data(

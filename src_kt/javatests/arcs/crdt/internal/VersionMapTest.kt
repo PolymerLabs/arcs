@@ -85,6 +85,45 @@ class VersionMapTest {
   }
 
   @Test
+  fun isDominatedByReturnsFalse_whenVersionMapsAreEqual() {
+    var a = VersionMap()
+    a["alice"]++
+    a["bob"] = 42
+    var b = VersionMap(a)
+    assertThat(a isDominatedBy b).isFalse()
+
+    a = VersionMap()
+    b = VersionMap(a)
+    assertThat(a isDominatedBy b).isFalse()
+  }
+
+  @Test
+  fun isDominatedByReturnsTrue_whenVersionMapIsDominatedByAnother() {
+    val a = VersionMap()
+    val b = VersionMap()
+
+    a["alice"]++
+    assertThat(b isDominatedBy a).isTrue()
+
+    a["bob"] = 2
+    b["bob"] = 2
+    assertThat(b isDominatedBy a).isTrue()
+  }
+
+  @Test
+  fun isDominatedByReturnsFalse_whenVersionMapDominatesAnother() {
+    val a = VersionMap()
+    val b = VersionMap()
+
+    b["alice"]++
+    assertThat(b isDominatedBy a).isFalse()
+
+    a["bob"] = 2
+    b["bob"] = 2
+    assertThat(b isDominatedBy a).isFalse()
+  }
+
+  @Test
   fun mergeWith_mergesTwoEmptyMaps() {
     val a = VersionMap()
     val b = VersionMap()
@@ -116,7 +155,7 @@ class VersionMapTest {
     a["alice"]++
     b["bob"]++
 
-    val merged = a mergeWith b
+    @Suppress("UNUSED_VARIABLE") val merged = a mergeWith b
     assertThat("bob" !in a).isTrue()
     assertThat(a["bob"]).isEqualTo(0)
     assertThat("alice" !in b).isTrue()
@@ -153,5 +192,53 @@ class VersionMapTest {
     a["bob"] = 2
 
     assertThat(a != b).isTrue()
+  }
+
+  @Test
+  fun minus_returnsEmptyMap_whenBothAreEqual() {
+    val a = VersionMap()
+    val b = VersionMap()
+
+    assertThat((b - a).isEmpty())
+      .isTrue()
+    assertThat((a - b).isEmpty())
+      .isTrue()
+
+    a["alice"] = 42
+    b["alice"] = 42
+    assertThat((b - a).isEmpty())
+      .isTrue()
+    assertThat((a - b).isEmpty())
+      .isTrue()
+  }
+
+  @Test
+  fun minus_returnsEmptyMap_ifLhsDoesNotDominateRhs() {
+    val a = VersionMap()
+    val b = VersionMap()
+
+    b["alice"] = 42
+    assertThat((a - b).isEmpty()).isTrue()
+  }
+
+  @Test
+  fun minus_returnsNonEmptyMap_ifLhsDominatesRhs() {
+    val a = VersionMap()
+    val b = VersionMap()
+
+    a["alice"]++
+    var difference = a - b
+    assertThat(difference["alice"]).isEqualTo(1)
+
+    a["alice"]++
+    difference = a - b
+    assertThat(difference["alice"]).isEqualTo(2)
+
+    b["alice"] = 2
+    a["bob"] = 1337
+    difference = a - b
+    assertThat(difference.size).isEqualTo(1)
+    assertThat(difference["bob"]).isEqualTo(1337)
+    assertThat(difference["alice"]).isEqualTo(0)
   }
 }
