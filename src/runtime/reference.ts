@@ -9,12 +9,13 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {handleFor, Collection, Storable} from './handle.js';
+import {Collection, Storable, unifiedHandleFor} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
 import {Entity} from './entity.js';
 import {SerializedEntity, StorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
+import {CollectionHandle} from './storageNG/handle.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -26,7 +27,8 @@ export class Reference implements Storable {
   private storageKey: string;
   private readonly context: ParticleExecutionContext;
   private storageProxy: StorageProxy = null;
-  protected handle: Collection|null = null;
+  // tslint:disable-next-line: no-any
+  protected handle: Collection|CollectionHandle<any>|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
@@ -43,7 +45,8 @@ export class Reference implements Storable {
   protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referredType);
-      this.handle = handleFor(this.storageProxy, this.context.idGenerator) as Collection;
+      // tslint:disable-next-line: no-any
+      this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator}) as CollectionHandle<any>;
       if (this.storageKey) {
         assert(this.storageKey === this.storageProxy.storageKey);
       } else {
@@ -87,7 +90,11 @@ export abstract class ClientReference extends Reference {
 
   private async storeReference(entity): Promise<void> {
     await this.ensureStorageProxy();
-    await this.handle.store(entity);
+    if (this.handle instanceof CollectionHandle) {
+      await this.handle.add(entity);
+    } else {
+      await this.handle.store(entity);
+    }
     this.mode = ReferenceMode.Stored;
   }
 
