@@ -1,5 +1,6 @@
 package arcs.android;
 
+
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import java.util.Collection;
@@ -8,7 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-class AndroidPortableJsonParser implements PortableJsonParser {
+public class AndroidPortableJsonParser implements PortableJsonParser {
 
   @Inject
   public AndroidPortableJsonParser() {}
@@ -62,3 +63,4 @@ class AndroidPortableJsonParser implements PortableJsonParser {
     return array;
   }
 }
+

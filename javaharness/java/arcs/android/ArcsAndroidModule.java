@@ -1,12 +1,12 @@
 package arcs.android;
 
+import arcs.api.PortableJson;
+import arcs.api.PortableJsonParser;
 import javax.inject.Singleton;
 
 import arcs.api.ParticleLoader;
-import arcs.api.PecPortManager;
 import arcs.api.RuntimeSettings;
 import arcs.api.ShellApi;
-import arcs.api.UiBroker;
 import dagger.Binds;
 import dagger.Module;
 
@@ -25,16 +25,14 @@ public abstract class ArcsAndroidModule {
 
   @Singleton
   @Binds
-  public abstract UiBroker provideUiBroker(
-    AndroidUiBroker androidUiBroker);
-
-  @Singleton
-  @Binds
-  public abstract PecPortManager providePecPortManager(
-    AndroidPecPortManager androidPecPortManager);
-
-  @Singleton
-  @Binds
   public abstract RuntimeSettings providesRuntimeSettings(
     AndroidRuntimeSettings impl);
+
+  @Binds
+  abstract PortableJson providesPortableJson(
+      AndroidPortableJson androidPortableJson);
+
+  @Binds
+  abstract PortableJsonParser providesPortableJsonParser(
+      AndroidPortableJsonParser androidPortableJsonParser);
 }

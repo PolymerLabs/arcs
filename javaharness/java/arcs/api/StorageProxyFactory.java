@@ -6,7 +6,7 @@ class StorageProxyFactory {
       String id,
       Type type,
       String name,
-      PecPort port,
+      PECInnerPort port,
       PortableJsonParser jsonParser) {
     if (type.isCollection()) {
       return new CollectionProxy(id, type, port, name, jsonParser);

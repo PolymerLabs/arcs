@@ -19,7 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import arcs.api.PecPortManager;
+import arcs.api.PECPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RuntimeSettings;
@@ -49,7 +49,7 @@ final class AndroidArcsEnvironment {
 
   private final List<ReadyListener> readyListeners = new ArrayList<>();
   private final PortableJsonParser jsonParser;
-  private final PecPortManager pecPortManager;
+  private final PECPortManager pecPortManager;
   private final UiBroker uiBroker;
   private final ShellApi shellApi;
   private final Handler uiThreadHandler;
@@ -60,7 +60,7 @@ final class AndroidArcsEnvironment {
   @Inject
   public AndroidArcsEnvironment(
     PortableJsonParser jsonParser,
-    PecPortManager pecPortManager,
+    PECPortManager pecPortManager,
     UiBroker uiBroker,
     ShellApi shellApi,
     Provider<RuntimeSettings> runtimeSettings) {

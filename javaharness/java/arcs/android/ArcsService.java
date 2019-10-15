@@ -12,8 +12,10 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Constants;
-import arcs.api.PecPort;
-import arcs.api.PecPortManager;
+import arcs.api.PECInnerPort;
+import arcs.api.PECPortManager;
+import arcs.api.PECPortProxy;
+import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
 
@@ -46,9 +48,10 @@ public class ArcsService extends IntentService {
   ShellApi shellApi;
 
   @Inject
-  PecPortManager pecPortManager;
-  @Inject PortableJsonParser jsonParser;
-  @Inject UiBroker uiBroker;
+  PECPortManager pecPortManager;
+
+  @Inject
+  UiBroker uiBroker;
 
   @Override
   public void onCreate() {
@@ -96,8 +99,8 @@ public class ArcsService extends IntentService {
           List<String> particleNames,
           List<String> providedSlotIds,
           IRemotePecCallback callback) {
-        PecInnerPortProxy pecInnerPortProxy =
-            new PecInnerPortProxy(
+        PECPortProxy pecRemotePort =
+            new PECPortProxy(
                 message -> {
                   try {
                     callback.onMessage(message);
@@ -122,14 +125,14 @@ public class ArcsService extends IntentService {
             }
 
           ArcData arcData = arcDataBuilder.build();
-          PecPort pecPort = null;
+          PECInnerPort pecInnerPort = null;
           for (ArcData.ParticleData particleData : arcData.getParticleList()) {
             if (particleData.getParticle() != null) {
-              if (pecPort == null) {
-                pecPort = pecPortManager.getOrCreatePecPort(
+              if (pecInnerPort == null) {
+                pecInnerPort = pecPortManager.getOrCreatePecPort(
                   arcData.getPecId(), arcData.getSessionId());
               }
-              pecPort.mapParticle(particleData.getParticle());
+              pecInnerPort.mapParticle(particleData.getParticle());
             }
           }
           shellApi.sendMessageToArcs(constructRunArcRequest(arcData));

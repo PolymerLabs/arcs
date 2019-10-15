@@ -1,46 +1,38 @@
-package arcs.android;
+package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-import arcs.api.ParticleExecutionContext;
-import arcs.api.PecPort;
-import arcs.api.PecPortManager;
-import arcs.api.PecPortProxy;
-import arcs.api.PortableJson;
-import arcs.api.PortableJsonParser;
-import arcs.api.ShellApi;
+@Singleton
+public final class PECPortManager {
 
-public class AndroidPecPortManager implements PecPortManager {
-
-  private final Map<String, PecPort> pecPortMap = new HashMap<>();
-  private final Map<String, PecPortProxy> pecPortProxyMap = new HashMap<>();
+  private final Map<String, PECInnerPort> pecPortMap = new HashMap<>();
+  private final Map<String, PECPortProxy> pecPortProxyMap = new HashMap<>();
 
   private final ShellApi shellApi;
   private final ParticleExecutionContext pec;
   private final PortableJsonParser jsonParser;
 
   @Inject
-  AndroidPecPortManager(
-    ShellApi shellApi,
-    ParticleExecutionContext pec,
-    PortableJsonParser jsonParser) {
+  PECPortManager(
+      ShellApi shellApi,
+      ParticleExecutionContext pec,
+      PortableJsonParser jsonParser) {
     this.shellApi = shellApi;
     this.pec = pec;
     this.jsonParser = jsonParser;
   }
 
-  @Override
   public void deliverPecMessage(String pecId, String sessionId, PortableJson message) {
-    PecPort port = pecPortMap.get(pecId);
+    PECInnerPort port = pecPortMap.get(pecId);
     if (port != null) {
       port.onReceivePecMessage(message);
       return;
     }
 
-    PecPortProxy portProxy = pecPortProxyMap.get(pecId);
+    PECPortProxy portProxy = pecPortProxyMap.get(pecId);
     if (portProxy != null) {
       portProxy.onReceivePecMessage(message);
       return;
@@ -51,14 +43,12 @@ public class AndroidPecPortManager implements PecPortManager {
     port.onReceivePecMessage(message);
   }
 
-  @Override
-  public void addPecPortProxy(String pecId, PecPortProxy pecPortProxy) {
+  public void addPecPortProxy(String pecId, PECPortProxy pecPortProxy) {
     pecPortProxyMap.put(pecId, pecPortProxy);
   }
 
-  @Override
-  public PecPort getOrCreatePecPort(String pecId, String sessionId) {
-    PecPort port = pecPortMap.get(pecId);
+  public PECInnerPort getOrCreatePecPort(String pecId, String sessionId) {
+    PECInnerPort port = pecPortMap.get(pecId);
     if (port == null) {
       return createPecPort(pecId, sessionId);
     } else {
@@ -66,19 +56,18 @@ public class AndroidPecPortManager implements PecPortManager {
     }
   }
 
-  @Override
   public void removePecPort(String pecId) {
     pecPortMap.remove(pecId);
     pecPortProxyMap.remove(pecId);
   }
 
-  private PecPort createPecPort(String pecId, String sessionId) {
+  private PECInnerPort createPecPort(String pecId, String sessionId) {
     if (pecPortMap.containsKey(pecId)) {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
 
-    PecPort pecPort = new PecPort(pecId, sessionId, shellApi, pec, jsonParser);
-    pecPortMap.put(pecId, pecPort);
-    return pecPort;
+    PECInnerPort pecInnerPort = new PECInnerPort(pecId, sessionId, shellApi, pec, jsonParser);
+    pecPortMap.put(pecId, pecInnerPort);
+    return pecInnerPort;
   }
 }

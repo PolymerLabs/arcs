@@ -18,8 +18,8 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Particle;
-import arcs.api.PecPort;
-import arcs.api.PecPortManager;
+import arcs.api.PECInnerPort;
+import arcs.api.PECPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.ShellApi;
@@ -30,7 +30,7 @@ public class AndroidArcsClient {
 
   private static final String TAG = "Arcs";
 
-  private final PecPortManager pecPortManager;
+  private final PECPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final ShellApi shellApi;
   private final ServiceConnection serviceConnection;
@@ -40,7 +40,7 @@ public class AndroidArcsClient {
 
   @Inject
   AndroidArcsClient(
-      PecPortManager pecPortManager,
+      PECPortManager pecPortManager,
       PortableJsonParser jsonParser,
       ShellApi shellApi) {
     this.pecPortManager = pecPortManager;
@@ -91,11 +91,11 @@ public class AndroidArcsClient {
   }
 
   public void runArc(ArcData arcData) {
-    PecPort pecPort =
+    PECInnerPort pecInnerPort =
         pecPortManager.getOrCreatePecPort(arcData.getPecId(), arcData.getSessionId());
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getParticle() != null) {
-        pecPort.mapParticle(particleData.getParticle());
+        pecInnerPort.mapParticle(particleData.getParticle());
       }
     });
 
@@ -120,7 +120,7 @@ public class AndroidArcsClient {
           new IRemotePecCallback.Stub() {
             @Override
             public void onMessage(String message) {
-              pecPort.onReceivePecMessage(jsonParser.parse(message));
+              pecInnerPort.onReceivePecMessage(jsonParser.parse(message));
             }
           });
       } catch (RemoteException e) {

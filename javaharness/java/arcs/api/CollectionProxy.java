@@ -22,7 +22,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
   public CollectionProxy(
       String id,
       Type type,
-      PecPort port,
+      PECInnerPort port,
       String name,
       PortableJsonParser jsonParser) {
     super(id, type, port, name, jsonParser);
