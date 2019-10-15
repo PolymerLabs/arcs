@@ -36,7 +36,9 @@ export abstract class Schema2Base {
     const schemas: Dictionary<Schema> = {};
     manifest.allSchemas.forEach(schema => {
       const name = schema && schema.names && schema.names[0] || this.nameAnonymousSchema(schema);
-      schemas[name] = schema;
+      if (!(name in schemas)) {
+        schemas[name] = schema;
+      }
     });
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
