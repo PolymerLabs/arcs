@@ -524,6 +524,7 @@ export function unifiedHandleFor(opts: {
   const defaultOpts = {particleId: '', canRead: true, canWrite: true};
   opts = {...defaultOpts, ...opts};
   if (opts.proxy instanceof StorageProxyNG) {
+    assert(opts.particleId.length, 'NG Handles require a particle ID');
     return handleNGFor(
         opts.particleId,
         opts.proxy,
