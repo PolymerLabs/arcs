@@ -50,6 +50,11 @@ public class ArcsAndroid implements Arcs {
   }
 
   @Override
+  public void sendMessageToArcs(String message) {
+    bridge.sendMessageToArcs(message);
+  }
+
+  @Override
   public UiBroker getUiBroker() {
     return uiBroker;
   }

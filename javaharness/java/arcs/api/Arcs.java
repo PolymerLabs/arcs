@@ -51,6 +51,8 @@ public interface Arcs {
 
   void stopArc(ArcData arcData);
 
+  void sendMessageToArcs(String message);
+
   UiBroker getUiBroker();
 
   default void registerRenderer(String modality, UiRenderer renderer) {

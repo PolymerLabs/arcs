@@ -17,5 +17,8 @@
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
+        <service
+            android:name=".AndroidNotificationHandlerService"
+            android:exported="true" />
     </application>
 </manifest>

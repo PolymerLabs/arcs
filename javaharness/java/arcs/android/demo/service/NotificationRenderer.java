@@ -12,13 +12,19 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import arcs.android.api.Annotations;
-import arcs.android.service.ArcsService;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiRenderer;
 
 @Singleton
 public class NotificationRenderer implements UiRenderer {
+
+  public static final String MESSAGE_FIELD = "message";
+  public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
+  public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
+  public static final String PARTICLE_ID_FIELD = "particleId";
+  public static final String EVENTLET_FIELD = "eventlet";
+  public static final String UI_EVENT_MESSAGE = "uiEvent";
 
   private static final int REQUEST_CODE_TAP = 0;
   private static final int REQUEST_CODE_DISMISS = 1;
@@ -91,11 +97,10 @@ public class NotificationRenderer implements UiRenderer {
   }
 
   private Intent getNotificationIntent(String outputSlotId, String handler) {
-    Intent intent = new Intent(context, ArcsService.class);
+    Intent intent = new Intent(context, AndroidNotificationHandlerService.class);
     intent.setAction(outputSlotId);
-    intent.putExtra(ArcsService.INTENT_REFERENCE_ID_FIELD, outputSlotId);
-    intent.putExtra(
-      ArcsService.INTENT_EVENT_DATA_FIELD,
+    intent.putExtra(INTENT_REFERENCE_ID_FIELD, outputSlotId);
+    intent.putExtra(INTENT_EVENT_DATA_FIELD,
       jsonParser.stringify(
         jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
 
