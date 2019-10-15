@@ -55,7 +55,7 @@ describe('schema2base', () => {
   beforeEach(async () => await overwriteInput(''));
   afterEach( async () => await overwriteOutput(''));
 
-  it('creates names for anonymous schemas', async () => {
+  it('creates names for anonymous schemas (0 names)', async () => {
     await overwriteInput(`\
   alias schema * as MySchema
     Text value

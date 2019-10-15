@@ -120,6 +120,8 @@ export class Schema2Cpp extends Schema2Base {
       equals.push('true');
     }
 
+    const typeAliases = schema.names.length > 1 ? schema.names.slice(1).map(alias => `using ${alias} = ${name}`) : [];
+
     return `\
 
 namespace arcs {
@@ -217,6 +219,8 @@ inline std::string internal::Accessor::encode_entity(const ${name}& entity) {
   ${encode.join('\n  ')}
   return encoder.result();
 }
+
+${typeAliases.join('\n')}
 
 }  // namespace arcs
 

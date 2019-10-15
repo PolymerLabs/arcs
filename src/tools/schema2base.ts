@@ -44,16 +44,9 @@ export abstract class Schema2Base {
         if (!schema) {
           continue;
         }
-        if (schema.names.length === 0) {
-          const name = this.nameAnonymousSchema(schema);
-          if (!(name in schemas)) {
-            schemas[name] = schema;
-          }
-        }
-        for (const name of schema.names) {
-          if (!(name in schemas)) {
-            schemas[name] = schema;
-          }
+        const name = schema.names && schema.names[0] || this.nameAnonymousSchema(schema); // `${particle.name}_${connection.name}`;
+        if (!(name in schemas)) {
+          schemas[name] = schema;
         }
       }
     }

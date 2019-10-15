@@ -77,6 +77,8 @@ package arcs
       encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
     });
 
+    const typeAliases = schema.names.length > 1 ? schema.names.slice(1).map(alias => `typealias ${alias} = ${name}`) : [];
+
     return `\
 
 data class ${name}(
@@ -108,6 +110,9 @@ data class ${name}(
     return encoder.result()
   }
 }
+
+${typeAliases.join('\n')}
+
 `;
   }
 }
