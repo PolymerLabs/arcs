@@ -41,9 +41,19 @@ export abstract class Schema2Base {
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0] || this.nameAnonymousSchema(schema);
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
+        if (!schema) {
+          continue;
+        }
+        if (schema.names.length === 0) {
+          const name = this.nameAnonymousSchema(schema);
+          if (!(name in schemas)) {
+            schemas[name] = schema;
+          }
+        }
+        for (const name of schema.names) {
+          if (!(name in schemas)) {
+            schemas[name] = schema;
+          }
         }
       }
     }
