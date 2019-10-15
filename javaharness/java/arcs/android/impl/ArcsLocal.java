@@ -53,6 +53,11 @@ public class ArcsLocal implements Arcs {
   }
 
   @Override
+  public void sendMessageToArcs(String message) {
+    environment.sendMessageToArcs(message);
+  }
+
+  @Override
   public UiBroker getUiBroker() {
     return uiBroker;
   }

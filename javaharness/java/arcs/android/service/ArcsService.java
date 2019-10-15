@@ -1,6 +1,7 @@
 package arcs.android.service;
 
 import android.app.IntentService;
+import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -28,17 +29,12 @@ import arcs.api.UiBroker;
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
  * ArcsService to communicate with Arcs.
  */
-public class ArcsService extends IntentService {
-  public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
-  public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
+public class ArcsService extends Service {
 
   private static final String MESSAGE_FIELD = "message";
   private static final String STOP_ARC_MESSAGE = "stopArc";
   private static final String ARC_ID_FIELD = "arcId";
   private static final String PEC_ID_FIELD = "pecId";
-  private static final String UI_EVENT_MESSAGE = "uiEvent";
-  private static final String PARTICLE_ID_FIELD = "particleId";
-  private static final String EVENTLET_FIELD = "eventlet";
   private static final String TAG = "Arcs";
 
   private WebView arcsWebView;
@@ -50,10 +46,6 @@ public class ArcsService extends IntentService {
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
-
-  public ArcsService() {
-    super(ArcsService.class.getSimpleName());
-  }
 
   @Override
   public void onCreate() {
@@ -83,14 +75,6 @@ public class ArcsService extends IntentService {
     Log.d(TAG, "onDestroy()");
     harnessController.deInit();
     super.onDestroy();
-  }
-
-  @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
-    super.onStartCommand(intent, flags, startId);
-    Log.d(TAG, "onStartCommand()");
-
-    return START_STICKY;
   }
 
   @Override
@@ -173,21 +157,6 @@ public class ArcsService extends IntentService {
   public boolean onUnbind(Intent intent) {
     Log.d(TAG, "onUnbind()");
     return super.onUnbind(intent);
-  }
-
-  @Override
-  protected void onHandleIntent(Intent intent) {
-    // TODO(mmandlis): refactor into an Arcs API method.
-    String referenceId = intent.getStringExtra(INTENT_REFERENCE_ID_FIELD);
-    String eventlet = intent.getStringExtra(INTENT_EVENT_DATA_FIELD);
-    Log.d(TAG, "Received referenceId " + referenceId);
-    shellEnvironment.sendMessageToArcs(
-        jsonParser.stringify(
-            jsonParser
-                .emptyObject()
-                .put(MESSAGE_FIELD, UI_EVENT_MESSAGE)
-                .put(PARTICLE_ID_FIELD, referenceId)
-                .put(EVENTLET_FIELD, jsonParser.parse(eventlet))));
   }
 
   private void runWhenReady(Runnable runnable) {
