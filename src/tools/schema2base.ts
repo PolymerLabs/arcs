@@ -73,16 +73,13 @@ export abstract class Schema2Base {
 
   /** Quick-and-dirty name mangling for anonymous schemas. TODO(alxr): suggestions welcome */
   private nameAnonymousSchema(schema: Schema): string {
-    const fieldStrings = Object.values(schema.fields)
-      .map(f => Schema._typeString(f))
+    const fieldStrings = Object.entries(schema.fields)
+      .map(([name, field]) => Schema._typeString(field) + name)
+      .sort((a, b) => a.localeCompare(b))
       .map(ts => {
         return ts
-          .replace(/[()]/g, '__')       // Unions  --> __fieldOrfieldOrfield__
-          .replace('or', 'Or')
-          .replace(',', '_')            // Tuples --> field_field_filed
-          .replace('Reference<', 'Ref') // References --> RefField
-          .replace(/[{}]/g, '___')        // Inline --> ___field_field_field___
-          .replace(/[[\]]/g, '____')    // Collections --> _____field_____
+          .replace('(', '__')       // Unions  --> __fieldorfieldorfield
+          .replace(',', '_')        // Tuples --> __field_field_filed
           .replace(/[.,/#!$%^&*;:{}<>=\-`~()\s]/g, ''); // Remove punctuation (except `_`).
       });
 

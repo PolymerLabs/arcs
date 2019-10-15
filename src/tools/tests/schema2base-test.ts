@@ -15,6 +15,7 @@ import fs from 'fs';
 import {promisify} from 'util';
 
 const writeFile = promisify(fs.writeFile);
+const unlink = promisify(fs.unlink);
 
 class Schema2Mock extends Schema2Base {
   public readonly entityArgs: [string, Schema][] = [];
@@ -54,19 +55,33 @@ describe('schema2base', () => {
   beforeEach(async () => await overwriteInput(''));
   afterEach( async () => await overwriteOutput(''));
 
-  it('creates a name for anonymous schemas', async () => {
+  it('creates names for anonymous schemas', async () => {
     await overwriteInput(`\
   alias schema * as MySchema
-    Text value`);
+    Text value
+    
+  particle Foo
+    in * {Number n} input0
+    in * {Number n} input1
+    in * {Number x} input2
+    in * {(URL or Text) u} union
+    in * {(Number, Number) coordinate} tuple 
+    in Reference<* {Number n, URL u}> nested0
+    in Reference<* {Number n}> nested1
+    in [* {Text t, URL u}] collection0
+    in [* {URL u, Text t}] collection1
+    in [* {Text t}] collection2
+    `);
 
-    const opts = {'_': [inputName], 'outdir': '.', 'd': '.'};
-    const mock = new Schema2Mock(opts);
+    const mock = new Schema2Mock({'_': [inputName], 'outdir': '.'});
     await mock.call();
 
     assert.isNotEmpty(mock.entityArgs);
-    const entityArg = mock.entityArgs[0];
-    assert.containsAllKeys(entityArg[1].fields, ['value']);
-    assert.equal(entityArg[0], 'AnonText');
 
+    const names = mock.entityArgs.map(arg => arg[0]);
+    assert.equal(names.length, 8);
+    assert.includeDeepOrderedMembers(names,
+      ['AnonTextvalue', 'AnonNumbern', 'AnonNumberx', 'Anon__URLorTextu', 'Anon__Number_Numbercoordinate',
+        'AnonNumbernURLu', 'AnonTexttURLu', 'AnonTextt']);
   });
 });
