@@ -16,7 +16,7 @@ import {Handle} from './handle.js';
 import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
-import {directionToArrow, acceptedDirections} from './recipe-util.js';
+import {acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
@@ -274,8 +274,8 @@ export class HandleConnection implements Comparable<HandleConnection> {
 
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
-    result.push(this.name || '*');
-    result.push(directionToArrow(this.direction));
+    result.push(`${this.name || '*'}:`);
+    result.push(this.direction);
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);

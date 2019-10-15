@@ -69,6 +69,33 @@
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
     return {...data, location: location()} as T;
   }
+
+
+  // Temporary move of DirectionArrow type definition and conversions so allow
+  // DirectionArrow to be removed from the runtime.
+  type DirectionArrow = '<-' | '->' | '<->' | 'consume' | 'provide' | '=';
+
+  function arrowToDirection(arrow: DirectionArrow): AstNode.Direction {
+    // Use switch for totality checking.
+    switch (arrow) {
+      case '->':
+        return 'out';
+      case '<-':
+        return 'in';
+      case '<->':
+        return 'inout';
+      case 'consume':
+        return '`consume';
+      case 'provide':
+        return '`provide';
+      case '=':
+        return 'any';
+      default:
+        // Catch nulls and unsafe values from javascript.
+        throw new Error(`Bad arrow ${arrow}`);
+    }
+  }
+
 }
 
 Manifest
@@ -512,9 +539,10 @@ Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
     return dir;
   }
 
+// TODO(jopra): Remove when syntax is updated to not use arrows.
 DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, consume, provide)"
   = '<->' / '<-' / '->' / '=' / 'consume' / 'provide' {
-    const dir = text() as AstNode.DirectionArrow;
+    const dir = text() as DirectionArrow;
     if(dir === null) {
       expected('a direction arrow');
     }
@@ -797,12 +825,28 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = RecipeParticleConnectionPreSlandle / RecipeParticleConnectionUnified
+
+RecipeParticleConnectionUnified
+  = param:(lowerIdent / '*') ':' whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param,
       dir,
+      target: optional(target, target => target[1], null),
+      dependentConnections: optional(dependentConnections, extractIndented, []),
+    });
+  }
+
+// TODO(jopra): Remove after unification
+RecipeParticleConnectionPreSlandle
+  = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  {
+    return toAstNode<AstNode.RecipeParticleConnection>({
+      kind: 'handle-connection',
+      param,
+      dir: arrowToDirection(dir),
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
@@ -857,11 +901,25 @@ SlotDirection
   = 'provide' / 'consume'
 
 RecipeConnection
-  = from:ConnectionTarget whiteSpace direction:DirectionArrow whiteSpace to:ConnectionTarget eolWhiteSpace
+  = RecipeConnectionUnified / RecipeConnectionPreSlandle
+
+RecipeConnectionUnified
+  = from:ConnectionTarget ':' whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction,
+      from,
+      to,
+    });
+  }
+
+RecipeConnectionPreSlandle
+  = from:ConnectionTarget whiteSpace direction:DirectionArrow whiteSpace to:ConnectionTarget eolWhiteSpace
+  {
+    return toAstNode<AstNode.RecipeConnection>({
+      kind: 'connection',
+      direction: arrowToDirection(direction),
       from,
       to,
     });
@@ -1240,6 +1298,7 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 ReservedWord
   = keyword:(DirectionArrow
   / Direction
+  / SlotDirection
   / RecipeHandleFate
   / 'particle'
   / 'recipe'

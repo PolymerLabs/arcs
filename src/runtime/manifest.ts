@@ -27,7 +27,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {Slot} from './recipe/slot.js';
 import {HandleConnection} from './recipe/handle-connection.js';
-import {RecipeUtil, arrowToDirection, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
+import {RecipeUtil, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -1005,7 +1005,7 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        const direction = arrowToDirection(connectionItem.dir);
+        const direction = connectionItem.dir;
         if (!connectionMatchesHandleDirection(direction, connection.direction)) {
           throw new ManifestError(
               connectionItem.location,
