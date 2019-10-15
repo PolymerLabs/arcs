@@ -1,20 +1,22 @@
 package arcs.android;
 
 import arcs.api.PortableJson;
-import arcs.api.PortableJsonParser;
-import java.util.Arrays;
-import java.util.HashSet;
-import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Arrays;
+import java.util.HashSet;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 @RunWith(JUnit4.class)
 public class AndroidPortableJsonTest {
   // TODO(cromwellian): use dependendency injection to make these tests run on all platforms
   @Test
   public void testEmpty() {
-    PortableJsonParser parser = new AndroidPortableJsonParser();
+    AndroidPortableJsonParser parser = new AndroidPortableJsonParser();
     PortableJson obj = parser.emptyObject();
     PortableJson arr = parser.emptyArray();
     assertEquals(0, obj.keys().size());
@@ -23,7 +25,7 @@ public class AndroidPortableJsonTest {
 
   @Test
   public void testObject() {
-    PortableJsonParser parser = new AndroidPortableJsonParser();
+    AndroidPortableJsonParser parser = new AndroidPortableJsonParser();
     PortableJson obj = parser.emptyObject();
     String str = "string";
     int i = 123;
@@ -60,7 +62,7 @@ public class AndroidPortableJsonTest {
   @Test
   public void testArray() {
     System.err.println("Hello");
-    PortableJsonParser parser = new AndroidPortableJsonParser();
+    AndroidPortableJsonParser parser = new AndroidPortableJsonParser();
     PortableJson obj = parser.emptyArray();
     String str = "string";
     int i = 123;

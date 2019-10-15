@@ -9,7 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-class AndroidPortableJson implements PortableJson {
+public class AndroidPortableJson implements PortableJson {
 
   private Object jsonObject;
 
