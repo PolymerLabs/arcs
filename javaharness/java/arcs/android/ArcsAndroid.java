@@ -1,8 +1,8 @@
-package arcs.android.client;
+package arcs.android;
 
 import javax.inject.Inject;
 
-import arcs.android.api.IRemotePecCallback;
+import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.PecInnerPort;

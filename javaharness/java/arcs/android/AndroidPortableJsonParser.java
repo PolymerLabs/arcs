@@ -1,4 +1,4 @@
-package arcs.android.impl;
+package arcs.android;
 
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;

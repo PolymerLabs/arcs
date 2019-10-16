@@ -1,4 +1,4 @@
-package arcs.android.client;
+package arcs.android;
 
 import android.content.ServiceConnection;
 
