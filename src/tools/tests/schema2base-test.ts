@@ -11,10 +11,8 @@
 import {assert} from '../../platform/chai-web.js';
 import {Schema2Base} from '../schema2base.js';
 import {Schema} from '../../runtime/schema.js';
-import fs from 'fs';
-import {promisify} from 'util';
+import {Manifest} from '../../runtime/manifest.js';
 
-const writeFile = promisify(fs.writeFile);
 
 class Schema2Mock extends Schema2Base {
   public readonly entityArgs: [string, Schema][] = [];
@@ -43,19 +41,8 @@ class Schema2Mock extends Schema2Base {
 }
 
 describe('schema2base', () => {
-  const inputName = './testInput.arcs';
-  const outputName = './schema-mock.tmp';
-
-  const overwriteFile = (filePath: string) => async (contents: string) => writeFile(filePath, contents);
-
-  const overwriteInput = overwriteFile(inputName);
-  const overwriteOutput = overwriteFile(outputName);
-
-  beforeEach(async () => await overwriteInput(''));
-  afterEach( async () => await overwriteOutput(''));
-
   it('creates names for anonymous schemas (0 names)', async () => {
-    await overwriteInput(`\
+    const manifest = await Manifest.parse(`\
   particle Foo
     in * {Number n} input0
     in * {Number n} input1
@@ -69,8 +56,8 @@ describe('schema2base', () => {
     in [* {Text t}] collection2
     `);
 
-    const mock = new Schema2Mock({'_': [inputName], 'outdir': '.'});
-    await mock.call();
+    const mock = new Schema2Mock({'_': []});
+    const _ = [...mock.processManifest(manifest)];
 
     assert.isNotEmpty(mock.entityArgs);
 
