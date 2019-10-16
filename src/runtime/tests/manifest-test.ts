@@ -23,10 +23,10 @@ import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} f
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 import {Flags} from '../flags.js';
 import {Store} from '../storageNG/store.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 import {StorageStub} from '../storage-stub.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
+import {RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -2965,7 +2965,7 @@ resource NobIdJson
 
     assert.instanceOf(store, Store);
     assert.strictEqual(store.name, 'NobId');
-    assert.instanceOf(store.storageKey, VolatileStorageKey);
+    assert.instanceOf(store.storageKey, RamDiskStorageKey);
     const schema = store.type.getEntitySchema();
     assert.sameMembers(schema.names, ['NobIdStore']);
   });
