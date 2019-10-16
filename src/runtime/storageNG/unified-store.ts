@@ -107,7 +107,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     if (info.originalId) {
       handleStr.push(`!!${info.originalId}`);
     }
-    if (this.version !== undefined) {
+    if (this.version != null) {
       handleStr.push(`@${this.version}`);
     }
     if (opts.handleTags && opts.handleTags.length) {
