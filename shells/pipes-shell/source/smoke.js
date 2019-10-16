@@ -58,6 +58,11 @@ export const smokeTest = async (paths, storage, manifest, bus) => {
     send({message: 'parse', path: `https://$particles/canonical.arcs`});
   };
   //
+  const wasmTest = () => {
+    // spawn an arc using WASM particle
+    send({message: 'spawn', modality: 'dom', recipe: 'HelloWorldRecipe'});
+  };
+  //
   enqueue([
     // waste 500ms so configuration can complete
     // TODO(sjmiles): instead, wait for ready message
@@ -65,6 +70,7 @@ export const smokeTest = async (paths, storage, manifest, bus) => {
     ingestionTest,
     autofillTest,
     notificationTest,
-    parseTest
+    parseTest,
+    wasmTest
   ], 500);
 };

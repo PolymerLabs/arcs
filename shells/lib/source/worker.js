@@ -9,14 +9,17 @@
  */
 
 import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
-import {PlatformLoader} from '../../../build/platform/loader-web.js';
+import {Loader} from '../../../build/runtime/loader.js';
 import {Id, IdGenerator} from '../../../build/runtime/id.js';
 
 self.onmessage = function(e) {
+  // immediately close message channel, this is one-time use
   self.onmessage = null;
-  const {id, base, logLevel} = e.data;
   // TODO(sjmiles): happens too late for modules that immediately construct loggers, but
   // soon enough for `log` injected into Particle.
   global.logLevel = logLevel;
-  new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new PlatformLoader(base));
+  // snarf out scope data
+  const {id, base, logLevel} = e.data;
+  // construct execution context with scope data
+  new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new Loader(base));
 };

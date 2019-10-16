@@ -8,13 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PlatformLoaderBase} from './loader-platform.js';
-import {logsFactory} from './logs-factory.js';
+import {Loader as LoaderBase} from '../runtime/loader-base.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
+import {logsFactory} from './logs-factory.js';
 
-const {log, warn, error} = logsFactory('loader-web', 'green');
+const {warn} = logsFactory('loader-web', 'green');
 
-export class PlatformLoader extends PlatformLoaderBase {
+export class Loader extends LoaderBase {
+  clone(): Loader {
+    return new Loader(this._urlMap);
+  }
   flushCaches(): void {
     // punt object urls?
   }
@@ -29,6 +32,12 @@ export class PlatformLoader extends PlatformLoaderBase {
     const code = `${raw}\n//# sourceURL=${path}`;
     return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
   }
+  // TODO(sjmiles): integrate this into loadResource?
+  async loadWasmBinary(spec): Promise<ArrayBuffer> {
+    this.mapParticleUrl(spec.implFile);
+    const target = spec.implBlobUrl || this.resolve(spec.implFile);
+    return fetch(target).then(res => res.arrayBuffer());
+  }
   // Below here invoked from inside Worker
   async loadParticleClass(spec: ParticleSpec) {
     const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
@@ -39,7 +48,7 @@ export class PlatformLoader extends PlatformLoaderBase {
     }
     return clazz;
   }
-  async requireParticle(unresolvedPath: string, blobUrl?) {
+  async requireParticle(unresolvedPath: string, blobUrl: string) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(unresolvedPath);
@@ -61,7 +70,7 @@ export class PlatformLoader extends PlatformLoaderBase {
     // of self.defineParticle because we share this
     // scope with other particles
     // TODO fix usage of quoted property
-    self['defineParticle'] = (particleWrapper) => {
+    self['defineParticle'] = particleWrapper => {
       if (result) {
         warn('multiple particles not supported, last particle wins');
       }

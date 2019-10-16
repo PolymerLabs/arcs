@@ -7,10 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlatformLoader} from '../../build/platform/loader-web.js';
+import {Loader} from '../../build/runtime/loader.js';
 import {Utils} from '../lib/utils.js';
 
-export class DevShellLoader extends PlatformLoader {
+export class DevShellLoader extends Loader {
   constructor(fileMap) {
     super(Utils.createPathMap('../..'));
     super.flushCaches();
