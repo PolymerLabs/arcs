@@ -5,7 +5,7 @@ import javax.inject.Inject;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.Arcs;
-import arcs.api.PECInnerPort;
+import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBroker;
@@ -33,7 +33,7 @@ public class ArcsAndroid implements Arcs {
 
   @Override
   public void runArc(ArcData arcData) {
-    PECInnerPort pecInnerPort =
+    PecInnerPort pecInnerPort =
         pecPortManager.getOrCreateInnerPort(arcData.getPecId(), arcData.getSessionId());
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getParticle() != null) {
@@ -59,7 +59,7 @@ public class ArcsAndroid implements Arcs {
     return uiBroker;
   }
 
-  private IRemotePecCallback createPecCallback(PECInnerPort pecInnerPort) {
+  private IRemotePecCallback createPecCallback(PecInnerPort pecInnerPort) {
     return new IRemotePecCallback.Stub() {
       @Override
       public void onMessage(String message) {

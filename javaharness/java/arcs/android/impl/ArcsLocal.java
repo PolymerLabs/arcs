@@ -1,11 +1,11 @@
 package arcs.android.impl;
 
+import arcs.api.PecInnerPort;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
-import arcs.api.PECInnerPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
@@ -34,7 +34,7 @@ public class ArcsLocal implements Arcs {
 
   @Override
   public void runArc(ArcData arcData) {
-    PECInnerPort pecInnerPort = null;
+    PecInnerPort pecInnerPort = null;
     for (ArcData.ParticleData particleData : arcData.getParticleList()) {
       if (particleData.getParticle() != null) {
         if (pecInnerPort == null) {

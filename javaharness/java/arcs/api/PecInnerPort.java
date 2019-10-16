@@ -2,7 +2,7 @@ package arcs.api;
 
 import java.util.function.Consumer;
 
-public interface PECInnerPort extends PecMessageReceiver {
+public interface PecInnerPort extends PecMessageReceiver {
 
   String getId();
 

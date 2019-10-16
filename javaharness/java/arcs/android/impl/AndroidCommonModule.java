@@ -2,8 +2,8 @@ package arcs.android.impl;
 
 import arcs.api.HandleFactory;
 import arcs.api.HandleFactoryImpl;
-import arcs.api.PECInnerPortFactory;
-import arcs.api.PECInnerPortFactoryImpl;
+import arcs.api.PecInnerPortFactory;
+import arcs.api.PecInnerPortFactoryImpl;
 import arcs.api.ParticleExecutionContext;
 import arcs.api.ParticleExecutionContextImpl;
 import arcs.api.ParticleLoader;
@@ -20,7 +20,7 @@ public abstract class AndroidCommonModule {
   abstract PortableJsonParser providesPortableJsonParser(AndroidPortableJsonParser impl);
 
   @Binds
-  public abstract PECInnerPortFactory providesPECInnerPortFactory(PECInnerPortFactoryImpl impl);
+  public abstract PecInnerPortFactory providesPECInnerPortFactory(PecInnerPortFactoryImpl impl);
 
   // TODO(csilvestrini): The dependencies below shouldn't be in the common module, they should only
   // be in the main Harness module.
