@@ -48,10 +48,10 @@ export abstract class Schema2Base {
 
         schema.names.forEach(n => {
           const alias = `${n}${name}`;
-          if (aliases[n] !== undefined) {
-            aliases[n].add(alias);
+          if (aliases[name] !== undefined) {
+            aliases[name].add(alias);
           } else {
-            aliases[n] = new Set([alias]);
+            aliases[name] = new Set([alias]);
           }
         });
 

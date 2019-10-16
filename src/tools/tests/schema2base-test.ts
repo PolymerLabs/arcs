@@ -12,6 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Schema2Base} from '../schema2base.js';
 import {Schema} from '../../runtime/schema.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {Dictionary} from '../../runtime/hot.js';
 
 
 class Schema2Mock extends Schema2Base {
@@ -38,6 +39,10 @@ class Schema2Mock extends Schema2Base {
     return baseName;
   }
 
+  addAliases(aliases: Dictionary<Set<string>>): string {
+    return '';
+  }
+
 }
 
 describe('schema2base', () => {
@@ -57,11 +62,9 @@ describe('schema2base', () => {
     `);
 
     const mock = new Schema2Mock({'_': []});
-    const _ = [...mock.processManifest(manifest)];
+    const [schemas, _] = mock.processManifest(manifest);
 
-    assert.isNotEmpty(mock.entityArgs);
-
-    const names = mock.entityArgs.map(arg => arg[0]);
+    const names = Object.keys(schemas);
     assert.equal(names.length, 10);
     assert.includeDeepOrderedMembers(names,
       ['Foo_input0', 'Foo_input1', 'Foo_input2', 'Foo_union', 'Foo_tuple', 'Foo_nested0', 'Foo_nested1',
