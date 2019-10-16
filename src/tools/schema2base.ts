@@ -73,6 +73,25 @@ export abstract class Schema2Base {
     return inlineSchemas;
   }
 
+  /** Convert manifest into entities */
+  public* processManifest(manifest: Manifest): Iterable<string> {
+
+    const schemas = this.collectSchemas(manifest);
+
+    if (Object.keys(schemas).length === 0) {
+      console.warn(`No schemas found in manifest`);
+      return;
+    }
+
+    const inlineSchemas = this.collectInlineSchemas(schemas);
+
+    for (const dict of [inlineSchemas, schemas]) {
+      for (const [name, schema] of Object.entries(dict)) {
+        yield this.entityClass(name, schema).replace(/ +\n/g, '\n');
+      }
+    }
+  }
+
   private async processFile(src: string) {
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
@@ -83,21 +102,12 @@ export abstract class Schema2Base {
 
     const manifest = await Utils.parse(`import '${src}'`);
 
-    const schemas = this.collectSchemas(manifest);
-
-    if (Object.keys(schemas).length === 0) {
-      console.warn(`No schemas found in '${src}'`);
-      return;
-    }
-
-    const inlineSchemas = this.collectInlineSchemas(schemas);
+    const generated = this.processManifest(manifest);
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const dict of [inlineSchemas, schemas]) {
-      for (const [name, schema] of Object.entries(dict)) {
-        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
-      }
+    for (const generation of generated) {
+        fs.writeSync(outFile, generation);
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
