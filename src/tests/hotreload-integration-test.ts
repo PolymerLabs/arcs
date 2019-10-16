@@ -226,7 +226,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
         use as personOut
         ReloadHandleTest
           personIn <- personIn
-          personOut -> personOut`, {loader, fileName: process.cwd() + '/input.arcs'});
+          personOut -> personOut`, {loader, fileName: './input.arcs'});
 
     const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
     const personType = context.findTypeByName('Person');
