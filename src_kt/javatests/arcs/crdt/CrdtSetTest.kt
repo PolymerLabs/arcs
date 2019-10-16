@@ -19,8 +19,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-private data class Reference(override val id: ReferenceId) : Referencable
-
 /** Tests for [CrdtSet]. */
 @RunWith(JUnit4::class)
 class CrdtSetTest {
@@ -486,25 +484,27 @@ class CrdtSetTest {
 
     assertThat(ff.simplify()).isEqualTo(listOf(ff))
   }
+
+  private data class Reference(override val id: ReferenceId) : Referencable
+
+  /** Pseudo-constructor for [CrdtSet.Operation.Add]. */
+  private fun Add(actor: Actor, versions: VersionMap, id: ReferenceId) =
+    CrdtSet.Operation.Add(versions, actor, Reference(id))
+
+  /** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
+  private fun Remove(actor: Actor, versions: VersionMap, id: ReferenceId) =
+    CrdtSet.Operation.Remove(versions, actor, Reference(id))
+
+  private fun CrdtSet<Reference>.add(
+    actor: Actor,
+    versions: VersionMap,
+    id: ReferenceId
+  ) = Add(actor, versions, id).also { applyOperation(it) }
+
+  private fun CrdtSet<Reference>.remove(
+    actor: Actor,
+    versions: VersionMap,
+    id: ReferenceId
+  ) = Remove(actor, versions, id).also { applyOperation(it) }
 }
-
-/** Pseudo-constructor for [CrdtSet.Operation.Add]. */
-private fun Add(actor: Actor, versions: VersionMap, id: ReferenceId) =
-  CrdtSet.Operation.Add(versions, actor, Reference(id))
-
-/** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
-private fun Remove(actor: Actor, versions: VersionMap, id: ReferenceId) =
-  CrdtSet.Operation.Remove(versions, actor, Reference(id))
-
-private fun CrdtSet<Reference>.add(
-  actor: Actor,
-  versions: VersionMap,
-  id: ReferenceId
-) = Add(actor, versions, id).also { applyOperation(it) }
-
-private fun CrdtSet<Reference>.remove(
-  actor: Actor,
-  versions: VersionMap,
-  id: ReferenceId
-) = Remove(actor, versions, id).also { applyOperation(it) }
 

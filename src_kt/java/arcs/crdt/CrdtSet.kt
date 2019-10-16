@@ -17,13 +17,21 @@ import arcs.crdt.internal.ReferenceId
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
-class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>> {
+class CrdtSet<T : Referencable>(
   private var _data: Data<T> = Data()
+) : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>> {
   override val data: Data<T>
-    get() = _data.copy(versionMap = VersionMap(_data.versionMap), values = HashMap(_data.values))
+    get() = Data(versionMap = VersionMap(_data.versionMap), values = HashMap(_data.values))
 
   override val consumerView: Set<T>
     get() = HashSet<T>().apply { addAll(_data.values.values.map { it.value }) }
+
+  /**
+   * The original value (not a copy, as with [data]) of the backing data. Should only be used by
+   * other [CrdtModel] implementations which are backed by a [CrdtSet].
+   */
+  internal val originalData: Data<T>
+    get() = _data
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
     val newClock = _data.versionMap mergeWith other.versionMap
@@ -78,13 +86,14 @@ class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T
 
   override fun applyOperation(op: Operation<T>): Boolean = op.applyTo(_data)
 
+  fun canApplyOperation(op: Operation<T>): Boolean = op.applyTo(_data, isDryRun = true)
+
   override fun updateData(newData: Data<T>) {
-    _data = newData
+    _data = Data(newData.versionMap, newData.values.toMutableMap())
   }
 
   /** Representation of the data managed by [CrdtSet]. */
   data class Data<T : Referencable>(
-    /** Current version clock for the [Data]. */
     override var versionMap: VersionMap = VersionMap(),
     /** Map of values by their [ReferenceId]s. */
     val values: MutableMap<ReferenceId, DataValue<T>> = mutableMapOf()
@@ -101,7 +110,7 @@ class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T
   /** Operations which can be performed on a [CrdtSet]. */
   sealed class Operation<T : Referencable> : CrdtOperation {
     /** Performs the operation on the specified [Data] instance. */
-    internal abstract fun applyTo(data: Data<T>): Boolean
+    internal abstract fun applyTo(data: Data<T>, isDryRun: Boolean = false): Boolean
 
     /**
      * Represents an addition of a new item into a [CrdtSet] and returns whether or not the
@@ -112,9 +121,12 @@ class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T
       val actor: Actor,
       val added: T
     ) : Operation<T>() {
-      override fun applyTo(data: Data<T>): Boolean {
+      override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
         // Only accept an add if it is immediately consecutive to the clock for that actor.
         if (clock[actor] != data.versionMap[actor] + 1) return false
+
+        // No need to edit actual data during a dry run.
+        if (isDryRun) return true
 
         data.versionMap[actor] = clock[actor]
         val previousVersion = data.values[added.id]?.versionMap ?: VersionMap()
@@ -129,7 +141,7 @@ class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T
       val actor: Actor,
       val removed: T
     ) : Operation<T>() {
-      override fun applyTo(data: Data<T>): Boolean {
+      override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
         // Can't remove an item that doesn't exist.
         val existingDatum = data.values[removed.id] ?: return false
 
@@ -139,6 +151,9 @@ class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T
         // Can't remove the item unless the clock value dominates that of the item already in the
         // set.
         if (clock isDominatedBy existingDatum.versionMap) return false
+
+        // No need to edit actual data during a dry run.
+        if (isDryRun) return true
 
         data.versionMap[actor] = clock[actor]
         data.values.remove(removed.id)
@@ -153,13 +168,16 @@ class CrdtSet<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T
       val added: MutableList<DataValue<T>> = mutableListOf(),
       val removed: MutableList<T> = mutableListOf()
     ) : Operation<T>() {
-      override fun applyTo(data: Data<T>): Boolean {
+      override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
         // Can't fast-forward when current data's clock is behind oldClock.
         if (data.versionMap isDominatedBy oldClock) return false
 
         // If the current data already knows about everything in the fast-forward op, we don't have
         // to do anything.
         if (data.versionMap dominates newClock) return true
+
+        // No need to edit actual data during a dry run.
+        if (isDryRun) return true
 
         added.forEach { (addedClock: VersionMap, addedValue: T) ->
           val existingValue = data.values[addedValue.id]
