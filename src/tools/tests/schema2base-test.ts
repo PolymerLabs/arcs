@@ -15,7 +15,6 @@ import fs from 'fs';
 import {promisify} from 'util';
 
 const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
 
 class Schema2Mock extends Schema2Base {
   public readonly entityArgs: [string, Schema][] = [];
