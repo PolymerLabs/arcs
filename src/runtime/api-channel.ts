@@ -27,7 +27,7 @@ import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ActiveStore, ProxyCallback, ProxyMessage} from './storageNG/store.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
@@ -514,8 +514,8 @@ export abstract class PECOuterPort extends APIPort {
   abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
   abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
 
-  abstract onRegister(handle: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
-  abstract onProxyMessage(handle: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
+  abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
