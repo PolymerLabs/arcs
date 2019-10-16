@@ -8,7 +8,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 # the emsdk.BUILD file might need updating too (also, the bundled version of
 # node might change too).
 _emsdk_commit_hash = "efc64876db1473312587a3f346be000a733bc16d"
-_emscripten_version = "1.38.42"
+_emscripten_version = "1.38.43"
 
 def emsdk_repo():
     """Clones the emsdk repo, and "installs" an Emscripten toolchain.
