@@ -80,6 +80,7 @@ Follow the steps to inspect and debug Arcs:
 
 ## Properties
 Android properties are used to change and tweak Arcs settings at run-time.
+
 | Property | Description | Default |
 | -------- | ----------- | ------- |
 | debug.arcs.runtime.log | Change logging level of the JS Arcs runtime | 2 (the most verbose) |
