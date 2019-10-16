@@ -1,4 +1,4 @@
-package arcs.android.demo.service;
+package arcs.android.demo;
 
 import android.content.Context;
 import android.service.autofill.Dataset;

@@ -1,4 +1,4 @@
-package arcs.android.demo.ui;
+package arcs.android.demo;
 
 import android.content.Context;
 
@@ -6,21 +6,20 @@ import javax.inject.Singleton;
 
 import arcs.android.api.Annotations.AppContext;
 import arcs.android.client.AndroidClientModule;
-import arcs.android.demo.service.AndroidDemoServiceModule;
 import dagger.BindsInstance;
 import dagger.Component;
 
 @Singleton
 @Component(modules = {AndroidClientModule.class, AndroidDemoServiceModule.class})
-public interface AutofillDemoActivityComponent {
+public interface NotificationDemoActivityComponent {
 
-  void inject(AutofillDemoActivity autofillDemoActivity);
+  void inject(NotificationDemoActivity activity);
 
   @Component.Builder
   interface Builder {
     @BindsInstance
-    AutofillDemoActivityComponent.Builder appContext(@AppContext Context appContext);
+    NotificationDemoActivityComponent.Builder appContext(@AppContext Context appContext);
 
-    AutofillDemoActivityComponent build();
+    NotificationDemoActivityComponent build();
   }
 }

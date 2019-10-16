@@ -1,4 +1,4 @@
-package arcs.android.demo.service;
+package arcs.android.demo;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;

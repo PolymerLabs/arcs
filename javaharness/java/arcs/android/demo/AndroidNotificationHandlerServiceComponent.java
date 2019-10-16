@@ -1,25 +1,23 @@
-package arcs.android.demo.service;
+package arcs.android.demo;
 
 import android.content.Context;
-
-import javax.inject.Singleton;
-
 import arcs.android.api.Annotations.AppContext;
 import arcs.android.client.AndroidClientModule;
 import dagger.BindsInstance;
 import dagger.Component;
+import javax.inject.Singleton;
 
 @Singleton
 @Component(modules = {AndroidClientModule.class, AndroidDemoServiceModule.class})
-public interface ArcsAutofillServiceComponent {
+public interface AndroidNotificationHandlerServiceComponent {
 
-  void inject(ArcsAutofillService arcsAutofillService);
+  void inject(AndroidNotificationHandlerService service);
 
   @Component.Builder
   interface Builder {
     @BindsInstance
-    ArcsAutofillServiceComponent.Builder appContext(@AppContext Context appContext);
+    AndroidNotificationHandlerServiceComponent.Builder appContext(@AppContext Context appContext);
 
-    ArcsAutofillServiceComponent build();
+    AndroidNotificationHandlerServiceComponent build();
   }
 }
