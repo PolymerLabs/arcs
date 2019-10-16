@@ -1,12 +1,11 @@
-package arcs.android.service;
+package arcs.android;
 
 import android.content.Context;
 import android.webkit.WebView;
 
 import javax.inject.Singleton;
 
-import arcs.android.api.Annotations.AppContext;
-import arcs.android.impl.AndroidHarnessModule;
+import arcs.android.Annotations.AppContext;
 import arcs.api.ParticlesModule;
 import arcs.api.RenderersModule;
 import dagger.BindsInstance;

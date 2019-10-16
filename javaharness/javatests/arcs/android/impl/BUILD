@@ -7,7 +7,7 @@ java_test(
     size = "small",
     test_class = "arcs.android.impl.AllTests",
     deps = [
-        "//javaharness/java/arcs/android/impl:impl",
+        "//javaharness/java/arcs/android:impl",
         "@junit//jar",
         "//javaharness/java/arcs/api:api-android",
     ],

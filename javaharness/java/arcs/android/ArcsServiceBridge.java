@@ -1,4 +1,4 @@
-package arcs.android.client;
+package arcs.android;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
@@ -14,9 +14,9 @@ import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
-import arcs.android.api.IArcsService;
-import arcs.android.api.IRemoteOutputCallback;
-import arcs.android.api.IRemotePecCallback;
+import arcs.android.IArcsService;
+import arcs.android.IRemoteOutputCallback;
+import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.ArcsEnvironment;
 

@@ -1,4 +1,4 @@
-package arcs.android.api;
+package arcs.android;
 
 public class Annotations {
 

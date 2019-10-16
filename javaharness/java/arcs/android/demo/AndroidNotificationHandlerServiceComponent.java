@@ -1,8 +1,8 @@
 package arcs.android.demo;
 
 import android.content.Context;
-import arcs.android.api.Annotations.AppContext;
-import arcs.android.client.AndroidClientModule;
+import arcs.android.Annotations.AppContext;
+import arcs.android.AndroidClientModule;
 import dagger.BindsInstance;
 import dagger.Component;
 import javax.inject.Singleton;

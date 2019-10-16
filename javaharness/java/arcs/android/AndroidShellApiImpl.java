@@ -1,4 +1,4 @@
-package arcs.android.impl;
+package arcs.android;
 
 import android.os.Handler;
 import android.os.Looper;

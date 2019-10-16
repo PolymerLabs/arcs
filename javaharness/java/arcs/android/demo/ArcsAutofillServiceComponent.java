@@ -4,8 +4,8 @@ import android.content.Context;
 
 import javax.inject.Singleton;
 
-import arcs.android.api.Annotations.AppContext;
-import arcs.android.client.AndroidClientModule;
+import arcs.android.Annotations.AppContext;
+import arcs.android.AndroidClientModule;
 import dagger.BindsInstance;
 import dagger.Component;
 

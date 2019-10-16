@@ -1,11 +1,10 @@
-package arcs.android.client;
+package arcs.android;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.inject.Singleton;
 
-import arcs.android.impl.AndroidCommonModule;
 import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
 import arcs.api.ParticleFactory;

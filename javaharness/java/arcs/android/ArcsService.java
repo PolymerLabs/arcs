@@ -1,4 +1,4 @@
-package arcs.android.service;
+package arcs.android;
 
 import android.app.Service;
 import android.content.Intent;
@@ -13,9 +13,9 @@ import arcs.api.RemotePecPort;
 import java.util.List;
 import javax.inject.Inject;
 
-import arcs.android.api.IArcsService;
-import arcs.android.api.IRemoteOutputCallback;
-import arcs.android.api.IRemotePecCallback;
+import arcs.android.IArcsService;
+import arcs.android.IRemoteOutputCallback;
+import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.HarnessController;

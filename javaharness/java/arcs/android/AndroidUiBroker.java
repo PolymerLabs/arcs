@@ -1,10 +1,10 @@
-package arcs.android.client;
+package arcs.android;
 
 import java.util.Map;
 
 import javax.inject.Inject;
 
-import arcs.android.api.IRemoteOutputCallback;
+import arcs.android.IRemoteOutputCallback;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiBrokerImpl;

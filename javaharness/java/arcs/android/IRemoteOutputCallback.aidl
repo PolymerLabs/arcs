@@ -1,4 +1,4 @@
-package arcs.android.api;
+package arcs.android;
 
 interface IRemoteOutputCallback {
   void onOutput(String output);

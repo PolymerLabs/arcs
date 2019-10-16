@@ -8,8 +8,11 @@ licenses(["notice"])
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
 
 android_library(
-    name = "impl",
-    srcs = glob(["**/*.java"]),
+    name = "android",
+    srcs = glob(["*.java"]),
+    resource_files = glob(["res/**"]),
+    idl_srcs = glob(["*.aidl"]),
+    idl_import_root = ".",
     assets = [
         "//shells/pipes-shell:pipes_shell_web",
     ],

@@ -11,7 +11,7 @@ import android.util.Log;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import arcs.android.api.Annotations;
+import arcs.android.Annotations;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiRenderer;

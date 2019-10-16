@@ -1,4 +1,4 @@
-package arcs.android.client;
+package arcs.android;
 
 import android.content.Context;
 import android.content.Intent;
@@ -6,8 +6,7 @@ import android.content.ServiceConnection;
 
 import javax.inject.Inject;
 
-import arcs.android.api.Annotations.AppContext;
-import arcs.android.service.ArcsService;
+import arcs.android.Annotations.AppContext;
 
 public class ArcsServiceStarterImpl implements ArcsServiceStarter {
 

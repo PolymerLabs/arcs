@@ -1,4 +1,4 @@
-package arcs.android.impl;
+package arcs.android;
 
 import android.util.Log;
 import android.webkit.JavascriptInterface;
