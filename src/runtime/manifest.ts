@@ -1009,7 +1009,7 @@ ${e.message}
         if (!connectionMatchesHandleDirection(direction, connection.direction)) {
           throw new ManifestError(
               connectionItem.location,
-              `'${connectionItem.dir}' (${direction}) not compatible with '${connection.direction}' param of '${particle.name}'`);
+              `'${direction}' not compatible with '${connection.direction}' param of '${particle.name}'`);
         } else if (connection.direction === 'any') {
           if (connectionItem.param !== '*' && particle.spec !== undefined) {
             throw new ManifestError(

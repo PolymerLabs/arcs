@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction} from '../manifest-ast-nodes.js';
+import {usingPreSlandlesSyntax, Direction, directionToArrow} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
@@ -172,6 +172,9 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     let unresolved = '';
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';
+    }
+    if (usingPreSlandlesSyntax()) {
+      return `${this.from.toString(nameMap)} ${directionToArrow(this.direction)} ${this.to.toString(nameMap)}${unresolved}`;
     }
     return `${this.from.toString(nameMap)}: ${this.direction} ${this.to.toString(nameMap)}${unresolved}`;
   }

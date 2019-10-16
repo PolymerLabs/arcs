@@ -22,6 +22,8 @@ import {assertThrowsAsync} from '../../runtime/testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
+import {withPreSlandlesSyntax} from '../../runtime/manifest-ast-nodes.js';
+
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
   if (typeof manifest === 'string') {
@@ -837,7 +839,64 @@ describe('Automatic resolution', () => {
         B`);
   });
 
+  it('SLANDLES SYNTAX coalesces recipes to resolve connections', async () => {
+    const result = await verifyResolvedPlan(`
+      schema Thing
+        Text id
+      schema Product extends Thing
+        Text name
+      schema Other
+        Number count
+      schema Location
+        Number lat
+        Number lng
+
+      particle A
+        out Product product
+      particle B
+        in Thing thing
+        out Other other
+      particle C
+        in * {Number count} something
+        in Location location
+      particle D
+        inout Location location
+
+      recipe
+        ? as product
+        A
+          product: out product
+      recipe
+        ? as other
+        B
+          other: out other
+      recipe
+        C
+      recipe
+        ? as location
+        D
+          location: inout location
+`);
+
+    assert.strictEqual(`recipe
+  create as handle0 // ~
+  create as handle1 // ~
+  create as handle2 // Location {Number lat, Number lng}
+  A as particle0
+    product: out handle0
+  B as particle1
+    other: out handle1
+    thing: in handle0
+  C as particle2
+    location: in handle2
+    something: in handle1
+  D as particle3
+    location: inout handle2`, result.toString({hideFields: false}));
+  });
+
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('coalesces recipes to resolve connections', async () => {
+    withPreSlandlesSyntax(async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
         Text id
@@ -890,6 +949,7 @@ describe('Automatic resolution', () => {
     something <- handle1
   D as particle3
     location <-> handle2`, result.toString({hideFields: false}));
+    });
   });
 
   it('uses existing handle from the arc', async () => {
@@ -914,7 +974,52 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
+  it('SLANDLES SYNTAX composes recipe rendering a list of items from a recipe', async () => {
+    let arc = null;
+    const recipes = await verifyResolvedPlans(`
+      import './src/runtime/tests/artifacts/Common/List.recipes'
+      schema Thing
+
+      particle ThingProducer
+        out [Thing] things
+
+      particle ThingRenderer
+        in Thing thing
+        consume item
+
+      recipe ProducingRecipe
+        create #items as things
+        ThingProducer`, arcRef => arc = arcRef);
+
+    assert.lengthOf(recipes, 2);
+    const composedRecipes = recipes.filter(r => r.name !== 'ProducingRecipe');
+    assert.lengthOf(composedRecipes, 1);
+
+    const recipeString = `recipe
+  create #items as handle0 // [Thing {}]
+  create #selected as handle1 // Thing {}
+  slot 'rootslotid-root' #root as slot1
+  ItemMultiplexer as particle0
+    hostedParticle: host ThingRenderer
+    list: in handle0
+    consume item as slot0
+  SelectableList as particle1
+    items: inout handle0
+    selected: inout handle1
+    consume root as slot1
+      provide action as slot2
+      provide annotation as slot3
+      provide item as slot0
+      provide postamble as slot4
+      provide preamble as slot5
+  ThingProducer as particle2
+    things: out handle0`;
+    assert.strictEqual(composedRecipes[0].toString(), recipeString);
+    assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
+  });
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('composes recipe rendering a list of items from a recipe', async () => {
+    withPreSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -956,8 +1061,46 @@ describe('Automatic resolution', () => {
     things -> handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
+    });
   });
+  it('SLANDLES SYNTAX composes recipe rendering a list of items from the current arc', async () => {
+    let arc = null;
+    const recipes = await verifyResolvedPlans(`
+        import './src/runtime/tests/artifacts/Common/List.recipes'
+        schema Thing
+
+        particle ThingRenderer
+          in Thing thing
+          consume item`,
+        async (arcRef, manifest) => {
+          arc = arcRef;
+          const thing = manifest.findSchemaByName('Thing').entityClass();
+          await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
+        });
+
+    assert.lengthOf(recipes, 1);
+    assert.strictEqual(recipes[0].toString(), `recipe SelectableUseListRecipe
+  use 'test-store' #items as handle0 // [Thing {}]
+  create #selected as handle1 // Thing {}
+  slot 'rootslotid-root' #root as slot1
+  ItemMultiplexer as particle0
+    hostedParticle: host ThingRenderer
+    list: in handle0
+    consume item as slot0
+  SelectableList as particle1
+    items: inout handle0
+    selected: inout handle1
+    consume root as slot1
+      provide action as slot2
+      provide annotation as slot3
+      provide item as slot0
+      provide postamble as slot4
+      provide preamble as slot5`);
+  });
+
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('composes recipe rendering a list of items from the current arc', async () => {
+    withPreSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -990,6 +1133,7 @@ describe('Automatic resolution', () => {
       provide item as slot0
       provide postamble as slot4
       provide preamble as slot5`);
+    });
   });
   it('coalesces resolved recipe with no UI', async () => {
     const recipes = await verifyResolvedPlans(`

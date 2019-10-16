@@ -632,6 +632,78 @@ export type eol = string;
 // TODO: convert to actual enums so that they can be iterated over.
 export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
 
+// Temporary move of DirectionArrow type definition and conversions so allow
+// DirectionArrow to be removed from the runtime.
+// TODO(jopra): Remove after syntax unification.
+export type DirectionArrow = '<-' | '->' | '<->' | 'consume' | 'provide' | '=';
+
+export function arrowToDirection(arrow: DirectionArrow): Direction {
+  // TODO(jopra): Remove after syntax unification.
+  // Use switch for totality checking.
+  switch (arrow) {
+    case '->':
+      return 'out';
+    case '<-':
+      return 'in';
+    case '<->':
+      return 'inout';
+    case 'consume':
+      return '`consume';
+    case 'provide':
+      return '`provide';
+    case '=':
+      return 'any';
+    default:
+      // Catch nulls and unsafe values from javascript.
+      throw new Error(`Bad arrow ${arrow}`);
+  }
+}
+
+export function directionToArrow(dir: Direction): string {
+  // TODO(jopra): Remove after syntax unification.
+  switch (dir) {
+    case 'in':
+      return '<-';
+    case 'out':
+      return '->';
+    case 'inout':
+      return '<->';
+    case 'host':
+      return '=';
+    case '`consume':
+      return '`consume';
+    case '`provide':
+      return '`provide';
+    case 'any':
+      return '=';
+  }
+}
+
+let usePreSlandlesSyntax = false;
+export function withPreSlandlesSyntaxSync(f) {
+  usePreSlandlesSyntax = true;
+  let res;
+  try {
+    res = f();
+  } finally {
+    usePreSlandlesSyntax = false;
+  }
+  return res;
+}
+export async function withPreSlandlesSyntax(f) {
+  usePreSlandlesSyntax = true;
+  let res;
+  try {
+    res = await f();
+  } finally {
+    usePreSlandlesSyntax = false;
+  }
+  return res;
+}
+export function usingPreSlandlesSyntax() {
+  return usePreSlandlesSyntax;
+}
+
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 

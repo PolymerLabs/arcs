@@ -70,32 +70,6 @@
     return {...data, location: location()} as T;
   }
 
-
-  // Temporary move of DirectionArrow type definition and conversions so allow
-  // DirectionArrow to be removed from the runtime.
-  type DirectionArrow = '<-' | '->' | '<->' | 'consume' | 'provide' | '=';
-
-  function arrowToDirection(arrow: DirectionArrow): AstNode.Direction {
-    // Use switch for totality checking.
-    switch (arrow) {
-      case '->':
-        return 'out';
-      case '<-':
-        return 'in';
-      case '<->':
-        return 'inout';
-      case 'consume':
-        return '`consume';
-      case 'provide':
-        return '`provide';
-      case '=':
-        return 'any';
-      default:
-        // Catch nulls and unsafe values from javascript.
-        throw new Error(`Bad arrow ${arrow}`);
-    }
-  }
-
 }
 
 Manifest
@@ -542,7 +516,7 @@ Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
 // TODO(jopra): Remove when syntax is updated to not use arrows.
 DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, consume, provide)"
   = '<->' / '<-' / '->' / '=' / 'consume' / 'provide' {
-    const dir = text() as DirectionArrow;
+    const dir = text() as AstNode.DirectionArrow;
     if(dir === null) {
       expected('a direction arrow');
     }
@@ -846,7 +820,7 @@ RecipeParticleConnectionPreSlandle
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param,
-      dir: arrowToDirection(dir),
+      dir: AstNode.arrowToDirection(dir),
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
@@ -919,7 +893,7 @@ RecipeConnectionPreSlandle
   {
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
-      direction: arrowToDirection(direction),
+      direction: AstNode.arrowToDirection(direction),
       from,
       to,
     });
