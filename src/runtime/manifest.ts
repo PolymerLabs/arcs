@@ -1353,7 +1353,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString({handleTags: this.storeTags.get(store).map(a => `#${a}`)}));
+      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
     });
 
     return results.join('\n');

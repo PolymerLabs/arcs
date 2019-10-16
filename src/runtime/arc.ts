@@ -252,7 +252,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       key = store.storageKey;
     }
     const tags: Set<string> = this.storeTags.get(store) || new Set();
-    const handleTags = [...tags].map(a => `#${a}`);
+    const handleTags = [...tags];
 
     const actualHandle = this.activeRecipe.findHandle(store.id);
     const originalId = actualHandle ? actualHandle.originalId : null;
