@@ -18,9 +18,8 @@ import arcs.android.api.IArcsService;
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.ArcData;
-import arcs.api.ArcsEnvironment;
 
-public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
+public class ArcsServiceBridge implements ServiceConnection {
 
   private final ArcsServiceStarter arcsServiceStarter;
   private IArcsService arcsService; // Access via connectToArcsService.
@@ -71,13 +70,12 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     runServiceMethod(service -> service.registerRenderer(modality, callback));
   }
 
-  @Override
   public void sendMessageToArcs(String message) {
     runServiceMethod(service -> service.sendMessageToArcs(message));
   }
 
   /**
-   * Connects to the Arcs service (if not already connected), and then runs the given service
+   * Connects to the Constants service (if not already connected), and then runs the given service
    * method.
    */
   private void runServiceMethod(ServiceCallback callback) {

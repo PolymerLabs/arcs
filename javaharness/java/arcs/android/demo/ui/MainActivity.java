@@ -14,7 +14,7 @@ import arcs.android.service.ArcsService;
  * Main class for the Bazel Android "Hello, World" app.
  */
 public class MainActivity extends Activity {
-  private static final String TAG = "Arcs";
+  private static final String TAG = "Constants";
 
   private final ServiceConnection connection =
       new ServiceConnection() {

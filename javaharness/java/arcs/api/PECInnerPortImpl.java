@@ -48,7 +48,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final Logger logger = Logger.getLogger(PECInnerPortImpl.class.getName());
 
   private final String id;
-  private final ArcsEnvironment environment;
+  private final ShellApi shellApi;
   private final ParticleExecutionContext pec;
   private final ThingMapper mapper;
   private final PortableJsonParser jsonParser;
@@ -57,11 +57,11 @@ public class PECInnerPortImpl implements PECInnerPort {
   public PECInnerPortImpl(
       String id,
       String sessionId,
-      ArcsEnvironment environment,
+      ShellApi shellApi,
       ParticleExecutionContext pec,
       PortableJsonParser jsonParser) {
     this.id = id;
-    this.environment = environment;
+    this.shellApi = shellApi;
     this.pec = pec;
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
@@ -271,6 +271,6 @@ public class PECInnerPortImpl implements PECInnerPort {
     json.put(MESSAGE_PEC_MESSAGE_KEY, MESSAGE_PEC_PEC_VALUE);
     json.put(MESSAGE_PEC_ID_FIELD, this.id);
     json.put(MESSAGE_PEC_ENTITY_KEY, message);
-    environment.sendMessageToArcs(jsonParser.stringify(json));
+    shellApi.sendMessageToArcs(jsonParser.stringify(json));
   }
 }

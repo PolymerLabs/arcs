@@ -1,6 +1,8 @@
 package arcs.android.service;
 
-import android.app.IntentService;
+import static arcs.api.Constants.RECIPE_FIELD;
+import static arcs.api.Constants.RUN_ARC_MESSAGE;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -10,6 +12,10 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import arcs.android.impl.AndroidArcsEnvironment;
+import arcs.api.Constants;
+import arcs.api.PortableJson;
+import arcs.api.ShellApi;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -17,17 +23,14 @@ import arcs.android.api.IArcsService;
 import arcs.android.api.IRemoteOutputCallback;
 import arcs.android.api.IRemotePecCallback;
 import arcs.api.ArcData;
-import arcs.api.Arcs;
-import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
 import arcs.api.RemotePecPort;
-import arcs.api.ShellApiBasedArcsEnvironment;
 import arcs.api.UiBroker;
 
 /**
- * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
- * ArcsService to communicate with Arcs.
+ * ArcsService wraps Constants runtime. Other Android activities/services are expected to connect to
+ * ArcsService to communicate with Constants.
  */
 public class ArcsService extends Service {
 
@@ -35,17 +38,21 @@ public class ArcsService extends Service {
   private static final String STOP_ARC_MESSAGE = "stopArc";
   private static final String ARC_ID_FIELD = "arcId";
   private static final String PEC_ID_FIELD = "pecId";
-  private static final String TAG = "Arcs";
+  private static final String TAG = "Constants";
 
   private WebView arcsWebView;
   private boolean arcsReady;
 
-  @Inject Arcs arcs;
-  @Inject HarnessController harnessController;
-  @Inject ShellApiBasedArcsEnvironment shellEnvironment;
-  @Inject PecPortManager pecPortManager;
-  @Inject PortableJsonParser jsonParser;
-  @Inject UiBroker uiBroker;
+  @Inject
+  AndroidArcsEnvironment environment;
+  @Inject
+  ShellApi shellApi;
+  @Inject
+  PecPortManager pecPortManager;
+  @Inject
+  PortableJsonParser jsonParser;
+  @Inject
+  UiBroker uiBroker;
 
   @Override
   public void onCreate() {
@@ -65,15 +72,15 @@ public class ArcsService extends Service {
         .build()
         .inject(this);
 
-    shellEnvironment.addReadyListener(recipes -> arcsReady = true);
+    environment.addReadyListener(recipes -> arcsReady = true);
 
-    harnessController.init();
+    environment.init(this);
   }
 
   @Override
   public void onDestroy() {
     Log.d(TAG, "onDestroy()");
-    harnessController.deInit();
+    environment.destroy();
     super.onDestroy();
   }
 
@@ -83,7 +90,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        shellEnvironment.sendMessageToArcs(message);
+        shellApi.sendMessageToArcs(message);
       }
 
       @Override
@@ -120,7 +127,8 @@ public class ArcsService extends Service {
                       .setProvidedSlotId(providedSlotIds.get(i)));
             }
 
-            arcs.runArc(arcDataBuilder.build());
+            ArcData arcData = arcDataBuilder.build();
+          shellApi.sendMessageToArcs(constructRunArcRequest(arcData));
         });
       }
 
@@ -128,7 +136,7 @@ public class ArcsService extends Service {
       public void stopArc(String arcId, String pecId) {
         runWhenReady(
             () ->
-                shellEnvironment.sendMessageToArcs(
+                shellApi.sendMessageToArcs(
                     jsonParser.stringify(
                         jsonParser
                             .emptyObject()
@@ -163,7 +171,36 @@ public class ArcsService extends Service {
     if (arcsReady) {
       runnable.run();
     } else {
-      shellEnvironment.addReadyListener(recipes -> runnable.run());
+      environment.addReadyListener(recipes -> runnable.run());
     }
+  }
+
+  private String constructRunArcRequest(ArcData arcData) {
+
+    PortableJson request = jsonParser
+        .emptyObject()
+        .put(MESSAGE_FIELD, RUN_ARC_MESSAGE)
+        .put(ARC_ID_FIELD, arcData.getArcId())
+        .put(PEC_ID_FIELD, arcData.getPecId())
+        .put(RECIPE_FIELD, arcData.getRecipe());
+    PortableJson particles = jsonParser.emptyArray();
+    arcData.getParticleList().forEach(particleData -> {
+      if (particleData.getName() != null && particleData.getId() != null) {
+        PortableJson particleJson =
+            jsonParser
+                .emptyObject()
+                .put(Constants.PARTICLE_ID_FIELD, particleData.getId())
+                .put(Constants.PARTICLE_NAME_FIELD, particleData.getName());
+        if (particleData.getProvidedSlotId() != null) {
+          particleJson.put(Constants.PROVIDED_SLOT_ID_FIELD, particleData.getProvidedSlotId());
+        }
+        particles.put(0, particleJson);
+      }
+    });
+
+    if (particles.getLength() > 0) {
+      request.put(Constants.PARTICLES_FIELD, particles);
+    }
+    return jsonParser.stringify(request);
   }
 }

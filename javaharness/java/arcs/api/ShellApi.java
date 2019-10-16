@@ -1,7 +1,22 @@
 package arcs.api;
 
-/** An API for Java to call Javascript (shell). */
+/** An API for Java to call Constants shell. */
 public interface ShellApi {
-  // Sends a message to Arcs JS shell.
-  String receive(String json);
+
+  interface Proxy {
+    void onMessage(String message);
+  }
+
+  /**
+   * Send an entity to Constants. To understand what kinds of entities are supported and in what formats,
+   * see https://github.com/PolymerLabs/arcs/blob/master/shells/web-shell/elements/pipes/
+   *
+   * @param message a message in JSON format
+   */
+  void sendMessageToArcs(String message);
+
+  /**
+   * Attach a message proxy.
+   */
+  void attachProxy(Proxy proxy);
 }

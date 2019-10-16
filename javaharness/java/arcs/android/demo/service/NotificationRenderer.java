@@ -47,7 +47,7 @@ public class NotificationRenderer implements UiRenderer {
     this.jsonParser = jsonParser;
 
     NotificationChannel channel =
-        new NotificationChannel(CHANNEL_ID, "Arcs", NotificationManager.IMPORTANCE_DEFAULT);
+        new NotificationChannel(CHANNEL_ID, "Constants", NotificationManager.IMPORTANCE_DEFAULT);
     NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
     notificationManager.createNotificationChannel(channel);
   }

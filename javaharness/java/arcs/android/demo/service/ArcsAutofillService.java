@@ -11,6 +11,7 @@ import android.service.autofill.SaveCallback;
 import android.service.autofill.SaveRequest;
 import android.widget.RemoteViews;
 
+import arcs.android.client.AndroidArcsClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,16 +19,16 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.Arcs;
 import arcs.api.UiBroker;
 
 /**
- * Demo implementation of an {@link AutofillService} for Arcs. This service retrieves Autofill
- * suggestions from Arcs, and makes them available on Android.
+ * Demo implementation of an {@link AutofillService} for Constants. This service retrieves Autofill
+ * suggestions from Constants, and makes them available on Android.
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject Arcs arcs;
+  @Inject
+  AndroidArcsClient client;
   @Inject UiBroker uiBroker;
   AutofillRenderer autofillRenderer;
 
@@ -59,14 +60,14 @@ public class ArcsAutofillService extends AutofillService {
     }
 
     AutofillParticle autofillParticle = new AutofillParticle(node.get());
-    ArcData arcData = arcs.runArc("AndroidAutofill", autofillParticle);
+    ArcData arcData = client.runArc("AndroidAutofill", autofillParticle);
 
     autofillRenderer.addCallback(
         arcData.getParticleList().get(0).getProvidedSlotId(),
         node.get().getAutofillId(),
         fillResponse -> {
           callback.onSuccess(fillResponse);
-          arcs.stopArc(arcData);
+          client.stopArc(arcData);
         });
   }
 

@@ -1,6 +1,6 @@
 package(default_visibility = [
-    "//javaharness/java/arcs/android/demo:__subpackages__",
-    "//javaharness/javatests/arcs/android/demo:__subpackages__",
+    "//javaharness/java/client/android/demo:__subpackages__",
+    "//javaharness/javatests/client/android/demo:__subpackages__",
 ])
 
 licenses(["notice"])
@@ -10,9 +10,9 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android
 android_library(
     name = "service",
     srcs = glob(["*.java"]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
-    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//javaharness/java/arcs/android/api",
         "//javaharness/java/arcs/android/client",

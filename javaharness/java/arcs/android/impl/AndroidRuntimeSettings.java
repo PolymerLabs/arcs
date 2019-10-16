@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import javax.inject.Inject;
 
-/** For Javascript-based Arcs runtime. */
+/** For Javascript-based Constants runtime. */
 public final class AndroidRuntimeSettings implements RuntimeSettings {
   // Equivalent to &log parameter
   private static final String LOG_LEVEL_PROPERTY = "debug.arcs.runtime.log";

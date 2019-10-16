@@ -40,7 +40,7 @@ public class AndroidClipboardService implements ClipboardService {
               pasted.accept(clipboard.getPrimaryClip().getItemAt(0).getText().toString());
             }
           } catch (Throwable t) {
-            Log.e("Arcs", "Error in clipboard handling", t);
+            Log.e("Constants", "Error in clipboard handling", t);
           }
         };
     clipboard.addPrimaryClipChangedListener(onPrimaryClipChangedListener);

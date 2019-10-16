@@ -10,9 +10,9 @@ import android.view.autofill.AutofillManager;
 import android.widget.Button;
 import android.widget.TextView;
 
+import arcs.api.Constants;
 import javax.inject.Inject;
 
-import arcs.api.Arcs;
 import arcs.api.PortableJsonParser;
 
 /** Autofill demo activity. Contains Autofill status info, and some example autofill fields. */
@@ -20,7 +20,8 @@ public class AutofillDemoActivity extends Activity {
 
   private static final int REQUEST_CODE_AUTOFILL_SET = 1;
   private AutofillManager autofillManager;
-  @Inject Arcs arcs;
+  @Inject
+  Constants constants;
   @Inject PortableJsonParser jsonParser;
 
   @Override
@@ -50,7 +51,7 @@ public class AutofillDemoActivity extends Activity {
     }
   }
 
-  /** Updates the status UI to indicate whether the Arcs Autofill service is enabled or not. */
+  /** Updates the status UI to indicate whether the Constants Autofill service is enabled or not. */
   private void updateSettingStatus() {
     boolean supported = autofillManager.isAutofillSupported();
     boolean enabled = supported && autofillManager.hasEnabledAutofillServices();
@@ -73,7 +74,7 @@ public class AutofillDemoActivity extends Activity {
 
   private void openAutofillSettings() {
     Intent intent = new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE);
-    intent.setData(Uri.parse("package:arcs.android.demo"));
+    intent.setData(Uri.parse("package:constants.android.demo"));
     startActivityForResult(intent, REQUEST_CODE_AUTOFILL_SET);
   }
 
@@ -86,6 +87,6 @@ public class AutofillDemoActivity extends Activity {
     CapturePerson capturePerson = new CapturePerson();
     capturePerson.setId("capture-person-particle");
     capturePerson.setJsonParser(jsonParser);
-    arcs.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
+    constants.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
   }
 }

@@ -6,16 +6,16 @@ import static arcs.android.demo.service.NotificationRenderer.INTENT_REFERENCE_ID
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
-import arcs.api.Arcs;
+import arcs.android.client.AndroidArcsClient;
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
 
 public class AndroidNotificationHandlerService extends IntentService {
 
-  private static final String TAG = "Arcs";
+  private static final String TAG = "Constants";
 
   @Inject
-  Arcs arcs;
+  AndroidArcsClient client;
 
   @Inject
   PortableJsonParser jsonParser;
@@ -45,11 +45,11 @@ public class AndroidNotificationHandlerService extends IntentService {
 
   @Override
   public void onHandleIntent(Intent intent) {
-    // TODO(mmandlis): refactor into an Arcs API method.
+    // TODO(mmandlis): refactor into an Constants API method.
     String referenceId = intent.getStringExtra(INTENT_REFERENCE_ID_FIELD);
     String eventlet = intent.getStringExtra(INTENT_EVENT_DATA_FIELD);
     Log.d(TAG, "Received referenceId " + referenceId);
-    arcs.sendMessageToArcs(
+    client.sendMessageToArcs(
         jsonParser.stringify(
             jsonParser
                 .emptyObject()

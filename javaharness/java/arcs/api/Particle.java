@@ -39,7 +39,7 @@ public interface Particle {
   void output();
 
   // Particle doesn't know its spec until it is instantiated. This is a helper method
-  // indicates to Arcs whether provided slot ID mapping needs to be created with the Renderer.
+  // indicates to Constants whether provided slot ID mapping needs to be created with the Renderer.
   default boolean providesSlot() {
     return false;
   }

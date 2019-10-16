@@ -3,14 +3,14 @@ package arcs.android.demo.ui;
 import android.app.Activity;
 import android.os.Bundle;
 
+import arcs.api.Constants;
 import javax.inject.Inject;
-
-import arcs.api.Arcs;
 
 /** Notification demo activity. */
 public class NotificationDemoActivity extends Activity {
 
-  @Inject Arcs arcs;
+  @Inject
+  Constants constants;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -27,6 +27,6 @@ public class NotificationDemoActivity extends Activity {
   }
 
   private void sendNotification() {
-    arcs.runArc("NotificationTest");
+    constants.runArc("NotificationTest");
   }
 }

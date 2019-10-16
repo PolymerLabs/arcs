@@ -37,7 +37,7 @@ class AndroidPortableJson implements PortableJson {
     try {
       return func.apply((JSONObject) jsonObject);
     } catch (JSONException e) {
-      Log.e("Arcs", "Exception, Json is " + ((JSONObject) jsonObject).toString(), e);
+      Log.e("Constants", "Exception, Json is " + ((JSONObject) jsonObject).toString(), e);
     }
     return null;
   }
@@ -46,7 +46,7 @@ class AndroidPortableJson implements PortableJson {
     try {
       return func.apply((JSONArray) jsonObject);
     } catch (JSONException e) {
-      Log.e("Arcs", "Exception, Json is " + ((JSONArray) jsonObject).toString(), e);
+      Log.e("Constants", "Exception, Json is " + ((JSONArray) jsonObject).toString(), e);
     }
     return null;
   }
