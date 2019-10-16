@@ -2,13 +2,13 @@ package arcs.api;
 
 import javax.inject.Inject;
 
-public class PECInnerPortFactoryImpl implements PECInnerPortFactory {
+public class PecInnerPortFactoryImpl implements PecInnerPortFactory {
   private final ArcsEnvironment environment;
   private final ParticleExecutionContext pec;
   private final PortableJsonParser jsonParser;
 
   @Inject
-  public PECInnerPortFactoryImpl(
+  public PecInnerPortFactoryImpl(
       ArcsEnvironment environment,
       ParticleExecutionContext pec,
       PortableJsonParser jsonParser) {
@@ -18,7 +18,7 @@ public class PECInnerPortFactoryImpl implements PECInnerPortFactory {
   }
 
   @Override
-  public PECInnerPort createPECInnerPort(String id, String sessionId) {
-    return new PECInnerPortImpl(id, sessionId, environment, pec, jsonParser);
+  public PecInnerPort createPECInnerPort(String id, String sessionId) {
+    return new PecInnerPortImpl(id, sessionId, environment, pec, jsonParser);
   }
 }

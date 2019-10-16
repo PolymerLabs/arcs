@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 /**
  * A proxy PEC port implementation. It receives PEC messages and forwards them to a real
- * PECInnerPort implementation that lives elsewhere (e.g. in another Android service).
+ * PecInnerPort implementation that lives elsewhere (e.g. in another Android service).
  */
 public class RemotePecPort implements PecMessageReceiver {
 

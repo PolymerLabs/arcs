@@ -9,10 +9,10 @@ import javax.inject.Singleton;
 public class PecPortManager {
 
   private final Map<String, PecMessageReceiver> ports = new HashMap<>();
-  private final PECInnerPortFactory portFactory;
+  private final PecInnerPortFactory portFactory;
 
   @Inject
-  PecPortManager(PECInnerPortFactory portFactory) {
+  PecPortManager(PecInnerPortFactory portFactory) {
     this.portFactory = portFactory;
   }
 
@@ -30,12 +30,12 @@ public class PecPortManager {
     ports.put(pecId, remotePecPort);
   }
 
-  public PECInnerPort getOrCreateInnerPort(String pecId, String sessionId) {
+  public PecInnerPort getOrCreateInnerPort(String pecId, String sessionId) {
     PecMessageReceiver port = ports.get(pecId);
     if (port == null) {
       return createInnerPecPort(pecId, sessionId);
-    } else if (port instanceof PECInnerPort) {
-      return (PECInnerPort) port;
+    } else if (port instanceof PecInnerPort) {
+      return (PecInnerPort) port;
     } else {
       throw new IllegalArgumentException("PEC with ID %s is not an inner port: " + pecId);
     }
@@ -45,11 +45,11 @@ public class PecPortManager {
     ports.remove(pecId);
   }
 
-  private PECInnerPort createInnerPecPort(String pecId, String sessionId) {
+  private PecInnerPort createInnerPecPort(String pecId, String sessionId) {
     if (ports.containsKey(pecId)) {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
-    PECInnerPort pecInnerPort = portFactory.createPECInnerPort(pecId, sessionId);
+    PecInnerPort pecInnerPort = portFactory.createPECInnerPort(pecId, sessionId);
     ports.put(pecId, pecInnerPort);
     return pecInnerPort;
   }

@@ -1,6 +1,5 @@
 package arcs.android.service;
 
-import android.app.IntentService;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -10,6 +9,7 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import arcs.api.RemotePecPort;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -21,7 +21,6 @@ import arcs.api.Arcs;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
-import arcs.api.RemotePecPort;
 import arcs.api.ShellApiBasedArcsEnvironment;
 import arcs.api.UiBroker;
 
@@ -43,7 +42,8 @@ public class ArcsService extends Service {
   @Inject Arcs arcs;
   @Inject HarnessController harnessController;
   @Inject ShellApiBasedArcsEnvironment shellEnvironment;
-  @Inject PecPortManager pecPortManager;
+  @Inject
+  PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
 

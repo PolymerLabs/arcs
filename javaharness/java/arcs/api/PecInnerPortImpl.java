@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class PECInnerPortImpl implements PECInnerPort {
+public class PecInnerPortImpl implements PecInnerPort {
   private static final String MESSAGE_TYPE_FIELD = "messageType";
   private static final String MESSAGE_BODY_FIELD = "messageBody";
   private static final String MESSAGE_PEC_ID_FIELD = "id";
@@ -45,7 +45,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
   private static final String HANDLE_REMOVE_MSG = "HandleRemove";
 
-  private static final Logger logger = Logger.getLogger(PECInnerPortImpl.class.getName());
+  private static final Logger logger = Logger.getLogger(PecInnerPortImpl.class.getName());
 
   private final String id;
   private final ArcsEnvironment environment;
@@ -54,7 +54,7 @@ public class PECInnerPortImpl implements PECInnerPort {
   private final PortableJsonParser jsonParser;
   private final IdGenerator idGenerator;
 
-  public PECInnerPortImpl(
+  public PecInnerPortImpl(
       String id,
       String sessionId,
       ArcsEnvironment environment,
