@@ -6,6 +6,7 @@ namespace arcs {
 namespace internal {
 extern "C" {
 
+
 // --- Wasm-to-JS API ---
 
 EM_JS(const char*, singletonSet, (Particle* p, Handle* h, const char* encoded), {})
