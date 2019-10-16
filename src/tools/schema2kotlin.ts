@@ -9,6 +9,7 @@
  */
 import {Schema2Base} from './schema2base.js';
 import {Schema} from '../runtime/schema.js';
+import {Dictionary} from '../runtime/hot.js';
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
@@ -77,8 +78,6 @@ package arcs
       encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
     });
 
-    const typeAliases = schema.names.filter(n => n !== name).map(alias => `typealias ${alias} = ${name}`);
-
     return `\
 
 data class ${name}(
@@ -110,9 +109,15 @@ data class ${name}(
     return encoder.result()
   }
 }
-
-${typeAliases.join('\n')}
-
 `;
+  }
+
+
+  addAliases(aliases: Dictionary<Set<string>>): string {
+    const lines: string[] = Object.entries(aliases)
+      .map(([rhs, ids]): string[] => [...ids].map((id) => `typealias ${id} = ${rhs}`))
+      .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
+
+    return lines.join('\n');
   }
 }

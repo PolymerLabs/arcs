@@ -9,6 +9,7 @@
  */
 import {Schema2Base} from './schema2base.js';
 import {Schema} from '../runtime/schema.js';
+import {Dictionary} from '../runtime/hot.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -120,8 +121,6 @@ export class Schema2Cpp extends Schema2Base {
       equals.push('true');
     }
 
-    const typeAliases = schema.names.filter(n => n !== name).map(alias => `using ${alias} = ${name};`);
-
     return `\
 
 namespace arcs {
@@ -164,8 +163,6 @@ private:
   friend class Collection<${name}>;
   friend class internal::Accessor;
 };
-
-${typeAliases.join('\n')}
 
 template<>
 inline ${name} internal::Accessor::clone_entity(const ${name}& entity) {
@@ -232,5 +229,13 @@ struct std::hash<arcs::${name}> {
   }
 };
 `;
+  }
+
+  addAliases(aliases: Dictionary<Set<string>>): string {
+    const lines: string[] = Object.entries(aliases)
+      .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = ${rhs};`))
+      .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
+
+    return lines.join('\n');
   }
 }

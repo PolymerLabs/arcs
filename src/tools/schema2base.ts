@@ -31,9 +31,10 @@ export abstract class Schema2Base {
     }
   }
 
-  /** Collect schemas from particle connections */
-  private collectSchemas(manifest: Manifest): Dictionary<Schema> {
+  /** Collect schemas from particle connections and build map of aliases. */
+  public processManifest(manifest: Manifest): [Dictionary<Schema>, Dictionary<Set<string>>] {
     const schemas: Dictionary<Schema> = {};
+    const aliases: Dictionary<Set<string>> = {};
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
@@ -41,55 +42,34 @@ export abstract class Schema2Base {
           continue;
         }
 
-        for (let i = 0; i < schema.names.length; i++) {
-          schema.names[i] = `${particle.name}${schema.names[i]}_${connection.name}`;
-        }
-
+        // include primary schemas from particle and connection name
         const name = `${particle.name}_${connection.name}`;
         schemas[name] = schema;
-      }
-    }
-    return schemas;
-  }
 
+        schema.names.forEach(n => {
+          const alias = `${n}${name}`;
+          if (aliases[n] !== undefined) {
+            aliases[n].add(alias);
+          } else {
+            aliases[n] = new Set([alias]);
+          }
+        });
 
-  /**
-   * Collect inline schema fields. These will be output first so they're defined
-   * prior to use in their containing entity classes.
-   */
-  private collectInlineSchemas(schemas: Dictionary<Schema>): Dictionary<Schema> {
-    const inlineSchemas: Dictionary<Schema> = {};
-    for (const schema of Object.values(schemas)) {
-      for (const [field, descriptor] of Object.entries(schema.fields)) {
-        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-          const name = this.inlineSchemaName(field, descriptor);
-          if (!(name in inlineSchemas)) {
-            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
+        // Collect inline schema fields. These will be output first so they're defined
+        // prior to use in their containing entity classes.
+        for (const [field, descriptor] of Object.entries(schema.fields)) {
+          if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
+            const name = this.inlineSchemaName(field, descriptor);
+            const inlineSchema = descriptor.schema.model.getEntitySchema();
+            if (!(name in schemas)) {
+              schemas[name] = inlineSchema;
+            }
           }
         }
       }
     }
 
-    return inlineSchemas;
-  }
-
-  /** Convert manifest into entities */
-  public* processManifest(manifest: Manifest): Iterable<string> {
-
-    const schemas = this.collectSchemas(manifest);
-
-    if (Object.keys(schemas).length === 0) {
-      console.warn(`No schemas found in manifest`);
-      return;
-    }
-
-    const inlineSchemas = this.collectInlineSchemas(schemas);
-
-    for (const dict of [inlineSchemas, schemas]) {
-      for (const [name, schema] of Object.entries(dict)) {
-        yield this.entityClass(name, schema).replace(/ +\n/g, '\n');
-      }
-    }
+    return [schemas, aliases];
   }
 
   private async processFile(src: string) {
@@ -102,13 +82,19 @@ export abstract class Schema2Base {
 
     const manifest = await Utils.parse(`import '${src}'`);
 
-    const generated = this.processManifest(manifest);
+    const [schemas, aliases] = this.processManifest(manifest);
+
+    if (Object.keys(schemas).length === 0) {
+      console.warn(`No schemas found in manifest`);
+      return;
+    }
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const generation of generated) {
-        fs.writeSync(outFile, generation);
+    for (const [name, schema] of Object.entries(schemas)) {
+        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
     }
+    fs.writeSync(outFile, `\n${this.addAliases(aliases)}\n`);
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
@@ -177,4 +163,5 @@ export abstract class Schema2Base {
   abstract fileHeader(outName: string): string;
   abstract fileFooter(): string;
   abstract entityClass(name: string, schema: Schema): string;
+  abstract addAliases(aliases: Dictionary<Set<string>>): string;
 }
