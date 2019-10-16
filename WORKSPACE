@@ -66,9 +66,9 @@ http_archive(
 )
 
 
-rules_kotlin_version = "legacy-modded-0_26_1-02"
 
-rules_kotlin_sha = "245d0bc1511048aaf82afd0fa8a83e8c3b5afdff0ae4fbcae25e03bb2c6f1a1a"
+rules_kotlin_version = "legacy-modded-1_0_0-01"
+rules_kotlin_sha = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
