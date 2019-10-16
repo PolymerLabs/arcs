@@ -28,7 +28,7 @@ import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ActiveStore, ProxyMessage} from './storageNG/store.js';
+import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -240,17 +240,21 @@ class PECOuterPortImpl extends PECOuterPort {
     (handle as BigCollectionStorageProvider).cursorClose(cursorId);
   }
 
-  async onRegister(store: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
-    const id = store.on(async data => {
+  async onRegister(store: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
+    // Need an ActiveStore here to listen to changes. Calling .activate() should
+    // generally be a no-op.
+    const id = (await store.activate()).on(async data => {
       this.SimpleCallback(messagesCallback, data);
       return Promise.resolve(true);
     });
     this.SimpleCallback(idCallback, id);
   }
 
-  async onProxyMessage(store: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
-   const res = await store.onProxyMessage(message);
-   this.SimpleCallback(callback, res);
+  async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
+    // Need an ActiveStore here in order to forward messages. Calling
+    // .activate() should generally be a no-op.
+    const res = await (await store.activate()).onProxyMessage(message);
+    this.SimpleCallback(callback, res);
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {

@@ -16,7 +16,7 @@ import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {InitPopulation} from '../../strategies/init-population.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {Id, ArcId} from '../../../runtime/id.js';
+import {ArcId} from '../../../runtime/id.js';
 
 describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {

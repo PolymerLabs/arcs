@@ -369,6 +369,12 @@ export class EntityType extends Type {
   crdtInstanceConstructor() {
     return this.entitySchema.crdtConstructor();
   }
+
+  handleConstructor<T>() {
+    // Currently using SingletonHandle as the implementation for Entity handles.
+    // TODO: Make an EntityHandle class that uses the proper Entity CRDT.
+    return SingletonHandle;
+  }
 }
 
 
