@@ -1,5 +1,7 @@
 package arcs.api;
 
+import java.util.List;
+
 public interface Arcs {
   String MESSAGE_FIELD = "message";
   String RUN_ARC_MESSAGE = "runArc";
@@ -28,6 +30,16 @@ public interface Arcs {
     return arcData;
   }
 
+  default ArcData runArc(String recipe, List<? extends Particle> particles) {
+    ArcData.Builder builder = new ArcData.Builder().setRecipe(recipe);
+    particles.forEach(particle -> builder.addParticleData(
+        new ArcData.ParticleData().setParticle(particle)
+    ));
+    ArcData arcData = builder.build();
+    runArc(arcData);
+    return arcData;
+  }
+
   default ArcData runArc(String recipe, String arcId, String pecId) {
     ArcData arcData =
         new ArcData.Builder().setRecipe(recipe).setArcId(arcId).setPecId(pecId).build();
@@ -43,6 +55,21 @@ public interface Arcs {
             .setPecId(pecId)
             .addParticleData(new ArcData.ParticleData().setParticle(particle))
             .build();
+    runArc(arcData);
+    return arcData;
+  }
+
+  default ArcData runArc(String recipe, String arcId, String pecId,
+                         List<? extends Particle> particles) {
+    ArcData.Builder builder =
+        new ArcData.Builder()
+            .setRecipe(recipe)
+            .setArcId(arcId)
+            .setPecId(pecId);
+    particles.forEach(particle -> builder.addParticleData(
+        new ArcData.ParticleData().setParticle(particle)
+    ));
+    ArcData arcData = builder.build();
     runArc(arcData);
     return arcData;
   }
