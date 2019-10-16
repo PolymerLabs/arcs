@@ -839,7 +839,7 @@ describe('Automatic resolution', () => {
         B`);
   });
 
-  it('SLANDLES SYNTAX coalesces recipes to resolve connections', async () => {
+  it('SLANDLES SYNTAX coalesces recipes to resolve connections', Flags.withPostSlandlesSyntax(async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
         Text id
@@ -892,11 +892,10 @@ describe('Automatic resolution', () => {
     something: in handle1
   D as particle3
     location: inout handle2`, result.toString({hideFields: false}));
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('coalesces recipes to resolve connections', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('coalesces recipes to resolve connections', Flags.withPreSlandlesSyntax(async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
         Text id
@@ -949,8 +948,7 @@ describe('Automatic resolution', () => {
     something <- handle1
   D as particle3
     location <-> handle2`, result.toString({hideFields: false}));
-    });
-  });
+  }));
 
   it('uses existing handle from the arc', async () => {
     // An existing handle from the arc can be used as input to a recipe
@@ -974,7 +972,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
-  it('SLANDLES SYNTAX composes recipe rendering a list of items from a recipe', async () => {
+  it('SLANDLES SYNTAX composes recipe rendering a list of items from a recipe', Flags.withPostSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1016,10 +1014,9 @@ describe('Automatic resolution', () => {
     things: out handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-  });
+  }));
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('composes recipe rendering a list of items from a recipe', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('composes recipe rendering a list of items from a recipe', Flags.withPreSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1061,9 +1058,8 @@ describe('Automatic resolution', () => {
     things -> handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-    });
-  });
-  it('SLANDLES SYNTAX composes recipe rendering a list of items from the current arc', async () => {
+  }));
+  it('SLANDLES SYNTAX composes recipe rendering a list of items from the current arc', Flags.withPostSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1096,11 +1092,10 @@ describe('Automatic resolution', () => {
       provide item as slot0
       provide postamble as slot4
       provide preamble as slot5`);
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('composes recipe rendering a list of items from the current arc', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('composes recipe rendering a list of items from the current arc', Flags.withPreSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1133,8 +1128,7 @@ describe('Automatic resolution', () => {
       provide item as slot0
       provide postamble as slot4
       provide preamble as slot5`);
-    });
-  });
+  }));
   it('coalesces resolved recipe with no UI', async () => {
     const recipes = await verifyResolvedPlans(`
       schema Thing

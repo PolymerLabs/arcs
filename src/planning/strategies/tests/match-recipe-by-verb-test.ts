@@ -18,7 +18,7 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Flags} from '../../../runtime/flags.js';
 
 describe('MatchRecipeByVerb', () => {
-  it('SLANDLES SYNTAX removes a particle and adds a recipe', async () => {
+  it('SLANDLES SYNTAX removes a particle and adds a recipe', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       recipe
         &jump
@@ -45,11 +45,10 @@ describe('MatchRecipeByVerb', () => {
     assert.lengthOf(results, 1);
     assert.isEmpty(results[0].result.particles);
     assert.deepEqual(results[0].result.toString(), 'recipe &jump\n  JumpingBoots.e: in NuclearReactor.e\n  JumpingBoots.f: in FootFactory.f');
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('removes a particle and adds a recipe', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('removes a particle and adds a recipe', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       recipe
         &jump
@@ -77,10 +76,9 @@ describe('MatchRecipeByVerb', () => {
     assert.lengthOf(results, 1);
     assert.isEmpty(results[0].result.particles);
     assert.deepEqual(results[0].result.toString(), 'recipe &jump\n  JumpingBoots.e <- NuclearReactor.e\n  JumpingBoots.f <- FootFactory.f');
-    });
-  });
+  }));
 
-  it('SLANDLES SYNTAX plays nicely with constraints', async () => {
+  it('SLANDLES SYNTAX plays nicely with constraints', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
@@ -111,11 +109,10 @@ describe('MatchRecipeByVerb', () => {
     p: out handle0
   Q as particle1
     q: in handle0`);
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('plays nicely with constraints', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('plays nicely with constraints', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
@@ -146,8 +143,7 @@ describe('MatchRecipeByVerb', () => {
     p -> handle0
   Q as particle1
     q <- handle0`);
-    });
-  });
+  }));
 
   const basicHandlesContraintsManifest = `
       particle P in 'A.js'
@@ -189,7 +185,7 @@ ${recipesManifest}`);
     assert.lengthOf(results, 4);
   });
 
-  it('SLANDLES SYNTAX listens to handle constraints - out connection', async () => {
+  it('SLANDLES SYNTAX listens to handle constraints - out connection', Flags.withPostSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -198,11 +194,10 @@ ${recipesManifest}`);
     assert.lengthOf(results[0].result.particles, 1);
     assert.strictEqual(results[0].result.particles[0].name, 'P');
     assert.lengthOf(results[1].result.particles, 2);
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('listens to handle constraints - out connection', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('listens to handle constraints - out connection', Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -211,10 +206,9 @@ ${recipesManifest}`);
     assert.lengthOf(results[0].result.particles, 1);
     assert.strictEqual(results[0].result.particles[0].name, 'P');
     assert.lengthOf(results[1].result.particles, 2);
-    });
-  });
+  }));
 
-  it('SLANDLES SYNTAX listens to handle constraints - in connection', async () => {
+  it('SLANDLES SYNTAX listens to handle constraints - in connection', Flags.withPostSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -223,11 +217,10 @@ ${recipesManifest}`);
     assert.lengthOf(results[1].result.particles, 1);
     assert.strictEqual(results[1].result.particles[0].name, 'Q');
     assert.lengthOf(results[0].result.particles, 2);
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('listens to handle constraints - in connection', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('listens to handle constraints - in connection', Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -236,10 +229,9 @@ ${recipesManifest}`);
     assert.lengthOf(results[1].result.particles, 1);
     assert.strictEqual(results[1].result.particles[0].name, 'Q');
     assert.lengthOf(results[0].result.particles, 2);
-    });
-  });
+  }));
 
-  it('SLANDLES SYNTAX listens to handle constraints - both connection', async () => {
+  it('SLANDLES SYNTAX listens to handle constraints - both connection', Flags.withPostSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -250,11 +242,10 @@ ${recipesManifest}`);
     assert.lengthOf(results[1].result.particles, 1);
     assert.strictEqual(results[1].result.particles[0].name, 'Q');
     assert.lengthOf(results[0].result.particles, 2);
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('listens to handle constraints - both connection', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('listens to handle constraints - both connection', Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -265,10 +256,9 @@ ${recipesManifest}`);
     assert.lengthOf(results[1].result.particles, 1);
     assert.strictEqual(results[1].result.particles[0].name, 'Q');
     assert.lengthOf(results[0].result.particles, 2);
-    });
-  });
+  }));
 
-  it('SLANDLES SYNTAX listens to handle constraints - handle', async () => {
+  it('SLANDLES SYNTAX listens to handle constraints - handle', Flags.withPostSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         create as handle0
@@ -277,10 +267,9 @@ ${recipesManifest}`);
       `);
     assert.lengthOf(results, 3);
     assert.deepEqual([['P'], ['P', 'Q'], ['Q']], results.map(r => r.result.particles.map(p => p.name)));
-  });
+  }));
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('listens to handle constraints - handle', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('listens to handle constraints - handle', Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         create as handle0
@@ -289,8 +278,7 @@ ${recipesManifest}`);
       `);
     assert.lengthOf(results, 3);
     assert.deepEqual([['P'], ['P', 'Q'], ['Q']], results.map(r => r.result.particles.map(p => p.name)));
-    });
-  });
+  }));
   it('listens to slot constraints', async () => {
     const manifest = await Manifest.parse(`
       particle P in 'A.js'
@@ -344,7 +332,7 @@ ${recipesManifest}`);
     assert.strictEqual(results[0].result.particles[0].name, 'P');
     assert.lengthOf(results[1].result.particles, 2);
   });
-  it('SLANDLES SYNTAX carries handle assignments across verb substitution', async () => {
+  it('SLANDLES SYNTAX carries handle assignments across verb substitution', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
@@ -373,10 +361,9 @@ ${recipesManifest}`);
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.strictEqual(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
     assert.strictEqual(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
-  });
+  }));
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('carries handle assignments across verb substitution', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('carries handle assignments across verb substitution', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
@@ -405,9 +392,8 @@ ${recipesManifest}`);
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.strictEqual(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
     assert.strictEqual(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
-    });
-  });
-  it('SLANDLES SYNTAX carries handle assignments across verb substitution with generic binding', async () => {
+  }));
+  it('SLANDLES SYNTAX carries handle assignments across verb substitution with generic binding', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
@@ -436,10 +422,9 @@ ${recipesManifest}`);
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.strictEqual(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
     assert.strictEqual(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
-  });
+  }));
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('carries handle assignments across verb substitution with generic binding', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('carries handle assignments across verb substitution with generic binding', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
@@ -468,10 +453,9 @@ ${recipesManifest}`);
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.strictEqual(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
     assert.strictEqual(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
-    });
-  });
+  }));
 
-  it('SLANDLES SYNTAX selects the appropriate generic binding when handle assignments carry type information', async () => {
+  it('SLANDLES SYNTAX selects the appropriate generic binding when handle assignments carry type information', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle O in 'Z.js'
@@ -509,11 +493,10 @@ ${recipesManifest}`);
     assert.strictEqual(particleP.connections.a.handle, particleQ.connections.b.handle);
     assert.strictEqual(particleP.connections.a.handle.connections[0].particle, particleP);
     assert.strictEqual(particleQ.connections.b.handle.connections[1].particle, particleQ);
-  });
+  }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('selects the appropriate generic binding when handle assignments carry type information', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  it('selects the appropriate generic binding when handle assignments carry type information', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle O in 'Z.js'
@@ -551,8 +534,7 @@ ${recipesManifest}`);
     assert.strictEqual(particleP.connections.a.handle, particleQ.connections.b.handle);
     assert.strictEqual(particleP.connections.a.handle.connections[0].particle, particleP);
     assert.strictEqual(particleQ.connections.b.handle.connections[1].particle, particleQ);
-    });
-  });
+  }));
   it('carries slot assignments across verb substitution', async () => {
     const manifest = await Manifest.parse(`
       particle P in 'A.js'

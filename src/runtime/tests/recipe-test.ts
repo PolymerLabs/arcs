@@ -392,7 +392,7 @@ describe('recipe', () => {
     assert(recipe.normalize());
     assert.isFalse(recipe.isResolved());
   });
-  it('SLANDLES SYNTAX considers type resolution as recipe update', async () => {
+  it('SLANDLES SYNTAX considers type resolution as recipe update', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
@@ -446,8 +446,8 @@ describe('recipe', () => {
     thing: in handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
-  });
-  it('SLANDLES SYNTAX considers type resolution as recipe update', async () => {
+  }));
+  it('SLANDLES SYNTAX considers type resolution as recipe update', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
@@ -501,9 +501,8 @@ describe('recipe', () => {
     thing: in handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
-  });
-  it('considers type resolution as recipe update', async () => {
-    Flags.withPreSlandlesSyntax(async () => {
+  }));
+  it('considers type resolution as recipe update', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
@@ -557,8 +556,7 @@ describe('recipe', () => {
     thing <- handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
-    });
-  });
+  }));
   const isResolved = (recipe) => {
     const recipeClone = recipe.clone();
     assert.isTrue(recipeClone.normalize());

@@ -671,11 +671,13 @@ export function directionToArrow(dir: Direction): string {
     case 'host':
       return '=';
     case '`consume':
-      return '`consume';
+      return 'consume';
     case '`provide':
-      return '`provide';
+      return 'provide';
     case 'any':
       return '=';
+    default:
+      throw new Error(`Unexpected direction ${dir}`);
   }
 }
 
