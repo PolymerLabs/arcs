@@ -21,16 +21,16 @@ describe('schema2cpp', () => {
     `);
 
     const mock = new Schema2Cpp({'_': []});
-    const generated = [...mock.processManifest(manifest)];
+    const [_, aliases] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
 
-    assert.lengthOf(generated, 2);
-    assert.include(generated[0], 'using FooProduct_alpha = Foo_alpha;');
-    assert.include(generated[0], 'using FooElement_alpha = Foo_alpha;');
-    assert.include(generated[0], 'using FooThing_alpha = Foo_alpha;');
-    assert.include(generated[1], 'using FooThing_beta = Foo_beta;');
+    assert.include(generated, 'using ProductFoo_alpha = Foo_alpha;');
+    assert.include(generated, 'using ElementFoo_alpha = Foo_alpha;');
+    assert.include(generated, 'using ThingFoo_alpha = Foo_alpha;');
+    assert.include(generated, 'using ThingFoo_beta = Foo_beta;');
   });
 
-  it('creates simple names for aliases', async () => {
+  it('creates scoped aliases for global schemas', async () => {
    const manifest = await Manifest.parse(`\
 schema Product
   Text name
@@ -53,8 +53,11 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
   in [Product] bar`);
 
    const mock = new Schema2Cpp({'_': []});
-   const generated = [...mock.processManifest(manifest)];
+    const [_, aliases] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
 
-   assert.lengthOf(generated, 3);
+    assert.include(generated, 'using ProductBasicParticle_foo = BasicParticle_foo;');
+    assert.include(generated, 'using ProductBasicParticle_bar = BasicParticle_bar;');
+    assert.include(generated, 'using ProductWatcher_bar = Watcher_bar;');
   });
 });

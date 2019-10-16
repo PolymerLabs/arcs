@@ -21,12 +21,45 @@ describe('schema2kotlin', () => {
     `);
 
     const mock = new Schema2Kotlin({'_': []});
-    const generated = [...mock.processManifest(manifest)];
+    const [_, aliases] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
 
-    assert.lengthOf(generated, 2);
-    assert.include(generated[0], 'typealias FooProduct_alpha = Foo_alpha');
-    assert.include(generated[0], 'typealias FooElement_alpha = Foo_alpha');
-    assert.include(generated[0], 'typealias FooThing_alpha = Foo_alpha');
-    assert.include(generated[1], 'typealias FooThing_beta = Foo_beta');
+    assert.notInclude(generated, ';');
+    assert.include(generated, 'typealias ProductFoo_alpha = Foo_alpha');
+    assert.include(generated, 'typealias ElementFoo_alpha = Foo_alpha');
+    assert.include(generated, 'typealias ThingFoo_alpha = Foo_alpha');
+    assert.include(generated, 'typealias ThingFoo_beta = Foo_beta');
+  });
+
+  it('creates scoped aliases for global schemas', async () => {
+    const manifest = await Manifest.parse(`\
+schema Product
+  Text name
+  Number sku
+
+resource ProductResource
+  start
+  [{"name": "Vegemite", "sku": 249126}]
+store ProductStore of Product in ProductResource
+
+// Particle name must match the C++ class name
+// Wasm module name must match one specified in wasm.json
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar
+
+particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
+  consume root
+  in [Product] bar`);
+
+    const mock = new Schema2Kotlin({'_': []});
+    const [_, aliases] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
+
+    assert.notInclude(generated, ';');
+    assert.include(generated, 'typealias ProductBasicParticle_foo = BasicParticle_foo');
+    assert.include(generated, 'typealias ProductBasicParticle_bar = BasicParticle_bar');
+    assert.include(generated, 'typealias ProductWatcher_bar = Watcher_bar');
   });
 });
