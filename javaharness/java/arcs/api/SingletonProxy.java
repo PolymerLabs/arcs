@@ -1,7 +1,7 @@
 // package arcs.api;
 
 // public class SingletonProxy extends StorageProxy implements SingletonStore {
-//   public SingletonProxy(String id, Type type, PecPortLocal port, String name) {
+//   public SingletonProxy(String id, Type type, PecInnerPort port, String name) {
 //     super(id, type, port, name);
 //   }
 

@@ -21,7 +21,7 @@ android_library(
     assets_dir = "pipes_shell_web_dist",
     resource_files = glob(["res/**"]),
     deps = [
-        "@com_google_auto_value",
+        "//javaharness:autovalue",
         "//javaharness/java/arcs/api",
         "@com_google_dagger",
         "@flogger//jar",

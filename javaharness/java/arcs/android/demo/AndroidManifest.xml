@@ -43,5 +43,9 @@
         android:name=".NotificationDemoActivity"
         android:label="Notification Demo"
         android:exported="false" />
+
+    <service
+        android:name=".AndroidNotificationHandlerService"
+        android:exported="true" />
   </application>
 </manifest>

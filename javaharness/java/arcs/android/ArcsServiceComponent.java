@@ -6,7 +6,7 @@ import dagger.Component;
 
 @Singleton
 @Component(modules = {ArcsAndroidModule.class})
-public interface ArcsServiceComponent {
+interface ArcsServiceComponent {
 
   void inject(ArcsService arcsService);
 

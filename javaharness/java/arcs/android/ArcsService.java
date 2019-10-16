@@ -12,30 +12,22 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Constants;
-import arcs.api.PECInnerPort;
-import arcs.api.PECPortManager;
-import arcs.api.PECPortProxy;
+import arcs.api.PecInnerPort;
+import arcs.api.PecPortManager;
+import arcs.api.PecPortProxy;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
+import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
  * ArcsService to communicate with Arcs.
  */
-public class ArcsService extends IntentService {
+public class ArcsService extends Service {
 
   private static final String TAG = "Arcs";
 
-  public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
-  public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
-
-  private static final String MESSAGE_FIELD = "message";
-  private static final String UI_EVENT_MESSAGE = "uiEvent";
-  private static final String PARTICLE_ID_FIELD = "particleId";
-  private static final String EVENTLET_FIELD = "eventlet";
-
-  private WebView arcsWebView;
   private boolean arcsReady;
 
   @Inject
@@ -48,7 +40,7 @@ public class ArcsService extends IntentService {
   ShellApi shellApi;
 
   @Inject
-  PECPortManager pecPortManager;
+  PecPortManager pecPortManager;
 
   @Inject
   UiBroker uiBroker;
@@ -60,8 +52,8 @@ public class ArcsService extends IntentService {
     Log.d(TAG, "onCreate()");
 
     DaggerArcsServiceComponent.builder()
-        .build()
-        .inject(this);
+      .build()
+      .inject(this);
 
     environment.addReadyListener(recipes -> arcsReady = true);
     environment.init(this);
@@ -75,19 +67,12 @@ public class ArcsService extends IntentService {
   }
 
   @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
-    Log.d(TAG, "onStartCommand()");
-    super.onStartCommand(intent, flags, startId);
-    return START_STICKY;
-  }
-
-  @Override
   public IBinder onBind(Intent intent) {
     Log.d(TAG, "onBind()");
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        arcsMessageSender.sendMessageToArcs(message);
+        shellApi.sendMessageToArcs(message);
       }
 
       @Override
@@ -99,8 +84,8 @@ public class ArcsService extends IntentService {
           List<String> particleNames,
           List<String> providedSlotIds,
           IRemotePecCallback callback) {
-        PECPortProxy pecRemotePort =
-            new PECPortProxy(
+        PecPortProxy pecPortProxy =
+            new PecPortProxy(
                 message -> {
                   try {
                     callback.onMessage(message);
@@ -109,7 +94,7 @@ public class ArcsService extends IntentService {
                   }
                 },
                 jsonParser);
-        pecPortManager.addPecInnerPortProxy(pecId, pecInnerPortProxy);
+        pecPortManager.addPecPortProxy(pecId, pecPortProxy);
 
         runWhenReady(() -> {
             ArcData.Builder arcDataBuilder = new ArcData.Builder()
@@ -125,7 +110,7 @@ public class ArcsService extends IntentService {
             }
 
           ArcData arcData = arcDataBuilder.build();
-          PECInnerPort pecInnerPort = null;
+          PecInnerPort pecInnerPort = null;
           for (ArcData.ParticleData particleData : arcData.getParticleList()) {
             if (particleData.getParticle() != null) {
               if (pecInnerPort == null) {
@@ -162,27 +147,6 @@ public class ArcsService extends IntentService {
             });
       }
     };
-  }
-
-  @Override
-  public boolean onUnbind(Intent intent) {
-    Log.d(TAG, "onUnbind()");
-    return super.onUnbind(intent);
-  }
-
-  @Override
-  protected void onHandleIntent(Intent intent) {
-    // TODO(mmandlis): refactor into an Arcs API method.
-    String referenceId = intent.getStringExtra(INTENT_REFERENCE_ID_FIELD);
-    String eventlet = intent.getStringExtra(INTENT_EVENT_DATA_FIELD);
-    Log.d(TAG, "Received referenceId " + referenceId);
-    shellApi.sendMessageToArcs(
-        jsonParser.stringify(
-            jsonParser
-                .emptyObject()
-                .put(MESSAGE_FIELD, UI_EVENT_MESSAGE)
-                .put(PARTICLE_ID_FIELD, referenceId)
-                .put(EVENTLET_FIELD, jsonParser.parse(eventlet))));
   }
 
   private String constructRunArcRequest(ArcData arcData) {

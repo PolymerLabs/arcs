@@ -15,7 +15,7 @@ android_binary(
     licenses = ["notice"],
     deps = [
         "//javaharness/java/arcs/android",
-        "//javaharness/java/arcs/api:api-android",
+        "//javaharness/java/arcs/api",
         "@com_google_dagger",
         "@flogger//jar",
         "@flogger_system_backend//jar",

@@ -18,19 +18,19 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Particle;
-import arcs.api.PECInnerPort;
-import arcs.api.PECPortManager;
+import arcs.api.PecInnerPort;
+import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.ShellApi;
 import arcs.api.UiRenderer;
 
 // This class implements Arcs API for clients to access Arcs via Android service.
-public class AndroidArcsClient {
+public class AndroidArcs {
 
   private static final String TAG = "Arcs";
 
-  private final PECPortManager pecPortManager;
+  private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final ShellApi shellApi;
   private final ServiceConnection serviceConnection;
@@ -39,8 +39,8 @@ public class AndroidArcsClient {
   private Queue<Consumer<IArcsService>> pendingCalls = new ArrayDeque<>();
 
   @Inject
-  AndroidArcsClient(
-      PECPortManager pecPortManager,
+  AndroidArcs(
+      PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
       ShellApi shellApi) {
     this.pecPortManager = pecPortManager;
@@ -78,6 +78,16 @@ public class AndroidArcsClient {
     return arcData;
   }
 
+  public ArcData runArc(String recipe, List<? extends Particle> particles) {
+    ArcData.Builder builder = new ArcData.Builder().setRecipe(recipe);
+    particles.forEach(particle -> builder.addParticleData(
+      new ArcData.ParticleData().setParticle(particle)
+    ));
+    ArcData arcData = builder.build();
+    runArc(arcData);
+    return arcData;
+  }
+
   public ArcData runArc(String recipe, String arcId, String pecId, Particle particle) {
     ArcData arcData =
       new ArcData.Builder()
@@ -90,8 +100,23 @@ public class AndroidArcsClient {
     return arcData;
   }
 
+  public ArcData runArc(String recipe, String arcId, String pecId,
+                        List<? extends Particle> particles) {
+    ArcData.Builder builder =
+      new ArcData.Builder()
+        .setRecipe(recipe)
+        .setArcId(arcId)
+        .setPecId(pecId);
+    particles.forEach(particle -> builder.addParticleData(
+      new ArcData.ParticleData().setParticle(particle)
+    ));
+    ArcData arcData = builder.build();
+    runArc(arcData);
+    return arcData;
+  }
+
   public void runArc(ArcData arcData) {
-    PECInnerPort pecInnerPort =
+    PecInnerPort pecInnerPort =
         pecPortManager.getOrCreatePecPort(arcData.getPecId(), arcData.getSessionId());
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getParticle() != null) {
@@ -181,7 +206,7 @@ public class AndroidArcsClient {
     }
   }
 
-  class HelperServiceConnection implements ServiceConnection {
+  private class HelperServiceConnection implements ServiceConnection {
     @Override
     public void onServiceConnected(ComponentName className, IBinder service) {
       Log.d(TAG, "ArcsService.onServiceConnected");

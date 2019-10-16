@@ -6,17 +6,17 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public final class PECPortManager {
+public final class PecPortManager {
 
-  private final Map<String, PECInnerPort> pecPortMap = new HashMap<>();
-  private final Map<String, PECPortProxy> pecPortProxyMap = new HashMap<>();
+  private final Map<String, PecInnerPort> pecPortMap = new HashMap<>();
+  private final Map<String, PecPortProxy> pecPortProxyMap = new HashMap<>();
 
   private final ShellApi shellApi;
   private final ParticleExecutionContext pec;
   private final PortableJsonParser jsonParser;
 
   @Inject
-  PECPortManager(
+  PecPortManager(
       ShellApi shellApi,
       ParticleExecutionContext pec,
       PortableJsonParser jsonParser) {
@@ -26,13 +26,13 @@ public final class PECPortManager {
   }
 
   public void deliverPecMessage(String pecId, String sessionId, PortableJson message) {
-    PECInnerPort port = pecPortMap.get(pecId);
+    PecInnerPort port = pecPortMap.get(pecId);
     if (port != null) {
       port.onReceivePecMessage(message);
       return;
     }
 
-    PECPortProxy portProxy = pecPortProxyMap.get(pecId);
+    PecPortProxy portProxy = pecPortProxyMap.get(pecId);
     if (portProxy != null) {
       portProxy.onReceivePecMessage(message);
       return;
@@ -43,12 +43,12 @@ public final class PECPortManager {
     port.onReceivePecMessage(message);
   }
 
-  public void addPecPortProxy(String pecId, PECPortProxy pecPortProxy) {
+  public void addPecPortProxy(String pecId, PecPortProxy pecPortProxy) {
     pecPortProxyMap.put(pecId, pecPortProxy);
   }
 
-  public PECInnerPort getOrCreatePecPort(String pecId, String sessionId) {
-    PECInnerPort port = pecPortMap.get(pecId);
+  public PecInnerPort getOrCreatePecPort(String pecId, String sessionId) {
+    PecInnerPort port = pecPortMap.get(pecId);
     if (port == null) {
       return createPecPort(pecId, sessionId);
     } else {
@@ -61,12 +61,12 @@ public final class PECPortManager {
     pecPortProxyMap.remove(pecId);
   }
 
-  private PECInnerPort createPecPort(String pecId, String sessionId) {
+  private PecInnerPort createPecPort(String pecId, String sessionId) {
     if (pecPortMap.containsKey(pecId)) {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
 
-    PECInnerPort pecInnerPort = new PECInnerPort(pecId, sessionId, shellApi, pec, jsonParser);
+    PecInnerPort pecInnerPort = new PecInnerPort(pecId, sessionId, shellApi, pec, jsonParser);
     pecPortMap.put(pecId, pecInnerPort);
     return pecInnerPort;
   }

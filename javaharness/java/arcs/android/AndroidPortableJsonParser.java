@@ -9,7 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class AndroidPortableJsonParser implements PortableJsonParser {
+class AndroidPortableJsonParser implements PortableJsonParser {
 
   @Inject
   public AndroidPortableJsonParser() {}

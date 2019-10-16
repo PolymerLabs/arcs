@@ -5,13 +5,13 @@ import android.os.Bundle;
 
 import javax.inject.Inject;
 
-import arcs.android.AndroidArcsClient;
+import arcs.android.AndroidArcs;
 
 /** Notification demo activity. */
 public class NotificationDemoActivity extends Activity {
 
   @Inject
-  AndroidArcsClient arcsClient;
+  AndroidArcs arcsClient;
 
   @Inject
   NotificationRenderer notificationRenderer;

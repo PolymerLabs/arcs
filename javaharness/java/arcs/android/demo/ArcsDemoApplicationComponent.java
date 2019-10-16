@@ -17,6 +17,7 @@ interface ArcsDemoApplicationComponent {
   void inject(AutofillDemoActivity activity);
   void inject(NotificationDemoActivity activity);
   void inject(ArcsAutofillService service);
+  void inject(AndroidNotificationHandlerService service);
 
   @Component.Builder
   interface Builder {

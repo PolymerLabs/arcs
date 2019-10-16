@@ -3,9 +3,7 @@ package arcs.api;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * Portable representation of JSON structure.
- */
+/** Portable representation of JSON structure. */
 public interface PortableJson {
   // Array methods
   String getString(int index);

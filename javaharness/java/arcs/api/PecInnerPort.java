@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class PECInnerPort {
+public class PecInnerPort {
 
-  private static final Logger logger = Logger.getLogger(PECInnerPort.class.getName());
+  private static final Logger logger = Logger.getLogger(PecInnerPort.class.getName());
 
   private static final String MESSAGE_TYPE_FIELD = "messageType";
   private static final String MESSAGE_BODY_FIELD = "messageBody";
@@ -55,7 +55,7 @@ public class PECInnerPort {
   private final PortableJsonParser jsonParser;
   private final IdGenerator idGenerator;
 
-  public PECInnerPort(
+  public PecInnerPort(
     String id,
     String sessionId,
     ShellApi shellApi,
@@ -94,19 +94,8 @@ public class PECInnerPort {
           // TODO: implement proper capabilities.
           particle.setOutput((content) -> output(particle, content));
         } else {
-          if (REINSTANTIATE_PARTICLE_MSG.equals(messageType)) {
-            throw new AssertionError("Unexpected reinstantiate call for " + particleId);
-          }
-          Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
-          if (particle == null) {
-            // TODO: improve error handling.
-            throw new AssertionError("Cannot instantiate particle " + spec.name);
-          }
-
-          mapper.establishThingMapping(
-            messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
-          // TODO: implement proper capabilities.
-          particle.setOutput((content) -> output(particle, content));
+          throw new AssertionError(
+            "Unexpected instantiate/reinstantiate call for " + particleId);
         }
 
         break;
