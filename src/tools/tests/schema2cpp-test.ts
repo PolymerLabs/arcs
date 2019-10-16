@@ -29,4 +29,32 @@ describe('schema2cpp', () => {
     assert.include(generated[0], 'using FooThing_alpha = Foo_alpha;');
     assert.include(generated[1], 'using FooThing_beta = Foo_beta;');
   });
+
+  it('creates simple names for aliases', async () => {
+   const manifest = await Manifest.parse(`\
+schema Product
+  Text name
+  Number sku
+
+resource ProductResource
+  start
+  [{"name": "Vegemite", "sku": 249126}]
+store ProductStore of Product in ProductResource
+
+// Particle name must match the C++ class name
+// Wasm module name must match one specified in wasm.json
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar
+
+particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
+  consume root
+  in [Product] bar`);
+
+   const mock = new Schema2Cpp({'_': []});
+   const generated = [...mock.processManifest(manifest)];
+
+   assert.lengthOf(generated, 3);
+  });
 });
