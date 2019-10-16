@@ -40,11 +40,12 @@ export abstract class Schema2Base {
         if (!schema) {
           continue;
         }
-        // TODO(alxr): now that names is a set, what order will these be in?
-        let name = schema.names && schema.names[0] || `${particle.name}_${connection.name}`;
-        if (name in schemas) {
-          name = `${particle.name}_${connection.name}`;
+
+        for (let i = 0; i < schema.names.length; i++) {
+          schema.names[i] = `${particle.name}${schema.names[i]}_${connection.name}`;
         }
+
+        const name = `${particle.name}_${connection.name}`;
         schemas[name] = schema;
       }
     }

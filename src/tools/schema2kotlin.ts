@@ -77,7 +77,7 @@ package arcs
       encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
     });
 
-    const typeAliases = schema.names.length > 1 ? schema.names.slice(1).map(alias => `typealias ${alias} = ${name}`) : [];
+    const typeAliases = schema.names.filter(n => n !== name).map(alias => `typealias ${alias} = ${name}`);
 
     return `\
 
