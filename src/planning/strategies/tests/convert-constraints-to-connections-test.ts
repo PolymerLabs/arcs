@@ -17,7 +17,7 @@ import {ConvertConstraintsToConnections} from '../../strategies/convert-constrai
 import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';
 import {ArcId} from '../../../runtime/id.js';
 
-import {withPreSlandlesSyntax} from '../../../runtime/manifest-ast-nodes.js';
+import {Flags} from '../../../runtime/flags.js';
 
 describe('ConvertConstraintsToConnections', () => {
   const newArc = (manifest: Manifest) => {
@@ -54,7 +54,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('fills out an empty constraint', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
         inout S {} b
@@ -96,7 +96,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('does not cause an input only handle to be created', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -166,7 +166,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('can create handle for input and output handle', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const parseManifest = async (constraint1, constraint2) => await Manifest.parse(`
       schema S
       particle A
@@ -228,7 +228,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('fills out a constraint, reusing a single particle', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -281,7 +281,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('fills out a constraint, reusing a single particle (2)', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -335,7 +335,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('fills out a constraint, reusing two particles', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -392,7 +392,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('fills out a constraint, reusing two particles and a handle', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -451,7 +451,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('fills out a constraint, reusing two particles and a handle (2)', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -510,7 +510,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('removes an already fulfilled constraint', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
@@ -573,7 +573,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('verifies modality', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A in 'A.js'
@@ -631,7 +631,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('connects to handles', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
         out S {} o
@@ -682,7 +682,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('connects existing particles to handles', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
         out S {} o
@@ -736,7 +736,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it(`doesn't attempt to duplicate existing handles to particles`, async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
         out S {} o
@@ -795,7 +795,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it(`duplicates particles to get handle connections right`, async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
         out S {} o
@@ -852,7 +852,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('connects to tags', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       out S {} o
@@ -905,7 +905,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('connects existing particles to tags', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       out S {} o
@@ -961,7 +961,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it(`doesn't attempt to duplicate existing connections to tags`, async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       out S {} o
@@ -1011,7 +1011,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it(`connects particles together when there's only one possible connection`, async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       out S {} o
@@ -1056,7 +1056,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it(`connects particles together when there's extra things that can't connect`, async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       out S {} o
@@ -1103,7 +1103,7 @@ describe('ConvertConstraintsToConnections', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it(`connects particles together with multiple connections`, async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       out S {} o

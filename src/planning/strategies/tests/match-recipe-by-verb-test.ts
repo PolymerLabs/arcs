@@ -15,7 +15,7 @@ import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
-import {withPreSlandlesSyntax} from '../../../runtime/manifest-ast-nodes.js';
+import {Flags} from '../../../runtime/flags.js';
 
 describe('MatchRecipeByVerb', () => {
   it('SLANDLES SYNTAX removes a particle and adds a recipe', async () => {
@@ -49,7 +49,7 @@ describe('MatchRecipeByVerb', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('removes a particle and adds a recipe', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       recipe
         &jump
@@ -115,7 +115,7 @@ describe('MatchRecipeByVerb', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('plays nicely with constraints', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
@@ -202,7 +202,7 @@ ${recipesManifest}`);
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('listens to handle constraints - out connection', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -227,7 +227,7 @@ ${recipesManifest}`);
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('listens to handle constraints - in connection', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -254,7 +254,7 @@ ${recipesManifest}`);
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('listens to handle constraints - both connection', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         &verb
@@ -280,7 +280,7 @@ ${recipesManifest}`);
   });
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('listens to handle constraints - handle', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const results = await generatePlans(`
       recipe
         create as handle0
@@ -376,7 +376,7 @@ ${recipesManifest}`);
   });
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('carries handle assignments across verb substitution', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
@@ -439,7 +439,7 @@ ${recipesManifest}`);
   });
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('carries handle assignments across verb substitution with generic binding', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
@@ -513,7 +513,7 @@ ${recipesManifest}`);
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('selects the appropriate generic binding when handle assignments carry type information', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
 
       particle O in 'Z.js'

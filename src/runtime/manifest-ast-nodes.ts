@@ -679,31 +679,6 @@ export function directionToArrow(dir: Direction): string {
   }
 }
 
-let usePreSlandlesSyntax = false;
-export function withPreSlandlesSyntaxSync(f) {
-  usePreSlandlesSyntax = true;
-  let res;
-  try {
-    res = f();
-  } finally {
-    usePreSlandlesSyntax = false;
-  }
-  return res;
-}
-export async function withPreSlandlesSyntax(f) {
-  usePreSlandlesSyntax = true;
-  let res;
-  try {
-    res = await f();
-  } finally {
-    usePreSlandlesSyntax = false;
-  }
-  return res;
-}
-export function usingPreSlandlesSyntax() {
-  return usePreSlandlesSyntax;
-}
-
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 

@@ -14,7 +14,7 @@ import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Type} from '../type.js';
 
-import {withPreSlandlesSyntax} from '../manifest-ast-nodes.js';
+import {Flags} from '../flags.js';
 
 describe('recipe', () => {
   it('normalize errors', async () => {
@@ -503,7 +503,7 @@ describe('recipe', () => {
     assert.notStrictEqual(hash, hashResolvedClone);
   });
   it('considers type resolution as recipe update', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
@@ -557,7 +557,7 @@ describe('recipe', () => {
     thing <- handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
-  });
+    });
   });
   const isResolved = (recipe) => {
     const recipeClone = recipe.clone();

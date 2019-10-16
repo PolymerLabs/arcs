@@ -16,7 +16,7 @@ import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
-import {withPreSlandlesSyntax} from '../../runtime/manifest-ast-nodes.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
@@ -63,7 +63,7 @@ describe('RecipeIndex', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('adds use handles', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
       schema Lumberjack
@@ -105,7 +105,7 @@ describe('RecipeIndex', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('matches free handles to connections', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
 
@@ -177,7 +177,7 @@ describe('RecipeIndex', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('resolves constraints', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema A
       schema B

@@ -20,7 +20,8 @@ import {acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
-import {usingPreSlandlesSyntax, Direction, directionToArrow} from '../manifest-ast-nodes.js';
+import {Direction, directionToArrow} from '../manifest-ast-nodes.js';
+import {Flags} from '../flags.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {
   private readonly _recipe: Recipe;
@@ -274,7 +275,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
 
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
-    if (usingPreSlandlesSyntax()) {
+    if (Flags.usePreSlandlesSyntax) {
       result.push(`${this.name || '*'}`); // TODO: Remove post slandles syntax
       result.push(directionToArrow(this.direction));
     } else {

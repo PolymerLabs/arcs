@@ -22,7 +22,7 @@ import {assertThrowsAsync} from '../../runtime/testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
-import {withPreSlandlesSyntax} from '../../runtime/manifest-ast-nodes.js';
+import {Flags} from '../../runtime/flags.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -896,7 +896,7 @@ describe('Automatic resolution', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('coalesces recipes to resolve connections', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
         Text id
@@ -1019,7 +1019,7 @@ describe('Automatic resolution', () => {
   });
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('composes recipe rendering a list of items from a recipe', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1100,7 +1100,7 @@ describe('Automatic resolution', () => {
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('composes recipe rendering a list of items from the current arc', async () => {
-    withPreSlandlesSyntax(async () => {
+    Flags.withPreSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
