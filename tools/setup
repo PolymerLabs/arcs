@@ -2,7 +2,7 @@
 
 ROOT=$(dirname $0)/..
 NVM_VERSION="v0.34.0"
-BAZEL_VERSION="0.29.0"
+BAZEL_VERSION="1.0.0"
 
 YLW="\033[33m"
 RED="\033[91m"
