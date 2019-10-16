@@ -24,9 +24,9 @@ describe('schema2kotlin', () => {
     const generated = [...mock.processManifest(manifest)];
 
     assert.lengthOf(generated, 2);
-    assert.match(generated[0], /typealias\s+[\w_]*Product[\w_]*\s*=\s*/g);
-    assert.match(generated[0], /typealias\s+[\w_]*Element[\w_]*\s*=\s*/g);
-    assert.match(generated[0], /typealias\s+[\w_]*Thing[\w_]*\s*=\s*/g);
-    assert.match(generated[1], /typealias\s+[\w_]*Thing[\w_]*\s*=\s*/g);
+    assert.include(generated[0], 'typealias FooProduct_alpha = Foo_alpha');
+    assert.include(generated[0], 'typealias FooElement_alpha = Foo_alpha');
+    assert.include(generated[0], 'typealias FooThing_alpha = Foo_alpha');
+    assert.include(generated[1], 'typealias FooThing_beta = Foo_beta');
   });
 });
