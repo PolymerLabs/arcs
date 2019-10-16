@@ -31,7 +31,7 @@ export abstract class Schema2Base {
     }
   }
 
-  /** Collect declared schemas along with any inlined in particle connections. */
+  /** Collect schemas from particle connections */
   private collectSchemas(manifest: Manifest): Dictionary<Schema> {
     const schemas: Dictionary<Schema> = {};
     for (const particle of manifest.allParticles) {
