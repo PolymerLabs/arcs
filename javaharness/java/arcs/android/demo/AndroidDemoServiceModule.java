@@ -1,4 +1,4 @@
-package arcs.android.demo.service;
+package arcs.android.demo;
 
 import arcs.api.UiRenderer;
 import dagger.Module;

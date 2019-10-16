@@ -1,0 +1,46 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="arcs.android.demo">
+
+<uses-sdk
+  android:minSdkVersion="29"
+  android:targetSdkVersion="29" />
+
+<uses-permission android:name="android.permission.INTERNET" />
+
+<application
+  android:label="Arcs Demo"
+  android:usesCleartextTraffic="true">
+  <service
+    android:name=".ArcsAutofillService"
+    android:label="Arcs Demo Autofill Service"
+    android:permission="android.permission.BIND_AUTOFILL_SERVICE"
+    android:exported="true">
+    <intent-filter>
+      <action android:name="android.service.autofill.AutofillService" />
+    </intent-filter>
+  </service>
+  <service
+    android:name=".AndroidNotificationHandlerService"
+    android:exported="true" />
+
+  <activity
+    android:name=".MainActivity"
+    android:label="Arcs Demo"
+    android:exported="true">
+    <intent-filter>
+      <action android:name="android.intent.action.MAIN"/>
+      <category android:name="android.intent.category.LAUNCHER"/>
+    </intent-filter>
+  </activity>
+
+  <activity
+    android:name=".AutofillDemoActivity"
+    android:label="Autofill Demo"
+    android:exported="false" />
+
+  <activity
+    android:name=".NotificationDemoActivity"
+    android:label="Notification Demo"
+    android:exported="false" />
+</application>
+</manifest>

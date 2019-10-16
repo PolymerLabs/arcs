@@ -1,4 +1,4 @@
-package arcs.android.demo.ui;
+package arcs.android.demo;
 
 import android.app.Activity;
 import android.content.ComponentName;

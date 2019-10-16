@@ -1,7 +1,7 @@
-package arcs.android.demo.service;
+package arcs.android.demo;
 
-import static arcs.android.demo.service.NotificationRenderer.INTENT_EVENT_DATA_FIELD;
-import static arcs.android.demo.service.NotificationRenderer.INTENT_REFERENCE_ID_FIELD;
+import static arcs.android.demo.NotificationRenderer.INTENT_EVENT_DATA_FIELD;
+import static arcs.android.demo.NotificationRenderer.INTENT_REFERENCE_ID_FIELD;
 
 import android.app.IntentService;
 import android.content.Intent;

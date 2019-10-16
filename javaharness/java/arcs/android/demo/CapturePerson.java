@@ -1,4 +1,4 @@
-package arcs.android.demo.ui;
+package arcs.android.demo;
 
 import java.util.Map;
 
