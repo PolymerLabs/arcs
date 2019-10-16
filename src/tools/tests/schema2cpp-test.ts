@@ -24,9 +24,9 @@ describe('schema2cpp', () => {
     const generated = [...mock.processManifest(manifest)];
 
     assert.lengthOf(generated, 2);
-    assert.include(generated[0], 'using FooProduct_alpha = Foo_alpha');
-    assert.include(generated[0], 'using FooElement_alpha = Foo_alpha');
-    assert.include(generated[0], 'using FooThing_alpha = Foo_alpha');
-    assert.include(generated[1], 'using FooThing_beta = Foo_beta');
+    assert.include(generated[0], 'using FooProduct_alpha = Foo_alpha;');
+    assert.include(generated[0], 'using FooElement_alpha = Foo_alpha;');
+    assert.include(generated[0], 'using FooThing_alpha = Foo_alpha;');
+    assert.include(generated[1], 'using FooThing_beta = Foo_beta;');
   });
 });

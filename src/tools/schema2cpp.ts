@@ -120,7 +120,7 @@ export class Schema2Cpp extends Schema2Base {
       equals.push('true');
     }
 
-    const typeAliases = schema.names.filter(n => n !== name).map(alias => `using ${alias} = ${name}`);
+    const typeAliases = schema.names.filter(n => n !== name).map(alias => `using ${alias} = ${name};`);
 
     return `\
 
