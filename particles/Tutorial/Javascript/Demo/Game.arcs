@@ -1,72 +1,161 @@
 // Tutorial Demo
 // Shows how to use Arcs features to create a tic-tac-toe game.
 import 'GameSchemas.arcs'
+import 'Stores.arcs'
 
 particle Game in './source/Game.js'
-  inout Person {name, avatar} humanPlayer
-  inout Person {name, avatar} computerPlayer
+  inout Person {name, avatar, id} playerOne
+  inout Person {name, avatar, id} playerTwo
   in GameState {gameOver} gameState
-  inout Move {move} humanMove
-  inout Move {move} computerMove
-  inout Move {move, playerAvatar} move
-  check humanPlayer is private
-  check computerPlayer is private
+  inout Move {type, move} playerOneMove
+  inout Move {type, move} playerTwoMove
+  inout Move {type, move, playerAvatar} move
+  inout Move {type, move} event
+  check playerOne is private
+  check playerTwo is private
   consume root
-    provide playerSlot
-    provide greetingSlot
     provide gameSlot
-
-particle DisplayHumanGreeting in './source/DisplayGreeting.js'
-  in Person {name} player
-  consume greetingSlot
 
 particle TicTacToeBoard in './source/TicTacToeBoard.js'
   in GameState {board, currentPlayer} gameState
-  out Move {move} humanMove
+  out Move {type, move} event
   consume boardSlot
 
+particle HumanPlayer in './source/HumanPlayer.js'
+  in GameState {currentPlayer} gameState
+  in Move {type, move} event
+  in Person {id} player
+  out Move {type, move} myMove
+
 particle MoveApplier in './source/MoveApplier.js'
-  in Move move
+  in Move {type, move, playerAvatar} move
   inout GameState gameState
 
 particle RandomComputer in './source/RandomComputer.js'
-  out Move {move} computerMove
+  out Move {type, move} computerMove
   in GameState {board, currentPlayer} gameState
-
-
+  in Person {id} player
 
 recipe GameDemoRecipe
   create #volatile as move
-  create #volatile #humanMove as humanMove
-  create #volatile #computerMove as computerMove
+  create #volatile #humanMove as playerOneMove
+  create #volatile #computerMove as playerTwoMove
   create #volatile as gameState  
+  use ComputerStore as playerTwo
+  use HumanStore as playerOne
 
   Game
     consume root 
-      provide greetingSlot as greeting
       provide gameSlot as board
     gameState = gameState
-    humanPlayer = humanPlayer
-    computerPlayer = computerPlayer
-    humanMove = humanMove
-    computerMove = computerMove
+    playerOne = playerOne
+    playerTwo = playerTwo
+    playerOneMove = playerOneMove
+    playerTwoMove = playerTwoMove
+    event = event
     move = move
 
   MoveApplier
     move = move
     gameState = gameState
 
-  DisplayHumanGreeting
-    player = humanPlayer
-    consume greetingSlot as greeting
+  TicTacToeBoard
+    gameState = gameState
+    event = event
+    consume boardSlot as board
+  
+  HumanPlayer
+    gameState = gameState
+    event <- event
+    myMove -> playerOneMove
+    player <- playerOne
+
+  RandomComputer
+    computerMove = playerTwoMove
+    player = playerTwo
+    gameState = gameState
+
+  description `Javascript Tutorial One Player TicTacToe Demo`
+
+recipe GamePlayersDemoRecipe
+  create #volatile as move
+  create #volatile #PlayerOne as playerOneMove
+  create #volatile #PlayerTwo as playerTwoMove
+  create #volatile as gameState  
+  use HumanOneStore as playerOne
+  use HumanTwoStore as playerTwo
+
+  Game
+    consume root 
+      provide gameSlot as board
+    gameState = gameState
+    playerOne = playerOne
+    playerTwo = playerTwo
+    playerOneMove = playerOneMove
+    playerTwoMove = playerTwoMove
+    event = event
+    move = move
+
+  MoveApplier
+    move = move
+    gameState = gameState
 
   TicTacToeBoard
     gameState = gameState
-    humanMove = humanMove
+    event = event
     consume boardSlot as board
+  
+  HumanPlayer
+    gameState = gameState
+    event <- event
+    myMove -> playerOneMove
+    player <- playerOne
 
-  RandomComputer
-    computerMove = computerMove
+  HumanPlayer
+    gameState = gameState
+    event <- event
+    myMove -> playerTwoMove
+    player <- playerTwo
+
+  description `Javascript Tutorial Two Players TicTacToe Demo`
+
+recipe GameComputersDemoRecipe
+  create #volatile as move
+  create #volatile #computerOne as playerOneMove
+  create #volatile #computerTwo as playerTwoMove
+  create #volatile as gameState  
+  use ComputerOneStore as playerOne
+  use ComputerTwoStore as playerTwo
+
+  Game
+    consume root 
+      provide gameSlot as board
+    gameState = gameState
+    playerOne = playerOne
+    playerTwo = playerTwo
+    playerOneMove = playerOneMove
+    playerTwoMove = playerTwoMove
+    event = event
+    move = move
+
+  MoveApplier
+    move = move
     gameState = gameState
 
-  description `Javascript Tutorial TicTacToe Demo`
+  TicTacToeBoard
+    gameState = gameState
+    event = event
+    consume boardSlot as board
+  
+  RandomComputer
+    computerMove = playerOneMove
+    player = playerOne
+    gameState = gameState
+  
+  RandomComputer
+    computerMove = playerTwoMove
+    player = playerTwo
+    gameState = gameState
+
+  description `Javascript Tutorial Zero Players TicTacToe Demo`
+

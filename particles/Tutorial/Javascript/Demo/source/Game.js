@@ -9,6 +9,8 @@
  */
 
 'use strict';
+const resetMove = {type: 'reset', move: -1};
+const clearMove = {type: 'clear', move: -1};
 
 /* global defineParticle */
 defineParticle(({SimpleParticle, html, log}) => {
@@ -17,81 +19,81 @@ defineParticle(({SimpleParticle, html, log}) => {
 
     get template() {
       return html`
-      <b>Please enter your name:</b>
-      <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-      <div slotid="greetingSlot"></div>
-      <span>{{turnMessage}}</span>
+      <span>It is your turn <span>{{name}}</span>, playing as <span>{{avatar}}</span>.
       <div slotid="gameSlot"></div>
-      <div hidden={{hideCongrats}}><span>{{congrats}}</span></div>
+      <div hidden={{hideCongrats}}>Congratulations <span>{{winnerName}}</span>!</div>
     `;
     }
 
-    shouldRender({gameState}) {
-      return gameState;
+    shouldRender({gameState, playerOne, playerTwo}) {
+      return gameState && playerOne && playerTwo;
     }
 
-    render({gameState, humanMove, computerMove, humanPlayer, computerPlayer, move}) {
+    render({gameState, playerOneMove, playerTwoMove, playerOne, playerTwo, move, event}) {
       const toReturn = {hideCongrats: true};
       if (!move) {
-        this.set('move', {move: 'reset'});
-        return;
+        this.set('move', resetMove);
+        return toReturn;
       }
 
-      if (!humanPlayer) {
-        this.set('humanPlayer', {name: 'Human', avatar: '🧑'});
-        return;
+      if (playerOne.id != 0) {
+        this.set('playerOne', {name: playerOne.name, avatar: playerOne.avatar, id: 0});
+        return toReturn;
       }
 
-      if (!computerPlayer) {
-        this.set('computerPlayer', {name: 'Computer', avatar: '🤖'});
-        return;
+      if (!playerTwo.id) {
+        this.set('playerTwo', {name: playerTwo.name, avatar: playerTwo.avatar, id: 1});
+        return toReturn;
       }
 
       // If the move has been applied, and the game isn't over
       if (gameState.lastMove == move.move && !gameState.gameOver) {
 
         if (gameState.currentPlayer == 0) {
-          toReturn.turnMessage = `It is your move, ${humanPlayer.name}.`;
-          if (humanMove && humanMove.move != move.move) {
-            this.set('move', {move: humanMove.move, playerAvatar: humanPlayer.avatar});
-            this.set('humanMove', {move: ''});
+          toReturn.name = playerOne.name;
+          toReturn.avatar = playerOne.avatar;
+          if (playerOneMove && playerOneMove.move != -1) {
+            this.set('move', {move: playerOneMove.move, playerAvatar: playerOne.avatar});
+            this.clearPlayerMoves();
           }
         }
 
         if (gameState.currentPlayer == 1) {
-          toReturn.turnMessage = `It is ${computerPlayer.avatar}'s move, please wait.`;
-          if (computerMove && computerMove.move != move.move) {
-            this.set('move', {move: computerMove.move, playerAvatar: computerPlayer.avatar});
-            this.set('computerMove', {move: ''});
+          toReturn.name = playerTwo.name;
+          toReturn.avatar = playerTwo.avatar;
+          if (playerTwoMove && playerTwoMove.move != -1) {
+            this.set('move', {move: playerTwoMove.move, playerAvatar: playerTwo.avatar});
+            this.clearPlayerMoves();
           }
         }
       }
 
       if (gameState.gameOver) {
-        if (humanMove && humanMove.move == 'reset') {
-          this.set('move', {move: 'reset'});
-          this.set('humanMove', {move: ''});
-          this.set('computerMove', {move: ''});
+        if (event && event.type == 'reset') {
+          this.set('move', resetMove);
+          this.clearPlayerMoves();
           return;
         }
 
         // Set congratulations message based on winner
         toReturn.hideCongrats = false;
         if (gameState.winnerAvatar !== null) {
-          if (gameState.winnerAvatar == humanPlayer.avatar) {
-            toReturn.congrats = `Congratulations ${humanPlayer.name}, you won!`;
+          if (gameState.winnerAvatar == playerOne.avatar) {
+            toReturn.winnerName = playerOne.name;
           } else {
-            toReturn.congrats = `Better luck next time... ${computerPlayer.avatar} won.`;
+            toReturn.winnerName = playerTwo.name;
           }
         } else {
-          toReturn.congrats = `It's a tie!`;
+          toReturn.winnerName = `it's a tie`;
         }
       }
       return toReturn;
     }
 
-    onNameInputChange(e) {
-      this.set('humanPlayer', {name: e.data.value, avatar: '🧑'});
+    clearPlayerMoves() {
+      this.set('playerOneMove', clearMove);
+      this.set('playerTwoMove', clearMove);
+      this.set('event', clearMove);
     }
   };
 });

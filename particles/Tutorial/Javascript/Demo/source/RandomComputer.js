@@ -10,42 +10,40 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, html}) => {
+defineParticle(({SimpleParticle, log}) => {
 
   function getMove(b) {
     const emptyCells = [];
-      const board = b.split(`,`);
-      // Determine which cells are empty.
-      for (let i = 0; i < board.length; i++) {
-        if (board[i] == ``) {
-          emptyCells.push((i + 1).toString());
-        }
+    const board = JSON.parse(b);
+    // Determine which cells are empty.
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] == ``) {
+        emptyCells.push(i);
       }
+    }
 
-      return emptyCells[Math.floor(Math.random() * emptyCells.length).toString()];
+    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
   }
 
   return class extends SimpleParticle {
 
-    update({gameState}) {
+    update({gameState, player}) {
       if (!gameState) {
         return;
       }
 
-
-      if (gameState.currentPlayer == 1) {
+      if (player && gameState.currentPlayer == player.id) {
         const emptyCells = [];
-        const board = gameState.board.split(`,`);
+        const board = JSON.parse(gameState.board);
         // Determine which cells are empty.
         for (let i = 0; i < board.length; i++) {
           if (board[i] == ``) {
-            emptyCells.push((i + 1).toString());
+            emptyCells.push(i);
           }
         }
 
         const selection = Math.floor(Math.random() * emptyCells.length);
-
-        setTimeout(() => this.set('computerMove', {move: getMove(gameState.board)}), 4000);
+        this.set('computerMove', {type: 'move', move: emptyCells[selection]});
       }
     }
   };

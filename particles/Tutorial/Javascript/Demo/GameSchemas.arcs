@@ -1,14 +1,16 @@
 schema Person
   Text name
   Text avatar
+  Number id
 
 schema GameState
   Boolean gameOver
   Text winnerAvatar
   Text board
   Number currentPlayer
-  Text lastMove
+  Number lastMove
 
 schema Move 
+  Text type
   Text playerAvatar
-  Text move
+  Number move

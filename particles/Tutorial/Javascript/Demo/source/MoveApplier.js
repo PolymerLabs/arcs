@@ -10,7 +10,7 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle}) => {
+defineParticle(({SimpleParticle, log}) => {
 
   const winningSequences = [
     [0, 1, 2],
@@ -25,13 +25,13 @@ defineParticle(({SimpleParticle}) => {
 
   return class extends SimpleParticle {
     update({move, gameState}) {
-      if (!gameState || (move && move.move == 'reset' && gameState.lastMove != 'reset')) {
+      if (!gameState || (move && move.type == 'reset' && gameState.lastMove != -1)) {
         const gs = {
-          board: ',,,,,,,,',
+          board: JSON.stringify(['', '', '', '', '', '', '', '', '']),
           gameOver: false,
           winnerAvatar: null,
           currentPlayer: Math.floor(Math.random() * 2),
-          lastMove: 'reset',
+          lastMove: -1,
         };
         this.set('gameState', gs);
         return;
@@ -46,13 +46,13 @@ defineParticle(({SimpleParticle}) => {
           lastMove: move.move,
         };
 
-        const arr = gameState.board.split(`,`);
-        const mv = parseInt(move.move, 10) - 1;
+        const arr = JSON.parse(gameState.board);
+        const mv = move.move;
 
         // If the move is valid, apply move
-        if (arr[mv] == ``) {
+        if (mv > -1 && arr[mv] == '') {
           arr[mv] = move.playerAvatar;
-          gs.board = arr.join();
+          gs.board = JSON.stringify(arr); //arr.join();
           gs.currentPlayer = (gameState.currentPlayer + 1) % 2;
         }
 
@@ -73,7 +73,6 @@ defineParticle(({SimpleParticle}) => {
             break;
           }
         }
-
         this.set('gameState', gs);
         return;
       }
