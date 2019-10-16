@@ -1,9 +1,6 @@
 package arcs.android.demo.service;
 
 import arcs.api.UiRenderer;
-import arcs.demo.services.AlertService;
-import arcs.demo.services.ClipboardService;
-import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.IntoMap;
@@ -11,12 +8,6 @@ import dagger.multibindings.StringKey;
 
 @Module
 public abstract class AndroidDemoServiceModule {
-
-  @Binds
-  public abstract ClipboardService provideClipboardSurface(AndroidClipboardService impl);
-
-  @Binds
-  public abstract AlertService provideAlertSurface(AndroidToastAlertService impl);
 
   @Provides
   @IntoMap
