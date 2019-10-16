@@ -168,6 +168,79 @@ describe('CRDTCollection', () => {
     }));
   });
 
+  it('allows removal by single actors who are up to date', () => {
+    const set = new CRDTCollection<{id: string}>();
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'x'},
+      clock: {a: 1},
+      actor: 'a'
+    }));
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'x'},
+      clock: {a: 1},
+      actor: 'a'
+    }));
+  });
+
+  it('allows removal by actors who are up to date', () => {
+    const set = new CRDTCollection<{id: string}>();
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'x'},
+      clock: {a: 1},
+      actor: 'a'
+    }));
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'x'},
+      clock: {c: 1},
+      actor: 'c'
+    }));
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'x'},
+      clock: {a: 1, c: 1},
+      actor: 'a'
+    }));
+    // This does not cause an update, as the removal has already been applied.
+    assert.isFalse(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'x'},
+      clock: {a: 1, c: 1},
+      actor: 'c'
+    }));
+  });
+
+  it('refuses removal by actors who are not up to date', () => {
+    const set = new CRDTCollection<{id: string}>();
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'x'},
+      clock: {a: 1},
+      actor: 'a'
+    }));
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'x'},
+      clock: {c: 1},
+      actor: 'c'
+    }));
+    assert.isFalse(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'x'},
+      clock: {a: 1},
+      actor: 'a'
+    }));
+    assert.isFalse(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: {id: 'x'},
+      clock: {c: 1},
+      actor: 'c'
+    }));
+  });
+
   it('can merge two models', () => {
     // Original set of data common to both sets. Say that actor c added them all.
     const originalOps = [
