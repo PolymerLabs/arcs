@@ -85,7 +85,7 @@ export abstract class Schema2Base {
     const [schemas, aliases] = this.processManifest(manifest);
 
     if (Object.keys(schemas).length === 0) {
-      console.warn(`No schemas found in ${src}`);
+      console.warn(`No schemas found in '${src}'`);
       return;
     }
 
