@@ -99,19 +99,7 @@ public class PecInnerPortImpl implements PecInnerPort {
             // TODO: implement proper capabilities.
             particle.setOutput((content) -> output(particle, content));
           } else {
-            if (REINSTANTIATE_PARTICLE_MSG.equals(messageType)) {
-              throw new AssertionError("Unexpected reinstantiate call for " + particleId);
-            }
-            Particle particle = pec.instantiateParticle(particleId, spec, proxies, idGenerator);
-            if (particle == null) {
-              // TODO: improve error handling.
-              throw new AssertionError("Cannot instantiate particle " + spec.name);
-            }
-
-            mapper.establishThingMapping(
-                messageBody.getString(INDENTIFIER_FIELD), new Thing<>(particle));
-            // TODO: implement proper capabilities.
-            particle.setOutput((content) -> output(particle, content));
+            throw new RuntimeException("Unexpected instantiate call for " + particleId);
           }
 
           break;

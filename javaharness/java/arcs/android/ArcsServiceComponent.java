@@ -6,13 +6,12 @@ import android.webkit.WebView;
 import javax.inject.Singleton;
 
 import arcs.android.Annotations.AppContext;
-import arcs.api.ParticlesModule;
 import arcs.api.RenderersModule;
 import dagger.BindsInstance;
 import dagger.Component;
 
 @Singleton
-@Component(modules = {AndroidHarnessModule.class, ParticlesModule.class, RenderersModule.class})
+@Component(modules = {AndroidHarnessModule.class, RenderersModule.class})
 public interface ArcsServiceComponent {
 
   void inject(ArcsService arcsService);
