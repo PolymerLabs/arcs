@@ -25,10 +25,12 @@ describe('schema2kotlin', () => {
     const generated = mock.addAliases(aliases);
 
     assert.notInclude(generated, ';');
-    assert.include(generated, 'typealias ProductFoo_alpha = Foo_alpha');
-    assert.include(generated, 'typealias ElementFoo_alpha = Foo_alpha');
-    assert.include(generated, 'typealias ThingFoo_alpha = Foo_alpha');
-    assert.include(generated, 'typealias ThingFoo_beta = Foo_beta');
+    assert.sameMembers(generated.split(/\n+/g), [
+      'typealias ProductFoo_alpha = Foo_alpha',
+      'typealias ElementFoo_alpha = Foo_alpha',
+      'typealias ThingFoo_alpha = Foo_alpha',
+      'typealias ThingFoo_beta = Foo_beta',
+    ]);
   });
 
   it('creates scoped aliases for global schemas', async () => {
@@ -58,8 +60,10 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
     const generated = mock.addAliases(aliases);
 
     assert.notInclude(generated, ';');
-    assert.include(generated, 'typealias ProductBasicParticle_foo = BasicParticle_foo');
-    assert.include(generated, 'typealias ProductBasicParticle_bar = BasicParticle_bar');
-    assert.include(generated, 'typealias ProductWatcher_bar = Watcher_bar');
+    assert.sameMembers(generated.split(/\n+/g), [
+      'typealias ProductBasicParticle_foo = BasicParticle_foo',
+      'typealias ProductBasicParticle_bar = BasicParticle_bar',
+      'typealias ProductWatcher_bar = Watcher_bar',
+    ]);
   });
 });

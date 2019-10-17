@@ -24,10 +24,12 @@ describe('schema2cpp', () => {
     const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
-    assert.include(generated, 'using ProductFoo_alpha = Foo_alpha;');
-    assert.include(generated, 'using ElementFoo_alpha = Foo_alpha;');
-    assert.include(generated, 'using ThingFoo_alpha = Foo_alpha;');
-    assert.include(generated, 'using ThingFoo_beta = Foo_beta;');
+    assert.sameMembers(generated.split(/\n+/g), [
+      'using ProductFoo_alpha = arcs::Foo_alpha;',
+      'using ElementFoo_alpha = arcs::Foo_alpha;',
+      'using ThingFoo_alpha = arcs::Foo_alpha;',
+      'using ThingFoo_beta = arcs::Foo_beta;',
+    ]);
   });
 
   it('creates scoped aliases for global schemas', async () => {
@@ -56,8 +58,10 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
     const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
-    assert.include(generated, 'using ProductBasicParticle_foo = BasicParticle_foo;');
-    assert.include(generated, 'using ProductBasicParticle_bar = BasicParticle_bar;');
-    assert.include(generated, 'using ProductWatcher_bar = Watcher_bar;');
+    assert.sameMembers(generated.split(/\n+/g), [
+      'using ProductBasicParticle_foo = arcs::BasicParticle_foo;',
+      'using ProductBasicParticle_bar = arcs::BasicParticle_bar;',
+      'using ProductWatcher_bar = arcs::Watcher_bar;',
+    ]);
   });
 });
