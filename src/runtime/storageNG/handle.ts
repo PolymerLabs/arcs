@@ -116,6 +116,14 @@ export abstract class Handle<T extends CRDTTypeRecord> {
     this.storageProxy.deregisterHandle(this);
     this.storageProxy = new NoOpStorageProxy();
   }
+
+  protected ensureEntityHasId(entity: unknown) {
+    console.log(`ensureEntityHasId called. instanceof Entity? ${entity instanceof Entity}. isIdentified? ${Entity.isIdentified(entity as any)}.`);
+    if (entity instanceof Entity && !Entity.isIdentified(entity)) {
+      this.createIdentityFor(entity);
+    }
+    console.log(`ensureEntityHasId finished. instanceof Entity? ${entity instanceof Entity}. isIdentified? ${Entity.isIdentified(entity as any)}.`);
+  }
 }
 
 /**
@@ -130,6 +138,8 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
   }
 
   async add(entity: T): Promise<boolean> {
+    this.ensureEntityHasId(entity);
+
     this.clock[this.key] = (this.clock[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: CollectionOpTypes.Add,
@@ -210,6 +220,8 @@ export class CollectionHandle<T extends Referenceable> extends Handle<CRDTCollec
  */
 export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSingletonTypeRecord<T>> {
   async set(entity: T): Promise<boolean> {
+    this.ensureEntityHasId(entity);
+
     this.clock[this.key] = (this.clock[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: SingletonOpTypes.Set,

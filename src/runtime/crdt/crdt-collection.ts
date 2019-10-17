@@ -10,6 +10,7 @@
 
 import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
 import {Dictionary} from '../hot.js';
+import {assert} from '../../platform/assert-web.js';
 
 type RawCollection<T> = Set<T>;
 
@@ -132,6 +133,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
   }
 
   private add(value: T, key: string, version: VersionMap): boolean {
+    this.checkValue(value);
     // Only accept an add if it is immediately consecutive to the clock for that actor.
     const expectedClockValue = (this.model.version[key] || 0) + 1;
     if (!(expectedClockValue === version[key] || 0)) {
@@ -144,6 +146,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
   }
 
   private remove(value: T, key: string, version: VersionMap): boolean {
+    this.checkValue(value);
     if (!this.model.values[value.id]) {
       return false;
     }
@@ -175,6 +178,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
       return true;
     }
     for (const [value, version] of op.added) {
+      this.checkValue(value);
       const existingValue = this.model.values[value.id];
       if (existingValue) {
         existingValue.version = mergeVersions(existingValue.version, version);
@@ -183,6 +187,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
       }
     }
     for (const value of op.removed) {
+      this.checkValue(value);
       const existingValue = this.model.values[value.id];
       if (existingValue && dominates(op.newClock, existingValue.version)) {
         delete this.model.values[value.id];
@@ -190,6 +195,10 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     }
     this.model.version = mergeVersions(currentClock, op.newClock);
     return true;
+  }
+
+  private checkValue(value: T) {
+    assert(value.id && value.id.length, `CRDT value must have an ID.`);
   }
 }
 

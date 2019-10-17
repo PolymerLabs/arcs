@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {VersionMap} from '../../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
@@ -82,6 +82,17 @@ describe('CollectionHandle', async () => {
     await handle.add(entity);
     await handle.add({id: 'B'});
     assert.deepEqual(await handle.get('A'), entity);
+  });
+
+  it('assigns IDs to entities with missing IDs', async () => {
+    const handle = await getCollectionHandle();
+    const entity = new handle.entityClass({});
+    assert.isUndefined(entity.id);
+    // TODO: Fails here! entity.id is not the right way of accessing the
+    // entity's ID, but that is what the CRDT expects. Do we need to serialize
+    // it first?
+    await handle.add(entity as unknown as Referenceable);
+    assert.isNotEmpty(entity.id);
   });
 
   it('can clear', async () => {

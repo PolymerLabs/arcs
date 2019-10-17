@@ -11,6 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {ChangeType, VersionMap} from '../crdt.js';
 import {CollectionOpTypes, CRDTCollection, CollectionOperation, simplifyFastForwardOp} from '../crdt-collection.js';
+import undefined from 'firebase/empty-import';
 
 /** Creates an Add operation. */
 function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {
@@ -166,6 +167,24 @@ describe('CRDTCollection', () => {
       clock: {me: 1},
       actor: 'them'
     }));
+  });
+
+  it('rejects values with missing IDs', () => {
+    const set = new CRDTCollection<{id: string}>();
+
+    const valuesWithMissingIDs: {id: string}[] = [
+      {} as {id: string},
+      {id: null},
+      {id: ''},
+    ];
+    valuesWithMissingIDs.forEach(value => {
+      assert.throws(
+          () => set.applyOperation({type: CollectionOpTypes.Add, added: value, actor: 'a', clock: {a: 1}}),
+          'CRDT value must have an ID.');
+      assert.throws(
+          () => set.applyOperation({type: CollectionOpTypes.Remove, removed: value, actor: 'a', clock: {a: 1}}),
+          'CRDT value must have an ID.');
+    });
   });
 
   it('can merge two models', () => {
