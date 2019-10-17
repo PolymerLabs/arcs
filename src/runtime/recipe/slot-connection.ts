@@ -17,6 +17,8 @@ import {compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Dictionary} from '../hot.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 
+import {Flags} from '../flags.js';
+
 export class SlotConnection implements Comparable<SlotConnection> {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;

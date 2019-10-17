@@ -18,6 +18,7 @@ import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type
 import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
+import {Flags} from './flags.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -387,7 +388,12 @@ export class ParticleSpec {
     const indent = '  ';
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
+      if (Flags.usePreSlandlesSyntax) {
+        // TODO: Remove post slandles syntax
+        results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
+      } else {
+        results.push(`${indent}${connection.name}: ${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()}${tags}`);
+      }
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }

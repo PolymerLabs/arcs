@@ -492,6 +492,10 @@ ParticleHandleConnection
   }
 
 ParticleHandleConnectionBody
+  = ParticleHandleConnectionBodyPreSlandle
+  / ParticleHandleConnectionBodyUnified
+
+ParticleHandleConnectionBodyPreSlandle
   = direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -502,6 +506,26 @@ ParticleHandleConnectionBody
       dependentConnections: [],
       name: nametag.name,
       tags: nametag.tags,
+    });
+  }
+
+NameWithColon
+  = &(unsafeLowerIdent whiteSpace? ':') name:lowerIdent whiteSpace? ':' whiteSpace?
+  {
+    return name;
+  }
+
+ParticleHandleConnectionBodyUnified
+  = maybeName:NameWithColon? direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  {
+    return toAstNode<AstNode.ParticleHandleConnection>({
+      kind: 'particle-argument',
+      direction,
+      type: type,
+      isOptional: !!isOptional,
+      dependentConnections: [],
+      name: maybeName || maybeTags[0] || expected(`either a name or tags to be supplied ${maybeName} ${maybeTags}`),
+      tags: maybeTags || []
     });
   }
 
@@ -1044,6 +1068,7 @@ NameAndTagList
    }
    / whiteSpace name:lowerIdent
    {
+     // TODO(jopra): Likely covered by previous case.
      return toAstNode<AstNode.NameAndTagList>({
        kind: 'name-and-tag-list',
        name: name,
@@ -1295,7 +1320,9 @@ id "an identifier (e.g. 'id')"
 upperIdent "an uppercase identifier (e.g. Foo)"
   = [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
-  = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
+  = !ReservedWord unsafeLowerIdent { return text(); }
+unsafeLowerIdent "a lowercase identifier or keyword"
+  = [a-z][a-z0-9_]i* { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
