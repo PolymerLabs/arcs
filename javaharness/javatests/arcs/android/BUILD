@@ -5,9 +5,9 @@ java_test(
     name = "AllTests",
     srcs = glob(["*.java"]),
     size = "small",
-    test_class = "arcs.android.impl.AllTests",
+    test_class = "arcs.android.AllTests",
     deps = [
-        "//javaharness/java/arcs/android:impl",
+        "//javaharness/java/arcs/android",
         "@junit//jar",
         "//javaharness/java/arcs/api:api-android",
     ],

@@ -1,10 +1,9 @@
-package arcs.android.impl;
+package arcs.android;
 
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Objects;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
