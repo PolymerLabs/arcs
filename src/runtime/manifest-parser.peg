@@ -36,33 +36,35 @@
     }
     return defaultValue === null ? null : defaultValue;
   }
-  function checkNormal(result) {
+  function checkNormal(result, path: string = '') {
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
-      error(`result was undefined`);
+      error(`Internal Parser Error: result was undefined at ${path}`);
     }
     if (Array.isArray(result)) {
+      let i = 0;
       for (const item of result) {
-        checkNormal(item);
+        checkNormal(item, `${path}/${i}`);
+        i++;
       }
       return;
     }
     if (result.model) {
-      error(`unexpected 'model' in ${JSON.stringify(result)}`);
+      error(`Internal Parser Error: unexpected 'model' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.location) {
-      error(`no 'location' in ${JSON.stringify(result)}`);
+      error(`Internal Parser Error: no 'location' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.kind) {
-      error(`no 'kind' in ${JSON.stringify(result)}`);
+      error(`Internal Parser Error: no 'kind' in ${JSON.stringify(result)} at ${path}`);
     }
     for (const key of Object.keys(result)) {
       if (['location', 'kind'].includes(key)) {
         continue;
       }
-      checkNormal(result[key]);
+      checkNormal(result[key], `${path}/${key}`);
     }
   }
 
