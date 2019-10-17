@@ -10,15 +10,15 @@ public:
   }
 
   void onHandleSync(const std::string& name, bool all_synced) override {
-    arcs::Data out;
+    arcs::Dummy_data out;
     out.set_txt("sync:" + name);
     out.set_flg(all_synced);
     output_.store(&out);
   }
 
   void onHandleUpdate(const std::string& name) override {
-    arcs::Data out;
-    if (auto input = getSingleton<arcs::Data>(name)) {
+    arcs::Dummy_data out;
+    if (auto input = getSingleton<arcs::Dummy_data>(name)) {
       out.set_txt("update:" + name);
       out.set_num(input->get().num());
     } else {
@@ -27,9 +27,9 @@ public:
     output_.store(&out);
   }
 
-  arcs::Singleton<arcs::Data> input1_;
-  arcs::Singleton<arcs::Data> input2_;
-  arcs::Collection<arcs::Data> output_;
+  arcs::Singleton<arcs::Dummy_data> input1_;
+  arcs::Singleton<arcs::Dummy_data> input2_;
+  arcs::Collection<arcs::Dummy_data> output_;
 };
 
 DEFINE_PARTICLE(HandleSyncUpdateTest)
@@ -50,11 +50,11 @@ public:
   }
 
   void onHandleUpdate(const std::string& name) override {
-    const arcs::RenderFlags& flags = flags_.get();
+    const arcs::Dummy_renderFlags& flags = flags_.get();
     renderSlot("root", flags._template(), flags.model());
   }
 
-  arcs::Singleton<arcs::RenderFlags> flags_;
+  arcs::Singleton<arcs::Dummy_renderFlags> flags_;
 };
 
 DEFINE_PARTICLE(RenderTest)
@@ -68,11 +68,11 @@ public:
   }
 
   std::string getTemplate(const std::string& slot_name) override {
-    const arcs::Data& data = data_.get();
+    const arcs::Dummy_data& data = data_.get();
     return data.has_txt() ? data.txt() : "empty";
   }
 
-  arcs::Singleton<arcs::Data> data_;
+  arcs::Singleton<arcs::Dummy_data> data_;
 };
 
 DEFINE_PARTICLE(AutoRenderTest)
@@ -85,12 +85,12 @@ public:
   }
 
   void fireEvent(const std::string& slot_name, const std::string& handler) override {
-    arcs::Data out;
+    arcs::Dummy_data out;
     out.set_txt("event:" + slot_name + ":" + handler);
     output_.set(&out);
   }
 
-  arcs::Singleton<arcs::Data> output_;
+  arcs::Singleton<arcs::Dummy_data> output_;
 };
 
 DEFINE_PARTICLE(EventsTest)
@@ -104,7 +104,7 @@ public:
 
   void init() override {
     std::string url = resolveUrl("$resolve-me");
-    arcs::ServiceResponse out;
+    arcs::Dummy_serviceResponse out;
     out.set_call("resolveUrl");
     out.set_payload(url);
     output_.store(&out);
@@ -121,14 +121,14 @@ public:
       payload += pair.first + ":" + pair.second + ";";
     }
 
-    arcs::ServiceResponse out;
+    arcs::Dummy_serviceResponse out;
     out.set_call(call);
     out.set_tag(tag);
     out.set_payload(payload);
     output_.store(&out);
   }
 
-  arcs::Collection<arcs::ServiceResponse> output_;
+  arcs::Collection<arcs::Dummy_serviceResponse> output_;
 };
 
 DEFINE_PARTICLE(ServicesTest)
@@ -147,11 +147,11 @@ public:
   }
 
   void fireEvent(const std::string& slot_name, const std::string& handler) override {
-    arcs::Data data;
+    arcs::Dummy_data data;
     data_.set(&data);
   }
 
-  arcs::Singleton<arcs::Data> data_;
+  arcs::Singleton<arcs::Dummy_data> data_;
 };
 
 DEFINE_PARTICLE(UnconnectedHandlesTest)
@@ -184,16 +184,16 @@ public:
     }
   }
 
-  void report(const std::string& label, const arcs::Ref<arcs::Data>& ref) {
-    arcs::Data d;
+  void report(const std::string& label, const arcs::Ref<arcs::Dummy_data>& ref) {
+    arcs::Dummy_data d;
     const std::string& id = arcs::internal::Accessor::get_id(ref);
     d.set_txt(label + " <" + id + "> " + arcs::entity_to_str(ref.entity()));
     res_.store(&d);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::Data>> sng_;
-  arcs::Collection<arcs::Ref<arcs::Data>> col_;
-  arcs::Collection<arcs::Data> res_;
+  arcs::Singleton<arcs::Ref<arcs::Dummy_data>> sng_;
+  arcs::Collection<arcs::Ref<arcs::Dummy_data>> col_;
+  arcs::Collection<arcs::Dummy_data> res_;
 };
 
 DEFINE_PARTICLE(InputReferenceHandlesTest)
@@ -207,18 +207,18 @@ public:
   }
 
   void init() override {
-    arcs::Ref<arcs::Data> r1;
+    arcs::Ref<arcs::Dummy_data> r1;
     arcs::internal::Accessor::decode_entity(&r1, "3:idX|4:keyX|");
     sng_.set(&r1);
 
-    arcs::Ref<arcs::Data> r2;
+    arcs::Ref<arcs::Dummy_data> r2;
     arcs::internal::Accessor::decode_entity(&r2, "3:idY|4:keyY|");
     col_.store(&r1);
     col_.store(&r2);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::Data>> sng_;
-  arcs::Collection<arcs::Ref<arcs::Data>> col_;
+  arcs::Singleton<arcs::Ref<arcs::Dummy_data>> sng_;
+  arcs::Collection<arcs::Ref<arcs::Dummy_data>> col_;
 };
 
 DEFINE_PARTICLE(OutputReferenceHandlesTest)
