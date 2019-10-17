@@ -1,6 +1,5 @@
 package arcs.android;
 
-
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import java.util.Collection;
@@ -63,4 +62,3 @@ class AndroidPortableJsonParser implements PortableJsonParser {
     return array;
   }
 }
-

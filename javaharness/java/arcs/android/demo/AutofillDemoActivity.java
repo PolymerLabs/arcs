@@ -21,7 +21,7 @@ public class AutofillDemoActivity extends Activity {
   private static final int REQUEST_CODE_AUTOFILL_SET = 1;
 
   @Inject
-  ArcsAndroid arcsClient;
+  ArcsAndroid arcs;
 
   @Inject
   PortableJsonParser jsonParser;
@@ -44,12 +44,12 @@ public class AutofillDemoActivity extends Activity {
     Button capturePersonButton = findViewById(R.id.capture_person_button);
     capturePersonButton.setOnClickListener(v -> capturePerson());
 
-    arcsClient.connect(this);
+    arcs.connect(this);
   }
 
   @Override
   public void onDestroy() {
-    arcsClient.disconnect(this);
+    arcs.disconnect(this);
 
     super.onDestroy();
   }
@@ -86,7 +86,7 @@ public class AutofillDemoActivity extends Activity {
 
   private void openAutofillSettings() {
     Intent intent = new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE);
-    intent.setData(Uri.parse("package:arcsClient.android.demo"));
+    intent.setData(Uri.parse("package:arcs.android.demo"));
     startActivityForResult(intent, REQUEST_CODE_AUTOFILL_SET);
   }
 
@@ -99,6 +99,6 @@ public class AutofillDemoActivity extends Activity {
     CapturePerson capturePerson = new CapturePerson();
     capturePerson.setId("capture-person-particle");
     capturePerson.setJsonParser(jsonParser);
-    arcsClient.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
+    arcs.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
   }
 }

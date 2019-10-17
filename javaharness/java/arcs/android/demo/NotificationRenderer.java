@@ -17,7 +17,6 @@ import arcs.api.UiRenderer;
 
 public class NotificationRenderer implements UiRenderer {
 
-
   private static final int REQUEST_CODE_TAP = 0;
   private static final int REQUEST_CODE_DISMISS = 1;
   private static final String TITLE_FIELD = "title";

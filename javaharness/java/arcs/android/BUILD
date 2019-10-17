@@ -22,7 +22,7 @@ android_library(
     resource_files = glob(["res/**"]),
     deps = [
         "//javaharness:autovalue",
-        "//javaharness/java/arcs/api",
+        "//javaharness/java/arcs/api:api-android",
         "@com_google_dagger",
         "@flogger//jar",
         "@flogger_system_backend//jar",

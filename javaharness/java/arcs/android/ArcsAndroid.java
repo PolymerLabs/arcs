@@ -17,12 +17,12 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
+import arcs.api.ArcsMessageSender;
 import arcs.api.Particle;
 import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
-import arcs.api.ShellApi;
 import arcs.api.UiRenderer;
 
 // This class implements Arcs API for clients to access Arcs via Android service.
@@ -32,7 +32,6 @@ public class ArcsAndroid {
 
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
-  private final ShellApi shellApi;
   private final ServiceConnection serviceConnection;
 
   private IArcsService arcsService;
@@ -42,13 +41,12 @@ public class ArcsAndroid {
   ArcsAndroid(
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
-      ShellApi shellApi) {
+      ArcsMessageSender arcsMessageSender) {
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
-    this.shellApi = shellApi;
     this.serviceConnection = new HelperServiceConnection();
 
-    this.shellApi.attachProxy(this::sendMessageToArcs);
+    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
   public void connect(Context context) {

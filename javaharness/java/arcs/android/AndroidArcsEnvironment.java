@@ -14,20 +14,21 @@ import android.webkit.WebViewClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import arcs.api.ArcsMessageSender;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RuntimeSettings;
-import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 /**
- * Android environment hosting Arcs runtime.
+ * Android WebView based environment for Arcs runtime.
  */
 @Singleton
 final class AndroidArcsEnvironment {
@@ -35,6 +36,9 @@ final class AndroidArcsEnvironment {
   interface ReadyListener {
     void onReady(List<String> recipes);
   }
+
+  private static final Logger logger =
+    Logger.getLogger(AndroidArcsEnvironment.class.getName());
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -47,41 +51,38 @@ final class AndroidArcsEnvironment {
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
 
-  private final List<ReadyListener> readyListeners = new ArrayList<>();
   private final PortableJsonParser jsonParser;
   private final PecPortManager pecPortManager;
   private final UiBroker uiBroker;
-  private final ShellApi shellApi;
-  private final Handler uiThreadHandler;
-  private WebView webView;
   // Fetches the up-to-date properties on every get().
   private Provider<RuntimeSettings> runtimeSettings;
+  private final Handler uiThreadHandler;
+  private final List<ReadyListener> readyListeners = new ArrayList<>();
+
+  private WebView webView;
 
   @Inject
-  public AndroidArcsEnvironment(
+  AndroidArcsEnvironment(
     PortableJsonParser jsonParser,
     PecPortManager pecPortManager,
     UiBroker uiBroker,
-    ShellApi shellApi,
+    ArcsMessageSender arcsMessageSender,
     Provider<RuntimeSettings> runtimeSettings) {
     this.jsonParser = jsonParser;
     this.pecPortManager = pecPortManager;
     this.uiBroker = uiBroker;
-    this.shellApi = shellApi;
     this.runtimeSettings = runtimeSettings;
 
     this.uiThreadHandler = new Handler(Looper.getMainLooper());
+
+    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
-  public void addReadyListener(ReadyListener listener) {
+  void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
   }
 
-  public void fireReadyEvent(List<String> recipes) {
-    readyListeners.forEach(listener -> listener.onReady(recipes));
-  }
-
-  public void init(Context context) {
+  void init(Context context) {
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -109,8 +110,6 @@ final class AndroidArcsEnvironment {
 
     webView.addJavascriptInterface(this, "DeviceClient");
 
-    shellApi.attachProxy(this::sendMessageToArcs);
-
     RuntimeSettings settings = runtimeSettings.get();
     // If using any of the host shells, i.e. pipe-shells at the host:
     // http://localhost:8786/shells/pipes-shell/web/deploy/dist/?
@@ -127,9 +126,12 @@ final class AndroidArcsEnvironment {
     webView.loadUrl(url);
   }
 
-  public void reset() {}
-
-  public void destroy() {}
+  void destroy() {
+    if (webView != null) {
+      // Clean up content/context thus the host devServer can be aware of the disconnection.
+      webView.loadUrl("about:blank");
+    }
+  }
 
   @JavascriptInterface
   public void receive(String json) {
@@ -140,20 +142,32 @@ final class AndroidArcsEnvironment {
         fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
         break;
       case MESSAGE_DATA:
+        logger.warning("logger: Received deprecated 'data' message");
         break;
       case MESSAGE_PEC:
-        PortableJson data = content.getObject(FIELD_DATA);
-        String pecId = data.getString(FIELD_PEC_ID);
-        String sessionId =
-          data.hasKey(FIELD_SESSION_ID) ? data.getString(FIELD_SESSION_ID) : null;
-        pecPortManager.deliverPecMessage(pecId, sessionId, data);
+        deliverPecMessage(content.getObject(FIELD_DATA));
         break;
       case MESSAGE_OUTPUT:
-        uiBroker.render(content.getObject(FIELD_DATA));
+        if (!uiBroker.render(content.getObject(FIELD_DATA))) {
+          logger.warning(
+            "Skipped rendering content for "
+              + content.getObject("data").getString("containerSlotName"));
+        }
         break;
       default:
         throw new AssertionError("Received unsupported message: " + message);
     }
+  }
+
+  private void deliverPecMessage(PortableJson message) {
+    String pecId = message.getString(FIELD_PEC_ID);
+    String sessionId =
+      message.hasKey(FIELD_SESSION_ID) ? message.getString(FIELD_SESSION_ID) : null;
+    pecPortManager.deliverPecMessage(pecId, sessionId, message);
+  }
+
+  private void fireReadyEvent(List<String> recipes) {
+    readyListeners.forEach(listener -> listener.onReady(recipes));
   }
 
   private void sendMessageToArcs(String msg) {

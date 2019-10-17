@@ -8,21 +8,21 @@ import javax.inject.Singleton;
 @Singleton
 public final class PecPortManager {
 
-  private final Map<String, PecInnerPort> pecPortMap = new HashMap<>();
-  private final Map<String, PecPortProxy> pecPortProxyMap = new HashMap<>();
-
-  private final ShellApi shellApi;
-  private final ParticleExecutionContext pec;
+  private final ArcsMessageSender arcsMessageSender;
   private final PortableJsonParser jsonParser;
+  private final HandleFactory handleFactory;
+
+  private final Map<String, PecInnerPort> pecPortMap = new HashMap<>();
+  private final Map<String, PecInnerPortProxy> pecInnerPortProxyMap = new HashMap<>();
 
   @Inject
   PecPortManager(
-      ShellApi shellApi,
-      ParticleExecutionContext pec,
-      PortableJsonParser jsonParser) {
-    this.shellApi = shellApi;
-    this.pec = pec;
+      ArcsMessageSender arcsMessageSender,
+      PortableJsonParser jsonParser,
+      HandleFactory handleFactory) {
+    this.arcsMessageSender = arcsMessageSender;
     this.jsonParser = jsonParser;
+    this.handleFactory = handleFactory;
   }
 
   public void deliverPecMessage(String pecId, String sessionId, PortableJson message) {
@@ -32,9 +32,9 @@ public final class PecPortManager {
       return;
     }
 
-    PecPortProxy portProxy = pecPortProxyMap.get(pecId);
-    if (portProxy != null) {
-      portProxy.onReceivePecMessage(message);
+    PecInnerPortProxy pecInnerPortProxy = pecInnerPortProxyMap.get(pecId);
+    if (pecInnerPortProxy != null) {
+      pecInnerPortProxy.onReceivePecMessage(message);
       return;
     }
 
@@ -43,8 +43,8 @@ public final class PecPortManager {
     port.onReceivePecMessage(message);
   }
 
-  public void addPecPortProxy(String pecId, PecPortProxy pecPortProxy) {
-    pecPortProxyMap.put(pecId, pecPortProxy);
+  public void addPecInnerPortProxy(String pecId, PecInnerPortProxy pecInnerPortProxy) {
+    pecInnerPortProxyMap.put(pecId, pecInnerPortProxy);
   }
 
   public PecInnerPort getOrCreateInnerPort(String pecId, String sessionId) {
@@ -57,8 +57,14 @@ public final class PecPortManager {
   }
 
   public void removePecPort(String pecId) {
-    pecPortMap.remove(pecId);
-    pecPortProxyMap.remove(pecId);
+    // TODO: split and verify this method is called correctly.
+    if (pecPortMap.remove(pecId) != null) {
+      return;
+    } else if (pecInnerPortProxyMap.remove(pecId) != null) {
+      return;
+    }
+
+    throw new IllegalArgumentException("Pec with ID " + pecId + " doesn't exist.");
   }
 
   private PecInnerPort createPecPort(String pecId, String sessionId) {
@@ -66,7 +72,8 @@ public final class PecPortManager {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
 
-    PecInnerPort pecInnerPort = new PecInnerPort(pecId, sessionId, shellApi, pec, jsonParser);
+    PecInnerPort pecInnerPort = new PecInnerPort(
+        pecId, sessionId, arcsMessageSender, jsonParser, handleFactory);
     pecPortMap.put(pecId, pecInnerPort);
     return pecInnerPort;
   }

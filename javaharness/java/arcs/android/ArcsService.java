@@ -11,13 +11,13 @@ import java.util.List;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
+import arcs.api.ArcsMessageSender;
 import arcs.api.Constants;
 import arcs.api.PecInnerPort;
+import arcs.api.PecInnerPortProxy;
 import arcs.api.PecPortManager;
-import arcs.api.PecPortProxy;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
-import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 /**
@@ -37,7 +37,7 @@ public class ArcsService extends Service {
   AndroidArcsEnvironment environment;
 
   @Inject
-  ShellApi shellApi;
+  ArcsMessageSender arcsMessageSender;
 
   @Inject
   PecPortManager pecPortManager;
@@ -52,8 +52,8 @@ public class ArcsService extends Service {
     Log.d(TAG, "onCreate()");
 
     DaggerArcsServiceComponent.builder()
-      .build()
-      .inject(this);
+        .build()
+        .inject(this);
 
     environment.addReadyListener(recipes -> arcsReady = true);
     environment.init(this);
@@ -72,7 +72,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        shellApi.sendMessageToArcs(message);
+        arcsMessageSender.sendMessageToArcs(message);
       }
 
       @Override
@@ -84,8 +84,8 @@ public class ArcsService extends Service {
           List<String> particleNames,
           List<String> providedSlotIds,
           IRemotePecCallback callback) {
-        PecPortProxy pecPortProxy =
-            new PecPortProxy(
+        PecInnerPortProxy pecInnerPortProxy =
+            new PecInnerPortProxy(
                 message -> {
                   try {
                     callback.onMessage(message);
@@ -94,20 +94,20 @@ public class ArcsService extends Service {
                   }
                 },
                 jsonParser);
-        pecPortManager.addPecPortProxy(pecId, pecPortProxy);
+        pecPortManager.addPecInnerPortProxy(pecId, pecInnerPortProxy);
 
         runWhenReady(() -> {
-            ArcData.Builder arcDataBuilder = new ArcData.Builder()
+          ArcData.Builder arcDataBuilder = new ArcData.Builder()
               .setArcId(arcId)
               .setPecId(pecId)
               .setRecipe(recipe);
-            for (int i = 0; i < particleIds.size(); ++i) {
-              arcDataBuilder.addParticleData(
-                  new ArcData.ParticleData()
-                      .setId(particleIds.get(i))
-                      .setName(particleNames.get(i))
-                      .setProvidedSlotId(providedSlotIds.get(i)));
-            }
+          for (int i = 0; i < particleIds.size(); ++i) {
+            arcDataBuilder.addParticleData(
+                new ArcData.ParticleData()
+                    .setId(particleIds.get(i))
+                    .setName(particleNames.get(i))
+                    .setProvidedSlotId(providedSlotIds.get(i)));
+          }
 
           ArcData arcData = arcDataBuilder.build();
           PecInnerPort pecInnerPort = null;
@@ -115,12 +115,12 @@ public class ArcsService extends Service {
             if (particleData.getParticle() != null) {
               if (pecInnerPort == null) {
                 pecInnerPort = pecPortManager.getOrCreateInnerPort(
-                  arcData.getPecId(), arcData.getSessionId());
+                    arcData.getPecId(), arcData.getSessionId());
               }
               pecInnerPort.mapParticle(particleData.getParticle());
             }
           }
-          shellApi.sendMessageToArcs(constructRunArcRequest(arcData));
+          arcsMessageSender.sendMessageToArcs(constructRunArcRequest(arcData));
         });
       }
 
@@ -128,7 +128,7 @@ public class ArcsService extends Service {
       public void stopArc(String arcId, String pecId) {
         runWhenReady(() -> {
           ArcData arcData = new ArcData.Builder().setArcId(arcId).setPecId(pecId).build();
-          shellApi.sendMessageToArcs(constructStopArcRequest(arcData));
+          arcsMessageSender.sendMessageToArcs(constructStopArcRequest(arcData));
         });
         pecPortManager.removePecPort(pecId);
       }
@@ -151,19 +151,19 @@ public class ArcsService extends Service {
 
   private String constructRunArcRequest(ArcData arcData) {
     PortableJson request = jsonParser
-      .emptyObject()
-      .put(Constants.MESSAGE_FIELD, Constants.RUN_ARC_MESSAGE)
-      .put(Constants.ARC_ID_FIELD, arcData.getArcId())
-      .put(Constants.PEC_ID_FIELD, arcData.getPecId())
-      .put(Constants.RECIPE_FIELD, arcData.getRecipe());
+        .emptyObject()
+        .put(Constants.MESSAGE_FIELD, Constants.RUN_ARC_MESSAGE)
+        .put(Constants.ARC_ID_FIELD, arcData.getArcId())
+        .put(Constants.PEC_ID_FIELD, arcData.getPecId())
+        .put(Constants.RECIPE_FIELD, arcData.getRecipe());
     PortableJson particles = jsonParser.emptyArray();
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getName() != null && particleData.getId() != null) {
         PortableJson particleJson =
-          jsonParser
-            .emptyObject()
-            .put(Constants.PARTICLE_ID_FIELD, particleData.getId())
-            .put(Constants.PARTICLE_NAME_FIELD, particleData.getName());
+            jsonParser
+                .emptyObject()
+                .put(Constants.PARTICLE_ID_FIELD, particleData.getId())
+                .put(Constants.PARTICLE_NAME_FIELD, particleData.getName());
         if (particleData.getProvidedSlotId() != null) {
           particleJson.put(Constants.PROVIDED_SLOT_ID_FIELD, particleData.getProvidedSlotId());
         }
@@ -179,11 +179,11 @@ public class ArcsService extends Service {
 
   private String constructStopArcRequest(ArcData arcData) {
     return jsonParser.stringify(
-      jsonParser
-        .emptyObject()
-        .put(Constants.MESSAGE_FIELD, Constants.STOP_ARC_MESSAGE)
-        .put(Constants.ARC_ID_FIELD, arcData.getArcId())
-        .put(Constants.PEC_ID_FIELD, arcData.getPecId()));
+        jsonParser
+            .emptyObject()
+            .put(Constants.MESSAGE_FIELD, Constants.STOP_ARC_MESSAGE)
+            .put(Constants.ARC_ID_FIELD, arcData.getArcId())
+            .put(Constants.PEC_ID_FIELD, arcData.getPecId()));
   }
 
   private void runWhenReady(Runnable runnable) {

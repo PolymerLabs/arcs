@@ -11,7 +11,7 @@ import arcs.android.ArcsAndroid;
 public class NotificationDemoActivity extends Activity {
 
   @Inject
-  ArcsAndroid arcsClient;
+  ArcsAndroid arcs;
 
   @Inject
   NotificationRenderer notificationRenderer;
@@ -22,8 +22,8 @@ public class NotificationDemoActivity extends Activity {
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
-    arcsClient.connect(this);
-    arcsClient.registerRenderer("notification", notificationRenderer);
+    arcs.connect(this);
+    arcs.registerRenderer("notification", notificationRenderer);
 
     setContentView(R.layout.notification_demo);
 
@@ -32,11 +32,11 @@ public class NotificationDemoActivity extends Activity {
 
   @Override
   public void onDestroy() {
-    arcsClient.disconnect(this);
+    arcs.disconnect(this);
     super.onDestroy();
   }
 
   private void sendNotification() {
-    arcsClient.runArc("NotificationTest");
+    arcs.runArc("NotificationTest");
   }
 }
