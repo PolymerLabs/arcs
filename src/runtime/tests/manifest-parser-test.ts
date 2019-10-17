@@ -87,7 +87,7 @@ describe('manifest parser', () => {
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
-  it('SLANDLES SYNTAX fails to parse an argument list that use a reserved word as an identifier', Flags.withPostSlandlesSyntax(() => {
+  it('SLANDLES SYNTAX fails to parse an argument list that use a reserved word as an identifier', Flags.withPostSlandlesSyntax(async () => {
     try {
       parse(`
         particle MyParticle
@@ -98,7 +98,7 @@ describe('manifest parser', () => {
       assert.include(e.message, 'Expected', `bad error: '${e}'`);
     }
   }));
-  it('fails to parse an argument list that use a reserved word as an identifier', Flags.withPreSlandlesSyntax(() => {
+  it('fails to parse an argument list that use a reserved word as an identifier', Flags.withPreSlandlesSyntax(async () => {
     try {
       parse(`
         particle MyParticle
