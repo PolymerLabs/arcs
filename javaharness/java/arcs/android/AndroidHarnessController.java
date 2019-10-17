@@ -127,7 +127,7 @@ public class AndroidHarnessController implements HarnessController {
   private void sendMessageToArcs(String json) {
     String escapedEnvelope = json.replace("\\\"", "\\\\\"");
 
-    String script = String.format("ArcsMessageSender.receive('%s');", escapedEnvelope);
+    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
     Log.e("Arcs", "Receive called " + script);
 
     if (webView != null) {
