@@ -7,9 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base} from './schema2base.js';
+import {Aliases, Schema2Base} from './schema2base.js';
 import {Schema} from '../runtime/schema.js';
-import {Dictionary} from '../runtime/hot.js';
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
@@ -113,7 +112,7 @@ data class ${name}(
   }
 
 
-  addAliases(aliases: Dictionary<Set<string>>): string {
+  addAliases(aliases: Aliases): string {
     const lines: string[] = Object.entries(aliases)
       .map(([rhs, ids]): string[] => [...ids].map((id) => `typealias ${id} = ${rhs}`))
       .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()

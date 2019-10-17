@@ -9,10 +9,9 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Schema2Base} from '../schema2base.js';
+import {Aliases, Schema2Base} from '../schema2base.js';
 import {Schema} from '../../runtime/schema.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Dictionary} from '../../runtime/hot.js';
 
 
 class Schema2Mock extends Schema2Base {
@@ -39,7 +38,7 @@ class Schema2Mock extends Schema2Base {
     return baseName;
   }
 
-  addAliases(aliases: Dictionary<Set<string>>): string {
+  addAliases(aliases: Aliases): string {
     return '';
   }
 

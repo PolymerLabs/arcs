@@ -15,6 +15,8 @@ import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 import {Manifest} from '../runtime/manifest.js';
 
+export type Aliases = Dictionary<Set<string>>;
+
 export abstract class Schema2Base {
   constructor(readonly opts: minimist.ParsedArgs) {
     Utils.init('../..');
@@ -32,7 +34,7 @@ export abstract class Schema2Base {
   }
 
   /** Collect schemas from particle connections and build map of aliases. */
-  public processManifest(manifest: Manifest): [Dictionary<Set<string>>, Dictionary<Schema>, Dictionary<Schema>] {
+  public processManifest(manifest: Manifest): [Aliases, Dictionary<Schema>, Dictionary<Schema>] {
     const aliases: Dictionary<Set<string>> = {};
     const updateAliases = (rhs, alias) => {
       if (aliases[rhs] !== undefined) {
@@ -181,5 +183,5 @@ export abstract class Schema2Base {
   abstract fileHeader(outName: string): string;
   abstract fileFooter(): string;
   abstract entityClass(name: string, schema: Schema): string;
-  abstract addAliases(aliases: Dictionary<Set<string>>): string;
+  abstract addAliases(aliases: Aliases): string;
 }
