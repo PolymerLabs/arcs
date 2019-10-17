@@ -123,7 +123,7 @@ export interface ManifestStorage extends BaseNode {
   version: number;
   tags: TagList;
   source: string;
-  origin: string;
+  origin: 'file' | 'resource' | 'storage';
   description: string|null;
   claim: ManifestStorageClaim;
 }

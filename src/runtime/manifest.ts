@@ -247,6 +247,7 @@ export class Manifest {
       description?: string,
       version?: number,
       source?: string,
+      origin?: 'file' | 'resource' | 'storage',
       referenceMode?: boolean,
       model?: {}[],
   }) {
@@ -276,6 +277,7 @@ export class Manifest {
           opts.description,
           opts.version,
           opts.source,
+          opts.origin,
           opts.referenceMode,
           opts.model);
     }
@@ -1206,6 +1208,7 @@ ${e.message}
         claims,
         description: item.description,
         version: item.version,
+        origin: item.origin,
       });
     }
 
@@ -1310,6 +1313,7 @@ ${e.message}
         description: item.description,
         version,
         source: item.source,
+        origin: item.origin,
         referenceMode,
         model,
     });
@@ -1349,7 +1353,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString(this.storeTags.get(store).map(a => `#${a}`)));
+      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
     });
 
     return results.join('\n');
