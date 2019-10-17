@@ -35,10 +35,7 @@ public class ArcsAutofillService extends AutofillService {
   public void onCreate() {
     super.onCreate();
 
-    DaggerArcsAutofillServiceComponent.builder()
-        .appContext(getApplicationContext())
-        .build()
-        .inject(this);
+    ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
     autofillRenderer = ((AutofillRenderer) uiBroker.getRenderer("autofill"));
   }

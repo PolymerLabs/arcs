@@ -16,10 +16,7 @@ public class NotificationDemoActivity extends Activity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    DaggerNotificationDemoActivityComponent.builder()
-        .appContext(getApplicationContext())
-        .build()
-        .inject(this);
+    ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
     setContentView(R.layout.notification_demo);
 

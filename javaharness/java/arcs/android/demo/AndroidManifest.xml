@@ -9,7 +9,9 @@ package="arcs.android.demo">
 
 <application
   android:label="Arcs Demo"
+  android:name=".ArcsDemoApplication"
   android:usesCleartextTraffic="true">
+
   <service
     android:name=".ArcsAutofillService"
     android:label="Arcs Demo Autofill Service"
@@ -19,6 +21,7 @@ package="arcs.android.demo">
       <action android:name="android.service.autofill.AutofillService" />
     </intent-filter>
   </service>
+
   <service
     android:name=".AndroidNotificationHandlerService"
     android:exported="true" />

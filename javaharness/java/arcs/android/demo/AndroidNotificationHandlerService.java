@@ -30,11 +30,7 @@ public class AndroidNotificationHandlerService extends IntentService {
 
     Log.d(TAG, "onCreate()");
 
-    DaggerAndroidNotificationHandlerServiceComponent.builder()
-        .appContext(getApplicationContext())
-        .build()
-        .inject(this);
-
+    ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
   }
 
   @Override

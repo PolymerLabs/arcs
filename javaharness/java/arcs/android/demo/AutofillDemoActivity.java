@@ -27,18 +27,16 @@ public class AutofillDemoActivity extends Activity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    autofillManager = getSystemService(AutofillManager.class);
-
-    DaggerAutofillDemoActivityComponent.builder()
-        .appContext(getApplicationContext())
-        .build()
-        .inject(this);
+    ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
     setContentView(R.layout.autofill_demo);
+
+    autofillManager = getSystemService(AutofillManager.class);
     updateSettingStatus();
 
     Button capturePersonButton = findViewById(R.id.capture_person_button);
     capturePersonButton.setOnClickListener(v -> capturePerson());
+
   }
 
   @Override
