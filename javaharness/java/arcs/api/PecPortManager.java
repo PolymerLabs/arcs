@@ -9,8 +9,8 @@ import javax.inject.Singleton;
 public class PecPortManager {
 
   private final ArcsMessageSender arcsMessageSender;
-  private final ParticleExecutionContext pec;
   private final PortableJsonParser jsonParser;
+  private final HandleFactory handleFactory;
 
   private final Map<String, PecInnerPort> pecPortMap = new HashMap<>();
   private final Map<String, PecInnerPortProxy> pecPortProxyMap = new HashMap<>();
@@ -18,11 +18,11 @@ public class PecPortManager {
   @Inject
   PecPortManager(
     ArcsMessageSender arcsMessageSender,
-    ParticleExecutionContext pec,
-    PortableJsonParser jsonParser) {
+    PortableJsonParser jsonParser,
+    HandleFactory handleFactory) {
     this.arcsMessageSender = arcsMessageSender;
-    this.pec = pec;
     this.jsonParser = jsonParser;
+    this.handleFactory = handleFactory;
   }
 
   public void deliverPecMessage(String pecId, String sessionId, PortableJson message) {
@@ -72,7 +72,7 @@ public class PecPortManager {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
     PecInnerPort pecInnerPort = new PecInnerPort(
-      pecId, sessionId, arcsMessageSender, pec, jsonParser);
+      pecId, sessionId, arcsMessageSender, jsonParser, handleFactory);
     pecPortMap.put(pecId, pecInnerPort);
     return pecInnerPort;
   }

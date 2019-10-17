@@ -2,10 +2,12 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 public class PecInnerPort {
+
   private static final String MESSAGE_TYPE_FIELD = "messageType";
   private static final String MESSAGE_BODY_FIELD = "messageBody";
   private static final String MESSAGE_PEC_ID_FIELD = "id";
@@ -49,22 +51,22 @@ public class PecInnerPort {
 
   private final String id;
   private final ArcsMessageSender arcsMessageSender;
-  private final ParticleExecutionContext pec;
   private final ThingMapper mapper;
   private final PortableJsonParser jsonParser;
   private final IdGenerator idGenerator;
+  private final HandleFactory handleFactory;
 
   public PecInnerPort(
       String id,
       String sessionId,
       ArcsMessageSender arcsMessageSender,
-      ParticleExecutionContext pec,
-      PortableJsonParser jsonParser) {
+      PortableJsonParser jsonParser,
+      HandleFactory handleFactory) {
     this.id = id;
     this.arcsMessageSender = arcsMessageSender;
-    this.pec = pec;
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
+    this.handleFactory = handleFactory;
     this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
   }
 
@@ -93,7 +95,7 @@ public class PecInnerPort {
           if (mapper.hasThingForIdentifier(particleId)) {
            // Non-factory instantiation of a Particle.
             Particle particle = mapper.thingForIdentifier(particleId).getParticle();
-            pec.initializeParticle(particle, spec, proxies, idGenerator);
+            initializeParticle(particle, spec, proxies, idGenerator);
             // TODO: implement proper capabilities.
             particle.setOutput((content) -> output(particle, content));
           } else {
@@ -214,6 +216,38 @@ public class PecInnerPort {
     body.put(PARTICLE_FIELD, mapper.identifierForThing(new Thing<>(particle)));
     body.put(CONTENT_FIELD, content);
     postMessage(message);
+  }
+
+  private void initializeParticle(
+    Particle particle,
+    ParticleSpec spec,
+    Map<String, StorageProxy> proxies,
+    IdGenerator idGenerator) {
+    Objects.requireNonNull(particle).setSpec(spec);
+    particle.setJsonParser(jsonParser);
+
+    Map<String, Handle> handleMap = new HashMap<>();
+    Map<Handle, StorageProxy> registerMap = new HashMap<>();
+
+    for (String proxyName : proxies.keySet()) {
+      StorageProxy storageProxy = proxies.get(proxyName);
+      Handle handle =
+        this.handleFactory.handleFor(
+          storageProxy,
+          idGenerator,
+          proxyName,
+          particle.getId(),
+          spec.isInput(proxyName),
+          spec.isOutput(proxyName));
+      handleMap.put(proxyName, handle);
+      registerMap.put(handle, storageProxy);
+    }
+
+    particle.setHandles(handleMap);
+    for (Handle handle : registerMap.keySet()) {
+      StorageProxy storageProxy = registerMap.get(handle);
+      storageProxy.register(particle, handle);
+    }
   }
 
   private PortableJson constructMessage(String messageType) {
