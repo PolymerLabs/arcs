@@ -1,6 +1,6 @@
 package arcs.api;
 
-public abstract class Type {
+abstract class Type {
   enum Tag {
     UNKNOWN,
     ENTITY,

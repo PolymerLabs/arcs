@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class ThingMapper {
+class ThingMapper {
   private String prefix;
   private int nextIdentifier;
   // TODO: consider using BiMap instead.
