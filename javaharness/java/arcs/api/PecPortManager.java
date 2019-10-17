@@ -57,6 +57,7 @@ public class PecPortManager {
   }
 
   public void removePecPort(String pecId) {
+    // TODO: split and verify this method is called correctly.
     if (pecPortMap.remove(pecId) != null) {
       return;
     } else if (pecPortProxyMap.remove(pecId) != null) {

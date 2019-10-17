@@ -51,13 +51,13 @@ public class AndroidHarnessController implements HarnessController {
 
   @Inject
   AndroidHarnessController(
-    PortableJsonParser jsonParser,
-    ArcsEnvironment environment,
-    PecPortManager pecPortManager,
-    UiBroker uiBroker,
-    ArcsMessageSender arcsMessageSender,
-    WebView webView,
-    Provider<RuntimeSettings> runtimeSettings) {
+      PortableJsonParser jsonParser,
+      ArcsEnvironment environment,
+      PecPortManager pecPortManager,
+      UiBroker uiBroker,
+      ArcsMessageSender arcsMessageSender,
+      WebView webView,
+      Provider<RuntimeSettings> runtimeSettings) {
     this.jsonParser = jsonParser;
     this.environment = environment;
     this.pecPortManager = pecPortManager;
