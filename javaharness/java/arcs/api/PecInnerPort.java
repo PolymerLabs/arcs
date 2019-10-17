@@ -48,7 +48,7 @@ public class PecInnerPort {
   private static final Logger logger = Logger.getLogger(PecInnerPort.class.getName());
 
   private final String id;
-  private final ShellApi shellApi;
+  private final ArcsMessageSender arcsMessageSender;
   private final ParticleExecutionContext pec;
   private final ThingMapper mapper;
   private final PortableJsonParser jsonParser;
@@ -57,11 +57,11 @@ public class PecInnerPort {
   public PecInnerPort(
       String id,
       String sessionId,
-      ShellApi shellApi,
+      ArcsMessageSender arcsMessageSender,
       ParticleExecutionContext pec,
       PortableJsonParser jsonParser) {
     this.id = id;
-    this.shellApi = shellApi;
+    this.arcsMessageSender = arcsMessageSender;
     this.pec = pec;
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
@@ -249,6 +249,6 @@ public class PecInnerPort {
     json.put(MESSAGE_PEC_MESSAGE_KEY, MESSAGE_PEC_PEC_VALUE);
     json.put(MESSAGE_PEC_ID_FIELD, this.id);
     json.put(MESSAGE_PEC_ENTITY_KEY, message);
-    shellApi.sendMessageToArcs(jsonParser.stringify(json));
+    arcsMessageSender.sendMessageToArcs(jsonParser.stringify(json));
   }
 }

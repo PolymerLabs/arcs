@@ -4,20 +4,20 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class ShellApi {
+public class ArcsMessageSender {
 
   public interface Proxy {
-    void onMessage(String message);
+    void sendMessage(String message);
   }
 
   Proxy proxy;
 
   @Inject
-  ShellApi() {}
+  ArcsMessageSender() {}
 
   public void sendMessageToArcs(String message) {
     if (proxy != null) {
-      proxy.onMessage(message);
+      proxy.sendMessage(message);
     }
   }
 

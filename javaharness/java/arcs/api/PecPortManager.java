@@ -8,7 +8,7 @@ import javax.inject.Singleton;
 @Singleton
 public class PecPortManager {
 
-  private final ShellApi shellApi;
+  private final ArcsMessageSender arcsMessageSender;
   private final ParticleExecutionContext pec;
   private final PortableJsonParser jsonParser;
 
@@ -17,10 +17,10 @@ public class PecPortManager {
 
   @Inject
   PecPortManager(
-    ShellApi shellApi,
+    ArcsMessageSender arcsMessageSender,
     ParticleExecutionContext pec,
     PortableJsonParser jsonParser) {
-    this.shellApi = shellApi;
+    this.arcsMessageSender = arcsMessageSender;
     this.pec = pec;
     this.jsonParser = jsonParser;
   }
@@ -39,34 +39,39 @@ public class PecPortManager {
     }
 
     // Create a new inner PEC port for this pecId.
-    port = createInnerPecPort(pecId, sessionId);
+    port = createPecInnerPort(pecId, sessionId);
     port.onReceivePecMessage(message);
   }
 
-  public void addRemotePecPort(String pecId, PecInnerPortProxy pecInnerPortProxy) {
+  public void addPecInnerPortProxy(String pecId, PecInnerPortProxy pecInnerPortProxy) {
     pecPortProxyMap.put(pecId, pecInnerPortProxy);
   }
 
-  public PecInnerPort getOrCreateInnerPort(String pecId, String sessionId) {
+  public PecInnerPort getOrCreatePecInnerPort(String pecId, String sessionId) {
     PecInnerPort port = pecPortMap.get(pecId);
     if (port == null) {
-      return createInnerPecPort(pecId, sessionId);
+      return createPecInnerPort(pecId, sessionId);
     } else {
       return port;
     }
   }
 
   public void removePecPort(String pecId) {
-    pecPortMap.remove(pecId);
-    pecPortProxyMap.remove(pecId);
+    if (pecPortMap.remove(pecId) != null) {
+      return;
+    } else if (pecPortProxyMap.remove(pecId) != null) {
+      return;
+    }
+
+    throw new IllegalArgumentException("Pec with ID " + pecId + " doesn't exist.");
   }
 
-  private PecInnerPort createInnerPecPort(String pecId, String sessionId) {
+  private PecInnerPort createPecInnerPort(String pecId, String sessionId) {
     if (pecPortMap.containsKey(pecId)) {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
     PecInnerPort pecInnerPort = new PecInnerPort(
-      pecId, sessionId, shellApi, pec, jsonParser);
+      pecId, sessionId, arcsMessageSender, pec, jsonParser);
     pecPortMap.put(pecId, pecInnerPort);
     return pecInnerPort;
   }

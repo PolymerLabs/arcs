@@ -4,7 +4,6 @@ import javax.inject.Singleton;
 
 import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
-import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 import dagger.Binds;
 import dagger.Module;

@@ -5,11 +5,10 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Arcs;
-import arcs.api.ArcsEnvironment;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
-import arcs.api.ShellApi;
+import arcs.api.ArcsMessageSender;
 import arcs.api.UiBroker;
 
 // This class implements Arcs API for callers within the same Android service
@@ -19,18 +18,18 @@ public class ArcsLocal implements Arcs {
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final UiBroker uiBroker;
-  private final ShellApi shellApi;
+  private final ArcsMessageSender arcsMessageSender;
 
   @Inject
   ArcsLocal(
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
       UiBroker uiBroker,
-      ShellApi shellApi) {
+      ArcsMessageSender arcsMessageSender) {
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
     this.uiBroker = uiBroker;
-    this.shellApi = shellApi;
+    this.arcsMessageSender = arcsMessageSender;
   }
 
   @Override
@@ -40,22 +39,22 @@ public class ArcsLocal implements Arcs {
       if (particleData.getParticle() != null) {
         if (pecInnerPort == null) {
           pecInnerPort =
-              pecPortManager.getOrCreateInnerPort(arcData.getPecId(), arcData.getSessionId());
+              pecPortManager.getOrCreatePecInnerPort(arcData.getPecId(), arcData.getSessionId());
         }
         pecInnerPort.mapParticle(particleData.getParticle());
       }
     }
-    shellApi.sendMessageToArcs(constructRunArcRequest(arcData));
+    arcsMessageSender.sendMessageToArcs(constructRunArcRequest(arcData));
   }
 
   @Override
   public void stopArc(ArcData arcData) {
-    shellApi.sendMessageToArcs(constructStopArcRequest(arcData));
+    arcsMessageSender.sendMessageToArcs(constructStopArcRequest(arcData));
   }
 
   @Override
   public void sendMessageToArcs(String message) {
-    shellApi.sendMessageToArcs(message);
+    arcsMessageSender.sendMessageToArcs(message);
   }
 
   @Override

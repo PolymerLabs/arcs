@@ -6,8 +6,8 @@ import javax.inject.Singleton;
 import arcs.api.ArcsEnvironment;
 
 /**
- * Web based ArcsEnvironment using ShellApi. The Android version of this will different only in not
- * needing to use the ShellApi + Web runtime.
+ * Web based ArcsEnvironment using ArcsMessageSender. The Android version of this will different only in not
+ * needing to use the ArcsMessageSender + Web runtime.
  */
 @Singleton
 public class AndroidArcsEnvironment implements ArcsEnvironment {

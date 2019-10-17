@@ -1,15 +1,13 @@
 package arcs.android;
 
-import android.util.Log;
-
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Arcs;
+import arcs.api.ArcsMessageSender;
 import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
-import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 // This class implements Arcs API for callers running in Android service
@@ -20,7 +18,7 @@ public class ArcsAndroid implements Arcs {
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final UiBroker uiBroker;
-  private final ShellApi shellApi;
+  private final ArcsMessageSender arcsMessageSender;
 
   @Inject
   ArcsAndroid(
@@ -28,18 +26,18 @@ public class ArcsAndroid implements Arcs {
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
       UiBroker uiBroker,
-      ShellApi shellApi) {
+      ArcsMessageSender arcsMessageSender) {
     this.bridge = bridge;
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
     this.uiBroker = uiBroker;
-    this.shellApi = shellApi;
+    this.arcsMessageSender = arcsMessageSender;
   }
 
   @Override
   public void runArc(ArcData arcData) {
     PecInnerPort pecInnerPort =
-        pecPortManager.getOrCreateInnerPort(arcData.getPecId(), arcData.getSessionId());
+        pecPortManager.getOrCreatePecInnerPort(arcData.getPecId(), arcData.getSessionId());
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getParticle() != null) {
         pecInnerPort.mapParticle(particleData.getParticle());
@@ -56,7 +54,7 @@ public class ArcsAndroid implements Arcs {
 
   @Override
   public void sendMessageToArcs(String message) {
-    shellApi.sendMessageToArcs(message);
+    arcsMessageSender.sendMessageToArcs(message);
   }
 
   @Override

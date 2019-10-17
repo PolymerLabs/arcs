@@ -16,7 +16,7 @@ import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.ArcsEnvironment;
-import arcs.api.ShellApi;
+import arcs.api.ArcsMessageSender;
 
 public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
 
@@ -35,10 +35,10 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
   }
 
   @Inject
-  ArcsServiceBridge(ArcsServiceStarter arcsServiceStarter, ShellApi shellApi) {
+  ArcsServiceBridge(ArcsServiceStarter arcsServiceStarter, ArcsMessageSender arcsMessageSender) {
     this.arcsServiceStarter = arcsServiceStarter;
 
-    shellApi.attachProxy(this::sendMessageToArcs);
+    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
   void startArc(ArcData arcData, IRemotePecCallback callback) {

@@ -10,12 +10,12 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import arcs.api.ArcsEnvironment;
+import arcs.api.ArcsMessageSender;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.RuntimeSettings;
-import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class AndroidHarnessController implements HarnessController {
     ArcsEnvironment environment,
     PecPortManager pecPortManager,
     UiBroker uiBroker,
-    ShellApi shellApi,
+    ArcsMessageSender arcsMessageSender,
     WebView webView,
     Provider<RuntimeSettings> runtimeSettings) {
     this.jsonParser = jsonParser;
@@ -64,7 +64,7 @@ public class AndroidHarnessController implements HarnessController {
     this.uiBroker = uiBroker;
     this.webView = webView;
     this.runtimeSettings = runtimeSettings;
-    shellApi.attachProxy(this::sendMessageToArcs);
+    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
   @Override
@@ -127,7 +127,7 @@ public class AndroidHarnessController implements HarnessController {
   private void sendMessageToArcs(String json) {
     String escapedEnvelope = json.replace("\\\"", "\\\\\"");
 
-    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
+    String script = String.format("ArcsMessageSender.receive('%s');", escapedEnvelope);
     Log.e("Arcs", "Receive called " + script);
 
     if (webView != null) {

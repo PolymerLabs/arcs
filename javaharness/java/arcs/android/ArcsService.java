@@ -18,7 +18,7 @@ import arcs.api.Arcs;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
-import arcs.api.ShellApi;
+import arcs.api.ArcsMessageSender;
 import arcs.api.UiBroker;
 
 /**
@@ -38,7 +38,8 @@ public class ArcsService extends Service {
 
   @Inject Arcs arcs;
   @Inject HarnessController harnessController;
-  @Inject ShellApi shellApi;
+  @Inject
+  ArcsMessageSender arcsMessageSender;
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
@@ -79,7 +80,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        shellApi.sendMessageToArcs(message);
+        arcsMessageSender.sendMessageToArcs(message);
       }
 
       @Override
@@ -101,7 +102,7 @@ public class ArcsService extends Service {
                   }
                 },
                 jsonParser);
-        pecPortManager.addRemotePecPort(pecId, pecInnerPortProxy);
+        pecPortManager.addPecInnerPortProxy(pecId, pecInnerPortProxy);
 
         runWhenReady(() -> {
             ArcData.Builder arcDataBuilder = new ArcData.Builder()
@@ -124,7 +125,7 @@ public class ArcsService extends Service {
       public void stopArc(String arcId, String pecId) {
         runWhenReady(
             () ->
-                shellApi.sendMessageToArcs(
+                arcsMessageSender.sendMessageToArcs(
                     jsonParser.stringify(
                         jsonParser
                             .emptyObject()
