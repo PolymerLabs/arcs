@@ -364,7 +364,7 @@ export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | 
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
-  dir: DirectionArrow;
+  dir: Direction;
   target: ParticleConnectionTargetComponents;
   dependentConnections: RecipeParticleConnection[];
 }
@@ -404,7 +404,7 @@ export interface RecipeSlotConnectionRef extends BaseNode {
 
 export interface RecipeConnection extends BaseNode {
   kind: 'connection';
-  direction: DirectionArrow;
+  direction: Direction;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }
@@ -631,7 +631,55 @@ export type eol = string;
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
 export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
+
+// Temporary move of DirectionArrow type definition and conversions so allow
+// DirectionArrow to be removed from the runtime.
+// TODO(jopra): Remove after syntax unification.
 export type DirectionArrow = '<-' | '->' | '<->' | 'consume' | 'provide' | '=';
+
+export function arrowToDirection(arrow: DirectionArrow): Direction {
+  // TODO(jopra): Remove after syntax unification.
+  // Use switch for totality checking.
+  switch (arrow) {
+    case '->':
+      return 'out';
+    case '<-':
+      return 'in';
+    case '<->':
+      return 'inout';
+    case 'consume':
+      return '`consume';
+    case 'provide':
+      return '`provide';
+    case '=':
+      return 'any';
+    default:
+      // Catch nulls and unsafe values from javascript.
+      throw new Error(`Bad arrow ${arrow}`);
+  }
+}
+
+export function directionToArrow(dir: Direction): string {
+  // TODO(jopra): Remove after syntax unification.
+  switch (dir) {
+    case 'in':
+      return '<-';
+    case 'out':
+      return '->';
+    case 'inout':
+      return '<->';
+    case 'host':
+      return '=';
+    case '`consume':
+      return 'consume';
+    case '`provide':
+      return 'provide';
+    case 'any':
+      return '=';
+    default:
+      throw new Error(`Unexpected direction ${dir}`);
+  }
+}
 
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
