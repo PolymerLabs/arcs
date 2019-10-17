@@ -1,17 +1,12 @@
 package arcs.android;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.inject.Singleton;
 
 import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
-import arcs.api.ParticleFactory;
 import arcs.api.UiBroker;
 import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
 
 /** Dagger module for client code (running in a service separate to the main ArcsService). */
 @Module(includes = AndroidCommonModule.class)
@@ -24,14 +19,6 @@ public abstract class AndroidClientModule {
   // via the service bridge (instead of trying to talk directly to JS).
   @Binds
   abstract ArcsEnvironment provideArcsEnvironment(ArcsServiceBridge arcsServiceBridge);
-
-  // TODO(csilvestrini): Figure out a nicer way of providing ParticleFactory instances for remote
-  // PECs.
-  @Provides
-  @Singleton
-  static Set<ParticleFactory> provideParticleFactories() {
-    return new HashSet<>();
-  }
 
   @Binds
   @Singleton
