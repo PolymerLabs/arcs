@@ -7,13 +7,13 @@ import kotlin.native.internal.ExportForCppRuntime
  */
 class JsonStoreParticle : Particle() {
 
-  private val res = Singleton { PersonDetails() }
+  private val res = Singleton { JsonStoreParticle_inputData() }
   init {
     registerHandle("inputData", res)
   }
 
   override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
-    val person = res.get() ?: PersonDetails("", 0.0);
+    val person = res.get() ?: JsonStoreParticle_inputData("", 0.0);
 
     return model + mapOf(
       "name" to person.name,
