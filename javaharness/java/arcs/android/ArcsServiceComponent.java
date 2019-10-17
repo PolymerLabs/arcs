@@ -1,7 +1,6 @@
 package arcs.android;
 
 import android.content.Context;
-import android.webkit.WebView;
 
 import javax.inject.Singleton;
 
@@ -20,9 +19,6 @@ public interface ArcsServiceComponent {
   interface Builder {
     @BindsInstance
     Builder appContext(@AppContext Context appContext);
-
-    @BindsInstance
-    Builder webView(WebView webView);
 
     ArcsServiceComponent build();
   }

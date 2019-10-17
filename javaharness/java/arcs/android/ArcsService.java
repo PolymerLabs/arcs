@@ -5,20 +5,17 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-import android.view.View;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 
-import arcs.api.PecInnerPortProxy;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
 import arcs.api.Arcs;
-import arcs.api.HarnessController;
+import arcs.api.ArcsMessageSender;
+import arcs.api.PecInnerPortProxy;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
-import arcs.api.ArcsMessageSender;
 import arcs.api.UiBroker;
 
 /**
@@ -33,13 +30,11 @@ public class ArcsService extends Service {
   private static final String PEC_ID_FIELD = "pecId";
   private static final String TAG = "Arcs";
 
-  private WebView arcsWebView;
   private boolean arcsReady;
 
   @Inject Arcs arcs;
-  @Inject HarnessController harnessController;
-  @Inject
-  ArcsMessageSender arcsMessageSender;
+  @Inject AndroidArcsEnvironment environment;
+  @Inject ArcsMessageSender arcsMessageSender;
   @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
@@ -50,27 +45,19 @@ public class ArcsService extends Service {
 
     Log.d(TAG, "onCreate()");
 
-    arcsWebView = new WebView(this);
-    arcsWebView.setVisibility(View.GONE);
-    arcsWebView.getSettings().setAppCacheEnabled(false);
-    arcsWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
-    arcsWebView.clearCache(true);
-
     DaggerArcsServiceComponent.builder()
         .appContext(getApplicationContext())
-        .webView(arcsWebView)
         .build()
         .inject(this);
 
-    harnessController.addReadyListener(recipes -> arcsReady = true);
-
-    harnessController.init();
+    environment.addReadyListener(recipes -> arcsReady = true);
+    environment.init(this);
   }
 
   @Override
   public void onDestroy() {
     Log.d(TAG, "onDestroy()");
-    harnessController.deInit();
+    environment.destroy();
     super.onDestroy();
   }
 
@@ -160,7 +147,7 @@ public class ArcsService extends Service {
     if (arcsReady) {
       runnable.run();
     } else {
-      harnessController.addReadyListener(recipes -> runnable.run());
+      environment.addReadyListener(recipes -> runnable.run());
     }
   }
 }

@@ -15,10 +15,9 @@ import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.ArcsEnvironment;
 import arcs.api.ArcsMessageSender;
 
-public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
+public class ArcsServiceBridge implements ServiceConnection {
 
   private final ArcsServiceStarter arcsServiceStarter;
   private IArcsService arcsService; // Access via connectToArcsService.
