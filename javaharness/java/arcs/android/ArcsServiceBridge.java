@@ -14,11 +14,9 @@ import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
-import arcs.android.IArcsService;
-import arcs.android.IRemoteOutputCallback;
-import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.ArcsEnvironment;
+import arcs.api.ArcsMessageSender;
 
 public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
 
@@ -37,8 +35,10 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
   }
 
   @Inject
-  ArcsServiceBridge(ArcsServiceStarter arcsServiceStarter) {
+  ArcsServiceBridge(ArcsServiceStarter arcsServiceStarter, ArcsMessageSender arcsMessageSender) {
     this.arcsServiceStarter = arcsServiceStarter;
+
+    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
   void startArc(ArcData arcData, IRemotePecCallback callback) {
@@ -71,8 +71,7 @@ public class ArcsServiceBridge implements ArcsEnvironment, ServiceConnection {
     runServiceMethod(service -> service.registerRenderer(modality, callback));
   }
 
-  @Override
-  public void sendMessageToArcs(String message) {
+  private void sendMessageToArcs(String message) {
     runServiceMethod(service -> service.sendMessageToArcs(message));
   }
 

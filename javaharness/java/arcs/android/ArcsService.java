@@ -9,19 +9,16 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import arcs.api.RemotePecPort;
+import arcs.api.PecInnerPortProxy;
 import java.util.List;
 import javax.inject.Inject;
 
-import arcs.android.IArcsService;
-import arcs.android.IRemoteOutputCallback;
-import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.HarnessController;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
-import arcs.api.ShellApiBasedArcsEnvironment;
+import arcs.api.ArcsMessageSender;
 import arcs.api.UiBroker;
 
 /**
@@ -41,9 +38,9 @@ public class ArcsService extends Service {
 
   @Inject Arcs arcs;
   @Inject HarnessController harnessController;
-  @Inject ShellApiBasedArcsEnvironment shellEnvironment;
   @Inject
-  PecPortManager pecPortManager;
+  ArcsMessageSender arcsMessageSender;
+  @Inject PecPortManager pecPortManager;
   @Inject PortableJsonParser jsonParser;
   @Inject UiBroker uiBroker;
 
@@ -65,7 +62,7 @@ public class ArcsService extends Service {
         .build()
         .inject(this);
 
-    shellEnvironment.addReadyListener(recipes -> arcsReady = true);
+    harnessController.addReadyListener(recipes -> arcsReady = true);
 
     harnessController.init();
   }
@@ -83,7 +80,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        shellEnvironment.sendMessageToArcs(message);
+        arcsMessageSender.sendMessageToArcs(message);
       }
 
       @Override
@@ -95,8 +92,8 @@ public class ArcsService extends Service {
           List<String> particleNames,
           List<String> providedSlotIds,
           IRemotePecCallback callback) {
-        RemotePecPort remotePecPort =
-            new RemotePecPort(
+        PecInnerPortProxy pecInnerPortProxy =
+            new PecInnerPortProxy(
                 message -> {
                   try {
                     callback.onMessage(message);
@@ -105,7 +102,7 @@ public class ArcsService extends Service {
                   }
                 },
                 jsonParser);
-        pecPortManager.addRemotePecPort(pecId, remotePecPort);
+        pecPortManager.addPecInnerPortProxy(pecId, pecInnerPortProxy);
 
         runWhenReady(() -> {
             ArcData.Builder arcDataBuilder = new ArcData.Builder()
@@ -128,7 +125,7 @@ public class ArcsService extends Service {
       public void stopArc(String arcId, String pecId) {
         runWhenReady(
             () ->
-                shellEnvironment.sendMessageToArcs(
+                arcsMessageSender.sendMessageToArcs(
                     jsonParser.stringify(
                         jsonParser
                             .emptyObject()
@@ -163,7 +160,7 @@ public class ArcsService extends Service {
     if (arcsReady) {
       runnable.run();
     } else {
-      shellEnvironment.addReadyListener(recipes -> runnable.run());
+      harnessController.addReadyListener(recipes -> runnable.run());
     }
   }
 }

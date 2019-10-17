@@ -2,9 +2,9 @@ package arcs.android;
 
 import javax.inject.Inject;
 
-import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.Arcs;
+import arcs.api.ArcsMessageSender;
 import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
@@ -18,23 +18,26 @@ public class ArcsAndroid implements Arcs {
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final UiBroker uiBroker;
+  private final ArcsMessageSender arcsMessageSender;
 
   @Inject
   ArcsAndroid(
       ArcsServiceBridge bridge,
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
-      UiBroker uiBroker) {
+      UiBroker uiBroker,
+      ArcsMessageSender arcsMessageSender) {
     this.bridge = bridge;
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
     this.uiBroker = uiBroker;
+    this.arcsMessageSender = arcsMessageSender;
   }
 
   @Override
   public void runArc(ArcData arcData) {
     PecInnerPort pecInnerPort =
-        pecPortManager.getOrCreateInnerPort(arcData.getPecId(), arcData.getSessionId());
+        pecPortManager.getOrCreatePecInnerPort(arcData.getPecId(), arcData.getSessionId());
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getParticle() != null) {
         pecInnerPort.mapParticle(particleData.getParticle());
@@ -51,7 +54,7 @@ public class ArcsAndroid implements Arcs {
 
   @Override
   public void sendMessageToArcs(String message) {
-    bridge.sendMessageToArcs(message);
+    arcsMessageSender.sendMessageToArcs(message);
   }
 
   @Override
