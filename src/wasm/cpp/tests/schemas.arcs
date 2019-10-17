@@ -23,7 +23,7 @@ schema SpecialFields
   Text for
   Number internal_id
 
-particle Dummy
+particle Test
   in Foo foo
   in Data data
   in Empty empty
