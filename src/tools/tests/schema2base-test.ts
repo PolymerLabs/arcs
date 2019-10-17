@@ -62,9 +62,9 @@ describe('schema2base', () => {
     `);
 
     const mock = new Schema2Mock({'_': []});
-    const [schemas, _] = mock.processManifest(manifest);
+    const [_, ...schemas] = mock.processManifest(manifest);
 
-    const names = Object.keys(schemas);
+    const names = schemas.map(s => Object.keys(s)).reduce((acc, x) => acc.concat(x), []);
     assert.equal(names.length, 10);
     assert.includeDeepOrderedMembers(names,
       ['Foo_input0', 'Foo_input1', 'Foo_input2', 'Foo_union', 'Foo_tuple', 'Foo_nested0', 'Foo_nested1',

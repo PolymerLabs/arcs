@@ -32,9 +32,11 @@ export abstract class Schema2Base {
   }
 
   /** Collect schemas from particle connections and build map of aliases. */
-  public processManifest(manifest: Manifest): [Dictionary<Schema>, Dictionary<Set<string>>] {
+  public processManifest(manifest: Manifest): [Dictionary<Set<string>>, Dictionary<Schema>, Dictionary<Schema>] {
     const schemas: Dictionary<Schema> = {};
+    const refSchemas: Dictionary<Schema> = {};
     const aliases: Dictionary<Set<string>> = {};
+
     const updateAliases = (rhs, alias) => {
       if (aliases[rhs] !== undefined) {
         aliases[rhs].add(alias);
@@ -56,24 +58,24 @@ export abstract class Schema2Base {
 
         schema.names.forEach(n => updateAliases(name, `${n}${name}`));
 
-        // Create aliases for reference fields
+        // Collect reference schema fields. These will be output first so they're defined
+        // prior to use in their containing entity classes.
         for (const [field, descriptor] of Object.entries(schema.fields)) {
           if (descriptor.kind === 'schema-reference') {
-            const inlineSchemaName = this.inlineSchemaName(field, descriptor);
-            const inlineSchema = descriptor.schema.model.getEntitySchema();
-            const found = Object.entries(schemas).find(([_, sch]) => inlineSchema.equals(sch));
-            if (found) {
-              const [originalName, _] = found;
-              updateAliases(originalName, inlineSchemaName);
-            } else {
-              schemas[inlineSchemaName] = inlineSchema;
+            const refSchemaName = this.inlineSchemaName(field, descriptor);
+            const refSchema = descriptor.schema.model.getEntitySchema();
+            if (!(refSchemaName in refSchemas)) {
+              refSchemas[refSchemaName] = refSchema;
             }
+
+            // TODO(alxr) Test the corner cases
+            refSchema.names.filter(n => n !== refSchemaName).forEach(n => updateAliases(refSchemaName, n));
           }
         }
       }
     }
 
-    return [schemas, aliases];
+    return [aliases, refSchemas, schemas];
   }
 
   private async processFile(src: string) {
@@ -86,19 +88,21 @@ export abstract class Schema2Base {
 
     const manifest = await Utils.parse(`import '${src}'`);
 
-    const [schemas, aliases] = this.processManifest(manifest);
+    const [aliases, ...schemas] = this.processManifest(manifest);
 
-    if (Object.keys(schemas).length === 0) {
+    if (Object.values(schemas).map(s => Object.keys(s).length).reduce((acc, x) => acc + x, 0) === 0) {
       console.warn(`No schemas found in '${src}'`);
       return;
     }
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    fs.writeSync(outFile, `\n${this.addAliases(aliases)}\n`);
-    for (const [name, schema] of Object.entries(schemas)) {
+    for (const dict of schemas) {
+      for (const [name, schema] of Object.entries(dict)) {
         fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
+      }
     }
+    fs.writeSync(outFile, `\n${this.addAliases(aliases)}\n`);
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }

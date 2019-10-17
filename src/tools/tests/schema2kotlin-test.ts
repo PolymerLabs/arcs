@@ -21,7 +21,7 @@ describe('schema2kotlin', () => {
     `);
 
     const mock = new Schema2Kotlin({'_': []});
-    const [_, aliases] = mock.processManifest(manifest);
+    const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
     assert.notInclude(generated, ';');
@@ -54,7 +54,7 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
   in [Product] bar`);
 
     const mock = new Schema2Kotlin({'_': []});
-    const [_, aliases] = mock.processManifest(manifest);
+    const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
     assert.notInclude(generated, ';');

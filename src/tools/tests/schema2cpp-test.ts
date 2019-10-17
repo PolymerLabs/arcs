@@ -21,7 +21,7 @@ describe('schema2cpp', () => {
     `);
 
     const mock = new Schema2Cpp({'_': []});
-    const [_, aliases] = mock.processManifest(manifest);
+    const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
     assert.include(generated, 'using ProductFoo_alpha = Foo_alpha;');
@@ -53,7 +53,7 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
   in [Product] bar`);
 
    const mock = new Schema2Cpp({'_': []});
-    const [_, aliases] = mock.processManifest(manifest);
+    const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
     assert.include(generated, 'using ProductBasicParticle_foo = BasicParticle_foo;');
