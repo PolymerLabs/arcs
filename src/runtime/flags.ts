@@ -9,33 +9,28 @@
  */
 
 /** Arcs runtime flags. */
-export class Flags {
-  static useNewStorageStack: boolean;
-  static usePreSlandlesSyntax: boolean;
 
+class FlagDefaults {
+  static useNewStorageStack = false;
+  static usePreSlandlesSyntax = true;
+}
+
+export class Flags extends FlagDefaults {
   /** Resets flags. To be called in test teardown methods. */
   static reset() {
-    Flags.useNewStorageStack = false;
-    Flags.usePreSlandlesSyntax = true;
+    Object.assign(Flags, FlagDefaults);
   }
 
-  // For testing new syntax.
-  static withPostSlandlesSyntax(f) {
-    return async () => {
-      Flags.usePreSlandlesSyntax = false;
-      let res;
-      try {
-        res = await f();
-      } finally {
-        Flags.reset();
-      }
-      return res;
-    };
+  static withPreSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
+    return Flags.withFlags({usePreSlandlesSyntax: true}, f);
   }
-  // For testing old syntax.
-  static withPreSlandlesSyntax(f) {
+  static withPostSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
+    return Flags.withFlags({usePreSlandlesSyntax: false}, f);
+  }
+  // For testing with a different set of flags to the default.
+  static withFlags<T>(args: Partial<typeof FlagDefaults>, f: () => Promise<T>): () => Promise<T> {
     return async () => {
-      Flags.usePreSlandlesSyntax = true;
+      Object.assign(Flags, args);
       let res;
       try {
         res = await f();
