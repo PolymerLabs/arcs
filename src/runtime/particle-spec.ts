@@ -483,7 +483,13 @@ export class ParticleSpec {
             if (!handle) {
               throw new Error(`Can't make a check on unknown handle ${handleName}.`);
             }
-            if (!handle.isInput) {
+            if (handle.direction === '`consume' || handle.direction === '`provide') {
+              // Do slandles versions of slots checks and claims.
+              if (handle.direction === '`consume') {
+                  throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
+
+              }
+            } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
             }
             if (handle.check) {
