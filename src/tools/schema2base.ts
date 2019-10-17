@@ -35,6 +35,14 @@ export abstract class Schema2Base {
   public processManifest(manifest: Manifest): [Dictionary<Schema>, Dictionary<Set<string>>] {
     const schemas: Dictionary<Schema> = {};
     const aliases: Dictionary<Set<string>> = {};
+    const updateAliases = (rhs, alias) => {
+      if (aliases[rhs] !== undefined) {
+        aliases[rhs].add(alias);
+      } else {
+        aliases[rhs] = new Set([alias]);
+      }
+    };
+
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
@@ -46,23 +54,19 @@ export abstract class Schema2Base {
         const name = `${particle.name}_${connection.name}`;
         schemas[name] = schema;
 
-        schema.names.forEach(n => {
-          const alias = `${n}${name}`;
-          if (aliases[name] !== undefined) {
-            aliases[name].add(alias);
-          } else {
-            aliases[name] = new Set([alias]);
-          }
-        });
+        schema.names.forEach(n => updateAliases(name, `${n}${name}`));
 
-        // Collect inline schema fields. These will be output first so they're defined
-        // prior to use in their containing entity classes.
+        // Create aliases for reference fields
         for (const [field, descriptor] of Object.entries(schema.fields)) {
-          if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-            const name = this.inlineSchemaName(field, descriptor);
+          if (descriptor.kind === 'schema-reference') {
+            const inlineSchemaName = this.inlineSchemaName(field, descriptor);
             const inlineSchema = descriptor.schema.model.getEntitySchema();
-            if (!(name in schemas)) {
-              schemas[name] = inlineSchema;
+            const found = Object.entries(schemas).find(([_, sch]) => inlineSchema.equals(sch));
+            if (found) {
+              const [originalName, _] = found;
+              updateAliases(originalName, inlineSchemaName);
+            } else {
+              schemas[inlineSchemaName] = inlineSchema;
             }
           }
         }
@@ -91,10 +95,10 @@ export abstract class Schema2Base {
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
+    fs.writeSync(outFile, `\n${this.addAliases(aliases)}\n`);
     for (const [name, schema] of Object.entries(schemas)) {
         fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
     }
-    fs.writeSync(outFile, `\n${this.addAliases(aliases)}\n`);
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }

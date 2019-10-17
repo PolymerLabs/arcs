@@ -233,7 +233,7 @@ struct std::hash<arcs::${name}> {
 
   addAliases(aliases: Dictionary<Set<string>>): string {
     const lines: string[] = Object.entries(aliases)
-      .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = ${rhs};`))
+      .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = arcs::${rhs};`))
       .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
 
     return lines.join('\n');
