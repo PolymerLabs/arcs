@@ -2,11 +2,8 @@ package arcs.android;
 
 import arcs.api.Arcs;
 import arcs.api.ArcsEnvironment;
-import arcs.api.DeviceClient;
 import arcs.api.HarnessController;
 import arcs.api.RuntimeSettings;
-import arcs.api.ShellApi;
-import arcs.api.ShellApiBasedArcsEnvironment;
 import dagger.Binds;
 import dagger.Module;
 import javax.inject.Singleton;
@@ -20,16 +17,8 @@ public abstract class AndroidHarnessModule {
 
   @Binds
   @Singleton
-  public abstract ArcsEnvironment provideStandaloneWebArcsEnvironment(
-      ShellApiBasedArcsEnvironment impl);
-
-  @Singleton
-  @Binds
-  public abstract DeviceClient provideAndroidDeviceClient(AndroidDeviceClient impl);
-
-  @Binds
-  @Singleton
-  abstract ShellApi providesWebShellApi(AndroidShellApiImpl impl);
+  public abstract ArcsEnvironment provideArcsEnvironment(
+      AndroidArcsEnvironment impl);
 
   @Binds
   public abstract HarnessController providesHarnessController(AndroidHarnessController impl);

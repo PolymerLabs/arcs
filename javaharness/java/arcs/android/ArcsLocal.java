@@ -9,27 +9,28 @@ import arcs.api.ArcsEnvironment;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
+import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 // This class implements Arcs API for callers within the same Android service
 // that hosts the Arcs Runtime.
 public class ArcsLocal implements Arcs {
 
-  private final ArcsEnvironment environment;
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final UiBroker uiBroker;
+  private final ShellApi shellApi;
 
   @Inject
   ArcsLocal(
-      ArcsEnvironment environment,
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
-      UiBroker uiBroker) {
-    this.environment = environment;
+      UiBroker uiBroker,
+      ShellApi shellApi) {
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
     this.uiBroker = uiBroker;
+    this.shellApi = shellApi;
   }
 
   @Override
@@ -44,17 +45,17 @@ public class ArcsLocal implements Arcs {
         pecInnerPort.mapParticle(particleData.getParticle());
       }
     }
-    environment.sendMessageToArcs(constructRunArcRequest(arcData));
+    shellApi.sendMessageToArcs(constructRunArcRequest(arcData));
   }
 
   @Override
   public void stopArc(ArcData arcData) {
-    environment.sendMessageToArcs(constructStopArcRequest(arcData));
+    shellApi.sendMessageToArcs(constructStopArcRequest(arcData));
   }
 
   @Override
   public void sendMessageToArcs(String message) {
-    environment.sendMessageToArcs(message);
+    shellApi.sendMessageToArcs(message);
   }
 
   @Override

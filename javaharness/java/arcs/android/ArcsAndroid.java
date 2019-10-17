@@ -1,13 +1,15 @@
 package arcs.android;
 
+import android.util.Log;
+
 import javax.inject.Inject;
 
-import arcs.android.IRemotePecCallback;
 import arcs.api.ArcData;
 import arcs.api.Arcs;
 import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJsonParser;
+import arcs.api.ShellApi;
 import arcs.api.UiBroker;
 
 // This class implements Arcs API for callers running in Android service
@@ -18,17 +20,20 @@ public class ArcsAndroid implements Arcs {
   private final PecPortManager pecPortManager;
   private final PortableJsonParser jsonParser;
   private final UiBroker uiBroker;
+  private final ShellApi shellApi;
 
   @Inject
   ArcsAndroid(
       ArcsServiceBridge bridge,
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
-      UiBroker uiBroker) {
+      UiBroker uiBroker,
+      ShellApi shellApi) {
     this.bridge = bridge;
     this.pecPortManager = pecPortManager;
     this.jsonParser = jsonParser;
     this.uiBroker = uiBroker;
+    this.shellApi = shellApi;
   }
 
   @Override
@@ -51,7 +56,7 @@ public class ArcsAndroid implements Arcs {
 
   @Override
   public void sendMessageToArcs(String message) {
-    bridge.sendMessageToArcs(message);
+    shellApi.sendMessageToArcs(message);
   }
 
   @Override
