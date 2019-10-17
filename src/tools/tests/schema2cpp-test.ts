@@ -31,7 +31,7 @@ describe('schema2cpp', () => {
   });
 
   it('creates scoped aliases for global schemas', async () => {
-   const manifest = await Manifest.parse(`\
+    const manifest = await Manifest.parse(`\
 schema Product
   Text name
   Number sku
@@ -52,7 +52,7 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
   consume root
   in [Product] bar`);
 
-   const mock = new Schema2Cpp({'_': []});
+    const mock = new Schema2Cpp({'_': []});
     const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 
