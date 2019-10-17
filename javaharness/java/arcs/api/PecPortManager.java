@@ -6,7 +6,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public final class PecPortManager {
+public class PecPortManager {
 
   private final ArcsMessageSender arcsMessageSender;
   private final PortableJsonParser jsonParser;
@@ -47,7 +47,7 @@ public final class PecPortManager {
     pecInnerPortProxyMap.put(pecId, pecInnerPortProxy);
   }
 
-  public PecInnerPort getOrCreateInnerPort(String pecId, String sessionId) {
+  public PecInnerPort getOrCreatePecInnerPort(String pecId, String sessionId) {
     PecInnerPort port = pecPortMap.get(pecId);
     if (port == null) {
       return createPecPort(pecId, sessionId);

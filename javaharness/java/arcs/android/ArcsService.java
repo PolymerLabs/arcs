@@ -3,7 +3,6 @@ package arcs.android;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.List;
@@ -11,14 +10,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.ArcsMessageSender;
-import arcs.api.Constants;
-import arcs.api.PecInnerPort;
-import arcs.api.PecInnerPortProxy;
-import arcs.api.PecPortManager;
-import arcs.api.PortableJson;
-import arcs.api.PortableJsonParser;
-import arcs.api.UiBroker;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
@@ -28,41 +19,21 @@ public class ArcsService extends Service {
 
   private static final String TAG = "Arcs";
 
-  private boolean arcsReady;
-
   @Inject
-  PortableJsonParser jsonParser;
-
-  @Inject
-  AndroidArcsEnvironment environment;
-
-  @Inject
-  ArcsMessageSender arcsMessageSender;
-
-  @Inject
-  PecPortManager pecPortManager;
-
-  @Inject
-  UiBroker uiBroker;
+  ArcsShellApi arcsShellApi;
 
   @Override
   public void onCreate() {
     super.onCreate();
-
     Log.d(TAG, "onCreate()");
-
-    DaggerArcsServiceComponent.builder()
-        .build()
-        .inject(this);
-
-    environment.addReadyListener(recipes -> arcsReady = true);
-    environment.init(this);
+    DaggerArcsServiceComponent.builder().build().inject(this);
+    arcsShellApi.init(this);
   }
 
   @Override
   public void onDestroy() {
     Log.d(TAG, "onDestroy()");
-    environment.destroy();
+    arcsShellApi.destroy();
     super.onDestroy();
   }
 
@@ -72,7 +43,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        arcsMessageSender.sendMessageToArcs(message);
+        arcsShellApi.sendMessageToArcs(message);
       }
 
       @Override
@@ -84,113 +55,32 @@ public class ArcsService extends Service {
           List<String> particleNames,
           List<String> providedSlotIds,
           IRemotePecCallback callback) {
-        PecInnerPortProxy pecInnerPortProxy =
-            new PecInnerPortProxy(
-                message -> {
-                  try {
-                    callback.onMessage(message);
-                  } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                  }
-                },
-                jsonParser);
-        pecPortManager.addPecInnerPortProxy(pecId, pecInnerPortProxy);
+        ArcData.Builder arcDataBuilder = new ArcData.Builder()
+            .setArcId(arcId)
+            .setPecId(pecId)
+            .setRecipe(recipe);
+        for (int i = 0; i < particleIds.size(); ++i) {
+          arcDataBuilder.addParticleData(
+              new ArcData.ParticleData()
+                  .setId(particleIds.get(i))
+                  .setName(particleNames.get(i))
+                  .setProvidedSlotId(providedSlotIds.get(i)));
+        }
 
-        runWhenReady(() -> {
-          ArcData.Builder arcDataBuilder = new ArcData.Builder()
-              .setArcId(arcId)
-              .setPecId(pecId)
-              .setRecipe(recipe);
-          for (int i = 0; i < particleIds.size(); ++i) {
-            arcDataBuilder.addParticleData(
-                new ArcData.ParticleData()
-                    .setId(particleIds.get(i))
-                    .setName(particleNames.get(i))
-                    .setProvidedSlotId(providedSlotIds.get(i)));
-          }
-
-          ArcData arcData = arcDataBuilder.build();
-          PecInnerPort pecInnerPort = null;
-          for (ArcData.ParticleData particleData : arcData.getParticleList()) {
-            if (particleData.getParticle() != null) {
-              if (pecInnerPort == null) {
-                pecInnerPort = pecPortManager.getOrCreateInnerPort(
-                    arcData.getPecId(), arcData.getSessionId());
-              }
-              pecInnerPort.mapParticle(particleData.getParticle());
-            }
-          }
-          arcsMessageSender.sendMessageToArcs(constructRunArcRequest(arcData));
-        });
+        ArcData arcData = arcDataBuilder.build();
+        arcsShellApi.startArc(arcData, callback);
       }
 
       @Override
       public void stopArc(String arcId, String pecId) {
-        runWhenReady(() -> {
-          ArcData arcData = new ArcData.Builder().setArcId(arcId).setPecId(pecId).build();
-          arcsMessageSender.sendMessageToArcs(constructStopArcRequest(arcData));
-        });
-        pecPortManager.removePecPort(pecId);
+        arcsShellApi.stopArc(
+            new ArcData.Builder().setArcId(arcId).setPecId(pecId).build());
       }
 
       @Override
       public void registerRenderer(String modality, IRemoteOutputCallback callback) {
-        uiBroker.registerRenderer(
-            modality,
-            content -> {
-              try {
-                callback.onOutput(jsonParser.stringify(content));
-              } catch (RemoteException e) {
-                throw new RuntimeException(e);
-              }
-              return true;
-            });
+        arcsShellApi.registerRemoteRenderer(modality, callback);
       }
     };
-  }
-
-  private String constructRunArcRequest(ArcData arcData) {
-    PortableJson request = jsonParser
-        .emptyObject()
-        .put(Constants.MESSAGE_FIELD, Constants.RUN_ARC_MESSAGE)
-        .put(Constants.ARC_ID_FIELD, arcData.getArcId())
-        .put(Constants.PEC_ID_FIELD, arcData.getPecId())
-        .put(Constants.RECIPE_FIELD, arcData.getRecipe());
-    PortableJson particles = jsonParser.emptyArray();
-    arcData.getParticleList().forEach(particleData -> {
-      if (particleData.getName() != null && particleData.getId() != null) {
-        PortableJson particleJson =
-            jsonParser
-                .emptyObject()
-                .put(Constants.PARTICLE_ID_FIELD, particleData.getId())
-                .put(Constants.PARTICLE_NAME_FIELD, particleData.getName());
-        if (particleData.getProvidedSlotId() != null) {
-          particleJson.put(Constants.PROVIDED_SLOT_ID_FIELD, particleData.getProvidedSlotId());
-        }
-        particles.put(0, particleJson);
-      }
-    });
-
-    if (particles.getLength() > 0) {
-      request.put(Constants.PARTICLES_FIELD, particles);
-    }
-    return jsonParser.stringify(request);
-  }
-
-  private String constructStopArcRequest(ArcData arcData) {
-    return jsonParser.stringify(
-        jsonParser
-            .emptyObject()
-            .put(Constants.MESSAGE_FIELD, Constants.STOP_ARC_MESSAGE)
-            .put(Constants.ARC_ID_FIELD, arcData.getArcId())
-            .put(Constants.PEC_ID_FIELD, arcData.getPecId()));
-  }
-
-  private void runWhenReady(Runnable runnable) {
-    if (arcsReady) {
-      runnable.run();
-    } else {
-      environment.addReadyListener(recipes -> runnable.run());
-    }
   }
 }

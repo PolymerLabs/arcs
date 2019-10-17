@@ -2,7 +2,7 @@ package arcs.api;
 
 import javax.inject.Inject;
 
-class HandleFactory {
+public class HandleFactory {
 
   @Inject
   HandleFactory() {}

@@ -26,7 +26,7 @@ import arcs.api.PortableJsonParser;
 import arcs.api.UiRenderer;
 
 // This class implements Arcs API for clients to access Arcs via Android service.
-public class ArcsAndroid {
+public class ArcsAndroidClient {
 
   private static final String TAG = "Arcs";
 
@@ -38,7 +38,7 @@ public class ArcsAndroid {
   private Queue<Consumer<IArcsService>> pendingCalls = new ArrayDeque<>();
 
   @Inject
-  ArcsAndroid(
+  ArcsAndroidClient(
       PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
       ArcsMessageSender arcsMessageSender) {
@@ -115,7 +115,7 @@ public class ArcsAndroid {
 
   public void runArc(ArcData arcData) {
     PecInnerPort pecInnerPort =
-        pecPortManager.getOrCreateInnerPort(arcData.getPecId(), arcData.getSessionId());
+        pecPortManager.getOrCreatePecInnerPort(arcData.getPecId(), arcData.getSessionId());
     arcData.getParticleList().forEach(particleData -> {
       if (particleData.getParticle() != null) {
         pecInnerPort.mapParticle(particleData.getParticle());

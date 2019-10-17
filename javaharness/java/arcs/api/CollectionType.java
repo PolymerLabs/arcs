@@ -1,6 +1,6 @@
 package arcs.api;
 
-class CollectionType<T extends Type> extends Type {
+public class CollectionType<T extends Type> extends Type {
   public final T collectionType;
 
   public CollectionType(T collectionType) {

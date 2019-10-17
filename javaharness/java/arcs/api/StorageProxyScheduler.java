@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 // copied from storage-proxy.ts
 @SuppressWarnings("FutureReturnValueIgnored")
-class StorageProxyScheduler {
+public class StorageProxyScheduler {
   private boolean scheduled = false;
   private Map<Particle, Map<Handle, List<Args>>> queues = new HashMap<>();
   private Runnable idleResolver;

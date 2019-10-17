@@ -21,6 +21,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import arcs.api.ArcsMessageSender;
+import arcs.api.Handle;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
@@ -51,31 +52,29 @@ final class AndroidArcsEnvironment {
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
 
-  private final PortableJsonParser jsonParser;
-  private final PecPortManager pecPortManager;
-  private final UiBroker uiBroker;
+  @Inject
+  PortableJsonParser jsonParser;
+
+  @Inject
+  PecPortManager pecPortManager;
+
+  @Inject
+  UiBroker uiBroker;
+
   // Fetches the up-to-date properties on every get().
-  private Provider<RuntimeSettings> runtimeSettings;
-  private final Handler uiThreadHandler;
+  @Inject
+  Provider<RuntimeSettings> runtimeSettings;
+
+  @Inject
+  ArcsMessageSender arcsMessageSender;
+
   private final List<ReadyListener> readyListeners = new ArrayList<>();
+  private final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
 
   private WebView webView;
 
   @Inject
-  AndroidArcsEnvironment(
-    PortableJsonParser jsonParser,
-    PecPortManager pecPortManager,
-    UiBroker uiBroker,
-    ArcsMessageSender arcsMessageSender,
-    Provider<RuntimeSettings> runtimeSettings) {
-    this.jsonParser = jsonParser;
-    this.pecPortManager = pecPortManager;
-    this.uiBroker = uiBroker;
-    this.runtimeSettings = runtimeSettings;
-
-    this.uiThreadHandler = new Handler(Looper.getMainLooper());
-
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
+  AndroidArcsEnvironment() {
   }
 
   void addReadyListener(ReadyListener listener) {
@@ -123,6 +122,7 @@ final class AndroidArcsEnvironment {
     }
 
     Log.i("Arcs", "runtime url: " + url);
+    arcsMessageSender.attachProxy(this::sendMessageToArcs);
     webView.loadUrl(url);
   }
 

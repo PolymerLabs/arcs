@@ -9,6 +9,6 @@ java_test(
     deps = [
         "@junit//jar",
         "//javaharness/java/arcs/api:api-android",
-        "//javaharness/java/arcs/crdt",
+        "//javaharness/java/arcs/crdt:crdt-android",
     ],
 )

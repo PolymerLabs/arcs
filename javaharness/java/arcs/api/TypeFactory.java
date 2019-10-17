@@ -1,7 +1,6 @@
 package arcs.api;
 
 class TypeFactory {
-
   public static Type typeFromJson(PortableJson json) {
     Type.Tag tag = Type.Tag.fromString(json.getString("tag"));
     PortableJson data = json.getObject("data");

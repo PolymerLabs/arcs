@@ -5,13 +5,13 @@ import android.os.Bundle;
 
 import javax.inject.Inject;
 
-import arcs.android.ArcsAndroid;
+import arcs.android.ArcsAndroidClient;
 
 /** Notification demo activity. */
 public class NotificationDemoActivity extends Activity {
 
   @Inject
-  ArcsAndroid arcs;
+  ArcsAndroidClient arcsAndroidClient;
 
   @Inject
   NotificationRenderer notificationRenderer;
@@ -22,8 +22,8 @@ public class NotificationDemoActivity extends Activity {
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
-    arcs.connect(this);
-    arcs.registerRenderer("notification", notificationRenderer);
+    arcsAndroidClient.connect(this);
+    arcsAndroidClient.registerRenderer("notification", notificationRenderer);
 
     setContentView(R.layout.notification_demo);
 
@@ -32,11 +32,11 @@ public class NotificationDemoActivity extends Activity {
 
   @Override
   public void onDestroy() {
-    arcs.disconnect(this);
+    arcsAndroidClient.disconnect(this);
     super.onDestroy();
   }
 
   private void sendNotification() {
-    arcs.runArc("NotificationTest");
+    arcsAndroidClient.runArc("NotificationTest");
   }
 }

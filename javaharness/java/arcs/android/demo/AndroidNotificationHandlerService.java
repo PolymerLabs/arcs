@@ -3,7 +3,7 @@ package arcs.android.demo;
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
-import arcs.android.ArcsAndroid;
+import arcs.android.ArcsAndroidClient;
 import arcs.api.Constants;
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
@@ -13,7 +13,7 @@ public class AndroidNotificationHandlerService extends IntentService {
   private static final String TAG = "Arcs";
 
   @Inject
-  ArcsAndroid arcs;
+  ArcsAndroidClient arcsAndroidClient;
 
   @Inject
   PortableJsonParser jsonParser;
@@ -28,12 +28,12 @@ public class AndroidNotificationHandlerService extends IntentService {
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
-    arcs.connect(this);
+    arcsAndroidClient.connect(this);
   }
 
   @Override
   public void onDestroy() {
-    arcs.disconnect(this);
+    arcsAndroidClient.disconnect(this);
 
     super.onDestroy();
   }
@@ -45,7 +45,7 @@ public class AndroidNotificationHandlerService extends IntentService {
     String referenceId = intent.getStringExtra(Constants.INTENT_REFERENCE_ID_FIELD);
     String eventlet = intent.getStringExtra(Constants.INTENT_EVENT_DATA_FIELD);
     Log.d(TAG, "Received referenceId " + referenceId);
-    arcs.sendMessageToArcs(
+    arcsAndroidClient.sendMessageToArcs(
         jsonParser.stringify(
             jsonParser
                 .emptyObject()
