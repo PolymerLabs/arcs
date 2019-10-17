@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import javax.inject.Inject;
 
-import arcs.android.AndroidArcs;
+import arcs.android.ArcsAndroid;
 import arcs.api.PortableJsonParser;
 
 /** Autofill demo activity. Contains Autofill status info, and some example autofill fields. */
@@ -21,7 +21,7 @@ public class AutofillDemoActivity extends Activity {
   private static final int REQUEST_CODE_AUTOFILL_SET = 1;
 
   @Inject
-  AndroidArcs arcsClient;
+  ArcsAndroid arcsClient;
 
   @Inject
   PortableJsonParser jsonParser;

@@ -114,7 +114,7 @@ public class ArcsService extends Service {
           for (ArcData.ParticleData particleData : arcData.getParticleList()) {
             if (particleData.getParticle() != null) {
               if (pecInnerPort == null) {
-                pecInnerPort = pecPortManager.getOrCreatePecPort(
+                pecInnerPort = pecPortManager.getOrCreateInnerPort(
                   arcData.getPecId(), arcData.getSessionId());
               }
               pecInnerPort.mapParticle(particleData.getParticle());

@@ -3,7 +3,7 @@ package arcs.android.demo;
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
-import arcs.android.AndroidArcs;
+import arcs.android.ArcsAndroid;
 import arcs.api.Constants;
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
@@ -13,7 +13,7 @@ public class AndroidNotificationHandlerService extends IntentService {
   private static final String TAG = "Arcs";
 
   @Inject
-  AndroidArcs arcsClient;
+  ArcsAndroid arcsClient;
 
   @Inject
   PortableJsonParser jsonParser;

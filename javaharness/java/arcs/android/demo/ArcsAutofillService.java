@@ -17,7 +17,7 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
-import arcs.android.AndroidArcs;
+import arcs.android.ArcsAndroid;
 import arcs.api.ArcData;
 
 /**
@@ -27,7 +27,7 @@ import arcs.api.ArcData;
 public class ArcsAutofillService extends AutofillService {
 
   @Inject
-  AndroidArcs arcsClient;
+  ArcsAndroid arcsClient;
 
   @Inject
   AutofillRenderer autofillRenderer;

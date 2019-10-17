@@ -47,7 +47,7 @@ public final class PecPortManager {
     pecPortProxyMap.put(pecId, pecPortProxy);
   }
 
-  public PecInnerPort getOrCreatePecPort(String pecId, String sessionId) {
+  public PecInnerPort getOrCreateInnerPort(String pecId, String sessionId) {
     PecInnerPort port = pecPortMap.get(pecId);
     if (port == null) {
       return createPecPort(pecId, sessionId);
