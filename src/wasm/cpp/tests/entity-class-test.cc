@@ -10,8 +10,8 @@ static size_t hash(const T& d) {
   return std::hash<T>()(d);
 }
 
-static arcs::Ref<arcs::Dummy_foo> make_ref(const std::string& id, const std::string& key) {
-  return Accessor::make_ref<arcs::Dummy_foo>(id, key);
+static arcs::Ref<arcs::Foo> make_ref(const std::string& id, const std::string& key) {
+  return Accessor::make_ref<arcs::Foo>(id, key);
 }
 
 static auto converter() {
@@ -85,8 +85,8 @@ public:
     IS_TRUE(d.has_flg());
     IS_FALSE(d.flg());
 
-    arcs::Ref<arcs::Dummy_foo> empty;
-    arcs::Ref<arcs::Dummy_foo> populated = make_ref("id", "key");
+    arcs::Ref<arcs::Foo> empty;
+    arcs::Ref<arcs::Foo> populated = make_ref("id", "key");
     IS_FALSE(d.has_ref());
     EQUAL(d.ref(), empty);
     d.set_ref(populated);
@@ -286,7 +286,7 @@ public:
 
   void test_reference_field_equality() {
     arcs::Dummy_data d1, d2;
-    arcs::Ref<arcs::Dummy_foo> empty;
+    arcs::Ref<arcs::Foo> empty;
 
     // unset vs default value
     d2.set_ref({});
