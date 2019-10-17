@@ -33,10 +33,7 @@ export abstract class Schema2Base {
 
   /** Collect schemas from particle connections and build map of aliases. */
   public processManifest(manifest: Manifest): [Dictionary<Set<string>>, Dictionary<Schema>, Dictionary<Schema>] {
-    const schemas: Dictionary<Schema> = {};
-    const refSchemas: Dictionary<Schema> = {};
     const aliases: Dictionary<Set<string>> = {};
-
     const updateAliases = (rhs, alias) => {
       if (aliases[rhs] !== undefined) {
         aliases[rhs].add(alias);
@@ -45,6 +42,12 @@ export abstract class Schema2Base {
       }
     };
 
+    const schemas: Dictionary<Schema> = {};
+    const refSchemas: Dictionary<Schema> = {};
+
+    const isNotInline = (schema: Schema): boolean => Object.values(schema.fields)
+      .every(f => f['kind'] !== 'schema-inline');
+
     for (const particle of manifest.allParticles) {
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
@@ -52,11 +55,18 @@ export abstract class Schema2Base {
           continue;
         }
 
-        // include primary schemas from particle and connection name
-        const name = `${particle.name}_${connection.name}`;
-        schemas[name] = schema;
-
-        schema.names.forEach(n => updateAliases(name, `${n}${name}`));
+        // Include primary schemas from particle and connection name
+        // Given non-inline schemas: Create particle-namespaced schemas and alias connections to them.
+        const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
+        const name = namespaceByParticle(connection.name);
+        if (isNotInline(schema)) {
+          const schemaName = schema.names && schema.names[0] && namespaceByParticle(schema.names[0]);
+          schemas[schemaName] = schema;
+          schema.names.slice(1).forEach(n => updateAliases(schemaName, namespaceByParticle(n)));
+          updateAliases(schemaName, name);
+        } else {
+          schemas[name] = schema;
+        }
 
         // Collect reference schema fields. These will be output first so they're defined
         // prior to use in their containing entity classes.
