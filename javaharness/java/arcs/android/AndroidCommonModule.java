@@ -1,7 +1,5 @@
 package arcs.android;
 
-import arcs.api.HandleFactory;
-import arcs.api.HandleFactoryImpl;
 import arcs.api.PortableJsonParser;
 import dagger.Binds;
 import dagger.Module;
@@ -12,7 +10,4 @@ public abstract class AndroidCommonModule {
 
   @Binds
   abstract PortableJsonParser providesPortableJsonParser(AndroidPortableJsonParser impl);
-
-  @Binds
-  public abstract HandleFactory providesHandleFactory(HandleFactoryImpl impl);
 }
