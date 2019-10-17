@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
-public abstract class StorageProxy implements Store {
+abstract class StorageProxy implements Store {
   public final String id;
   public final String name;
   public final Type type;
