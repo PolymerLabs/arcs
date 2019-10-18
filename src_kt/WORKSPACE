@@ -16,7 +16,7 @@ http_archive(
     urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 KOTLIN_VERSION = "1.3.31"
 
@@ -31,7 +31,7 @@ KOTLINC_RELEASE = {
 
 kotlin_repositories(compiler_release = KOTLINC_RELEASE)
 
-kt_register_toolchains()
+register_toolchains("//build_defs:kotlin_toolchain")
 
 # END: io_bazel_rules_kotlin
 
