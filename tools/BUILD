@@ -1,4 +1,4 @@
-load("//build_defs:run_in_repo.bzl", "run_in_repo")
+load("//build_defs:sigh.bzl", "sigh_command")
 
 licenses(["notice"])
 
@@ -15,16 +15,12 @@ filegroup(
 )
 
 # Runs sigh 'webpack' command.
-run_in_repo(
+sigh_command(
     name = "sigh_webpack",
-    srcs = ["//src:core_srcs"],
+    srcs = ["//:all_srcs"],
     outs = ["worker.js"],
     # Run webpack, then copy the output to the location bazel expects it to be.
-    cmd = "$(location //tools:sigh_bin) webpack && cp $PWD/shells/lib/build/worker.js {OUT}",
+    cmd = "webpack && cp $PWD/shells/lib/build/worker.js {OUT}",
     progress_message = "Webpacking Arcs runtime",
     visibility = ["//visibility:public"],
-    deps = ["//tools:sigh_bin",
-            "//tools",
-            "@npm//:node_modules",
-            "//:tsconfig"],
 )

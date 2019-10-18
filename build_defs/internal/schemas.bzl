@@ -3,7 +3,7 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("//build_defs:run_in_repo.bzl", "run_in_repo")
+load("//build_defs:sigh.bzl", "sigh_command")
 load(":kotlin.bzl", "arcs_kt_library")
 
 def _output_name(src, file_extension = ""):
@@ -19,19 +19,19 @@ def _run_schema2pkg(name, src, out, language_name, language_flag):
     if not src.endswith(".arcs"):
         fail("src must be a .arcs file")
 
-    run_in_repo(
-        name = name,
-        srcs = [src],
-        outs = [out],
-        deps = ["//src/tools:schema2pkg_srcs"],
-        # TODO: generated header guard should contain whole workspace-relative
-        # path to file.
-        cmd = "./tools/sigh schema2pkg " +
-              language_flag + " " +
-              "--outdir $(dirname {OUT}) " +
-              "--outfile $(basename {OUT}) " +
-              "{SRC}",
-        progress_message = "Generating {} entity schemas".format(language_name),
+    sigh_command(
+            name = name,
+            srcs = [src],
+            outs = [out],
+
+            # TODO: generated header guard should contain whole workspace-relative
+            # path to file.
+            sigh_cmd = "schema2pkg " +
+                  language_flag + " " +
+                  "--outdir $(dirname {OUT}) " +
+                  "--outfile $(basename {OUT}) " +
+                  "{SRC}",
+            progress_message = "Generating {} entity schemas".format(language_name),
     )
 
 def arcs_cc_schema(name, src, out = None):

@@ -12,15 +12,15 @@ run_in_repo(
     progress_message = "Webpacking pipes-shell",
     visibility = ["//visibility:public"],
     deps = [
-        "//tools:sigh_bin", 
-        ":web_deploy",
+        "//tools:sigh_webpack",
+        ":web_deploy_srcs",
         ":web_deploy_bin",
     ],
 )
 
 filegroup(
-    name = "web_deploy",
-    srcs = glob(["web/deploy/**"]),
+    name = "web_deploy_srcs",
+    srcs = glob(["web/deploy/**"], exclude = ["web/deploy/deploy.sh"]),
 )
 
 filegroup(
