@@ -16,7 +16,7 @@ def arcs_kt_library(name, srcs = [], deps = []):
         deps = _ARCS_KOTLIN_LIBS + deps,
     )
 
-def arcs_kt_particle(name, srcs = [], deps = []):
+def arcs_kt_binary(name, srcs = [], deps = []):
     """Performs final compilation of wasm and bundling if necessary."""
     kt_wasm_binary(
         name = name,

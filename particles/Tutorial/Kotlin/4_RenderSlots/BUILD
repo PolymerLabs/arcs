@@ -1,11 +1,11 @@
-load("//build_defs:build_defs.bzl", "arcs_kt_particle")
+load("//build_defs:build_defs.bzl", "arcs_kt_binary")
 
-arcs_kt_particle(
+arcs_kt_binary(
     name = "ParentParticle",
     srcs = ["ParentParticle.kt"],
 )
 
-arcs_kt_particle(
+arcs_kt_binary(
     name = "ChildParticle",
     srcs = ["ChildParticle.kt"],
 )
