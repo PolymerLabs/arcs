@@ -3,7 +3,7 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load(":run_in_repo.bzl", "run_in_repo")
+load("//build_defs:run_in_repo.bzl", "run_in_repo")
 load(":kotlin.bzl", "arcs_kt_library")
 
 def _output_name(src, file_extension = ""):
