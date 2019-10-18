@@ -72,6 +72,17 @@
     return {...data, location: location()} as T;
   }
 
+  function requireUsePreSlandleSyntax() {
+    if (!Flags.usePreSlandlesSyntax) {
+      expected('pre slandles syntax');
+    }
+  }
+
+  function requireUsePostSlandleSyntax() {
+    if (Flags.usePreSlandlesSyntax) {
+      expected('post slandles syntax');
+    }
+  }
 }
 
 Manifest
@@ -498,6 +509,7 @@ ParticleHandleConnectionBody
 ParticleHandleConnectionBodyPreSlandle
   = direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
       direction,
@@ -518,6 +530,7 @@ NameWithColon
 ParticleHandleConnectionBodyUnified
   = maybeName:NameWithColon? direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
+    requireUsePostSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
       direction,
@@ -830,6 +843,7 @@ RecipeParticleConnection
 RecipeParticleConnectionUnified
   = param:(lowerIdent / '*') ':' whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
+    requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param,
@@ -843,6 +857,7 @@ RecipeParticleConnectionUnified
 RecipeParticleConnectionPreSlandle
   = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param,
@@ -906,6 +921,7 @@ RecipeConnection
 RecipeConnectionUnified
   = from:ConnectionTarget ':' whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
   {
+    requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction,
@@ -917,6 +933,7 @@ RecipeConnectionUnified
 RecipeConnectionPreSlandle
   = from:ConnectionTarget whiteSpace direction:DirectionArrow whiteSpace to:ConnectionTarget eolWhiteSpace
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction: AstNode.arrowToDirection(direction),
