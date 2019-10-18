@@ -29,6 +29,7 @@ def _write_shell_script(ctx, run_script):
     cmd = ctx.attr.cmd
     cmd = cmd.format(SRC = SRC, SRCS = SRCS, OUT = OUT, OUTS = OUTS)
     cmd = ctx.expand_location(cmd, ctx.attr.deps)
+
     # Write a shell script to perform the command.
     script_name = ctx.attr.name + ".sh"
     script_file = ctx.actions.declare_file(script_name)

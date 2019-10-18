@@ -8,8 +8,11 @@ load("//build_defs:sigh.bzl", "sigh_command")
 
 # Re-export rules from various other files.
 arcs_cc_schema = _arcs_cc_schema
+
 arcs_kt_schema = _arcs_kt_schema
+
 arcs_kt_library = _arcs_kt_library
+
 arcs_kt_binary = _arcs_kt_binary
 arcs_manifest = _arcs_manifest
 
@@ -18,8 +21,7 @@ def arcs_ts_test(name, src, deps):
     sigh_command(
         name = name,
         srcs = [src],
+        execute = False,
         sigh_cmd = "test --bazel --file {SRC}",
         deps = deps,
-        tags = EXECUTION_REQUIREMENTS_TAGS,
-        execute = False
     )
