@@ -35,11 +35,17 @@ object Base64 {
     return@with toString()
   }
 
-  /** Decodes the given Base64-encoded [String] into a [ByteArray]. */
-  // TODO: this is kinda ugly, clean it up.
-  fun decode(string: String): ByteArray {
+  /**
+   * Decodes the given Base64-encoded [String] into a [ByteArray].
+   *
+   * If you're confident that your string is well-formed, pass [true] for [gottaGoFast] to skip a
+   * regular expression check..
+   */
+  fun decode(string: String, gottaGoFast: Boolean = false): ByteArray {
+    if (string.isEmpty()) return ByteArray(0)
+
     require(string.length % 4 == 0) { "Base64 string length must be a multiple of 4" }
-    require(REGEXP.matches(string)) { "Input string is invalid Base64 string" }
+    require(gottaGoFast || REGEXP.matches(string)) { "Input string is invalid Base64 string" }
 
     val expectedByteCount = string.length / 4 * 3
 
