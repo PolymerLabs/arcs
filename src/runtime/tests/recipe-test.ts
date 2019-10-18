@@ -396,9 +396,9 @@ describe('recipe', () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
-        in ~a anyA
+        anyA: in ~a
       particle Specific
-        in Thing thing
+        thing: in Thing
       recipe
         map as thingHandle
         Generic
@@ -451,9 +451,9 @@ describe('recipe', () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
-        in ~a anyA
+        anyA: in ~a
       particle Specific
-        in Thing thing
+        thing: in Thing
       recipe
         map as thingHandle
         Generic

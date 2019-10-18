@@ -27,12 +27,12 @@ describe('MatchRecipeByVerb', () => {
       schema Energy
 
       particle JumpingBoots in 'A.js'
-        in Feet f
-        in Energy e
+        f: in Feet
+        e: in Energy
       particle FootFactory in 'B.js'
-        out Feet f
+        f: out Feet
       particle NuclearReactor in 'C.js'
-        out Energy e
+        e: out Energy
 
       recipe &jump
         JumpingBoots.f: in FootFactory.f
@@ -82,9 +82,9 @@ describe('MatchRecipeByVerb', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
-        out S p
+        p: out S
       particle Q in 'B.js'
-        in S q
+        q: in S
 
       recipe
         P.p: out Q.q
@@ -178,6 +178,39 @@ ${recipesManifest}`);
     return await mrv.generateFrom(generated);
   };
 
+  const slandlesSyntaxBasicHandlesContraintsManifest = `
+      particle P in 'A.js'
+        a: out S {}
+
+      particle Q in 'B.js'
+        a: in S {}
+        b: out S {}
+
+      particle R in 'C.js'
+        c: in S {}
+
+      recipe &verb
+        P
+
+      recipe &verb
+        P
+        Q
+
+      recipe &verb
+        Q
+
+      recipe &verb
+        R`;
+  const slandlesSyntaxGeneratePlans = async (recipesManifest) => {
+    const manifest = await Manifest.parse(`
+${slandlesSyntaxBasicHandlesContraintsManifest}
+${recipesManifest}`);
+    const arc = StrategyTestHelper.createTestArc(manifest);
+    const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
+    const mrv = new MatchRecipeByVerb(arc);
+    return await mrv.generateFrom(generated);
+  };
+
   it('listens to handle constraints - all recipes', async () => {
     const results = await generatePlans(`
       recipe
@@ -186,7 +219,7 @@ ${recipesManifest}`);
   });
 
   it('SLANDLES SYNTAX listens to handle constraints - out connection', Flags.withPostSlandlesSyntax(async () => {
-    const results = await generatePlans(`
+    const results = await slandlesSyntaxGeneratePlans(`
       recipe
         &verb
           a: out`);
@@ -209,7 +242,7 @@ ${recipesManifest}`);
   }));
 
   it('SLANDLES SYNTAX listens to handle constraints - in connection', Flags.withPostSlandlesSyntax(async () => {
-    const results = await generatePlans(`
+    const results = await slandlesSyntaxGeneratePlans(`
       recipe
         &verb
           a: in`);
@@ -232,7 +265,7 @@ ${recipesManifest}`);
   }));
 
   it('SLANDLES SYNTAX listens to handle constraints - both connection', Flags.withPostSlandlesSyntax(async () => {
-    const results = await generatePlans(`
+    const results = await slandlesSyntaxGeneratePlans(`
       recipe
         &verb
           a: in
@@ -259,7 +292,7 @@ ${recipesManifest}`);
   }));
 
   it('SLANDLES SYNTAX listens to handle constraints - handle', Flags.withPostSlandlesSyntax(async () => {
-    const results = await generatePlans(`
+    const results = await slandlesSyntaxGeneratePlans(`
       recipe
         create as handle0
         &verb
@@ -336,10 +369,10 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
-        in S {} a
+        a: in S {}
 
       particle Q in 'B.js'
-        out S {} b
+        b: out S {}
 
       recipe &verb
         P
@@ -397,10 +430,10 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
-        in S {} a
+        a: in S {}
 
       particle Q in 'B.js'
-        out S {} b
+        b: out S {}
 
       recipe &verb
         P
@@ -459,16 +492,16 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 
       particle O in 'Z.js'
-        in R {} x
-        out S {} y
+        x: in R {}
+        y: out S {}
 
       particle P in 'A.js'
-        in R {} x
-        out S {} y
-        in S {} a
+        x: in R {}
+        y: out S {}
+        a: in S {}
 
       particle Q in 'B.js'
-        out S {} b
+        b: out S {}
 
       recipe &verb
         O

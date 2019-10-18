@@ -852,15 +852,15 @@ describe('Automatic resolution', () => {
         Number lng
 
       particle A
-        out Product product
+        product: out Product
       particle B
-        in Thing thing
-        out Other other
+        thing: in Thing
+        other: out Other
       particle C
-        in * {Number count} something
-        in Location location
+        something: in * {Number count}
+        location: in Location
       particle D
-        inout Location location
+        location: inout Location
 
       recipe
         ? as product
@@ -975,14 +975,14 @@ describe('Automatic resolution', () => {
   it('SLANDLES SYNTAX composes recipe rendering a list of items from a recipe', Flags.withPostSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
-      import './src/runtime/tests/artifacts/Common/List.recipes'
+      import './src/runtime/tests/artifacts/Common/SLANDLESListRecipes.arcs'
       schema Thing
 
       particle ThingProducer
-        out [Thing] things
+        things: out [Thing]
 
       particle ThingRenderer
-        in Thing thing
+        thing: in Thing
         consume item
 
       recipe ProducingRecipe
@@ -1062,11 +1062,11 @@ describe('Automatic resolution', () => {
   it('SLANDLES SYNTAX composes recipe rendering a list of items from the current arc', Flags.withPostSlandlesSyntax(async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
-        import './src/runtime/tests/artifacts/Common/List.recipes'
+        import './src/runtime/tests/artifacts/Common/SLANDLESListRecipes.arcs'
         schema Thing
 
         particle ThingRenderer
-          in Thing thing
+          thing: in Thing
           consume item`,
         async (arcRef, manifest) => {
           arc = arcRef;
