@@ -62,11 +62,11 @@ class Base64PerformanceTest {
     }
 
     assertWithMessage(
-      "Arcs implementation should be no more than 0.01ms per cycle slower Java's on average"
+      "Arcs implementation should be no more than 0.02ms per cycle slower Java's on average"
     ).that(
       (arcsTime.await() - javaTime.await()).toDouble() / iterations
     ).isLessThan(
-      TimeUnit.MICROSECONDS.toNanos(10).toDouble()
+      TimeUnit.MICROSECONDS.toNanos(20).toDouble()
     )
   }
 
