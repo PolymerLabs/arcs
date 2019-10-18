@@ -8,5 +8,5 @@ arcs_kt_schema(
 arcs_kt_particle(
     name = "JsonStore",
     srcs = ["JsonStore.kt"],
-    deps = [":store_schemas"]
+    deps = [":store_schemas"],
 )

@@ -56,7 +56,7 @@ def arcs_kt_schema(name, src):
         language_name = "Kotlin",
         language_flag = "--kotlin",
     )
-    
+
     arcs_kt_library(
         name = name,
         srcs = [out],

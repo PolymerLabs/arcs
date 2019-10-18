@@ -29,6 +29,6 @@ arcs_kt_particle(
 
 arcs_kt_particle(
     name = "test_particle",
-    srcs = ["source/TestParticle.kt",],
-    deps = [":wasm_schemas",]
+    srcs = ["source/TestParticle.kt"],
+    deps = [":wasm_schemas"],
 )
