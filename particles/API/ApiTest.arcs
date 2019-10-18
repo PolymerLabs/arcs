@@ -1,0 +1,8 @@
+particle ApiTest in 'source/ApiTest.js'
+  consume root
+
+recipe ApiTest
+  slot 'rootslotid-root' as root
+  ApiTest
+    consume root as root
+  description `test particle api`

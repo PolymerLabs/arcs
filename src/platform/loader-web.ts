@@ -38,16 +38,6 @@ export class Loader extends LoaderBase {
     const target = spec.implBlobUrl || this.resolve(spec.implFile);
     return fetch(target).then(res => res.arrayBuffer());
   }
-  // Below here invoked from inside Worker
-  async loadParticleClass(spec: ParticleSpec) {
-    const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
-    if (clazz) {
-      clazz.spec = spec;
-    } else {
-      warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
-    }
-    return clazz;
-  }
   async requireParticle(unresolvedPath: string, blobUrl: string) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"

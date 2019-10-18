@@ -9,30 +9,26 @@
  */
 import {assert} from '../platform/assert-web.js';
 import {fetch} from '../platform/fetch-web.js';
-//import {vm} from '../platform/vm-web.js';
-//import {fs} from '../platform/fs-web.js';
-//
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ClientReference} from './reference.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
-//
 import {DomParticle} from './dom-particle.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
 import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
-//
 import {UiParticle} from './ui-particle.js';
 import {UiMultiplexerParticle} from './ui-multiplexer-particle.js';
-//
 import {html} from './html.js';
 import {logsFactory} from './log-factory.js';
+
+type Ctor = new() => Object;
 
 const {warn} = logsFactory('Loader', 'green');
 
 export abstract class Loader {
-  protected _urlMap: [];
   public pec?: ParticleExecutionContext;
+  protected _urlMap: [];
   constructor(urlMap?: []) {
     this._urlMap = urlMap || [];
   }
@@ -70,22 +66,6 @@ export abstract class Loader {
     path = path.replace(/([^:])(\/\/)/g, '$1/');
     return path;
   }
-  // async loadResource(file: string): Promise<string> {
-  //   if (/^https?:\/\//.test(file)) {
-  //     return this._loadURL(file);
-  //   }
-  //   return this.loadFile(file, 'utf-8') as Promise<string>;
-  // }
-  // async loadWasmBinary(spec): Promise<ArrayBuffer> {
-  //   // TODO: use spec.implBlobUrl if present?
-  //   this.mapParticleUrl(spec.implFile);
-  //   const target = this.resolve(spec.implFile);
-  //   if (/^https?:\/\//.test(target)) {
-  //     return fetch(target).then(res => res.arrayBuffer());
-  //   } else {
-  //     return this.loadFile(target) as Promise<ArrayBuffer>;
-  //   }
-  // }
   resolve(path: string) {
     let url = this._urlMap[path];
     if (!url && path) {
@@ -113,42 +93,31 @@ export abstract class Loader {
     this._urlMap['$here'] = resolved;
     this._urlMap['$module'] = resolved;
   }
-
-  // private async loadFile(file: string, encoding?: string): Promise<string | ArrayBuffer> {
-  //   return new Promise((resolve, reject) => {
-  //     fs.readFile(file, {encoding}, (err, data: string | Buffer) => {
-  //       if (err) {
-  //         reject(err);
-  //       } else {
-  //         resolve(encoding ? (data as string) : (data as Buffer).buffer);
-  //       }
-  //     });
-  //   });
-  // }
-
   async _loadURL(url: string): Promise<string> {
     if (/\/\/schema.org\//.test(url)) {
-      return this._loadSchemaOrgUrl(url);
+      return this.loadSchemaOrgUrl(url);
     }
-    return this._fetchText(url);
+    return this.fetchText(url);
   }
-  async _loadSchemaOrgUrl(url: string): Promise<string> {
+  private async loadSchemaOrgUrl(url: string): Promise<string> {
     let href = `${url}.jsonld`;
     let opts = null;
     if (url.endsWith('/Thing')) {
       href = 'https://schema.org/Product.jsonld';
       opts =  {'@id': 'schema:Thing'};
     }
-    const data = await this._fetchText(href);
+    const data = await this.fetchText(href);
     return JsonldToManifest.convert(data, opts);
   }
-  async _fetchText(url: string): Promise<string> {
+  protected async fetchText(url: string): Promise<string> {
     const res = await fetch(url);
     if (res.ok) {
       return res.text()
     }
     return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
   }
+
+  // Below here invoked from inside isolation scope (e.g. Worker)
 
   /**
    * Returns a particle class implementation by loading and executing
@@ -159,19 +128,37 @@ export abstract class Loader {
    * Particle foo in 'x.js'
    * ```
    */
-  // async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle> {
-  //   const clazz = await this.requireParticle(spec.implFile);
-  //   clazz.spec = spec;
-  //   return clazz;
-  // }
-  async loadParticleClass(spec: ParticleSpec) {
-    const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
-    if (clazz) {
-      clazz.spec = spec;
-    } else {
+  async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle> {
+    let clazz: any = null;
+    let userClass = await this.requireParticle(spec.implFile, spec.implBlobUrl);
+    if (!userClass) {
       warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
+    } else {
+      // TODO(sjmiles): this seems bad, but instanceof didn't work (worker scope?)
+      if (userClass.toString().includes('extends')) {
+      //if (userClass instanceof Particle) {
+        clazz = userClass;
+      } else {
+        clazz = this.implementWrappedParticle(userClass);
+      }
+      clazz.spec = spec;
     }
     return clazz;
+  }
+  private implementWrappedParticle(userClass): Ctor {
+    return class extends UiParticle {
+      update(...args) {
+        console.warn('UPDATE UDPATE UDTAPE');
+        this.impl.update(...args);
+      }
+      get impl() {
+        if (!this._impl) {
+          this._impl = new userClass();
+          this._impl.particle = this;
+        }
+        return this._impl;
+      }
+    };
   }
   /**
    * Loads a particle class from the given filename by loading the
@@ -179,49 +166,10 @@ export abstract class Loader {
    *
    * Protected for use in tests.
    */
-  // protected async requireParticle(fileName: string): Promise<typeof Particle> {
-  //   fileName = fileName || '';
-  //   const src = await this.loadResource(fileName);
-  //   // Note. This is not real isolation.
-  //   const script = new vm.Script(src, {filename: fileName, displayErrors: true});
-  //   const result = [];
-  //   // TODO(lindner): restrict Math.random here.
-  //   const self = {
-  //     defineParticle(particleWrapper) {
-  //       result.push(particleWrapper);
-  //     },
-  //     console,
-  //     fetch,
-  //     setTimeout,
-  //     importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
-  //   };
-  //   script.runInNewContext(self, {filename: fileName, displayErrors: true});
-  //   assert(result.length > 0 && typeof result[0] === 'function', `Error while instantiating particle implementation from ${fileName}`);
-  //   return this.unwrapParticle(result[0]);
-  // }
-  /**
-   * Loads a particle class from the given filename by loading the
-   * script contained in `fileName` and executing it as a script.
-   *
-   * Protected for use in tests.
-   */
   protected abstract async requireParticle(fileName: string, blobUrl?: string): Promise<typeof Particle>;
-
   /**
    * executes the defineParticle() code and returns the results which should be a class definition.
    */
-  // unwrapParticle(particleWrapper): typeof Particle {
-  //   assert(this.pec);
-  //   return particleWrapper({
-  //     Particle,
-  //     DomParticle,
-  //     SimpleParticle: UiParticle,
-  //     TransformationDomParticle,
-  //     MultiplexerDomParticle,
-  //     Reference: ClientReference.newClientReference(this.pec),
-  //     html
-  //   });
-  // }
   unwrapParticle(particleWrapper, log?) {
     assert(this.pec);
     return particleWrapper({
@@ -234,7 +182,7 @@ export abstract class Loader {
       // Ui-flavored Particles
       UiParticle,
       UiMultiplexerParticle,
-      // Aliasing
+      // Aliases
       ReactiveParticle: UiParticle,
       SimpleParticle: UiParticle,
       // utilities
@@ -244,7 +192,4 @@ export abstract class Loader {
       html
     });
   }
-  // clone(): Loader {
-  //   return (new (Object.getPrototypeOf(this).constructor)(this._urlMap)) as Loader;
-  // }
 }
