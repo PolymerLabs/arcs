@@ -895,6 +895,7 @@ RecipeParticleSlotConnection
 RecipeParticleSlotConnectionPreSlandle
   = direction:SlotDirection whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
@@ -907,6 +908,7 @@ RecipeParticleSlotConnectionPreSlandle
 RecipeParticleSlotConnectionUnified
   = param: NameWithColon direction:SlotDirection name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
+    requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
