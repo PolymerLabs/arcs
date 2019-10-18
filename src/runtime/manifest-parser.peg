@@ -890,6 +890,9 @@ ParticleConnectionTargetComponents
   }
 
 RecipeParticleSlotConnection
+  = RecipeParticleSlotConnectionPreSlandle / RecipeParticleSlotConnectionUnified
+
+RecipeParticleSlotConnectionPreSlandle
   = direction:SlotDirection whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
@@ -897,6 +900,18 @@ RecipeParticleSlotConnection
       direction,
       param: ref.param,
       tags: ref.tags,
+      name: optional(name, name=>name[1], null),
+      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
+    });
+  }
+RecipeParticleSlotConnectionUnified
+  = param: NameWithColon direction:SlotDirection name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  {
+    return toAstNode<AstNode.RecipeParticleSlotConnection>({
+      kind: 'slot-connection',
+      direction,
+      param,
+      tags,
       name: optional(name, name=>name[1], null),
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     });
