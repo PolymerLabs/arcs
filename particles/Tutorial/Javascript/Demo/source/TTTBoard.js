@@ -15,35 +15,37 @@
 defineParticle(({SimpleParticle, html, log}) => {
 
 const template = html`
-  <style>
-    .grid-container {
-      display: grid;
-      grid-template-columns: 50px 50px 50px;
-      grid-column-gap: 0px;
-    }
+<style>
+  .grid-container {
+    display: grid;
+    grid-template-columns: 50px 50px 50px;
+    grid-column-gap: 0px;
+  }
 
-    .valid-butt {
-      border: 1px outset blue;
-      height: 50px;
-      width: 50px;
-      cursor: pointer;
-      background-color: lightblue;
-    }
+  .valid-butt {
+    border: 1px outset blue;
+    height: 50px;
+    width: 50px;
+    cursor: pointer;
+    background-color: lightblue;
+  }
 
-    .valid-butt:hover {
-      background-color: blue;
-      color: white;
-    }
-  </style>
-  <div class="grid-container">
-      <div class="grid-container">{{buttons}}</div>
-  </div>
-  <template button>
-    <button class=valid-butt type="button" on-click="onClick" value={{value}} \>
-      <span>{{cell}}</span>
-    </button>
-  </template>
-  <div hidden={{hideReset}}> Please hit reset to start a new game. <button on-click="reset">Reset</button></div>
+  .valid-butt:hover {
+    background-color: blue;
+    color: white;
+  }
+</style>
+<div class="grid-container">
+    <div class="grid-container">{{buttons}}</div>
+</div>
+<template button>
+  <button class="valid-butt" type="button" on-click="onClick" value="{{value}}" \>
+    <span>{{cell}}</span>
+  </button>
+</template>
+<div hidden="{{hideReset}}"> 
+  Please hit reset to start a new game.<button on-click="reset">Reset</button>
+</div>
 `;
 
   return class extends SimpleParticle {
@@ -57,7 +59,6 @@ const template = html`
     }
 
     render({gameState}) {
-
       const baordArr = JSON.parse(gameState.board);
       return {
         hideReset: !gameState.gameOver,
@@ -76,7 +77,7 @@ const template = html`
     }
 
     onClick(e) {
-      this.set(`event`, {type: 'move', move: parseInt(e.data.value, 10)});
+      this.set(`event`, {type: 'click', move: Number(e.data.value)});
     }
 
   };

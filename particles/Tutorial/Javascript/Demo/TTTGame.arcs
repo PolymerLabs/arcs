@@ -1,43 +1,37 @@
 // Tutorial Demo
 // Shows how to use Arcs features to create a tic-tac-toe game.
-import 'GameSchemas.arcs'
-import 'Stores.arcs'
+import 'TTTGameSchemas.arcs'
+import 'TTTGameData.arcs'
 
-particle Game in './source/Game.js'
+particle Game in './source/TTTGame.js'
   inout Person {name, avatar, id} playerOne
   inout Person {name, avatar, id} playerTwo
-  in GameState {gameOver} gameState
-  inout Move {type, move} playerOneMove
-  inout Move {type, move} playerTwoMove
-  inout Move {type, move, playerAvatar} move
-  inout Move {type, move} event
+  inout GameState gameState
+  inout Move {move} playerOneMove
+  inout Move {move} playerTwoMove
+  inout Event {type, move} event
   check playerOne is private
   check playerTwo is private
   consume root
     provide gameSlot
 
-particle TicTacToeBoard in './source/TicTacToeBoard.js'
+particle TicTacToeBoard in './source/TTTBoard.js'
   in GameState {board, currentPlayer} gameState
-  out Move {type, move} event
+  out Event {type, move} event
   consume boardSlot
 
-particle HumanPlayer in './source/HumanPlayer.js'
+particle HumanPlayer in './source/TTTHumanPlayer.js'
   in GameState {currentPlayer} gameState
-  in Move {type, move} event
+  in Event {type, move} event
   in Person {id} player
-  out Move {type, move} myMove
+  out Move {move} myMove
 
-particle MoveApplier in './source/MoveApplier.js'
-  in Move {type, move, playerAvatar} move
-  inout GameState gameState
-
-particle RandomComputer in './source/RandomComputer.js'
-  out Move {type, move} computerMove
+particle RandomComputer in './source/TTTRandomComputer.js'
+  out Move {move} computerMove
   in GameState {board, currentPlayer} gameState
   in Person {id} player
 
 recipe GameDemoRecipe
-  create #volatile as move
   create #volatile #humanMove as playerOneMove
   create #volatile #computerMove as playerTwoMove
   create #volatile as gameState  
@@ -53,11 +47,6 @@ recipe GameDemoRecipe
     playerOneMove = playerOneMove
     playerTwoMove = playerTwoMove
     event = event
-    move = move
-
-  MoveApplier
-    move = move
-    gameState = gameState
 
   TicTacToeBoard
     gameState = gameState
@@ -78,7 +67,6 @@ recipe GameDemoRecipe
   description `Javascript Tutorial One Player TicTacToe Demo`
 
 recipe GamePlayersDemoRecipe
-  create #volatile as move
   create #volatile #PlayerOne as playerOneMove
   create #volatile #PlayerTwo as playerTwoMove
   create #volatile as gameState  
@@ -94,11 +82,6 @@ recipe GamePlayersDemoRecipe
     playerOneMove = playerOneMove
     playerTwoMove = playerTwoMove
     event = event
-    move = move
-
-  MoveApplier
-    move = move
-    gameState = gameState
 
   TicTacToeBoard
     gameState = gameState
@@ -120,7 +103,6 @@ recipe GamePlayersDemoRecipe
   description `Javascript Tutorial Two Players TicTacToe Demo`
 
 recipe GameComputersDemoRecipe
-  create #volatile as move
   create #volatile #computerOne as playerOneMove
   create #volatile #computerTwo as playerTwoMove
   create #volatile as gameState  
@@ -136,11 +118,6 @@ recipe GameComputersDemoRecipe
     playerOneMove = playerOneMove
     playerTwoMove = playerTwoMove
     event = event
-    move = move
-
-  MoveApplier
-    move = move
-    gameState = gameState
 
   TicTacToeBoard
     gameState = gameState

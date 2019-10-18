@@ -5,12 +5,14 @@ schema Person
 
 schema GameState
   Boolean gameOver
-  Text winnerAvatar
+  Number winnerId
   Text board
   Number currentPlayer
   Number lastMove
 
-schema Move 
+schema Event
   Text type
-  Text playerAvatar
+  Number move
+
+schema Move
   Number move

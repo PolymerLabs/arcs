@@ -1,4 +1,4 @@
-import 'GameSchemas.arcs'
+import 'TTTGameSchemas.arcs'
 
 resource ComputerDefault
   start

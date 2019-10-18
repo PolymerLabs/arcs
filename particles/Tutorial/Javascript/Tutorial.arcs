@@ -28,4 +28,4 @@ import '5_Collections/Collections.arcs'
 import '6_Handles/Handles.arcs'
 
 // Demo the tutorials lead to
-import 'Demo/Game.arcs'
+import 'Demo/TTTGame.arcs'

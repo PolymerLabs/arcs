@@ -17,8 +17,8 @@ defineParticle(({SimpleParticle}) => {
   return class extends SimpleParticle {
 
     update({gameState, event, player}) {
-      if (event && player && gameState && gameState.currentPlayer == player.id) {
-        this.set('myMove', event);
+      if (event && event.type == `click` && player && gameState && gameState.currentPlayer == player.id) {
+        this.set('myMove', {move: event.move});
       }
     }
 

@@ -12,19 +12,6 @@
 
 defineParticle(({SimpleParticle, log}) => {
 
-  function getMove(b) {
-    const emptyCells = [];
-    const board = JSON.parse(b);
-    // Determine which cells are empty.
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] == ``) {
-        emptyCells.push(i);
-      }
-    }
-
-    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
-  }
-
   return class extends SimpleParticle {
 
     update({gameState, player}) {
@@ -43,7 +30,7 @@ defineParticle(({SimpleParticle, log}) => {
         }
 
         const selection = Math.floor(Math.random() * emptyCells.length);
-        this.set('computerMove', {type: 'move', move: emptyCells[selection]});
+        this.set('computerMove', {move: emptyCells[selection]});
       }
     }
   };
