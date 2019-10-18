@@ -232,9 +232,12 @@ struct std::hash<arcs::${name}> {
 
   addAliases(aliases: Aliases): string {
     const lines: string[] = Object.entries(aliases)
-      .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = arcs::${rhs};`))
+      .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = ${rhs};`))
       .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
 
-    return lines.join('\n');
+
+    return `namespace arcs {
+${lines.join('\n')}
+}`;
   }
 }
