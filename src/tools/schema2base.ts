@@ -33,24 +33,26 @@ export abstract class Schema2Base {
     }
   }
 
+
   /** Collect schemas from particle connections and build map of aliases. */
   public processManifest(manifest: Manifest): [Aliases, Dictionary<Schema>, Dictionary<Schema>] {
-    const aliases: Dictionary<Set<string>> = {};
-    const updateAliases = (rhs, alias) => {
-      if (aliases[rhs] !== undefined) {
-        aliases[rhs].add(alias);
+    const aliases: Aliases = {};
+
+    const updateTheseAliases = (aliases_: Aliases) => (rhs: string, alias: string) => {
+      if (aliases_[rhs] !== undefined) {
+        aliases_[rhs].add(alias);
       } else {
-        aliases[rhs] = new Set([alias]);
+        aliases_[rhs] = new Set([alias]);
       }
     };
+
+    const updateAliases = updateTheseAliases(aliases);
 
     const schemas: Dictionary<Schema> = {};
     const refSchemas: Dictionary<Schema> = {};
 
-    const isNotInline = (schema: Schema): boolean => Object.values(schema.fields)
-      .every(f => f['kind'] !== 'schema-inline');
-
     for (const particle of manifest.allParticles) {
+      const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
       for (const connection of particle.connections) {
         const schema = connection.type.getEntitySchema();
         if (!schema) {
@@ -59,16 +61,22 @@ export abstract class Schema2Base {
 
         // Include primary schemas from particle and connection name
         // Given non-inline schemas: Create particle-namespaced schemas and alias connections to them.
-        const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
         const name = namespaceByParticle(connection.name);
-        if (isNotInline(schema)) {
-          const schemaName = schema.names && schema.names[0] && namespaceByParticle(schema.names[0]);
-          schemas[schemaName] = schema;
-          schema.names.slice(1).forEach(n => updateAliases(schemaName, namespaceByParticle(n)));
-          updateAliases(schemaName, name);
-        } else {
-          schemas[name] = schema;
+
+        if (aliases[name] === undefined) {
+          aliases[name] = new Set<string>([]);
         }
+
+        schemas[name] = schema;
+
+        schema.names.forEach(n => {
+          const mangledName = namespaceByParticle(n);
+          if (Object.values(aliases).some(lst => lst.has(mangledName))) {
+            Object.values(aliases).forEach(lst => lst.delete(mangledName));
+          } else {
+            aliases[name].add(mangledName);
+          }
+        });
 
         // Collect reference schema fields. These will be output first so they're defined
         // prior to use in their containing entity classes.
@@ -87,6 +95,7 @@ export abstract class Schema2Base {
       }
     }
 
+
     return [aliases, refSchemas, schemas];
   }
 
@@ -99,6 +108,7 @@ export abstract class Schema2Base {
     }
 
     const manifest = await Utils.parse(`import '${src}'`);
+
 
     const [aliases, ...schemas] = this.processManifest(manifest);
 
@@ -120,7 +130,7 @@ export abstract class Schema2Base {
   }
 
   protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
+                          processField: (field: string, typeChar: string, refName: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
@@ -180,8 +190,12 @@ export abstract class Schema2Base {
   }
 
   abstract outputName(baseName: string): string;
+
   abstract fileHeader(outName: string): string;
+
   abstract fileFooter(): string;
+
   abstract entityClass(name: string, schema: Schema): string;
+
   abstract addAliases(aliases: Aliases): string;
 }
