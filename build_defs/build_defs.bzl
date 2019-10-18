@@ -74,7 +74,7 @@ def _android_and_wasm_library(name, srcs, deps):
 
 def arcs_kt_schema(name, src, out = None, deps = [], wasm_deps = []):
     """Generates a Kotlin file for the given .arcs schema file."""
-    out = out or _output_name(src, ".kt")
+    out = out or _output_name(src, "_GeneratedSchemas.kt")
     _run_schema2pkg(
         name = name + "_genrule",
         src = src,
