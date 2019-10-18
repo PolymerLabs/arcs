@@ -28,8 +28,9 @@ exports.defaultTimeout = exports.seconds(30);
 exports.shellUrl = `shells/web-shell`;
 
 const storageKeyByType = {
+  'firebase': `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`,
   'pouchdb': `pouchdb://local/user`,
-  'firebase': `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`
+  'volatile': `volatile://`
 };
 
 exports.waitForServer = async function() {
