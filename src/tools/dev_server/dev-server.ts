@@ -16,6 +16,7 @@ import morgan from 'morgan';
 import {status} from './status-handler.js';
 import {ExplorerProxy, green, bold} from './explorer-proxy.js';
 import {HotReloadServer} from './hot-reload-server.js';
+import {requestPathRewriter} from './env-customization.js';
 
 
 // ALDS - Arcs Local Development Server.
@@ -23,6 +24,7 @@ import {HotReloadServer} from './hot-reload-server.js';
 // It consists of 2 components:
 // * Web Server serving static files from the root directory.
 // * WebSocket proxy for exchanging messages between Arcs Runtime and Arcs Explorer.
+// * File system watcher for Hot Code Reloading.
 // There are many plans for extending this list for various development features.
 
 
@@ -45,6 +47,10 @@ async function launch() {
     app.use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'));
   }
   app.use(status(proxy));
+  app.use((req, res, next) => {
+    req.url = requestPathRewriter(req.url);
+    next();
+  });
   app.use(express.static('.'));
 
   const server = http.createServer(app);

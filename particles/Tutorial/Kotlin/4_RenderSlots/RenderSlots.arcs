@@ -2,7 +2,7 @@
 // Creates two particles, and renders one inside the other using render slots.
 
 // The "parent" particle. It provides a slot for another particle to be rendered inside it.
-particle ParentParticle in 'https://$arcs/bazel-bin/particles/Tutorial/Kotlin/4_RenderSlots/ParentParticle.wasm'
+particle ParentParticle in 'ParentParticle.wasm'
   // This particle renders to the root slot ("consumes" it), and provides a slot inside it called "mySlot" in which another particle can render
   // itself. The child particle will be rendered inside a special div with the identifier "mySlot", which this particle will need to provide in
   // its HTML.
@@ -10,7 +10,7 @@ particle ParentParticle in 'https://$arcs/bazel-bin/particles/Tutorial/Kotlin/4_
     provide mySlot
 
 // The "child" particle. Instead of consuming "root" it consumes "mySlot", which connects it to the slot provided by ParentParticle.
-particle ChildParticle in 'https://$arcs/bazel-bin/particles/Tutorial/Kotlin/4_RenderSlots/ChildParticle.wasm'
+particle ChildParticle in 'ChildParticle.wasm'
   consume mySlot
 
 recipe RenderSlotsRecipe
