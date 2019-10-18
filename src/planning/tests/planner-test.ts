@@ -1000,16 +1000,16 @@ describe('Automatic resolution', () => {
   ItemMultiplexer as particle0
     hostedParticle: host ThingRenderer
     list: in handle0
-    consume item as slot0
+    item: consume slot0
   SelectableList as particle1
     items: inout handle0
     selected: inout handle1
-    consume root as slot1
-      provide action as slot2
-      provide annotation as slot3
-      provide item as slot0
-      provide postamble as slot4
-      provide preamble as slot5
+    root: consume slot1
+      action: provide slot2
+      annotation: provide slot3
+      item: provide slot0
+      postamble: provide slot4
+      preamble: provide slot5
   ThingProducer as particle2
     things: out handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
@@ -1082,16 +1082,16 @@ describe('Automatic resolution', () => {
   ItemMultiplexer as particle0
     hostedParticle: host ThingRenderer
     list: in handle0
-    consume item as slot0
+    item: consume slot0
   SelectableList as particle1
     items: inout handle0
     selected: inout handle1
-    consume root as slot1
-      provide action as slot2
-      provide annotation as slot3
-      provide item as slot0
-      provide postamble as slot4
-      provide preamble as slot5`);
+    root: consume slot1
+      action: provide slot2
+      annotation: provide slot3
+      item: provide slot0
+      postamble: provide slot4
+      preamble: provide slot5`);
   }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
