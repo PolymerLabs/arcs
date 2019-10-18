@@ -46,8 +46,8 @@ describe('RecipeIndex', () => {
       schema Lumberjack
 
       particle Transform
-        in Person person
-        out Lumberjack lumberjack
+        person: in Person
+        lumberjack: out Lumberjack
 
       recipe
         Transform
@@ -88,7 +88,7 @@ describe('RecipeIndex', () => {
       schema Person
 
       particle A
-        inout Person person
+        person: inout Person
 
       recipe
         create as person
@@ -149,11 +149,11 @@ describe('RecipeIndex', () => {
       schema C
 
       particle Transform
-        in A a
-        out B b
+        a: in A
+        b: out B
       particle TransformAgain
-        in B b
-        out C c
+        b: in B
+        c: out C
 
       recipe
         Transform.b: out TransformAgain.b
@@ -239,21 +239,21 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle A
-        in Thing thing
+        thing: in Thing
       recipe A
         map as thing
         A
           thing: any thing
 
       particle B
-        out Thing thing
+        thing: out Thing
       recipe B
         create as thing
         B
           thing: any thing
 
       particle C
-        in Thing thing
+        thing: in Thing
       recipe C
         use as thing
         C

@@ -176,12 +176,22 @@ export class SlotConnection implements Comparable<SlotConnection> {
 
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const consumeRes: string[] = [];
-    consumeRes.push('consume');
-    consumeRes.push(`${this.name}`);
-    if (this.targetSlot) {
-      consumeRes.push(`as ${
-          (nameMap && nameMap.get(this.targetSlot)) ||
-          this.targetSlot.localName}`);
+    if (Flags.usePreSlandlesSyntax) {
+      consumeRes.push('consume');
+      consumeRes.push(`${this.name}`);
+      if (this.targetSlot) {
+        consumeRes.push(`as ${
+            (nameMap && nameMap.get(this.targetSlot)) ||
+            this.targetSlot.localName}`);
+      }
+    } else {
+      consumeRes.push(`${this.name}:`);
+      consumeRes.push('consume');
+      if (this.targetSlot) {
+        consumeRes.push(`${
+            (nameMap && nameMap.get(this.targetSlot)) ||
+            this.targetSlot.localName}`);
+      }
     }
 
     if (options && options.showUnresolved) {
@@ -196,15 +206,23 @@ export class SlotConnection implements Comparable<SlotConnection> {
     Object.keys(this.providedSlots).forEach(psName => {
       const providedSlot = this.providedSlots[psName];
       const provideRes: string[] = [];
-      provideRes.push('  provide');
-
       // Only assert that there's a spec for this provided slot if there's a spec for
       // the consumed slot .. otherwise this is just a constraint.
       if (this.getSlotSpec()) {
         const providedSlotSpec = this.particle.getSlotSpecByName(psName);
         assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
       }
-      provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
+
+      if (Flags.usePreSlandlesSyntax) {
+        provideRes.push('  provide');
+        provideRes.push(`${psName}`);
+        provideRes.push(`as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
+      } else {
+        provideRes.push(`  ${psName}:`);
+        provideRes.push('provide');
+        provideRes.push(`${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
+      }
+
       result.push(provideRes.join(' '));
     });
     return result.join('\n');

@@ -2455,11 +2455,11 @@ resource SomeName
           slot as s0
           P1
             *: out h0
-            consume root
-              provide details as s0
+            root: consume
+              details: provide s0
           P2
             *: in h0
-            consume details
+            details: consume s0
         P1
     `);
     const recipe = manifest.recipes[0];
