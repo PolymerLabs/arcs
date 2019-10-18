@@ -1,6 +1,7 @@
 package arcs.api;
 
 public class StorageProxyFactory {
+
   static StorageProxy newProxy(
       String id,
       Type type,

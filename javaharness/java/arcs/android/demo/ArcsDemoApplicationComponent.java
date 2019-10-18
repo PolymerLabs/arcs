@@ -4,14 +4,13 @@ import android.content.Context;
 
 import javax.inject.Singleton;
 
-import arcs.android.AndroidClientModule;
-import arcs.android.Annotations;
+import arcs.android.ArcsAndroidModule;
 import dagger.BindsInstance;
 import dagger.Component;
 
 @Singleton
 @Component(
-  modules = {AndroidClientModule.class, AndroidDemoServiceModule.class}
+  modules = {ArcsAndroidModule.class}
 )
 interface ArcsDemoApplicationComponent {
 
@@ -23,8 +22,7 @@ interface ArcsDemoApplicationComponent {
   @Component.Builder
   interface Builder {
     @BindsInstance
-    ArcsDemoApplicationComponent.Builder appContext(
-      @Annotations.AppContext  Context context);
+    ArcsDemoApplicationComponent.Builder context(Context context);
 
     ArcsDemoApplicationComponent build();
   }

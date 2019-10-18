@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 
 public class PecInnerPort {
 
+  private static final Logger logger = Logger.getLogger(PecInnerPort.class.getName());
+
   private static final String MESSAGE_TYPE_FIELD = "messageType";
   private static final String MESSAGE_BODY_FIELD = "messageBody";
   private static final String MESSAGE_PEC_ID_FIELD = "id";
@@ -47,14 +49,12 @@ public class PecInnerPort {
   private static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
   private static final String HANDLE_REMOVE_MSG = "HandleRemove";
 
-  private static final Logger logger = Logger.getLogger(PecInnerPort.class.getName());
-
   private final String id;
   private final ArcsMessageSender arcsMessageSender;
   private final ThingMapper mapper;
   private final PortableJsonParser jsonParser;
-  private final IdGenerator idGenerator;
   private final HandleFactory handleFactory;
+  private final IdGenerator idGenerator;
 
   public PecInnerPort(
       String id,
@@ -67,6 +67,7 @@ public class PecInnerPort {
     this.mapper = new ThingMapper("j");
     this.jsonParser = jsonParser;
     this.handleFactory = handleFactory;
+
     this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
   }
 
@@ -80,30 +81,30 @@ public class PecInnerPort {
     PortableJson messageBody = message.getObject(MESSAGE_BODY_FIELD);
     switch (messageType) {
       case INSTANTIATE_PARTICLE_MSG:
-      case REINSTANTIATE_PARTICLE_MSG:
-        {
-          ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject(PARTICLE_SPEC_FIELD));
-          PortableJson stores = messageBody.getObject(PARTICLE_STORES_FIELD);
-          Map<String, StorageProxy> proxies = new HashMap<>();
-          stores.forEach(
-              proxyName -> {
-                String proxyId = stores.getString(proxyName);
-                proxies.put(proxyName, mapper.thingForIdentifier(proxyId).getStorageProxy());
-              });
+      case REINSTANTIATE_PARTICLE_MSG: {
+        ParticleSpec spec = ParticleSpec.fromJson(messageBody.getObject(PARTICLE_SPEC_FIELD));
+        PortableJson stores = messageBody.getObject(PARTICLE_STORES_FIELD);
+        Map<String, StorageProxy> proxies = new HashMap<>();
+        stores.forEach(
+            proxyName -> {
+              String proxyId = stores.getString(proxyName);
+              proxies.put(proxyName, mapper.thingForIdentifier(proxyId).getStorageProxy());
+            });
 
-          String particleId = messageBody.getString(PARTICLE_ID_FIELD);
-          if (mapper.hasThingForIdentifier(particleId)) {
-           // Non-factory instantiation of a Particle.
-            Particle particle = mapper.thingForIdentifier(particleId).getParticle();
-            initializeParticle(particle, spec, proxies, idGenerator);
-            // TODO: implement proper capabilities.
-            particle.setOutput((content) -> output(particle, content));
-          } else {
-            throw new RuntimeException("Unexpected instantiate call for " + particleId);
-          }
-
-          break;
+        String particleId = messageBody.getString(PARTICLE_ID_FIELD);
+        if (mapper.hasThingForIdentifier(particleId)) {
+          // Non-factory instantiation of a Particle.
+          Particle particle = mapper.thingForIdentifier(particleId).getParticle();
+          initializeParticle(particle, spec, proxies, idGenerator);
+          // TODO: implement proper capabilities.
+          particle.setOutput((content) -> output(particle, content));
+        } else {
+          throw new AssertionError(
+              "Unexpected instantiate/reinstantiate call for " + particleId);
         }
+
+        break;
+      }
       case DEFINE_HANDLE_MSG:
         String identifier = messageBody.getString(INDENTIFIER_FIELD);
         StorageProxy storageProxy =
@@ -129,8 +130,8 @@ public class PecInnerPort {
           String slotName = messageBody.getString(SLOT_NAME_FIELD);
           logger.info(
               "Unexpected StartRender call for particle "
-              + particle.getName() + " slot " + slotName
-              );
+                  + particle.getName() + " slot " + slotName
+          );
           break;
         }
       case STOP_RENDER_MSG:
@@ -140,8 +141,8 @@ public class PecInnerPort {
           String slotName = messageBody.getString(SLOT_NAME_FIELD);
           logger.info(
               "Unexpected StopRender call for particle "
-              + particle.getName() + " slot " + slotName
-              );
+                  + particle.getName() + " slot " + slotName
+          );
           break;
         }
       case STOP_MSG:
@@ -185,7 +186,8 @@ public class PecInnerPort {
     postMessage(constructHandleMessage(HANDLE_STORE_MSG, storageProxy, callback, data, particleId));
   }
 
-  public void handleToList(StorageProxy storageProxy, Consumer<PortableJson> callback) {
+  public void handleToList(
+      StorageProxy storageProxy, Consumer<PortableJson> callback) {
     postMessage(
         constructHandleMessage(
             HANDLE_TO_LIST_MSG, storageProxy, callback, /* data= */ null, /* particleId= */ null));
@@ -219,10 +221,10 @@ public class PecInnerPort {
   }
 
   private void initializeParticle(
-    Particle particle,
-    ParticleSpec spec,
-    Map<String, StorageProxy> proxies,
-    IdGenerator idGenerator) {
+      Particle particle,
+      ParticleSpec spec,
+      Map<String, StorageProxy> proxies,
+      IdGenerator idGenerator) {
     Objects.requireNonNull(particle).setSpec(spec);
     particle.setJsonParser(jsonParser);
 
@@ -232,13 +234,13 @@ public class PecInnerPort {
     for (String proxyName : proxies.keySet()) {
       StorageProxy storageProxy = proxies.get(proxyName);
       Handle handle =
-        this.handleFactory.handleFor(
-          storageProxy,
-          idGenerator,
-          proxyName,
-          particle.getId(),
-          spec.isInput(proxyName),
-          spec.isOutput(proxyName));
+          handleFactory.handleFor(
+              storageProxy,
+              idGenerator,
+              proxyName,
+              particle.getId(),
+              spec.isInput(proxyName),
+              spec.isOutput(proxyName));
       handleMap.put(proxyName, handle);
       registerMap.put(handle, storageProxy);
     }

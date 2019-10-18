@@ -10,7 +10,7 @@ import java.util.List;
  * that same IdGenerator instance.
  */
 // copied from id.ts
-public class IdGenerator {
+class IdGenerator {
   private final String currentSessionId;
   private int nextComponentId = 0;
 

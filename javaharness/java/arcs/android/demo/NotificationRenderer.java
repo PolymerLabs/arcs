@@ -8,23 +8,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import arcs.api.Constants;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-import arcs.android.Annotations;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
 import arcs.api.UiRenderer;
 
-@Singleton
 public class NotificationRenderer implements UiRenderer {
-
-  public static final String MESSAGE_FIELD = "message";
-  public static final String INTENT_REFERENCE_ID_FIELD = "intent_reference_id";
-  public static final String INTENT_EVENT_DATA_FIELD = "intent_event_data";
-  public static final String PARTICLE_ID_FIELD = "particleId";
-  public static final String EVENTLET_FIELD = "eventlet";
-  public static final String UI_EVENT_MESSAGE = "uiEvent";
 
   private static final int REQUEST_CODE_TAP = 0;
   private static final int REQUEST_CODE_DISMISS = 1;
@@ -42,7 +33,7 @@ public class NotificationRenderer implements UiRenderer {
   private static final String TAG = NotificationRenderer.class.getSimpleName();
 
   @Inject
-  NotificationRenderer(@Annotations.AppContext Context context, PortableJsonParser jsonParser) {
+  NotificationRenderer(Context context, PortableJsonParser jsonParser) {
     this.context = context;
     this.jsonParser = jsonParser;
 
@@ -99,8 +90,8 @@ public class NotificationRenderer implements UiRenderer {
   private Intent getNotificationIntent(String outputSlotId, String handler) {
     Intent intent = new Intent(context, AndroidNotificationHandlerService.class);
     intent.setAction(outputSlotId);
-    intent.putExtra(INTENT_REFERENCE_ID_FIELD, outputSlotId);
-    intent.putExtra(INTENT_EVENT_DATA_FIELD,
+    intent.putExtra(Constants.INTENT_REFERENCE_ID_FIELD, outputSlotId);
+    intent.putExtra(Constants.INTENT_EVENT_DATA_FIELD,
       jsonParser.stringify(
         jsonParser.emptyObject().put(HANDLER_FIELD, handler)));
 

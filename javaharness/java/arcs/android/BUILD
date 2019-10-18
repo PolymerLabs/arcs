@@ -5,20 +5,21 @@ package(default_visibility = [
 
 licenses(["notice"])
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
+load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 android_library(
     name = "android",
     srcs = glob(["*.java"]),
-    resource_files = glob(["res/**"]),
+    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     idl_srcs = glob(["*.aidl"]),
     idl_import_root = ".",
+    manifest = "AndroidManifest.xml",
     assets = [
         "//shells/pipes-shell:pipes_shell_web",
     ],
+    exports_manifest = 1,
     assets_dir = "pipes_shell_web_dist",
-    javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
-    manifest = "AndroidManifest.xml",
+    resource_files = glob(["res/**"]),
     deps = [
         "//javaharness:autovalue",
         "//javaharness/java/arcs/api:api-android",

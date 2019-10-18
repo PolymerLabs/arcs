@@ -3,7 +3,6 @@ package arcs.android;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.List;
@@ -11,12 +10,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.Arcs;
-import arcs.api.ArcsMessageSender;
-import arcs.api.PecInnerPortProxy;
-import arcs.api.PecPortManager;
-import arcs.api.PortableJsonParser;
-import arcs.api.UiBroker;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
@@ -24,40 +17,23 @@ import arcs.api.UiBroker;
  */
 public class ArcsService extends Service {
 
-  private static final String MESSAGE_FIELD = "message";
-  private static final String STOP_ARC_MESSAGE = "stopArc";
-  private static final String ARC_ID_FIELD = "arcId";
-  private static final String PEC_ID_FIELD = "pecId";
   private static final String TAG = "Arcs";
 
-  private boolean arcsReady;
-
-  @Inject Arcs arcs;
-  @Inject AndroidArcsEnvironment environment;
-  @Inject ArcsMessageSender arcsMessageSender;
-  @Inject PecPortManager pecPortManager;
-  @Inject PortableJsonParser jsonParser;
-  @Inject UiBroker uiBroker;
+  @Inject
+  ArcsShellApi arcsShellApi;
 
   @Override
   public void onCreate() {
     super.onCreate();
-
     Log.d(TAG, "onCreate()");
-
-    DaggerArcsServiceComponent.builder()
-        .appContext(getApplicationContext())
-        .build()
-        .inject(this);
-
-    environment.addReadyListener(recipes -> arcsReady = true);
-    environment.init(this);
+    DaggerArcsServiceComponent.builder().build().inject(this);
+    arcsShellApi.init(this);
   }
 
   @Override
   public void onDestroy() {
     Log.d(TAG, "onDestroy()");
-    environment.destroy();
+    arcsShellApi.destroy();
     super.onDestroy();
   }
 
@@ -67,7 +43,7 @@ public class ArcsService extends Service {
     return new IArcsService.Stub() {
       @Override
       public void sendMessageToArcs(String message) {
-        arcsMessageSender.sendMessageToArcs(message);
+        arcsShellApi.sendMessageToArcs(message);
       }
 
       @Override
@@ -79,75 +55,32 @@ public class ArcsService extends Service {
           List<String> particleNames,
           List<String> providedSlotIds,
           IRemotePecCallback callback) {
-        PecInnerPortProxy pecInnerPortProxy =
-            new PecInnerPortProxy(
-                message -> {
-                  try {
-                    callback.onMessage(message);
-                  } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                  }
-                },
-                jsonParser);
-        pecPortManager.addPecInnerPortProxy(pecId, pecInnerPortProxy);
+        ArcData.Builder arcDataBuilder = new ArcData.Builder()
+            .setArcId(arcId)
+            .setPecId(pecId)
+            .setRecipe(recipe);
+        for (int i = 0; i < particleIds.size(); ++i) {
+          arcDataBuilder.addParticleData(
+              new ArcData.ParticleData()
+                  .setId(particleIds.get(i))
+                  .setName(particleNames.get(i))
+                  .setProvidedSlotId(providedSlotIds.get(i)));
+        }
 
-        runWhenReady(() -> {
-            ArcData.Builder arcDataBuilder = new ArcData.Builder()
-              .setArcId(arcId)
-              .setPecId(pecId)
-              .setRecipe(recipe);
-            for (int i = 0; i < particleIds.size(); ++i) {
-              arcDataBuilder.addParticleData(
-                  new ArcData.ParticleData()
-                      .setId(particleIds.get(i))
-                      .setName(particleNames.get(i))
-                      .setProvidedSlotId(providedSlotIds.get(i)));
-            }
-
-            arcs.runArc(arcDataBuilder.build());
-        });
+        ArcData arcData = arcDataBuilder.build();
+        arcsShellApi.startArc(arcData, callback);
       }
 
       @Override
       public void stopArc(String arcId, String pecId) {
-        runWhenReady(
-            () ->
-                arcsMessageSender.sendMessageToArcs(
-                    jsonParser.stringify(
-                        jsonParser
-                            .emptyObject()
-                            .put(MESSAGE_FIELD, STOP_ARC_MESSAGE)
-                            .put(ARC_ID_FIELD, arcId))));
-        pecPortManager.removePecPort(pecId);
+        arcsShellApi.stopArc(
+            new ArcData.Builder().setArcId(arcId).setPecId(pecId).build());
       }
 
       @Override
       public void registerRenderer(String modality, IRemoteOutputCallback callback) {
-        uiBroker.registerRenderer(
-            modality,
-            content -> {
-              try {
-                callback.onOutput(jsonParser.stringify(content));
-              } catch (RemoteException e) {
-                throw new RuntimeException(e);
-              }
-              return true;
-            });
+        arcsShellApi.registerRemoteRenderer(modality, callback);
       }
     };
-  }
-
-  @Override
-  public boolean onUnbind(Intent intent) {
-    Log.d(TAG, "onUnbind()");
-    return super.onUnbind(intent);
-  }
-
-  private void runWhenReady(Runnable runnable) {
-    if (arcsReady) {
-      runnable.run();
-    } else {
-      environment.addReadyListener(recipes -> runnable.run());
-    }
   }
 }

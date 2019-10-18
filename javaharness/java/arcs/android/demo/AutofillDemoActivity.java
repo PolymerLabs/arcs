@@ -12,22 +12,29 @@ import android.widget.TextView;
 
 import javax.inject.Inject;
 
-import arcs.api.Arcs;
+import arcs.android.ArcsAndroidClient;
 import arcs.api.PortableJsonParser;
 
 /** Autofill demo activity. Contains Autofill status info, and some example autofill fields. */
 public class AutofillDemoActivity extends Activity {
 
   private static final int REQUEST_CODE_AUTOFILL_SET = 1;
+
+  @Inject
+  ArcsAndroidClient arcsAndroidClient;
+
+  @Inject
+  PortableJsonParser jsonParser;
+
   private AutofillManager autofillManager;
-  @Inject Arcs arcs;
-  @Inject PortableJsonParser jsonParser;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
+
+    autofillManager = getSystemService(AutofillManager.class);
 
     setContentView(R.layout.autofill_demo);
 
@@ -37,6 +44,14 @@ public class AutofillDemoActivity extends Activity {
     Button capturePersonButton = findViewById(R.id.capture_person_button);
     capturePersonButton.setOnClickListener(v -> capturePerson());
 
+    arcsAndroidClient.connect(this);
+  }
+
+  @Override
+  public void onDestroy() {
+    arcsAndroidClient.disconnect(this);
+
+    super.onDestroy();
   }
 
   @Override
@@ -71,7 +86,7 @@ public class AutofillDemoActivity extends Activity {
 
   private void openAutofillSettings() {
     Intent intent = new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE);
-    intent.setData(Uri.parse("package:arcs.android.demo"));
+    intent.setData(Uri.parse("package:arcsAndroidClient.android.demo"));
     startActivityForResult(intent, REQUEST_CODE_AUTOFILL_SET);
   }
 
@@ -84,6 +99,6 @@ public class AutofillDemoActivity extends Activity {
     CapturePerson capturePerson = new CapturePerson();
     capturePerson.setId("capture-person-particle");
     capturePerson.setJsonParser(jsonParser);
-    arcs.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
+    arcsAndroidClient.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
   }
 }

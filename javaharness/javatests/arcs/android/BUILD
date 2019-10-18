@@ -1,15 +1,13 @@
-
 licenses(["notice"])
 
 java_test(
     name = "AllTests",
-    srcs = glob(["*.java"]),
     size = "small",
+    srcs = glob(["*.java"]),
     test_class = "arcs.android.AllTests",
     deps = [
         "//javaharness/java/arcs/android",
-        "@junit//jar",
         "//javaharness/java/arcs/api:api-android",
+        "@junit//jar",
     ],
 )
-

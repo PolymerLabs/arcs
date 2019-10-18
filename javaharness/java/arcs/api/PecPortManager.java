@@ -13,13 +13,13 @@ public class PecPortManager {
   private final HandleFactory handleFactory;
 
   private final Map<String, PecInnerPort> pecPortMap = new HashMap<>();
-  private final Map<String, PecInnerPortProxy> pecPortProxyMap = new HashMap<>();
+  private final Map<String, PecInnerPortProxy> pecInnerPortProxyMap = new HashMap<>();
 
   @Inject
   PecPortManager(
-    ArcsMessageSender arcsMessageSender,
-    PortableJsonParser jsonParser,
-    HandleFactory handleFactory) {
+      ArcsMessageSender arcsMessageSender,
+      PortableJsonParser jsonParser,
+      HandleFactory handleFactory) {
     this.arcsMessageSender = arcsMessageSender;
     this.jsonParser = jsonParser;
     this.handleFactory = handleFactory;
@@ -32,27 +32,27 @@ public class PecPortManager {
       return;
     }
 
-    PecInnerPortProxy portProxy = pecPortProxyMap.get(pecId);
-    if (portProxy != null) {
-      portProxy.onReceivePecMessage(message);
+    PecInnerPortProxy pecInnerPortProxy = pecInnerPortProxyMap.get(pecId);
+    if (pecInnerPortProxy != null) {
+      pecInnerPortProxy.onReceivePecMessage(message);
       return;
     }
 
     // Create a new inner PEC port for this pecId.
-    port = createPecInnerPort(pecId, sessionId);
+    port = createPecPort(pecId, sessionId);
     port.onReceivePecMessage(message);
   }
 
   public void addPecInnerPortProxy(String pecId, PecInnerPortProxy pecInnerPortProxy) {
-    pecPortProxyMap.put(pecId, pecInnerPortProxy);
+    pecInnerPortProxyMap.put(pecId, pecInnerPortProxy);
   }
 
   public PecInnerPort getOrCreatePecInnerPort(String pecId, String sessionId) {
     PecInnerPort port = pecPortMap.get(pecId);
     if (port == null) {
-      return createPecInnerPort(pecId, sessionId);
+      return createPecPort(pecId, sessionId);
     } else {
-      return port;
+      return  port;
     }
   }
 
@@ -60,19 +60,20 @@ public class PecPortManager {
     // TODO: split and verify this method is called correctly.
     if (pecPortMap.remove(pecId) != null) {
       return;
-    } else if (pecPortProxyMap.remove(pecId) != null) {
+    } else if (pecInnerPortProxyMap.remove(pecId) != null) {
       return;
     }
 
     throw new IllegalArgumentException("Pec with ID " + pecId + " doesn't exist.");
   }
 
-  private PecInnerPort createPecInnerPort(String pecId, String sessionId) {
+  private PecInnerPort createPecPort(String pecId, String sessionId) {
     if (pecPortMap.containsKey(pecId)) {
       throw new IllegalArgumentException("Pec with ID " + pecId + " already exists.");
     }
+
     PecInnerPort pecInnerPort = new PecInnerPort(
-      pecId, sessionId, arcsMessageSender, jsonParser, handleFactory);
+        pecId, sessionId, arcsMessageSender, jsonParser, handleFactory);
     pecPortMap.put(pecId, pecInnerPort);
     return pecInnerPort;
   }

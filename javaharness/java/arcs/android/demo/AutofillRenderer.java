@@ -12,13 +12,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-import arcs.android.Annotations;
 import arcs.api.PortableJson;
 import arcs.api.UiRenderer;
 
-@Singleton
 public class AutofillRenderer implements UiRenderer {
 
   private static final String CONTAINER_SLOT_ID_FIELD = "containerSlotId";
@@ -39,7 +36,7 @@ public class AutofillRenderer implements UiRenderer {
   private final Context context;
 
   @Inject
-  AutofillRenderer(@Annotations.AppContext Context context) {
+  AutofillRenderer(Context context) {
     this.context = context;
   }
 

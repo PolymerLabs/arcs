@@ -1,12 +1,10 @@
 package arcs.android.demo;
 
-import static arcs.android.demo.NotificationRenderer.INTENT_EVENT_DATA_FIELD;
-import static arcs.android.demo.NotificationRenderer.INTENT_REFERENCE_ID_FIELD;
-
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
-import arcs.api.Arcs;
+import arcs.android.ArcsAndroidClient;
+import arcs.api.Constants;
 import arcs.api.PortableJsonParser;
 import javax.inject.Inject;
 
@@ -15,7 +13,7 @@ public class AndroidNotificationHandlerService extends IntentService {
   private static final String TAG = "Arcs";
 
   @Inject
-  Arcs arcs;
+  ArcsAndroidClient arcsAndroidClient;
 
   @Inject
   PortableJsonParser jsonParser;
@@ -28,29 +26,31 @@ public class AndroidNotificationHandlerService extends IntentService {
   public void onCreate() {
     super.onCreate();
 
-    Log.d(TAG, "onCreate()");
-
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
+
+    arcsAndroidClient.connect(this);
   }
 
   @Override
   public void onDestroy() {
-    Log.d(TAG, "onDestroy()");
+    arcsAndroidClient.disconnect(this);
+
     super.onDestroy();
   }
 
   @Override
   public void onHandleIntent(Intent intent) {
+    Log.d("Arcs", "onHandleIntent");
     // TODO(mmandlis): refactor into an Arcs API method.
-    String referenceId = intent.getStringExtra(INTENT_REFERENCE_ID_FIELD);
-    String eventlet = intent.getStringExtra(INTENT_EVENT_DATA_FIELD);
+    String referenceId = intent.getStringExtra(Constants.INTENT_REFERENCE_ID_FIELD);
+    String eventlet = intent.getStringExtra(Constants.INTENT_EVENT_DATA_FIELD);
     Log.d(TAG, "Received referenceId " + referenceId);
-    arcs.sendMessageToArcs(
+    arcsAndroidClient.sendMessageToArcs(
         jsonParser.stringify(
             jsonParser
                 .emptyObject()
-                .put(NotificationRenderer.MESSAGE_FIELD, NotificationRenderer.UI_EVENT_MESSAGE)
-                .put(NotificationRenderer.PARTICLE_ID_FIELD, referenceId)
-                .put(NotificationRenderer.EVENTLET_FIELD, jsonParser.parse(eventlet))));
+                .put(Constants.MESSAGE_FIELD, Constants.UI_EVENT_MESSAGE)
+                .put(Constants.UI_PARTICLE_ID_FIELD, referenceId)
+                .put(Constants.EVENTLET_FIELD, jsonParser.parse(eventlet))));
   }
 }

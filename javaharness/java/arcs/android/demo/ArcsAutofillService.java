@@ -17,9 +17,8 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
+import arcs.android.ArcsAndroidClient;
 import arcs.api.ArcData;
-import arcs.api.Arcs;
-import arcs.api.UiBroker;
 
 /**
  * Demo implementation of an {@link AutofillService} for Arcs. This service retrieves Autofill
@@ -27,8 +26,10 @@ import arcs.api.UiBroker;
  */
 public class ArcsAutofillService extends AutofillService {
 
-  @Inject Arcs arcs;
-  @Inject UiBroker uiBroker;
+  @Inject
+  ArcsAndroidClient arcsAndroidClient;
+
+  @Inject
   AutofillRenderer autofillRenderer;
 
   @Override
@@ -37,8 +38,16 @@ public class ArcsAutofillService extends AutofillService {
 
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
-    autofillRenderer = ((AutofillRenderer) uiBroker.getRenderer("autofill"));
+    arcsAndroidClient.connect(this);
+    arcsAndroidClient.registerRenderer("autofill", autofillRenderer);
   }
+
+  @Override
+  public void onDestroy() {
+    arcsAndroidClient.disconnect(this);
+    super.onDestroy();
+  }
+
 
   @Override
   public void onFillRequest(
@@ -56,14 +65,14 @@ public class ArcsAutofillService extends AutofillService {
     }
 
     AutofillParticle autofillParticle = new AutofillParticle(node.get());
-    ArcData arcData = arcs.runArc("AndroidAutofill", autofillParticle);
+    ArcData arcData = arcsAndroidClient.runArc("AndroidAutofill", autofillParticle);
 
     autofillRenderer.addCallback(
         arcData.getParticleList().get(0).getProvidedSlotId(),
         node.get().getAutofillId(),
         fillResponse -> {
           callback.onSuccess(fillResponse);
-          arcs.stopArc(arcData);
+          arcsAndroidClient.stopArc(arcData);
         });
   }
 
