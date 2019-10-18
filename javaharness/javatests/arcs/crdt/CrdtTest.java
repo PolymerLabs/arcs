@@ -1,11 +1,15 @@
 package arcs.crdt;
 
-import java.util.Arrays;
-import java.util.Objects;
-import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Objects;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 // The set of tests copied from src/runtime/crdt/tests/crdt-collection-test.ts
 // Please, keep in sync.

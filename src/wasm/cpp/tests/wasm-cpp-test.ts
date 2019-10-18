@@ -386,4 +386,119 @@ describe('wasm tests (C++)', () => {
       {id: 'idY', rawData: {id: 'idY', storageKey: 'keyY'}}
     ]);
   });
+
+  // TODO - check that writing to read-only handles throws and vice versa
+  it('singleton storage API', async () => {
+    const {arc, stores} = await setup(`
+      import '${schemasFile}'
+
+      particle SingletonApiTest in '${buildDir}/test-module.wasm'
+        consume root
+        in Data inHandle
+        out Data outHandle
+        inout Data ioHandle
+
+      recipe
+        slot 'rootslotid-root' as slot1
+        SingletonApiTest
+          consume root as slot1
+          inHandle <- h1
+          outHandle -> h2
+          ioHandle = h3
+      `);
+    const inStore = stores.get('inHandle') as VolatileSingleton;
+    const outStore = stores.get('outHandle') as VolatileSingleton;
+    const ioStore = stores.get('ioHandle') as VolatileSingleton;
+
+    const sendEvent = async handler => {
+      await arc.idle;
+      arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+      await arc.idle;
+    };
+
+    // clear() on out/io with pre-populated stores
+    await outStore.set({id: 'i1', rawData: {txt: 'out'}});
+    await ioStore.set({id: 'i2', rawData: {txt: 'inout'}});
+    await sendEvent('case1');
+    assert.isNull(await outStore.get());
+    assert.isNull(await ioStore.get());
+
+    // in.get(), out.set()
+    await inStore.set({id: 'i3', rawData: {num: 4}});
+    await sendEvent('case2');
+    assert.deepStrictEqual((await outStore.get()).rawData, {num: 8});
+
+    // io.get()/set()
+    await ioStore.set({id: 'i3', rawData: {num: 4}});
+    await sendEvent('case3');
+    assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12});
+  });
+
+  it('collection storage API', async () => {
+    const {arc, stores} = await setup(`
+      import '${schemasFile}'
+
+      particle CollectionApiTest in '${buildDir}/test-module.wasm'
+        consume root
+        in [Data] inHandle
+        out [Data] outHandle
+        inout [Data] ioHandle
+
+      recipe
+        slot 'rootslotid-root' as slot1
+        CollectionApiTest
+          consume root as slot1
+          inHandle <- h1
+          outHandle -> h2
+          ioHandle = h3
+      `);
+    const inStore = stores.get('inHandle') as VolatileCollection;
+    const outStore = stores.get('outHandle') as VolatileCollection;
+    const ioStore = stores.get('ioHandle') as VolatileCollection;
+
+    const sendEvent = async handler => {
+      await arc.idle;
+      arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+      await arc.idle;
+    };
+
+    // clear() on out/io with pre-populated stores
+    await outStore.store({id: 'id1', rawData: {num: 1}}, ['k1']);
+    await ioStore.store({id: 'id2', rawData: {num: 2}}, ['k2']);
+    await sendEvent('case1');
+    assert.isEmpty(await outStore.toList());
+    assert.isEmpty(await ioStore.toList());
+
+    // in.empty(), in.size(), out.store()
+    await inStore.store({id: 'id3', rawData: {num: 3}}, ['k3']);
+    await sendEvent('case2');
+    assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, num: 1}]);
+
+    // out.remove() - clears entity stored as the previous result
+    await sendEvent('case3');
+    assert.isEmpty(await outStore.toList());
+
+    // in.begin(), in.end() and iterator methods
+    await sendEvent('case4');
+    assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+      {txt: '{id3}, num: 3', num: 6, flg: true},
+      {txt: 'eq', flg: false},
+      {txt: 'ne', flg: true},
+    ]);
+
+    // io.* and ranged iteration
+    await ioStore.store({id: 'id4', rawData: {num: 0}}, ['k4']);
+    await ioStore.store({id: 'id5', rawData: {num: 1}}, ['k5']);
+    await ioStore.store({id: 'id6', rawData: {num: 2}}, ['k6']);
+    await outStore.clearItemsForTesting();
+    await sendEvent('case5');
+    assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+      {num: 4, flg: false},      // store() an entity in addition to the 3 above
+      {num: 3},                  // remove() the entity
+      {txt: '{id4}, num: 0'},    // ranged loop over the 3 entities above, using num to sort
+      {txt: '{id5}, num: 1'},
+      {txt: '{id6}, num: 2'},
+      {num: 0, flg: true},       // clear()
+    ]);
+  });
 });

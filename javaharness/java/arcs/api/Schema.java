@@ -3,7 +3,7 @@ package arcs.api;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Schema {
+class Schema {
   enum FieldKind {
     PRIMITIVE,
     UNION,

@@ -3,7 +3,7 @@ package arcs.api;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParticleSpec {
+class ParticleSpec {
   public final String name;
   public final String implFile;
   private final Map<String, HandleConnectionSpec> handleConnectionMap = new HashMap<>();

@@ -36,39 +36,42 @@
     }
     return defaultValue === null ? null : defaultValue;
   }
-  function checkNormal(result) {
+  function checkNormal(result, path: string = '') {
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
-      error(`result was undefined`);
+      error(`Internal Parser Error: result was undefined at ${path}`);
     }
     if (Array.isArray(result)) {
+      let i = 0;
       for (const item of result) {
-        checkNormal(item);
+        checkNormal(item, `${path}/${i}`);
+        i++;
       }
       return;
     }
     if (result.model) {
-      error(`unexpected 'model' in ${JSON.stringify(result)}`);
+      error(`Internal Parser Error: unexpected 'model' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.location) {
-      error(`no 'location' in ${JSON.stringify(result)}`);
+      error(`Internal Parser Error: no 'location' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.kind) {
-      error(`no 'kind' in ${JSON.stringify(result)}`);
+      error(`Internal Parser Error: no 'kind' in ${JSON.stringify(result)} at ${path}`);
     }
     for (const key of Object.keys(result)) {
       if (['location', 'kind'].includes(key)) {
         continue;
       }
-      checkNormal(result[key]);
+      checkNormal(result[key], `${path}/${key}`);
     }
   }
 
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
     return {...data, location: location()} as T;
   }
+
 }
 
 Manifest
@@ -489,6 +492,10 @@ ParticleHandleConnection
   }
 
 ParticleHandleConnectionBody
+  = ParticleHandleConnectionBodyPreSlandle
+  / ParticleHandleConnectionBodyUnified
+
+ParticleHandleConnectionBodyPreSlandle
   = direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -502,6 +509,26 @@ ParticleHandleConnectionBody
     });
   }
 
+NameWithColon
+  = &(unsafeLowerIdent whiteSpace? ':') name:lowerIdent whiteSpace? ':' whiteSpace?
+  {
+    return name;
+  }
+
+ParticleHandleConnectionBodyUnified
+  = maybeName:NameWithColon? direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  {
+    return toAstNode<AstNode.ParticleHandleConnection>({
+      kind: 'particle-argument',
+      direction,
+      type: type,
+      isOptional: !!isOptional,
+      dependentConnections: [],
+      name: maybeName || maybeTags[0] || expected(`either a name or tags to be supplied ${maybeName} ${maybeTags}`),
+      tags: maybeTags || []
+    });
+  }
+
 Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
   = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any'
   {
@@ -512,6 +539,7 @@ Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
     return dir;
   }
 
+// TODO(jopra): Remove when syntax is updated to not use arrows.
 DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, consume, provide)"
   = '<->' / '<-' / '->' / '=' / 'consume' / 'provide' {
     const dir = text() as AstNode.DirectionArrow;
@@ -797,12 +825,28 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = RecipeParticleConnectionPreSlandle / RecipeParticleConnectionUnified
+
+RecipeParticleConnectionUnified
+  = param:(lowerIdent / '*') ':' whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param,
       dir,
+      target: optional(target, target => target[1], null),
+      dependentConnections: optional(dependentConnections, extractIndented, []),
+    });
+  }
+
+// TODO(jopra): Remove after unification
+RecipeParticleConnectionPreSlandle
+  = param:(lowerIdent / '*') whiteSpace dir:DirectionArrow target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  {
+    return toAstNode<AstNode.RecipeParticleConnection>({
+      kind: 'handle-connection',
+      param,
+      dir: AstNode.arrowToDirection(dir),
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
@@ -857,11 +901,25 @@ SlotDirection
   = 'provide' / 'consume'
 
 RecipeConnection
-  = from:ConnectionTarget whiteSpace direction:DirectionArrow whiteSpace to:ConnectionTarget eolWhiteSpace
+  = RecipeConnectionUnified / RecipeConnectionPreSlandle
+
+RecipeConnectionUnified
+  = from:ConnectionTarget ':' whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction,
+      from,
+      to,
+    });
+  }
+
+RecipeConnectionPreSlandle
+  = from:ConnectionTarget whiteSpace direction:DirectionArrow whiteSpace to:ConnectionTarget eolWhiteSpace
+  {
+    return toAstNode<AstNode.RecipeConnection>({
+      kind: 'connection',
+      direction: AstNode.arrowToDirection(direction),
       from,
       to,
     });
@@ -1010,6 +1068,7 @@ NameAndTagList
    }
    / whiteSpace name:lowerIdent
    {
+     // TODO(jopra): Likely covered by previous case.
      return toAstNode<AstNode.NameAndTagList>({
        kind: 'name-and-tag-list',
        name: name,
@@ -1240,6 +1299,7 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 ReservedWord
   = keyword:(DirectionArrow
   / Direction
+  / SlotDirection
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
@@ -1260,7 +1320,9 @@ id "an identifier (e.g. 'id')"
 upperIdent "an uppercase identifier (e.g. Foo)"
   = [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
-  = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
+  = !ReservedWord unsafeLowerIdent { return text(); }
+unsafeLowerIdent "a lowercase identifier or keyword"
+  = [a-z][a-z0-9_]i* { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"

@@ -52,6 +52,7 @@ public class ParticleBase implements Particle {
     if (!this.handleByName.containsKey(id)) {
       throw new AssertionError("Handle " + id + "does not exist");
     }
+
     return this.handleByName.get(id);
   }
 

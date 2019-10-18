@@ -14,6 +14,8 @@ import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Type} from '../type.js';
 
+import {Flags} from '../flags.js';
+
 describe('recipe', () => {
   it('normalize errors', async () => {
     const manifest = await Manifest.parse(`
@@ -390,7 +392,117 @@ describe('recipe', () => {
     assert(recipe.normalize());
     assert.isFalse(recipe.isResolved());
   });
-  it('considers type resolution as recipe update', async () => {
+  it('SLANDLES SYNTAX considers type resolution as recipe update', Flags.withPostSlandlesSyntax(async () => {
+    const manifest = await Manifest.parse(`
+      schema Thing
+      particle Generic
+        in ~a anyA
+      particle Specific
+        in Thing thing
+      recipe
+        map as thingHandle
+        Generic
+          anyA: in thingHandle
+        Specific
+          thing: in thingHandle
+      store MyThings of Thing 'my-things' in ThingsJson
+      resource ThingsJson
+        start
+        [{}]
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].id = 'my-things';
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+    assert.strictEqual(`recipe
+  map 'my-things' as handle0 // ~
+  Generic as particle0
+    anyA: in handle0
+  Specific as particle1
+    thing: in handle0`, recipe.toString());
+    assert.strictEqual(`recipe
+  map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
+  Generic as particle0
+    anyA: in handle0
+  Specific as particle1
+    thing: in handle0`, recipe.toString({showUnresolved: true}));
+    const hash = await recipe.digest();
+
+    const recipeClone = recipe.clone();
+    const hashClone = await recipeClone.digest();
+    assert.strictEqual(hash, hashClone);
+
+    const store = manifest.findStoreByName('MyThings');
+    recipeClone.handles[0].mapToStorage(store);
+    recipeClone.normalize();
+    assert.isTrue(recipeClone.isResolved());
+    const hashResolvedClone = await recipeClone.digest();
+    assert.strictEqual(`recipe
+  map 'my-things' as handle0 // Thing {}
+  Generic as particle0
+    anyA: in handle0
+  Specific as particle1
+    thing: in handle0`, recipeClone.toString());
+    assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
+    assert.notStrictEqual(hash, hashResolvedClone);
+  }));
+  it('SLANDLES SYNTAX considers type resolution as recipe update', Flags.withPostSlandlesSyntax(async () => {
+    const manifest = await Manifest.parse(`
+      schema Thing
+      particle Generic
+        in ~a anyA
+      particle Specific
+        in Thing thing
+      recipe
+        map as thingHandle
+        Generic
+          anyA: in thingHandle
+        Specific
+          thing: in thingHandle
+      store MyThings of Thing 'my-things' in ThingsJson
+      resource ThingsJson
+        start
+        [{}]
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].id = 'my-things';
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+    assert.strictEqual(`recipe
+  map 'my-things' as handle0 // ~
+  Generic as particle0
+    anyA: in handle0
+  Specific as particle1
+    thing: in handle0`, recipe.toString());
+    assert.strictEqual(`recipe
+  map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
+  Generic as particle0
+    anyA: in handle0
+  Specific as particle1
+    thing: in handle0`, recipe.toString({showUnresolved: true}));
+    const hash = await recipe.digest();
+
+    const recipeClone = recipe.clone();
+    const hashClone = await recipeClone.digest();
+    assert.strictEqual(hash, hashClone);
+
+    const store = manifest.findStoreByName('MyThings');
+    recipeClone.handles[0].mapToStorage(store);
+    recipeClone.normalize();
+    assert.isTrue(recipeClone.isResolved());
+    const hashResolvedClone = await recipeClone.digest();
+    assert.strictEqual(`recipe
+  map 'my-things' as handle0 // Thing {}
+  Generic as particle0
+    anyA: in handle0
+  Specific as particle1
+    thing: in handle0`, recipeClone.toString());
+    assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
+    assert.notStrictEqual(hash, hashResolvedClone);
+  }));
+  it('considers type resolution as recipe update', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
@@ -444,7 +556,7 @@ describe('recipe', () => {
     thing <- handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
-  });
+  }));
   const isResolved = (recipe) => {
     const recipeClone = recipe.clone();
     assert.isTrue(recipeClone.normalize());

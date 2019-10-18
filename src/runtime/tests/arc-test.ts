@@ -977,7 +977,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const recipe = manifest.recipes[0];
     assert.isNotNull(recipe);
 
-    const foodStore = await arc.createStore(favoriteFoodClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+    const foodStore = await arc.createStore(favoriteFoodClass.type.collectionOf(), undefined, 'test:1');
     assert.isNotNull(foodStore);
     recipe.handles[0].mapToStorage(foodStore);
 

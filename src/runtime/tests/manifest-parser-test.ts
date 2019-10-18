@@ -10,6 +10,7 @@
 
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
+import {Flags} from '../flags.js';
 
 describe('manifest parser', () => {
   it('parses an empy manifest', () => {
@@ -86,7 +87,18 @@ describe('manifest parser', () => {
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
-  it('fails to parse an argument list that use a reserved word as an identifier', () => {
+  it('SLANDLES SYNTAX fails to parse an argument list that use a reserved word as an identifier', Flags.withPostSlandlesSyntax(async () => {
+    try {
+      parse(`
+        particle MyParticle
+          consume: in MyThing
+          output: out? BigCollection<MyThing>`);
+      assert.fail('this parse should have failed, identifiers should not be reserved words!');
+    } catch (e) {
+      assert.include(e.message, 'Expected', `bad error: '${e}'`);
+    }
+  }));
+  it('fails to parse an argument list that use a reserved word as an identifier', Flags.withPreSlandlesSyntax(async () => {
     try {
       parse(`
         particle MyParticle
@@ -96,7 +108,7 @@ describe('manifest parser', () => {
     } catch (e) {
       assert.include(e.message, 'Expected', `bad error: '${e}'`);
     }
-  });
+  }));
   it('allows identifiers to start with reserved words', () => {
     parse(`
       particle MyParticle

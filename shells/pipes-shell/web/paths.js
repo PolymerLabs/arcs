@@ -10,8 +10,9 @@
 export const paths = {
   root: '.',
   map: {
-    'https://$build/': `../../lib/build/`,
-    'https://$particles/': `../../../particles/`
+    'https://$arcs/': `../../../`,
+    'https://$particles/': `../../../particles/`,
+    'https://$build/': `../../lib/build/`
   }
 };
 

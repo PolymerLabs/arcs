@@ -328,18 +328,20 @@ export class VolatileCollection extends VolatileStorageProvider implements Colle
     if (items.length === 0) {
       items = this._model.toList().map(item => ({id: item.id, keys: []}));
     }
-    items.forEach(item => {
-      if (item.keys.length === 0) {
-        item.keys = this._model.getKeys(item.id);
+    const remove = items.map(item => {
+      const res: {id: string, keys: string[], value: {}, effective?: boolean} = {
+        id: item.id,
+        keys: item.keys.length ? item.keys : this._model.getKeys(item.id),
+        value: this._model.getValue(item.id)
+      };
+      if (res.value !== null) {
+        res.effective = this._model.remove(item.id, res.keys);
       }
-      item.value = this._model.getValue(item.id);
-      if (item.value !== null) {
-        item.effective = this._model.remove(item.id, item.keys);
-      }
+      return res;
     });
     this.version++;
 
-    await this._fire(new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({remove, version: this.version, originatorId}));
   }
 
   async remove(id, keys:string[] = [], originatorId=null) {

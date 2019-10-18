@@ -13,73 +13,30 @@ import {ParticleSpec, HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {Direction, DirectionArrow} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
 
-export function directionToArrow(direction: Direction): DirectionArrow {
-  // Use switch for totality checking.
+export function reverseDirection(direction: Direction): Direction {
   switch (direction) {
-    case 'out':
-      return '->';
     case 'in':
-      return '<-';
-    case 'inout':
-      return '<->';
-    case '`consume':
-      return 'consume';
-    case '`provide':
-      return 'provide';
-    case 'host':
-      return '='; // TODO(cypher1): Check this
-    case 'any':
-      return '=';
-    default:
-      throw new Error(`Bad direction ${direction}`);
-  }
-}
-
-export function arrowToDirection(arrow: DirectionArrow): Direction {
-  // Use switch for totality checking.
-  switch (arrow) {
-    case '->':
       return 'out';
-    case '<-':
+    case 'out':
       return 'in';
-    case '<->':
+    case 'inout':
       return 'inout';
-    case 'consume':
-      return '`consume';
-    case 'provide':
+    case '`consume':
       return '`provide';
-    case '=':
+    case '`provide':
+      return '`consume';
+    case 'any':
       return 'any';
     default:
       // Catch nulls and unsafe values from javascript.
-      throw new Error(`Bad arrow ${arrow}`);
-  }
-}
-
-export function reverseArrow(arrow: DirectionArrow): DirectionArrow {
-  switch (arrow) {
-    case '->':
-      return '<-';
-    case '<-':
-      return '->';
-    case '<->':
-      return '<->';
-    case 'consume':
-      return 'provide';
-    case 'provide':
-      return 'consume';
-    case '=':
-      return '=';
-    default:
-      // Catch nulls and unsafe values from javascript.
-      throw new Error(`Bad arrow ${arrow}`);
+      throw new Error(`Bad direction ${direction}`);
   }
 }
 
@@ -137,7 +94,7 @@ class Shape {
 }
 type DirectionCounts = {[K in Direction]: number};
 
-export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: DirectionArrow};
+export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: Direction};
 
 type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
 
@@ -160,8 +117,8 @@ export class RecipeUtil {
         }
 
         const connection = pMap[key].addConnectionName(name);
-        // NOTE: for now, 'any' on the connection and '=' on the shape means 'accept anything'.
-        connection.direction = arrowToDirection(handle.direction || '=');
+        // NOTE: for now, 'any' on the connection and shape means 'accept anything'.
+        connection.direction = handle.direction || 'any';
 
         hMap.get(handle.handle).tags = tags;
         connection.connectToHandle(hMap.get(handle.handle));

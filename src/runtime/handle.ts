@@ -19,8 +19,9 @@ import {EntityClass, Entity} from './entity.js';
 import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './store.js';
 import {IdGenerator, Id} from './id.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {Handle as HandleNG} from './storageNG/handle.js';
+import {Handle as HandleNG, handleNGFor} from './storageNG/handle.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
+import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 
 // While transitioning to the NG storage stack, we define Handle as either the
 // "old" handle (before migration) or the NG handle. After migration the handle
@@ -509,4 +510,35 @@ export function handleFor(storage: Store, idGenerator: IdGenerator, name: string
     handle.entityClass = schema.entityClass(storage.pec);
   }
   return handle;
+}
+
+/** Creates either a new- or old-style Handle for the given storage proxy. */
+export function unifiedHandleFor(opts: {
+    proxy: Store|StorageProxyNG<CRDTTypeRecord>,
+    idGenerator: IdGenerator,
+    name?: string,
+    particleId?: string,
+    particle?: Particle,
+    canRead?: boolean,
+    canWrite?: boolean}) {
+  const defaultOpts = {particleId: '', canRead: true, canWrite: true};
+  opts = {...defaultOpts, ...opts};
+  if (opts.proxy instanceof StorageProxyNG) {
+    assert(opts.particleId.length, 'NG Handles require a particle ID');
+    return handleNGFor(
+        opts.particleId,
+        opts.proxy,
+        opts.idGenerator,
+        opts.particle,
+        opts.canRead,
+        opts.canWrite,
+        opts.name);
+  } else {
+    return handleFor(opts.proxy,
+        opts.idGenerator,
+        opts.name,
+        opts.particleId,
+        opts.canRead,
+        opts.canWrite);
+  }
 }

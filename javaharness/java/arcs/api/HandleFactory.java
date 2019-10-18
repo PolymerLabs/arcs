@@ -1,11 +1,23 @@
 package arcs.api;
 
-public interface HandleFactory {
-  Handle handleFor(
-      StorageProxy storage,
-      IdGenerator idGenerator,
-      String name,
-      String particleId,
-      boolean isInput,
-      boolean isOutput);
+import javax.inject.Inject;
+
+public class HandleFactory {
+
+  @Inject
+  HandleFactory() {}
+
+  public Handle handleFor(
+    StorageProxy storage,
+    IdGenerator idGenerator,
+    String name,
+    String particleId,
+    boolean isInput,
+    boolean isOutput) {
+    if (storage.type.isCollection()) {
+      return new Collection(storage, idGenerator, name, particleId, isInput, isOutput);
+    } else {
+      return new Singleton(storage, idGenerator, name, particleId, isInput, isOutput);
+    }
+  }
 }

@@ -31,9 +31,10 @@ export class StorageStub extends UnifiedStore {
               description: string,
               public readonly version?: number,
               source?: string,
+              origin?: 'file' | 'resource' | 'storage',
               public referenceMode: boolean = false,
               public readonly model?: {}[]) {
-    super({type, id, name, originalId, claims, description, source});
+    super({type, id, name, originalId, claims, description, source, origin});
   }
 
   // No-op implementations for `on` and `off`.

@@ -13,13 +13,13 @@ import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
-import {reverseArrow} from '../../runtime/recipe/recipe-util.js';
-import {DirectionArrow} from '../../runtime/manifest-ast-nodes.js';
+import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
+import {Direction} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Dictionary} from '../../runtime/hot.js';
 
-type Obligation = {from: EndPoint, to: EndPoint, direction: DirectionArrow};
+type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
 
 export class ConvertConstraintsToConnections extends Strategy {
   async generate(inputParams: StrategyParams): Promise<Descendant<Recipe>[]> {
@@ -92,7 +92,7 @@ export class ConvertConstraintsToConnections extends Strategy {
             }
           }
           if (from instanceof HandleEndPoint) {
-            handle = {handle: nameForHandle(from.handle, handleNames), direction: reverseArrow(constraint.direction), localName: from.handle.localName};
+            handle = {handle: nameForHandle(from.handle, handleNames), direction: reverseDirection(constraint.direction), localName: from.handle.localName};
             handles.add(handle.handle);
           }
           if (to instanceof ParticleEndPoint) {
@@ -163,7 +163,7 @@ export class ConvertConstraintsToConnections extends Strategy {
             }
           }
 
-          direction = reverseArrow(constraint.direction);
+          direction = reverseDirection(constraint.direction);
           if (to instanceof ParticleEndPoint) {
             const connection = to.connection;
             if (connection) {

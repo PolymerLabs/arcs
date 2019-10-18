@@ -27,7 +27,7 @@ import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ActiveStore, ProxyCallback, ProxyMessage} from './storageNG/store.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
@@ -261,7 +261,10 @@ export class APIPort {
     assert(this['before' + e.data.messageType] !== undefined);
     const count = this.messageCount++;
     if (this.inspector) {
-      this.inspector.pecMessage('on' + e.data.messageType, e.data.messageBody, count, e.data.stack);
+      this.inspector.pecMessage('on' + e.data.messageType, e.data.messageBody, count,
+          this.supportsJavaParticle() ? /* android */ 'a' : /* web */ 'w',
+          this._port['pecId'],
+          e.data.stack);
     }
     this['before' + e.data.messageType](e.data.messageBody);
   }
@@ -270,7 +273,10 @@ export class APIPort {
     const call = {messageType: name, messageBody: args, stack: this.attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
     if (this.inspector) {
-      this.inspector.pecMessage(name, args, count, new Error().stack || '');
+      this.inspector.pecMessage(name, args, count,
+          this.supportsJavaParticle() ? /* android */ 'a' : /* web */ 'w',
+          this._port['pecId'] || '',
+          new Error().stack || '');
     }
     await this._port.postMessage(call);
   }
@@ -508,8 +514,8 @@ export abstract class PECOuterPort extends APIPort {
   abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
   abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
 
-  abstract onRegister(handle: ActiveStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
-  abstract onProxyMessage(handle: ActiveStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
+  abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
@@ -552,7 +558,7 @@ export abstract class PECInnerPort extends APIPort {
 
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string);
-  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
+  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy|StorageProxyNG<CRDTTypeRecord>>);
   abstract onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
   abstract onReloadParticles(ids: string[]);
 
@@ -588,13 +594,13 @@ export abstract class PECInnerPort extends APIPort {
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 
   GetBackingStore(@LocalMapped callback: (proxy: StorageProxy, key: string) => void, @Direct storageKey: string, @ByLiteral(Type) type: Type) {}
-  abstract onGetBackingStoreCallback(callback: (proxy: StorageProxy, key: string) => void, type: Type, name: string, id: string, storageKey: string);
+  abstract onGetBackingStoreCallback(callback: (proxy: StorageProxy | StorageProxyNG<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
 
   ConstructInnerArc(@LocalMapped callback: Consumer<string>, @Mapped particle: Particle) {}
   abstract onConstructArcCallback(callback: Consumer<string>, arc: string);
 
   ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  abstract onCreateHandleCallback(callback: Consumer<StorageProxy>, type: Type, name: string, id: string);
+  abstract onCreateHandleCallback(callback: Consumer<StorageProxy | StorageProxyNG<CRDTTypeRecord>>, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: Consumer<string>, id: string);
 
