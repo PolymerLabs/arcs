@@ -45,20 +45,22 @@ def arcs_cc_schema(name, src, out = None):
         language_flag = "--cpp",
     )
 
-def arcs_kt_schema(name, src):
+def arcs_kt_schema(name, srcs):
     """Generates a Kotlin file for the given .arcs schema file."""
-    out = _output_name(src, "_GeneratedSchemas.kt")
-
-    _run_schema2pkg(
-        name = name + "_genrule",
-        src = src,
-        out = out,
-        language_name = "Kotlin",
-        language_flag = "--kotlin",
-    )
-
+    outs = []
+    for src in srcs:
+      out = _output_name(src, "_GeneratedSchemas.kt")
+      outs.append(out)
+      _run_schema2pkg(
+          name = _output_name(src) + "_genrule",
+          src = src,
+          out = out,
+          language_name = "Kotlin",
+          language_flag = "--kotlin",
+      )
+    
     arcs_kt_library(
         name = name,
-        srcs = [out],
+        srcs = outs,
         deps = [],
     )
