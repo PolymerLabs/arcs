@@ -35,7 +35,7 @@ class BitVectorTest {
   @Test
   fun twoBitValues() {
     BitVector(alternatingBytes)
-      .asSequenceOfInts(2).forEachIndexed { index, window ->
+      .asSequenceOfInts(2).forEach { window ->
         assertThat(window.value).isEqualTo(0b01)
         assertWithMessage("No padding bits").that(window.paddingBits).isEqualTo(0)
       }
@@ -77,7 +77,7 @@ class BitVectorTest {
   @Test
   fun thirtyTwoBitValues() {
     var calls = 0
-    BitVector(alternatingBytes).asSequenceOfInts(32).forEachIndexed { index, window ->
+    BitVector(alternatingBytes).asSequenceOfInts(32).forEach { window ->
       calls++
       assertThat(window.value).isEqualTo(alternating)
       assertThat(window.paddingBits).isEqualTo(0)

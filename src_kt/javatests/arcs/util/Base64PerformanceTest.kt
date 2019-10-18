@@ -12,10 +12,17 @@
 package arcs.util
 
 import com.google.common.truth.Truth.assertWithMessage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.security.SecureRandom
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
 
@@ -32,28 +39,32 @@ class Base64PerformanceTest {
   lateinit var bytes: ByteArray
 
   @Test
-  fun testKotlinVsJava() {
+  fun testKotlinVsJava() = runBlocking {
     // Runs more iterations for shorter byte arrays, fewer for longer byte arrays.
     val iterations = 2000 * (100 - bytes.size + 1)
 
-    val arcsTime = measureNanoTime {
-      repeat(iterations) {
-        random.nextBytes(bytes)
-        arcsEncodeDecode(bytes)
+    val arcsTime = async(DISPATCHER) {
+      measureNanoTime {
+        repeat(iterations) {
+          random.nextBytes(bytes)
+          arcsEncodeDecode(bytes)
+        }
       }
     }
 
-    val javaTime = measureNanoTime {
-      repeat(iterations) {
-        random.nextBytes(bytes)
-        javaEncodeDecode(bytes)
+    val javaTime = async(DISPATCHER) {
+      measureNanoTime {
+        repeat(iterations) {
+          random.nextBytes(bytes)
+          javaEncodeDecode(bytes)
+        }
       }
     }
 
     assertWithMessage(
       "Arcs implementation should be no more than 0.01ms per cycle slower Java's on average"
     ).that(
-      (arcsTime - javaTime).toDouble() / iterations
+      (arcsTime.await() - javaTime.await()).toDouble() / iterations
     ).isLessThan(
       TimeUnit.MICROSECONDS.toNanos(10).toDouble()
     )
@@ -68,7 +79,11 @@ class Base64PerformanceTest {
   }
 
   companion object {
-    @Parameterized.Parameters(name = "{index}-element ByteArray")
+    private val DISPATCHER = Executors.newFixedThreadPool(2) {
+      Thread(it).apply { priority = Thread.MAX_PRIORITY }
+    }.asCoroutineDispatcher()
+
+    @Parameterized.Parameters(name = "Base64Performance: {index}-element ByteArray")
     @JvmStatic
     fun arrays(): Collection<ByteArray> = (0..100).map(::ByteArray)
   }
