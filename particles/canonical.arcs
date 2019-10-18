@@ -20,4 +20,5 @@ import 'Tutorial/Kotlin/Tutorial.arcs'
 // Other
 import 'TicTacToe/TicTacToe.arcs'
 import 'Native/native.arcs'
+import 'API/ApiTest.arcs'
 

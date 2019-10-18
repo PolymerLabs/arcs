@@ -150,7 +150,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (state.arc && state.arcMeta) {
       if (state.writtenArcMeta !== state.arcMeta) {
         state.writtenArcMeta = state.arcMeta;
-        this.recordArcMeta(state.arcMeta);
+        this.recordArcMeta(state.arcMeta, state.store);
       }
     }
     this.state = {hideLauncher: Boolean(state.arckey)};
@@ -284,7 +284,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   configureBgArc(name)  {
     const key = `arc-${name.toLowerCase()}`;
-    // this.recordArcMeta({key: key, href: `?arc=${key}`, description: `${name} arc`, color: 'silver', touched: 0});
     return {
       id: key,
       suggestionContainer: this.getSuggestionSlot()
@@ -293,9 +292,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
-  async recordArcMeta(meta) {
-    if (this.state.store) {
-      await this.state.store.store({id: meta.key, rawData: meta}, [generateId()]);
+  async recordArcMeta(meta, store) {
+    if (store) {
+      await store.store({id: meta.key, rawData: meta}, [generateId()]);
     } else {
       log('failed to record arc metadata: no store');
     }
