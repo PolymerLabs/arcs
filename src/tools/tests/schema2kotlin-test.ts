@@ -26,11 +26,42 @@ describe('schema2kotlin', () => {
 
     assert.notInclude(generated, ';');
     assert.sameMembers(generated.split(/\n+/g), [
-      'typealias ProductFoo_alpha = Foo_alpha',
-      'typealias ElementFoo_alpha = Foo_alpha',
-      'typealias ThingFoo_alpha = Foo_alpha',
-      'typealias ThingFoo_beta = Foo_beta',
+      'typealias Foo_Product = Foo_alpha',
+      'typealias Foo_Element = Foo_alpha',
     ]);
+  });
+
+  it('creates aliases while eliminating ambiguous identifiers', async () => {
+    const manifest = await Manifest.parse(`\
+particle Reader
+  in * {Text value} object
+  in Product Element Thing {Text value} myThing
+  in Thing {Number n} otherThing`);
+
+    const mock = new Schema2Kotlin({'_': []});
+    const [aliases, ..._] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
+
+    assert.notInclude(generated, ';');
+    assert.sameMembers(generated.split(/\n+/g), [
+      'typealias Reader_Product = Reader_myThing',
+      'typealias Reader_Element = Reader_myThing',
+    ]);
+  });
+
+  it('creates aliases while eliminating abigous identifies, including in the first connection', async () => {
+    const manifest = await Manifest.parse(`\
+particle Foo
+  in Product Element Thing {Text value} myThing
+  in Thing {Number n} otherThing
+  out Product {Text name, Number age} anotherThing`);
+
+    const mock = new Schema2Kotlin({'_': []});
+    const [aliases, ..._] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
+
+    assert.notInclude(generated, ';');
+    assert.equal(generated, 'typealias Foo_Element = Foo_myThing');
   });
 
   it('creates scoped aliases for global schemas', async () => {
@@ -61,9 +92,9 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
 
     assert.notInclude(generated, ';');
     assert.sameMembers(generated.split(/\n+/g), [
-      'typealias ProductBasicParticle_foo = BasicParticle_foo',
-      'typealias ProductBasicParticle_bar = BasicParticle_bar',
-      'typealias ProductWatcher_bar = Watcher_bar',
+      // 'typealias BasicParticle_foo = BasicParticle_Product',
+      // 'typealias BasicParticle_bar = BasicParticle_Product',
+      'typealias Watcher_Product = Watcher_bar',
     ]);
   });
 });

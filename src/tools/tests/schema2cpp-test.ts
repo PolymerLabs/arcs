@@ -25,10 +25,10 @@ describe('schema2cpp', () => {
     const generated = mock.addAliases(aliases);
 
     assert.sameMembers(generated.split(/\n+/g), [
-      'using ProductFoo_alpha = arcs::Foo_alpha;',
-      'using ElementFoo_alpha = arcs::Foo_alpha;',
-      'using ThingFoo_alpha = arcs::Foo_alpha;',
-      'using ThingFoo_beta = arcs::Foo_beta;',
+      'namespace arcs {',
+      'using Foo_Product = Foo_alpha;',
+      'using Foo_Element = Foo_alpha;',
+      '}',
     ]);
   });
 
@@ -59,9 +59,9 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
     const generated = mock.addAliases(aliases);
 
     assert.sameMembers(generated.split(/\n+/g), [
-      'using ProductBasicParticle_foo = arcs::BasicParticle_foo;',
-      'using ProductBasicParticle_bar = arcs::BasicParticle_bar;',
-      'using ProductWatcher_bar = arcs::Watcher_bar;',
+      'namespace arcs {',
+      'using Watcher_Product = Watcher_bar;',
+      '}'
     ]);
   });
 });
