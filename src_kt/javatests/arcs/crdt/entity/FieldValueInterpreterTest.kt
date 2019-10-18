@@ -11,8 +11,10 @@
 
 package arcs.crdt.entity
 
+import arcs.util.toBase64String
 import com.google.common.truth.Truth.assertThat
 import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -105,14 +107,13 @@ class FieldValueInterpreterTest {
     }
   }
 
-  // TODO: enable this test when Base64 support is implemented.
-  //@Test
+  @Test
   fun byteArrayIsSupported() {
     val myData = "this is not a test"
     val bytes = myData.toByteArray()
 
     with(bytes.toFieldValue()) {
-      assertThat(id).isEqualTo("Bytes::${bytes.toBase64String().hashCode()}")
+      assertThat(id).isEqualTo("Bytes::${bytes.contentHashCode()}")
       assertThat(serializedValue).isEqualTo(bytes.toBase64String())
     }
     with(bytes.toBase64String().toFieldValue<Bytes>("blah")) {

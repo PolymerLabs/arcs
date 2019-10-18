@@ -20,14 +20,6 @@ typealias Text = String
 /** Arcs-entity-friendly name for [ByteArray]. */
 typealias Bytes = ByteArray
 
-fun String.toBase64Bytes(): Bytes {
-  TODO("Implement once Base64 Utils have landed.")
-}
-
-fun ByteArray.toBase64String(): String {
-  TODO("Implement once Base64 Utils have landed.")
-}
-
 /** Point in time. Represents milliseconds from the epoch. */
 typealias Instant = Long
 

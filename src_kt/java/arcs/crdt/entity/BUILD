@@ -6,6 +6,7 @@ kt_arcs_library(
     name = "entity",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/crdt/internal"
-    ]
+        "//java/arcs/crdt/internal",
+        "//java/arcs/util",
+    ],
 )

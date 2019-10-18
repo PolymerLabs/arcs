@@ -66,5 +66,7 @@ import arcs.crdt.internal.Referencable
  * ```
  */
 class CrdtEntity {
-
+  init {
+    TODO("Not implemented yet.")
+  }
 }

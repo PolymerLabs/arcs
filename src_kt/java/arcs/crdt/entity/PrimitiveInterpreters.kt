@@ -12,6 +12,8 @@
 package arcs.crdt.entity
 
 import arcs.crdt.internal.ReferenceId
+import arcs.util.toBase64Bytes
+import arcs.util.toBase64String
 import kotlin.reflect.KClass
 import arcs.crdt.entity.Url as ArcsUrl
 
@@ -59,16 +61,18 @@ object PrimitiveInterpreters {
       arcs.crdt.entity.Bytes::class,
       "Bytes",
       { toBase64String() },
-      { toBase64Bytes() }
+      { toBase64Bytes() },
+      { contentHashCode() }
     )
 
   private fun <T : Any> buildInterpreter(
     kClass: KClass<T>,
     idPrefix: String = kClass.toString(),
     toString: T.() -> String,
-    fromString: String.() -> T
+    fromString: String.() -> T,
+    getHashCode: T.() -> Int = { hashCode() }
   ): Pair<KClass<T>, FieldValueInterpreter<T>> = kClass to object : FieldValueInterpreter<T> {
-    override fun getReferenceId(value: T): ReferenceId = "$idPrefix::${value.hashCode()}"
+    override fun getReferenceId(value: T): ReferenceId = "$idPrefix::${value.getHashCode()}"
     override fun serialize(value: T): String = toString(value)
     override fun deserialize(rawValue: String): T = rawValue.fromString()
   }
