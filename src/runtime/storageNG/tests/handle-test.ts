@@ -15,7 +15,7 @@ import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpT
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType} from '../../type.js';
-import {CollectionHandle, SingletonHandle} from '../handle.js';
+import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
@@ -23,7 +23,7 @@ import {MockParticle, MockStore} from '../testing/test-storage.js';
 async function getCollectionHandle(particle?: MockParticle):
     Promise<CollectionHandle<{id: string}>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const handle = new CollectionHandle<{id: string}>(
+  const handle = handleNGFor(
       'me',
       new StorageProxy(
           'id',
@@ -32,7 +32,7 @@ async function getCollectionHandle(particle?: MockParticle):
       IdGenerator.newSession(),
       fakeParticle,
       true,
-      true);
+      true) as CollectionHandle<{id: string}>;
   // Initialize the model.
   await handle.storageProxy.onMessage({
     type: ProxyMessageType.ModelUpdate,
@@ -45,7 +45,7 @@ async function getCollectionHandle(particle?: MockParticle):
 async function getSingletonHandle(particle?: MockParticle):
     Promise<SingletonHandle<{id: string}>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const handle = new SingletonHandle<{id: string}>(
+  const handle = handleNGFor(
       'me',
       new StorageProxy(
           'id',
@@ -54,7 +54,7 @@ async function getSingletonHandle(particle?: MockParticle):
       IdGenerator.newSession(),
       fakeParticle,
       true,
-      true);
+      true) as SingletonHandle<{id: string}>;
   // Initialize the model.
   await handle.storageProxy.onMessage({
     type: ProxyMessageType.ModelUpdate,

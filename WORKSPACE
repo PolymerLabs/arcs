@@ -66,9 +66,9 @@ http_archive(
 )
 
 
-rules_kotlin_version = "legacy-modded-0_26_1-02"
 
-rules_kotlin_sha = "245d0bc1511048aaf82afd0fa8a83e8c3b5afdff0ae4fbcae25e03bb2c6f1a1a"
+rules_kotlin_version = "legacy-modded-1_0_0-01"
+rules_kotlin_sha = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
@@ -154,4 +154,18 @@ http_archive(
     sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
     strip_prefix = "rules_android-0.1.1",
     urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
+)
+
+AUTO_VALUE_VERSION = "1.7"
+
+maven_jar(
+    name = "autovalue",
+    artifact = "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
+    sha1 = "fe8387764ed19460eda4f106849c664f51c07121",
+)
+
+maven_jar(
+    name = "autovalue_annotations",
+    artifact = "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
+    sha1 = "5be124948ebdc7807df68207f35a0f23ce427f29",
 )

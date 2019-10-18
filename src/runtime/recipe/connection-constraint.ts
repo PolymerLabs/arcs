@@ -11,11 +11,12 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction, DirectionArrow} from '../manifest-ast-nodes.js';
+import {Direction, directionToArrow} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
 import {Particle} from './particle.js';
+import {Flags} from '../flags.js';
 
 export abstract class EndPoint implements Comparable<EndPoint> {
   abstract _compareTo(other: EndPoint): number;
@@ -134,10 +135,10 @@ export class TagEndPoint extends EndPoint {
 export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
   from: EndPoint;
   to: EndPoint;
-  direction: DirectionArrow;
+  direction: Direction;
   type: 'constraint' | 'obligation';
 
-  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: DirectionArrow, type: 'constraint' | 'obligation') {
+  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, type: 'constraint' | 'obligation') {
     assert(direction);
     assert(type);
     this.from = fromConnection;
@@ -173,6 +174,9 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';
     }
-    return `${this.from.toString(nameMap)} ${this.direction} ${this.to.toString(nameMap)}${unresolved}`;
+    if (Flags.usePreSlandlesSyntax) {
+      return `${this.from.toString(nameMap)} ${directionToArrow(this.direction)} ${this.to.toString(nameMap)}${unresolved}`;
+    }
+    return `${this.from.toString(nameMap)}: ${this.direction} ${this.to.toString(nameMap)}${unresolved}`;
   }
 }

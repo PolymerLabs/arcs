@@ -94,6 +94,19 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         color: white;
         background-color: var(--highlight-blue);
       }
+      [pecType] {
+        border-radius: 30px;
+        color: white;
+        min-width: 30px;
+        text-align: center;
+        text-transform: capitalize;
+      }
+      [pecType].a {
+        background-color: var(--devtools-red);
+      }
+      [pecType].w {
+        background-color: var(--devtools-blue);
+      }
       [name] {
         margin: 0 4px;
       }
@@ -119,6 +132,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
                 <iron-icon icon="menu"></iron-icon>
               </span>
             </span>
+            <span pecType class$="[[item.pecType]]" title="[[item.pecId]]">[[item.pecType]]</span>
             <span dirIcon highlight$="[[item.highlight]]" callbackId$="[[item.pecMsgBody.callback]]" on-click="_highlightGroup">[[item.icon]]</span>
             <span name>[[item.name]]</span>
           </object-explorer>
@@ -145,6 +159,11 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
 
   static get properties() {
     return {
+      active: {
+        type: Boolean,
+        observer: '_onActiveChanged',
+        reflectToAttribute: true
+      },
       searchParams: {
         type: Object,
         observer: '_onSearchChanged'
@@ -260,6 +279,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       explorerData,
       stack,
       msgCount: msg.pecMsgCount,
+      pecType: msg.pecType,
+      pecId: msg.pecId,
       time: formatTime(msg.timestamp, 3),
       highlight: msg.pecMsgBody.callback === this.highlightedGroupCallbackId
     };
@@ -325,6 +346,13 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     }
 
     event.stopPropagation();
+  }
+
+  _onActiveChanged(active) {
+    if (active) {
+      // Iron-list needs to be notified that the panel got shown, so that it draws itself.
+      this.$.list.fire('iron-resize');
+    }
   }
 }
 

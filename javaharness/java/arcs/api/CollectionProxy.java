@@ -16,13 +16,13 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class CollectionProxy extends StorageProxy implements CollectionStore {
+class CollectionProxy extends StorageProxy implements CollectionStore {
   CRDTCollection<ModelEntry> model;
 
   public CollectionProxy(
       String id,
       Type type,
-      PECInnerPort port,
+      PecInnerPort port,
       String name,
       PortableJsonParser jsonParser) {
     super(id, type, port, name, jsonParser);

@@ -256,3 +256,19 @@ export class SingletonHandle<T extends Referenceable> extends Handle<CRDTSinglet
         e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
   }
 }
+
+export function handleNGFor<T extends CRDTTypeRecord>(key: string,
+      storageProxy: StorageProxy<T>,
+      idGenerator: IdGenerator,
+      particle: Particle,
+      canRead: boolean,
+      canWrite: boolean,
+      name?: string): Handle<T> {
+  return new (storageProxy.type.handleConstructor<T>())(key,
+          storageProxy,
+          idGenerator,
+          particle,
+          canRead,
+          canWrite,
+          name);
+}

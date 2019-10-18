@@ -16,6 +16,7 @@ import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
@@ -39,7 +40,29 @@ describe('RecipeIndex', () => {
     return (await createIndex(manifestContent)).recipes.map(r => r.toString());
   }
 
-  it('adds use handles', async () => {
+  it('SLANDLES SYNTAX adds use handles', Flags.withPostSlandlesSyntax(async () => {
+    assert.sameMembers(await extractIndexRecipeStrings(`
+      schema Person
+      schema Lumberjack
+
+      particle Transform
+        in Person person
+        out Lumberjack lumberjack
+
+      recipe
+        Transform
+    `), [
+`recipe
+  ? as handle0 // ~
+  ? as handle1 // ~
+  Transform as particle0
+    lumberjack: out handle0
+    person: in handle1`
+    ]);
+  }));
+
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
+  it('adds use handles', Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
       schema Lumberjack
@@ -58,9 +81,28 @@ describe('RecipeIndex', () => {
     lumberjack -> handle0
     person <- handle1`
     ]);
-  });
+  }));
 
-  it('matches free handles to connections', async () => {
+  it('SLANDLES SYNTAX matches free handles to connections', Flags.withPostSlandlesSyntax(async () => {
+    assert.sameMembers(await extractIndexRecipeStrings(`
+      schema Person
+
+      particle A
+        inout Person person
+
+      recipe
+        create as person
+        A
+    `), [
+`recipe
+  create as handle0 // Person {}
+  A as particle0
+    person: inout handle0`
+    ]);
+  }));
+
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
+  it('matches free handles to connections', Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
 
@@ -76,7 +118,7 @@ describe('RecipeIndex', () => {
   A as particle0
     person <-> handle0`
     ]);
-  });
+  }));
 
   it('resolves local slots, but not a root slot', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
@@ -100,7 +142,37 @@ describe('RecipeIndex', () => {
     ]);
   });
 
-  it('resolves constraints', async () => {
+  it('SLANDLES SYNTAX resolves constraints', Flags.withPostSlandlesSyntax(async () => {
+    assert.sameMembers(await extractIndexRecipeStrings(`
+      schema A
+      schema B
+      schema C
+
+      particle Transform
+        in A a
+        out B b
+      particle TransformAgain
+        in B b
+        out C c
+
+      recipe
+        Transform.b: out TransformAgain.b
+    `), [
+`recipe
+  ? as handle0 // ~
+  create as handle1 // B {}
+  ? as handle2 // ~
+  Transform as particle0
+    a: in handle0
+    b: out handle1
+  TransformAgain as particle1
+    b: in handle1
+    c: out handle2`
+    ]);
+  }));
+
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
+  it('resolves constraints', Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema A
       schema B
@@ -127,7 +199,7 @@ describe('RecipeIndex', () => {
     b <- handle1
     c -> handle2`
     ]);
-  });
+  }));
 
   it('does not resolve verbs', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
@@ -162,6 +234,41 @@ describe('RecipeIndex', () => {
     ]);
   });
 
+  it('SLANDLES SYNTAX finds matching handles by fate', Flags.withPostSlandlesSyntax(async () => {
+    const index = await createIndex(`
+      schema Thing
+
+      particle A
+        in Thing thing
+      recipe A
+        map as thing
+        A
+          thing: any thing
+
+      particle B
+        out Thing thing
+      recipe B
+        create as thing
+        B
+          thing: any thing
+
+      particle C
+        in Thing thing
+      recipe C
+        use as thing
+        C
+          thing: any thing
+    `);
+
+    const recipe = checkDefined(index.recipes.find(r => r.name === 'C'), 'missing recipe C');
+
+    const handle = recipe.handles[0];
+
+    assert.deepEqual(['A'], index.findHandleMatch(handle, ['map']).map(h => h.recipe.name));
+    assert.deepEqual(['B'], index.findHandleMatch(handle, ['create']).map(h => h.recipe.name));
+  }));
+
+  // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('finds matching handles by fate', async () => {
     const index = await createIndex(`
       schema Thing

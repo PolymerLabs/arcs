@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
-public abstract class StorageProxy implements Store {
+abstract class StorageProxy implements Store {
   public final String id;
   public final String name;
   public final Type type;
@@ -17,7 +17,7 @@ public abstract class StorageProxy implements Store {
   protected SyncState syncState = SyncState.NONE;
   protected Map<Handle, Particle> observers = new HashMap<>();
   protected List<PortableJson> updates = new ArrayList<>();
-  protected PECInnerPort port;
+  protected PecInnerPort port;
   protected PortableJsonParser jsonParser;
   protected StorageProxyScheduler scheduler;
 
@@ -31,7 +31,7 @@ public abstract class StorageProxy implements Store {
   protected StorageProxy(
       String id,
       Type type,
-      PECInnerPort port,
+      PecInnerPort port,
       String name,
       PortableJsonParser jsonParser) {
     this.id = id;

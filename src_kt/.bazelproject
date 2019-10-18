@@ -1,0 +1,20 @@
+directories:
+  java/arcs
+  javatests/arcs
+  project
+  build_defs
+
+targets:
+  //java/...
+  //javatests/...
+
+test_sources:
+  javatests/
+
+additional_languages:
+  kotlin
+
+workspace_type: java
+
+build_flags:
+  --incompatible_depset_is_not_iterable=false

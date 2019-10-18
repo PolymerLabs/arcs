@@ -16,8 +16,10 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {Recipe} from '../recipe/recipe.js';
+import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {CollectionHandle} from '../storageNG/handle.js';
+import {Entity} from '../entity.js';
 
 describe('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, slotComposer: MockSlotComposer, arc: Arc}> {
@@ -47,12 +49,14 @@ describe('particle interface loading with slots', () => {
     return {manifest, recipe, slotComposer, arc};
   }
 
-  async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionStorageProvider> {
+  // tslint:disable-next-line: no-any
+  async function instantiateRecipeAndStore(arc: Arc, recipe: Recipe, manifest: Manifest): Promise<CollectionHandle<any>> {
     await arc.instantiate(recipe);
-    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0] as CollectionStorageProvider;
-    await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
-    await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
-    return inStore;
+    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
+    const inHandle = await collectionHandleForTest(arc, inStore);
+    await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo1'}), 'subid-1'));
+    await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo2'}), 'subid-2'));
+    return inHandle;
   }
 
   const expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
@@ -91,7 +95,7 @@ describe('particle interface loading with slots', () => {
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
-    await inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
+    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
@@ -140,7 +144,7 @@ describe('particle interface loading with slots', () => {
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
-    await inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
+    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})

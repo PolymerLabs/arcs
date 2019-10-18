@@ -2,7 +2,7 @@ package arcs.api;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface CollectionStore extends Store {
+interface CollectionStore extends Store {
   CompletableFuture<PortableJson> get(String id);
 
   void store(PortableJson value, String[] keys, String particleId);

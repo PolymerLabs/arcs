@@ -16,3 +16,5 @@ public interface PortableJsonParser {
 
   PortableJson fromObjectArray(Collection<PortableJson> collection);
 }
+
+

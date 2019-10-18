@@ -27,7 +27,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {Slot} from './recipe/slot.js';
 import {HandleConnection} from './recipe/handle-connection.js';
-import {RecipeUtil, arrowToDirection, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
+import {RecipeUtil, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -42,9 +42,10 @@ import {StorageStub} from './storage-stub.js';
 import {Flags} from './flags.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {Exists} from './storageNG/drivers/driver-factory.js';
+import {Exists, DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -246,6 +247,7 @@ export class Manifest {
       description?: string,
       version?: number,
       source?: string,
+      origin?: 'file' | 'resource' | 'storage',
       referenceMode?: boolean,
       model?: {}[],
   }) {
@@ -275,6 +277,7 @@ export class Manifest {
           opts.description,
           opts.version,
           opts.source,
+          opts.origin,
           opts.referenceMode,
           opts.model);
     }
@@ -1004,11 +1007,11 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        const direction = arrowToDirection(connectionItem.dir);
+        const direction = connectionItem.dir;
         if (!connectionMatchesHandleDirection(direction, connection.direction)) {
           throw new ManifestError(
               connectionItem.location,
-              `'${connectionItem.dir}' (${direction}) not compatible with '${connection.direction}' param of '${particle.name}'`);
+              `'${direction}' not compatible with '${connection.direction}' param of '${particle.name}'`);
         } else if (connection.direction === 'any') {
           if (connectionItem.param !== '*' && particle.spec !== undefined) {
             throw new ManifestError(
@@ -1162,9 +1165,13 @@ ${e.message}
     return null;
   }
 
-  private createVolatileStorageKey(): string | VolatileStorageKey {
+  /**
+   * Creates a new storage key for data local to the manifest itself (e.g.
+   * from embedded JSON data, or an external JSON file).
+   */
+  private createLocalDataStorageKey(): string | RamDiskStorageKey {
     if (Flags.useNewStorageStack) {
-      return new VolatileStorageKey(this.id, this.generateID('volatile').toString());
+      return new RamDiskStorageKey(this.generateID('local-data').toString());
     } else {
       return (this.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
     }
@@ -1201,6 +1208,7 @@ ${e.message}
         claims,
         description: item.description,
         version: item.version,
+        origin: item.origin,
       });
     }
 
@@ -1298,13 +1306,14 @@ ${e.message}
         type,
         name,
         id,
-        storageKey: manifest.createVolatileStorageKey(),
+        storageKey: manifest.createLocalDataStorageKey(),
         tags,
         originalId,
         claims,
         description: item.description,
         version,
         source: item.source,
+        origin: item.origin,
         referenceMode,
         model,
     });
@@ -1344,7 +1353,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString(this.storeTags.get(store).map(a => `#${a}`)));
+      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
     });
 
     return results.join('\n');

@@ -1,6 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="arcs.android.impl">
-  <uses-sdk
-    android:minSdkVersion="29"
-    android:targetSdkVersion="29"/>
-</manifest>

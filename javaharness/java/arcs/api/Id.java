@@ -10,7 +10,7 @@ import java.util.Date;
  * subcomponents to their parent ID"s idTree).
  */
 // copied from id.ts
-public class Id {
+class Id {
   /** The Session ID of the session during which the ID got created. See IdGenerator class. */
   final String root;
 

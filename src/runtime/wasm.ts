@@ -257,7 +257,7 @@ export class StringDecoder {
         const dictionary = this.chomp(len);
         return this.decodeDictionary(dictionary);
       }
-      
+
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
     }
