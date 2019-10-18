@@ -659,7 +659,7 @@ export function arrowToDirection(arrow: DirectionArrow): Direction {
   }
 }
 
-export function directionToArrow(dir: Direction): string {
+export function directionToArrow(dir: Direction): DirectionArrow {
   // TODO(jopra): Remove after syntax unification.
   switch (dir) {
     case 'in':
