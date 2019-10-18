@@ -4,11 +4,13 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load(":run_in_repo.bzl", "run_in_repo")
+load(":kotlin.bzl", "arcs_kt_library")
 
 def _output_name(src, file_extension = ""):
+    """Cleans up the given file name, and replaces the .arcs extension."""
     return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + file_extension
 
-def _run_schema2pkg(name, src, out, language_name, language_flag, file_extension):
+def _run_schema2pkg(name, src, out, language_name, language_flag):
     """Generates source code for the given .arcs schema file.
 
     Runs sigh schema2pkg to generate the output.
@@ -16,10 +18,6 @@ def _run_schema2pkg(name, src, out, language_name, language_flag, file_extension
 
     if not src.endswith(".arcs"):
         fail("src must be a .arcs file")
-
-    if out == None:
-        # Clean up the output name.
-        out = _output_name(src, file_extension)
 
     run_in_repo(
         name = name,
@@ -38,25 +36,29 @@ def _run_schema2pkg(name, src, out, language_name, language_flag, file_extension
 
 def arcs_cc_schema(name, src, out = None):
     """Generates a C++ header file for the given .arcs schema file."""
+    out = out or _output_name(src, ".h")
     _run_schema2pkg(
-        name = name,
+        name = name + "_genrule",
         src = src,
         out = out,
         language_name = "C++",
         language_flag = "--cpp",
-        file_extension = ".h",
     )
 
-def arcs_kt_schema(name, src, out = None, deps = [], wasm_deps = []):
+def arcs_kt_schema(name, src):
     """Generates a Kotlin file for the given .arcs schema file."""
-    out = out or _output_name(src, "_GeneratedSchemas.kt")
+    out = _output_name(src, "_GeneratedSchemas.kt")
+
     _run_schema2pkg(
         name = name + "_genrule",
         src = src,
         out = out,
         language_name = "Kotlin",
         language_flag = "--kotlin",
-        file_extension = ".kt",
     )
-
-    return out
+    
+    arcs_kt_library(
+        name = name,
+        srcs = [out],
+        deps = [],
+    )

@@ -1,17 +1,12 @@
-load("//build_defs:build_defs.bzl", "arcs_manifest", "arcs_kt_particle", "arcs_kt_wasm_binary")
+load("//build_defs:build_defs.bzl", "arcs_kt_schema", "arcs_kt_particle")
 
-arcs_manifest(
+arcs_kt_schema(
     name = "store_schemas",
-    srcs = ["JsonStore.arcs"],
+    src = "JsonStore.arcs",
 )
 
 arcs_kt_particle(
-    name = "json_store_lib",
+    name = "JsonStore",
     srcs = ["JsonStore.kt"],
     deps = [":store_schemas"]
-)
-
-arcs_kt_wasm_binary(
-   name = "JsonStore",
-   deps = [":json_store_lib"]
 )
