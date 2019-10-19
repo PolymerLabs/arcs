@@ -10,7 +10,7 @@ schema PersonDetails
 // file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
 
-particle JsonStoreParticle in 'https://$arcs/bazel-bin/particles/Tutorial/Kotlin/3_JsonStore/JsonStore.wasm'
+particle JsonStoreParticle in 'JsonStore.wasm'
   // This particle has an input parameter called inputData. We can use this parameter in the particle's
   // Kotlin file.
   in PersonDetails {name, age} inputData
