@@ -54,6 +54,10 @@ class ArcsConnectionStatus extends MessengerMixin(PolymerElement) {
         <button type="button" on-click="onCancel">Cancel</button>
         <button type="button" on-click="onOk" id="ok">OK</button>
       </div>
+      <br>
+      <div load>
+        <a href="?snapshot">Load a Snapshot</a>
+      </div>
     </div>
 `;
   }
@@ -78,7 +82,15 @@ class ArcsConnectionStatus extends MessengerMixin(PolymerElement) {
   }
 
   onMessage(msg) {
+    if (this.disabled) {
+      return;
+    }
+
     switch (msg.messageType) {
+      case 'mode-snapshot':
+        this.disabled = true;
+        this.onCancel();
+        return;
       case 'connection-status-waiting':
         return this.notify({text: 'Waiting for Arcs Shell...'});
       case 'connection-status-disconnected':
