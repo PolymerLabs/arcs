@@ -31,4 +31,5 @@ def sigh_command(
             "//tools:tools_srcs",
             "//:tsconfig",
         ] + deps,
+        visibility = visibility,
     )
