@@ -1,3 +1,6 @@
 schema Person
   Text name
   Number age
+
+particle Test
+  in Person person

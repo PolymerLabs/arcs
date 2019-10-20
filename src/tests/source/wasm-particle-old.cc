@@ -27,8 +27,8 @@ class ReloadHandleTest : public arcs::Particle {
       update(name);
     }
     void update(const std::string& name) {
-      arcs::Person out;
-      if (auto input = getSingleton<arcs::Person>(name)) {
+      arcs::Test_person out;
+      if (auto input = getSingleton<arcs::Test_person>(name)) {
         out.set_name(input->get().name());
         out.set_age(input->get().age() * 2);
       } else {
@@ -36,8 +36,8 @@ class ReloadHandleTest : public arcs::Particle {
       }
       personOut.set(&out);
     }
-    arcs::Singleton<arcs::Person> personIn;
-    arcs::Singleton<arcs::Person> personOut;
+    arcs::Singleton<arcs::Test_person> personIn;
+    arcs::Singleton<arcs::Test_person> personOut;
 };
 
 DEFINE_PARTICLE(ReloadHandleTest);

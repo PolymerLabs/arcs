@@ -13,9 +13,14 @@ import minimist from 'minimist';
 import {Schema} from '../runtime/schema.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
+import {Manifest} from '../runtime/manifest.js';
+
+export type Aliases = Dictionary<Set<string>>;
 
 export abstract class Schema2Base {
-  constructor(readonly opts: minimist.ParsedArgs) {}
+  constructor(readonly opts: minimist.ParsedArgs) {
+    Utils.init('../..');
+  }
 
   async call() {
     fs.mkdirSync(this.opts.outdir, {recursive: true});
@@ -28,8 +33,73 @@ export abstract class Schema2Base {
     }
   }
 
+
+  /** Collect schemas from particle connections and build map of aliases. */
+  public processManifest(manifest: Manifest): [Aliases, Dictionary<Schema>, Dictionary<Schema>] {
+    const aliases: Aliases = {};
+
+    const updateTheseAliases = (aliases_: Aliases) => (rhs: string, alias: string) => {
+      if (aliases_[rhs] !== undefined) {
+        aliases_[rhs].add(alias);
+      } else {
+        aliases_[rhs] = new Set([alias]);
+      }
+    };
+
+    const updateAliases = updateTheseAliases(aliases);
+
+    const schemas: Dictionary<Schema> = {};
+    const refSchemas: Dictionary<Schema> = {};
+
+    for (const particle of manifest.allParticles) {
+      const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
+      for (const connection of particle.connections) {
+        const schema = connection.type.getEntitySchema();
+        if (!schema) {
+          continue;
+        }
+
+        // Include primary schemas from particle and connection name
+        // Given non-inline schemas: Create particle-namespaced schemas and alias connections to them.
+        const name = namespaceByParticle(connection.name);
+
+        if (aliases[name] === undefined) {
+          aliases[name] = new Set<string>([]);
+        }
+
+        schemas[name] = schema;
+
+        schema.names.forEach(n => {
+          const mangledName = namespaceByParticle(n);
+          if (Object.values(aliases).some(lst => lst.has(mangledName))) {
+            Object.values(aliases).forEach(lst => lst.delete(mangledName));
+          } else {
+            aliases[name].add(mangledName);
+          }
+        });
+
+        // Collect reference schema fields. These will be output first so they're defined
+        // prior to use in their containing entity classes.
+        for (const [field, descriptor] of Object.entries(schema.fields)) {
+          if (descriptor.kind === 'schema-reference') {
+            const refSchemaName = this.inlineSchemaName(field, descriptor);
+            const refSchema = descriptor.schema.model.getEntitySchema();
+            if (!(refSchemaName in refSchemas)) {
+              refSchemas[refSchemaName] = refSchema;
+            }
+
+            // TODO(alxr) Test the corner cases
+            refSchema.names.filter(n => n !== refSchemaName).forEach(n => updateAliases(refSchemaName, n));
+          }
+        }
+      }
+    }
+
+
+    return [aliases, refSchemas, schemas];
+  }
+
   private async processFile(src: string) {
-    Utils.init('../..');
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
@@ -39,50 +109,28 @@ export abstract class Schema2Base {
 
     const manifest = await Utils.parse(`import '${src}'`);
 
-    // Collect declared schemas along with any inlined in particle connections.
-    const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.allParticles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
-      }
-    }
-    if (Object.keys(schemas).length === 0) {
+
+    const [aliases, ...schemas] = this.processManifest(manifest);
+
+    if (Object.values(schemas).map(s => Object.keys(s).length).reduce((acc, x) => acc + x, 0) === 0) {
       console.warn(`No schemas found in '${src}'`);
       return;
     }
 
-    // Collect inline schema fields. These will be output first so they're defined
-    // prior to use in their containing entity classes.
-    const inlineSchemas: Dictionary<Schema> = {};
-    for (const schema of Object.values(schemas)) {
-      for (const [field, descriptor] of Object.entries(schema.fields)) {
-        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-          const name = this.inlineSchemaName(field, descriptor);
-          if (!(name in inlineSchemas)) {
-            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
-          }
-         }
-      }
-    }
-
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const dict of [inlineSchemas, schemas]) {
+    for (const dict of schemas) {
       for (const [name, schema] of Object.entries(dict)) {
         fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
       }
     }
+    fs.writeSync(outFile, `\n${this.addAliases(aliases)}\n`);
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
 
   protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
+                          processField: (field: string, typeChar: string, refName: string) => void): number {
     let fieldCount = 0;
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       fieldCount++;
@@ -142,7 +190,12 @@ export abstract class Schema2Base {
   }
 
   abstract outputName(baseName: string): string;
+
   abstract fileHeader(outName: string): string;
+
   abstract fileFooter(): string;
+
   abstract entityClass(name: string, schema: Schema): string;
+
+  abstract addAliases(aliases: Aliases): string;
 }

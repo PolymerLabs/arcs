@@ -19,7 +19,7 @@ public:
   }
 
   void populateModel(const std::string& slot_name, arcs::Dictionary* model) override {
-    const arcs::Product& product = foo_.get();
+    const arcs::BasicParticle_foo& product = foo_.get();
     model->emplace("name", product.name());
     model->emplace("sku", arcs::num_to_str(product.sku()));
     model->emplace("num", arcs::num_to_str(num_clicks_));
@@ -28,8 +28,12 @@ public:
   // Responding to UI events
   void fireEvent(const std::string& slot_name, const std::string& handler) override {
     if (handler == "clicky") {
-      arcs::Product copy = arcs::clone_entity(foo_.get());  // does not copy internal entity id
-      bar_.store(&copy);  // pass as pointer; 'copy' will be updated with a new internal id
+      arcs::BasicParticle_foo copy = arcs::clone_entity(foo_.get());  // does not copy internal entity id
+      // TODO(alxr): Myk, please advise
+      arcs::BasicParticle_bar copy1;
+      copy1.set_name(copy.name());
+      copy1.set_sku(copy.sku());
+      bar_.store(&copy1);  // pass as pointer; 'copy' will be updated with a new internal id
 
       // Basic printf-style logging; note the c_str() for std::string variables
       console("Product copied; new id is %s\n", arcs::entity_to_str(copy).c_str());
@@ -40,8 +44,8 @@ public:
   }
 
 private:
-  arcs::Singleton<arcs::Product> foo_;
-  arcs::Collection<arcs::Product> bar_;
+  arcs::Singleton<arcs::BasicParticle_foo> foo_;
+  arcs::Collection<arcs::BasicParticle_bar> bar_;
   int num_clicks_ = 0;
 };
 
@@ -62,7 +66,7 @@ public:
   }
 
 private:
-  arcs::Collection<arcs::Product> bar_;
+  arcs::Collection<arcs::Watcher_bar> bar_;
 };
 
 

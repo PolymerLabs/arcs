@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base} from './schema2base.js';
+import {Aliases, Schema2Base} from './schema2base.js';
 import {Schema} from '../runtime/schema.js';
 
 // https://en.cppreference.com/w/cpp/keyword
@@ -228,5 +228,16 @@ struct std::hash<arcs::${name}> {
   }
 };
 `;
+  }
+
+  addAliases(aliases: Aliases): string {
+    const lines: string[] = Object.entries(aliases)
+      .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = ${rhs};`))
+      .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
+
+
+    return `namespace arcs {
+${lines.join('\n')}
+}`;
   }
 }

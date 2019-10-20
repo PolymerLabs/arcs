@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
 
 import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
@@ -16,7 +15,6 @@ import {EntityType, Type} from './type.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
-import {Singleton} from './handle.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 
 export class Schema {

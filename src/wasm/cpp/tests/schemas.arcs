@@ -21,3 +21,11 @@ schema ServiceResponse
 schema SpecialFields
   Text for
   Number internal_id
+
+particle Test
+  in Foo foo
+  in Data data
+  in Empty empty
+  in RenderFlags renderFlags
+  in ServiceResponse serviceResponse
+  in SpecialFields specialFields

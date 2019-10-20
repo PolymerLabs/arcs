@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base} from './schema2base.js';
+import {Aliases, Schema2Base} from './schema2base.js';
 import {Schema} from '../runtime/schema.js';
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
@@ -109,5 +109,14 @@ data class ${name}(
   }
 }
 `;
+  }
+
+
+  addAliases(aliases: Aliases): string {
+    const lines: string[] = Object.entries(aliases)
+      .map(([rhs, ids]): string[] => [...ids].map((id) => `typealias ${id} = ${rhs}`))
+      .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
+
+    return lines.join('\n');
   }
 }
