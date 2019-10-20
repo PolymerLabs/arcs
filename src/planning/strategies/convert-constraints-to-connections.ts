@@ -135,15 +135,16 @@ export class ConvertConstraintsToConnections extends Strategy {
             });
           }
 
-          const unionDirections = (a, b) => {
-            if (a === '=') {
-              return '=';
+          const unionDirections = (a: Direction, b: Direction): Direction => {
+            // TODO(jopra): Move to be with other handle direction + type resolution code.
+            if (a === 'any') {
+              return 'any';
             }
-            if (b === '=') {
-              return '=';
+            if (b === 'any') {
+              return 'any';
             }
             if (a !== b) {
-              return '=';
+              return 'any';
             }
             return a;
           };
