@@ -18,10 +18,13 @@ import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
 class CrdtSet<T : Referencable>(
-  private var _data: Data<T> = Data()
+  /** Initial data. */
+  private var _data: Data<T> = DataImpl(),
+  /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
+  private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
 ) : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>> {
   override val data: Data<T>
-    get() = Data(versionMap = VersionMap(_data.versionMap), values = HashMap(_data.values))
+    get() = _data.copy()
 
   override val consumerView: Set<T>
     get() = HashSet<T>().apply { addAll(_data.values.values.map { it.value }) }
@@ -35,7 +38,7 @@ class CrdtSet<T : Referencable>(
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
     val newClock = _data.versionMap mergeWith other.versionMap
-    val mergedData = Data<T>(newClock)
+    val mergedData = dataBuilder(newClock)
     val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
 
     other.values.values.forEach { (otherVersion: VersionMap, otherValue: T) ->
@@ -86,18 +89,32 @@ class CrdtSet<T : Referencable>(
 
   override fun applyOperation(op: Operation<T>): Boolean = op.applyTo(_data)
 
+  /** Checks whether or not a given [Operation] will succeed. */
+  @Suppress("unused")
   fun canApplyOperation(op: Operation<T>): Boolean = op.applyTo(_data, isDryRun = true)
 
   override fun updateData(newData: Data<T>) {
-    _data = Data(newData.versionMap, newData.values.toMutableMap())
+    _data = DataImpl(newData.versionMap, newData.values.toMutableMap())
+  }
+
+  /** Abstract representation of the data managed by [CrdtSet]. */
+  interface Data<T : Referencable> : CrdtData {
+    val values: MutableMap<ReferenceId, DataValue<T>>
+
+    /** Constructs a deep copy of this [DataImpl]. */
+    fun copy(): Data<T>
   }
 
   /** Representation of the data managed by [CrdtSet]. */
-  data class Data<T : Referencable>(
+  data class DataImpl<T : Referencable>(
     override var versionMap: VersionMap = VersionMap(),
     /** Map of values by their [ReferenceId]s. */
-    val values: MutableMap<ReferenceId, DataValue<T>> = mutableMapOf()
-  ) : CrdtData
+    override val values: MutableMap<ReferenceId, DataValue<T>> = mutableMapOf()
+  ) : Data<T> {
+    override fun copy(): Data<T> =
+      DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
+  }
+
 
   /** A particular datum within a [CrdtSet]. */
   data class DataValue<T : Referencable>(
@@ -109,7 +126,7 @@ class CrdtSet<T : Referencable>(
 
   /** Operations which can be performed on a [CrdtSet]. */
   sealed class Operation<T : Referencable> : CrdtOperation {
-    /** Performs the operation on the specified [Data] instance. */
+    /** Performs the operation on the specified [DataImpl] instance. */
     internal abstract fun applyTo(data: Data<T>, isDryRun: Boolean = false): Boolean
 
     /**

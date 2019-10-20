@@ -11,7 +11,10 @@
 
 package arcs.crdt
 
-import arcs.crdt.internal.*
+import arcs.crdt.internal.Actor
+import arcs.crdt.internal.Referencable
+import arcs.crdt.internal.ReferenceId
+import arcs.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Before
@@ -500,11 +503,5 @@ class CrdtSetTest {
     versions: VersionMap,
     id: ReferenceId
   ) = Add(actor, versions, id).also { applyOperation(it) }
-
-  private fun CrdtSet<Reference>.remove(
-    actor: Actor,
-    versions: VersionMap,
-    id: ReferenceId
-  ) = Remove(actor, versions, id).also { applyOperation(it) }
 }
 
