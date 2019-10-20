@@ -46,7 +46,7 @@ class CrdtSingleton<T : Referencable>(
     override fun copy(): Data<T>
   }
 
-  /** Concrete representatino of the data stored by a [CrdtSingleton]. */
+  /** Concrete representation of the data stored by a [CrdtSingleton]. */
   class DataImpl<T : Referencable>(
     override var versionMap: VersionMap = VersionMap(),
     override val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>> = mutableMapOf()
