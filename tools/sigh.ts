@@ -94,6 +94,8 @@ const scripts: {[index: string]: string} = {
   flowcheck: 'build/dataflow/cli/flowcheck.js',
 
   schema2pkg: 'build/tools/schema2packager.js',
+
+  manifestChecker: 'build/tools/manifest-checker.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';

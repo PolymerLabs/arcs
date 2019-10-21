@@ -1,6 +1,5 @@
 """Arcs BUILD rules."""
 
-load(":run_in_repo.bzl", "EXECUTION_REQUIREMENTS_TAGS", "run_in_repo_test")
 load(":sigh.bzl", "sigh_command")
 load(
     "//build_defs/internal:kotlin.bzl",
