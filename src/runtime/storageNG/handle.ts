@@ -116,12 +116,19 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 }
 
-abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends Handle<T> {
+/**
+ * This handle class allows particles to manipulate collections and singletons of Entities
+ * before the Entity Mutation API (and CRDT stack) is live. Once entity mutation is
+ * available then this class will be deprecated and removed, and CollectionHandle / SingletonHandle
+ * will become wrappers that reconstruct collections from a collection of references and
+ * multiple entity stacks.
+ */
+export abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends Handle<T> {
   entityClass: EntityClass;
 
   constructor(key: string, storageProxy: StorageProxy<T>, idGenerator: IdGenerator,
-    particle: Particle, canRead: boolean, canWrite: boolean, name?: string) {
-      super(key, storageProxy, idGenerator, particle, canRead, canWrite, name);
+              particle: Particle, canRead: boolean, canWrite: boolean, name?: string) {
+    super(key, storageProxy, idGenerator, particle, canRead, canWrite, name);
 
     const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
     if (type instanceof EntityType) {
