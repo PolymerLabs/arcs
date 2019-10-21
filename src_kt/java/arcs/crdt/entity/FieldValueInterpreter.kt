@@ -11,7 +11,7 @@
 
 package arcs.crdt.entity
 
-import arcs.crdt.internal.ReferenceId
+import arcs.common.ReferenceId
 import kotlin.reflect.KClass
 
 /**

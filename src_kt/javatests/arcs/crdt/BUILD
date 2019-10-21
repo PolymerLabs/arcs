@@ -9,6 +9,7 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
         srcs = [src_file],
         test_class = "arcs.crdt.%s" % src_file[:-3],
         deps = [
+            "//src_kt/java/arcs/common",
             "//src_kt/java/arcs/crdt",
             "//src_kt/java/arcs/crdt/internal",
             "@maven//:com_google_truth_truth",

@@ -9,8 +9,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.crdt.internal
+package arcs.common
 
-/** Denotes an individual actor responsible for modifications to a Crdt. */
-typealias Actor = String
+/** An identifier for a [Referencable]. */
+typealias ReferenceId = String
 
+/** Represents a referencable object, ie. one which can be referenced by a unique [id]. */
+interface Referencable {
+  /** Unique identifier of the Referencable object. */
+  val id: ReferenceId
+}

@@ -11,8 +11,8 @@
 
 package arcs.crdt.entity
 
-import arcs.crdt.internal.Referencable
-import arcs.crdt.internal.ReferenceId
+import arcs.common.Referencable
+import arcs.common.ReferenceId
 
 /**
  * Referencable wrapper of an actual value for an entity's field.

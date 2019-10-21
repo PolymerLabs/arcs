@@ -6,6 +6,7 @@ kt_jvm_and_js_library(
     name = "crdt",
     srcs = glob(["*.kt"]),
     deps = [
+        "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt/internal",
     ],
 )

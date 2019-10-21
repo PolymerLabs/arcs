@@ -9,8 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.crdt.internal
+package arcs.common
 
-/** Denotes an individual actor responsible for modifications to a Crdt. */
-typealias Actor = String
-
+class Id {
+}

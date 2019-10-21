@@ -13,8 +13,8 @@ package arcs.crdt
 
 import arcs.crdt.CrdtSingleton.Operation.Clear
 import arcs.crdt.CrdtSingleton.Operation.Update
-import arcs.crdt.internal.Referencable
-import arcs.crdt.internal.ReferenceId
+import arcs.common.Referencable
+import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
