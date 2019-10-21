@@ -13,7 +13,7 @@ import {Arc} from '../../runtime/arc.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
 import {Description} from '../../runtime/description.js';
 import {Dictionary} from '../../runtime/hot.js';
-import {Loader} from '../../runtime/loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Modality} from '../../runtime/modality.js';
 import {Particle} from '../../runtime/recipe/particle.js';

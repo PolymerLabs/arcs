@@ -14,7 +14,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';

@@ -12,7 +12,7 @@ import '../storage/firebase/firebase-provider.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Id, ArcId} from '../id.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {EntityType, ReferenceType} from '../type.js';

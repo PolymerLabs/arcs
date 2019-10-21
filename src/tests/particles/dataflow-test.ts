@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import glob from 'glob';
-import {Loader} from '../../runtime/loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {analyseDataflow} from '../../dataflow/analysis/analysis.js';
 import {assert} from '../../platform/chai-web.js';

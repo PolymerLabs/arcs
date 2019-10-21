@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/chai-web.js';
-import {Loader} from '../runtime/loader.js';
+import {Loader} from '../platform/loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 

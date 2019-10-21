@@ -12,7 +12,7 @@ import {fetch} from './fetch-node.js';
 import {vm} from './vm-node.js';
 import {fs} from './fs-node.js';
 import {Particle} from '../runtime/particle.js';
-import {Loader as LoaderBase} from '../runtime/loader-base.js';
+import {Loader as LoaderBase} from './loader-base.js';
 
 export class Loader extends LoaderBase {
   clone(): Loader {

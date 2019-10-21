@@ -7,20 +7,20 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../platform/assert-web.js';
-import {fetch} from '../platform/fetch-web.js';
-import {JsonldToManifest} from './converters/jsonldToManifest.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
-import {ClientReference} from './reference.js';
-import {ParticleSpec} from './particle-spec.js';
-import {Particle} from './particle.js';
-import {DomParticle} from './dom-particle.js';
-import {TransformationDomParticle} from './transformation-dom-particle.js';
-import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
-import {UiParticle} from './ui-particle.js';
-import {UiMultiplexerParticle} from './ui-multiplexer-particle.js';
-import {html} from './html.js';
-import {logsFactory} from './log-factory.js';
+import {assert} from './assert-web.js';
+import {fetch} from './fetch-web.js';
+import {JsonldToManifest} from '../runtime/converters/jsonldToManifest.js';
+import {ParticleExecutionContext} from '../runtime/particle-execution-context.js';
+import {ClientReference} from '../runtime/reference.js';
+import {ParticleSpec} from '../runtime/particle-spec.js';
+import {Particle} from '../runtime/particle.js';
+import {DomParticle} from '../runtime/dom-particle.js';
+import {TransformationDomParticle} from '../runtime/transformation-dom-particle.js';
+import {MultiplexerDomParticle} from '../runtime/multiplexer-dom-particle.js';
+import {UiParticle} from '../runtime/ui-particle.js';
+import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
+import {html} from '../runtime/html.js';
+import {logsFactory} from '../runtime/log-factory.js';
 
 type Ctor = new() => Object;
 

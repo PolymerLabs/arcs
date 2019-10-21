@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader as LoaderBase} from '../runtime/loader-base.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
 import {logsFactory} from './logs-factory.js';
+import {Loader as LoaderBase} from './loader-base.js';
 
 const {warn} = logsFactory('loader-web', 'green');
 

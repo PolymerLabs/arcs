@@ -9,8 +9,8 @@
  */
 
 import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
-import {Loader} from '../../../build/runtime/loader.js';
 import {Id, IdGenerator} from '../../../build/runtime/id.js';
+import {Loader} from '../../../build/platform/loader.js';
 
 self.onmessage = function(e) {
   // immediately close message channel, this is one-time use

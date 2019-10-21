@@ -14,7 +14,7 @@ import {PECInnerPort} from './api-channel.js';
 import {Handle, unifiedHandleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
-import {Loader} from './loader.js';
+import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';

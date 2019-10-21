@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Schema} from '../schema.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
