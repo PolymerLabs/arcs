@@ -210,6 +210,9 @@ export class Manifest {
   get allStores() {
     return [...this._findAll(manifest => manifest._stores)];
   }
+  get allMeta() {
+    return [...this._findAll(manifest => [manifest._meta])];
+  }
   get interfaces() {
     return this._interfaces;
   }

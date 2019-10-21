@@ -14,6 +14,7 @@ import {Schema} from '../runtime/schema.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 import {Manifest} from '../runtime/manifest.js';
+import {ManifestMeta} from '../runtime/manifest-meta.js';
 
 export type Aliases = Dictionary<Set<string>>;
 
@@ -107,8 +108,11 @@ export abstract class Schema2Base {
 
     const manifest = await Utils.parse(`import '${src}'`);
 
-
     const [aliases, ...schemas] = this.processManifest(manifest);
+
+    // Try to get one of the following keys from the manifest metadata
+    const scope: string = manifest.allMeta.reduce((acc, x) => acc || x.packageName, null) || 'arcs';
+    this.addScope(scope);
 
     if (Object.values(schemas).map(s => Object.keys(s).length).reduce((acc, x) => acc + x, 0) === 0) {
       console.warn(`No schemas found in '${src}'`);
