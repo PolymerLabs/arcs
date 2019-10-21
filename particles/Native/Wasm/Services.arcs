@@ -1,4 +1,4 @@
-particle ServiceParticle in 'https://$arcs/bazel-bin/particles/Native/Wasm/service_particle.wasm'
+particle ServiceParticle in 'service_particle.wasm'
   consume root
 
 recipe ServicesAPI

@@ -39,8 +39,8 @@ abstract class Particle : WasmObject() {
         onHandleSync(handle, toSync.isEmpty())
     }
 
-    abstract fun onHandleUpdate(handle: Handle)
-    abstract fun onHandleSync(handle: Handle, allSynced: Boolean)
+    open fun onHandleUpdate(handle: Handle) {}
+    open fun onHandleSync(handle: Handle, allSynced: Boolean) {}
 
     fun renderOutput() {
       log("renderOutput")

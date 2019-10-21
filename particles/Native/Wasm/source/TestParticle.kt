@@ -16,19 +16,6 @@ class TestParticle : Particle() {
           log("info was updated.")
           updated = 2
         }
-      renderSlot("root")
-    }
-
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        log("onHandleSync called")
-        if (allSynced) {
-          log("All handles synced\n")
-          renderSlot("root")
-        }
-    }
-
-    private fun console(s: String) {
-      log(s)
     }
 
     override fun getTemplate(slotName: String): String {
@@ -87,7 +74,7 @@ class TestParticle : Particle() {
             <td></td>
             <td><button on-click="infoclear">Clear</button></td>
             </tr>
-             </table>"""
+             </table>""".trimIndent()
       }
 
     private val data = Singleton { TestParticle_data() }
