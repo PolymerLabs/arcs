@@ -38,15 +38,13 @@ export abstract class Schema2Base {
   public processManifest(manifest: Manifest): [Aliases, Dictionary<Schema>, Dictionary<Schema>] {
     const aliases: Aliases = {};
 
-    const updateTheseAliases = (aliases_: Aliases) => (rhs: string, alias: string) => {
-      if (aliases_[rhs] !== undefined) {
-        aliases_[rhs].add(alias);
+    const updateAliases = (rhs: string, alias: string) => {
+      if (aliases[rhs] !== undefined) {
+        aliases[rhs].add(alias);
       } else {
-        aliases_[rhs] = new Set([alias]);
+        aliases[rhs] = new Set([alias]);
       }
     };
-
-    const updateAliases = updateTheseAliases(aliases);
 
     const schemas: Dictionary<Schema> = {};
     const refSchemas: Dictionary<Schema> = {};
