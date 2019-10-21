@@ -78,7 +78,7 @@ interface CrdtModel<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
 /** Internal data representation of a [CrdtModel]. */
 interface CrdtData {
   /** Vector clock tracking the changes made to the data by each replica. */
-  val versionMap: VersionMap
+  var versionMap: VersionMap
 }
 
 /** Operation which can be performed on a particular [CrdtModel] instance. */

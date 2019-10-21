@@ -15,19 +15,23 @@ import arcs.crdt.CrdtSet.Operation.Add
 import arcs.crdt.CrdtSet.Operation.Remove
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.Referencable
+import arcs.crdt.internal.ReferenceId
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a mutable reference. */
-class CrdtSingleton<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSingleton.Operation<T>, T?> {
-  private val set: CrdtSet<T> = CrdtSet()
+class CrdtSingleton<T : Referencable>(
+  /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
+  dataBuilder: (VersionMap) -> Data<T> = { versionMap -> DataImpl(versionMap) }
+) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.Operation<T>, T?> {
+  private val set: CrdtSet<T> = CrdtSet(DataImpl(), dataBuilder)
 
-  override val data: CrdtSet.Data<T>
-    get() = set.data
+  override val data: Data<T>
+    get() = set.data as Data<T>
   override val consumerView: T?
     // Get any value, or null if no value is present.
     get() = set.consumerView.minBy { it.id }
 
-  override fun merge(other: CrdtSet.Data<T>): MergeChanges<CrdtSet.Data<T>, Operation<T>> {
+  override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
     set.merge(other)
     // Always return CrdtChange.Data change records, since we cannot perform an op-based change.
     return MergeChanges(CrdtChange.Data(data), CrdtChange.Data(data))
@@ -35,7 +39,21 @@ class CrdtSingleton<T : Referencable> : CrdtModel<CrdtSet.Data<T>, CrdtSingleton
 
   override fun applyOperation(op: Operation<T>): Boolean = op.applyTo(set)
 
-  override fun updateData(newData: CrdtSet.Data<T>) = set.updateData(newData)
+  override fun updateData(newData: Data<T>) = set.updateData(newData)
+
+  /** Abstract representation of the data stored by a [CrdtSingleton]. */
+  interface Data<T : Referencable> : CrdtSet.Data<T> {
+    override fun copy(): Data<T>
+  }
+
+  /** Concrete representation of the data stored by a [CrdtSingleton]. */
+  class DataImpl<T : Referencable>(
+    override var versionMap: VersionMap = VersionMap(),
+    override val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>> = mutableMapOf()
+  ) : Data<T> {
+    override fun copy(): Data<T> =
+      DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
+  }
 
   sealed class Operation<T : Referencable>(
     open val actor: Actor,
