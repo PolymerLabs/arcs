@@ -30,7 +30,7 @@ class StubWasmLoader extends Loader {
 
   async loadWasmBinary(spec): Promise<ArrayBuffer> {
     const file = this.reloaded ? 'wasm-particle-new.wasm' : 'wasm-particle-old.wasm';
-    return super.loadWasmBinary({implFile: `bazel-bin/src/tests/source/${file}`});
+    return super.loadWasmBinary({implFile: `src/tests/source/${file}`});
   }
 
   clone(): StubWasmLoader {
@@ -226,7 +226,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
         use as personOut
         ReloadHandleTest
           personIn <- personIn
-          personOut -> personOut`, {loader, fileName: process.cwd() + '/input.arcs'});
+          personOut -> personOut`, {loader, fileName: './input.arcs'});
 
     const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
     const personType = context.findTypeByName('Person');

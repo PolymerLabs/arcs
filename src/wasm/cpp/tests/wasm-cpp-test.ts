@@ -22,7 +22,7 @@ import '../../../services/clock-service.js';
 import '../../../services/random-service.js';
 
 const schemasFile = 'src/wasm/cpp/tests/schemas.arcs';
-const buildDir = 'bazel-bin/src/wasm/cpp/tests';
+const buildDir = 'src/wasm/cpp/tests';
 
 class TestLoader extends Loader {
   resolve(path: string) {

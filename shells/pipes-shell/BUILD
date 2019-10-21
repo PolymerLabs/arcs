@@ -6,12 +6,24 @@ run_in_repo(
     name = "pipes_shell_web",
     srcs = glob(["**"]),
     outs = ["pipes_shell_web_dist"],
-    cmd = "cd shells/pipes-shell/web/deploy && " +
+    cmd = "set OLDPWD=$PWD && cd $PWD/$(dirname $(location //shells/pipes-shell:web_deploy_bin)) && " +
           "./deploy.sh && " +
-          "cp -r dist {OUT}",
+          "cp -r dist $OLDPWD/{OUT}",
     progress_message = "Webpacking pipes-shell",
     visibility = ["//visibility:public"],
     deps = [
         "//tools:sigh_webpack",
+        ":web_deploy_srcs",
+        ":web_deploy_bin",
     ],
+)
+
+filegroup(
+    name = "web_deploy_srcs",
+    srcs = glob(["web/deploy/**"], exclude = ["web/deploy/deploy.sh"]),
+)
+
+filegroup(
+    name = "web_deploy_bin",
+    srcs = ["web/deploy/deploy.sh"],
 )

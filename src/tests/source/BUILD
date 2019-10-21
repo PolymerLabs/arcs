@@ -3,6 +3,11 @@ load("//build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 
 package(default_visibility = ["//src/tests:__pkg__"])
 
+filegroup(
+    name = "schemas_srcs",
+    srcs = ["schemas.arcs"],
+)
+
 arcs_cc_schema(
     name = "schemas",
     src = "schemas.arcs",
