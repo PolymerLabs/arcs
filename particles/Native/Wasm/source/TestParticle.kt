@@ -37,8 +37,8 @@ class TestParticle : Particle() {
       val dataStr = "${data.get().toString()}\n"
 
       val infoCol = if (updated == 2) "color: blue;" else ""
-        var infoStr = "Size: ${info.size()}\n"
-        if (!info.empty()) {
+        var infoStr = "Size: ${info.size}\n"
+        if (!info.isEmpty()) {
           var i = 0
           info.forEach { info ->
             infoStr += "${(++i)}. $info | \n"
@@ -115,7 +115,7 @@ class TestParticle : Particle() {
         eventHandler("store") {
           val info = TestParticle_info()
           info.internalId = "wasm" + (++storeCount)
-          info.val_ = (this.info.size() + storeCount).toDouble()
+          info.val_ = (this.info.size + storeCount).toDouble()
           this.info.store(info)
         }
 
