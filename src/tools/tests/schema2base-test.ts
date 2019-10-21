@@ -42,6 +42,9 @@ class Schema2Mock extends Schema2Base {
     return '';
   }
 
+  addScope(namespace: string) {
+  }
+
 }
 
 describe('schema2base', () => {
