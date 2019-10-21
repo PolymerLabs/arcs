@@ -244,9 +244,10 @@ struct std::hash<arcs::${name}> {
       .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = ${rhs};`))
       .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
 
-
-    return `namespace arcs {
+    return `${this.nsTop}
+    
 ${lines.join('\n')}
-}`;
+
+${this.nsBottom}`;
   }
 }
