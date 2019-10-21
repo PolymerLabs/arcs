@@ -73,9 +73,9 @@
   }
 
   function requireUsePreSlandleSyntax() {
-    /*if (!Flags.usePreSlandlesSyntax) {
+    if (!Flags.usePreSlandlesSyntax) {
       error('using pre slandles syntax (disabled by flag)');
-    }*/
+    }
   }
 
   function requireUsePostSlandleSyntax() {
