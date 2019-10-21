@@ -8,13 +8,12 @@ resource ProductResource
 store ProductStore of Product in ProductResource
 
 // Particle name must match the C++ class name
-// Wasm module name must match one specified in wasm.json
-particle BasicParticle in 'module.wasm'
+particle BasicParticle in 'example_particle.wasm'
   consume root
   in Product foo
   out [Product] bar
 
-particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
+particle Watcher in 'example_particle.wasm'
   consume root
   in [Product] bar
 
