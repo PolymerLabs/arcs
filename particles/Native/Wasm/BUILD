@@ -1,6 +1,6 @@
 load("//build_defs/kotlin_native:build_defs.bzl", "kt_wasm_binary", "kt_wasm_library")
 load("//build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
-load("//build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema", "arcs_cc_schema", "arcs_ts_test")
+load("//build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema", "arcs_cc_schema", "arcs_ts_test", "arcs_manifest")
 
 licenses(["notice"])
 
@@ -15,6 +15,12 @@ cc_wasm_binary(
     srcs = ["source/example.cc"],
     hdrs = ["example.h"],
     deps = ["//src/wasm/cpp:arcs"],
+)
+
+arcs_manifest(
+    name = "example_manifest",
+    srcs = ["example.arcs"],
+    deps = [":example_particle"],
 )
 
 arcs_kt_schema(
