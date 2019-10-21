@@ -44,22 +44,34 @@ http_archive(
 
 # Kotlin
 
-rules_kotlin_version = "7543a917cda483c5856ec79b590343c9669eacd6"
+RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
 
-rules_kotlin_sha = "d335be363937ed62b5758cfdb33910ee52429835685345ef6b9f009c2bff9a9d"
+RULES_KOTLIN_SHA = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
-    sha256 = rules_kotlin_sha,
-    strip_prefix = "rules_kotlin-%s" % rules_kotlin_version,
-    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.tar.gz" % rules_kotlin_version],
+    sha256 = RULES_KOTLIN_SHA,
+    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
+    type = "zip",
+    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-kotlin_repositories()
+KOTLIN_VERSION = "1.3.31"
 
-kt_register_toolchains()
+KOTLINC_RELEASE_SHA = "107325d56315af4f59ff28db6837d03c2660088e3efeb7d4e41f3e01bb848d6a"
+
+KOTLINC_RELEASE = {
+    "urls": [
+        "https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION),
+    ],
+    "sha256": KOTLINC_RELEASE_SHA,
+}
+
+kotlin_repositories(compiler_release = KOTLINC_RELEASE)
+
+register_toolchains("//build_defs/internal:kotlin_toolchain")
 
 # Java deps from Maven.
 
@@ -89,6 +101,8 @@ maven_install(
         "junit:junit:4.11",
         "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
+        "com.google.truth:truth:1.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2",
     ],
     repositories = [
         "https://jcenter.bintray.com/",
