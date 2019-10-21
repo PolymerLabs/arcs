@@ -50,6 +50,11 @@ export abstract class Schema2Base {
     const schemas: Dictionary<Schema> = {};
     const refSchemas: Dictionary<Schema> = {};
 
+    // Try to get one of the following keys from the manifest metadata
+    const scope: string = manifest.allMeta
+      .reduce((acc: string | null, x: ManifestMeta): string => acc || x.packageName, null) || 'arcs';
+    this.addScope(scope);
+
     for (const particle of manifest.allParticles) {
       const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
       for (const connection of particle.connections) {
@@ -110,9 +115,6 @@ export abstract class Schema2Base {
 
     const [aliases, ...schemas] = this.processManifest(manifest);
 
-    // Try to get one of the following keys from the manifest metadata
-    const scope: string = manifest.allMeta.reduce((acc, x) => acc || x.packageName, null) || 'arcs';
-    this.addScope(scope);
 
     if (Object.values(schemas).map(s => Object.keys(s).length).reduce((acc, x) => acc + x, 0) === 0) {
       console.warn(`No schemas found in '${src}'`);
