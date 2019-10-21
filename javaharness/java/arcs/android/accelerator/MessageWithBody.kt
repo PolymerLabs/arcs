@@ -7,5 +7,5 @@ abstract class MessageBody(
     @Json(PecInnerPort.PROXY_HANDLE_ID_FIELD) val proxyHandleId: String? = null,
     @Json(PecInnerPort.PROXY_CALLBACK_FIELD) val callback: String? = null
 ) {
-  abstract fun processMessage(pecId: String, acceleratorPipesShell: AcceleratorPipesShell)
+  abstract fun processPecMessage(pecId: String, acceleratorPipesShell: AcceleratorPipesShell)
 }

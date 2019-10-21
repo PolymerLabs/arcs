@@ -1,7 +1,7 @@
 package arcs.android.accelerator
 
 import arcs.android.accelerator.Log.logger
-import com.beust.klaxon.*
+import com.beust.klaxon.Klaxon
 import java.util.logging.Logger
 
 object Log {
@@ -11,23 +11,24 @@ object Log {
 /**
  * Implements a version of the Pipes-Shell directly in Kotlin. Responds to the same
  * commands as the normal runtime, except that manifest information and recipe resolution
- * has been performed at build time.
+ * has been performed at build time. This is an inbetween state of removing the
+ * PEH/PEC completely in Particle Accelerator.
  */
 class AcceleratorPipesShell(private val arcById: MutableMap<String, Arc> = mutableMapOf()) {
 
   fun receive(json: String) {
-    logger.severe("JSON: $json")
+    logger.info("JSON: $json")
     parseMessage(json)?.process(this)
   }
 
   fun parseMessage(json: String) = Klaxon()
       .parse<ShellMessage>(json)
 
-  fun findRecipeByName(recipe: String): Any {
+  fun findRecipeByName(recipe: String): Any? {
     when (recipe) {
       "IngestPeople" -> IngestPeopleRecipe()
     }
-    throw RuntimeException("Can't find recipe $recipe")
+    return null
   }
 
   fun spawnOrFindArc(arcId: String): Arc {

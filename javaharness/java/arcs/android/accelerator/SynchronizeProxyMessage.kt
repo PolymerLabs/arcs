@@ -1,7 +1,9 @@
 package arcs.android.accelerator
 
+import arcs.android.accelerator.Log.logger
+
 class SynchronizeProxyMessage : MessageBody() {
-  override fun processMessage(pecId: String, accelerator: AcceleratorPipesShell) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {
+    logger.info("NOT IMPLEMENTED: SynchronizeProxyMessage $pecId")
   }
 }

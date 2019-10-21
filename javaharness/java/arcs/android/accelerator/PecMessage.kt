@@ -8,14 +8,16 @@ import com.beust.klaxon.TypeAdapter
 import com.beust.klaxon.TypeFor
 import kotlin.reflect.KClass
 
+/**
+ * Handles all outgoing messages sent by [PecInnerPort.postMessage].
+ */
 class PecMessagePayload(@Json(PecInnerPort.MESSAGE_PEC_ID_FIELD)
-                                 val pecId: String,
-
-                                 @Json(Constants.PEC_ENTITY_KEY)
-                                 val pecMessage: PecMessage) : ShellMessage(Constants.PEC_MESSAGE) {
+                        val pecId: String,
+                        @Json(Constants.PEC_ENTITY_KEY)
+                        val pecMessage: PecMessage) : ShellMessage(Constants.PEC_MESSAGE) {
 
   override fun process(accelerator: AcceleratorPipesShell) {
-    logger.severe("Pec message received with pecId $pecId and arcId")
+    logger.info("Pec message received with pecId $pecId and arcId")
     pecMessage!!.processPecMessage(pecId!!, accelerator)
   }
 }
@@ -36,9 +38,11 @@ class PecMessageAdapter : TypeAdapter<MessageBody> {
 class PecMessage(
     @TypeFor(field = PecInnerPort.MESSAGE_BODY_FIELD, adapter = PecMessageAdapter::class)
     @Json(PecInnerPort.MESSAGE_TYPE_FIELD)
-    var messageType: String? = null,
+    val messageType: String,
     @Json(PecInnerPort.MESSAGE_BODY_FIELD)
-    var messageBody: MessageBody? = null) {
-  fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {}
+    val messageBody: MessageBody) {
+  fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {
+    messageBody.processPecMessage(pecId, accelerator)
+  }
 }
 

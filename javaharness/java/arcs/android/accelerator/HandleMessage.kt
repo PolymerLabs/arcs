@@ -1,33 +1,32 @@
 package arcs.android.accelerator
 
+import arcs.android.accelerator.Log.logger
 import arcs.api.PecInnerPort
 import com.beust.klaxon.Json
 
 class HandleRemoveMessage : HandleMessage() {
-  override fun processMessage(pecId: String, accelerator: AcceleratorPipesShell) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {
+    logger.info("NOT IMPLEMENTED: HandleRemoveMessage $pecId")
   }
-
 }
 
 class HandleRemoveMultipleMessage : HandleMessage() {
-  override fun processMessage(pecId: String, accelerator: AcceleratorPipesShell) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {
+    logger.info("NOT IMPLEMENTED: HandleRemoveMultipleMessage $pecId")
   }
 
 }
 
 class HandleToListMessage : HandleMessage() {
-  override fun processMessage(pecId: String, accelerator: AcceleratorPipesShell) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {
+    logger.info("NOT IMPLEMENTED: HandleToListMessage $pecId")
   }
 }
 
 class HandleStoreMessage : HandleMessage() {
-  override fun processMessage(pecId: String, accelerator: AcceleratorPipesShell) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  override fun processPecMessage(pecId: String, accelerator: AcceleratorPipesShell) {
+    logger.info("NOT IMPLEMENTED: HandleStoreMessage $pecId")
   }
-
 }
 
 abstract class HandleMessage : MessageBody() {

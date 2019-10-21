@@ -10,13 +10,14 @@ import arcs.api.Constants
 class RunArcMessage(val arcId: String, val pecId: String, val recipe: String,
                     val particles: List<ParticleData> = emptyList()) : ShellMessage(Constants.RUN_ARC_MESSAGE) {
   override fun process(accelerator: AcceleratorPipesShell) {
-    logger.severe("RunArcs!")
+    logger.info("Running $recipe in Arc $arcId on Pec $pecId with $particles")
     val action = accelerator.findRecipeByName(recipe)
 
-    if (recipe != null && action == null) {
+    if (action == null) {
       logger.warning("found no recipes matching [${recipe}]")
-      return;
+      return
     }
+
     val arc = accelerator.spawnOrFindArc(arcId)
     // optionally instantiate recipe
     if (accelerator.instantiateRecipe(arc, action, particles)) {

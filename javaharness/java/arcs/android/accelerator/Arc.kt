@@ -1,5 +1,6 @@
 package arcs.android.accelerator
 
-class Arc(arcId: String) {
-
-}
+/**
+ * Particle Accelerator runtime representation of arc.ts
+ */
+class Arc(arcId: String)
