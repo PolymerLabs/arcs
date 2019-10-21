@@ -60,7 +60,7 @@ export class Schema2Cpp extends Schema2Base {
   addScope(namespace: string = 'arcs') {
     const nss = namespace.trim().split('.');
     this.nsTop = nss.map(n => `namespace ${n} {`).join('\n');
-    this.nsBottom = nss.map(n => `}  // namespace ${n}`).join('\n');
+    this.nsBottom = nss.reverse().map(n => `}  // namespace ${n}`).join('\n');
   }
 
   entityClass(name: string, schema: Schema): string {
