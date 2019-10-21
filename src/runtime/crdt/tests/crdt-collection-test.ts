@@ -11,7 +11,6 @@
 import {assert} from '../../../platform/chai-web.js';
 import {ChangeType, VersionMap} from '../crdt.js';
 import {CollectionOpTypes, CRDTCollection, CollectionOperation, simplifyFastForwardOp} from '../crdt-collection.js';
-import undefined from 'firebase/empty-import';
 
 /** Creates an Add operation. */
 function addOp(id: string, actor: string, clock: VersionMap): CollectionOperation<{id: string}> {

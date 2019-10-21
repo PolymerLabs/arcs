@@ -134,7 +134,7 @@ describe('CollectionHandle', async () => {
 
   it('can add multiple entities', async () => {
     const handle = await getCollectionHandle(barType);
-    await handle.addMultiple([newEntity('A'), newEntity('B')]); 
+    await handle.addMultiple([newEntity('A'), newEntity('B')]);
     assert.sameDeepMembers(await containedIds(handle), ['A', 'B']);
   });
 

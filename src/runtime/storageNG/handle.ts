@@ -29,10 +29,6 @@ export interface HandleOptions {
   notifyDesync: boolean;
 }
 
-interface Converter<T, U> {
-  convert(t: T): U;
-} 
-
 /**
  * Base class for Handles.
  */
@@ -122,11 +118,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
 abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends Handle<T> {
   entityClass: EntityClass;
-  
+
   constructor(key: string, storageProxy: StorageProxy<T>, idGenerator: IdGenerator,
     particle: Particle, canRead: boolean, canWrite: boolean, name?: string) {
       super(key, storageProxy, idGenerator, particle, canRead, canWrite, name);
-    
+
     const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
     if (type instanceof EntityType) {
       this.entityClass = type.entitySchema.entityClass();
@@ -146,9 +142,9 @@ abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends Handle<
     }
   }
 
-  protected deserialize(value: SerializedEntity, entityClass: EntityClass): Entity {
+  protected deserialize(value: SerializedEntity): Entity {
     const {id, rawData} = value;
-    const entity = new entityClass(rawData);
+    const entity = new this.entityClass(rawData);
     Entity.identify(entity, id);
     return entity;
   }
@@ -164,7 +160,7 @@ abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends Handle<
 export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<CRDTCollectionTypeRecord<SerializedEntity>> {
   async get(id: string): Promise<T> {
     const values: SerializedEntity[] = await this.toCRDTList();
-    return this.deserialize(values.find(element => element.id === id), this.entityClass) as T;
+    return this.deserialize(values.find(element => element.id === id)) as T;
   }
 
   async add(entity: T): Promise<boolean> {
@@ -212,7 +208,7 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
 
   async toList(): Promise<T[]> {
     const list = await this.toCRDTList();
-    return list.map(entry => this.deserialize(entry, this.entityClass) as T);
+    return list.map(entry => this.deserialize(entry) as T);
   }
 
   private async toCRDTList(): Promise<SerializedEntity[]> {
@@ -231,10 +227,10 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
     // Pass the change up to the particle.
     const update: {added?: Entity, removed?: Entity, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
-      update.added = this.deserialize(op.added, this.entityClass);
+      update.added = this.deserialize(op.added);
     }
     if (op.type === CollectionOpTypes.Remove) {
-      update.removed = this.deserialize(op.removed, this.entityClass);
+      update.removed = this.deserialize(op.removed);
     }
     await this.particle.callOnHandleUpdate(
         this /*handle*/,
@@ -279,7 +275,7 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
   async get(): Promise<T> {
     const [value, versionMap] = await this.storageProxy.getParticleView();
     this.clock = versionMap;
-    return value == null ? null : this.deserialize(value, this.entityClass) as T;
+    return value == null ? null : this.deserialize(value) as T;
   }
 
   async onUpdate(op: SingletonOperation<SerializedEntity>, oldData: SerializedEntity, version: VersionMap): Promise<void> {
@@ -287,7 +283,7 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
     // Pass the change up to the particle.
     const update: {data?: Entity, oldData: SerializedEntity, originator: boolean} = {oldData, originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
-      update.data = this.deserialize(op.value, this.entityClass);
+      update.data = this.deserialize(op.value);
     }
     // Nothing else to add (beyond oldData) for SingletonOpTypes.Clear.
     await this.particle.callOnHandleUpdate(
