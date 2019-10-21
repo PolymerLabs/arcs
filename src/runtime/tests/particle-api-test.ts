@@ -24,6 +24,7 @@ import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
 import {BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
+import {Flags} from '../flags.js';
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
@@ -1039,7 +1040,7 @@ describe('particle-api', () => {
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
-  it('loadRecipe returns ids of provided slots', async () => {
+  it('loadRecipe returns ids of provided slots', Flags.withPreSlandlesSyntax(async () => {
     const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
         consume root
@@ -1111,5 +1112,79 @@ describe('particle-api', () => {
   B as particle1
     consume detail as slot1`,
     'Particle B should consume the detail slot provided by particle A');
-  });
+  }));
+  // TODO(jopra): Fix the slandle version of this, which throws an undefined in setHandles.
+  it.skip('SLANDLES SYNTAX loadRecipe returns ids of provided slots', Flags.withPostSlandlesSyntax(async () => {
+    const context = await Manifest.parse(`
+      particle TransformationParticle in 'TransformationParticle.js'
+        root: consume Slot
+
+      recipe
+        slot 'rootslotid-root' as slot0
+        TransformationParticle
+          root: consume slot0`);
+
+    const loader = new StubLoader({
+      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
+        return class extends DomParticle {
+          async setHandles(handles) {
+            super.setHandles(handles);
+
+            const innerArc = await this.constructInnerArc();
+            const hostedSlotId = await innerArc.createSlot(this, 'root');
+
+            const {providedSlotIds} = await innerArc.loadRecipe(\`
+              particle A in 'A.js'
+                content: consume Slot
+                  detail: provide Slot
+
+              recipe
+                slot '\` + hostedSlotId + \`' as hosted
+                A as a
+                  content: consume hosted
+            \`);
+
+            await innerArc.loadRecipe(\`
+              particle B in 'B.js'
+                detail: consume Slot
+
+              recipe
+                slot '\` + providedSlotIds['a.detail'] + \`' as detail
+                B
+                  detail: consume detail
+            \`);
+          }
+
+          renderHostedSlot(slotName, hostedSlotId, content) {}
+        };
+      });`,
+      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+    });
+    // TODO(lindner): add strict rendering
+    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
+        storageKey: 'key', loader, slotComposer, context});
+    const [recipe] = arc.context.recipes;
+    recipe.normalize();
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    assert.lengthOf(arc.activeRecipe.particles, 1);
+    const [transformationParticle] = arc.activeRecipe.particles;
+
+    assert.lengthOf(arc.recipeDeltas, 1);
+    const [innerArc] = arc.findInnerArcs(transformationParticle);
+
+    const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
+    assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
+  slot '!${sessionId}:demo:inner2:slot1' as slot0
+  slot '!${sessionId}:demo:inner2:slot2' as slot1
+  A as particle0
+    content: consume slot0
+      detail: provide slot1
+  B as particle1
+    detail: consume slot1`,
+    'Particle B should consume the detail slot provided by particle A');
+  }));
 });

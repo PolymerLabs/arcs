@@ -847,7 +847,7 @@ describe('ConvertConstraintsToConnections', () => {
     i -> handle1`);
   }));
 
-  it('SLANDLE SYNTAX connects existing particles to tags', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES SYNTAX connects existing particles to tags', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
     particle A
       o: out S {}
