@@ -276,7 +276,7 @@ Meta
   return toAstNode<AstNode.Meta>({kind: 'meta', items: items});
 }
 
-MetaItem = MetaStorageKey / MetaName
+MetaItem = MetaStorageKey / MetaName / MetaPackageName
 
 MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 {
@@ -286,6 +286,11 @@ MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
   return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storageKey' });
+};
+
+MetaPackageName = 'packageName' whiteSpace? ':' whiteSpace? packageName:id eolWhiteSpace
+{
+  return toAstNode<AstNode.MetaPackageName>({key: 'packageName', value: packageName, kind: 'packageName' });
 };
 
 Particle

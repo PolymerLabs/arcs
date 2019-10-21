@@ -12,10 +12,12 @@
 export class ManifestMeta {
   storageKey: string|null;
   name: string|null;
+  packageName: string|null;
 
   constructor() {
     this.storageKey = null;
     this.name = null;
+    this.packageName = null;
   }
 
   apply(items: {key: string, value: string}[]) {
