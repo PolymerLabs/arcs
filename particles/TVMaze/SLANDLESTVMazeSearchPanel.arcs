@@ -28,14 +28,14 @@ recipe SlandleTVMazeShowTiles
   use as shows
   create #selected as selected
   SlandleSelectableTiles
-    root consume
-      tile provide
-      annotation provide action
+    root `consume
+      tile `provide
+      annotation `provide action
     list = shows
     selected = selected
   SlandleTileMultiplexer
     hostedParticle = SlandleTVMazeShowTile
-    tile consume
+    tile `consume
     list = shows
   description `show information about ${SelectableTiles.list}`
 

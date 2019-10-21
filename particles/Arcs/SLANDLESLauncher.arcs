@@ -16,4 +16,4 @@ recipe SlandleLauncher
   `slot 'rootslotid-root' as root
   SlandleLauncher
     arcs = arcs
-    root consume root
+    root `consume root

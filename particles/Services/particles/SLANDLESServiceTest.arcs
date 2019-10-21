@@ -1,2 +1,2 @@
 particle SlandleServiceTest in './js/ServiceTest.js'
-  consume root
+  `consume Slot root

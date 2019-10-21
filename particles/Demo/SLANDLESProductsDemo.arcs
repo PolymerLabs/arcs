@@ -17,9 +17,9 @@ recipe SlandleProducts
   copy #shoplist as shoplist
   create #selected as selected
   SlandleSelectableItems
-    root consume
-      annotation provide annotationSlot
-      action provide actionSlot
+    root `consume
+      annotation `provide annotationSlot
+      action `provide actionSlot
     list = shoplist
     selected = selected
   SlandleItemMultiplexer
@@ -33,14 +33,14 @@ recipe SlandleProducts
   SlandleSimpleAnnotationMultiplexer
     list = shoplist
     hostedParticle = SlandleArrivinator
-    annotation consume annotationSlot
+    annotation `consume annotationSlot
   //
   // &addFromWishlist
   map #wishlist as wishlist
   create #volatile as recommendations
   // annotates shoplist
   SlandleChoicesMultiplexer
-    choice consume annotationSlot
+    choice `consume annotationSlot
     list = shoplist
     choices = wishlist
     hostedParticle = SlandleAlsoOn
@@ -51,7 +51,7 @@ recipe SlandleProducts
     recommendations = recommendations
   // present recommendations for adding to shoplist
   SlandleChooser
-    action consume actionSlot
+    action `consume actionSlot
     person = person
     choices = recommendations
     resultList = shoplist

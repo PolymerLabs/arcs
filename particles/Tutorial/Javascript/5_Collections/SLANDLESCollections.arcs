@@ -27,7 +27,7 @@ recipe CollectionRecipe
   map PeopleToGreetStore as data
 
   CollectionParticle
-    root consume root
+    root `consume root
     inputData <- data
 
   description `Javascript Tutorial 5: Collections`

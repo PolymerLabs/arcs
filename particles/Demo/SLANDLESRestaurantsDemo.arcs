@@ -22,7 +22,7 @@ recipe SlandleRestaurantsDemo
   SlandleReservationForm
     restaurant = selected
     event = event
-    action consume toproot
+    action `consume toproot
   SlandleGeolocate
     location = location
   SlandleRestaurantFind
@@ -42,10 +42,10 @@ recipe SlandleRestaurantsDemo
     selected = selected
   SlandleRestaurantDetail
     restaurant = selected
-    content consume
-      detailAction provide actionSlot
+    content `consume
+      detailAction `provide actionSlot
   SlandleReservationForm
     restaurant = selected
     event = event
-    action consume actionSlot
+    action `consume actionSlot
   description `[demo] find restaurants and make reservations near ${RestaurantFind.location}`
