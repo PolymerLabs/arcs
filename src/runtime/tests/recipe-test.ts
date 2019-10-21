@@ -658,12 +658,12 @@ describe('recipe', () => {
       recipe
         \`slot 'slot-id' as root
         P0
-          root consume root
+          root \`consume root
         P1
-          root consume root
+          root \`consume root
         P2
         P3
-          root consume root`;
+          root \`consume root`;
     return str;
   };
   it('SLANDLES verifies modalities - default', async () => {

@@ -16,6 +16,7 @@ import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {Flags} from '../flags.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
@@ -67,7 +68,7 @@ describe('Multiplexer', () => {
     assert.strictEqual(slotsCreated, 3);
   });
 
-  it('SLANDLES Processes multiple inputs', async () => {
+  it('SLANDLES Processes multiple inputs', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       import 'src/runtime/tests/artifacts/Common/SLANDLESMultiplexer.arcs'
       import 'src/runtime/tests/artifacts/SLANDLEStest-particles.arcs'
@@ -76,9 +77,9 @@ describe('Multiplexer', () => {
         use 'test:1' as handle0
         \`slot 'rootslotid-slotid' as slot0
         SlandleMultiplexer
-          hostedParticle = SlandleConsumerParticle
-          annotation consume slot0
-          list <- handle0
+          hostedParticle: host SlandleConsumerParticle
+          annotation: \`consume slot0
+          list: in handle0
     `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];
@@ -117,6 +118,6 @@ describe('Multiplexer', () => {
     await arc.idle;
 
     assert.strictEqual(slotsCreated, 3);
-  });
+  }));
 
 });

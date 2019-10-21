@@ -527,14 +527,14 @@ describe('ConvertConstraintsToConnections', () => {
       particle A in 'A.js'
         b: out S
         modality vr
-        consume root
+        root: consume
       particle C in 'C.js'
         d: in S
         modality vr
-        consume root
+        root: consume
       particle E in 'E.js'
         f: in S
-        consume root
+        root: consume
 
       recipe
         A.b: out C.d

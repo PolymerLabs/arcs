@@ -1,47 +1,48 @@
 // @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
+// Copyright (c) 2019 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+// TODO(jopra): Finish conversion to use SLANDLES
 interface HostedParticleInterface
   in ~a *
   consume item
 
 // row lists
 
-particle ItemMultiplexer in 'source/Multiplexer.js'
+particle ItemMultiplexer in 'source/SLANDLESMultiplexer.js'
   hostedParticle: host HostedParticleInterface
   list: in [~a]
-  consume set of item
+  item: consume [Slot]
 
 particle List in 'source/List.js'
   items: in [~a]
-  consume root #content
-    provide preamble
-    must provide set of item
+  root: consume Slot #content
+    preamble: provide? Slot
+    item: provide [Slot]
       handle items
-    provide set of annotation
+    annotation: provide? [Slot]
       handle items
-    provide action
+    action: provide? Slot
       handle items
-    provide postamble
+    postamble: provide? Slot
   description `show ${items}`
 
 particle SelectableList in 'source/List.js'
   items: inout [~a]
   selected: inout ~a
-  consume root #content
-    provide preamble
-    must provide set of item
+  root: consume Slot #content
+    preamble: provide? Slot
+    item: provide [Slot]
       handle items
-    provide set of annotation
+    annotation: provide? [Slot]
       handle items
-    provide action
+    action: provide? Slot
       handle items
-    provide postamble
+    postamble: provide? Slot
   description `show ${items}`
 
 // tile lists
@@ -50,22 +51,22 @@ interface HostedTileParticleInterface
   in ~a *
   consume tile
 
-particle TileMultiplexer in 'source/Multiplexer.js'
+particle TileMultiplexer in 'source/SLANDLESMultiplexer.js'
   hostedParticle: host HostedTileParticleInterface
   list: in [~a]
-  consume set of tile
+  tile: consume [Slot]
 
 particle TileList in 'source/TileList.js'
   items: inout [~a]
-  consume root #content
-    must provide set of tile
-    provide set of action
+  root: consume Slot #content
+    tile: provide [Slot]
+    action: provide? [Slot]
   description `show ${items} as tiles`
 
 particle SelectableTileList in 'source/TileList.js'
   items: inout [~a]
   selected: inout ~a
-  consume root #content
-    must provide set of tile
-    provide set of action
+  root: consume Slot #content
+    tile: provide [Slot]
+    action: provide? [Slot]
   description `show ${items} as tiles`

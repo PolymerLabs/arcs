@@ -141,168 +141,168 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('resolves particles with multiple consumed SLANDLES', async () => {
+  it('SLANDLES resolves particles with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        \`consume Slot one
-        \`consume Slot two
+        one: \`consume Slot
+        two: \`consume Slot
       recipe
         \`slot 'slot-id0' as s0
         P1
-          one consume s0
+          one: \`consume s0
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('resolves particles with multiple consumed set SLANDLES', async () => {
+  it('SLANDLES resolves particles with multiple consumed set slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        \`consume [Slot] one
-        \`consume [Slot] two
+        one: \`consume [Slot]
+        two: \`consume [Slot]
       recipe
         \`slot 'slot-id0' as s0
         P1
-          one consume s0
+          one: \`consume s0
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('resolves particles with multiple consumed SLANDLES with the = direction arrow', async () => {
+  it('SLANDLES resolves particles with multiple consumed slots with the any direction', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        \`consume Slot one
-        \`consume Slot two
+        one: \`consume Slot
+        two: \`consume Slot
       recipe
         \`slot 'slot-id0' as s0
         P1
-          one = s0
+          one: any s0
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('resolves particles with multiple consumed set SLANDLES with the = direction arrow', async () => {
+  it('SLANDLES resolves particles with multiple consumed set with the any direction', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        \`consume [Slot] one
-        \`consume [Slot] two
+        one: \`consume [Slot]
+        two: \`consume [Slot]
       recipe
         \`slot 'slot-id0' as s0
         P1
-          one = s0
+          one: any s0
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('resolves particles with SLANDLES with other SLANDLES', async () => {
+  it('SLANDLES resolves particles with slots with other slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
-        \`consume Slot inSlot
-        \`provide Slot outSlot
+        inSlot: \`consume Slot
+        outSlot: \`provide Slot
       particle P2 in './render.js'
-        \`consume Slot inSlot
+        inSlot: \`consume Slot
       recipe
         \`slot 'slot-id0' as s0
         \`slot 'slot-id1' as s1
         P1
-          inSlot = s0
-          outSlot = s1
+          inSlot: any s0
+          outSlot: any s1
         P2
-          inSlot = s1
+          inSlot: any s1
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('resolves particles with set SLANDLES with other set SLANDLES', async () => {
+  it('SLANDLES resolves particles with set slots with other set slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
-        \`consume Slot inSlot
-        \`provide [Slot] outSlot
+        inSlot: \`consume Slot
+        outSlot: \`provide [Slot]
       particle P2 in './render.js'
-        \`consume [Slot] inSlot
+        inSlot: \`consume [Slot]
       recipe
         \`slot 'slot-id0' as s0
         \`slot 'slot-id1' as s1
         P1
-          inSlot = s0
-          outSlot = s1
+          inSlot: any s0
+          outSlot: any s1
         P2
-          inSlot = s1
+          inSlot: any s1
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('cannot resolve SLANDLES with set SLANDLES', async () => {
+  it('SLANDLES cannot resolve slots with set slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
-        \`consume Slot inSlot
-        \`provide Slot outSlot
+        inSlot: \`consume Slot
+        outSlot: \`provide Slot
       particle P2 in './render.js'
-        \`consume [Slot] inSlot
+        inSlot: \`consume [Slot]
       recipe
         \`slot 'slot-id0' as s0
         \`slot 'slot-id1' as s1
         P1
-          inSlot = s0
-          outSlot = s1
+          inSlot: any s0
+          outSlot: any s1
         P2
-          inSlot = s1
+          inSlot: any s1
     `);
     assert.lengthOf(results, 0);
-  });
+  }));
 
-  it('cannot resolve multiple consumed SLANDLES with incorrect directions', async () => {
+  it('SLANDLES cannot resolve multiple consumed slots with incorrect directions', Flags.withPostSlandlesSyntax(async () => {
     assertThrowsAsync(async () => {
       await planFromManifest(`
         particle P1 in './some-particle.js'
-          \`consume Slot one
-          \`consume Slot two
+          one: \`consume Slot
+          two: \`consume Slot
         recipe
           \`slot 'slot-id0' as s0
           P1
-            one provide s0
+            one: \`provide s0
       `);
     }, 'not compatible with \'`consume\'');
-  });
+  }));
 
-  it('cannot resolve multiple consumed set SLANDLES with incorrect directions', async () => {
+  it('SLANDLES cannot resolve multiple consumed set slots with incorrect directions', Flags.withPostSlandlesSyntax(async () => {
     assertThrowsAsync(async () => {
       await planFromManifest(`
         particle P1 in './some-particle.js'
-          \`consume [Slot] one
-          \`consume [Slot] two
+          one: \`consume [Slot]
+          two: \`consume [Slot]
         recipe
           \`slot 'slot-id0' as s0
           P1
-            one provide s0
+            one: \`provide s0
       `);
     }, 'not compatible with \'`consume\'');
-  });
+  }));
 
-  it('resolves particles with multiple consumed SLANDLES with arrows', async () => {
+  it('SLANDLES resolves particles with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        \`consume Slot one
-        \`consume Slot two
+        one: \`consume Slot
+        two: \`consume Slot
       recipe
         \`slot 'slot-id0' as s0
         P1
-          one <- s0
+          one: \`consume s0
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
-  it('resolves particles with multiple consumed set SLANDLES with consume', async () => {
+  it('SLANDLES resolves particles with multiple consumed set SLANDLES with consume', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        \`consume [Slot] one
-        \`consume [Slot] two
+        one: \`consume [Slot]
+        two: \`consume [Slot]
       recipe
         \`slot 'slot-id0' as s0
         P1
-          one consume s0
+          one: \`consume s0
     `);
     assert.lengthOf(results, 1);
-  });
+  }));
 
   it('resolves particles with multiple consumed set SLANDLES with arrows', async () => {
     const results = await planFromManifest(`
@@ -983,7 +983,7 @@ describe('Automatic resolution', () => {
 
       particle ThingRenderer
         thing: in Thing
-        consume item
+        item: consume? Slot
 
       recipe ProducingRecipe
         create #items as things
@@ -1067,7 +1067,7 @@ describe('Automatic resolution', () => {
 
         particle ThingRenderer
           thing: in Thing
-          consume item`,
+          item: consume? Slot`,
         async (arcRef, manifest) => {
           arc = arcRef;
           const thing = manifest.findSchemaByName('Thing').entityClass();
