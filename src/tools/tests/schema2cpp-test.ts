@@ -28,7 +28,7 @@ describe('schema2cpp', () => {
       'namespace arcs {',
       'using Foo_Product = Foo_alpha;',
       'using Foo_Element = Foo_alpha;',
-      '}',
+      '}  // namespace arcs',
     ]);
   });
 
@@ -61,7 +61,7 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
     assert.sameMembers(generated.split(/\n+/g), [
       'namespace arcs {',
       'using Watcher_Product = Watcher_bar;',
-      '}'
+      '}  // namespace arcs'
     ]);
   });
 });

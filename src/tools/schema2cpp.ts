@@ -245,7 +245,7 @@ struct std::hash<arcs::${name}> {
       .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
 
     return `${this.nsTop}
-    
+
 ${lines.join('\n')}
 
 ${this.nsBottom}`;
