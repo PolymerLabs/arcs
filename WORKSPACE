@@ -37,6 +37,33 @@ maven_jar(
     artifact = "com.google.flogger:flogger-system-backend:0.4",
 )
 
+RULES_JVM_EXTERNAL_TAG = "2.8"
+RULES_JVM_EXTERNAL_SHA = "79c9850690d7614ecdb72d68394f994fef7534b292c4867ce5e7dec0aa7bdfad"
+
+http_archive(
+    name = "rules_jvm_external",
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+maven_install(
+    artifacts = [
+        "junit:junit:4.11",
+        "com.beust:klaxon:5.1",
+        "com.google.flogger:flogger:0.4",
+        "com.google.flogger:flogger-system-backend:0.4",
+        "com.google.truth:truth:1.0",
+    ],
+    repositories = [
+        "https://maven.google.com",
+        "https://repo1.maven.org/maven2",
+        "https://jcenter.bintray.com/",
+    ],
+)
+
 #git_repository(
 #    name = "android_sdk_downloader",
 #    remote = "https://github.com/quittle/bazel_android_sdk_downloader",
@@ -79,16 +106,19 @@ http_archive(
 )
 
 
+rules_kotlin_version = "7543a917cda483c5856ec79b590343c9669eacd6"
+rules_kotlin_sha = "d335be363937ed62b5758cfdb33910ee52429835685345ef6b9f009c2bff9a9d"
+# rules_kotlin_version = "legacy-modded-1_0_0-01"
+# rules_kotlin_sha = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
 
-rules_kotlin_version = "legacy-modded-1_0_0-01"
-rules_kotlin_sha = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
     sha256 = rules_kotlin_sha,
     strip_prefix = "rules_kotlin-%s" % rules_kotlin_version,
-    type = "zip",
-    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % rules_kotlin_version],
+#    type = "zip",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.tar.gz" % rules_kotlin_version],
+#    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % rules_kotlin_version],
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")

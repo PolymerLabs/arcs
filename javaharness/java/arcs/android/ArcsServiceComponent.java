@@ -5,7 +5,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 
 @Singleton
-@Component(modules = {ArcsAndroidModule.class})
+@Component(modules = {ArcsAndroidModule.class, ArcsAndroidDeveloperModule.class})
 interface ArcsServiceComponent {
 
   void inject(ArcsService arcsService);

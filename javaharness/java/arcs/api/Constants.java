@@ -4,6 +4,7 @@ public interface Constants {
   String MESSAGE_FIELD = "message";
   String RUN_ARC_MESSAGE = "runArc";
   String STOP_ARC_MESSAGE = "stopArc";
+  String PEC_MESSAGE = "pec";
   String ARC_ID_FIELD = "arcId";
   String PEC_ID_FIELD = "pecId";
   String RECIPE_FIELD = "recipe";
@@ -16,4 +17,6 @@ public interface Constants {
   String UI_PARTICLE_ID_FIELD = "particleId";
   String EVENTLET_FIELD = "eventlet";
   String UI_EVENT_MESSAGE = "uiEvent";
+  String PEC_ENTITY_KEY = "entity";
+  String MESSAGE_TYPE_FIELD = "messageType";
 }

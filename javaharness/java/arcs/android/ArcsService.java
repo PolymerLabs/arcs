@@ -18,7 +18,7 @@ import arcs.api.ArcData;
 public class ArcsService extends Service {
 
   private static final String TAG = "Arcs";
-
+  private static final boolean ACCELERATOR = true;
   @Inject
   ArcsShellApi arcsShellApi;
 
@@ -26,7 +26,11 @@ public class ArcsService extends Service {
   public void onCreate() {
     super.onCreate();
     Log.d(TAG, "onCreate()");
-    DaggerArcsServiceComponent.builder().build().inject(this);
+    if (ACCELERATOR) {
+      DaggerArcsServiceAcceleratorComponent.builder().build().inject(this);
+    } else {
+      DaggerArcsServiceComponent.builder().build().inject(this);
+    }
     arcsShellApi.init(this);
   }
 

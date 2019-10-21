@@ -10,9 +10,9 @@ public class PecInnerPort {
 
   private static final Logger logger = Logger.getLogger(PecInnerPort.class.getName());
 
-  private static final String MESSAGE_TYPE_FIELD = "messageType";
-  private static final String MESSAGE_BODY_FIELD = "messageBody";
-  private static final String MESSAGE_PEC_ID_FIELD = "id";
+  public static final String MESSAGE_TYPE_FIELD = Constants.MESSAGE_TYPE_FIELD;
+  public static final String MESSAGE_BODY_FIELD = "messageBody";
+  public static final String MESSAGE_PEC_ID_FIELD = "id";
   private static final String INDENTIFIER_FIELD = "identifier";
   private static final String INSTANTIATE_PARTICLE_MSG = "InstantiateParticle";
   private static final String REINSTANTIATE_PARTICLE_MSG = "ReinstantiateParticle";
@@ -24,13 +24,13 @@ public class PecInnerPort {
   private static final String HANDLE_NAME_FIELD = "name";
   private static final String SIMPLE_CALLBACK_MSG = "SimpleCallback";
   private static final String CALLBACK_FIELD = "callback";
-  private static final String DATA_FIELD = "data";
-  private static final String INITIALIZE_PROXY_MSG = "InitializeProxy";
-  private static final String SYNCHRONIZE_PROXY_MSG = "SynchronizeProxy";
-  private static final String PROXY_HANDLE_ID_FIELD = "handle";
-  private static final String PROXY_CALLBACK_FIELD = "callback";
+  public  static final String DATA_FIELD = "data";
+  public static final String INITIALIZE_PROXY_MSG = "InitializeProxy";
+  public static final String SYNCHRONIZE_PROXY_MSG = "SynchronizeProxy";
+  public static final String PROXY_HANDLE_ID_FIELD = "handle";
+  public static final String PROXY_CALLBACK_FIELD = "callback";
   private static final String START_RENDER_MSG = "StartRender";
-  private static final String PARTICLE_FIELD = "particle";
+  public static final String PARTICLE_FIELD = "particle";
   private static final String SLOT_NAME_FIELD = "slotName";
   private static final String PROVIDED_SLOTS_FIELD = "providedSlots";
   private static final String CONTENT_TYPES_FIELD = "contentTypes";
@@ -38,16 +38,16 @@ public class PecInnerPort {
   private static final String STOP_MSG = "Stop";
   private static final String DEV_TOOLS_CONNECTED_MSG = "DevToolsConnected";
   private static final String RENDER_MSG = "Render";
-  private static final String OUTPUT_MSG = "Output";
-  private static final String CONTENT_FIELD = "content";
-  private static final String MESSAGE_PEC_MESSAGE_KEY = "message";
-  private static final String MESSAGE_PEC_PEC_VALUE = "pec";
-  private static final String MESSAGE_PEC_ENTITY_KEY = "entity";
-  private static final String HANDLE_STORE_MSG = "HandleStore";
-  private static final String HANDLE_PARTICLE_ID_FIELD = "particleId";
-  private static final String HANDLE_TO_LIST_MSG = "HandleToList";
-  private static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
-  private static final String HANDLE_REMOVE_MSG = "HandleRemove";
+  public static final String OUTPUT_MSG = "Output";
+  public static final String CONTENT_FIELD = "content";
+  private static final String MESSAGE_PEC_MESSAGE_KEY = Constants.MESSAGE_FIELD;
+  private static final String MESSAGE_PEC_PEC_VALUE = Constants.PEC_MESSAGE;
+  private static final String MESSAGE_PEC_ENTITY_KEY = Constants.PEC_ENTITY_KEY;
+  public static final String HANDLE_STORE_MSG = "HandleStore";
+  public static final String HANDLE_PARTICLE_ID_FIELD = "particleId";
+  public static final String HANDLE_TO_LIST_MSG = "HandleToList";
+  public static final String HANDLE_REMOVE_MULTIPLE_MSG = "HandleRemoveMultiple";
+  public static final String HANDLE_REMOVE_MSG = "HandleRemove";
 
   private final String id;
   private final ArcsMessageSender arcsMessageSender;
