@@ -19,8 +19,6 @@ def sigh_command(
         name = name,
         srcs = srcs,
         outs = outs,
-        # TODO: generated header guard should contain whole workspace-relative
-        # path to file.
         cmd = "$(location //tools:sigh_bin) " + sigh_cmd,
         progress_message = progress_message,
         tags = EXECUTION_REQUIREMENTS_TAGS,
