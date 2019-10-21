@@ -9,7 +9,7 @@
  */
 
 import {logsFactory} from './logs-factory.js';
-import {Loader as LoaderBase} from './loader-base.js';
+import {LoaderBase} from './loader-base.js';
 
 const {warn} = logsFactory('loader-web', 'green');
 

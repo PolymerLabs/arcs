@@ -37,7 +37,7 @@ const {warn} = logsFactory('Loader', 'green');
 
 const isString = s => (typeof s === 'string');
 
-export abstract class Loader {
+export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
   constructor(urlMap?: {}) {
