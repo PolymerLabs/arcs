@@ -16,7 +16,7 @@ import {Loader as LoaderBase} from '../runtime/loader-base.js';
 
 export class Loader extends LoaderBase {
   clone(): Loader {
-    return new Loader(this._urlMap);
+    return new Loader(this.urlMap);
   }
   async loadResource(file: string): Promise<string> {
     if (/^https?:\/\//.test(file)) {

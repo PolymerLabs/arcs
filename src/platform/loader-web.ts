@@ -16,7 +16,7 @@ const {warn} = logsFactory('loader-web', 'green');
 
 export class Loader extends LoaderBase {
   clone(): Loader {
-    return new Loader(this._urlMap);
+    return new Loader(this.urlMap);
   }
   flushCaches(): void {
     // punt object urls?

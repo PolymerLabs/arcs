@@ -24,13 +24,24 @@ import {logsFactory} from './log-factory.js';
 
 type Ctor = new() => Object;
 
+interface UrlMap {
+  [macro: string]: string | {
+    root: string
+    path?: string
+    buildDir: string
+    buildOutputRegex: RegExp
+  };
+}
+
 const {warn} = logsFactory('Loader', 'green');
+
+const isString = s => (typeof s === 'string');
 
 export abstract class Loader {
   public pec?: ParticleExecutionContext;
-  protected _urlMap: [];
-  constructor(urlMap?: []) {
-    this._urlMap = urlMap || [];
+  protected readonly urlMap: UrlMap;
+  constructor(urlMap?: {}) {
+    this.urlMap = urlMap || {};
   }
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
@@ -55,43 +66,66 @@ export abstract class Loader {
   }
   // convert `././foo/bar/../baz` to `./foo/baz`
   protected normalizeDots(path: string): string {
+    path = path || '';
     // only unix slashes
     path = path.replace(/\\/g, '/');
     // remove './'
     path = path.replace(/\/\.\//g, '/');
     // remove 'foo/..'
     const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
+    // keep removing `<name>/..` until there are no more
     for (let n = norm(path); n !== path; path = n, n = norm(path));
     // remove '//' except after `:`
     path = path.replace(/([^:])(\/\/)/g, '$1/');
     return path;
   }
   resolve(path: string) {
-    let url = this._urlMap[path];
-    if (!url && path) {
-      // TODO(sjmiles): inefficient!
-      const macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) === k);
-      if (macro) {
-        url = this._urlMap[macro] + path.slice(macro.length);
+    let resolved = this.resolvePath(path);
+    resolved = this.normalizeDots(resolved);
+    return resolved;
+  }
+  resolvePath(path: string) {
+    let resolved: string = path;
+    // TODO(sjmiles): inefficient
+    // find longest key in urlMap that is a prefix of path
+    const macro = this.findUrlMapMacro(path);
+    if (macro) {
+      const config = this.urlMap[macro];
+      if (isString(config)) {
+        resolved = `${config}${path.slice(macro.length)}`;
+      } else {
+        resolved = this.resolveConfiguredPath(path, macro, config);
       }
     }
-    url = this.normalizeDots(url || path);
-    return url;
+    return resolved;
+  }
+  findUrlMapMacro(path: string): string {
+    // TODO(sjmiles): inefficient
+    // find longest key in urlMap that is a prefix of path
+    return Object.keys(this.urlMap).sort((a, b) => b.length - a.length).find(k => isString(path) && (path.slice(0, k.length) === k));
+  }
+  resolveConfiguredPath(path: string, macro: string, config) {
+    return [
+      config.root,
+      (path.match(config.buildOutputRegex) ? config.buildDir : ''),
+      (config.path || ''),
+      path.slice(macro.length)
+    ].join('');
   }
   mapParticleUrl(path: string) {
     if (!path) {
       return undefined;
     }
-    const parts = path.split('/');
+    const resolved = this.resolve(path);
+    const parts = resolved.split('/');
     const suffix = parts.pop();
     const folder = parts.join('/');
-    const resolved = this.resolve(folder);
     if (!suffix.endsWith('.wasm')) {
       const name = suffix.split('.').shift();
-      this._urlMap[name] = resolved;
+      this.urlMap[name] = folder;
     }
-    this._urlMap['$here'] = resolved;
-    this._urlMap['$module'] = resolved;
+    this.urlMap['$here'] = folder;
+    this.urlMap['$module'] = folder;
   }
   async _loadURL(url: string): Promise<string> {
     if (/\/\/schema.org\//.test(url)) {
@@ -130,7 +164,7 @@ export abstract class Loader {
    */
   async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle> {
     let clazz: any = null;
-    let userClass = await this.requireParticle(spec.implFile, spec.implBlobUrl);
+    let userClass = await this.requireParticle(spec.implFile || '', spec.implBlobUrl);
     if (!userClass) {
       warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
     } else {
@@ -162,6 +196,8 @@ export abstract class Loader {
     };
   }
   /**
+   * Abstract
+   *
    * Loads a particle class from the given filename by loading the
    * script contained in `fileName` and executing it as a script.
    *
