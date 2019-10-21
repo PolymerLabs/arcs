@@ -196,4 +196,6 @@ export abstract class Schema2Base {
   abstract entityClass(name: string, schema: Schema): string;
 
   abstract addAliases(aliases: Aliases): string;
+
+  abstract addScope(namespace: string);
 }
