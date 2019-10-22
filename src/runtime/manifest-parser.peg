@@ -1232,12 +1232,28 @@ HandleRef
   }
 
 RecipeSlot
+  = RecipeSlotPreSlandles
+  / RecipeSlotUnified
+
+RecipeSlotPreSlandles
   = 'slot' ref:(whiteSpace HandleRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeSlot>({
       kind: 'slot',
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       name: optional(name, name => name[1], '')
+    });
+  }
+
+RecipeSlotUnified
+  = name:NameWithColon? 'slot' ref:(whiteSpace HandleRef)? eolWhiteSpace
+  {
+    requireUsePostSlandleSyntax();
+    return toAstNode<AstNode.RecipeSlot>({
+      kind: 'slot',
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
+      name,
     });
   }
 
