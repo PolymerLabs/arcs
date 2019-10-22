@@ -11,6 +11,10 @@
 
 package arcs.common
 
+/**
+ * An interface which denotes a particular (and immutable) class as being a serializable/copyable
+ * instance of a more complicated class.
+ */
 interface Literal
 
 /** A list of [Literal]s that is itself a [Literal]. */

@@ -5,4 +5,7 @@ load("//build_defs:build_defs.bzl", "kt_arcs_library")
 kt_arcs_library(
     name = "common",
     srcs = glob(["*.kt"]),
+    deps = [
+        "//java/arcs/util"
+    ]
 )
