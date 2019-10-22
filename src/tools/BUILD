@@ -5,3 +5,9 @@ filegroup(
     ]),
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
