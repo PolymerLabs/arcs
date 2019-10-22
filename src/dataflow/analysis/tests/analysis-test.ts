@@ -2470,7 +2470,7 @@ describe('FlowGraph validation', () => {
           bar: in Foo {}
           slotToConsume: consume Slot
         recipe R
-          slot 'rootslotid-root' as root
+          root: slot 'rootslotid-root'
           P1
             root: consume root
               slotToProvide: provide slot0
@@ -2519,7 +2519,7 @@ describe('FlowGraph validation', () => {
         particle P2
           slotToConsume: consume
         recipe R
-          slot 'rootslotid-root' as root
+          root: slot 'rootslotid-root'
           P1
             root: consume root
               slotToProvide: provide slot0
@@ -2560,7 +2560,7 @@ describe('FlowGraph validation', () => {
           bar: in Foo {}
           slotToConsume: consume Slot
         recipe R
-          slot 'rootslotid-root' as root
+          root: slot 'rootslotid-root'
           P1
             foo: out h
             root: consume root
@@ -2607,7 +2607,7 @@ describe('FlowGraph validation', () => {
         particle P2
           slotToConsume: consume Slot
         recipe R
-          slot 'rootslotid-root' as root
+          root: slot 'rootslotid-root'
           P1
             foo: out h
             root: consume root

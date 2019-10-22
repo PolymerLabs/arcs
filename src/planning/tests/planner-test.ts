@@ -996,7 +996,7 @@ describe('Automatic resolution', () => {
     const recipeString = `recipe
   create #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  slot 'rootslotid-root' #root as slot1
+  slot1: slot 'rootslotid-root' #root
   ItemMultiplexer as particle0
     hostedParticle: host ThingRenderer
     list: in handle0
@@ -1078,7 +1078,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual(recipes[0].toString(), `recipe SelectableUseListRecipe
   use 'test-store' #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  slot 'rootslotid-root' #root as slot1
+  slot1: slot 'rootslotid-root' #root
   ItemMultiplexer as particle0
     hostedParticle: host ThingRenderer
     list: in handle0
