@@ -155,7 +155,7 @@ export interface ManifestStorageStorageSource extends ManifestStorageSource {
 
 export interface Meta extends BaseNode {
   kind: 'meta';
-  items: (MetaItem)[];
+  items: (MetaName|MetaStorageKey)[];
 }
 
 export interface MetaName extends BaseNode {
@@ -165,18 +165,12 @@ export interface MetaName extends BaseNode {
 }
 
 export interface MetaStorageKey extends BaseNode {
-  kind: 'storageKey';
   key: 'storageKey';
   value: string;
+  kind: 'storageKey';
 }
 
-export interface MetaPackageName extends BaseNode {
-  kind: 'packageName';
-  key: 'packageName';
-  value: string;
-}
-
-export type MetaItem = MetaStorageKey | MetaName | MetaPackageName;
+export type MetaItem = MetaStorageKey | MetaName;
 
 export interface Particle extends BaseNode {
   kind: 'particle';
@@ -694,7 +688,7 @@ export type ParticleHandleConnectionType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;
 
 // Note that ManifestStorage* are not here, as they do not have 'kind'
-export type All = Import|Meta|MetaName|MetaStorageKey|MetaPackageName|Particle|ParticleHandleConnection|
+export type All = Import|Meta|MetaName|MetaStorageKey|Particle|ParticleHandleConnection|
     ParticleInterface|RecipeHandle|Resource|Interface|InterfaceArgument|InterfaceInterface|
     InterfaceSlot;
 
