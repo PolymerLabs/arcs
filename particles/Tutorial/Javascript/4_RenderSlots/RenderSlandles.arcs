@@ -11,9 +11,9 @@ particle SlandleChildParticle in 'child.js'
 recipe SlandleRenderSlotsRecipe
   `slot 'rootslotid-root' as root
   SlandleParentParticle
-    root consume root
-      mySlot provide shared
+    root `consume root
+      mySlot `provide shared
   SlandleChildParticle
-    childSlot consume shared
+    childSlot `consume shared
 
   description `Tutorial 4: Render Slandles`

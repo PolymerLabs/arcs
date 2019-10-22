@@ -25,7 +25,7 @@ recipe SlandleCreateShoppingList
   copy as products
   `slot 'rootslotid-root' as root
   SlandleItems
-    root consume root
+    root `consume root
     list = products
   SlandleItemMultiplexer
     list = products
@@ -40,7 +40,7 @@ recipe SlandleShopForOccasion
   SlandleSimpleAnnotationMultiplexer
     list = shoplist
     hostedParticle = SlandleArrivinator
-    annotation consume annotationSlot
+    annotation `consume annotationSlot
 
 recipe SlandleUseWishlist
   map #wishlist as wishlist
@@ -51,8 +51,8 @@ recipe SlandleUseWishlist
   // annotates shoplist
   SlandleChoicesMultiplexer
     // This is probably wrong, but it works now (instead of annotationSlot)
-    // choice consume annotationSlot
-    choice consume actionSlot
+    // choice `consume annotationSlot
+    choice `consume actionSlot
     list = shoplist
     choices = wishlist
     hostedParticle = SlandleAlsoOn
@@ -63,7 +63,7 @@ recipe SlandleUseWishlist
     recommendations = recommendations
   // present recommendations for adding to shoplist
   SlandleChooser
-    action consume actionSlot
+    action `consume actionSlot
     person = person
     choices = recommendations
     resultList = shoplist

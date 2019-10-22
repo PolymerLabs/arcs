@@ -52,7 +52,7 @@ recipe SlandleMakeReservations
   SlandleReservationForm
     restaurant = restaurant
     event = event
-    action consume toproot
+    action `consume toproot
   // per-restaurant tile scheduler
   SlandleAnnotationMultiplexer
     list = restaurants
@@ -62,10 +62,10 @@ recipe SlandleMakeReservations
   SlandleDetailReservationForm
      restaurant = restaurant
      event = event
-     detailAction consume
-       annotation provide detailAnnotation
+     detailAction `consume
+       annotation `provide detailAnnotation
   SlandleReservationAnnotation
     restaurant = restaurant
     event = event
     descriptions = annotationDescriptions
-    annotation consume detailAnnotation
+    annotation `consume detailAnnotation

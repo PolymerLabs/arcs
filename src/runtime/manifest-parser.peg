@@ -73,14 +73,14 @@
   }
 
   function requireUsePreSlandleSyntax() {
-    if (!Flags.usePreSlandlesSyntax) {
-      expected('pre slandles syntax');
-    }
+    /*if (!Flags.usePreSlandlesSyntax) {
+      error('using pre slandles syntax (disabled by flag)');
+    }*/
   }
 
   function requireUsePostSlandleSyntax() {
     if (Flags.usePreSlandlesSyntax) {
-      expected('post slandles syntax');
+      error('using post slandles syntax (disabled by flag)');
     }
   }
 }
@@ -553,8 +553,8 @@ Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
   }
 
 // TODO(jopra): Remove when syntax is updated to not use arrows.
-DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, consume, provide)"
-  = '<->' / '<-' / '->' / '=' / 'consume' / 'provide' {
+DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, `consume, `provide)"
+  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide' {
     const dir = text() as AstNode.DirectionArrow;
     if(dir === null) {
       expected('a direction arrow');
@@ -657,9 +657,14 @@ ParticleModality
   }
 
 ParticleSlotConnection
+ = ParticleSlotConnectionUnified
+ / ParticleSlotConnectionPreSlandles
+
+ParticleSlotConnectionPreSlandles
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotConnectionItem)*)?
   {
+    requireUsePreSlandleSyntax();
     let formFactor: AstNode.SlotFormFactor|null = null;
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     items = optional(items, extractIndented, []);
@@ -686,6 +691,37 @@ ParticleSlotConnection
     });
   }
 
+ParticleSlotConnectionUnified
+  = name:NameWithColon? 'consume' isOptional:'?'? isSet:(whiteSpace ('Slot' / '[Slot]'))? maybeTags:SpaceTagList? eolWhiteSpace
+    items:(Indent (SameIndent ParticleSlotConnectionItem)*)?
+  {
+    requireUsePostSlandleSyntax();
+    let formFactor: AstNode.SlotFormFactor|null = null;
+    const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
+    items = optional(items, extractIndented, []);
+    items.forEach(item => {
+      if (item.kind === 'provided-slot') {
+        provideSlotConnections.push(item);
+      } else if (item.kind === 'form-factor') {
+        if (formFactor) {
+          error('duplicate form factor for a slot');
+        }
+        formFactor = item.formFactor;
+      } else {
+        error('Unsupported particle slot item ', item);
+      }
+    });
+    return toAstNode<AstNode.ParticleSlotConnection>({
+      kind: 'particle-slot',
+      name,
+      tags: maybeTags || [],
+      isRequired: !isOptional,
+      isSet: isSet && isSet[1] === '[Slot]',
+      formFactor,
+      provideSlotConnections
+    });
+  }
+
 ParticleSlotConnectionItem
   = SlotFormFactor
   / ParticleProvidedSlot
@@ -700,8 +736,13 @@ SlotFormFactor
   }
 
 ParticleProvidedSlot
-  = isRequired:('must' whiteSpace)? 'provide' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  = ParticleProvidedSlotPreSlandles
+  / ParticleProvidedSlotUnified
+
+ParticleProvidedSlotPreSlandles
+  = isRequired:('must' whiteSpace)? 'provide' whiteSpace? isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
+    requireUsePreSlandleSyntax();
     let formFactor: AstNode.SlotFormFactor|null = null;
     const handles: AstNode.ParticleProvidedSlotHandle[] = [];
     items = items ? extractIndented(items) : [];
@@ -721,6 +762,34 @@ ParticleProvidedSlot
       tags: optional(tags, tags => tags[1], []),
       isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       isSet: !!isSet,
+      formFactor,
+      handles
+    });
+  }
+
+ParticleProvidedSlotUnified
+  = name:NameWithColon? 'provide' isOptional:'?'? isSet:(whiteSpace ('Slot' / '[Slot]'))? maybeTags:SpaceTagList? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  {
+    requireUsePostSlandleSyntax();
+    let formFactor: AstNode.SlotFormFactor|null = null;
+    const handles: AstNode.ParticleProvidedSlotHandle[] = [];
+    items = items ? extractIndented(items) : [];
+    items.forEach(item => {
+      if (item.kind === 'form-factor') {
+        if (formFactor) {
+          error('duplicate form factor for a slot');
+        }
+        formFactor = item.formFactor;
+      } else {
+        handles.push(item.handle);
+      }
+    });
+    return toAstNode<AstNode.ParticleProvidedSlot>({
+      kind: 'provided-slot',
+      name,
+      tags: maybeTags || [],
+      isRequired: !isOptional,
+      isSet: isSet && isSet[1] === '[Slot]',
       formFactor,
       handles
     });

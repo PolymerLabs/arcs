@@ -6,5 +6,5 @@ particle PlayDemoParticle in './source/PlayDemo.js'
 recipe PlayDemoRecipe
   `slot 'rootslotid-root' as root
   PlayDemoParticle
-    root consume root
+    root `consume root
   description `Play a simple demo song with Magenta`
