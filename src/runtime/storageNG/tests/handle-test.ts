@@ -10,29 +10,35 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {VersionMap} from '../../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
-import {CollectionType, EntityType, SingletonType} from '../../type.js';
+import {CollectionType, EntityType, SingletonType, Type} from '../../type.js';
 import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
+import {SYMBOL_INTERNALS} from '../../symbols.js';
+import {SerializedEntity} from '../../storage-proxy.js';
+import {Loader} from '../../loader.js';
+import {Manifest} from '../../manifest.js';
+import {EntityClass, Entity} from '../../entity.js';
 
-async function getCollectionHandle(particle?: MockParticle):
-    Promise<CollectionHandle<{id: string}>> {
+
+async function getCollectionHandle(primitiveType: Type, particle?: MockParticle):
+    Promise<CollectionHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   const handle = handleNGFor(
       'me',
       new StorageProxy(
           'id',
-          new MockStore<CRDTCollectionTypeRecord<{id: string}>>(),
-          new CollectionType(EntityType.make([], {}))),
+          new MockStore<CRDTCollectionTypeRecord<SerializedEntity>>(),
+          new CollectionType(primitiveType)),
       IdGenerator.newSession(),
       fakeParticle,
       true,
-      true) as CollectionHandle<{id: string}>;
+      true) as CollectionHandle<Entity>;
   // Initialize the model.
   await handle.storageProxy.onMessage({
     type: ProxyMessageType.ModelUpdate,
@@ -42,19 +48,19 @@ async function getCollectionHandle(particle?: MockParticle):
   return handle;
 }
 
-async function getSingletonHandle(particle?: MockParticle):
-    Promise<SingletonHandle<{id: string}>> {
+async function getSingletonHandle(primitiveType: Type, particle?: MockParticle):
+    Promise<SingletonHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
   const handle = handleNGFor(
       'me',
       new StorageProxy(
           'id',
-          new MockStore<CRDTSingletonTypeRecord<{id: string}>>(),
-          new SingletonType(EntityType.make([], {}))),
+          new MockStore<CRDTSingletonTypeRecord<SerializedEntity>>(),
+          new SingletonType(primitiveType)),
       IdGenerator.newSession(),
       fakeParticle,
       true,
-      true) as SingletonHandle<{id: string}>;
+      true) as SingletonHandle<Entity>;
   // Initialize the model.
   await handle.storageProxy.onMessage({
     type: ProxyMessageType.ModelUpdate,
@@ -62,77 +68,111 @@ async function getSingletonHandle(particle?: MockParticle):
     id: 1
   });
   return handle;
+}
+
+let barType: EntityType;
+// tslint:disable-next-line variable-name
+let Bar: EntityClass;
+
+function newEntity(id: string) {
+  const bar = new Bar({});
+  Entity.identify(bar, id);
+  return bar;
+}
+
+async function containedIds(handle: CollectionHandle<Entity>): Promise<string[]> {
+  return (await handle.toList()).map(a => Entity.id(a));
 }
 
 describe('CollectionHandle', async () => {
+  before(async () => {
+    const loader = new Loader();
+    const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
+    barType = manifest.schemas.Bar.type as EntityType;
+    Bar = barType.getEntitySchema().entityClass();
+  });
+
   it('can add and remove elements', async () => {
-    const handle = await getCollectionHandle();
+    const handle = await getCollectionHandle(barType);
     assert.isEmpty(handle.toList());
-    await handle.add({id: 'A'});
-    assert.sameDeepMembers(await handle.toList(), [{id: 'A'}]);
-    await handle.add({id: 'B'});
-    assert.sameDeepMembers(await handle.toList(), [{id: 'A'}, {id: 'B'}]);
-    await handle.remove({id: 'A'});
-    assert.sameDeepMembers(await handle.toList(), [{id: 'B'}]);
+
+    await handle.add(newEntity('A'));
+    assert.sameDeepMembers(await containedIds(handle), ['A']);
+    await handle.add(newEntity('B'));
+    assert.sameDeepMembers(await containedIds(handle), ['A', 'B']);
+    await handle.remove(newEntity('A'));
+    assert.sameDeepMembers(await containedIds(handle), ['B']);
   });
 
   it('can get an element by ID', async () => {
-    const handle = await getCollectionHandle();
-    const entity = {id: 'A', property: 'something'};
+    const handle = await getCollectionHandle(barType);
+    const entity = newEntity('A');
+    Entity.mutate(entity, {value: 'something'});
     await handle.add(entity);
-    await handle.add({id: 'B'});
+    await handle.add(newEntity('B'));
     assert.deepEqual(await handle.get('A'), entity);
   });
 
+  it('assigns IDs to entities with missing IDs', async () => {
+    const handle = await getCollectionHandle(barType);
+    const entity = new handle.entityClass({});
+    assert.isFalse(Entity.isIdentified(entity));
+    // TODO: Fails here! entity.id is not the right way of accessing the
+    // entity's ID, but that is what the CRDT expects. Do we need to serialize
+    // it first?
+    await handle.add(entity);
+    assert.isTrue(Entity.isIdentified(entity));
+  });
+
   it('can clear', async () => {
-    const handle = await getCollectionHandle();
-    await handle.add({id: 'A'});
-    await handle.add({id: 'B'});
+    const handle = await getCollectionHandle(barType);
+    await handle.add(newEntity('A'));
+    await handle.add(newEntity('B'));
     await handle.clear();
     assert.isEmpty(handle.toList());
   });
 
   it('can add multiple entities', async () => {
-    const handle = await getCollectionHandle();
-    await handle.addMultiple([{id: 'A'}, {id: 'B'}]);
-    assert.sameDeepMembers(await handle.toList(), [{id: 'A'}, {id: 'B'}]);
+    const handle = await getCollectionHandle(barType);
+    await handle.addMultiple([newEntity('A'), newEntity('B')]);
+    assert.sameDeepMembers(await containedIds(handle), ['A', 'B']);
   });
 
   it('notifies particle on sync event', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getCollectionHandle(particle);
+    const handle = await getCollectionHandle(barType, particle);
     await handle.onSync();
     assert.isTrue(particle.onSyncCalled);
   });
 
   it('notifies particle on desync event', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getCollectionHandle(particle);
+    const handle = await getCollectionHandle(barType, particle);
     await handle.onDesync();
     assert.isTrue(particle.onDesyncCalled);
   });
 
-  it('notifies particle of updates', async () => {
+    it('notifies particle of updates', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getCollectionHandle(particle);
-    const op: CollectionOperation<{id: string}> = {
+    const handle = await getCollectionHandle(barType, particle);
+    const op: CollectionOperation<SerializedEntity> = {
       type: CollectionOpTypes.Remove,
-      removed: {id: 'id'},
+      removed: {id: 'id', rawData: {}},
       actor: 'actor',
       clock: {'actor': 1}
     };
     await handle.onUpdate(op, new Set(), {'actor': 1, 'other': 2});
-    assert.deepEqual(
-        particle.lastUpdate, {removed: {id: 'id'}, originator: false});
+    assert.equal(Entity.id(particle.lastUpdate.removed), 'id');
+    assert.isFalse(particle.lastUpdate.originator);
   });
 
   it('notifies particle of fast forward ops', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getCollectionHandle(particle);
-    const op: CollectionOperation<{id: string}> = {
+    const handle = await getCollectionHandle(barType, particle);
+    const op: CollectionOperation<SerializedEntity> = {
       type: CollectionOpTypes.FastForward,
       added: [],
-      removed: [{id: 'id'}],
+      removed: [{id: 'id', rawData: {}}],
       oldClock: {'actor': 1},
       newClock: {'actor': 1}
     };
@@ -141,7 +181,7 @@ describe('CollectionHandle', async () => {
   });
 
   it('stores new version map', async () => {
-    const handle = await getCollectionHandle();
+    const handle = await getCollectionHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
     // Make storageProxy return the defined version map.
@@ -158,12 +198,12 @@ describe('CollectionHandle', async () => {
       return true;
     };
     // Use an op that does not increment the clock.
-    await handle.remove({id: 'id'});
+    await handle.remove(newEntity('id'));
     assert.deepEqual(capturedClock, versionMap);
   });
 
   it('can override default options', async () => {
-    const handle = await getCollectionHandle();
+    const handle = await getCollectionHandle(barType);
     assert.deepEqual(handle.options, {
       keepSynced: true,
       notifySync: true,
@@ -182,52 +222,53 @@ describe('CollectionHandle', async () => {
 
 describe('SingletonHandle', async () => {
   it('can set and clear elements', async () => {
-    const handle = await getSingletonHandle();
+    const handle = await getSingletonHandle(barType);
     assert.strictEqual(await handle.get(), null);
-    await handle.set({id: 'A'});
-    assert.deepEqual(await handle.get(), {id: 'A'});
-    await handle.set({id: 'B'});
-    assert.deepEqual(await handle.get(), {id: 'B'});
+    await handle.set(newEntity('A'));
+    assert.deepEqual(await handle.get(), newEntity('A'));
+    await handle.set(newEntity('B'));
+    assert.deepEqual(await handle.get(), newEntity('B'));
     await handle.clear();
     assert.strictEqual(await handle.get(), null);
   });
 
   it('notifies particle on sync event', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getSingletonHandle(particle);
+    const handle = await getSingletonHandle(barType, particle);
     await handle.onSync();
     assert.isTrue(particle.onSyncCalled);
   });
 
   it('notifies particle on desync event', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getSingletonHandle(particle);
+    const handle = await getSingletonHandle(barType, particle);
     await handle.onDesync();
     assert.isTrue(particle.onDesyncCalled);
   });
 
   it('notifies particle of updates', async () => {
     const particle: MockParticle = new MockParticle();
-    const handle = await getSingletonHandle(particle);
-    const op: SingletonOperation<{id: string}> = {
+    const handle = await getSingletonHandle(barType, particle);
+    const op: SingletonOperation<SerializedEntity> = {
       type: SingletonOpTypes.Set,
-      value: {id: 'id'},
+      value: {id: 'id', rawData: {}},
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {id: 'old'}, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op, {id: 'old', rawData: {}}, {'actor': 1, 'other': 2});
     assert.deepEqual(
         particle.lastUpdate,
-        {data: {id: 'id'}, oldData: {id: 'old'}, originator: false});
+        {data: {}, oldData: {id: 'old', rawData: {}}, originator: false});
+    assert.equal(Entity.id(particle.lastUpdate.data), 'id');
   });
 
   it('stores new version map', async () => {
-    const handle = await getSingletonHandle();
+    const handle = await getSingletonHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
     // Make storageProxy return the defined version map.
     handle.storageProxy.getParticleView = async () => {
-      return Promise.resolve([{id: 'id'}, versionMap]);
+      return Promise.resolve([{id: 'id', rawData: {}}, versionMap]);
     };
 
     // This will pull in the version map above.
@@ -243,3 +284,4 @@ describe('SingletonHandle', async () => {
     assert.deepEqual(capturedClock, versionMap);
   });
 });
+

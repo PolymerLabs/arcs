@@ -18,6 +18,8 @@ import {Referenceable, CRDTCollectionTypeRecord} from '../crdt/crdt-collection.j
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
 import {Manifest} from '../manifest.js';
+import {SerializedEntity} from '../storage-proxy.js';
+import {Entity} from '../entity.js';
 
 /**
  * Creates a singleton handle for a store for testing purposes. Returns an
@@ -29,7 +31,7 @@ export async function singletonHandleForTest(arcOrManifest: Arc | Manifest, stor
   if (Flags.useNewStorageStack) {
     return new SingletonHandle(
       arcOrManifest.generateID('test-handle').toString(),
-      await createStorageProxyForTest<CRDTSingletonTypeRecord<Referenceable>>(arcOrManifest, store),
+      await createStorageProxyForTest<CRDTSingletonTypeRecord<SerializedEntity>>(arcOrManifest, store),
       arcOrManifest.idGeneratorForTesting,
       /* particle= */ null, // TODO: We don't have a particle here.
       /* canRead= */ true,
@@ -56,7 +58,7 @@ export async function collectionHandleForTest(arcOrManifest: Arc | Manifest, sto
   if (Flags.useNewStorageStack) {
     return new CollectionHandle(
       arcOrManifest.generateID('test-handle').toString(),
-      await createStorageProxyForTest<CRDTCollectionTypeRecord<Referenceable>>(arcOrManifest, store),
+      await createStorageProxyForTest<CRDTCollectionTypeRecord<SerializedEntity>>(arcOrManifest, store),
       arcOrManifest.idGeneratorForTesting,
       /* particle= */ null, // TODO: We don't have a particle here.
       /* canRead= */ true,
@@ -89,7 +91,7 @@ async function createStorageProxyForTest<T extends CRDTTypeRecord>(
  *
  * Can be deleted after we've migrated to the new storage stack.
  */
-function collectionHandleWrapper<T extends Referenceable>(oldHandle: Collection): CollectionHandle<T> {
+function collectionHandleWrapper<T extends Entity>(oldHandle: Collection): CollectionHandle<T> {
   const handle = oldHandle as unknown as CollectionHandle<T>;
 
   handle.add = async (entity: T): Promise<boolean> => {
