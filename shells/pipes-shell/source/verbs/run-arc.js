@@ -13,6 +13,7 @@ import {RecipeUtil} from '../../../../build/runtime/recipe/recipe-util.js';
 import {Utils} from '../../../lib/utils.js';
 import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
 import {portIndustry} from '../pec-port.js';
+import {Sharing} from '../sharing.js';
 
 const {log, warn} = logsFactory('pipe');
 
@@ -46,6 +47,11 @@ export const runArc = async (msg, bus, runtime, env) => {
   if (action && await instantiateRecipe(arc, action, particles || [])) {
     log(`successfully instantiated ${recipe} in ${arc}`);
   }
+
+  // set up shared store, if applicable for the arc.
+  // TODO(sjmiles): "live context" tool (for demos)
+  await Sharing.init(arc);
+
   return arc;
 };
 

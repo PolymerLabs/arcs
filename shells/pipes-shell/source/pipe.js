@@ -48,7 +48,6 @@ export const initPipe = async (client, paths, storage) => {
 
 // TODO(sjmiles): must be called only after `window.ShellApi` is initialized
 export const initArcs = async (storage, bus) => {
-  // TODO(sjmiles): "live context" tool (for demos)
   // marshal context
   const context = await requireContext(manifest);
   // send pipe identifiers to client
