@@ -67,9 +67,6 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
 
   it('sets the nested namespace for entities', async () => {
     const manifest = await Manifest.parse(`\
-meta
-  packageName: 'grandma.mom.daughter'
-  
 schema Product
   Text name
   Number sku
@@ -79,7 +76,7 @@ particle BasicParticle in 'module.wasm'
   in Product foo
   out [Product] bar`);
 
-    const mock = new Schema2Cpp({'_': []});
+    const mock = new Schema2Cpp({'_': [], 'package': 'grandma.mom.daughter'});
     const [_, __, schemas] = mock.processManifest(manifest);
 
     const entities: string[] = Object.entries(schemas).map(([name, schema]) => mock.entityClass(name, schema));
@@ -99,9 +96,6 @@ namespace daughter {`);
 
   it('sets the nested namespace for aliases', async () => {
     const manifest = await Manifest.parse(`\
-meta
-  packageName: 'grandma.mom.daughter'
-  
 schema Product
   Text name
   Number sku
@@ -111,7 +105,7 @@ particle BasicParticle in 'module.wasm'
   in Product foo
   out [Product] bar`);
 
-    const mock = new Schema2Cpp({'_': []});
+    const mock = new Schema2Cpp({'_': [], 'package': 'grandma.mom.daughter'});
     const [aliases, ..._] = mock.processManifest(manifest);
     const generated = mock.addAliases(aliases);
 

@@ -78,15 +78,12 @@ describe('schema2base', () => {
   it('sets the scope / package once', async () => {
 
     const manifest = await Manifest.parse(`\
-  meta
-    packageName: 'baz'
-    
   particle Bar
     in Product {Text name, Number price} order
     out [Product {Text name, Number price}] recommendations
     `);
 
-    const mock = new Schema2Mock({'_': []});
+    const mock = new Schema2Mock({'_': [], 'package': 'baz'});
     const _ = mock.processManifest(manifest);
 
     assert.includeDeepOrderedMembers(mock.namespaceArgs, ['baz']);

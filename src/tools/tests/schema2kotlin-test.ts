@@ -49,7 +49,7 @@ particle Reader
     ]);
   });
 
-  it('creates aliases while eliminating abigous identifies, including in the first connection', async () => {
+  it('creates aliases while eliminating ambiguous identifies, including in the first connection', async () => {
     const manifest = await Manifest.parse(`\
 particle Foo
   in Product Element Thing {Text value} myThing
@@ -100,14 +100,11 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
 
   it('creates nested package name for entities', async () => {
     const manifest = await Manifest.parse(`\
-    meta
-      packageName: 'grandma.mom.daughter'
-      
     particle Reader
       in * {Text value} object
       out Id {Number hash} output`);
 
-    const mock = new Schema2Kotlin({'_': []});
+    const mock = new Schema2Kotlin({'_': [], 'package': 'grandma.mom.daughter'});
     const _ = mock.processManifest(manifest);
     const header = mock.fileHeader('');
 

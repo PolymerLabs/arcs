@@ -14,13 +14,15 @@ import {Schema} from '../runtime/schema.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
 import {Manifest} from '../runtime/manifest.js';
-import {ManifestMeta} from '../runtime/manifest-meta.js';
 
 export type Aliases = Dictionary<Set<string>>;
 
 export abstract class Schema2Base {
+  private readonly scope: string;
+
   constructor(readonly opts: minimist.ParsedArgs) {
     Utils.init('../..');
+    this.scope = opts.package;
   }
 
   async call() {
@@ -51,9 +53,7 @@ export abstract class Schema2Base {
     const refSchemas: Dictionary<Schema> = {};
 
     // Try to get one of the following keys from the manifest metadata
-    const scope: string = manifest.allMeta
-      .reduce((acc: string | null, x: ManifestMeta): string => acc || x.packageName, null) || 'arcs';
-    this.addScope(scope);
+    this.addScope(this.scope);
 
     for (const particle of manifest.allParticles) {
       const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
