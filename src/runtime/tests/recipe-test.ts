@@ -400,7 +400,7 @@ describe('recipe', () => {
       particle Specific
         thing: in Thing
       recipe
-        map as thingHandle
+        thingHandle: map
         Generic
           anyA: in thingHandle
         Specific
@@ -416,13 +416,13 @@ describe('recipe', () => {
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
     assert.strictEqual(`recipe
-  map 'my-things' as handle0 // ~
+  handle0: map 'my-things' // ~
   Generic as particle0
     anyA: in handle0
   Specific as particle1
     thing: in handle0`, recipe.toString());
     assert.strictEqual(`recipe
-  map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
+  handle0: map 'my-things' // ~ // Thing {}  // unresolved handle: unresolved type
   Generic as particle0
     anyA: in handle0
   Specific as particle1
@@ -439,7 +439,7 @@ describe('recipe', () => {
     assert.isTrue(recipeClone.isResolved());
     const hashResolvedClone = await recipeClone.digest();
     assert.strictEqual(`recipe
-  map 'my-things' as handle0 // Thing {}
+  handle0: map 'my-things' // Thing {}
   Generic as particle0
     anyA: in handle0
   Specific as particle1
@@ -455,7 +455,7 @@ describe('recipe', () => {
       particle Specific
         thing: in Thing
       recipe
-        map as thingHandle
+        thingHandle: map
         Generic
           anyA: in thingHandle
         Specific
@@ -471,13 +471,13 @@ describe('recipe', () => {
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
     assert.strictEqual(`recipe
-  map 'my-things' as handle0 // ~
+  handle0: map 'my-things' // ~
   Generic as particle0
     anyA: in handle0
   Specific as particle1
     thing: in handle0`, recipe.toString());
     assert.strictEqual(`recipe
-  map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
+  handle0: map 'my-things' // ~ // Thing {}  // unresolved handle: unresolved type
   Generic as particle0
     anyA: in handle0
   Specific as particle1
@@ -494,7 +494,7 @@ describe('recipe', () => {
     assert.isTrue(recipeClone.isResolved());
     const hashResolvedClone = await recipeClone.digest();
     assert.strictEqual(`recipe
-  map 'my-things' as handle0 // Thing {}
+  handle0: map 'my-things' // Thing {}
   Generic as particle0
     anyA: in handle0
   Specific as particle1

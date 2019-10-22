@@ -631,7 +631,7 @@ ${particleStr1}
         oneMoreSlot: consume Slot
 
       recipe SomeRecipe
-        ? #someHandle1 as myHandle
+        myHandle: ? #someHandle1
         slot0: slot 'slotIDs:A' #someSlot
         SomeParticle
           someParam: in myHandle
@@ -678,8 +678,8 @@ ${particleStr1}
         oneMoreSlot: \`consume Slot
 
       recipe SomeRecipe
-        ? #someHandle1 as myHandle
-        \`slot 'slotIDs:A' #someSlot as slot0
+        myHandle: ? #someHandle1
+        slot0: \`slot 'slotIDs:A' #someSlot
         SomeParticle
           someParam: in myHandle
           mySlot: \`consume slot0
@@ -836,7 +836,7 @@ ${particleStr1}
           slotB: \`consume${arg.isRequiredSlotB ? '' : '?'} Slot
 
         recipe
-          \`slot 'slota-0' as s0
+          s0: \`slot 'slota-0'
           SomeParticle
             slotA: \`consume s0
       `)).recipes[0];
@@ -857,7 +857,7 @@ ${particleStr1}
           slotB: \`consume${arg.isRequiredSlotB ? '' : '?'} [Slot]
 
         recipe
-          \`slot 'slota-0' as s0
+          s0: \`slot 'slota-0'
           SomeParticle
             slotA: \`consume s0
       `)).recipes[0];
@@ -959,7 +959,7 @@ ${particleStr1}
         slotA: \`consume Slot #aaa
           slotB: \`provide Slot #bbb
       recipe
-        \`slot 'slot-id0' #aa #aaa as s0
+        s0: \`slot 'slot-id0' #aa #aaa
         SomeParticle
           slotA: \`consume s0 #aa #hello
           slotB: \`provide
@@ -1016,7 +1016,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide Slot
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1043,7 +1043,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide Slot
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1067,7 +1067,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1094,7 +1094,7 @@ ${particleStr1}
         slotB1: \`consume [Slot]
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1121,7 +1121,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide Slot
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1145,7 +1145,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1172,7 +1172,7 @@ ${particleStr1}
         slotB1: \`consume [Slot]
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1387,8 +1387,8 @@ ${particleStr1}
       particle P2 in 'some-particle.js'
         slotB: \`consume Slot
       recipe
-        \`slot 'rootslot-0' as slot0
-        \`slot 'local-slot-0' as slot1
+        slot0: \`slot 'rootslot-0'
+        slot1: \`slot 'local-slot-0'
         P1
           slotA: \`consume slot0
           slotB: \`provide slot1
@@ -1926,7 +1926,7 @@ resource SomeName
       particle P
         bar: in Bar {Reference<Foo> foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -1973,7 +1973,7 @@ resource SomeName
       particle P
         bar: in Bar {Reference<Foo {Text far}> foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -2020,7 +2020,7 @@ resource SomeName
       particle P
         bar: in Bar {[Reference<Foo>] foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -2066,7 +2066,7 @@ resource SomeName
       particle P
         bar: in Bar {[Reference<Foo {Text far}>] foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -2341,7 +2341,7 @@ resource SomeName
   it('SLANDLES can parse a recipe with slot constraints on verbs', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       recipe
-        \`slot as provideSlot
+        provideSlot: \`slot
         &verb
           foo: \`consume provideSlot
     `);
