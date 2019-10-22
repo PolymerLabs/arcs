@@ -39,11 +39,12 @@ def kt_jvm_and_js_library(
         deps = [_to_jvm_dep(dep) for dep in deps],
     )
 
-    kt_js_library(
-        name = "%s-js" % name,
-        srcs = srcs,
-        deps = [_to_js_dep(dep) for dep in deps],
-    )
+    # Disabled while https://github.com/bazelbuild/rules_kotlin/issues/219 is unfixed.
+    # kt_js_library(
+    #    name = "%s-js" % name,
+    #    srcs = srcs,
+    #    deps = [_to_js_dep(dep) for dep in deps],
+    #)
 
 def _to_jvm_dep(dep):
     return dep
@@ -76,7 +77,7 @@ def _kt_js_import_for_thirdparty(thirdparty_dep):
     kt_js_import(
         name = name,
         jars = [maven_name],
-        srcjar = "%s-%s-sources.jar" % (version, name)
+        srcjar = "%s-%s-sources.jar" % (name, version)
     )
 
     return ":%s" % name
