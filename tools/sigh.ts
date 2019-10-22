@@ -989,7 +989,7 @@ function runScript(args: string[]) {
   }
   const scriptName = args[0];
   const scriptPath = scripts[scriptName];
-  if (!scriptName) {
+  if (!scriptPath) {
     console.error(`Unknown script name: ${scriptName}`);
     return false;
   }
