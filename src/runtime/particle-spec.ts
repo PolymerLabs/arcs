@@ -435,7 +435,7 @@ export class ParticleSpec {
         tokens.push(`${s.name}:`);
         tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
 
-        let fieldSet = [];
+        const fieldSet = [];
         // TODO(jopra): Move the formFactor and handle to the slot type information.
         if (s.formFactor) {
           fieldSet.push(`formFactor: ${s.formFactor}`);
@@ -443,7 +443,7 @@ export class ParticleSpec {
         for (const handle of s.handles) {
           fieldSet.push(`handle: ${handle}`);
         }
-        let fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
+        const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
         if (s.isSet) {
           tokens.push(`[Slot]${fields}`);
         } else {
