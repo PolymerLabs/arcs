@@ -23,7 +23,8 @@ export class Loader extends LoaderBase {
   async loadResource(url: string): Promise<string> {
     // subclass impl differentiates paths and URLs,
     // for browser env we can feed both kinds into _loadURL
-    return super._loadURL(this.resolve(url));
+    const path = this.resolve(url);
+    return this.loadStatic(path) || this.loadURL(path);
   }
   async provisionObjectUrl(fileName: string) {
     const raw = await this.loadResource(fileName);

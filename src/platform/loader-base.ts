@@ -40,14 +40,25 @@ const isString = s => (typeof s === 'string');
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
-  constructor(urlMap?: {}) {
-    this.urlMap = urlMap || {};
+  protected readonly staticMap: {};
+  constructor(urlMap: {} = {}, staticMap: {} = {}) {
+    this.urlMap = urlMap;
+    this.staticMap = staticMap;
   }
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
   }
   flushCaches(): void {
     // as needed
+  }
+  loadStatic(path) {
+    return this.staticMap[path];
+  }
+  protected async loadURL(url: string): Promise<string> {
+    if (/\/\/schema.org\//.test(url)) {
+      return this.loadSchemaOrgUrl(url);
+    }
+    return this.fetchText(url);
   }
   path(fileName: string): string {
     return fileName.replace(/[/][^/]+$/, '/');
@@ -126,12 +137,6 @@ export abstract class LoaderBase {
     }
     this.urlMap['$here'] = folder;
     this.urlMap['$module'] = folder;
-  }
-  async _loadURL(url: string): Promise<string> {
-    if (/\/\/schema.org\//.test(url)) {
-      return this.loadSchemaOrgUrl(url);
-    }
-    return this.fetchText(url);
   }
   private async loadSchemaOrgUrl(url: string): Promise<string> {
     let href = `${url}.jsonld`;

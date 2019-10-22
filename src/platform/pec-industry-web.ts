@@ -12,7 +12,7 @@ const WORKER_PATH = `https://$build/worker.js`;
 
 export const PecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
-  const remap = expandUrls(loader._urlMap);
+  const remap = expandUrls(loader.urlMap);
   // get real path from meta path
   const workerUrl = loader.resolve(WORKER_PATH);
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)

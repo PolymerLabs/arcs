@@ -7,28 +7,27 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Loader} from '../../build/runtime/loader.js';
+import {Loader} from '../../build/platform/loader.js';
 import {Utils} from '../lib/utils.js';
 
 export class DevShellLoader extends Loader {
   constructor(fileMap) {
-    super(Utils.createPathMap('../..'));
+    super(Utils.createPathMap('../..'), fileMap);
     super.flushCaches();
-    this._fileMap = fileMap;
+    //this._fileMap = fileMap;
   }
-
+  /*
   loadResource(path) {
     if (!path) {
       return undefined;
     }
     return this._fileMap[path] || super.loadResource(path);
   }
-
   path(fileName) {
     return this._fileMap[fileName] ? fileName : super.path(fileName);
   }
-
   clone() {
     return new DevShellLoader(this._fileMap, this._urlMap);
   }
+  */
 }

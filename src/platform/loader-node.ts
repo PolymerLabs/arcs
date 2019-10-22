@@ -19,18 +19,23 @@ export class Loader extends LoaderBase {
     return new Loader(this.urlMap);
   }
   async loadResource(file: string): Promise<string> {
-    if (/^https?:\/\//.test(file)) {
-      return this._loadURL(file);
+    const path = this.resolve(file);
+    const content = this.loadStatic(path);
+    if (content) {
+      return content;
     }
-    return this.loadFile(file, 'utf-8') as Promise<string>;
+    if (/^https?:\/\//.test(path)) {
+      return this.loadURL(path);
+    }
+    return this.loadFile(path);
   }
-  private async loadFile(file: string, encoding?: string): Promise<string | ArrayBuffer> {
+  private async loadFile(file: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      fs.readFile(file, {encoding}, (err, data: string | Buffer) => {
+      fs.readFile(file, 'utf-8', (err, data: string) => {
         if (err) {
           reject(err);
         } else {
-          resolve(encoding ? (data as string) : (data as Buffer).buffer);
+          resolve(data);
         }
       });
     });
