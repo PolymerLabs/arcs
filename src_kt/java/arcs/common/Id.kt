@@ -89,9 +89,11 @@ interface Id {
         IdImpl("", bits)
       }
     }
-
   }
 }
+
+/** Convenience to parse a [String] into an [ArcId]. */
+fun String.toArcId(): ArcId = toId().let { ArcId(it.root, it.idTree) }
 
 /** [Id] for an Arc. */
 data class ArcId internal constructor(
@@ -110,6 +112,7 @@ data class ArcId internal constructor(
      *   this.
      */
     fun newForTest(name: String): ArcId = Id.Generator.newSession().newArcId(name)
+
   }
 }
 

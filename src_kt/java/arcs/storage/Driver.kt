@@ -29,8 +29,17 @@ interface Driver<Data : Any> {
   /** Requirement for the existence of the [Driver]. */
   val existenceCriteria: ExistenceCriteria
 
+  /**
+   * Returns a token that represents the current state of the data.
+   *
+   * This can be provided to [registerReceiver], and will impact what data is delivered on
+   * initialization (only "new" data should be delivered, though note that this can be satisfied by
+   * sending a model for merging rather than by remembering a set of ops).
+   */
+  val token: String?
+
   /** Registers a listener for [Data]. */
-  fun registerReceiver(receiver: (data: Data, version: Int) -> Unit)
+  fun registerReceiver(token: String? = null, receiver: (data: Data, version: Int) -> Unit)
 
   /** Sends data to the [Driver] for storage. */
   suspend fun send(data: Data, version: Int): Boolean
