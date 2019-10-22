@@ -9,20 +9,18 @@ particle Game in './source/TTTGame.js'
   inout GameState gameState
   inout Move {move} playerOneMove
   inout Move {move} playerTwoMove
-  inout Event {type, move} event
-  check playerOne is private
-  check playerTwo is private
+  inout [Event] events
   consume root
     provide gameSlot
 
 particle TicTacToeBoard in './source/TTTBoard.js'
   in GameState {board, currentPlayer} gameState
-  out Event {type, move} event
+  out [Event] events
   consume boardSlot
 
 particle HumanPlayer in './source/TTTHumanPlayer.js'
   in GameState {currentPlayer} gameState
-  in Event {type, move} event
+  in [Event] events
   in Person {id} player
   out Move {move} myMove
 
@@ -46,16 +44,16 @@ recipe GameDemoRecipe
     playerTwo = playerTwo
     playerOneMove = playerOneMove
     playerTwoMove = playerTwoMove
-    event = event
+    events = events
 
   TicTacToeBoard
     gameState = gameState
-    event = event
+    events = events
     consume boardSlot as board
   
   HumanPlayer
     gameState = gameState
-    event <- event
+    events <- events
     myMove -> playerOneMove
     player <- playerOne
 
@@ -81,22 +79,22 @@ recipe GamePlayersDemoRecipe
     playerTwo = playerTwo
     playerOneMove = playerOneMove
     playerTwoMove = playerTwoMove
-    event = event
+    events = events
 
   TicTacToeBoard
     gameState = gameState
-    event = event
+    events = events
     consume boardSlot as board
   
   HumanPlayer
     gameState = gameState
-    event <- event
+    events <- events
     myMove -> playerOneMove
     player <- playerOne
 
   HumanPlayer
     gameState = gameState
-    event <- event
+    events <- events
     myMove -> playerTwoMove
     player <- playerTwo
 
@@ -117,11 +115,11 @@ recipe GameComputersDemoRecipe
     playerTwo = playerTwo
     playerOneMove = playerOneMove
     playerTwoMove = playerTwoMove
-    event = event
+    events = events
 
   TicTacToeBoard
     gameState = gameState
-    event = event
+    events = events
     consume boardSlot as board
   
   RandomComputer

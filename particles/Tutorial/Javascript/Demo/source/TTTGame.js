@@ -24,20 +24,22 @@ defineParticle(({SimpleParticle, html}) => {
     [2, 4, 6]
   ];
 
+  const template = html`
+It is your turn <span>{{playerDetails}}</span>.
+<div slotid="gameSlot"></div>
+<div hidden="{{hideCongrats}}">Congratulations <span>{{winnerName}}</span>!</div>`;
+
   return class extends SimpleParticle {
 
     get template() {
-      return html`
-<span>It is your turn <span>{{name}}</span>, playing as <span>{{avatar}}</span>.
-<div slotid="gameSlot"></div>
-<div hidden="{{hideCongrats}}">Congratulations <span>{{winnerName}}</span>!</div>`;
+      return template;
     }
 
     shouldRender({gameState, playerOne, playerTwo}) {
-      return gameState && playerOne.id == 0 && playerTwo.id;
+      return gameState && playerOne.id === 0 && playerTwo.id === 1;
     }
 
-    update({gameState, playerOne, playerTwo, playerOneMove, playerTwoMove, event}) {
+    update({gameState, playerOne, playerTwo, playerOneMove, playerTwoMove, events}) {
 
       if (playerOne.id != 0) {
         this.set('playerOne', {name: playerOne.name, avatar: playerOne.avatar, id: 0});
@@ -51,17 +53,23 @@ defineParticle(({SimpleParticle, html}) => {
         this.newGame();
       }
 
-      if (gameState && gameState.gameOver && event && event.type == 'reset') {
-        this.newGame();
+      if (gameState && gameState.gameOver && events) {
+        const reset = events.find(e => e.type === 'reset');
+        if (reset) {
+          this.newGame();
+        }
       }
 
       if (gameState && !gameState.gameOver) {
         const mv = [playerOneMove.move, playerTwoMove.move][gameState.currentPlayer];
         const avatar = [playerOne.avatar, playerTwo.avatar][gameState.currentPlayer];
-        let gs = this.extractGameState(gameState);
+        // Create a local mutable copy of gameState to manipulate.
+        let gs = {...gameState};
+        gs.board = JSON.parse(gs.board);
         if (this.isMoveValid(gs, mv)) {
           gs = this.applyMove(gs, mv, avatar);
           gs = this.applyGameStatus(gs, playerOne, playerTwo);
+          gs.board = JSON.stringify(gs.board);
           this.set('gameState', gs);
         }
       }
@@ -70,78 +78,52 @@ defineParticle(({SimpleParticle, html}) => {
     render({gameState, playerOne, playerTwo}) {
       return {
         hideCongrats: !gameState.gameOver,
-        name: [playerOne.name, playerTwo.name][gameState.currentPlayer],
-        avatar: [playerOne.avatar, playerTwo.avatar][gameState.currentPlayer],
-        winnerName: this.getWinner(gameState, playerOne, playerTwo)
+        playerDetails: this.getPlayerDetails(gameState.currentPlayer, playerOne, playerTwo),
+        winnerName: gameState.winnerId !== null ? this.getPlayerDetails(gameState.winnerId, playerOne, playerTwo) : `it's a tie`
       };
     }
 
     newGame() {
+      this.set('playerOneMove', {});
+      this.set('playerTwoMove', {});
+      this.clear('events');
       this.set('gameState', {
         board: JSON.stringify(['', '', '', '', '', '', '', '', '']),
         gameOver: false,
         winnerId: null,
         currentPlayer: Math.floor(Math.random() * 2)
       });
-      this.set('playerOneMove', {});
-      this.set('playerTwoMove', {});
-      this.set('event', {});
     }
 
     isMoveValid(gs, mv) {
-      return mv > -1 && mv < 10 && JSON.parse(gs.board)[mv] == '';
+      return mv > -1 && mv < 10 && gs.board[mv] === '';
     }
 
     applyMove(gs, mv, avatar) {
-      const arr = JSON.parse(gs.board);
-      arr[mv] = avatar;
-      gs.board = JSON.stringify(arr);
+      gs.board[mv] = avatar;
       gs.currentPlayer = (gs.currentPlayer + 1) % 2;
-
       return gs;
     }
 
     applyGameStatus(gs, p1, p2) {
       // Check if the game is tied
-      gs.gameOver = true;
-      const board = JSON.parse(gs.board);
-      for (const cell of board) {
-        if (cell == '') {
-          gs.gameOver = false;
-          break;
-        }
-      }
+      gs.gameOver = gs.board.every(cell => cell !== '');
 
       // Check if the game has been won
       for (const ws of winningSequences) {
-        if (board[ws[0]] !== '' && board[ws[0]] === board[ws[1]] && board[ws[1]] == board[ws[2]]) {
+        if (gs.board[ws[0]] !== '' && gs.board[ws[0]] === gs.board[ws[1]] && gs.board[ws[1]] === gs.board[ws[2]]) {
           gs.gameOver = true;
-          if (board[ws[0]] == p1.avatar) {
-            gs.winnerId = p1.id;
-          } else {
-            gs.winnerId = p2.id;
-          }
+          gs.winnerId = gs.board[ws[0]] === p1.avatar ? p1.id : p2.id;
           break;
         }
       }
       return gs;
     }
 
-    extractGameState(gs) {
-      return {
-        board: gs.board,
-        gameOver: gs.gameOver,
-        winnerId: gs.winnerId,
-        currentPlayer: gs.currentPlayer,
-      };
-    }
-
-    getWinner(gs, p1, p2) {
-      if (gs.winnerId !== null) {
-        return [p1.name, p2.name][gs.winnerId];
-      } else {
-        return `it's a tie`;
-      }
+    getPlayerDetails(playerId, p1, p2) {
+      const name = [p1.name, p2.name][playerId];
+      const avatar = [p1.avatar, p2.avatar][playerId];
+      return `${name} playing as ${avatar}`;
     }
   };
 });

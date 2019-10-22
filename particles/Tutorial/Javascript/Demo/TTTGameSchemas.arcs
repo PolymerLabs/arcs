@@ -13,6 +13,7 @@ schema GameState
 schema Event
   Text type
   Number move
+  Number time
 
 schema Move
   Number move

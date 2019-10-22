@@ -10,28 +10,25 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, log}) => {
+defineParticle(({SimpleParticle}) => class extends SimpleParticle {
 
-  return class extends SimpleParticle {
-
-    update({gameState, player}) {
-      if (!gameState) {
-        return;
-      }
-
-      if (player && gameState.currentPlayer == player.id) {
-        const emptyCells = [];
-        const board = JSON.parse(gameState.board);
-        // Determine which cells are empty.
-        for (let i = 0; i < board.length; i++) {
-          if (board[i] == ``) {
-            emptyCells.push(i);
-          }
-        }
-
-        const selection = Math.floor(Math.random() * emptyCells.length);
-        this.set('computerMove', {move: emptyCells[selection]});
-      }
+  update({gameState, player}) {
+    if (!gameState) {
+      return;
     }
-  };
+
+    if (player && gameState.currentPlayer === player.id) {
+      const emptyCells = [];
+      const board = JSON.parse(gameState.board);
+      // Determine which cells are empty.
+      for (let i = 0; i < board.length; i++) {
+        if (board[i] === '') {
+          emptyCells.push(i);
+        }
+      }
+
+      const selection = Math.floor(Math.random() * emptyCells.length);
+      this.set('computerMove', {move: emptyCells[selection]});
+    }
+  }
 });

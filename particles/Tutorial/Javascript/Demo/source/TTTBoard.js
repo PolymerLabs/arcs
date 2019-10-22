@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle, html, log}) => {
+defineParticle(({SimpleParticle, html}) => {
 
 const template = html`
 <style>
@@ -35,9 +35,7 @@ const template = html`
     color: white;
   }
 </style>
-<div class="grid-container">
-    <div class="grid-container">{{buttons}}</div>
-</div>
+<div class="grid-container">{{buttons}}</div>
 <template button>
   <button class="valid-butt" type="button" on-click="onClick" value="{{value}}" \>
     <span>{{cell}}</span>
@@ -59,26 +57,22 @@ const template = html`
     }
 
     render({gameState}) {
-      const baordArr = JSON.parse(gameState.board);
+      const boardArr = JSON.parse(gameState.board);
       return {
         hideReset: !gameState.gameOver,
         buttons: {
           $template: 'button',
-          models: baordArr.map((cell, index) => ({
-            cell: cell,
-            value: index,
-          }))
+          models: boardArr.map((cell, index) => ({cell, value: index}))
         }
       };
     }
 
     reset() {
-      this.set('event', {type: 'reset'});
+      this.add('events', {type: 'reset'});
     }
 
     onClick(e) {
-      this.set(`event`, {type: 'click', move: Number(e.data.value)});
+      this.add(`events`, {type: 'click', move: Number(e.data.value), time: new Date().getTime()});
     }
-
   };
 });

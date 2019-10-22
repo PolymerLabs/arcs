@@ -12,15 +12,16 @@
 
 /* global defineParticle */
 
-defineParticle(({SimpleParticle}) => {
-
-  return class extends SimpleParticle {
-
-    update({gameState, event, player}) {
-      if (event && event.type == `click` && player && gameState && gameState.currentPlayer == player.id) {
-        this.set('myMove', {move: event.move});
+defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+  update({gameState, events, player}) {
+    if (events && player && gameState) {
+      if (events.length && gameState.currentPlayer === player.id) {
+        const reset = events.find(e => e.type === 'reset');
+        if (!reset) {
+          const e = events.sort(function(a, b) { return b.time - a.time; });
+          this.set('myMove', {move: e[0].move});
+        }
       }
     }
-
-  };
+  }
 });
