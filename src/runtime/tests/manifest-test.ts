@@ -96,13 +96,9 @@ schema Person
   person: out Person {}
   modality dom
   modality domTouch
-  root: consume Slot #master #main
-    formFactor big
-    action: provide Slot #large
-      formFactor big
-      handle list
-    preamble: provide Slot
-      formFactor medium
+  root: consume Slot {formFactor: big} #master #main
+    action: provide Slot {formFactor: big, handle: list} #large
+    preamble: provide Slot {formFactor: medium}
     annotation: provide Slot
   other: consume Slot
     myProvidedSetCell: provide [Slot]
@@ -618,12 +614,9 @@ ${particleStr1}
       schema Thing
       particle SomeParticle in 'some-particle.js'
         someParam: in Thing
-        mySlot: consume Slot
-          formFactor big
-          otherSlot: provide Slot
-            handle someParam
-          oneMoreSlot: provide Slot
-            formFactor small
+        mySlot: consume Slot {formFactor: big}
+          otherSlot: provide Slot {handle: someParam}
+          oneMoreSlot: provide Slot {formFactor: small}
 
       particle OtherParticle
         aParam: out Thing
@@ -2433,10 +2426,8 @@ resource SomeName
     output: out [Product {}]
   thingy: in ~a
   modality dom
-  thing: consume Slot #main #tagname
-    formFactor big
-    otherThing: provide Slot #testtag
-      handle thingy`;
+  thing: consume Slot {formFactor: big} #main #tagname
+    otherThing: provide Slot {handle: thingy} #testtag`;
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
