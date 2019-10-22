@@ -45,6 +45,13 @@ export class VolatileStorageKey extends StorageKey {
 
 export class VolatileMemory {
   entries = new Map<string, VolatileEntry<unknown>>();
+  // Tokens can't just be an incrementing number as VolatileMemory is the basis for RamDiskMemory too;
+  // if we were to use numbers here then a RamDisk could be reaped, restarted, and end up with the
+  // same token as a previous iteration.
+  // When we want to support RamDisk fast-forwarding (e.g. by keeping a rotating window of recent
+  // operations) then we'll need tokens to be a combination of a per-instance random value and a
+  // per-operation updating number. For now, just a random value that is updated with each write
+  // is sufficient.
   token = Math.random() + '';
 }
 
