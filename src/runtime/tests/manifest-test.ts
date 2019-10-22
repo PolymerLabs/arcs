@@ -1532,7 +1532,22 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     ]);
   });
-  it('resolves store names to ids', async () => {
+  it('SLANDLES SYNTAX resolves store names to ids', Flags.withPostSlandlesSyntax(async () => {
+    const manifestSource = `
+        schema Thing
+        store Store0 of [Thing] in 'entities.json'
+        recipe
+          map Store0 as myStore`;
+    const entitySource = JSON.stringify([]);
+    const loader = new StubLoader({
+      'the.manifest': manifestSource,
+      'entities.json': entitySource,
+    });
+    const manifest = await Manifest.load('the.manifest', loader);
+    const recipe = manifest.recipes[0];
+    assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
+  }));
+  it('resolves store names to ids', Flags.withPreSlandlesSyntax(async () => {
     const manifestSource = `
         schema Thing
         store Store0 of [Thing] in 'entities.json'
@@ -1546,7 +1561,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     const manifest = await Manifest.load('the.manifest', loader);
     const recipe = manifest.recipes[0];
     assert.deepEqual(recipe.toString(), 'recipe\n  map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\' as myStore');
-  });
+  }));
   it('has prettyish syntax errors', async () => {
     try {
       await Manifest.parse('recipe ?', {fileName: 'bad-file'});
