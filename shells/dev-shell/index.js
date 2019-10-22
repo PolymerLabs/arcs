@@ -10,6 +10,7 @@
 import './file-pane.js';
 import './output-pane.js';
 import '../configuration/whitelisted.js';
+import '../lib/platform/loglevel-web.js';
 import {DevShellLoader} from './loader.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';
@@ -100,8 +101,13 @@ async function wrappedExecute() {
     const options = {loader, fileName: './manifest', throwImportErrors: true};
     manifest = await Runtime.parseManifest(files.getManifest(), options);
   } catch (e) {
-    output.showError('Error in Manifest.parse', e);
-    return;
+    if (e.severity === 'warning') {
+      // warning output?
+    }
+    else {
+      output.showError('Error in Manifest.parse', e);
+      return;
+    }
   }
 
   if (manifest.allRecipes.length == 0) {
