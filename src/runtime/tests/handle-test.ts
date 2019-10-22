@@ -59,7 +59,7 @@ describe('Handle', () => {
     const barStore = await arc.createStore(manifest.schemas.Bar.type.collectionOf()) as CollectionStorageProvider;
     let version = 0;
     barStore.legacyOn(({add: [{effective}]}) => {if (effective) version++;});
-    assert.strictEqual(barStore.version, 0);
+    assert.strictEqual(barStore._version, 0);
     const bar1 = {id: 'an id', value: 'a Bar'};
     await barStore.store(bar1, ['key1']);
     assert.strictEqual(version, 1);
