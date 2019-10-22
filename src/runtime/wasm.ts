@@ -56,7 +56,8 @@ export class EntityPackager {
   private decoder: StringDecoder;
 
   constructor(handle: Handle) {
-    const schema = handle.entityClass.schema;
+    // TODO(shans): fail if the handle doesn't have collection or singleton of entity type.
+    const schema = handle['entityClass'].schema;
     assert(schema.names.length > 0, 'At least one schema name is required for entity packaging');
 
     let refType: ReferenceType = null;

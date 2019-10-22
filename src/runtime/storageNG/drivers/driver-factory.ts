@@ -37,8 +37,15 @@ export abstract class Driver<Data> {
     this.storageKey = storageKey;
     this.exists = exists;
   }
-  abstract registerReceiver(receiver: ReceiveMethod<Data>): void;
+  abstract registerReceiver(receiver: ReceiveMethod<Data>, token?: string): void;
   abstract async send(model: Data, version: number): Promise<boolean>;
+
+  // Return a token that represents the current state of the data.
+  // This can be provided to registerReceiver, and will impact what
+  // data is delivered on initialization (only "new" data should be
+  // delivered, though note that this can be satisfied by sending
+  // a model for merging rather than by remembering a set of ops)
+  abstract getToken(): string | null;
 
   // these methods only available to Backing Stores and will
   // be removed once entity mutation is performed on CRDTs

@@ -23,4 +23,4 @@ recipe SlandleStardateTOS
   SlandleStardateDisplay
     stardate <- stardate
     destination <- destination
-    root consume root
+    root `consume root

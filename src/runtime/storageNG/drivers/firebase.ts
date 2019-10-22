@@ -127,13 +127,20 @@ export class FirebaseDriver<Data> extends Driver<Data> {
     this.reference = reference;
   }
 
-  registerReceiver(receiver: ReceiveMethod<Data>) {
+  registerReceiver(receiver: ReceiveMethod<Data>, token?: string) {
     this.receiver = receiver;
+    if (token) {
+      this.seenVersion = Number(token);
+    }
     if (this.pendingModel !== null) {
       assert(this.pendingModel);
-      receiver(this.pendingModel, this.pendingVersion);
+      if (this.pendingVersion > this.seenVersion) {
+        receiver(this.pendingModel, this.pendingVersion);
+        this.seenVersion = this.pendingVersion;
+      }
       this.pendingModel = null;
-      this.seenVersion = this.pendingVersion;
+    } else {
+      assert(this.seenVersion === 0);
     }
     this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
   }
@@ -180,6 +187,10 @@ export class FirebaseDriver<Data> extends Driver<Data> {
 
   async read(key: StorageKey) {
     throw new Error('Method not implemented.');
+  }
+
+  getToken() {
+    return this.seenVersion + '';
   }
 }
 

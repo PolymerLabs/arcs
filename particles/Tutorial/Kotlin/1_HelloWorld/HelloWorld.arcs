@@ -2,7 +2,7 @@
 // Defines a really simple particle that just prints out "Hello, world!"
 
 // Defines the Hello World particle, and links it to the Kotlin source code in file HelloWorld.kt.
-particle HelloWorldParticle in 'https://$arcs/bazel-bin/particles/Tutorial/Kotlin/1_HelloWorld/HelloWorld.wasm'
+particle HelloWorldParticle in 'HelloWorld.wasm'
   // The "root" slot is a special slot provided by the system. It is where the main content gets rendered. This binds our particle to the root
   // slot so that it can render things to the screen.
   consume root

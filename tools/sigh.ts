@@ -69,13 +69,31 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   clean: [clean],
   unit: [unit],
   health: [health],
-  bundle: [peg, build, bundle],
-  schema2pkg: [peg, build, schema2pkg],
+  bundle: runScriptSteps('bundle'),
+  schema2pkg: runScriptSteps('schema2pkg'),
   devServer: [peg, build, devServer],
-  flowcheck: [peg, build, flowcheck],
+  flowcheck: runScriptSteps('flowcheck'),
+  run: [peg, build, runScript],
   licenses: [build],
   install: [install],
   default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack, webpackTools, lint, tslint],
+};
+
+/**
+ * Maps from script name to script path. Scripts can be invoked via:
+ * `tools/sigh run <script name> <script args>`.
+ */
+const scripts: {[index: string]: string} = {
+  /** e.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes */
+  bundle: 'build/tools/bundle-cli.js',
+
+  /**
+   * Runs the dataflow analyser on the recipes defined in the given manifest
+   * file(s). e.g. ./tools/sigh flowcheck particles/Dataflow/Dataflow.recipe
+   */
+  flowcheck: 'build/dataflow/cli/flowcheck.js',
+
+  schema2pkg: 'build/tools/schema2packager.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -954,28 +972,34 @@ function spawnTool(toolPath: string, args: string[]) {
   return saneSpawn('node', [...nodeFlags, '--no-warnings', toolPath, ...args]);
 }
 
-// E.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes
-function bundle(args: string[]) {
-  return spawnTool('build/tools/bundle-cli.js', args);
-}
-
-function schema2pkg(args: string[]) {
-  return spawnTool('build/tools/schema2packager.js', args);
-}
-
 function devServer(args: string[]) {
   getOptionalDependencies(['chokidar'], 'The devServer command');
   return spawnTool('build/tools/dev_server/dev-server.js', args);
 }
 
 /**
- * Runs the dataflow analyser on the recipes defined in the given manifest
- * file(s).
- *
- * e.g. ./tools/sigh flowcheck particles/Dataflow/Dataflow.recipe
+ * Runs a script with the given name and args. The first arg in the array is
+ * the name of the script to run. The rest of the args are passed to that script
+ * when it is invoked.
  */
-function flowcheck(args: string[]) {
-  return spawnTool('build/dataflow/cli/flowcheck.js', args);
+function runScript(args: string[]) {
+  if (args.length === 0) {
+    console.error('You must supply a script name.');
+    return false;
+  }
+  const scriptName = args[0];
+  const scriptPath = scripts[scriptName];
+  if (!scriptPath) {
+    console.error(`Unknown script name: ${scriptName}`);
+    return false;
+  }
+  return spawnTool(scriptPath, args.slice(1));
+}
+
+/** Returns the series of steps to run the given script. */
+function runScriptSteps(scriptName: string) {
+  const runFn = (args: string[]) => runScript([scriptName, ...args]);
+  return [peg, build, runFn];
 }
 
 // Looks up the steps for `command` and runs each with `args`.

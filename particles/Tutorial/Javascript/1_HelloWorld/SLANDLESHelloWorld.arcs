@@ -11,7 +11,7 @@ particle HelloWorldParticle in 'HelloWorld.js'
 recipe HelloWorldRecipe
   `slot 'rootslotid-root' as root
   HelloWorldParticle
-    root consume root
+    root `consume root
 
   // This sets a nicer name for our recipe in the shell. Otherwise it would be displayed as "HelloWorldRecipe".
   description `Javascript Tutorial 1: Hello World`

@@ -16,19 +16,6 @@ class TestParticle : Particle() {
           log("info was updated.")
           updated = 2
         }
-      renderSlot("root")
-    }
-
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        log("onHandleSync called")
-        if (allSynced) {
-          log("All handles synced\n")
-          renderSlot("root")
-        }
-    }
-
-    private fun console(s: String) {
-      log(s)
     }
 
     override fun getTemplate(slotName: String): String {
@@ -37,8 +24,8 @@ class TestParticle : Particle() {
       val dataStr = "${data.get().toString()}\n"
 
       val infoCol = if (updated == 2) "color: blue;" else ""
-        var infoStr = "Size: ${info.size()}\n"
-        if (!info.empty()) {
+        var infoStr = "Size: ${info.size}\n"
+        if (!info.isEmpty()) {
           var i = 0
           info.forEach { info ->
             infoStr += "${(++i)}. $info | \n"
@@ -87,7 +74,7 @@ class TestParticle : Particle() {
             <td></td>
             <td><button on-click="infoclear">Clear</button></td>
             </tr>
-             </table>"""
+             </table>""".trimIndent()
       }
 
     private val data = Singleton { TestParticle_data() }
@@ -115,7 +102,7 @@ class TestParticle : Particle() {
         eventHandler("store") {
           val info = TestParticle_info()
           info.internalId = "wasm" + (++storeCount)
-          info.val_ = (this.info.size() + storeCount).toDouble()
+          info.val_ = (this.info.size + storeCount).toDouble()
           this.info.store(info)
         }
 

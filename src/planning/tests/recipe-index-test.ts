@@ -120,7 +120,29 @@ describe('RecipeIndex', () => {
     ]);
   }));
 
-  it('resolves local slots, but not a root slot', async () => {
+  it('SLANDLES SYNTAX resolves local slots, but not a root slot', Flags.withPostSlandlesSyntax(async () => {
+    assert.sameMembers(await extractIndexRecipeStrings(`
+      particle A
+        root: consume
+          detail: provide
+      particle B
+        detail: consume
+
+      recipe
+        A
+          root: consume
+        B
+    `), [
+`recipe
+  A as particle0
+    root: consume
+      detail: provide slot0
+  B as particle1
+    detail: consume slot0`
+    ]);
+  }));
+
+  it('resolves local slots, but not a root slot', Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       particle A
         consume root
@@ -140,7 +162,7 @@ describe('RecipeIndex', () => {
   B as particle1
     consume detail as slot0`
     ]);
-  });
+  }));
 
   it('SLANDLES SYNTAX resolves constraints', Flags.withPostSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`

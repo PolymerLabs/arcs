@@ -1,0 +1,9 @@
+# Some npm modules include their own WORKSPACE, so we need to ignore them from
+# our build.
+node_modules
+server/node_modules
+
+# Shell deploy scripts create symlinks to directories which include BUILD files.
+# These fail to resolve, so we need to ignore them too.
+shells/pipes-shell/web/deploy/dist
+

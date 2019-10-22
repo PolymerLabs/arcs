@@ -241,6 +241,24 @@ describe('CRDTCollection', () => {
     }));
   });
 
+  it('rejects values with missing IDs', () => {
+    const set = new CRDTCollection<{id: string}>();
+
+    const valuesWithMissingIDs: {id: string}[] = [
+      {} as {id: string},
+      {id: null},
+      {id: ''},
+    ];
+    valuesWithMissingIDs.forEach(value => {
+      assert.throws(
+          () => set.applyOperation({type: CollectionOpTypes.Add, added: value, actor: 'a', clock: {a: 1}}),
+          'CRDT value must have an ID.');
+      assert.throws(
+          () => set.applyOperation({type: CollectionOpTypes.Remove, removed: value, actor: 'a', clock: {a: 1}}),
+          'CRDT value must have an ID.');
+    });
+  });
+
   it('can merge two models', () => {
     // Original set of data common to both sets. Say that actor c added them all.
     const originalOps = [

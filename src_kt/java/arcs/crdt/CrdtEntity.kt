@@ -11,7 +11,7 @@
 
 package arcs.crdt
 
-import arcs.crdt.internal.Referencable
+import arcs.common.Referencable
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named

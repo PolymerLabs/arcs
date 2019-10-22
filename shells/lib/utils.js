@@ -24,7 +24,12 @@ const createPathMap = root => ({
   'https://$arcs/': `${root}/`,
   'https://$shells/': `${root}/shells/`,
   'https://$build/': `${root}/shells/lib/build/`,
-  'https://$particles/': `${root}/particles/`,
+  'https://$particles/': {
+    root,
+    path: '/particles/',
+    buildDir: '/bazel-bin',
+    buildOutputRegex: /\.wasm$/,
+  }
 });
 
 const init = (root, urls) => {

@@ -658,12 +658,12 @@ describe('recipe', () => {
       recipe
         \`slot 'slot-id' as root
         P0
-          root consume root
+          root \`consume root
         P1
-          root consume root
+          root \`consume root
         P2
         P3
-          root consume root`;
+          root \`consume root`;
     return str;
   };
   it('SLANDLES verifies modalities - default', async () => {
@@ -818,9 +818,23 @@ describe('recipe', () => {
           consume details as s0
     `)).recipes[0];
     assert.isTrue(recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot === recipe.requires[0].particles[1].getSlotConnectionByName('details').targetSlot, 'there is more than one slot');
-    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot, 'slot in the require section doesn\'t match slot in the recipe');
+    assert.strictEqual(recipe.slots[0], recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot, 'slot in the require section doesn\'t match slot in the recipe');
   });
-  it('recipe with require section toString method works', async () => {
+  it('SLANDLES SYNTAX recipe with require section toString method works', Flags.withPostSlandlesSyntax(async () => {
+    const recipe = (await Manifest.parse(`
+      particle B
+        root: consume
+
+      recipe
+        require
+          A as p1
+            root: consume
+        B as p2
+          root: consume s0`)).recipes[0];
+    const recipeString = 'recipe\n  require\n    A as p1\n      root: consume\n  B as p2\n    root: consume s0';
+    assert.strictEqual(recipe.toString(), recipeString.toString(), 'incorrect recipe toString method');
+  }));
+  it('recipe with require section toString method works', Flags.withPreSlandlesSyntax(async () => {
     const recipe = (await Manifest.parse(`
       particle B
         consume root
@@ -832,8 +846,8 @@ describe('recipe', () => {
         B as p2
           consume root as s0`)).recipes[0];
     const recipeString = 'recipe\n  require\n    A as p1\n      consume root\n  B as p2\n    consume root as s0';
-    assert.isTrue(recipe.toString() === recipeString.toString(), 'incorrect recipe toString method');
-  });
+    assert.strictEqual(recipe.toString(), recipeString.toString(), 'incorrect recipe toString method');
+  }));
   it('clones connections with type variables', async () => {
     const recipe = (await Manifest.parse(`
       schema Thing

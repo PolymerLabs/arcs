@@ -39,6 +39,9 @@ export class MockDriver<Data> extends Driver<Data> {
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }
+  getToken() {
+    return null;
+  }
   async send(model: Data): Promise<boolean> {
     return true;
   }

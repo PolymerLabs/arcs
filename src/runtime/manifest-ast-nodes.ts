@@ -635,7 +635,7 @@ export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide
 // Temporary move of DirectionArrow type definition and conversions so allow
 // DirectionArrow to be removed from the runtime.
 // TODO(jopra): Remove after syntax unification.
-export type DirectionArrow = '<-' | '->' | '<->' | 'consume' | 'provide' | '=';
+export type DirectionArrow = '<-' | '->' | '<->' | '`consume' | '`provide' | '=';
 
 export function arrowToDirection(arrow: DirectionArrow): Direction {
   // TODO(jopra): Remove after syntax unification.
@@ -647,9 +647,9 @@ export function arrowToDirection(arrow: DirectionArrow): Direction {
       return 'in';
     case '<->':
       return 'inout';
-    case 'consume':
+    case '`consume':
       return '`consume';
-    case 'provide':
+    case '`provide':
       return '`provide';
     case '=':
       return 'any';
@@ -671,9 +671,9 @@ export function directionToArrow(dir: Direction): DirectionArrow {
     case 'host':
       return '=';
     case '`consume':
-      return 'consume';
+      return '`consume';
     case '`provide':
-      return 'provide';
+      return '`provide';
     case 'any':
       return '=';
     default:
