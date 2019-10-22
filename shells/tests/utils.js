@@ -107,7 +107,6 @@ exports.waitFor = async function(selector, timeout) {
       reject(new Error(`timedout [${Math.floor(timeout/1e3)}] waiting for "${selector}"`));
     } else {
       const result = await deepQuerySelector(selector);
-      //console.log(result);
       if (result) {
         resolve(result);
       } else {

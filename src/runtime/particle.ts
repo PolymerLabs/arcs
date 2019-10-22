@@ -281,10 +281,9 @@ export class Particle {
 
   async setDescriptionPattern(connectionName: string, pattern): Promise<boolean> {
     const descriptions = this.handles.get('descriptions');
-    if (descriptions && descriptions instanceof PreEntityMutationHandle) {
-      // TODO(shanestephens): Fix this!
-      const entityClass = descriptions.entityClass;
+    if (descriptions) {
       if (descriptions instanceof Collection || descriptions instanceof BigCollection) {
+        const entityClass = descriptions.entityClass;
         await descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       }
       return true;
