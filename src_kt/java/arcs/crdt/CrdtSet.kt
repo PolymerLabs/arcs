@@ -12,8 +12,8 @@
 package arcs.crdt
 
 import arcs.crdt.internal.Actor
-import arcs.crdt.internal.Referencable
-import arcs.crdt.internal.ReferenceId
+import arcs.common.Referencable
+import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
