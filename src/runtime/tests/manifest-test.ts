@@ -12,7 +12,7 @@ import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
-import {Manifest} from '../manifest.js';
+import {Manifest, ErrorSeverity} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
@@ -1840,6 +1840,15 @@ resource SomeName
           iface0 = handle0`);
     assert(manifest.findInterfaceByName('Bar'));
     assert(manifest.recipes[0].normalize());
+  });
+  it('can parse a manifest containing a warning', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        Text value
+      particle Particle
+        in Foo foo`);
+    assert.equal(manifest.errors[0].severity, ErrorSeverity.Warning);
+    assert.lengthOf(manifest.allParticles, 1);
   });
   it('can parse interfaces using new-style body syntax', async () => {
     const manifest = await Manifest.parse(`

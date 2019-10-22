@@ -529,8 +529,11 @@ ${e.message}
       throw processError(e, false);
     }
     dumpErrors(manifest);
-    if (options.throwImportErrors && manifest.errors.length > 0) {
-      throw manifest.errors[0];
+    if (options.throwImportErrors) {
+      const error = manifest.errors.find(e => e.severity === ErrorSeverity.Error);
+      if (error) {
+        throw error;
+      }
     }
     return manifest;
   }
