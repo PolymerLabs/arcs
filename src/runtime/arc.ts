@@ -264,7 +264,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     switch (key.protocol) {
       case 'firebase':
       case 'pouchdb':
-        context.handles += context.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
+        context.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
         break;
       case 'volatile': {
         // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
