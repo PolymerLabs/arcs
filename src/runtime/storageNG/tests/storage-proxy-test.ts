@@ -50,7 +50,7 @@ describe('StorageProxy', async () => {
       id: 1
     });
     await storageProxy.idle();
-    assert.sameDeepMembers(handle.lastUpdate, [op, null, {A: 1}]);
+    assert.sameDeepMembers(handle.lastUpdate, [op, {A: 1}]);
   });
 
   it('will sync if desynced before returning the particle view', async () => {

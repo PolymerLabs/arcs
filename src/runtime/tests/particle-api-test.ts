@@ -100,17 +100,17 @@ describe('particle-api', () => {
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
     fooStore['_fire'] = fireFn;
     await fooHandle.set(new fooHandle.entityClass({value: 'v3'}));
-    await inspector.verify('update:{"data":{"value":"v1"},"oldData":null}',
+    await inspector.verify('update:{"data":{"value":"v1"}}',
                            'desync',
                            'sync:{"value":"v3"}');
 
     // Check it includes the previous value (v3) in updates.
     await fooHandle.set(new fooHandle.entityClass({value: 'v4'}));
-    await inspector.verify('update:{"data":{"value":"v4"},"oldData":{"value":"v3"}}');
+    await inspector.verify('update:{"data":{"value":"v4"}}');
 
     // Check clearing the store.
     await fooHandle.clear();
-    await inspector.verify('update:{"data":null,"oldData":{"value":"v4"}}');
+    await inspector.verify('update:{"data":null}');
   });
 
   it('can sync/update and store/remove with collections', async () => {

@@ -455,9 +455,8 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
       }
       return null;
     }
-    const oldData = this.model;
     this.model = update.data;
-    return {...update, oldData};
+    return {...update};
   }
 
   // Read ops: if we're synchronized we can just return the local copy of the data.
@@ -488,12 +487,11 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
     } else {
       barrier = null;
     }
-    const oldData = this.model;
     // TODO: is this already a clone?
     this.model = JSON.parse(JSON.stringify(entity));
     this.barrier = barrier;
     this.port.HandleSet(this, entity, particleId, barrier);
-    const update = {originatorId: particleId, data: entity, oldData};
+    const update = {originatorId: particleId, data: entity};
     this._notify('update', update, options => options.notifyUpdate);
     return Promise.resolve();
   }
@@ -503,11 +501,10 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
       return Promise.resolve();
     }
     const barrier = this.generateBarrier();
-    const oldData = this.model;
     this.model = null;
     this.barrier = barrier;
     this.port.HandleClear(this, particleId, barrier);
-    const update = {originatorId: particleId, data: null, oldData};
+    const update = {originatorId: particleId, data: null};
     this._notify('update', update, options => options.notifyUpdate);
     return Promise.resolve();
   }

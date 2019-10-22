@@ -122,8 +122,8 @@ export class MockHandle<T extends CRDTTypeRecord> extends Handle<T> {
   onSync() {
     this.onSyncCalled = true;
   }
-  onUpdate(op: CRDTOperation, oldData: CRDTConsumerType, version: VersionMap) {
-    this.lastUpdate = [op, oldData, version];
+  onUpdate(op: CRDTOperation, version: VersionMap) {
+    this.lastUpdate = [op, version];
   }
 }
 
