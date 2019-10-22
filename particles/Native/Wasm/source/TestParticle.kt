@@ -1,5 +1,6 @@
-package arcs
+package arcs.test
 
+import arcs.*
 import kotlin.native.internal.ExportForCppRuntime
 
 /**

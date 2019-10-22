@@ -1,5 +1,8 @@
-package arcs
+package arcs.test
 
+import arcs.Particle
+import arcs.log
+import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class ServiceParticle : Particle() {
