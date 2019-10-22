@@ -14,7 +14,6 @@ import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {Utils} from '../../lib/utils.js';
 import {instantiateRecipeByName} from './lib/utils.js';
 import {requireContext} from './context.js';
-import {requireIngestionArc} from './ingestion-arc.js';
 import {dispatcher} from './dispatcher.js';
 import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
@@ -27,7 +26,6 @@ const {log} = logsFactory('pipe');
 
 const manifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
-import 'https://$particles/PipeApps/Ingestion.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
@@ -50,9 +48,7 @@ export const initPipe = async (client, paths, storage) => {
 
 // TODO(sjmiles): must be called only after `window.ShellApi` is initialized
 export const initArcs = async (storage, bus) => {
-  // marshal ingestion arc
   // TODO(sjmiles): "live context" tool (for demos)
-  await requireIngestionArc(storage, bus);
   // marshal context
   const context = await requireContext(manifest);
   // send pipe identifiers to client
@@ -60,7 +56,7 @@ export const initArcs = async (storage, bus) => {
 };
 
 const identifyPipe = async (context, bus) => {
-  const recipes = context.allRecipes.map(r => r.name);
+  const recipes = context.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
   bus.send({message: 'ready', recipes});
 };
 

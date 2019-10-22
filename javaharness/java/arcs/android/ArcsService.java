@@ -5,11 +5,14 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
+import arcs.api.PortableJson;
 
 /**
  * ArcsService wraps Arcs runtime. Other Android activities/services are expected to connect to
@@ -22,12 +25,23 @@ public class ArcsService extends Service {
   @Inject
   ArcsShellApi arcsShellApi;
 
+  @Inject
+  AndroidArcsEnvironment environment;
+
   @Override
   public void onCreate() {
     super.onCreate();
     Log.d(TAG, "onCreate()");
     DaggerArcsServiceComponent.builder().build().inject(this);
     arcsShellApi.init(this);
+    environment.addReadyListener(recipes -> {
+      recipes.forEach(recipe -> {
+        ArcData arcData = findStartupTrigger(recipe);
+        if (arcData != null) {
+          arcsShellApi.startArc(arcData);
+        }
+      });
+    });
   }
 
   @Override
@@ -82,5 +96,25 @@ public class ArcsService extends Service {
         arcsShellApi.registerRemoteRenderer(modality, callback);
       }
     };
+  }
+
+  private ArcData findStartupTrigger(PortableJson recipe) {
+    // Consider creating a helper class for recipe.
+    PortableJson triggers = recipe.getArray("triggers");
+    for (int j = 0; j < triggers.getLength(); ++j) {
+      Map<String, String> triggersMap = new HashMap<>();
+      for (int k = 0; k < triggers.getArray(j).getLength(); ++k) {
+        triggersMap.put(triggers.getArray(j).getArray(k).getString(0), triggers.getArray(j).getArray(k).getString(1));
+      }
+      if ("startup".equals(triggersMap.get("launch"))) {
+        String recipeName = recipe.getString("name");
+        ArcData.Builder arcDataBuilder = new ArcData.Builder().setRecipe(recipeName);
+        if (triggersMap.containsKey("arcId")) {
+          arcDataBuilder.setArcId(triggersMap.get("arcId"));
+        }
+        return arcDataBuilder.build();
+      }
+    }
+    return null;
   }
 }

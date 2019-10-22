@@ -61,7 +61,10 @@ class ArcsShellApi {
             },
             jsonParser);
     pecPortManager.addPecInnerPortProxy(arcData.getPecId(), pecInnerPortProxy);
+    startArc(arcData);
+  }
 
+  void startArc(ArcData arcData) {
     runWhenReady(() -> {
       PecInnerPort pecInnerPort = null;
       for (ArcData.ParticleData particleData : arcData.getParticleList()) {
