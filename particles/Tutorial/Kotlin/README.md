@@ -55,9 +55,7 @@ class HelloWorldParticle : Particle() {
 // available outside the wasm modue.
 @Retain
 @ExportForCppRuntime("_newHelloWorldParticle")
-fun constructHelloWorldParticle(): WasmAddress {
-    return HelloWorldParticle().toWasmAddress()
-}
+fun constructHelloWorldParticle(): WasmAddress = HelloWorldParticle().toWasmAddress()
 ```
 
 Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. Here's an example Bazel BUILD file for HelloWorld:
