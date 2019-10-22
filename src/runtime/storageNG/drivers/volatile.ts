@@ -45,6 +45,7 @@ export class VolatileStorageKey extends StorageKey {
 
 export class VolatileMemory {
   entries = new Map<string, VolatileEntry<unknown>>();
+  token = Math.random() + '';
 }
 
 export class VolatileDriver<Data> extends Driver<Data> {
@@ -81,6 +82,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
           } else {
             this.data = {data: null, version: 0, drivers: []};
             this.memory.entries.set(keyAsString, this.data as VolatileEntry<unknown>);
+            this.memory.token = Math.random() + '';
           }
           break;
         }
@@ -90,13 +92,15 @@ export class VolatileDriver<Data> extends Driver<Data> {
     this.data.drivers.push(this);
   }
 
-  registerReceiver(receiver: ReceiveMethod<Data>) {
+  registerReceiver(receiver: ReceiveMethod<Data>, token?: string) {
     this.receiver = receiver;
-    if (this.pendingModel) {
+    if (this.pendingModel && token !== this.memory.token) {
       receiver(this.pendingModel, this.pendingVersion);
-      this.pendingModel = null;
     }
+    this.pendingModel = null;
   }
+
+  getToken() { return this.memory.token; }
 
   async send(model: Data, version: number): Promise<boolean> {
     // This needs to contain an "empty" await, otherwise there's
