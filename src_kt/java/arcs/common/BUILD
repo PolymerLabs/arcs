@@ -1,11 +1,11 @@
 package(default_visibility = ["//visibility:public"])
 
-load("//build_defs:build_defs.bzl", "kt_arcs_library")
+load("//build_defs:build_defs.bzl", "kt_jvm_and_js_library")
 
-kt_arcs_library(
+kt_jvm_and_js_library(
     name = "common",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/util"
+        "//src_kt/java/arcs/util"
     ]
 )
