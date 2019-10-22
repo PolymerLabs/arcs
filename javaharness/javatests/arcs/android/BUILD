@@ -8,6 +8,6 @@ java_test(
     deps = [
         "//javaharness/java/arcs/android",
         "//javaharness/java/arcs/api:api-android",
-        "@junit//jar",
+        "@maven//:junit_junit",
     ],
 )

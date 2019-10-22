@@ -15,8 +15,8 @@ android_library(
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//javaharness/java/arcs/crdt:crdt-android",
-        "@com_google_dagger",
-        "@javax_inject_source//jar",
-        "@org_json//jar",
+        "@maven//:com_google_dagger_dagger",
+        "@maven//:javax_inject_javax_inject",
+        "@maven//:org_json_json",
     ],
 )

@@ -14,7 +14,7 @@ android_library(
     ]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
-      "@com_google_dagger",
-      "@javax_inject_source//jar",
+        "@maven//:com_google_dagger_dagger",
+        "@maven//:javax_inject_javax_inject",
     ],
 )
