@@ -11,7 +11,7 @@ android_library(
     name = "android",
     srcs = glob(["*.java"]),
     assets = [
-        "//shells/pipes-shell:pipes_shell_web",
+        "//third_party/javascript/arcs:pipes-shell-assets",
     ],
     assets_dir = "pipes_shell_web_dist",
     exports_manifest = 1,
