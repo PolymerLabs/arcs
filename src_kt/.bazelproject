@@ -2,6 +2,7 @@ directories:
   src_kt/java/arcs
   src_kt/javatests/arcs
   src_kt/project
+  build_defs
 
 targets:
   //src_kt/java/...
