@@ -522,8 +522,12 @@ ParticleHandleConnectionBodyPreSlandle
   }
 
 NameWithColon
-  = &(unsafeLowerIdent whiteSpace? ':') name:lowerIdent whiteSpace? ':' whiteSpace?
+  = &((unsafeLowerIdent / '*') whiteSpace? ':') name:(lowerIdent / '*') whiteSpace? ':' whiteSpace?
   {
+    // TODO(jopra): Remove ability to use "*: <def>" syntax and instead use anonymous "<def>".
+    if (name === '*') {
+      return null;
+    }
     return name;
   }
 
@@ -1109,8 +1113,25 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
+  = RecipeHandlePreSlandle
+  / RecipeHandleUnified
+
+RecipeHandleUnified
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? eolWhiteSpace
+  {
+    requireUsePostSlandleSyntax();
+    return toAstNode<AstNode.RecipeHandle>({
+      kind: 'handle',
+      name,
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
+      fate
+    });
+  }
+
+RecipeHandlePreSlandle
   = type:RecipeHandleFate ref:(whiteSpace HandleRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name: optional(name, name => name[1], null),

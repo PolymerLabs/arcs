@@ -45,7 +45,7 @@ describe('ConvertConstraintsToConnections', () => {
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as handle0 // S {}
+  handle0: create // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -213,7 +213,7 @@ describe('ConvertConstraintsToConnections', () => {
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as handle0 // S {}
+  handle0: create // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -264,7 +264,7 @@ describe('ConvertConstraintsToConnections', () => {
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as handle0 // S {}
+  handle0: create // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -316,7 +316,7 @@ describe('ConvertConstraintsToConnections', () => {
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as handle0 // S {}
+  handle0: create // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -360,7 +360,7 @@ describe('ConvertConstraintsToConnections', () => {
 
       recipe
         A.b: out C.d
-        use as handle1
+        handle1: use
         C
           d: inout handle1
         A`);
@@ -371,7 +371,7 @@ describe('ConvertConstraintsToConnections', () => {
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as handle0 // S {}
+  handle0: use // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -417,7 +417,7 @@ describe('ConvertConstraintsToConnections', () => {
 
       recipe
         A.b: out C.d
-        use as handle1
+        handle1: use
         C
         A
           b: any handle1`);
@@ -428,7 +428,7 @@ describe('ConvertConstraintsToConnections', () => {
     const {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as handle0 // S {}
+  handle0: use // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -474,7 +474,7 @@ describe('ConvertConstraintsToConnections', () => {
 
       recipe
         A.b: out C.d
-        use as handle1
+        handle1: use
         C
           d: inout handle1
         A
@@ -485,7 +485,7 @@ describe('ConvertConstraintsToConnections', () => {
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
-  use as handle0 // S {}
+  handle0: use // S {}
   A as particle0
     b: inout handle0
   C as particle1
@@ -593,7 +593,7 @@ describe('ConvertConstraintsToConnections', () => {
       particle B
         i: in S {}
       recipe
-        ? as h
+        h: ?
         A.o: out h
         h: out B.i
     `);
@@ -602,7 +602,7 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? as handle0 // S {}
+  handle0: ? // S {}
   A as particle0
     o: out handle0
   B as particle1
@@ -640,7 +640,7 @@ describe('ConvertConstraintsToConnections', () => {
       particle B
         i: in S {}
       recipe
-        ? as h
+        h: ?
         A.o: out h
         h: out B.i
         A
@@ -651,7 +651,7 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? as handle0 // S {}
+  handle0: ? // S {}
   A as particle0
     o: out handle0
   B as particle1
@@ -691,7 +691,7 @@ describe('ConvertConstraintsToConnections', () => {
       particle B
         i: in S {}
       recipe
-        ? as h
+        h: ?
         A.o: out h
         h: out B.i
         A
@@ -703,7 +703,7 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? as handle0 // S {}
+  handle0: ? // S {}
   A as particle0
     o: out handle0
   B as particle1
@@ -744,8 +744,8 @@ describe('ConvertConstraintsToConnections', () => {
       particle B
         i: in S {}
       recipe
-        ? as h
-        ? as j
+        h: ?
+        j: ?
         A.o: out h
         h: out B.i
         A
@@ -757,8 +757,8 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? as handle0 // ~
-  ? as handle1 // S {}
+  handle0: ? // ~
+  handle1: ? // S {}
   A as particle0
     o: out handle0
   A as particle1
@@ -805,7 +805,7 @@ describe('ConvertConstraintsToConnections', () => {
     particle B
       i: out S {}
     recipe
-      ? #hashtag
+      *: ? #hashtag
       A.o: out #hashtag
       #trashbag: in B.i
     `);
@@ -814,8 +814,8 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? #hashtag as handle0 // ~
-  create #trashbag as handle1 // ~
+  handle0: ? #hashtag // ~
+  handle1: create #trashbag // ~
   A as particle0
     o: out handle0
   B as particle1
@@ -854,7 +854,7 @@ describe('ConvertConstraintsToConnections', () => {
     particle B
       i: out S {}
     recipe
-      ? #hashtag
+      *: ? #hashtag
       A.o: out #hashtag
       #trashbag: in B.i
       A
@@ -865,8 +865,8 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? #hashtag as handle0 // ~
-  create #trashbag as handle1 // ~
+  handle0: ? #hashtag // ~
+  handle1: create #trashbag // ~
   A as particle0
     o: out handle0
   B as particle1
@@ -907,7 +907,7 @@ describe('ConvertConstraintsToConnections', () => {
     particle B
       i: out S {}
     recipe
-      ? #hashtag as handle0
+      handle0: ? #hashtag
       A.o: out #hashtag
       #trashbag: in B.i
       A
@@ -920,7 +920,7 @@ describe('ConvertConstraintsToConnections', () => {
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? #hashtag as handle0 // ~
+  handle0: ? #hashtag // ~
   A as particle0
     o: out handle0
   B as particle1
