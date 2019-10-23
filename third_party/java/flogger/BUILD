@@ -8,10 +8,7 @@ java_library(
     runtime_deps = ["@maven//:com_google_flogger_flogger_system_backend"],
 )
 
-
-java_library(
+alias(
     name = "android",
-    exports = ["@maven//:com_google_flogger_flogger"],
-    runtime_deps = ["@maven//:com_google_flogger_flogger_system_backend"],
+    actual = ":flogger",
 )
-
