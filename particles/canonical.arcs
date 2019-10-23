@@ -16,7 +16,7 @@ import 'Magenta/Visualizer.arcs'
 import 'Arcs/schemas/ArcMeta.arcs'
 // Tutorials
 import 'Tutorial/Javascript/Tutorial.arcs'
-//import 'Tutorial/Kotlin/Tutorial.arcs'
+import 'Tutorial/Kotlin/Tutorial.arcs'
 // Other
 import 'TicTacToe/TicTacToe.arcs'
 //import 'Native/native.arcs'
