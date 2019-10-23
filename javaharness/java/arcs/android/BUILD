@@ -19,15 +19,12 @@ android_library(
     idl_srcs = glob(["*.aidl"]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     manifest = "AndroidManifest.xml",
-    plugins = [
-        "//javaharness:dagger_compiler",
-    ],
     resource_files = glob(["res/**"]),
     deps = [
-        "//javaharness:autovalue",
+        "//third_party/java/auto:auto_value",
         "//javaharness/java/arcs/api:api-android",
-        "@maven//:com_google_dagger_dagger",
-        "@maven//:com_google_flogger_flogger_system_backend",
-        "@maven//:javax_inject_javax_inject",
+        "//third_party/java/dagger",
+        "//third_party/java/flogger",
+        "//third_party/java/jsr330_inject",
     ],
 )
