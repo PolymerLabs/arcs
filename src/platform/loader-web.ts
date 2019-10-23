@@ -27,15 +27,20 @@ export class Loader extends LoaderBase {
     return this.loadStatic(path) || this.loadURL(path);
   }
   async provisionObjectUrl(fileName: string) {
-    const raw = await this.loadResource(fileName);
-    const path = this.resolve(fileName);
-    const code = `${raw}\n//# sourceURL=${path}`;
-    return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+    if (fileName.endsWith('.wasm')) {
+      return null;
+    } else {
+      const raw = await this.loadResource(fileName);
+      const path = this.resolve(fileName);
+      const code = `${raw}\n//# sourceURL=${path}`;
+      return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+    }
   }
   // TODO(sjmiles): integrate this into loadResource?
   async loadWasmBinary(spec): Promise<ArrayBuffer> {
     this.mapParticleUrl(spec.implFile);
-    const target = spec.implBlobUrl || this.resolve(spec.implFile);
+    // TODO(sjmiles): BLOB Urls don't seem to work for .wasm (?)
+    const target = /*spec.implBlobUrl ||*/ this.resolve(spec.implFile);
     return fetch(target).then(res => res.arrayBuffer());
   }
   async requireParticle(unresolvedPath: string, blobUrl: string) {
