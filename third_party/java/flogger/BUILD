@@ -7,3 +7,11 @@ java_library(
     exports = ["@maven//:com_google_flogger_flogger"],
     runtime_deps = ["@maven//:com_google_flogger_flogger_system_backend"],
 )
+
+
+java_library(
+    name = "android",
+    exports = ["@maven//:com_google_flogger_flogger"],
+    runtime_deps = ["@maven//:com_google_flogger_flogger_system_backend"],
+)
+

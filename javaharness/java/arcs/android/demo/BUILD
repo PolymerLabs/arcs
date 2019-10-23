@@ -17,7 +17,7 @@ android_binary(
         "//javaharness/java/arcs/android",
         "//javaharness/java/arcs/api:api-android",
         "//third_party/java/dagger",
-        "//third_party/java/flogger",
+        "//third_party/java/flogger:android",
         "//third_party/java/jsr330_inject",
     ],
 )
