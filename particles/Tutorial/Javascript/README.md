@@ -4,7 +4,7 @@ Welcome to developing using Arcs! By using Arcs as the platform for your system,
 
 Before we get to code, it is important that we are all speaking the same language, so we present two definitions to start.
 
->- *Particle* - Modular component of functionality. Ideally small units so particles can be interchangeable. 
+>- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable. 
 >- *Recipe* - A combination of particles to create features and systems.
 
 Particles and recipes are defined using the Arcs Manifest Language and implemented in Javascript, Kotlin, or C++.  The best way to understand this is to jump into some code. Let’s look at how Hello World is implemented.

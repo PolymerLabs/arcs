@@ -1,5 +1,7 @@
-package arcs
+package arcs.tutorials
 
+import arcs.Particle
+import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -13,6 +15,4 @@ class ParentParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newParentParticle")
-fun constructParentParticle(): WasmAddress {
-    return ParentParticle().toWasmAddress()
-}
+fun _newParentParticle(): WasmAddress = ParentParticle().toWasmAddress()
