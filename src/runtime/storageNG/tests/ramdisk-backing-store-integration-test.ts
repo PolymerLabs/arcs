@@ -45,6 +45,7 @@ describe('RamDisk + Backing Store Integration', async () => {
       type: new CountType(),
       mode: StorageMode.Backing,
       baseStore,
+      versionToken: null
     });
 
     const count1 = new CRDTCount();
