@@ -5,7 +5,7 @@ package(default_visibility = [
     "//javaharness/javatests/arcs:__subpackages__",
 ])
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//tools/build_defs/android:rules.bzl", "android_library")
 
 android_library(
     name = "api-android",

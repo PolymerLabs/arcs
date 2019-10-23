@@ -6,7 +6,7 @@ java_test(
     srcs = glob(["*.java"]),
     test_class = "arcs.api.AllTests",
     deps = [
-        "//third_party/java/junit",
         "//javaharness/java/arcs/api:api-android",
+        "//third_party/java/junit",
     ],
 )

@@ -6,8 +6,8 @@ java_test(
     srcs = glob(["*.java"]),
     test_class = "arcs.crdt.AllTests",
     deps = [
-        "//third_party/java/junit",
         "//javaharness/java/arcs/api:api-android",
         "//javaharness/java/arcs/crdt:crdt-android",
+        "//third_party/java/junit",
     ],
 )
