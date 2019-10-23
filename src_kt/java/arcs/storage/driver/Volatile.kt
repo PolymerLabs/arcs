@@ -180,7 +180,7 @@ internal data class VolatileEntry<Data : Any>(
  */
 internal class VolatileMemory {
   private val lock = Any()
-  private val entries: HashMap<StorageKey, VolatileEntry<*>> = hashMapOf()
+  private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
 
   /** Current token. Will be updated with every call to [set]. */
   var token: String = Random.nextInt().toString()
