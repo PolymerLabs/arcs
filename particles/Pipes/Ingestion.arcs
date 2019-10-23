@@ -6,9 +6,6 @@ schema IncomingEntity
 particle Ingestion in './source/Noop.js'
   in [IncomingEntity] entities
 
-@trigger
-  launch startup
-  arcId classicingestionarc
 recipe Ingestion
   create #incomingEntities as entities
   Ingestion
