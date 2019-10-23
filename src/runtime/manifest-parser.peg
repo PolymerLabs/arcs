@@ -524,7 +524,7 @@ ParticleHandleConnectionBodyPreSlandle
 NameWithColon
   = &((unsafeLowerIdent / '*') whiteSpace? ':') name:(lowerIdent / '*') whiteSpace? ':' whiteSpace?
   {
-    // TODO(jopra): Remove ability to use "*: <def>" syntax and instead use anonymouse "<def>".
+    // TODO(jopra): Remove ability to use "*: <def>" syntax and instead use anonymous "<def>".
     if (name === '*') {
       return null;
     }
