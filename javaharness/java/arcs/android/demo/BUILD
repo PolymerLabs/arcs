@@ -19,6 +19,5 @@ android_binary(
         "//third_party/java/dagger",
         "//third_party/java/flogger",
         "//third_party/java/jsr330_inject",
-        "@maven//:com_google_flogger_flogger_system_backend",
     ],
 )

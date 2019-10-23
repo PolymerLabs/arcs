@@ -2,8 +2,8 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-alias(
-  name = "flogger",
-  actual = "@maven//:com_google_flogger_flogger",
+java_library(
+    name = "flogger",
+    exports = ["@maven//:com_google_flogger_flogger"],
+    runtime_deps = ["@maven//:com_google_flogger_flogger_system_backend"],
 )
-
