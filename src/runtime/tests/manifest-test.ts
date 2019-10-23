@@ -1530,7 +1530,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         schema Thing
         store Store0 of [Thing] in 'entities.json'
         recipe
-          map Store0 as myStore`;
+          myStore: map Store0`;
     const entitySource = JSON.stringify([]);
     const loader = new StubLoader({
       'the.manifest': manifestSource,
