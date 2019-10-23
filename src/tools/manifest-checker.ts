@@ -40,7 +40,7 @@ async function checkManifest(src: string) {
   for (const particle of manifest.particles) {
     const implFile = particle.implFile;
     if (implFile.endsWith('.wasm')) {
-      await loader.loadWasmBinary(implFile);
+      await loader.loadWasmBinary(particle);
     } else {
       await loader.loadResource(implFile);
     }
