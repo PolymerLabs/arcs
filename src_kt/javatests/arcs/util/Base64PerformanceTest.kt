@@ -30,7 +30,7 @@ import kotlin.system.measureNanoTime
 /**
  * Performance comparison tests between Arcs' implementation of Base64-encoding/decoding and Java's.
  */
-@Ignore // Remove to run manually.
+@Ignore // Remove to run manually. (Disabled because of unpredictable perf characteristics in CI.)
 @RunWith(Parameterized::class)
 class Base64PerformanceTest {
   private val random = SecureRandom()
