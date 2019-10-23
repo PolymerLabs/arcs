@@ -96,14 +96,28 @@ class StringDecoder(private var str: String) {
 class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     companion object {
-      fun encodeDictionary(dict: Map<String, String>): String {
+      fun <t> encodeDictionary(dict: Map<String, t>): String {
         val sb = StringBuilder()
         sb.append(dict.size).append(":")
 
-        for((key, value) in dict) {
+        for((key, v) in dict) {
           sb.append(key.length).append(":").append(key)
-          sb.append(value.length).append(":").append(value)
+          when {
+            v is String -> {
+              log("v is a string: ${v}")
+              sb.append("T").append(v.length).append(":").append(v)
+            }
+            v is Map<*, *> -> {
+              log("v is a map!")
+              val dictString = encodeDictionary(v as Map<String, t>);
+              sb.append("D").append(dictString.length).append(":").append(dictString)
+            }
+            else -> {
+              throw IllegalArgumentException("Unknown Expression.")
+            }
+          } 
         }
+        log("Encoded Dictionary is: ${sb.toString()}")
         return sb.toString()
       }
     }
