@@ -8,8 +8,8 @@
 
 // TODO(jopra): Finish conversion to use SLANDLES
 interface HostedParticleInterface
-  in ~a *
-  consume item
+  in ~a
+  item: consume?
 
 // row lists
 
@@ -42,8 +42,8 @@ particle SelectableList in 'source/List.js'
 // tile lists
 
 interface HostedTileParticleInterface
-  in ~a *
-  consume tile
+  in ~a
+  tile: consume
 
 particle TileMultiplexer in 'source/SLANDLESMultiplexer.js'
   hostedParticle: host HostedTileParticleInterface

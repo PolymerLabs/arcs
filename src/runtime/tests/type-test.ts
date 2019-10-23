@@ -304,7 +304,7 @@ describe('types', () => {
 `interface i
   any Foo {Text value} foo
   any ~a *
-  consume x `);
+  consume x`);
     });
 
     // Regression test for https://github.com/PolymerLabs/arcs/issues/2575

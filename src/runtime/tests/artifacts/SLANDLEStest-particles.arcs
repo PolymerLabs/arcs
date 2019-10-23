@@ -17,8 +17,8 @@ particle SlandleTestParticle in 'test-particle.js'
   description `test particle`
 
 interface SlandleTestInterface
-  in Foo foo
-  out Bar bar
+  foo: in Foo
+  bar: out Bar
 
 particle SlandleOuterParticle in 'outer-particle.js'
   particle0: host SlandleTestInterface
