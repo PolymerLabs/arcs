@@ -4,7 +4,7 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//build_defs/kotlin_native:build_defs.bzl", "kt_wasm_binary", "kt_wasm_library")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library", "kt_js_library", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library", "kt_js_library", "kt_jvm_library", "kt_js_import")
 
 _ARCS_KOTLIN_LIBS = ["//src/wasm/kotlin:arcs_wasm"]
 
@@ -36,20 +36,49 @@ def kt_jvm_and_js_library(
     kt_jvm_library(
         name = name,
         srcs = srcs,
-        deps = deps,
+        deps = [_to_jvm_dep(dep) for dep in deps],
     )
 
-    kt_js_library(
-        name = "%s-js" % name,
-        srcs = srcs,
-        deps = [_to_js_dep(dep) for dep in deps],
-    )
+    # Disabled while https://github.com/bazelbuild/rules_kotlin/issues/219 is unfixed.
+    # kt_js_library(
+    #    name = "%s-js" % name,
+    #    srcs = srcs,
+    #    deps = [_to_js_dep(dep) for dep in deps],
+    #)
+
+def _to_jvm_dep(dep):
+    return dep
 
 def _to_js_dep(dep):
     last_part = dep.split("/")[-1]
+
+    if (dep.find("@maven") == 0):
+        return _kt_js_import_for_thirdparty(dep)
 
     index_of_colon = dep.find(":")
     if (index_of_colon == -1):
         return dep + (":%s-js" % last_part)
     else:
         return dep + "-js"
+
+def _kt_js_import_for_thirdparty(thirdparty_dep):
+    name = "unknown"
+    version = ""
+    maven_name = "unknown"
+    if (thirdparty_dep == "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core"):
+        name = "kotlinx-coroutines-core-js"
+        version = "1.3.2"
+        maven_name = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_js"
+    if (thirdparty_dep == "@maven//:org_jetbrains_kotlinx_atomicfu"):
+        name = "atomicfu-js"
+        version = "0.13.1"
+        maven_name = "@maven//:org_jetbrains_kotlinx_atomicfu_js"
+
+    kt_js_import(
+        name = name,
+        jars = [maven_name],
+        srcjar = "%s-%s-sources.jar" % (name, version)
+    )
+
+    return ":%s" % name
+
