@@ -43,10 +43,4 @@ interface Driver<Data : Any> {
 
   /** Sends data to the [Driver] for storage. */
   suspend fun send(data: Data, version: Int): Boolean
-
-  enum class ExistenceCriteria {
-    ShouldExist,
-    ShouldCreate,
-    MayExist
-  }
 }

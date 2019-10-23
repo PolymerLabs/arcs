@@ -12,7 +12,7 @@
 package arcs.storage.driver
 
 import arcs.common.ArcId
-import arcs.storage.Driver.ExistenceCriteria
+import arcs.storage.ExistenceCriteria
 import arcs.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking

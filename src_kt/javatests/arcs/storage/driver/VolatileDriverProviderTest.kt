@@ -12,8 +12,8 @@
 package arcs.storage.driver
 
 import arcs.common.ArcId
-import arcs.storage.Driver
 import arcs.storage.DriverFactory
+import arcs.storage.ExistenceCriteria
 import arcs.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -76,11 +76,11 @@ class VolatileDriverProviderTest {
     val driver =
       fooProvider.getDriver<Int>(
         VolatileStorageKey(arcIdFoo, "myfoo"),
-        Driver.ExistenceCriteria.ShouldCreate
+        ExistenceCriteria.ShouldCreate
       )
 
     assertThat(driver).isNotNull()
     assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
-    assertThat(driver.existenceCriteria).isEqualTo(Driver.ExistenceCriteria.ShouldCreate)
+    assertThat(driver.existenceCriteria).isEqualTo(ExistenceCriteria.ShouldCreate)
   }
 }

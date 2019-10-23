@@ -11,6 +11,37 @@
 
 package arcs.storage
 
-interface Store {
-  // TODO: Everything.
+import arcs.crdt.CrdtData
+import arcs.crdt.CrdtOperation
+
+interface Store<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+  val storageKey: StorageKey
+  val existenceCriteria: ExistenceCriteria
+  val mode: Mode
+  //val type: Type
+
+  /**
+   * Modes for Storage.
+   *
+   * TODO: need actual, helpful kdoc for these.
+   */
+  enum class Mode {
+    Direct,
+    Backing,
+    ReferenceMode,
+  }
+
+  /** Wrapper for options which will be used to construct a [Store]. */
+  data class ConstructorOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+    val storageKey: StorageKey,
+    val existenceCriteria: ExistenceCriteria,
+    val mode: Mode,
+    // val type: Type
+    val baseStore: Store<Data, Op, ConsumerData>
+  )
 }
+
+interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+  fun getStorageEndpoint()
+}
+

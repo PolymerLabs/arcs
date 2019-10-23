@@ -14,7 +14,7 @@ package arcs.storage.driver
 import arcs.common.ArcId
 import arcs.common.toArcId
 import arcs.storage.Driver
-import arcs.storage.Driver.ExistenceCriteria
+import arcs.storage.ExistenceCriteria
 import arcs.storage.DriverFactory
 import arcs.storage.DriverProvider
 import arcs.storage.StorageKey
