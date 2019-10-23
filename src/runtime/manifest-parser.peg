@@ -243,8 +243,13 @@ InterfaceItem
   / InterfaceArgument
 
 InterfaceArgument
+  = InterfaceArgumentPreSlandlesSyntax
+  / InterfaceArgumentUnified
+
+InterfaceArgumentPreSlandlesSyntax
   = direction:(Direction whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
+    requireUsePreSlandleSyntax();
     direction = optional(direction, dir => dir[0], 'any');
     if (direction === 'host') {
       error(`Interface cannot have arguments with a 'host' direction.`);
@@ -257,15 +262,58 @@ InterfaceArgument
     });
   }
 
+InterfaceArgumentUnified
+  = name:NameWithColon? direction:Direction type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
+  {
+    requireUsePostSlandleSyntax();
+    name = name || '*';
+    if (direction === 'host') {
+      error(`Interface cannot have arguments with a 'host' direction.`);
+    }
+    return toAstNode<AstNode.InterfaceArgument>({
+      kind: 'interface-argument',
+      direction,
+      type: optional(type, ty => ty[1], null),
+      name,
+    });
+  }
+
 InterfaceSlot
+  = InterfaceSlotPreSlandles
+  / InterfaceSlotUnified
+
+
+InterfaceSlotPreSlandles
   = isRequired:('must' whiteSpace)? direction:('consume' / 'provide') isSet:(whiteSpace 'set of')? name:(whiteSpace lowerIdent)? eolWhiteSpace
   {
+    requireUsePreSlandleSyntax();
     return toAstNode<AstNode.InterfaceSlot>({
       kind: 'interface-slot',
       name: optional(name, isRequired => name[1], null),
       isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       direction,
       isSet: !!isSet,
+    });
+  }
+
+InterfaceSlotUnified
+  = name: NameWithColon? direction:('consume' / 'provide') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
+  {
+    requireUsePostSlandleSyntax();
+    let isSet = false;
+    if (type) {
+      type = type[1]; // remove the whitespace.
+      isSet = type.isSet;
+      type.fields.forEach(({name, value}) => {
+        error(`interface slots do not currently support fields`);
+      });
+    }
+    return toAstNode<AstNode.InterfaceSlot>({
+      kind: 'interface-slot',
+      name,
+      isRequired: !isOptional,
+      direction,
+      isSet,
     });
   }
 
