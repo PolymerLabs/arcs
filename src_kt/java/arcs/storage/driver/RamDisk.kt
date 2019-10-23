@@ -51,6 +51,14 @@ class RamDiskDriverProvider : DriverProvider {
     require(willSupport(storageKey)) { "This provider does not support StorageKey: $storageKey" }
     return VolatileDriver(storageKey, existenceCriteria, RamDisk.memory)
   }
+
+  /*
+   * These ensure that if/when RamDiskDriverProvider is placed in a set, or used as a key for a map,
+   * it's only used once.
+   */
+
+  override fun equals(other: Any?): Boolean = other is RamDiskDriverProvider
+  override fun hashCode(): Int = this::class.hashCode()
 }
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs . */

@@ -13,9 +13,11 @@ package arcs.storage.driver
 
 import arcs.common.ArcId
 import arcs.storage.Driver.ExistenceCriteria
+import arcs.storage.DriverFactory
 import arcs.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -23,6 +25,25 @@ import org.junit.runners.JUnit4
 /** Tests for [RamDiskDriverProvider]. */
 @RunWith(JUnit4::class)
 class RamDiskDriverProviderTest {
+  @After
+  fun teardown() = DriverFactory.clearRegistrationsForTesting()
+
+  @Test
+  fun registersSelfWithDriverFactory() {
+    RamDiskDriverProvider() // Constructor registers self.
+
+    assertThat(DriverFactory.willSupport(RamDiskStorageKey("foo"))).isTrue()
+  }
+
+  @Test
+  fun differentInstances_treatedAsEqual() {
+    val providerA = RamDiskDriverProvider()
+    val providerB = RamDiskDriverProvider()
+
+    assertThat(providerA).isEqualTo(providerB)
+    assertThat(providerA.hashCode()).isEqualTo(providerB.hashCode())
+  }
+
   @Test
   fun willSupport_returnsTrue_whenRamDiskKey() {
     val provider = RamDiskDriverProvider()
