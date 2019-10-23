@@ -193,7 +193,7 @@ export class InterfaceInfo {
   _handleConnectionsToManifestString() {
     return this.handleConnections
       .map(h => {
-        if(Flags.usePreSlandlesSyntax) {
+        if (Flags.usePreSlandlesSyntax) {
           return `  ${h.direction || 'any'} ${h.type.toString()} ${h.name ? h.name : '*'}`;
         } else {
           const nameStr = h.name ? `${h.name}: ` : '';
@@ -206,7 +206,7 @@ export class InterfaceInfo {
     // TODO deal with isRequired
     return this.slots
       .map(slot => {
-        if(Flags.usePreSlandlesSyntax) {
+        if (Flags.usePreSlandlesSyntax) {
           return `  ${slot.isRequired ? 'must ' : ''}${slot.direction} ${slot.isSet ? 'set of ' : ''}${slot.name || ''}`;
         } else {
           const nameStr = slot.name ? `${slot.name}: ` : '';
