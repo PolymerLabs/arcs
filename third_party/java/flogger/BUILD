@@ -7,3 +7,8 @@ java_library(
     exports = ["@maven//:com_google_flogger_flogger"],
     runtime_deps = ["@maven//:com_google_flogger_flogger_system_backend"],
 )
+
+alias(
+    name = "android",
+    actual = ":flogger",
+)
