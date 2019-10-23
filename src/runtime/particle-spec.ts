@@ -434,23 +434,25 @@ export class ParticleSpec {
       } else {
         tokens.push(`${s.name}:`);
         tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
+
+        const fieldSet = [];
+        // TODO(jopra): Move the formFactor and handle to the slot type information.
+        if (s.formFactor) {
+          fieldSet.push(`formFactor: ${s.formFactor}`);
+        }
+        for (const handle of s.handles) {
+          fieldSet.push(`handle: ${handle}`);
+        }
+        const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
         if (s.isSet) {
-          tokens.push('[Slot]');
+          tokens.push(`[Slot]${fields}`);
         } else {
-          tokens.push('Slot');
+          tokens.push(`Slot${fields}`);
         }
         if (s.tags.length > 0) {
           tokens.push(s.tags.map(a => `#${a}`).join(' '));
         }
         results.push(`${indent}${tokens.join(' ')}`);
-        // TODO(jopra): Move the formFactor and handle to the slot type information.
-        if (s.formFactor) {
-          results.push(`${indent}  formFactor ${s.formFactor}`);
-        }
-        for (const handle of s.handles) {
-          results.push(`${indent}  handle ${handle}`);
-        }
-
       }
       if (s.provideSlotConnections) {
         // Provided slots.

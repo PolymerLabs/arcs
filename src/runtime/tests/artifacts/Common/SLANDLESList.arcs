@@ -22,12 +22,9 @@ particle List in 'source/List.js'
   items: in [~a]
   root: consume Slot #content
     preamble: provide? Slot
-    item: provide [Slot]
-      handle items
-    annotation: provide? [Slot]
-      handle items
-    action: provide? Slot
-      handle items
+    item: provide [Slot {handle: items}]
+    annotation: provide? [Slot {handle: items}]
+    action: provide? Slot {handle: items}
     postamble: provide? Slot
   description `show ${items}`
 
@@ -36,12 +33,9 @@ particle SelectableList in 'source/List.js'
   selected: inout ~a
   root: consume Slot #content
     preamble: provide? Slot
-    item: provide [Slot]
-      handle items
-    annotation: provide? [Slot]
-      handle items
-    action: provide? Slot
-      handle items
+    item: provide [Slot {handle: items}]
+    annotation: provide? [Slot {handle: items}]
+    action: provide? Slot {handle: items}
     postamble: provide? Slot
   description `show ${items}`
 
