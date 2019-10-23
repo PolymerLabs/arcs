@@ -1439,7 +1439,7 @@ SchemaTupleType
 Version "a version number (e.g. @012)"
   = '@' version:[0-9]+
   {
-    return Number(version.join(''));
+    return version.join('');
   }
 
 Indent "indentation" = &(i:" "+ &{

@@ -391,7 +391,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     // or during local modifications.
 
     // TODO Replace this nullness with a uninitialized boolean.
-    this.version = null;
+    this._version = null;
 
     // Whether `this.value` is affected by a local modification.
     // When this is true we are still in the process of writing
@@ -421,7 +421,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
       return;
     }
     const data = dataSnapshot.val();
-    assert(this.version == null || data.version > this.version);
+    assert(this._version == null || data.version > this._version);
 
     // NOTE that remoteStateChanged will be invoked immediately by the
     // this.reference.on(...) call in the constructor; this means that it's possible for this
@@ -431,19 +431,19 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     // that).
 
     this.value = data.value || null;
-    this.version = data.version;
+    this._version = data.version;
 
     this.resolveInitialized();
     // Firebase doesn't maintain a distinction between null and undefined, but we explicitly
     // require empty variables to store 'null'.
     if (this.referenceMode && this.value) {
-      const version = this.version;
+      const version = this._version;
       await this.ensureBackingStore().then(async store => {
         const data = await store.get(this.value.id);
         await this._fire(new ChangeEvent({data, version}));
       });
     } else {
-      await this._fire(new ChangeEvent({data: data.value || null, version: this.version}));
+      await this._fire(new ChangeEvent({data: data.value || null, version: this._version}));
     }
   }
 
@@ -457,7 +457,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     // local mutation, these versions will be different when the transaction
     // completes indicating that we need to continue the process of sending
     // local modifications.
-    const version = this.version;
+    const version = this._version;
 
     // the await required for fetching baseStorage can cause initialization/localModified
     // flag reordering if done before persisting a change.
@@ -478,7 +478,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     }
 
     const result = await this._transaction(data => {
-      assert(this.version >= version);
+      assert(this._version >= version);
       return {
         version: Math.max(data.version + 1, version),
         value,
@@ -490,20 +490,20 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     assert(data !== 0);
     assert(data.version >= version);
 
-    if (this.version !== version) {
+    if (this._version !== version) {
       // A new local modification happened while we were writing the previous one.
       return this._persistChangesImpl();
     }
 
     this.localModified = false;
-    this.version = data.version;
+    this._version = data.version;
     // Firebase will return 'undefined' when data is set to null, but should
     this.value = data.value || null;
 
   }
 
   get versionForTesting() {
-    return this.version;
+    return this._version;
   }
 
   async get() {
@@ -518,12 +518,12 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
 
   async set(value, originatorId=null, barrier=null) {
     assert(value !== undefined);
-    if (this.version == null) {
+    if (this._version == null) {
       assert(!this.localModified);
       // If the first modification happens before init, this becomes
       // init. We pick the initial version which will be updated by the
       // transaction in _persistChanges.
-      this.version = 0;
+      this._version = 0;
       this.resolveInitialized();
     } else if (!this.referenceMode) {
       // If in reference mode, we can't actually determine if this value is identical to the previous
@@ -533,8 +533,8 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
       }
     }
 
-    this.version++;
-    const version = this.version;
+    this._version++;
+    const version = this._version;
     let storageKey;
     if (this.referenceMode && value) {
       storageKey = this.storageEngine.baseStorageKey(this.type, this.storageKey);
@@ -568,7 +568,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     this.localModified = true;
     this.resolveInitialized();
     // TODO: do we need to fire an event here?
-    await this._fire(new ChangeEvent({data: this.referenceMode ? data : this.value, version: this.version}));
+    await this._fire(new ChangeEvent({data: this.referenceMode ? data : this.value, version: this._version}));
     await this._persistChanges();
   }
 
@@ -583,7 +583,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
       await this.ensureBackingStore();
       const result = await this.backingStore.get(value.id);
       return {
-        version: this.version,
+        version: this._version,
         model: [{id: value.id, value: result}]
       };
     }
@@ -598,7 +598,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     // TODO: what should keys be set to?
     const model = (value == null) ? [] : [{id: value.id, value, keys: []}];
 
-    return {version: this.version, model};
+    return {version: this._version, model};
   }
 
   private fromLiteral({version, model}) {
@@ -606,7 +606,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     assert(value !== undefined);
     assert(this.referenceMode || !value.storageKey);
     this.value = value;
-    this.version = version;
+    this._version = version;
   }
 }
 
@@ -680,7 +680,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
     // Monotonic version. Updated each time we receive an update
     // from firebase, or when a local modification is applied.
-    this.version = null;
+    this._version = null;
 
     // The last copy of the serialized state received from firebase.
     // {items: id => {value, keys: {[key]: null}}}
@@ -805,7 +805,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     // version, but we might not be able to if there have been local
     // modifications in the meantime. We'll recover the remote version
     // once we persist those.
-    this.version = Math.max(this.version + 1, newRemoteState.version);
+    this._version = Math.max(this._version + 1, newRemoteState.version);
     this.remoteState = newRemoteState;
     this.resolveInitialized();
 
@@ -817,16 +817,16 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
         values.forEach(value => valueMap[value.id] = value);
         const addPrimitives = add.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
         const removePrimitives = remove.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
-        await this._fire(new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this.version}));
+        await this._fire(new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this._version}));
       });
 
     } else {
-      await this._fire(new ChangeEvent({add, remove, version: this.version}));
+      await this._fire(new ChangeEvent({add, remove, version: this._version}));
     }
   }
 
   get versionForTesting() {
-    return this.version;
+    return this._version;
   }
 
   async get(id: string) {
@@ -861,11 +861,11 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
       // We should exit early in that case.
       item.effective = this.model.remove(item.id, item.keys);
     });
-    this.version++;
+    this._version++;
 
     // 2. Notify listeners.
     items = items.filter(item => item.value);
-    await this._fire(new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({remove: items, version: this._version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     items.forEach(item => {
@@ -897,10 +897,10 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     // TODO: These keys might already have been removed (concurrently).
     // We should exit early in that case.
     const effective = this.model.remove(id, keys);
-    this.version++;
+    this._version++;
 
     // 2. Notify listeners.
-    await this._fire(new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({remove: [{value, keys, effective}], version: this._version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -925,15 +925,15 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
       const referredType = this.type.getContainedType();
       const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
       effective = this.model.add(id, {id, storageKey}, keys);
-      this.version++;
+      this._version++;
       this.pendingWrites.push({value, storageKey});
     } else {
       effective = this.model.add(id, value, keys);
-      this.version++;
+      this._version++;
     }
 
     // 2. Notify listeners.
-    await this._fire(new ChangeEvent({add: [{value, keys, effective}], version: this.version, originatorId}));
+    await this._fire(new ChangeEvent({add: [{value, keys, effective}], version: this._version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -984,7 +984,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
           // However it seems firebase will remove an empty object.
           data.items = {};
         }
-        data.version = Math.max(data.version + 1, this.version);
+        data.version = Math.max(data.version + 1, this._version);
         // Record the changes that we're attempting to write. We'll remove
         // these from this.localChanges if this transaction commits.
         changesPersisted = new Map();
@@ -1087,7 +1087,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
   async modelForSynchronization() {
     const model = await this._toList();
-    return {version: this.version, model};
+    return {version: this._version, model};
   }
 
   async toList(): Promise<ModelValue[]> {
@@ -1143,13 +1143,13 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     // if yes, how should it represent local modifications?
     await this.persisting;
     return {
-      version: this.version,
+      version: this._version,
       model: this.model.toLiteral(),
     };
   }
 
   private fromLiteral({version, model}) {
-    this.version = version;
+    this._version = version;
     this.model = new CrdtCollectionModel(model);
   }
 }

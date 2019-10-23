@@ -84,7 +84,7 @@ describe('firebase', function() {
       const result = await variable.get();
       assert.strictEqual(result.value, value);
 
-      assert.strictEqual(variable.version, 1);
+      assert.strictEqual(variable._version, 1);
       assert.strictEqual(events, 1);
     });
 
@@ -209,7 +209,7 @@ describe('firebase', function() {
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
 
-      assert.strictEqual(collection.version, 2);
+      assert.strictEqual(collection._version, 2);
       assert.strictEqual(events, 2);
     });
 

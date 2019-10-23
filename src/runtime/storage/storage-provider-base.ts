@@ -113,14 +113,18 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
   protected readonly _storageKey: string;
   referenceMode = false;
 
-  version: number|null;
+  _version: number|null;
   storeInfo: StoreInfo;
+
+  get versionToken(): string|null {
+    return this._version == null ? null : this._version + '';
+  }
 
   protected constructor(type: Type, name: string, id: string, key: string) {
     super({type, name, id});
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    this.version = 0;
+    this._version = 0;
     this._storageKey = key;
   }
 

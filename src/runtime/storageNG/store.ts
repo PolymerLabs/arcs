@@ -38,7 +38,7 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly mode: StorageMode;
-  readonly version: number = 0; // TODO(shans): Needs to become the version vector, and is also probably only available on activated storage?
+  readonly versionToken: string = null;
   modelConstructor: new () => CRDTModel<T>;
 
   private activeStore: ActiveStore<T> | null;
