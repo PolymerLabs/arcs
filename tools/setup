@@ -97,6 +97,8 @@ rm "$BAZEL_SCRIPT_NAME"
 
 status "5.2. Updating PATH"
 append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
+# Makes the updates visiable at this subshell i.e. bazel
+source ~/.profile
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
 echo "node --version"
@@ -112,3 +114,5 @@ echo "- Run tests:"
 echo "  - $CMD\`./tools/sigh test\`$END"
 echo "  - $CMD\`./tools/test\`$END"
 
+echo "\nPlease source the updated environment variables:"
+echo "  - $CMD\`source ~/.profile\`$END"
