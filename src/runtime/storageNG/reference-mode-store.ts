@@ -15,7 +15,7 @@ import {BackingStore} from './backing-store.js';
 import {CRDTEntityTypeRecord, CRDTEntity, EntityData} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
-import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTData, VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver-factory.js';
 import {Type, CollectionType, ReferenceType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
@@ -173,6 +173,16 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   private registerStoreCallbacks() {
     this.backingStore.on(this.onBackingStore.bind(this));
     this.containerStore.on(this.onContainerStore.bind(this));
+  }
+
+  async getLocalData(): Promise<CRDTData> {
+    const {pendingIds, model} = this.constructPendingIdsAndModel(this.containerStore.localModel.getData());
+    if (pendingIds.length === 0) {
+      return model();
+    } else {
+      return new Promise(resolve =>
+          this.enqueueBlockingSend(pendingIds, () => resolve(model())));
+    }
   }
 
   /**

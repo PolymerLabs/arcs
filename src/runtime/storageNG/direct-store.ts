@@ -9,7 +9,7 @@
  */
 
 import {PropagatedException} from '../arc-exceptions.js';
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
+import {CRDTData, CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
 import {Type} from '../type.js';
 import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
@@ -35,6 +35,10 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
    */
   private constructor(options: StoreConstructorOptions<T>) {
     super(options);
+  }
+
+  async getLocalData(): Promise<CRDTData> {
+    return this.localModel.getData();
   }
 
   async idle() {
