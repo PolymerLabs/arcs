@@ -17,6 +17,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -29,6 +30,7 @@ import kotlin.system.measureNanoTime
 /**
  * Performance comparison tests between Arcs' implementation of Base64-encoding/decoding and Java's.
  */
+@Ignore // Remove to run manually. (Disabled because of unpredictable perf characteristics in CI.)
 @RunWith(Parameterized::class)
 class Base64PerformanceTest {
   private val random = SecureRandom()
