@@ -101,13 +101,8 @@ async function wrappedExecute() {
     const options = {loader, fileName: './manifest', throwImportErrors: true};
     manifest = await Runtime.parseManifest(files.getManifest(), options);
   } catch (e) {
-    if (e.severity === 'warning') {
-      // warning output?
-    }
-    else {
-      output.showError('Error in Manifest.parse', e);
-      return;
-    }
+    output.showError('Error in Manifest.parse', e);
+    return;
   }
 
   if (manifest.allRecipes.length == 0) {
