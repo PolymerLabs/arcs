@@ -40,7 +40,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   // TODO: Once the old storage stack is gone, this should only be of type
   // StorageKey, and can be moved into StoreInfo.
   abstract storageKey: string | StorageKey;
-  abstract versionToken: string; // TODO(shans): This needs to be a version vector for new storage.
+  abstract versionToken: string;
   abstract referenceMode: boolean;
 
   storeInfo: StoreInfo;
