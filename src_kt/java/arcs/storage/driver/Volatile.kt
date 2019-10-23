@@ -96,7 +96,11 @@ internal class VolatileDriver<Data : Any>(
     get() = memory.token
 
   init {
-    require(storageKey is VolatileStorageKey) { "Invalid storage key type: $storageKey" }
+    require(
+      // VolatileDriver does double-duty: serving both Volatile and RamDisk purposes, just with
+      // different policies on which instances of VolatileMemory they point at.
+      storageKey is VolatileStorageKey || storageKey is RamDiskStorageKey
+    ) { "Invalid storage key type: $storageKey" }
 
     val dataForCriteria: VolatileEntry<Data> = when (existenceCriteria) {
       ExistenceCriteria.ShouldCreate -> {
@@ -176,7 +180,7 @@ internal data class VolatileEntry<Data : Any>(
  */
 internal class VolatileMemory {
   private val lock = Any()
-  private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
+  private val entries: HashMap<StorageKey, VolatileEntry<*>> = hashMapOf()
 
   /** Current token. Will be updated with every call to [set]. */
   var token: String = Random.nextInt().toString()
@@ -208,6 +212,9 @@ internal class VolatileMemory {
     token = Random.nextInt().toString()
     return originalValue as VolatileEntry<Data>?
   }
+
+  /** Clears everything from storage. */
+  fun clear() = entries.clear()
 }
 
 
