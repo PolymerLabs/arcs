@@ -31,6 +31,8 @@ const typeMap = {
 };
 
 export class Schema2Kotlin extends Schema2Base {
+  pkgName: string;
+
   // test-Kotlin.file_name.arcs -> TestKotlinFileName.kt
   outputName(baseName: string): string {
     const parts = baseName.toLowerCase().replace(/\.arcs$/, '').split(/[-._]/);
@@ -39,7 +41,7 @@ export class Schema2Kotlin extends Schema2Base {
 
   fileHeader(outName: string): string {
     return `\
-package arcs
+package ${this.pkgName}
 
 //
 // GENERATED CODE -- DO NOT EDIT
@@ -111,6 +113,9 @@ data class ${name}(
 `;
   }
 
+  addScope(namespace: string = 'arcs') {
+    this.pkgName = namespace;
+  }
 
   addAliases(aliases: Aliases): string {
     const lines: string[] = Object.entries(aliases)

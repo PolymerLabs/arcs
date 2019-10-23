@@ -49,7 +49,7 @@ particle Reader
     ]);
   });
 
-  it('creates aliases while eliminating abigous identifies, including in the first connection', async () => {
+  it('creates aliases while eliminating ambiguous identifies, including in the first connection', async () => {
     const manifest = await Manifest.parse(`\
 particle Foo
   in Product Element Thing {Text value} myThing
@@ -96,5 +96,32 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
       // 'typealias BasicParticle_bar = BasicParticle_Product',
       'typealias Watcher_Product = Watcher_bar',
     ]);
+  });
+
+  it('creates nested package name for entities', async () => {
+    const manifest = await Manifest.parse(`\
+    particle Reader
+      in * {Text value} object
+      out Id {Number hash} output`);
+
+    const mock = new Schema2Kotlin({'_': [], 'package': 'grandma.mom.daughter'});
+    const _ = mock.processManifest(manifest);
+    const header = mock.fileHeader('');
+
+    assert.equal(header.split(/\n+/g)[0], `package grandma.mom.daughter`);
+  });
+
+  it('creates a default package name when needed', async () => {
+
+    const manifest = await Manifest.parse(`\
+    particle Foo
+      in * {Text name} input
+      out Id {Number hash} output`);
+
+    const mock = new Schema2Kotlin({'_': []});
+    const _ = mock.processManifest(manifest);
+    const header = mock.fileHeader('');
+
+    assert.equal(header.split(/\n+/g)[0], `package arcs`);
   });
 });

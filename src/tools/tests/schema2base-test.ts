@@ -18,6 +18,7 @@ class Schema2Mock extends Schema2Base {
   public readonly entityArgs: [string, Schema][] = [];
   public readonly outnameArgs: string[] = [];
   public readonly basenameArgs: string[] = [];
+  public readonly namespaceArgs: string[] = [];
 
   entityClass(name: string, schema: Schema): string {
     this.entityArgs.push([name, schema]);
@@ -40,6 +41,10 @@ class Schema2Mock extends Schema2Base {
 
   addAliases(aliases: Aliases): string {
     return '';
+  }
+
+  addScope(namespace: string) {
+    this.namespaceArgs.push(namespace);
   }
 
 }
@@ -68,5 +73,20 @@ describe('schema2base', () => {
     assert.includeDeepOrderedMembers(names,
       ['Foo_input0', 'Foo_input1', 'Foo_input2', 'Foo_union', 'Foo_tuple', 'Foo_nested0', 'Foo_nested1',
         'Foo_collection0', 'Foo_collection1', 'Foo_collection2']);
+  });
+
+  it('sets the scope / package once', async () => {
+
+    const manifest = await Manifest.parse(`\
+  particle Bar
+    in Product {Text name, Number price} order
+    out [Product {Text name, Number price}] recommendations
+    `);
+
+    const mock = new Schema2Mock({'_': [], 'package': 'baz'});
+    const _ = mock.processManifest(manifest);
+
+    assert.includeDeepOrderedMembers(mock.namespaceArgs, ['baz']);
+
   });
 });
