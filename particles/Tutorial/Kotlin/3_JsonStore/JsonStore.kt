@@ -32,4 +32,4 @@ class JsonStoreParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newJsonStoreParticle")
-fun constructJsonStoreParticle(): WasmAddress = JsonStoreParticle().toWasmAddress()
+fun constructJsonStoreParticle() = JsonStoreParticle().toWasmAddress()

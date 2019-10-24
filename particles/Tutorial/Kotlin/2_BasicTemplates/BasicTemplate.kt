@@ -15,11 +15,9 @@ class BasicTemplateParticle : Particle() {
         )
     }
 
-    override fun getTemplate(slotName: String): String {
-        return "<b>Hello, <span>{{name}}</span>!</b>"
-    }
+    override fun getTemplate(slotName: String) = "<b>Hello, <span>{{name}}</span>!</b>"
 }
 
 @Retain
 @ExportForCppRuntime("_newBasicTemplateParticle")
-fun constructBasicTemplateParticle(): WasmAddress = BasicTemplateParticle().toWasmAddress()
+fun constructBasicTemplateParticle() = BasicTemplateParticle().toWasmAddress()
