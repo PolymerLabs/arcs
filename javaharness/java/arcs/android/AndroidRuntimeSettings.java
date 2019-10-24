@@ -24,6 +24,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final int DEFAULT_LOG_LEVEL = 2;
   private static final boolean DEFAULT_USE_DEV_SERVER = false;
   private static final String DEFAULT_SHELL_URL = "file:///android_asset/index.html?";
+  private static final String LOCALHOST_SHELL_URL = "http://localhost:8786/shells/pipes-shell/web/deploy/dist/?";
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());

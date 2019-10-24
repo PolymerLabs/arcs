@@ -3,6 +3,9 @@ package arcs.android;
 import android.content.Context;
 import android.os.RemoteException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -42,6 +45,14 @@ class ArcsShellApi {
   void init(Context context) {
     arcsReady = false;
     environment.addReadyListener(recipes -> arcsReady = true);
+    environment.addReadyListener(recipes -> {
+      recipes.forEach(recipe -> {
+        ArcData arcData = findStartupTrigger(recipe);
+        if (arcData != null) {
+          startArc(arcData);
+        }
+      });
+    });
     environment.init(context);
   }
 
@@ -61,7 +72,10 @@ class ArcsShellApi {
             },
             jsonParser);
     pecPortManager.addPecInnerPortProxy(arcData.getPecId(), pecInnerPortProxy);
+    startArc(arcData);
+  }
 
+  void startArc(ArcData arcData) {
     runWhenReady(() -> {
       PecInnerPort pecInnerPort = null;
       for (ArcData.ParticleData particleData : arcData.getParticleList()) {
@@ -138,12 +152,31 @@ class ArcsShellApi {
             .put(Constants.PEC_ID_FIELD, arcData.getPecId()));
   }
 
-
   private void runWhenReady(Runnable runnable) {
     if (arcsReady) {
       runnable.run();
     } else {
       environment.addReadyListener(recipes -> runnable.run());
     }
+  }
+
+  private ArcData findStartupTrigger(PortableJson recipe) {
+    // Consider creating a helper class for recipe.
+    PortableJson triggers = recipe.getArray("triggers");
+    for (int j = 0; j < triggers.getLength(); ++j) {
+      Map<String, String> triggersMap = new HashMap<>();
+      for (int k = 0; k < triggers.getArray(j).getLength(); ++k) {
+        triggersMap.put(triggers.getArray(j).getArray(k).getString(0), triggers.getArray(j).getArray(k).getString(1));
+      }
+      if ("startup".equals(triggersMap.get("launch"))) {
+        String recipeName = recipe.getString("name");
+        ArcData.Builder arcDataBuilder = new ArcData.Builder().setRecipe(recipeName);
+        if (triggersMap.containsKey("arcId")) {
+          arcDataBuilder.setArcId(triggersMap.get("arcId"));
+        }
+        return arcDataBuilder.build();
+      }
+    }
+    return null;
   }
 }

@@ -2,11 +2,14 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public final class UiBroker {
+
+  private static final Logger logger = Logger.getLogger(UiBroker.class.getName());
 
   private static final String MODALITY_FIELD = "modality";
 
@@ -28,7 +31,8 @@ public final class UiBroker {
       names = renderers.keySet().toArray(new String[renderers.size()]);
     }
     if (names.length == 0) {
-      throw new AssertionError("No render for content");
+      logger.warning("No renderer for content: " + packet);
+      return false;
     }
 
     boolean rendered = false;

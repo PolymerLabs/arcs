@@ -35,7 +35,7 @@ import arcs.api.UiBroker;
 final class AndroidArcsEnvironment {
 
   interface ReadyListener {
-    void onReady(List<String> recipes);
+    void onReady(List<PortableJson> recipes);
   }
 
   private static final Logger logger =
@@ -138,7 +138,7 @@ final class AndroidArcsEnvironment {
     String message = content.getString(FIELD_MESSAGE);
     switch (message) {
       case MESSAGE_READY:
-        fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asStringArray());
+        fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asObjectArray());
         break;
       case MESSAGE_DATA:
         logger.warning("logger: Received deprecated 'data' message");
@@ -150,7 +150,7 @@ final class AndroidArcsEnvironment {
         if (!uiBroker.render(content.getObject(FIELD_DATA))) {
           logger.warning(
             "Skipped rendering content for "
-              + content.getObject("data").getString("containerSlotName"));
+              + jsonParser.stringify(content.getObject("data")));
         }
         break;
       default:
@@ -165,7 +165,7 @@ final class AndroidArcsEnvironment {
     pecPortManager.deliverPecMessage(pecId, sessionId, message);
   }
 
-  private void fireReadyEvent(List<String> recipes) {
+  private void fireReadyEvent(List<PortableJson> recipes) {
     readyListeners.forEach(listener -> listener.onReady(recipes));
   }
 

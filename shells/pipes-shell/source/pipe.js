@@ -27,7 +27,6 @@ const {log} = logsFactory('pipe');
 
 const manifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
-import 'https://$particles/PipeApps/Ingestion.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
@@ -60,7 +59,8 @@ export const initArcs = async (storage, bus) => {
 };
 
 const identifyPipe = async (context, bus) => {
-  const recipes = context.allRecipes.map(r => r.name);
+  // TODO(sjmiles): Formalize the pipes API.
+  const recipes = context.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
   bus.send({message: 'ready', recipes});
 };
 
