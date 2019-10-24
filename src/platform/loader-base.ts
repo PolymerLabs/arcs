@@ -90,7 +90,7 @@ export abstract class LoaderBase {
       if (isString(content)) {
         return content;
       }
-      throw 'Cannot load static binary content as string';
+      throw new Error('Cannot load static binary content as string');
     }
     return null;
   }
@@ -100,7 +100,7 @@ export abstract class LoaderBase {
       if (content instanceof ArrayBuffer) {
         return content;
       }
-      throw 'Cannot load static string content as binary';
+      throw new Error('Cannot load static string content as binary');
     }
     return null;
   }
@@ -130,8 +130,8 @@ export abstract class LoaderBase {
   /**
    * Abstract: platforms access the filesystem differently.
    */
-  protected abstract async loadFile(url: string): Promise<string>
-  protected abstract async loadBinaryFile(url: string): Promise<ArrayBuffer>
+  protected abstract async loadFile(url: string): Promise<string>;
+  protected abstract async loadBinaryFile(url: string): Promise<ArrayBuffer>;
   //
   // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?
   join(prefix: string, path: string): string {

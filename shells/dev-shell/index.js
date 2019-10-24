@@ -16,7 +16,7 @@ import {Runtime} from '../../build/runtime/runtime.js';
 import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
-import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+import {pecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
@@ -107,7 +107,7 @@ async function wrappedExecute() {
   // TODO(sjmiles): should be a static method
   loader.flushCaches();
 
-  const pecFactory = PecIndustry(loader);
+  const pecFactory = pecIndustry(loader);
 
   let manifest;
   try {

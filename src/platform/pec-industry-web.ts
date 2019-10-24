@@ -10,7 +10,7 @@
 
 const WORKER_PATH = `https://$build/worker.js`;
 
-export const PecIndustry = loader => {
+export const pecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
   const remap = expandUrls(loader.urlMap);
   // get real path from meta path
