@@ -11,5 +11,8 @@
 
 package arcs.data
 
+/**
+ * TODO: Everything.
+ */
 class EntityInternals {
 }

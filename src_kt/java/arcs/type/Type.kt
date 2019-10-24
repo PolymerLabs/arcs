@@ -139,14 +139,14 @@ interface Type {
       if (type1 !is CanReadSubsetHolder || type2 !is CanReadSubsetHolder) return true
       if (type1.canReadSubset?.tag != type2.canReadSubset?.tag) return false
 
-      return type1.canMergeCanReadSubsetWith(type2)
+      return type1.canMergeCanReadSubsetWith(type2) && type2.canMergeCanReadSubsetWith(type1)
     }
 
     private fun canMergeCanWriteSuperset(type1: Type, type2: Type): Boolean {
       if (type1 !is CanWriteSupersetHolder || type2 !is CanWriteSupersetHolder) return true
       if (type1.canWriteSuperset?.tag != type2.canWriteSuperset?.tag) return false
 
-      return type1.canMergeCanWriteSupersetWith(type2)
+      return type1.canMergeCanWriteSupersetWith(type2) && type2.canMergeCanWriteSupersetWith(type2)
     }
   }
 }

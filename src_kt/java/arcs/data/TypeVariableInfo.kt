@@ -13,6 +13,7 @@ package arcs.data
 
 import arcs.type.Type
 
+/** Represents metadata required to serialize a type variable. (?) */
 data class TypeVariableInfo(
   val name: String,
   var canWriteSuperset: Type? = null,
