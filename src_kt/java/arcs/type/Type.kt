@@ -104,9 +104,16 @@ interface Type {
   /** Shorthand for a [Type] that is both a [CanReadSubsetHolder] and a [CanWriteSupersetHolder] */
   interface CanReadWriteHolder : CanReadSubsetHolder, CanWriteSupersetHolder
 
-  interface TypeContainer<T : Type> {
+  /** Defines a [Type] for data capable of being a container for data of another [Type]. */
+  interface TypeContainer<T : Type> : Type {
     /** The [Type] of data contained by this [Type]. Think: kotlin's `typeParameter`. */
     val containedType: T
+  }
+
+  /** Provides capability to merge internal type data with a given variableMap. */
+  interface TypeVariableMerger : Type {
+    /** Merges internal type data with a given [variableMap]. */
+    fun mergeTypeVariablesByName(variableMap: MutableMap<Any, Any>): Type
   }
 
   companion object {

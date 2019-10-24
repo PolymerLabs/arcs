@@ -18,7 +18,7 @@ import arcs.type.TypeLiteral
 
 /** [Type] representation of a type variable. */
 class TypeVariable(val variable: TypeVariableInfo)
-  : Type, TypeVariableMergerType, Type.CanReadWriteHolder, EntitySchemaProviderType {
+  : Type, Type.TypeVariableMerger, Type.CanReadWriteHolder, EntitySchemaProviderType {
 
   override val tag = Tag.TypeVariable
   override val resolvedType: Type?
@@ -87,6 +87,7 @@ class TypeVariable(val variable: TypeVariableInfo)
     return resolvedType?.toString(options) ?: "[~${variable.name}]"
   }
 
+  /** [Literal] representation of a [TypeVariable]. */
   data class Literal(
     override val tag: Tag,
     override val data: TypeVariableInfo.Literal
@@ -99,12 +100,4 @@ class TypeVariable(val variable: TypeVariableInfo)
       }
     }
   }
-}
-
-interface TypeVariableMergerType : Type {
-  /**
-   * Updates the [variableMap] if this type's variable(s) were not yet in it, or merges their
-   * constraints with those that are already in the map.
-   */
-  fun mergeTypeVariablesByName(variableMap: MutableMap<Any, Any>): Type
 }
