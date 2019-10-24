@@ -520,7 +520,7 @@ export class ParticleSpec {
 
               }
             } else if (!handle.isInput) {
-              throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
+              throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
             if (handle.check) {
               throw new Error(`Can't make multiple checks on the same input (${handleName}).`);

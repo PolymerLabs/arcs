@@ -247,7 +247,7 @@ InterfaceArgument
   / InterfaceArgumentUnified
 
 InterfaceArgumentPreSlandlesSyntax
-  = direction:(Direction whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
+  = direction:(DirectionPreSlandles whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
     requireUsePreSlandleSyntax();
     direction = optional(direction, dir => dir[0], 'any');
@@ -263,7 +263,7 @@ InterfaceArgumentPreSlandlesSyntax
   }
 
 InterfaceArgumentUnified
-  = name:NameWithColon? direction:Direction type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
+  = name:NameWithColon? direction:DirectionUnified type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
   {
     requireUsePostSlandleSyntax();
     name = name || '*';
@@ -354,7 +354,7 @@ Particle
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
-        args = item.args; // TODO(jopra): This should merge, not overwrite;
+        args.push(...item.args);
         hasParticleHandleConnection = true;
       } else if (item.kind === 'particle-argument') {
         args.push(item);
@@ -555,7 +555,7 @@ ParticleHandleConnectionBody
   / ParticleHandleConnectionBodyUnified
 
 ParticleHandleConnectionBodyPreSlandle
-  = direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
+  = direction:DirectionPreSlandles isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
   {
     requireUsePreSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -580,7 +580,7 @@ NameWithColon
   }
 
 ParticleHandleConnectionBodyUnified
-  = maybeName:NameWithColon? direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = maybeName:NameWithColon? direction:DirectionUnified isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -594,25 +594,24 @@ ParticleHandleConnectionBodyUnified
     });
   }
 
-Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
-  = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any'
+DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
+  = ('inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any')
   {
-    const dir = text() as AstNode.Direction;
-    if(dir === null) {
-      expected('a direction');
-    }
+    requireUsePreSlandleSyntax();
+    return text() as AstNode.Direction;
+  }
+
+DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
+  = ('reads writes' / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any')
+  {
+    const dir = AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
+    requireUsePostSlandleSyntax();
     return dir;
   }
 
 // TODO(jopra): Remove when syntax is updated to not use arrows.
 DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, `consume, `provide)"
-  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide' {
-    const dir = text() as AstNode.DirectionArrow;
-    if(dir === null) {
-      expected('a direction arrow');
-    }
-    return dir;
-  }
+  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide'
 
 ParticleHandleConnectionType
   = TypeVariable
@@ -1011,7 +1010,7 @@ RecipeParticleConnection
   = RecipeParticleConnectionPreSlandle / RecipeParticleConnectionUnified
 
 RecipeParticleConnectionUnified
-  = param:(lowerIdent / '*') ':' whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:(lowerIdent / '*') ':' whiteSpace dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleConnection>({
@@ -1106,7 +1105,7 @@ RecipeConnection
   = RecipeConnectionUnified / RecipeConnectionPreSlandle
 
 RecipeConnectionUnified
-  = from:ConnectionTarget ':' whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTarget ':' whiteSpace direction:DirectionUnified whiteSpace to:ConnectionTarget eolWhiteSpace
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeConnection>({
@@ -1535,12 +1534,14 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 // Should only be used as a negative match.
 ReservedWord
   = keyword:(DirectionArrow
-  / Direction
+  / DirectionPreSlandles
+  / DirectionUnified
   / SlotDirection
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
   / 'import'
+  / 'in'
   / 'interface'
   / 'schema'
   / 'require'
@@ -1559,7 +1560,8 @@ upperIdent "an uppercase identifier (e.g. Foo)"
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord unsafeLowerIdent { return text(); }
 unsafeLowerIdent "a lowercase identifier or keyword"
-  = [a-z][a-z0-9_]i* { return text(); }
+  = [a-z][a-z0-9_]i* &([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
+  { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"

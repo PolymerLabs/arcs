@@ -637,11 +637,58 @@ export type eol = string;
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
 export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
+export type DirectionUnified = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
 
 // Temporary move of DirectionArrow type definition and conversions so allow
 // DirectionArrow to be removed from the runtime.
 // TODO(jopra): Remove after syntax unification.
 export type DirectionArrow = '<-' | '->' | '<->' | '`consume' | '`provide' | '=';
+
+export function preSlandlesDirectionToDirection(direction: Direction): DirectionUnified {
+  // TODO(jopra): Remove after syntax unification.
+  // Use switch for totality checking.
+  switch (direction) {
+    case 'in':
+      return 'reads';
+    case 'out':
+      return 'writes';
+    case 'inout':
+      return 'reads writes';
+    case '`consume':
+      return '`consumes';
+    case '`provide':
+      return '`provides';
+    case 'any':
+      return 'any';
+    default:
+      // Catch nulls and unsafe values from javascript.
+      throw new Error(`Bad pre slandles direction ${direction}`);
+  }
+}
+
+export function directionToPreSlandlesDirection(direction: DirectionUnified): Direction {
+  // TODO(jopra): Remove after syntax unification.
+  // Use switch for totality checking.
+  switch (direction) {
+    case 'reads':
+      return 'in';
+    case 'writes':
+      return 'out';
+    case 'reads writes':
+      return 'inout';
+    case '`consumes':
+      return '`consume';
+    case '`provides':
+      return '`provide';
+    case 'hosts':
+      return 'any';
+    case 'any':
+      return 'any';
+    default:
+      // Catch nulls and unsafe values from javascript.
+      throw new Error(`Bad direction ${direction}`);
+  }
+}
 
 export function arrowToDirection(arrow: DirectionArrow): Direction {
   // TODO(jopra): Remove after syntax unification.
