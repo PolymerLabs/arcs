@@ -27,7 +27,7 @@ class StubWasmLoader extends Loader {
     return (path[0] === '$') ? `RESOLVED(${path})`: path;
   }
 
-  async loadWasmBinary(spec): Promise<ArrayBuffer> {
+  async loadBinaryResource(path: string): Promise<ArrayBuffer> {
     const file = this.reloaded ? 'wasm-particle-new.wasm' : 'wasm-particle-old.wasm';
     return super.loadBinaryResource(`src/tests/source/${file}`);
   }
