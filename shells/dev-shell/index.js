@@ -26,9 +26,12 @@ import {SlotObserver} from '../lib/xen-renderer.js';
 import '../../build/services/ml5-service.js';
 import '../../build/services/random-service.js';
 
-const files = document.getElementById('file-pane');
-const output = document.getElementById('output-pane');
-const popup = document.getElementById('popup');
+const root = '../..';
+
+//const files = document.getElementById('file-pane');
+//const output = document.getElementById('output-pane');
+//const popup = document.getElementById('popup');
+const {files, output, popup, execute, help} = window;
 
 init();
 
@@ -93,7 +96,7 @@ async function wrappedExecute() {
   document.dispatchEvent(new Event('clear-arcs-explorer'));
   output.reset();
 
-  const loader = new DevShellLoader(files.getFileMap());
+  const loader = new DevShellLoader(root, files.getFileMap());
   const pecFactory = PecIndustry(loader);
 
   let manifest;

@@ -11,23 +11,8 @@ import {Loader} from '../../build/platform/loader.js';
 import {Utils} from '../lib/utils.js';
 
 export class DevShellLoader extends Loader {
-  constructor(fileMap) {
-    super(Utils.createPathMap('../..'), fileMap);
+  constructor(root, fileMap) {
+    super(Utils.createPathMap(root), fileMap);
     super.flushCaches();
-    //this._fileMap = fileMap;
   }
-  /*
-  loadResource(path) {
-    if (!path) {
-      return undefined;
-    }
-    return this._fileMap[path] || super.loadResource(path);
-  }
-  path(fileName) {
-    return this._fileMap[fileName] ? fileName : super.path(fileName);
-  }
-  clone() {
-    return new DevShellLoader(this._fileMap, this._urlMap);
-  }
-  */
 }
