@@ -17,7 +17,6 @@ import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
 import {UnifiedActiveStore} from './unified-store.js';
 import {Store} from './store.js';
-import {model} from '@tensorflow/tfjs';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
