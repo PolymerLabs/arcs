@@ -106,13 +106,7 @@ async function wrappedExecute() {
   const loader = new Loader(Utils.createPathMap(root), filePane.getFileMap());
   // TODO(sjmiles): should be a static method
   loader.flushCaches();
-  /*
-  constructor(root, fileMap) {
-    super(Utils.createPathMap(root), fileMap);
-    super.flushCaches();
-  }
-  const loader = new DevShellLoader(root, filePane.getFileMap());
-  */
+  
   const pecFactory = PecIndustry(loader);
 
   let manifest;
