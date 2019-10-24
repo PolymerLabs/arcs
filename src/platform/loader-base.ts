@@ -253,13 +253,13 @@ export abstract class LoaderBase {
     return class extends UiParticle {
       private _impl: {};
       update(...args) {
-        this.impl["update"](...args);
+        this.impl['update'](...args);
       }
       get impl() {
         if (!this._impl) {
           this._impl = new userClass();
-          this._impl["output"] = (...args) => this.output(args);
-          this._impl["particle"] = this;
+          this._impl['output'] = (...args) => this.output(args);
+          this._impl['particle'] = this;
         }
         return this._impl;
       }
