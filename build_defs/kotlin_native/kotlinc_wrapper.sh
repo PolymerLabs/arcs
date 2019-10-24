@@ -11,8 +11,7 @@ soft_mkdir() {
   fi
 }
 
-export PATH="$PATH:/c/Progra~1/Java/jdk-12.0.2/bin"
-echo "PATH is $PATH"
+
 # Create file if it doesn't exist
 soft_touch() {
   if [ ! -f "$1" ]; then
@@ -23,7 +22,7 @@ soft_touch() {
 _DEPENDENCIES=$1
 shift 1
 
-case $(ls "${BASH_SOURCE[0]}.exe.runfiles/" | grep "kotlin_native_") in
+case $(ls "${BASH_SOURCE[0]}.runfiles/" | grep "kotlin_native_") in
   *windows*)
     PLATFORM="windows"
     idx=0
@@ -43,19 +42,19 @@ esac
 
 # Get only relevant platform's dependencies
 set -f
-_ALL_DEPS=(${_DEPENDENCIES//:/ })
+_ALL_DEPS=(${_DEPENDENCIES//|/ })
 set +f
 DEPENDENCIES=${_ALL_DEPS[idx]}
 
 
-repo_rel="${BASH_SOURCE[0]}.exe.runfiles/kotlin_native_$PLATFORM/kotlin-native-$PLATFORM-1.3.50"
-repo=$(/c/Users/Scott\ J.\ Miles/AppData/Local/Programs/Python/Python36/python -c '
+repo_rel="${BASH_SOURCE[0]}.runfiles/kotlin_native_$PLATFORM/kotlin-native-$PLATFORM-1.3.50"
+repo=$(python -c '
 import sys
 import os.path
-print("\\\\?\\" + os.path.abspath(sys.argv[1]))' "$repo_rel")
+print(os.path.abspath(sys.argv[1]))' "$repo_rel")
 
-konan_deps=${BASH_SOURCE[0]}.exe.runfiles/
-deps=$(/c/Users/Scott\ J.\ Miles/AppData/Local/Programs/Python/Python36/python -c '
+konan_deps=${BASH_SOURCE[0]}.runfiles/
+deps=$(python -c '
 import sys
 import os.path
 print(os.path.abspath(sys.argv[1]))' "$konan_deps")
@@ -74,8 +73,7 @@ for i in $DEPENDENCIES; do
   src="$deps/$i/$i"
   dst="$deps/dependencies/$i"
   if [ ! -e "$dst" ]; then
-    ln -s "\\\\?\\$src" "\\\\?\\$dst"
-
+    ln -s "$src" "$dst"
     echo "$i" >> "$deps/dependencies/.extracted"
   fi
 done
@@ -83,4 +81,3 @@ unset IFS
 
 # Run the command line args that were passed to this script.
 exec "$repo/bin/kotlinc" "$@"
-
