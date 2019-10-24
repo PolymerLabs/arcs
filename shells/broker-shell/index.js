@@ -38,9 +38,7 @@ const Application = {
       this.ingestTid = this.send({message: 'spawn', recipe: 'PersonAutofill'});
     }, 300);
     // upon ready, we right away ask for an Arc
-    //this.arcTid = this.send({message: 'spawn', recipe: 'Notification'});
-    // upon ready, we right away ask for an Arc
-    this.arcTid = this.send({message: 'spawn', recipe: 'HelloWorldRecipe'});
+    this.arcTid = this.send({message: 'spawn', recipe: 'Notification'});
   },
   // handle packets that were not otherwised consumed
   receive(packet) {

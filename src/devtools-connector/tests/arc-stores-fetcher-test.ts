@@ -21,7 +21,7 @@ describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
 
-  it.skip('allows fetching a list of arc stores', async () => {
+  it('allows fetching a list of arc stores', async () => {
     const context = await Manifest.parse(`
       schema Foo
         Text value`);
@@ -97,7 +97,6 @@ describe('ArcStoresFetcher', () => {
         create as foo
         P
           foo = foo`);
-
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://', {inspectorFactory: devtoolsArcInspectorFactory});
 

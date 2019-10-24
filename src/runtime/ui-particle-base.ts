@@ -9,7 +9,7 @@
  */
 
 import {Entity, EntityClass} from './entity.js';
-import {Handle, /*BigCollection,*/ Collection, Singleton} from './handle.js';
+import {Handle, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 
 export interface UiParticleConfig {

@@ -17,8 +17,7 @@ import 'Arcs/schemas/ArcMeta.arcs'
 // Tutorials
 import 'Tutorial/Javascript/Tutorial.arcs'
 import 'Tutorial/Kotlin/Tutorial.arcs'
-// Other
 import 'TicTacToe/TicTacToe.arcs'
+// Other
 //import 'Native/native.arcs'
-import 'API/ApiTest.arcs'
 
