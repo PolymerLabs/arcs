@@ -7,8 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Aliases, Schema2Base} from './schema2base.js';
-import {Schema} from '../runtime/schema.js';
+import {Schema2Base, ClassGenerator} from './schema2base.js';
+import {SchemaNode} from './schema2graph.js';
+
+// TODO: use the type lattice to generate interfaces
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
@@ -31,9 +33,7 @@ const typeMap = {
 };
 
 export class Schema2Kotlin extends Schema2Base {
-  pkgName: string;
-
-  // test-Kotlin.file_name.arcs -> TestKotlinFileName.kt
+  // test-KOTLIN.file_Name.arcs -> TestKotlinFileName.kt
   outputName(baseName: string): string {
     const parts = baseName.toLowerCase().replace(/\.arcs$/, '').split(/[-._]/);
     return parts.map(part => part[0].toUpperCase() + part.slice(1)).join('') + '.kt';
@@ -41,48 +41,58 @@ export class Schema2Kotlin extends Schema2Base {
 
   fileHeader(outName: string): string {
     return `\
-package ${this.pkgName}
+package ${this.scope}
 
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
+// Current implementation doesn't support references or optional field detection
 `;
   }
 
-  fileFooter(): string {
-    return '';
+  getClassGenerator(node: SchemaNode): ClassGenerator {
+    return new KotlinGenerator(node);
+  }
+}
+
+class KotlinGenerator implements ClassGenerator {
+  fields: string[] = [];
+  encode: string[] = [];
+  decode: string[] = [];
+
+  constructor(readonly node: SchemaNode) {}
+
+  processField(field: string, typeChar: string, inherited: boolean, refName: string) {
+    if (typeChar === 'R') {
+      console.log('TODO: support reference types in kotlin');
+      process.exit(1);
+    }
+
+    const {type, defaultVal, decodeFn} = typeMap[typeChar];
+    const fixed = field + (keywords.includes(field) ? '_' : '');
+
+    this.fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
+
+    this.decode.push(`"${field}" -> {`,
+                     `  decoder.validate("${typeChar}")`,
+                     `  this.${fixed} = decoder.${decodeFn}`,
+                     `}`);
+
+    this.encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
   }
 
-  entityClass(name: string, schema: Schema): string {
-    const fields: string[] = [];
-    const encode: string[] = [];
-    const decode: string[] = [];
+  generate(fieldCount: number): string {
+    const {name, aliases} = this.node;
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
-      if (typeChar === 'R') {
-        console.log('TODO: support reference types in kotlin');
-        process.exit(1);
-      }
-
-      const {type, defaultVal, decodeFn} = typeMap[typeChar];
-      const fixed = field + (keywords.includes(field) ? '_' : '');
-
-      fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
-
-      decode.push(`"${field}" -> {`,
-                  `  decoder.validate("${typeChar}")`,
-                  `  this.${fixed} = decoder.${decodeFn}`,
-                  `}`,
-      );
-
-      encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
-    });
+    let typeDecls = '';
+    if (aliases.length) {
+      typeDecls = '\n' + aliases.map(a => `typealias ${a} = ${name}`).join('\n') + '\n';
+    }
 
     return `\
 
 data class ${name}(
-  ${fields.join(', ')}
+  ${this.fields.join(', ')}
 ) : Entity<${name}>() {
   override fun decodeEntity(encoded: String): ${name}? {
     if (encoded.isEmpty()) {
@@ -95,7 +105,7 @@ data class ${name}(
     while (!decoder.done() && i < ${fieldCount}) {
       val name = decoder.upTo(":")
       when (name) {
-        ${decode.join('\n        ')}
+        ${this.decode.join('\n        ')}
       }
       decoder.validate("|")
       i++
@@ -106,22 +116,11 @@ data class ${name}(
   override fun encodeEntity(): String {
     val encoder = StringEncoder()
     encoder.encode("", internalId)
-    ${encode.join('\n    ')}
+    ${this.encode.join('\n    ')}
     return encoder.result()
   }
 }
+${typeDecls}
 `;
-  }
-
-  addScope(namespace: string = 'arcs') {
-    this.pkgName = namespace;
-  }
-
-  addAliases(aliases: Aliases): string {
-    const lines: string[] = Object.entries(aliases)
-      .map(([rhs, ids]): string[] => [...ids].map((id) => `typealias ${id} = ${rhs}`))
-      .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
-
-    return lines.join('\n');
   }
 }

@@ -7,86 +7,103 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 import {assert} from '../../platform/chai-web.js';
-import {Aliases, Schema2Base} from '../schema2base.js';
-import {Schema} from '../../runtime/schema.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {Schema} from '../../runtime/schema.js';
+import {Dictionary} from '../../runtime/hot.js';
+import {Schema2Base, ClassGenerator} from '../schema2base.js';
+import {SchemaNode} from '../schema2graph.js';
 
+/* eslint key-spacing: ["error", {"mode": "minimum"}] */
 
 class Schema2Mock extends Schema2Base {
-  public readonly entityArgs: [string, Schema][] = [];
-  public readonly outnameArgs: string[] = [];
-  public readonly basenameArgs: string[] = [];
-  public readonly namespaceArgs: string[] = [];
+  res: Dictionary<[string, string, boolean, string][]> = {};
+  count: Dictionary<number> = {};
 
-  entityClass(name: string, schema: Schema): string {
-    this.entityArgs.push([name, schema]);
-    return '';
+  constructor(manifest: Manifest) {
+    super({'_': []});
+    this.processManifest(manifest);
   }
 
-  fileFooter(): string {
-    return '';
-  }
+  getClassGenerator(node: SchemaNode): ClassGenerator {
+    const mock = this;
+    mock.res[node.name] = [];
+    return {
+      processField(field: string, typeChar: string, inherited: boolean, refName: string) {
+        mock.res[node.name].push([field, typeChar, inherited, refName]);
+      },
 
-  fileHeader(outName: string): string {
-    this.outnameArgs.push(outName);
-    return '';
+      generate(fieldCount: number): string {
+        mock.count[node.name] = fieldCount;
+        return '';
+      }
+    };
   }
-
-  outputName(baseName: string): string {
-    this.basenameArgs.push(baseName);
-    return baseName;
-  }
-
-  addAliases(aliases: Aliases): string {
-    return '';
-  }
-
-  addScope(namespace: string) {
-    this.namespaceArgs.push(namespace);
-  }
-
 }
 
 describe('schema2base', () => {
-  it('creates names for anonymous schemas (0 names)', async () => {
+  it('generates one class per unique schema', async () => {
     const manifest = await Manifest.parse(`\
-  particle Foo
-    in * {Number n} input0
-    in * {Number n} input1
-    in * {Number x} input2
-    in * {(URL or Text) u} union
-    in * {(Number, Number) coordinate} tuple 
-    in Reference<* {Number n, URL u}> nested0
-    in Reference<* {Number n}> nested1
-    in [* {Text t, URL u}] collection0
-    in [* {URL u, Text t}] collection1
-    in [* {Text t}] collection2
+      particle Foo
+        in * {Text txt} input1
+        out Reference<* {Text txt, Number num}> input2
+        inout [Site {URL url, Reference<* {Text txt}> ref}] input3
     `);
-
-    const mock = new Schema2Mock({'_': []});
-    const [_, ...schemas] = mock.processManifest(manifest);
-
-    const names = schemas.map(s => Object.keys(s)).reduce((acc, x) => acc.concat(x), []);
-    assert.equal(names.length, 10);
-    assert.includeDeepOrderedMembers(names,
-      ['Foo_input0', 'Foo_input1', 'Foo_input2', 'Foo_union', 'Foo_tuple', 'Foo_nested0', 'Foo_nested1',
-        'Foo_collection0', 'Foo_collection1', 'Foo_collection2']);
+    const mock = new Schema2Mock(manifest);
+    assert.sameMembers(Object.keys(mock.res), ['FooInternal1', 'Foo_Input2', 'Foo_Input3']);
   });
 
-  it('sets the scope / package once', async () => {
-
+  it('supports all primitive types', async () => {
     const manifest = await Manifest.parse(`\
-  particle Bar
-    in Product {Text name, Number price} order
-    out [Product {Text name, Number price}] recommendations
+      particle Foo
+        in * {Text txt, URL url, Number num, Boolean flg} input
     `);
+    const mock = new Schema2Mock(manifest);
+    assert.deepStrictEqual(mock.res, {
+      'Foo_Input': [
+        ['txt', 'T', false, null],
+        ['url', 'U', false, null],
+        ['num', 'N', false, null],
+        ['flg', 'B', false, null],
+      ]
+    });
+    assert.deepStrictEqual(mock.count, {'Foo_Input': 4});
+  });
 
-    const mock = new Schema2Mock({'_': [], 'package': 'baz'});
-    const _ = mock.processManifest(manifest);
+  it('supports nested references with schema aliasing', async () => {
+    const manifest = await Manifest.parse(`\
+      particle Foo
+        in * {Text a, Reference<* {Text b}> r} h1
+        in * {Reference<* {Boolean f, Reference<* {Number x}> t}> s} h2
+    `);
+    const mock = new Schema2Mock(manifest);
+    assert.deepStrictEqual(mock.res, {
+      'Foo_H1':     [['a', 'T', false, null], ['r', 'R', false, 'Foo_H1_R']],
+      'Foo_H1_R':   [['b', 'T', false, null]],
+      'Foo_H2':     [['s', 'R', false, 'Foo_H2_S']],
+      'Foo_H2_S':   [['f', 'B', false, null], ['t', 'R', false, 'Foo_H2_S_T']],
+      'Foo_H2_S_T': [['x', 'N', false, null]],
+    });
+    assert.deepStrictEqual(mock.count, {
+      'Foo_H1': 2, 'Foo_H1_R': 1, 'Foo_H2': 1, 'Foo_H2_S': 2, 'Foo_H2_S_T': 1
+    });
+  });
 
-    assert.includeDeepOrderedMembers(mock.namespaceArgs, ['baz']);
-
+  it('indicates inherited fields for type slicing', async () => {
+    const manifest = await Manifest.parse(`\
+      particle Foo
+        in * {Text txt} h1
+        in * {Text txt, Number num} h2
+        in * {URL url} h3
+        in * {Text txt, Number num, URL url} h4
+    `);
+    const mock = new Schema2Mock(manifest);
+    assert.deepStrictEqual(mock.res, {
+      'Foo_H1': [['txt', 'T', false, null]],
+      'Foo_H2': [['txt', 'T', true, null], ['num', 'N', false, null]],
+      'Foo_H3': [['url', 'U', false, null]],
+      'Foo_H4': [['txt', 'T', true, null], ['num', 'N', true, null], ['url', 'U', true, null]],
+    });
+    assert.deepStrictEqual(mock.count, {'Foo_H1': 1, 'Foo_H2': 2, 'Foo_H3': 1, 'Foo_H4': 3});
   });
 });

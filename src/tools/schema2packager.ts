@@ -11,10 +11,6 @@ import minimist from 'minimist';
 import {Schema2Cpp} from './schema2cpp.js';
 import {Schema2Kotlin} from './schema2kotlin.js';
 
-// TODO: schemas with multiple names and schemas with parents
-// TODO: schemas with no fields
-// TODO: schemas with no names?  i.e. inline '* {Text s}'
-
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'package'],
   boolean: ['cpp', 'kotlin', 'update', 'help'],

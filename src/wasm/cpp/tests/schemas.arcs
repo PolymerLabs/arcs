@@ -1,11 +1,9 @@
-schema Foo
-
 schema Data
   Number num
   Text txt
   URL lnk
   Boolean flg
-  Reference<Foo> ref
+  Reference<Foo {}> ref
 
 schema Empty
 
@@ -23,7 +21,6 @@ schema SpecialFields
   Number internal_id
 
 particle Test
-  in Foo foo
   in Data data
   in Empty empty
   in RenderFlags renderFlags

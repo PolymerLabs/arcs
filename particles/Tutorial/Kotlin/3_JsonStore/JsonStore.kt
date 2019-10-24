@@ -3,7 +3,7 @@ package arcs.tutorials
 import arcs.Particle
 import arcs.WasmAddress
 import arcs.Singleton
-import arcs.JsonStoreParticle_inputData
+import arcs.JsonStoreParticle_InputData
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -11,18 +11,18 @@ import kotlin.native.internal.ExportForCppRuntime
  */
 class JsonStoreParticle : Particle() {
 
-    private val res = Singleton { JsonStoreParticle_inputData() }
+    private val res = Singleton { JsonStoreParticle_InputData() }
     init {
         registerHandle("inputData", res)
     }
 
     override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
-        val person = res.get() ?: JsonStoreParticle_inputData("", 0.0);
+        val person = res.get() ?: JsonStoreParticle_InputData("", 0.0);
 
         return model + mapOf(
             "name" to person.name,
             "age" to person.age.toString()
-        )   
+        )
     }
 
     override fun getTemplate(slotName: String): String {
