@@ -31,7 +31,7 @@ export class Flags extends FlagDefaults {
   static withNewStorageStack<T>(f: () => Promise<T>): () => Promise<T> {
     return Flags.withFlags({useNewStorageStack: true}, f);
   }
-  
+
   // For testing with a different set of flags to the default.
   static withFlags<T>(args: Partial<typeof FlagDefaults>, f: () => Promise<T>): () => Promise<T> {
     return async () => {

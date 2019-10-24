@@ -22,7 +22,7 @@ import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
 
-// ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on 
+// ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
 export type Reference = {id: string, storageKey: StorageKey, version: VersionMap};
 export class ReferenceCollection extends CRDTCollection<Reference> {}
@@ -166,7 +166,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   }
 
   // For referenceMode stores, the version tracked is just the version
-  // of the container, because any updates to Entities must necessarily be 
+  // of the container, because any updates to Entities must necessarily be
   // stored as version updates to the references in the container.
   get versionToken() {
     return this.containerStore.versionToken;
