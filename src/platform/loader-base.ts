@@ -22,7 +22,8 @@ import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../runtime/log-factory.js';
 
-type Ctor = new() => Object;
+type Ctor = typeof Object;
+type ParticleCtor = typeof Particle;
 
 interface UrlMap {
   [macro: string]: string | {
@@ -112,7 +113,7 @@ export abstract class LoaderBase {
   protected async fetchString(url: string): Promise<string> {
     const res = await fetch(url);
     if (res.ok) {
-      return res.text()
+      return res.text();
     }
     return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
   }
@@ -122,7 +123,7 @@ export abstract class LoaderBase {
   protected async fetchBuffer(url: string): Promise<ArrayBuffer> {
     const res = await fetch(url);
     if (res.ok) {
-      return res.arrayBuffer()
+      return res.arrayBuffer();
     }
     return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText} for ${url}`));
   }
@@ -230,24 +231,25 @@ export abstract class LoaderBase {
    * Particle foo in 'x.js'
    * ```
    */
-  async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle> {
-    let clazz: any = null;
-    let userClass = await this.requireParticle(spec.implFile || '', spec.implBlobUrl);
+  async loadParticleClass(spec: ParticleSpec): Promise<ParticleCtor> {
+    let particleClass: ParticleCtor = null;
+    const userClass = await this.requireParticle(spec.implFile || '', spec.implBlobUrl);
     if (!userClass) {
       warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
     } else {
       // TODO(sjmiles): this seems bad, but instanceof didn't work (worker scope issue?)
       if (userClass.toString().includes('extends')) {
       //if (userClass instanceof Particle) {
-        clazz = userClass;
+        particleClass = userClass;
       } else {
-        clazz = this.implementWrappedParticle(userClass);
+        particleClass = this.implementWrappedParticle(userClass);
       }
-      clazz.spec = spec;
+      particleClass.spec = spec;
     }
-    return clazz;
+    return particleClass;
   }
-  private implementWrappedParticle(userClass): Ctor {
+  // TODO(sjmiles): experimental privatized particle API
+  private implementWrappedParticle(userClass: ParticleCtor): ParticleCtor {
     return class extends UiParticle {
       private _impl: {};
       update(...args) {
@@ -261,7 +263,8 @@ export abstract class LoaderBase {
         }
         return this._impl;
       }
-    };
+    // TODO(sjmiles): TS says Particle and UiParticle do not overlap, but `UiParticle extends Particle`
+    } as unknown as ParticleCtor;
   }
   /**
    * Loads a particle class from the given filename by loading the
@@ -271,7 +274,7 @@ export abstract class LoaderBase {
    *
    * Abstract because different platforms marshal particle execution contexts differently.
    */
-  protected abstract async requireParticle(fileName: string, blobUrl?: string): Promise<typeof Particle>;
+  protected abstract async requireParticle(fileName: string, blobUrl?: string): Promise<ParticleCtor>;
   /**
    * executes the defineParticle() code and returns the results which should be a class definition.
    */
