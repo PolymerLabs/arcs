@@ -1,5 +1,6 @@
 package arcs
 
+
 class HandleSyncUpdateTest : Particle() {
     private val input1 = Singleton { Test_data() }
     private val input2 = Singleton { Test_data() }
@@ -17,13 +18,12 @@ class HandleSyncUpdateTest : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val input = (handle as Singleton<*>).get() as Test_data?;
+        val input = (handle as Singleton<*>).get() as Test_data?
         val out = input?.let { Test_data(input.num, "update: ${handle.name}") }
                 ?: Test_data(txt = "unexpected handle name: ${handle.name}")
 
         output.set(out)
     }
-
 }
 
 class RenderTest : Particle() {
@@ -98,7 +98,6 @@ class ServiceTest : Particle() {
 
         output.set(Test_serviceResponse(call, tag, payload))
     }
-
 }
 
 class MissingRegisterHandleTest : Particle() {}
