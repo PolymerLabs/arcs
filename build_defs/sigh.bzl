@@ -8,6 +8,7 @@ def sigh_command(
         outs = [],
         deps = [],
         execute = True,
+        quiet = True,
         visibility = []):
     """Runs the tool/sigh command from bazel with the given sign_cmd arguments.
     Note: Any files (e.g. additional src, build outputs, etc) needed to be seen
@@ -15,11 +16,16 @@ def sigh_command(
 
     run_macro = run_in_repo if execute else run_in_repo_test
 
+    cmd = "$(location //tools:sigh_bin) "
+    if quiet:
+        cmd += "--quiet "
+    cmd += sigh_cmd
+
     run_macro(
         name = name,
         srcs = srcs,
         outs = outs,
-        cmd = "$(location //tools:sigh_bin) " + sigh_cmd,
+        cmd = cmd,
         progress_message = progress_message,
         tags = EXECUTION_REQUIREMENTS_TAGS,
         deps = [
