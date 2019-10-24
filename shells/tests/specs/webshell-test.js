@@ -30,7 +30,7 @@ describe('wait for server', () => {
 });
 
 const persona = `${marshalPersona('volatile')}`;
-describe.skip(`WASM (${persona})`, () => {
+describe(`WASM (${persona})`, () => {
   it('loads Kotlin Tutorial 1', async function() {
     console.log(`running "${this.test.fullTitle()}"`);
     await openArc(persona);
