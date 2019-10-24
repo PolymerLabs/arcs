@@ -43,10 +43,14 @@ def _write_shell_script(ctx, run_script):
 
     # Optionally run the shell script.
     if run_script:
-        ctx.actions.run(
-            executable = script_file,
+        # Running scripts via ctx.actions.run is not supported on Windows, so
+        # we need to use ctx.actions.run_shell instead, with the script path as
+        # our only command.
+        ctx.actions.run_shell(
+            command = script_file.path,
             inputs = depset(input_files + ctx.files.deps),
             outputs = output_files,
+            tools = [script_file],
             progress_message = ctx.attr.progress_message,
             use_default_shell_env = True,
             execution_requirements = EXECUTION_REQUIREMENTS_DICT,
