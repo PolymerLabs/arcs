@@ -130,7 +130,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
    * Returns the state of this singleton based as an object of the form
    * {version, model: [{id, value}]}
    */
-  async toLiteral(): Promise<{version: number; model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number; model: SerializedModelEntry[]}> {
     await this.initialized;
 
     const doc = await this.upsert(async doc => doc);

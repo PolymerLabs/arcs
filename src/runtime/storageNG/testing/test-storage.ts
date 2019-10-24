@@ -76,6 +76,10 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   async getLocalData(): Promise<CRDTData> {
     throw new Error('unimplemented');
   }
+
+  async serializeContents(): Promise<T['data']> {
+    throw new Error('unimplemented');
+  }
 }
 
 export class MockStorageKey extends StorageKey {

@@ -60,6 +60,8 @@ export abstract class Type {
         return new ArcType();
       case 'Handle':
         return new HandleType();
+      case 'Singleton':
+        return new SingletonType(Type.fromLiteral(literal.data));
       default:
         throw new Error(`fromLiteral: unknown type ${literal}`);
     }
@@ -290,7 +292,7 @@ export class SingletonType<T extends Type> extends Type {
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: 'Singleton'};
+    return {tag: 'Singleton', data: this.innerType.toLiteral()};
   }
 
   getContainedType(): T {
@@ -307,6 +309,10 @@ export class SingletonType<T extends Type> extends Type {
 
   get isSingleton(): boolean {
     return true;
+  }
+
+  toString(options = undefined): string {
+    return `![${this.innerType.toString(options)}]`;
   }
 }
 

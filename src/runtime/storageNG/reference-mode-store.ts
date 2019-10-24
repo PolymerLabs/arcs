@@ -22,11 +22,7 @@ import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
 
-<<<<<<< HEAD
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
-=======
-// ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
->>>>>>> Complete plumbing of tokens
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
 export type Reference = {id: string, storageKey: StorageKey, version: VersionMap};
 export class ReferenceCollection extends CRDTCollection<Reference> {}
@@ -163,6 +159,19 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
     });
     result.registerStoreCallbacks();
     return result;
+  }
+
+  async serializeContents(): Promise<Container['data']> {
+    const data = await this.containerStore.serializeContents();
+    const {pendingIds, model} = this.constructPendingIdsAndModel(data);
+
+    if (pendingIds.length === 0) {
+      return model();
+    }
+
+    return new Promise((resolve, reject) => {
+      this.enqueueBlockingSend(pendingIds, () => resolve(model()));
+    });
   }
 
   reportExceptionInHost(exception: PropagatedException): void {

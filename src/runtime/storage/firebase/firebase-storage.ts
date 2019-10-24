@@ -591,7 +591,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     return super.modelForSynchronization();
   }
 
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     // fixme: think about if there are local mutations...
     const value = this.value;
@@ -1062,7 +1062,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   async _toList(): Promise<SerializedModelEntry[]> {
     await this.initialized;
     if (this.referenceMode) {
-      const items = (await this.toLiteral()).model;
+      const items = (await this.serializeContents()).model;
       if (items.length === 0) {
         return [];
       }
@@ -1082,7 +1082,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
       return await Promise.all(items.map(retrieveItem));
     }
-    return (await this.toLiteral()).model;
+    return (await this.serializeContents()).model;
   }
 
   async modelForSynchronization() {
@@ -1137,7 +1137,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     await this._persistChanges();
   }
 
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     // TODO: think about what to do here, do we really need toLiteral for a firebase store?
     // if yes, how should it represent local modifications?
@@ -1472,7 +1472,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
     throw new Error('FirebaseBigCollection does not yet implement cloneFrom');
   }
 
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('FirebaseBigCollection does not yet implement toLiteral');
   }
 
@@ -1604,7 +1604,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement off');
   }
 
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('FirebaseBackingStore does not implement toLiteral');
   }
 

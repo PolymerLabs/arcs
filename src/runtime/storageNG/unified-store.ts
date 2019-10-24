@@ -145,7 +145,7 @@ export interface UnifiedActiveStore extends StorageCommunicationEndpointProvider
   // for new storage we probably need to extract the model from the store instead and have the CRDT directly produce a
   // JSON representation for insertion into the serialization.
   // tslint:disable-next-line no-any
-  toLiteral(): Promise<any>;
+  serializeContents(): Promise<any>;
 
   cloneFrom(store: UnifiedActiveStore): Promise<void>;
   modelForSynchronization(): Promise<{}>;
@@ -167,6 +167,7 @@ export type StoreInfo = {
 
   /** Trust tags claimed by this data store. */
   readonly claims?: ClaimIsTag[];
-  
+
   readonly versionToken?: string;
+  readonly model?: {};
 };

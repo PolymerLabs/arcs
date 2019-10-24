@@ -107,7 +107,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   }
 
   /** @inheritDoc */
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     return {
       version: this._version,

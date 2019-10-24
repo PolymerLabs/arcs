@@ -273,28 +273,33 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         if (!volatile) {
           // TODO: include keys in serialized [big]collections?
           const activeStore = await store.activate();
-          serializedData = (await activeStore.toLiteral()).model.map((model) => {
-            const {id, value} = model;
-            const index = model['index']; // TODO: Invalid Type
+          const model = await activeStore.serializeContents();
+          if (Flags.useNewStorageStack) {
+            serializedData = model;
+          } else {
+            serializedData = model.model.map((model) => {
+              const {id, value} = model;
+              const index = model['index']; // TODO: Invalid Type
 
-            if (value == null) {
-              return null;
-            }
-
-            let result;
-            if (value.rawData) {
-              result = {$id: id};
-              for (const field of Object.keys(value.rawData)) {
-                result[field] = value.rawData[field];
+              if (value == null) {
+                return null;
               }
-            } else {
-              result = value;
-            }
-            if (index !== undefined) {
-              result.$index = index;
-            }
-            return result;
-          });
+
+              let result;
+              if (value.rawData) {
+                result = {$id: id};
+                for (const field of Object.keys(value.rawData)) {
+                  result[field] = value.rawData[field];
+                }
+              } else {
+                result = value;
+              }
+              if (index !== undefined) {
+                result.$index = index;
+              }
+              return result;
+            });
+          }
         }
         if (store.referenceMode && serializedData.length > 0) {
           const storageKey = serializedData[0].storageKey;
@@ -424,16 +429,11 @@ ${this.activeRecipe.toString()}`;
 
   static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
-    const arc = new Arc({
-      id: Id.fromString(manifest.meta.name),
-      storageKey: manifest.meta.storageKey,
-      slotComposer,
-      pecFactories,
-      loader,
-      storageProviderFactory: manifest.storageProviderFactory,
-      context,
-      inspectorFactory
-    });
+    const storageProviderFactory = Flags.useNewStorageStack ? null : manifest.storageProviderFactory;
+    const id = Id.fromString(manifest.meta.name);
+    const storageKey = manifest.meta.storageKey;
+    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory});
+
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
       const store = await storeStub.activate();

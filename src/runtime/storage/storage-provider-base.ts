@@ -208,7 +208,7 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
   /**
    * @returns an object notation of this storage provider.
    */
-  abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
+  abstract async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
   abstract cloneFrom(store: UnifiedActiveStore): Promise<void>;
 
@@ -222,6 +222,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
    * Called by Particle Execution Host to synchronize it's proxy.
    */
   async modelForSynchronization(): Promise<{version: number, model: {}}> {
-    return this.toLiteral();
+    return this.serializeContents();
   }
 }
