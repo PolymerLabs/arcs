@@ -135,7 +135,7 @@ export abstract class LoaderBase {
   //
   // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?
   join(prefix: string, path: string): string {
-    if (/^https?:\/\//.test(path)) {
+    if (isQualifiedUrl(path)) {
       return path;
     }
     // TODO: replace this with something that isn't hacky
@@ -237,34 +237,10 @@ export abstract class LoaderBase {
     if (!userClass) {
       warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
     } else {
-      // TODO(sjmiles): this seems bad, but instanceof didn't work (worker scope issue?)
-      if (userClass.toString().includes('extends')) {
-      //if (userClass instanceof Particle) {
-        particleClass = userClass;
-      } else {
-        particleClass = this.implementWrappedParticle(userClass);
-      }
+      particleClass = userClass;
       particleClass.spec = spec;
     }
     return particleClass;
-  }
-  // TODO(sjmiles): experimental privatized particle API
-  private implementWrappedParticle(userClass: ParticleCtor): ParticleCtor {
-    return class extends UiParticle {
-      private _impl: {};
-      update(...args) {
-        this.impl['update'](...args);
-      }
-      get impl() {
-        if (!this._impl) {
-          this._impl = new userClass();
-          this._impl['output'] = (...args) => this.output(args);
-          this._impl['particle'] = this;
-        }
-        return this._impl;
-      }
-    // TODO(sjmiles): TS says Particle and UiParticle do not overlap, but `UiParticle extends Particle`
-    } as unknown as ParticleCtor;
   }
   /**
    * Loads a particle class from the given filename by loading the
