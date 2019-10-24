@@ -497,10 +497,9 @@ ${this.activeRecipe.toString()}`;
       // if supported, construct spec.implBlobUrl for spec.implFile
       if (this.loader && this.loader['provisionObjectUrl']) {
         const url = await this.loader['provisionObjectUrl'](spec.implFile);
+        // may not produce a url if implFile is binary
         if (url) {
           spec.setImplBlobUrl(url);
-        } else {
-          throw new Error(`Expected url for ${spec.implFile} but got ${url}`);
         }
       }
     }

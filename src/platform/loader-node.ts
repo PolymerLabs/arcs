@@ -18,20 +18,15 @@ export class Loader extends LoaderBase {
   clone(): Loader {
     return new Loader(this.urlMap);
   }
-  async loadResource(file: string): Promise<string> {
-    const path = this.resolve(file);
-    const content = this.loadStatic(path);
-    if (content) {
-      return content;
-    }
-    if (/^https?:\/\//.test(path)) {
-      return this.loadURL(path);
-    }
-    return this.loadFile(path);
+  async loadFile(path: string): Promise<string> {
+    return this.loadFileData(path, 'utf-8') as Promise<string>;
   }
-  private async loadFile(file: string): Promise<string> {
+  async loadBinaryFile(path: string): Promise<ArrayBuffer> {
+    return this.loadFileData(path) as Promise<ArrayBuffer>;
+  }
+  private async loadFileData(path: string, encoding?: string): Promise<string | ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      fs.readFile(file, 'utf-8', (err, data: string) => {
+      fs.readFile(path, encoding, (err, data: string) => {
         if (err) {
           reject(err);
         } else {
@@ -40,13 +35,14 @@ export class Loader extends LoaderBase {
       });
     });
   }
-  protected async requireParticle(fileName: string, blobUrl?: string): Promise<typeof Particle> {
-    const path = this.resolve(fileName);
+  async requireParticle(fileName: string, blobUrl?: string): Promise<typeof Particle> {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
-    this.mapParticleUrl(path);
+    this.mapParticleUrl(fileName);
+    // resolve path
+    const path = this.resolve(fileName);
     // get source code
-    const src = await this.loadResource(blobUrl || fileName);
+    const src = await this.loadResource(blobUrl || path);
     // Note. This is not real isolation.
     const script = new vm.Script(src, {filename: fileName, displayErrors: true});
     const result = [];
@@ -61,7 +57,9 @@ export class Loader extends LoaderBase {
       importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
     script.runInNewContext(self, {filename: fileName, displayErrors: true});
-    assert(result.length > 0 && typeof result[0] === 'function', `Error while instantiating particle implementation from ${fileName}`);
-    return this.unwrapParticle(result[0]);
+    const wrapper = result[0];
+    assert(typeof wrapper === 'function', `Error while instantiating particle implementation from ${fileName}`);
+    // unwrap particle wrapper
+    return this.unwrapParticle(wrapper, this.provisionLogger(fileName));
   }
 }

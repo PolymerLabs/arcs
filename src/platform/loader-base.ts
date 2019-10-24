@@ -36,7 +36,16 @@ interface UrlMap {
 const {warn} = logsFactory('Loader', 'green');
 
 const isString = s => (typeof s === 'string');
+const isSchemaOrgUrl = (s: string) => /\/\/schema.org\//.test(s);
+// a qualified url is an absolute path with `https` protocol
+const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 
+/**
+ * Key public API:
+ *   async loadResource(file: string): Promise<string>
+ *   async loadBinaryResource(file: string): Promise<ArrayBuffer>
+ *   async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle>
+ */
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
@@ -51,18 +60,79 @@ export abstract class LoaderBase {
   flushCaches(): void {
     // as needed
   }
-  loadStatic(path) {
-    return this.staticMap[path];
+  // TODO(sjmiles): XXX and XXXBinary methods are forked for type-safety (is there a way to be more DRY?)
+  async loadResource(file: string): Promise<string> {
+    const content = this.loadStatic(file);
+    if (content) {
+      return content;
+    }
+    const path = this.resolve(file);
+    if (isQualifiedUrl(path)) {
+      return this.loadUrl(path);
+    }
+    return this.loadFile(path);
   }
-  protected async loadURL(url: string): Promise<string> {
-    if (/\/\/schema.org\//.test(url)) {
+  async loadBinaryResource(file: string): Promise<ArrayBuffer> {
+    const content = this.loadStaticBinary(file);
+    if (content) {
+      return content;
+    }
+    const path = this.resolve(file);
+    if (isQualifiedUrl(path)) {
+      return this.loadBinaryUrl(path);
+    }
+    return this.loadBinaryFile(path);
+  }
+  protected loadStatic(path: string): string {
+    const content = this.staticMap[path];
+    if (content) {
+      if (isString(content)) {
+        return content;
+      }
+      throw 'Cannot load static binary content as string';
+    }
+    return null;
+  }
+  protected loadStaticBinary(path: string): ArrayBuffer {
+    const content = this.staticMap[path];
+    if (content) {
+      if (content instanceof ArrayBuffer) {
+        return content;
+      }
+      throw 'Cannot load static string content as binary';
+    }
+    return null;
+  }
+  protected async loadUrl(url: string): Promise<string> {
+    if (isSchemaOrgUrl(url)) {
       return this.loadSchemaOrgUrl(url);
     }
-    return this.fetchText(url);
+    return this.fetchString(url);
   }
-  path(fileName: string): string {
-    return fileName.replace(/[/][^/]+$/, '/');
+  protected async fetchString(url: string): Promise<string> {
+    const res = await fetch(url);
+    if (res.ok) {
+      return res.text()
+    }
+    return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
   }
+  protected async loadBinaryUrl(url: string): Promise<ArrayBuffer> {
+    return this.fetchBuffer(url);
+  }
+  protected async fetchBuffer(url: string): Promise<ArrayBuffer> {
+    const res = await fetch(url);
+    if (res.ok) {
+      return res.arrayBuffer()
+    }
+    return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText} for ${url}`));
+  }
+  /**
+   * Abstract: platforms access the filesystem differently.
+   */
+  protected abstract async loadFile(url: string): Promise<string>
+  protected abstract async loadBinaryFile(url: string): Promise<ArrayBuffer>
+  //
+  // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?
   join(prefix: string, path: string): string {
     if (/^https?:\/\//.test(path)) {
       return path;
@@ -74,6 +144,10 @@ export abstract class LoaderBase {
     prefix = this.path(prefix);
     path = this.normalizeDots(`${prefix}${path}`);
     return path;
+  }
+  // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?
+  path(fileName: string): string {
+    return fileName.replace(/[/][^/]+$/, '/');
   }
   // convert `././foo/bar/../baz` to `./foo/baz`
   protected normalizeDots(path: string): string {
@@ -91,11 +165,11 @@ export abstract class LoaderBase {
     return path;
   }
   resolve(path: string) {
-    let resolved = this.resolvePath(path);
-    resolved = this.normalizeDots(resolved);
-    return resolved;
+    const resolved = this.resolvePath(path);
+    const compact = this.normalizeDots(resolved);
+    return compact;
   }
-  resolvePath(path: string) {
+  private resolvePath(path: string) {
     let resolved: string = path;
     // TODO(sjmiles): inefficient
     // find longest key in urlMap that is a prefix of path
@@ -110,12 +184,12 @@ export abstract class LoaderBase {
     }
     return resolved;
   }
-  findUrlMapMacro(path: string): string {
+  private findUrlMapMacro(path: string): string {
     // TODO(sjmiles): inefficient
     // find longest key in urlMap that is a prefix of path
     return Object.keys(this.urlMap).sort((a, b) => b.length - a.length).find(k => isString(path) && (path.slice(0, k.length) === k));
   }
-  resolveConfiguredPath(path: string, macro: string, config) {
+  private resolveConfiguredPath(path: string, macro: string, config) {
     return [
       config.root,
       (path.match(config.buildOutputRegex) ? config.buildDir : ''),
@@ -123,18 +197,14 @@ export abstract class LoaderBase {
       path.slice(macro.length)
     ].join('');
   }
-  mapParticleUrl(path: string) {
+  protected mapParticleUrl(path: string) {
     if (!path) {
       return undefined;
     }
     const resolved = this.resolve(path);
     const parts = resolved.split('/');
-    const suffix = parts.pop();
+    parts.pop();
     const folder = parts.join('/');
-    if (!suffix.endsWith('.wasm')) {
-      const name = suffix.split('.').shift();
-      this.urlMap[name] = folder;
-    }
     this.urlMap['$here'] = folder;
     this.urlMap['$module'] = folder;
   }
@@ -145,19 +215,12 @@ export abstract class LoaderBase {
       href = 'https://schema.org/Product.jsonld';
       opts =  {'@id': 'schema:Thing'};
     }
-    const data = await this.fetchText(href);
+    const data = await this.fetchString(href);
     return JsonldToManifest.convert(data, opts);
   }
-  protected async fetchText(url: string): Promise<string> {
-    const res = await fetch(url);
-    if (res.ok) {
-      return res.text()
-    }
-    return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
-  }
-
+  //
   // Below here invoked from inside isolation scope (e.g. Worker)
-
+  //
   /**
    * Returns a particle class implementation by loading and executing
    * the code defined by a particle.  In the following example `x.js`
@@ -173,7 +236,7 @@ export abstract class LoaderBase {
     if (!userClass) {
       warn(`[${spec.implFile}]::defineParticle() returned no particle.`);
     } else {
-      // TODO(sjmiles): this seems bad, but instanceof didn't work (worker scope?)
+      // TODO(sjmiles): this seems bad, but instanceof didn't work (worker scope issue?)
       if (userClass.toString().includes('extends')) {
       //if (userClass instanceof Particle) {
         clazz = userClass;
@@ -201,18 +264,18 @@ export abstract class LoaderBase {
     };
   }
   /**
-   * Abstract
-   *
    * Loads a particle class from the given filename by loading the
    * script contained in `fileName` and executing it as a script.
    *
    * Protected for use in tests.
+   *
+   * Abstract because different platforms marshal particle execution contexts differently.
    */
   protected abstract async requireParticle(fileName: string, blobUrl?: string): Promise<typeof Particle>;
   /**
    * executes the defineParticle() code and returns the results which should be a class definition.
    */
-  unwrapParticle(particleWrapper, log?) {
+  protected unwrapParticle(particleWrapper, log?) {
     assert(this.pec);
     return particleWrapper({
       // Particle base
@@ -233,5 +296,8 @@ export abstract class LoaderBase {
       log: log || (() => {}),
       html
     });
+  }
+  protected provisionLogger(fileName: string): Function {
+    return logsFactory(fileName.split('/').pop(), '#1faa00').log;
   }
 }

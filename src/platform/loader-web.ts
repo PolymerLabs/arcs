@@ -20,13 +20,14 @@ export class Loader extends LoaderBase {
   flushCaches(): void {
     // punt object urls?
   }
-  async loadResource(url: string): Promise<string> {
-    // subclass impl differentiates paths and URLs,
-    // for browser env we can feed both kinds into _loadURL
-    const path = this.resolve(url);
-    return this.loadStatic(path) || this.loadURL(path);
+  async loadFile(path: string): Promise<string> {
+    return this.loadUrl(path);
+  }
+  async loadBinaryFile(path: string): Promise<ArrayBuffer> {
+    return this.loadBinaryUrl(path);
   }
   async provisionObjectUrl(fileName: string) {
+    // TODO(sjmiles): BLOB Urls don't work for binary content (.wasm), mime-type?
     if (fileName.endsWith('.wasm')) {
       return null;
     } else {
@@ -36,30 +37,22 @@ export class Loader extends LoaderBase {
       return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
     }
   }
-  // TODO(sjmiles): integrate this into loadResource?
-  async loadWasmBinary(spec): Promise<ArrayBuffer> {
-    this.mapParticleUrl(spec.implFile);
-    // TODO(sjmiles): BLOB Urls don't seem to work for .wasm (?)
-    const target = /*spec.implBlobUrl ||*/ this.resolve(spec.implFile);
-    return fetch(target).then(res => res.arrayBuffer());
-  }
   async requireParticle(unresolvedPath: string, blobUrl: string) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(unresolvedPath);
     // resolve path
     const resolvedPath = this.resolve(unresolvedPath);
-    // resolved target
+    // resolve target
     const url = blobUrl || resolvedPath;
     // load wrapped particle
     const wrapper = this.loadWrappedParticle(url, resolvedPath);
     // unwrap particle wrapper, if we have one
     if (wrapper) {
-      const logger = this.provisionLogger(unresolvedPath);
-      return this.unwrapParticle(wrapper, logger);
+      return this.unwrapParticle(wrapper, this.provisionLogger(unresolvedPath));
     }
   }
-  loadWrappedParticle(url: string, path?: string) {
+  private loadWrappedParticle(url: string, path?: string) {
     let result;
     // MUST be synchronous from here until deletion
     // of self.defineParticle because we share this
@@ -83,8 +76,5 @@ export class Loader extends LoaderBase {
       delete self['defineParticle'];
     }
     return result;
-  }
-  provisionLogger(fileName: string) {
-    return logsFactory(fileName.split('/').pop(), '#1faa00').log;
   }
 }

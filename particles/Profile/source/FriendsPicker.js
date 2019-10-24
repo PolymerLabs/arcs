@@ -144,7 +144,7 @@ defineParticle(({SimpleParticle, html, resolver, log}) => {
       const name = (await this.boxQuery(names, publicKey))[0];
       return {
         publicKey,
-        avatar: (avatar && avatar.url) || resolver(`FriendsPicker/../assets/user.png`),
+        avatar: (avatar && avatar.url) || resolver(`$here/../assets/user.png`),
         name: (name && name.userName) || publicKey.split('/').pop()
       };
     }
