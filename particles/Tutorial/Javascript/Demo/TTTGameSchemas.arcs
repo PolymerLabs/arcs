@@ -1,0 +1,19 @@
+schema Person
+  Text name
+  Text avatar
+  Number id
+
+schema GameState
+  Boolean gameOver
+  Number winnerId
+  Text board
+  Number currentPlayer
+  Number lastMove
+
+schema Event
+  Text type
+  Number move
+  Number time
+
+schema Move
+  Number move

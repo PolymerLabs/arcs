@@ -1,0 +1,136 @@
+// Tutorial Demo
+// Shows how to use Arcs features to create a tic-tac-toe game.
+import 'TTTGameSchemas.arcs'
+import 'TTTGameData.arcs'
+
+particle Game in './source/TTTGame.js'
+  inout Person {name, avatar, id} playerOne
+  inout Person {name, avatar, id} playerTwo
+  inout GameState gameState
+  inout Move {move} playerOneMove
+  inout Move {move} playerTwoMove
+  inout [Event] events
+  consume root
+    provide gameSlot
+
+particle TicTacToeBoard in './source/TTTBoard.js'
+  in GameState {board, currentPlayer} gameState
+  out [Event] events
+  consume boardSlot
+
+particle HumanPlayer in './source/TTTHumanPlayer.js'
+  in GameState {currentPlayer} gameState
+  in [Event] events
+  in Person {id} player
+  out Move {move} myMove
+
+particle RandomComputer in './source/TTTRandomComputer.js'
+  out Move {move} computerMove
+  in GameState {board, currentPlayer} gameState
+  in Person {id} player
+
+recipe GameDemoRecipe
+  create #volatile #humanMove as playerOneMove
+  create #volatile #computerMove as playerTwoMove
+  create #volatile as gameState  
+  use ComputerStore as playerTwo
+  use HumanStore as playerOne
+
+  Game
+    consume root 
+      provide gameSlot as board
+    gameState = gameState
+    playerOne = playerOne
+    playerTwo = playerTwo
+    playerOneMove = playerOneMove
+    playerTwoMove = playerTwoMove
+    events = events
+
+  TicTacToeBoard
+    gameState = gameState
+    events = events
+    consume boardSlot as board
+  
+  HumanPlayer
+    gameState = gameState
+    events <- events
+    myMove -> playerOneMove
+    player <- playerOne
+
+  RandomComputer
+    computerMove = playerTwoMove
+    player = playerTwo
+    gameState = gameState
+
+  description `Javascript Tutorial One Player TicTacToe Demo`
+
+recipe GamePlayersDemoRecipe
+  create #volatile #PlayerOne as playerOneMove
+  create #volatile #PlayerTwo as playerTwoMove
+  create #volatile as gameState  
+  use HumanOneStore as playerOne
+  use HumanTwoStore as playerTwo
+
+  Game
+    consume root 
+      provide gameSlot as board
+    gameState = gameState
+    playerOne = playerOne
+    playerTwo = playerTwo
+    playerOneMove = playerOneMove
+    playerTwoMove = playerTwoMove
+    events = events
+
+  TicTacToeBoard
+    gameState = gameState
+    events = events
+    consume boardSlot as board
+  
+  HumanPlayer
+    gameState = gameState
+    events <- events
+    myMove -> playerOneMove
+    player <- playerOne
+
+  HumanPlayer
+    gameState = gameState
+    events <- events
+    myMove -> playerTwoMove
+    player <- playerTwo
+
+  description `Javascript Tutorial Two Players TicTacToe Demo`
+
+recipe GameComputersDemoRecipe
+  create #volatile #computerOne as playerOneMove
+  create #volatile #computerTwo as playerTwoMove
+  create #volatile as gameState  
+  use ComputerOneStore as playerOne
+  use ComputerTwoStore as playerTwo
+
+  Game
+    consume root 
+      provide gameSlot as board
+    gameState = gameState
+    playerOne = playerOne
+    playerTwo = playerTwo
+    playerOneMove = playerOneMove
+    playerTwoMove = playerTwoMove
+    events = events
+
+  TicTacToeBoard
+    gameState = gameState
+    events = events
+    consume boardSlot as board
+  
+  RandomComputer
+    computerMove = playerOneMove
+    player = playerOne
+    gameState = gameState
+  
+  RandomComputer
+    computerMove = playerTwoMove
+    player = playerTwo
+    gameState = gameState
+
+  description `Javascript Tutorial Zero Players TicTacToe Demo`
+
