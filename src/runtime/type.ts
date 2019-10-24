@@ -169,6 +169,11 @@ export abstract class Type {
     return false;
   }
 
+  get isSingleton(): boolean {
+    return false;
+  }
+
+
   collectionOf() {
     return new CollectionType(this);
   }
@@ -299,6 +304,10 @@ export class SingletonType<T extends Type> extends Type {
   handleConstructor<T>() {
     return SingletonHandle;
   }
+
+  get isSingleton(): boolean {
+    return true;
+  }
 }
 
 export class EntityType extends Type {
@@ -373,7 +382,7 @@ export class EntityType extends Type {
   handleConstructor<T>() {
     // Currently using SingletonHandle as the implementation for Entity handles.
     // TODO: Make an EntityHandle class that uses the proper Entity CRDT.
-    return SingletonHandle;
+    throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 }
 

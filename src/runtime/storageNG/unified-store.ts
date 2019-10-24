@@ -15,8 +15,9 @@ import {StorageStub} from '../storage-stub.js';
 import {assert} from '../../platform/assert-web.js';
 import {Store as OldStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {ProxyCallback} from './store.js';
+import {ProxyCallback, StorageCommunicationEndpointProvider} from './store.js';
 import {ClaimIsTag} from '../particle-claim.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -135,7 +136,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   }
 }
 
-export interface UnifiedActiveStore {
+export interface UnifiedActiveStore extends StorageCommunicationEndpointProvider<CRDTTypeRecord> {
   /** The UnifiedStore instance from which this store was activated. */
   readonly baseStore: UnifiedStore;
 
@@ -166,6 +167,6 @@ export type StoreInfo = {
 
   /** Trust tags claimed by this data store. */
   readonly claims?: ClaimIsTag[];
-
+  
   readonly versionToken?: string;
 };

@@ -23,7 +23,7 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import * as util from '../testing/test-util.js';
-import {ArcType} from '../type.js';
+import {ArcType, SingletonType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
@@ -35,6 +35,10 @@ import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
 import {VolatileStorageProvider, VolatileSingleton} from '../storage/volatile-storage.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
+import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
+import {StorageProxy} from '../storage-proxy.js';
+import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
+import {Entity} from '../entity.js';
 
 async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) {
   const loader = new Loader();
@@ -690,6 +694,62 @@ describe('Arc ' + storageKeyPrefix, () => {
     await newArc.idle;
     assert.strictEqual(slotsCreated, 1);
   });
+
+  it.only('serializes StorageNG stores appropriately', Flags.withNewStorageStack(async () => {
+    const loader = new StubLoader({
+      manifest: `
+        schema Data
+          Text value
+          Number size
+
+        particle TestParticle in 'a.js'
+          in Data var
+          out [Data] col
+
+        recipe
+          use as handle0
+          use as handle1
+          TestParticle
+            var <- handle0
+            col -> handle1
+      `,
+      'a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+    const manifest = await Manifest.load('manifest', loader);
+    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const id = ArcId.fromString('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+
+    const varStore = await arc.createStore(new SingletonType(dataClass.type), undefined, 'test:0');
+    const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1');
+
+    const varStorageProxy = new StorageProxyNG('id', await varStore.activate(), new SingletonType(dataClass.type));
+    const varHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+
+    const colStorageProxy = new StorageProxyNG('id-2', await colStore.activate(), dataClass.type.collectionOf());
+    const colHandle = await handleNGFor('crdt-key-2', colStorageProxy, arc.idGeneratorForTesting, null, true, true, 'colHandle') as CollectionHandle<Entity>;
+
+    // Populate the stores, run the arc and get its serialization.
+    // TODO: the serialization roundtrip re-generates keys using the entity ids; we should keep the actual keys
+    await varHandle.set(new dataClass({value: 'v1'}));
+    await colHandle.add(new dataClass({value: 'v2', size: 20}, 'i2'));
+    await colHandle.add(new dataClass({value: 'v3', size: 30}, 'i3'));
+
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(varStore);
+    recipe.handles[1].mapToStorage(colStore);
+    assert.isTrue(recipe.normalize());
+    console.log(recipe.toString({showUnresolved: true}));
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+    await arc.idle;
+    const serialization = await arc.serialize();
+    console.log(serialization);
+    arc.dispose();
+  }));
 
   it('serialization roundtrip preserves data for volatile stores', async function() {
     if (storageKeyPrefix.startsWith('pouchdb')) {
