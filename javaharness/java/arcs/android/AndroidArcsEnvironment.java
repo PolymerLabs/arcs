@@ -21,7 +21,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import arcs.api.ArcsMessageSender;
-import arcs.api.Handle;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
@@ -47,7 +46,6 @@ final class AndroidArcsEnvironment {
   private static final String MESSAGE_DATA = "data";
   private static final String MESSAGE_OUTPUT = "output";
   private static final String MESSAGE_PEC = "pec";
-  private static final String FIELD_TRANSACTION_ID = "tid";
   private static final String FIELD_DATA = "data";
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
@@ -74,14 +72,15 @@ final class AndroidArcsEnvironment {
   private WebView webView;
 
   @Inject
-  AndroidArcsEnvironment() {
-  }
+  AndroidArcsEnvironment() {}
 
   void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
   }
 
   void init(Context context) {
+    readyListeners.clear();
+
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -134,28 +133,30 @@ final class AndroidArcsEnvironment {
 
   @JavascriptInterface
   public void receive(String json) {
-    PortableJson content = jsonParser.parse(json);
-    String message = content.getString(FIELD_MESSAGE);
-    switch (message) {
-      case MESSAGE_READY:
-        fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asObjectArray());
-        break;
-      case MESSAGE_DATA:
-        logger.warning("logger: Received deprecated 'data' message");
-        break;
-      case MESSAGE_PEC:
-        deliverPecMessage(content.getObject(FIELD_DATA));
-        break;
-      case MESSAGE_OUTPUT:
-        if (!uiBroker.render(content.getObject(FIELD_DATA))) {
-          logger.warning(
-            "Skipped rendering content for "
-              + jsonParser.stringify(content.getObject("data")));
-        }
-        break;
-      default:
-        throw new AssertionError("Received unsupported message: " + message);
-    }
+    uiThreadHandler.post(() -> {
+      PortableJson content = jsonParser.parse(json);
+      String message = content.getString(FIELD_MESSAGE);
+      switch (message) {
+        case MESSAGE_READY:
+          fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asObjectArray());
+          break;
+        case MESSAGE_DATA:
+          logger.warning("logger: Received deprecated 'data' message");
+          break;
+        case MESSAGE_PEC:
+          deliverPecMessage(content.getObject(FIELD_DATA));
+          break;
+        case MESSAGE_OUTPUT:
+          if (!uiBroker.render(content.getObject(FIELD_DATA))) {
+            logger.warning(
+                "Skipped rendering content for "
+                    + jsonParser.stringify(content.getObject("data")));
+          }
+          break;
+        default:
+          throw new AssertionError("Received unsupported message: " + message);
+      }
+    });
   }
 
   private void deliverPecMessage(PortableJson message) {
