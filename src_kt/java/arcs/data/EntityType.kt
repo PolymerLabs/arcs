@@ -25,7 +25,7 @@ class EntityType(override val entitySchema: Schema) :
   Type.CanReadWriteHolder,
   EntitySchemaProviderType,
   CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, Entity>,
-  HandleCreator<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
+  HandleCreatorType<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
 
   override val tag = Tag.Entity
 

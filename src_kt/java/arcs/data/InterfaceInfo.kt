@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs
+package arcs.data
 
 import arcs.slot.Slot
 import arcs.type.Tag

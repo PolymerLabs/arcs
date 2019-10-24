@@ -9,7 +9,10 @@ kt_jvm_and_js_library(
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/type",
-    ]
+        # TODO: may need to extract an interface from slot into its own bazel
+        #  target to avoid circular deps.
+        "//src_kt/java/arcs/slot",
+    ],
 )
 
 kt_jvm_and_js_library(

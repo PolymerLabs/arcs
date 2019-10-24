@@ -11,6 +11,7 @@
 
 package arcs.type
 
+/** The allowable types of [Type]s. */
 enum class Tag {
   Arc,
   BigCollection,

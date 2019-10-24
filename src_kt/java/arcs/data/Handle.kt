@@ -20,7 +20,7 @@ interface Handle<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
 }
 
 /** Defines a [Type] which is capable of creating a [Handle]. */
-interface HandleCreator<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Type {
+interface HandleCreatorType<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Type {
   /** Creates a new handle. */
   fun createHandle(): Handle<Data, Op, ConsumerData>
 }

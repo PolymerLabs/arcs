@@ -27,7 +27,7 @@ class SingletonType<T : Type>(override val containedType: T) :
     CrdtSingleton.Data<Referencable>,
     CrdtSingleton.Operation<Referencable>,
     Referencable?>,
-  HandleCreator<
+  HandleCreatorType<
     CrdtSingleton.Data<Referencable>,
     CrdtSingleton.Operation<Referencable>,
     Referencable?> {

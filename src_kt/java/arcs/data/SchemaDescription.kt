@@ -12,4 +12,4 @@
 package arcs.data
 
 // TODO: lots.
-data class SchemaDescription(val pattern: String?)
+data class SchemaDescription(val pattern: String? = null, val plural: String? = null)
