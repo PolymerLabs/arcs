@@ -12,6 +12,7 @@
 package arcs.crdt
 
 import arcs.crdt.internal.VersionMap
+import arcs.type.Type
 
 /**
  * A [CrdtModel] can:
@@ -116,4 +117,10 @@ sealed class CrdtChange<Data : CrdtData, Op : CrdtOperation> {
     /** New representation of the internal data for the [CrdtModel]. */
     val data: Data
   ) : CrdtChange<Data, Op>()
+}
+
+/** Defines a [Type] that's capable of generating a [CrdtModel]. */
+interface CrdtModelType<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Type {
+  /** Creates a new instance of a [CrdtModel]. */
+  fun createCrdtModel(): CrdtModel<Data, Op, ConsumerData>
 }

@@ -1,0 +1,83 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+package arcs.data
+
+import arcs.crdt.CrdtEntity
+import arcs.crdt.CrdtModel
+import arcs.crdt.CrdtModelType
+import arcs.type.Tag
+import arcs.type.Type
+import arcs.type.TypeFactory
+import arcs.type.TypeLiteral
+
+/** [Type] representation of an entity. */
+class EntityType(override val entitySchema: Schema) :
+  Type,
+  Type.CanReadWriteHolder,
+  EntitySchemaProviderType,
+  CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, Entity>,
+  HandleCreator<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
+
+  override val tag = Tag.Entity
+
+  constructor(names: List<SchemaName>, fields: SchemaFields, description: SchemaDescription) :
+    this(Schema(names, fields, description))
+
+  override val canReadSubset: Type = this
+  override val canWriteSuperset: Type = this
+
+  override fun canMergeCanReadSubsetWith(other: Type.CanReadSubsetHolder): Boolean {
+    val otherEntityType = other as? EntityType ?: return false
+    return Schema.intersect(entitySchema, otherEntityType.entitySchema)
+  }
+
+  override fun canMergeCanWriteSupersetWith(other: Type.CanWriteSupersetHolder): Boolean {
+    val otherEntityType = other as? EntityType ?: return false
+    return Schema.intersect(entitySchema, otherEntityType.entitySchema)
+  }
+
+  override fun isMoreSpecificThan(other: Type) =
+    other is EntityType && entitySchema.isMoreSpecificThan(other.entitySchema)
+
+  override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
+    variableMap[entitySchema] as? Type
+      ?: EntityType(entitySchema).also { variableMap[entitySchema] = it }
+
+  override fun createCrdtModel(): CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, Entity> =
+    entitySchema.createCrdtEntityModel()
+
+  override fun createHandle(): Handle<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
+    TODO("not implemented")
+  }
+
+  override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
+
+  override fun toString(options: Type.ToStringOptions): String {
+    if (!options.pretty) return entitySchema.toInlineSchemaString(options)
+
+    // Pretty string output.
+    return entitySchema.description.pattern
+      ?: entitySchema.name?.toPrettyString()
+      ?: entitySchema.toLiteral().toJson()
+  }
+
+  /** Serialization-friendly [TypeLiteral] for [EntityType]. */
+  data class Literal(override val tag: Tag, override val data: Schema.Literal) : TypeLiteral
+
+  companion object {
+    init {
+      TypeFactory.registerBuilder(Tag.Entity) { literal ->
+        EntityType(Schema.fromLiteral(literal.data))
+      }
+    }
+  }
+}
