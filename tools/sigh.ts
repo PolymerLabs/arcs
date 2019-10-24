@@ -22,7 +22,10 @@ const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
 
 let keepProcessAlive = false;
-let globalOptions = null;
+let globalOptions = {
+  install: false,
+  quiet: false,
+};
 
 const sources = {
   peg: [{
@@ -125,6 +128,13 @@ const testFlags = {
   bazel: false,
 };
 
+/** Logs to console.log, unless suppressed by the global --quiet flag. */
+function sighLog(message, ...optionalParams) {
+  if (!globalOptions.quiet) {
+    console.log(message, ...optionalParams);
+  }
+}
+
 // tslint:disable-next-line: no-any
 function getOptionalDependencies(deps: string[], prefix): any[] {
   const result = [];
@@ -210,7 +220,7 @@ function fixPathForWindows(path: string): string {
   return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 }
 
-function targetIsUpToDate(relativeTarget: string, relativeDeps: string[], quiet = false): boolean {
+function targetIsUpToDate(relativeTarget: string, relativeDeps: string[]): boolean {
   const target = path.resolve(projectRoot, relativeTarget);
   if (!fs.existsSync(target)) {
     return false;
@@ -223,9 +233,7 @@ function targetIsUpToDate(relativeTarget: string, relativeDeps: string[], quiet 
     }
   }
 
-  if (!quiet) {
-    console.log(`Skipping step; '${relativeTarget}' is up-to-date`);
-  }
+  sighLog(`Skipping step; '${relativeTarget}' is up-to-date`);
   return true;
 }
 
@@ -250,7 +258,7 @@ function clean(): boolean {
   for (const file of cleanFiles) {
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
-      console.log('Removed', file);
+      sighLog('Removed', file);
     }
   }
 
@@ -268,7 +276,7 @@ function clean(): boolean {
   for (const buildDir of cleanDirs) {
     if (fs.existsSync(buildDir)) {
       recursiveDelete(buildDir);
-      console.log('Removed', buildDir);
+      sighLog('Removed', buildDir);
     }
   }
   return true;
@@ -412,7 +420,7 @@ function cleanObsolete() {
       const buildBase = file.slice(0, -2);         // drop 'js' extension
       const srcBase = 'src' + buildBase.slice(5);  // replace leading 'build' with 'src'
       if (!fs.existsSync(srcBase + 'ts') && !fs.existsSync(srcBase + 'js')) {
-        console.log('Cleaning obsolete build output:', file);
+        sighLog('Cleaning obsolete build output:', file);
         ['js', 'js.map', 'd.ts'].forEach(ext => {
           const target = buildBase + ext;
           if (fs.existsSync(target)) {
@@ -421,7 +429,7 @@ function cleanObsolete() {
         });
       }
     } else {
-      console.log('Cleaning obsolete build output:', file);
+      sighLog('Cleaning obsolete build output:', file);
       fs.unlinkSync(file);
     }
   }
@@ -449,10 +457,10 @@ function buildPath(path: string, preprocess: () => void): () => boolean {
 }
 
 function tsc(path: string): boolean {
-  console.log(saneSpawnWithOutput('node_modules/.bin/tsc',  ['--version']).stdout);
+  sighLog(saneSpawnWithOutput('node_modules/.bin/tsc',  ['--version']).stdout);
   const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics', '-p', path]);
   if (result.success) {
-    console.log(result.stdout);
+    sighLog(result.stdout);
   }
   return result.success;
 }
@@ -513,7 +521,7 @@ function tslint(args: string[]): boolean {
   for (const target of ['.', 'tools']) {
     const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', target, ...fixArgs]);
     if (result.stdout) {
-      console.log(result.stdout);
+      sighLog(result.stdout);
     }
     success = success && result.success;
   }
@@ -538,7 +546,7 @@ function lint(args: string[]): boolean {
   });
   const report = cli.executeOnFiles(jsSources);
   const formatter = cli.getFormatter(options.format || 'stylish');
-  console.log(formatter(report.results));
+  sighLog(formatter(report.results));
 
   if (options.fix) {
     CLIEngine.outputFixes(report);
@@ -550,7 +558,7 @@ function lint(args: string[]): boolean {
 function licenses(): boolean {
   const result = saneSpawnWithOutput('npm', ['run', 'test:licenses']);
   if (result.stdout) {
-    console.log(result.stdout);
+    sighLog(result.stdout);
   }
   return result.success;
 }
@@ -559,7 +567,7 @@ function webpackPkg(pkg: string): () => boolean {
   const fn = () => {
     const result = saneSpawnWithOutput('npm', ['run', `build:${pkg}`]);
     if (result.stdout) {
-      console.log(result.stdout);
+      sighLog(result.stdout);
     }
     return result.success;
   };
@@ -608,7 +616,7 @@ function saneSpawn(cmd: string, args: string[], opts?: SpawnOptions): boolean {
   cmd = path.normalize(cmd);
   opts = {stdio: 'inherit', ...opts, shell: true};
   if (opts.logCmd) {
-    console.log('+', cmd, args.join(' '));
+    sighLog('+', cmd, args.join(' '));
   }
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
@@ -620,7 +628,7 @@ function saneSpawnWithOutput(cmd: string, args: string[], opts?: SpawnOptions): 
   cmd = path.normalize(cmd);
   opts = {...opts, shell: true};
   if (opts.logCmd) {
-    console.log('+', cmd, args.join(' '));
+    sighLog('+', cmd, args.join(' '));
   }
   // it's OK, I know what I'm doing
   const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
@@ -773,7 +781,7 @@ function runTests(args: string[]): boolean {
   const testResults = [];
   const failedRuns = [];
   for (let i = 1; i < repeatCount + 1; i++) {
-    console.log('RUN %s STARTING [%s]:', i, new Date().toLocaleTimeString());
+    sighLog('RUN %s STARTING [%s]:', i, new Date().toLocaleTimeString());
     if (options.coverage) {
       process.env.NODE_V8_COVERAGE=coverageDir;
     }
@@ -791,12 +799,15 @@ function runTests(args: string[]): boolean {
     }
     testResults.push(testResult);
   }
-  console.log('%s runs completed. %s runs failed.', repeatCount, failedRuns.length);
+  const completionMessage = `${repeatCount} runs completed. ${failedRuns.length} runs failed`;
   if (failedRuns.length > 0) {
-    console.log('Failed runs: ', failedRuns);
+    console.error(completionMessage);
+    console.error('Failed runs: ', failedRuns);
+  } else {
+    sighLog(completionMessage);
   }
   if (options.coverage) {
-    console.log(`Visit 'file:///${process.cwd()}/coverage/index.html' in the browser for a coverage report.`);
+    sighLog(`Visit 'file:///${process.cwd()}/coverage/index.html' in the browser for a coverage report.`);
   }
   return testResults.filter(x => !x).length === 0;
 }
@@ -825,7 +836,7 @@ function watch(args: string[]): boolean {
     }
     changes.add(path);
     timeout = setTimeout(() => {
-      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
+      sighLog(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
       runSteps(command, options._);
       timeout = null;
@@ -875,7 +886,7 @@ function health(args: string[]): boolean {
   const migrationFiles = () => [...findProjectFiles('src', /\b(artifacts|runtime[/\\]build)\b|webpack\.config\.js/, /\.js$/)];
 
   if (options.migration) {
-    console.log('JS files to migrate:\n');
+    sighLog('JS files to migrate:\n');
     return saneSpawn('node_modules/.bin/sloc', ['-details', '--keys source', ...migrationFiles()]);
   }
 
@@ -901,12 +912,12 @@ function health(args: string[]): boolean {
 
   const healthInformation: string[] = [];
 
-  const line = () => console.log('+---------------------+--------+--------+---------------------------+');
+  const line = () => sighLog('+---------------------+--------+--------+---------------------------+');
   const show = (desc, score, points, info, ignore=false) => {
     if (!ignore) {
       healthInformation.push(...[desc, score, points, info].map(String));
     }
-    console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
+    sighLog(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
   };
 
   line();
@@ -948,7 +959,7 @@ function health(args: string[]): boolean {
 }
 
 function uploadCodeHealthStats(request, data: string[], testResult: boolean) {
-  console.log('Uploading health data');
+  sighLog('Uploading health data');
   const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
 
   const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
@@ -963,7 +974,7 @@ function uploadCodeHealthStats(request, data: string[], testResult: boolean) {
       console.error(error);
       console.error(response.toJSON());
     } else {
-      console.log(`Upload response status: ${response.statusCode}`);
+      sighLog(`Upload response status: ${response.statusCode}`);
     }
     process.exit(testResult ? 0 : 1);
   });
@@ -1008,39 +1019,54 @@ function runScriptSteps(scriptName: string) {
 function runSteps(command: string, args: string[]): boolean {
   const funcs = steps[command];
   if (funcs === undefined) {
-    console.log(`Unknown command: '${command}'`);
-    console.log('Available commands are:');
+    sighLog(`Unknown command: '${command}'`);
+    sighLog('Available commands are:');
     const cmds = Object.keys(steps);
     let chunk;
     while ((chunk = cmds.splice(0, 8)).length) {
-      console.log(' ', chunk.join(', '));
+      sighLog(' ', chunk.join(', '));
     }
     process.exit(2);
   }
 
-  globalOptions = minimist(args, {boolean: ['install']});
+  // Keep globalOptions defaults, and override with any args from command line.
+  globalOptions = {...globalOptions, ...minimist(args, {
+    boolean: ['install'],
+  })};
 
-  console.log(`😌 ${command}`);
+  sighLog(`😌 ${command}`);
   let result = false;
   try {
     for (const func of funcs) {
-      console.log(`🙋 ${func.name}`);
+      sighLog(`🙋 ${func.name}`);
       if (!func(args)) {
-        console.log(`🙅 ${func.name}`);
+        sighLog(`🙅 ${func.name}`);
         return false;
       }
-      console.log(`🙆 ${func.name}`);
+      sighLog(`🙆 ${func.name}`);
     }
     result = true;
   } catch (e) {
     console.error(e);
   } finally {
-    console.log(result ? '🎉 SUCCESS' : '😱 FAILURE');
+    if (result) {
+      sighLog('🎉 SUCCESS');
+    } else {
+      console.error('😱 FAILURE');
+    }
   }
   return result;
 }
 
-const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
+let args = process.argv.slice(2);
+
+// --quiet must be very first option to sigh.
+if (args[0] === '--quiet') {
+  globalOptions.quiet = true;
+  args = args.slice(1);
+}
+
+const result = runSteps(args[0] || 'default', args.slice(1));
 
 if (!keepProcessAlive) { // the watch command is running.
   process.exit(result ? 0 : 1);

@@ -20,8 +20,12 @@ function spawn(cmd, ...args) {
 const src = 'tools/sigh.ts';
 const dst = 'build/sigh.js';
 
+const quiet = process.argv[2] === '--quiet';
+
 if (!fs.existsSync(dst) || fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) {
-  console.log('Building sigh');
+  if (!quiet) {
+    console.log('Building sigh');
+  }
   if (!spawn('node_modules/.bin/tsc', '-p', 'tools')) {
     process.exit(1);
   }
