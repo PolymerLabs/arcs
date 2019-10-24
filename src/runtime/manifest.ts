@@ -245,7 +245,7 @@ export class Manifest {
       claims?: ClaimIsTag[],
       originalId?: string,
       description?: string,
-      version?: number,
+      version?: string,
       source?: string,
       origin?: 'file' | 'resource' | 'storage',
       referenceMode?: boolean,
@@ -529,8 +529,11 @@ ${e.message}
       throw processError(e, false);
     }
     dumpErrors(manifest);
-    if (options.throwImportErrors && manifest.errors.length > 0) {
-      throw manifest.errors[0];
+    if (options.throwImportErrors) {
+      const error = manifest.errors.find(e => e.severity === ErrorSeverity.Error);
+      if (error) {
+        throw error;
+      }
     }
     return manifest;
   }
@@ -1301,7 +1304,7 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-    const version = item.version || 0;
+    const version = item.version || null;
     return manifest.newStore({
         type,
         name,

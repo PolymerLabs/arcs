@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../platform/assert-web.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTData, CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type} from '../type.js';
 import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
@@ -46,6 +47,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   type: Type,
   mode: StorageMode,
   baseStore: Store<T>,
+  versionToken: string
 };
 
 export type StoreConstructor = {
@@ -72,6 +74,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly type: Type;
   readonly mode: StorageMode;
   readonly baseStore: Store<T>;
+  readonly versionToken: string;
 
   // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {
@@ -92,13 +95,20 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   }
 
   async cloneFrom(store: UnifiedActiveStore): Promise<void> {
-    throw new Error('Method not implemented.');
+    assert(store instanceof ActiveStore);
+    const activeStore: ActiveStore<T> = store as ActiveStore<T>;
+    assert(this.mode === activeStore.mode);
+    await this.onProxyMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: await activeStore.getLocalData()
+    });
   }
 
   async modelForSynchronization(): Promise<{}> {
     return this.toLiteral();
   }
 
+  abstract getLocalData(): Promise<CRDTData>;
   abstract on(callback: ProxyCallback<T>): number;
   abstract off(callback: number): void;
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;

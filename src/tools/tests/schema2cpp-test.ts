@@ -28,7 +28,7 @@ describe('schema2cpp', () => {
       'namespace arcs {',
       'using Foo_Product = Foo_alpha;',
       'using Foo_Element = Foo_alpha;',
-      '}',
+      '}  // namespace arcs',
     ]);
   });
 
@@ -61,7 +61,103 @@ particle Watcher in 'https://$arcs/bazel-bin/particles/Native/Wasm/module.wasm'
     assert.sameMembers(generated.split(/\n+/g), [
       'namespace arcs {',
       'using Watcher_Product = Watcher_bar;',
-      '}'
+      '}  // namespace arcs'
+    ]);
+  });
+
+  it('sets the nested namespace for entities', async () => {
+    const manifest = await Manifest.parse(`\
+schema Product
+  Text name
+  Number sku
+  
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar`);
+
+    const mock = new Schema2Cpp({'_': [], 'package': 'grandma.mom.daughter'});
+    const [_, __, schemas] = mock.processManifest(manifest);
+
+    const entities: string[] = Object.entries(schemas).map(([name, schema]) => mock.entityClass(name, schema));
+
+    for (const entity of entities) {
+      assert.include(entity,
+`namespace grandma {
+namespace mom {
+namespace daughter {`);
+
+      assert.include(entity,
+`}  // namespace daughter
+}  // namespace mom
+}  // namespace grandma`);
+    }
+  });
+
+  it('sets the nested namespace for aliases', async () => {
+    const manifest = await Manifest.parse(`\
+schema Product
+  Text name
+  Number sku
+  
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar`);
+
+    const mock = new Schema2Cpp({'_': [], 'package': 'grandma.mom.daughter'});
+    const [aliases, ..._] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
+
+    assert.sameMembers(generated.split(/\n+/g), [
+      'namespace grandma {',
+      'namespace mom {',
+      'namespace daughter {',
+      '}  // namespace daughter',
+      '}  // namespace mom',
+      '}  // namespace grandma',
+    ]);
+  });
+  it('sets the default namespace for entities', async () => {
+    const manifest = await Manifest.parse(`\
+schema Product
+  Text name
+  Number sku
+  
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar`);
+
+    const mock = new Schema2Cpp({'_': []});
+    const [_, __, schemas] = mock.processManifest(manifest);
+
+    const entities: string[] = Object.entries(schemas).map(([name, schema]) => mock.entityClass(name, schema));
+
+    for (const entity of entities) {
+      assert.include(entity, `namespace arcs {`);
+      assert.include(entity, `}  // namespace arcs`);
+    }
+  });
+
+  it('sets the default namespace for aliases', async () => {
+    const manifest = await Manifest.parse(`\
+schema Product
+  Text name
+  Number sku
+  
+particle BasicParticle in 'module.wasm'
+  consume root
+  in Product foo
+  out [Product] bar`);
+
+    const mock = new Schema2Cpp({'_': []});
+    const [aliases, ..._] = mock.processManifest(manifest);
+    const generated = mock.addAliases(aliases);
+
+    assert.sameMembers(generated.split(/\n+/g), [
+      'namespace arcs {',
+      '}  // namespace arcs',
     ]);
   });
 });

@@ -103,6 +103,9 @@ maven_install(
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
         "com.google.truth:truth:1.0",
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.2",
+        "org.jetbrains.kotlinx:atomicfu:0.13.1",
+        "org.jetbrains.kotlinx:atomicfu-js:0.13.1",
     ],
     repositories = [
         "https://jcenter.bintray.com/",

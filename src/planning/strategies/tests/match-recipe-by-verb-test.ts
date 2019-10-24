@@ -104,7 +104,7 @@ describe('MatchRecipeByVerb', () => {
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(),
 `recipe &a
-  create as handle0 // S {}
+  handle0: create // S {}
   P as particle0
     p: out handle0
   Q as particle1
@@ -294,7 +294,7 @@ ${recipesManifest}`);
   it('SLANDLES SYNTAX listens to handle constraints - handle', Flags.withPostSlandlesSyntax(async () => {
     const results = await slandlesSyntaxGeneratePlans(`
       recipe
-        create as handle0
+        handle0: create
         &verb
           *: out handle0
       `);
@@ -378,7 +378,7 @@ ${recipesManifest}`);
         P
 
       recipe
-        create as handle0
+        handle0: create
         &verb
           a: in handle0
         Q
@@ -439,7 +439,7 @@ ${recipesManifest}`);
         P
 
       recipe
-        create as handle0
+        handle0: create
         &verb
           *: in handle0
         Q
@@ -508,7 +508,7 @@ ${recipesManifest}`);
         P
 
       recipe
-        create as handle0
+        handle0: create
         &verb
           *: in handle0
         Q

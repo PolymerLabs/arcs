@@ -74,8 +74,8 @@ describe('Multiplexer', () => {
       import 'src/runtime/tests/artifacts/SLANDLEStest-particles.arcs'
 
       recipe
-        use 'test:1' as handle0
-        \`slot 'rootslotid-slotid' as slot0
+        handle0: use 'test:1'
+        slot0: \`slot 'rootslotid-slotid'
         SlandleMultiplexer
           hostedParticle: host SlandleConsumerParticle
           annotation: \`consume slot0

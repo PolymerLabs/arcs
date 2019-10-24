@@ -18,8 +18,11 @@ import {Manifest} from '../runtime/manifest.js';
 export type Aliases = Dictionary<Set<string>>;
 
 export abstract class Schema2Base {
+  private readonly scope: string;
+
   constructor(readonly opts: minimist.ParsedArgs) {
     Utils.init('../..');
+    this.scope = opts.package;
   }
 
   async call() {
@@ -38,18 +41,19 @@ export abstract class Schema2Base {
   public processManifest(manifest: Manifest): [Aliases, Dictionary<Schema>, Dictionary<Schema>] {
     const aliases: Aliases = {};
 
-    const updateTheseAliases = (aliases_: Aliases) => (rhs: string, alias: string) => {
-      if (aliases_[rhs] !== undefined) {
-        aliases_[rhs].add(alias);
+    const updateAliases = (rhs: string, alias: string) => {
+      if (aliases[rhs] !== undefined) {
+        aliases[rhs].add(alias);
       } else {
-        aliases_[rhs] = new Set([alias]);
+        aliases[rhs] = new Set([alias]);
       }
     };
 
-    const updateAliases = updateTheseAliases(aliases);
-
     const schemas: Dictionary<Schema> = {};
     const refSchemas: Dictionary<Schema> = {};
+
+    // Try to get one of the following keys from the manifest metadata
+    this.addScope(this.scope);
 
     for (const particle of manifest.allParticles) {
       const namespaceByParticle = (other: string) => `${particle.name}_${other}`;
@@ -109,8 +113,8 @@ export abstract class Schema2Base {
 
     const manifest = await Utils.parse(`import '${src}'`);
 
-
     const [aliases, ...schemas] = this.processManifest(manifest);
+
 
     if (Object.values(schemas).map(s => Object.keys(s).length).reduce((acc, x) => acc + x, 0) === 0) {
       console.warn(`No schemas found in '${src}'`);
@@ -198,4 +202,6 @@ export abstract class Schema2Base {
   abstract entityClass(name: string, schema: Schema): string;
 
   abstract addAliases(aliases: Aliases): string;
+
+  abstract addScope(namespace: string);
 }

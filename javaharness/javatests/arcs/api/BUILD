@@ -7,6 +7,6 @@ java_test(
     test_class = "arcs.api.AllTests",
     deps = [
         "//javaharness/java/arcs/api:api-android",
-        "@maven//:junit_junit",
+        "//third_party/java/junit",
     ],
 )

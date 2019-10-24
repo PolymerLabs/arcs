@@ -38,7 +38,10 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly mode: StorageMode;
-  readonly version: number = 0; // TODO(shans): Needs to become the version vector, and is also probably only available on activated storage?
+
+  // The last known version of this store that was stored in the serialized
+  // representation.
+  parsedVersionToken: string = null;
   modelConstructor: new () => CRDTModel<T>;
 
   private activeStore: ActiveStore<T> | null;
@@ -53,6 +56,14 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     this.storageKey = opts.storageKey;
     this.exists = opts.exists;
     this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
+    this.parsedVersionToken = opts.versionToken;
+  }
+
+  get versionToken() {
+    if (this.activeStore) {
+      return this.activeStore.versionToken;
+    }
+    return this.parsedVersionToken;
   }
 
   async activate(): Promise<ActiveStore<T>> {
@@ -73,6 +84,7 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
       type: this.type,
       mode: this.mode,
       baseStore: this,
+      versionToken: this.parsedVersionToken
     });
     this.exists = Exists.ShouldExist;
     this.activeStore = activeStore;

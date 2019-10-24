@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+licenses(["notice"])
+
 # Standalone deps of Java libraries and plugins
 java_plugin(
     name = "autovalue_plugin",

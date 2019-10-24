@@ -180,6 +180,21 @@ describe('Store', async () => {
     });
   });
 
+  it('can clone data from another store', async () => {
+    DriverFactory.register(new MockStorageDriverProvider());
+
+    const activeStore = await createStore().activate();
+    // Write some data.
+    const count = new CRDTCount();
+    count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
+    await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
+    assert.deepEqual(await activeStore.getLocalData(), count.getData());
+    // Clone into another store.
+    const activeStore2 = await createStore().activate();
+    await activeStore2.cloneFrom(activeStore);
+    assert.deepEqual(await activeStore2.getLocalData(), count.getData());
+  });
+
   it(`won't send an update to the driver after driver-originated messages`, async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 

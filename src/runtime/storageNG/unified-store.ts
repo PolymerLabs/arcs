@@ -40,7 +40,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   // TODO: Once the old storage stack is gone, this should only be of type
   // StorageKey, and can be moved into StoreInfo.
   abstract storageKey: string | StorageKey;
-  abstract version?: number; // TODO(shans): This needs to be a version vector for new storage.
+  abstract versionToken: string;
   abstract referenceMode: boolean;
 
   storeInfo: StoreInfo;
@@ -81,7 +81,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
-    cmp = compareNumbers(this.version, other.version);
+    cmp = compareStrings(this.versionToken, other.versionToken);
     if (cmp !== 0) return cmp;
     cmp = compareStrings(this.source, other.source);
     if (cmp !== 0) return cmp;
@@ -107,8 +107,8 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     if (info.originalId) {
       handleStr.push(`!!${info.originalId}`);
     }
-    if (this.version != null) {
-      handleStr.push(`@${this.version}`);
+    if (this.versionToken != null) {
+      handleStr.push(`@${this.versionToken}`);
     }
     if (opts.handleTags && opts.handleTags.length) {
       handleStr.push(`${opts.handleTags.map(tag => `#${tag}`).join(' ')}`);
@@ -166,4 +166,6 @@ export type StoreInfo = {
 
   /** Trust tags claimed by this data store. */
   readonly claims?: ClaimIsTag[];
+
+  readonly versionToken?: string;
 };

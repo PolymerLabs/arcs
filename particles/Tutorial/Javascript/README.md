@@ -1,8 +1,10 @@
+# Hello, World!
+
 Welcome to developing using Arcs! By using Arcs as the platform for your system, you are choosing to value user sovereignty and leverage AI.  To get started, please obtain the project through [Github](https://github.com/PolymerLabs/arcs) using the instructions available there. For debugging purposes, we highly recommend having the [Arcs Explorer Chrome Extension](https://github.com/PolymerLabs/arcs/tree/master/devtools) also installed.
 
 Before we get to code, it is important that we are all speaking the same language, so we present two definitions to start.
 
->- *Particle* - Modular component of functionality. Ideally small units so particles can be interchangeable. 
+>- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable. 
 >- *Recipe* - A combination of particles to create features and systems.
 
 Particles and recipes are defined using the Arcs Manifest Language and implemented in Javascript, Kotlin, or C++.  The best way to understand this is to jump into some code. Let’s look at how Hello World is implemented.
@@ -36,8 +38,8 @@ Alright, we’ve got our Arcs manifest file set. Now onto the Javascript. Just l
 
 ```javascript
 // To define a particle that interacts with the DOM, we use this boilerplate.
-defineParticle(({DomParticle, html}) => {
- return class extends DomParticle {
+defineParticle(({SimpleParticle, html}) => {
+ return class extends SimpleParticle {
    // Getter function which returns static HTML to display. In later tutorials 
    // we'll see how to use the templating functionality this provides.
    get template() {
@@ -51,3 +53,44 @@ defineParticle(({DomParticle, html}) => {
 Once you have Arcs on your computer, run `npm start` in command line, then navigate to [http://localhost:8786/shells/dev-shell/?m=https://$particles/HelloWorld/HelloWorld.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/HelloWorld/HelloWorld.arcs)
 
 And that’s it! Congratulations, you have written your first program in Arcs!
+
+# Template Interpolation Exploration
+
+Alright, you’ve made your first Arcs program. But now it’s time to go make something! We are going to need a few more Arcs features to create anything of substance.
+
+To get started, we want a way to make our UI dynamic. Simply returning static HTML is fairly boring. As with our Hello World program, we use `get template()` to return our base set of HTML, however we want to be able to update this in some way. To do so, we use the `render()` method and template interpolation. To make certain we are all speaking the same language, let’s define template interpolation within Arcs:
+
+> *Template Interpolation* - A mechanism to substitute formatted data into renderable elements.
+
+This interpolation occurs when `render()` returns a dictionary with keys that match elements in the template. The best way to explain how this works is to see it in action. The Arcs manifest file looks pretty much the same as with our Hello World example.
+
+```
+particle BasicTemplateParticle in 'basic-template.js'
+  consume root
+
+recipe BasicTemplateRecipe
+  BasicTemplateParticle
+  description `Javascript Tutorial 2: Basic Templates`
+```
+
+Meanwhile, the Javascript looks quite different, as this is where the magic occurs:
+```javascript
+defineParticle(({SimpleParticle, html}) => {  
+ return class extends SimpleParticle {
+   get template() {
+     // You can set placeholders in your template like so: {{name}}. The render
+     // function is where these placeholders are overridden.
+     // NOTE: Each placeholder needs to be enclosed inside its own HTML element
+     // (here, a <span>).
+     return html`<b>Hello, <span>{{name}}</span>!</b>`;
+   }
+
+   render() {
+     // Returns a dictionary, mapping from placeholder name to value.
+     return {name: 'Human'};
+   }
+ };
+});
+```
+
+Now your code should say “Hello, Human!”. You can update this by changing what `render()` returns. In upcoming tutorials, we will see how this can be updated based on user input.

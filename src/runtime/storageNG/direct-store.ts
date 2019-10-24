@@ -9,13 +9,10 @@
  */
 
 import {PropagatedException} from '../arc-exceptions.js';
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
-import {Type} from '../type.js';
-import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
-import {StorageKey} from './storage-key.js';
-import {ActiveStore, ProxyCallback, StorageMode, ProxyMessageType, ProxyMessage, StoreConstructorOptions} from './store-interface.js';
+import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError, CRDTData} from '../crdt/crdt.js';
+import {Driver, DriverFactory} from './drivers/driver-factory.js';
+import {ActiveStore, ProxyCallback, ProxyMessageType, ProxyMessage, StoreConstructorOptions} from './store-interface.js';
 import {noAwait} from '../util.js';
-import {Store} from './store.js';
 
 export enum DirectStoreState {Idle = 'Idle', AwaitingResponse = 'AwaitingResponse', AwaitingResponseDirty = 'AwaitingResponseDirty', AwaitingDriverModel = 'AwaitingDriverModel'}
 
@@ -37,6 +34,10 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     super(options);
   }
 
+  async getLocalData(): Promise<CRDTData> {
+    return this.localModel.getData();
+  }
+
   async idle() {
     if (this.pendingException) {
       return Promise.reject(this.pendingException);
@@ -48,6 +49,10 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       this.pendingResolves.push(resolve);
       this.pendingRejects.push(reject);
     });
+  }
+
+  get versionToken() {
+    return this.driver.getToken();
   }
 
   private setState(state: DirectStoreState) {
@@ -75,7 +80,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     if (me.driver == null) {
       throw new CRDTError(`No driver exists to support storage key ${options.storageKey}`);
     }
-    me.driver.registerReceiver(me.onReceive.bind(me));
+    me.driver.registerReceiver(me.onReceive.bind(me), options.versionToken);
     return me;
   }
   // The driver will invoke this method when it has an updated remote model

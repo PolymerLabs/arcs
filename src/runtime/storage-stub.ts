@@ -29,7 +29,7 @@ export class StorageStub extends UnifiedStore {
               originalId: string,
               claims: ClaimIsTag[],
               description: string,
-              public readonly version?: number,
+              public readonly versionToken: string,
               source?: string,
               origin?: 'file' | 'resource' | 'storage',
               public referenceMode: boolean = false,
@@ -67,7 +67,8 @@ export class StorageStub extends UnifiedStore {
 
     store.storeInfo = {...this.storeInfo};
     if (this.isBackedByManifest()) {
-      await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
+      const version = this.versionToken == null ? null : Number(this.versionToken);
+      await (store as VolatileStorageProvider).fromLiteral({version, model: this.model});
     }
     return store;
   }
@@ -77,7 +78,7 @@ export class StorageStub extends UnifiedStore {
   }
 
   isBackedByManifest(): boolean {
-    return (this.version !== undefined && !!this.model);
+    return (this.versionToken !== undefined && !!this.model);
   }
 
   _compareTo(other: UnifiedStore): number {

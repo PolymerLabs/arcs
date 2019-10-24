@@ -1,5 +1,9 @@
-package arcs
+package arcs.tutorials
 
+import arcs.Particle
+import arcs.WasmAddress
+import arcs.Singleton
+import arcs.JsonStoreParticle_inputData
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -22,12 +26,10 @@ class JsonStoreParticle : Particle() {
     }
 
     override fun getTemplate(slotName: String): String {
-        return """<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"""
+        return "<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"
     }
 }
 
 @Retain
 @ExportForCppRuntime("_newJsonStoreParticle")
-fun constructJsonStoreParticle(): WasmAddress {
-    return JsonStoreParticle().toWasmAddress()
-}
+fun constructJsonStoreParticle(): WasmAddress = JsonStoreParticle().toWasmAddress()

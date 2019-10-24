@@ -13,8 +13,8 @@ import 'SLANDLESList.arcs'
 //----------------------------------
 
 recipe SelectableUseListRecipe
-  use #items as items
-  create #selected as selected
+  items: use #items
+  selected: create #selected
   SelectableList
     items: any items
     selected: any selected
@@ -22,8 +22,8 @@ recipe SelectableUseListRecipe
     list: any items
 
 recipe SelectableCopyListRecipe
-  copy #items as items
-  create #selected as selected
+  items: copy #items
+  selected: create #selected
   SelectableList
     items: any items
     selected: any selected
@@ -35,8 +35,8 @@ recipe SelectableCopyListRecipe
 //----------------------------------------
 
 recipe SelectableCopyTilesRecipe
-  copy #tiles as items
-  create #selected as selected
+  items: copy #tiles
+  selected: create #selected
   SelectableTileList
     items: any items
     selected: any selected
@@ -45,8 +45,8 @@ recipe SelectableCopyTilesRecipe
   description `show ${SelectableTileList.items}`
 
 recipe SelectableUseTilesRecipe
-  use #tiles as items
-  create #selected as selected
+  items: use #tiles
+  selected: create #selected
   SelectableTileList
     items: any items
     selected: any selected

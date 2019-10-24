@@ -35,6 +35,9 @@ const typeMap = {
 };
 
 export class Schema2Cpp extends Schema2Base {
+  nsTop: string;
+  nsBottom: string;
+
   // test-CPP.file_name.arcs -> test-cpp-file-name.h
   outputName(baseName: string): string {
     return baseName.toLowerCase().replace(/\.arcs$/, '').replace(/[._]/g, '-') + '.h';
@@ -52,6 +55,12 @@ export class Schema2Cpp extends Schema2Base {
 
   fileFooter(): string {
     return '\n#endif\n';
+  }
+
+  addScope(namespace: string = 'arcs') {
+    const nss = namespace.trim().split('.');
+    this.nsTop = nss.map(n => `namespace ${n} {`).join('\n');
+    this.nsBottom = nss.reverse().map(n => `}  // namespace ${n}`).join('\n');
   }
 
   entityClass(name: string, schema: Schema): string {
@@ -122,7 +131,7 @@ export class Schema2Cpp extends Schema2Base {
 
     return `\
 
-namespace arcs {
+${this.nsTop}
 
 class ${name} {
 public:
@@ -218,7 +227,7 @@ inline std::string internal::Accessor::encode_entity(const ${name}& entity) {
   return encoder.result();
 }
 
-}  // namespace arcs
+${this.nsBottom}
 
 // For STL unordered associative containers. Entities will need to be std::move()-inserted.
 template<>
@@ -235,9 +244,10 @@ struct std::hash<arcs::${name}> {
       .map(([rhs, ids]): string[] => [...ids].map((id) => `using ${id} = ${rhs};`))
       .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
 
+    return `${this.nsTop}
 
-    return `namespace arcs {
 ${lines.join('\n')}
-}`;
+
+${this.nsBottom}`;
   }
 }

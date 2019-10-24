@@ -5,7 +5,7 @@ package(default_visibility = [
     "//javaharness/javatests/arcs:__subpackages__",
 ])
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//tools/build_defs/android:rules.bzl", "android_library")
 
 android_library(
     name = "api-android",
@@ -15,8 +15,7 @@ android_library(
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
         "//javaharness/java/arcs/crdt:crdt-android",
-        "@maven//:com_google_dagger_dagger",
-        "@maven//:javax_inject_javax_inject",
-        "@maven//:org_json_json",
+        "//third_party/java/dagger",
+        "//third_party/java/jsr330_inject",
     ],
 )

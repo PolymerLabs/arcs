@@ -49,7 +49,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
    */
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
     super(type, storageEngine, name, id, key, refMode);
-    this.version = 0;
+    this._version = 0;
 
     // See if the value has been set
     this.upsert(async doc => doc).then((doc) => {
@@ -96,12 +96,12 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
         await this.upsert(async doc => {
           doc.value = newvalue;
           doc.referenceMode = this.referenceMode;
-          doc.version = Math.max(this.version, doc.version) + 1;
+          doc.version = Math.max(this._version, doc.version) + 1;
           return doc;
         });
       }
 
-      await this._fire(new ChangeEvent({data: newvalue, version: this.version}));
+      await this._fire(new ChangeEvent({data: newvalue, version: this._version}));
     }
   }
 
@@ -118,7 +118,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
       const backingStore = await this.ensureBackingStore();
       const result = await backingStore.get(value.id);
       return {
-        version: this.version,
+        version: this._version,
         model: [{id: value.id, value: result}]
       };
     }
@@ -147,7 +147,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
       ];
     }
     return {
-      version: this.version,
+      version: this._version,
       model
     };
   }
@@ -173,7 +173,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
       return doc;
     });
 
-    this.version = newDoc.version;
+    this._version = newDoc.version;
   }
 
   /**
@@ -233,7 +233,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
       // Do this *after* the write to backing store, otherwise null responses could occur
       stored = await this.upsert(async doc => {
         doc.referenceMode = this.referenceMode;
-        doc.version = this.version;
+        doc.version = this._version;
         doc.value = {id: value['id'], storageKey};
         return doc;
       });
@@ -253,7 +253,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
       } else {
         stored = await this.upsert(async doc => {
           doc.referenceMode = this.referenceMode;
-          doc.version = this.version;
+          doc.version = this._version;
           doc.value = value;
           return doc;
         });
@@ -262,7 +262,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
     this.bumpVersion();
 
     const data = this.referenceMode ? value : stored.value;
-    await this._fire(new ChangeEvent({data, version: this.version, originatorId, barrier}));
+    await this._fire(new ChangeEvent({data, version: this._version, originatorId, barrier}));
   }
 
   /**
@@ -294,11 +294,11 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
           console.log('PouchDbSingleton.onRemoteSynced: possible race condition for id=' + value.id);
           return;
         }
-        await this._fire(new ChangeEvent({data, version: this.version}));
+        await this._fire(new ChangeEvent({data, version: this._version}));
       });
     } else {
       if (value != null) {
-        await this._fire(new ChangeEvent({data: value, version: this.version}));
+        await this._fire(new ChangeEvent({data: value, version: this._version}));
       }
     }
   }
@@ -316,7 +316,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
 
     // post process results from doc here.
     this.referenceMode = doc.referenceMode;
-    this.version = doc.version;
+    this._version = doc.version;
 
     return doc;
   }

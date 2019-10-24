@@ -15,6 +15,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral} from './type.js';
 import {ParticleSpec} from './particle-spec.js';
 import * as AstNode from './manifest-ast-nodes.js';
+import {Flags} from './flags.js';
 
 function _typeFromLiteral(member: TypeLiteral): Type {
   return Type.fromLiteral(member);
@@ -191,14 +192,27 @@ export class InterfaceInfo {
 
   _handleConnectionsToManifestString() {
     return this.handleConnections
-      .map(h => `  ${h.direction || 'any'} ${h.type.toString()} ${h.name ? h.name : '*'}`)
-      .join('\n');
+      .map(h => {
+        if (Flags.usePreSlandlesSyntax) {
+          return `  ${h.direction || 'any'} ${h.type.toString()} ${h.name ? h.name : '*'}`;
+        } else {
+          const nameStr = h.name ? `${h.name}: ` : '';
+          return `  ${nameStr}${h.direction || 'any'} ${h.type.toString()}`;
+        }
+      }).join('\n');
   }
 
   _slotsToManifestString() {
     // TODO deal with isRequired
     return this.slots
-      .map(slot => `  ${slot.direction} ${slot.isSet ? 'set of ' : ''}${slot.name ? slot.name + ' ' : ''}`)
+      .map(slot => {
+        if (Flags.usePreSlandlesSyntax) {
+          return `  ${slot.isRequired ? 'must ' : ''}${slot.direction} ${slot.isSet ? 'set of ' : ''}${slot.name || ''}`;
+        } else {
+          const nameStr = slot.name ? `${slot.name}: ` : '';
+          return `  ${nameStr}${slot.direction || 'any'}${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
+        }
+      })
       .join('\n');
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()

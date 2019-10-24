@@ -15,13 +15,15 @@ import {BackingStore} from './backing-store.js';
 import {CRDTEntityTypeRecord, CRDTEntity, EntityData} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
-import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTData, VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver-factory.js';
 import {Type, CollectionType, ReferenceType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
 
+// ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
+// receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
 export type Reference = {id: string, storageKey: StorageKey, version: VersionMap};
 export class ReferenceCollection extends CRDTCollection<Reference> {}
 export class ReferenceSingleton extends CRDTSingleton<Reference> {}
@@ -138,6 +140,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       mode: StorageMode.Backing,
       exists: options.exists,
       baseStore: options.baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>,
+      versionToken: null
     });
     let refType: Type;
     if (type.isCollectionType()) {
@@ -151,7 +154,8 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       type,
       mode: StorageMode.Direct,
       exists: options.exists,
-      baseStore: options.baseStore as unknown as Store<ReferenceContainer>
+      baseStore: options.baseStore as unknown as Store<ReferenceContainer>,
+      versionToken: options.versionToken
     });
     result.registerStoreCallbacks();
     return result;
@@ -159,6 +163,13 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
 
   reportExceptionInHost(exception: PropagatedException): void {
     // TODO(shans): Figure out idle / exception store for reference mode stores.
+  }
+
+  // For referenceMode stores, the version tracked is just the version
+  // of the container, because any updates to Entities must necessarily be
+  // stored as version updates to the references in the container.
+  get versionToken() {
+    return this.containerStore.versionToken;
   }
 
   on(callback: ProxyCallback<Container>): number {
@@ -173,6 +184,16 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
   private registerStoreCallbacks() {
     this.backingStore.on(this.onBackingStore.bind(this));
     this.containerStore.on(this.onContainerStore.bind(this));
+  }
+
+  async getLocalData(): Promise<CRDTData> {
+    const {pendingIds, model} = this.constructPendingIdsAndModel(this.containerStore.localModel.getData());
+    if (pendingIds.length === 0) {
+      return model();
+    } else {
+      return new Promise(resolve =>
+          this.enqueueBlockingSend(pendingIds, () => resolve(model())));
+    }
   }
 
   /**
@@ -238,12 +259,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
    *
    * Operations and Models either enqueue an immediate send (if all referenced entities
    * are available in the backing store) or enqueue a blocked send (if some referenced
-   * entities are not yet present).
-   *
-   * Note that the blocking mechanism isn't version-aware, so removes followed by
-   * adds may not correctly sync. If this turns out to be a problem then we can
-   * add version information to references and update the blocking store to gate
-   * on a version as well as presence.
+   * entities are not yet present or are at the incorrect version).
    *
    * Sync requests are propagated upwards to the storage proxy.
    */

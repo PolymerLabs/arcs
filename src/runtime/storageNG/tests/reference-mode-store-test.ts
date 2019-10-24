@@ -49,6 +49,7 @@ async function createReferenceModeStore() {
     type: collectionType,
     mode: null,
     baseStore,
+    versionToken: null
   });
 }
 
@@ -114,6 +115,26 @@ describe('Reference Mode Store', async () => {
     assert.deepEqual(capturedModel, referenceCollection.getData());
     const storedEntity = activeStore.backingStore.getLocalModel('an-id');
     assert.deepEqual(storedEntity.getData(), entityCRDT.getData());
+  });
+
+  it('can clone data from another store', async () => {
+    DriverFactory.register(new MockStorageDriverProvider());
+
+    const activeStore = await createReferenceModeStore();
+
+    // Add some data.
+    const collection = new MyEntityCollection();
+    const entity = new MyEntity();
+    entity.age = {id: '42', value: 42};
+    entity.id = 'an-id';
+    entity.name = {id: 'bob'};
+    collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
+    const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
+
+    // Clone.
+    const activeStore2 = await createReferenceModeStore();
+    await activeStore2.cloneFrom(activeStore);
+    assert.deepEqual(await activeStore2.getLocalData(), await activeStore.getLocalData());
   });
 
   it('will apply and propagate operation updates from proxies to drivers', async () => {

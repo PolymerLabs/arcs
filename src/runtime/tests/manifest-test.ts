@@ -12,7 +12,7 @@ import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
-import {Manifest} from '../manifest.js';
+import {Manifest, ErrorSeverity} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
@@ -96,13 +96,9 @@ schema Person
   person: out Person {}
   modality dom
   modality domTouch
-  root: consume Slot #master #main
-    formFactor big
-    action: provide Slot #large
-      formFactor big
-      handle list
-    preamble: provide Slot
-      formFactor medium
+  root: consume Slot {formFactor: big} #master #main
+    action: provide Slot {formFactor: big, handle: list} #large
+    preamble: provide Slot {formFactor: medium}
     annotation: provide Slot
   other: consume Slot
     myProvidedSetCell: provide [Slot]
@@ -618,12 +614,9 @@ ${particleStr1}
       schema Thing
       particle SomeParticle in 'some-particle.js'
         someParam: in Thing
-        mySlot: consume Slot
-          formFactor big
-          otherSlot: provide Slot
-            handle someParam
-          oneMoreSlot: provide Slot
-            formFactor small
+        mySlot: consume Slot {formFactor: big}
+          otherSlot: provide Slot {handle: someParam}
+          oneMoreSlot: provide Slot {formFactor: small}
 
       particle OtherParticle
         aParam: out Thing
@@ -631,7 +624,7 @@ ${particleStr1}
         oneMoreSlot: consume Slot
 
       recipe SomeRecipe
-        ? #someHandle1 as myHandle
+        myHandle: ? #someHandle1
         slot0: slot 'slotIDs:A' #someSlot
         SomeParticle
           someParam: in myHandle
@@ -678,8 +671,8 @@ ${particleStr1}
         oneMoreSlot: \`consume Slot
 
       recipe SomeRecipe
-        ? #someHandle1 as myHandle
-        \`slot 'slotIDs:A' #someSlot as slot0
+        myHandle: ? #someHandle1
+        slot0: \`slot 'slotIDs:A' #someSlot
         SomeParticle
           someParam: in myHandle
           mySlot: \`consume slot0
@@ -836,7 +829,7 @@ ${particleStr1}
           slotB: \`consume${arg.isRequiredSlotB ? '' : '?'} Slot
 
         recipe
-          \`slot 'slota-0' as s0
+          s0: \`slot 'slota-0'
           SomeParticle
             slotA: \`consume s0
       `)).recipes[0];
@@ -857,7 +850,7 @@ ${particleStr1}
           slotB: \`consume${arg.isRequiredSlotB ? '' : '?'} [Slot]
 
         recipe
-          \`slot 'slota-0' as s0
+          s0: \`slot 'slota-0'
           SomeParticle
             slotA: \`consume s0
       `)).recipes[0];
@@ -959,7 +952,7 @@ ${particleStr1}
         slotA: \`consume Slot #aaa
           slotB: \`provide Slot #bbb
       recipe
-        \`slot 'slot-id0' #aa #aaa as s0
+        s0: \`slot 'slot-id0' #aa #aaa
         SomeParticle
           slotA: \`consume s0 #aa #hello
           slotB: \`provide
@@ -1016,7 +1009,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide Slot
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1043,7 +1036,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide Slot
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1067,7 +1060,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1094,7 +1087,7 @@ ${particleStr1}
         slotB1: \`consume [Slot]
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1121,7 +1114,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide Slot
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1145,7 +1138,7 @@ ${particleStr1}
         slotB1: \`consume Slot
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1172,7 +1165,7 @@ ${particleStr1}
         slotB1: \`consume [Slot]
           slotB2: \`provide [Slot]
       recipe
-        \`slot 'slot-id0' as s0
+        s0: \`slot 'slot-id0'
         ParticleA
           slotA: \`consume mySlot
         ParticleB
@@ -1387,8 +1380,8 @@ ${particleStr1}
       particle P2 in 'some-particle.js'
         slotB: \`consume Slot
       recipe
-        \`slot 'rootslot-0' as slot0
-        \`slot 'local-slot-0' as slot1
+        slot0: \`slot 'rootslot-0'
+        slot1: \`slot 'local-slot-0'
         P1
           slotA: \`consume slot0
           slotB: \`provide slot1
@@ -1532,7 +1525,22 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     ]);
   });
-  it('resolves store names to ids', async () => {
+  it('SLANDLES SYNTAX resolves store names to ids', Flags.withPostSlandlesSyntax(async () => {
+    const manifestSource = `
+        schema Thing
+        store Store0 of [Thing] in 'entities.json'
+        recipe
+          myStore: map Store0`;
+    const entitySource = JSON.stringify([]);
+    const loader = new StubLoader({
+      'the.manifest': manifestSource,
+      'entities.json': entitySource,
+    });
+    const manifest = await Manifest.load('the.manifest', loader);
+    const recipe = manifest.recipes[0];
+    assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
+  }));
+  it('resolves store names to ids', Flags.withPreSlandlesSyntax(async () => {
     const manifestSource = `
         schema Thing
         store Store0 of [Thing] in 'entities.json'
@@ -1546,7 +1554,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     const manifest = await Manifest.load('the.manifest', loader);
     const recipe = manifest.recipes[0];
     assert.deepEqual(recipe.toString(), 'recipe\n  map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\' as myStore');
-  });
+  }));
   it('has prettyish syntax errors', async () => {
     try {
       await Manifest.parse('recipe ?', {fileName: 'bad-file'});
@@ -1841,6 +1849,15 @@ resource SomeName
     assert(manifest.findInterfaceByName('Bar'));
     assert(manifest.recipes[0].normalize());
   });
+  it('can parse a manifest containing a warning', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        Text value
+      particle Particle
+        in Foo foo`);
+    assert.equal(manifest.errors[0].severity, ErrorSeverity.Warning);
+    assert.lengthOf(manifest.allParticles, 1);
+  });
   it('can parse interfaces using new-style body syntax', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
@@ -1917,7 +1934,7 @@ resource SomeName
       particle P
         bar: in Bar {Reference<Foo> foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -1964,7 +1981,7 @@ resource SomeName
       particle P
         bar: in Bar {Reference<Foo {Text far}> foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -2011,7 +2028,7 @@ resource SomeName
       particle P
         bar: in Bar {[Reference<Foo>] foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -2057,7 +2074,7 @@ resource SomeName
       particle P
         bar: in Bar {[Reference<Foo {Text far}>] foo}
       recipe
-        create as h0
+        h0: create
         P
           bar: any h0
     `);
@@ -2332,7 +2349,7 @@ resource SomeName
   it('SLANDLES can parse a recipe with slot constraints on verbs', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       recipe
-        \`slot as provideSlot
+        provideSlot: \`slot
         &verb
           foo: \`consume provideSlot
     `);
@@ -2409,10 +2426,8 @@ resource SomeName
     output: out [Product {}]
   thingy: in ~a
   modality dom
-  thing: consume Slot #main #tagname
-    formFactor big
-    otherThing: provide Slot #testtag
-      handle thingy`;
+  thing: consume Slot {formFactor: big} #main #tagname
+    otherThing: provide Slot {handle: thingy} #testtag`;
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
