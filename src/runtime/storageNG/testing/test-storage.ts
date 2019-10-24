@@ -57,6 +57,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       type: new CountType(),
       mode: StorageMode.Direct,
       baseStore: null,
+      versionToken: null
     });
   }
   on(callback: ProxyCallback<T>): number {

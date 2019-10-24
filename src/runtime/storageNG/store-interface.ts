@@ -47,6 +47,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   type: Type,
   mode: StorageMode,
   baseStore: Store<T>,
+  versionToken: string
 };
 
 export type StoreConstructor = {
@@ -73,6 +74,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly type: Type;
   readonly mode: StorageMode;
   readonly baseStore: Store<T>;
+  readonly versionToken: string;
 
   // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {

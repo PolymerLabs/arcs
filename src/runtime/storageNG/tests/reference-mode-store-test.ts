@@ -49,6 +49,7 @@ async function createReferenceModeStore() {
     type: collectionType,
     mode: null,
     baseStore,
+    versionToken: null
   });
 }
 
