@@ -128,8 +128,7 @@ final class AndroidArcsEnvironment {
 
   void destroy() {
     if (webView != null) {
-      // Clean up content/context thus the host devServer can be aware of the disconnection.
-      webView.loadUrl("about:blank");
+      webView.destroy();
     }
   }
 
