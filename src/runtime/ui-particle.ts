@@ -11,37 +11,24 @@
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {UiParticleBase} from './ui-particle-base.js';
 import {Handle} from './handle.js';
-import {Runnable, Dictionary} from './hot.js';
-
-// tslint:disable-next-line: no-any
-type AnyModel = Dictionary<any>;
+import {Runnable} from './hot.js';
 
 export interface UiStatefulParticle extends UiParticleBase {
   // add type info for XenState members here
   _invalidate(): void;
-  _setState(state: AnyModel): boolean | undefined;
-  _setProps(props: AnyModel): boolean | undefined;
-  _setProperty(name: string, model: AnyModel);
-  _debounce(key, idleThenFunc, delay);
-  _state: AnyModel;
-  _props: AnyModel;
 }
 
-// create actual class via mixin
-// tslint:disable-next-line: variable-name
-const UiStatefulParticle: typeof UiParticleBase = XenStateMixin(UiParticleBase);
-
 // binds implementation below to interface above
-// TODO(sjmiles): how and why does this work?
-export interface UiParticle extends UiStatefulParticle {}
+export interface UiParticle extends UiStatefulParticle {
+}
 
 /**
  * Particle that interoperates with DOM and uses a simple state system
  * to handle updates.
  */
-// TODO(sjmiles): this is really `UiStatefulParticle` but it's
-// used so often, we went with the simpler name
-export class UiParticle extends UiStatefulParticle { //XenStateMixin(UiParticleBase) {
+// TODO(sjmiles): seems like this is really `UiStatefulParticle` but it's
+// used so often, I went with the simpler name
+export class UiParticle extends XenStateMixin(UiParticleBase) {
   /**
    * Override if necessary, to do things when props change.
    * Avoid if possible, use `update` instead.
@@ -174,6 +161,6 @@ export class UiParticle extends UiStatefulParticle { //XenStateMixin(UiParticleB
       state[subkey] = null;
     };
     // TODO(sjmiles): rewrite Xen debounce so caller has idle control
-    this._debounce(key, idleThenFunc, delay);
+    super._debounce(key, idleThenFunc, delay);
   }
 }
