@@ -9,36 +9,41 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_librar
 
 _ARCS_KOTLIN_LIBS = ["//src/wasm/kotlin:arcs_wasm"]
 
-def arcs_kt_library(name, srcs = [], deps = []):
+def arcs_kt_library(name, srcs = [], deps = [], visibility = []):
     """Declares kotlin library targets for Kotlin particle sources."""
     kt_native_library(
         name = name,
         srcs = srcs,
         deps = _ARCS_KOTLIN_LIBS + deps,
+        visibility = visibility,
     )
 
-def arcs_kt_binary(name, srcs = [], deps = []):
+def arcs_kt_binary(name, srcs = [], deps = [], visibility = []):
     """Performs final compilation of wasm and bundling if necessary."""
     kt_native_binary(
         name = name,
         srcs = srcs,
         entry_point = "arcs.main",
         deps = _ARCS_KOTLIN_LIBS + deps,
+        visibility = visibility
     )
 
 def kt_jvm_and_js_library(
         name = None,
         srcs = [],
-        deps = []):
+        deps = [],
+        visibility = []):
     """Simultaneously defines JVM and JS kotlin libraries.
     name: String; Name of the library
     srcs: List; List of sources
     deps: List; List of dependencies
+    visibility: List; List of visibilities
     """
     kt_jvm_library(
         name = name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
+        visibility = visibility,
     )
 
     # Disabled while https://github.com/bazelbuild/rules_kotlin/issues/219 is unfixed.
