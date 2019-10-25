@@ -209,7 +209,29 @@ export abstract class StringDecoder {
     return dict;
   }
 
-  protected upTo(char: string): string {
+  // TODO: make work in the new world.
+  decodeArray(str: string): Array<String> {
+    this.str = str;
+    const arr = [];
+    let num = Number(this.upTo(':'));
+    console.log(`I have an array oflength ${num}, it is ${str}`);
+    while (num--) {
+      // TODO(sjmiles): be backward compatible with encoders that only encode string values
+      const typeChar = this.chomp(1);
+      // if typeChar is a digit, it's part of a length specifier
+      if (typeChar >= '0' && typeChar <= '9') {
+        const len = Number(`${typeChar}${this.upTo(':')}`);
+        arr.push(this.chomp(len));
+      }
+      // otherwise typeChar is value-type specifier
+      else {
+        arr.push(this.decodeValue(typeChar));
+      }
+    }
+    return arr;
+  }
+
+  private upTo(char) {
     const i = this.str.indexOf(char);
     if (i < 0) {
       throw new Error(`Packaged entity decoding fail: expected '${char}' separator in '${this.str}'`);
@@ -239,6 +261,7 @@ export abstract class StringDecoder {
       case 'T':
       case 'U': {
         const len = Number(this.upTo(':'));
+        console.log(`I've got a T or U of length ${len}`)
         return this.chomp(len);
       }
 
@@ -256,7 +279,11 @@ export abstract class StringDecoder {
         const dictionary = this.chomp(len);
         return StringDecoder.decodeDictionary(dictionary);
       }
-
+      case 'A': {
+        const len = Number(this.upTo(':'));
+        const array = this.chomp(len);
+        return StringDecoder.decodeArray(array);
+      }
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
     }
