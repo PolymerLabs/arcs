@@ -17,5 +17,5 @@ recipe SlandleSlandleLogin &login
   `slot #root as root
   SlandleSlandleLogin
     key = key
-    root consume root
+    root `consume root
   description `user sign in`

@@ -28,7 +28,7 @@ defineParticle(({SimpleParticle, log}) => {
       return (pipe && pipe.type === 'tv_show');
     }
     updateFind({type, name}) {
-      this.updateSingleton('find', {type, name});
+      this.set('find', {type, name});
   }
   };
 

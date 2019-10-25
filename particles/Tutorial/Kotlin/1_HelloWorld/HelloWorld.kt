@@ -1,35 +1,18 @@
-package arcs
+package arcs.tutorials
 
+import arcs.Particle
+import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
  */
 class HelloWorldParticle : Particle() {
-
-  override fun onHandleUpdate(handle: Handle) {
-    renderSlot("root")
-  }
-
-  override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-    if(allSynced) {
-      log("All handles synched\n")
-      renderSlot("root")
-    }
-  }
-
-    private fun console(s: String) {
-      log(s)
-    }
-
     override fun getTemplate(slotName: String): String {
-        return """<b>Hello, world!</b>"""
-      }
+        return "<b>Hello, world!</b>"
+    }
 }
 
 @Retain
 @ExportForCppRuntime("_newHelloWorldParticle")
-fun constructHelloWorldParticle(): WasmAddress {
-    log("_newHelloWorldParticle called")
-    return HelloWorldParticle().toWasmAddress()
-}
+fun constructHelloWorldParticle(): WasmAddress = HelloWorldParticle().toWasmAddress()

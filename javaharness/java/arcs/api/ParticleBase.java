@@ -1,7 +1,6 @@
 package arcs.api;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -53,6 +52,7 @@ public class ParticleBase implements Particle {
     if (!this.handleByName.containsKey(id)) {
       throw new AssertionError("Handle " + id + "does not exist");
     }
+
     return this.handleByName.get(id);
   }
 

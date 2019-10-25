@@ -15,7 +15,7 @@ import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {DirectionArrow} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -72,13 +72,13 @@ export class Recipe implements Cloneable<Recipe> {
     this._name = name;
   }
 
-  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: DirectionArrow): ConnectionConstraint {
+  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'constraint');
     this._connectionConstraints.push(result);
     return result;
   }
 
-  newObligation(from: EndPoint, to: EndPoint, direction: DirectionArrow): ConnectionConstraint {
+  newObligation(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'obligation');
     this._obligations.push(result);
     return result;

@@ -36,11 +36,11 @@ particle SlandleAlternateShipping in 'source/AlternateShipping.js'
 //  Multiplexer
 //    list = shoplist
 //    hostedParticle = Arrivinator
-//    annotation consume annotationSlot
+//    annotation `consume annotationSlot
 //  Multiplexer
 //    list = shoplist
 //    hostedParticle = AlternateShipping
-//    annotation consume annotationSlot
+//    annotation `consume annotationSlot
 //  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
 
 

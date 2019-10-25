@@ -286,6 +286,7 @@ export abstract class Entity implements Storable {
 
   static identify(entity: Entity, identifier: string) {
     getInternals(entity).identify(identifier);
+    return entity;
   }
 
   static createIdentity(entity: Entity, parentId: Id, idGenerator: IdGenerator) {

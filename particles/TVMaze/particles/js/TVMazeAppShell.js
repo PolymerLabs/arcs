@@ -130,7 +130,7 @@ defineParticle(({SimpleParticle, html, log}) => {
         //
         const alsoWatch = watchers && show ? this.buildDescription(watchers, show) : '';
         log(alsoWatch);
-        this.updateSingleton('watcherText', {text: alsoWatch});
+        this.set('watcherText', {text: alsoWatch});
         //
         let description = '';
         if (watchers && show) {

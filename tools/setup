@@ -2,7 +2,7 @@
 
 ROOT=$(dirname $0)/..
 NVM_VERSION="v0.34.0"
-BAZEL_VERSION="0.29.0"
+BAZEL_VERSION="1.0.0"
 
 YLW="\033[33m"
 RED="\033[91m"
@@ -64,6 +64,8 @@ if [ "$OS_NAME" = "linux" ]; then
 elif [ "$OS_NAME" = "osx" ]; then
   status "0.1. Checking for Command Line Tools"
   xcode-select --version || xcode-select --install || fail "Unable to install Command Line Tools"
+  status "0.2. Updating SSL Certificates for Python3.6"
+  /Applications/Python\ 3.6/Install\ Certificates.command
 fi
 
 status "1. Install nvm"
@@ -97,10 +99,8 @@ rm "$BAZEL_SCRIPT_NAME"
 
 status "5.2. Updating PATH"
 append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
-
-status "5.3. Set up the .bazelrc file"
-(cd $ROOT && append_once "build --define=repo_root=$(pwd)" .bazelrc)
-
+# Makes the updates visiable at this subshell i.e. bazel
+source ~/.profile
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
 echo "node --version"
@@ -116,3 +116,5 @@ echo "- Run tests:"
 echo "  - $CMD\`./tools/sigh test\`$END"
 echo "  - $CMD\`./tools/test\`$END"
 
+echo "\nPlease source the updated environment variables:"
+echo "  - $CMD\`source ~/.profile\`$END"

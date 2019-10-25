@@ -22,7 +22,7 @@ defineParticle(({UiParticle, log}) => {
         const key = share.fromKey;
         const name = (await this.boxQuery(names, key))[0];
         if (name) {
-          //this.updateSingleton('from', name);
+          //this.set('from', name);
           desc = name.userName;
         } else {
           log(`couldn't find [${key}] in`, names.forEach(item => item.fromKey));

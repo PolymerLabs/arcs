@@ -19,6 +19,7 @@ import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {SingletonStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import * as util from '../runtime/testing/test-util.js';
+import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
 
 class StubWasmLoader extends Loader {
   public reloaded = false;
@@ -29,7 +30,7 @@ class StubWasmLoader extends Loader {
 
   async loadWasmBinary(spec): Promise<ArrayBuffer> {
     const file = this.reloaded ? 'wasm-particle-new.wasm' : 'wasm-particle-old.wasm';
-    return super.loadWasmBinary({implFile: `bazel-bin/src/tests/source/${file}`});
+    return super.loadWasmBinary({implFile: `src/tests/source/${file}`});
   }
 
   clone(): StubWasmLoader {
@@ -129,9 +130,11 @@ describe('Hot Code Reload for JS Particle', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
     const personType = context.findTypeByName('Person');
 
-    const personStoreIn = await arc.createStore(personType) as SingletonStorageProvider;
-    const personStoreOut = await arc.createStore(personType) as SingletonStorageProvider;
-    await personStoreIn.set({id: 'id1', rawData: {name: 'Jack', age: 15}});
+    const personStoreIn = await arc.createStore(personType);
+    const personStoreOut = await arc.createStore(personType);
+    const personHandleIn = await singletonHandleForTest(arc, personStoreIn);
+    const personHandleOut = await singletonHandleForTest(arc, personStoreOut);
+    await personHandleIn.set(new personHandleIn.entityClass({name: 'Jack', age: 15}));
 
     const recipe = context.recipes[0];
     recipe.handles[0].mapToStorage(personStoreIn);
@@ -161,9 +164,9 @@ describe('Hot Code Reload for JS Particle', async () => {
     });`;
     arc.pec.reload(arc.pec.particles);
     await arc.idle;
-    await personStoreIn.set({id: 'id1', rawData: {name: 'Jane', age: 20}});
-    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'name', 'Jane');
-    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'age', 18);
+    await personHandleIn.set(new personHandleIn.entityClass({name: 'Jane', age: 20}));
+    await arc.idle;
+    assert.deepEqual(await personHandleOut.get(), {name: 'Jane', age: 18});
   });
 });
 
@@ -223,14 +226,16 @@ describe('Hot Code Reload for WASM Particle', async () => {
         use as personOut
         ReloadHandleTest
           personIn <- personIn
-          personOut -> personOut`, {loader, fileName: process.cwd() + '/input.arcs'});
+          personOut -> personOut`, {loader, fileName: './input.arcs'});
 
     const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
     const personType = context.findTypeByName('Person');
 
-    const personStoreIn = await arc.createStore(personType) as SingletonStorageProvider;
-    const personStoreOut = await arc.createStore(personType) as SingletonStorageProvider;
-    await personStoreIn.set({id: 'id1', rawData: {name: 'Jack', age: 15}});
+    const personStoreIn = await arc.createStore(personType);
+    const personStoreOut = await arc.createStore(personType);
+    const personHandleIn = await singletonHandleForTest(arc, personStoreIn);
+    const personHandleOut = await singletonHandleForTest(arc, personStoreOut);
+    await personHandleIn.set(new personHandleIn.entityClass({name: 'Jack', age: 15}));
 
     const recipe = context.recipes[0];
     recipe.handles[0].mapToStorage(personStoreIn);
@@ -245,8 +250,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     loader.reloaded = true;
     arc.pec.reload(arc.pec.particles);
     await arc.idle;
-    await personStoreIn.set({id: 'id1', rawData: {name: 'Jane', age: 20}});
-    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'name', 'Jane');
-    await util.assertSingletonWillChangeTo(arc, personStoreOut, 'age', 18);
+    await personHandleIn.set(new personHandleIn.entityClass({name: 'Jane', age: 20}));
+    await arc.idle;
+    assert.deepEqual(await personHandleOut.get(), {name: 'Jane', age: 18});
   });
 });

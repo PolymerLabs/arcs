@@ -49,6 +49,7 @@ async function createReferenceModeStore() {
     type: collectionType,
     mode: null,
     baseStore,
+    versionToken: null
   });
 }
 
@@ -56,7 +57,7 @@ describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
-    baseStore = new Store(testKey, Exists.ShouldCreate, new CountType(), 'base-store-id');
+    baseStore = new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'base-store-id'});
     DriverFactory.clearRegistrationsForTesting();
   });
 
@@ -65,7 +66,7 @@ describe('Reference Mode Store', async () => {
   });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
-    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
+    const store = new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'an-id'});
     try {
       await store.activate();
       assert.fail('store.activate() should not have succeeded');
@@ -77,7 +78,7 @@ describe('Reference Mode Store', async () => {
   it('will construct ReferenceMode stores when required', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
-    const store = new Store(testKey, Exists.ShouldCreate, new CountType(), 'an-id');
+    const store = new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'an-id'});
     const activeStore = await store.activate();
 
     assert.equal(activeStore.constructor, ReferenceModeStore);
@@ -114,6 +115,26 @@ describe('Reference Mode Store', async () => {
     assert.deepEqual(capturedModel, referenceCollection.getData());
     const storedEntity = activeStore.backingStore.getLocalModel('an-id');
     assert.deepEqual(storedEntity.getData(), entityCRDT.getData());
+  });
+
+  it('can clone data from another store', async () => {
+    DriverFactory.register(new MockStorageDriverProvider());
+
+    const activeStore = await createReferenceModeStore();
+
+    // Add some data.
+    const collection = new MyEntityCollection();
+    const entity = new MyEntity();
+    entity.age = {id: '42', value: 42};
+    entity.id = 'an-id';
+    entity.name = {id: 'bob'};
+    collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
+    const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
+
+    // Clone.
+    const activeStore2 = await createReferenceModeStore();
+    await activeStore2.cloneFrom(activeStore);
+    assert.deepEqual(await activeStore2.getLocalData(), await activeStore.getLocalData());
   });
 
   it('will apply and propagate operation updates from proxies to drivers', async () => {

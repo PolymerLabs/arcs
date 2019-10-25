@@ -19,6 +19,7 @@ import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
+import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
 
 
 export interface TypeLiteral extends Literal {
@@ -59,6 +60,8 @@ export abstract class Type {
         return new ArcType();
       case 'Handle':
         return new HandleType();
+      case 'Singleton':
+        return new SingletonType(Type.fromLiteral(literal.data));
       default:
         throw new Error(`fromLiteral: unknown type ${literal}`);
     }
@@ -168,6 +171,11 @@ export abstract class Type {
     return false;
   }
 
+  get isSingleton(): boolean {
+    return false;
+  }
+
+
   collectionOf() {
     return new CollectionType(this);
   }
@@ -256,6 +264,10 @@ export abstract class Type {
   crdtInstanceConstructor<T extends CRDTTypeRecord>(): (new () => CRDTModel<T>) | null {
     return null;
   }
+
+  handleConstructor<T extends CRDTTypeRecord>() {
+    return null;
+  }
 }
 
 export class CountType extends Type {
@@ -280,7 +292,7 @@ export class SingletonType<T extends Type> extends Type {
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: 'Singleton'};
+    return {tag: 'Singleton', data: this.innerType.toLiteral()};
   }
 
   getContainedType(): T {
@@ -289,6 +301,18 @@ export class SingletonType<T extends Type> extends Type {
 
   crdtInstanceConstructor() {
     return CRDTSingleton;
+  }
+
+  handleConstructor<T>() {
+    return SingletonHandle;
+  }
+
+  get isSingleton(): boolean {
+    return true;
+  }
+
+  toString(options = undefined): string {
+    return `![${this.innerType.toString(options)}]`;
   }
 }
 
@@ -359,6 +383,12 @@ export class EntityType extends Type {
 
   crdtInstanceConstructor() {
     return this.entitySchema.crdtConstructor();
+  }
+
+  handleConstructor<T>() {
+    // Currently using SingletonHandle as the implementation for Entity handles.
+    // TODO: Make an EntityHandle class that uses the proper Entity CRDT.
+    throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 }
 
@@ -552,6 +582,10 @@ export class CollectionType<T extends Type> extends Type {
 
   crdtInstanceConstructor() {
     return CRDTCollection;
+  }
+
+  handleConstructor<T>() {
+    return CollectionHandle;
   }
 }
 

@@ -445,6 +445,7 @@ describe('schema', () => {
     assert.strictEqual(schema.fields.custom.type, 'Bytes');
   });
 
+
   it('represent anonymous schema names in a comparable way', async () => {
     const manifest = await Manifest.parse(`
     particle Foo
@@ -458,5 +459,26 @@ describe('schema', () => {
     particle.connections
       .map((conn: HandleConnectionSpec): Schema => conn.type.getEntitySchema())
       .forEach((s: Schema) => assert.deepEqual(s.names, []));
+  });
+  
+  it('parses anonymous schemas', async () => {
+    const manifest = await Manifest.parse(`alias schema * as X`);
+    const schema = manifest.findSchemaByName('X');
+
+    assert.isEmpty(schema.names);
+    assert.isEmpty(schema.fields);
+  });
+
+  it('parses anonymous inline schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle P
+        in * {} thing`);
+
+    const particle = manifest.particles[0];
+    const connection = particle.handleConnections[0];
+    const schema = connection.type.getEntitySchema();
+
+    assert.isEmpty(schema.names);
+    assert.isEmpty(schema.fields);
   });
 });

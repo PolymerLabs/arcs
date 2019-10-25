@@ -21,6 +21,7 @@ import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorag
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {Flags} from '../flags.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -83,7 +84,7 @@ describe('firebase', function() {
       const result = await variable.get();
       assert.strictEqual(result.value, value);
 
-      assert.strictEqual(variable.version, 1);
+      assert.strictEqual(variable._version, 1);
       assert.strictEqual(events, 1);
     });
 
@@ -208,7 +209,7 @@ describe('firebase', function() {
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
 
-      assert.strictEqual(collection.version, 2);
+      assert.strictEqual(collection._version, 2);
       assert.strictEqual(events, 2);
     });
 
@@ -700,7 +701,85 @@ describe('firebase', function() {
       assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
-    it('serialization roundtrip re-attaches to the same firebase stores', async () => {
+    it('SLANDLES SYNTAX serialization roundtrip re-attaches to the same firebase stores', Flags.withPostSlandlesSyntax(async () => {
+      const loader = new StubLoader({
+        manifest: `
+          schema Data
+            Text value
+
+          particle P in 'a.js'
+            var: in Data
+            col: out [Data]
+            big: inout BigCollection<Data>
+
+          recipe
+            use as handle0
+            use as handle1
+            use as handle2
+            P
+              var: in handle0
+              col: out handle1
+              big: any handle2
+        `,
+        'a.js': `
+          defineParticle(({Particle}) => class Noop extends Particle {});
+        `
+      });
+      const manifest = await Manifest.load('manifest', loader);
+      const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
+      const storage = createStorage(arc.id);
+      const dataType = new EntityType(manifest.schemas.Data);
+
+      const varStore = await storage.construct('test0', dataType, newStoreKey('variable')) as SingletonStorageProvider;
+      const colStore = await storage.construct('test1', dataType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
+      const bigStore = await storage.construct('test2', dataType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
+      console.log(varStore.id, colStore.id, bigStore.id);
+
+      // Populate the stores, run the arc and get its serialization.
+      await varStore.set({id: 'i1', rawData: {value: 'v1'}});
+      await colStore.store({id: 'i2', rawData: {value: 'v2'}}, ['k2']);
+      await bigStore.store({id: 'i3', rawData: {value: 'v3'}}, ['k3']);
+
+      const recipe = manifest.recipes[0];
+      recipe.handles[0].mapToStorage(varStore);
+      recipe.handles[1].mapToStorage(colStore);
+      recipe.handles[2].mapToStorage(bigStore);
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      const serialization = await arc.serialize();
+      console.log(serialization);
+      arc.dispose();
+      console.log('dispose');
+      console.log(varStore.id, colStore.id, bigStore.id);
+
+      // Update the stores between serializing and deserializing.
+      await varStore.set({id: 'i4', rawData: {value: 'v4'}});
+      await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
+      await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
+
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactories: undefined, slotComposer: undefined, context: manifest});
+      const varStore2 = arc2.findStoreById(varStore.id) as SingletonStorageProvider;
+      const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
+      const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
+
+      // New storage providers should have been created.
+      assert.notStrictEqual(varStore2, varStore);
+      assert.notStrictEqual(colStore2, colStore);
+      assert.notStrictEqual(bigStore2, bigStore);
+
+      // The new providers should reflect the updates made to the stores.
+      assert.strictEqual((await varStore2.get()).rawData.value, 'v4');
+      assert.deepEqual((await colStore2.toList()).map(e => e.rawData.value), ['v2', 'v5']);
+
+      const cursorId = await bigStore.stream(5);
+      const {value, done} = await bigStore.cursorNext(cursorId);
+      assert.isFalse(done);
+      assert.deepEqual(value.map(e => e.rawData.value), ['v3', 'v6']);
+      assert.isTrue((await bigStore.cursorNext(cursorId)).done);
+    }));
+    it('serialization roundtrip re-attaches to the same firebase stores', Flags.withPreSlandlesSyntax(async () => {
       const loader = new StubLoader({
         manifest: `
           schema Data
@@ -773,7 +852,7 @@ describe('firebase', function() {
       assert.isFalse(done);
       assert.deepEqual(value.map(e => e.rawData.value), ['v3', 'v6']);
       assert.isTrue((await bigStore.cursorNext(cursorId)).done);
-    });
+    }));
   });
 
   describe('backing store', () => {

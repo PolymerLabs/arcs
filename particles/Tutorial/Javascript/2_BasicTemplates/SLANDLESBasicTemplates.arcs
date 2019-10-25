@@ -7,5 +7,5 @@ particle BasicTemplateParticle in 'basic-template.js'
 recipe BasicTemplateRecipe
   `slot 'rootslotid-root' as root
   BasicTemplateParticle
-    root consume root
+    root `consume root
   description `Javascript Tutorial 2: Basic Templates`

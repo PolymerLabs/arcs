@@ -59,7 +59,7 @@ defineParticle(({SimpleParticle, log, html}) => {
           day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
           time: show.schedule && show.schedule.time
         };
-        this.updateSingleton('show', entityData);
+        this.set('show', entityData);
         if (this.props.descriptions) {
           this.updateDescription(entityData);
         }

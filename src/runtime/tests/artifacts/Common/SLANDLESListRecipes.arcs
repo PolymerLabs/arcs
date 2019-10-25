@@ -1,0 +1,55 @@
+// @license
+// Copyright (c) 2019 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'SLANDLESList.arcs'
+
+//----------------------------------
+// Recipe: Generic List (Selectable)
+//----------------------------------
+
+recipe SelectableUseListRecipe
+  items: use #items
+  selected: create #selected
+  SelectableList
+    items: any items
+    selected: any selected
+  ItemMultiplexer
+    list: any items
+
+recipe SelectableCopyListRecipe
+  items: copy #items
+  selected: create #selected
+  SelectableList
+    items: any items
+    selected: any selected
+  ItemMultiplexer
+    list: any items
+
+//----------------------------------------
+// Recipe: Generic Tiled List (Selectable)
+//----------------------------------------
+
+recipe SelectableCopyTilesRecipe
+  items: copy #tiles
+  selected: create #selected
+  SelectableTileList
+    items: any items
+    selected: any selected
+  TileMultiplexer
+    list: any items
+  description `show ${SelectableTileList.items}`
+
+recipe SelectableUseTilesRecipe
+  items: use #tiles
+  selected: create #selected
+  SelectableTileList
+    items: any items
+    selected: any selected
+  TileMultiplexer
+    list: any items
+  description `show ${SelectableTileList.items}`

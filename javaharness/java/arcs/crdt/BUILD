@@ -5,7 +5,7 @@ package(default_visibility = [
     "//javaharness/javatests/arcs:__subpackages__",
 ])
 
-load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//tools/build_defs/android:rules.bzl", "android_library")
 
 android_library(
     name = "crdt-android",
@@ -14,7 +14,7 @@ android_library(
     ]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
-      "@com_google_dagger",
-      "@javax_inject_source//jar",
+        "//third_party/java/dagger",
+        "//third_party/java/jsr330_inject",
     ],
 )

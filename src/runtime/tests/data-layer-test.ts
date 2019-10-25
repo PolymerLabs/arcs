@@ -10,13 +10,12 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {handleFor, Collection} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Schema} from '../schema.js';
-import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
-import {ArcId, IdGenerator} from '../id.js';
+import {ArcId} from '../id.js';
+import {collectionHandleForTest} from '../testing/handle-for-test.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {
@@ -29,14 +28,14 @@ describe('entity', () => {
     const collectionType = new EntityType(schema).collectionOf();
 
     const storage = await arc.createStore(collectionType);
-    const handle = handleFor(storage, IdGenerator.newSession()) as Collection;
-    await handle.store(entity);
+    const handle = await collectionHandleForTest(arc, storage);
+    await handle.add(entity);
 
-    const collection = arc.findStoresByType(collectionType)[0] as CollectionStorageProvider;
+    const collection = await collectionHandleForTest(arc, arc.findStoresByType(collectionType)[0]);
     const list = await collection.toList();
     const clone = list[0];
     assert.isDefined(clone);
-    assert.deepEqual(clone.rawData, {value: 'hello world'});
+    assert.deepEqual(clone, {value: 'hello world'});
 
     // TODO(https://github.com/PolymerLabs/arcs/pull/2916#discussion_r277793505)
     // Test that clone/entity are not deeply equal.  Revisit once we

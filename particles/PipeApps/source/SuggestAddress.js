@@ -18,7 +18,7 @@ defineParticle(({SimpleParticle, html, log}) => {
     render({recentEntities}, state) {
       if (recentEntities) {
         const json = this.query(recentEntities);
-        this.updateSingleton('suggestion', {json});
+        this.set('suggestion', {json});
         return {json};
       }
     }

@@ -7,25 +7,25 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedAnnotationParticleInterface
-  in ~a *
-  `consume Slot annotation
+  in ~a
+  annotation: `consume Slot
 
 // TODO: This particle should use generic slot name.
 particle SlandleMultiplexer in 'source/SlandleMultiplexer.js'
-  host SlandleHostedAnnotationParticleInterface hostedParticle
-  in [~a] list
-  `consume [Slot] annotation
+  hostedParticle: host SlandleHostedAnnotationParticleInterface
+  list: in [~a]
+  annotation: `consume [Slot]
   description `${hostedParticle} for ${list}`
 
 // Same as SlandleMultiplexer above, but with an additional connection.
 interface SlandleHostedParticleInterface2
-  in ~a *
-  in [~a] *
-  `consume Slot annotation
+  in ~a
+  in [~a]
+  annotation: `consume Slot
 
-particle SlandleMultiplexer2 in 'source/Multiplexer.js'
-  host SlandleHostedParticleInterface2 hostedParticle
-  in [~a] list
-  in [~a] others
-  `consume [Slot] annotation
+particle SlandleMultiplexer2 in 'source/SlandleMultiplexer.js'
+  hostedParticle: host SlandleHostedParticleInterface2
+  list: in [~a]
+  others: in [~a]
+  annotation: `consume [Slot]
   description `${hostedParticle} for ${list}`

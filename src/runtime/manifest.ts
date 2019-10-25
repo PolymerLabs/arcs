@@ -27,25 +27,48 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {Slot} from './recipe/slot.js';
 import {HandleConnection} from './recipe/handle-connection.js';
-import {RecipeUtil, arrowToDirection, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
+import {RecipeUtil, connectionMatchesHandleDirection} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {StorageStub} from './storage-stub.js';
+import {Flags} from './flags.js';
+import {Store} from './storageNG/store.js';
+import {StorageKey} from './storageNG/storage-key.js';
+import {Exists, DriverFactory} from './storageNG/drivers/driver-factory.js';
+import {StorageKeyParser} from './storageNG/storage-key-parser.js';
+import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
+import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
+import {Entity} from './entity.js';
+import {SerializedEntity} from './storage-proxy.js';
+
+export enum ErrorSeverity {
+  Error = 'error',
+  Warning = 'warning'
+}
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
   key: string;
+  severity = ErrorSeverity.Error;
   constructor(location: AstNode.SourceLocation, message: string) {
     super(message);
     this.location = location;
+  }
+}
+
+export class ManifestWarning extends ManifestError {
+  constructor(location: AstNode.SourceLocation, message: string) {
+    super(location, message);
+    this.severity = ErrorSeverity.Warning;
   }
 }
 
@@ -122,7 +145,8 @@ export class Manifest {
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
-  private errors: ManifestError[] = [];
+  readonly errors: ManifestError[] = [];
+  // readonly warnings: ManifestError[] = [];
 
   constructor({id}: {id: Id | string}) {
     // TODO: Cleanup usage of strings as Ids.
@@ -145,6 +169,9 @@ export class Manifest {
     return this._id;
   }
   get storageProviderFactory() {
+    if (Flags.useNewStorageStack) {
+      throw new Error('Not present in the new storage stack.');
+    }
     if (this._storageProviderFactory == undefined) {
       this._storageProviderFactory = new StorageProviderFactory(this.id);
     }
@@ -216,32 +243,46 @@ export class Manifest {
       type: Type,
       name: string,
       id: string,
-      storageKey: string,
+      storageKey: string | StorageKey,
       tags: string[],
       claims?: ClaimIsTag[],
       originalId?: string,
       description?: string,
-      version?: number,
+      version?: string,
       source?: string,
+      origin?: 'file' | 'resource' | 'storage',
       referenceMode?: boolean,
       model?: {}[],
   }) {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
     }
-    const store = new StorageStub(
-        opts.type,
-        opts.id,
-        opts.name,
-        opts.storageKey,
-        this.storageProviderFactory,
-        opts.originalId,
-        opts.claims,
-        opts.description,
-        opts.version,
-        opts.source,
-        opts.referenceMode,
-        opts.model);
+    let store: UnifiedStore;
+    if (Flags.useNewStorageStack) {
+      let storageKey = opts.storageKey;
+      if (typeof storageKey === 'string') {
+        storageKey = StorageKeyParser.parse(storageKey);
+      }
+      store = new Store({...opts, storageKey, exists: Exists.ShouldCreate});
+    } else {
+      if (opts.storageKey instanceof StorageKey) {
+        throw new Error(`Can't use new-style storage keys with the old storage stack.`);
+      }
+      store = new StorageStub(
+          opts.type,
+          opts.id,
+          opts.name,
+          opts.storageKey,
+          this.storageProviderFactory,
+          opts.originalId,
+          opts.claims,
+          opts.description,
+          opts.version,
+          opts.source,
+          opts.origin,
+          opts.referenceMode,
+          opts.model);
+    }
     return this._addStore(store, opts.tags);
   }
 
@@ -335,8 +376,8 @@ export class Manifest {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
 
-  generateID(): Id {
-    return this._idGenerator.newChildId(this.id);
+  generateID(subcomponent?: string): Id {
+    return this._idGenerator.newChildId(this.id, subcomponent);
   }
 
   static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
@@ -352,7 +393,7 @@ export class Manifest {
       return await Manifest.parse(content, {
         fileName,
         loader,
-        registry,
+        registry
       });
     })();
     return await registry[fileName];
@@ -364,7 +405,7 @@ export class Manifest {
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {fileName, loader, registry, context, throwImportErrors} = options;
+    let {fileName, loader, registry, context} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -412,10 +453,12 @@ export class Manifest {
           highlight += '^';
         }
         let preamble: string;
+        // Peg Parsing Errors don't have severity attached.
+        const severity = e.severity || ErrorSeverity.Error;
         if (parseError) {
-          preamble = 'Parse error in';
+          preamble = `Parse ${severity} in`;
         } else {
-          preamble = 'Post-parse processing error caused by';
+          preamble = `Post-parse processing ${severity} caused by`;
         }
         message = `${preamble} '${fileName}' line ${e.location.start.line}.
 ${e.message}
@@ -488,8 +531,11 @@ ${e.message}
       throw processError(e, false);
     }
     dumpErrors(manifest);
-    if (options.throwImportErrors && manifest.errors.length > 0) {
-      throw manifest.errors[0];
+    if (options.throwImportErrors) {
+      const error = manifest.errors.find(e => e.severity === ErrorSeverity.Error);
+      if (error) {
+        throw error;
+      }
     }
     return manifest;
   }
@@ -589,6 +635,9 @@ ${e.message}
           case 'reference-type':
             node.model = new ReferenceType(node.type.model);
             return;
+          case 'singleton-type':
+            node.model = new SingletonType(node.type.model);
+            return;
           default:
             return;
         }
@@ -667,9 +716,9 @@ ${e.message}
     }
 
     if (particleItem.hasParticleArgument) {
-      const warning = new ManifestError(particleItem.location, `Particle uses deprecated argument body`);
+      const warning = new ManifestWarning(particleItem.location, `Particle uses deprecated argument body`);
       warning.key = 'hasParticleArgument';
-      manifest['_warnings'].push(warning);
+      manifest.errors.push(warning);
     }
 
     // TODO: loader should not be optional.
@@ -679,6 +728,13 @@ ${e.message}
 
     const processArgTypes = args => {
       for (const arg of args) {
+        if (arg.type && arg.type.kind === 'type-name'
+            // For now let's focus on entities, we should do interfaces next.
+            && arg.type.model && arg.type.model.tag === 'Entity') {
+          const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
+          warning.key = 'externalSchemas';
+          manifest.errors.push(warning);
+        }
         arg.type = arg.type.model;
         processArgTypes(arg.dependentConnections);
       }
@@ -959,11 +1015,11 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        const direction = arrowToDirection(connectionItem.dir);
+        const direction = connectionItem.dir;
         if (!connectionMatchesHandleDirection(direction, connection.direction)) {
           throw new ManifestError(
               connectionItem.location,
-              `'${connectionItem.dir}' (${direction}) not compatible with '${connection.direction}' param of '${particle.name}'`);
+              `'${direction}' not compatible with '${connection.direction}' param of '${particle.name}'`);
         } else if (connection.direction === 'any') {
           if (connectionItem.param !== '*' && particle.spec !== undefined) {
             throw new ManifestError(
@@ -1117,6 +1173,18 @@ ${e.message}
     return null;
   }
 
+  /**
+   * Creates a new storage key for data local to the manifest itself (e.g.
+   * from embedded JSON data, or an external JSON file).
+   */
+  private createLocalDataStorageKey(): string | RamDiskStorageKey {
+    if (Flags.useNewStorageStack) {
+      return new RamDiskStorageKey(this.generateID('local-data').toString());
+    } else {
+      return (this.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
+    }
+  }
+
   private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader) {
     const name = item.name;
     let id = item.id;
@@ -1148,6 +1216,7 @@ ${e.message}
         claims,
         description: item.description,
         version: item.version,
+        origin: item.origin,
       });
     }
 
@@ -1173,6 +1242,12 @@ ${e.message}
       entities = JSON.parse(json);
     } catch (e) {
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
+    }
+
+    if (Flags.useNewStorageStack) {
+      return manifest.newStore({type, name, id, storageKey: manifest.createLocalDataStorageKey(),
+        tags, originalId, claims, description: item.description, version: item.version || null,
+        source: item.source, origin: item.origin, referenceMode: false, model: entities});
     }
 
     // TODO: clean this up
@@ -1240,19 +1315,19 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-    const version = item.version || 0;
-    const storageKey = (manifest.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
+    const version = item.version || null;
     return manifest.newStore({
         type,
         name,
         id,
-        storageKey,
+        storageKey: manifest.createLocalDataStorageKey(),
         tags,
         originalId,
         claims,
         description: item.description,
         version,
         source: item.source,
+        origin: item.origin,
         referenceMode,
         model,
     });
@@ -1292,7 +1367,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toString(this.storeTags.get(store).map(a => `#${a}`)));
+      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
     });
 
     return results.join('\n');

@@ -16,9 +16,9 @@ import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
-import {ClaimIsTag} from '../particle-claim.js';
-import {UnifiedStore, UnifiedActiveStore} from '../storageNG/unified-store.js';
-import {ProxyCallback} from '../storageNG/store.js';
+import {UnifiedStore, UnifiedActiveStore, StoreInfo} from '../storageNG/unified-store.js';
+import {ProxyCallback, StorageCommunicationEndpoint} from '../storageNG/store.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
 
 // tslint:disable-next-line: no-any
 type Callback = Consumer<Dictionary<any>>;
@@ -104,34 +104,31 @@ export class ChangeEvent {
  * Docs TBD
  */
 export abstract class StorageProviderBase extends UnifiedStore implements Store, UnifiedActiveStore {
+  getStorageEndpoint(storageProxy): StorageCommunicationEndpoint<CRDTTypeRecord> {
+    throw new Error('storage endpoints should not be extracted from old storage stack');
+  }
+
   protected unifiedStoreType: 'StorageProviderBase' = 'StorageProviderBase';
 
   private readonly legacyListeners: Set<Callback> = new Set();
   private nextCallbackId = 0;
   private readonly listeners: Map<number, ProxyCallback<null>> = new Map();
-  private readonly _type: Type;
 
   protected readonly _storageKey: string;
   referenceMode = false;
 
-  version: number|null;
-  readonly id: string;
-  originalId: string|null;
-  name: string;
-  source: string|null;
-  description: string;
-  /** Trust tags claimed by this data store. */
-  claims: ClaimIsTag[];
+  _version: number|null;
+  storeInfo: StoreInfo;
+
+  get versionToken(): string|null {
+    return this._version == null ? null : this._version + '';
+  }
 
   protected constructor(type: Type, name: string, id: string, key: string) {
-    super();
+    super({type, name, id});
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    this._type = type;
-    this.name = name;
-    this.version = 0;
-    this.id = id;
-    this.source = null;
+    this._version = 0;
     this._storageKey = key;
   }
 
@@ -148,10 +145,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
 
   get storageKey(): string {
     return this._storageKey;
-  }
-
-  get type(): Type {
-    return this._type;
   }
 
   reportExceptionInHost(exception: PropagatedException) {
@@ -205,33 +198,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
     }
   }
 
-  toString(handleTags?: string[]): string {
-    const results: string[] = [];
-    const handleStr: string[] = [];
-    handleStr.push(`store`);
-    if (this.name) {
-      handleStr.push(`${this.name}`);
-    }
-    handleStr.push(`of ${this.type.toString()}`);
-    if (this.id) {
-      handleStr.push(`'${this.id}'`);
-    }
-    if (handleTags && handleTags.length) {
-      handleStr.push(`${handleTags.join(' ')}`);
-    }
-    if (this.source) {
-      handleStr.push(`in '${this.source}'`);
-    }
-    results.push(handleStr.join(' '));
-    if (this.claims && this.claims.length > 0) {
-      results.push(`  claim is ${this.claims.map(claim => claim.tag).join(' and is ')}`);
-    }
-    if (this.description) {
-      results.push(`  description \`${this.description}\``);
-    }
-    return results.join('\n');
-  }
-
   get apiChannelMappingId() {
     return this.id;
   }
@@ -242,7 +208,7 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
   /**
    * @returns an object notation of this storage provider.
    */
-  abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
+  abstract async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
   abstract cloneFrom(store: UnifiedActiveStore): Promise<void>;
 
@@ -256,6 +222,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
    * Called by Particle Execution Host to synchronize it's proxy.
    */
   async modelForSynchronization(): Promise<{version: number, model: {}}> {
-    return this.toLiteral();
+    return this.serializeContents();
   }
 }

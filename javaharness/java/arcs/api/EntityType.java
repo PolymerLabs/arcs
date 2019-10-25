@@ -1,6 +1,6 @@
 package arcs.api;
 
-public class EntityType extends Type {
+class EntityType extends Type {
   private final Schema entitySchema;
 
   public EntityType(Schema entitySchema) {

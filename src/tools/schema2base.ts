@@ -10,12 +10,22 @@
 import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
-import {Schema} from '../runtime/schema.js';
-import {Dictionary} from '../runtime/hot.js';
 import {Utils} from '../../shells/lib/utils.js';
+import {Manifest} from '../runtime/manifest.js';
+import {SchemaGraph, SchemaNode} from './schema2graph.js';
+
+export interface ClassGenerator {
+  processField(field: string, typeChar: string, inherited: boolean, refName: string);
+  generate(fieldCount: number): string;
+}
 
 export abstract class Schema2Base {
-  constructor(readonly opts: minimist.ParsedArgs) {}
+  scope: string;
+
+  constructor(readonly opts: minimist.ParsedArgs) {
+    Utils.init('../..');
+    this.scope = this.opts.package || 'arcs';
+  }
 
   async call() {
     fs.mkdirSync(this.opts.outdir, {recursive: true});
@@ -29,7 +39,6 @@ export abstract class Schema2Base {
   }
 
   private async processFile(src: string) {
-    Utils.init('../..');
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
     console.log(outPath);
@@ -38,82 +47,66 @@ export abstract class Schema2Base {
     }
 
     const manifest = await Utils.parse(`import '${src}'`);
-
-    // Collect declared schemas along with any inlined in particle connections.
-    const schemas: Dictionary<Schema> = {};
-    manifest.allSchemas.forEach(schema => schemas[schema.name] = schema);
-    for (const particle of manifest.allParticles) {
-      for (const connection of particle.connections) {
-        const schema = connection.type.getEntitySchema();
-        const name = schema && schema.names && schema.names[0];
-        if (name && !(name in schemas)) {
-          schemas[name] = schema;
-        }
-      }
-    }
-    if (Object.keys(schemas).length === 0) {
-      console.warn(`No schemas found in '${src}'`);
+    const classes = this.processManifest(manifest);
+    if (classes.length === 0) {
+      console.warn(`Could not find any particle connections with schemas in '${src}'`);
       return;
-    }
-
-    // Collect inline schema fields. These will be output first so they're defined
-    // prior to use in their containing entity classes.
-    const inlineSchemas: Dictionary<Schema> = {};
-    for (const schema of Object.values(schemas)) {
-      for (const [field, descriptor] of Object.entries(schema.fields)) {
-        if (descriptor.kind === 'schema-reference' && descriptor.schema.kind === 'schema-inline') {
-          const name = this.inlineSchemaName(field, descriptor);
-          if (!(name in inlineSchemas)) {
-            inlineSchemas[name] = descriptor.schema.model.getEntitySchema();
-          }
-         }
-      }
     }
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, this.fileHeader(outName));
-    for (const dict of [inlineSchemas, schemas]) {
-      for (const [name, schema] of Object.entries(dict)) {
-        fs.writeSync(outFile, this.entityClass(name, schema).replace(/ +\n/g, '\n'));
-      }
+    for (const text of classes) {
+      fs.writeSync(outFile, text.replace(/ +\n/g, '\n'));
     }
     fs.writeSync(outFile, this.fileFooter());
     fs.closeSync(outFile);
   }
 
-  protected processSchema(schema: Schema,
-      processField: (field: string, typeChar: string, refName: string) => void): number {
-    let fieldCount = 0;
-    for (const [field, descriptor] of Object.entries(schema.fields)) {
-      fieldCount++;
-      switch (this.typeSummary(descriptor)) {
-        case 'schema-primitive:Text':
-          processField(field, 'T', null);
-          break;
+  processManifest(manifest: Manifest): string[] {
+    // TODO: consider an option to generate one file per particle
+    const classes: string[] = [];
+    for (const particle of manifest.allParticles) {
+      const graph = new SchemaGraph(particle);
 
-        case 'schema-primitive:URL':
-          processField(field, 'U', null);
-          break;
+      // Generate one class definition per node in the graph.
+      for (const node of graph.walk()) {
+        const generator = this.getClassGenerator(node);
+        const fields = Object.entries(node.schema.fields);
 
-        case 'schema-primitive:Number':
-          processField(field, 'N', null);
-          break;
+        for (const [field, descriptor] of fields) {
+          const inherited = !node.extras.includes(field);
+          switch (this.typeSummary(descriptor)) {
+            case 'schema-primitive:Text':
+              generator.processField(field, 'T', inherited, null);
+              break;
 
-        case 'schema-primitive:Boolean':
-          processField(field, 'B', null);
-          break;
+            case 'schema-primitive:URL':
+              generator.processField(field, 'U', inherited, null);
+              break;
 
-        case 'schema-reference':
-          processField(field, 'R', this.inlineSchemaName(field, descriptor));
-          break;
+            case 'schema-primitive:Number':
+              generator.processField(field, 'N', inherited, null);
+              break;
 
-        default:
-          console.log(`Schema type for field '${field}' is not yet supported:`);
-          console.dir(descriptor, {depth: null});
-          process.exit(1);
+            case 'schema-primitive:Boolean':
+              generator.processField(field, 'B', inherited, null);
+              break;
+
+            case 'schema-reference':
+              // TODO: this will be changed to its own method in a follow-up CL
+              generator.processField(field, 'R', inherited, node.refs[field].name);
+              break;
+
+            default:
+              console.log(`Schema type for field '${field}' is not yet supported:`);
+              console.dir(descriptor, {depth: null});
+              process.exit(1);
+          }
+        }
+        classes.push(generator.generate(fields.length));
       }
     }
-    return fieldCount;
+    return classes;
   }
 
   private typeSummary(descriptor) {
@@ -129,20 +122,11 @@ export abstract class Schema2Base {
     }
   }
 
-  private inlineSchemaName(field, descriptor) {
-    let name = descriptor.schema.name;
-    if (!name && descriptor.schema.names && descriptor.schema.names.length > 0) {
-      name = descriptor.schema.names[0];
-    }
-    if (!name) {
-      console.log(`Unnamed inline schemas (field '${field}') are not yet supported`);
-      process.exit(1);
-    }
-    return name;
-  }
+  outputName(baseName: string): string { return ''; }
 
-  abstract outputName(baseName: string): string;
-  abstract fileHeader(outName: string): string;
-  abstract fileFooter(): string;
-  abstract entityClass(name: string, schema: Schema): string;
+  fileHeader(outName: string): string { return ''; }
+
+  fileFooter(): string { return ''; }
+
+  abstract getClassGenerator(node: SchemaNode): ClassGenerator;
 }

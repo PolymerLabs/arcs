@@ -23,6 +23,7 @@ import {compareArrays, compareComparables, compareStrings, Comparable} from './c
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
+import {Flags} from '../flags.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -192,6 +193,10 @@ export class Handle implements Comparable<Handle> {
     this._originalId = storage.originalId;
     this._type = undefined;
     this._mappedType = storage.type;
+    if (this._mappedType.isSingleton) {
+      // TODO(shans): Extend notion of singleton types through recipes and remove this conversion.
+      this._mappedType = this._mappedType.getContainedType();
+    }
     this._storageKey = storage.storageKey;
 
     this.claims = storage.claims;
@@ -316,15 +321,28 @@ export class Handle implements Comparable<Handle> {
     }
     // TODO: type? maybe output in a comment
     const result: string[] = [];
-    result.push(this.fate);
-    if (this.id) {
-      result.push(`'${this.id}'`);
-    }
-    result.push(...this.tags.map(a => `#${a}`));
     const name = (nameMap && nameMap.get(this)) || this.localName;
-    if (name) {
-      result.push(`as ${name}`);
+    if (Flags.usePreSlandlesSyntax) {
+      result.push(this.fate);
+      if (this.id) {
+        result.push(`'${this.id}'`);
+      }
+      result.push(...this.tags.map(a => `#${a}`));
+      if (name) {
+        result.push(`as ${name}`);
+      }
+    } else {
+      if (name) {
+        result.push(`${name}:`);
+      }
+      result.push(this.fate);
+      if (this.id) {
+        result.push(`'${this.id}'`);
+      }
+      result.push(...this.tags.map(a => `#${a}`));
     }
+
+    // Debug information etc.
     if (this.type) {
       result.push('//');
       if (this.type.isResolved()) {

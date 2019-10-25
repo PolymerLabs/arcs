@@ -25,17 +25,11 @@ Before this will actually work, you will need to build pipes-shell
 
 ## Building
 
-The javaharness depends on pipes-shell, which needs to be webpacked before the
-Java code can be built/run with bazel. Instructions are in `build.sh` (run it
-from the repo root):
-
-```bash
-./javaharness/build.sh
-```
-
-You will need to re-run `build.sh` whenever the Runtime or pipes-shell code
-changes. If only the Java has changed, you can just run bazel directly (via
-command line or via Android Studio).
+The javaharness depends on pipes-shell and the Arcs runtime, which need to be
+webpacked before they can be used by the Android app. Thankfully bazel will
+automatically re-run webpack for you whenever those sources change. All you need
+to do is run the usual bazel mobile-install command (or build in Android Studio)
+and everything that needs to be rebuilt should be.
 
 ## Troubleshooting
 
@@ -45,5 +39,50 @@ command line or via Android Studio).
   ```bash
   bazel clean --expunge
   ```
-* If you see errors concerning `pipes-shell`, make sure you've run `build.sh`,
-  and check that the symlink points to the right place.
+
+## Debugging and Inspection
+The Arcs Local Development Server (ALDS) is used to proxy messages between
+the device and the host for developers to debug and inspect Arcs via either the Chrome
+inspection (chrome://inspect) or the Arcs Explorer (https://live.arcs.dev/devtools/).
+
+Follow the steps to inspect and debug Arcs:
+1. Shutting down the old Arcs demo application before configuring new settings:
+* ```bash
+  adb wait-for-device root
+  adb shell killall -9 arcs.android.demo
+  ```
+2. Starting the ALDS at the root of Arcs repository:
+* ```bash
+  tools/sigh devServer
+  ```
+3. Configuring reverse-socket on the device to forward messages to the host:
+* ```bash
+  adb wait-for-device root
+  adb reverse tcp:8786 tcp:8786
+  ```
+4. Instructing the on-device Arcs runtime to use ALDS proxy before starting it:
+* ```bash
+  adb shell setprop debug.arcs.runtime.use_alds true
+  ```
+5. Launching the demo activity i.e. Autofill by pressing the Autofill button at the demo application.
+* > The button pressing starts the on-device Arcs runtime, connecting to the host ALDS then launching the demo activity.
+  > `'Device connected'` should appear on the host console if the connection was established successfully.
+6. Debugging and inspecting the started Arcs by navigating to `chrome://inspect` then inspecting the `'Arcs'` tab at the remote target.
+* > `'Explorer connected'` should appear on the host console if the connection was established successfully.
+  > `Note: Please load and ensure the Arcs Explorer Devtools extension in place`
+
+  > Alternatively using the live Arcs Explorer by opening the link at the Chrome browser:
+  ```
+  https://live.arcs.dev/devtools/
+  ```
+
+> Re-visiting all steps if the device reboots.
+
+## Properties
+Android properties are used to change and tweak Arcs settings at run-time.
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
+| debug.arcs.runtime.log | Change logging level of the JS Arcs runtime | 2 (the most verbose) |
+| debug.arcs.runtime.use_alds | Connect to the host ALDS while starting the JS Arcs runtime | false |
+| debug.arcs.runtime.shell_url | Specify which shell to use | file:///android_asset/index.html? (on-device pipes-shell) |

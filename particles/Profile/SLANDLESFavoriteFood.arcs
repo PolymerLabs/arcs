@@ -19,4 +19,4 @@ recipe SlandleFavoriteFood
   `slot 'rootslotid-root' #root as root
   SlandleFavoriteFoodPicker
     foods <-> foods
-    root consume root
+    root `consume root

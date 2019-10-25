@@ -1,12 +1,9 @@
-schema Foo
-  Text dummy
-
 schema Data
   Number num
   Text txt
   URL lnk
   Boolean flg
-  Reference<Foo> ref
+  Reference<Foo {}> ref
 
 schema Empty
 
@@ -22,3 +19,10 @@ schema ServiceResponse
 schema SpecialFields
   Text for
   Number internal_id
+
+particle Test
+  in Data data
+  in Empty empty
+  in RenderFlags renderFlags
+  in ServiceResponse serviceResponse
+  in SpecialFields specialFields

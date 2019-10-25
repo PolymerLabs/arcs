@@ -6,8 +6,8 @@ recipe SLANDLESTicTacToeShowBoard
   create as board
   SLANDLESDebugShowBoard
     board <- board
-    root consume root
+    root `consume root
   SLANDLESDebugMakeBoard
     board -> board
-    root consume root
+    root `consume root
   description `boardy boardy boardy!`

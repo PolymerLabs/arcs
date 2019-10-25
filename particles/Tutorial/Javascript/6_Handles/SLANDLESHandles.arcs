@@ -23,10 +23,10 @@ recipe HandleRecipe
   GetPerson
     // Pass the output person to the handle person.
     person -> person
-    root consume root
-      greetingSlot provide greeting
+    root `consume root
+      greetingSlot `provide greeting
   DisplayGreeting
     // Define the input person to be the handle person.
     person <- person
-    greetingSlot consume greeting
+    greetingSlot `consume greeting
   description `Javascript Tutorial 6: Handles`

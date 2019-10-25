@@ -6,11 +6,11 @@ import java.util.List;
 
 /**
  * Generates new IDs which are rooted in the current session. Only one IdGenerator should be
- * instantiated for each running ArcData, and all of the IDs created should be created using that same
- * IdGenerator instance.
+ * instantiated for each running ArcData, and all of the IDs created should be created using
+ * that same IdGenerator instance.
  */
 // copied from id.ts
-public class IdGenerator {
+class IdGenerator {
   private final String currentSessionId;
   private int nextComponentId = 0;
 

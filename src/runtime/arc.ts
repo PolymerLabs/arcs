@@ -240,7 +240,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     return innerArc;
   }
 
-  private async _serializeStore(store: UnifiedStore, context: SerializeContext, id: string): Promise<void> {
+  private async _serializeStore(store: UnifiedStore, context: SerializeContext, name: string): Promise<void> {
     const type = store.type.getContainedType() || store.type;
     if (type instanceof InterfaceType) {
       context.interfaces += type.interfaceInfo.toString() + '\n';
@@ -252,7 +252,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       key = store.storageKey;
     }
     const tags: Set<string> = this.storeTags.get(store) || new Set();
-    const handleTags = [...tags].map(a => `#${a}`).join(' ');
+    const handleTags = [...tags];
 
     const actualHandle = this.activeRecipe.findHandle(store.id);
     const originalId = actualHandle ? actualHandle.originalId : null;
@@ -264,7 +264,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     switch (key.protocol) {
       case 'firebase':
       case 'pouchdb':
-        context.handles += `store ${id} of ${store.type.toString()} ${combinedId} @${store.version === null ? 0 : store.version} ${handleTags} at '${store.storageKey}'\n`;
+        context.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
         break;
       case 'volatile': {
         // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
@@ -273,33 +273,38 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         if (!volatile) {
           // TODO: include keys in serialized [big]collections?
           const activeStore = await store.activate();
-          serializedData = (await activeStore.toLiteral()).model.map((model) => {
-            const {id, value} = model;
-            const index = model['index']; // TODO: Invalid Type
+          const model = await activeStore.serializeContents();
+          if (Flags.useNewStorageStack) {
+            serializedData = model;
+          } else {
+            serializedData = model.model.map((model) => {
+              const {id, value} = model;
+              const index = model['index']; // TODO: Invalid Type
 
-            if (value == null) {
-              return null;
-            }
-
-            let result;
-            if (value.rawData) {
-              result = {$id: id};
-              for (const field of Object.keys(value.rawData)) {
-                result[field] = value.rawData[field];
+              if (value == null) {
+                return null;
               }
-            } else {
-              result = value;
-            }
-            if (index !== undefined) {
-              result.$index = index;
-            }
-            return result;
-          });
+
+              let result;
+              if (value.rawData) {
+                result = {$id: id};
+                for (const field of Object.keys(value.rawData)) {
+                  result[field] = value.rawData[field];
+                }
+              } else {
+                result = value;
+              }
+              if (index !== undefined) {
+                result.$index = index;
+              }
+              return result;
+            });
+          }
         }
         if (store.referenceMode && serializedData.length > 0) {
           const storageKey = serializedData[0].storageKey;
           if (!context.dataResources.has(storageKey)) {
-            const storeId = `${id}_Data`;
+            const storeId = `${name}_Data`;
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
@@ -314,13 +319,14 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
         const indent = '  ';
         const data = JSON.stringify(serializedData);
+        const resourceName = `${name}Resource`;
 
-        context.resources += `resource ${id}Resource\n`
+        context.resources += `resource ${resourceName}\n`
           + indent + 'start\n'
           + data.split('\n').map(line => indent + line).join('\n')
           + '\n';
 
-        context.handles += `store ${id} of ${store.type.toString()} ${combinedId} @${store.version || 0} ${handleTags} in ${id}Resource\n`;
+        context.handles += store.toManifestString({handleTags, overrides: {name, source: resourceName, origin: 'resource'}}) + '\n';
         break;
       }
       default:
@@ -423,16 +429,11 @@ ${this.activeRecipe.toString()}`;
 
   static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
-    const arc = new Arc({
-      id: Id.fromString(manifest.meta.name),
-      storageKey: manifest.meta.storageKey,
-      slotComposer,
-      pecFactories,
-      loader,
-      storageProviderFactory: manifest.storageProviderFactory,
-      context,
-      inspectorFactory
-    });
+    const storageProviderFactory = Flags.useNewStorageStack ? null : manifest.storageProviderFactory;
+    const id = Id.fromString(manifest.meta.name);
+    const storageKey = manifest.meta.storageKey;
+    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory});
+
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
       const store = await storeStub.activate();
@@ -628,14 +629,13 @@ ${this.activeRecipe.toString()}`;
           await (newStore as any).set(particleClone);
         } else if (['copy', 'map'].includes(recipeHandle.fate)) {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
-          const copiedStore = await copiedStoreRef.castToStorageStub().inflate(this.storageProviderFactory);
-          assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
-          assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
+          const copiedActiveStore = await copiedStoreRef.activate();
+          assert(copiedActiveStore, `Cannot find store ${recipeHandle.id}`);
           const activeStore = await newStore.activate();
-          await activeStore.cloneFrom(copiedStore);
+          await activeStore.cloneFrom(copiedActiveStore);
           this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
-          newStore.name = copiedStore.name && `Copy of ${copiedStore.name}`;
-          const copiedStoreDesc = this.getStoreDescription(copiedStore);
+          newStore.storeInfo.name = copiedStoreRef.name && `Copy of ${copiedStoreRef.name}`;
+          const copiedStoreDesc = this.getStoreDescription(copiedStoreRef);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
           }
@@ -721,14 +721,14 @@ ${this.activeRecipe.toString()}`;
       if (typeof storageKey === 'string') {
         throw new Error(`Can't use string storage keys with the new storage stack.`);
       }
-      store = new Store(storageKey, Exists.ShouldCreate, type, id, name);
+      store = new Store({storageKey, exists: Exists.ShouldCreate, type, id, name});
     } else {
       if (typeof storageKey !== 'string') {
         throw new Error(`Can't use new-style storage keys with the old storage stack.`);
       }
       store = await this.storageProviderFactory.construct(id, type, storageKey);
       assert(store, `failed to create store with id [${id}]`);
-      store.name = name;
+      store.storeInfo.name = name;
     }
     await this._registerStore(store, tags);
     return store;
@@ -854,10 +854,10 @@ ${this.activeRecipe.toString()}`;
   getVersionByStore({includeArc=true, includeContext=false}) {
     const versionById = {};
     if (includeArc) {
-      this.storesById.forEach((handle, id) => versionById[id] = handle.version);
+      this.storesById.forEach((handle, id) => versionById[id] = handle.versionToken);
     }
     if (includeContext) {
-      this._context.allStores.forEach(handle => versionById[handle.id] = handle.version);
+      this._context.allStores.forEach(handle => versionById[handle.id] = handle.versionToken);
     }
     return versionById;
   }
@@ -870,7 +870,7 @@ ${this.activeRecipe.toString()}`;
     const results: string[] = [];
     const stores = [...this.storesById.values()].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toString([...this.storeTags.get(store)]));
+      results.push(store.toManifestString({handleTags: [...this.storeTags.get(store)]}));
     });
 
     // TODO: include stores entities

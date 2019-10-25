@@ -45,7 +45,7 @@ describe('Runtime', () => {
       Text value
 
     particle Hello in 'hello.js'
-      out Text text
+      out Text {value} text
 
     recipe
       create as handleA

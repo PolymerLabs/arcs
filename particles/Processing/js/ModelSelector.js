@@ -51,7 +51,7 @@ defineParticle(({SimpleParticle, html, resolver}) => {
     onSubmit() {
       const location = resolver(this.state.inputModelUrl);
       const labelsUrl = resolver(this.state.inputLabelsUrl);
-      this.updateSingleton('model', {location, labelsUrl});
+      this.set('model', {location, labelsUrl});
 
     }
   };

@@ -103,13 +103,14 @@ class DevtoolsArcInspector implements ArcInspector {
     if (!this.arc.isSpeculative) this.hotCodeReloader.updateParticleSet(particles);
   }
 
-  public pecMessage(name: string, pecMsgBody: object, pecMsgCount: number, stackString: string) {
+  public pecMessage(name: string, pecMsgBody: object, pecMsgCount: number,
+      pecType: string, pecId: string, stackString: string) {
     if (!DevtoolsConnection.isConnected) return;
 
     const stack = this._extractStackFrames(stackString);
     this.arcDevtoolsChannel.send({
       messageType: 'PecLog',
-      messageBody: {name, pecMsgBody, pecMsgCount, timestamp: Date.now(), stack},
+      messageBody: {name, pecMsgBody, pecMsgCount, pecType, pecId, timestamp: Date.now(), stack},
     });
   }
 

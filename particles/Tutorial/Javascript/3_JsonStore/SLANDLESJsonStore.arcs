@@ -23,6 +23,6 @@ recipe JsonStoreRecipe
   JsonStoreParticle
     // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
     inputData <- data
-    root consume root
+    root `consume root
 
   description `Javascript Tutorial 3: JSON Store`

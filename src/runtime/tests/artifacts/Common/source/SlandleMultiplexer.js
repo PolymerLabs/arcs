@@ -15,12 +15,12 @@ defineParticle(({Particle, MultiplexerDomParticle}) => {
       const recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
-  use '${itemHandle._id}' as handle1
+  handle1: use '${itemHandle._id}'
   ${other.handles.join('\n')}
-  \`slot '${slot.id}' as handle2
+  handle2: \`slot '${slot.id}'
   ${hostedParticle.name}
-    ${hostedParticle.handleConnections[0].name} <- handle1
-    ${hostedParticle.handleConnections[1].name} consume handle2
+    ${hostedParticle.handleConnections[0].name}: in handle1
+    ${hostedParticle.handleConnections[1].name}: \`consume handle2
     ${other.connections.join('\n')}
   `;
       return recipe;

@@ -2,7 +2,7 @@ package arcs.api;
 
 import java.util.function.Consumer;
 
-public class Thing<T> {
+class Thing<T> {
   public final T thing;
 
   Thing(T thing) {

@@ -58,7 +58,7 @@ defineParticle(({SimpleParticle, log}) => {
       } else {
         const artist = artists.itemListElement[0].result;
         log(artist);
-        this.updateSingleton('artist', {
+        this.set('artist', {
           artistid: artist['@id'],
           type: artist['@type'].join(','),
           name: artist.name,

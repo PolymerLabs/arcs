@@ -26,3 +26,6 @@ import '5_Collections/Collections.arcs'
 // Tutorial 6: Handles
 // Passing an entity through a handle.
 import '6_Handles/Handles.arcs'
+
+// Demo the tutorials lead to
+import 'Demo/TTTGame.arcs'

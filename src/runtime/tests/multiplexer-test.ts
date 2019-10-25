@@ -10,12 +10,13 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {Id, ArcId} from '../id.js';
+import {ArcId} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
-import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {Flags} from '../flags.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
@@ -48,7 +49,8 @@ describe('Multiplexer', () => {
     };
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
-    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1') as CollectionStorageProvider;
+    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
+    const barHandle = await collectionHandleForTest(arc, barStore);
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize(), 'normalize');
     assert(recipe.isResolved());
@@ -57,27 +59,27 @@ describe('Multiplexer', () => {
 
     await arc.idle;
 
-    await barStore.store({id: 'a', rawData: {value: 'one'}}, ['key1']);
-    await barStore.store({id: 'b', rawData: {value: 'two'}}, ['key2']);
-    await barStore.store({id: 'c', rawData: {value: 'three'}}, ['key3']);
+    await barHandle.add(new barHandle.entityClass({value: 'one'}));
+    await barHandle.add(new barHandle.entityClass({value: 'two'}));
+    await barHandle.add(new barHandle.entityClass({value: 'three'}));
 
     await arc.idle;
 
     assert.strictEqual(slotsCreated, 3);
   });
 
-  it('SLANDLES Processes multiple inputs', async () => {
+  it('SLANDLES Processes multiple inputs', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       import 'src/runtime/tests/artifacts/Common/SLANDLESMultiplexer.arcs'
       import 'src/runtime/tests/artifacts/SLANDLEStest-particles.arcs'
 
       recipe
-        use 'test:1' as handle0
-        \`slot 'rootslotid-slotid' as slot0
+        handle0: use 'test:1'
+        slot0: \`slot 'rootslotid-slotid'
         SlandleMultiplexer
-          hostedParticle = SlandleConsumerParticle
-          annotation consume slot0
-          list <- handle0
+          hostedParticle: host SlandleConsumerParticle
+          annotation: \`consume slot0
+          list: in handle0
     `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];
@@ -96,7 +98,8 @@ describe('Multiplexer', () => {
     };
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
-    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1') as CollectionStorageProvider;
+    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
+    const barHandle = await collectionHandleForTest(arc, barStore);
     recipe.handles[0].mapToStorage(barStore);
     const options = {errors: new Map()};
     const n = recipe.normalize(options);
@@ -108,13 +111,13 @@ describe('Multiplexer', () => {
 
     await arc.idle;
 
-    await barStore.store({id: 'a', rawData: {value: 'one'}}, ['key1']);
-    await barStore.store({id: 'b', rawData: {value: 'two'}}, ['key2']);
-    await barStore.store({id: 'c', rawData: {value: 'three'}}, ['key3']);
+    await barHandle.add(new barHandle.entityClass({value: 'one'}));
+    await barHandle.add(new barHandle.entityClass({value: 'two'}));
+    await barHandle.add(new barHandle.entityClass({value: 'three'}));
 
     await arc.idle;
 
     assert.strictEqual(slotsCreated, 3);
-  });
+  }));
 
 });

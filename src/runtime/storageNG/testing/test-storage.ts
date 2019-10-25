@@ -9,7 +9,7 @@
  */
 
 import {PropagatedException} from '../../arc-exceptions.js';
-import {CRDTConsumerType, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
+import {CRDTConsumerType, CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
 import {Consumer} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
@@ -39,6 +39,9 @@ export class MockDriver<Data> extends Driver<Data> {
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }
+  getToken() {
+    return null;
+  }
   async send(model: Data): Promise<boolean> {
     return true;
   }
@@ -54,6 +57,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       type: new CountType(),
       mode: StorageMode.Direct,
       baseStore: null,
+      versionToken: null
     });
   }
   on(callback: ProxyCallback<T>): number {
@@ -68,6 +72,13 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
   reportExceptionInHost(exception: PropagatedException): void {
     this.lastCapturedException = exception;
+  }
+  async getLocalData(): Promise<CRDTData> {
+    throw new Error('unimplemented');
+  }
+
+  async serializeContents(): Promise<T['data']> {
+    throw new Error('unimplemented');
   }
 }
 

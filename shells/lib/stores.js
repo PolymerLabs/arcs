@@ -37,9 +37,9 @@ export class Stores {
 const ManifestPatch = {
   async createStore(type, name, id, tags, claims, storageKey) {
     const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
+    claims = claims || [];
     //assert(store.version !== null);
-    store.name = name;
-    store.claims = claims || [];
+    store.storeInfo = {...store.storeInfo, name, claims};
     //this.storeManifestUrls.set(store.id, this.fileName);
     return ManifestPatch.addStore.call(this, store, tags);
   },

@@ -10,7 +10,7 @@ import java.util.Date;
  * subcomponents to their parent ID"s idTree).
  */
 // copied from id.ts
-public class Id {
+class Id {
   /** The Session ID of the session during which the ID got created. See IdGenerator class. */
   final String root;
 
@@ -100,7 +100,9 @@ public class Id {
       timeStampChars[i] = PUSH_CHARS.charAt((int) (now % 64));
       now = (int) Math.floor(now / 64);
     }
-    if (now != 0) throw new AssertionError("We should have converted the entire timestamp.");
+    if (now != 0) {
+      throw new AssertionError("We should have converted the entire timestamp.");
+    }
 
     String id = String.valueOf(timeStampChars);
 

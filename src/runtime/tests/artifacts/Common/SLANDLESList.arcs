@@ -1,0 +1,66 @@
+// @license
+// Copyright (c) 2019 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+// TODO(jopra): Finish conversion to use SLANDLES
+interface HostedParticleInterface
+  in ~a
+  item: consume?
+
+// row lists
+
+particle ItemMultiplexer in 'source/SLANDLESMultiplexer.js'
+  hostedParticle: host HostedParticleInterface
+  list: in [~a]
+  item: consume [Slot]
+
+particle List in 'source/List.js'
+  items: in [~a]
+  root: consume Slot #content
+    preamble: provide? Slot
+    item: provide [Slot {handle: items}]
+    annotation: provide? [Slot {handle: items}]
+    action: provide? Slot {handle: items}
+    postamble: provide? Slot
+  description `show ${items}`
+
+particle SelectableList in 'source/List.js'
+  items: inout [~a]
+  selected: inout ~a
+  root: consume Slot #content
+    preamble: provide? Slot
+    item: provide [Slot {handle: items}]
+    annotation: provide? [Slot {handle: items}]
+    action: provide? Slot {handle: items}
+    postamble: provide? Slot
+  description `show ${items}`
+
+// tile lists
+
+interface HostedTileParticleInterface
+  in ~a
+  tile: consume
+
+particle TileMultiplexer in 'source/SLANDLESMultiplexer.js'
+  hostedParticle: host HostedTileParticleInterface
+  list: in [~a]
+  tile: consume [Slot]
+
+particle TileList in 'source/TileList.js'
+  items: inout [~a]
+  root: consume Slot #content
+    tile: provide [Slot]
+    action: provide? [Slot]
+  description `show ${items} as tiles`
+
+particle SelectableTileList in 'source/TileList.js'
+  items: inout [~a]
+  selected: inout ~a
+  root: consume Slot #content
+    tile: provide [Slot]
+    action: provide? [Slot]
+  description `show ${items} as tiles`

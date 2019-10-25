@@ -25,7 +25,7 @@ enclave/sdk
 enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
-build
+build/
 src/gen
 coverage
 .vscode
@@ -38,12 +38,7 @@ user-test/
 test-output
 node_modules/.cache/
 server/node_modules/.cache/
-bazel-bin
-bazel-genfiles
-bazel-javaharness
-bazel-out
-bazel-testlogs
-bazel-arcs*
+bazel-*
 .bazelrc
 .ijwb
 .sighdeps

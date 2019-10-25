@@ -256,7 +256,7 @@ export class UiSlotComposer {
     const observer = this['slotObserver'];
     if (observer && content) {
       // we scan connections for container and slotMap
-      const connections = particle.getSlotConnections();
+      const connections = particle.getSlandleConnections();
       // assemble a renderPacket to send to slot observer
       const packet = {};
       // identify parent container

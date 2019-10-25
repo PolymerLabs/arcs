@@ -18,6 +18,7 @@ import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
+import {PreEntityMutationHandle} from './storageNG/handle.js';
 
 export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;
@@ -281,8 +282,8 @@ export class Particle {
   async setDescriptionPattern(connectionName: string, pattern): Promise<boolean> {
     const descriptions = this.handles.get('descriptions');
     if (descriptions) {
-      const entityClass = descriptions.entityClass;
       if (descriptions instanceof Collection || descriptions instanceof BigCollection) {
+        const entityClass = descriptions.entityClass;
         await descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       }
       return true;

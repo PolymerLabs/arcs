@@ -468,8 +468,7 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model);
     } else {
-      return new Promise<{id: string}>(resolve =>
-        this.port.HandleGet(this, resolve));
+      return new Promise<{id: string}>(resolve => this.port.HandleGet(this, resolve));
     }
   }
 
@@ -500,7 +499,7 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
   }
 
   async clear(particleId: string): Promise<void> {
-    if (this.model == null) {
+    if (this.synchronized === SyncState.full && this.model == null) {
       return Promise.resolve();
     }
     const barrier = this.generateBarrier();

@@ -25,7 +25,7 @@ defineParticle(({SimpleParticle, log}) => {
           neo.name = name && name.userName || '';
         }
         log(neo);
-        this.updateSingleton('person', neo);
+        this.set('person', neo);
       }
     }
   };

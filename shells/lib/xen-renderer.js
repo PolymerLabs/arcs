@@ -137,7 +137,7 @@ export const SlotObserver = class {
           // slotId's are unique in the tree
           deepQuerySelector(root, slotId(containerSlotId))
           // use `containerSlotName` to catch root slots (not deep!)
-          || root.querySelector(slotId(containerSlotName))
+          || containerSlotName && root.querySelector(slotId(containerSlotName))
           || root.querySelector(`#${queryId(containerSlotId)}`)
           ;
       }

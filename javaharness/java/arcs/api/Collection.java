@@ -27,8 +27,12 @@ public class Collection extends Handle {
         break;
       case "update":
         PortableJson update = jsonParser.emptyObject();
-        if (details.hasKey("add")) update.put("added", details.getArray("add"));
-        if (details.hasKey("remove")) update.put("removed", details.getArray("remove"));
+        if (details.hasKey("add")) {
+          update.put("added", details.getArray("add"));
+        }
+        if (details.hasKey("remove")) {
+          update.put("removed", details.getArray("remove"));
+        }
         update.put(
             "originator", Objects.equals(details.getString("originatorId"), this.particleId));
         // TODO: Should return promise?

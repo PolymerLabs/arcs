@@ -18,6 +18,7 @@ import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type
 import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
+import {Flags} from './flags.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -387,7 +388,12 @@ export class ParticleSpec {
     const indent = '  ';
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
+      if (Flags.usePreSlandlesSyntax) {
+        // TODO: Remove post slandles syntax
+        results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
+      } else {
+        results.push(`${indent}${connection.name}: ${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()}${tags}`);
+      }
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }
@@ -406,23 +412,47 @@ export class ParticleSpec {
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
       const tokens: string[] = [];
-      if (s.isRequired) {
-        tokens.push('must');
-      }
-      tokens.push(direction);
-      if (s.isSet) {
-        tokens.push('set of');
-      }
-      tokens.push(s.name);
-      if (s.tags.length > 0) {
-        tokens.push(s.tags.map(a => `#${a}`).join(' '));
-      }
-      results.push(`${indent}${tokens.join(' ')}`);
-      if (s.formFactor) {
-        results.push(`${indent}  formFactor ${s.formFactor}`);
-      }
-      for (const handle of s.handles) {
-        results.push(`${indent}  handle ${handle}`);
+      if (Flags.usePreSlandlesSyntax) {
+        if (s.isRequired) {
+          tokens.push('must');
+        }
+        tokens.push(direction);
+        if (s.isSet) {
+          tokens.push('set of');
+        }
+        tokens.push(s.name);
+        if (s.tags.length > 0) {
+          tokens.push(s.tags.map(a => `#${a}`).join(' '));
+        }
+        results.push(`${indent}${tokens.join(' ')}`);
+        if (s.formFactor) {
+          results.push(`${indent}  formFactor ${s.formFactor}`);
+        }
+        for (const handle of s.handles) {
+          results.push(`${indent}  handle ${handle}`);
+        }
+      } else {
+        tokens.push(`${s.name}:`);
+        tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
+
+        const fieldSet = [];
+        // TODO(jopra): Move the formFactor and handle to the slot type information.
+        if (s.formFactor) {
+          fieldSet.push(`formFactor: ${s.formFactor}`);
+        }
+        for (const handle of s.handles) {
+          fieldSet.push(`handle: ${handle}`);
+        }
+        const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
+        if (s.isSet) {
+          tokens.push(`[Slot]${fields}`);
+        } else {
+          tokens.push(`Slot${fields}`);
+        }
+        if (s.tags.length > 0) {
+          tokens.push(s.tags.map(a => `#${a}`).join(' '));
+        }
+        results.push(`${indent}${tokens.join(' ')}`);
       }
       if (s.provideSlotConnections) {
         // Provided slots.
@@ -483,7 +513,13 @@ export class ParticleSpec {
             if (!handle) {
               throw new Error(`Can't make a check on unknown handle ${handleName}.`);
             }
-            if (!handle.isInput) {
+            if (handle.direction === '`consume' || handle.direction === '`provide') {
+              // Do slandles versions of slots checks and claims.
+              if (handle.direction === '`consume') {
+                  throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
+
+              }
+            } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
             }
             if (handle.check) {
