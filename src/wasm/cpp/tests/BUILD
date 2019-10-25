@@ -4,6 +4,7 @@ load("//build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 filegroup(
   name = "schemas_srcs",
   srcs = ["schemas.arcs"],
+  visibility = ["//visibility:public"],
 )
 
 arcs_cc_schema(
@@ -25,6 +26,7 @@ cc_wasm_binary(
         "test-base.h",
     ],
     deps = ["//src/wasm/cpp:arcs"],
+    visibility = ["//visibility:public"],
 )
 
 arcs_ts_test(
