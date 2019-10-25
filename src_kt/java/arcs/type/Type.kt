@@ -76,34 +76,6 @@ interface Type {
     val pretty: Boolean = false
   )
 
-  /** TODO: Docs. What does this mean? */
-  interface CanReadSubsetHolder : Type {
-    /** TODO: Docs. What does this mean? */
-    val canReadSubset: Type?
-
-    /** Returns whether or not this type can merge its [canReadSubset] with the other's. */
-    fun canMergeCanReadSubsetWith(other: CanReadSubsetHolder): Boolean {
-      throw UnsupportedOperationException(
-        "canMergeCanReadSubsetWith not implemented for type tagged with $tag"
-      )
-    }
-  }
-
-  /** TODO: Docs. What does this mean? */
-  interface CanWriteSupersetHolder : Type {
-    /** TODO: Docs. What does this mean? */
-    val canWriteSuperset: Type?
-
-    /** Returns whether or not this type can merge its [canWriteSuperset] with the other's. */
-    fun canMergeCanWriteSupersetWith(other: CanWriteSupersetHolder): Boolean {
-      // TODO: should this throw, like in CanReadSubsetHolder?
-      return true
-    }
-  }
-
-  /** Shorthand for a [Type] that is both a [CanReadSubsetHolder] and a [CanWriteSupersetHolder] */
-  interface CanReadWriteHolder : CanReadSubsetHolder, CanWriteSupersetHolder
-
   /** Defines a [Type] for data capable of being a container for data of another [Type]. */
   interface TypeContainer<T : Type> : Type {
     /** The [Type] of data contained by this [Type]. Think: kotlin's `typeParameter`. */
@@ -136,24 +108,6 @@ interface Type {
 
       // "We need to go deeper." - Dom Cobb
       return unwrapPair(contained1 to contained2)
-    }
-
-    /** Tests whether two [Types]' constraints are compatible with each other. */
-    fun canMergeConstraints(type1: Type, type2: Type): Boolean =
-      canMergeCanReadSubset(type1, type2) && canMergeCanWriteSuperset(type1, type2)
-
-    private fun canMergeCanReadSubset(type1: Type, type2: Type): Boolean {
-      if (type1 !is CanReadSubsetHolder || type2 !is CanReadSubsetHolder) return true
-      if (type1.canReadSubset?.tag != type2.canReadSubset?.tag) return false
-
-      return type1.canMergeCanReadSubsetWith(type2) && type2.canMergeCanReadSubsetWith(type1)
-    }
-
-    private fun canMergeCanWriteSuperset(type1: Type, type2: Type): Boolean {
-      if (type1 !is CanWriteSupersetHolder || type2 !is CanWriteSupersetHolder) return true
-      if (type1.canWriteSuperset?.tag != type2.canWriteSuperset?.tag) return false
-
-      return type1.canMergeCanWriteSupersetWith(type2) && type2.canMergeCanWriteSupersetWith(type2)
     }
   }
 }

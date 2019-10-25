@@ -30,23 +30,14 @@ open class CollectionType<T : Type>(
 ) : Type,
   Type.TypeContainer<T>,
   Type.TypeVariableMerger,
-  Type.CanReadWriteHolder,
   EntitySchemaProviderType,
-  CrdtModelType<CrdtSet.Data<Referencable>, CrdtSet.Operation<Referencable>, Set<Referencable>>,
-  HandleCreatorType<
-    CrdtSet.Data<Referencable>,
-    CrdtSet.Operation<Referencable>,
-    Set<Referencable>> {
+  CrdtModelType<CrdtSet.Data<Referencable>, CrdtSet.Operation<Referencable>, Set<Referencable>> {
 
   override val tag = Tag.Collection
   override val containedType: T
     get() = collectionType
   override val entitySchema: Schema?
     get() = (collectionType as? EntitySchemaProviderType)?.entitySchema
-  override val canReadSubset: Type?
-    get() = InterfaceType(tag.name, emptyList(), emptyList())
-  override val canWriteSuperset: Type?
-    get() = InterfaceType(tag.name, emptyList(), emptyList())
   override val canEnsureResolved: Boolean
     get() = collectionType.canEnsureResolved
   override val resolvedType: CollectionType<*>?
@@ -72,11 +63,6 @@ open class CollectionType<T : Type>(
   override fun createCrdtModel():
     CrdtModel<CrdtSet.Data<Referencable>, CrdtSet.Operation<Referencable>, Set<Referencable>> {
     return CrdtSet()
-  }
-
-  override fun createHandle():
-    Handle<CrdtSet.Data<Referencable>, CrdtSet.Operation<Referencable>, Set<Referencable>> {
-    TODO("implement me")
   }
 
   override fun copy(variableMap: MutableMap<Any, Any>): Type =

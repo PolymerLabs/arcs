@@ -18,36 +18,23 @@ import arcs.type.TypeLiteral
 
 /** [Type] representation of a type variable. */
 class TypeVariable(val variable: TypeVariableInfo)
-  : Type, Type.TypeVariableMerger, Type.CanReadWriteHolder, EntitySchemaProviderType {
+  : Type, Type.TypeVariableMerger, EntitySchemaProviderType {
 
   override val tag = Tag.TypeVariable
   override val resolvedType: Type?
     get() = variable.resolution ?: this
   override val canEnsureResolved: Boolean
     get() = variable.canEnsureResolved
-  override val canReadSubset: Type?
-    get() = variable.canReadSubset
-  override val canWriteSuperset: Type?
-    get() = variable.canWriteSuperset
   override val entitySchema: Schema?
     get() = (resolvedType as? EntitySchemaProviderType)?.entitySchema
 
-  constructor(name: String, canWriteSuperset: Type? = null, canReadSubset: Type? = null) :
-    this(TypeVariableInfo(name, canWriteSuperset, canReadSubset))
-
-  override fun maybeEnsureResolved() = variable.maybeEnsureResolved()
+  constructor(name: String) : this(TypeVariableInfo(name))
 
   override fun mergeTypeVariablesByName(variableMap: MutableMap<Any, Any>): Type {
     var variable = variableMap[variable.name] as? Type
     if (variable == null) {
       variable = this
       variableMap[this.variable.name] = this
-    } else if (variable is TypeVariable) {
-      if (variable.variable.hasConstraint || this.variable.hasConstraint) {
-        checkNotNull(variable.variable.maybeMergeConstraints(this.variable)) {
-          "Could not merge type variables"
-        }
-      }
     }
     return variable
   }
@@ -55,7 +42,7 @@ class TypeVariable(val variable: TypeVariableInfo)
   override fun copy(variableMap: MutableMap<Any, Any>): Type {
     (variableMap[variable.name] as? TypeVariableInfo)?.let { return TypeVariable(it) }
 
-    val infoCopy = TypeVariableInfo.fromLiteral(variable.toLiteral())
+    val infoCopy = variable.copy()
     return TypeVariable(infoCopy).also { variableMap[variable.name] = infoCopy }
   }
 
@@ -63,24 +50,17 @@ class TypeVariable(val variable: TypeVariableInfo)
     val mapVariableInfo = variableMap[variable] as? TypeVariableInfo
     if (mapVariableInfo != null) return TypeVariable(mapVariableInfo)
 
-    val copiedTypeVariableInfo =
-      TypeVariableInfo.fromLiteral(variable.toLiteralIgnoringResolutions())
+    val copiedTypeVariableInfo = variable.copy()
 
     variable.resolution?.let {
       copiedTypeVariableInfo.resolution = it.copyWithResolutions(variableMap)
-    }
-    variable.canReadSubset?.let {
-      copiedTypeVariableInfo.canReadSubset = it.copyWithResolutions(variableMap)
-    }
-    variable.canWriteSuperset?.let {
-      copiedTypeVariableInfo.canWriteSuperset = it.copyWithResolutions(variableMap)
     }
     variableMap[variable] = copiedTypeVariableInfo
     return TypeVariable(copiedTypeVariableInfo)
   }
 
   override fun toLiteral() =
-    variable.resolution?.toLiteral() ?: Literal(tag, variable.toLiteral())
+    variable.resolution?.toLiteral() ?: Literal(tag, variable.copy())
 
   override fun toString(options: Type.ToStringOptions): String {
     if (!options.pretty) return "~${variable.name}"
@@ -90,13 +70,13 @@ class TypeVariable(val variable: TypeVariableInfo)
   /** [Literal] representation of a [TypeVariable]. */
   data class Literal(
     override val tag: Tag,
-    override val data: TypeVariableInfo.Literal
+    override val data: TypeVariableInfo
   ) : TypeLiteral
 
   companion object {
     init {
       TypeFactory.registerBuilder(Tag.TypeVariable) { literal ->
-        TypeVariable(TypeVariableInfo.fromLiteral(literal.data))
+        TypeVariable(literal.data as TypeVariableInfo)
       }
     }
   }

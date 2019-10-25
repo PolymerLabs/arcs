@@ -17,18 +17,12 @@ import arcs.type.TypeFactory
 import arcs.type.TypeLiteral
 
 /** [Type] representation of a reference. */
-class ReferenceType<T : Type>(referredType: T) :
-  Type, Type.TypeContainer<T>,
-  Type.CanReadWriteHolder,
-  EntitySchemaProviderType {
+class ReferenceType<T : Type>(referredType: T)
+  : Type, Type.TypeContainer<T>, EntitySchemaProviderType {
   override val tag = Tag.Reference
   override val containedType: T = referredType
   override val canEnsureResolved: Boolean
     get() = containedType.canEnsureResolved
-  override val canReadSubset: Type?
-    get() = (containedType as? Type.CanReadSubsetHolder)?.canReadSubset
-  override val canWriteSuperset: Type?
-    get() = (containedType as? Type.CanWriteSupersetHolder)?.canWriteSuperset
   override val entitySchema: Schema?
     get() = (containedType as? EntitySchemaProviderType)?.entitySchema
   override val resolvedType: Type?

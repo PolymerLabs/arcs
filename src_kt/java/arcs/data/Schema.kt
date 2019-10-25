@@ -48,10 +48,6 @@ class Schema(
   }
 
   companion object {
-    fun intersect(schema1: Schema, schema2: Schema): Boolean {
-      TODO("Implement me.")
-    }
-
     fun fromLiteral(literal: arcs.common.Literal): Schema {
       TODO("Implement me.")
     }

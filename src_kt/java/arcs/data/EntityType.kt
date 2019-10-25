@@ -22,28 +22,13 @@ import arcs.type.TypeLiteral
 /** [Type] representation of an entity. */
 class EntityType(override val entitySchema: Schema) :
   Type,
-  Type.CanReadWriteHolder,
   EntitySchemaProviderType,
-  CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, Entity>,
-  HandleCreatorType<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
+  CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
 
   override val tag = Tag.Entity
 
   constructor(names: List<SchemaName>, fields: SchemaFields, description: SchemaDescription) :
     this(Schema(names, fields, description))
-
-  override val canReadSubset: Type = this
-  override val canWriteSuperset: Type = this
-
-  override fun canMergeCanReadSubsetWith(other: Type.CanReadSubsetHolder): Boolean {
-    val otherEntityType = other as? EntityType ?: return false
-    return Schema.intersect(entitySchema, otherEntityType.entitySchema)
-  }
-
-  override fun canMergeCanWriteSupersetWith(other: Type.CanWriteSupersetHolder): Boolean {
-    val otherEntityType = other as? EntityType ?: return false
-    return Schema.intersect(entitySchema, otherEntityType.entitySchema)
-  }
 
   override fun isMoreSpecificThan(other: Type) =
     other is EntityType && entitySchema.isMoreSpecificThan(other.entitySchema)
@@ -54,10 +39,6 @@ class EntityType(override val entitySchema: Schema) :
 
   override fun createCrdtModel(): CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, Entity> =
     entitySchema.createCrdtEntityModel()
-
-  override fun createHandle(): Handle<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
-    TODO("not implemented")
-  }
 
   override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
 

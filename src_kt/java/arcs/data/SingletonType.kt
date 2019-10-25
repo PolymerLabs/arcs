@@ -26,21 +26,12 @@ class SingletonType<T : Type>(override val containedType: T) :
   CrdtModelType<
     CrdtSingleton.Data<Referencable>,
     CrdtSingleton.Operation<Referencable>,
-    Referencable?>,
-  HandleCreatorType<
-    CrdtSingleton.Data<Referencable>,
-    CrdtSingleton.Operation<Referencable>,
     Referencable?> {
   override val tag = Tag.Singleton
 
   override fun toLiteral() = Literal(tag, containedType.toLiteral())
 
   override fun createCrdtModel() = CrdtSingleton<Referencable>()
-
-  override fun createHandle():
-    Handle<CrdtSingleton.Data<Referencable>, CrdtSingleton.Operation<Referencable>, Referencable?> {
-    TODO("not implemented")
-  }
 
   data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 
