@@ -193,26 +193,51 @@ export class StringDecoder {
     }
   }
 
-  decodeDictionary(str: string): Dictionary<string> {
+  decodeDictionary(str: string): Dictionary<String> {
     this.str = str;
     const dict = {};
     let num = Number(this.upTo(':'));
+    console.log(`I have a dictionary of length ${num}, it is ${str}`);
     while (num--) {
       const klen = Number(this.upTo(':'));
       const key = this.chomp(klen);
+      console.log(`getting the key! chomping it off! if is ${key}`);
       // TODO(sjmiles): be backward compatible with encoders that only encode string values
       const typeChar = this.chomp(1);
       // if typeChar is a digit, it's part of a length specifier
       if (typeChar >= '0' && typeChar <= '9') {
         const vlen = Number(`${typeChar}${this.upTo(':')}`);
+        console.log(`removing plain old value, it was ${vlen} chars, str is now ${str}`);
         dict[key] = this.chomp(vlen);
       }
       // otherwise typeChar is value-type specifier
       else {
-        dict[key] = this.decodeValue(typeChar);
+        console.log(`this val is complex! sending to decodeValue`)
+        dict[key] = this.decodeValue(typeChar);      
       }
     }
     return dict;
+  }
+
+  decodeArray(str: string): Array<String> {
+    this.str = str;
+    const arr = [];
+    let num = Number(this.upTo(':'));
+    console.log(`I have an array oflength ${num}, it is ${str}`);
+    while (num--) {
+      // TODO(sjmiles): be backward compatible with encoders that only encode string values
+      const typeChar = this.chomp(1);
+      // if typeChar is a digit, it's part of a length specifier
+      if (typeChar >= '0' && typeChar <= '9') {
+        const len = Number(`${typeChar}${this.upTo(':')}`);
+        arr.push(this.chomp(len));
+      }
+      // otherwise typeChar is value-type specifier
+      else {
+        arr.push(this.decodeValue(typeChar));
+      }
+    }
+    return arr;
   }
 
   private upTo(char) {
@@ -245,6 +270,7 @@ export class StringDecoder {
       case 'T':
       case 'U': {
         const len = Number(this.upTo(':'));
+        console.log(`I've got a T or U of length ${len}`)
         return this.chomp(len);
       }
 
@@ -257,9 +283,13 @@ export class StringDecoder {
       case 'D': {
         const len = Number(this.upTo(':'));
         const dictionary = this.chomp(len);
-        return this.decodeDictionary(dictionary);
+        return new StringDecoder().decodeDictionary(dictionary);
       }
-
+      case 'A': {
+        const len = Number(this.upTo(':'));
+        const array = this.chomp(len);
+        return new StringDecoder().decodeArray(array);
+      }
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
     }
