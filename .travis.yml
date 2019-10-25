@@ -11,6 +11,9 @@ addons:
   chrome: stable
 
 script:
+  - npm run test-with-start
+  - npm run build:rollup
+  - npm --prefix=server test
   # Bazel build & test everything. Can't use `bazel build ...` yet, because
   # javaharness doesn't build on Travis (needs working Android SDK).
   - >
@@ -23,9 +26,6 @@ script:
     //particles/...
     //src/...
     //src_kt/...
-  - npm run test-with-start
-  - npm run build:rollup
-  - npm --prefix=server test
 
 cache: npm
 
@@ -59,6 +59,7 @@ before_deploy:
 
 deploy:
   provider: pages
+
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
   keep-history: true
