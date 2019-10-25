@@ -36,9 +36,17 @@ export const smokeTest = async bus => {
     send({message: 'spawn', modality: 'dom', recipe: 'Notification'});
   };
   //
+  const parseTest = () => {
+    // parse manifest content
+    send({message: 'parse', content: `import 'https://$particles/canonical.arcs'`});
+    // parse manifest file
+    send({message: 'parse', path: `https://$particles/canonical.arcs`});
+  };
+  //
   enqueue([
     ingestionTest,
     autofillTest,
-    notificationTest
+    notificationTest,
+    parseTest
   ], 500);
 };

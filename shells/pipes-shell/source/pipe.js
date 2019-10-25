@@ -22,6 +22,7 @@ import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
+import {parse} from './verbs/parse.js';
 
 const {log} = logsFactory('pipe');
 
@@ -97,6 +98,9 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     },
     event: async (msg, tid, bus) => {
       return await event(msg, tid, bus);
+    },
+    parse: async (msg, tid, bus) => {
+      return await parse(msg, tid, bus);
     }
   });
   return dispatcher;
