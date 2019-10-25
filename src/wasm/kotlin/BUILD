@@ -1,4 +1,4 @@
-load("//build_defs:build_defs.bzl", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_schema")
 load("//tools/build_defs/kotlin/release/rules/native:native_rules.bzl", "kt_native_library", "kt_native_binary")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
@@ -21,7 +21,7 @@ arcs_kt_schema(
     srcs = ["tests/arcs/schemas.arcs"],
 )
 
-kt_wasm_binary(
+kt_native_binary(
     name = "tests_kt",
     srcs = glob(["tests/arcs/*.kt"]),
     deps = [":test_schemas"],
