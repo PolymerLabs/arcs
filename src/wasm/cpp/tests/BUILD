@@ -6,18 +6,6 @@ filegroup(
   srcs = ["schemas.arcs"],
 )
 
-filegroup(
-    name = "cc_tests",
-    srcs = glob(["*.cc"]),
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "test_hdr",
-    srcs = ["test-base.h"],
-    visibility = ["//visibility:public"],
-)
-
 arcs_cc_schema(
     name = "schemas",
     src = "schemas.arcs",
