@@ -25,4 +25,4 @@ recipe JsonStoreRecipe
     inputData <- data
     root `consume root
 
-  description `Javascript Tutorial 3: JSON Store`
+  description `Javascript Tutorial 6: JSON Store`
