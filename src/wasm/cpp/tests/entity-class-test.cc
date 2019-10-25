@@ -10,12 +10,12 @@ static size_t hash(const T& d) {
   return std::hash<T>()(d);
 }
 
-static arcs::Ref<arcs::Foo> make_ref(const std::string& id, const std::string& key) {
-  return Accessor::make_ref<arcs::Foo>(id, key);
+static arcs::Ref<arcs::Test_Data_Ref> make_ref(const std::string& id, const std::string& key) {
+  return Accessor::make_ref<arcs::Test_Data_Ref>(id, key);
 }
 
 static auto converter() {
-  return [](const arcs::Test_data& d) { return arcs::entity_to_str(d); };
+  return [](const arcs::Test_Data& d) { return arcs::entity_to_str(d); };
 }
 
 
@@ -39,7 +39,7 @@ public:
   }
 
   void test_field_methods() {
-    arcs::Test_data d;
+    arcs::Test_Data d;
 
     IS_FALSE(d.has_num());
     EQUAL(d.num(), 0);
@@ -85,8 +85,8 @@ public:
     IS_TRUE(d.has_flg());
     IS_FALSE(d.flg());
 
-    arcs::Ref<arcs::Foo> empty;
-    arcs::Ref<arcs::Foo> populated = make_ref("id", "key");
+    arcs::Ref<arcs::Test_Data_Ref> empty;
+    arcs::Ref<arcs::Test_Data_Ref> populated = make_ref("id", "key");
     IS_FALSE(d.has_ref());
     EQUAL(d.ref(), empty);
     d.set_ref(populated);
@@ -100,7 +100,7 @@ public:
   }
 
   void test_id_equality() {
-    arcs::Test_data d1, d2;
+    arcs::Test_Data d1, d2;
     EQUAL(Accessor::get_id(d1), "");
 
     // unset vs value
@@ -123,7 +123,7 @@ public:
   }
 
   void test_number_field_equality() {
-    arcs::Test_data d1, d2;
+    arcs::Test_Data d1, d2;
 
     // unset vs default value
     d2.set_num(0);
@@ -165,7 +165,7 @@ public:
   }
 
   void test_text_field_equality() {
-    arcs::Test_data d1, d2;
+    arcs::Test_Data d1, d2;
 
     // unset vs default value
     d2.set_txt("");
@@ -207,7 +207,7 @@ public:
   }
 
   void test_url_field_equality() {
-    arcs::Test_data d1, d2;
+    arcs::Test_Data d1, d2;
 
     // unset vs default value
     d2.set_lnk("");
@@ -249,7 +249,7 @@ public:
   }
 
   void test_boolean_field_equality() {
-    arcs::Test_data d1, d2;
+    arcs::Test_Data d1, d2;
 
     // unset vs default value
     d2.set_flg(false);
@@ -285,8 +285,8 @@ public:
   }
 
   void test_reference_field_equality() {
-    arcs::Test_data d1, d2;
-    arcs::Ref<arcs::Foo> empty;
+    arcs::Test_Data d1, d2;
+    arcs::Ref<arcs::Test_Data_Ref> empty;
 
     // unset vs default value
     d2.set_ref({});
@@ -326,7 +326,7 @@ public:
   }
 
   void test_entity_equality() {
-    arcs::Test_data d1, d2;
+    arcs::Test_Data d1, d2;
 
     // Empty entities are equal
     EQUAL(d1, d2);
@@ -336,7 +336,7 @@ public:
     EQUAL(hash(d1), hash(d2));
 
     // Entities with the same fields are equal
-    for (arcs::Test_data* d : std::vector{&d1, &d2}) {
+    for (arcs::Test_Data* d : std::vector{&d1, &d2}) {
       d->set_num(3);
       d->set_txt("abc");
       d->set_lnk("");
@@ -406,8 +406,8 @@ public:
   }
 
   void test_clone_entity() {
-    arcs::Test_data src;
-    arcs::Test_data d1 = arcs::clone_entity(src);
+    arcs::Test_Data src;
+    arcs::Test_Data d1 = arcs::clone_entity(src);
     EQUAL(d1, src);
     IS_TRUE(arcs::fields_equal(d1, src));
     EQUAL(hash(d1), hash(src));
@@ -415,7 +415,7 @@ public:
     src.set_num(8);
     src.set_txt("def");
     src.set_flg(false);
-    arcs::Test_data d2 = arcs::clone_entity(src);
+    arcs::Test_Data d2 = arcs::clone_entity(src);
     EQUAL(d2, src);
     IS_TRUE(arcs::fields_equal(d2, src));
     EQUAL(hash(d2), hash(src));
@@ -425,7 +425,7 @@ public:
 
     // Cloning doesn't include the internal id.
     Accessor::set_id(&src, "id");
-    arcs::Test_data d3 = arcs::clone_entity(src);
+    arcs::Test_Data d3 = arcs::clone_entity(src);
     EQUAL(Accessor::get_id(d3), "");
     NOT_EQUAL(d3, src);
     IS_TRUE(arcs::fields_equal(d3, src));
@@ -433,7 +433,7 @@ public:
   }
 
   void test_entity_to_str() {
-    arcs::Test_data d;
+    arcs::Test_Data d;
     EQUAL(arcs::entity_to_str(d), "{}");
 
     d.set_num(6);
@@ -449,12 +449,12 @@ public:
   }
 
   void test_stl_vector() {
-    arcs::Test_data d1, d2, d3;
+    arcs::Test_Data d1, d2, d3;
     d1.set_num(12);
     d2.set_num(12);
     Accessor::set_id(&d3, "id");
 
-    std::vector<arcs::Test_data> v;
+    std::vector<arcs::Test_Data> v;
     v.push_back(std::move(d1));
     v.push_back(std::move(d2));
     v.push_back(std::move(d3));
@@ -468,31 +468,31 @@ public:
   }
 
   void test_stl_set() {
-    arcs::Test_data d1;
+    arcs::Test_Data d1;
     d1.set_num(45);
     d1.set_txt("woop");
 
     // duplicate
-    arcs::Test_data d2;
+    arcs::Test_Data d2;
     d2.set_num(45);
     d2.set_txt("woop");
 
     // duplicate fields but with an id
-    arcs::Test_data d3;
+    arcs::Test_Data d3;
     Accessor::set_id(&d3, "id");
     d3.set_num(45);
     d3.set_txt("woop");
 
     // same id, different fields
-    arcs::Test_data d4;
+    arcs::Test_Data d4;
     Accessor::set_id(&d4, "id");
     d4.set_flg(false);
 
     // duplicate
-    arcs::Test_data d5 = arcs::clone_entity(d4);
+    arcs::Test_Data d5 = arcs::clone_entity(d4);
     Accessor::set_id(&d5, "id");
 
-    std::set<arcs::Test_data> s;
+    std::set<arcs::Test_Data> s;
     s.insert(std::move(d1));
     s.insert(std::move(d2));
     s.insert(std::move(d3));
@@ -508,31 +508,31 @@ public:
   }
 
   void test_stl_unordered_set() {
-    arcs::Test_data d1;
+    arcs::Test_Data d1;
     d1.set_num(45);
     d1.set_txt("woop");
 
     // duplicate
-    arcs::Test_data d2;
+    arcs::Test_Data d2;
     d2.set_num(45);
     d2.set_txt("woop");
 
     // duplicate fields but with an id
-    arcs::Test_data d3;
+    arcs::Test_Data d3;
     Accessor::set_id(&d3, "id");
     d3.set_num(45);
     d3.set_txt("woop");
 
     // same id, different fields
-    arcs::Test_data d4;
+    arcs::Test_Data d4;
     Accessor::set_id(&d4, "id");
     d4.set_flg(false);
 
     // duplicate
-    arcs::Test_data d5 = arcs::clone_entity(d4);
+    arcs::Test_Data d5 = arcs::clone_entity(d4);
     Accessor::set_id(&d5, "id");
 
-    std::unordered_set<arcs::Test_data> s;
+    std::unordered_set<arcs::Test_Data> s;
     s.insert(std::move(d1));
     s.insert(std::move(d2));
     s.insert(std::move(d3));
@@ -548,7 +548,7 @@ public:
   }
 
   void test_empty_schema() {
-    arcs::Test_empty e1, e2;
+    arcs::Test_Empty e1, e2;
 
     EQUAL(Accessor::get_id(e1), "");
     EQUAL(e1, e2);
@@ -574,21 +574,21 @@ public:
     IS_TRUE(arcs::fields_equal(e1, e2));
     EQUAL(hash(e1), hash(e2));
 
-    arcs::Test_empty e3 = arcs::clone_entity(e1);
+    arcs::Test_Empty e3 = arcs::clone_entity(e1);
     EQUAL(arcs::entity_to_str(e3), "{}");
 
-    auto converter = [](const arcs::Test_empty& e) {
+    auto converter = [](const arcs::Test_Empty& e) {
       return arcs::entity_to_str(e);
     };
     std::vector<std::string> expected = {"{id}", "{}"};
 
-    std::set<arcs::Test_empty> s1;
+    std::set<arcs::Test_Empty> s1;
     s1.insert(std::move(e1));
     s1.insert(std::move(e3));
     CHECK_UNORDERED(s1, converter, expected);
 
-    std::unordered_set<arcs::Test_empty> s2;
-    arcs::Test_empty e4;
+    std::unordered_set<arcs::Test_Empty> s2;
+    arcs::Test_Empty e4;
     s2.insert(std::move(e2));
     s2.insert(std::move(e4));
     CHECK_UNORDERED(s2, converter, expected);
@@ -608,7 +608,7 @@ public:
 
   // Test that language keywords can be field names.
   void test_language_keyword_field() {
-    arcs::Test_specialFields s;
+    arcs::Test_SpecialFields s;
 
     IS_FALSE(s.has_for());
     EQUAL(s._for(), "");
@@ -624,7 +624,7 @@ public:
 
   // Test that a field called 'internal_id' doesn't conflict with the Arcs internal id.
   void test_internal_id_field() {
-    arcs::Test_specialFields s;
+    arcs::Test_SpecialFields s;
     Accessor::set_id(&s, "real");
 
     IS_FALSE(s.has_internal_id());
@@ -642,7 +642,7 @@ public:
   }
 
   void test_general_usage() {
-    arcs::Test_specialFields s1;
+    arcs::Test_SpecialFields s1;
     Accessor::set_id(&s1, "id");
     s1.set_for("abc");
     s1.set_internal_id(15);
@@ -650,7 +650,7 @@ public:
     EQUAL(arcs::entity_to_str(s1), "{id}, for: abc, internal_id: 15");
 
     // same fields, different ids
-    arcs::Test_specialFields s2 = arcs::clone_entity(s1);
+    arcs::Test_SpecialFields s2 = arcs::clone_entity(s1);
     NOT_EQUAL(s1, s2);
     NOT_LESS(s1, s2);
     LESS(s2, s1);

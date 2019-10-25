@@ -78,9 +78,9 @@ class TestParticle : Particle() {
              </table>""".trimIndent()
       }
 
-    private val data = Singleton { TestParticle_data() }
-    private val res = Singleton { TestParticle_res() }
-    private val info = Collection { TestParticle_info() }
+    private val data = Singleton { TestParticle_Data() }
+    private val res = Singleton { TestParticle_Res() }
+    private val info = Collection { TestParticle_Info() }
     private var updated = 0
     private var storeCount = 0
 
@@ -101,7 +101,7 @@ class TestParticle : Particle() {
         }
 
         eventHandler("store") {
-          val info = TestParticle_info()
+          val info = TestParticle_Info()
           info.internalId = "wasm" + (++storeCount)
           info.val_ = (this.info.size + storeCount).toDouble()
           this.info.store(info)
