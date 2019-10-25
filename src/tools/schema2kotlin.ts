@@ -50,9 +50,9 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 ${withCustomPackage(`import arcs.Particle;
-import arcs.Entity; 
-import arcs.StringDecoder;
-import arcs.StringEncoder; 
+import arcs.Entity
+import arcs.StringEncoder
+import arcs.StringDecoder
 `)}`;
   }
 
