@@ -28,13 +28,6 @@ export class SchemaNode {
   parents: SchemaNode[] = null;
   children: SchemaNode[] = null;
 
-  // True if any other schema has the same parent as this one. Used to set up virtual
-  // inheritance for C++ classes.
-  sharesParent = false;
-
-  // The list of field names that this schema has *in addition to* all of its ancestors.
-  extras: string[];
-
   // Maps reference fields to the node for their contained schema. This is also used to
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
@@ -42,7 +35,6 @@ export class SchemaNode {
   constructor(schema: Schema, name: string) {
     this.schema = schema;
     this.aliases.push(name);
-    this.extras = Object.keys(schema.fields);
   }
 }
 
@@ -52,9 +44,8 @@ export class SchemaNode {
 // For example, the schema '* {Text t, URL u}' is slicable to both '* {Text t}' and '* {URL u}'.
 //
 // The graph has a second set of edges via the refs field, which connects nodes whose schemas have
-// references to other nodes which hold those references' nested schemas. These connections are used
-// to ensure that classes are generated in the order needed to satisfy both their reference fields'
-// type definitions and their inheritance heirarchies.
+// references to other nodes which hold those references' nested schemas. These are used to ensure
+// classes are generated in the order needed to satisfy their reference field type definitions.
 export class SchemaGraph {
   nodes: SchemaNode[] = [];
   startNodes: SchemaNode[];
@@ -72,7 +63,7 @@ export class SchemaGraph {
     // Both the second pass and the walk() method need to start from nodes with no parents.
     this.startNodes = this.nodes.filter(n => !n.parents);
 
-    // Second pass to set up the class names, aliases and the parents, children and extras lists.
+    // Second pass to set up the class names, aliases, parents and children.
     for (const node of this.startNodes) {
       node.parents = [];
       this.process(node);
@@ -140,20 +131,9 @@ export class SchemaGraph {
     // children = (all descendants) - (descendants of descendants)
     node.children = [...node.descendants].filter(x => !transitiveDescendants.has(x));
 
-    // Set up parent links on child nodes. If this node has multiple children, mark each
-    // of them as sharing a parent. This is used to set up virtual inheritance in C++.
-    // TODO: detect shared descendants across children for more accurate virtual inheritance
-    const sharesParent = node.children.length > 1;
-    const parentFields = Object.keys(node.schema.fields);
+    // Set up parent links on child nodes.
     for (const child of node.children) {
       child.parents.push(node);
-      child.sharesParent = child.sharesParent || sharesParent;  // don't wipe previous true value
-
-      // Remove all of this node's field names (derived from the schema) from each child's extras
-      // list. This means that extras will end up naming only those fields that a schema has in
-      // addition to its entire ancestry tree.
-      child.extras = child.extras.filter(f => !parentFields.includes(f));
-
       this.process(child);
     }
   }
