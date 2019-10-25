@@ -103,21 +103,19 @@ class KotlinGenerator implements ClassGenerator {
 ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  ')}\n`) }) : Entity<${name}>() {
 
   override fun decodeEntity(encoded: String): ${name}? {
-    if (encoded.isEmpty()) {
-      return null
-    }
+    if (encoded.isEmpty()) return null
+    
     val decoder = StringDecoder(encoded)
-    this.internalId = decoder.decodeText()
+    internalId = decoder.decodeText()
     decoder.validate("|")
-    ${withFields(`var i = 0
-    while (!decoder.done() && i < ${fieldCount}) {
+    ${withFields(`0.until(${fieldCount}).takeWhile { !decoder.done() }
+     .forEach {
       val name = decoder.upTo(":")
       when (name) {
         ${this.decode.join('\n        ')}
       }
       decoder.validate("|")
-      i++
-    }`)}
+     }`)}
     return this
   }
 
