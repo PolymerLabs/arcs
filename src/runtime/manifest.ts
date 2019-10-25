@@ -33,7 +33,7 @@ import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
@@ -46,6 +46,9 @@ import {Exists, DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
+import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
+import {Entity} from './entity.js';
+import {SerializedEntity} from './storage-proxy.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -260,7 +263,6 @@ export class Manifest {
       if (typeof storageKey === 'string') {
         storageKey = StorageKeyParser.parse(storageKey);
       }
-      // TODO: Need to handle additional options: version, model.
       store = new Store({...opts, storageKey, exists: Exists.ShouldCreate});
     } else {
       if (opts.storageKey instanceof StorageKey) {
@@ -632,6 +634,9 @@ ${e.message}
             return;
           case 'reference-type':
             node.model = new ReferenceType(node.type.model);
+            return;
+          case 'singleton-type':
+            node.model = new SingletonType(node.type.model);
             return;
           default:
             return;
@@ -1237,6 +1242,12 @@ ${e.message}
       entities = JSON.parse(json);
     } catch (e) {
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
+    }
+
+    if (Flags.useNewStorageStack) {
+      return manifest.newStore({type, name, id, storageKey: manifest.createLocalDataStorageKey(),
+        tags, originalId, claims, description: item.description, version: item.version || null,
+        source: item.source, origin: item.origin, referenceMode: false, model: entities});
     }
 
     // TODO: clean this up

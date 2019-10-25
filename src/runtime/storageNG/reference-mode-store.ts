@@ -161,6 +161,19 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
     return result;
   }
 
+  async serializeContents(): Promise<Container['data']> {
+    const data = await this.containerStore.serializeContents();
+    const {pendingIds, model} = this.constructPendingIdsAndModel(data);
+
+    if (pendingIds.length === 0) {
+      return model();
+    }
+
+    return new Promise((resolve, reject) => {
+      this.enqueueBlockingSend(pendingIds, () => resolve(model()));
+    });
+  }
+
   reportExceptionInHost(exception: PropagatedException): void {
     // TODO(shans): Figure out idle / exception store for reference mode stores.
   }

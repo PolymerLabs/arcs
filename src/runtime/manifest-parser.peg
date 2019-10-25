@@ -188,7 +188,7 @@ ManifestStorage
   }
 
 ManifestStorageType
-  = SchemaInline / CollectionType / BigCollectionType / TypeName
+  = SchemaInline / SingletonType / CollectionType / BigCollectionType / TypeName
 
 ManifestStorageSource
   = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
@@ -418,7 +418,7 @@ ParticleClaimExpression
   = first:ParticleClaim rest:(whiteSpace 'and' whiteSpace ParticleClaim)*
   {
     return [first, ...rest.map(item => item[3])] as AstNode.ParticleClaimExpression;
-  } 
+  }
 
 ParticleClaim
   = ParticleClaimIsTag
@@ -616,12 +616,22 @@ DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, `consume, `provide)"
 
 ParticleHandleConnectionType
   = TypeVariable
+  / SingletonType
   / CollectionType
   / BigCollectionType
   / ReferenceType
   / SlotType
   / SchemaInline
   / TypeName
+
+SingletonType
+ = '![' type:ParticleHandleConnectionType ']'
+ {
+   return toAstNode<AstNode.SingletonType>({
+     kind: 'singleton-type',
+     type
+   });
+ }
 
 CollectionType
   = '[' type:ParticleHandleConnectionType ']'
@@ -1485,7 +1495,7 @@ SchemaTupleType
   }
 
 Version "a version number (e.g. @012)"
-  = '@' version:[0-9]+
+  = '@' version:[^ ]+
   {
     return version.join('');
   }

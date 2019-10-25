@@ -69,7 +69,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
     this.referenceMode = handle.referenceMode;
 
-    const literal = await handle.toLiteral();
+    const literal = await handle.serializeContents();
     if (this.referenceMode && literal.model.length > 0) {
       const [backingStore, handleBackingStore] =
         await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
@@ -107,7 +107,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   }
 
   /** @inheritDoc */
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     return {
       version: this._version,

@@ -49,7 +49,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
     throw new Error('NotImplemented');
   }
 
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('NotImplemented');
   }
 

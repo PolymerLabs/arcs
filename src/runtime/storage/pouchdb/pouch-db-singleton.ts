@@ -74,7 +74,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
   }
 
   async cloneFrom(handle): Promise<void> {
-    const literal = await handle.toLiteral();
+    const literal = await handle.serializeContents();
     await this.initialized;
     this.referenceMode = handle.referenceMode;
 
@@ -130,7 +130,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
    * Returns the state of this singleton based as an object of the form
    * {version, model: [{id, value}]}
    */
-  async toLiteral(): Promise<{version: number; model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number; model: SerializedModelEntry[]}> {
     await this.initialized;
 
     const doc = await this.upsert(async doc => doc);
