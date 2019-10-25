@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Services} from '../../../build/runtime/services.js';
-import {logFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 
-const log = logFactory('textclassifier-service');
+const {log} = logsFactory('textclassifier-service');
 const m = (s, d, e) => ( {pattern: s, desc: d, label: e});
 
 const patterns = [

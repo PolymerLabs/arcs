@@ -26,7 +26,7 @@
  * If any of the data is invalid you will have an undefined value returned.
  */
 
-import {logFactory} from '../platform/log-web.js';
+import {logsFactory} from '../platform/logs-factory.js';
 import {Services} from '../runtime/services.js';
 import {Instant} from '../common/time/instant.js';
 import {TimeUnit} from '../common/time/timeunit.js';
@@ -35,7 +35,7 @@ type ClockServiceNowOptions = {
   timeUnit: string;
 };
 
-const log = logFactory('clock-service');
+const {log} = logsFactory('clock-service');
 
 Services.register('clock', {
   now: ({timeUnit}: ClockServiceNowOptions) => {

@@ -12,7 +12,7 @@
 // continue to function. These methods are easily removed when the demos are no
 // longer important.
 
-import {logFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {ArcHost} from '../../lib/components/arc-host.js';
 import {portIndustry} from './pec-port.js';
@@ -21,7 +21,7 @@ import {Sharing} from './sharing.js';
 const id = 'classic-ingestion-arc';
 const manifest = `import 'https://$particles/Pipes/Ingestion.arcs'`;
 
-const log = logFactory(id);
+const {log} = logsFactory(id);
 
 export const requireIngestionArc = async (storage, bus) => {
   if (!requireIngestionArc.promise) {

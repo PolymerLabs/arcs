@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../../build/platform/logs-factory.js';
 import {RecipeUtil} from '../../../../build/runtime/recipe/recipe-util.js';
-import {Utils} from '../../../lib/utils.js';
 import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
+import {Utils} from '../../../lib/utils.js';
 import {portIndustry} from '../pec-port.js';
 
 const {log, warn} = logsFactory('pipe');

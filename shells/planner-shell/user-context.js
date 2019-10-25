@@ -9,10 +9,9 @@
  */
 
 import {SingleUserContext} from './single-user-context.js';
-import {logFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 
-const log = logFactory('UserContext', '#4f0433');
-const warn = logFactory('UserContext', '#4f0433', 'warn');
+const {log, warn} = logsFactory('UserContext', '#4f0433');
 
 export class UserContext {
   constructor() {

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../../build/platform/logs-factory.js';
 
 const {log} = logsFactory('pipe::event');
 

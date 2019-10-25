@@ -9,14 +9,14 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {logFactory} from '../../platform/log-web.js';
+import {logsFactory} from '../../platform/logs-factory.js';
 import {Arc} from '../../runtime/arc.js';
-import {Consumer, Runnable} from '../../runtime/hot.js';
+import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
 
-const error = logFactory('PlanningResult', '#ff0090', 'error');
+const {error} = logsFactory('PlanningResult', '#ff0090');
 
 export type PlanningResultOptions = {
   suggestions: Suggestion[];

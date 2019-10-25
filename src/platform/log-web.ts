@@ -7,4 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export declare function logFactory(...args:any):(...args:any) => void;
+
+export const logFactory = (preamble, color, log = 'log') => {
+  const style = `background: ${color || 'gray'}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`;
+  return console[log].bind(console, `%c${preamble}`, style);
+};
