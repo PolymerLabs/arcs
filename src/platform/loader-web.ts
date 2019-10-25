@@ -39,7 +39,7 @@ export class Loader extends LoaderBase {
   }
   async requireParticle(unresolvedPath: string, blobUrl: string) {
     // inject path to this particle into the UrlMap,
-    // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
+    // allows Foo particle to invoke `importScripts(resolver('$here/othermodule.js'))`
     this.mapParticleUrl(unresolvedPath);
     // resolve path
     const resolvedPath = this.resolve(unresolvedPath);
