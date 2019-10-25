@@ -11,18 +11,20 @@ def _common_args(ctx, klibs):
     args = ctx.actions.args()
 
     # Pass dependencies for all platforms to wrapper script
-    args.add("|".join([",".join([name for name, _ in get_dependencies(target)])
-                      for target in ["windows", "macos", "linux"]]))
+    args.add("|".join([
+        ",".join([name for name, _ in get_dependencies(target)])
+        for target in ["windows", "macos", "linux"]
+    ]))
 
     # Arguments for kotlinc
     args.add_all([
-                 "-target",
-                 "wasm32",
-                 # Enable optimizations in the compilation
-                 "-opt",
-                 # Don't link the libraries from the dist/klib automatically
-                 "-nodefaultlibs",
-                 ])
+        "-target",
+        "wasm32",
+        # Enable optimizations in the compilation
+        "-opt",
+        # Don't link the libraries from the dist/klib automatically
+        "-nodefaultlibs",
+    ])
 
     args.add_all(klibs, before_each = "-l")
 
@@ -36,7 +38,7 @@ def _collect_deps(srcs, deps):
     klib_depset = depset(
         transitive = [dep[KtNativeInfo].klibraries for dep in deps],
     )
-    return srcs_depset,  klib_depset
+    return srcs_depset, klib_depset
 
 def _kt_wasm_binary(ctx):
     srcs_deps, klibs = _collect_deps(
@@ -72,9 +74,9 @@ kt_wasm_binary = rule(
             cfg = "host",
         ),
         "entry_point": attr.string(
-            default = 'arcs.main',
-            doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.main`."
-        )
+            default = "arcs.main",
+            doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.main`.",
+        ),
     },
     doc = "Builds a Wasm binary from Kotlin",
     outputs = {

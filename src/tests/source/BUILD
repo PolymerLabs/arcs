@@ -1,5 +1,5 @@
-load("//build_defs:build_defs.bzl", "arcs_cc_schema")
-load("//build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_cc_schema")
+load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 
 package(default_visibility = ["//src/tests:__pkg__"])
 
