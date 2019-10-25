@@ -8,13 +8,14 @@ import kotlin.native.internal.ExportForCppRuntime
  */
 class CollectionsParticle : Particle() {
 
-//    private val res = Singleton { CollectionsParticle_inputData() }
-//    init {
-//        registerHandle("inputData", res)
-//    }
+   private val res = Collection { CollectionsParticle_inputData() }
+   init {
+       registerHandle("inputData", res)
+   }
 
     override fun populateModel(slotName: String, model: Map<String, String>): Map<String, Any> {
-        //val people = res.get() ?: CollectionsParticle_inputData("", 0.0);
+        val people = CollectionsParticle_inputData();
+        log("people: ${people}")
         //var array = Array<Dictionary<String>> (people) {person in people -> mapOf( "name" to person.name, "age" to person.age) }
         // TODO 
 //        for (person in people) {
