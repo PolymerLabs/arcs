@@ -80,8 +80,8 @@ class KotlinGenerator implements ClassGenerator {
     this.fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
 
     this.decode.push(`"${field}" -> {`,
-                     `    decoder.validate("${typeChar}")`,
-                     `    this.${fixed} = decoder.${decodeFn}`,
+                     `  decoder.validate("${typeChar}")`,
+                     `  this.${fixed} = decoder.${decodeFn}`,
                      `}`);
 
     this.encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
@@ -100,37 +100,37 @@ class KotlinGenerator implements ClassGenerator {
 
     return `\
 
-${withFields('data ')}class ${name}(${ withFields(`\n    ${this.fields.join(',\n    ')}\n`) }) : Entity<${name}>() {
+${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  ')}\n`) }) : Entity<${name}>() {
 
-    override fun decodeEntity(encoded: String): ${name}? {
-        if (encoded.isEmpty()) {
-            return null
-        }
-        val decoder = StringDecoder(encoded)
-        this.internalId = decoder.decodeText()
-        decoder.validate("|")
-        ${withFields(`var i = 0
-        while (!decoder.done() && i < ${fieldCount}) {
-            val name = decoder.upTo(":")
-            when (name) {
-                ${this.decode.join('\n                ')}
-            }
-            decoder.validate("|")
-            i++
-        }`)}
-        return this
+  override fun decodeEntity(encoded: String): ${name}? {
+    if (encoded.isEmpty()) {
+      return null
     }
-
-    override fun encodeEntity(): String {
-        val encoder = StringEncoder()
-        encoder.encode("", internalId)
-        ${this.encode.join('\n        ')}
-        return encoder.result()
-    }
-    ${withoutFields(`
-    override fun toString(): String {
-        return "${name}()"
+    val decoder = StringDecoder(encoded)
+    this.internalId = decoder.decodeText()
+    decoder.validate("|")
+    ${withFields(`var i = 0
+    while (!decoder.done() && i < ${fieldCount}) {
+      val name = decoder.upTo(":")
+      when (name) {
+        ${this.decode.join('\n        ')}
+      }
+      decoder.validate("|")
+      i++
     }`)}
+    return this
+  }
+
+  override fun encodeEntity(): String {
+    val encoder = StringEncoder()
+    encoder.encode("", internalId)
+    ${this.encode.join('\n    ')}
+    return encoder.result()
+  }
+  ${withoutFields(`
+  override fun toString(): String {
+    return "${name}()"
+  }`)}
 }
 ${typeDecls}
 `;
