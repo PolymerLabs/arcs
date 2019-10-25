@@ -556,7 +556,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
 
   async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
-    const literal = await handle.toLiteral();
+    const literal = await handle.serializeContents();
     const data = literal.model[0].value;
     if (this.referenceMode && literal.model.length > 0) {
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
@@ -1117,7 +1117,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
 
   async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
-    const literal = await handle.toLiteral();
+    const literal = await handle.serializeContents();
     if (this.referenceMode && literal.model.length > 0) {
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
       if (this.backingStore !== handle.backingStore) {
