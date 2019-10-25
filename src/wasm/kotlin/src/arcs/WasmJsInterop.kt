@@ -109,10 +109,10 @@ fun init(particlePtr: WasmAddress) {
 
 @Retain
 @ExportForCppRuntime("_syncHandle")
-fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString) {
+fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString?) {
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
-    val encodedStr = encoded.toKString()
+    val encodedStr: String = encoded?.toKString() ?: ""
     log("Handle is " + handle.name + "syncing '" + encodedStr + "'")
     handle.sync(encodedStr)
     log("Invoking sync on handle on particle")
