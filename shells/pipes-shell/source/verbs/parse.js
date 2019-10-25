@@ -20,8 +20,7 @@ export const parse = async ({path, content}, tid, bus) => {
   if (path) {
     log(`loading [${path}]`);
     manifest = await Utils.parseFile(path);
-  }
-  if (content) {
+  } else if (content) {
     log(`parsing [${content.length}] bytes`);
     manifest = await Utils.parse(content);
   }
