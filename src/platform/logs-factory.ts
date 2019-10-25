@@ -11,7 +11,7 @@
 import {Dictionary} from '../runtime/hot.js';
 import {logFactory} from './log-web.js';
 
-var getGlobal = function () {
+const getGlobal = () => {
   if (typeof self !== 'undefined') { return self; }
   if (typeof window !== 'undefined') { return window; }
   if (typeof global !== 'undefined') { return global; }
