@@ -1,5 +1,5 @@
 package arcs
-
+import kotlin.native.internal.ExportForCppRuntime
 
 class HandleSyncUpdateTest : Particle() {
     private val input1 = Singleton { Test_Data() }
@@ -26,6 +26,11 @@ class HandleSyncUpdateTest : Particle() {
     }
 }
 
+@Retain
+@ExportForCppRuntime("_handleSyncUpdateTest")
+fun constructHandleSyncUpdateTest(): WasmAddress = HandleSyncUpdateTest().toWasmAddress()
+
+
 class RenderTest : Particle() {
     private val flags = Singleton { Test_RenderFlags() }
 
@@ -49,6 +54,10 @@ class RenderTest : Particle() {
     }
 }
 
+@Retain
+@ExportForCppRuntime("_renderTest")
+fun constructRenderTest(): WasmAddress = RenderTest().toWasmAddress()
+
 class AutoRenderTest : Particle() {
     private val data = Singleton { Test_Data() }
 
@@ -61,6 +70,10 @@ class AutoRenderTest : Particle() {
     }
 }
 
+@Retain
+@ExportForCppRuntime("_autoRenderTest")
+fun constructAutoRenderTest(): WasmAddress = AutoRenderTest().toWasmAddress()
+
 class EventTest : Particle() {
     private val output = Singleton { Test_Data() }
 
@@ -72,6 +85,10 @@ class EventTest : Particle() {
         output.set(Test_Data(txt = "event:$slotName:$eventName"))
     }
 }
+
+@Retain
+@ExportForCppRuntime("_eventTest")
+fun constructEventTest(): WasmAddress = EventTest().toWasmAddress()
 
 class ServiceTest : Particle() {
     private val output = Singleton { Test_ServiceResponse() }
@@ -100,7 +117,15 @@ class ServiceTest : Particle() {
     }
 }
 
+@Retain
+@ExportForCppRuntime("_serviceTest")
+fun constructServiceTest(): WasmAddress = ServiceTest().toWasmAddress()
+
 class MissingRegisterHandleTest : Particle() {}
+
+@Retain
+@ExportForCppRuntime("_missingRegisterHandleTest")
+fun constructMissingRegisterHandleTest(): WasmAddress = MissingRegisterHandleTest().toWasmAddress()
 
 class UnconnectedHandlesTest : Particle() {
     private val data = Singleton { Test_Data() }
@@ -114,3 +139,6 @@ class UnconnectedHandlesTest : Particle() {
     }
 }
 
+@Retain
+@ExportForCppRuntime("_unconnectedHandlesTest")
+fun constructUnconnectedHandlesTest(): WasmAddress = UnconnectedHandlesTest().toWasmAddress()
