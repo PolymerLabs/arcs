@@ -1,4 +1,4 @@
-load("//build_defs:sigh.bzl", "sigh_command")
+load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 
 licenses(["notice"])
 

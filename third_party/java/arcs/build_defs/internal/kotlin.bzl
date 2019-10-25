@@ -4,7 +4,7 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//tools/build_defs/kotlin/release/rules/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//tools/build_defs/kotlin/release/rules/js:js_library.bzl", "kt_js_library", "kt_js_import")
+load("//tools/build_defs/kotlin/release/rules/js:js_library.bzl", "kt_js_import", "kt_js_library")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
 _ARCS_KOTLIN_LIBS = ["//src/wasm/kotlin:arcs_wasm"]
@@ -79,8 +79,7 @@ def _kt_js_import_for_thirdparty(thirdparty_dep):
     kt_js_import(
         name = name,
         jars = [maven_name],
-        srcjar = "%s-%s-sources.jar" % (name, version)
+        srcjar = "%s-%s-sources.jar" % (name, version),
     )
 
     return ":%s" % name
-
