@@ -74,7 +74,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
   }
 
   async cloneFrom(handle): Promise<void> {
-    const literal = await handle.toLiteral();
+    const literal = await handle.serializeContents();
     await this.initialized;
     this.referenceMode = handle.referenceMode;
 
