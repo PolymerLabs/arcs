@@ -20,7 +20,6 @@ import {ReferenceType} from '../../runtime/type.js';
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
 
-const schemasFile = 'src/wasm/cpp/tests/schemas.arcs';
 
 class TestLoader extends Loader {
   resolve(path: string) {
@@ -47,8 +46,9 @@ async function setup(manifestString) {
   return {arc, stores: info.stores, slotComposer: arc.pec.slotComposer as RozSlotComposer};
 }
 
-['cpp/tests/'].forEach(env => {
+['cpp/tests/', 'kotlin/tests/arcs/'].forEach(env => {
   const buildDir = `src/wasm/${env}`;
+  const schemasFile = `src/wasm/${env}schemas.arcs`;
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
     before(function() {
