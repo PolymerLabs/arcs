@@ -13,7 +13,7 @@ public:
 
   bool check(bool ok, const std::string& condition, std::string file, int line) {
     if (!ok) {
-      arcs::Test_data err;
+      arcs::Test_Data err;
       if (auto pos = file.find_last_of("\\/"); pos != std::string::npos) {
         file = file.substr(pos + 1);
       }
@@ -72,7 +72,7 @@ public:
   }
 
   std::string test_name_;
-  arcs::Collection<arcs::Test_data> errors_;
+  arcs::Collection<arcs::Test_Data> errors_;
   char marker_;
 };
 

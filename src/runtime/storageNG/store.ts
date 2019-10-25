@@ -44,6 +44,10 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   parsedVersionToken: string = null;
   modelConstructor: new () => CRDTModel<T>;
 
+  // If there's a parsed model then it's stored here and provided to activate() when
+  // reconstituting an ActiveStore.
+  model: T['data'] | null;
+
   private activeStore: ActiveStore<T> | null;
 
   static readonly constructors = new Map<StorageMode, StoreConstructor>([
@@ -57,6 +61,7 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
     this.exists = opts.exists;
     this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
     this.parsedVersionToken = opts.versionToken;
+    this.model = opts.model as T['data'];
   }
 
   get versionToken() {
@@ -84,7 +89,8 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
       type: this.type,
       mode: this.mode,
       baseStore: this,
-      versionToken: this.parsedVersionToken
+      versionToken: this.parsedVersionToken,
+      model: this.model
     });
     this.exists = Exists.ShouldExist;
     this.activeStore = activeStore;

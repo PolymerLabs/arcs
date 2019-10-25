@@ -47,7 +47,8 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   type: Type,
   mode: StorageMode,
   baseStore: Store<T>,
-  versionToken: string
+  versionToken: string,
+  model?: T['data']
 };
 
 export type StoreConstructor = {
@@ -90,9 +91,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   }
 
   // tslint:disable-next-line no-any
-  async toLiteral(): Promise<any> {
-    throw new Error('Method not implemented.');
-  }
+  abstract async serializeContents(): Promise<T['data']>;
 
   async cloneFrom(store: UnifiedActiveStore): Promise<void> {
     assert(store instanceof ActiveStore);
@@ -105,7 +104,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   }
 
   async modelForSynchronization(): Promise<{}> {
-    return this.toLiteral();
+    return this.serializeContents();
   }
 
   abstract getLocalData(): Promise<CRDTData>;

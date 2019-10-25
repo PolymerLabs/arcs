@@ -3,9 +3,9 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 java_library(
-  name = "dagger",
-  exports = ["@maven//:com_google_dagger_dagger"],
-  exported_plugins = [":dagger_compiler"],
+    name = "dagger",
+    exported_plugins = [":dagger_compiler"],
+    exports = ["@maven//:com_google_dagger_dagger"],
 )
 
 java_plugin(
@@ -16,4 +16,3 @@ java_plugin(
         "@maven//:com_google_dagger_dagger_compiler",
     ],
 )
-

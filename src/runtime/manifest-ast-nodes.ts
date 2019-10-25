@@ -53,6 +53,12 @@ export interface CollectionType extends BaseNode {
   kind: 'collection-type';
   type: ParticleHandleConnectionType;
 }
+
+export interface SingletonType extends BaseNode {
+  kind: 'singleton-type';
+  type: ParticleHandleConnectionType;
+}
+
 export function isCollectionType(node: BaseNode): node is CollectionType {
   return node.kind === 'collection-type';
 }

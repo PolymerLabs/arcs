@@ -16,9 +16,9 @@ import {KeyBase} from './key-base.js';
 import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
-import {ClaimIsTag} from '../particle-claim.js';
 import {UnifiedStore, UnifiedActiveStore, StoreInfo} from '../storageNG/unified-store.js';
-import {ProxyCallback} from '../storageNG/store.js';
+import {ProxyCallback, StorageCommunicationEndpoint} from '../storageNG/store.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
 
 // tslint:disable-next-line: no-any
 type Callback = Consumer<Dictionary<any>>;
@@ -104,6 +104,10 @@ export class ChangeEvent {
  * Docs TBD
  */
 export abstract class StorageProviderBase extends UnifiedStore implements Store, UnifiedActiveStore {
+  getStorageEndpoint(storageProxy): StorageCommunicationEndpoint<CRDTTypeRecord> {
+    throw new Error('storage endpoints should not be extracted from old storage stack');
+  }
+
   protected unifiedStoreType: 'StorageProviderBase' = 'StorageProviderBase';
 
   private readonly legacyListeners: Set<Callback> = new Set();
@@ -204,7 +208,7 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
   /**
    * @returns an object notation of this storage provider.
    */
-  abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
+  abstract async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
   abstract cloneFrom(store: UnifiedActiveStore): Promise<void>;
 
@@ -218,6 +222,6 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
    * Called by Particle Execution Host to synchronize it's proxy.
    */
   async modelForSynchronization(): Promise<{version: number, model: {}}> {
-    return this.toLiteral();
+    return this.serializeContents();
   }
 }

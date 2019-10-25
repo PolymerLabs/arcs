@@ -189,7 +189,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     return this.model;
   }
 
-  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+  async serializeContents(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('unimplemented');
   }
 

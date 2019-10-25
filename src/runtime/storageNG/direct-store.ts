@@ -38,6 +38,11 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     return this.localModel.getData();
   }
 
+  async serializeContents(): Promise<T['data']> {
+    await this.idle();
+    return this.localModel.getData();
+  }
+
   async idle() {
     if (this.pendingException) {
       return Promise.reject(this.pendingException);
@@ -76,6 +81,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {
     const me = new DirectStore<T>(options);
     me.localModel = new (options.type.crdtInstanceConstructor<T>())();
+    if (options.model) {
+      me.localModel.merge(options.model);
+    }
     me.driver = await DriverFactory.driverInstance(options.storageKey, options.exists);
     if (me.driver == null) {
       throw new CRDTError(`No driver exists to support storage key ${options.storageKey}`);

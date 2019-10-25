@@ -14,19 +14,19 @@ public:
       out_.clear();
       io_.clear();
     } else if (handler == "case2") {
-      arcs::Test_data d = arcs::clone_entity(in_.get());
+      arcs::Test_Data d = arcs::clone_entity(in_.get());
       d.set_num(d.num() * 2);
       out_.set(&d);
     } else if (handler == "case3") {
-      arcs::Test_data d = arcs::clone_entity(io_.get());
+      arcs::Test_Data d = arcs::clone_entity(io_.get());
       d.set_num(d.num() * 3);
       io_.set(&d);
     }
   }
 
-  arcs::Singleton<arcs::Test_data> in_;
-  arcs::Singleton<arcs::Test_data> out_;
-  arcs::Singleton<arcs::Test_data> io_;
+  arcs::Singleton<arcs::Test_Data> in_;
+  arcs::Singleton<arcs::Test_Data> out_;
+  arcs::Singleton<arcs::Test_Data> io_;
 };
 
 DEFINE_PARTICLE(SingletonApiTest)
@@ -52,7 +52,7 @@ public:
       // We can't read from out_ so use a previously stored entity to test remove().
       out_.remove(stored_);
     } else if (handler == "case4") {
-      arcs::Test_data d1, d2, d3;
+      arcs::Test_Data d1, d2, d3;
 
       // Test begin()/end() and WrappedIter operators
       auto i1 = in_.begin();
@@ -70,7 +70,7 @@ public:
       d3.set_flg(++i2 == in_.end());         // prefix op++
       out_.store(&d3);
     } else if (handler == "case5") {
-      arcs::Test_data extra, d1, d2, d3;
+      arcs::Test_Data extra, d1, d2, d3;
 
       // Store and remove an entity.
       extra.set_txt("abc");
@@ -85,11 +85,11 @@ public:
 
       // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
       std::string res[3];
-      for (const arcs::Test_data& data : io_) {
+      for (const arcs::Test_Data& data : io_) {
         res[static_cast<int>(data.num())] = arcs::entity_to_str(data);
       }
       for (size_t i = 0; i < io_.size(); i++) {
-        arcs::Test_data d;
+        arcs::Test_Data d;
         d.set_txt(res[i]);
         out_.store(&d);
       }
@@ -101,10 +101,10 @@ public:
     }
   }
 
-  arcs::Collection<arcs::Test_data> in_;
-  arcs::Collection<arcs::Test_data> out_;
-  arcs::Collection<arcs::Test_data> io_;
-  arcs::Test_data stored_;
+  arcs::Collection<arcs::Test_Data> in_;
+  arcs::Collection<arcs::Test_Data> out_;
+  arcs::Collection<arcs::Test_Data> io_;
+  arcs::Test_Data stored_;
 };
 
 DEFINE_PARTICLE(CollectionApiTest)
@@ -137,16 +137,16 @@ public:
     }
   }
 
-  void report(const std::string& label, const arcs::Ref<arcs::Test_data>& ref) {
-    arcs::Test_data d;
+  void report(const std::string& label, const arcs::Ref<arcs::Test_Data>& ref) {
+    arcs::Test_Data d;
     const std::string& id = arcs::internal::Accessor::get_id(ref);
     d.set_txt(label + " <" + id + "> " + arcs::entity_to_str(ref.entity()));
     res_.store(&d);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::Test_data>> sng_;
-  arcs::Collection<arcs::Ref<arcs::Test_data>> col_;
-  arcs::Collection<arcs::Test_data> res_;
+  arcs::Singleton<arcs::Ref<arcs::Test_Data>> sng_;
+  arcs::Collection<arcs::Ref<arcs::Test_Data>> col_;
+  arcs::Collection<arcs::Test_Data> res_;
 };
 
 DEFINE_PARTICLE(InputReferenceHandlesTest)
@@ -160,18 +160,18 @@ public:
   }
 
   void init() override {
-    arcs::Ref<arcs::Test_data> r1;
+    arcs::Ref<arcs::Test_Data> r1;
     arcs::internal::Accessor::decode_entity(&r1, "3:idX|4:keyX|");
     sng_.set(&r1);
 
-    arcs::Ref<arcs::Test_data> r2;
+    arcs::Ref<arcs::Test_Data> r2;
     arcs::internal::Accessor::decode_entity(&r2, "3:idY|4:keyY|");
     col_.store(&r1);
     col_.store(&r2);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::Test_data>> sng_;
-  arcs::Collection<arcs::Ref<arcs::Test_data>> col_;
+  arcs::Singleton<arcs::Ref<arcs::Test_Data>> sng_;
+  arcs::Collection<arcs::Ref<arcs::Test_Data>> col_;
 };
 
 DEFINE_PARTICLE(OutputReferenceHandlesTest)

@@ -3,7 +3,7 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("//build_defs:sigh.bzl", "sigh_command")
+load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load(":kotlin.bzl", "arcs_kt_library")
 
 def _output_name(src, file_extension = ""):

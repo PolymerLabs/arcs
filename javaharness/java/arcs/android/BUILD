@@ -13,7 +13,7 @@ android_library(
     assets = [
         "//third_party/javascript/arcs:pipes-shell-assets",
     ],
-    assets_dir = "pipes_shell_web_dist",
+    assets_dir = "",
     exports_manifest = 1,
     idl_import_root = ".",
     idl_srcs = glob(["*.aidl"]),

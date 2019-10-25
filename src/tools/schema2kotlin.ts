@@ -7,8 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Aliases, Schema2Base} from './schema2base.js';
-import {Schema} from '../runtime/schema.js';
+import {Schema2Base, ClassGenerator} from './schema2base.js';
+import {SchemaNode} from './schema2graph.js';
+
+// TODO: use the type lattice to generate interfaces
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
@@ -31,97 +33,106 @@ const typeMap = {
 };
 
 export class Schema2Kotlin extends Schema2Base {
-  pkgName: string;
-
-  // test-Kotlin.file_name.arcs -> TestKotlinFileName.kt
+  // test-KOTLIN.file_Name.arcs -> TestKotlinFileName.kt
   outputName(baseName: string): string {
     const parts = baseName.toLowerCase().replace(/\.arcs$/, '').split(/[-._]/);
     return parts.map(part => part[0].toUpperCase() + part.slice(1)).join('') + '.kt';
   }
 
   fileHeader(outName: string): string {
+    const withCustomPackage = (populate: string) => this.scope !== 'arcs' ? populate : '';
     return `\
-package ${this.pkgName}
+package ${this.scope}
 
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
-`;
+// Current implementation doesn't support references or optional field detection
+
+${withCustomPackage(`import arcs.Particle;
+import arcs.Entity; 
+import arcs.StringDecoder;
+import arcs.StringEncoder; 
+`)}`;
   }
 
-  fileFooter(): string {
-    return '';
+  getClassGenerator(node: SchemaNode): ClassGenerator {
+    return new KotlinGenerator(node);
+  }
+}
+
+class KotlinGenerator implements ClassGenerator {
+  fields: string[] = [];
+  encode: string[] = [];
+  decode: string[] = [];
+
+  constructor(readonly node: SchemaNode) {}
+
+  processField(field: string, typeChar: string, inherited: boolean, refName: string) {
+    if (typeChar === 'R') {
+      console.log('TODO: support reference types in kotlin');
+      process.exit(1);
+    }
+
+    const {type, defaultVal, decodeFn} = typeMap[typeChar];
+    const fixed = field + (keywords.includes(field) ? '_' : '');
+
+    this.fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
+
+    this.decode.push(`"${field}" -> {`,
+                     `    decoder.validate("${typeChar}")`,
+                     `    this.${fixed} = decoder.${decodeFn}`,
+                     `}`);
+
+    this.encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
   }
 
-  entityClass(name: string, schema: Schema): string {
-    const fields: string[] = [];
-    const encode: string[] = [];
-    const decode: string[] = [];
+  generate(fieldCount: number): string {
+    const {name, aliases} = this.node;
 
-    const fieldCount = this.processSchema(schema, (field: string, typeChar: string, refName: string) => {
-      if (typeChar === 'R') {
-        console.log('TODO: support reference types in kotlin');
-        process.exit(1);
-      }
+    let typeDecls = '';
+    if (aliases.length) {
+      typeDecls = '\n' + aliases.map(a => `typealias ${a} = ${name}`).join('\n') + '\n';
+    }
 
-      const {type, defaultVal, decodeFn} = typeMap[typeChar];
-      const fixed = field + (keywords.includes(field) ? '_' : '');
-
-      fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
-
-      decode.push(`"${field}" -> {`,
-                  `  decoder.validate("${typeChar}")`,
-                  `  this.${fixed} = decoder.${decodeFn}`,
-                  `}`,
-      );
-
-      encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
-    });
+    const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
+    const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
     return `\
 
-data class ${name}(
-  ${fields.join(', ')}
-) : Entity<${name}>() {
-  override fun decodeEntity(encoded: String): ${name}? {
-    if (encoded.isEmpty()) {
-      return null
-    }
-    val decoder = StringDecoder(encoded)
-    this.internalId = decoder.decodeText()
-    decoder.validate("|")
-    var i = 0
-    while (!decoder.done() && i < ${fieldCount}) {
-      val name = decoder.upTo(":")
-      when (name) {
-        ${decode.join('\n        ')}
-      }
-      decoder.validate("|")
-      i++
-    }
-    return this
-  }
+${withFields('data ')}class ${name}(${ withFields(`\n    ${this.fields.join(',\n    ')}\n`) }) : Entity<${name}>() {
 
-  override fun encodeEntity(): String {
-    val encoder = StringEncoder()
-    encoder.encode("", internalId)
-    ${encode.join('\n    ')}
-    return encoder.result()
-  }
+    override fun decodeEntity(encoded: String): ${name}? {
+        if (encoded.isEmpty()) {
+            return null
+        }
+        val decoder = StringDecoder(encoded)
+        this.internalId = decoder.decodeText()
+        decoder.validate("|")
+        ${withFields(`var i = 0
+        while (!decoder.done() && i < ${fieldCount}) {
+            val name = decoder.upTo(":")
+            when (name) {
+                ${this.decode.join('\n                ')}
+            }
+            decoder.validate("|")
+            i++
+        }`)}
+        return this
+    }
+
+    override fun encodeEntity(): String {
+        val encoder = StringEncoder()
+        encoder.encode("", internalId)
+        ${this.encode.join('\n        ')}
+        return encoder.result()
+    }
+    ${withoutFields(`
+    override fun toString(): String {
+        return "${name}()"
+    }`)}
 }
+${typeDecls}
 `;
-  }
-
-  addScope(namespace: string = 'arcs') {
-    this.pkgName = namespace;
-  }
-
-  addAliases(aliases: Aliases): string {
-    const lines: string[] = Object.entries(aliases)
-      .map(([rhs, ids]): string[] => [...ids].map((id) => `typealias ${id} = ${rhs}`))
-      .reduce((acc, val) => acc.concat(val), []); // equivalent to .flat()
-
-    return lines.join('\n');
   }
 }

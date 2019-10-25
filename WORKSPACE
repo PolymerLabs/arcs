@@ -71,7 +71,7 @@ KOTLINC_RELEASE = {
 
 kotlin_repositories(compiler_release = KOTLINC_RELEASE)
 
-register_toolchains("//build_defs/internal:kotlin_toolchain")
+register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchain")
 
 # Java deps from Maven.
 
