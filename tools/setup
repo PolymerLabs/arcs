@@ -64,6 +64,8 @@ if [ "$OS_NAME" = "linux" ]; then
 elif [ "$OS_NAME" = "osx" ]; then
   status "0.1. Checking for Command Line Tools"
   xcode-select --version || xcode-select --install || fail "Unable to install Command Line Tools"
+  status "0.2. Updating SSL Certificates for Python3.6"
+  /Applications/Python\ 3.6/Install\ Certificates.command
 fi
 
 status "1. Install nvm"
