@@ -18,12 +18,16 @@ export const pecIndustry = (loader): PecFactory => {
   const remap = expandUrls(loader.urlMap);
   // get real path from meta path
   const workerUrl = loader.resolve(WORKER_PATH);
+  // use service worker cache instead of generating blobs
+  const useCache = new URLSearchParams(window.location.search).has('use-cache');
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
   let workerBlobUrl;
-  loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);
+  if (!useCache) {
+    loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);
+  }
   // return a pecfactory
   const factory = (id: Id, idGenerator?: IdGenerator) => {
-    if (!workerBlobUrl) {
+    if (!workerBlobUrl && !useCache) {
       console.warn('workerBlob not available, falling back to network URL');
     }
     const worker = new Worker(workerBlobUrl || workerUrl);
@@ -55,8 +59,8 @@ const expandUrls = urlMap => {
   Object.keys(urlMap).forEach(k => {
     const config = urlMap[k];
     remap[k] = typeof config === 'string'
-        ? transform(config)
-        : {...config, root: transform(config.root)};
+      ? transform(config)
+      : {...config, root: transform(config.root)};
   });
   return remap;
 };
