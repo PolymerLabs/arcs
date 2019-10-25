@@ -5,17 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/schemas/Description.arcs'
 import 'schemas/Event.arcs'
-
-alias schema Event as CalendarEvent
-  Text endDate
-  Text startDate
-  Number participants
-  Text description
+import '../Common/schemas/Description.arcs'
 
 particle Calendar in 'source/Calendar.js'
-  inout CalendarEvent event
+  inout Event event
   out [Description] descriptions
   consume action
   description `Select a time from your calendar`
