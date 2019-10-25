@@ -621,7 +621,7 @@ export class WasmParticle extends Particle {
   async onHandleSync(handle: Handle, model) {
     const wasmHandle = this.handleMap.getL(handle);
     if (!model) {
-      this.exports._syncHandle(this.innerParticle, wasmHandle, 0);
+      this.exports._syncHandle(this.innerParticle, wasmHandle, null);
       return;
     }
     const converter = this.converters.get(handle);
