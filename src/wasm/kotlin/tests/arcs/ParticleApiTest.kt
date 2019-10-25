@@ -2,9 +2,9 @@ package arcs
 
 
 class HandleSyncUpdateTest : Particle() {
-    private val input1 = Singleton { Test_data() }
-    private val input2 = Singleton { Test_data() }
-    private val output = Singleton { Test_data() }
+    private val input1 = Singleton { Test_Data() }
+    private val input2 = Singleton { Test_Data() }
+    private val output = Singleton { Test_Data() }
 
     init {
         registerHandle("input1", input1)
@@ -13,21 +13,21 @@ class HandleSyncUpdateTest : Particle() {
     }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        val out = Test_data(txt = "sync: ${handle.name}", flg = allSynced)
+        val out = Test_Data(txt = "sync: ${handle.name}", flg = allSynced)
         output.set(out)
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val input = (handle as Singleton<*>).get() as Test_data?
-        val out = input?.let { Test_data(input.num, "update: ${handle.name}") }
-                ?: Test_data(txt = "unexpected handle name: ${handle.name}")
+        val input = (handle as Singleton<*>).get() as Test_Data?
+        val out = input?.let { Test_Data(input.num, "update: ${handle.name}") }
+                ?: Test_Data(txt = "unexpected handle name: ${handle.name}")
 
         output.set(out)
     }
 }
 
 class RenderTest : Particle() {
-    private val flags = Singleton { Test_renderFlags() }
+    private val flags = Singleton { Test_RenderFlags() }
 
     init {
         registerHandle("flags", flags)
@@ -50,7 +50,7 @@ class RenderTest : Particle() {
 }
 
 class AutoRenderTest : Particle() {
-    private val data = Singleton { Test_data() }
+    private val data = Singleton { Test_Data() }
 
     init {
         registerHandle("data", data)
@@ -62,19 +62,19 @@ class AutoRenderTest : Particle() {
 }
 
 class EventTest : Particle() {
-    private val output = Singleton { Test_data() }
+    private val output = Singleton { Test_Data() }
 
     init {
         registerHandle("output", output)
     }
 
     override fun fireEvent(slotName: String, eventName: String) {
-        output.set(Test_data(txt = "event:$slotName:$eventName"))
+        output.set(Test_Data(txt = "event:$slotName:$eventName"))
     }
 }
 
 class ServiceTest : Particle() {
-    private val output = Singleton { Test_serviceResponse() }
+    private val output = Singleton { Test_ServiceResponse() }
 
     init {
         registerHandle("output", output)
@@ -82,7 +82,7 @@ class ServiceTest : Particle() {
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
-        output.set(Test_serviceResponse("resolveUrl", payload = url))
+        output.set(Test_ServiceResponse("resolveUrl", payload = url))
 
         serviceRequest("random.next", mapOf(), "first")
         serviceRequest("random.next", mapOf(), "second")
@@ -96,21 +96,21 @@ class ServiceTest : Particle() {
                 .forEach { str -> builder.append(str) }
         val payload = builder.toString()
 
-        output.set(Test_serviceResponse(call, tag, payload))
+        output.set(Test_ServiceResponse(call, tag, payload))
     }
 }
 
 class MissingRegisterHandleTest : Particle() {}
 
 class UnconnectedHandlesTest : Particle() {
-    private val data = Singleton { Test_data() }
+    private val data = Singleton { Test_Data() }
 
     init {
         registerHandle("data", data)
     }
 
     override fun fireEvent(slotName: String, eventName: String) {
-        data.set(Test_data())
+        data.set(Test_Data())
     }
 }
 
