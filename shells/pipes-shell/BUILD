@@ -5,7 +5,7 @@ load("//third_party/java/arcs/build_defs:run_in_repo.bzl", "run_in_repo")
 run_in_repo(
     name = "pipes_shell_web",
     srcs = glob(["**"]),
-    outs = ["pipes_shell_web_dist"],
+    outs = ["arcs"],
     cmd = "set OLDPWD=$PWD && cd $PWD/$(dirname $(location //shells/pipes-shell:web_deploy_bin)) && " +
           "./deploy.sh && " +
           "cp -r dist $OLDPWD/{OUT}",
