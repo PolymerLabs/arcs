@@ -13,8 +13,8 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
             "//src_kt/java/arcs/storage",
             "//src_kt/java/arcs/storage/driver",
             "//src_kt/java/arcs/util",
-            "//third_party/java/truth",
             "//third_party/java/junit",
+            "//third_party/java/truth",
             "//third_party/kotlin/kotlinx/kotlinx_coroutines",
         ],
     )

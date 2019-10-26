@@ -12,8 +12,8 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
             "//src_kt/java/arcs/common",
             "//src_kt/java/arcs/crdt",
             "//src_kt/java/arcs/crdt/internal",
-            "//third_party/java/truth",
             "//third_party/java/junit",
+            "//third_party/java/truth",
         ],
     )
     for src_file in glob(["*.kt"])

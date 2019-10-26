@@ -10,8 +10,8 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
         test_class = "arcs.common.%s" % src_file[:-3],
         deps = [
             "//src_kt/java/arcs/common",
-            "//third_party/java/truth",
             "//third_party/java/junit",
+            "//third_party/java/truth",
         ],
     )
     for src_file in glob(["*.kt"])
