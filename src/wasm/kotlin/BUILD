@@ -1,4 +1,4 @@
-load("//tools/build_defs/kotlin/release/rules/native:native_rules.bzl", "kt_native_library")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_library")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
