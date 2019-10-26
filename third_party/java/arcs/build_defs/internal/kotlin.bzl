@@ -24,6 +24,7 @@ def arcs_kt_binary(name, srcs = [], deps = []):
         srcs = srcs,
         entry_point = "arcs.main",
         deps = _ARCS_KOTLIN_LIBS + deps,
+        tags = ["wasm"],
     )
 
 def kt_jvm_and_js_library(
