@@ -3,11 +3,11 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("//tools/build_defs/kotlin/release/rules/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//tools/build_defs/kotlin/release/rules/js:js_library.bzl", "kt_js_library")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
-_ARCS_KOTLIN_LIBS = ["//src/wasm/kotlin:arcs_wasm"]
+_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/kotlin:arcs_wasm"]
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
@@ -21,11 +21,20 @@ def arcs_kt_library(name, srcs = [], deps = []):
 
 def arcs_kt_binary(name, srcs = [], deps = []):
     """Performs final compilation of wasm and bundling if necessary."""
+    libname = name + "_lib"
+
+    # Declare a library because g3 kt_native_binary doesn't take srcs
+    kt_native_library(
+        name = libname,
+        srcs = srcs,
+        deps = _ARCS_KOTLIN_LIBS + deps,
+        tags = ["wasm"],
+    )
+
     kt_native_binary(
         name = name,
-        srcs = srcs,
         entry_point = "arcs.main",
-        deps = _ARCS_KOTLIN_LIBS + deps,
+        deps = _ARCS_KOTLIN_LIBS + [":%s" % libname] + deps,
         tags = ["wasm"],
     )
 
@@ -52,10 +61,9 @@ def kt_jvm_and_js_library(
     #      deps = [_to_js_dep(dep) for dep in deps],
     #  )
 
-
 # Currently unsupported in G3
 def kt_js_import(**kwargs):
-  pass
+    pass
 
 def _to_jvm_dep(dep):
     return dep
