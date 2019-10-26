@@ -12,4 +12,13 @@
 package arcs.crdt
 
 /** Exception describing an issue which has occurred while working with CRDT data. */
-class CrdtException(message: String, cause: Throwable? = null) : Exception(message, cause)
+class CrdtException(message: String, cause: Throwable? = null) : Exception(message, cause) {
+  companion object {
+    /**
+     * Checker that can throw a [CrdtException] when the provided [value] is null, or return a
+     * non-nullable type of the value if it's not null.
+     */
+    fun <T> requireNotNull(value: T?, lazyMessage: () -> String): T =
+      value ?: throw CrdtException(lazyMessage())
+  }
+}
