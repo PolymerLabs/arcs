@@ -43,10 +43,18 @@ export const smokeTest = async bus => {
     send({message: 'parse', path: `https://$particles/canonical.arcs`});
   };
   //
+  const runArcTest = () => {
+    // create an arc and instantiate a recipe from the context
+    send({message: 'runArc', arcId: 'smoke-test-run-arc', recipe: `Notification`});
+    // create an arc and instantiate a recipe from a full path
+    send({message: 'runArc', arcId: 'smoke-test-run-arc-path', recipe: `https://$particles/Notification/Notification.arcs|Notification`});
+  };
+  //
   enqueue([
     ingestionTest,
     autofillTest,
     notificationTest,
-    parseTest
+    parseTest,
+    runArcTest
   ], 500);
 };
