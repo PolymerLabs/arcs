@@ -6,8 +6,7 @@ kt_jvm_and_js_library(
     name = "storage",
     srcs = glob(["*.kt"]),
     deps = [
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
-        "@maven//:org_jetbrains_kotlinx_atomicfu"
-    ]
+        "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+    ],
 )
-
