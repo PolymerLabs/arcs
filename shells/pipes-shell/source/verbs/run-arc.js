@@ -17,35 +17,52 @@ import {portIndustry} from '../pec-port.js';
 const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
-export const runArc = async (msg, bus, runtime, env) => {
+export const runArc = async (msg, bus, runtime) => {
   const {recipe, arcId, storageKeyPrefix, pecId, particles} = msg;
-  const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
     warn(`arcId must be provided.`);
     return null;
   }
-  if (recipe && !action) {
-    warn(`found no recipes matching [${recipe}]`);
+  const action = await marshalRecipe(recipe, runtime.context);
+  if (!action) {
+    warn(`found no recipe matching [${recipe}]`);
     return null;
   }
+  const arc = await marshalArc(runtime, arcId, storageKeyPrefix, pecId, bus);
+  if (await instantiateRecipe(arc, action, particles || [])) {
+    log(`successfully instantiated ${recipe} in Arc:${arcId}`);
+  }
+  return arc;
+};
+
+const marshalRecipe = async (recipeSpec, context) => {
+  let manifest = context;
+  let recipeName = recipeSpec;
+  if (recipeSpec.includes('|')) {
+    let manifestPath;
+    [manifestPath, recipeName] = recipeSpec.split('|');
+    manifest = await Utils.parseFile(manifestPath);
+  }
+  return findManifestRecipe(manifest, recipeName);
+};
+
+const findManifestRecipe = (manifest, recipeName) => {
+  return manifest.allRecipes.find(r => r.name === recipeName);
+};
+
+const marshalArc = (runtime, arcId, storageKeyPrefix, pecId, bus) => {
   const arc = runtime.runArc(arcId, storageKeyPrefix || 'volatile://', {
       fileName: './serialized.manifest',
-      pecFactories: [].concat([env.pecFactory], [portIndustry(bus, pecId)]),
-      loader: runtime.loader,
-      inspectorFactory: devtoolsArcInspectorFactory,
+      pecFactories: [].concat([Utils.env.pecFactory], [portIndustry(bus, pecId)]),
+      loader: Utils.env.loader,
+      inspectorFactory: devtoolsArcInspectorFactory
   });
   arc.pec.slotComposer.slotObserver = {
     observe: (content, arc) => {
-      delete content.particle;
       bus.send({message: 'output', data: content});
     },
     dispose: () => null
   };
-
-  // optionally instantiate recipe
-  if (action && await instantiateRecipe(arc, action, particles || [])) {
-    log(`successfully instantiated ${recipe} in ${arc}`);
-  }
   return arc;
 };
 
@@ -64,7 +81,6 @@ const instantiateRecipe = async (arc, recipe, particles) => {
     }
     return true;
   }
-
   for (const particle of particles) {
     plan = updateParticleInPlan(plan, particle.id, particle.name, particle.providedSlotId);
     if (!plan) {
@@ -72,7 +88,6 @@ const instantiateRecipe = async (arc, recipe, particles) => {
       return false;
     }
   }
-
   await arc.instantiate(plan);
   return true;
 };
