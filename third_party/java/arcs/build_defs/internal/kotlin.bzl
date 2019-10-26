@@ -4,7 +4,7 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", kt_js_import = "kt_js_import_fixed", "kt_js_library")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library", kt_js_import = "kt_js_import_fixed")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/kotlin:arcs_wasm"]
@@ -54,11 +54,11 @@ def kt_jvm_and_js_library(
     )
 
     if IS_BAZEL:
-      kt_js_library(
-          name = "%s-js" % name,
-          srcs = srcs,
-          deps = [_to_js_dep(dep) for dep in deps],
-      )
+        kt_js_library(
+            name = "%s-js" % name,
+            srcs = srcs,
+            deps = [_to_js_dep(dep) for dep in deps],
+        )
 
 def _to_jvm_dep(dep):
     return dep
@@ -71,4 +71,3 @@ def _to_js_dep(dep):
         return dep + (":%s-js" % last_part)
     else:
         return dep + "-js"
-
