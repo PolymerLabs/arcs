@@ -12,7 +12,7 @@ import {Const} from '../../configuration/constants.js';
 import {SyntheticStores} from '../synthetic-stores.js';
 import {StoreObserver} from '../store-observer.js';
 import {ArcHandleListener, ArcMetaListener, FriendArcMetaListener, ProfileListener, ShareListener} from '../context-listeners.js';
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 
 //const {log} = logsFactory('user-context', 'brown');
 // TODO(sjmiles): we _can_ do this, but should we?

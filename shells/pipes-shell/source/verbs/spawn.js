@@ -12,7 +12,7 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
 import {Utils} from '../../../lib/utils.js';
 import {recipeByName, instantiateRecipe} from '../lib/utils.js';
 import {portIndustry} from '../pec-port.js';
-import {logsFactory} from '../../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../../build/platform/logs-factory.js';
 
 const {warn} = logsFactory('pipe');
 

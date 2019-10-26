@@ -9,7 +9,7 @@
  */
 
 import {PlatformLoaderBase} from './loader-platform.js';
-import {logsFactory} from '../runtime/log-factory.js';
+import {logsFactory} from './logs-factory.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
 const {log, warn, error} = logsFactory('loader-web', 'green');

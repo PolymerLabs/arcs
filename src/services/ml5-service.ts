@@ -7,11 +7,11 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
+import {logsFactory} from '../platform/logs-factory.js';
 
-const log = logFactory('ml5-service');
+const {log} = logsFactory('ml5-service');
 
 const requireMl5 = async () => {
   if (!window.hasOwnProperty('ml5')) {

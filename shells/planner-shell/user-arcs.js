@@ -8,12 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 import {Const} from '../configuration/constants.js';
 import {SyntheticStores} from '../lib/synthetic-stores.js';
 
-const log = logFactory('UserArcs', '#4f0433');
-const warn = logFactory('UserArcs', '#4f0433', 'warn');
+const {log, warn} = logsFactory('UserArcs', '#4f0433');
 
 export class UserArcs {
   constructor(storage, userid) {

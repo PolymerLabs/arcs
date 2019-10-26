@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {Utils} from '../../lib/utils.js';

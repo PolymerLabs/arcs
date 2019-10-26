@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 import {forEachEntity, listenToStore} from './context-utils.js';
 
 // sanity check
@@ -40,7 +40,7 @@ export class StoreObserver {
     this.listener = listener;
     this.owner = owner;
     const type = store.type.tag === 'Handle' ? 'Handle' : store.type.getEntitySchema().names[0];
-    this.log = logFactory(`StoreObserver::${type}`, `orange`);
+    this.log = logsFactory(`StoreObserver::${type}`, `orange`).log;
     // prepare ready promise
     this.ready = new Promise(resolve => this._resolveReady = resolve);
     // TODO(sjmiles): connecting is async, beware race-condition vs. dispose()

@@ -8,13 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// TODO(wkorman): Incorporate debug levels. Consider outputting
-// preamble in the specified color via ANSI escape codes. Consider
-// sharing with similar log factory logic in `xen.js`. See `log-web.js`.
-const _logFactory = (preamble, color, log='log') => {
+// TODO(wkorman): Consider outputting preamble in the specified color via ANSI escape codes.
+export const logFactory = (preamble, color, log = 'log') => {
   return console[log].bind(console, `(${preamble})`);
 };
-
-const factory = global.logLevel < 1 ? () => () => {} : _logFactory;
-
-export const logFactory = (...args) => factory(...args);

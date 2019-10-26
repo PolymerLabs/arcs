@@ -46,7 +46,7 @@ import {Description} from '../runtime/description.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Relevance} from '../runtime/relevance.js';
 import {PlannerInspector, PlannerInspectorFactory, InspectablePlanner} from './planner-inspector.js';
-import {logsFactory} from '../runtime/log-factory.js';
+import {logsFactory} from '../platform/logs-factory.js';
 
 const {log} = logsFactory('planner', 'olive');
 

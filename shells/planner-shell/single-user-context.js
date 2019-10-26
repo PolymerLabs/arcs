@@ -9,11 +9,9 @@
  */
 
 import {SyntheticStores} from '../lib/synthetic-stores.js';
-import {logFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 
-const log = logFactory('SingleUserContext', '#f2ce14');
-const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
-const error = logFactory('SingleUserContext', '#f2ce14', 'error');
+const {log, warn, error} = logsFactory('SingleUserContext', '#f2ce14');
 
 // SoloContext (?)
 export const SingleUserContext = class {
