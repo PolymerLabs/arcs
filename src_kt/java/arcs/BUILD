@@ -6,4 +6,3 @@ kt_jvm_and_js_library(
     name = "util",
     srcs = glob(["*.kt"]),
 )
-

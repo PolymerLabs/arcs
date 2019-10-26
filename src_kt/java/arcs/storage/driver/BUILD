@@ -9,6 +9,6 @@ kt_jvm_and_js_library(
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/storage",
         "//src_kt/java/arcs/util",
-        "@maven//:org_jetbrains_kotlinx_atomicfu",
-    ]
+        "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
+    ],
 )
