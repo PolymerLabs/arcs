@@ -30,8 +30,6 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
       composer: composerFactory(modality, bus, tid),
       portFactories: [portIndustry(bus)]
     });
-    // TODO(sjmiles): why is this here?
-    //arc.tid = tid;
     if (contextRecipe) {
       // instantiate optional recipe
       await instantiateRecipe(arc, contextRecipe);
