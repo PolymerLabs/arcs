@@ -37,11 +37,11 @@ import 'https://$particles/Notification/Notification.arcs'
 
 export const initPipe = async (client, paths, storage) => {
   // configure arcs environment
-  const env = Utils.init(paths.root, paths.map);
+  Utils.init(paths.root, paths.map);
   // marshal context
   const context = await requireContext(manifest);
   // marshal dispatcher
-  populateDispatcher(dispatcher, storage, context, env);
+  populateDispatcher(dispatcher, storage, context);
   // create bus
   const bus = new Bus(dispatcher, client);
   // return bus
@@ -65,8 +65,8 @@ const identifyPipe = async (context, bus) => {
   bus.send({message: 'ready', recipes});
 };
 
-const populateDispatcher = (dispatcher, storage, context, env) => {
-  const runtime = new Runtime(env.loader, UiSlotComposer, context);
+const populateDispatcher = (dispatcher, storage, context) => {
+  const runtime = new Runtime(Utils.env.loader, UiSlotComposer, context);
   Object.assign(dispatcher, {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
@@ -74,7 +74,7 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     // TODO: consolidate runArc and uiEvent with spawn and event, as well as
     // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, bus, runtime, env);
+      return await runArc(msg, bus, runtime);
     },
     uiEvent: async (msg, tid, bus) => {
       return await uiEvent(msg, runtime);
@@ -119,18 +119,13 @@ const composerFactory = (modality, bus, tid) => {
 // `slot-composer` delegates ui work to a `ui-broker`
 const brokerFactory = bus => {
   return {
-    observe: async (output, arc) => {
-      log('UiBroker received', output);
-      const content = output;
-      content.particle = {
-        name: output.particle.name,
-        id: String(output.particle.id)
-      };
+    observe: async (content, arc) => {
+      log('UiBroker received', content);
       const tid = await bus.recoverTransactionId(arc);
       if (!tid) {
         log(`couldn't match the arc to a tid, inner arc?`);
       }
-      bus.send({message: 'slot', tid, content: output});
+      bus.send({message: 'slot', tid, content});
     },
     dispose: () => null
   };
