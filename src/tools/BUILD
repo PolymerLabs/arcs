@@ -10,7 +10,3 @@ filegroup(
     srcs = glob(["**"]),
 )
 
-sh_binary(
-    name = "generate_root_manifest",
-    srcs = ["generate_root_manifest.sh"],
-)
