@@ -644,22 +644,25 @@ export type DirectionUnified = 'reads' | 'writes' | 'reads writes' | 'hosts' | '
 // TODO(jopra): Remove after syntax unification.
 export type DirectionArrow = '<-' | '->' | '<->' | '`consume' | '`provide' | '=';
 
-export function preSlandlesDirectionToDirection(direction: Direction): DirectionUnified {
+export function preSlandlesDirectionToDirection(direction: Direction, isOptional: boolean = false): string {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
+  const opt: string = isOptional ? '?' : '';
   switch (direction) {
     case 'in':
-      return 'reads';
+      return `reads${opt}`;
     case 'out':
-      return 'writes';
+      return `writes${opt}`;
     case 'inout':
-      return 'reads writes';
+      return `reads${opt} writes${opt}`;
     case '`consume':
-      return '`consumes';
+      return `\`consumes${opt}`;
     case '`provide':
-      return '`provides';
+      return `\`provides${opt}`;
+    case 'host':
+      return `hosts${opt}`;
     case 'any':
-      return 'any';
+      return `any${opt}`;
     default:
       // Catch nulls and unsafe values from javascript.
       throw new Error(`Bad pre slandles direction ${direction}`);
@@ -681,7 +684,7 @@ export function directionToPreSlandlesDirection(direction: DirectionUnified): Di
     case '`provides':
       return '`provide';
     case 'hosts':
-      return 'any';
+      return 'host';
     case 'any':
       return 'any';
     default:

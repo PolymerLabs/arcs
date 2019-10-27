@@ -1004,7 +1004,6 @@ ${e.message}
 
     const newConnection = (particle: Particle, connectionItem: AstNode.RecipeParticleConnection) => {
         let connection;
-
         if (connectionItem.param === '*') {
           connection = particle.addUnnamedConnection();
         } else {

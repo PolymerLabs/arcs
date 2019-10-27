@@ -243,8 +243,8 @@ InterfaceItem
   / InterfaceArgument
 
 InterfaceArgument
-  = InterfaceArgumentPreSlandlesSyntax
-  / InterfaceArgumentUnified
+  = InterfaceArgumentUnified
+  / InterfaceArgumentPreSlandlesSyntax
 
 InterfaceArgumentPreSlandlesSyntax
   = direction:(DirectionPreSlandles whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
@@ -297,7 +297,7 @@ InterfaceSlotPreSlandles
   }
 
 InterfaceSlotUnified
-  = name: NameWithColon? direction:('consume' / 'provide') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
+  = name:NameWithColon? direction:('consumes' / 'provides') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
   {
     requireUsePostSlandleSyntax();
     let isSet = false;
@@ -307,6 +307,12 @@ InterfaceSlotUnified
       type.fields.forEach(({name, value}) => {
         error(`interface slots do not currently support fields`);
       });
+    }
+    if (direction === 'consumes') {
+      direction = 'consume';
+    }
+    if (direction === 'provides') {
+      direction = 'provide';
     }
     return toAstNode<AstNode.InterfaceSlot>({
       kind: 'interface-slot',
@@ -339,7 +345,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args: AstNode.ParticleHandleConnection[] = [];
+    const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
     const trustClaims: AstNode.ParticleClaimStatement[] = [];
@@ -570,17 +576,13 @@ ParticleHandleConnectionBodyPreSlandle
   }
 
 NameWithColon
-  = &((unsafeLowerIdent / '*') whiteSpace? ':') name:(lowerIdent / '*') whiteSpace? ':' whiteSpace?
+  = &(unsafeLowerIdent whiteSpace? ':') name:lowerIdent whiteSpace? ':' whiteSpace?
   {
-    // TODO(jopra): Remove ability to use "*: <def>" syntax and instead use anonymous "<def>".
-    if (name === '*') {
-      return null;
-    }
     return name;
   }
 
 ParticleHandleConnectionBodyUnified
-  = maybeName:NameWithColon? direction:DirectionUnified isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:DirectionUnified isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -589,7 +591,7 @@ ParticleHandleConnectionBodyUnified
       type: type,
       isOptional: !!isOptional,
       dependentConnections: [],
-      name: maybeName || maybeTags[0] || expected(`either a name or tags to be supplied ${maybeName} ${maybeTags}`),
+      name: name || maybeTags[0] || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || []
     });
   }
@@ -602,8 +604,9 @@ DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide
   }
 
 DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
-  = ('reads writes' / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any')
+  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any')
   {
+    // TODO(jopra): Parse optionality properly.
     const dir = AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
     requireUsePostSlandleSyntax();
     return dir;
@@ -770,7 +773,7 @@ SlandleType = type:SlotType {
   }
 
 ParticleSlotConnectionUnified
-  = name:NameWithColon? 'consume' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace
+  = name:NameWithColon? 'consumes' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotConnectionItem)*)?
   {
     requireUsePostSlandleSyntax();
@@ -858,7 +861,7 @@ ParticleProvidedSlotPreSlandles
   }
 
 ParticleProvidedSlotUnified
-  = name:NameWithColon? 'provide' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
+  = name:NameWithColon? 'provides' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
   {
     requireUsePostSlandleSyntax();
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
@@ -1007,15 +1010,16 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = RecipeParticleConnectionPreSlandle / RecipeParticleConnectionUnified
+  = RecipeParticleConnectionUnified
+  / RecipeParticleConnectionPreSlandle
 
 RecipeParticleConnectionUnified
-  = param:(lowerIdent / '*') ':' whiteSpace dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:NameWithColon? dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
-      param,
+      param: param || '*',
       dir,
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
@@ -1059,10 +1063,11 @@ ParticleConnectionTargetComponents
   }
 
 RecipeParticleSlotConnection
-  = RecipeParticleSlotConnectionPreSlandle / RecipeParticleSlotConnectionUnified
+  = RecipeParticleSlotConnectionUnified
+  / RecipeParticleSlotConnectionPreSlandle
 
 RecipeParticleSlotConnectionPreSlandle
-  = direction:SlotDirection whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  = direction:SlotDirectionPreSlandle whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
     requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
@@ -1075,14 +1080,14 @@ RecipeParticleSlotConnectionPreSlandle
     });
   }
 RecipeParticleSlotConnectionUnified
-  = param: NameWithColon direction:SlotDirection name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  = param: NameWithColon? direction:SlotDirectionUnified name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
       param,
-      tags,
+      tags: tags || [],
       name: optional(name, name=>name[1], null),
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     });
@@ -1098,22 +1103,38 @@ RecipeSlotConnectionRef
     });
   }
 
-SlotDirection
+SlotDirectionPreSlandle
   = 'provide' / 'consume'
+SlotDirectionUnified
+  = 'provides' { return 'provide'; }
+  / 'consumes' { return 'consume'; }
 
 RecipeConnection
   = RecipeConnectionUnified / RecipeConnectionPreSlandle
 
 RecipeConnectionUnified
-  = from:ConnectionTarget ':' whiteSpace direction:DirectionUnified whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTargetWithColon? direction:DirectionUnified whiteSpace to:ConnectionTarget eolWhiteSpace
   {
+    const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
+      kind: 'connection-target',
+      targetType: 'localName',
+      name: undefined,
+      param: '*',
+      tags: [],
+    });
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction,
-      from,
+      from: from || anyTarget,
       to,
     });
+  }
+
+ConnectionTargetWithColon
+  = target: ConnectionTarget ':' whiteSpace?
+  {
+    return target;
   }
 
 RecipeConnectionPreSlandle
@@ -1536,7 +1557,8 @@ ReservedWord
   = keyword:(DirectionArrow
   / DirectionPreSlandles
   / DirectionUnified
-  / SlotDirection
+  / SlotDirectionPreSlandle
+  / SlotDirectionUnified
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
