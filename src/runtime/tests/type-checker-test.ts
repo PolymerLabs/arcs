@@ -274,7 +274,7 @@ describe('TypeChecker', () => {
       recipe
         h0: create
         Transformation
-          particle0: reads Concrete
+          particle0: hosts Concrete
           collection: reads h0
     `);
 
