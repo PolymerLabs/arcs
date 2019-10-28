@@ -10,7 +10,7 @@
 
 import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Const} from '../../configuration/constants.js';
 import {Xen} from '../../lib/components/xen.js';
 import {Utils} from '../../lib/utils.js';

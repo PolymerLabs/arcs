@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Xen} from '../components/xen.js';
 import {ArcComponentMixin} from '../components/arc-component.js';
 import {SlotObserver} from '../xen-renderer.js';

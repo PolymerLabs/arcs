@@ -10,8 +10,8 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
         deps = [
             "//src_kt/java/arcs/crdt/entity",
             "//src_kt/java/arcs/crdt/internal",
-            "@maven//:com_google_truth_truth",
-            "@maven//:junit_junit",
+            "//third_party/java/junit",
+            "//third_party/java/truth",
         ],
     )
     for src_file in glob(["*.kt"])

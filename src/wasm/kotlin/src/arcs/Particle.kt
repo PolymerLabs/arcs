@@ -193,6 +193,3 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
         collectionClear(particle.toWasmAddress(), toWasmAddress())
     }
 }
-
-fun main() {
-}

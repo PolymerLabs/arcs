@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Reference, ReferenceManager as rmgr} from './reference-manager.js';
-import {logFactory} from '../platform/log-web.js';
+import {logsFactory} from '../platform/logs-factory.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
 // TODO(sjmiles): figure out a way to make the next two imports into one.
@@ -17,7 +17,7 @@ import * as Tf from '@tensorflow/tfjs';
 // for actual code
 import {requireTf} from '../platform/tf-web.js';
 
-const log = logFactory('tfjs-service');
+const {log} = logsFactory('tfjs-service');
 
 type TfTensor = Tf.Tensor | Tf.Tensor[] | Tf.NamedTensorMap;
 
@@ -25,7 +25,6 @@ export interface ClassificationPrediction {
   className: string;
   probability: number;
 }
-
 
 /**
  * Load a graph model given a URL to the model definition.

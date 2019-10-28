@@ -9,7 +9,7 @@
  */
 
 import {Const} from '../configuration/constants.js';
-import {logFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 import {SyntheticStores} from './synthetic-stores.js';
 import {StoreObserver} from './store-observer.js';
 import {ContextStores} from './context-stores.js';
@@ -49,7 +49,7 @@ const AbstractListener = class {
 
 export const ArcHandleListener = class extends AbstractListener {
   createLogger() {
-    return logFactory(`ArcHandleListener`, `#4040FF`);
+    return logsFactory(`ArcHandleListener`, `#4040FF`).log;
   }
   async add(handle) {
     this.log('add', handle);
@@ -116,7 +116,7 @@ export const ArcMetaListener = class extends ContextAwareListener {
 
 export const FriendArcMetaListener = class extends ArcMetaListener {
   createLogger() {
-    return logFactory(`FriendArcMetaListener`, `#5321a5`);
+    return logsFactory(`FriendArcMetaListener`, `#5321a5`).log;
   }
   async add(entity, store) {
     const {rawData: {key, deleted}} = entity;
@@ -145,7 +145,7 @@ export const ShareListener = class extends ContextAwareListener {
     return false;
   }
   createLogger() {
-    return logFactory(`ShareListener`, 'blue');
+    return logsFactory(`ShareListener`, 'blue').log;
   }
   async add(entity, store) {
     // TODO(sjmiles): `store.handle` is expected by getStoreMetrics, this is part
@@ -170,7 +170,7 @@ export const ProfileListener = class extends ShareListener {
     return true;
   }
   createLogger() {
-    return logFactory(`ProfileListener`, 'green');
+    return logsFactory(`ProfileListener`, 'green').log;
   }
   isFriendStore(store) {
     return (simpleNameOfType(store.type) === 'Friend' && store.type.isCollection);

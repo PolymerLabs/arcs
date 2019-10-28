@@ -54,6 +54,7 @@ arcs_manifest(
 
 arcs_manifest_bundle(
     name = "bundle",
+    visibility = ["//visibility:public"],
     deps = [
         ":example_manifest",
         ":harness_manifest",

@@ -15,4 +15,4 @@ class ParentParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newParentParticle")
-fun _newParentParticle(): WasmAddress = ParentParticle().toWasmAddress()
+fun _newParentParticle() = ParentParticle().toWasmAddress()

@@ -13,9 +13,9 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
             "//src_kt/java/arcs/storage",
             "//src_kt/java/arcs/storage/driver",
             "//src_kt/java/arcs/util",
-            "@maven//:com_google_truth_truth",
-            "@maven//:junit_junit",
-            "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
+            "//third_party/java/junit",
+            "//third_party/java/truth",
+            "//third_party/kotlin/kotlinx/kotlinx_coroutines",
         ],
     )
     for src_file in glob(["*.kt"])

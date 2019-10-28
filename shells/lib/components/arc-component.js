@@ -11,7 +11,7 @@
 import {Xen} from './xen.js';
 import {ArcHost} from './arc-host.js';
 import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 
 const {log, warn} = logsFactory('ArcComponent', '#cb23a6');
 
