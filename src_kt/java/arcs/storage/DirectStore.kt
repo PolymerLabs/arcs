@@ -19,17 +19,19 @@ import arcs.crdt.CrdtModelType
 import arcs.crdt.CrdtOperation
 import arcs.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.storage.DirectStore.State.Name.AwaitingResponse
-import arcs.storage.DirectStore.State.Name.AwaitingResponseDirty
 import arcs.storage.DirectStore.State.Name.Idle
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/** An [ActiveStore] capable of communicating directly with a [Driver]. */
+// TODO: generics here are sub-optimal, can we make this class generic itself?
 class DirectStore internal constructor(
   options: StoreOptions<CrdtData, CrdtOperation, Any?>,
   private val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
@@ -47,10 +49,14 @@ class DirectStore internal constructor(
    * transitions into the Idle state.
    */
   private val idleDeferred = atomic(IdleDeferred())
-  private val nextCallbackId = atomic(1)
-  private var version = atomic(0)
+  /**
+   * [AtomicRef] of a list of [PendingDriverModel]s, allowing us to treat it as a copy-on-write,
+   * threadsafe list using [AtomicRef.update].
+   */
   private var pendingDriverModels = atomic(listOf<PendingDriverModel>())
-  private var state: AtomicRef<State> = atomic(State.Idle(idleDeferred, driver, ::setState))
+  private var version = atomic(0)
+  private var state: AtomicRef<State> = atomic(State.Idle(idleDeferred, driver))
+  private val nextCallbackToken = atomic(1)
   private val callbacks = atomic(mapOf<Int, ProxyCallback<CrdtData, CrdtOperation, Any?>>())
 
   init {
@@ -59,22 +65,85 @@ class DirectStore internal constructor(
 
   override suspend fun getLocalData(): CrdtData = synchronized(this) { localModel.data }
 
-  override suspend fun idle() {
-    state.value.idle()
-  }
+  override suspend fun idle() = state.value.idle()
 
   override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
-    TODO("not implemented")
+    val token = nextCallbackToken.getAndIncrement()
+    callbacks.update { callbackMap ->
+      return@update callbackMap + (token to callback)
+    }
+    return token
   }
 
   override fun off(callbackToken: Int) {
-    TODO("not implemented")
+    callbacks.update { callbackMap ->
+      return@update callbackMap - callbackToken
+    }
   }
 
+  /**
+   * Receives operations/model-updates from connected storage proxies.
+   *
+   * Additionally, StorageProxy objects may request a SyncRequest, which will result in an
+   * up-to-date model being sent back to that StorageProxy. a return value of true implies that the
+   * message was accepted, a return value of false requires that the proxy send a model sync.
+   */
   override suspend fun onProxyMessage(
     message: ProxyMessage<CrdtData, CrdtOperation, Any?>
   ): Boolean {
-    TODO("not implemented")
+    return when (message) {
+      is ProxyMessage.SyncRequest -> {
+        callbacks.value[message.id]?.invoke(ProxyMessage.ModelUpdate(localModel.data, message.id))
+        true
+      }
+      is ProxyMessage.Operations -> {
+        val failure = !message.operations.all { localModel.applyOperation(it) }
+        if (failure) {
+          callbacks.value[message.id]?.invoke(ProxyMessage.SyncRequest(message.id))
+          false
+        } else {
+          val change =
+            CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
+          // Launch a co-routine on our scope to asynchronously process the model changes.
+          scope.launch {
+            processModelChange(
+              change,
+              otherChange = null,
+              version = version.value,
+              channel = message.id
+            )
+          }
+          true
+        }
+      }
+      is ProxyMessage.ModelUpdate -> {
+        val (modelChange, otherChange) = localModel.merge(message.model)
+        // Launch a co-routine on our scope to asynchronously process the model changes.
+        scope.launch {
+          processModelChange(
+            modelChange,
+            otherChange,
+            version.value,
+            channel = message.id
+          )
+        }
+        true
+      }
+    }
+  }
+
+  private suspend fun processModelChange(
+    modelChange: CrdtChange<CrdtData, CrdtOperation>,
+    otherChange: CrdtChange<CrdtData, CrdtOperation>?,
+    version: Int,
+    channel: Int?
+  ) {
+    deliverCallbacks(modelChange, messageFromDriver = false, channel = channel)
+    updateStateAndAct(
+      noDriverSideChanges(modelChange, otherChange, false),
+      version,
+      messageFromDriver = false
+    )
   }
 
   private fun onReceive(data: CrdtData, version: Int) {
@@ -86,12 +155,10 @@ class DirectStore internal constructor(
         }
       }
     } else {
+      // If the current state doesn't allow us to apply the models yet, tack it onto our pending
+      // list.
       pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
     }
-  }
-
-  private fun setState(newState: State) {
-    state.value = newState
   }
 
   private suspend fun applyPendingDriverModels(models: List<PendingDriverModel>) {
@@ -115,7 +182,7 @@ class DirectStore internal constructor(
         throw e
       }
     }
-    updateStateAndAct(noDriverSideChanges, theVersion, true)
+    updateStateAndAct(noDriverSideChanges, theVersion, messageFromDriver = true)
   }
 
   /**
@@ -127,7 +194,7 @@ class DirectStore internal constructor(
    */
   private fun noDriverSideChanges(
     thisChange: CrdtChange<CrdtData, CrdtOperation>,
-    otherChange: CrdtChange<CrdtData, CrdtOperation>,
+    otherChange: CrdtChange<CrdtData, CrdtOperation>?,
     messageFromDriver: Boolean
   ): Boolean {
     return if (messageFromDriver) {
@@ -140,7 +207,7 @@ class DirectStore internal constructor(
   private fun deliverCallbacks(
     thisChange: CrdtChange<CrdtData, CrdtOperation>,
     messageFromDriver: Boolean,
-    channel: Int
+    channel: Int?
   ) {
     when {
       thisChange is CrdtChange.Operations && thisChange.ops.isNotEmpty() -> {
@@ -170,126 +237,58 @@ class DirectStore internal constructor(
     messageFromDriver: Boolean
   ) {
     if (noDriverSideChanges) {
-      setState(State.Idle(idleDeferred, driver, ::setState))
+      // TODO: use a single lock here, rather than two separate atomics.
+      this.state.value = State.Idle(idleDeferred, driver)
       this.version.value = version
       return
     }
 
-    this.version.value = state.value.update(messageFromDriver, version)
-  }
+    // Wait until we're idle before we continue.
+    idleDeferred.update {
+      it.await()
+      // Re-initialize so that future calls get an un-completed idle signal.
+      return@update IdleDeferred()
+    }
 
-  /*
-  private async updateStateAndAct(noDriverSideChanges: boolean, version: number, messageFromDriver: boolean) {
-    // Don't send to the driver if we're already in sync and there are no driver-side changes.
-    if (noDriverSideChanges) {
-      // Need to record the driver version so that we can continue to send.
-      this.setState(DirectStoreState.Idle);
-      this.version = version;
-      return;
-    }
-    switch (this.state) {
-      case DirectStoreState.AwaitingDriverModel:
-        if (!messageFromDriver) {
-          return;
-        }
-        // This loop implements sending -> AwaitingResponse -> AwaitingResponseDirty -> sending.
-        // Breakouts happen if:
-        //  (1) a response arrives while still AwaitingResponse. This returns the store to Idle.
-        //  (2) a negative response arrives. This means we're now waiting for driver models
-        //      (AwaitingDriverModel). Note that in this case we are likely to end up back in
-        //      this loop when a driver model arrives.
-        while (true) {
-          this.setState(DirectStoreState.AwaitingResponse);
-          this.state = DirectStoreState.AwaitingResponse;
-          this.version = ++version;
-          const response = await this.driver.send(this.localModel.getData(), version);
-          if (response) {
-            if (this.state === DirectStoreState.AwaitingResponse) {
-              this.setState(DirectStoreState.Idle);
-              this.applyPendingDriverModels();
-              break;
-            }
-            if (this.state !== DirectStoreState.AwaitingResponseDirty) {
-              // This shouldn't be possible as only a 'nack' should put us into
-              // AwaitingDriverModel, and only the above code should put us back
-              // into Idle.
-              throw new Error('reached impossible state in store state machine');
-            }
-            // fallthrough to re-execute the loop.
-          } else {
-            this.setState(DirectStoreState.AwaitingDriverModel);
-            this.applyPendingDriverModels();
-            break;
-          }
-        }
-        return;
-      case DirectStoreState.Idle:
-        // This loop implements sending -> AwaitingResponse -> AwaitingResponseDirty -> sending.
-        // Breakouts happen if:
-        //  (1) a response arrives while still AwaitingResponse. This returns the store to Idle.
-        //  (2) a negative response arrives. This means we're now waiting for driver models
-        //      (AwaitingDriverModel). Note that in this case we are likely to end up back in
-        //      this loop when a driver model arrives.
-        while (true) {
-          this.setState(DirectStoreState.AwaitingResponse);
-          this.state = DirectStoreState.AwaitingResponse;
-          this.version = ++version;
-          const response = await this.driver.send(this.localModel.getData(), version);
-          if (response) {
-            if (this.state === DirectStoreState.AwaitingResponse) {
-              this.setState(DirectStoreState.Idle);
-              this.applyPendingDriverModels();
-              break;
-            }
-            if (this.state !== DirectStoreState.AwaitingResponseDirty) {
-              // This shouldn't be possible as only a 'nack' should put us into
-              // AwaitingDriverModel, and only the above code should put us back
-              // into Idle.
-              throw new Error('reached impossible state in store state machine');
-            }
-            // fallthrough to re-execute the loop.
-          } else {
-            this.setState(DirectStoreState.AwaitingDriverModel);
-            this.applyPendingDriverModels();
-            break;
-          }
-        }
-        return;
-      case DirectStoreState.AwaitingResponse:
-        this.setState(DirectStoreState.AwaitingResponseDirty);
-        return;
-      case DirectStoreState.AwaitingResponseDirty:
-        return;
-      default:
-        throw new Error('reached impossible default state in switch statement');
-    }
+    var currentState = state.value
+    var currentVersion = version
+    var spins = 0
+    do {
+      val (newVersion, newState) = currentState.update(currentVersion, messageFromDriver, localModel)
+      // TODO: use a lock instead here, rather than two separate atomics.
+      this.state.value = newState
+      this.version.value = currentVersion
+      currentState = newState
+      currentVersion = newVersion
+
+      // Make sure we don't loop infinitely.
+      check(++spins < MAX_UPDATE_SPINS) {
+        "updateAndAct iterated too many times, limit: $MAX_UPDATE_SPINS"
+      }
+    } while (newState !is State.Idle && newState !is State.AwaitingDriverModel)
+
+    // Finish applying the models from the driver, if we have any.
+    applyPendingDriverModels(pendingDriverModels.value)
   }
-   */
 
   private data class PendingDriverModel(val model: CrdtData, val version: Int)
-  private class IdleDeferred : CompletableDeferred<Unit> by CompletableDeferred()
+  private class IdleDeferred : CompletableDeferred<Unit> by CompletableDeferred(null)
 
   private sealed class State(
     val stateName: Name,
     val idleDeferred: AtomicRef<IdleDeferred>,
-    val driver: Driver<CrdtData>,
-    val sendStateTransition: (State) -> Unit
+    val driver: Driver<CrdtData>
   ) {
-    /** Waits until the [idleDeferred] signal is triggered. */
-    open suspend fun idle() = idleDeferred.value.await()
+    /** Simple names for each [State]. */
+    enum class Name { Idle, AwaitingResponse, AwaitingDriverModel }
 
-    open suspend fun update(messageFromDriver: Boolean, version: Int): Int = version
-
-    open fun shouldApplyPendingDriverModelsOnReceive(data: CrdtData, version: Int): Boolean = true
-
-    override fun toString(): String = "$stateName"
-
-    /** The [DirectStore] is currently idle. */
+    /**
+     * The [DirectStore] is currently idle.
+     */
     class Idle(
       idleDeferred: AtomicRef<IdleDeferred>,
-      driver: Driver<CrdtData>,
-      stateTransitionReceiver: (State) -> Unit
-    ) : State(Idle, idleDeferred, driver, stateTransitionReceiver) {
+      driver: Driver<CrdtData>
+    ) : State(Idle, idleDeferred, driver) {
       init {
         // When a new idle state is created, complete the deferred so anything waiting on it will
         // unblock.
@@ -298,88 +297,103 @@ class DirectStore internal constructor(
 
       // We're already in idle state, so no need to do anything.
       override suspend fun idle() = Unit
+
+      override suspend fun update(
+        version: Int,
+        messageFromDriver: Boolean,
+        localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+      ): Pair<Int, State> {
+        // On update() and when idle, we're ready to await the next version.
+        return (version + 1) to AwaitingResponse(idleDeferred, driver)
+      }
     }
 
+    /**
+     * On update: sends the local model to the driver and awaits a response.
+     */
     class AwaitingResponse(
       idleDeferred: AtomicRef<IdleDeferred>,
-      driver: Driver<CrdtData>,
-      sendStateTransition: (State) -> Unit
-    ) : State(AwaitingResponse, idleDeferred, driver, sendStateTransition) {
+      driver: Driver<CrdtData>
+    ) : State(AwaitingResponse, idleDeferred, driver) {
       override fun shouldApplyPendingDriverModelsOnReceive(data: CrdtData, version: Int) = false
 
-      suspend fun updateFromAwaitingDriver(messageFromDriver: Boolean, version: Int): Int {
-        var newVersion = version + 1
-
-        val response = driver.send()
-        const response = await this.driver.send(this.localModel.getData(), version);
-        if (response) {
-          if (this.state === DirectStoreState.AwaitingResponse) {
-            this.setState(DirectStoreState.Idle);
-            this.applyPendingDriverModels();
-            break;
-          }
-          if (this.state !== DirectStoreState.AwaitingResponseDirty) {
-            // This shouldn't be possible as only a 'nack' should put us into
-            // AwaitingDriverModel, and only the above code should put us back
-            // into Idle.
-            throw new Error('reached impossible state in store state machine');
-          }
-          // fallthrough to re-execute the loop.
+      override suspend fun update(
+        version: Int,
+        messageFromDriver: Boolean,
+        localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+      ): Pair<Int, State> {
+        val response = driver.send(localModel.data, version)
+        return if (response) {
+          // The driver ack'd our send, we can move to idle state.
+          version to Idle(idleDeferred, driver)
         } else {
-          this.setState(DirectStoreState.AwaitingDriverModel);
-          this.applyPendingDriverModels();
-          break;
+          // The driver didn't ack, so we need to move to AwaitingDriverModel.
+          version to AwaitingDriverModel(idleDeferred, driver)
         }
-        return version
       }
     }
 
-    class AwaitingResponseDirty(
-      idleDeferred: AtomicRef<IdleDeferred>,
-      driver: Driver<CrdtData>,
-      sendStateTransition: (State) -> Unit
-    ) : State(AwaitingResponseDirty, idleDeferred, driver, sendStateTransition) {
-      override fun shouldApplyPendingDriverModelsOnReceive(data: CrdtData, version: Int) = false
-    }
-
+    /**
+     * Awaiting a model from the driver after a failed send.
+     */
     class AwaitingDriverModel(
       idleDeferred: AtomicRef<IdleDeferred>,
-      driver: Driver<CrdtData>,
-      sendStateTransition: (State) -> Unit
-    ) : State(AwaitingDriverModel, idleDeferred, driver, sendStateTransition) {
-      override suspend fun update(messageFromDriver: Boolean, version: Int): Int {
-        if (!messageFromDriver) return version
-        val newState = AwaitingResponse(idleDeferred, sendStateTransition)
-        sendStateTransition(newState)
-        return newState.updateFromAwaitingDriver(messageFromDriver, version)
+      driver: Driver<CrdtData>
+    ) : State(AwaitingDriverModel, idleDeferred, driver) {
+      override suspend fun update(
+        version: Int,
+        messageFromDriver: Boolean,
+        localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+      ): Pair<Int, State> {
+        // If the message didn't come from the driver, we can't do anything.
+        if (!messageFromDriver) return version to this
+
+        // This loop implements sending -> AwaitingResponse -> AwaitingResponseDirty -> sending.
+        // Breakouts happen if:
+        //  (1) a response arrives while still AwaitingResponse. This returns the store to Idle.
+        //  (2) a negative response arrives. This means we're now waiting for driver models
+        //      (AwaitingDriverModel). Note that in this case we are likely to end up back in
+        //      this loop when a driver model arrives.
+        return (version + 1) to AwaitingResponse(idleDeferred, driver)
       }
     }
 
-    enum class Name {
-      Idle,
-      AwaitingResponse,
-      AwaitingResponseDirty,
-      AwaitingDriverModel,
-    }
+    /** Waits until the [idleDeferred] signal is triggered. */
+    open suspend fun idle() = idleDeferred.value.await()
+
+    /**
+     * Determines the next state and version of the model while acting. (e.g. sending the
+     * [localModel] to the [Driver])
+     *
+     * Core component of the state machine, called by [DirectStore.updateStateAndAct] to determine
+     * what state to transition into and perform any necessary operations.
+     */
+    open suspend fun update(
+      version: Int,
+      messageFromDriver: Boolean,
+      localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+    ): Pair<Int, State> =
+      version to this
+
+    /**
+     * Returns whether or not, given the machine being in this state, we should apply any pending
+     * driver models to the local model.
+     */
+    open fun shouldApplyPendingDriverModelsOnReceive(data: CrdtData, version: Int): Boolean = true
+
+    override fun toString(): String = "$stateName"
   }
 
 
   companion object {
+    /**
+     * To avoid an infinite loop OMG situation, set a maximum number of update spins for the state
+     * machine to something large, but not *infinite*.
+     */
+    private const val MAX_UPDATE_SPINS = 1000
+
     @Suppress("UNCHECKED_CAST")
     val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options ->
-      /*
-      const me = new DirectStore<T>(options);
-    me.localModel = new (options.type.crdtInstanceConstructor<T>())();
-    if (options.model) {
-      me.localModel.merge(options.model);
-    }
-    me.driver = await DriverFactory.driverInstance(options.storageKey, options.exists);
-    if (me.driver == null) {
-      throw new CRDTError(`No driver exists to support storage key ${options.storageKey}`);
-    }
-    me.driver.registerReceiver(me.onReceive.bind(me), options.versionToken);
-    return me;
-       */
       val localModel =
         requireNotNull(
           options.type as? CrdtModelType<CrdtData, CrdtOperation, Any?>
