@@ -21,6 +21,7 @@ import arcs.storage.StorageKey
 import arcs.storage.StorageKeyParser
 import arcs.util.Random
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.runBlocking
 
 /** Protocol to be used with the volatile driver. */
 const val VOLATILE_DRIVER_PROTOCOL = "volatile"
@@ -88,7 +89,7 @@ internal class VolatileDriver<Data : Any>(
   // The identifier is simply used to help differentiate between VolatileDrivers for the same
   // storage key.
   private val identifier = nextIdentifier.incrementAndGet()
-  private var receiver: ((data: Data, version: Int) -> Unit)? = null
+  private var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
   private var pendingModel: Data? = null
   private var pendingVersion: Int = 0
 
@@ -133,11 +134,14 @@ internal class VolatileDriver<Data : Any>(
     memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
   }
 
-  override fun registerReceiver(token: String?, receiver: (data: Data, version: Int) -> Unit) {
+  override fun registerReceiver(
+    token: String?,
+    receiver: suspend (data: Data, version: Int) -> Unit
+  ) {
     this.receiver = receiver
     this.pendingModel
       ?.takeIf { this.token != token }
-      ?.let { receiver(it, pendingVersion) }
+      ?.let { runBlocking { receiver(it, pendingVersion) } }
     this.pendingModel = null
   }
 

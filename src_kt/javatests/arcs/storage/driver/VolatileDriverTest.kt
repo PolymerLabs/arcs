@@ -85,7 +85,7 @@ class VolatileDriverTest {
 
     var calledWithData: Int? = null
     var calledWithVersion: Int? = null
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       calledWithData = data
       calledWithVersion = version
     }
@@ -103,7 +103,7 @@ class VolatileDriverTest {
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
 
     @Suppress("UNUSED_PARAMETER")
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       fail("Should not be called.")
     }
 
@@ -118,7 +118,7 @@ class VolatileDriverTest {
 
     var calledWithData: Int? = null
     var calledWithVersion: Int? = null
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       calledWithData = data
       calledWithVersion = version
     }
@@ -134,7 +134,7 @@ class VolatileDriverTest {
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.MayExist, memory)
 
     @Suppress("UNUSED_PARAMETER")
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       fail("Should not be called.")
     }
 

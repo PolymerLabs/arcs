@@ -30,7 +30,7 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   override val type: Type = options.type
   open val versionToken: String? = options.versionToken
   /** The [IStore] this instance is fronting. */
-  val baseStore: IStore<Data, Op, ConsumerData> = options.baseStore
+  val baseStore: IStore<Data, Op, ConsumerData>? = options.baseStore
 
   /** Suspends until all pending operations are complete. */
   open suspend fun idle() = Unit

@@ -52,15 +52,17 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
       requireNotNull(CONSTRUCTORS[mode]) { "No constructor registered for mode $mode" }
 
     val activeStore = checkNotNull(
-      constructor(StoreOptions(
-        storageKey = storageKey,
-        existenceCriteria = existenceCriteria,
-        type = type,
-        mode = mode,
-        baseStore = this,
-        versionToken = parsedVersionToken,
-        model = model
-      )) as? ActiveStore<Data, Op, ConsumerData>
+      constructor(
+        StoreOptions(
+          storageKey = storageKey,
+          existenceCriteria = existenceCriteria,
+          type = type,
+          mode = mode,
+          baseStore = this,
+          versionToken = parsedVersionToken,
+          model = model
+        )
+      ) as? ActiveStore<Data, Op, ConsumerData>
     ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
     existenceCriteria = ExistenceCriteria.ShouldExist
     this.activeStore = activeStore

@@ -90,6 +90,10 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 AUTO_VALUE_VERSION = "1.7"
 
+KOTLINX_ATOMICFU_VERSION = "0.13.1"
+
+KOTLINX_COROUTINES_VERSION = "1.3.2"
+
 maven_install(
     artifacts = [
         "org.json:json:20141113",
@@ -102,10 +106,11 @@ maven_install(
         "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
         "com.google.truth:truth:1.0",
-        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2",
-        "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.2",
-        "org.jetbrains.kotlinx:atomicfu:0.13.1",
-        "org.jetbrains.kotlinx:atomicfu-js:0.13.1",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:atomicfu:" + KOTLINX_ATOMICFU_VERSION,
+        "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
     ],
     repositories = [
         "https://jcenter.bintray.com/",

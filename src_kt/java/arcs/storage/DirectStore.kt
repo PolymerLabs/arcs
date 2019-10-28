@@ -26,23 +26,20 @@ import kotlinx.atomicfu.getAndUpdate
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /** An [ActiveStore] capable of communicating directly with a [Driver]. */
 // TODO: generics here are sub-optimal, can we make this class generic itself?
 class DirectStore internal constructor(
   options: StoreOptions<CrdtData, CrdtOperation, Any?>,
-  private val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
+  internal val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
   private val driver: Driver<CrdtData>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
   override val versionToken: String?
     get() = driver.token
-
-  /** Coroutine Scope to use for IO operations. */
-  private val scope =
-    CoroutineScope(Dispatchers.IO + CoroutineName("DirectStore $localModel"))
 
   /**
    * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
@@ -97,36 +94,32 @@ class DirectStore internal constructor(
         true
       }
       is ProxyMessage.Operations -> {
-        val failure = !message.operations.all { localModel.applyOperation(it) }
+        val failure =
+          synchronized(this) { !message.operations.all { localModel.applyOperation(it) } }
+
         if (failure) {
           callbacks.value[message.id]?.invoke(ProxyMessage.SyncRequest(message.id))
           false
         } else {
           val change =
             CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
-          // Launch a co-routine on our scope to asynchronously process the model changes.
-          scope.launch {
-            processModelChange(
-              change,
-              otherChange = null,
-              version = version.value,
-              channel = message.id
-            )
-          }
+          processModelChange(
+            change,
+            otherChange = null,
+            version = version.value,
+            channel = message.id
+          )
           true
         }
       }
       is ProxyMessage.ModelUpdate -> {
-        val (modelChange, otherChange) = localModel.merge(message.model)
-        // Launch a co-routine on our scope to asynchronously process the model changes.
-        scope.launch {
-          processModelChange(
-            modelChange,
-            otherChange,
-            version.value,
-            channel = message.id
-          )
-        }
+        val (modelChange, otherChange) = synchronized(this) { localModel.merge(message.model) }
+        processModelChange(
+          modelChange,
+          otherChange,
+          version.value,
+          channel = message.id
+        )
         true
       }
     }
@@ -146,14 +139,10 @@ class DirectStore internal constructor(
     )
   }
 
-  private fun onReceive(data: CrdtData, version: Int) {
+  private suspend fun onReceive(data: CrdtData, version: Int) {
     if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
-      scope.launch {
-        pendingDriverModels.getAndUpdate { pendingModels ->
-          applyPendingDriverModels(pendingModels + PendingDriverModel(data, version))
-          return@getAndUpdate emptyList()
-        }
-      }
+      val pending = pendingDriverModels.getAndUpdate { emptyList() }
+      applyPendingDriverModels(pending + PendingDriverModel(data, version))
     } else {
       // If the current state doesn't allow us to apply the models yet, tack it onto our pending
       // list.
@@ -204,7 +193,7 @@ class DirectStore internal constructor(
     }
   }
 
-  private fun deliverCallbacks(
+  private suspend fun deliverCallbacks(
     thisChange: CrdtChange<CrdtData, CrdtOperation>,
     messageFromDriver: Boolean,
     channel: Int?
@@ -213,13 +202,13 @@ class DirectStore internal constructor(
       thisChange is CrdtChange.Operations && thisChange.ops.isNotEmpty() -> {
         callbacks.value.filter { messageFromDriver || channel != it.key }
           .map { (id, callback) ->
-            scope.launch { callback(ProxyMessage.Operations(thisChange.ops, id)) }
+            coroutineScope { launch { callback(ProxyMessage.Operations(thisChange.ops, id)) } }
           }
       }
       thisChange is CrdtChange.Data -> {
         callbacks.value.filter { messageFromDriver || channel != it.key }
           .map { (id, callback) ->
-            scope.launch { callback(ProxyMessage.ModelUpdate(thisChange.data, id)) }
+            coroutineScope { launch { callback(ProxyMessage.ModelUpdate(thisChange.data, id)) } }
           }
       }
     }
@@ -254,6 +243,7 @@ class DirectStore internal constructor(
     var currentVersion = version
     var spins = 0
     do {
+      val localModel = synchronized(this) { localModel.data }
       val (newVersion, newState) = currentState.update(currentVersion, messageFromDriver, localModel)
       // TODO: use a lock instead here, rather than two separate atomics.
       this.state.value = newState
@@ -301,7 +291,7 @@ class DirectStore internal constructor(
       override suspend fun update(
         version: Int,
         messageFromDriver: Boolean,
-        localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+        localModel: CrdtData
       ): Pair<Int, State> {
         // On update() and when idle, we're ready to await the next version.
         return (version + 1) to AwaitingResponse(idleDeferred, driver)
@@ -320,9 +310,9 @@ class DirectStore internal constructor(
       override suspend fun update(
         version: Int,
         messageFromDriver: Boolean,
-        localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+        localModel: CrdtData
       ): Pair<Int, State> {
-        val response = driver.send(localModel.data, version)
+        val response = driver.send(localModel, version)
         return if (response) {
           // The driver ack'd our send, we can move to idle state.
           version to Idle(idleDeferred, driver)
@@ -343,7 +333,7 @@ class DirectStore internal constructor(
       override suspend fun update(
         version: Int,
         messageFromDriver: Boolean,
-        localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+        localModel: CrdtData
       ): Pair<Int, State> {
         // If the message didn't come from the driver, we can't do anything.
         if (!messageFromDriver) return version to this
@@ -371,7 +361,7 @@ class DirectStore internal constructor(
     open suspend fun update(
       version: Int,
       messageFromDriver: Boolean,
-      localModel: CrdtModel<CrdtData, CrdtOperation, Any?>
+      localModel: CrdtData
     ): Pair<Int, State> =
       version to this
 

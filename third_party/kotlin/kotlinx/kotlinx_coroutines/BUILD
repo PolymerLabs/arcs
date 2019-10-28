@@ -16,3 +16,9 @@ kt_js_import(
     ],
     srcjar = "kotlinx-coroutines-core-js-1.3.2-sources.jar",
 )
+
+# Only supported for JVM, since our tests are written with JUnit.
+alias(
+    name = "kotlinx_coroutines_test",
+    actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
+)

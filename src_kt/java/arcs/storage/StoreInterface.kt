@@ -67,11 +67,12 @@ enum class StorageMode {
 data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   val storageKey: StorageKey,
   val existenceCriteria: ExistenceCriteria,
-  val mode: StorageMode,
   val type: Type,
-  val baseStore: IStore<Data, Op, ConsumerData>,
-  val versionToken: String?,
-  val model: Data?
+  val mode: StorageMode = StorageMode.Direct,
+  //  if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode else StorageMode.Direct,
+  val baseStore: IStore<Data, Op, ConsumerData>? = null,
+  val versionToken: String? = null,
+  val model: Data? = null
 )
 
 
