@@ -120,11 +120,9 @@ fun init(particlePtr: WasmAddress) {
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString?) {
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
-    if (encoded != 0) {
-        val encodedStr: String = encoded.toKString()
-        log("Handle is '${handle.name}' syncing '$encodedStr'")
-        handle.sync(encodedStr)
-    }
+    val encodedStr: String? = encoded.toNullableKString()
+    log("Handle is '${handle.name}' syncing '$encodedStr'")
+    handle.sync(encodedStr)
     log("Invoking sync on handle on particle")
     particlePtr.toObject<Particle>().sync(handle)
 }
