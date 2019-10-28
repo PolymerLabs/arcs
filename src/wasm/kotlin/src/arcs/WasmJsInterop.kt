@@ -114,22 +114,14 @@ fun init(particlePtr: WasmAddress) {
   particlePtr.toObject<Particle>().init()
 }
 
-
 @Retain
 @ExportForCppRuntime("_syncHandle")
-<<<<<<< HEAD
-fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
-    log("Getting handle")
-    val handle = handlePtr.toObject<Handle>()
-    val encodedStr: String? = encoded.toNullableKString()
-    log("Handle is '${handle.name}' syncing '$encodedStr'")
-=======
+
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString?) {
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
-    val encodedStr: String = encoded?.toKString() ?: ""
+    val encodedStr: String = if (encoded == 0) encoded.toKString() else ""
     log("Handle is " + handle.name + "syncing '" + encodedStr + "'")
->>>>>>> _syncHandle: defensive against NPEs
     handle.sync(encodedStr)
     log("Invoking sync on handle on particle")
     particlePtr.toObject<Particle>().sync(handle)
