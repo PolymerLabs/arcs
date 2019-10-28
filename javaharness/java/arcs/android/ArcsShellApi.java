@@ -44,6 +44,7 @@ class ArcsShellApi {
 
   void init(Context context) {
     arcsReady = false;
+    environment.init(context);
     environment.addReadyListener(recipes -> arcsReady = true);
     environment.addReadyListener(recipes -> {
       recipes.forEach(recipe -> {
@@ -53,7 +54,6 @@ class ArcsShellApi {
         }
       });
     });
-    environment.init(context);
   }
 
   void destroy() {
