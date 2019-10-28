@@ -19,7 +19,6 @@ typealias FieldName = String
  */
 class Entity(
   val name: String,
-  val internals: EntityInternals,
   val data: MutableMap<FieldName, Any?>
 ) : AbstractMutableMap<FieldName, Any?>() {
   @Suppress("UNCHECKED_CAST")

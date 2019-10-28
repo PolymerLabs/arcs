@@ -24,14 +24,6 @@ class Schema(
 
   fun toLiteral(): Literal = Literal(names, fields, description)
 
-  fun isMoreSpecificThan(other: Schema): Boolean {
-    TODO("Implement me.")
-  }
-
-  fun toInlineSchemaString(options: Type.ToStringOptions): String {
-    TODO("Implement me.")
-  }
-
   fun createCrdtEntityModel(): CrdtEntity {
     TODO("Implement me.")
   }

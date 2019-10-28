@@ -30,9 +30,6 @@ class EntityType(override val entitySchema: Schema) :
   constructor(names: List<SchemaName>, fields: SchemaFields, description: SchemaDescription) :
     this(Schema(names, fields, description))
 
-  override fun isMoreSpecificThan(other: Type) =
-    other is EntityType && entitySchema.isMoreSpecificThan(other.entitySchema)
-
   override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
     variableMap[entitySchema] as? Type
       ?: EntityType(entitySchema).also { variableMap[entitySchema] = it }
@@ -43,9 +40,6 @@ class EntityType(override val entitySchema: Schema) :
   override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
 
   override fun toString(options: Type.ToStringOptions): String {
-    if (!options.pretty) return entitySchema.toInlineSchemaString(options)
-
-    // Pretty string output.
     return entitySchema.description.pattern
       ?: entitySchema.name?.toPrettyString()
       ?: entitySchema.toLiteral().toJson()
