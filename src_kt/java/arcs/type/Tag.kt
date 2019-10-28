@@ -25,5 +25,5 @@ enum class Tag {
   // Relation,
   Singleton,
   // Slot,
-  TypeVariable,
+  // TypeVariable,
 }

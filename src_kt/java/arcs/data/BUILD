@@ -16,6 +16,5 @@ kt_jvm_and_js_library(
     name = "entity",
     srcs = [
         "Entity.kt",
-        "EntityInternals.kt",
     ],
 )
