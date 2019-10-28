@@ -128,7 +128,7 @@ recipe RenderSlotsRecipe
     consume root
       // ParentParticle also provides mySlot. Note the additional tab over.
       // The name "slot" is the name the recipe uses for the slot, and is how
-     // the recipe connects the parent's mySlot and the child's mySlot
+      // the recipe connects the parent's mySlot and the child's mySlot
       provide mySlot as slot
   ChildParticle
     // And the ChildParticle consumes the slot.
@@ -142,7 +142,8 @@ Next, we implement the parent and child particles in Javascript. To do this, we 
 defineParticle(({SimpleParticle, html}) => {
  return class extends SimpleParticle {
    get template() {
-     // The parent particle needs to provide a div with slotid "mySlot". This is where the child particle will be rendered.
+     // The parent particle needs to provide a div with slotid "mySlot".
+     // This is where the child particle will be rendered.
      return html`
        <b>Hello:</b>
        <div slotid="mySlot"></div>
