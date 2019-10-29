@@ -52,7 +52,7 @@ export const initPipe = async (client, paths, storage, manifest = defaultManifes
 export const initArcs = async (storage, bus, manifest = defaultManifest) => {
   // marshal ingestion arc
   // TODO(sjmiles): "live context" tool (for demos)
-  await requireIngestionArc(storage, bus);
+  // await requireIngestionArc(storage, bus);
   // marshal context
   const context = await requireContext(manifest);
   // send pipe identifiers to client
