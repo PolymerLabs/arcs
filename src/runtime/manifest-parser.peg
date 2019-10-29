@@ -597,7 +597,7 @@ ParticleHandleConnectionBodyUnified
   }
 
 DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
-  = ('inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any')
+  = ('inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any') &([^a-zA-Z0-9] / !.)
   {
     requireUsePreSlandleSyntax();
     return text() as AstNode.Direction;
@@ -607,9 +607,8 @@ DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consume
   = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any') &([^a-zA-Z0-9] / !.)
   {
     // TODO(jopra): Parse optionality properly.
-    const dir = AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
     requireUsePostSlandleSyntax();
-    return dir;
+    return AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
   }
 
 // TODO(jopra): Remove when syntax is updated to not use arrows.
@@ -1230,30 +1229,23 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = RecipeHandlePreSlandle
-  / RecipeHandleUnified
-
-RecipeHandleUnified
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? namePreSlandles:(whiteSpace LocalName)? eolWhiteSpace
   {
-    requireUsePostSlandleSyntax();
+    if (name && namePreSlandles) {
+      error('cannot provide both name and localName for RecipeHandle.');
+    }
+    if (name) {
+      requireUsePostSlandleSyntax();
+    }
+    if (namePreSlandles) {
+      requireUsePreSlandleSyntax();
+      name = optional(namePreSlandles, n => n[1], null);
+    }
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate
-    });
-  }
-
-RecipeHandlePreSlandle
-  = type:RecipeHandleFate ref:(whiteSpace HandleRef)? name:(whiteSpace LocalName)? eolWhiteSpace
-  {
-    requireUsePreSlandleSyntax();
-    return toAstNode<AstNode.RecipeHandle>({
-      kind: 'handle',
-      name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
-      fate: type
     });
   }
 
