@@ -1,6 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
 
 [
     kt_jvm_test(

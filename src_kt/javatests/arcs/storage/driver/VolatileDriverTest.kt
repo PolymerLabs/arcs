@@ -12,10 +12,11 @@
 package arcs.storage.driver
 
 import arcs.common.ArcId
-import arcs.storage.Driver.ExistenceCriteria
+import arcs.storage.ExistenceCriteria
 import arcs.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +24,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for [VolatileDriver]. */
+@Suppress("RedundantSuspendModifier")
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class VolatileDriverTest {
   private lateinit var key: VolatileStorageKey
@@ -78,14 +81,14 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun firstRegisterReceiver_whenShouldExist_receivesExistingValue() {
+  fun firstRegisterReceiver_whenShouldExist_receivesExistingValue() = runBlockingTest {
     memory[key] = VolatileEntry(42, version = 1337)
 
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
 
     var calledWithData: Int? = null
     var calledWithVersion: Int? = null
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       calledWithData = data
       calledWithVersion = version
     }
@@ -97,13 +100,13 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun firstRegisterReceiver_whenShouldExist_doesNotReceiveExistingValue_whenTokenMatches() {
+  fun firstRegReceiver_whenShouldExist_doesntReceiveExisting_whenTokenMatches() = runBlockingTest {
     memory[key] = VolatileEntry(42, version = 1337)
 
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
 
     @Suppress("UNUSED_PARAMETER")
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       fail("Should not be called.")
     }
 
@@ -111,14 +114,14 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun firstRegisterReceiver_whenMayExist_receivesExistingValue() {
+  fun firstRegisterReceiver_whenMayExist_receivesExistingValue() = runBlockingTest {
     memory[key] = VolatileEntry(42, version = 1337)
 
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.MayExist, memory)
 
     var calledWithData: Int? = null
     var calledWithVersion: Int? = null
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       calledWithData = data
       calledWithVersion = version
     }
@@ -130,11 +133,11 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun firstRegisterReceiver_whenMayExist_doesNotReceiveValue_whenDoesntExist() {
+  fun firstRegisterReceiver_whenMayExist_doesNotReceiveValue_whenDoesntExist() = runBlockingTest {
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.MayExist, memory)
 
     @Suppress("UNUSED_PARAMETER")
-    fun receiver(data: Int, version: Int) {
+    suspend fun receiver(data: Int, version: Int) {
       fail("Should not be called.")
     }
 
@@ -142,7 +145,7 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun send_updatesMemory_whenVersion_isCorrect() = runBlocking {
+  fun send_updatesMemory_whenVersion_isCorrect() = runBlockingTest {
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
 
     assertThat(driver.send(data = 1, version = 1)).isTrue()
@@ -159,7 +162,7 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun send_doesNotUpdateMemory_whenVersion_isIncorrect() = runBlocking {
+  fun send_doesNotUpdateMemory_whenVersion_isIncorrect() = runBlockingTest {
     val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
 
     assertThat(driver.send(data = 1, version = 0)).isFalse()
@@ -176,7 +179,7 @@ class VolatileDriverTest {
   }
 
   @Test
-  fun send_canSendToOtherDriverReceiver() = runBlocking {
+  fun send_canSendToOtherDriverReceiver() = runBlockingTest {
     val driver1 = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
     val driver2 = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
 

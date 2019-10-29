@@ -90,22 +90,29 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 AUTO_VALUE_VERSION = "1.7"
 
+KOTLINX_ATOMICFU_VERSION = "0.13.1"
+
+KOTLINX_COROUTINES_VERSION = "1.3.2"
+
 maven_install(
     artifacts = [
-        "org.json:json:20141113",
         "com.google.flogger:flogger:0.4",
         "com.google.flogger:flogger-system-backend:0.4",
         "com.google.dagger:dagger:2.23.1",
         "com.google.dagger:dagger-compiler:2.23.1",
-        "javax.inject:javax.inject:1",
-        "junit:junit:4.11",
         "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
         "com.google.truth:truth:1.0",
-        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2",
-        "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.2",
-        "org.jetbrains.kotlinx:atomicfu:0.13.1",
-        "org.jetbrains.kotlinx:atomicfu-js:0.13.1",
+        "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
+        "javax.inject:javax.inject:1",
+        "junit:junit:4.11",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:atomicfu:" + KOTLINX_ATOMICFU_VERSION,
+        "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
+        "org.json:json:20141113",
+        "org.mockito:mockito-core:2.23.0",
     ],
     repositories = [
         "https://jcenter.bintray.com/",

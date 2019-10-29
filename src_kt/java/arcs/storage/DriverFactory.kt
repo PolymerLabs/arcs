@@ -11,7 +11,6 @@
 
 package arcs.storage
 
-import arcs.storage.Driver.ExistenceCriteria
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 
