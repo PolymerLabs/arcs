@@ -26,7 +26,7 @@ import {Particle} from './recipe/particle.js';
 import {Recipe, IsValidOptions} from './recipe/recipe.js';
 import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/comparable.js';
-import {SlotComposer} from './slot-composer.js';
+import {UiSlotComposer as SlotComposer} from './ui-slot-composer.js';
 import {StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
