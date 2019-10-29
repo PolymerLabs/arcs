@@ -13,7 +13,6 @@ package arcs.storage
 
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtOperation
-import java.lang.UnsupportedOperationException
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -74,7 +73,7 @@ interface ProxyCallback<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
   val singleCallback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Boolean
     get() = throw UnsupportedOperationException("Single callback not supported.")
   val multiCallback: suspend (ProxyMessage<Data, Op, ConsumerData>, String) -> Boolean
-    get() = throw UnsupportedOperationException("MUltiplexed callback not supported")
+    get() = throw UnsupportedOperationException("Multiplexed callback not supported")
 
   suspend operator fun invoke(
     message: ProxyMessage<Data, Op, ConsumerData>,
