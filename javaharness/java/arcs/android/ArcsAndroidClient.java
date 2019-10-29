@@ -189,10 +189,11 @@ public class ArcsAndroidClient {
     });
   }
 
-  public void addManifests(List<String> manifests) {
+  public void addManifests(List<String> manifests, Consumer<Boolean> callback) {
     executeArcsServiceCall(iArcsService -> {
       try {
-        iArcsService.addManifests(manifests);
+        boolean success = iArcsService.addManifests(manifests);
+        callback.accept(success);
       } catch (RemoteException e) {
         e.printStackTrace();
       }

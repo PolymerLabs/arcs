@@ -25,7 +25,12 @@ public class NotificationDemoActivity extends Activity {
 
     arcsAndroidClient.connect(this);
     arcsAndroidClient.addManifests(
-        Arrays.asList("https://$particles/PipeApps/RenderNotification.arcs"));
+        Arrays.asList("https://$particles/PipeApps/RenderNotification.arcs"),
+        success ->  {
+          if (!success) {
+            throw new IllegalStateException("Failed to add manfiest");
+          }
+        });
     arcsAndroidClient.registerRenderer("notification", notificationRenderer);
 
     setContentView(R.layout.notification_demo);

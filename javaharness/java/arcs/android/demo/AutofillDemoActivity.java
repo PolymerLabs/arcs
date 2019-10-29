@@ -9,8 +9,11 @@ import android.view.View;
 import android.view.autofill.AutofillManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
+
 import javax.inject.Inject;
 
 import arcs.android.ArcsAndroidClient;
@@ -47,7 +50,12 @@ public class AutofillDemoActivity extends Activity {
 
     arcsAndroidClient.connect(this);
     arcsAndroidClient.addManifests(
-        Arrays.asList("https://$particles/PipeApps/AndroidAutofill.arcs"));
+        Arrays.asList("https://$particles/PipeApps/AndroidAutofill.arcs"),
+        success ->  {
+          if (!success) {
+            throw new IllegalStateException("Failed to add manfiest");
+          }
+        });
   }
 
   @Override
