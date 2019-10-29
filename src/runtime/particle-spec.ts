@@ -446,7 +446,7 @@ export class ParticleSpec {
         }
         const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
         if (s.isSet) {
-          tokens.push(`[Slot]${fields}`);
+          tokens.push(`[Slot${fields}]`);
         } else {
           tokens.push(`Slot${fields}`);
         }
