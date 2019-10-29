@@ -20,7 +20,7 @@ import {MultiplexerDomParticle} from '../runtime/multiplexer-dom-particle.js';
 import {UiParticle} from '../runtime/ui-particle.js';
 import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
-import {logsFactory} from '../runtime/log-factory.js';
+import {logsFactory} from '../platform/logs-factory.js';
 
 type Ctor = typeof Object;
 type ParticleCtor = typeof Particle;
