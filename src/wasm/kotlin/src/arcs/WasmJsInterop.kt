@@ -9,6 +9,9 @@ typealias WasmAddress = Int
 // Wasm Strings are also Int heap pointers
 typealias WasmString = Int
 
+typealias WasmNullableString = Int
+
+
 /**
  * Any object implementing this interface can be converted into a (pinned) stable heap pointer.
  * To avoid GC Leaks, eventually the ABI should have a Particle.dispose() method which releases
@@ -48,6 +51,11 @@ fun NativePtr.toWasmAddress(): WasmAddress {
 // Convert a WasmString pointer into a Kotlin String
 fun WasmString.toKString(): String {
     return this.toLong().toCPointer<ByteVar>()!!.toKStringFromUtf8()
+}
+
+// Convert a WasmString pointer into a nullable Kotlin String
+fun WasmNullableString.toNullableKString(): String? {
+    return this.toLong().toCPointer<ByteVar>()?.toKStringFromUtf8()
 }
 
 @SymbolName("Kotlin_Arrays_getByteArrayAddressOfElement")
@@ -109,11 +117,11 @@ fun init(particlePtr: WasmAddress) {
 
 @Retain
 @ExportForCppRuntime("_syncHandle")
-fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString) {
+fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
-    val encodedStr = encoded.toKString()
-    log("Handle is " + handle.name + "syncing '" + encodedStr + "'")
+    val encodedStr: String? = encoded.toNullableKString()
+    log("Handle is '${handle.name}' syncing '$encodedStr'")
     handle.sync(encodedStr)
     log("Invoking sync on handle on particle")
     particlePtr.toObject<Particle>().sync(handle)
@@ -121,10 +129,10 @@ fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmSt
 
 @Retain
 @ExportForCppRuntime("_updateHandle")
-fun updateHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded1Ptr: WasmString,
-                 encoded2Ptr: WasmString) {
+fun updateHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded1Ptr: WasmNullableString,
+                 encoded2Ptr: WasmNullableString) {
     val handle = handlePtr.toObject<Handle>()
-    handle.update(encoded1Ptr.toKString(), encoded2Ptr.toKString())
+    handle.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
     particlePtr.toObject<Particle>().onHandleUpdate(handle)
 }
 

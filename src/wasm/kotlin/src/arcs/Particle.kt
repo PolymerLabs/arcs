@@ -99,19 +99,19 @@ abstract class Particle : WasmObject() {
 abstract class Handle : WasmObject() {
     lateinit var name: String
     lateinit var particle: Particle
-    abstract fun sync(encoded: String)
-    abstract fun update(added: String, removed: String)
+    abstract fun sync(encoded: String?)
+    abstract fun update(added: String?, removed: String?)
 }
 
 open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     private var entity: T? = null
 
-    override fun sync(encoded: String) {
-        entity = entityCtor().decodeEntity(encoded)
+    override fun sync(encoded: String?) {
+        entity = encoded?.let { entityCtor().decodeEntity(encoded) } ?: entityCtor()
     }
 
-    override fun update(added: String, removed: String) {
-        entity = entityCtor().decodeEntity(added)
+    override fun update(added: String?, removed: String?) {
+        entity = added?.let { entityCtor().decodeEntity(added) } ?: entityCtor()
     }
 
     fun get() = entity
@@ -142,21 +142,23 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
 
     override fun iterator() = entities.values.iterator()
 
-    override fun sync(encoded: String) {
+    override fun sync(encoded: String?) {
         entities.clear()
-        add(encoded)
+        encoded?.let { add(it) }
     }
 
-    override fun update(added: String, removed: String) {
-        add(added)
-        with(StringDecoder(removed)) {
-            var num = getInt(":")
-            while (num-- > 0) {
-                val len = getInt(":")
-                val chunk = chomp(len)
-                // TODO: just get the id, no need to decode the full entity
-                val entity = entityCtor().decodeEntity(chunk)!!
-                entities.remove(entity.internalId)
+    override fun update(added: String?, removed: String?) {
+        added?.let { add(added) }
+        removed?.let {
+            with(StringDecoder(it)) {
+                var num = getInt(":")
+                while (num-- > 0) {
+                    val len = getInt(":")
+                    val chunk = chomp(len)
+                    // TODO: just get the id, no need to decode the full entity
+                    val entity = entityCtor().decodeEntity(chunk)!!
+                    entities.remove(entity.internalId)
+                }
             }
         }
     }
@@ -179,7 +181,7 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
 
     private fun add(added: String) {
         with(StringDecoder(added)) {
-            getInt(":").downTo(0).forEach {
+            repeat(getInt(":")) {
                 val len = getInt(":")
                 val chunk = chomp(len)
                 val entity = entityCtor().decodeEntity(chunk)!!
