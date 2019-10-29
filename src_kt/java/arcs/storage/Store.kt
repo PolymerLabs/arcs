@@ -71,7 +71,8 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
   companion object {
     private val CONSTRUCTORS = mapOf(
-      StorageMode.Direct to DirectStore.CONSTRUCTOR
+      StorageMode.Direct to DirectStore.CONSTRUCTOR,
+      StorageMode.Backing to BackingStore.CONSTRUCTOR
     )
   }
 }
