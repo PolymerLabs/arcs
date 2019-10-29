@@ -189,6 +189,16 @@ public class ArcsAndroidClient {
     });
   }
 
+  public void addManifests(List<String> manifests) {
+    executeArcsServiceCall(iArcsService -> {
+      try {
+        iArcsService.addManifests(manifests);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
   /**
    * If the service is not connected, adds the Consumer callback to a queue to be executed later
    * when the service (re)connects. Otherwise, invokes the provided callback immediately with an

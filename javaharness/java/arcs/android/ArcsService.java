@@ -81,6 +81,11 @@ public class ArcsService extends Service {
       public void registerRenderer(String modality, IRemoteOutputCallback callback) {
         arcsShellApi.registerRemoteRenderer(modality, callback);
       }
+
+      @Override
+      public boolean addManifests(List<String> manifests) {
+        return arcsShellApi.addManifests(manifests);
+      }
     };
   }
 }

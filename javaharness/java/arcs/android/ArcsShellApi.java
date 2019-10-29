@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.RemoteException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -37,14 +38,16 @@ class ArcsShellApi {
   @Inject
   UiBroker uiBroker;
 
+  private Context context;
   private boolean arcsReady;
+  private boolean manifestsAdded;
 
   @Inject
   ArcsShellApi() {}
 
   void init(Context context) {
+    this.context = context;
     arcsReady = false;
-    environment.init(context);
     environment.addReadyListener(recipes -> arcsReady = true);
     environment.addReadyListener(recipes -> {
       recipes.forEach(recipe -> {
@@ -113,6 +116,16 @@ class ArcsShellApi {
 
   void sendMessageToArcs(String message) {
     runWhenReady(() -> arcsMessageSender.sendMessageToArcs(message));
+  }
+
+  boolean addManifests(List<String> manifests) {
+    if (manifestsAdded) {
+      return false;
+    } else {
+      manifestsAdded = true;
+      environment.init(context, manifests);
+      return true;
+    }
   }
 
   private String constructRunArcRequest(ArcData arcData) {

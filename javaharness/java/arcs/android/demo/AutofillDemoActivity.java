@@ -10,6 +10,7 @@ import android.view.autofill.AutofillManager;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Arrays;
 import javax.inject.Inject;
 
 import arcs.android.ArcsAndroidClient;
@@ -45,6 +46,8 @@ public class AutofillDemoActivity extends Activity {
     capturePersonButton.setOnClickListener(v -> capturePerson());
 
     arcsAndroidClient.connect(this);
+    arcsAndroidClient.addManifests(
+        Arrays.asList("https://$particles/PipeApps/AndroidAutofill.arcs"));
   }
 
   @Override
