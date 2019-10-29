@@ -167,7 +167,7 @@ class StoreTest {
       listener1Finished.complete(Unit)
       true
     })
-    val id2 = activeStore.on(ProxyCallback { message ->
+    val id2 = activeStore.on(ProxyCallback {
       fail("This callback should not be called.")
       true
     })
@@ -181,7 +181,7 @@ class StoreTest {
   fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
     val (driver, _) = setupMocks()
     val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
-    doNothing().whenever(driver).registerReceiver(anyOrNull(), receiverCaptor.capture())
+    whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
 
     val store = createStore()
     val activeStore = store.activate()
@@ -233,7 +233,7 @@ class StoreTest {
   fun doesntSendUpdateToDriver_afterDriverOriginatedMessages() = runBlockingTest {
     val (driver, _) = setupMocks()
     val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
-    doNothing().whenever(driver).registerReceiver(anyOrNull(), receiverCaptor.capture())
+    whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
     whenever(driver.send(any(), any())).thenThrow(IllegalStateException("Should not be invoked"))
 
     val store = createStore().activate()
@@ -253,7 +253,7 @@ class StoreTest {
     val firstCallComplete = CompletableDeferred<Unit>(coroutineContext[Job.Key])
     val secondCallComplete = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
-    doNothing().whenever(driver).registerReceiver(anyOrNull(), receiverCaptor.capture())
+    whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
     whenever(driver.send(any(), any())).then {
       firstCallComplete.complete(Unit)
       return@then false
@@ -298,7 +298,7 @@ class StoreTest {
     val (driver, _) = setupMocks()
     val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
     val driverModelCaptor = argumentCaptor<CrdtCount.Data>()
-    doNothing().whenever(driver).registerReceiver(anyOrNull(), receiverCaptor.capture())
+    whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
     whenever(driver.send(driverModelCaptor.capture(), any())).thenReturn(true)
 
     val activeStore = createStore().activate() as DirectStore

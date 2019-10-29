@@ -16,6 +16,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
             "//third_party/java/junit",
             "//third_party/java/truth",
             "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+            "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
         ],
     )
     for src_file in glob(["*.kt"])

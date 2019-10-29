@@ -21,7 +21,9 @@ import arcs.storage.StorageKey
 import arcs.storage.StorageKeyParser
 import arcs.util.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /** Protocol to be used with the volatile driver. */
 const val VOLATILE_DRIVER_PROTOCOL = "volatile"
@@ -134,14 +136,14 @@ internal class VolatileDriver<Data : Any>(
     memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
   }
 
-  override fun registerReceiver(
+  override suspend fun registerReceiver(
     token: String?,
     receiver: suspend (data: Data, version: Int) -> Unit
   ) {
     this.receiver = receiver
     this.pendingModel
       ?.takeIf { this.token != token }
-      ?.let { runBlocking { receiver(it, pendingVersion) } }
+      ?.let { receiver(it, pendingVersion) }
     this.pendingModel = null
   }
 

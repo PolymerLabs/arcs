@@ -60,10 +60,6 @@ class DirectStore internal constructor(
   private val nextCallbackToken = atomic(1)
   private val callbacks = atomic(mapOf<Int, ProxyCallback<CrdtData, CrdtOperation, Any?>>())
 
-  init {
-    driver.registerReceiver(options.versionToken, this::onReceive)
-  }
-
   override suspend fun idle() = state.value.idle()
 
   override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
@@ -403,7 +399,11 @@ class DirectStore internal constructor(
         options as StoreOptions<CrdtData, CrdtOperation, Any?>,
         localModel = localModel,
         driver = driver
-      )
+      ).also { store ->
+        driver.registerReceiver(options.versionToken) { data, version ->
+          store.onReceive(data, version)
+        }
+      }
     }
   }
 }
