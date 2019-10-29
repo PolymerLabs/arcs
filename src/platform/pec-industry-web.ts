@@ -19,7 +19,9 @@ export const pecIndustry = (loader): PecFactory => {
   // get real path from meta path
   const workerUrl = loader.resolve(WORKER_PATH);
   // use service worker cache instead of generating blobs
-  const useCache = new URLSearchParams(window.location.search).has('use-cache');
+  const useCache =
+    location.protocol === 'https:' &&
+    (new URLSearchParams(window.location.search)).has('use-cache');
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
   let workerBlobUrl;
   if (!useCache) {

@@ -13,9 +13,14 @@ const ARCS_CACHE_MANAGER = './cache-mgr-sw.js';
 // Arcs Cache Manager
 (async function _arcsCacheManager() {
   if ('serviceWorker' in navigator) {
-    // Only registers the cache manager service worker when requested with
-    // ?use-cache url parameter, otherwise unregisters all service workers
-    // at this scope.
+    // Service Worker supports ONLY https:// and http://localhost.
+    // Only https:// is accepted at this moment since local socket test
+    // servers are not supported on devices.
+    if (location.protocol !== 'https:') return;
+
+    // Only registering the new cache manager service worker instance when
+    // requested in 'https' protocol and with ?use-cache url parameter,
+    // otherwise unregistering the existing service workers at this scope.
     const params = new URLSearchParams(window.location.search);
     if (!params.has('use-cache')) {
       navigator.serviceWorker.getRegistrations().then(function(regs) {
