@@ -150,8 +150,9 @@ final class AndroidArcsEnvironment {
     if (settings.enableArcsExplorer()) {
       url += "&explore-proxy=" + settings.devServerPort();
     }
-
-    // TODO: add a runtime setting for ?use-cache
+    if (settings.useCacheManager()) {
+      url += "&use-cache";
+    }
 
     Log.i("Arcs", "runtime url: " + url);
     webView.loadUrl(url);

@@ -22,6 +22,8 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
       "debug.arcs.runtime.load_workstation_assets";
   // Port to be used for the communication with the dev server.
   private static final String DEV_SERVER_PORT_PROPERTY = "debug.arcs.runtime.dev_server_port";
+  // Equivalent to &use-cache parameter
+  private static final String USE_CACHE_MANAGER_PROPERTY = "debug.arcs.runtime.use_cache_mgr";
 
   // Default settings:
   // Logs the most information
@@ -34,6 +36,8 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final boolean DEFAULT_ASSETS_FROM_WORKSTATION = false;
   // Uses the standard 8786 port
   private static final int DEFAULT_DEV_SERVER_PORT = 8786;
+  private static final boolean DEFAULT_USE_DEV_SERVER = false;
+  private static final boolean DEFAULT_USE_CACHE_MANAGER = false;
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());
@@ -45,6 +49,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
     abstract String shellUrl();
     abstract boolean loadAssetsFromWorkstation();
     abstract int devServerPort();
+    abstract boolean useCacheManager();
 
     static Builder builder() {
       return new AutoValue_AndroidRuntimeSettings_Settings.Builder();
@@ -57,6 +62,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
       abstract Builder setShellUrl(String shellUrl);
       abstract Builder setLoadAssetsFromWorkstation(boolean loadAssetsFromWorkstation);
       abstract Builder setDevServerPort(int devServerPort);
+      abstract Builder setUseCacheManager(boolean useCacheManager);
       abstract Settings build();
     }
   }
@@ -78,6 +84,8 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
                 DEFAULT_ASSETS_FROM_WORKSTATION))
         .setDevServerPort(
             getProperty(DEV_SERVER_PORT_PROPERTY, Integer::valueOf, DEFAULT_DEV_SERVER_PORT))
+        .setUseCacheManager(
+            getProperty(USE_CACHE_MANAGER_PROPERTY, Boolean::valueOf, DEFAULT_USE_CACHE_MANAGER))
         .build();
   }
 
@@ -104,6 +112,10 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   @Override
   public int devServerPort() {
     return settings.devServerPort();
+
+  @Override
+  public boolean useCacheManager() {
+    return settings.useCacheManager();
   }
 
   /**
