@@ -26,7 +26,7 @@ import {parse} from './verbs/parse.js';
 
 const {log} = logsFactory('pipe');
 
-const manifest = `
+const defaultManifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 // UIBroker/demo particles below here
@@ -35,7 +35,7 @@ import 'https://$particles/Restaurants/Restaurants.arcs'
 import 'https://$particles/Notification/Notification.arcs'
 `;
 
-export const initPipe = async (client, paths, storage) => {
+export const initPipe = async (client, paths, storage, manifest = defaultManifest) => {
   // configure arcs environment
   const env = Utils.init(paths.root, paths.map);
   // marshal context
@@ -49,7 +49,7 @@ export const initPipe = async (client, paths, storage) => {
 };
 
 // TODO(sjmiles): must be called only after `window.ShellApi` is initialized
-export const initArcs = async (storage, bus) => {
+export const initArcs = async (storage, bus, manifest = defaultManifest) => {
   // marshal ingestion arc
   // TODO(sjmiles): "live context" tool (for demos)
   await requireIngestionArc(storage, bus);

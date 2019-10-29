@@ -10,7 +10,7 @@
 
 // configure
 import '../../lib/platform/loglevel-web.js';
-import {version, paths, storage, test} from './config.js';
+import {manifest, version, paths, storage, test} from './config.js';
 
 // optional
 //import '../../lib/pouchdb-support.js';
@@ -30,11 +30,11 @@ const client = window.DeviceClient || {};
   // if remote DevTools are requested, wait for connect
   await DevtoolsSupport();
   // configure pipes and get a bus
-  const bus = await initPipe(client, paths, storage);
+  const bus = await initPipe(client, paths, storage, manifest);
   // export bus
   window.ShellApi = bus;
   // post startup shell initializations.
-  await initArcs(storage, bus);
+  await initArcs(storage, bus, manifest);
   // run smokeTest if requested
   if (test) {
     smokeTest(bus);
