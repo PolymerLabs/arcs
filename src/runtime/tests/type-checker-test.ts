@@ -11,9 +11,10 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
-import {TypeChecker} from '../recipe/type-checker.js';
-import {EntityType, SlotType, TypeVariable, Type, CollectionType, BigCollectionType} from '../type.js';
+import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
+import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
+import {Flags} from '../flags.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -258,7 +259,38 @@ describe('TypeChecker', () => {
     }
   });
 
-  it('correctly applies then resolves a one-sided Entity constraint', async () => {
+  it('SLANDLES SYNTAX correctly applies then resolves a one-sided Entity constraint', Flags.withPostSlandlesSyntax(async () => {
+    const manifest = await Manifest.parse(`
+      interface Interface
+        item: reads ~a
+
+      particle Concrete
+        item: reads Product {}
+
+      particle Transformation
+        particle0: hosts Interface
+        collection: reads [~a]
+
+      recipe
+        h0: create
+        Transformation
+          particle0: hosts Concrete
+          collection: reads h0
+    `);
+
+    const recipe = manifest.recipes[0];
+    const type = Handle.effectiveType(null, recipe.handles[0].connections);
+    assert.strictEqual(false, type.isResolved());
+    assert.strictEqual(true, type.canEnsureResolved());
+    assert.strictEqual(true, type.maybeEnsureResolved());
+    assert.strictEqual(true, type.isResolved());
+    assert.strictEqual('Product', (type.resolvedType() as CollectionType<EntityType>).collectionType.entitySchema.names[0]);
+
+    recipe.normalize();
+    assert.strictEqual(true, recipe.isResolved());
+  }));
+
+  it('correctly applies then resolves a one-sided Entity constraint', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       interface Interface
         in ~a item
@@ -287,15 +319,14 @@ describe('TypeChecker', () => {
 
     recipe.normalize();
     assert.strictEqual(true, recipe.isResolved());
-
-  });
+  }));
 
   it(`doesn't resolve Entity and Collection`, async () => {
-    const entity = {
+    const entity: TypeListInfo = {
       type: EntityType.make(['Product', 'Thing'], {}),
       direction: 'inout'
     };
-    const collection = {
+    const collection: TypeListInfo = {
       type: EntityType.make(['Product', 'Thing'], {}).collectionOf(),
       direction: 'inout'
     };
@@ -307,11 +338,11 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve Entity and BigCollection`, async () => {
-    const entity = {
+    const entity: TypeListInfo = {
       type: EntityType.make(['Product', 'Thing'], {}),
       direction: 'inout'
     };
-    const bigCollection = {
+    const bigCollection: TypeListInfo = {
       type: EntityType.make(['Product', 'Thing'], {}).bigCollectionOf(),
       direction: 'inout'
     };
@@ -323,11 +354,11 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve Collection and BigCollection`, async () => {
-    const collection = {
+    const collection: TypeListInfo = {
       type: EntityType.make(['Product', 'Thing'], {}).collectionOf(),
       direction: 'inout'
     };
-    const bigCollection = {
+    const bigCollection: TypeListInfo = {
       type: EntityType.make(['Product', 'Thing'], {}).bigCollectionOf(),
       direction: 'inout'
     };

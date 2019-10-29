@@ -9,11 +9,12 @@
  */
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from '../type.js';
+import {Direction} from '../manifest-ast-nodes.js';
 
 export interface TypeListInfo {
   type: Type;
-  direction?: string;
-  connection?: {direction: string};
+  direction?: Direction;
+  connection?: {direction: Direction};
 }
 
 export class TypeChecker {

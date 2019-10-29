@@ -19,6 +19,7 @@ import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
+import * as AstNode from './manifest-ast-nodes.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -392,7 +393,7 @@ export class ParticleSpec {
         // TODO: Remove post slandles syntax
         results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
       } else {
-        results.push(`${indent}${connection.name}: ${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()}${tags}`);
+        results.push(`${indent}${connection.name}: ${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} ${connection.type.toString()}${tags}`);
       }
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
@@ -433,7 +434,7 @@ export class ParticleSpec {
         }
       } else {
         tokens.push(`${s.name}:`);
-        tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
+        tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
 
         const fieldSet = [];
         // TODO(jopra): Move the formFactor and handle to the slot type information.
@@ -445,7 +446,7 @@ export class ParticleSpec {
         }
         const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
         if (s.isSet) {
-          tokens.push(`[Slot]${fields}`);
+          tokens.push(`[Slot${fields}]`);
         } else {
           tokens.push(`Slot${fields}`);
         }
@@ -520,7 +521,7 @@ export class ParticleSpec {
 
               }
             } else if (!handle.isInput) {
-              throw new Error(`Can't make a check on handle ${handleName} (not an input handle).`);
+              throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
             if (handle.check) {
               throw new Error(`Can't make multiple checks on the same input (${handleName}).`);

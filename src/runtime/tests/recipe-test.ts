@@ -396,15 +396,15 @@ describe('recipe', () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
-        anyA: in ~a
+        anyA: reads ~a
       particle Specific
-        thing: in Thing
+        thing: reads Thing
       recipe
         thingHandle: map
         Generic
-          anyA: in thingHandle
+          anyA: reads thingHandle
         Specific
-          thing: in thingHandle
+          thing: reads thingHandle
       store MyThings of Thing 'my-things' in ThingsJson
       resource ThingsJson
         start
@@ -418,15 +418,15 @@ describe('recipe', () => {
     assert.strictEqual(`recipe
   handle0: map 'my-things' // ~
   Generic as particle0
-    anyA: in handle0
+    anyA: reads handle0
   Specific as particle1
-    thing: in handle0`, recipe.toString());
+    thing: reads handle0`, recipe.toString());
     assert.strictEqual(`recipe
   handle0: map 'my-things' // ~ // Thing {}  // unresolved handle: unresolved type
   Generic as particle0
-    anyA: in handle0
+    anyA: reads handle0
   Specific as particle1
-    thing: in handle0`, recipe.toString({showUnresolved: true}));
+    thing: reads handle0`, recipe.toString({showUnresolved: true}));
     const hash = await recipe.digest();
 
     const recipeClone = recipe.clone();
@@ -441,9 +441,9 @@ describe('recipe', () => {
     assert.strictEqual(`recipe
   handle0: map 'my-things' // Thing {}
   Generic as particle0
-    anyA: in handle0
+    anyA: reads handle0
   Specific as particle1
-    thing: in handle0`, recipeClone.toString());
+    thing: reads handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
   }));
@@ -451,15 +451,15 @@ describe('recipe', () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
-        anyA: in ~a
+        anyA: reads ~a
       particle Specific
-        thing: in Thing
+        thing: reads Thing
       recipe
         thingHandle: map
         Generic
-          anyA: in thingHandle
+          anyA: reads thingHandle
         Specific
-          thing: in thingHandle
+          thing: reads thingHandle
       store MyThings of Thing 'my-things' in ThingsJson
       resource ThingsJson
         start
@@ -473,15 +473,15 @@ describe('recipe', () => {
     assert.strictEqual(`recipe
   handle0: map 'my-things' // ~
   Generic as particle0
-    anyA: in handle0
+    anyA: reads handle0
   Specific as particle1
-    thing: in handle0`, recipe.toString());
+    thing: reads handle0`, recipe.toString());
     assert.strictEqual(`recipe
   handle0: map 'my-things' // ~ // Thing {}  // unresolved handle: unresolved type
   Generic as particle0
-    anyA: in handle0
+    anyA: reads handle0
   Specific as particle1
-    thing: in handle0`, recipe.toString({showUnresolved: true}));
+    thing: reads handle0`, recipe.toString({showUnresolved: true}));
     const hash = await recipe.digest();
 
     const recipeClone = recipe.clone();
@@ -496,9 +496,9 @@ describe('recipe', () => {
     assert.strictEqual(`recipe
   handle0: map 'my-things' // Thing {}
   Generic as particle0
-    anyA: in handle0
+    anyA: reads handle0
   Specific as particle1
-    thing: in handle0`, recipeClone.toString());
+    thing: reads handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
   }));
@@ -823,15 +823,15 @@ describe('recipe', () => {
   it('SLANDLES SYNTAX recipe with require section toString method works', Flags.withPostSlandlesSyntax(async () => {
     const recipe = (await Manifest.parse(`
       particle B
-        root: consume
+        root: consumes
 
       recipe
         require
           A as p1
-            root: consume
+            root: consumes
         B as p2
-          root: consume s0`)).recipes[0];
-    const recipeString = 'recipe\n  require\n    A as p1\n      root: consume\n  B as p2\n    root: consume s0';
+          root: consumes s0`)).recipes[0];
+    const recipeString = 'recipe\n  require\n    A as p1\n      root: consumes\n  B as p2\n    root: consumes s0';
     assert.strictEqual(recipe.toString(), recipeString.toString(), 'incorrect recipe toString method');
   }));
   it('recipe with require section toString method works', Flags.withPreSlandlesSyntax(async () => {

@@ -398,11 +398,11 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when there are no checks', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       recipe R
         P
-          foo: out h
+          foo: writes h
     `);
     markParticlesWithIngress(graph, 'P');
     assert.isTrue(validateGraph(graph).isValid);
@@ -424,16 +424,16 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when a check is satisfied directly', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -460,16 +460,16 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when the edge has no ingress', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     assertGraphFailures(graph, [`'check bar is trusted' failed: no data ingress.`]);
   }));
@@ -494,16 +494,16 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when the edge has no ingress', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     assertGraphFailures(graph, [`'check bar is trusted' failed: no data ingress.`]);
   }));
@@ -528,16 +528,16 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when a different tag is claimed', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is notTrusted
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assertGraphFailures(graph, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
@@ -564,15 +564,15 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when no tag is claimed', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assertGraphFailures(graph, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
@@ -598,16 +598,16 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when a "not tag" is claimed and the tag is checked for', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is not trusted
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assertGraphFailures(graph, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
@@ -634,15 +634,15 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when a "not tag" is claimed and there are no checks', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is not trusted
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -667,23 +667,23 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when a "not tag" cancels a tag', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
-        baz: out Foo {}
+        bar: reads Foo {}
+        baz: writes Foo {}
         claim baz is not trusted
       particle P3
-        bye: in Foo {}
+        bye: reads Foo {}
         check bye is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
-          baz: out h1
+          bar: reads h
+          baz: writes h1
         P3
-          bye: in h1
+          bye: reads h1
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isFalse(validateGraph(graph).isValid);
@@ -717,30 +717,30 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when a "not tag" cancels a tag that is reclaimed downstream', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
-        baz: out Foo {}
+        bar: reads Foo {}
+        baz: writes Foo {}
         claim baz is not trusted
       particle P3
-        bye: in Foo {}
-        boy: out Foo {}
+        bye: reads Foo {}
+        boy: writes Foo {}
         claim boy is trusted
       particle P4
-        bit: in Foo {}
+        bit: reads Foo {}
         check bit is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
-          baz: out h1
+          bar: reads h
+          baz: writes h1
         P3
-          bye: in h1
-          boy: out h2
+          bye: reads h1
+          boy: writes h2
         P4
-          bit: in h2
+          bit: reads h2
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -781,11 +781,11 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds for a negated tag check when the tag is missing', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is not private
       recipe R
         P
-          bar: in h
+          bar: reads h
     `);
     markParticleInputsWithIngress(graph, 'P.bar');
     assert.isTrue(validateGraph(graph).isValid);
@@ -807,16 +807,16 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails for a negated tag check when the tag is present', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is private
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is not private
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assertGraphFailures(graph, [`'check bar is not private' failed for path: P1.foo -> P2.bar`]);
@@ -843,12 +843,12 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when an inout handle claims the same tag it checks', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P
-        foo: inout Foo {}
+        foo: reads writes Foo {}
         check foo is t
         claim foo is t
       recipe R
         P
-          foo: inout h
+          foo: reads writes h
     `);
     markParticlesWithIngress(graph, 'P');
     assert.isTrue(validateGraph(graph).isValid);
@@ -871,12 +871,12 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when an inout handle claims a different tag from the one it checks', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P
-        foo: inout Foo {}
+        foo: reads writes Foo {}
         check foo is t1
         claim foo is t2
       recipe R
         P
-          foo: inout h
+          foo: reads writes h
     `);
     markParticlesWithIngress(graph, 'P');
     assertGraphFailures(graph, [`'check foo is t1' failed for path: P.foo -> P.foo`]);
@@ -899,21 +899,21 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when handle has multiple inputs with the right tags', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P3
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          foo: out h
+          foo: writes h
         P3
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1', 'P2');
     assert.isTrue(validateGraph(graph).isValid);
@@ -945,20 +945,20 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when handle has multiple inputs but one is untagged', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        foo: out Foo {}
+        foo: writes Foo {}
       particle P3
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          foo: out h
+          foo: writes h
         P3
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1', 'P2');
     assertGraphFailures(graph, [`'check bar is trusted' failed for path: P2.foo -> P3.bar`]);
@@ -989,11 +989,11 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX fails when handle has no inputs', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P
-          bar: in h
+          bar: reads h
     `);
     markParticleInputsWithIngress(graph, 'P.bar');
     assertGraphFailures(graph, [`'check bar is trusted' failed for path: P.bar`]);
@@ -1014,22 +1014,22 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX claim propagates through a chain of particles', Flags.withPostSlandlesSyntax( async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
-        foo: out Foo {}
+        bar: reads Foo {}
+        foo: writes Foo {}
       particle P3
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h1
+          foo: writes h1
         P2
-          bar: in h1
-          foo: out h2
+          bar: reads h1
+          foo: writes h2
         P3
-          bar: in h2
+          bar: reads h2
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -1062,23 +1062,23 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX a claim made later in a chain of particles does not override claims made earlier', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is trusted
       particle P2
-        bar: in Foo {}
-        foo: out Foo {}
+        bar: reads Foo {}
+        foo: writes Foo {}
         claim foo is someOtherTag
       particle P3
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h1
+          foo: writes h1
         P2
-          bar: in h1
-          foo: out h2
+          bar: reads h1
+          foo: writes h2
         P3
-          bar: in h2
+          bar: reads h2
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -1112,21 +1112,21 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX succeeds when a check includes multiple tags', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is tag1
       particle P2
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is tag2
       particle P3
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is tag1 or is tag2
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          foo: out h
+          foo: writes h
         P3
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1', 'P2');
     assert.isTrue(validateGraph(graph).isValid);
@@ -1158,21 +1158,21 @@ describe('FlowGraph validation', () => {
   it(`SLANDLES SYNTAX fails when a check including multiple tags isn't met`, Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is tag1
       particle P2
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is someOtherTag
       particle P3
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is tag1 or is tag2
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          foo: out h
+          foo: writes h
         P3
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1', 'P2');
     assertGraphFailures(graph, [`'check bar is tag1 or is tag2' failed for path: P2.foo -> P3.bar`]);
@@ -1204,16 +1204,16 @@ describe('FlowGraph validation', () => {
   it(`SLANDLES SYNTAX succeeds when a check including multiple anded tags is met by a single claim`, Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is tag1 and is tag2
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is tag1 and is tag2
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -1240,16 +1240,16 @@ describe('FlowGraph validation', () => {
   it(`SLANDLES SYNTAX succeeds when a check including multiple 'or'd tags is met by a single claim`, Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is tag1 and is tag2
       particle P2
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is tag1 or is tag2
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1');
     assert.isTrue(validateGraph(graph).isValid);
@@ -1276,25 +1276,25 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX can detect more than one failure for the same check', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is notTrusted
       particle P2
-        foo: out Foo {}
+        foo: writes Foo {}
         claim foo is someOtherTag
       particle P3
-        foo: out Foo {}
+        foo: writes Foo {}
       particle P4
-        bar: in Foo {}
+        bar: reads Foo {}
         check bar is trusted
       recipe R
         P1
-          foo: out h
+          foo: writes h
         P2
-          foo: out h
+          foo: writes h
         P3
-          foo: out h
+          foo: writes h
         P4
-          bar: in h
+          bar: reads h
     `);
     markParticlesWithIngress(graph, 'P1', 'P2', 'P3');
     assertGraphFailures(graph, [
@@ -1338,22 +1338,22 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX can detect failures for different checks', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        foo1: out Foo {}
-        foo2: out Foo {}
+        foo1: writes Foo {}
+        foo2: writes Foo {}
         claim foo1 is notTrusted
         claim foo2 is trusted
       particle P2
-        bar1: in Foo {}
-        bar2: in Foo {}
+        bar1: reads Foo {}
+        bar2: reads Foo {}
         check bar1 is trusted
         check bar2 is extraTrusted
       recipe R
         P1
-          foo1: out h1
-          foo2: out h2
+          foo1: writes h1
+          foo2: writes h2
         P2
-          bar1: in h1
-          bar2: in h2
+          bar1: reads h1
+          bar2: reads h2
     `);
     markParticlesWithIngress(graph, 'P1');
     assertGraphFailures(graph, [
@@ -1399,12 +1399,12 @@ describe('FlowGraph validation', () => {
       store MyStore of MyEntity in MyResource
         claim is trusted
       particle P
-        input: in MyEntity
+        input: reads MyEntity
         check input is trusted
       recipe R
         s: use MyStore
         P
-          input: in s
+          input: reads s
     `);
     assert.isTrue(validateGraph(graph).isValid);
   }));
@@ -1433,13 +1433,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the handle is exactly the same', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input1: in Foo {}
-          input2: in Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
           check input2 is from handle input1
         recipe R
           P
-            input1: in h
-            input2: in h
+            input1: reads h
+            input2: reads h
       `);
       markParticleInputsWithIngress(graph, 'P.input1', 'P.input2');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1463,13 +1463,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when handle is different', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input1: in Foo {}
-          input2: in Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
           check input2 is from handle input1
         recipe R
           P
-            input1: in h1
-            input2: in h2
+            input1: reads h1
+            input2: reads h2
       `);
       markParticleInputsWithIngress(graph, 'P.input1', 'P.input2');
       assertGraphFailures(graph, [`'check input2 is from handle input1' failed for path: P.input2`]);
@@ -1493,13 +1493,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds for a negated handle check when the handle is different', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input1: in Foo {}
-          input2: in Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
           check input2 is not from handle input1
         recipe R
           P
-            input1: in h1
-            input2: in h2
+            input1: reads h1
+            input2: reads h2
       `);
       markParticleInputsWithIngress(graph, 'P.input1', 'P.input2');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1523,13 +1523,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails for a negated handle check when the handle is the same', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input1: in Foo {}
-          input2: in Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
           check input2 is not from handle input1
         recipe R
           P
-            input1: in h
-            input2: in h
+            input1: reads h
+            input2: reads h
       `);
       markParticleInputsWithIngress(graph, 'P.input1');
       assertGraphFailures(graph, [`'check input2 is not from handle input1' failed for path: P.input2`]);
@@ -1553,11 +1553,11 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds on an inout handle checking against itself', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          foo: inout Foo {}
+          foo: reads writes Foo {}
           check foo is from handle foo
         recipe R
           P
-            foo: inout h
+            foo: reads writes h
       `);
       markParticlesWithIngress(graph, 'P');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1579,19 +1579,19 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the handle has inputs', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          output1: out Foo {}
-          output2: out Foo {}
+          output1: writes Foo {}
+          output2: writes Foo {}
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource
         recipe R
           P1
-            output1: out h
-            output2: out h
+            output1: writes h
+            output2: writes h
           P2
-            trustedSource: in h
-            inputToCheck: in h
+            trustedSource: reads h
+            inputToCheck: reads h
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1621,19 +1621,19 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the handle is separated by a chain of other particles', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource
         recipe R
           P1
-            input: in h
-            output: out h1
+            input: reads h
+            output: writes h1
           P2
-            trustedSource: in h
-            inputToCheck: in h1
+            trustedSource: reads h
+            inputToCheck: reads h1
       `);
       markParticleInputsWithIngress(graph, 'P1.input');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1663,20 +1663,20 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the handle is separated by another particle with a claim', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           claim output is somethingElse
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource
         recipe R
           P1
-            input: in h
-            output: out h1
+            input: reads h
+            output: writes h1
           P2
-            trustedSource: in h
-            inputToCheck: in h1
+            trustedSource: reads h
+            inputToCheck: reads h1
       `);
       markParticleInputsWithIngress(graph, 'P1.input');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1707,21 +1707,21 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when another handle is also found', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          input1: in Foo {}
-          input2: in Foo {}
-          output: out Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
+          output: writes Foo {}
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource
         recipe R
           P1
-            input1: in h
-            input2: in h1
-            output: out h2
+            input1: reads h
+            input2: reads h1
+            output: writes h2
           P2
-            trustedSource: in h
-            inputToCheck: in h2
+            trustedSource: reads h
+            inputToCheck: reads h2
       `);
       markParticleInputsWithIngress(graph, 'P1.input1', 'P1.input2');
       assertGraphFailures(graph, [
@@ -1759,13 +1759,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the output is directly connected to the input', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          foo: in Foo {}
-          bar: out Foo {}
+          foo: reads Foo {}
+          bar: writes Foo {}
           check foo is from output bar
         recipe R
           P
-            foo: in h
-            bar: out h
+            foo: reads h
+            bar: writes h
       `);
       markParticlesWithIngress(graph, 'P');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1789,13 +1789,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when the output is directly connected to an ingress input', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          foo: in Foo {}
-          bar: out Foo {}
+          foo: reads Foo {}
+          bar: writes Foo {}
           check foo is from output bar
         recipe R
           P
-            foo: in h
-            bar: out h
+            foo: reads h
+            bar: writes h
       `);
       markParticleInputsWithIngress(graph, 'P.foo');
       assertGraphFailures(graph, [`'check foo is from output bar' failed for path: P.foo`]);
@@ -1819,19 +1819,19 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the output is separated from the input by another particle', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
       particle P1
-        foo: in Foo {}
-        bar: out Foo {}
+        foo: reads Foo {}
+        bar: writes Foo {}
         check foo is from output bar
       particle P2
-        foo: in Foo {}
-        bar: out Foo {}
+        foo: reads Foo {}
+        bar: writes Foo {}
       recipe R
         P1
-          foo: in h2
-          bar: out h1
+          foo: reads h2
+          bar: writes h1
         P2
-          foo: in h1
-          bar: out h2
+          foo: reads h1
+          bar: writes h2
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1861,17 +1861,17 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when another particle writes to the same handle', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
       particle P1
-        foo: in Foo {}
-        bar: out Foo {}
+        foo: reads Foo {}
+        bar: writes Foo {}
         check foo is from output bar
       particle P2
-        bar: out Foo {}
+        bar: writes Foo {}
       recipe R
         P1
-          foo: in h
-          bar: out h
+          foo: reads h
+          bar: writes h
         P2
-          bar: out h
+          bar: writes h
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -1907,12 +1907,12 @@ describe('FlowGraph validation', () => {
           [{"text": "asdf"}]
         store MyStore of MyEntity in MyResource
         particle P
-          input: in MyEntity
+          input: reads MyEntity
           check input is from store MyStore
         recipe R
           s: use MyStore
           P
-            input: in s
+            input: reads s
       `);
       assert.isTrue(validateGraph(graph).isValid);
     }));
@@ -1944,12 +1944,12 @@ describe('FlowGraph validation', () => {
           [{"text": "asdf"}]
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
-          input: in MyEntity
+          input: reads MyEntity
           check input is from store 'my-store-id'
         recipe R
           s: use MyStore
           P
-            input: in s
+            input: reads s
       `);
       assert.isTrue(validateGraph(graph).isValid);
     }));
@@ -1982,12 +1982,12 @@ describe('FlowGraph validation', () => {
           [{"text": "asdf"}]
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
-          input: in MyEntity
+          input: reads MyEntity
           check input is not from store 'my-store-id'
         recipe R
           s: use MyStore
           P
-            input: in h
+            input: reads h
       `);
       markParticleInputsWithIngress(graph, 'P.input');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2022,12 +2022,12 @@ describe('FlowGraph validation', () => {
           [{"text": "asdf"}]
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
-          input: in MyEntity
+          input: reads MyEntity
           check input is not from store 'my-store-id'
         recipe R
           s: use MyStore
           P
-            input: in s
+            input: reads s
       `);
       assertGraphFailures(graph, [`'check input is not from store 'my-store-id'' failed for path: P.input`]);
     }));
@@ -2054,11 +2054,11 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when the data store identified by name is missing', Flags.withPostSlandlesSyntax(async () => {
       assertThrowsAsync(async () => await buildFlowGraph(`
         particle P
-          input: in Foo {}
+          input: reads Foo {}
           check input is from store MyStore
         recipe R
           P
-            input: in h
+            input: reads h
       `), 'Store with name MyStore not found.');
     }));
 
@@ -2076,11 +2076,11 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when the data store identified by ID is missing', Flags.withPostSlandlesSyntax(async () => {
       assertThrowsAsync(async () => await buildFlowGraph(`
         particle P
-          input: in Foo {}
+          input: reads Foo {}
           check input is from store 'my-store-id'
         recipe R
           P
-            input: in h
+            input: reads h
       `), `Store with id 'my-store-id' not found.`);
     }));
 
@@ -2105,12 +2105,12 @@ describe('FlowGraph validation', () => {
         store MyStore of MyEntity 'my-store-id' in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P
-          input: in MyEntity
+          input: reads MyEntity
           check input is from store 'my-store-id'
         recipe R
           s: use SomeOtherStore
           P
-            input: in s
+            input: reads s
       `), 'Store with id my-store-id is not connected by a handle.');
     }));
 
@@ -2143,15 +2143,15 @@ describe('FlowGraph validation', () => {
         store MyStore of MyEntity in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P
-          input1: in MyEntity
-          input2: in MyEntity
+          input1: reads MyEntity
+          input2: reads MyEntity
           check input1 is from store MyStore
         recipe R
           s1: use SomeOtherStore
           s2: use MyStore
           P
-            input1: in s1
-            input2: in s2
+            input1: reads s1
+            input2: reads s2
       `);
       assertGraphFailures(graph, [`'check input1 is from store MyStore' failed for path: P.input1`]);
     }));
@@ -2183,17 +2183,17 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when only the handle is present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource or is trusted
         recipe R
           P1
-            output: out h
+            output: writes h
           P2
-            trustedSource: in h
-            inputToCheck: in h
+            trustedSource: reads h
+            inputToCheck: reads h
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2221,18 +2221,18 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when only the tag is present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
           claim output is trusted
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource or is trusted
         recipe R
           P1
-            output: out h2
+            output: writes h2
           P2
-            trustedSource: in h
-            inputToCheck: in h2
+            trustedSource: reads h
+            inputToCheck: reads h2
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2261,17 +2261,17 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when neither condition is present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource or is trusted
         recipe R
           P1
-            output: out h2
+            output: writes h2
           P2
-            trustedSource: in h
-            inputToCheck: in h2
+            trustedSource: reads h
+            inputToCheck: reads h2
       `);
       markParticlesWithIngress(graph, 'P1');
       assertGraphFailures(graph, [
@@ -2304,18 +2304,18 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when both conditions are met', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
           claim output is trusted
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource and is trusted
         recipe R
           P1
-            output: out h
+            output: writes h
           P2
-            trustedSource: in h
-            inputToCheck: in h
+            trustedSource: reads h
+            inputToCheck: reads h
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2343,18 +2343,18 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when only one condition is met', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
           claim output is onlyKindaTrusted
         particle P2
-          trustedSource: in Foo {}
-          inputToCheck: in Foo {}
+          trustedSource: reads Foo {}
+          inputToCheck: reads Foo {}
           check inputToCheck is from handle trustedSource and is trusted
         recipe R
           P1
-            output: out h
+            output: writes h
           P2
-            trustedSource: in h
-            inputToCheck: in h
+            trustedSource: reads h
+            inputToCheck: reads h
       `);
       markParticlesWithIngress(graph, 'P1');
       assertGraphFailures(graph, [
@@ -2387,18 +2387,18 @@ describe('FlowGraph validation', () => {
       const validateCondition = async (checkCondition: string) => {
         const graph = await buildFlowGraph(`
           particle P1
-            output: out Foo {}
+            output: writes Foo {}
             claim output is trusted
           particle P2
-            trustedSource: in Foo {}
-            inputToCheck: in Foo {}
+            trustedSource: reads Foo {}
+            inputToCheck: reads Foo {}
             check inputToCheck ${checkCondition}
           recipe R
             P1
-              output: out h
+              output: writes h
             P2
-              trustedSource: in h
-              inputToCheck: in h
+              trustedSource: reads h
+              inputToCheck: reads h
         `);
         markParticlesWithIngress(graph, 'P1');
         return validateGraph(graph).isValid;
@@ -2460,25 +2460,25 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds for tag checks when the slot consumer has the right tag', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          root: consume Slot
-            slotToProvide: provide Slot
+          root: consumes Slot
+            slotToProvide: provides Slot
           check slotToProvide data is trusted
         particle P2
-          foo: out Foo {}
+          foo: writes Foo {}
           claim foo is trusted
         particle P3
-          bar: in Foo {}
-          slotToConsume: consume Slot
+          bar: reads Foo {}
+          slotToConsume: consumes Slot
         recipe R
           root: slot 'rootslotid-root'
           P1
-            root: consume root
-              slotToProvide: provide slot0
+            root: consumes root
+              slotToProvide: provides slot0
           P2
-            foo: out h
+            foo: writes h
           P3
-            bar: in h
-            slotToConsume: consume slot0
+            bar: reads h
+            slotToConsume: consumes slot0
       `);
       markParticlesWithIngress(graph, 'P2');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2513,18 +2513,18 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails for tag checks when the tag is missing', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          root: consume Slot
-            slotToProvide: provide Slot
+          root: consumes Slot
+            slotToProvide: provides Slot
           check slotToProvide data is trusted
         particle P2
-          slotToConsume: consume
+          slotToConsume: consumes
         recipe R
           root: slot 'rootslotid-root'
           P1
-            root: consume root
-              slotToProvide: provide slot0
+            root: consumes root
+              slotToProvide: provides slot0
           P2
-            slotToConsume: consume slot0
+            slotToConsume: consumes slot0
       `);
       markParticlesWithIngress(graph, 'P2');
       assertGraphFailures(graph, [`'check slotToProvide data is trusted' failed for path: P2.slotToConsume`]);
@@ -2552,22 +2552,22 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds for handle checks when the slot consumer derives from the right handle', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          foo: out Foo {}
-          root: consume Slot
-            slotToProvide: provide Slot
+          foo: writes Foo {}
+          root: consumes Slot
+            slotToProvide: provides Slot
           check slotToProvide data is from handle foo
         particle P2
-          bar: in Foo {}
-          slotToConsume: consume Slot
+          bar: reads Foo {}
+          slotToConsume: consumes Slot
         recipe R
           root: slot 'rootslotid-root'
           P1
-            foo: out h
-            root: consume root
-              slotToProvide: provide slot0
+            foo: writes h
+            root: consumes root
+              slotToProvide: provides slot0
           P2
-            bar: in h
-            slotToConsume: consume slot0
+            bar: reads h
+            slotToConsume: consumes slot0
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2600,20 +2600,20 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails for handle checks when the handle is not present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          foo: out Foo {}
-          root: consume Slot
-            slotToProvide: provide Slot
+          foo: writes Foo {}
+          root: consumes Slot
+            slotToProvide: provides Slot
           check slotToProvide data is from handle foo
         particle P2
-          slotToConsume: consume Slot
+          slotToConsume: consumes Slot
         recipe R
           root: slot 'rootslotid-root'
           P1
-            foo: out h
-            root: consume root
-              slotToProvide: provide slot0
+            foo: writes h
+            root: consumes root
+              slotToProvide: provides slot0
           P2
-            slotToConsume: consume slot0
+            slotToConsume: consumes slot0
       `);
       markParticlesWithIngress(graph, 'P2');
       assertGraphFailures(graph, [`'check slotToProvide data is from handle foo' failed for path: P2.slotToConsume`]);
@@ -2645,14 +2645,14 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX supports tag checks in a single-particle cycle', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           check input is trusted
           claim output is trusted
         recipe R
           P
-            input: in h
-            output: out h
+            input: reads h
+            output: writes h
       `);
       markParticlesWithIngress(graph, 'P');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2675,14 +2675,14 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX supports tag checks in a single-particle cycle', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           check input is trusted
           claim output is trusted
         recipe R
           P
-            input: in h
-            output: out h
+            input: reads h
+            output: writes h
       `);
       markParticlesWithIngress(graph, 'P');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2706,13 +2706,13 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX supports handle checks tags in a single-particle cycle', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           check input is from handle output
         recipe R
           P
-            input: in h
-            output: out h
+            input: reads h
+            output: writes h
       `);
       markParticlesWithIngress(graph, 'P');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2735,21 +2735,21 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX works with simple two-particle cycles', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           check input is trusted
           claim output is trusted
         particle P2
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           check input is trusted
         recipe R
           P1
-            input: in h1
-            output: out h2
+            input: reads h1
+            output: writes h2
           P2
-            input: in h2
-            output: out h1
+            input: reads h2
+            output: writes h1
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -2782,19 +2782,19 @@ describe('FlowGraph validation', () => {
       const runWithCheck = async (check: string) => {
         const graph = await buildFlowGraph(`
           particle P
-            input1: in Foo {}
-            input2: in Foo {}
-            output1: out Foo {}
-            output2: out Foo {}
+            input1: reads Foo {}
+            input2: reads Foo {}
+            output1: writes Foo {}
+            output2: writes Foo {}
             claim output1 derives from input1 and is a
             claim output2 derives from input2 and is b
             check input2 ${check}
           recipe R
             P
-              input1: in h1
-              input2: in h2
-              output1: out h1
-              output2: out h2
+              input1: reads h1
+              input2: reads h2
+              output1: writes h1
+              output2: writes h2
         `);
         markParticlesWithIngress(graph, 'P');
         return validateGraph(graph).isValid;
@@ -2841,46 +2841,46 @@ describe('FlowGraph validation', () => {
       const runWithCheck = async (check: string) => {
         const graph = await buildFlowGraph(`
           particle P1
-            input1: in Foo {}
-            input2: in Foo {}
-            output1: out Foo {}
-            output2: out Foo {}
+            input1: reads Foo {}
+            input2: reads Foo {}
+            output1: writes Foo {}
+            output2: writes Foo {}
             check input1 ${check}
             check input2 ${check}
             claim output1 is a
             claim output2 is b
           particle P2
-            input1: in Foo {}
-            input2: in Foo {}
-            output1: out Foo {}
-            output2: out Foo {}
+            input1: reads Foo {}
+            input2: reads Foo {}
+            output1: writes Foo {}
+            output2: writes Foo {}
             check input1 ${check}
             check input2 ${check}
           particle P3
-            input: in Foo {}
-            output: out Foo {}
+            input: reads Foo {}
+            output: writes Foo {}
             check input ${check}
           particle P4
-            input: in Foo {}
-            output: out Foo {}
+            input: reads Foo {}
+            output: writes Foo {}
             check input ${check}
           recipe R
             P1
-              input1: in h3
-              input2: in h6
-              output1: out h1
-              output2: out h4
+              input1: reads h3
+              input2: reads h6
+              output1: writes h1
+              output2: writes h4
             P2
-              input1: in h1
-              input2: in h5
-              output1: out h2
-              output2: out h6
+              input1: reads h1
+              input2: reads h5
+              output1: writes h2
+              output2: writes h6
             P3
-              input: in h2
-              output: out h3
+              input: reads h2
+              output: writes h3
             P4
-              input: in h4
-              output: out h5
+              input: reads h4
+              output: writes h5
         `);
         markParticlesWithIngress(graph, 'P1');
         return validateGraph(graph).isValid;
@@ -2953,32 +2953,32 @@ describe('FlowGraph validation', () => {
       // the middle of it. The cycle shouldn't stop the claim from propagating.
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
           claim output is trusted
         particle P2
-          input1: in Foo {}
-          input2: in Foo {}
-          output: out Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
+          output: writes Foo {}
         particle P3
-          input: in Foo {}
-          output1: out Foo {}
-          output2: out Foo {}
+          input: reads Foo {}
+          output1: writes Foo {}
+          output2: writes Foo {}
         particle P4
-          input: in Foo {}
+          input: reads Foo {}
           check input is trusted
         recipe R
           P1
-            output: out h1
+            output: writes h1
           P2
-            input1: in h1
-            input2: in h4
-            output: out h2
+            input1: reads h1
+            input2: reads h4
+            output: writes h2
           P3
-            input: in h2
-            output1: out h3
-            output2: out h4
+            input: reads h2
+            output1: writes h3
+            output2: writes h4
           P4
-           input: in h3
+           input: reads h3
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -3026,30 +3026,30 @@ describe('FlowGraph validation', () => {
       // P3.
       const graph = await buildFlowGraph(`
         particle P1
-          input1: in Foo {}
-          input2: in Foo {}
-          output: out Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
+          output: writes Foo {}
           claim output is a
         particle P2
-          input: in Foo {}
-          output1: out Foo {}
-          output2: out Foo {}
-          output3: out Foo {}
+          input: reads Foo {}
+          output1: writes Foo {}
+          output2: writes Foo {}
+          output3: writes Foo {}
         particle P3
-          input: in Foo {}
+          input: reads Foo {}
           check input is a
         recipe R
           P1
-            input1: in h1
-            input2: in h2
-            output: out h3
+            input1: reads h1
+            input2: reads h2
+            output: writes h3
           P2
-            input: in h3
-            output1: out h1
-            output2: out h2
-            output3: out h4
+            input: reads h3
+            output1: writes h1
+            output2: writes h2
+            output3: writes h4
           P3
-            input: in h4
+            input: reads h4
       `);
       markParticleInputsWithIngress(graph, 'P1.input1', 'P1.input2');
       assert.isTrue(validateGraph(graph).isValid);
@@ -3093,21 +3093,21 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX tags can be removed in a simple cycle ', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           check input is trusted
           claim output is trusted
         particle P2
-          input: in Foo {}
-          output: out Foo {}
+          input: reads Foo {}
+          output: writes Foo {}
           claim output is not trusted
         recipe R
           P1
-            input: in h1
-            output: out h2
+            input: reads h1
+            output: writes h2
           P2
-            input: in h2
-            output: out h1
+            input: reads h2
+            output: writes h1
       `);
       markParticlesWithIngress(graph, 'P1');
       assertGraphFailures(graph, [
@@ -3145,27 +3145,27 @@ describe('FlowGraph validation', () => {
       // P2.input, which removes the tag. A check at P3 should fail.
       const graph = await buildFlowGraph(`
         particle P1
-          output: out Foo {}
+          output: writes Foo {}
           claim output is trusted
         particle P2
-          input1: in Foo {}
-          input2: in Foo {}
-          output1: out Foo {}
-          output2: out Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
+          output1: writes Foo {}
+          output2: writes Foo {}
           claim output2 is not trusted
         particle P3
-          input: in Foo {}
+          input: reads Foo {}
           check input is trusted
         recipe R
           P1
-            output: out h1
+            output: writes h1
           P2
-            input1: in h1
-            input2: in h3
-            output1: out h2
-            output2: out h3
+            input1: reads h1
+            input2: reads h3
+            output1: writes h2
+            output2: writes h3
           P3
-            input: in h2
+            input: reads h2
       `);
       markParticlesWithIngress(graph, 'P1');
       assertGraphFailures(graph, [
@@ -3209,19 +3209,19 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX overlapping cycles with no ingress fail', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P
-          input1: in Foo {}
-          input2: in Foo {}
-          output1: out Foo {}
-          output2: out Foo {}
+          input1: reads Foo {}
+          input2: reads Foo {}
+          output1: writes Foo {}
+          output2: writes Foo {}
           claim output1 is trusted
           claim output2 is trusted
           check input1 is trusted
         recipe R
           P
-            input1: in h
-            input2: in h
-            output1: out h
-            output2: out h
+            input1: reads h
+            input2: reads h
+            output1: writes h
+            output2: writes h
       `);
       assertGraphFailures(graph, [`'check input1 is trusted' failed: no data ingress.`]);
     }));
@@ -3250,26 +3250,26 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX prunes unrelated inputs', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          foo: out [Foo {}]
-          bar: out [Bar {}]
+          foo: writes [Foo {}]
+          bar: writes [Bar {}]
           claim foo is trusted
         particle P2
-          foo: in [Foo {}]
-          bar: in [Bar {}]
-          ref: out Reference<Foo {}>
+          foo: reads [Foo {}]
+          bar: reads [Bar {}]
+          ref: writes Reference<Foo {}>
         particle P3
-          ref: in Reference<Foo {}>
+          ref: reads Reference<Foo {}>
           check ref is trusted
         recipe R
           P1
-            foo: out h1
-            bar: out h2
+            foo: writes h1
+            bar: writes h2
           P2
-            foo: in h1
-            bar: in h2
-            ref: out h3
+            foo: reads h1
+            bar: reads h2
+            ref: writes h3
           P3
-            ref: in h3
+            ref: reads h3
       `);
       markParticlesWithIngress(graph, 'P1');
       assert.isTrue(validateGraph(graph).isValid);
@@ -3350,27 +3350,27 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX "derives from" claims override reference pruning', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          foo: out [Foo {}]
-          bar: out [Bar {}]
+          foo: writes [Foo {}]
+          bar: writes [Bar {}]
           claim foo is trusted
         particle P2
-          foo: in [Foo {}]
-          bar: in [Bar {}]
-          ref: out Reference<Foo {}>
+          foo: reads [Foo {}]
+          bar: reads [Bar {}]
+          ref: writes Reference<Foo {}>
           claim ref derives from bar
         particle P3
-          ref: in Reference<Foo {}>
+          ref: reads Reference<Foo {}>
           check ref is trusted
         recipe R
           P1
-            foo: out h1
-            bar: out h2
+            foo: writes h1
+            bar: writes h2
           P2
-            foo: in h1
-            bar: in h2
-            ref: out h3
+            foo: reads h1
+            bar: reads h2
+            ref: writes h3
           P3
-            ref: in h3
+            ref: reads h3
       `);
       markParticlesWithIngress(graph, 'P1');
       assertGraphFailures(graph, [`'check ref is trusted' failed for path: P1.bar -> P2.bar -> P2.ref -> P3.ref`]);

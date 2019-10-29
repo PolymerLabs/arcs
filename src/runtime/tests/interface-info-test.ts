@@ -19,10 +19,10 @@ import {Flags} from '../flags.js';
 describe('interface', () => {
   it('SLANDLES SYNTAX round trips interface info', Flags.withPostSlandlesSyntax(async () => {
     const interfStr = `interface HostedInterface
-  in ~a
-  name: out Text {Text name}
-  root: consume? Slot
-  other: provide [Slot]`;
+  reads ~a
+  name: writes Text {Text name}
+  root: consumes? Slot
+  other: provides [Slot]`;
     const manifest = await Manifest.parse(interfStr);
 
     assert.lengthOf(manifest.interfaces, 1);
