@@ -1,0 +1,8 @@
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])
+
+alias(
+    name = "mockito",
+    actual = "@maven//:org_mockito_mockito_core",
+)

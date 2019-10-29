@@ -31,12 +31,11 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   open val versionToken: String? = options.versionToken
   /** The [IStore] this instance is fronting. */
   val baseStore: IStore<Data, Op, ConsumerData>? = options.baseStore
+  /** Returns the model [Data]. */
+  abstract val localData: Data
 
   /** Suspends until all pending operations are complete. */
   open suspend fun idle() = Unit
-
-  /** Returns the model [Data]. */
-  abstract suspend fun getLocalData(): Data
 
   /**
    * Registers a [ProxyCallback] with the store and returns a token which can be used to unregister
@@ -67,5 +66,10 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return this@ActiveStore.onProxyMessage(messageCopy)
       }
     }
+  }
+
+  /** Clones data from the given store into this one. */
+  suspend fun cloneFrom(store: ActiveStore<Data, Op, ConsumerData>) {
+    onProxyMessage(ProxyMessage.ModelUpdate(store.localData, id = null))
   }
 }

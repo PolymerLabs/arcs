@@ -26,6 +26,7 @@ import kotlinx.atomicfu.getAndUpdate
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -36,16 +37,19 @@ import kotlin.coroutines.coroutineContext
 class DirectStore internal constructor(
   options: StoreOptions<CrdtData, CrdtOperation, Any?>,
   internal val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
-  private val driver: Driver<CrdtData>
+  internal val driver: Driver<CrdtData>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
   override val versionToken: String?
     get() = driver.token
+
+  override val localData: CrdtData
+    get() = synchronized(this) { localModel.data }
 
   /**
    * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
    * transitions into the Idle state.
    */
-  private val idleDeferred = atomic(IdleDeferred())
+  private val idleDeferred: AtomicRef<IdleDeferred> = atomic(CompletableDeferred(Unit))
   /**
    * [AtomicRef] of a list of [PendingDriverModel]s, allowing us to treat it as a copy-on-write,
    * threadsafe list using [AtomicRef.update].
@@ -59,8 +63,6 @@ class DirectStore internal constructor(
   init {
     driver.registerReceiver(options.versionToken, this::onReceive)
   }
-
-  override suspend fun getLocalData(): CrdtData = synchronized(this) { localModel.data }
 
   override suspend fun idle() = state.value.idle()
 
@@ -232,11 +234,11 @@ class DirectStore internal constructor(
       return
     }
 
-    // Wait until we're idle before we continue.
-    idleDeferred.update {
-      it.await()
-      // Re-initialize so that future calls get an un-completed idle signal.
-      return@update IdleDeferred()
+    // Wait until we're idle before we continue, unless - of course - we've been waiting on driver
+    // model information, in which case - we can start without being idle.
+    if (state.value !is State.AwaitingDriverModel) {
+      // Await is called on the old value of idleDeferred.
+      idleDeferred.getAndSet(IdleDeferred()).await()
     }
 
     var currentState = state.value
@@ -262,7 +264,8 @@ class DirectStore internal constructor(
   }
 
   private data class PendingDriverModel(val model: CrdtData, val version: Int)
-  private class IdleDeferred : CompletableDeferred<Unit> by CompletableDeferred(null)
+  private suspend fun IdleDeferred() : CompletableDeferred<Unit> =
+    CompletableDeferred(coroutineContext[Job.Key])
 
   private sealed class State(
     val stateName: Name,
@@ -404,3 +407,4 @@ class DirectStore internal constructor(
     }
   }
 }
+private typealias IdleDeferred = CompletableDeferred<Unit>

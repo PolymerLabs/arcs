@@ -89,7 +89,7 @@ internal class VolatileDriver<Data : Any>(
   // The identifier is simply used to help differentiate between VolatileDrivers for the same
   // storage key.
   private val identifier = nextIdentifier.incrementAndGet()
-  private var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
+  internal var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
   private var pendingModel: Data? = null
   private var pendingVersion: Int = 0
 

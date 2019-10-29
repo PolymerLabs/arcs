@@ -91,7 +91,7 @@ class RamDiskStoreIntegrationTest {
     activeStore.idle()
 
     val volatileEntry = RamDisk.memory.get<CrdtCount.Data>(storageKey)
-    assertThat(volatileEntry?.data).isEqualTo(activeStore.localModel.data)
+    assertThat(volatileEntry?.data).isEqualTo(activeStore.localData)
     assertThat(volatileEntry?.version).isEqualTo(3)
     println("Done")
   }
@@ -136,8 +136,8 @@ class RamDiskStoreIntegrationTest {
     // actor at a time, and their actors' versions are correct.
     val opReply2 =
       async(start = CoroutineStart.UNDISPATCHED) {
+        // Random sleep/delay, to make the ordering of execution random.
         delay(Random.nextLong(1500))
-        println("opReply2")
         activeStore2.onProxyMessage(
           Operations(
             listOf(
@@ -149,8 +149,8 @@ class RamDiskStoreIntegrationTest {
       }
     val opReply3 =
       async(start = CoroutineStart.UNDISPATCHED) {
+        // Random sleep/delay, to make the ordering of execution random.
         delay(Random.nextLong(1500))
-        println("opReply3")
         activeStore1.onProxyMessage(
           Operations(
             listOf(
@@ -167,9 +167,59 @@ class RamDiskStoreIntegrationTest {
     activeStore2.idle()
 
     val volatileEntry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory[storageKey]
-    assertThat(volatileEntry?.data).isEqualTo(activeStore1.localModel.data)
-    assertThat(volatileEntry?.data).isEqualTo(activeStore2.localModel.data)
+    assertThat(volatileEntry?.data).isEqualTo(activeStore1.localData)
+    assertThat(volatileEntry?.data).isEqualTo(activeStore2.localData)
     assertThat(volatileEntry?.version).isEqualTo(5)
+  }
+
+  @Test
+  fun store_operationUpdates_fromMultipleSources_withTimingDelays() = runBlockingTest {
+    val storageKey = RamDiskStorageKey("unique")
+    val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
+    val activeStore1 = store1.activate() as DirectStore
+    val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
+    val activeStore2 = store2.activate() as DirectStore
+
+    assertThat(
+      activeStore1.onProxyMessage(Operations(listOf(Increment("me", 0 to 1)), 1))
+    ).isTrue()
+
+    delay(100)
+
+    val concurrentJobA = launch {
+      delay(Random.nextLong(5))
+      assertThat(
+        activeStore1.onProxyMessage(
+          Operations(listOf(Increment("them", 0 to 1)), 1)
+        )
+      ).isTrue()
+    }
+    val concurrentJobB = launch {
+      delay(Random.nextLong(5))
+      assertThat(
+        activeStore2.onProxyMessage(
+          Operations(listOf(Increment("other", 0 to 1)), 1)
+        )
+      ).isTrue()
+    }
+
+    listOf(concurrentJobA, concurrentJobB).joinAll()
+
+    delay(100)
+
+    assertThat(
+      activeStore2.onProxyMessage(Operations(listOf(Increment("other", 1 to 2)), 1))
+    ).isTrue()
+
+    activeStore1.idle()
+    activeStore2.idle()
+
+    val entry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory[storageKey]
+    assertThat(entry?.data).isEqualTo(activeStore1.localData)
+    assertThat(entry?.data).isEqualTo(activeStore2.localData)
+    assertThat(entry?.version).isEqualTo(4)
+    assertThat(activeStore1.localModel.consumerView).isEqualTo(4)
+    assertThat(activeStore2.localModel.consumerView).isEqualTo(4)
   }
 
   companion object {
