@@ -64,9 +64,7 @@ class DirectStore internal constructor(
 
   override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
     val token = nextCallbackToken.getAndIncrement()
-    callbacks.update { callbackMap ->
-      return@update callbackMap + (token to callback)
-    }
+    callbacks.update { it + (token to callback) }
     return token
   }
 
@@ -80,8 +78,8 @@ class DirectStore internal constructor(
    * Receives operations/model-updates from connected storage proxies.
    *
    * Additionally, StorageProxy objects may request a SyncRequest, which will result in an
-   * up-to-date model being sent back to that StorageProxy. a return value of true implies that the
-   * message was accepted, a return value of false requires that the proxy send a model sync.
+   * up-to-date model being sent back to that StorageProxy. A return value of `true` implies that
+   * the message was accepted, a return value of `false` requires that the proxy send a model sync.
    */
   override suspend fun onProxyMessage(
     message: ProxyMessage<CrdtData, CrdtOperation, Any?>
