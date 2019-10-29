@@ -604,7 +604,7 @@ DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide
   }
 
 DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
-  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any')
+  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any') &([^a-zA-Z0-9] / !.)
   {
     // TODO(jopra): Parse optionality properly.
     const dir = AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
