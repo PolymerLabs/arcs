@@ -12,6 +12,7 @@
 
 class FlagDefaults {
   static useNewStorageStack = false;
+  static usePostSlandlesSyntax = false;
   static usePreSlandlesSyntax = true;
 }
 
@@ -22,10 +23,10 @@ export class Flags extends FlagDefaults {
   }
 
   static withPreSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
-    return Flags.withFlags({usePreSlandlesSyntax: true}, f);
+    return Flags.withFlags({usePreSlandlesSyntax: true, usePostSlandlesSyntax: false}, f);
   }
   static withPostSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
-    return Flags.withFlags({usePreSlandlesSyntax: false}, f);
+    return Flags.withFlags({usePostSlandlesSyntax: true, usePreSlandlesSyntax: false}, f);
   }
 
   static withNewStorageStack<T>(f: () => Promise<T>): () => Promise<T> {
