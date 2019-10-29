@@ -3,6 +3,8 @@ directories:
   src_kt/javatests/arcs
   src_kt/project
   build_defs
+  tools
+  third_party
 
 targets:
   //src_kt/java/...

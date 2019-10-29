@@ -3,6 +3,7 @@ package arcs.android;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JavascriptInterface;
@@ -12,10 +13,13 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -33,12 +37,17 @@ import arcs.api.UiBroker;
 @Singleton
 final class AndroidArcsEnvironment {
 
+  private static final String TAG = "Arcs";
+
   interface ReadyListener {
     void onReady(List<PortableJson> recipes);
   }
 
   private static final Logger logger =
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
+
+  private static final String DYNAMIC_MANIFEST_URL =
+      "file:///android_asset/arcs/dynamic.manifest";
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -78,9 +87,7 @@ final class AndroidArcsEnvironment {
     readyListeners.add(listener);
   }
 
-  void init(Context context) {
-    readyListeners.clear();
-
+  void init(Context context, List<String> manifests) {
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -102,6 +109,26 @@ final class AndroidArcsEnvironment {
     webView.setWebViewClient(new WebViewClient() {
       @Override
       public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        Log.d(TAG, "Intercepting request " + request.getUrl());
+        if (TextUtils.equals(
+            DYNAMIC_MANIFEST_URL,
+            request.getUrl().toString())) {
+          String dynamicManifest = manifests
+              .stream()
+              .map(s -> String.format("import \'%s\'", s))
+              .collect(Collectors.joining("\n"));
+
+          try {
+            Log.d(TAG, "Intercepted dynamic manifest request, offering " + dynamicManifest);
+            return new WebResourceResponse(
+                "text/plain",
+                "utf-8",
+                new ByteArrayInputStream(dynamicManifest.getBytes(StandardCharsets.UTF_8)));
+          } catch (Exception e) {
+            Log.e(TAG, "Failed to return dynamic manifest.", e);
+          }
+        }
+
         return super.shouldInterceptRequest(view, request);
       }
     });
@@ -129,6 +156,7 @@ final class AndroidArcsEnvironment {
     if (webView != null) {
       webView.destroy();
     }
+    readyListeners.clear();
   }
 
   @JavascriptInterface

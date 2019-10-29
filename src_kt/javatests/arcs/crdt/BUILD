@@ -1,6 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
 
 [
     kt_jvm_test(
@@ -12,8 +12,8 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_test")
             "//src_kt/java/arcs/common",
             "//src_kt/java/arcs/crdt",
             "//src_kt/java/arcs/crdt/internal",
-            "@maven//:com_google_truth_truth",
-            "@maven//:junit_junit",
+            "//third_party/java/junit",
+            "//third_party/java/truth",
         ],
     )
     for src_file in glob(["*.kt"])

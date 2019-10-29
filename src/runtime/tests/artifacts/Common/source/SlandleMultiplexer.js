@@ -19,8 +19,8 @@ recipe
   ${other.handles.join('\n')}
   handle2: \`slot '${slot.id}'
   ${hostedParticle.name}
-    ${hostedParticle.handleConnections[0].name}: in handle1
-    ${hostedParticle.handleConnections[1].name}: \`consume handle2
+    ${hostedParticle.handleConnections[0].name}: reads handle1
+    ${hostedParticle.handleConnections[1].name}: \`consumes handle2
     ${other.connections.join('\n')}
   `;
       return recipe;

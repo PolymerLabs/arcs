@@ -708,17 +708,17 @@ describe('firebase', function() {
             Text value
 
           particle P in 'a.js'
-            var: in Data
-            col: out [Data]
-            big: inout BigCollection<Data>
+            var: reads Data
+            col: writes [Data]
+            big: reads writes BigCollection<Data>
 
           recipe
-            use as handle0
-            use as handle1
-            use as handle2
+            handle0: use
+            handle1: use
+            handle2: use
             P
-              var: in handle0
-              col: out handle1
+              var: reads handle0
+              col: writes handle1
               big: any handle2
         `,
         'a.js': `

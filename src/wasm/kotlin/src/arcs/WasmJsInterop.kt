@@ -196,3 +196,6 @@ fun log(msg: String) {
     write(msg.toWasmString())
     flush()
 }
+
+fun main() {
+}

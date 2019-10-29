@@ -1,4 +1,4 @@
-// Tutorial 2: Basic Templates
+// Tutorial: Basic Templates
 // Shows how to use templates to render data. This recipe has the exact same structure as the Hello World tutorial, only the JS is different.
 
 particle BasicTemplateParticle in 'BasicTemplate.wasm'

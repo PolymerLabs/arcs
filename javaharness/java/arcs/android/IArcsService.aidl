@@ -25,8 +25,11 @@ interface IArcsService {
 
   void stopArc(String arcId, String pecId);
 
-  void registerRenderer(String modality, IRemoteOutputCallback callback);
   // TODO: add unregisterRenderer method.
-  // TODO: add UI events passing / handling method.
+  void registerRenderer(String modality, IRemoteOutputCallback callback);
+
+  // Adds manifests to Arcs.
+  // Returns true if manifests are successfully added. Otherwise false.
+  boolean addManifests(in List<String> manifests);
 }
 

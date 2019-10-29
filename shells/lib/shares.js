@@ -9,7 +9,7 @@
  */
 
 import {Stores} from './stores.js';
-import {logsFactory} from '../../build/runtime/log-factory.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 
 const {log} = logsFactory('Shares', '#999900');
 

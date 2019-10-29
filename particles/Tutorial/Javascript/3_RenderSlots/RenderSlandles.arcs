@@ -1,4 +1,4 @@
-// Tutorial 4: Render Slots
+// Tutorial: Render Slots
 // Creates two particles, and renders one inside the other using render slots.
 
 particle SlandleParentParticle in 'parent.js'
@@ -16,4 +16,4 @@ recipe SlandleRenderSlotsRecipe
   SlandleChildParticle
     childSlot `consume shared
 
-  description `Tutorial 4: Render Slandles`
+  description `Tutorial 3: Render Slandles`

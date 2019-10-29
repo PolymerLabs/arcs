@@ -9,7 +9,7 @@
  */
 
 import {Reference, ReferenceManager} from './reference-manager.js';
-import {logFactory} from '../platform/log-web.js';
+import {logsFactory} from '../platform/logs-factory.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
 import {ClassificationPrediction} from './tfjs-service.js';
@@ -22,7 +22,7 @@ import * as Tf from '@tensorflow/tfjs';
 // for actual code
 import {requireTf} from '../platform/tf-web.js';
 
-const log = logFactory('tfjs-mobilenet-service');
+const {log} = logsFactory('tfjs-mobilenet-service');
 
 /**
  * A tuple that determines the type and structure of MobileNet

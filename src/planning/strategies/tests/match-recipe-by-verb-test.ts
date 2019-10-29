@@ -27,16 +27,16 @@ describe('MatchRecipeByVerb', () => {
       schema Energy
 
       particle JumpingBoots in 'A.js'
-        f: in Feet
-        e: in Energy
+        f: reads Feet
+        e: reads Energy
       particle FootFactory in 'B.js'
-        f: out Feet
+        f: writes Feet
       particle NuclearReactor in 'C.js'
-        e: out Energy
+        e: writes Energy
 
       recipe &jump
-        JumpingBoots.f: in FootFactory.f
-        JumpingBoots.e: in NuclearReactor.e
+        JumpingBoots.f: reads FootFactory.f
+        JumpingBoots.e: reads NuclearReactor.e
     `);
     const arc = StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[0], score: 1}];
@@ -44,7 +44,7 @@ describe('MatchRecipeByVerb', () => {
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.isEmpty(results[0].result.particles);
-    assert.deepEqual(results[0].result.toString(), 'recipe &jump\n  JumpingBoots.e: in NuclearReactor.e\n  JumpingBoots.f: in FootFactory.f');
+    assert.deepEqual(results[0].result.toString(), 'recipe &jump\n  JumpingBoots.e: reads NuclearReactor.e\n  JumpingBoots.f: reads FootFactory.f');
   }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
@@ -82,12 +82,12 @@ describe('MatchRecipeByVerb', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
-        p: out S
+        p: writes S
       particle Q in 'B.js'
-        q: in S
+        q: reads S
 
       recipe
-        P.p: out Q.q
+        P.p: writes Q.q
         &a
 
       recipe &a
@@ -106,9 +106,9 @@ describe('MatchRecipeByVerb', () => {
 `recipe &a
   handle0: create // S {}
   P as particle0
-    p: out handle0
+    p: writes handle0
   Q as particle1
-    q: in handle0`);
+    q: reads handle0`);
   }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
@@ -180,14 +180,14 @@ ${recipesManifest}`);
 
   const slandlesSyntaxBasicHandlesContraintsManifest = `
       particle P in 'A.js'
-        a: out S {}
+        a: writes S {}
 
       particle Q in 'B.js'
-        a: in S {}
-        b: out S {}
+        a: reads S {}
+        b: writes S {}
 
       particle R in 'C.js'
-        c: in S {}
+        c: reads S {}
 
       recipe &verb
         P
@@ -222,7 +222,7 @@ ${recipesManifest}`);
     const results = await slandlesSyntaxGeneratePlans(`
       recipe
         &verb
-          a: out`);
+          a: writes`);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
     assert.strictEqual(results[0].result.particles[0].name, 'P');
@@ -245,7 +245,7 @@ ${recipesManifest}`);
     const results = await slandlesSyntaxGeneratePlans(`
       recipe
         &verb
-          a: in`);
+          a: reads`);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[1].result.particles, 1);
     assert.strictEqual(results[1].result.particles[0].name, 'Q');
@@ -268,8 +268,8 @@ ${recipesManifest}`);
     const results = await slandlesSyntaxGeneratePlans(`
       recipe
         &verb
-          a: in
-          b: out
+          a: reads
+          b: writes
       `);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[1].result.particles, 1);
@@ -296,7 +296,7 @@ ${recipesManifest}`);
       recipe
         handle0: create
         &verb
-          *: out handle0
+          writes handle0
       `);
     assert.lengthOf(results, 3);
     assert.deepEqual([['P'], ['P', 'Q'], ['Q']], results.map(r => r.result.particles.map(p => p.name)));
@@ -369,10 +369,10 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
-        a: in S {}
+        a: reads S {}
 
       particle Q in 'B.js'
-        b: out S {}
+        b: writes S {}
 
       recipe &verb
         P
@@ -380,9 +380,9 @@ ${recipesManifest}`);
       recipe
         handle0: create
         &verb
-          a: in handle0
+          a: reads handle0
         Q
-          b: out handle0
+          b: writes handle0
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
@@ -430,10 +430,10 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 
       particle P in 'A.js'
-        a: in S {}
+        a: reads S {}
 
       particle Q in 'B.js'
-        b: out S {}
+        b: writes S {}
 
       recipe &verb
         P
@@ -441,9 +441,9 @@ ${recipesManifest}`);
       recipe
         handle0: create
         &verb
-          *: in handle0
+          reads handle0
         Q
-          b: out handle0
+          b: writes handle0
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
@@ -492,16 +492,16 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 
       particle O in 'Z.js'
-        x: in R {}
-        y: out S {}
+        x: reads R {}
+        y: writes S {}
 
       particle P in 'A.js'
-        x: in R {}
-        y: out S {}
-        a: in S {}
+        x: reads R {}
+        y: writes S {}
+        a: reads S {}
 
       particle Q in 'B.js'
-        b: out S {}
+        b: writes S {}
 
       recipe &verb
         O
@@ -510,9 +510,9 @@ ${recipesManifest}`);
       recipe
         handle0: create
         &verb
-          *: in handle0
+          reads handle0
         Q
-          b: out handle0
+          b: writes handle0
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);

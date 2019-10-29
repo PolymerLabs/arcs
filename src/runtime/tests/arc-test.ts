@@ -875,14 +875,14 @@ describe('Arc ' + storageKeyPrefix, () => {
           in ~a *
 
         particle A in 'a.js'
-          host HostedInterface hosts
+          host HostedInterface reader
 
         particle B in 'b.js'
           in Entity {} val
 
         recipe
           A
-            hosts = B
+            reader = B
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
@@ -908,7 +908,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const recipeHCs = serialization.recipes[0].handleConnections;
     assert.lengthOf(recipeHCs, 1);
     const [connection] = recipeHCs;
-    assert.strictEqual('hosts', connection.name);
+    assert.strictEqual('reader', connection.name);
     assert.strictEqual('A', connection.particle.spec.name);
     assert.strictEqual('B', connection.handle.immediateValue.name);
   });

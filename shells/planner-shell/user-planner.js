@@ -8,12 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/platform/logs-factory.js';
 import {Planificator} from '../../build/planning/arcs-planning.js';
 import {devtoolsPlannerInspectorFactory} from '../../build/devtools-connector/devtools-planner-inspector.js';
 
-const log = logFactory('UserPlanner', '#4f0433');
-const warn = logFactory('UserPlanner', '#4f0433', 'warn');
+const {log, warn} = logsFactory('UserPlanner', '#4f0433');
 
 export class UserPlanner {
   constructor(userid, hostFactory, options) {

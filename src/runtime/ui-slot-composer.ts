@@ -16,7 +16,7 @@ import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {ProvidedSlotContext, SlotContext} from './slot-context.js';
-import {logsFactory} from './log-factory.js';
+import {logsFactory} from '../platform/logs-factory.js';
 
 const {log, warn} = logsFactory('UiSlotComposer', 'brown');
 

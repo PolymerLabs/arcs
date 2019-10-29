@@ -39,14 +39,8 @@ interface Driver<Data : Any> {
   val token: String?
 
   /** Registers a listener for [Data]. */
-  fun registerReceiver(token: String? = null, receiver: (data: Data, version: Int) -> Unit)
+  suspend fun registerReceiver(token: String? = null, receiver: suspend (data: Data, version: Int) -> Unit)
 
   /** Sends data to the [Driver] for storage. */
   suspend fun send(data: Data, version: Int): Boolean
-
-  enum class ExistenceCriteria {
-    ShouldExist,
-    ShouldCreate,
-    MayExist
-  }
 }

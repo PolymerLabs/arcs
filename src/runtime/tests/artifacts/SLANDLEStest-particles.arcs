@@ -12,19 +12,19 @@ schema Bar
 schema Far
 
 particle SlandleTestParticle in 'test-particle.js'
-  foo: in Foo
-  bar: out Bar
+  foo: reads Foo
+  bar: writes Bar
   description `test particle`
 
 interface SlandleTestInterface
-  foo: in Foo
-  bar: out Bar
+  foo: reads Foo
+  bar: writes Bar
 
-particle SlandleOuterParticle in 'outer-particle.js'
-  particle0: host SlandleTestInterface
-  input: in Foo
-  output: out Bar
+particle SlandleOuterParticle in 'SLANDLESSYNTAXouter-particle.js'
+  particle0: hosts SlandleTestInterface
+  input: reads Foo
+  output: writes Bar
 
 particle SlandleConsumerParticle in 'consumer-particle.js'
-  input: in Bar
-  annotation: `consume Slot
+  input: reads Bar
+  annotation: consumes? Slot

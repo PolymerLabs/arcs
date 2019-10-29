@@ -243,11 +243,11 @@ InterfaceItem
   / InterfaceArgument
 
 InterfaceArgument
-  = InterfaceArgumentPreSlandlesSyntax
-  / InterfaceArgumentUnified
+  = InterfaceArgumentUnified
+  / InterfaceArgumentPreSlandlesSyntax
 
 InterfaceArgumentPreSlandlesSyntax
-  = direction:(Direction whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
+  = direction:(DirectionPreSlandles whiteSpace)? type:(ParticleHandleConnectionType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
     requireUsePreSlandleSyntax();
     direction = optional(direction, dir => dir[0], 'any');
@@ -263,7 +263,7 @@ InterfaceArgumentPreSlandlesSyntax
   }
 
 InterfaceArgumentUnified
-  = name:NameWithColon? direction:Direction type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
+  = name:NameWithColon? direction:DirectionUnified type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
   {
     requireUsePostSlandleSyntax();
     name = name || '*';
@@ -297,7 +297,7 @@ InterfaceSlotPreSlandles
   }
 
 InterfaceSlotUnified
-  = name: NameWithColon? direction:('consume' / 'provide') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
+  = name:NameWithColon? direction:('consumes' / 'provides') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
   {
     requireUsePostSlandleSyntax();
     let isSet = false;
@@ -307,6 +307,12 @@ InterfaceSlotUnified
       type.fields.forEach(({name, value}) => {
         error(`interface slots do not currently support fields`);
       });
+    }
+    if (direction === 'consumes') {
+      direction = 'consume';
+    }
+    if (direction === 'provides') {
+      direction = 'provide';
     }
     return toAstNode<AstNode.InterfaceSlot>({
       kind: 'interface-slot',
@@ -339,7 +345,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args: AstNode.ParticleHandleConnection[] = [];
+    const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
     const trustClaims: AstNode.ParticleClaimStatement[] = [];
@@ -354,7 +360,7 @@ Particle
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
-        args = item.args; // TODO(jopra): This should merge, not overwrite;
+        args.push(...item.args);
         hasParticleHandleConnection = true;
       } else if (item.kind === 'particle-argument') {
         args.push(item);
@@ -555,7 +561,7 @@ ParticleHandleConnectionBody
   / ParticleHandleConnectionBodyUnified
 
 ParticleHandleConnectionBodyPreSlandle
-  = direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
+  = direction:DirectionPreSlandles isOptional:'?'? whiteSpace type:ParticleHandleConnectionType whiteSpace nametag:NameAndTagList
   {
     requireUsePreSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -570,17 +576,13 @@ ParticleHandleConnectionBodyPreSlandle
   }
 
 NameWithColon
-  = &((unsafeLowerIdent / '*') whiteSpace? ':') name:(lowerIdent / '*') whiteSpace? ':' whiteSpace?
+  = &(unsafeLowerIdent whiteSpace? ':') name:lowerIdent whiteSpace? ':' whiteSpace?
   {
-    // TODO(jopra): Remove ability to use "*: <def>" syntax and instead use anonymous "<def>".
-    if (name === '*') {
-      return null;
-    }
     return name;
   }
 
 ParticleHandleConnectionBodyUnified
-  = maybeName:NameWithColon? direction:Direction isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:DirectionUnified isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.ParticleHandleConnection>({
@@ -589,30 +591,29 @@ ParticleHandleConnectionBodyUnified
       type: type,
       isOptional: !!isOptional,
       dependentConnections: [],
-      name: maybeName || maybeTags[0] || expected(`either a name or tags to be supplied ${maybeName} ${maybeTags}`),
+      name: name || maybeTags[0] || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || []
     });
   }
 
-Direction "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
-  = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any'
+DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide, any)"
+  = ('inout' / 'in' / 'out' / 'host' / '`consume' / '`provide' / 'any') &([^a-zA-Z0-9] / !.)
   {
-    const dir = text() as AstNode.Direction;
-    if(dir === null) {
-      expected('a direction');
-    }
-    return dir;
+    requireUsePreSlandleSyntax();
+    return text() as AstNode.Direction;
+  }
+
+DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
+  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any') &([^a-zA-Z0-9] / !.)
+  {
+    // TODO(jopra): Parse optionality properly.
+    requireUsePostSlandleSyntax();
+    return AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
   }
 
 // TODO(jopra): Remove when syntax is updated to not use arrows.
 DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, `consume, `provide)"
-  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide' {
-    const dir = text() as AstNode.DirectionArrow;
-    if(dir === null) {
-      expected('a direction arrow');
-    }
-    return dir;
-  }
+  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide'
 
 ParticleHandleConnectionType
   = TypeVariable
@@ -771,7 +772,7 @@ SlandleType = type:SlotType {
   }
 
 ParticleSlotConnectionUnified
-  = name:NameWithColon? 'consume' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace
+  = name:NameWithColon? 'consumes' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotConnectionItem)*)?
   {
     requireUsePostSlandleSyntax();
@@ -859,7 +860,7 @@ ParticleProvidedSlotPreSlandles
   }
 
 ParticleProvidedSlotUnified
-  = name:NameWithColon? 'provide' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
+  = name:NameWithColon? 'provides' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
   {
     requireUsePostSlandleSyntax();
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
@@ -1008,15 +1009,16 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = RecipeParticleConnectionPreSlandle / RecipeParticleConnectionUnified
+  = RecipeParticleConnectionUnified
+  / RecipeParticleConnectionPreSlandle
 
 RecipeParticleConnectionUnified
-  = param:(lowerIdent / '*') ':' whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:NameWithColon? dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
-      param,
+      param: param || '*',
       dir,
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
@@ -1060,10 +1062,11 @@ ParticleConnectionTargetComponents
   }
 
 RecipeParticleSlotConnection
-  = RecipeParticleSlotConnectionPreSlandle / RecipeParticleSlotConnectionUnified
+  = RecipeParticleSlotConnectionUnified
+  / RecipeParticleSlotConnectionPreSlandle
 
 RecipeParticleSlotConnectionPreSlandle
-  = direction:SlotDirection whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  = direction:SlotDirectionPreSlandle whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
     requireUsePreSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
@@ -1076,14 +1079,14 @@ RecipeParticleSlotConnectionPreSlandle
     });
   }
 RecipeParticleSlotConnectionUnified
-  = param: NameWithColon direction:SlotDirection name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  = param: NameWithColon? direction:SlotDirectionUnified name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
       param,
-      tags,
+      tags: tags || [],
       name: optional(name, name=>name[1], null),
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     });
@@ -1099,22 +1102,38 @@ RecipeSlotConnectionRef
     });
   }
 
-SlotDirection
+SlotDirectionPreSlandle
   = 'provide' / 'consume'
+SlotDirectionUnified
+  = 'provides' { return 'provide'; }
+  / 'consumes' { return 'consume'; }
 
 RecipeConnection
   = RecipeConnectionUnified / RecipeConnectionPreSlandle
 
 RecipeConnectionUnified
-  = from:ConnectionTarget ':' whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTargetWithColon? direction:DirectionUnified whiteSpace to:ConnectionTarget eolWhiteSpace
   {
+    const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
+      kind: 'connection-target',
+      targetType: 'localName',
+      name: undefined,
+      param: '*',
+      tags: [],
+    });
     requireUsePostSlandleSyntax();
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction,
-      from,
+      from: from || anyTarget,
       to,
     });
+  }
+
+ConnectionTargetWithColon
+  = target: ConnectionTarget ':' whiteSpace?
+  {
+    return target;
   }
 
 RecipeConnectionPreSlandle
@@ -1210,30 +1229,23 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = RecipeHandlePreSlandle
-  / RecipeHandleUnified
-
-RecipeHandleUnified
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? namePreSlandles:(whiteSpace LocalName)? eolWhiteSpace
   {
-    requireUsePostSlandleSyntax();
+    if (name && namePreSlandles) {
+      error('cannot provide both name and localName for RecipeHandle.');
+    }
+    if (name) {
+      requireUsePostSlandleSyntax();
+    }
+    if (namePreSlandles) {
+      requireUsePreSlandleSyntax();
+      name = optional(namePreSlandles, n => n[1], null);
+    }
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate
-    });
-  }
-
-RecipeHandlePreSlandle
-  = type:RecipeHandleFate ref:(whiteSpace HandleRef)? name:(whiteSpace LocalName)? eolWhiteSpace
-  {
-    requireUsePreSlandleSyntax();
-    return toAstNode<AstNode.RecipeHandle>({
-      kind: 'handle',
-      name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
-      fate: type
     });
   }
 
@@ -1535,12 +1547,15 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 // Should only be used as a negative match.
 ReservedWord
   = keyword:(DirectionArrow
-  / Direction
-  / SlotDirection
+  / DirectionPreSlandles
+  / DirectionUnified
+  / SlotDirectionPreSlandle
+  / SlotDirectionUnified
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
   / 'import'
+  / 'in'
   / 'interface'
   / 'schema'
   / 'require'
@@ -1559,7 +1574,8 @@ upperIdent "an uppercase identifier (e.g. Foo)"
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord unsafeLowerIdent { return text(); }
 unsafeLowerIdent "a lowercase identifier or keyword"
-  = [a-z][a-z0-9_]i* { return text(); }
+  = [a-z][a-z0-9_]i* &([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
+  { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"

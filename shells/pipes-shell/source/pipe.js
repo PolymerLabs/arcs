@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {Utils} from '../../lib/utils.js';
@@ -22,10 +22,11 @@ import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
+import {parse} from './verbs/parse.js';
 
 const {log} = logsFactory('pipe');
 
-const manifest = `
+const defaultManifest = `
 import 'https://$particles/PipeApps/RenderNotification.arcs'
 import 'https://$particles/PipeApps/AndroidAutofill.arcs'
 // UIBroker/demo particles below here
@@ -34,7 +35,7 @@ import 'https://$particles/Restaurants/Restaurants.arcs'
 import 'https://$particles/Notification/Notification.arcs'
 `;
 
-export const initPipe = async (client, paths, storage) => {
+export const initPipe = async (client, paths, storage, manifest = defaultManifest) => {
   // configure arcs environment
   const env = Utils.init(paths.root, paths.map);
   // marshal context
@@ -48,7 +49,7 @@ export const initPipe = async (client, paths, storage) => {
 };
 
 // TODO(sjmiles): must be called only after `window.ShellApi` is initialized
-export const initArcs = async (storage, bus) => {
+export const initArcs = async (storage, bus, manifest = defaultManifest) => {
   // marshal ingestion arc
   // TODO(sjmiles): "live context" tool (for demos)
   await requireIngestionArc(storage, bus);
@@ -97,6 +98,9 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     },
     event: async (msg, tid, bus) => {
       return await event(msg, tid, bus);
+    },
+    parse: async (msg, tid, bus) => {
+      return await parse(msg, tid, bus);
     }
   });
   return dispatcher;

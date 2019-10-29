@@ -637,11 +637,61 @@ export type eol = string;
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
 export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
+export type DirectionUnified = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
 
 // Temporary move of DirectionArrow type definition and conversions so allow
 // DirectionArrow to be removed from the runtime.
 // TODO(jopra): Remove after syntax unification.
 export type DirectionArrow = '<-' | '->' | '<->' | '`consume' | '`provide' | '=';
+
+export function preSlandlesDirectionToDirection(direction: Direction, isOptional: boolean = false): string {
+  // TODO(jopra): Remove after syntax unification.
+  // Use switch for totality checking.
+  const opt: string = isOptional ? '?' : '';
+  switch (direction) {
+    case 'in':
+      return `reads${opt}`;
+    case 'out':
+      return `writes${opt}`;
+    case 'inout':
+      return `reads${opt} writes${opt}`;
+    case '`consume':
+      return `\`consumes${opt}`;
+    case '`provide':
+      return `\`provides${opt}`;
+    case 'host':
+      return `hosts${opt}`;
+    case 'any':
+      return `any${opt}`;
+    default:
+      // Catch nulls and unsafe values from javascript.
+      throw new Error(`Bad pre slandles direction ${direction}`);
+  }
+}
+
+export function directionToPreSlandlesDirection(direction: DirectionUnified): Direction {
+  // TODO(jopra): Remove after syntax unification.
+  // Use switch for totality checking.
+  switch (direction) {
+    case 'reads':
+      return 'in';
+    case 'writes':
+      return 'out';
+    case 'reads writes':
+      return 'inout';
+    case '`consumes':
+      return '`consume';
+    case '`provides':
+      return '`provide';
+    case 'hosts':
+      return 'host';
+    case 'any':
+      return 'any';
+    default:
+      // Catch nulls and unsafe values from javascript.
+      throw new Error(`Bad direction ${direction}`);
+  }
+}
 
 export function arrowToDirection(arrow: DirectionArrow): Direction {
   // TODO(jopra): Remove after syntax unification.

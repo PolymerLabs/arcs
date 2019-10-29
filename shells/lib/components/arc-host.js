@@ -9,7 +9,7 @@
  */
 
 import {ArcType} from '../../../build/runtime/type.js';
-import {logsFactory} from '../../../build/runtime/log-factory.js';
+import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {SyntheticStores} from '../synthetic-stores.js';
 import {Utils} from '../utils.js';
 

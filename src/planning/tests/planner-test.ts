@@ -144,12 +144,12 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume Slot
-        two: \`consume Slot
+        one: \`consumes Slot
+        two: \`consumes Slot
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: \`consume s0
+          one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
   }));
@@ -157,12 +157,12 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed set slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume [Slot]
-        two: \`consume [Slot]
+        one: \`consumes [Slot]
+        two: \`consumes [Slot]
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: \`consume s0
+          one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
   }));
@@ -170,8 +170,8 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed slots with the any direction', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume Slot
-        two: \`consume Slot
+        one: \`consumes Slot
+        two: \`consumes Slot
       recipe
         s0: \`slot 'slot-id0'
         P1
@@ -183,8 +183,8 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed set with the any direction', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume [Slot]
-        two: \`consume [Slot]
+        one: \`consumes [Slot]
+        two: \`consumes [Slot]
       recipe
         s0: \`slot 'slot-id0'
         P1
@@ -196,10 +196,10 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with slots with other slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
-        inSlot: \`consume Slot
-        outSlot: \`provide Slot
+        inSlot: \`consumes Slot
+        outSlot: \`provides Slot
       particle P2 in './render.js'
-        inSlot: \`consume Slot
+        inSlot: \`consumes Slot
       recipe
         s0: \`slot 'slot-id0'
         s1: \`slot 'slot-id1'
@@ -215,10 +215,10 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with set slots with other set slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
-        inSlot: \`consume Slot
-        outSlot: \`provide [Slot]
+        inSlot: \`consumes Slot
+        outSlot: \`provides [Slot]
       particle P2 in './render.js'
-        inSlot: \`consume [Slot]
+        inSlot: \`consumes [Slot]
       recipe
         s0: \`slot 'slot-id0'
         s1: \`slot 'slot-id1'
@@ -234,10 +234,10 @@ describe('Planner', () => {
   it('SLANDLES cannot resolve slots with set slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
-        inSlot: \`consume Slot
-        outSlot: \`provide Slot
+        inSlot: \`consumes Slot
+        outSlot: \`provides Slot
       particle P2 in './render.js'
-        inSlot: \`consume [Slot]
+        inSlot: \`consumes [Slot]
       recipe
         s0: \`slot 'slot-id0'
         s1: \`slot 'slot-id1'
@@ -254,12 +254,12 @@ describe('Planner', () => {
     assertThrowsAsync(async () => {
       await planFromManifest(`
         particle P1 in './some-particle.js'
-          one: \`consume Slot
-          two: \`consume Slot
+          one: \`consumes Slot
+          two: \`consumes Slot
         recipe
           s0: \`slot 'slot-id0'
           P1
-            one: \`provide s0
+            one: \`provides s0
       `);
     }, 'not compatible with \'`consume\'');
   }));
@@ -268,12 +268,12 @@ describe('Planner', () => {
     assertThrowsAsync(async () => {
       await planFromManifest(`
         particle P1 in './some-particle.js'
-          one: \`consume [Slot]
-          two: \`consume [Slot]
+          one: \`consumes [Slot]
+          two: \`consumes [Slot]
         recipe
           s0: \`slot 'slot-id0'
           P1
-            one: \`provide s0
+            one: \`provides s0
       `);
     }, 'not compatible with \'`consume\'');
   }));
@@ -281,12 +281,12 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume Slot
-        two: \`consume Slot
+        one: \`consumes Slot
+        two: \`consumes Slot
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: \`consume s0
+          one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
   }));
@@ -294,12 +294,12 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed set SLANDLES with consume', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume [Slot]
-        two: \`consume [Slot]
+        one: \`consumes [Slot]
+        two: \`consumes [Slot]
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: \`consume s0
+          one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
   }));
@@ -307,8 +307,8 @@ describe('Planner', () => {
   it('SLANDLES resolves particles with multiple consumed set slots with any', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        one: \`consume [Slot]
-        two: \`consume [Slot]
+        one: \`consumes [Slot]
+        two: \`consumes [Slot]
       recipe
         s0: \`slot 'slot-id0'
         P1
@@ -852,30 +852,30 @@ describe('Automatic resolution', () => {
         Number lng
 
       particle A
-        product: out Product
+        product: writes Product
       particle B
-        thing: in Thing
-        other: out Other
+        thing: reads Thing
+        other: writes Other
       particle C
-        something: in * {Number count}
-        location: in Location
+        something: reads * {Number count}
+        location: reads Location
       particle D
-        location: inout Location
+        location: reads writes Location
 
       recipe
         product: ?
         A
-          product: out product
+          product: writes product
       recipe
         other: ?
         B
-          other: out other
+          other: writes other
       recipe
         C
       recipe
         location: ?
         D
-          location: inout location
+          location: reads writes location
 `);
 
     assert.strictEqual(`recipe
@@ -883,15 +883,15 @@ describe('Automatic resolution', () => {
   handle1: create // ~
   handle2: create // Location {Number lat, Number lng}
   A as particle0
-    product: out handle0
+    product: writes handle0
   B as particle1
-    other: out handle1
-    thing: in handle0
+    other: writes handle1
+    thing: reads handle0
   C as particle2
-    location: in handle2
-    something: in handle1
+    location: reads handle2
+    something: reads handle1
   D as particle3
-    location: inout handle2`, result.toString({hideFields: false}));
+    location: reads writes handle2`, result.toString({hideFields: false}));
   }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
@@ -979,11 +979,11 @@ describe('Automatic resolution', () => {
       schema Thing
 
       particle ThingProducer
-        things: out [Thing]
+        things: writes [Thing]
 
       particle ThingRenderer
-        thing: in Thing
-        item: consume? Slot
+        thing: reads Thing
+        item: consumes? Slot
 
       recipe ProducingRecipe
         things: create #items
@@ -998,20 +998,20 @@ describe('Automatic resolution', () => {
   handle1: create #selected // Thing {}
   slot1: slot 'rootslotid-root' #root
   ItemMultiplexer as particle0
-    hostedParticle: host ThingRenderer
-    list: in handle0
-    item: consume slot0
+    hostedParticle: hosts ThingRenderer
+    list: reads handle0
+    item: consumes slot0
   SelectableList as particle1
-    items: inout handle0
-    selected: inout handle1
-    root: consume slot1
-      action: provide slot2
-      annotation: provide slot3
-      item: provide slot0
-      postamble: provide slot4
-      preamble: provide slot5
+    items: reads writes handle0
+    selected: reads writes handle1
+    root: consumes slot1
+      action: provides slot2
+      annotation: provides slot3
+      item: provides slot0
+      postamble: provides slot4
+      preamble: provides slot5
   ThingProducer as particle2
-    things: out handle0`;
+    things: writes handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
   }));
@@ -1066,8 +1066,8 @@ describe('Automatic resolution', () => {
         schema Thing
 
         particle ThingRenderer
-          thing: in Thing
-          item: consume? Slot`,
+          thing: reads Thing
+          item: consumes? Slot`,
         async (arcRef, manifest) => {
           arc = arcRef;
           const thing = manifest.findSchemaByName('Thing').entityClass();
@@ -1080,18 +1080,18 @@ describe('Automatic resolution', () => {
   handle1: create #selected // Thing {}
   slot1: slot 'rootslotid-root' #root
   ItemMultiplexer as particle0
-    hostedParticle: host ThingRenderer
-    list: in handle0
-    item: consume slot0
+    hostedParticle: hosts ThingRenderer
+    list: reads handle0
+    item: consumes slot0
   SelectableList as particle1
-    items: inout handle0
-    selected: inout handle1
-    root: consume slot1
-      action: provide slot2
-      annotation: provide slot3
-      item: provide slot0
-      postamble: provide slot4
-      preamble: provide slot5`);
+    items: reads writes handle0
+    selected: reads writes handle1
+    root: consumes slot1
+      action: provides slot2
+      annotation: provides slot3
+      item: provides slot0
+      postamble: provides slot4
+      preamble: provides slot5`);
   }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
