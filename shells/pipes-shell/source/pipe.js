@@ -12,61 +12,50 @@ import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 import {Utils} from '../../lib/utils.js';
-import {instantiateRecipeByName} from './lib/utils.js';
-import {requireContext} from './context.js';
-import {requireIngestionArc} from './ingestion-arc.js';
-import {dispatcher} from './dispatcher.js';
-import {Bus} from './bus.js';
 import {pec} from './verbs/pec.js';
 import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
-import {parse} from './verbs/parse.js';
+import {instantiateRecipeByName} from './lib/utils.js';
+import {requireContext} from './context.js';
+import {dispatcher} from './dispatcher.js';
+import {requireIngestionArc} from './ingestion-arc.js';
 
 const {log} = logsFactory('pipe');
 
-const defaultManifest = `
-import 'https://$particles/PipeApps/RenderNotification.arcs'
-import 'https://$particles/PipeApps/AndroidAutofill.arcs'
-// UIBroker/demo particles below here
-import 'https://$particles/Pipes/Pipes.arcs'
-import 'https://$particles/Restaurants/Restaurants.arcs'
-import 'https://$particles/Notification/Notification.arcs'
-`;
+export const busReady = async (bus, {manifest}) => {
+  bus.dispatcher.configure = async ({config}, tid, bus) => {
+    // TODO(sjmiles): hack to allow configuring mainfest via runtime argument
+    // for back-compat (deprecated)
+    config.manifest = config.manifest || manifest;
+    return await configureRuntime(config, bus);
+  };
+  bus.send({message: 'ready'});
+};
 
-export const initPipe = async (client, paths, storage, manifest = defaultManifest) => {
+const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs environment
-  const env = Utils.init(paths.root, paths.map);
+  Utils.init(rootPath, urlMap);
   // marshal context
-  const context = await requireContext(manifest);
-  // marshal dispatcher
-  populateDispatcher(dispatcher, storage, context, env);
-  // create bus
-  const bus = new Bus(dispatcher, client);
-  // return bus
-  return bus;
-};
-
-// TODO(sjmiles): must be called only after `window.ShellApi` is initialized
-export const initArcs = async (storage, bus, manifest = defaultManifest) => {
-  // marshal ingestion arc
-  // TODO(sjmiles): "live context" tool (for demos)
-  // await requireIngestionArc(storage, bus);
-  // marshal context
-  const context = await requireContext(manifest);
+  const context = await requireContext(manifest || config.manifest);
+  // configure Runtime
+  const runtime = new Runtime(Utils.env.loader, UiSlotComposer, context);
+  runtime.pecFactory = Utils.env.pecFactory;
+  // attach verb-handlers to dispatcher
+  populateDispatcher(dispatcher, storage, context);
   // send pipe identifiers to client
-  identifyPipe(context, bus);
+  contextReady(bus, context);
 };
 
-const identifyPipe = async (context, bus) => {
+const contextReady = async (bus, context) => {
   // TODO(sjmiles): Formalize the pipes API.
   const recipes = context.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
-  bus.send({message: 'ready', recipes});
+  bus.send({message: 'context', recipes});
 };
 
-const populateDispatcher = (dispatcher, storage, context, env) => {
-  const runtime = new Runtime(env.loader, UiSlotComposer, context);
+const populateDispatcher = (dispatcher, storage, context) => {
+  const runtime = Runtime.getRuntime();
   Object.assign(dispatcher, {
     pec: async (msg, tid, bus) => {
       return await pec(msg, tid, bus);
@@ -74,7 +63,7 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     // TODO: consolidate runArc and uiEvent with spawn and event, as well as
     // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, bus, runtime, env);
+      return await runArc(msg, bus, runtime);
     },
     uiEvent: async (msg, tid, bus) => {
       return await uiEvent(msg, runtime);
@@ -87,8 +76,7 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
       return await ingest(msg.entity, tid, bus);
     },
     spawn: async (msg, tid, bus) => {
-      const arc = await spawn(msg, tid, bus, composerFactory, storage, context);
-      return arc;
+      return await spawn(msg, tid, bus, composerFactory, storage, context);
     },
     recipe: async (msg, tid, bus) => {
       const arc = await bus.getAsyncValue(msg.tid);
@@ -101,6 +89,11 @@ const populateDispatcher = (dispatcher, storage, context, env) => {
     },
     parse: async (msg, tid, bus) => {
       return await parse(msg, tid, bus);
+    },
+    enableIngestion: async (msg, tid, bus) => {
+      // TODO(sjmiles): "live context" tool (for demos)
+      // marshal ingestion arc
+      return await requireIngestionArc(storage, bus);
     }
   });
   return dispatcher;

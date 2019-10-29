@@ -8,8 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export const smokeTest = async bus => {
+const defaultManifest = `
+// UIBroker/demo particles below here
+import 'https://$particles/Pipes/Pipes.arcs'
+//import 'https://$particles/Restaurants/Restaurants.arcs'
+import 'https://$particles/Notification/Notification.arcs'
+`;
+
+export const smokeTest = async (paths, storage, manifest, bus) => {
   const send = envelope => bus.receive(envelope);
+  // configure for smoke test
+  send({message: 'configure', config: {
+    rootPath: paths.root,
+    urlMap: paths.map,
+    storage,
+    manifest: defaultManifest
+  }});
+  //
   const enqueue = (tests, delay) => {
     if (tests.length) {
       console.warn(`busish: starting new task...(${tests.length} remaining)`);
@@ -44,6 +59,9 @@ export const smokeTest = async bus => {
   };
   //
   enqueue([
+    // waste 500ms so configuration can complete
+    // TODO(sjmiles): instead, wait for ready message
+    () => {},
     ingestionTest,
     autofillTest,
     notificationTest,

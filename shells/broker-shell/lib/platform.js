@@ -20,19 +20,25 @@ export const connectToPlatform = async Application => {
     receive(json) {
       const packet = JSON.parse(json);
       console.log('RECEIVED: ', packet);
-      const delegate = dispatcher[packet.message] || Application.receive.bind(Application);
-      delegate(packet);
+      //const delegate = dispatcher[packet.message] || Application.receive.bind(Application);
+      const delegate = dispatcher[packet.message];
+      if (delegate) {
+        delegate(packet);
+      } else {
+        const delegate = Application[packet.message];
+        if (delegate) {
+          delegate.call(Application, packet);
+        }
+      }
     }
   };
   // bus packet handlers
   const dispatcher = {
     ready(packet) {
-      if (packet.message === 'ready') {
-        // create function which sends to Arcs runtime
-        Application.send = msg => arcsProcess.ShellApi.receive(msg);
-        // forward signal
-        Application.ready(packet);
-      }
+      // create function which sends to Arcs runtime
+      Application.send = msg => arcsProcess.ShellApi.receive(msg);
+      // forward signal
+      Application.ready(packet);
     },
     // hand all slot rendering requests to a uiBroker (we could differentiate
     // by modality here, or let uiBroker do it; these decisions can be composed)
