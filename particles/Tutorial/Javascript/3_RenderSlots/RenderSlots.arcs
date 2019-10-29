@@ -1,4 +1,4 @@
-// Tutorial 4: Render Slots
+// Tutorial: Render Slots
 // Creates two particles, and renders one inside the other using render slots.
 
 // The "parent" particle. It provides a slot for another particle to be rendered inside it.

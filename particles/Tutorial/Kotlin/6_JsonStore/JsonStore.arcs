@@ -1,4 +1,4 @@
-// Tutorial 3: JSON Store
+// Tutorial: JSON Store
 // Loads data stored in a JSON file.
 
 // Defines a new Entity called PersonDetails, with two fields.
@@ -25,4 +25,4 @@ recipe JsonStoreRecipe
     // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
     inputData <- data
 
-  description `Kotlin Tutorial 3: JSON Store`
+  description `Kotlin Tutorial 6: JSON Store`

@@ -63,28 +63,44 @@ the top left of the screen:
 
 ![Tutorial 1 image](screenshots/1-hello-world.png)
 
-Read it at: [1_HelloWorld/HelloWorld.recipe]
+Implement it in Javascript at [particles/Tutorial/Javascript/1_HelloWorld](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#hello-world) or in Kotlin at [particles/Tutorial/Kotlin/1_HelloWorld](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Kotlin#hello-world) 
 
-## Tutorial 2: Basic Templates
+## Tutorial 2: Template Interpolation Exploration
 
-This tutorial demonstrates how to render data in a template:  [2_BasicTemplates/BasicTemplates.recipe]
+This tutorial demonstrates how to render data in a template.
 
 ![Tutorial 2 image](screenshots/2-basic-template.png)
 
-## Tutorial 3: JSON Store
+Implement it in Javascript at [particles/Tutorial/Javascript/2_BasicTemplates](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#template-interpolation-exploration) or in Kotlin at [particles/Tutorial/Kotlin/2_BasicTemplates](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Kotlin#template-interpolation-exploration) 
 
-This tutorial defines a new entity schema, and adds a data store backed by a JSON file: [3_JsonStore/JsonStore.recipe]
+## Tutorial 3: Slots: start with root
 
-![Tutorial 3 image](screenshots/3-json-store.png)
+This tutorial combines two particles using render slots.
 
-## Tutorial 4: Render Slots
+![Tutorial 3 image](screenshots/3-render-slots.png)
 
-This tutorial combines two particles using render slots: [4_RenderSlots/RenderSlots.recipe]
+Implement it in Javascript at [particles/Tutorial/Javascript/3_RenderSlots](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#slots-the-root-of-the-matter) or in Kotlin at particles/Tutorial/Kotlin/3_RenderSlots (text coming soon). 
 
-![Tutorial 4 image](screenshots/4-render-slots.png)
+## Tutorial 4: Getting a Grip on Handles
+
+This tutorial passes user entered information using handles.
+
+![Tutorial 4 image](screenshots/4-handles.png)
+
+Implement it in Javascript at particles/Tutorial/Javascript/4_Handles (text coming soon). 
 
 ## Tutorial 5: Collections
 
-This tutorial shows how to use lists, and how to store data inline inside a manifest file: [5_Collections/Collections.recipe]
+This tutorial shows how to use lists, and how to store data inline inside a manifest file.
+
+Implement it in Javascript at particles/Tutorial/Javascript/5_Collections (text coming soon). 
+
 
 ![Tutorial 5 image](screenshots/5-collections.png)
+
+## Tutorial 6: JSON Store
+
+Implement it in Javascript at particles/Tutorial/Javascript/6_JsonStore (text coming soon) or in Kotlin at particles/Tutorial/Kotlin/6_JsonStore (text coming soon). 
+
+![Tutorial 6 image](screenshots/6-json-store.png)
+

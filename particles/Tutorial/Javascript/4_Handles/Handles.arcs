@@ -1,4 +1,4 @@
-// Tutorial 6: Handles
+// Tutorial: Handles
 // Shows how to use a handle to pass information between particles.
 
 schema Person

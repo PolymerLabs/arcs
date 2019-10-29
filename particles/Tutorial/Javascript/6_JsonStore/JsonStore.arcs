@@ -1,4 +1,4 @@
-// Tutorial 3: JSON Store
+// Tutorial: JSON Store
 // Loads data stored in a JSON file.
 
 // Defines a new Entity called PersonDetails, with two fields.

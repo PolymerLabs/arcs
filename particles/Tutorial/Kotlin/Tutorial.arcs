@@ -9,6 +9,6 @@ import '1_HelloWorld/HelloWorld.arcs'
 
 import '2_BasicTemplates/BasicTemplates.arcs'
 
-import '3_JsonStore/JsonStore.arcs'
+import '3_RenderSlots/RenderSlots.arcs'
 
-import '4_RenderSlots/RenderSlots.arcs'
+import '6_JsonStore/JsonStore.arcs'
