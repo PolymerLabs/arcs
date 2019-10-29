@@ -275,7 +275,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
 
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
-    if (Flags.usePreSlandlesSyntax) {
+    if (Flags.defaultToPreSlandlesSyntax) {
       result.push(`${this.name || '*'}`); // TODO: Remove post slandles syntax
       result.push(directionToArrow(this.direction));
     } else {

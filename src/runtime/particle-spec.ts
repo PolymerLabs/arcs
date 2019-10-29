@@ -389,7 +389,7 @@ export class ParticleSpec {
     const indent = '  ';
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      if (Flags.usePreSlandlesSyntax) {
+      if (Flags.defaultToPreSlandlesSyntax) {
         // TODO: Remove post slandles syntax
         results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
       } else {
@@ -413,7 +413,7 @@ export class ParticleSpec {
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
       const tokens: string[] = [];
-      if (Flags.usePreSlandlesSyntax) {
+      if (Flags.defaultToPreSlandlesSyntax) {
         if (s.isRequired) {
           tokens.push('must');
         }

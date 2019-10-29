@@ -162,7 +162,7 @@ export class Slot implements Comparable<Slot> {
   toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     const result: string[] = [];
     const name = (nameMap && nameMap.get(this)) || this.localName;
-    if (Flags.usePreSlandlesSyntax) {
+    if (Flags.defaultToPreSlandlesSyntax) {
       result.push('slot');
       if (this.id) {
         result.push(`'${this.id}'`);
