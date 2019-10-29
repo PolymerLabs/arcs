@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 # target
 rm -rf dist
 mkdir dist
@@ -10,6 +10,4 @@ ln -s $PWD/../../../../particles $PWD/dist/particles
 # worker build
 cp -fR ../../../lib/build/worker.js dist/
 # collate sources
-echo packing...
-npx webpack
-echo done.
+npx webpack --display=errors-only
