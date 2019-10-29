@@ -20,7 +20,7 @@ interface SlandleTestInterface
   foo: reads Foo
   bar: writes Bar
 
-particle SlandleOuterParticle in 'outer-particle.js'
+particle SlandleOuterParticle in 'SLANDLESSYNTAXouter-particle.js'
   particle0: hosts SlandleTestInterface
   input: reads Foo
   output: writes Bar
