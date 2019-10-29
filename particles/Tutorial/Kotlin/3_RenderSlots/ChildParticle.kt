@@ -8,11 +8,9 @@ import kotlin.native.internal.ExportForCppRuntime
  * Sample WASM Particle.
  */
 class ChildParticle : Particle() {
-    override fun getTemplate(slotName: String): String {
-        return "Child"
-    }
+    override fun getTemplate(slotName: String) = "Child"
 }
 
 @Retain
-@ExportForCppRuntime("_newChildParticle")
+@ExportForCppRuntime()
 fun _newChildParticle() = ChildParticle().toWasmAddress()
