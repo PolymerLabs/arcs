@@ -1,4 +1,5 @@
 package arcs
+
 import kotlin.native.internal.ExportForCppRuntime
 
 class HandleSyncUpdateTest : Particle() {
@@ -27,7 +28,7 @@ class HandleSyncUpdateTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_handleSyncUpdateTest")
+@ExportForCppRuntime("_newHandleSyncUpdateTest")
 fun constructHandleSyncUpdateTest(): WasmAddress = HandleSyncUpdateTest().toWasmAddress()
 
 
@@ -55,7 +56,7 @@ class RenderTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_renderTest")
+@ExportForCppRuntime("_newRenderTest")
 fun constructRenderTest(): WasmAddress = RenderTest().toWasmAddress()
 
 class AutoRenderTest : Particle() {
@@ -71,7 +72,7 @@ class AutoRenderTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_autoRenderTest")
+@ExportForCppRuntime("_newAutoRenderTest")
 fun constructAutoRenderTest(): WasmAddress = AutoRenderTest().toWasmAddress()
 
 class EventTest : Particle() {
@@ -87,7 +88,7 @@ class EventTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_eventTest")
+@ExportForCppRuntime("_newEventTest")
 fun constructEventTest(): WasmAddress = EventTest().toWasmAddress()
 
 class ServiceTest : Particle() {
@@ -118,13 +119,13 @@ class ServiceTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_serviceTest")
+@ExportForCppRuntime("_newServiceTest")
 fun constructServiceTest(): WasmAddress = ServiceTest().toWasmAddress()
 
 class MissingRegisterHandleTest : Particle() {}
 
 @Retain
-@ExportForCppRuntime("_missingRegisterHandleTest")
+@ExportForCppRuntime("_newMissingRegisterHandleTest")
 fun constructMissingRegisterHandleTest(): WasmAddress = MissingRegisterHandleTest().toWasmAddress()
 
 class UnconnectedHandlesTest : Particle() {
@@ -140,5 +141,5 @@ class UnconnectedHandlesTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_unconnectedHandlesTest")
+@ExportForCppRuntime("_newUnconnectedHandlesTest")
 fun constructUnconnectedHandlesTest(): WasmAddress = UnconnectedHandlesTest().toWasmAddress()
