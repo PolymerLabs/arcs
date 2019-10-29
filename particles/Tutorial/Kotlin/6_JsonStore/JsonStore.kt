@@ -3,7 +3,6 @@ package arcs.tutorials
 import arcs.Particle
 import arcs.WasmAddress
 import arcs.Singleton
-import arcs.JsonStoreParticle_InputData
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
