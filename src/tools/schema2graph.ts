@@ -9,7 +9,6 @@
  */
 import {Schema} from '../runtime/type.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
-import {Dictionary} from '../runtime/hot.js';
 
 export class SchemaNode {
   schema: Schema;
@@ -35,9 +34,9 @@ export class SchemaNode {
   // The list of field names that this schema has *in addition to* all of its ancestors.
   extras: string[];
 
-  // Maps reference fields to the schema name and node that they contain. This is also used
-  // to ensure that nested schemas are generated before the references that rely on them.
-  refs: Dictionary<{name: string, node: SchemaNode}> = {};
+  // Maps reference fields to the node for their contained schema. This is also used to
+  // ensure that nested schemas are generated before the references that rely on them.
+  refs = new Map<string, SchemaNode>();
 
   constructor(schema: Schema, name: string) {
     this.schema = schema;
@@ -65,7 +64,7 @@ export class SchemaGraph {
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();
       if (schema) {
-        this.createNodes(schema, connection.name);
+        this.createNodes(schema, `${this.particleSpec.name}_${this.upperFirst(connection.name)}`);
       }
     }
 
@@ -80,27 +79,27 @@ export class SchemaGraph {
   }
 
   private createNodes(schema: Schema, name: string) {
-    // We can only have one node in the graph per schema. Collect duplicates as aliases.
-    const previous = this.nodes.find(n => schema.equals(n.schema));
-    if (previous) {
-      previous.aliases.push(name);
-      return previous;
-    }
-
-    // This is a new schema. Check for slicability against all previous schemas
-    // (in both directions) to establish the descendancy mappings.
-    const node = new SchemaNode(schema, name);
-    for (const previous of this.nodes) {
-      for (const [a, b] of [[node, previous], [previous, node]]) {
-        if (b.schema.isMoreSpecificThan(a.schema)) {
-          a.descendants.add(b);  // b can be sliced to a
-          b.parents = [];        // non-null to indicate this has parents; will be filled later
+    let node = this.nodes.find(n => schema.equals(n.schema));
+    if (node) {
+      // We can only have one node in the graph per schema. Collect duplicates as aliases.
+      node.aliases.push(name);
+    } else {
+      // This is a new schema. Check for slicability against all previous schemas
+      // (in both directions) to establish the descendancy mappings.
+      node = new SchemaNode(schema, name);
+      for (const previous of this.nodes) {
+        for (const [a, b] of [[node, previous], [previous, node]]) {
+          if (b.schema.isMoreSpecificThan(a.schema)) {
+            a.descendants.add(b);  // b can be sliced to a
+            b.parents = [];        // non-null to indicate this has parents; will be filled later
+          }
         }
       }
+      this.nodes.push(node);
     }
-    this.nodes.push(node);
 
-    // Recurse on any nested schemas in reference-typed fields.
+    // Recurse on any nested schemas in reference-typed fields. We need to do this even if we've
+    // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
       let nestedSchema;
       if (descriptor.kind === 'schema-reference') {
@@ -111,9 +110,8 @@ export class SchemaGraph {
       if (nestedSchema) {
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedName = name + '_' + this.upperFirst(field);
-        const nestedNode = this.createNodes(nestedSchema, nestedName);
-        node.refs[field] = {name: this.typeName(nestedName), node: nestedNode};
+        const nestedNode = this.createNodes(nestedSchema, name + '_' + this.upperFirst(field));
+        node.refs.set(field, nestedNode);
       }
     }
     return node;
@@ -125,10 +123,9 @@ export class SchemaGraph {
     // If this node only has one alias, use that for the class name.
     // Otherwise generate an internal name and create aliases for it.
     if (node.aliases.length === 1) {
-      node.name = this.typeName(node.aliases.pop());
+      node.name = node.aliases.pop();
     } else {
       node.name = `${this.particleSpec.name}Internal${++this.internalClassIndex}`;
-      node.aliases = node.aliases.map(a => this.typeName(a));
     }
 
     // Set up children links: collect descendants of descendants.
@@ -160,10 +157,6 @@ export class SchemaGraph {
     }
   }
 
-  private typeName(postfix: string): string {
-    return `${this.particleSpec.name}_${this.upperFirst(postfix)}`;
-  }
-
   private upperFirst(s: string): string {
     return s[0].toUpperCase() + s.slice(1);
   }
@@ -183,7 +176,7 @@ export class SchemaGraph {
       // We can only process this node if all its parents and reference fields have
       // themselves been processed. If not, push it to the back of the queue.
       if (node.parents.some(p => !seen.has(p)) ||
-          Object.values(node.refs).some(r => !seen.has(r.node))) {
+          [...node.refs.values()].some(r => !seen.has(r))) {
         queue.push(node);
         continue;
       }

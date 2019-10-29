@@ -148,8 +148,10 @@ class CppGenerator implements ClassGenerator {
       dtor = `virtual ~${name}() {}\n`;
     }
 
+    let aliasComment = '';
     let usingDecls = '';
     if (aliases.length) {
+      aliasComment = `\n// Aliased as ${aliases.join(', ')}`;
       usingDecls = '\n' + aliases.map(a => `using ${a} = ${name};`).join('\n') + '\n';
     }
 
@@ -161,7 +163,7 @@ class CppGenerator implements ClassGenerator {
     return `\
 
 namespace ${this.namespace} {
-
+${aliasComment}
 class ${name}${bases} {
 public:
   // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.

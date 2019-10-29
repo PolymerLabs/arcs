@@ -47,6 +47,9 @@ export abstract class Schema2Base {
     }
 
     const manifest = await Utils.parse(`import '${src}'`);
+    if (manifest.errors.length) {
+      return;
+    }
     const classes = this.processManifest(manifest);
     if (classes.length === 0) {
       console.warn(`Could not find any particle connections with schemas in '${src}'`);
@@ -94,7 +97,7 @@ export abstract class Schema2Base {
 
             case 'schema-reference':
               // TODO: this will be changed to its own method in a follow-up CL
-              generator.processField(field, 'R', inherited, node.refs[field].name);
+              generator.processField(field, 'R', inherited, node.refs.get(field).name);
               break;
 
             default:

@@ -326,12 +326,11 @@ describe('schema2graph', () => {
     const graph = new SchemaGraph(manifest.particles[0]);
     const res = convert(graph);
     assert.deepStrictEqual(res.nodes.map(x => x.name), [
-      'Names_Data_Outer_Inner',
-      'NamesInternal1',
-      'Names_Data',
+      'NamesInternal2', 'NamesInternal1', 'Names_Data'
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'NamesInternal1': ['Names_Data_Outer', 'Names_Dupe']
+      'NamesInternal1': ['Names_Data_Outer', 'Names_Dupe'],
+      'NamesInternal2': ['Names_Data_Outer_Inner', 'Names_Dupe_Inner'],
     });
   });
 
@@ -353,6 +352,33 @@ describe('schema2graph', () => {
     ]);
     assert.deepStrictEqual(res.aliases, {
       'NInternal1': ['N_H2_R', 'N_H3_R']
+    });
+  });
+
+  it('all shared nested schemas are aliased appropriately', async () => {
+    // For h1: fields r and s both have multiply-nested references leading to the same innermost
+    // schema '* {Text a}'. We want a common class name for each level of the nesting stack, with
+    // type aliases set up for both "sides" of the reference chain. h2 and h3 also end up using
+    // the same innermost schema, so they should also have aliases set up.
+    const manifest = await Manifest.parse(`
+      particle Q
+        in * {Reference<* {Reference<* {Reference<* {Text a}> u}> t}> r, \
+              Reference<* {Reference<* {Reference<* {Text a}> u}> t}> s} h1
+        in * {Text a} h2
+        in * {Reference<* {Text a}> v} h3
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'QInternal3', parents: '', extras: 'a',  shares: false},
+      {name: 'Q_H3',       parents: '', extras: 'v',  shares: false},
+      {name: 'QInternal2', parents: '', extras: 'u',  shares: false},
+      {name: 'QInternal1', parents: '', extras: 't',  shares: false},
+      {name: 'Q_H1',       parents: '', extras: 'rs', shares: false},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'QInternal1': ['Q_H1_R', 'Q_H1_S'],
+      'QInternal2': ['Q_H1_R_T', 'Q_H1_S_T'],
+      'QInternal3': ['Q_H1_R_T_U', 'Q_H1_S_T_U', 'Q_H2', 'Q_H3_V'],
     });
   });
 
@@ -391,10 +417,10 @@ describe('schema2graph', () => {
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
       {name: 'YInternal1', parents: '',                       extras: 'a',   shares: false},
-      {name: 'Y_H3_T_U_V', parents: '',                       extras: 'd',   shares: false},
+      {name: 'YInternal3', parents: '',                       extras: 'd',   shares: false},
       {name: 'Y_H1',       parents: '',                       extras: 'r',   shares: false},
       {name: 'Y_H2',       parents: 'YInternal1',             extras: 's',   shares: true},
-      {name: 'Y_H4',       parents: 'YInternal1, Y_H3_T_U_V', extras: 'e',   shares: true},
+      {name: 'Y_H4',       parents: 'YInternal1, YInternal3', extras: 'e',   shares: true},
       {name: 'YInternal2', parents: '',                       extras: 'bcv', shares: false},
       {name: 'Y_H3_T',     parents: '',                       extras: 'bu',  shares: false},
       {name: 'Y_H3',       parents: '',                       extras: 't',   shares: false},
@@ -402,6 +428,7 @@ describe('schema2graph', () => {
     assert.deepStrictEqual(res.aliases, {
       'YInternal1': ['Y_H1_R', 'Y_H2_S'],
       'YInternal2': ['Y_H3_T_U', 'Y_H5'],
+      'YInternal3': ['Y_H3_T_U_V', 'Y_H5_V'],
     });
   });
 
