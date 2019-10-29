@@ -2,6 +2,7 @@ licenses(["notice"])
 
 load("//tools/build_defs/android:rules.bzl", "android_binary")
 
+# TODO: Add manifest_bundle assets for all the particles needed in the demo app.
 android_binary(
     name = "demo",
     srcs = glob(["*.java"]),
