@@ -10,7 +10,7 @@ def _output_name(src, file_extension = ""):
     """Cleans up the given file name, and replaces the .arcs extension."""
     return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + file_extension
 
-def _run_schema2pkg(name, src, out, language_name, language_flag):
+def _run_schema2pkg(name, src, out, language_name, language_flag, package):
     """Generates source code for the given .arcs schema file.
 
     Runs sigh schema2pkg to generate the output.
@@ -31,10 +31,11 @@ def _run_schema2pkg(name, src, out, language_name, language_flag):
                    language_flag + " " +
                    "--outdir $(dirname {OUT}) " +
                    "--outfile $(basename {OUT}) " +
+                   "--package " + package  + " " +
                    "{SRC}",
     )
 
-def arcs_cc_schema(name, src, out = None):
+def arcs_cc_schema(name, src, out = None, package = 'arcs'):
     """Generates a C++ header file for the given .arcs schema file."""
     out = out or _output_name(src, ".h")
     _run_schema2pkg(
@@ -43,9 +44,10 @@ def arcs_cc_schema(name, src, out = None):
         out = out,
         language_flag = "--cpp",
         language_name = "C++",
+        package = package
     )
 
-def arcs_kt_schema(name, srcs):
+def arcs_kt_schema(name, srcs, package = 'arcs'):
     """Generates a Kotlin file for the given .arcs schema file."""
     outs = []
     for src in srcs:
@@ -57,6 +59,7 @@ def arcs_kt_schema(name, srcs):
             out = out,
             language_flag = "--kotlin",
             language_name = "Kotlin",
+            package = package,
         )
 
     arcs_kt_library(
