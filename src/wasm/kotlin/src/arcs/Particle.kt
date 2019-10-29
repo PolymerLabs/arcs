@@ -181,7 +181,7 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
 
     private fun add(added: String) {
         with(StringDecoder(added)) {
-            getInt(":").downTo(0).forEach {
+            repeat(getInt(":")) {
                 val len = getInt(":")
                 val chunk = chomp(len)
                 val entity = entityCtor().decodeEntity(chunk)!!
