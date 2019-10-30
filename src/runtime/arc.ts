@@ -493,11 +493,10 @@ ${this.activeRecipe.toString()}`;
   }
 
   private async _provisionSpecUrl(spec: ParticleSpec): Promise<void> {
-    if (!spec.implBlobUrl) {
-      // if supported, construct spec.implBlobUrl for spec.implFile
-      if (this.loader && this.loader['provisionObjectUrl']) {
-        const url = await this.loader['provisionObjectUrl'](spec.implFile);
-        // may not produce a url if implFile is binary
+    // if supported, construct spec.implBlobUrl for spec.implFile
+    if (spec.implFile && !spec.implBlobUrl) {
+      if (this.loader) {
+        const url = await this.loader.provisionObjectUrl(spec.implFile);
         if (url) {
           spec.setImplBlobUrl(url);
         }
