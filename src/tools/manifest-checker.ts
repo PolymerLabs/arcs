@@ -39,7 +39,11 @@ async function checkManifest(src: string) {
   // Check particle impls can be loaded.
   for (const particle of manifest.particles) {
     const implFile = particle.implFile;
-    if (implFile.endsWith('.wasm')) {
+    if (!implFile) {
+      // Particle does not have an implementation. Might be an Android particle,
+      // so this is possibly fine. Just skip it.
+      continue;
+    } else if (implFile.endsWith('.wasm')) {
       await loader.loadWasmBinary(particle);
     } else {
       await loader.loadResource(implFile);
