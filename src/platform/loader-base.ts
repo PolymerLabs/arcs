@@ -86,7 +86,7 @@ export abstract class LoaderBase {
   }
   protected loadStatic(path: string): string {
     const content = this.staticMap[path];
-    if (!isString(content)) {
+    if (content && !isString(content)) {
       throw new Error('Cannot load static binary content as string');
     }
     return content;
