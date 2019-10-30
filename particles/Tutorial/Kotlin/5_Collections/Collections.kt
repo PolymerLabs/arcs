@@ -15,27 +15,13 @@ class CollectionsParticle : Particle() {
 
     override fun populateModel(slotName: String, model: Map<String, String>): Map<String, Any> {
         
-        var peopleStr = ""
-        //var peopleArr = arrayOfNulls<Map<String, String>>(people.size + 1)
-            if (!people.isEmpty()) {
-            var i = 0
-            people.forEach { people ->
-                peopleStr += "${(++i)}. $people.name $people.age | \n"
-                //peopleArr[i] = mapOf("name" to people.name, "age" to people.age.toString())
-            }
-        }
-        val size = people.size
-        log("people: $peopleStr")
-        // val generatedStringArray = Array(10) { i -> "Number of index: $i"  }
-        val peopleArr = Array(people.size) { i -> mapOf("name" to people.name, "age" to "10") }
+        val peopleList = ArrayList<Map<String, String>>()
+        people.forEach { people -> peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) }
+
         return model + mapOf(
             "people" to mapOf(
                 "\$template" to "person",
-                "models" to peopleArr
-                // arrayOf(
-                //     mapOf("name" to "sarah", "age" to "1"),
-                //     mapOf("name" to "jaye", "age" to "5")
-                // )
+                "models" to peopleList.toTypedArray()
             )
         )   
     }

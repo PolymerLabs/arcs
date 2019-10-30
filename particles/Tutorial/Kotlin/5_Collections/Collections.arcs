@@ -10,7 +10,8 @@ resource PeopleData
   start
   [
     {"name": "Jill", "age": 70},
-    {"name": "Jack", "age": 0}
+    {"name": "Jack", "age": 25},
+    {"name": "Jen", "age": 50}
   ]
 
 // This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
