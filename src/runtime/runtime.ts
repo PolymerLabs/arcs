@@ -18,6 +18,7 @@ import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
+import {UiSlotComposer} from './ui-slot-composer.js';
 import {Loader} from '../platform/loader.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
@@ -63,6 +64,27 @@ export class Runtime {
   static newForNodeTesting(context?: Manifest) {
     return new Runtime(new Loader(), FakeSlotComposer, context);
   }
+
+  static init(root, urls) {
+    const map = {...Runtime.mapFromRootPath(root), ...urls};
+    const loader = new PlatformLoader(map);
+    const pecFactory = PecIndustry(loader);
+    const runtime = new Runtime(loader, UiSlotComposer);
+    runtime.pecFactory = pecFactory;
+  }
+
+  static mapFromRootPath = (root: string) => ({
+    // important: path to `worker.js`
+    'https://$build/': `${root}/shells/lib/build/`,
+    // these are optional (?)
+    'https://$arcs/': `${root}/`,
+    'https://$particles/': {
+      root,
+      path: '/particles/',
+      buildDir: '/bazel-bin',
+      buildOutputRegex: /\.wasm$/,
+    },
+  })
 
   constructor(loader?: Loader, composerClass?: new () => SlotComposer, context?: Manifest) {
     this.cacheService = new RuntimeCacheService();
@@ -180,5 +202,3 @@ export class Runtime {
 }
 
 let runtime: Runtime = null;
-
-
