@@ -199,6 +199,28 @@ export class Runtime {
 
   // stuff the strategizer needs
 
+  // stuff from Shells/Utils
+
+  static async parseContent(content: string, options?): Promise<Manifest> {
+    const {loader} = this.getRuntime();
+    const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
+    const localOptions = {id, fileName: `./${id}`, loader};
+    return this._parse(content, localOptions, options);
+  }
+
+  static async parseFile(path, options) {
+    const {loader} = this.getRuntime();
+    const localOptions = {id: path, fileName: path, loader};
+    const content = await loader.loadResource(path);
+    return this._parse(content, localOptions, options);
+  }
+
+  static async _parse(content: string, localOptions?, options?) {
+    if (localOptions && options) {
+      localOptions = {...localOptions, ...options};
+    }
+    return Manifest.parse(content, localOptions);
+  }
 }
 
 let runtime: Runtime = null;
