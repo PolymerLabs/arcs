@@ -18,13 +18,13 @@ import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
-import {UiSlotComposer} from './ui-slot-composer.js';
-import {Loader} from '../platform/loader.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {VolatileMemory} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
+import {Loader} from '../platform/loader.js';
+import {pecIndustry} from '../platform/pec-industry.js';
 
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
@@ -36,16 +36,19 @@ export type RuntimeArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory;
 }>;
 
+let runtime: Runtime = null;
+
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
-  private composerClass: new () => SlotComposer | null;
+  private composerClass: typeof SlotComposer | null;
   public readonly context: Manifest;
   private readonly ramDiskMemory: VolatileMemory;
   readonly arcById = new Map<string, Arc>();
+  pecFactory;
 
   static getRuntime() {
     if (runtime == null) {
@@ -65,11 +68,11 @@ export class Runtime {
     return new Runtime(new Loader(), FakeSlotComposer, context);
   }
 
-  static init(root, urls) {
+  static init(root?: string, urls?: {}) {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
-    const loader = new PlatformLoader(map);
-    const pecFactory = PecIndustry(loader);
-    const runtime = new Runtime(loader, UiSlotComposer);
+    const loader = new Loader(map);
+    const pecFactory = pecIndustry(loader);
+    const runtime = new Runtime(loader, SlotComposer);
     runtime.pecFactory = pecFactory;
   }
 
@@ -86,7 +89,7 @@ export class Runtime {
     },
   })
 
-  constructor(loader?: Loader, composerClass?: new () => SlotComposer, context?: Manifest) {
+  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest) {
     this.cacheService = new RuntimeCacheService();
     this.loader = loader;
     this.composerClass = composerClass;
@@ -113,15 +116,12 @@ export class Runtime {
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
+    const {loader, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    if (typeof storageKeyPrefix === 'string') {
-      const storageKey = storageKeyPrefix + id.toString();
-      return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
-    } else {
-      const storageKey = storageKeyPrefix(id);
-      return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
-    }
+    const storageKey = (typeof storageKeyPrefix === 'string')
+      ? `${storageKeyPrefix}${id.toString()}` : storageKeyPrefix(id);
+    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
   }
 
   // Stuff the shell needs
@@ -189,7 +189,7 @@ export class Runtime {
   }
 
   /**
-   * Load and parse a manifest from a resource (not striclty a file) and return
+   * Load and parse a manifest from a resource (not stritcly a file) and return
    * a Manifest object. The loader determines the semantics of the fileName. See
    * the Manifest class for details.
    */
@@ -199,28 +199,16 @@ export class Runtime {
 
   // stuff the strategizer needs
 
-  // stuff from Shells/Utils
+  // stuff from shells/lib/utils
 
-  static async parseContent(content: string, options?): Promise<Manifest> {
+  // TODO(sjmiles): there is redundancy vs `parse/loadManifest` above, but this is
+  // temporary until we polish this integration.
+
+  static async parse(content: string, options?): Promise<Manifest> {
     const {loader} = this.getRuntime();
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     const localOptions = {id, fileName: `./${id}`, loader};
-    return this._parse(content, localOptions, options);
+    return Manifest.parse(content, {...localOptions, ...options});
   }
 
-  static async parseFile(path, options) {
-    const {loader} = this.getRuntime();
-    const localOptions = {id: path, fileName: path, loader};
-    const content = await loader.loadResource(path);
-    return this._parse(content, localOptions, options);
-  }
-
-  static async _parse(content: string, localOptions?, options?) {
-    if (localOptions && options) {
-      localOptions = {...localOptions, ...options};
-    }
-    return Manifest.parse(content, localOptions);
-  }
 }
-
-let runtime: Runtime = null;
