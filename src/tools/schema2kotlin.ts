@@ -108,11 +108,9 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
     with(StringDecoder(encoded)) {
       internalId = decodeText()
       validate("|")
-    ${withFields(`  0.until(${fieldCount}).takeWhile { _ -> !done() }
-        .forEach {
-         if (done()) return@forEach
+    ${withFields(`  for (_i in 0..${fieldCount - 1}) {
+         if (done()) break 
          val name = upTo(":")
-         log(name)
          when (name) {
            ${this.decode.join('\n           ')}
          }
