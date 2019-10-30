@@ -10,8 +10,8 @@
 import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
-import {Utils} from '../../shells/lib/utils.js';
 import {Manifest} from '../runtime/manifest.js';
+import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 
 export interface ClassGenerator {
@@ -23,7 +23,7 @@ export abstract class Schema2Base {
   scope: string;
 
   constructor(readonly opts: minimist.ParsedArgs) {
-    Utils.init('../..');
+    Runtime.init('../..');
     this.scope = this.opts.package || 'arcs';
   }
 
@@ -46,7 +46,7 @@ export abstract class Schema2Base {
       return;
     }
 
-    const manifest = await Utils.parse(`import '${src}'`);
+    const manifest = await Runtime.parse(`import '${src}'`);
     if (manifest.errors.length) {
       return;
     }
