@@ -21,7 +21,7 @@ class CollectionsParticle : Particle() {
         return model + mapOf(
             "people" to mapOf(
                 "\$template" to "person",
-                "models" to peopleList.toTypedArray()
+                "models" to peopleList
             )
         )   
     }

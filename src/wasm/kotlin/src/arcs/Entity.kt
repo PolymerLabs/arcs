@@ -104,15 +104,14 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
                 sb.append(key.length).append(":").append(key)
                 sb.append(encodeValue(value))
             }
-            log("Encoded Dictionary is: ${sb.toString()}")
             return sb.toString()
         }
 
-        fun encodeArray(arr: Array<Any>): String {
+        fun encodeList(list: List<Any>): String {
           val sb = StringBuilder()
-          sb.append(arr.size).append(":")
+          sb.append(list.size).append(":")
           
-          for(value in arr) {
+          for(value in list) {
             sb.append(encodeValue(value))
           }
           return sb.toString()
@@ -122,17 +121,16 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
             val sb = StringBuilder()
             when (value) {
                 is String -> {
-                    log("v is a string: ${value}")
                     sb.append("T").append(value.length).append(":").append(value)
                 }
                 is Map<*, *> -> {
-                    log("v is a map!")
+                    @Suppress("UNCHECKED_CAST")
                     val dictString = encodeDictionary(value as Map<String, Any>)
                     sb.append("D").append(dictString.length).append(":").append(dictString)
                 }
-                is Array<*> -> {
-                    log("v is an array!")
-                    val arrString = encodeArray(value as Array<Any>)
+                is List<*> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val arrString = encodeList(value as List<Any>)
                     sb.append("A").append(arrString.length).append(":").append(arrString)
                 }
                 else -> {

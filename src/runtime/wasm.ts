@@ -36,6 +36,7 @@ type EntityTypeMap = BiMap<number, EntityType>;
 //    Boolean      B<zero-or-one>
 //    Reference    R<length>:<id>|<length>:<storage-key>|<type-index>:
 //    Dictionary   D<length>:<dictionary format>
+//    Array        A<length>:<array format>
 //
 //  <collection> = <num-entities>:<length>:<encoded><length>:<encoded> ...
 //
@@ -214,7 +215,6 @@ export abstract class StringDecoder {
     this.str = str;
     const arr = [];
     let num = Number(this.upTo(':'));
-    console.log(`I have an array oflength ${num}, it is ${str}`);
     while (num--) {
       // TODO(sjmiles): be backward compatible with encoders that only encode string values
       const typeChar = this.chomp(1);
@@ -261,7 +261,6 @@ export abstract class StringDecoder {
       case 'T':
       case 'U': {
         const len = Number(this.upTo(':'));
-        console.log(`I've got a T or U of length ${len}`)
         return this.chomp(len);
       }
 
