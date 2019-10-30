@@ -37,6 +37,9 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
   /** Returns whether or not this [VersionMap] contains items. */
   fun isNotEmpty(): Boolean = !isEmpty()
 
+  /** Creates a deep copy of this [VersionMap]. */
+  fun copy(): VersionMap = VersionMap(this)
+
   /**
    * Gets a the current [Version] for a given [Actor], or [DEFAULT_VERSION] if no value has been
    * set.
