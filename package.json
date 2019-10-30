@@ -91,6 +91,7 @@
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.9",
     "assert": "^1.4.1",
+    "circular-dependency-plugin": "^5.2.0",
     "esm": "^3.0.84",
     "firebase": "^6.0.4",
     "idb": "^2.1.3",
