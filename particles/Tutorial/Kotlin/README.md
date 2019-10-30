@@ -135,3 +135,86 @@ arcs_kt_binary(
 
 Now your code should say “Hello, Human!”. You can update this by changing what `populateModel()` returns. In upcoming tutorials, we will see how this can be updated based on user input.
 
+# Slots: The root of the matter
+
+But, as promised, let’s get to understanding root. We start with a definition:
+
+> Slots - an element of the Arcs platform that allows particles to render on a user interface. 
+
+As a matter of notation, we say that particles consume slots when they fill a slot, and provide slots when they make slots available to other particles. Particles can also delegate by providing and consuming a slot. Root is the base slot that Arcs provides for particles to use. 
+
+This all is a bit theoretical, so let's get to an example. To show how particles can provide and consume slots, this time we will have two particles.
+
+As usual, we start with the Arcs manifest file:
+```
+// The "parent" particle. It provides a slot for another particle to render within.
+particle ParentParticle in 'ParentParticle.wasm'
+  // This particle renders to the root slot ("consumes" it), and provides a slot
+  // called "mySlot" in which another particle can render. The
+  // child particle will be rendered inside a special div with the identifier
+  // "mySlot", which this particle will need to provide in its HTML.
+  consume root
+    provide mySlot
+
+// The "child" particle. Instead of consuming "root" it consumes "mySlot"
+particle ChildParticle in 'ChildParticle.wasm'
+  consume mySlot
+
+
+// Unlike previous recipes, this one includes two particles.
+recipe RenderSlotsRecipe
+  ParentParticle
+    // The ParentParticle consumes root just like particles in previous examples.
+    consume root
+      // ParentParticle also provides mySlot. Note the additional tab over.
+      // The name "slot" is the name the recipe uses for the slot, and is how
+      // the recipe connects the parent's mySlot and the child's mySlot
+      provide mySlot as slot
+  ChildParticle
+    // And the ChildParticle consumes the slot.
+    consume mySlot as slot
+
+  description `Javascript Tutorial 3: Render Slots`
+```
+
+Next, we implement the parent and child particles in Kotlin. To do this, we will create a Kotlin file for each particle as outlined in the Arcs manifest file. We start with the ParentParticle which provides the slot.
+```Kotlin
+class ParentParticle : Particle() {
+    // The parent particle needs to provide a div with slotid "mySlot".
+    override fun getTemplate(slotName: String) = "<b>Hello:</b><div slotId=\"mySlot\"></div>"
+}
+
+@Retain
+@ExportForCppRuntime()
+fun _newParentParticle() = ParentParticle().toWasmAddress()
+```
+
+The ChildParticle looks nearly identical to the particles we created in our first tutorials.
+```Kotlin
+class ChildParticle : Particle() {
+    override fun getTemplate(slotName: String) = "Child"
+}
+
+@Retain
+@ExportForCppRuntime()
+fun _newChildParticle() = ChildParticle().toWasmAddress()
+```
+
+And finally the BUILD file, which is the same as in the previous tutorials, but has a second rule.
+```
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary")
+
+arcs_kt_binary(
+    name = "ParentParticle",
+    srcs = ["ParentParticle.kt"],
+)
+
+arcs_kt_binary(
+    name = "ChildParticle",
+    srcs = ["ChildParticle.kt"],
+)
+
+```
+
+And there you have it! The mystery of root solved, and a basic understanding of slots. Slots are a large part of the power of Arcs to hide user data, so we'll be using them a lot going forward. So don't worry if you don't fully understand them yet, there will plenty more examples to come!
+
