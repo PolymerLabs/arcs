@@ -20,7 +20,7 @@ class HandleSyncUpdateTest : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
         val input = (handle as Singleton<*>).get() as Test_Data?
-        val out = input?.let { Test_Data(input.num, "update: ${handle.name}") }
+        val out = input?.let { Test_Data(input.num, "update:${handle.name}") }
                 ?: Test_Data(txt = "unexpected handle name: ${handle.name}")
 
         output.store(out)
@@ -75,7 +75,7 @@ class AutoRenderTest : Particle() {
 @ExportForCppRuntime("_newAutoRenderTest")
 fun constructAutoRenderTest(): WasmAddress = AutoRenderTest().toWasmAddress()
 
-class EventTest : Particle() {
+class EventsTest : Particle() {
     private val output = Singleton { Test_Data() }
 
     init {
@@ -88,8 +88,8 @@ class EventTest : Particle() {
 }
 
 @Retain
-@ExportForCppRuntime("_newEventTest")
-fun constructEventTest(): WasmAddress = EventTest().toWasmAddress()
+@ExportForCppRuntime("_newEventsTest")
+fun constructEventTest(): WasmAddress = EventsTest().toWasmAddress()
 
 class ServiceTest : Particle() {
     private val output = Singleton { Test_ServiceResponse() }
