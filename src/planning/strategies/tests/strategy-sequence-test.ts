@@ -22,11 +22,11 @@ describe('A Strategy Sequence', () => {
   it('SLANDLES SYNTAX resolves a verb substitution and slot mapping', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle P in 'A.js'
-        foo: consume
+        foo: consumes
 
       particle Q in 'B.js'
-        root: consume
-          foo: provide
+        root: consumes
+          foo: provides
 
       recipe &verb
         P
@@ -86,18 +86,18 @@ describe('A Strategy Sequence', () => {
       schema S
 
       particle P in 'A.js'
-        s: in S
-        foo: consume
+        s: reads S
+        foo: consumes
 
       particle R in 'C.js'
-        s: out S
+        s: writes S
 
       particle Q in 'B.js'
-        root: consume
-          foo: provide
+        root: consumes
+          foo: provides
 
       recipe &verb
-        P.s: out R.s
+        P.s: writes R.s
 
       recipe
         &verb
@@ -154,25 +154,25 @@ describe('A Strategy Sequence', () => {
       schema S
 
       particle P in 'A.js'
-        s: in S
-        foo: consume
+        s: reads S
+        foo: consumes
 
       particle R in 'C.js'
-        s: out S
+        s: writes S
 
       particle Q in 'B.js'
-        s: in S
-        root: consume
-          foo: provide
+        s: reads S
+        root: consumes
+          foo: provides
 
       particle T in 'D.js'
-        s: out S
+        s: writes S
 
       recipe &verb
-        P.s: out R.s
+        P.s: writes R.s
 
       recipe
-        Q.s: out T.s
+        Q.s: writes T.s
         &verb
 
     `);
@@ -234,78 +234,78 @@ describe('A Strategy Sequence', () => {
       schema Description
 
       particle ShowCollection in 'source/ShowCollection.js'
-        collection: in [~a]
-        descriptions: out [Description]
+        collection: reads [~a]
+        descriptions: writes [Description]
         modality dom
         modality domTouch
-        master: consume #root
-          action: provide Slot {handle: collection}
-          preamble: provide
-          postamble: provide
-          item: provide [Slot {handle: collection}]
-          annotation: provide [Slot {handle: collection}]
+        master: consumes? #root
+          action: provides Slot {handle: collection}
+          preamble: provides
+          postamble: provides
+          item: provides [Slot {handle: collection}]
+          annotation: provides [Slot {handle: collection}]
 
       particle ShowProduct in 'source/ShowProduct.js'
-        product: in Product
+        product: reads Product
         modality dom
         modality domTouch
-        item: consume?
+        item: consumes?
 
       particle AlsoOn in 'source/AlsoOn.js'
-        product: in Thing
-        choices: in [Thing]
-        annotation: consume?
+        product: reads Thing
+        choices: reads [Thing]
+        annotation: consumes?
 
       interface HostedParticleInterface
-        in ~a *
-        consume
+        reads ~a
+        consumes?
 
-      particle Multiplexer in 'source/Multiplexer.js'
-        hostedParticle: host HostedParticleInterface
-        list: in [~a]
-        annotation: consume [Slot]
+      particle Multiplexer in 'source/SlandleSyntaxMultiplexer.js'
+        hostedParticle: hosts HostedParticleInterface
+        list: reads [~a]
+        annotation: consumes? [Slot]
 
       particle Chooser in 'source/Chooser.js'
-        choices: in [~a]
-        resultList: inout [~a]
-        action: consume
-          annotation: provide [Slot {handle: choices}]
+        choices: reads [~a]
+        resultList: reads writes [~a]
+        action: consumes?
+          annotation: provides [Slot {handle: choices}]
 
       particle Recommend in 'source/Recommend.js'
-        known: in [Product]
-        population: in [Product]
-        recommendations: out [Product]
+        known: reads [Product]
+        population: reads [Product]
+        recommendations: writes [Product]
 
       interface HostedParticleInterface2
-        in ~a *
-        in [~a] *
-        consume
+        reads ~a
+        reads [~a]
+        consumes?
 
-      particle Multiplexer2 in 'source/Multiplexer.js'
-        hostedParticle: host HostedParticleInterface2
-        list: in [~a]
-        others: in [~a]
-        annotation: consume [Slot]
+      particle Multiplexer2 in 'source/SlandleSyntaxMultiplexer.js'
+        hostedParticle: hosts HostedParticleInterface2
+        list: reads [~a]
+        others: reads [~a]
+        annotation: consumes? [Slot]
 
       recipe &showList
-        ShowCollection.collection: out Multiplexer.list
+        ShowCollection.collection: writes Multiplexer.list
         ShowCollection
-          master: consume
-            item: provide itemSlot
+          master: consumes
+            item: provides itemSlot
         Multiplexer
-          hostedParticle: any ShowProduct
-          annotation: consume itemSlot
+          hostedParticle: hosts ShowProduct
+          annotation: consumes itemSlot
 
       recipe
-        Chooser.choices: out Recommend.recommendations
-        Chooser.resultList: out ShowCollection.collection
-        Chooser.resultList: out Recommend.known
-        Chooser.resultList: out Multiplexer2.list
-        Chooser.choices: out Multiplexer2.others
+        Chooser.choices: writes Recommend.recommendations
+        Chooser.resultList: writes ShowCollection.collection
+        Chooser.resultList: writes Recommend.known
+        Chooser.resultList: writes Multiplexer2.list
+        Chooser.choices: writes Multiplexer2.others
         wishlist: map #wishlist
         shortlist: copy #shortlist
         Recommend
-          population: in wishlist
+          population: reads wishlist
         &showList
         Multiplexer2
           hostedParticle: any AlsoOn
@@ -421,11 +421,11 @@ describe('A Strategy Sequence', () => {
   it('SLANDLES SYNTAX connects particles together when there\'s only one possible connection', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
-        o: out S {}
+        o: writes S {}
       particle B
-        i: in S {}
+        i: reads S {}
       recipe
-        A: out B
+        A: writes B
     `);
 
     let recipe = manifest.recipes[0];
@@ -459,13 +459,13 @@ describe('A Strategy Sequence', () => {
     it(`SLANDLES SYNTAX connects particles together when there's extra things that can't connect`, Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
-        o: out S {}
-        i: in S {}
+        o: writes S {}
+        i: reads S {}
       particle B
-        i: in S {}
-        i2: in T {}
+        i: reads S {}
+        i2: reads T {}
       recipe
-        A: out B
+        A: writes B
     `);
 
     let recipe = manifest.recipes[0];
@@ -505,11 +505,11 @@ describe('A Strategy Sequence', () => {
   it('SLANDLES SYNTAX connects particles together with multiple connections', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A
-        o: out S {}
-        i: in T {}
+        o: writes S {}
+        i: reads T {}
       particle B
-        i: in S {}
-        o: out T {}
+        i: reads S {}
+        o: writes T {}
       recipe
         A: any B
     `);
