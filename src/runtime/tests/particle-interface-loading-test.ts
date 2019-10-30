@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType} from '../type.js';

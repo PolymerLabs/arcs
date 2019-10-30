@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
-import {Loader} from './loader.js';
+import {Loader} from '../platform/loader.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -493,14 +493,12 @@ ${this.activeRecipe.toString()}`;
   }
 
   private async _provisionSpecUrl(spec: ParticleSpec): Promise<void> {
-    if (!spec.implBlobUrl) {
-      // if supported, construct spec.implBlobUrl for spec.implFile
-      if (this.loader && this.loader['provisionObjectUrl']) {
-        const url = await this.loader['provisionObjectUrl'](spec.implFile);
+    // if supported, construct spec.implBlobUrl for spec.implFile
+    if (spec.implFile && !spec.implBlobUrl) {
+      if (this.loader) {
+        const url = await this.loader.provisionObjectUrl(spec.implFile);
         if (url) {
           spec.setImplBlobUrl(url);
-        } else {
-          throw new Error(`Expected url for ${spec.implFile} but got ${url}`);
         }
       }
     }

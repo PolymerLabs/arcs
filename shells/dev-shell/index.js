@@ -10,39 +10,50 @@
 import './file-pane.js';
 import './output-pane.js';
 import '../configuration/whitelisted.js';
-import {DevShellLoader} from './loader.js';
+import '../lib/platform/loglevel-web.js';
 
 import {Runtime} from '../../build/runtime/runtime.js';
+import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
-import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+import {pecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
+import {Utils} from '../lib/utils.js';
 import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 
 import '../../build/services/ml5-service.js';
 import '../../build/services/random-service.js';
 
-const files = document.getElementById('file-pane');
-const output = document.getElementById('output-pane');
-const popup = document.getElementById('popup');
+const root = '../..';
+
+// import DOM node references
+const {
+  filePane,
+  outputPane,
+  popupContainer,
+  executeButton,
+  toggleFilesButton,
+  exportFilesButton,
+  helpButton
+} = window;
 
 init();
 
 function init() {
-  files.init(execute, document.getElementById('toggle-files'), document.getElementById('export-files'));
-  document.getElementById('execute').addEventListener('click', execute);
-  document.getElementById('help').addEventListener('click', showHelp);
-  popup.addEventListener('click', () => popup.style.display = 'none');
+  filePane.init(execute, toggleFilesButton, exportFilesButton);
+  executeButton.addEventListener('click', execute);
+  helpButton.addEventListener('click', showHelp);
+  popupContainer.addEventListener('click', () => popupContainer.style.display = 'none');
 
   const params = new URLSearchParams(window.location.search);
   window.logLevel = (params.get('log') !== null) ? 1 : 0;
 
   const manifestParam = params.get('m') || params.get('manifest');
   if (manifestParam) {
-    files.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
+    filePane.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
     execute();
   } else {
     const exampleManifest = `\
@@ -80,38 +91,41 @@ defineParticle(({SimpleParticle, html, log}) => {
   };
 });`;
 
-    files.seedExample(exampleManifest, exampleParticle);
+    filePane.seedExample(exampleManifest, exampleParticle);
   }
 }
 
 function execute() {
-  wrappedExecute().catch(e => output.showError('Unhandled exception', e.stack));
+  wrappedExecute().catch(e => outputPane.showError('Unhandled exception', e.stack));
 }
 
 async function wrappedExecute() {
   document.dispatchEvent(new Event('clear-arcs-explorer'));
-  output.reset();
+  outputPane.reset();
 
-  const loader = new DevShellLoader(files.getFileMap());
-  const pecFactory = PecIndustry(loader);
+  const loader = new Loader(Utils.createPathMap(root), filePane.getFileMap());
+  // TODO(sjmiles): should be a static method
+  loader.flushCaches();
+
+  const pecFactory = pecIndustry(loader);
 
   let manifest;
   try {
     const options = {loader, fileName: './manifest', throwImportErrors: true};
-    manifest = await Runtime.parseManifest(files.getManifest(), options);
+    manifest = await Runtime.parseManifest(filePane.getManifest(), options);
   } catch (e) {
-    output.showError('Error in Manifest.parse', e);
+    outputPane.showError('Error in Manifest.parse', e);
     return;
   }
 
   if (manifest.allRecipes.length == 0) {
-    output.showError('No recipes found in Manifest.parse');
+    outputPane.showError('No recipes found in Manifest.parse');
   }
 
   let arcIndex = 1;
   for (const recipe of manifest.allRecipes) {
     const id = IdGenerator.newSession().newArcId('arc' + arcIndex++);
-    const arcPanel = output.addArcPanel(id);
+    const arcPanel = outputPane.addArcPanel(id);
 
     const errors = new Map();
     if (!recipe.normalize({errors})) {
@@ -163,12 +177,12 @@ async function wrappedExecute() {
 }
 
 function showHelp() {
-  popup.style.display = 'block';
+  popupContainer.style.display = 'block';
   document.addEventListener('keydown', hideHelp);
 }
 
 function hideHelp(e) {
-  popup.style.display = 'none';
+  popupContainer.style.display = 'none';
   e.preventDefault();
   document.removeEventListener('keydown', hideHelp);
 }

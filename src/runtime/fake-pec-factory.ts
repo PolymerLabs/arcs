@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from './loader.js';
+import {Loader} from '../platform/loader.js';
 import {MessageChannel, MessagePort} from './message-channel.js';
 import {ParticleExecutionContext, PecFactory} from './particle-execution-context.js';
 import {StubLoader} from './testing/stub-loader.js';

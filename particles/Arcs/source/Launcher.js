@@ -174,7 +174,7 @@ defineParticle(({UiParticle, html, log, resolver}) => {
       //
       // TODO(sjmiles): late-bind avatar because this data can be delayed
       chosen.forEach(model =>
-        model.avatar = this.avatarForArc(model) || resolver(`Launcher/../../Profile/assets/user.png`));
+        model.avatar = this.avatarForArc(model) || resolver(`https://$particles/Profile/assets/user.png`));
       //
       const columns = [[], []];
       const method = ['ltr', 'ttb'][0];

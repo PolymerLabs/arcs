@@ -227,7 +227,7 @@ export class Planner implements InspectablePlanner {
     let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
     if (this._shouldSpeculate(plan)) {
-      log(`speculatively executing [${plan.name}]`);
+      //log(`speculatively executing [${plan.name}]`);
       const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
@@ -235,7 +235,7 @@ export class Planner implements InspectablePlanner {
       const speculativeArc = result.speculativeArc;
       relevance = result.relevance;
       description = await Description.create(speculativeArc, relevance);
-      log(`[${plan.name}] => [${description.getRecipeSuggestion()}]`);
+      //log(`[${plan.name}] => [${description.getRecipeSuggestion()}]`);
     } else {
       const speculativeArc = await arc.cloneForSpeculativeExecution();
       await speculativeArc.mergeIntoActiveRecipe(plan);

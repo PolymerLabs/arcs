@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
+import {Loader} from '../../../platform/loader.js';
 import {VersionMap} from '../../crdt/crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
@@ -19,9 +20,7 @@ import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
-import {SYMBOL_INTERNALS} from '../../symbols.js';
 import {SerializedEntity} from '../../storage-proxy.js';
-import {Loader} from '../../loader.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity} from '../../entity.js';
 

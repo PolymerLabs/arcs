@@ -10,7 +10,7 @@
 
 import minimist from 'minimist';
 import {Manifest, ManifestWarning} from '../runtime/manifest.js';
-import {PlatformLoader} from '../platform/loader-web.js';
+import {Loader} from '../platform/loader.js';
 
 // Script to check that a bundle of Arcs manifest files, particle
 // implementations and JSON data files is complete (i.e. no explicitly mentioned
@@ -23,7 +23,7 @@ import {PlatformLoader} from '../platform/loader-web.js';
  * thrown as an exception.
  */
 async function checkManifest(src: string) {
-  const loader = new PlatformLoader({});
+  const loader = new Loader({});
   const manifest = await Manifest.load(src, loader);
 
   // Look for errors from parsing the manifest (ignore warnings). This covers
@@ -37,15 +37,10 @@ async function checkManifest(src: string) {
   }
 
   // Check particle impls can be loaded.
-  for (const particle of manifest.particles) {
-    const implFile = particle.implFile;
-    if (!implFile) {
-      // Particle does not have an implementation. Might be an Android particle,
-      // so this is possibly fine. Just skip it.
-      continue;
-    } else if (implFile.endsWith('.wasm')) {
-      await loader.loadWasmBinary(particle);
-    } else {
+  for (const {implFile} of manifest.particles) {
+    // Particle may not have an implementation. Might be an Android particle,
+    // so this is possibly fine. Just skip it.
+    if (implFile) {
       await loader.loadResource(implFile);
     }
   }

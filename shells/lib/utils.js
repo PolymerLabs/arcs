@@ -12,8 +12,8 @@ import {Manifest} from '../../build/runtime/manifest.js';
 import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
-import {PlatformLoader} from '../../build/platform/loader-web.js';
-import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+import {Loader} from '../../build/platform/loader.js';
+import {pecIndustry} from '../../build/platform/pec-industry-web.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 
 const log = console.log.bind(console);
@@ -34,8 +34,8 @@ const createPathMap = root => ({
 
 const init = (root, urls) => {
   const map = Object.assign(Utils.createPathMap(root), urls);
-  env.loader = new PlatformLoader(map);
-  env.pecFactory = PecIndustry(env.loader);
+  env.loader = new Loader(map);
+  env.pecFactory = pecIndustry(env.loader);
   return env;
 };
 
