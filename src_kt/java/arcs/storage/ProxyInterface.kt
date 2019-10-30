@@ -69,13 +69,34 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
  * }
  * ```
  */
-data class ProxyCallback<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-  private val callback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Boolean
-) {
-  // Makes this class behave as if it were a suspend function itself.
-  suspend operator fun invoke(message: ProxyMessage<Data, Op, ConsumerData>): Boolean =
-    callback.invoke(message)
+interface ProxyCallback<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+  val singleCallback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Boolean
+    get() = throw UnsupportedOperationException("Single callback not supported.")
+  val multiCallback: suspend (ProxyMessage<Data, Op, ConsumerData>, String) -> Boolean
+    get() = throw UnsupportedOperationException("Multiplexed callback not supported")
+
+  suspend operator fun invoke(
+    message: ProxyMessage<Data, Op, ConsumerData>,
+    muxId: String? = null
+  ): Boolean {
+    return muxId?.let { multiCallback(message, muxId) } ?: singleCallback(message)
+  }
 }
+
+/** Pseudo-constructor for a [ProxyCallback] capable of receiving direct messages. */
+fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
+  callback: suspend (message: ProxyMessage<Data, Op, ConsumerData>) -> Boolean
+): ProxyCallback<Data, Op, ConsumerData> = object : ProxyCallback<Data, Op, ConsumerData> {
+  override val singleCallback = callback
+}
+
+/** Pseudo-constructor for a [ProxyCallback] capable of receiving multiplexed messages. */
+fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> MultiplexedProxyCallback(
+  callback: suspend (message: ProxyMessage<Data, Op, ConsumerData>, muxId: String) -> Boolean
+): ProxyCallback<Data, Op, ConsumerData> = object : ProxyCallback<Data, Op, ConsumerData> {
+  override val multiCallback = callback
+}
+
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
 interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
