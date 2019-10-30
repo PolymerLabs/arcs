@@ -108,7 +108,7 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
     val decoder = StringDecoder(encoded)
     internalId = decoder.decodeText()
     decoder.validate("|")
-    ${withFields(`0.until(${fieldCount}).takeWhile { !decoder.done() }
+    ${withFields(`0.until(${fieldCount}).takeWhile { _ -> !decoder.done() }
      .forEach {
       val name = decoder.upTo(":")
       when (name) {
