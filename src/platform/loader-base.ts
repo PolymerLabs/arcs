@@ -86,13 +86,10 @@ export abstract class LoaderBase {
   }
   protected loadStatic(path: string): string {
     const content = this.staticMap[path];
-    if (content) {
-      if (isString(content)) {
-        return content;
-      }
+    if (!isString(content)) {
       throw new Error('Cannot load static binary content as string');
     }
-    return null;
+    return content;
   }
   protected loadStaticBinary(path: string): ArrayBuffer {
     const content = this.staticMap[path];
@@ -218,6 +215,10 @@ export abstract class LoaderBase {
     }
     const data = await this.fetchString(href);
     return JsonldToManifest.convert(data, opts);
+  }
+  async provisionObjectUrl(fileName: string) {
+    // no facility for this by default
+    return null;
   }
   //
   // Below here invoked from inside isolation scope (e.g. Worker)
