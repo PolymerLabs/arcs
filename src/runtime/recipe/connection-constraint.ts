@@ -174,7 +174,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';
     }
-    if (Flags.usePreSlandlesSyntax) {
+    if (Flags.defaultToPreSlandlesSyntax) {
       return `${this.from.toString(nameMap)} ${directionToArrow(this.direction)} ${this.to.toString(nameMap)}${unresolved}`;
     }
     return `${this.from.toString(nameMap)}: ${preSlandlesDirectionToDirection(this.direction)} ${this.to.toString(nameMap)}${unresolved}`;

@@ -12,7 +12,12 @@
 
 class FlagDefaults {
   static useNewStorageStack = false;
-  static usePreSlandlesSyntax = true;
+  // Enables the parsing of both pre and post slandles (unified) syntaxes.
+  // Preslandles syntax is to be deprecated.
+  static parseBothSyntaxes = false;
+  // Use pre slandles syntax for parsing and toString by default.
+  // If parseBothSyntaxes is off, this will set which syntax is enabled.
+  static defaultToPreSlandlesSyntax = true;
 }
 
 export class Flags extends FlagDefaults {
@@ -22,10 +27,10 @@ export class Flags extends FlagDefaults {
   }
 
   static withPreSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
-    return Flags.withFlags({usePreSlandlesSyntax: true}, f);
+    return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, f);
   }
   static withPostSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
-    return Flags.withFlags({usePreSlandlesSyntax: false}, f);
+    return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: false}, f);
   }
 
   static withNewStorageStack<T>(f: () => Promise<T>): () => Promise<T> {

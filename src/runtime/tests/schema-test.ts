@@ -444,6 +444,29 @@ describe('schema', () => {
     assert.strictEqual(schema.fields.custom.type, 'Bytes');
   });
 
+  it('handles multi named aliased schemas with extensions', async () => {
+    const manifest = await Manifest.parse(`
+      alias schema Event Occurrence as EventAlias
+        Text name
+        
+      schema Accident extends EventAlias
+        Number financialCost
+      
+      schema Crisis extends Accident`);
+    
+    const alias = manifest.findSchemaByName('EventAlias');
+    assert.deepEqual(alias.names, ['Event', 'Occurrence']);
+    assert.deepEqual(Object.keys(alias.fields), ['name']);
+
+    const accident = manifest.findSchemaByName('Accident');
+    assert.deepEqual(accident.names, ['Accident', 'Event', 'Occurrence']);
+    assert.deepEqual(Object.keys(accident.fields), ['financialCost', 'name']);
+
+    const crisis = manifest.findSchemaByName('Crisis');
+    assert.deepEqual(crisis.names, ['Crisis', 'Accident', 'Event', 'Occurrence']);
+    assert.deepEqual(Object.keys(crisis.fields), ['financialCost', 'name']);
+  });
+
   it('parses anonymous schemas', async () => {
     const manifest = await Manifest.parse(`alias schema * as X`);
     const schema = manifest.findSchemaByName('X');

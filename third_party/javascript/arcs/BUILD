@@ -4,5 +4,5 @@ licenses(["notice"])
 
 alias(
     name = "pipes-shell-assets",
-    actual = "//shells/pipes-shell:pipes_shell_web",
+    actual = "//shells/pipes-shell:pipes_shell_android",
 )

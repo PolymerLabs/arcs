@@ -144,6 +144,7 @@ export class ConvertConstraintsToConnections extends Strategy {
               return 'any';
             }
             if (a !== b) {
+              // TODO(jopra): Double check this, should require both directions.
               return 'any';
             }
             return a;

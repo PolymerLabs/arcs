@@ -22,6 +22,8 @@
   let startIndent = '';
   const indents: string[] = [];
 
+  const preSlandlesSyntaxLocations = [];
+
   const emptyRef = () => ({kind: 'handle-ref', id: null, name: null, tags: [], location: location()}) as AstNode.HandleRef;
 
   function extractIndented(items) {
@@ -73,13 +75,14 @@
   }
 
   function requireUsePreSlandleSyntax() {
-    /*if (!Flags.usePreSlandlesSyntax) {
+    if (!Flags.parseBothSyntaxes && !Flags.defaultToPreSlandlesSyntax) {
       error('using pre slandles syntax (disabled by flag)');
-    }*/
+    }
+    preSlandlesSyntaxLocations.push(location());
   }
 
   function requireUsePostSlandleSyntax() {
-    if (Flags.usePreSlandlesSyntax) {
+    if (!Flags.parseBothSyntaxes && Flags.defaultToPreSlandlesSyntax) {
       error('using post slandles syntax (disabled by flag)');
     }
   }
@@ -96,6 +99,12 @@ Manifest
       return manifestItem;
     });
     checkNormal(result);
+    if (preSlandlesSyntaxLocations.length > 0 && !Flags.defaultToPreSlandlesSyntax) {
+      console.warn('WARNING: Pre-Slandles Syntax is deprecated. Contact jopra@google.com for more information.');
+      console.warn(`WARNING: Used in \n  ${
+        preSlandlesSyntaxLocations.map(loc => `line ${loc.start.line} column ${loc.start.column}`).join("\n  ")
+      }`);
+    }
     return result;
   }
 

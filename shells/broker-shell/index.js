@@ -10,9 +10,29 @@
 
 import {connectToPlatform, waitForRenderSurface, addToast} from './lib/platform.js';
 
+const config = {
+  rootPath: '.',
+  urlMap: {
+    'https://$arcs/': `../../../`,
+    'https://$particles/': `../../../particles/`,
+    'https://$build/': `../../lib/build/`
+  },
+  storage: 'volatile://',
+  manifest: `
+import 'https://$particles/Pipes/Pipes.arcs'
+import 'https://$particles/Restaurants/Restaurants.arcs'
+import 'https://$particles/Notification/Notification.arcs'
+  `
+};
+
 const Application = {
   ready() {
+    // message channel is ready, time to configure
+    this.send({message: 'configure', config});
+  },
+  context() {
     // testing ingestion
+    this.send({message: 'enableIngestion'});
     this.send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
     setTimeout(() => {
       this.ingestTid = this.send({message: 'spawn', recipe: 'PersonAutofill'});
