@@ -80,8 +80,8 @@ class KotlinGenerator implements ClassGenerator {
     this.fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
 
     this.decode.push(`"${field}" -> {`,
-                     `  decoder.validate("${typeChar}")`,
-                     `  this.${fixed} = decoder.${decodeFn}`,
+                     `  validate("${typeChar}")`,
+                     `  ${fixed} = ${decodeFn}`,
                      `}`);
 
     this.encode.push(`${fixed}?.let { encoder.encode("${field}:${typeChar}", it) }`);
@@ -105,17 +105,21 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
   override fun decodeEntity(encoded: String): ${name}? {
     if (encoded.isEmpty()) return null
     
-    val decoder = StringDecoder(encoded)
-    internalId = decoder.decodeText()
-    decoder.validate("|")
-    ${withFields(`0.until(${fieldCount}).takeWhile { _ -> !decoder.done() }
-     .forEach {
-      val name = decoder.upTo(":")
-      when (name) {
-        ${this.decode.join('\n        ')}
-      }
-      decoder.validate("|")
-     }`)}
+    with(StringDecoder(encoded)) {
+      internalId = decodeText()
+      validate("|")
+    ${withFields(`  0.until(${fieldCount}).takeWhile { _ -> !done() }
+        .forEach {
+         if (done()) return@forEach
+         val name = upTo(":")
+         log(name)
+         when (name) {
+           ${this.decode.join('\n           ')}
+         }
+         validate("|")
+        }
+   `)}}
+    
     return this
   }
 
