@@ -899,7 +899,8 @@ export class WasmParticle extends Particle {
   fireEvent(slotName: string, event) {
     const sp = this.container.store(slotName);
     const hp = this.container.store(event.handler);
-    this.exports._fireEvent(this.innerParticle, sp, hp);
-    this.container.free(sp, hp);
+    const data = this.container.store(JSON.stringify(event.data))
+    this.exports._fireEvent(this.innerParticle, sp, hp, data);
+    this.container.free(sp, hp, data);
   }
 }
