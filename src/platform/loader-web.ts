@@ -28,7 +28,7 @@ export class Loader extends LoaderBase {
   }
   async provisionObjectUrl(fileName: string) {
     // TODO(sjmiles): BLOB Urls don't work for binary content (.wasm), mime-type?
-    if (fileName.endsWith('.wasm')) {
+    if (!fileName || fileName.endsWith('.wasm')) {
       return null;
     } else {
       const raw = await this.loadResource(fileName);
