@@ -5,9 +5,6 @@ directories:
 targets:
   //javaharness/java/...
   //javaharness/javatests/...
-  # This symlinked directory contains BUILD files which aren't relevant and
-  # which won't resolve correctly:
-  -javaharness/java/arcs/pipes-shell/...
 
 additional_languages:
   # kotlin
