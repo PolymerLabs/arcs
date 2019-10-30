@@ -8,32 +8,34 @@ import kotlin.native.internal.ExportForCppRuntime
  */
 class CollectionsParticle : Particle() {
 
-   private val res = Collection { CollectionsParticle_InputData() }
+   private val people = Collection { CollectionsParticle_InputData() }
    init {
-       registerHandle("inputData", res)
+       registerHandle("inputData", people)
    }
 
     override fun populateModel(slotName: String, model: Map<String, String>): Map<String, Any> {
-        val people = CollectionsParticle_InputData();
-        log("people: ${people}")
-        //var array = Array<Dictionary<String>> (people) {person in people -> mapOf( "name" to person.name, "age" to person.age) }
-        // TODO 
-//        for (person in people) {
-//            array.push(
-//                mapOf(
-//                    "name" to person.name,
-//                    "age" to person.age
-//                )
-//            )
-//        }
-
+        
+        var peopleStr = ""
+        //var peopleArr = arrayOfNulls<Map<String, String>>(people.size + 1)
+            if (!people.isEmpty()) {
+            var i = 0
+            people.forEach { people ->
+                peopleStr += "${(++i)}. $people.name $people.age | \n"
+                //peopleArr[i] = mapOf("name" to people.name, "age" to people.age.toString())
+            }
+        }
+        val size = people.size
+        log("people: $peopleStr")
+        // val generatedStringArray = Array(10) { i -> "Number of index: $i"  }
+        val peopleArr = Array(people.size) { i -> mapOf("name" to people.name, "age" to "10") }
         return model + mapOf(
             "people" to mapOf(
                 "\$template" to "person",
-                "models" to arrayOf(
-                  mapOf("name" to "sarah", "age" to "20"),
-                  mapOf("name" to "Jaye", "age" to "16")
-                )
+                "models" to peopleArr
+                // arrayOf(
+                //     mapOf("name" to "sarah", "age" to "1"),
+                //     mapOf("name" to "jaye", "age" to "5")
+                // )
             )
         )   
     }

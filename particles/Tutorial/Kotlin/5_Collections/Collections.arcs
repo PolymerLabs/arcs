@@ -9,7 +9,8 @@ schema PersonDetails
 resource PeopleData
   start
   [
-    {"name": "Jill", "age": 70}
+    {"name": "Jill", "age": 70},
+    {"name": "Jack", "age": 0}
   ]
 
 // This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
