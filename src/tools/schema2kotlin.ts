@@ -108,7 +108,7 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
     with(StringDecoder(encoded)) {
       internalId = decodeText()
       validate("|")
-    ${withFields(`  for (_i in 0..${fieldCount - 1}) {
+    ${withFields(`  for (_i in 0 until ${fieldCount}) {
          if (done()) break 
          val name = upTo(":")
          when (name) {
