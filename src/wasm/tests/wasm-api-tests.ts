@@ -98,6 +98,10 @@ async function setup(manifestString) {
     });
 
     it('getTemplate / populateModel / renderSlot', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {arc, stores, slotComposer} = await setup(`
       import '${schemasFile}'
 
@@ -133,6 +137,10 @@ async function setup(manifestString) {
     });
 
     it('autoRender', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {arc, stores, slotComposer} = await setup(`
       import '${schemasFile}'
 
@@ -240,7 +248,10 @@ async function setup(manifestString) {
     function prefix(title, fn) {
       it(title, async () => {
         console.log('    »', title);
-        await fn();
+        // TODO(alxr): Remove check when kotlin tests are ready
+        if ( !env.includes('kotlin') ) {
+          await fn();
+        }
       });
     }
 
@@ -299,6 +310,10 @@ async function setup(manifestString) {
     });
 
     it('reading from reference-typed handles', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {arc, stores} = await setup(`
       import '${schemasFile}'
 
@@ -363,6 +378,10 @@ async function setup(manifestString) {
     });
 
     it('writing to reference-typed handles', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {arc, stores} = await setup(`
       import '${schemasFile}'
 
@@ -390,6 +409,10 @@ async function setup(manifestString) {
 
     // TODO - check that writing to read-only handles throws and vice versa
     it('singleton storage API', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {arc, stores} = await setup(`
       import '${schemasFile}'
 
@@ -436,6 +459,10 @@ async function setup(manifestString) {
     });
 
     it('collection storage API', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {arc, stores} = await setup(`
       import '${schemasFile}'
 
@@ -503,6 +530,4 @@ async function setup(manifestString) {
       ]);
     });
   });
-});
-describe('wasm tests (C++)', () => {
 });

@@ -91,8 +91,8 @@ class EventsTest : Particle() {
 @ExportForCppRuntime("_newEventsTest")
 fun constructEventTest(): WasmAddress = EventsTest().toWasmAddress()
 
-class ServiceTest : Particle() {
-    private val output = Singleton { Test_ServiceResponse() }
+class ServicesTest : Particle() {
+    private val output = Collection { Test_ServiceResponse() }
 
     init {
         registerHandle("output", output)
@@ -100,7 +100,7 @@ class ServiceTest : Particle() {
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
-        output.set(Test_ServiceResponse("resolveUrl", payload = url))
+        output.store(Test_ServiceResponse("resolveUrl", payload = url))
 
         serviceRequest("random.next", mapOf(), "first")
         serviceRequest("random.next", mapOf(), "second")
@@ -114,13 +114,13 @@ class ServiceTest : Particle() {
                 .forEach { str -> builder.append(str) }
         val payload = builder.toString()
 
-        output.set(Test_ServiceResponse(call, tag, payload))
+        output.store(Test_ServiceResponse(call, tag, payload))
     }
 }
 
 @Retain
-@ExportForCppRuntime("_newServiceTest")
-fun constructServiceTest(): WasmAddress = ServiceTest().toWasmAddress()
+@ExportForCppRuntime("_newServicesTest")
+fun constructServiceTest(): WasmAddress = ServicesTest().toWasmAddress()
 
 class MissingRegisterHandleTest : Particle() {}
 
