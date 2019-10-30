@@ -34,6 +34,7 @@ import {BiMap} from './bimap.js';
 //    Number       N<number>:
 //    Boolean      B<zero-or-one>
 //    Dictionary   D<length>:<dictionary format>
+//    Array        A<length>:<array format>
 //
 //  <collection> = <num-entities>:<length>:<encoded><length>:<encoded> ...
 //
@@ -193,37 +194,32 @@ export class StringDecoder {
     }
   }
 
-  decodeDictionary(str: string): Dictionary<String> {
+  decodeDictionary(str: string): Dictionary<string> {
     this.str = str;
     const dict = {};
     let num = Number(this.upTo(':'));
-    console.log(`I have a dictionary of length ${num}, it is ${str}`);
     while (num--) {
       const klen = Number(this.upTo(':'));
       const key = this.chomp(klen);
-      console.log(`getting the key! chomping it off! if is ${key}`);
       // TODO(sjmiles): be backward compatible with encoders that only encode string values
       const typeChar = this.chomp(1);
       // if typeChar is a digit, it's part of a length specifier
       if (typeChar >= '0' && typeChar <= '9') {
         const vlen = Number(`${typeChar}${this.upTo(':')}`);
-        console.log(`removing plain old value, it was ${vlen} chars, str is now ${str}`);
         dict[key] = this.chomp(vlen);
       }
       // otherwise typeChar is value-type specifier
       else {
-        console.log(`this val is complex! sending to decodeValue`)
         dict[key] = this.decodeValue(typeChar);      
       }
     }
     return dict;
   }
 
-  decodeArray(str: string): Array<String> {
+  decodeArray(str: string): string[] {
     this.str = str;
     const arr = [];
     let num = Number(this.upTo(':'));
-    console.log(`I have an array oflength ${num}, it is ${str}`);
     while (num--) {
       // TODO(sjmiles): be backward compatible with encoders that only encode string values
       const typeChar = this.chomp(1);
@@ -270,7 +266,6 @@ export class StringDecoder {
       case 'T':
       case 'U': {
         const len = Number(this.upTo(':'));
-        console.log(`I've got a T or U of length ${len}`)
         return this.chomp(len);
       }
 
