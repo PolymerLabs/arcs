@@ -14,7 +14,7 @@ class HandleSyncUpdateTest : Particle() {
     }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        val out = Test_Data(txt = "sync: ${handle.name}", flg = allSynced)
+        val out = Test_Data(txt = "sync:${handle.name}", flg = allSynced)
         output.store(out)
     }
 
@@ -50,7 +50,7 @@ class RenderTest : Particle() {
     override fun onHandleUpdate(handle: Handle) {
         val flags = flags.get()
         flags?.let {
-            renderSlot("root", flags.template, flags.model)
+            renderSlot("root", flags.template ?: true, flags.model ?: true)
         }
     }
 }

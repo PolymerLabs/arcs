@@ -25,10 +25,10 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: 'String',  defaultVal: '""',    decodeFn: 'decodeText()'},
-  'U': {type: 'String',  defaultVal: '""',    decodeFn: 'decodeText()'},
-  'N': {type: 'Double',  defaultVal: '0.0',   decodeFn: 'decodeNum()'},
-  'B': {type: 'Boolean', defaultVal: 'false', decodeFn: 'decodeBool()'},
+  'T': {type: 'String?',  defaultVal: 'null',    decodeFn: 'decodeText()'},
+  'U': {type: 'String?',  defaultVal: 'null',    decodeFn: 'decodeText()'},
+  'N': {type: 'Double?',  defaultVal: 'null',   decodeFn: 'decodeNum()'},
+  'B': {type: 'Boolean?', defaultVal: 'null', decodeFn: 'decodeBool()'},
   'R': {type: '',        defaultVal: '',      decodeFn: ''},
 };
 
@@ -84,7 +84,7 @@ class KotlinGenerator implements ClassGenerator {
                      `  this.${fixed} = decoder.${decodeFn}`,
                      `}`);
 
-    this.encode.push(`encoder.encode("${field}:${typeChar}", ${fixed})`);
+    this.encode.push(`${fixed}?.let { encoder.encode("${field}:${typeChar}", it) }`);
   }
 
   generate(fieldCount: number): string {
