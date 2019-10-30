@@ -13,6 +13,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import arcs.api.Constants;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ final class AndroidArcsEnvironment {
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
+  private static final String MESSAGE_CONTEXT = "context";
   private static final String FIELD_READY_RECIPES = "recipes";
   private static final String MESSAGE_DATA = "data";
   private static final String MESSAGE_OUTPUT = "output";
@@ -79,6 +81,7 @@ final class AndroidArcsEnvironment {
   private final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
 
   private WebView webView;
+  private String dynamicManifest;
 
   @Inject
   AndroidArcsEnvironment() {}
@@ -106,18 +109,16 @@ final class AndroidArcsEnvironment {
     // needed to allow WebWorkers to work in FileURLs.
     arcsSettings.setAllowUniversalAccessFromFileURLs(true);
 
+    dynamicManifest = manifests
+        .stream()
+        .map(s -> String.format("import \'%s\'", s))
+        .collect(Collectors.joining("\n"));
+
     webView.setWebViewClient(new WebViewClient() {
       @Override
       public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
         Log.d(TAG, "Intercepting request " + request.getUrl());
-        if (TextUtils.equals(
-            DYNAMIC_MANIFEST_URL,
-            request.getUrl().toString())) {
-          String dynamicManifest = manifests
-              .stream()
-              .map(s -> String.format("import \'%s\'", s))
-              .collect(Collectors.joining("\n"));
-
+        if (TextUtils.equals(DYNAMIC_MANIFEST_URL, request.getUrl().toString())) {
           try {
             Log.d(TAG, "Intercepted dynamic manifest request, offering " + dynamicManifest);
             return new WebResourceResponse(
@@ -166,6 +167,9 @@ final class AndroidArcsEnvironment {
       String message = content.getString(FIELD_MESSAGE);
       switch (message) {
         case MESSAGE_READY:
+          configureShell();
+          break;
+        case MESSAGE_CONTEXT:
           fireReadyEvent(content.getArray(FIELD_READY_RECIPES).asObjectArray());
           break;
         case MESSAGE_DATA:
@@ -199,7 +203,8 @@ final class AndroidArcsEnvironment {
   }
 
   private void sendMessageToArcs(String msg) {
-    String escapedEnvelope = msg.replace("\\\"", "\\\\\"");
+    String escapedEnvelope = msg.replace("\\\"", "\\\\\"")
+        .replace("'", "\\'");
     String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
 
     if (webView != null) {
@@ -210,5 +215,19 @@ final class AndroidArcsEnvironment {
     } else {
       Log.e("Arcs", "webView is null");
     }
+  }
+
+  private void configureShell() {
+    PortableJson msg =
+        jsonParser
+            .emptyObject()
+            .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
+            .put("config", jsonParser.emptyObject()
+                .put("rootPath", ".")
+                .put("storage", "volatile://")
+                .put("manifest", dynamicManifest)
+                .put("urlMap", jsonParser.emptyObject()
+                    .put("https://$build/", "")));
+    sendMessageToArcs(jsonParser.stringify(msg));
   }
 }
