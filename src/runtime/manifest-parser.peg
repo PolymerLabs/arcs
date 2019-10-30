@@ -1413,9 +1413,8 @@ SchemaInline
   }
 
 SchemaInlineField
-  = preSlandlesType:(SchemaType whiteSpace)? name:fieldName //type:(':' whiteSpace? SchemaType)?
+  = preSlandlesType:(SchemaType whiteSpace)? name:fieldName type:(':' whiteSpace? SchemaType)?
   {
-    let type = null;
     if (type && preSlandlesType) {
       error('cannot provide a type using both preslandles syntax and unification syntax for SchemaInlineField.');
     }
@@ -1474,15 +1473,14 @@ SchemaItem
   = SchemaField
   / Description
 
-  // = field:SchemaInlineField eolWhiteSpace
 SchemaField
-  = type:SchemaType whiteSpace name:fieldName eolWhiteSpace
+  = field:SchemaInlineField eolWhiteSpace
   {
-    return toAstNode<AstNode.SchemaField>({
-      kind: 'schema-field',
-      type,
-      name,
-    });
+    if (!field.type) {
+      expected('a type (required for schema fields)');
+    }
+    field.kind = 'schema-field';
+    return toAstNode<AstNode.SchemaField>(field);
   }
 
 SchemaType
