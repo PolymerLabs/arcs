@@ -84,10 +84,11 @@ status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 status "4. Install dependencies"
-(cd $ROOT && npm ci && npm --prefix=server ci) || fail 'Failed to install dependencies.'
+(cd $ROOT && npm install && npm --prefix=server install) || fail 'Failed to install dependencies.'
 
-status "4.1. Install sigh dependencies"
-(cd $ROOT && ./tools/sigh install chokidar) || fail 'Failed to install sigh dependencies.'
+# chokidar is useful when developing, but we don't want to require it for all installations
+status "4.1. Install useful optional dependencies"
+(cd $ROOT && npm install --no-save chokidar) || fail 'Failed to install optional dependencies.'
 
 status "5. Install Bazel"
 
@@ -99,7 +100,7 @@ rm "$BAZEL_SCRIPT_NAME"
 
 status "5.2. Updating PATH"
 append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
-# Makes the updates visiable at this subshell i.e. bazel
+# Makes the updates visible at this subshell i.e. bazel
 source ~/.profile
 
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"

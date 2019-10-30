@@ -30,8 +30,10 @@ script:
 cache: npm
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
+# The list command dumps the top-level packages with their versions, in case we need that for debugging.
 install:
   - ./tools/setup
+  - npm list --depth=0
 
 
 before_deploy:
