@@ -27,7 +27,11 @@ describe('Particle definitions', () => {
       it(`parses successfully: ${filename}`, async () => {
         const manifest = await Manifest.load(filename, loader);
         for (const particle of manifest.particles) {
-          assert.isNotNull(particle.implFile, `particle ${particle.name} specified with implementation found in ${particle.implFile}.`);
+          if (particle.implFile == null) {
+            // It's ok for some particles to not have implementation files (e.g.
+            // Android particles).
+            continue;
+          }
           if (particle.implFile.endsWith('.js')) {
             assert.isTrue(fs.existsSync(particle.implFile), `${particle.implFile} not found`);
           }
