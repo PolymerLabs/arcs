@@ -20,7 +20,7 @@ describe('interface', () => {
   it('SLANDLES SYNTAX round trips interface info', Flags.withPostSlandlesSyntax(async () => {
     const interfStr = `interface HostedInterface
   reads ~a
-  name: writes Text {Text name}
+  name: writes Text {name: Text}
   root: consumes? Slot
   other: provides [Slot]`;
     const manifest = await Manifest.parse(interfStr);

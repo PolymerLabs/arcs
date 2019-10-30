@@ -1592,7 +1592,7 @@ lowerIdent "a lowercase identifier (e.g. foo)"
 unsafeLowerIdent "a lowercase identifier or keyword"
   = [a-z][a-z0-9_]i* &([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
   { return text(); }
-fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
+fieldName "a field name (e.g. foo9)" // Current handle, formFactor or any entity field.
   = [a-z][a-z0-9_]i* { return text(); }
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
   = $ (simpleName ("." simpleName)*) // Note that a single simpleName matches too
