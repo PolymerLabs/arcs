@@ -5,7 +5,7 @@ import kotlin.native.internal.ExportForCppRuntime
 class HandleSyncUpdateTest : Particle() {
     private val input1 = Singleton { Test_Data() }
     private val input2 = Singleton { Test_Data() }
-    private val output = Singleton { Test_Data() }
+    private val output = Collection { Test_Data() }
 
     init {
         registerHandle("input1", input1)
@@ -15,7 +15,7 @@ class HandleSyncUpdateTest : Particle() {
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         val out = Test_Data(txt = "sync: ${handle.name}", flg = allSynced)
-        output.set(out)
+        output.store(out)
     }
 
     override fun onHandleUpdate(handle: Handle) {
@@ -23,7 +23,7 @@ class HandleSyncUpdateTest : Particle() {
         val out = input?.let { Test_Data(input.num, "update: ${handle.name}") }
                 ?: Test_Data(txt = "unexpected handle name: ${handle.name}")
 
-        output.set(out)
+        output.store(out)
     }
 }
 
