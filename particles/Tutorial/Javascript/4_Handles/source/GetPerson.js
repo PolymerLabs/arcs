@@ -10,25 +10,32 @@
 
  /* global defineParticle */
 
- defineParticle(({SimpleParticle, html}) => {
 
-    const template = html`
-  <input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-  <div slotid="greetingSlot"></div>
-    `;
+defineParticle(({SimpleParticle, html}) => {
+
+  const template = html`
+<input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
+<div slotid="greetingSlot"></div>
+  `;
 
   return class extends SimpleParticle {
     get template() {
       return template;
     }
 
-    update(props, state) {
-      // Get the handle "person" and update the data stored to be the name of the person we will greet.
+    // Because we have some logic to implement, we use update instead of render. 
+    update() {
+      // To set the "person" handle, we call this.set, pass the handle name as a
+      // string, and then a JSON representation of the updated information. In this
+      // case we give person the default value of "Human" so we have a value to
+      // work with in the DisplayGreeting particle. 
       this.set('person', {name: 'Human'});
     }
 
     onNameInputChange(e) {
+      // Update the value of person when the human enters a value.
       this.set('person', {name: e.data.value});
     }
   };
 });
+

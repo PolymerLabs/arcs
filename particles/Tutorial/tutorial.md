@@ -87,7 +87,7 @@ This tutorial passes user entered information using handles.
 
 ![Tutorial 4 image](screenshots/4-handles.png)
 
-Implement it in Javascript at particles/Tutorial/Javascript/4_Handles (text coming soon). 
+Implement it in Javascript at [particles/Tutorial/Javascript/4_Handles] (https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#getting-a-grip-on-handles). 
 
 ## Tutorial 5: Collections
 
