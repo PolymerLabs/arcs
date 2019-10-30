@@ -9,7 +9,7 @@
  */
 
 import {ModalityHandler} from '../modality-handler.js';
-import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
+import {UiSlotComposer as SlotComposer, SlotComposerOptions} from '../ui-slot-composer.js';
 import {SlotContext} from '../slot-context.js';
 import {Particle} from '../recipe/particle.js';
 import {Content} from '../slot-consumer.js';
@@ -25,12 +25,12 @@ export class FakeSlotComposer extends SlotComposer {
     }
     super({
       rootContainer: {'root': 'root-context'},
-      ...options});
+      ...options
+    });
   }
 
   renderSlot(particle: Particle, slotName: string, content: Content) {
     super.renderSlot(particle, slotName, content);
-
     // In production updateProvidedContexts() is done in DOM Mutation Observer.
     // We don't have it in tests, so we do it here.
     const slotConsumer = this.getSlotConsumer(particle, slotName);

@@ -102,8 +102,7 @@ export class TestHelper {
    */
   async sendSlotEvent(particleName: string, slotName, event, data) {
     this.log(`Sending event '${event}' to ${particleName}:${slotName}`);
-
-    this.slotComposer.sendEvent(particleName, slotName, event, data);
+    //this.slotComposer.sendEvent(particleName, slotName, event, data);
     await this.idle();
   }
 

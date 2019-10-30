@@ -12,7 +12,6 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Consumer} from '../../runtime/hot.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
-
 import {PlanningResult} from './planning-result.js';
 import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
 import {SuggestFilter} from './suggest-filter.js';
@@ -114,7 +113,8 @@ export class PlanConsumer {
     if (composer && composer.findContextById('rootslotid-suggestions')) {
       this.suggestionComposer = new SuggestionComposer(this.arc, composer);
       this.registerVisibleSuggestionsChangedCallback(
-        (suggestions: Suggestion[]) => this.suggestionComposer.setSuggestions(suggestions));
+        (suggestions: Suggestion[]) => this.suggestionComposer.setSuggestions(suggestions)
+      );
     }
   }
 

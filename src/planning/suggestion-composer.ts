@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Arc} from '../runtime/arc.js';
-import {SlotComposer} from '../runtime/slot-composer.js';
+import {UiSlotComposer as SlotComposer} from '../runtime/ui-slot-composer.js';
 import {ProvidedSlotContext} from '../runtime/slot-context.js';
-
 import {Suggestion} from './plan/suggestion.js';
 import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
