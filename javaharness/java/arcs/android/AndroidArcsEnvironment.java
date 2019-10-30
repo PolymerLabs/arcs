@@ -1,8 +1,11 @@
 package arcs.android;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Trace;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JavascriptInterface;
@@ -125,6 +128,16 @@ final class AndroidArcsEnvironment {
       public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
         // For the renderer main thread to intercept the urls.
         return assetLoader.shouldInterceptRequest(request.getUrl());
+      }
+
+      @Override
+      public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        Trace.beginAsyncSection("AndroidArcsEnvironment::init::loadUrl", 0);
+      }
+
+      @Override
+      public void onPageFinished(WebView view, String url) {
+        Trace.endAsyncSection("AndroidArcsEnvironment::init::loadUrl", 0);
       }
     });
 
