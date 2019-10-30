@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -50,7 +51,7 @@ public class AutofillDemoActivity extends Activity {
 
     arcsAndroidClient.connect(this);
     arcsAndroidClient.addManifests(
-        Arrays.asList("https://$particles/PipeApps/AndroidAutofill.arcs"),
+        Collections.singletonList(DemoConstants.ROOT_MANIFEST),
         success ->  {
           if (!success) {
             throw new IllegalStateException("Failed to add manfiest");

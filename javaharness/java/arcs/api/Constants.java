@@ -4,6 +4,7 @@ public interface Constants {
   String MESSAGE_FIELD = "message";
   String RUN_ARC_MESSAGE = "runArc";
   String STOP_ARC_MESSAGE = "stopArc";
+  String CONFIGURE_MESSAGE = "configure";
   String ARC_ID_FIELD = "arcId";
   String PEC_ID_FIELD = "pecId";
   String RECIPE_FIELD = "recipe";
