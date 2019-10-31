@@ -28,7 +28,7 @@ const createPathMap = root => ({
     root,
     path: '/particles/',
     buildDir: '/bazel-bin',
-    buildOutputRegex: /\.wasm$/,
+    buildOutputRegex: '\\.wasm$',
   }
 });
 
