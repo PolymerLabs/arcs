@@ -61,10 +61,10 @@ abstract class Particle : WasmObject() {
     fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
         val encoded = StringEncoder.encodeDictionary(args)
         serviceRequest(
-                toWasmAddress(),
-                call.toWasmString(),
-                encoded.toWasmString(),
-                tag.toWasmString()
+            toWasmAddress(),
+            call.toWasmString(),
+            encoded.toWasmString(),
+            tag.toWasmString()
         )
     }
 
@@ -120,9 +120,9 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
         this.entity = entity
         val encoded = entity.encodeEntity()
         singletonSet(
-                particle.toWasmAddress(),
-                toWasmAddress(),
-                encoded.toWasmString()
+            particle.toWasmAddress(),
+            toWasmAddress(),
+            encoded.toWasmString()
         )
     }
 
@@ -133,7 +133,7 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
 }
 
 class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
-        Iterable<T> {
+    Iterable<T> {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
 
