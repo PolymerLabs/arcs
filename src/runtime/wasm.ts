@@ -640,7 +640,7 @@ export class WasmParticle extends Particle {
   }
 
   // tslint:disable-next-line: no-any
-  async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}) {
+  async onHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: any}) {
     if (update.originator) {
       return;
     }

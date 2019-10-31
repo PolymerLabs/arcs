@@ -101,7 +101,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
   }
 
-  abstract onUpdate(update: StorageType['operation'], oldData: StorageType['consumerType'], version: VersionMap): void;
+  abstract onUpdate(update: StorageType['operation'], version: VersionMap): void;
   abstract onSync(): void;
 
   async onDesync(): Promise<void> {
@@ -224,7 +224,7 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
     return [...set];
   }
 
-  async onUpdate(op: CollectionOperation<SerializedEntity>, oldData: Set<SerializedEntity>, version: VersionMap): Promise<void> {
+  async onUpdate(op: CollectionOperation<SerializedEntity>, version: VersionMap): Promise<void> {
     this.clock = version;
     // FastForward cannot be expressed in terms of ordered added/removed, so pass a full model to
     // the particle.
@@ -289,10 +289,10 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
     return value == null ? null : this.deserialize(value) as T;
   }
 
-  async onUpdate(op: SingletonOperation<SerializedEntity>, oldData: SerializedEntity, version: VersionMap): Promise<void> {
+  async onUpdate(op: SingletonOperation<SerializedEntity>, version: VersionMap): Promise<void> {
      this.clock = version;
     // Pass the change up to the particle.
-    const update: {data?: Entity, oldData: SerializedEntity, originator: boolean} = {oldData, originator: (this.key === op.actor)};
+    const update: {data?: Entity, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
       update.data = this.deserialize(op.value);
     }
