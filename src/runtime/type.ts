@@ -91,13 +91,13 @@ export class Schema {
     return result;
   }
 
-  // TODO: This should only be an ident used in manifest parsing.
+  // TODO(cypher1): This should only be an ident used in manifest parsing.
   get name() {
     return this.names[0];
   }
 
   static typesEqual(fieldType1, fieldType2): boolean {
-    // TODO: structural check instead of stringification.
+    // TODO(cypher1): structural check instead of stringification.
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
@@ -154,7 +154,7 @@ export class Schema {
 
   equals(otherSchema: Schema): boolean {
     return this === otherSchema || (this.name === otherSchema.name
-       // TODO: Check equality without calling contains.
+       // TODO(cypher1): Check equality without calling contains.
        && this.isMoreSpecificThan(otherSchema)
        && otherSchema.isMoreSpecificThan(this));
   }
