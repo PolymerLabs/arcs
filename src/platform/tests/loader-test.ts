@@ -28,7 +28,7 @@ describe('PlatformLoader', () => {
       'https://$macro/': {
         root: 'http://host/',
         buildDir: 'bazel-bin/',
-        buildOutputRegex: /\.wasm$/,
+        buildOutputRegex: '\\.wasm$',
       }
     });
 
@@ -43,7 +43,7 @@ describe('PlatformLoader', () => {
         root: '../../',
         path: 'over/here/',
         buildDir: 'bazel-bin/',
-        buildOutputRegex: /\.wasm$/,
+        buildOutputRegex: '\\.wasm$',
       }
     });
 

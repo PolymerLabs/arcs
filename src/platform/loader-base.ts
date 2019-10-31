@@ -21,18 +21,18 @@ import {UiParticle} from '../runtime/ui-particle.js';
 import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
+import {Dictionary} from '../runtime/hot.js';
 
 type Ctor = typeof Object;
 type ParticleCtor = typeof Particle;
 
-interface UrlMap {
-  [macro: string]: string | {
-    root: string
-    path?: string
-    buildDir: string
-    buildOutputRegex: RegExp
-  };
-}
+type UrlMap = Dictionary<string | {
+  root: string
+  path?: string
+  buildDir: string
+  buildOutputRegex: string
+  compiledRegex?: RegExp
+}>;
 
 const {warn} = logsFactory('Loader', 'green');
 
@@ -51,9 +51,10 @@ export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
   protected readonly staticMap: {};
-  constructor(urlMap: {} = {}, staticMap: {} = {}) {
+  constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
     this.urlMap = urlMap;
     this.staticMap = staticMap;
+    this.compileRegExp(urlMap);
   }
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
@@ -190,7 +191,7 @@ export abstract class LoaderBase {
   private resolveConfiguredPath(path: string, macro: string, config) {
     return [
       config.root,
-      (path.match(config.buildOutputRegex) ? config.buildDir : ''),
+      (path.match(config.compiledRegex) ? config.buildDir : ''),
       (config.path || ''),
       path.slice(macro.length)
     ].join('');
@@ -279,5 +280,11 @@ export abstract class LoaderBase {
   }
   protected provisionLogger(fileName: string): Function {
     return logsFactory(fileName.split('/').pop(), '#1faa00').log;
+  }
+  private compileRegExp(urlMap: UrlMap) {
+    for (const config of Object.values(urlMap)) {
+      if (typeof config === 'string') continue;
+      config.compiledRegex = RegExp(config.buildOutputRegex);
+    }
   }
 }
