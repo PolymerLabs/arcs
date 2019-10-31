@@ -70,9 +70,10 @@ export class Runtime {
 
   /**
    * `Runtime.getRuntime()` returns the most recently constructed Runtime object (or creates one),
-   * so one can call `init` to initialize a default environment without capturing the return value.
-   * Systems can use `Runtime.getRuntime()` to access the default environment instead of plumbing a
-   * `runtime` argument through numerous functions.
+   * so calling `init` establishes a default environment (capturing the return value is optional).
+   * Systems can use `Runtime.getRuntime()` to access this environment instead of plumbing `runtime`
+   * arguments through numerous functions.
+   * Some static methods on this class automatically use the default environment.
    */
   static init(root?: string, urls?: {}): Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
@@ -82,6 +83,8 @@ export class Runtime {
   }
 
   static mapFromRootPath(root: string) {
+    // TODO(sjmiles): this is a commonly-used map, but it's not generic enough to live here.
+    // Shells that use this default should be provide it to `init` themselves.
     return {
       // important: path to `worker.js`
       'https://$build/': `${root}/shells/lib/build/`,
@@ -213,7 +216,11 @@ export class Runtime {
 
   async parse(content: string, options?): Promise<Manifest> {
     const {loader} = this;
+    // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
+    // maybe should be using one of the id generators, or even better
+    // we could eliminate it if the Manifest object takes care of this.
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
+    // TODO(sjmiles): this is a virtual manifest, the fileName is invented
     const localOptions = {id, fileName: `./${id}`, loader};
     return Manifest.parse(content, {...localOptions, ...options});
   }
