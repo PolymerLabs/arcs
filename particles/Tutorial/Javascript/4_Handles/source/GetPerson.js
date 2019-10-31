@@ -23,12 +23,12 @@ defineParticle(({SimpleParticle, html}) => {
       return template;
     }
 
-    // Because we have some logic to implement, we use update instead of render. 
+    // Because we have some logic to implement, we use update instead of render.
     update() {
       // To set the "person" handle, we call this.set, pass the handle name as a
       // string, and then a JSON representation of the updated information. In this
       // case we give person the default value of "Human" so we have a value to
-      // work with in the DisplayGreeting particle. 
+      // work with in the DisplayGreeting particle.
       this.set('person', {name: 'Human'});
     }
 
