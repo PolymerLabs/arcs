@@ -43,34 +43,35 @@ abstract class Particle : WasmObject() {
     open fun onHandleSync(handle: Handle, allSynced: Boolean) {}
 
     fun renderOutput() {
-      log("renderOutput")
-      val slotName = ""
-      val template = getTemplate(slotName)
-      val dict = populateModel(slotName)
-      val model = StringEncoder.encodeDictionary(dict)
-      onRenderOutput(toWasmAddress(), template.toWasmString(), model.toWasmString())
+        log("renderOutput")
+        val slotName = ""
+        val template = getTemplate(slotName)
+        val dict = populateModel(slotName)
+        val model = StringEncoder.encodeDictionary(dict)
+        onRenderOutput(toWasmAddress(), template.toWasmString(), model.toWasmString())
     }
 
     /**
-      * @deprecated for contexts using UiBroker (e.g Kotlin)
-      */
+     * @deprecated for contexts using UiBroker (e.g Kotlin)
+     */
+    @Deprecated(reason="Rendering refactored to use UiBroker.", replacement="renderOutput")
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
         log("ignoring renderSlot")
     }
 
     fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
-      val encoded = StringEncoder.encodeDictionary(args)
-      serviceRequest(
-        toWasmAddress(),
-        call.toWasmString(),
-        encoded.toWasmString(),
-        tag.toWasmString()
-      )
+        val encoded = StringEncoder.encodeDictionary(args)
+        serviceRequest(
+            toWasmAddress(),
+            call.toWasmString(),
+            encoded.toWasmString(),
+            tag.toWasmString()
+        )
     }
 
     open fun fireEvent(slotName: String, eventName: String) {
-      eventHandlers[eventName]?.invoke()
-      renderSlot(slotName)
+        eventHandlers[eventName]?.invoke()
+        renderOutput()
     }
 
     /**
@@ -83,10 +84,10 @@ abstract class Particle : WasmObject() {
      * @return absolute URL
      */
     fun resolveUrl(url: String): String {
-      val r: WasmString = resolveUrl(url.toWasmString())
-      val resolved = r.toKString()
-      _free(r)
-      return resolved
+        val r: WasmString = resolveUrl(url.toWasmString())
+        val resolved = r.toKString()
+        _free(r)
+        return resolved
     }
 
     open fun init() {}
@@ -132,8 +133,7 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     }
 }
 
-class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
-    Iterable<T> {
+class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Iterable<T> {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
 

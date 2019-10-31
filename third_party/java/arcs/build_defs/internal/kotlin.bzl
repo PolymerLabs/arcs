@@ -11,15 +11,16 @@ _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/kotlin:arcs_wasm"]
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
-def arcs_kt_library(name, srcs = [], deps = []):
+def arcs_kt_library(name, srcs = [], deps = [], visibility = []):
     """Declares kotlin library targets for Kotlin particle sources."""
     kt_native_library(
         name = name,
         srcs = srcs,
         deps = _ARCS_KOTLIN_LIBS + deps,
+        visibility = visibility,
     )
 
-def arcs_kt_binary(name, srcs = [], deps = []):
+def arcs_kt_binary(name, srcs = [], deps = [], visibility = []):
     """Performs final compilation of wasm and bundling if necessary."""
     libname = name + "_lib"
 
@@ -29,6 +30,7 @@ def arcs_kt_binary(name, srcs = [], deps = []):
         srcs = srcs,
         deps = _ARCS_KOTLIN_LIBS + deps,
         tags = ["wasm"],
+        visibility = visibility,
     )
 
     kt_native_binary(
@@ -36,21 +38,25 @@ def arcs_kt_binary(name, srcs = [], deps = []):
         entry_point = "arcs.main",
         deps = _ARCS_KOTLIN_LIBS + [":%s" % libname] + deps,
         tags = ["wasm"],
+        visibility = visibility,
     )
 
 def kt_jvm_and_js_library(
         name = None,
         srcs = [],
-        deps = []):
+        deps = [],
+        visibility = []):
     """Simultaneously defines JVM and JS kotlin libraries.
     name: String; Name of the library
     srcs: List; List of sources
     deps: List; List of dependencies
+    visibility: List; List of visibilities
     """
     kt_jvm_library(
         name = name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
+        visibility = visibility,
     )
 
     if IS_BAZEL:

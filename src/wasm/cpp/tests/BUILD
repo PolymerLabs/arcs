@@ -4,6 +4,7 @@ load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_bi
 filegroup(
     name = "schemas_srcs",
     srcs = ["schemas.arcs"],
+    visibility = ["//visibility:public"],
 )
 
 arcs_cc_schema(
@@ -25,13 +26,6 @@ cc_wasm_binary(
         "test-base.h",
     ],
     deps = ["//src/wasm/cpp:arcs"],
+    visibility = ["//visibility:public"],
 )
 
-arcs_ts_test(
-    name = "wasm-cpp-test",
-    src = "wasm-cpp-test.ts",
-    deps = [
-        ":schemas_srcs",
-        ":test-module",
-    ],
-)

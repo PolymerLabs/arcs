@@ -1,0 +1,31 @@
+schema Foo
+
+schema Data
+  Number num
+  Text txt
+  URL lnk
+  Boolean flg
+//Reference<Foo> ref // TODO(alxr): port references support to Kotlin
+
+schema Empty
+
+schema RenderFlags
+  Boolean template
+  Boolean model
+
+schema ServiceResponse
+  Text call
+  Text tag
+  Text payload
+
+schema SpecialFields
+  Text for
+  Number internal_id
+
+particle Test
+  in Foo foo
+  in Data data
+  in Empty empty
+  in RenderFlags renderFlags
+  in ServiceResponse serviceResponse
+  in SpecialFields specialFields
