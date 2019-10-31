@@ -132,8 +132,7 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     }
 }
 
-class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(),
-    Iterable<T> {
+class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Iterable<T> {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
 
