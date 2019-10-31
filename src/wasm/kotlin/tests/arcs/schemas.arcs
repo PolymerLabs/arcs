@@ -5,7 +5,7 @@ schema Data
   Text txt
   URL lnk
   Boolean flg
-//Reference<Foo> ref
+//Reference<Foo> ref // TODO(alxr): port references support to Kotlin
 
 schema Empty
 
