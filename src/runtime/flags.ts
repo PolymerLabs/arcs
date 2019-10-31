@@ -26,24 +26,28 @@ export class Flags extends FlagDefaults {
     Object.assign(Flags, FlagDefaults);
   }
 
-  static withPreSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
+  // tslint:disable-next-line: no-any
+  static withPreSlandlesSyntax<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, f);
   }
-  static withPostSlandlesSyntax<T>(f: () => Promise<T>): () => Promise<T> {
+  // tslint:disable-next-line: no-any
+  static withPostSlandlesSyntax<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: false}, f);
   }
 
-  static withNewStorageStack<T>(f: () => Promise<T>): () => Promise<T> {
+  // tslint:disable-next-line: no-any
+  static withNewStorageStack<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({useNewStorageStack: true}, f);
   }
 
   // For testing with a different set of flags to the default.
-  static withFlags<T>(args: Partial<typeof FlagDefaults>, f: () => Promise<T>): () => Promise<T> {
-    return async () => {
-      Object.assign(Flags, args);
+  // tslint:disable-next-line: no-any
+  static withFlags<T, Args extends any[]>(flagsSettings: Partial<typeof FlagDefaults>, f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
+    return async (...args) => {
+      Object.assign(Flags, flagsSettings);
       let res;
       try {
-        res = await f();
+        res = await f(...args);
       } finally {
         Flags.reset();
       }
