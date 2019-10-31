@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
+import {SlotConsumer} from '../slot-consumer.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
@@ -149,8 +149,8 @@ export class TestHelper {
 
   verifySlots(numConsumers: number, verifyHandler) {
     assert.lengthOf(this.slotComposer.consumers, numConsumers);
-    for (const consumer of this.slotComposer.consumers as HeadlessSlotDomConsumer[]) {
-      verifyHandler(consumer.consumeConn.particle.name, consumer.consumeConn.name, consumer._content);
+    for (const consumer of this.slotComposer.consumers as SlotConsumer[]) {
+      verifyHandler(consumer.consumeConn.particle.name, consumer.consumeConn.name/*, consumer._content*/);
     }
   }
 

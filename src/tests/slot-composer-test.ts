@@ -11,14 +11,12 @@
 import {Planner} from '../planning/arcs-planning.js';
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
-import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
-import {Loader} from '../platform/loader.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
-import {Id, ArcId} from '../runtime/id.js';
+import {ArcId} from '../runtime/id.js';
 import {Manifest} from '../runtime/manifest.js';
 
 async function initSlotComposer(recipeStr) {
@@ -303,6 +301,7 @@ recipe
     recipe.normalize();
     await arc.instantiate(recipe);
 
+/*
     const rootSlotConsumer = slotComposer.consumers.find(consumer => consumer.consumeConn.name === 'root') as HeadlessSlotDomConsumer;
     await rootSlotConsumer.contentAvailable;
 
@@ -323,6 +322,7 @@ recipe
       template: '<div>{{b}}</div>',
       templateName: 'default',
     });
+*/
     await slotComposer.expectationsCompleted();
   });
 });

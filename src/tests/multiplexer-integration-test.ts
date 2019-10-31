@@ -10,7 +10,6 @@
 
 import {assert} from '../platform/chai-web.js';
 import {HostedSlotContext} from '../runtime/slot-context.js';
-import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
 import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
 import {collectionHandleForTest} from '../runtime/testing/handle-for-test.js';
@@ -101,9 +100,11 @@ describe('Multiplexer', () => {
     }
 
     // verify template cache
+    /*
     HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
     HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
     HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::default');
     HeadlessSlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
+    */
   });
 });
