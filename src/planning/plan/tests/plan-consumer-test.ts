@@ -177,7 +177,6 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     };
 
     const consumerDom = await initConsumer(Modality.Name.Dom);
-    debugger;
     const domSuggestions = consumerDom.getCurrentSuggestions();
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),

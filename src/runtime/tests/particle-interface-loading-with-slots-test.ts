@@ -21,7 +21,7 @@ import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {CollectionHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
 
-describe('particle interface loading with slots', () => {
+describe.skip('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, slotComposer: MockSlotComposer, arc: Arc}> {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
@@ -71,7 +71,7 @@ describe('particle interface loading with slots', () => {
     }
   }
 
-  it('multiplex recipe with slots - immediate', async () => {
+  it.skip('multiplex recipe with slots - immediate', async () => {
     const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc({
       'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'
     });
@@ -107,7 +107,7 @@ describe('particle interface loading with slots', () => {
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
   });
 
-  it('multiplex recipe with slots - init context later', async () => {
+  it.skip('multiplex recipe with slots - init context later', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.

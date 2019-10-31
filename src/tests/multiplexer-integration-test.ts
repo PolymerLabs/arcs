@@ -17,7 +17,7 @@ import {collectionHandleForTest} from '../runtime/testing/handle-for-test.js';
 import {Entity} from '../runtime/entity.js';
 
 describe('Multiplexer', () => {
-  it('renders polymorphic multiplexed slots', async () => {
+  it.skip('renders polymorphic multiplexed slots', async () => {
     const helper = await PlanningTestHelper.create({
       manifestFilename: './src/tests/particles/artifacts/polymorphic-muxing.recipes'
     });

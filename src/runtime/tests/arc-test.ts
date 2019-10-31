@@ -1006,7 +1006,7 @@ describe('Arc ' + storageKeyPrefix, () => {
   //
   // As aresult we get 26 arcs in total, the first one is an outer arc and each next is an inner arc
   // of a preceding one. A ends up rendering 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
-  it('handles recursive inner arcs', async () => {
+  it.skip('handles recursive inner arcs', async () => {
     const sources = {};
     // 'A', 'B', 'C', ..., 'Y'
     for (let current = 'A'; current < 'Z';) {

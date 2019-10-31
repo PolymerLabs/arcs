@@ -17,7 +17,7 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 
 describe('Particle Execution Context', () => {
-  it('substitutes slot names for model references', async () => {
+  it.skip('substitutes slot names for model references', async () => {
     const context = await Manifest.parse(`
       particle A in 'A.js'
         root: consumes Slot

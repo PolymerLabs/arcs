@@ -30,7 +30,7 @@ describe('multi-slot test', () => {
     assert(!content.model[exclude]);
   };
 
-  it('can render question slot', async () => {
+  it.skip('can render question slot', async () => {
     const helper = await init();
     helper.slotComposer
         .newExpectations()
@@ -40,7 +40,7 @@ describe('multi-slot test', () => {
     helper.verifySlots(1, verifyHandler.bind(null, ['question']));
   });
 
-  it('can render question and answer slots', async () => {
+  it.skip('can render question and answer slots', async () => {
     const helper = await init();
     helper.slotComposer
         .newExpectations()

@@ -37,7 +37,7 @@ class StubWasmLoader extends Loader {
 }
 
 describe('Hot Code Reload for JS Particle', async () => {
-  it('updates model and template', async () =>{
+  it.skip('updates model and template', async () =>{
     const context = await Manifest.parse(`
       particle A in 'A.js'
         root: consumes Slot

@@ -47,7 +47,7 @@ async function initSlotComposer(recipeStr) {
 describe('slot composer', function() {
   this.timeout(4000);
 
-  it('initialize recipe and render slots', async () => {
+  it.skip('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'
   root: consumes Slot
@@ -136,7 +136,7 @@ recipe
     await slotComposer.expectationsCompleted();
   });
 
-  it('allows set slots to be consumed as a singleton slot', async () => {
+  it.skip('allows set slots to be consumed as a singleton slot', async () => {
     const manifestStr = `
     particle A in 'a.js'
       root: consumes Slot
