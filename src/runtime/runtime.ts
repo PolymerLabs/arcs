@@ -68,10 +68,12 @@ export class Runtime {
     return new Runtime(new Loader(), FakeSlotComposer, context);
   }
 
-  // Note: `Runtime.getRuntime()` returns the most recently constructed Runtime object (or creates one),
-  // so one can call `init` to initialize the default environment without capturing the return value.
-  // Systems can use `Runtime.getRuntime()` to access the default environment instead of plumbing `runtime`
-  // arguments through all functions.
+  /**
+   * `Runtime.getRuntime()` returns the most recently constructed Runtime object (or creates one),
+   * so one can call `init` to initialize a default environment without capturing the return value.
+   * Systems can use `Runtime.getRuntime()` to access the default environment instead of plumbing a
+   * `runtime` argument through numerous functions.
+   */
   static init(root?: string, urls?: {}): Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
     const loader = new Loader(map);
@@ -207,13 +209,17 @@ export class Runtime {
   // stuff from shells/lib/utils
 
   // TODO(sjmiles): there is redundancy vs `parse/loadManifest` above, but this is
-  // temporary until we polish this integration.
+  // temporary until we polish the Utils integration.
 
-  static async parse(content: string, options?): Promise<Manifest> {
-    const {loader} = this.getRuntime();
+  async parse(content: string, options?): Promise<Manifest> {
+    const {loader} = this;
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     const localOptions = {id, fileName: `./${id}`, loader};
     return Manifest.parse(content, {...localOptions, ...options});
+  }
+
+  static async parse(content: string, options?): Promise<Manifest> {
+    return this.getRuntime().parse(content, options);
   }
 
 }
