@@ -30,7 +30,7 @@ type UrlMap = Dictionary<string | {
   root: string
   path?: string
   buildDir: string
-  buildOutputRegex: string
+  buildOutputRegex: string | RegExp
   compiledRegex?: RegExp
 }>;
 
@@ -284,7 +284,11 @@ export abstract class LoaderBase {
   private compileRegExp(urlMap: UrlMap) {
     for (const config of Object.values(urlMap)) {
       if (typeof config === 'string') continue;
-      config.compiledRegex = RegExp(config.buildOutputRegex);
+      if (typeof config.buildOutputRegex === 'string') {
+        config.compiledRegex = RegExp(config.buildOutputRegex);
+      } else {
+        config.compiledRegex = config.buildOutputRegex;
+      }
     }
   }
 }
