@@ -29,11 +29,3 @@ cc_wasm_binary(
     visibility = ["//visibility:public"],
 )
 
-arcs_ts_test(
-    name = "wasm-cpp-test",
-    src = "wasm-cpp-test.ts",
-    deps = [
-        ":schemas_srcs",
-        ":test-module",
-    ],
-)
