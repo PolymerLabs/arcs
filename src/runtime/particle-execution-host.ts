@@ -70,7 +70,7 @@ export class ParticleExecutionHost {
 
   private choosePortForParticle(particle: Particle): PECOuterPort {
     assert(!this._portByParticle.has(particle), `port already found for particle '${particle.spec.name}'`);
-    const port = this._apiPorts.find(port => particle.isJavaParticle() === port.supportsJavaParticle());
+    const port = this._apiPorts.find(port => particle.isExternalParticle() === port.supportsExternalParticle());
     assert(!!port, `No port found for '${particle.spec.name}'`);
     this._portByParticle.set(particle, port);
     return this.getPort(particle);
