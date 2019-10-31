@@ -91,7 +91,7 @@ class TestParticle : Particle() {
 
         eventHandler("add") {
           val newData = data.get()!!
-          newData.num = newData.num + 2
+          newData.num?.let { newData.num = newData.num + 2 }
           newData.txt = newData.txt + "!!!!!!"
           this.data.set(newData)
         }

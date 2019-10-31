@@ -96,13 +96,15 @@ class StringDecoder(private var str: String) {
 class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     companion object {
-      fun encodeDictionary(dict: Map<String, String>): String {
+      fun encodeDictionary(dict: Map<String, String?>): String {
         val sb = StringBuilder()
         sb.append(dict.size).append(":")
 
         for((key, value) in dict) {
-          sb.append(key.length).append(":").append(key)
-          sb.append(value.length).append(":").append(value)
+            value?.let {
+                sb.append(key.length).append(":").append(key)
+                sb.append(it.length).append(":").append(it)
+            }
         }
         return sb.toString()
       }
