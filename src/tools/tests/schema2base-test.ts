@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Schema} from '../../runtime/schema.js';
+import {Schema} from '../../runtime/type.js';
 import {Dictionary} from '../../runtime/hot.js';
 import {Schema2Base, ClassGenerator} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';

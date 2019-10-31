@@ -9,10 +9,9 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
 import {Entity, EntityRawData} from './entity.js';
 import {Reference} from './reference.js';
-import {ReferenceType} from './type.js';
+import {Schema, ReferenceType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';

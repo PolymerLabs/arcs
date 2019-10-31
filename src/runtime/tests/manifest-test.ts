@@ -13,7 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
 import {Manifest, ErrorSeverity} from '../manifest.js';
-import {Schema} from '../schema.js';
+import {Schema} from '../type.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
