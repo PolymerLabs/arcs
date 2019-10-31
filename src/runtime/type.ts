@@ -24,7 +24,7 @@ import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/cr
 import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Referenceable} from './crdt/crdt-collection.js';
-
+import {Flags} from './flags.js';
 
 export class Schema {
   readonly names: string[];
