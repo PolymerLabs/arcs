@@ -1413,12 +1413,22 @@ SchemaInline
   }
 
 SchemaInlineField
-  = type:(SchemaType whiteSpace)? name:fieldName
+  = preSlandlesType:(SchemaType whiteSpace)? name:fieldName type:(':' whiteSpace? SchemaType)?
   {
+    if (type && preSlandlesType) {
+      error('cannot provide a type using both preslandles syntax and unification syntax for SchemaInlineField.');
+    }
+    if (preSlandlesType) {
+      requireUsePreSlandleSyntax();
+      type = optional(preSlandlesType, ty => ty[0], null);
+    } else if (type) {
+      requireUsePostSlandleSyntax();
+      type = optional(type, ty => ty[2], null);
+    }
     return toAstNode<AstNode.SchemaInlineField>({
       kind: 'schema-inline-field',
       name,
-      type: optional(type, type => type[0], null),
+      type
     });
   }
 
@@ -1464,13 +1474,13 @@ SchemaItem
   / Description
 
 SchemaField
-  = type:SchemaType whiteSpace name:fieldName eolWhiteSpace
+  = field:SchemaInlineField eolWhiteSpace
   {
-    return toAstNode<AstNode.SchemaField>({
-      kind: 'schema-field',
-      type,
-      name,
-    });
+    if (!field.type) {
+      expected('a type (required for schema fields)');
+    }
+    field.kind = 'schema-field';
+    return toAstNode<AstNode.SchemaField>(field);
   }
 
 SchemaType
@@ -1592,7 +1602,7 @@ lowerIdent "a lowercase identifier (e.g. foo)"
 unsafeLowerIdent "a lowercase identifier or keyword"
   = [a-z][a-z0-9_]i* &([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
   { return text(); }
-fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
+fieldName "a field name (e.g. foo9)" // Current handle, formFactor or any entity field.
   = [a-z][a-z0-9_]i* { return text(); }
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
   = $ (simpleName ("." simpleName)*) // Note that a single simpleName matches too

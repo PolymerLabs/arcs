@@ -35,7 +35,58 @@ function verifyPrimitiveType(field, type) {
 }
 
 describe('manifest', () => {
-  it('can parse a manifest containing a recipe', async () => {
+  it('SLANDLES SYNTAX can parse a manifest containing a recipe', Flags.withPostSlandlesSyntax(async () => {
+    const manifest = await Manifest.parse(`
+      schema S
+        t: Text
+
+        description \`one-s\`
+          plural \`many-ses\`
+          value \`s:\${t}\`
+      particle SomeParticle &work in 'some-particle.js'
+        someParam: writes S
+
+      recipe SomeRecipe &someVerb1 &someVerb2
+        map #someHandle
+        handle0: create #newHandle
+        SomeParticle
+          someParam: writes #tag
+        description \`hello world\`
+          handle0 \`best handle\``);
+    const verify = (manifest: Manifest) => {
+      const particle = manifest.particles[0];
+      assert.strictEqual('SomeParticle', particle.name);
+      assert.deepEqual(['work'], particle.verbs);
+      const recipe = manifest.recipes[0];
+      assert(recipe);
+      assert.strictEqual('SomeRecipe', recipe.name);
+      assert.deepEqual(['someVerb1', 'someVerb2'], recipe.verbs);
+      assert.sameMembers(manifest.findRecipesByVerb('someVerb1'), [recipe]);
+      assert.sameMembers(manifest.findRecipesByVerb('someVerb2'), [recipe]);
+      assert.lengthOf(recipe.particles, 1);
+      assert.lengthOf(recipe.handles, 2);
+      assert.strictEqual(recipe.handles[0].fate, 'map');
+      assert.strictEqual(recipe.handles[1].fate, 'create');
+      assert.lengthOf(recipe.handleConnections, 1);
+      assert.sameMembers(recipe.handleConnections[0].tags, ['tag']);
+      assert.lengthOf(recipe.patterns, 1);
+      assert.strictEqual(recipe.patterns[0], 'hello world');
+      assert.strictEqual(recipe.handles[1].pattern, 'best handle');
+      const type = recipe.handleConnections[0]['_resolvedType'];
+      assert.lengthOf(Object.keys(manifest.schemas), 1);
+      const schema = Object.values(manifest.schemas)[0] as Schema;
+      assert.lengthOf(Object.keys(schema.description), 3);
+      assert.deepEqual(Object.keys(schema.description), ['pattern', 'plural', 'value']);
+    };
+    verify(manifest);
+    // TODO(dstockwell): The connection between particles and schemas does
+    //                   not roundtrip the same way.
+    const type = manifest.recipes[0].handleConnections[0].type;
+    assert.strictEqual('one-s', type.toPrettyString());
+    assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
+    verify(await Manifest.parse(manifest.toString(), {}));
+  }));
+  it('can parse a manifest containing a recipe', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
         Text t
@@ -84,7 +135,7 @@ describe('manifest', () => {
     assert.strictEqual('one-s', type.toPrettyString());
     assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
-  });
+  }));
   it('SLANDLES SYNTAX can parse a manifest containing a particle specification', Flags.withPostSlandlesSyntax(async () => {
     const schemaStr = `
 schema Product
@@ -1930,9 +1981,9 @@ resource SomeName
   it('SLANDLES SYNTAX can resolve a particle with a schema reference', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-        Text far
+        far: Text
       particle P
-        bar: reads Bar {Reference<Foo> foo}
+        bar: reads Bar {foo: Reference<Foo>}
       recipe
         h0: create
         P
@@ -1948,7 +1999,7 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {Reference<Foo {Text far}> foo}
+  bar: reads Bar {foo: Reference<Foo {far: Text}>}
   modality dom`);
   }));
   it('can resolve a particle with a schema reference', Flags.withPreSlandlesSyntax(async () => {
@@ -1979,7 +2030,7 @@ resource SomeName
     const manifest = await Manifest.parse(`
       schema Foo
       particle P
-        bar: reads Bar {Reference<Foo {Text far}> foo}
+        bar: reads Bar {foo: Reference<Foo {far: Text}>}
       recipe
         h0: create
         P
@@ -1995,7 +2046,7 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {Reference<Foo {Text far}> foo}
+  bar: reads Bar {foo: Reference<Foo {far: Text}>}
   modality dom`);
   }));
   it('can resolve a particle with an inline schema reference', Flags.withPreSlandlesSyntax(async () => {
@@ -2024,9 +2075,9 @@ resource SomeName
   it('SLANDLES SYNTAX can resolve a particle with a collection of schema references', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-        Text far
+        far: Text
       particle P
-        bar: reads Bar {[Reference<Foo>] foo}
+        bar: reads Bar {foo: [Reference<Foo>]}
       recipe
         h0: create
         P
@@ -2042,7 +2093,7 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {[Reference<Foo {Text far}>] foo}
+  bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
   modality dom`);
   }));
   it('can resolve a particle with a collection of schema references', Flags.withPreSlandlesSyntax(async () => {
@@ -2072,7 +2123,7 @@ resource SomeName
   it('SLANDLES SYNTAX can resolve a particle with a collection of inline schema references', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle P
-        bar: reads Bar {[Reference<Foo {Text far}>] foo}
+        bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
       recipe
         h0: create
         P
@@ -2088,7 +2139,7 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {[Reference<Foo {Text far}>] foo}
+  bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
   modality dom`);
   }));
   it('can resolve a particle with a collection of inline schema references', Flags.withPreSlandlesSyntax(async () => {
@@ -2133,6 +2184,54 @@ resource SomeName
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
+  it('SLANDLES SYNTAX can resolve handle types from inline schemas', Flags.withPostSlandlesSyntax(async () => {
+    const manifest = await Manifest.parse(`
+      particle P
+        foo: reads * {value: Text}
+      particle P2
+        foo: reads * {value: Text, value2: Text}
+      particle P3
+        foo: reads * {value: Text, value3: Text}
+      particle P4
+        foo: reads * {value: Text, value2: Number}
+
+      recipe
+        h0: create
+        P
+          foo: any h0
+        P2
+          foo: any h0
+
+      recipe
+        h0: create
+        P2
+          foo: any h0
+        P3
+          foo: any h0
+
+      recipe
+        h0: create
+        P2
+          foo: any h0
+        P4
+          foo: any h0
+    `);
+    const [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
+    // Although suspicious, this is valid because entities in the
+    // created handle just need to be able to be read as {Text value, Text value2}
+    // and {Text value, Text value3}. Hence, the recipe is valid and the type
+    // of the handle is * {Text value, Text value2, Text value3};
+    assert(suspiciouslyValidRecipe.normalize());
+    const suspiciouslyValidFields =
+        suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.getEntitySchema().fields;
+    verifyPrimitiveType(suspiciouslyValidFields.value, 'Text');
+    verifyPrimitiveType(suspiciouslyValidFields.value2, 'Text');
+    verifyPrimitiveType(suspiciouslyValidFields.value3, 'Text');
+    assert(!invalidRecipe.normalize());
+  }));
+
   it('can resolve handle types from inline schemas', async () => {
     const manifest = await Manifest.parse(`
       particle P

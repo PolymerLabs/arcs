@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Foo
-  Text value
+  value: Text
 schema Bar
-  Text value
+  value: Text
 schema Far
 
 particle SlandleTestParticle in 'test-particle.js'
