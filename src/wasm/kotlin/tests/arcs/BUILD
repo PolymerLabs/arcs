@@ -9,6 +9,7 @@ filegroup(
 
 arcs_kt_schema(
     name = "test_schemas",
+    package = "wasm.kotlin.tests.arcs",
     srcs = ["schemas.arcs"],
 )
 
