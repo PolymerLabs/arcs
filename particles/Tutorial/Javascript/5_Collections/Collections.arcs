@@ -5,7 +5,7 @@ schema PersonDetails
   Text name
   Number age
 
-// This is essentially a JSON file, but defined inside the manifest itself rather than in a separate file.
+// This is essentially a JSON file defined inside the manifest.
 resource PeopleData
   start
   [
@@ -14,11 +14,12 @@ resource PeopleData
     {"name": "Jen", "age": 50}
   ]
 
-// This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
+// This data store contains a collection of entities rather than a single
+// entity, and is backed by the PeopleData resource defined above.
 store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionParticle in 'collections.js'
-  // The input is a list of PersonDetails entities.
+  // The input is a collection of PersonDetails entities.
   in [PersonDetails] inputData
   consume root
 
