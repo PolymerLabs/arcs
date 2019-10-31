@@ -2,9 +2,9 @@ load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_cc_schema", "arc
 load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 
 filegroup(
-  name = "schemas_srcs",
-  srcs = ["schemas.arcs"],
-  visibility = ["//visibility:public"],
+    name = "schemas_srcs",
+    srcs = ["schemas.arcs"],
+    visibility = ["//visibility:public"],
 )
 
 arcs_cc_schema(
