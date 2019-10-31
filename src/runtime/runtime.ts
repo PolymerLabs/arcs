@@ -189,7 +189,7 @@ export class Runtime {
   }
 
   /**
-   * Load and parse a manifest from a resource (not stritcly a file) and return
+   * Load and parse a manifest from a resource (not strictly a file) and return
    * a Manifest object. The loader determines the semantics of the fileName. See
    * the Manifest class for details.
    */
