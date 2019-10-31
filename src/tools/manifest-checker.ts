@@ -40,7 +40,7 @@ async function checkManifest(src: string) {
   for (const {implFile} of manifest.particles) {
     // Particle may not have an implementation. Might be an Android particle,
     // so this is possibly fine. Just skip it.
-    if (implFile) {
+    if (implFile && !implFile.endsWith('java')) {
       await loader.loadResource(implFile);
     }
   }
