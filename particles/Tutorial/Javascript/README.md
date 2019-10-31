@@ -99,7 +99,7 @@ Now your code should say “Hello, Human!”. You can update this by changing wh
 
 But, as promised, let’s get to understanding root. We start with a definition:
 
-> Slots - an element of the Arcs platform that allows particles to render on a user interface. 
+> Slots - An element of the Arcs platform that allows particles to render on a user interface. 
 
 As a matter of notation, we say that particles consume slots when they fill a slot, and provide slots when they make slots available to other particles. Particles can also delegate by providing and consuming a slot. Root is the base slot that Arcs provides for particles to use. 
 
@@ -369,3 +369,81 @@ defineParticle(({SimpleParticle, html}) => {
 ```
 
 When you execute this recipe, you should see everyone being greeted. If you added or remove an entity from the `PeopleData` store, the number of people greeted will change accordingly thanks to the template interpolation.
+
+# The Lore of a JSON Store
+
+Hopefully by now you are starting to see how the different components of Arcs work together to preserve user sovereignty as you develop. This is the final chapter in our introductory tutorials which are designed to introduce the base Arcs concepts. But don’t worry, this is not the end of our tutorials! From here you can continue to the next set of tutorials where you’ll build a tic-tac-toe game with interchangeable human and computer players.
+
+Alright, let’s get to the actual tutorial! This time, instead of embedding the store's data directly inside
+the Arcs Manifest file (as a `resource`), we're going to load it from a separate JSON file. Let’s start with the Arcs Manifest file:
+```
+// Tutorial: JSON Store
+// Loads data stored in a JSON file.
+
+// Defines a new Entity called PersonDetails, with two fields.
+schema PersonDetails
+  Text name
+  Number age
+
+// Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
+store PersonToGreetStore of PersonDetails in 'data.json'
+
+particle JsonStoreParticle in 'JsonStore.js'
+  // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
+  in PersonDetails inputData
+  consume root
+
+recipe JsonStoreRecipe
+  // This line connects this recipe to the data store above. It also creates a local alias for it called "data", which is how we will refer to
+  // it inside the scope of this recipe.
+  map PersonToGreetStore as data
+
+  JsonStoreParticle
+    // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
+    inputData = data
+
+  description `Javascript Tutorial 6: JSON Store`
+```
+
+Next, we have the JSON file, which according to the Arcs Manifest should be called data.json:
+```json
+[
+    {
+        "name": "Jack",
+        "age": 7
+    }
+]
+```
+
+And finally, the Javascript:
+```javascript
+defineParticle(({SimpleParticle, html}) => {
+  return class extends SimpleParticle {
+    get template() {
+      return html`Hello <span>{{name}}</span>, aged <span>{{age}}</span>!`;
+    }
+
+    shouldRender({inputData}) {
+      return inputData;
+    }
+
+    render({inputData}) {
+      return {name: inputData.name, age: inputData.age};
+    }
+  };
+});
+```
+
+
+Before we finish, let’s go over all of the concepts we have introduced in these tutorials.
+
+>- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable. 
+>- *Recipe* - A combination of particles to create features and systems.
+>- *Template Interpolation* - A mechanism to substitute formatted data into renderable elements.
+>- *Slots* - An element of the Arcs platform that allows particles to render on a user interface.
+>- *Schema* - Composition of data to create a new type.
+>- *Entity* - Entities are units of data in Arcs. They are created, exchanged and modified as means of communication between particles.
+>- *Stores* - A store represents a data location
+>- *Handles* - Handles are manifestations of stores inside an arc. They allow particles to read, write and listen for data updates.
+
+To see how we combine these elements to create a functioning system, checkout the tic-tac-toe tutorial next!
