@@ -48,10 +48,7 @@ class RenderTest : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val flags = flags.get()
-        flags?.let {
-            renderSlot("root", flags.template ?: true, flags.model ?: true)
-        }
+        flags.get()?.let { renderOutput() }
     }
 }
 
