@@ -25,11 +25,11 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: 'String?',  defaultVal: 'null',    decodeFn: 'decodeText()'},
-  'U': {type: 'String?',  defaultVal: 'null',    decodeFn: 'decodeText()'},
-  'N': {type: 'Double?',  defaultVal: 'null',   decodeFn: 'decodeNum()'},
-  'B': {type: 'Boolean?', defaultVal: 'null', decodeFn: 'decodeBool()'},
-  'R': {type: '',        defaultVal: '',      decodeFn: ''},
+  'T': {type: 'String?', decodeFn: 'decodeText()'},
+  'U': {type: 'String?', decodeFn: 'decodeText()'},
+  'N': {type: 'Double?', decodeFn: 'decodeNum()'},
+  'B': {type: 'Boolean?', decodeFn: 'decodeBool()'},
+  'R': {type: '', decodeFn: ''},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -74,10 +74,10 @@ class KotlinGenerator implements ClassGenerator {
       process.exit(1);
     }
 
-    const {type, defaultVal, decodeFn} = typeMap[typeChar];
+    const {type, decodeFn} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
-    this.fields.push(`var ${fixed}: ${type} = ${defaultVal}`);
+    this.fields.push(`var ${fixed}: ${type} = null`);
 
     this.decode.push(`"${field}" -> {`,
                      `  validate("${typeChar}")`,
