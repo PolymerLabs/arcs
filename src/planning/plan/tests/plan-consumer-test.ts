@@ -74,9 +74,9 @@ async function storeResults(consumer, suggestions) {
 
       let suggestionsChangeCount = 0;
       const suggestionsCallback = (suggestions) => ++suggestionsChangeCount;
+      consumer.registerSuggestionsChangedCallback(suggestionsCallback);
       let visibleSuggestionsChangeCount = 0;
       const visibleSuggestionsCallback = (suggestions) => { ++visibleSuggestionsChangeCount; };
-      consumer.registerSuggestionsChangedCallback(suggestionsCallback);
       consumer.registerVisibleSuggestionsChangedCallback(visibleSuggestionsCallback);
       assert.isEmpty(consumer.getCurrentSuggestions());
 
@@ -177,6 +177,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     };
 
     const consumerDom = await initConsumer(Modality.Name.Dom);
+    debugger;
     const domSuggestions = consumerDom.getCurrentSuggestions();
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),

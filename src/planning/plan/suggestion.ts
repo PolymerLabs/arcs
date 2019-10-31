@@ -24,7 +24,6 @@ import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
 import {isRoot} from '../../runtime/particle-spec.js';
 
-
 export type DescriptionProperties = {
   text?: string;
   template?: string;

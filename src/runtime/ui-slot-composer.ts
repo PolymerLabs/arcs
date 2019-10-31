@@ -31,7 +31,7 @@ export type SlotComposerOptions = {
 };
 
 export class UiSlotComposer {
-  private readonly _containerKind: string;
+  //private readonly _containerKind: string;
   readonly modality: Modality;
   readonly modalityHandler: ModalityHandler;
   private readonly _consumers: SlotConsumer[] = [];
@@ -52,17 +52,21 @@ export class UiSlotComposer {
       ...options
     };
 
-    // TODO: Support rootContext for backward compatibility, remove when unused.
-    // options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;
-    // assert((options.rootContainer !== undefined)
-    //        !==
-    //        (options.noRoot === true),
-    //   'Root container is mandatory unless it is explicitly skipped');
-    // this._containerKind = options.containerKind;
-    // if (options.modalityName) {
-    //   this.modality = Modality.create([options.modalityName]);
-    // }
     this.modalityHandler = opts.modalityHandler;
+
+    // TODO: Support rootContext for backward compatibility, remove when unused.
+    // opts.rootContainer = opts.rootContainer || opts.rootContext || (opts.containers || Object).root;
+    // assert((opts.rootContainer !== undefined)
+    //        !==
+    //        (opts.noRoot === true),
+    //   'Root container is mandatory unless it is explicitly skipped');
+
+    // this._containerKind = opts.containerKind;
+
+    if (opts.modalityName) {
+      this.modality = Modality.create([options.modalityName]);
+    }
+
 
     //if (opts.noRoot) {
     //  return;
@@ -70,7 +74,7 @@ export class UiSlotComposer {
 
     const containerByName =
         opts.containers
-        //|| this.findRootContainers(options.rootContainer)
+        //|| this.findRootContainers(opts.rootContainer)
         //|| {}
         ;
     //if (Object.keys(containerByName).length === 0) {
@@ -91,8 +95,11 @@ export class UiSlotComposer {
   get consumers(): SlotConsumer[] {
     return this._consumers;
   }
+
   get containerKind(): string {
-    return this._containerKind;
+    warn('containerKind is deprecated');
+    return '';
+    //return this._containerKind;
   }
 
   getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {
@@ -118,7 +125,7 @@ export class UiSlotComposer {
   }
 
   findContextById(slotId: string) {
-    return this._contexts.find(({id}) => id === slotId) || {};
+    return this._contexts.find(({id}) => id === slotId); // || {};
   }
 
   createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
@@ -149,7 +156,7 @@ export class UiSlotComposer {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;
         }
-        const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, this._containerKind);
+        const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, ''); //this._containerKind);
         const providedContexts = slotConsumer.createProvidedContexts();
         this._contexts = this._contexts.concat(providedContexts);
         newConsumers.push(slotConsumer);
