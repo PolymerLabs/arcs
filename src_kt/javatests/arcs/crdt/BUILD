@@ -12,6 +12,8 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
             "//src_kt/java/arcs/common",
             "//src_kt/java/arcs/crdt",
             "//src_kt/java/arcs/crdt/internal",
+            "//src_kt/java/arcs/data",
+            "//src_kt/java/arcs/testutil",
             "//third_party/java/junit",
             "//third_party/java/truth",
         ],

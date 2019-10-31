@@ -16,5 +16,9 @@ kt_jvm_and_js_library(
     name = "entity",
     srcs = [
         "Entity.kt",
+        "RawEntity.kt",
+    ],
+    deps = [
+        "//src_kt/java/arcs/common",
     ],
 )

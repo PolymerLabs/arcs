@@ -20,5 +20,10 @@ class CrdtException(message: String, cause: Throwable? = null) : Exception(messa
      */
     fun <T> requireNotNull(value: T?, lazyMessage: () -> String): T =
       value ?: throw CrdtException(lazyMessage())
+
+    /** Checker that can throw a [CrdtException] when the provided [condition] is not met. */
+    fun require(condition: Boolean, lazyMessage: () -> String) {
+      if (!condition) throw CrdtException(lazyMessage())
+    }
   }
 }
