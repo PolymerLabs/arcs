@@ -37,11 +37,13 @@ async function checkManifest(src: string) {
   }
 
   // Check particle impls can be loaded.
-  for (const {implFile} of manifest.particles) {
-    // Particle may not have an implementation. Might be an Android particle,
-    // so this is possibly fine. Just skip it.
-    if (implFile) {
-      await loader.loadResource(implFile);
+  for (const particle of manifest.particles) {
+    if (!particle.external) {
+      if (particle.implFile) {
+        await loader.loadResource(particle.implFile);
+      } else {
+        throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
+      }
     }
   }
 }

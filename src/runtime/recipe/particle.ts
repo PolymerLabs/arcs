@@ -382,8 +382,8 @@ export class Particle implements Comparable<Particle> {
     this.recipe.removeParticle(this);
   }
 
-  isJavaParticle(): boolean {
-    return this.spec && (this.spec.implFile || '').endsWith('java');
+  isExternalParticle(): boolean {
+    return this.spec && this.spec.external;
   }
 
   toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {

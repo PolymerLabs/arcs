@@ -477,7 +477,7 @@ ${this.activeRecipe.toString()}`;
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
-    if (!recipeParticle.isJavaParticle()) {
+    if (!recipeParticle.isExternalParticle()) {
       await this._provisionSpecUrl(recipeParticle.spec);
     }
 
