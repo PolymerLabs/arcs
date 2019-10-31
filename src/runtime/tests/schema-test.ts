@@ -453,7 +453,7 @@ describe('schema', () => {
         Number financialCost
       
       schema Crisis extends Accident`);
-    
+
     const alias = manifest.findSchemaByName('EventAlias');
     assert.deepEqual(alias.names, ['Event', 'Occurrence']);
     assert.deepEqual(Object.keys(alias.fields), ['name']);
