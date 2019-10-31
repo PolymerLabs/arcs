@@ -68,12 +68,7 @@ class KotlinGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode) {}
 
-  processField(field: string, typeChar: string, inherited: boolean, refName: string) {
-    if (typeChar === 'R') {
-      console.log('TODO: support reference types in kotlin');
-      process.exit(1);
-    }
-
+  addField(field: string, typeChar: string, inherited: boolean) {
     const {type, decodeFn} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
@@ -85,6 +80,10 @@ class KotlinGenerator implements ClassGenerator {
                      `}`);
 
     this.encode.push(`${fixed}?.let { encoder.encode("${field}:${typeChar}", it) }`);
+  }
+
+  addReference(field: string, inherited: boolean, refName: string) {
+    throw new Error('TODO: support reference types in kotlin');
   }
 
   generate(fieldCount: number): string {

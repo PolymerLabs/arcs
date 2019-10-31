@@ -7,120 +7,151 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 import {assert} from '../../platform/chai-web.js';
-import {EntityPackager} from '../wasm.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
-import {Reference} from '../reference.js';
 import {Entity} from '../entity.js';
-import {Handle} from '../handle.js';
-
-function fakeHandle(schema) {
-  return {
-    entityClass: {schema},
-    type: {getContainedType: () => null},
-    storage: {pec: null}
-  } as Handle;
-}
+import {Reference} from '../reference.js';
+import {StringEncoder, StringDecoder} from '../wasm.js';
+import {BiMap} from '../bimap.js';
 
 async function setup() {
   const manifest = await Manifest.parse(`
     schema Foo
-      Text      txt
-      URL       lnk
-      Number    num
-      Boolean   flg`);
-  const schema = manifest.schemas.Foo;
-  return {entityClass: schema.entityClass(), handle: fakeHandle(schema)};
+      Text txt
+      URL lnk
+      Number num
+      Boolean flg
+      Reference<Bar {Text a}> ref
+    `);
+  const fooClass = manifest.schemas.Foo.entityClass();
+  const barType = EntityType.make(['Bar'], {a: 'Text'});
+
+  const typeMap = new BiMap<number, EntityType>();
+  const encoder = StringEncoder.create(fooClass.type, typeMap);
+  const decoder = StringDecoder.create(fooClass.type, typeMap, null);
+  return {fooClass, barType, encoder, decoder, typeMap};
 }
 
 describe('wasm', () => {
-  it('entity packaging supports basic field types', async () => {
-    const {entityClass, handle} = await setup();
-    const foo = new entityClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true});
+  it('entity packaging supports primitive field types and references', async () => {
+    const {fooClass, barType, encoder, decoder, typeMap} = await setup();
+    const ref = new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(barType), null);
+    const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
     Entity.identify(foo, 'test');
 
-    const packager = new EntityPackager(handle);
-    const encoded = packager.encodeSingleton(foo);
-    assert.deepEqual(foo, packager.decodeSingleton(encoded));
+    const encoded = encoder.encodeSingleton(foo);
+    assert.deepStrictEqual([...typeMap.entries()], [[1, barType]]);
+
+    const foo2 = decoder.decodeSingleton(encoded);
+    assert.deepStrictEqual(foo, foo2);
   });
 
   it('entity packaging supports partially assigned entity', async () => {
-    const {entityClass, handle} = await setup();
-    const foo = new entityClass({txt: 'abc', num: -5.1});
+    const {fooClass, encoder, decoder} = await setup();
+    const foo = new fooClass({txt: 'abc', num: -5.1});
     Entity.identify(foo, '!test:foo:bar|');
 
-    const packager = new EntityPackager(handle);
-    const encoded = packager.encodeSingleton(foo);
-    assert.deepEqual(foo, packager.decodeSingleton(encoded));
+    const encoded = encoder.encodeSingleton(foo);
+    const foo2 = decoder.decodeSingleton(encoded);
+    assert.deepStrictEqual(foo, foo2);
   });
 
   it('entity packaging supports zero and empty values', async () => {
-    const {entityClass, handle} = await setup();
-    const foo = new entityClass({txt: '', lnk: '', num: 0, flg: false});
+    const {fooClass, encoder, decoder} = await setup();
+    const foo = new fooClass({txt: '', lnk: '', num: 0, flg: false});
     Entity.identify(foo, 'te|st');
 
-    const packager = new EntityPackager(handle);
-    const encoded = packager.encodeSingleton(foo);
-    assert.deepEqual(foo, packager.decodeSingleton(encoded));
+    const encoded = encoder.encodeSingleton(foo);
+    const foo2 = decoder.decodeSingleton(encoded);
+    assert.deepStrictEqual(foo, foo2);
   });
 
   it('entity packaging supports empty entity', async () => {
-    const {entityClass, handle} = await setup();
-    const foo = new entityClass({});
+    const {fooClass, encoder, decoder} = await setup();
+    const foo = new fooClass({});
     Entity.identify(foo, 'te st');
 
-    const packager = new EntityPackager(handle);
-    const encoded = packager.encodeSingleton(foo);
-    assert.deepEqual(foo, packager.decodeSingleton(encoded));
+    const encoded = encoder.encodeSingleton(foo);
+    const foo2 = decoder.decodeSingleton(encoded);
+    assert.deepStrictEqual(foo, foo2);
   });
 
   it('entity packaging encodes collections', async () => {
-    const {entityClass, handle} = await setup();
-
+    const {fooClass, barType, encoder, decoder, typeMap} = await setup();
     const make = (id, data) => {
-      const foo = new entityClass(data);
+      const foo = new fooClass(data);
       Entity.identify(foo, id);
       return foo;
     };
-
-    const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true});
+    const ref = new Reference({id: 'r1', storageKey: 'k1'}, new ReferenceType(barType), null);
+    const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true, ref});
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
 
-    const packager = new EntityPackager(handle);
-    const encoded = packager.encodeCollection([f1, f2, f3]);
+    const encoded = encoder.encodeCollection([f1, f2, f3]);
 
     // Decoding of collections hasn't been implemented (yet?).
-    assert.strictEqual(encoded, '3:53:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|10:7:id2|two|29:6:!id:3!|txt:T3:def|num:N-7:|');
+    assert.strictEqual(encoded,
+      '3:' +
+      '71:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:k1|1:|' +
+      '10:7:id2|two|' +
+      '29:6:!id:3!|txt:T3:def|num:N-7:|');
   });
 
   it('entity packaging fails for not-yet-supported types', async () => {
     const multifest = await Manifest.parse(`
       schema BytesFail
-        Bytes foo
+        Bytes value
       schema UnionFail
-        (Text or URL or Number) foo
+        (Text or URL or Number) value
       schema TupleFail
-        (Text, Number) foo
-      schema NamedRefFail
-        Reference<BytesFail> foo
-      schema InlineRefFail
-        Reference<Bar {Text val}> foo`);
+        (Text, Number) value
+      `);
 
     const verify = (schema, value) => {
-      const entity = new (schema.entityClass())({foo: value});
-      Entity.identify(entity, 'test');
-      assert.throws(() => new EntityPackager(fakeHandle(schema)).encodeSingleton(entity), 'not yet supported');
+      const entityClass = schema.entityClass();
+      const e = new entityClass({value});
+      Entity.identify(e, 'test');
+      assert.throws(() => StringEncoder.create(entityClass.type, null).encodeSingleton(e), 'not yet supported');
     };
-
-    const makeRef = entityType => new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(entityType), null);
 
     verify(multifest.schemas.BytesFail, new Uint8Array([2]));
     verify(multifest.schemas.UnionFail, 12);
     verify(multifest.schemas.TupleFail, ['abc', 78]);
-    verify(multifest.schemas.NamedRefFail, makeRef(new EntityType(multifest.schemas.BytesFail)));
-    verify(multifest.schemas.InlineRefFail, makeRef(EntityType.make(['Bar'], {val: 'Text'})));
+  });
+
+  it('decodes string values in dictionary', () => {
+    const enc = '1:3:foo3:bar';
+    const dic = StringDecoder.decodeDictionary(enc);
+    assert.deepStrictEqual(dic, {foo: 'bar'});
+  });
+
+  it('decodes type-coded values in dictionary', () => {
+    const enc = '1:3:fooT3:bar';
+    const dic = StringDecoder.decodeDictionary(enc);
+    assert.deepStrictEqual(dic, {foo: 'bar'});
+  });
+
+  it('decodes nested dictionaries', () => {
+    const base = '1:3:fooT3:bar';
+    const nestedEnc = `1:3:fooD${base.length}:${base}`;
+    const enc = `1:3:fooD${nestedEnc.length}:${nestedEnc}`;
+    const dic = StringDecoder.decodeDictionary(enc);
+    assert.deepStrictEqual<{}>(dic, {foo: {foo: {foo: 'bar'}}});
+  });
+
+  it('decodes complex dictionary', () => {
+    const data = '2:okB13:numN42:3:fooT3:bar';
+    const base = `3:${data}`;
+    const nestedEnc = `4:${data}3:bazD${base.length}:${base}`;
+    const enc = `2:3:zotT3:zoo3:fooD${nestedEnc.length}:${nestedEnc}`;
+    const dic = StringDecoder.decodeDictionary(enc);
+    assert.deepStrictEqual<{}>(dic, {
+      zot: 'zoo',
+      foo: {
+        ok: true, num: 42, foo: 'bar', baz: {ok: true, num: 42, foo: 'bar'}
+      }
+    });
   });
 });

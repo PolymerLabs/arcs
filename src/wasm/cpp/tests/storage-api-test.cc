@@ -1,6 +1,8 @@
 #include "src/wasm/cpp/arcs.h"
 #include "src/wasm/cpp/tests/entities.h"
 
+using arcs::internal::Accessor;
+
 class SingletonApiTest : public arcs::Particle {
 public:
   SingletonApiTest() {
@@ -110,37 +112,38 @@ public:
 DEFINE_PARTICLE(CollectionApiTest)
 
 
-class InputReferenceHandlesTest : public arcs::Particle {
+class ReferenceHandlesTest : public arcs::Particle {
 public:
-  InputReferenceHandlesTest() {
+  ReferenceHandlesTest() {
     registerHandle("sng", sng_);
     registerHandle("col", col_);
     registerHandle("res", res_);
   }
 
   void onHandleSync(const std::string& name, bool all_synced) override {
-    if (all_synced) {
-      report("empty_before", sng_.get());
-      sng_.get().dereference([this] { report("empty_after", sng_.get()); });
-    }
+    if (!all_synced) return;
+    report("s::empty", sng_.get());
+    dereference(sng_.get(), [this] { report("should not be reached", {}); });
   }
 
   void onHandleUpdate(const std::string& name) override {
     if (name == "sng") {
-      report("s::before", sng_.get());
-      sng_.get().dereference([this] { report("s::after", sng_.get()); });
+      const arcs::Ref<arcs::Test_Data>& ref = sng_.get();
+      report("s::before", ref);
+      dereference(ref, [this, &ref] { report("s::after", ref); });
     } else if (name == "col") {
-      for (auto& ref : col_) {
+      for (arcs::Ref<arcs::Test_Data>& ref : col_) {
         report("c::before", ref);
-        ref.dereference([ref, this] { report("c::after", ref); });
+        dereference(ref, [this, &ref] { report("c::after", ref); });
       }
     }
   }
 
   void report(const std::string& label, const arcs::Ref<arcs::Test_Data>& ref) {
     arcs::Test_Data d;
-    const std::string& id = arcs::internal::Accessor::get_id(ref);
-    d.set_txt(label + " <" + id + "> " + arcs::entity_to_str(ref.entity()));
+    const std::string& id = Accessor::get_id(ref);
+    const std::string& bang = ref.is_dereferenced() ? "" : "!";
+    d.set_txt(label + " <" + id + "> " + bang + arcs::entity_to_str(ref.entity()));
     res_.store(&d);
   }
 
@@ -149,29 +152,53 @@ public:
   arcs::Collection<arcs::Test_Data> res_;
 };
 
-DEFINE_PARTICLE(InputReferenceHandlesTest)
+DEFINE_PARTICLE(ReferenceHandlesTest)
 
 
-class OutputReferenceHandlesTest : public arcs::Particle {
+class SchemaReferenceFieldsTest : public arcs::Particle {
 public:
-  OutputReferenceHandlesTest() {
-    registerHandle("sng", sng_);
-    registerHandle("col", col_);
+  SchemaReferenceFieldsTest() {
+    registerHandle("input", input_);
+    registerHandle("output", output_);
+    registerHandle("res", res_);
   }
 
-  void init() override {
-    arcs::Ref<arcs::Test_Data> r1;
-    arcs::internal::Accessor::decode_entity(&r1, "3:idX|4:keyX|");
-    sng_.set(&r1);
+  void onHandleSync(const std::string& name, bool all_synced) override {
+    if (!all_synced) return;
 
-    arcs::Ref<arcs::Test_Data> r2;
-    arcs::internal::Accessor::decode_entity(&r2, "3:idY|4:keyY|");
-    col_.store(&r1);
-    col_.store(&r2);
+    const arcs::Ref<arcs::Test_Data_Ref>& ref = input_.get().ref();
+    report("empty", ref);
+    dereference(ref, [this] { report("should not be reached", {}); });
   }
 
-  arcs::Singleton<arcs::Ref<arcs::Test_Data>> sng_;
-  arcs::Collection<arcs::Ref<arcs::Test_Data>> col_;
+  void onHandleUpdate(const std::string& name) override {
+    const arcs::Ref<arcs::Test_Data_Ref>& ref = input_.get().ref();
+    report("before", ref);
+    dereference(ref, [this, &ref] {
+      report("after", ref);
+
+      arcs::Test_Data_Ref foo;
+      Accessor::set_id(&foo, "foo1");
+
+      arcs::Test_Data data = arcs::clone_entity(input_.get());
+      data.set_txt("xyz");
+      data.bind_ref(foo);
+
+      output_.set(&data);
+    });
+  }
+
+  void report(const std::string& label, const arcs::Ref<arcs::Test_Data_Ref>& ref) {
+    arcs::Test_Data d;
+    const std::string& id = Accessor::get_id(ref);
+    const std::string& bang = ref.is_dereferenced() ? "" : "!";
+    d.set_txt(label + " <" + id + "> " + bang + arcs::entity_to_str(ref.entity()));
+    res_.store(&d);
+  }
+
+  arcs::Singleton<arcs::Test_Data> input_;
+  arcs::Singleton<arcs::Test_Data> output_;
+  arcs::Collection<arcs::Test_Data> res_;
 };
 
-DEFINE_PARTICLE(OutputReferenceHandlesTest)
+DEFINE_PARTICLE(SchemaReferenceFieldsTest)

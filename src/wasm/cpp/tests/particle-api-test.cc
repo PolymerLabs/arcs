@@ -4,32 +4,33 @@
 class HandleSyncUpdateTest : public arcs::Particle {
 public:
   HandleSyncUpdateTest() {
-    registerHandle("input1", input1_);
-    registerHandle("input2", input2_);
-    registerHandle("output", output_);
+    registerHandle("sng", sng_);
+    registerHandle("col", col_);
+    registerHandle("res", res_);
   }
 
   void onHandleSync(const std::string& name, bool all_synced) override {
     arcs::Test_Data out;
-    out.set_txt("sync:" + name);
-    out.set_flg(all_synced);
-    output_.store(&out);
+    out.set_txt("sync:" + name + (all_synced ? ":true" : ":false"));
+    res_.store(&out);
   }
 
   void onHandleUpdate(const std::string& name) override {
     arcs::Test_Data out;
+    out.set_txt("update:" + name);
     if (auto input = getSingleton<arcs::Test_Data>(name)) {
-      out.set_txt("update:" + name);
       out.set_num(input->get().num());
+    } else if (auto input = getCollection<arcs::Test_Data>(name)) {
+      out.set_num(input->begin()->num());
     } else {
       out.set_txt("unexpected handle name: " + name);
     }
-    output_.store(&out);
+    res_.store(&out);
   }
 
-  arcs::Singleton<arcs::Test_Data> input1_;
-  arcs::Singleton<arcs::Test_Data> input2_;
-  arcs::Collection<arcs::Test_Data> output_;
+  arcs::Singleton<arcs::Test_Data> sng_;
+  arcs::Collection<arcs::Test_Data> col_;
+  arcs::Collection<arcs::Test_Data> res_;
 };
 
 DEFINE_PARTICLE(HandleSyncUpdateTest)
@@ -138,20 +139,3 @@ class MissingRegisterHandleTest : public arcs::Particle {
 };
 
 DEFINE_PARTICLE(MissingRegisterHandleTest)
-
-
-class UnconnectedHandlesTest : public arcs::Particle {
-public:
-  UnconnectedHandlesTest() {
-    registerHandle("data", data_);
-  }
-
-  void fireEvent(const std::string& slot_name, const std::string& handler) override {
-    arcs::Test_Data data;
-    data_.set(&data);
-  }
-
-  arcs::Singleton<arcs::Test_Data> data_;
-};
-
-DEFINE_PARTICLE(UnconnectedHandlesTest)

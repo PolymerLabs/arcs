@@ -27,11 +27,10 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: () => 'std::string',    returnByRef: true,  setByRef: true,  useCompare: true},
-  'U': {type: () => 'URL',            returnByRef: true,  setByRef: true,  useCompare: true},
-  'N': {type: () => 'double',         returnByRef: false, setByRef: false, useCompare: false},
-  'B': {type: () => 'bool',           returnByRef: false, setByRef: false, useCompare: false},
-  'R': {type: name => `Ref<${name}>`, returnByRef: false, setByRef: true,  useCompare: false},
+  'T': {type: 'std::string', defaultVal: ' = ""',    isString: true},
+  'U': {type: 'URL',         defaultVal: ' = ""',    isString: true},
+  'N': {type: 'double',      defaultVal: ' = 0',     isString: false},
+  'B': {type: 'bool',        defaultVal: ' = false', isString: false},
 };
 
 export class Schema2Cpp extends Schema2Base {
@@ -59,6 +58,10 @@ export class Schema2Cpp extends Schema2Base {
   }
 }
 
+function fixName(field: string): string {
+  return (keywords.includes(field) ? '_' : '') + field;
+}
+
 class CppGenerator implements ClassGenerator {
   fields: string[] = [];
   api: string[] = [];
@@ -68,27 +71,24 @@ class CppGenerator implements ClassGenerator {
   less: string[] = [];
   decode: string[] = [];
   encode: string[] = [];
-  toString: string[] = [];
+  stringify: string[] = [];
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  processField(field: string, typeChar: string, inherited: boolean, refName: string) {
-    const typeInfo = typeMap[typeChar];
-    const type = typeInfo.type(refName);
-    const [r1, r2] = typeInfo.returnByRef ? ['const ', '&'] : ['', ''];
-    const [s1, s2] = typeInfo.setByRef ? ['const ', '&'] : ['', ''];
-    const fixed = (keywords.includes(field) ? '_' : '') + field;
+  addField(field: string, typeChar: string, inherited: boolean) {
+    const {type, defaultVal, isString} = typeMap[typeChar];
+    const [r1, r2] = isString ? ['const ', '&'] : ['', ''];
     const valid = `${field}_valid_`;
 
     // Fields inherited from a base class don't need member declarations or API methods in this one.
     if (!inherited) {
-      this.fields.push(`${type} ${field}_ = ${type}();`,
+      this.fields.push(`${type} ${field}_${defaultVal};`,
                        `bool ${valid} = false;`,
                        ``);
 
-      this.api.push(`${r1}${type}${r2} ${fixed}() const { return ${field}_; }`,
-                    `void set_${field}(${s1}${type}${s2} value) { ${field}_ = value; ${valid} = true; }`,
-                    `void clear_${field}() { ${field}_ = ${type}(); ${valid} = false; }`,
+      this.api.push(`${r1}${type}${r2} ${fixName(field)}() const { return ${field}_; }`,
+                    `void set_${field}(${r1}${type}${r2} value) { ${field}_ = value; ${valid} = true; }`,
+                    `void clear_${field}() { ${field}_${defaultVal}; ${valid} = false; }`,
                     `bool has_${field}() const { return ${valid}; }`,
                     ``);
     }
@@ -103,7 +103,7 @@ class CppGenerator implements ClassGenerator {
 
     this.less.push(`if (a.${valid} != b.${valid}) {`,
                    `  return !a.${valid};`);
-    if (typeInfo.useCompare) {
+    if (isString) {
       this.less.push(`} else {`,
                      `  cmp = a.${field}_.compare(b.${field}_);`,
                      `  if (cmp != 0) return cmp < 0;`,
@@ -122,8 +122,40 @@ class CppGenerator implements ClassGenerator {
     this.encode.push(`if (entity.${valid})`,
                      `  encoder.encode("${field}:${typeChar}", entity.${field}_);`);
 
-    this.toString.push(`if (entity.${valid})`,
-                       `  printer.add("${field}: ", entity.${field}_);`);
+    this.stringify.push(`if (entity.${valid})`,
+                        `  printer.add("${field}: ", entity.${field}_);`);
+  }
+
+  addReference(field: string, inherited: boolean, refName: string) {
+    const type = `Ref<${refName}>`;
+
+    this.fields.push(`${type} ${field}_;`,
+                     ``);
+
+    this.api.push(`const ${type}& ${fixName(field)}() const { return ${field}_; }`,
+                  `void bind_${field}(const ${refName}& value) { internal::Accessor::bind(&${field}_, value); }`,
+                  ``);
+
+    this.clone.push(`clone.${field}_ = entity.${field}_;`);
+
+    this.hash.push(`if (entity.${field}_._internal_id_ != "")`,
+                   `  internal::hash_combine(h, entity.${field}_);`);
+
+    this.equals.push(`(a.${field}_ == b.${field}_)`);
+
+    this.less.push(`if (a.${field}_ != b.${field}_) {`,
+                   `  return a.${field}_ < b.${field}_;`,
+                   `}`);
+
+    this.decode.push(`} else if (name == "${field}") {`,
+                     `  decoder.validate("R");`,
+                     `  decoder.decode(entity->${field}_);`);
+
+    this.encode.push(`if (entity.${field}_._internal_id_ != "")`,
+                     `  encoder.encode("${field}:R", entity.${field}_);`);
+
+    this.stringify.push(`if (entity.${field}_._internal_id_ != "")`,
+                        `  printer.add("${field}: ", entity.${field}_);`);
   }
 
   generate(fieldCount: number): string {
@@ -148,6 +180,7 @@ class CppGenerator implements ClassGenerator {
       dtor = `virtual ~${name}() {}\n`;
     }
 
+    // 'using' declarations for equivalent entity types.
     let aliasComment = '';
     let usingDecls = '';
     if (aliases.length) {
@@ -187,9 +220,6 @@ public:
   }
 
 protected:
-  // Ref<T> instances require a Handle pointer; entity classes can ignore it.
-  ${name}(Handle* handle) {}
-
   // Allow private copying for use in Handles.
   ${name}(const ${name}&) = default;
   ${name}& operator=(const ${name}&) = default;
@@ -199,6 +229,7 @@ protected:
 
   friend class Singleton<${name}>;
   friend class Collection<${name}>;
+  friend class Ref<${name}>;
   friend class internal::Accessor;
 };
 ${usingDecls}
@@ -230,7 +261,7 @@ template<>
 inline std::string internal::Accessor::entity_to_str(const ${name}& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id_);
-  ${this.toString.join('\n  ')}
+  ${this.stringify.join('\n  ')}
   return printer.result(join);
 }
 

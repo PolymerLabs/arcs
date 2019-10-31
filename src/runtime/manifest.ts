@@ -593,6 +593,7 @@ ${e.message}
               }
             }
             node.model = new EntityType(schema);
+            delete node.fields;
             return;
           }
           case 'variable-type': {

@@ -10,10 +10,6 @@ static size_t hash(const T& d) {
   return std::hash<T>()(d);
 }
 
-static arcs::Ref<arcs::Test_Data_Ref> make_ref(const std::string& id, const std::string& key) {
-  return Accessor::make_ref<arcs::Test_Data_Ref>(id, key);
-}
-
 static auto converter() {
   return [](const arcs::Test_Data& d) { return arcs::entity_to_str(d); };
 }
@@ -39,64 +35,65 @@ public:
   }
 
   void test_field_methods() {
-    arcs::Test_Data d;
+    arcs::Test_Data d1;
 
-    IS_FALSE(d.has_num());
-    EQUAL(d.num(), 0);
-    d.set_num(7.3);
-    IS_TRUE(d.has_num());
-    EQUAL(d.num(), 7.3);
-    d.clear_num();
-    IS_FALSE(d.has_num());
-    d.set_num(0);
-    IS_TRUE(d.has_num());
-    EQUAL(d.num(), 0);
+    IS_FALSE(d1.has_num());
+    EQUAL(d1.num(), 0);
+    d1.set_num(7.3);
+    IS_TRUE(d1.has_num());
+    EQUAL(d1.num(), 7.3);
+    d1.clear_num();
+    IS_FALSE(d1.has_num());
+    d1.set_num(0);
+    IS_TRUE(d1.has_num());
+    EQUAL(d1.num(), 0);
 
-    IS_FALSE(d.has_txt());
-    EQUAL(d.txt(), "");
-    d.set_txt("abc");
-    IS_TRUE(d.has_txt());
-    EQUAL(d.txt(), "abc");
-    d.clear_txt();
-    IS_FALSE(d.has_txt());
-    d.set_txt("");
-    IS_TRUE(d.has_txt());
-    EQUAL(d.txt(), "");
+    IS_FALSE(d1.has_txt());
+    EQUAL(d1.txt(), "");
+    d1.set_txt("abc");
+    IS_TRUE(d1.has_txt());
+    EQUAL(d1.txt(), "abc");
+    d1.clear_txt();
+    IS_FALSE(d1.has_txt());
+    d1.set_txt("");
+    IS_TRUE(d1.has_txt());
+    EQUAL(d1.txt(), "");
 
-    IS_FALSE(d.has_lnk());
-    EQUAL(d.lnk(), "");
-    d.set_lnk("url");
-    IS_TRUE(d.has_lnk());
-    EQUAL(d.lnk(), "url");
-    d.clear_lnk();
-    IS_FALSE(d.has_lnk());
-    d.set_lnk("");
-    IS_TRUE(d.has_lnk());
-    EQUAL(d.lnk(), "");
+    IS_FALSE(d1.has_lnk());
+    EQUAL(d1.lnk(), "");
+    d1.set_lnk("url");
+    IS_TRUE(d1.has_lnk());
+    EQUAL(d1.lnk(), "url");
+    d1.clear_lnk();
+    IS_FALSE(d1.has_lnk());
+    d1.set_lnk("");
+    IS_TRUE(d1.has_lnk());
+    EQUAL(d1.lnk(), "");
 
-    IS_FALSE(d.has_flg());
-    IS_FALSE(d.flg());
-    d.set_flg(true);
-    IS_TRUE(d.has_flg());
-    IS_TRUE(d.flg());
-    d.clear_flg();
-    IS_FALSE(d.has_flg());
-    d.set_flg(false);
-    IS_TRUE(d.has_flg());
-    IS_FALSE(d.flg());
+    IS_FALSE(d1.has_flg());
+    IS_FALSE(d1.flg());
+    d1.set_flg(true);
+    IS_TRUE(d1.has_flg());
+    IS_TRUE(d1.flg());
+    d1.clear_flg();
+    IS_FALSE(d1.has_flg());
+    d1.set_flg(false);
+    IS_TRUE(d1.has_flg());
+    IS_FALSE(d1.flg());
 
-    arcs::Ref<arcs::Test_Data_Ref> empty;
-    arcs::Ref<arcs::Test_Data_Ref> populated = make_ref("id", "key");
-    IS_FALSE(d.has_ref());
-    EQUAL(d.ref(), empty);
-    d.set_ref(populated);
-    IS_TRUE(d.has_ref());
-    EQUAL(d.ref(), populated);
-    d.clear_ref();
-    IS_FALSE(d.has_ref());
-    d.set_ref(empty);
-    IS_TRUE(d.has_ref());
-    EQUAL(d.ref(), empty);
+    EQUAL(d1.ref(), arcs::Ref<arcs::Test_Data_Ref>());
+    EQUAL(d1.ref().entity(), arcs::Test_Data_Ref());
+
+    // Binding a reference requires a valid id, storage key and type index on the
+    // ref field itself, and an id on the entity being bound.
+    arcs::Test_Data d2;
+    Accessor::decode_entity(&d2, "7:data-id|ref:R6:foo-id|3:key|4:|");
+
+    arcs::Test_Data_Ref foo;
+    Accessor::set_id(&foo, "foo-id");
+    foo.set_val("bar");
+    d2.bind_ref(foo);
+    EQUAL(arcs::entity_to_str(d2), "{data-id}, ref: REF<foo-id|key|[{foo-id}, val: bar]>");
   }
 
   void test_id_equality() {
@@ -286,43 +283,24 @@ public:
 
   void test_reference_field_equality() {
     arcs::Test_Data d1, d2;
-    arcs::Ref<arcs::Test_Data_Ref> empty;
 
-    // unset vs default value
-    d2.set_ref({});
+    // empty vs populated
+    Accessor::decode_entity(&d2, "0:|ref:R3:id1|4:key1|1:|");
     NOT_EQUAL(d1, d2);
     LESS(d1, d2);
     NOT_LESS(d2, d1);
 
-    // unset vs other value
-    d2.set_ref(make_ref("id1", "key1"));
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
-
-    // default vs default
-    d1.set_ref(empty);
-    d2.set_ref(empty);
-    EQUAL(d1, d2);
-    NOT_LESS(d1, d2);
-    NOT_LESS(d2, d1);
-
-    // value vs value
-    d1.set_ref(make_ref("id5", "key5"));
-    d2.set_ref(make_ref("id7", "key7"));
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
-
-    d1.set_ref(make_ref("id7", "key7"));
-    EQUAL(d1, d2);
-    NOT_LESS(d1, d2);
-    NOT_LESS(d2, d1);
-
-    d2.set_ref(make_ref("id3", "key3"));
+    // populated vs populated
+    const char* encoded = "0:|ref:R3:id9|4:key9|3:|";
+    Accessor::decode_entity(&d1, encoded);
     NOT_EQUAL(d1, d2);
     NOT_LESS(d1, d2);
     LESS(d2, d1);
+
+    Accessor::decode_entity(&d2, encoded);
+    EQUAL(d1, d2);
+    NOT_LESS(d1, d2);
+    NOT_LESS(d2, d1);
   }
 
   void test_entity_equality() {
@@ -444,8 +422,7 @@ public:
 
     Accessor::set_id(&d, "id");
     d.clear_flg();
-    d.set_ref(make_ref("i12", "k34"));
-    EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo, ref: REF<i12|k34>");
+    EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo");
   }
 
   void test_stl_vector() {

@@ -13,7 +13,7 @@ EM_JS(void, singletonClear, (Particle* p, Handle* h), {})
 EM_JS(const char*, collectionStore, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionRemove, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionClear, (Particle* p, Handle* h), {})
-EM_JS(void, dereference, (Particle* p, Handle* h, const char* ref_id, size_t continuation_id), {})
+EM_JS(void, dereference, (Particle* p, const char* id, const char* key, int type_index, int continuation_id), {})
 EM_JS(void, render, (Particle* p, const char* slotName, const char* template_str, const char* model), {})
 EM_JS(void, serviceRequest, (Particle* p, const char* call, const char* args, const char* tag), {})
 EM_JS(const char*, resolveUrl, (const char* url), {})
@@ -45,7 +45,7 @@ void updateHandle(Particle* particle, Handle* handle, const char* encoded1, cons
 }
 
 EMSCRIPTEN_KEEPALIVE
-void dereferenceResponse(Particle* particle, size_t continuation_id, const char* encoded) {
+void dereferenceResponse(Particle* particle, int continuation_id, const char* encoded) {
   particle->dereferenceResponse(continuation_id, encoded);
 }
 
@@ -61,7 +61,7 @@ void fireEvent(Particle* particle, const char* slot_name, const char* handler) {
 
 EMSCRIPTEN_KEEPALIVE
 void serviceResponse(Particle* particle, const char* call, const char* response, const char* tag) {
-  Dictionary dict = internal::StringDecoder::decodeDictionary(response);
+  Dictionary dict = StringDecoder::decodeDictionary(response);
   particle->serviceResponse(call, dict, tag);
 }
 
@@ -155,7 +155,7 @@ std::string StringDecoder::upTo(char sep) {
 }
 
 int StringDecoder::getInt(char sep) {
-  std::string token = upTo(':');
+  std::string token = upTo(sep);
   return atoi(token.c_str());
 }
 
@@ -217,7 +217,7 @@ Dictionary StringDecoder::decodeDictionary(const char* str) {
 // StringEncoder
 template<>
 void StringEncoder::encode(const char* prefix, const std::string& str) {
-  str_ += prefix + std::to_string(str.size()) + ":" + str + "|";
+  str_ += prefix + encodeStr(str) + "|";
 }
 
 template<>
@@ -240,10 +240,13 @@ std::string StringEncoder::result() {
 std::string StringEncoder::encodeDictionary(const Dictionary& dict) {
   std::string encoded = std::to_string(dict.size()) + ":";
   for (const auto pair : dict) {
-    encoded += std::to_string(pair.first.size()) + ":" + pair.first;
-    encoded += std::to_string(pair.second.size()) + ":" + pair.second;
+    encoded += encodeStr(pair.first) + encodeStr(pair.second);
   }
   return encoded;
+}
+
+std::string StringEncoder::encodeStr(const std::string& str) {
+  return std::to_string(str.size()) + ":" + str;
 }
 
 // StringPrinter
@@ -314,8 +317,8 @@ bool Handle::failForDirection(Direction bad_dir) const {
 }
 
 // Particle
-void Particle::registerHandle(std::string name, Handle& handle) {
-  handle.name_ = std::move(name);
+void Particle::registerHandle(const std::string& name, Handle& handle) {
+  handle.name_ = name;
   handle.particle_ = this;
   handles_[handle.name_] = &handle;
 }

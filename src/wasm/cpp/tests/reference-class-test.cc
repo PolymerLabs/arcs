@@ -10,26 +10,28 @@ static auto converter() {
 }
 
 
-class TestHandle : public arcs::Handle {
-public:
-  void sync(const char* model) override {}
-  void update(const char* encoded1, const char* encoded2) override {}
-
-  void dereference(const std::string& ref_id, arcs::internal::DerefContinuation fn) override {
-    Accessor::set_id(&data, ref_id);
-    fn(Accessor::encode_entity(data).c_str());
-  }
-
-  arcs::Test_Data data;
-};
-
-
 class ReferenceClassApiTest : public TestBase {
 public:
+  arcs::Test_Data data_;
+
+  // Non-virtual override, oh my!
+  void dereference(const arcs::RefBase& ref, std::function<void()> continuation) {
+    auto wrapped = Accessor::wrap(ref, continuation);
+    if (wrapped) {
+      Accessor::set_id(&data_, Accessor::get_id(ref));
+      wrapped(Accessor::encode_entity(data_).c_str());
+    }
+  }
+
+  void before_each() override {
+    data_ = {};
+  }
+
   void init() override {
     RUN(test_accessor_methods);
     RUN(test_empty_references);
     RUN(test_populated_references);
+    RUN(test_shared_references);
     RUN(test_operators);
     RUN(test_stl_vector);
     RUN(test_stl_set);
@@ -38,10 +40,9 @@ public:
 
   void test_accessor_methods() {
     arcs::Ref<arcs::Test_Data> r1;
-
-    Accessor::decode_entity(&r1, "5:id789|6:key123|");
+    Accessor::decode_entity(&r1, "5:id789|6:key123|4:|");
     EQUAL(arcs::entity_to_str(r1), "REF<id789|key123>");
-    EQUAL(Accessor::encode_entity(r1), "5:id789|6:key123|");
+    EQUAL(Accessor::encode_entity(r1), "5:id789|6:key123|4:|");
 
     size_t h1 = arcs::hash_entity(r1);
     NOT_EQUAL(h1, 0);
@@ -51,141 +52,162 @@ public:
     EQUAL(Accessor::get_id(r1), "id55");
     NOT_EQUAL(arcs::hash_entity(r1), h1);
 
-    arcs::Ref<arcs::Test_Data> r2 = arcs::clone_entity(r1);
-    IS_TRUE(arcs::fields_equal(r1, r2));
+    // Same ids and storage keys; type index is ignored
+    arcs::Ref<arcs::Test_Data> r2;
+    Accessor::decode_entity(&r1, "4:idAA|6:key789|5:|");
+    Accessor::decode_entity(&r2, "4:idAA|6:key789|7:|");
     EQUAL(arcs::hash_entity(r1), arcs::hash_entity(r2));
-    EQUAL(arcs::entity_to_str(r1), arcs::entity_to_str(r2));
-
-    // References are copyable.
-    arcs::Ref<arcs::Test_Data> r3 = r1;
-    IS_TRUE(arcs::fields_equal(r1, r3));
 
     // Different ids, same storage keys.
-    Accessor::decode_entity(&r1, "4:idAA|6:key123|");
-    Accessor::decode_entity(&r2, "5:idXXX|6:key123|");
-    IS_FALSE(arcs::fields_equal(r1, r2));
+    Accessor::decode_entity(&r2, "5:idXXX|6:key789|5:|");
     NOT_EQUAL(arcs::hash_entity(r1), arcs::hash_entity(r2));
 
     // Same ids, different storage keys.
-    Accessor::decode_entity(&r1, "4:idAA|6:key123|");
-    Accessor::decode_entity(&r2, "4:idAA|5:key56|");
-    IS_FALSE(arcs::fields_equal(r1, r2));
+    Accessor::decode_entity(&r2, "4:idAA|5:key00|5:|");
     NOT_EQUAL(arcs::hash_entity(r1), arcs::hash_entity(r2));
   }
 
   void test_empty_references() {
-    arcs::Ref<arcs::Test_Data> r1;
+    arcs::Ref<arcs::Test_Data> r;
 
-    EQUAL(r1.entity(), arcs::Test_Data());
-    IS_FALSE(r1.is_dereferenced());
-    EQUAL(arcs::entity_to_str(r1), "REF<>");
-    EQUAL(Accessor::encode_entity(r1), "0:|0:|");
-    EQUAL(Accessor::get_id(r1), "");
+    IS_FALSE(r.is_dereferenced());
+    EQUAL(r.entity(), arcs::Test_Data());
 
-    arcs::Ref<arcs::Test_Data> r2 = arcs::clone_entity(r1);
-    IS_TRUE(arcs::fields_equal(r1, r2));
-    EQUAL(arcs::hash_entity(r1), arcs::hash_entity(r2));
-    EQUAL(arcs::entity_to_str(r1), arcs::entity_to_str(r2));
+    EQUAL(arcs::entity_to_str(r), "REF<>");
+    EQUAL(arcs::entity_to_str(r.entity()), "{}");
+    EQUAL(Accessor::encode_entity(r), "0:|0:|0:|");
+    EQUAL(Accessor::get_id(r), "");
+
+    // dereference is a no-op
+    bool called = false;
+    dereference(r, [&called] { called = true; });
+    IS_FALSE(called);
+    IS_FALSE(r.is_dereferenced());
   }
 
   void test_populated_references() {
-    TestHandle handle;
-    handle.data.set_txt("ltuae");
-    handle.data.set_num(42);
+    arcs::Ref<arcs::Test_Data> r;
 
-    arcs::Ref<arcs::Test_Data> r1(&handle);
-    Accessor::decode_entity(&r1, "5:id789|6:key123|");
-    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123>");
-    EQUAL(arcs::entity_to_str(r1.entity()), "{}");
+    Accessor::decode_entity(&r, "5:id789|6:key123|2:|");
+    IS_FALSE(r.is_dereferenced());
+    EQUAL(r.entity(), arcs::Test_Data());
+
+    data_.set_txt("ltuae");
+    data_.set_num(42);
+    bool called = false;
+    dereference(r, [&called] { called = true; });
+    IS_TRUE(called);
+    IS_TRUE(r.is_dereferenced());
+
+    EQUAL(arcs::entity_to_str(r), "REF<id789|key123|[{id789}, num: 42, txt: ltuae]>");
+    EQUAL(arcs::entity_to_str(r.entity()), "{id789}, num: 42, txt: ltuae");
+
+    // The dereference operation shouldn't affect the encoded form of the reference itself.
+    EQUAL(Accessor::encode_entity(r), "5:id789|6:key123|2:|");
+
+    // The reference should have its own copy of the entity.
+    data_.set_txt("different");
+    EQUAL(r.entity().txt(), "ltuae");
+  }
+
+  void test_shared_references() {
+    arcs::Ref<arcs::Test_Data> r1;
+    Accessor::decode_entity(&r1, "5:id789|6:key123|2:|");
 
     // Make a copy prior to dereferencing.
     arcs::Ref<arcs::Test_Data> r2 = r1;
+
     IS_FALSE(r1.is_dereferenced());
     IS_FALSE(r2.is_dereferenced());
+    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123>");
+    EQUAL(arcs::entity_to_str(r2), "REF<id789|key123>");
 
-    // dereference() via TestHandle is synchronous.
+    data_.set_num(4);
+    data_.set_txt("four");
     bool called = false;
-    r1.dereference([&called] { called = true; });
+    dereference(r1, [&called] { called = true; });
     IS_TRUE(called);
-    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123|{id789}, num: 42, txt: ltuae>");
-    EQUAL(arcs::entity_to_str(r1.entity()), "{id789}, num: 42, txt: ltuae");
 
     // Dereferencing one Ref instance affects copies.
     IS_TRUE(r1.is_dereferenced());
     IS_TRUE(r2.is_dereferenced());
+    EQUAL(arcs::entity_to_str(r1), "REF<id789|key123|[{id789}, num: 4, txt: four]>");
+    EQUAL(arcs::entity_to_str(r2), "REF<id789|key123|[{id789}, num: 4, txt: four]>");
 
-    // Populating the reference shouldn't affect the encoded form.
-    EQUAL(Accessor::encode_entity(r1), "5:id789|6:key123|");
-
-    // The reference should have its own copy of the entity.
-    handle.data.set_txt("different");
-    EQUAL(arcs::entity_to_str(r1.entity()), "{id789}, num: 42, txt: ltuae");
-
-    // Copying references shares the underlying entity, even when the copy
-    // occurred before the dereference call.
+    // Copying references shares the underlying entity, even when the copy occurred
+    // before the dereference call.
     EQUAL(&r1.entity(), &r2.entity());
-    EQUAL(arcs::entity_to_str(r1.entity()), arcs::entity_to_str(r2.entity()));
 
+    // Mutating the entity via one Ref instance means the copy sees the same change.
     // TODO: use the mutation API
-    arcs::Test_Data* d1 = const_cast<arcs::Test_Data*>(&r1.entity());
-    d1->set_lnk("zelda");
-    EQUAL(r2.entity().lnk(), "zelda");
-    EQUAL(arcs::entity_to_str(r1.entity()), arcs::entity_to_str(r2.entity()));
+    arcs::Test_Data* d = const_cast<arcs::Test_Data*>(&r1.entity());
+    d->set_txt("shared");
+    EQUAL(r2.entity().txt(), "shared");
   }
 
   void test_operators() {
-    TestHandle handle;
-    arcs::Ref<arcs::Test_Data> r1(&handle);
-    arcs::Ref<arcs::Test_Data> r2(&handle);
+    arcs::Ref<arcs::Test_Data> r1, r2;
 
-    Accessor::decode_entity(&r1, "3:idA|4:keyA|");
-    Accessor::decode_entity(&r2, "3:idB|4:keyA|");
+    // different ids
+    Accessor::decode_entity(&r1, "3:idA|4:keyA|1:|");
+    Accessor::decode_entity(&r2, "3:idX|4:keyA|1:|");
     NOT_EQUAL(r1, r2);
     LESS(r1, r2);
     NOT_LESS(r2, r1);
 
-    Accessor::decode_entity(&r2, "3:idA|4:keyB|");
+    // different keys
+    Accessor::decode_entity(&r2, "3:idA|4:keyX|1:|");
     NOT_EQUAL(r1, r2);
     LESS(r1, r2);
     NOT_LESS(r2, r1);
 
-    Accessor::decode_entity(&r2, "3:idA|4:keyA|");
+    // same ids and keys
+    Accessor::decode_entity(&r2, "3:idA|4:keyA|1:|");
     EQUAL(r1, r2);
     NOT_LESS(r1, r2);
     NOT_LESS(r2, r1);
 
-    // Dereferenced state should not affect comparisons.
-    handle.data.set_num(77);
-    r1.dereference([] {});
+    // different type indexes should not affect equality
+    Accessor::decode_entity(&r2, "3:idA|4:keyA|5:|");
+    EQUAL(r1, r2);
+    NOT_LESS(r1, r2);
+    NOT_LESS(r2, r1);
+
+    // dereferenced state should not affect comparisons.
+    data_.set_num(77);
+    dereference(r1, [] {});
     EQUAL(r1, r2);
     NOT_LESS(r1, r2);
     NOT_LESS(r2, r1);
   }
 
   void test_stl_vector() {
-    TestHandle handle;
-    handle.data.set_num(99);
-
     // empty
     arcs::Ref<arcs::Test_Data> r1;
 
     // populated and dereferenced
-    arcs::Ref<arcs::Test_Data> r2(&handle);
-    Accessor::decode_entity(&r2, "3:idA|4:keyA|");
-    r2.dereference([] {});
+    data_.set_num(99);
+    arcs::Ref<arcs::Test_Data> r2;
+    Accessor::decode_entity(&r2, "3:idA|4:keyA|1:|");
+    dereference(r2, [] {});
 
     // populated but not dereferenced
     arcs::Ref<arcs::Test_Data> r3;
-    Accessor::decode_entity(&r3, "3:idB|4:keyB|");
+    Accessor::decode_entity(&r3, "3:idB|4:keyB|2:|");
 
     // same reference as r2, but not a copy
     arcs::Ref<arcs::Test_Data> r4;
-    Accessor::decode_entity(&r4, "3:idA|4:keyA|");
+    Accessor::decode_entity(&r4, "3:idA|4:keyA|1:|");
 
-    std::vector<arcs::Ref<arcs::Test_Data>> v = {r1, r2, r3, r4};
+    std::vector<arcs::Ref<arcs::Test_Data>> v;
+    v.push_back(std::move(r1));
+    v.push_back(std::move(r2));
+    v.push_back(std::move(r3));
+    v.push_back(std::move(r4));
+
     std::vector<std::string> expected = {
       "REF<>",
-      "REF<idA|keyA|{idA}, num: 99>",
+      "REF<idA|keyA|[{idA}, num: 99]>",
       "REF<idB|keyB>",
       "REF<idA|keyA>"
     };
@@ -193,58 +215,64 @@ public:
   }
 
   void test_stl_set() {
-    TestHandle handle;
-    handle.data.set_txt("zz");
-
     // empty
     arcs::Ref<arcs::Test_Data> r1;
 
     // dereferenced
-    arcs::Ref<arcs::Test_Data> r2(&handle);
-    Accessor::decode_entity(&r2, "3:idA|4:keyA|");
-    r2.dereference([] {});
+    data_.set_txt("zz");
+    arcs::Ref<arcs::Test_Data> r2;
+    Accessor::decode_entity(&r2, "3:idA|4:keyA|1:|");
+    dereference(r2, [] {});
 
     // populated but not dereferenced
     arcs::Ref<arcs::Test_Data> r3;
-    Accessor::decode_entity(&r3, "3:idB|4:keyB|");
+    Accessor::decode_entity(&r3, "3:idB|4:keyB|2:|");
 
     // same reference as r2, but not a copy
     arcs::Ref<arcs::Test_Data> r4;
-    Accessor::decode_entity(&r4, "3:idA|4:keyA|");
+    Accessor::decode_entity(&r4, "3:idA|4:keyA|1:|");
 
-    std::set<arcs::Ref<arcs::Test_Data>> s = {r1, r2, r3, r4};
+    std::set<arcs::Ref<arcs::Test_Data>> s;
+    s.insert(std::move(r1));
+    s.insert(std::move(r2));
+    s.insert(std::move(r3));
+    s.insert(std::move(r4));
+
     std::vector<std::string> expected = {
       "REF<>",
-      "REF<idA|keyA|{idA}, txt: zz>",
+      "REF<idA|keyA|[{idA}, txt: zz]>",
       "REF<idB|keyB>"
     };
     CHECK_UNORDERED(s, converter(), expected);
   }
 
   void test_stl_unordered_set() {
-    TestHandle handle;
-    handle.data.set_lnk("knl");
-
     // empty
     arcs::Ref<arcs::Test_Data> r1;
 
     // dereferenced
-    arcs::Ref<arcs::Test_Data> r2(&handle);
-    Accessor::decode_entity(&r2, "3:idA|4:keyA|");
-    r2.dereference([] {});
+    data_.set_lnk("knl");
+    arcs::Ref<arcs::Test_Data> r2;
+    Accessor::decode_entity(&r2, "3:idA|4:keyA|1:|");
+    dereference(r2, [] {});
 
     // populated but not dereferenced
     arcs::Ref<arcs::Test_Data> r3;
-    Accessor::decode_entity(&r3, "3:idB|4:keyB|");
+    Accessor::decode_entity(&r3, "3:idB|4:keyB|2:|");
 
     // same reference as r2, but not a copy
     arcs::Ref<arcs::Test_Data> r4;
-    Accessor::decode_entity(&r4, "3:idA|4:keyA|");
+    Accessor::decode_entity(&r4, "3:idA|4:keyA|1:|");
 
-    std::unordered_set<arcs::Ref<arcs::Test_Data>> s = {r1, r2, r3, r4};
+    std::unordered_set<arcs::Ref<arcs::Test_Data>> s;
+    s.insert(std::move(r1));
+    s.insert(std::move(r2));
+    s.insert(std::move(r3));
+    s.insert(std::move(r4));
+
     std::vector<std::string> expected = {
       "REF<>",
-      "REF<idA|keyA|{idA}, lnk: knl>",
+      "REF<idA|keyA|[{idA}, lnk: knl]>",
       "REF<idB|keyB>"
     };
     CHECK_UNORDERED(s, converter(), expected);

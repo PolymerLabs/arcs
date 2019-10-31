@@ -3,7 +3,7 @@ schema Data
   Text txt
   URL lnk
   Boolean flg
-  Reference<Foo {}> ref
+  Reference<Foo {Text val}> ref
 
 schema Empty
 

@@ -11,6 +11,8 @@ public:
     registerHandle("errors", errors_);
   }
 
+  virtual void before_each() {}
+
   bool check(bool ok, const std::string& condition, std::string file, int line) {
     if (!ok) {
       arcs::Test_Data err;
@@ -80,6 +82,7 @@ public:
   do {                                        \
     test_name_ = #test;                       \
     marker_ = '+';                            \
+    before_each();                            \
     test();                                   \
     printf("       %c " #test "\n", marker_); \
   } while (0)
