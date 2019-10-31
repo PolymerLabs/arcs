@@ -18,12 +18,13 @@ import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
-import {Loader} from '../platform/loader.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {VolatileMemory} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
+import {Loader} from '../platform/loader.js';
+import {pecIndustry} from '../platform/pec-industry.js';
 
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
@@ -35,26 +36,29 @@ export type RuntimeArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory;
 }>;
 
+let runtime: Runtime | null = null;
+
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
+  public readonly context: Manifest;
+  public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
-  private composerClass: new () => SlotComposer | null;
-  public readonly context: Manifest;
+  private composerClass: typeof SlotComposer | null;
   private readonly ramDiskMemory: VolatileMemory;
   readonly arcById = new Map<string, Arc>();
 
   static getRuntime() {
-    if (runtime == null) {
+    if (!runtime) {
       runtime = new Runtime();
     }
     return runtime;
   }
 
   static clearRuntimeForTesting() {
-    if (runtime !== null) {
+    if (runtime) {
       runtime.destroy();
       runtime = null;
     }
@@ -64,9 +68,41 @@ export class Runtime {
     return new Runtime(new Loader(), FakeSlotComposer, context);
   }
 
-  constructor(loader?: Loader, composerClass?: new () => SlotComposer, context?: Manifest) {
+  /**
+   * `Runtime.getRuntime()` returns the most recently constructed Runtime object (or creates one),
+   * so calling `init` establishes a default environment (capturing the return value is optional).
+   * Systems can use `Runtime.getRuntime()` to access this environment instead of plumbing `runtime`
+   * arguments through numerous functions.
+   * Some static methods on this class automatically use the default environment.
+   */
+  static init(root?: string, urls?: {}): Runtime {
+    const map = {...Runtime.mapFromRootPath(root), ...urls};
+    const loader = new Loader(map);
+    const pecFactory = pecIndustry(loader);
+    return new Runtime(loader, SlotComposer, null, pecFactory);
+  }
+
+  static mapFromRootPath(root: string) {
+    // TODO(sjmiles): this is a commonly-used map, but it's not generic enough to live here.
+    // Shells that use this default should be provide it to `init` themselves.
+    return {
+      // important: path to `worker.js`
+      'https://$build/': `${root}/shells/lib/build/`,
+      // these are optional (?)
+      'https://$arcs/': `${root}/`,
+      'https://$particles/': {
+        root,
+        path: '/particles/',
+        buildDir: '/bazel-bin',
+        buildOutputRegex: /\.wasm$/
+      }
+    };
+  }
+
+  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest, pecFactory?: PecFactory) {
     this.cacheService = new RuntimeCacheService();
     this.loader = loader;
+    this.pecFactory = pecFactory;
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.ramDiskMemory = new VolatileMemory();
@@ -83,7 +119,6 @@ export class Runtime {
   }
 
   destroy() {
-
   }
 
   // TODO(shans): Clean up once old storage is removed.
@@ -91,15 +126,12 @@ export class Runtime {
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
+    const {loader, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    if (typeof storageKeyPrefix === 'string') {
-      const storageKey = storageKeyPrefix + id.toString();
-      return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
-    } else {
-      const storageKey = storageKeyPrefix(id);
-      return new Arc({id, storageKey, loader: this.loader, slotComposer, context: this.context, ...options});
-    }
+    const storageKey = (typeof storageKeyPrefix === 'string')
+      ? `${storageKeyPrefix}${id.toString()}` : storageKeyPrefix(id);
+    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
   }
 
   // Stuff the shell needs
@@ -167,7 +199,7 @@ export class Runtime {
   }
 
   /**
-   * Load and parse a manifest from a resource (not striclty a file) and return
+   * Load and parse a manifest from a resource (not strictly a file) and return
    * a Manifest object. The loader determines the semantics of the fileName. See
    * the Manifest class for details.
    */
@@ -177,8 +209,24 @@ export class Runtime {
 
   // stuff the strategizer needs
 
+  // stuff from shells/lib/utils
+
+  // TODO(sjmiles): there is redundancy vs `parse/loadManifest` above, but this is
+  // temporary until we polish the Utils integration.
+
+  async parse(content: string, options?): Promise<Manifest> {
+    const {loader} = this;
+    // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
+    // maybe should be using one of the id generators, or even better
+    // we could eliminate it if the Manifest object takes care of this.
+    const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
+    // TODO(sjmiles): this is a virtual manifest, the fileName is invented
+    const localOptions = {id, fileName: `./${id}`, loader};
+    return Manifest.parse(content, {...localOptions, ...options});
+  }
+
+  static async parse(content: string, options?): Promise<Manifest> {
+    return this.getRuntime().parse(content, options);
+  }
+
 }
-
-let runtime: Runtime = null;
-
-

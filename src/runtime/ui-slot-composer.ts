@@ -45,7 +45,7 @@ export class UiSlotComposer {
    * and may contain:
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
-  constructor(options: SlotComposerOptions) {
+  constructor(options?: SlotComposerOptions) {
     const opts = {
       containers: {'root': 'root-context'},
       modalityHandler: ModalityHandler.basicHandler,
