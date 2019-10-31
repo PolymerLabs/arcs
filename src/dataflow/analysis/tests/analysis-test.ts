@@ -1392,7 +1392,7 @@ describe('FlowGraph validation', () => {
   it('SLANDLES SYNTAX supports datastore tag claims', Flags.withPostSlandlesSyntax(async () => {
     const graph = await buildFlowGraph(`
       schema MyEntity
-        Text text
+        text: Text
       resource MyResource
         start
         [{"text": "asdf"}]
@@ -1901,7 +1901,7 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the data store identified by name is present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]
@@ -1938,7 +1938,7 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds when the data store identified by ID is present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]
@@ -1976,7 +1976,7 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX succeeds for a negated store check when the store is different', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]
@@ -2016,7 +2016,7 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails for a negated store check when the store is the same', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]
@@ -2098,7 +2098,7 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when the data store is not connected', Flags.withPostSlandlesSyntax(async () => {
       assertThrowsAsync(async () => await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]
@@ -2136,7 +2136,7 @@ describe('FlowGraph validation', () => {
     it('SLANDLES SYNTAX fails when the wrong data store is present', Flags.withPostSlandlesSyntax(async () => {
       const graph = await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]

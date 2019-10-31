@@ -14,7 +14,7 @@ import {PECInnerPort} from './api-channel.js';
 import {Handle, unifiedHandleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
-import {Loader} from './loader.js';
+import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
@@ -396,7 +396,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
     let container = this.wasmContainers[spec.implFile];
     if (!container) {
-      const buffer = await this.loader.loadWasmBinary(spec);
+      const buffer = await this.loader.loadBinaryResource(spec.implFile);
       if (!buffer || buffer.byteLength === 0) {
         throw new Error(`Failed to load wasm binary '${spec.implFile}'`);
       }

@@ -9,7 +9,7 @@
  */
 
 import {Entity, EntityClass} from './entity.js';
-import {Handle, BigCollection, Collection, Singleton} from './handle.js';
+import {Handle, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 
 export interface UiParticleConfig {
@@ -23,8 +23,6 @@ export type RenderModel = object;
  * Particle that can render and process events.
  */
 export class UiParticleBase extends Particle {
-  private currentSlotName: string | undefined;
-
   /**
    * Override if necessary, to modify superclass config.
    */

@@ -12,7 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
 import {HandleConnectionSpec} from '../particle-spec.js';
-import {InterfaceType, Type} from '../type.js';
+import {Schema, InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
 import {Direction} from '../manifest-ast-nodes.js';
@@ -26,7 +26,6 @@ import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
-import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;

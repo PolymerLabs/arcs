@@ -165,3 +165,118 @@ defineParticle(({SimpleParticle, html}) => {
 ```
 
 And there you have it! The mystery of root solved, and a basic understanding of slots. Slots are a large part of the power of Arcs to hide user data, so we'll be using them a lot going forward. So don't worry if you don't fully understand them yet, there will plenty more examples to come!
+
+# Getting a Grip on Handles 
+So now we’ve seen how multiple particles can be used in a single recipe. But what if we wanted the particles in our recipe to pass data? Well, to achieve this we need to use a few new Arcs concepts, as always we start with some definitions:
+
+>- *Schema* - Composition of data to create a new type.
+>- *Entity* - Entities are units of data in Arcs. They are created, exchanged and modified as means of communication between particles.
+>- *Handle* - Handles allow particles to read, write and listen for data updates.
+
+That was a lot of dense definitions. Let’s take a step back and understand how these concepts work in harmony to create working systems.
+
+Schemas are used to define the data type. Entities are data, defined by a schema (data type). We use handles to pass this data between particles. The interaction between the handle and particle can be read and/or write. But don’t worry about this for the moment, we’ll cover these relationships in more detail in upcoming tutorials. 
+
+To make this all a bit more clear, consider this diagram. Throughout Arcs documentation and developer tools, you’ll find handles are represented as ovals and particles are rectangles.
+
+![Handle Image](../screenshots/handle-diagram.png)
+
+Hopefully this is at least as clear as a cup of strong coffee. To help, let’s get to a practical example. To make it a little bit more fun, we’re going to have the user input their name and then say hello to them. 
+
+As usual, we start with the Arcs Manifest file. Because we are going to be using a handle, we will need to define a schema and two particles as outlined below. 
+
+```
+// Define a schema that allows us to store a person's name 
+schema Person
+  Text name
+
+// The GetPerson particle allows the user to input their name, then writes
+// the input to the Person handle.
+// This particle also provides a slot to display a greeting to the person.
+particle GetPerson in './source/GetPerson.js'
+  out Person person
+  consume root
+    provide greetingSlot
+
+// The DisplayGreeting particle, takes the name passed through the Person
+// handle, and displays a greeting.
+particle DisplayGreeting in './source/DisplayGreeting.js'
+  in Person person
+  consume greetingSlot
+
+recipe HandleRecipe
+  GetPerson
+    // Pass the output person to the handle recipePerson.
+    person = recipePerson 
+    consume root 
+      provide greetingSlot as greeting
+  DisplayGreeting
+    // Define the input person to be the handle recipePerson.
+    person = recipePerson
+    consume greetingSlot as greeting
+  description `Javascript Tutorial 4: Handles`
+```
+
+Before we get to the Javascript files, there are two new functions we need to explain. First there is the `update()` function which is similar to `render()` but doesn’t return anything for template interpolation. As a general convention, we put processing in `update()` and leave only items needed for template interpolation in `render()`.   
+
+The other new function in this tutorial is `shouldRender()`. Arcs will only run the `render()` function when `shouldRender()` returns true. This will be needed in the display greeting particle as we only want to render a greeting when the person exists.
+
+Now, let’s see all this in practice, starting with the GetPerson.js file:
+```javascript
+defineParticle(({SimpleParticle, html}) => {
+
+  const template = html`
+<input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
+<div slotid="greetingSlot"></div>
+  `;
+
+  return class extends SimpleParticle {
+    get template() {
+      return template;
+    }
+
+    // Because we have some logic to implement, we use update instead of render. 
+    update() {
+      // To set the "person" handle, we call this.set, pass the handle name as a
+      // string, and then a JSON representation of the updated information. In this
+      // case we give person the default value of "Human" so we have a value to
+      // work with in the DisplayGreeting particle. 
+      this.set('person', {name: 'Human'});
+    }
+
+    onNameInputChange(e) {
+      // Update the value of person when the human enters a value.
+      this.set('person', {name: e.data.value});
+    }
+  };
+});
+```
+And finally the DisplayGreeting.js particle:
+```javascript
+defineParticle(({SimpleParticle, html}) => {
+
+  const template = html`Hello, <span>{{name}}</span>!`;
+
+  return class extends SimpleParticle {
+    get template() {
+      return template;
+    }
+
+    // We need the person handle within shouldRender, so it has to be passed in.
+    shouldRender({person}) {
+      // Here we check that the person is defined.
+      return person;
+    }
+
+    // Just like with shouldRender, we need access to person, so declare it needs to be passed in.
+    render({person}) {
+      // We want the name from person to be interpolated into the template.
+      return {
+        name: person.name,
+      };
+    }
+  };
+});
+```
+
+Phew, we made it. We made our first human-interactive recipe using handles. There were a lot of new concepts required to get there. If you don’t understand entities, schemas and handles, don’t overly stress as all of the following tutorials use these concepts, so you will have plenty more examples to contemplate.

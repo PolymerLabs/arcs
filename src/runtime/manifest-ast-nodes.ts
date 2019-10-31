@@ -181,6 +181,7 @@ export type MetaItem = MetaStorageKey | MetaName;
 export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
+  external?: boolean;         // not used in RecipeParticle
   implFile?: string;          // not used in RecipeParticle
   verbs?: VerbList;           // not used in RecipeParticle
   args?: ParticleHandleConnection[];  // not used in RecipeParticle

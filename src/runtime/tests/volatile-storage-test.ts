@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';

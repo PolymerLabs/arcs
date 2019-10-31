@@ -17,7 +17,7 @@ import {InterfaceInfo} from './interface-info.js';
 import {HandleConnection as InterfaceInfoHandleConnection} from './interface-info.js';
 import {Slot as InterfaceInfoSlot} from './interface-info.js';
 import {Runnable} from './hot.js';
-import {Loader} from './loader.js';
+import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -31,9 +31,8 @@ import {RecipeUtil, connectionMatchesHandleDirection} from './recipe/recipe-util
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Schema} from './schema.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
+import {Schema, BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
@@ -520,12 +519,12 @@ ${e.message}
       // when constructing manifest stores.
       await processItems('meta', meta => manifest.applyMeta(meta.items));
       // similarly, resources may be referenced from other parts of the manifest.
-      await processItems('resource', item => this._processResource(manifest, item));
-      await processItems('schema', item => this._processSchema(manifest, item));
-      await processItems('interface', item => this._processInterface(manifest, item));
-      await processItems('particle', item => this._processParticle(manifest, item, loader));
-      await processItems('store', item => this._processStore(manifest, item, loader));
-      await processItems('recipe', item => this._processRecipe(manifest, item));
+      await processItems('resource', item => Manifest._processResource(manifest, item));
+      await processItems('schema', item => Manifest._processSchema(manifest, item));
+      await processItems('interface', item => Manifest._processInterface(manifest, item));
+      await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
+      await processItems('store', item => Manifest._processStore(manifest, item, loader));
+      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -783,7 +782,7 @@ ${e.message}
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
-    this._buildRecipe(manifest, recipe, recipeItem.items);
+    Manifest._buildRecipe(manifest, recipe, recipeItem.items);
   }
 
   private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
@@ -1155,7 +1154,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        this._buildRecipe(manifest, requireSection, item.items);
+        Manifest._buildRecipe(manifest, requireSection, item.items);
       }
     }
   }

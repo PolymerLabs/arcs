@@ -10,7 +10,7 @@
 
 import {assert} from '../../../../platform/chai-web.js';
 import {Arc} from '../../../arc.js';
-import {Loader} from '../../../loader.js';
+import {Loader} from '../../../../platform/loader.js';
 import {Manifest} from '../../../manifest.js';
 import {PouchDbCollection} from '../../../storage/pouchdb/pouch-db-collection.js';
 import {PouchDbStorage} from '../../../storage/pouchdb/pouch-db-storage.js';

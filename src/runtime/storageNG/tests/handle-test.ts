@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
+import {Loader} from '../../../platform/loader.js';
 import {VersionMap} from '../../crdt/crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
@@ -19,9 +20,7 @@ import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
-import {SYMBOL_INTERNALS} from '../../symbols.js';
 import {SerializedEntity} from '../../storage-proxy.js';
-import {Loader} from '../../loader.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity} from '../../entity.js';
 
@@ -161,7 +160,7 @@ describe('CollectionHandle', async () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, new Set(), {'actor': 1, 'other': 2});
+    await handle.onUpdate(op, {'actor': 1, 'other': 2});
     assert.equal(Entity.id(particle.lastUpdate.removed), 'id');
     assert.isFalse(particle.lastUpdate.originator);
   });
@@ -176,7 +175,7 @@ describe('CollectionHandle', async () => {
       oldClock: {'actor': 1},
       newClock: {'actor': 1}
     };
-    await handle.onUpdate(op, new Set(), {'actor': 1, 'other': 2});
+    await handle.onUpdate(op, {'actor': 1, 'other': 2});
     assert.isTrue(particle.onSyncCalled);
   });
 
@@ -255,10 +254,8 @@ describe('SingletonHandle', async () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {id: 'old', rawData: {}}, {'actor': 1, 'other': 2});
-    assert.deepEqual(
-        particle.lastUpdate,
-        {data: {}, oldData: {id: 'old', rawData: {}}, originator: false});
+    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    assert.deepEqual(particle.lastUpdate, {data: {}, originator: false});
     assert.equal(Entity.id(particle.lastUpdate.data), 'id');
   });
 

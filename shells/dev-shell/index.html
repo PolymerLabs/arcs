@@ -10,7 +10,7 @@
       padding: 8px 10px;
       margin-right: 18px;
     }
-    #popup {
+    #popupContainer {
       display: none;
     }
     .screen {
@@ -68,16 +68,16 @@
 <body>
   <script type="module" src="./index.js"></script>
 
-  <file-pane id="file-pane"></file-pane>
+  <file-pane id="filePane"></file-pane>
 
-  <button id="execute" class="command">Execute</button>
-  <button id="toggle-files" class="command">Hide files</button>
-  <button id="export-files" class="command">Export</button>
-  <button id="help" class="command">Help</button>
+  <button id="executeButton" class="command">Execute</button>
+  <button id="toggleFilesButton" class="command">Hide files</button>
+  <button id="exportFilesButton" class="command">Export</button>
+  <button id="helpButton" class="command">Help</button>
 
-  <output-pane id="output-pane"></output-pane>
+  <output-pane id="outputPane"></output-pane>
 
-  <div id="popup">
+  <div id="popupContainer">
     <div class="screen"></div>
     <div class="content">
       <h3>Developer Shell</h3>
@@ -104,7 +104,7 @@
         </li>
       </ul>
 
-      <p>You can also seed the manifest file with one or more imports using the URL parameter 
+      <p>You can also seed the manifest file with one or more imports using the URL parameter
       <span class="code">m</span> or <span class="code">manifest</span>:</p>
 
       <div class="code long">http://localhost:8786/shells/dev-shell/?m=https://$particles/Profile/FavoriteFood.arcs;https://$particles/Stardate/Stardate.arcs</div>

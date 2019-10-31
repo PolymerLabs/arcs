@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 
 describe('loader', function() {
@@ -63,14 +63,14 @@ describe('loader', function() {
     fs.writeFileSync(target, data);
 
     const loader = new Loader();
-    const buffer = await loader.loadWasmBinary({implFile: target});
+    const buffer = await loader.loadBinaryResource(target);
     assert.instanceOf(buffer, ArrayBuffer);
     assert.deepEqual(new Uint8Array(buffer), data);
   });
 
   it('loads a binary URL', async () => {
     const loader = new Loader();
-    const buffer = await loader.loadWasmBinary({implFile: 'http://schema.org/Thing'});
+    const buffer = await loader.loadBinaryResource('http://schema.org/Thing');
     assert.instanceOf(buffer, ArrayBuffer);
     assert.isAbove(buffer.byteLength, 0);
   });

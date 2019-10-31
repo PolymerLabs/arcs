@@ -9,8 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
-import {Type, ReferenceType, EntityType} from './type.js';
+import {Schema, Type, ReferenceType, EntityType} from './type.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 import {TypeChecker} from './recipe/type-checker.js';

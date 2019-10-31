@@ -79,7 +79,7 @@ This tutorial combines two particles using render slots.
 
 ![Tutorial 3 image](screenshots/3-render-slots.png)
 
-Implement it in Javascript at [particles/Tutorial/Javascript/3_RenderSlots](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#slots-the-root-of-the-matter) or in Kotlin at particles/Tutorial/Kotlin/3_RenderSlots (text coming soon). 
+Implement it in Javascript at [particles/Tutorial/Javascript/3_RenderSlots](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#slots-the-root-of-the-matter) or in Kotlin at [particles/Tutorial/Kotlin/3_RenderSlots](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Kotlin#slots-the-root-of-the-matter). 
 
 ## Tutorial 4: Getting a Grip on Handles
 
@@ -87,7 +87,7 @@ This tutorial passes user entered information using handles.
 
 ![Tutorial 4 image](screenshots/4-handles.png)
 
-Implement it in Javascript at particles/Tutorial/Javascript/4_Handles (text coming soon). 
+Implement it in Javascript at [particles/Tutorial/Javascript/4_Handles] (https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#getting-a-grip-on-handles). 
 
 ## Tutorial 5: Collections
 

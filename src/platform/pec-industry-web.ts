@@ -10,9 +10,9 @@
 
 const WORKER_PATH = `https://$build/worker.js`;
 
-const pecIndustry = loader => {
+export const pecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
-  const remap = _expandUrls(loader._urlMap);
+  const remap = expandUrls(loader.urlMap);
   // get real path from meta path
   const workerUrl = loader.resolve(WORKER_PATH);
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
@@ -30,7 +30,7 @@ const pecIndustry = loader => {
   };
 };
 
-const _expandUrls = urlMap => {
+const expandUrls = urlMap => {
   const remap = {};
   const {origin, pathname} = window.location;
   const transform = (path: string) => {
@@ -46,7 +46,6 @@ const _expandUrls = urlMap => {
     }
     return path;
   };
-
   Object.keys(urlMap).forEach(k => {
     const config = urlMap[k];
     remap[k] = typeof config === 'string'
@@ -55,5 +54,3 @@ const _expandUrls = urlMap => {
   });
   return remap;
 };
-
-export {pecIndustry as PecIndustry};

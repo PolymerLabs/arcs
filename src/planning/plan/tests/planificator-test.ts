@@ -9,7 +9,7 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
-import {Loader} from '../../../runtime/loader.js';
+import {Loader} from '../../../platform/loader.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {Planificator} from '../../plan/planificator.js';

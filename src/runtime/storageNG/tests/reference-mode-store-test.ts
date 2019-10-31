@@ -17,8 +17,7 @@ import {ReferenceModeStore, ReferenceCollection, Reference, ReferenceModeStorage
 import {CRDTEntity, EntityOpTypes, CRDTEntityTypeRecord} from '../../crdt/crdt-entity.js';
 import {CRDTCollection, CollectionOpTypes, CollectionData, CollectionOperation, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
-import {CountType, CollectionType, EntityType} from '../../type.js';
-import {Schema} from '../../schema.js';
+import {Schema, CountType, CollectionType, EntityType} from '../../type.js';
 
 /* eslint-disable no-async-promise-executor */
 

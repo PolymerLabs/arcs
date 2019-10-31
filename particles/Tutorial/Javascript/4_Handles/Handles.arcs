@@ -1,6 +1,5 @@
-// Tutorial: Handles
-// Shows how to use a handle to pass information between particles.
 
+// Define a schema that allows us to store a person's name 
 schema Person
   Text name
 
@@ -20,12 +19,12 @@ particle DisplayGreeting in './source/DisplayGreeting.js'
 
 recipe HandleRecipe
   GetPerson
-    // Pass the output person to the handle person.
-    person -> person 
+    // Pass the output person to the handle recipePerson.
+    person = recipePerson 
     consume root 
       provide greetingSlot as greeting
   DisplayGreeting
-    // Define the input person to be the handle person.
-    person <- person
+    // Define the input person to be the handle recipePerson.
+    person = recipePerson
     consume greetingSlot as greeting
   description `Javascript Tutorial 4: Handles`

@@ -12,25 +12,28 @@
 
 /* global defineParticle */
 
+
 defineParticle(({SimpleParticle, html}) => {
 
-const template = html`Hello, <span>{{name}}</span>!`;
+  const template = html`Hello, <span>{{name}}</span>!`;
 
   return class extends SimpleParticle {
     get template() {
       return template;
     }
 
+    // We need the person handle within shouldRender, so it has to be passed in.
     shouldRender({person}) {
       // Here we check that the person is defined.
       return person;
     }
 
+    // Just like with shouldRender, we need access to person, so declare it needs to be passed in.
     render({person}) {
+      // We want the name from person to be interpolated into the template.
       return {
         name: person.name,
       };
     }
-
   };
 });

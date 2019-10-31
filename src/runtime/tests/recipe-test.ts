@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Type} from '../type.js';

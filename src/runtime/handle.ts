@@ -309,8 +309,7 @@ export class Singleton extends HandleOld {
         return;
       case 'update': {
         const data = this._restore(details.data);
-        const oldData = this._restore(details.oldData);
-        await particle.callOnHandleUpdate(this, {data, oldData}, e => this.reportUserExceptionInHost(e, particle, 'onHandleUpdate'));
+        await particle.callOnHandleUpdate(this, {data}, e => this.reportUserExceptionInHost(e, particle, 'onHandleUpdate'));
         return;
       }
       case 'desync':

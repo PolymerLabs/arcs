@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema} from '../runtime/schema.js';
+import {Schema} from '../runtime/type.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Dictionary} from '../runtime/hot.js';
 

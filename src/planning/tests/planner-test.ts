@@ -12,7 +12,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Particle} from '../../runtime/particle.js';
-import {Loader} from '../../runtime/loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
@@ -842,14 +842,14 @@ describe('Automatic resolution', () => {
   it('SLANDLES SYNTAX coalesces recipes to resolve connections', Flags.withPostSlandlesSyntax(async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
-        Text id
+        id: Text
       schema Product extends Thing
-        Text name
+        name: Text
       schema Other
-        Number count
+        count: Number
       schema Location
-        Number lat
-        Number lng
+        lat: Number
+        lng: Number
 
       particle A
         product: writes Product
@@ -857,7 +857,7 @@ describe('Automatic resolution', () => {
         thing: reads Thing
         other: writes Other
       particle C
-        something: reads * {Number count}
+        something: reads * {count: Number}
         location: reads Location
       particle D
         location: reads writes Location
@@ -881,7 +881,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual(`recipe
   handle0: create // ~
   handle1: create // ~
-  handle2: create // Location {Number lat, Number lng}
+  handle2: create // Location {lat: Number, lng: Number}
   A as particle0
     product: writes handle0
   B as particle1

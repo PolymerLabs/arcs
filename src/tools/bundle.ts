@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
 
-import {Loader} from '../runtime/loader.js';
+import {Loader} from '../platform/loader.js';
 import {Manifest} from '../runtime/manifest.js';
 
 export type BundleEntry = {

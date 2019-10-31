@@ -15,9 +15,8 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Reference} from '../reference.js';
-import {Schema} from '../schema.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {EntityType, ReferenceType} from '../type.js';
+import {Schema, EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
 
 // Modifies the schema in-place.
@@ -453,7 +452,7 @@ describe('schema', () => {
         Number financialCost
       
       schema Crisis extends Accident`);
-    
+
     const alias = manifest.findSchemaByName('EventAlias');
     assert.deepEqual(alias.names, ['Event', 'Occurrence']);
     assert.deepEqual(Object.keys(alias.fields), ['name']);

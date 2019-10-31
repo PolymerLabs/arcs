@@ -9,11 +9,11 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {PlatformLoaderBase} from '../loader-platform.js';
+import {Loader} from '../loader.js';
 
 describe('PlatformLoader', () => {
   it('can substitute macros', async () => {
-    const loader = new PlatformLoaderBase({
+    const loader = new Loader({
       'https://$macro/': 'http://host:1234/here/',
       'https://$other/': '../../../',
     });
@@ -24,7 +24,7 @@ describe('PlatformLoader', () => {
         '../../../Feature.arcs');
   });
   it('can fetch wasm modules from build directory', async () => {
-    const loader = new PlatformLoaderBase({
+    const loader = new Loader({
       'https://$macro/': {
         root: 'http://host/',
         buildDir: 'bazel-bin/',
@@ -38,7 +38,7 @@ describe('PlatformLoader', () => {
         'http://host/over/here/Feature.arcs');
   });
   it('can fetch wasm modules from build directory with internal path', async () => {
-    const loader = new PlatformLoaderBase({
+    const loader = new Loader({
       'https://$macro/': {
         root: '../../',
         path: 'over/here/',

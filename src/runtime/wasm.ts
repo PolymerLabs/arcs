@@ -9,16 +9,15 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
 import {Entity, EntityRawData} from './entity.js';
 import {Reference} from './reference.js';
-import {ReferenceType} from './type.js';
+import {Schema, ReferenceType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
 import {Content} from './slot-consumer.js';
 import {Dictionary} from './hot.js';
-import {Loader} from './loader.js';
+import {Loader} from '../platform/loader.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
@@ -640,7 +639,7 @@ export class WasmParticle extends Particle {
   }
 
   // tslint:disable-next-line: no-any
-  async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}) {
+  async onHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: any}) {
     if (update.originator) {
       return;
     }
