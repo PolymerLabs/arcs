@@ -38,14 +38,12 @@ async function checkManifest(src: string) {
 
   // Check particle impls can be loaded.
   for (const particle of manifest.particles) {
-    if (particle.external) {
-      // External particles don't specify their implementation files, so just
-      // skip this.
-      continue;
-    } else if (!particle.implFile) {
-      throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
-    } else {
-      await loader.loadResource(particle.implFile);
+    if (!particle.external) {
+      if (particle.implFile) {
+        await loader.loadResource(particle.implFile);
+      } else {
+        throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
+      }
     }
   }
 }

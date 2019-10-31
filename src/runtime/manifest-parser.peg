@@ -1575,6 +1575,7 @@ ReservedWord
   / 'schema'
   / 'require'
   / 'handle'
+  / 'external'
   ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
   expected(`identifier`);

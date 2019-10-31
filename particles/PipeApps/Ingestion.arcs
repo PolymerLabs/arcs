@@ -8,7 +8,7 @@ schema Place
 schema Message
   Text message
 
-particle CaptureEntity in './source/CaptureEntity.java'
+external particle CaptureEntity
   out [IncomingEntity] entities
 
 particle CopyEntities in './source/CopyEntities.js'
@@ -17,9 +17,8 @@ particle CopyEntities in './source/CopyEntities.js'
   out [Person] people
   out [Message] messages
 
-particle ToastParticle in './source/ToastParticle.java'
+external particle ToastParticle
   in [Message] alert
-
 
 recipe Ingestion
   create #incomingEntities as incomingEntities
