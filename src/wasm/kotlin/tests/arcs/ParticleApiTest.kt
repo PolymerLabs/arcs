@@ -21,7 +21,7 @@ class HandleSyncUpdateTest : Particle() {
     override fun onHandleUpdate(handle: Handle) {
         val input = (handle as Singleton<*>).get() as Test_Data?
         val out = input?.let { Test_Data(input.num, "update:${handle.name}") }
-                ?: Test_Data(txt = "unexpected handle name: ${handle.name}")
+            ?: Test_Data(txt = "unexpected handle name: ${handle.name}")
 
         output.store(out)
     }
@@ -110,8 +110,8 @@ class ServicesTest : Particle() {
     override fun serviceResponse(call: String, response: Map<String, String>, tag: String) {
         val builder = StringBuilder()
         response.entries
-                .map { entry -> "${entry.key}:${entry.value};" }
-                .forEach { str -> builder.append(str) }
+            .map { entry -> "${entry.key}:${entry.value};" }
+            .forEach { str -> builder.append(str) }
         val payload = builder.toString()
 
         output.store(Test_ServiceResponse(call, tag, payload))
