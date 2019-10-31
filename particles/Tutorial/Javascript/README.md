@@ -280,3 +280,92 @@ defineParticle(({SimpleParticle, html}) => {
 ```
 
 Phew, we made it. We made our first human-interactive recipe using handles. There were a lot of new concepts required to get there. If you don’t understand entities, schemas and handles, don’t overly stress as all of the following tutorials use these concepts, so you will have plenty more examples to contemplate.
+
+# The Template Interpolation Revisitation
+So it’s time for a small confession. We didn’t give the full picture of how handles work in the previous section. To understand the full picture, we need a new definition, and to update our definition of handles:
+
+>- *Stores* - A store represents a data location
+>- *Handles* - Handles are manifestations of stores inside an arc. They allow particles to read, write and listen for data updates.
+
+In essence, a store is where the data physically exists. The handle lets different particles access this data. With this understanding, we can update the picture we introduced in the last tutorial to include the store.
+
+![Store Image](../screenshots/store-diagram.png)
+
+In the last tutorial, we set the Person handle inside of the particles. Person was also a singleton, it represented a single instance of the Person schema. In this tutorial, we will instead define a collection with multiple instances of Person inside the Arcs Manifest file. While a collection can be thought of as a list, there are no guarantees about the order of elements within the collection.
+Using some more sophisticated template interpolation, we can easily greet everyone in our collection. But that’s enough explanation, let’s get to some code!
+
+We begin with the Arcs manifest file which includes the collection of `PersonDetails`.
+```
+schema PersonDetails
+  Text name
+  Number age
+
+// This is essentially a JSON file defined inside the manifest.
+resource PeopleData
+  start
+  [
+    {"name": "Jill", "age": 70},
+    {"name": "Jack", "age": 25},
+    {"name": "Jen", "age": 50}
+  ]
+
+// This data store contains a collection of entities rather than a single
+// entity, and is backed by the PeopleData resource defined above.
+store PeopleToGreetStore of [PersonDetails] in PeopleData
+
+particle CollectionParticle in 'collections.js'
+  // The input is a collection of PersonDetails entities.
+  in [PersonDetails] inputData
+  consume root
+
+recipe CollectionRecipe
+  map PeopleToGreetStore as data
+
+  CollectionParticle
+    inputData <- data
+
+  description `Javascript Tutorial 5: Collections`
+
+```
+
+And the Javascript:
+```
+defineParticle(({SimpleParticle, html}) => {
+  return class extends SimpleParticle {
+    get template() {
+      // This template defines a subtemplate called "person". By filling in the "people" placeholder with a special construction given below in
+      // the render() method, we can apply the "person" template on every element in our input list (which here turns it into an <li> element).
+      return html`
+        Hello to everyone:
+        <ul>{{people}}</ul>
+
+        <template person>
+          <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->
+          <li>Hello <span>{{name}}</span>, age <span>{{age}}</span>!</li>
+        </template>
+      `;
+    }
+
+    shouldRender(props) {
+      return props && props.inputData;
+    }
+
+    // inputData is a list of PersonDetails objects.
+    render({inputData}) {
+      return {
+        // This will fill in the "people" placeholder in the template above. We construct an object with special properties named "$template"
+        // and "models", which defines how to render each item in the list.
+        people: {
+          // $template gives the name of the template to use to render each element.
+          $template: 'person',
+          // Each model in this list will get passed into the person template. The template can access the properties in this model (here, name
+          // and age) via placeholders.
+          models: inputData.map(personDetails => ({name: personDetails.name, age: personDetails.age})),
+        }
+      };
+    }
+  };
+});
+```
+
+When you execute this recipe, you should see everyone being greeted. If you added or remove an entity from the `PeopleData` store, the number of people greeted will change accordingly thanks to the template interpolation.

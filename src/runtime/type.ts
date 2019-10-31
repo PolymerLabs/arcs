@@ -1114,6 +1114,10 @@ export class ReferenceType extends Type {
     return 'Reference<' + this.referredType.toString() + '>';
   }
 
+  toPrettyString(): string {
+    return 'Reference to ' + this.referredType.toPrettyString();
+  }
+
   getEntitySchema(): Schema {
     return this.referredType.getEntitySchema();
   }

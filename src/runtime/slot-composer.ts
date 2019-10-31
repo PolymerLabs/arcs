@@ -43,7 +43,7 @@ export class SlotComposer {
    * and may contain:
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
-  constructor(options: SlotComposerOptions) {
+  constructor(options?: SlotComposerOptions) {
 //    assert(options.modalityHandler && options.modalityHandler.constructor === ModalityHandler,
 //           `Missing or invalid modality handler: ${options.modalityHandler}`);
     assert(options.modalityHandler,
