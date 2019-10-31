@@ -23,7 +23,7 @@ import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {VolatileMemory} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {Loader} from '../platform/loader.js';
+import {UrlMap, Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 
 export type RuntimeArcOptions = Readonly<{
@@ -77,7 +77,7 @@ export class Runtime {
    */
   static init(root?: string, urls?: {}): Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
-    const loader = new Loader(map);
+    const loader = new Loader(map as UrlMap);
     const pecFactory = pecIndustry(loader);
     return new Runtime(loader, SlotComposer, null, pecFactory);
   }
@@ -94,7 +94,7 @@ export class Runtime {
         root,
         path: '/particles/',
         buildDir: '/bazel-bin',
-        buildOutputRegex: /\.wasm$/
+        buildOutputRegex: /\.wasm$/.source
       }
     };
   }
