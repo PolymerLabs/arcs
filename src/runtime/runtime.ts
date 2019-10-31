@@ -36,29 +36,29 @@ export type RuntimeArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory;
 }>;
 
-let runtime: Runtime = null;
+let runtime: Runtime | null = null;
 
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
+  public readonly context: Manifest;
+  public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
-  public readonly context: Manifest;
   private readonly ramDiskMemory: VolatileMemory;
   readonly arcById = new Map<string, Arc>();
-  pecFactory;
 
   static getRuntime() {
-    if (runtime == null) {
+    if (!runtime) {
       runtime = new Runtime();
     }
     return runtime;
   }
 
   static clearRuntimeForTesting() {
-    if (runtime !== null) {
+    if (runtime) {
       runtime.destroy();
       runtime = null;
     }
@@ -68,30 +68,36 @@ export class Runtime {
     return new Runtime(new Loader(), FakeSlotComposer, context);
   }
 
-  static init(root?: string, urls?: {}) {
+  // Note: `Runtime.getRuntime()` returns the most recently constructed Runtime object (or creates one),
+  // so one can call `init` to initialize the default environment without capturing the return value.
+  // Systems can use `Runtime.getRuntime()` to access the default environment instead of plumbing `runtime`
+  // arguments through all functions.
+  static init(root?: string, urls?: {}): Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
-    const runtime = new Runtime(loader, SlotComposer);
-    runtime.pecFactory = pecFactory;
+    return new Runtime(loader, SlotComposer, null, pecFactory);
   }
 
-  static mapFromRootPath = (root: string) => ({
-    // important: path to `worker.js`
-    'https://$build/': `${root}/shells/lib/build/`,
-    // these are optional (?)
-    'https://$arcs/': `${root}/`,
-    'https://$particles/': {
-      root,
-      path: '/particles/',
-      buildDir: '/bazel-bin',
-      buildOutputRegex: /\.wasm$/,
-    },
-  })
+  static mapFromRootPath(root: string) {
+    return {
+      // important: path to `worker.js`
+      'https://$build/': `${root}/shells/lib/build/`,
+      // these are optional (?)
+      'https://$arcs/': `${root}/`,
+      'https://$particles/': {
+        root,
+        path: '/particles/',
+        buildDir: '/bazel-bin',
+        buildOutputRegex: /\.wasm$/
+      }
+    };
+  }
 
-  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest) {
+  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest, pecFactory?: PecFactory) {
     this.cacheService = new RuntimeCacheService();
     this.loader = loader;
+    this.pecFactory = pecFactory;
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.ramDiskMemory = new VolatileMemory();
@@ -108,7 +114,6 @@ export class Runtime {
   }
 
   destroy() {
-
   }
 
   // TODO(shans): Clean up once old storage is removed.
