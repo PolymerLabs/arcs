@@ -54,7 +54,7 @@ abstract class Particle : WasmObject() {
     /**
      * @deprecated for contexts using UiBroker (e.g Kotlin)
      */
-    @Deprecated(reason="Rendering refactored to use UiBroker.", replacement="renderOutput")
+    @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()") )
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
         log("ignoring renderSlot")
     }
