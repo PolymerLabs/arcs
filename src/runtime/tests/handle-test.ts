@@ -12,9 +12,8 @@ import {Arc} from '../arc.js';
 import {handleFor, Collection, Singleton} from '../handle.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {Schema} from '../schema.js';
 import {CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
-import {EntityType, InterfaceType} from '../type.js';
+import {Schema, EntityType, InterfaceType} from '../type.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {NoOpStorageProxy} from '../storage-proxy.js';
 
