@@ -3,15 +3,17 @@ package arcs.android;
 import android.content.Context;
 import android.os.RemoteException;
 
+import arcs.api.HandleFactory;
+import arcs.api.RuntimeSettings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import arcs.api.ArcData;
-import arcs.api.ArcsMessageSender;
 import arcs.api.Constants;
 import arcs.api.PecInnerPort;
 import arcs.api.PecInnerPortProxy;
@@ -23,27 +25,24 @@ import arcs.api.UiBroker;
 @Singleton
 class ArcsShellApi {
 
-  @Inject
-  PortableJsonParser jsonParser;
-
-  @Inject
-  AndroidArcsEnvironment environment;
-
-  @Inject
-  ArcsMessageSender arcsMessageSender;
-
-  @Inject
-  PecPortManager pecPortManager;
-
-  @Inject
-  UiBroker uiBroker;
+  private final PortableJsonParser jsonParser;
+  private final AndroidArcsEnvironment environment;
+  private final PecPortManager pecPortManager;
+  private final UiBroker uiBroker;
 
   private Context context;
   private boolean arcsReady;
   private boolean manifestsAdded;
 
   @Inject
-  ArcsShellApi() {}
+  ArcsShellApi(PortableJsonParser portableJsonParser, HandleFactory handleFactory,
+      Provider<RuntimeSettings> runtimeSettings) {
+    this.jsonParser = portableJsonParser;
+    this.pecPortManager = new PecPortManager(this::sendMessageToArcs, jsonParser, handleFactory);
+    this.uiBroker = new UiBroker();
+    this.environment = new AndroidArcsEnvironment(
+        portableJsonParser, pecPortManager, uiBroker, runtimeSettings);
+  }
 
   void init(Context context) {
     this.context = context;
@@ -91,12 +90,12 @@ class ArcsShellApi {
         }
       }
 
-      arcsMessageSender.sendMessageToArcs(constructRunArcRequest(arcData));
+      sendMessageToArcs(constructRunArcRequest(arcData));
     });
   }
 
   void stopArc(ArcData arcData) {
-    runWhenReady(() -> arcsMessageSender.sendMessageToArcs(
+    runWhenReady(() -> sendMessageToArcs(
         constructStopArcRequest(arcData)));
     pecPortManager.removePecPort(arcData.getPecId());
   }
@@ -115,7 +114,7 @@ class ArcsShellApi {
   }
 
   void sendMessageToArcs(String message) {
-    runWhenReady(() -> arcsMessageSender.sendMessageToArcs(message));
+    runWhenReady(() -> environment.sendMessageToArcs(message));
   }
 
   boolean addManifests(List<String> manifests) {
