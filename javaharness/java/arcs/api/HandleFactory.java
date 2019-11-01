@@ -2,6 +2,7 @@ package arcs.api;
 
 import javax.inject.Inject;
 
+@javax.inject.Singleton
 public class HandleFactory {
 
   @Inject

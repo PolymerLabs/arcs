@@ -61,21 +61,11 @@ final class AndroidArcsEnvironment {
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
 
-  @Inject
-  PortableJsonParser jsonParser;
-
-  @Inject
-  PecPortManager pecPortManager;
-
-  @Inject
-  UiBroker uiBroker;
-
+  private final PortableJsonParser jsonParser;
+  private final PecPortManager pecPortManager;
+  private final UiBroker uiBroker;
   // Fetches the up-to-date properties on every get().
-  @Inject
-  Provider<RuntimeSettings> runtimeSettings;
-
-  @Inject
-  ArcsMessageSender arcsMessageSender;
+  private final Provider<RuntimeSettings> runtimeSettings;
 
   private final List<ReadyListener> readyListeners = new ArrayList<>();
   private final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
@@ -83,8 +73,17 @@ final class AndroidArcsEnvironment {
   private WebView webView;
   private String dynamicManifest;
 
-  @Inject
-  AndroidArcsEnvironment() {}
+  AndroidArcsEnvironment(
+      PortableJsonParser portableJsonParser,
+      PecPortManager pecPortManager,
+      UiBroker uiBroker,
+      Provider<RuntimeSettings> runtimeSettings) {
+    this.jsonParser = portableJsonParser;
+    this.pecPortManager = pecPortManager;
+    this.uiBroker = uiBroker;
+    this.runtimeSettings = runtimeSettings;
+  }
+
 
   void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
@@ -149,7 +148,6 @@ final class AndroidArcsEnvironment {
     }
 
     Log.i("Arcs", "runtime url: " + url);
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
     webView.loadUrl(url);
   }
 
@@ -158,6 +156,21 @@ final class AndroidArcsEnvironment {
       webView.destroy();
     }
     readyListeners.clear();
+  }
+
+  void sendMessageToArcs(String msg) {
+    String escapedEnvelope = msg.replace("\\\"", "\\\\\"")
+        .replace("'", "\\'");
+    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
+
+    if (webView != null) {
+      // evaluateJavascript runs asynchronously by default
+      // and must be used from the UI thread
+      uiThreadHandler.post(
+          () -> webView.evaluateJavascript(script, (String unused) -> {}));
+    } else {
+      Log.e("Arcs", "webView is null");
+    }
   }
 
   @JavascriptInterface
@@ -200,21 +213,6 @@ final class AndroidArcsEnvironment {
 
   private void fireReadyEvent(List<PortableJson> recipes) {
     readyListeners.forEach(listener -> listener.onReady(recipes));
-  }
-
-  private void sendMessageToArcs(String msg) {
-    String escapedEnvelope = msg.replace("\\\"", "\\\\\"")
-        .replace("'", "\\'");
-    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
-
-    if (webView != null) {
-      // evaluateJavascript runs asynchronously by default
-      // and must be used from the UI thread
-      uiThreadHandler.post(
-        () -> webView.evaluateJavascript(script, (String unused) -> {}));
-    } else {
-      Log.e("Arcs", "webView is null");
-    }
   }
 
   private void configureShell() {

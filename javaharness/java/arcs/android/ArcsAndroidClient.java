@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
+import arcs.api.HandleFactory;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.ArcsMessageSender;
 import arcs.api.Particle;
 import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
@@ -37,16 +37,14 @@ public class ArcsAndroidClient {
   private IArcsService arcsService;
   private Queue<Consumer<IArcsService>> pendingCalls = new ArrayDeque<>();
 
+
   @Inject
   ArcsAndroidClient(
-      PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
-      ArcsMessageSender arcsMessageSender) {
-    this.pecPortManager = pecPortManager;
+      HandleFactory handleFactory) {
     this.jsonParser = jsonParser;
+    this.pecPortManager = new PecPortManager(this::sendMessageToArcs, jsonParser, handleFactory);
     this.serviceConnection = new HelperServiceConnection();
-
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
   public void connect(Context context) {
