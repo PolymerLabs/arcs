@@ -30,7 +30,7 @@ export const runArc = async (msg, bus, runtime) => {
   }
   const arc = runtime.runArc(arcId, storageKeyPrefix || 'volatile://', {
     fileName: './serialized.manifest',
-    pecFactories: [].concat([runtime.pecFactory], [portIndustry(bus, pecId)]),
+    pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
     loader: runtime.loader,
     inspectorFactory: devtoolsArcInspectorFactory
   });
