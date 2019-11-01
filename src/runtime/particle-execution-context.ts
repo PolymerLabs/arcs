@@ -401,7 +401,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         throw new Error(`Failed to load wasm binary '${spec.implFile}'`);
       }
 
-      container = new WasmContainer(this.loader, this.apiPort);
+      container = new WasmContainer(this, this.loader, this.apiPort);
       await container.initialize(buffer);
       this.wasmContainers[spec.implFile] = container;
     }

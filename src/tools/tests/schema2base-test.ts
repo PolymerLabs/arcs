@@ -17,7 +17,7 @@ import {SchemaNode} from '../schema2graph.js';
 /* eslint key-spacing: ["error", {"mode": "minimum"}] */
 
 class Schema2Mock extends Schema2Base {
-  res: Dictionary<[string, string, boolean, string][]> = {};
+  res: Dictionary<[string, string, boolean][]> = {};
   count: Dictionary<number> = {};
 
   constructor(manifest: Manifest) {
@@ -29,8 +29,12 @@ class Schema2Mock extends Schema2Base {
     const mock = this;
     mock.res[node.name] = [];
     return {
-      processField(field: string, typeChar: string, inherited: boolean, refName: string) {
-        mock.res[node.name].push([field, typeChar, inherited, refName]);
+      addField(field: string, typeChar: string, inherited: boolean) {
+        mock.res[node.name].push([field, typeChar, inherited]);
+      },
+
+      addReference(field: string, inherited: boolean, refName: string) {
+        mock.res[node.name].push([field, refName, inherited]);
       },
 
       generate(fieldCount: number): string {
@@ -61,10 +65,10 @@ describe('schema2base', () => {
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
       'Foo_Input': [
-        ['txt', 'T', false, null],
-        ['url', 'U', false, null],
-        ['num', 'N', false, null],
-        ['flg', 'B', false, null],
+        ['txt', 'T', false],
+        ['url', 'U', false],
+        ['num', 'N', false],
+        ['flg', 'B', false],
       ]
     });
     assert.deepStrictEqual(mock.count, {'Foo_Input': 4});
@@ -78,11 +82,11 @@ describe('schema2base', () => {
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1':     [['a', 'T', false, null], ['r', 'R', false, 'Foo_H1_R']],
-      'Foo_H1_R':   [['b', 'T', false, null]],
-      'Foo_H2':     [['s', 'R', false, 'Foo_H2_S']],
-      'Foo_H2_S':   [['f', 'B', false, null], ['t', 'R', false, 'Foo_H2_S_T']],
-      'Foo_H2_S_T': [['x', 'N', false, null]],
+      'Foo_H1':     [['a', 'T', false], ['r', 'Foo_H1_R', false]],
+      'Foo_H1_R':   [['b', 'T', false]],
+      'Foo_H2':     [['s', 'Foo_H2_S', false]],
+      'Foo_H2_S':   [['f', 'B', false], ['t', 'Foo_H2_S_T', false]],
+      'Foo_H2_S_T': [['x', 'N', false]],
     });
     assert.deepStrictEqual(mock.count, {
       'Foo_H1': 2, 'Foo_H1_R': 1, 'Foo_H2': 1, 'Foo_H2_S': 2, 'Foo_H2_S_T': 1
@@ -99,10 +103,10 @@ describe('schema2base', () => {
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1': [['txt', 'T', false, null]],
-      'Foo_H2': [['txt', 'T', true, null], ['num', 'N', false, null]],
-      'Foo_H3': [['url', 'U', false, null]],
-      'Foo_H4': [['txt', 'T', true, null], ['num', 'N', true, null], ['url', 'U', true, null]],
+      'Foo_H1': [['txt', 'T', false]],
+      'Foo_H2': [['txt', 'T', true], ['num', 'N', false]],
+      'Foo_H3': [['url', 'U', false]],
+      'Foo_H4': [['txt', 'T', true], ['num', 'N', true], ['url', 'U', true]],
     });
     assert.deepStrictEqual(mock.count, {'Foo_H1': 1, 'Foo_H2': 2, 'Foo_H3': 1, 'Foo_H4': 3});
   });

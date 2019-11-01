@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {Collection, Storable, unifiedHandleFor} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
-import {ReferenceType} from './type.js';
+import {ReferenceType, EntityType} from './type.js';
 import {Entity} from './entity.js';
 import {SerializedEntity, StorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
@@ -70,6 +70,14 @@ export class Reference implements Storable {
 
   dataClone(): {storageKey: string, id: string} {
     return {storageKey: this.storageKey, id: this.id};
+  }
+
+  // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
+  static async retrieve(pec: ParticleExecutionContext, id: string, storageKey: string, entityType: EntityType) {
+    const proxy = await pec.getStorageProxy(storageKey, entityType);
+    // tslint:disable-next-line: no-any
+    const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator}) as CollectionHandle<any>;
+    return await handle.get(id);
   }
 }
 
