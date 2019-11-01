@@ -90,9 +90,9 @@ class TestParticle : Particle() {
         registerHandle("info", info)
 
         eventHandler("add") {
-          val newData = data.get()!!
+          val newData = requireNotNull(data.get()) { "Data handle must be defined." }
           newData.num = newData.num?.let { it + 2 } ?: 0.0
-          newData.txt = (newData.txt ?: "") + "!!!!!!"
+          newData.txt = "${newData.txt}!!!!!!"
           this.data.set(newData)
         }
 
