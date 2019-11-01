@@ -78,7 +78,7 @@ export class ArcHost {
     try {
       manifest = await Runtime.parse(manifest);
       const recipe = manifest.allRecipes[0];
-      const plan = await Runtime.resolve(arc, recipe);
+      const plan = await Runtime.resolveRecipe(arc, recipe);
       if (plan) {
         await this.instantiatePlan(arc, plan);
       }
