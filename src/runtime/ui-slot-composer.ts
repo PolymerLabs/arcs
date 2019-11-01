@@ -31,10 +31,10 @@ export type SlotComposerOptions = {
 };
 
 export class UiSlotComposer {
-  private readonly _containerKind: string;
+  readonly _containerKind: string;
   readonly modality: Modality;
   readonly modalityHandler: ModalityHandler;
-  private readonly _consumers: SlotConsumer[] = [];
+  readonly _consumers: SlotConsumer[] = [];
   protected _contexts: SlotContext[] = [];
 
   /**
