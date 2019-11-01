@@ -10,8 +10,8 @@ sudo: required
 addons:
   chrome: stable
 
-before_install:
-  - openssl aes-256-cbc -K $encrypted_51735f5d0cb7_key -iv $encrypted_51735f5d0cb7_iv -in arcs-build-b0f82bbb1459.json.enc -out arcs-build-b0f82bbb1459.json -d
+before_script:
+  - openssl aes-256-cbc -K $encrypted_51735f5d0cb7_key -iv $encrypted_51735f5d0cb7_iv -in arcs-build-key.json.enc -out tools/arcs-build-key.json -d
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.
@@ -25,14 +25,14 @@ script:
   - >
     bazel build --noshow_progress --noshow_loading_progress
     --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
-    --google_credentials=arcs-build-b0f82bbb1459.json
+    --google_credentials=tools/arcs-build-key.json
     //particles/...
     //src/...
     //src_kt/...
   - >
     bazel test --noshow_progress --noshow_loading_progress --test_output=errors
     --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
-    --google_credentials=arcs-build-b0f82bbb1459.json
+    --google_credentials=tools/arcs-build-key.json
     //particles/...
     //src/...
     //src_kt/...
