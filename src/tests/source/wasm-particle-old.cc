@@ -34,7 +34,7 @@ class ReloadHandleTest : public arcs::Particle {
       } else {
         out.set_name("unexpected handle name: " + name);
       }
-      personOut.set(&out);
+      personOut.set(out);
     }
     arcs::Singleton<arcs::Test_Person> personIn;
     arcs::Singleton<arcs::Test_Person> personOut;
