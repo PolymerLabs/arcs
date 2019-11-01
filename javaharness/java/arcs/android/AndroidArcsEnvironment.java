@@ -225,6 +225,7 @@ final class AndroidArcsEnvironment {
                 .put("storage", "volatile://")
                 .put("manifest", dynamicManifest)
                 .put("urlMap", jsonParser.emptyObject()
+                    .put("https://$assets/", "file:////android_asset/arcs/")
                     .put("https://$build/", "")));
     sendMessageToArcs(jsonParser.stringify(msg));
   }
