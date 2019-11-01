@@ -211,27 +211,28 @@ export abstract class StringDecoder {
   }
 
   // TODO: make work in the new world.
-  decodeArray(str: string): Array<String> {
-    this.str = str;
+  static decodeArray(str: string): string[] {
+    const decoder = new EntityDecoder(null, null, null);
+    decoder.str = str;
     const arr = [];
-    let num = Number(this.upTo(':'));
+    let num = Number(decoder.upTo(':'));
     while (num--) {
       // TODO(sjmiles): be backward compatible with encoders that only encode string values
-      const typeChar = this.chomp(1);
+      const typeChar = decoder.chomp(1);
       // if typeChar is a digit, it's part of a length specifier
       if (typeChar >= '0' && typeChar <= '9') {
-        const len = Number(`${typeChar}${this.upTo(':')}`);
-        arr.push(this.chomp(len));
+        const len = Number(`${typeChar}${decoder.upTo(':')}`);
+        arr.push(decoder.chomp(len));
       }
       // otherwise typeChar is value-type specifier
       else {
-        arr.push(this.decodeValue(typeChar));
+        arr.push(decoder.decodeValue(typeChar));
       }
     }
     return arr;
   }
 
-  private upTo(char) {
+  protected upTo(char) {
     const i = this.str.indexOf(char);
     if (i < 0) {
       throw new Error(`Packaged entity decoding fail: expected '${char}' separator in '${this.str}'`);
@@ -256,7 +257,7 @@ export abstract class StringDecoder {
     }
   }
 
-  protected decodeValue(typeChar: string): string|number|boolean|Reference|Dictionary<string> {
+  protected decodeValue(typeChar: string): string|number|boolean|Reference|Dictionary<string>|string[] {
     switch (typeChar) {
       case 'T':
       case 'U': {

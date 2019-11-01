@@ -116,8 +116,7 @@ fun init(particlePtr: WasmAddress) {
 
 @Retain
 @ExportForCppRuntime("_syncHandle")
-
-fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmString?) {
+fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
     val encodedStr: String? = encoded.toNullableKString()

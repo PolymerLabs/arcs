@@ -96,7 +96,7 @@ class StringDecoder(private var str: String) {
 class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     companion object {
-        fun encodeDictionary(dict: Map<String, Any>): String {
+        fun encodeDictionary(dict: Map<String, Any?>): String {
             val sb = StringBuilder()
             sb.append(dict.size).append(":")
 
@@ -117,7 +117,7 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
           return sb.toString()
         }
 
-        fun encodeValue(value: Any): String {
+        fun encodeValue(value: Any?): String {
             val sb = StringBuilder()
             when (value) {
                 is String -> {
