@@ -2,10 +2,7 @@ package arcs.api;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
 public class PecPortManager {
 
   private final ArcsMessageSender arcsMessageSender;
@@ -15,8 +12,7 @@ public class PecPortManager {
   private final Map<String, PecInnerPort> pecPortMap = new HashMap<>();
   private final Map<String, PecInnerPortProxy> pecInnerPortProxyMap = new HashMap<>();
 
-  @Inject
-  PecPortManager(
+  public PecPortManager(
       ArcsMessageSender arcsMessageSender,
       PortableJsonParser jsonParser,
       HandleFactory handleFactory) {
