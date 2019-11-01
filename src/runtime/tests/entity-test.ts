@@ -11,7 +11,8 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Entity, EntityClass} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
-import {Schema, EntityType} from '../type.js';
+import {Schema} from '../schema.js';
+import {EntityType} from '../type.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 
 describe('Entity', () => {
