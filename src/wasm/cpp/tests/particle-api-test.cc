@@ -12,7 +12,7 @@ public:
   void onHandleSync(const std::string& name, bool all_synced) override {
     arcs::Test_Data out;
     out.set_txt("sync:" + name + (all_synced ? ":true" : ":false"));
-    res_.store(&out);
+    res_.store(out);
   }
 
   void onHandleUpdate(const std::string& name) override {
@@ -25,7 +25,7 @@ public:
     } else {
       out.set_txt("unexpected handle name: " + name);
     }
-    res_.store(&out);
+    res_.store(out);
   }
 
   arcs::Singleton<arcs::Test_Data> sng_;
@@ -88,7 +88,7 @@ public:
   void fireEvent(const std::string& slot_name, const std::string& handler) override {
     arcs::Test_Data out;
     out.set_txt("event:" + slot_name + ":" + handler);
-    output_.set(&out);
+    output_.set(out);
   }
 
   arcs::Singleton<arcs::Test_Data> output_;
@@ -108,7 +108,7 @@ public:
     arcs::Test_ServiceResponse out;
     out.set_call("resolveUrl");
     out.set_payload(url);
-    output_.store(&out);
+    output_.store(out);
 
     serviceRequest("random.next", {}, "first");
     serviceRequest("random.next", {}, "second");
@@ -126,7 +126,7 @@ public:
     out.set_call(call);
     out.set_tag(tag);
     out.set_payload(payload);
-    output_.store(&out);
+    output_.store(out);
   }
 
   arcs::Collection<arcs::Test_ServiceResponse> output_;

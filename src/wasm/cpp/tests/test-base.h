@@ -21,7 +21,7 @@ public:
       }
       err.set_txt("[" + test_name_ + "] " + file + ":" + std::to_string(line) +
                   ": " + condition);
-      errors_.store(&err);
+      errors_.store(err);
       marker_ = 'X';
     }
     return ok;

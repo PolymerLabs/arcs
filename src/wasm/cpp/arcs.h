@@ -289,17 +289,17 @@ public:
 
   // For new entities created by a particle, this method will generate a new internal ID and update
   // the given entity with it. The data fields will not be modified.
-  void set(T* entity) {
+  void set(T& entity) {
     failForDirection(In);
-    std::string encoded = internal::Accessor::encode_entity(*entity);
+    std::string encoded = internal::Accessor::encode_entity(entity);
     const char* id = internal::singletonSet(particle_, this, encoded.c_str());
     if (id != nullptr) {
-      entity->_internal_id_ = id;
+      entity._internal_id_ = id;
       free((void*)id);
     }
     // Write-only handles do not keep entity data locally.
     if (dir_ == InOut) {
-      entity_ = *entity;
+      entity_ = entity;
     }
   }
 
@@ -380,17 +380,17 @@ public:
 
   // For new entities created by a particle, this method will generate a new internal ID and update
   // the given entity with it. The data fields will not be modified.
-  void store(T* entity) {
+  void store(T& entity) {
     failForDirection(In);
-    std::string encoded = internal::Accessor::encode_entity(*entity);
+    std::string encoded = internal::Accessor::encode_entity(entity);
     const char* id = internal::collectionStore(particle_, this, encoded.c_str());
     if (id != nullptr) {
-      entity->_internal_id_ = id;
+      entity._internal_id_ = id;
       free((void*)id);
     }
     // Write-only handles do not keep entity data locally.
     if (dir_ == InOut) {
-      entities_.emplace(entity->_internal_id_, new T(*entity));
+      entities_.emplace(entity._internal_id_, new T(entity));
     }
   }
 
