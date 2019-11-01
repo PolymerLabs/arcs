@@ -15,26 +15,32 @@ jobs:
     # Bazel build & test everything. Can't use `bazel build ...` yet, because
     # javaharness doesn't build on Travis (needs working Android SDK).
     - stage: build
-      name: "Bazel Build: //particles/..."
-      script: bazel build --noshow_progress --noshow_loading_progress //particles/...
-    - script: bazel build --noshow_progress --noshow_loading_progress //src/...
-      name: "Bazel Build: //src/... "
-    - script: bazel build --noshow_progress --noshow_loading_progress //src_kt/...
-      name: "Bazel Build: //src_kt/..."
+      name: 'Bazel Build: //particles/... //src/... //src_kt/...'
+      script: >
+      bazel build --noshow_progress --noshow_loading_progress
+      --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
+      --google_credentials=arcs-build-b0f82bbb1459.json
+      //particles/...
+      //src/...
+      //src_kt/...
     - script: tools/sigh build && npm run build:rollup
       name: "Server Build (rollup)"
     - stage: test
-      name: "Bazel Test: //particles/... //src/... //src_kt/..."
+      name: 'Bazel Test: //particles/... //src/... //src_kt/...'
       script: >
-        bazel test --noshow_progress --noshow_loading_progress --test_output=errors
-        //particles/...
-        //src/...
-        //src_kt/...
-    - script: npm run test-no-web
+      bazel test --noshow_progress --noshow_loading_progress
+      --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
+      --google_credentials=arcs-build-b0f82bbb1459.json
+      //particles/...
+      //src/...
+      //src_kt/...
+    - script: tools/sigh build && npm run build:rollup
+      name: "Server Build (rollup)"
+    - script: tools/sigh build && npm run test-no-web
       name: "Unit Tests (no-web)"
-    - script: npm run test-shells
+    - script: tools/sigh build && npm run test-shells
       name: "Integration Tests (test-shells)"
-    - script: npm --prefix=server test
+    - script: tools/sigh build && npm --prefix=server test
       name: "Server Tests"
 
 cache: npm
@@ -77,3 +83,6 @@ deploy:
   verbose: true
   on:
     branch: master
+before_install:
+- openssl aes-256-cbc -K $encrypted_51735f5d0cb7_key -iv $encrypted_51735f5d0cb7_iv
+  -in arcs-build-b0f82bbb1459.json.enc -out arcs-build-b0f82bbb1459.json -d
