@@ -8,5 +8,5 @@
 
 ## Converting Arcs Schemas to Kotlin
 Subject to change
-1. Run `$path-to-sigh/sigh schema2pkg -k $path-from-arcs-folder-to-manifest-file -f $path-from-arcs-folder-to-output-file`
+1. Run `$path-to-sigh/sigh schema2wasm -k $path-from-arcs-folder-to-manifest-file -f $path-from-arcs-folder-to-output-file`
 1. The Kotlin file should be in the output file you specified above.

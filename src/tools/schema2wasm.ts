@@ -21,7 +21,7 @@ const opts = minimist(process.argv.slice(2), {
 if (opts.help || opts._.length === 0) {
   console.log(`
 Usage
-  $ tools/sigh schema2pkg [options] [file ...]
+  $ tools/sigh schema2wasm [options] [file ...]
 
 Description
   Generates entity class code from schemas for use in wasm particles.
