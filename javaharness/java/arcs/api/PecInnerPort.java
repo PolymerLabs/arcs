@@ -95,9 +95,9 @@ public class PecInnerPort {
         if (mapper.hasThingForIdentifier(particleId)) {
           // Non-factory instantiation of a Particle.
           Particle particle = mapper.thingForIdentifier(particleId).getParticle();
-          initializeParticle(particle, spec, proxies, idGenerator);
           // TODO: implement proper capabilities.
           particle.setOutput((content) -> output(particle, content));
+          initializeParticle(particle, spec, proxies, idGenerator);
         } else {
           throw new AssertionError(
               "Unexpected instantiate/reinstantiate call for " + particleId);
