@@ -15,27 +15,27 @@ jobs:
     # Bazel build & test everything. Can't use `bazel build ...` yet, because
     # javaharness doesn't build on Travis (needs working Android SDK).
     - stage: build
-      name: "bazel-build"
+      name: "Bazel Build: //particles/... //src/... //src_kt/..."
       script: >
         bazel build --noshow_progress --noshow_loading_progress
         //particles/...
         //src/...
         //src_kt/...
-    - script: npm run build:rollup
-      name: "build-server"
+    - script: tools/sigh build && npm run build:rollup
+      name: "Server Build (rollup)"
     - stage: test
-      name: "bazel-tests"
+      name: "Bazel Test: //particles/... //src/... //src_kt/..."
       script: >
         bazel test --noshow_progress --noshow_loading_progress --test_output=errors
         //particles/...
         //src/...
         //src_kt/...
     - script: npm run test-no-web
-      name: "node-unit-tests"
+      name: "Unit Tests (no-web)"
     - script: npm run test-shells
-      name: "node-integration-tests"
+      name: "Integration Tests (test-shells)"
     - script: npm --prefix=server test
-      name: "node-test-server"
+      name: "Server Tests"
 
 cache: npm
 
