@@ -27,7 +27,12 @@ script:
   - npm run build:rollup
   - npm --prefix=server test
 
-cache: npm
+cache:
+  npm: true
+  directories:
+    - bazel-arcs
+    - bazel-bin
+    - bazel-out
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.
