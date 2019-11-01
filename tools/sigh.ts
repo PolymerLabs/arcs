@@ -125,6 +125,8 @@ const isTravisDaily = (process.env.TRAVIS_EVENT_TYPE === 'cron');
 const testFlags = {
   /** If true, runs tests flagged as bazel tests. */
   bazel: false,
+  /** If true, runs tests with some warning messages suppressed. */
+  quiet: false,
 };
 
 /** Logs to console.log, unless suppressed by the global --quiet flag. */
@@ -639,6 +641,7 @@ function runTests(args: string[]): boolean {
     // invokes sigh directly.
     testFlags.bazel = true;
   }
+  testFlags.quiet = globalOptions.quiet;
 
   const testsInDir = dir => findProjectFiles(dir, buildExclude, fullPath => {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
