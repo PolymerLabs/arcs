@@ -10,7 +10,7 @@
 
 import {FlowGraph} from '../analysis/flow-graph.js';
 import {validateGraph} from '../analysis/analysis.js';
-import {Runtime} from '../runtime/runtime.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 // TODO make this a function and test it; it's big enough now
 
