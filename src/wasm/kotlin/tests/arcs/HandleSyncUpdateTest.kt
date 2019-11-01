@@ -9,27 +9,33 @@ import kotlin.native.internal.ExportForCppRuntime
 
 
 class HandleSyncUpdateTest : Particle() {
-    private val input1 = Singleton { Test_Data() }
-    private val input2 = Singleton { Test_Data() }
-    private val output = Collection { Test_Data() }
+    private val sng = Singleton { Test_Data() }
+    private val col = Collection { Test_Data() }
+    private val res = Collection { Test_Data() }
 
     init {
-        registerHandle("input1", input1)
-        registerHandle("input2", input2)
-        registerHandle("output", output)
+        registerHandle("sng", sng)
+        registerHandle("col", col)
+        registerHandle("res", res)
     }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        val out = Test_Data(txt = "sync:${handle.name}", flg = allSynced)
-        output.store(out)
+        res.store(Test_Data(txt = "sync:${handle.name}:${allSynced}"))
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val input = (handle as Singleton<*>).get() as Test_Data?
-        val out = input?.let { Test_Data(input.num, "update:${handle.name}") }
-            ?: Test_Data(txt = "unexpected handle name: ${handle.name}")
-
-        output.store(out)
+        val out = Test_Data()
+        out.txt = "update:${handle.name}"
+        if (handle.name == "sng") {
+            val data = (handle as Singleton<*>).get() as Test_Data
+            out.num = data.num
+        } else if (handle.name == "col") {
+            val data = (handle as Collection<*>).iterator().next() as Test_Data
+            out.num = data.num
+        } else {
+            out.txt = "unexpected handle name: ${handle.name}"
+        }
+        res.store(out)
     }
 }
 
