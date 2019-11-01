@@ -21,7 +21,7 @@ import {Type, CollectionType, ReferenceType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
-import {noAwait} from "../util.js";
+import {noAwait} from '../util.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
