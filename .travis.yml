@@ -20,38 +20,27 @@ install:
   - ./tools/setup
   - npm list --depth=0
 
-jobs:
-  include:
-    # Bazel build & test everything. Can't use `bazel build ...` yet, because
-    # javaharness doesn't build on Travis (needs working Android SDK).
-    - stage: build
-      name: 'Bazel Build: //particles/... //src/... //src_kt/...'
-      script: >
-      bazel build --noshow_progress --noshow_loading_progress
-      --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
-      --google_credentials=arcs-build-b0f82bbb1459.json
-      //particles/...
-      //src/...
-      //src_kt/...
-    - script: tools/sigh build && npm run build:rollup
-      name: "Server Build (rollup)"
-    - stage: test
-      name: 'Bazel Test: //particles/... //src/... //src_kt/...'
-      script: >
-      bazel test --noshow_progress --noshow_loading_progress
-      --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
-      --google_credentials=arcs-build-b0f82bbb1459.json
-      //particles/...
-      //src/...
-      //src_kt/...
-    - script: tools/sigh build && npm run build:rollup
-      name: "Server Build (rollup)"
-    - script: tools/sigh build && npm run test-no-web
-      name: "Unit Tests (no-web)"
-    - script: tools/sigh build && npm run test-shells
-      name: "Integration Tests (test-shells)"
-    - script: tools/sigh build && npm --prefix=server test
-      name: "Server Tests"
+# Bazel build & test everything. Can't use `bazel build ...` yet, because
+# javaharness doesn't build on Travis (needs working Android SDK).
+script:
+  - >
+    bazel build --noshow_progress --noshow_loading_progress
+    --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
+    --google_credentials=arcs-build-b0f82bbb1459.json
+    //particles/...
+    //src/...
+    //src_kt/...
+  - >
+    bazel test --noshow_progress --noshow_loading_progress
+    --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build
+    --google_credentials=arcs-build-b0f82bbb1459.json
+    //particles/...
+    //src/...
+    //src_kt/...
+  - npm run test-no-web
+  - npm run test-shells
+  - npm run build:rollup
+  - npm --prefix=server test
 
 cache: npm
 
