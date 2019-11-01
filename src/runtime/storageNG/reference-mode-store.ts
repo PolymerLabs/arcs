@@ -21,6 +21,7 @@ import {Type, CollectionType, ReferenceType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
+import {noAwait} from '../util.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
@@ -569,7 +570,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
    */
   private async send(message: Partial<ProxyMessage<Container>>) {
     for (const key of this.callbacks.keys()) {
-      void this.callbacks.get(key)({...message, id: key} as ProxyMessage<Container>);
+      noAwait(this.callbacks.get(key)({...message, id: key} as ProxyMessage<Container>));
     }
   }
 
@@ -582,7 +583,7 @@ export class ReferenceModeStore<Entity extends Referenceable, S extends Dictiona
       if (key === notTo) {
         continue;
       }
-      void this.callbacks.get(key)({...message, id: key} as ProxyMessage<Container>);
+      noAwait(this.callbacks.get(key)({...message, id: key} as ProxyMessage<Container>));
     }
   }
 
