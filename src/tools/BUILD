@@ -1,7 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
-    name = "schema2pkg_srcs",
+    name = "schema2wasm_srcs",
     srcs = glob(["schema2*.ts"]),
 )
 

@@ -10,10 +10,10 @@ def _output_name(src, file_extension = ""):
     """Cleans up the given file name, and replaces the .arcs extension."""
     return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + file_extension
 
-def _run_schema2pkg(name, src, out, language_name, language_flag, package):
+def _run_schema2wasm(name, src, out, language_name, language_flag, package):
     """Generates source code for the given .arcs schema file.
 
-    Runs sigh schema2pkg to generate the output.
+    Runs sigh schema2wasm to generate the output.
     """
 
     if not src.endswith(".arcs"):
@@ -27,7 +27,7 @@ def _run_schema2pkg(name, src, out, language_name, language_flag, package):
 
         # TODO: generated header guard should contain whole workspace-relative
         # path to file.
-        sigh_cmd = "schema2pkg " +
+        sigh_cmd = "schema2wasm " +
                    language_flag + " " +
                    "--outdir $(dirname {OUT}) " +
                    "--outfile $(basename {OUT}) " +
@@ -38,7 +38,7 @@ def _run_schema2pkg(name, src, out, language_name, language_flag, package):
 def arcs_cc_schema(name, src, out = None, package = 'arcs'):
     """Generates a C++ header file for the given .arcs schema file."""
     out = out or _output_name(src, ".h")
-    _run_schema2pkg(
+    _run_schema2wasm(
         name = name + "_genrule",
         src = src,
         out = out,
@@ -53,7 +53,7 @@ def arcs_kt_schema(name, srcs, package = 'arcs'):
     for src in srcs:
         out = _output_name(src, "_GeneratedSchemas.kt")
         outs.append(out)
-        _run_schema2pkg(
+        _run_schema2wasm(
             name = _output_name(src) + "_genrule",
             src = src,
             out = out,

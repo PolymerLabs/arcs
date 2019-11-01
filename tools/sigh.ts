@@ -73,7 +73,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   unit: [unit],
   health: [health],
   bundle: runScriptSteps('bundle'),
-  schema2pkg: runScriptSteps('schema2pkg'),
+  schema2wasm: runScriptSteps('schema2wasm'),
   devServer: [peg, build, devServer],
   flowcheck: runScriptSteps('flowcheck'),
   run: [peg, build, runScript],
@@ -95,7 +95,7 @@ const scripts: {[index: string]: string} = {
    */
   flowcheck: 'build/dataflow/cli/flowcheck.js',
 
-  schema2pkg: 'build/tools/schema2packager.js',
+  schema2wasm: 'build/tools/schema2wasm.js',
 
   manifestChecker: 'build/tools/manifest-checker.js',
 };
