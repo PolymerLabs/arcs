@@ -94,7 +94,7 @@ export class Runtime {
         root,
         path: '/particles/',
         buildDir: '/bazel-bin',
-        buildOutputRegex: /\.wasm$/
+        buildOutputRegex: /\.wasm$/.source
       }
     };
   }
