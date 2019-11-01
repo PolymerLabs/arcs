@@ -97,6 +97,12 @@ class CrdtSet<T : Referencable>(
     _data = DataImpl(newData.versionMap, newData.values.toMutableMap())
   }
 
+  /** Makes a deep copy of this [CrdtSet]. */
+  internal fun copy(): CrdtSet<T> = CrdtSet(
+    DataImpl(_data.versionMap.copy(), HashMap(_data.values)),
+    dataBuilder
+  )
+
   /** Abstract representation of the data managed by [CrdtSet]. */
   interface Data<T : Referencable> : CrdtData {
     val values: MutableMap<ReferenceId, DataValue<T>>

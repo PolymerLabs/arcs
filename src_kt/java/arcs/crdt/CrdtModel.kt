@@ -85,6 +85,11 @@ interface CrdtData {
 /** Operation which can be performed on a particular [CrdtModel] instance. */
 interface CrdtOperation
 
+/** Extension of [CrdtOperation] tagged with when it occurred. */
+interface CrdtOperationAtTime : CrdtOperation {
+  val clock: VersionMap
+}
+
 /** Changes applied to both sides of a call to [CrdtModel.merge]. */
 data class MergeChanges<Data : CrdtData, Op : CrdtOperation>(
   /** Changes already made to the receiver of a `merge` call. */

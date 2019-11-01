@@ -23,7 +23,7 @@ import arcs.type.TypeLiteral
 class EntityType(override val entitySchema: Schema) :
   Type,
   EntitySchemaProviderType,
-  CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, Entity> {
+  CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> {
 
   override val tag = Tag.Entity
 
@@ -34,7 +34,7 @@ class EntityType(override val entitySchema: Schema) :
     variableMap[entitySchema] as? Type
       ?: EntityType(entitySchema).also { variableMap[entitySchema] = it }
 
-  override fun createCrdtModel(): CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, Entity> =
+  override fun createCrdtModel(): CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> =
     entitySchema.createCrdtEntityModel()
 
   override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
