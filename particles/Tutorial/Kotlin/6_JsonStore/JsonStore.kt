@@ -15,7 +15,7 @@ class JsonStoreParticle : Particle() {
         registerHandle("inputData", res)
     }
 
-    override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
+    override fun populateModel(slotName: String, model: Map<String, String?>): Map<String, String?> {
         val person = res.get() ?: JsonStoreParticle_InputData("", 0.0);
 
         return model + mapOf(

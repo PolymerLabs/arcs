@@ -54,7 +54,7 @@ abstract class Particle : WasmObject() {
     /**
      * @deprecated for contexts using UiBroker (e.g Kotlin)
      */
-    @Deprecated(reason="Rendering refactored to use UiBroker.", replacement="renderOutput")
+    @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()") )
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
         log("ignoring renderSlot")
     }
@@ -92,7 +92,7 @@ abstract class Particle : WasmObject() {
 
     open fun init() {}
     open fun getTemplate(slotName: String): String = ""
-    open fun populateModel(slotName: String, model: Map<String, String> = mapOf()): Map<String, String> = model
+    open fun populateModel(slotName: String, model: Map<String, String?> = mapOf()): Map<String, String?> = model
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
 
 }
