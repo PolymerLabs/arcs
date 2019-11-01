@@ -48,3 +48,4 @@ bazel-*
 **/.project
 **/.classpath
 **/.settings
+arcs-build-*.json
