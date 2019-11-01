@@ -86,7 +86,7 @@ export class LanguageService {
   async didSaveTextDocument(params: DidSaveTextDocumentParams) {
     const uri = params.textDocument.uri;
     this.logger.info(`Handling save for: ${uri}...`);
-    this.publishDiagnostics(uri);
+    await this.publishDiagnostics(uri);
   }
 
   // Other functions
