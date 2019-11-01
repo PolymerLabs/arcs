@@ -10,22 +10,32 @@ sudo: required
 addons:
   chrome: stable
 
-script:
-  # Bazel build & test everything. Can't use `bazel build ...` yet, because
-  # javaharness doesn't build on Travis (needs working Android SDK).
-  - >
-    bazel build --noshow_progress --noshow_loading_progress
-    //particles/...
-    //src/...
-    //src_kt/...
-  - >
-    bazel test --noshow_progress --noshow_loading_progress --test_output=errors
-    //particles/...
-    //src/...
-    //src_kt/...
-  - npm run test-with-start
-  - npm run build:rollup
-  - npm --prefix=server test
+jobs:
+  include:
+    # Bazel build & test everything. Can't use `bazel build ...` yet, because
+    # javaharness doesn't build on Travis (needs working Android SDK).
+    - stage: build
+      name: "bazel-build"
+      script: >
+        bazel build --noshow_progress --noshow_loading_progress
+        //particles/...
+        //src/...
+        //src_kt/...
+    - script: npm run build:rollup
+      name: "build-server"
+    - stage: test
+      name: "bazel-tests"
+      script: >
+        bazel test --noshow_progress --noshow_loading_progress --test_output=errors
+        //particles/...
+        //src/...
+        //src_kt/...
+    - script: npm run test-no-web
+      name: "node-unit-tests"
+    - script: npm run test-shells
+      name: "node-integration-tests"
+    - script: npm --prefix=server test
+      name: "node-test-server"
 
 cache: npm
 
