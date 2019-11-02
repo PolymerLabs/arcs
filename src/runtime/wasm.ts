@@ -232,7 +232,7 @@ export abstract class StringDecoder {
     return arr;
   }
 
-  protected upTo(char) {
+  protected upTo(char: string): string {
     const i = this.str.indexOf(char);
     if (i < 0) {
       throw new Error(`Packaged entity decoding fail: expected '${char}' separator in '${this.str}'`);

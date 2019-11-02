@@ -14,7 +14,6 @@ class CollectionsParticle : Particle() {
    }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        
         val peopleList = ArrayList<Map<String, String?>>()
         people.forEach { people -> peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) }
 
