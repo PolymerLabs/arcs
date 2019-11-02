@@ -5,6 +5,9 @@ directories:
   build_defs
   tools
   third_party
+  particles
+  src/wasm
+  src/runtime
 
 targets:
   //src_kt/java/...

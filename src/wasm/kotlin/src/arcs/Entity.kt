@@ -29,21 +29,6 @@ class StringDecoder(private var str: String) {
 
             return dict
         }
-
-      fun decodeList(str: String): List<String> {
-          val decoder = StringDecoder(str)
-
-          val list = mutableListOf<String>()
-
-          var num = decoder.getInt(":")
-            while(num-- > 0) {
-                val len = decoder.getInt(":")
-                val chunk = decoder.chomp(len)
-                list.add(chunk)
-            }
-
-          return list
-        }
     }
 
     fun done():Boolean {
