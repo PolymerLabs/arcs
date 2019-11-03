@@ -1,13 +1,19 @@
 language: node_js  # https://docs.travis-ci.com/user/languages/javascript-with-nodejs/
 dist: xenial
 
+env:
+  global:
+    # Global key to encrypt/decrypt files before install. If a new key is required, remember to change the value of
+    # ENCRYPT_PW in Travis settings.
+    secure: "PNms2hG5Ha/Dcu3T52MKQIcwutq61BAwVc/QmLAvHyVNqnQWIUwAND1w5G93WcO2tktTiU2zKQKI/VPMDW4wYSWR6tQTDRA/NtgS4pD0z82zmPJHvwkvgeoAjAG52o9tiWAext9hDbh2OV52IcKFo3LqPCBoHU/NXlf7k35XOHJ91Xs2oy/MkNhJzrKqK2Org83+bor5W+7ItBPRr2sLSIc+HdtloM0oaztz+9XXQdjyNUtK2TCljYquslOQZ4UTQklIsqIGemGdKyqkRPjKYrhJ7sXjctSBuRg+JAUzmrKaQ6/7O3sCr0LlFssH7YYSwtI69y+vm5UyxGfZVqCDSwWQmmoeWTz3w+5emVBojES/X/5jqD/xejzr5Sajy5k91EiJcdNpEDIgqE/BgUT3KjMbqk1K3wDIHI5zCO13ir+f899qsH2QRpV+o7J/9pst2DZrrXlIJtocljt54Hby9A1prss+J2+eq0q1z/1GPGdttvSVlpepYyLQdL8Q/sNqwk5opsoXXHUR8gJWemKca++E/IMeRLoRRvv7S2K7NmsncWVTlkGr2lKQsrzQ5Kzhk1XbbXAuhjGeZed0zSjX0EbdZYZmEudXpORErcDXbsQ7KaFWy9SUkdUKqy2hCJOnqs+6vDY70SfLeIrruUxE5yD8otzq/L1hCFJmooTUSSI="
+
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
 addons:
   chrome: stable
 
 before_install:
-  - openssl aes-256-cbc -K $encrypted_51735f5d0cb7_key -iv $encrypted_51735f5d0cb7_iv -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d
+  - openssl aes-256-cbc -K $ENCRYPT_PW -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.
