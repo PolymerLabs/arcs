@@ -7,7 +7,7 @@ addons:
   chrome: stable
 
 before_script:
-  - openssl aes-256-cbc -K $encrypted_51735f5d0cb7_key -iv $encrypted_51735f5d0cb7_iv -in arcs-build-key.json.enc -out tools/arcs-build-key.json -d
+  - openssl aes-256-cbc -K $encrypted_51735f5d0cb7_key -iv $encrypted_51735f5d0cb7_iv -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.
