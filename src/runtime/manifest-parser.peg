@@ -1015,7 +1015,7 @@ RecipeParticle
       }
     }
     return toAstNode<AstNode.RecipeParticle>({
-      kind: 'particle',
+      kind: 'recipe-particle',
       name: optional(name, name => name[1], null),
       ref,
       connections: handleConnections,

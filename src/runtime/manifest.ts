@@ -793,7 +793,7 @@ ${e.message}
       byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
       requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
-      particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
+      particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
       bySlot: new Map<Slot, AstNode.RecipeSlot | AstNode.RecipeParticleSlotConnection>(),
