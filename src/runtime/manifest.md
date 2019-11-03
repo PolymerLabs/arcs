@@ -60,8 +60,7 @@ particle MyParticle in 'my-particle.js'
   myoutthings: writes [MyThing]
   mySlot: consumes  // required
     innerSlot: provides?
-    restrictedInnerSlot: provides?
-      // Temporarily not supported: `handle myinthing`
+    restrictedInnerSlot: provides? Slot {handle: myinthing}
   otherSlot: consumes?  // optional
 ```
 
