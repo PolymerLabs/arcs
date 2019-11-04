@@ -27,7 +27,6 @@ script:
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       bazel build --noshow_progress --noshow_loading_progress  \
       --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build  \
-      --remote_upload_local_results=false \
       --google_credentials=tools/arcs-build-key.json \
       //particles/... //src/... //src_kt/...
     else
@@ -37,13 +36,10 @@ script:
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       bazel test --noshow_progress --noshow_loading_progress --test_output=errors \
       --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build \
-      --remote_upload_local_results=false \
       --google_credentials=tools/arcs-build-key.json  \
       //particles/... //src/...  //src_kt/...
     else
       bazel test --noshow_progress --noshow_loading_progress --test_output=errors \
-      --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build \
-      --google_credentials=tools/arcs-build-key.json \
       //particles/... //src/...  //src_kt/...
     fi
   - npm run test-no-web
