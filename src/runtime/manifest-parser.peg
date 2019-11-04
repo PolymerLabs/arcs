@@ -74,14 +74,14 @@
     return {...data, location: location()} as T;
   }
 
-  function requireUsePreSlandleSyntax(tag: Number) {
+  function requireUsePreSlandleSyntax(tag: number) {
     if (!Flags.parseBothSyntaxes && !Flags.defaultToPreSlandlesSyntax) {
       error(`using pre slandles syntax (disabled by flag) #${tag}`);
     }
     preSlandlesSyntaxLocations.push(location());
   }
 
-  function requireUsePostSlandleSyntax(tag: Number) {
+  function requireUsePostSlandleSyntax(tag: number) {
     if (!Flags.parseBothSyntaxes && Flags.defaultToPreSlandlesSyntax) {
       error(`using post slandles syntax (disabled by flag) #${tag}`);
     }
