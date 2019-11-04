@@ -26,24 +26,24 @@ script:
   - >
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       echo "Remote caching supported" && \
-      bazel build \
+      bazel build --jobs=4 \
       --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build  \
       --google_credentials=tools/arcs-build-key.json \
       //particles/... //src/... //src_kt/...
     else
       echo "No Remote Caching" && \
-      bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/...
+      bazel build --jobs=4 --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/...
     fi
   - >
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       echo "Remote caching supported" && \
-      bazel test --noshow_progress --noshow_loading_progress --test_output=errors \
+      bazel test --jobs=4 --noshow_progress --noshow_loading_progress --test_output=errors \
       --remote_http_cache=https://storage.googleapis.com/arcs-bazel-build \
       --google_credentials=tools/arcs-build-key.json  \
       //particles/... //src/...  //src_kt/...
     else
       echo "No Remote Caching" && \
-      bazel test --noshow_progress --noshow_loading_progress --test_output=errors \
+      bazel test --jobs=4 --noshow_progress --noshow_loading_progress --test_output=errors \
       //particles/... //src/...  //src_kt/...
     fi
   - npm run test-no-web
