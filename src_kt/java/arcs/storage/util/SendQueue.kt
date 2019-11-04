@@ -19,7 +19,7 @@ import kotlinx.coroutines.sync.withLock
 
 /**
  * Thread-safe queue to manage and dispatch sending events, where said dispatching may depend on
- * waiting for a hold in a [HoldQuuee] to be released.
+ * waiting for a hold in a [HoldQueue] to be released.
  */
 class SendQueue(
     /** Whether or not to initiate a queue drain after each [enqueue]/[enqueueBlocking]. */

@@ -6,10 +6,17 @@ kt_jvm_and_js_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = ["ProxyInterface.kt", "StorageKey.kt"],
+        exclude = [
+            "ProxyInterface.kt",
+            "StorageKey.kt",
+        ],
     ),
+    exports = [
+        ":proxy",
+        ":storage_key",
+    ],
     deps = [
-        ":proxy_stuff",
+        ":proxy",
         ":storage_key",
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt",
@@ -23,10 +30,6 @@ kt_jvm_and_js_library(
         "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",
     ],
-    exports = [
-        ":proxy_stuff",
-        ":storage_key",
-    ]
 )
 
 kt_jvm_and_js_library(
@@ -37,11 +40,11 @@ kt_jvm_and_js_library(
 )
 
 kt_jvm_and_js_library(
-    name = "proxy_stuff",
+    name = "proxy",
     srcs = [
         "ProxyInterface.kt",
     ],
     deps = [
         "//src_kt/java/arcs/crdt",
-    ]
+    ],
 )

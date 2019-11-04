@@ -10,7 +10,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
         test_class = "arcs.storage.util.%s" % src_file[:-3],
         deps = [
             "//src_kt/java/arcs/crdt/internal",
-            "//src_kt/java/arcs/storage:proxy_stuff",
+            "//src_kt/java/arcs/storage:proxy",
             "//src_kt/java/arcs/storage/driver",
             "//src_kt/java/arcs/storage/referencemode",
             "//src_kt/java/arcs/storage/util",
