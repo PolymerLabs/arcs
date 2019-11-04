@@ -17,7 +17,7 @@ import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
-open class CrdtSet<T : Referencable>(
+class CrdtSet<T : Referencable>(
     /** Initial data. */
     private var _data: Data<T> = DataImpl(),
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */

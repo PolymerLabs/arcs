@@ -19,7 +19,7 @@ import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a mutable reference. */
-open class CrdtSingleton<T : Referencable>(
+class CrdtSingleton<T : Referencable>(
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
     dataBuilder: (VersionMap) -> Data<T> = { versionMap -> DataImpl(versionMap) },
     initialVersion: VersionMap = VersionMap(),
