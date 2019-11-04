@@ -34,7 +34,7 @@ function verifyPrimitiveType(field, type) {
   assert.deepEqual(copy, {kind: 'schema-primitive', type});
 }
 
-describe('manifest', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+describe('manifest', async () => {
   it('can parse a manifest containing a recipe', async () => {
     const manifest = await Manifest.parse(`
       schema S
@@ -86,7 +86,7 @@ describe('manifest', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async 
     assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('can parse a manifest containing a particle specification', async () => {
+  it('can parse a manifest containing a particle specification', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const schemaStr = `
 schema Product
 schema Person
@@ -122,8 +122,8 @@ ${particleStr1}
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
-  });
-  it('SLANDLES can parse a manifest containing a particle specification', Flags.withPostSlandlesSyntax(async () => {
+  }));
+  it('SLANDLES can parse a manifest containing a particle specification', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const schemaStr = `
 schema Product
 schema Person
@@ -171,7 +171,7 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].handleConnections, 2);
   });
-  it('SLANDLES can parse a manifest containing a particle with an argument list', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
     const manifest = await Manifest.parse(`
     particle TestParticle in 'a.js'
       list: reads [Product {}]
@@ -181,7 +181,7 @@ ${particleStr1}
     `);
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].handleConnections, 4);
-  }));
+  });
   it('can parse a manifest with dependent handles', async () => {
     const manifest = await Manifest.parse(`
     particle TestParticle in 'a.js'
@@ -204,7 +204,7 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].handleConnections, 4);
   });
-  it('can round-trip particles with dependent handles', async () => {
+  it('can round-trip particles with dependent handles', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -215,8 +215,8 @@ ${particleStr1}
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  });
-  it('SLANDLES can round-trip particles with dependent handles', Flags.withPostSlandlesSyntax(async () => {
+  }));
+  it('SLANDLES can round-trip particles with dependent handles', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -554,54 +554,7 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
   });
-  it('SLANDLES SYNTAX can parse a manifest containing a recipe with slots', Flags.withPostSlandlesSyntax(async () => {
-    const manifest = await Manifest.parse(`
-      schema Thing
-      particle SomeParticle in 'some-particle.js'
-        someParam: reads Thing
-        mySlot: consumes Slot {formFactor: big}
-          otherSlot: provides Slot {handle: someParam}
-          oneMoreSlot: provides Slot {formFactor: small}
-
-      particle OtherParticle
-        aParam: writes Thing
-        mySlot: consumes Slot
-        oneMoreSlot: consumes Slot
-
-      recipe SomeRecipe
-        myHandle: ? #someHandle1
-        slot0: slot 'slotIDs:A' #someSlot
-        SomeParticle
-          someParam: reads myHandle
-          mySlot: consumes slot0
-            otherSlot: provides slot2
-            oneMoreSlot: provides slot1
-        OtherParticle
-          aParam: writes myHandle
-          mySlot: consumes slot0
-          oneMoreSlot: consumes slot1
-    `);
-    const verify = (manifest: Manifest) => {
-      const recipe = manifest.recipes[0];
-      assert(recipe);
-      recipe.normalize();
-
-      assert.lengthOf(recipe.particles, 2);
-      assert.lengthOf(recipe.handles, 1);
-      assert.lengthOf(recipe.handleConnections, 2);
-      assert.lengthOf(recipe.slots, 3);
-      assert.lengthOf(recipe.slotConnections, 3);
-      assert.lengthOf(recipe.particles[0].getSlotConnectionNames(), 2);
-      assert.lengthOf(recipe.particles[1].getSlotConnectionNames(), 1);
-      const mySlot = recipe.particles[1].getSlotConnectionByName('mySlot');
-      assert.isDefined(mySlot.targetSlot);
-      assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
-      assert.strictEqual(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].getSlotConnectionByName('oneMoreSlot').targetSlot);
-    };
-    verify(manifest);
-    verify(await Manifest.parse(manifest.toString()));
-  }));
-  it('SLANDLES can parse a manifest containing a recipe with slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES can parse a manifest containing a recipe with slots', async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle SomeParticle in 'some-particle.js'
@@ -642,7 +595,7 @@ ${particleStr1}
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
-  }));
+  });
   it('unnamed consume slots', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle &work in 'some-particle.js'
@@ -694,7 +647,7 @@ ${particleStr1}
     assert.lengthOf(recipe.slotConnections, 2);
     assert.isEmpty(recipe.slots);
   });
-  it('SLANDLES unnamed consume slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES unnamed consume slots', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle &work in 'some-particle.js'
         slotA: \`consumes Slot
@@ -710,8 +663,8 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handleConnections, 2);
     assert.isEmpty(recipe.handles);
-  }));
-  it('SLANDLES unnamed consume set slots', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES unnamed consume set slots', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle &work in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -727,8 +680,8 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handleConnections, 2);
     assert.isEmpty(recipe.handles);
-  }));
-  it('SLANDLES unnamed consume set slots', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES unnamed consume set slots', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle &work in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -744,7 +697,7 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handleConnections, 2);
     assert.isEmpty(recipe.handles);
-  }));
+  });
   it('resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
@@ -766,7 +719,7 @@ ${particleStr1}
     await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
-  it('SLANDLES resolves in context with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
@@ -786,8 +739,8 @@ ${particleStr1}
     await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
     await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
-  }));
-  it('SLANDLES resolves & consumes in context with multiple set slots', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES resolves & consumes in context with multiple set slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
@@ -807,9 +760,9 @@ ${particleStr1}
     await parseRecipe({label: '2', isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
     await parseRecipe({label: '3', isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({label: '4', isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
-  }));
+  });
 
-  it('SLANDLES resolves with dependent slandles', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves with dependent slandles', async () => {
     const manifest = await Manifest.parse(`
       particle Parent in 'parent.js'
         root: \`consumes Slot
@@ -832,9 +785,9 @@ ${particleStr1}
     recipe.normalize();
     assert.lengthOf(recipe.handles, 2);
     assert.isTrue(recipe.isResolved());
-  }));
+  });
 
-  it('SLANDLES doesn\'t resolve mismatching dependencies dependent slandles', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES doesn\'t resolve mismatching dependencies dependent slandles', async () => {
     const manifest = await Manifest.parse(`
       particle Parent in 'parent.js'
         root: \`consumes Slot
@@ -856,7 +809,7 @@ ${particleStr1}
     recipe.normalize();
     assert.lengthOf(recipe.handles, 2);
     assert.isFalse(recipe.isResolved());
-  }));
+  });
 
   it('recipe slots with tags', async () => {
     const manifest = await Manifest.parse(`
@@ -891,7 +844,7 @@ ${particleStr1}
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
     assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
   });
-  it('SLANDLES recipe slots with tags', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES recipe slots with tags', async () => {
     const manifest = await Manifest.parse(`
       particle SomeParticle in 'some-particle.js'
         slotA: \`consumes Slot #aaa
@@ -921,7 +874,7 @@ ${particleStr1}
 
     const slotConn = checkDefined(recipe.particles[0].connections['slotA']);
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
-  }));
+  });
   it('recipe slots with different names', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
@@ -946,7 +899,7 @@ ${particleStr1}
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
-  it('SLANDLES recipe slots with different names', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES recipe slots with different names', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes Slot
@@ -972,8 +925,8 @@ ${particleStr1}
     const options = {errors: new Map(), details: '', showUnresolved: true};
     assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
-  }));
-  it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -996,8 +949,8 @@ ${particleStr1}
       checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).connections['slotA'].handle,
       checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
     assert.isFalse(recipe.normalize(), 'does not normalize');
-  }));
-  it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -1023,8 +976,8 @@ ${particleStr1}
     const options = {errors: new Map(), details: '', showUnresolved: true};
     assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
-  }));
-  it('SLANDLES recipe set slots with different names (passing set slots)', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe set slots with different names (passing set slots)', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -1050,8 +1003,8 @@ ${particleStr1}
     const options = {errors: new Map(), details: '', showUnresolved: true};
     assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
-  }));
-  it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -1074,8 +1027,8 @@ ${particleStr1}
       checkDefined(recipe.particles.find(p => p.name === 'ParticleA')).connections['slotA'].handle,
       checkDefined(recipe.particles.find(p => p.name === 'ParticleB')).connections['slotB2'].handle);
     assert.isFalse(recipe.normalize(), 'does not normalize');
-  }));
-  it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -1101,8 +1054,8 @@ ${particleStr1}
     const options = {errors: new Map(), details: '', showUnresolved: true};
     assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
-  }));
-  it('SLANDLES recipe set slots with different names (passing set slots)', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe set slots with different names (passing set slots)', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA: \`consumes [Slot]
@@ -1128,7 +1081,7 @@ ${particleStr1}
     const options = {errors: new Map(), details: '', showUnresolved: true};
     assert.isTrue(recipe.normalize(options), 'normalizes');
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
-  }));
+  });
   it('recipe provided slot with no local name', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
@@ -1148,7 +1101,7 @@ ${particleStr1}
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
   });
-  it('SLANDLES recipe provided slot with no local name', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES recipe provided slot with no local name', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA1: \`consumes Slot
@@ -1177,8 +1130,8 @@ ${particleStr1}
     // consuming slotA2).
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
-  }));
-  it('SLANDLES recipe provided set slots with no local name', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe provided set slots with no local name', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA1: \`consumes [Slot]
@@ -1207,8 +1160,8 @@ ${particleStr1}
     // consuming slotA2).
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
-  }));
-  it('SLANDLES recipe provided set slots with no local name', Flags.withPostSlandlesSyntax(async () => {
+  });
+  it('SLANDLES recipe provided set slots with no local name', async () => {
     const manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
         slotA1: \`consumes [Slot]
@@ -1237,7 +1190,7 @@ ${particleStr1}
     // consuming slotA2).
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
-  }));
+  });
   it('incomplete aliasing', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
@@ -1266,7 +1219,7 @@ ${particleStr1}
     assert.lengthOf(slotB.consumeConnections, 1);
     assert.strictEqual(slotB.sourceConnection, slotConnA);
   });
-  it('SLANDLES incomplete aliasing', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES incomplete aliasing', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
         slotA: \`consumes Slot
@@ -1297,7 +1250,7 @@ ${particleStr1}
     assert.lengthOf(directions, 2);
     assert.include(directions, '`provide');
     assert.include(directions, '`consume');
-  }));
+  });
   it('parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
@@ -1317,7 +1270,7 @@ ${particleStr1}
     recipe.normalize();
     assert.lengthOf(recipe.slots, 2);
   });
-  it('SLANDLES parses local slots with IDs', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
         slotA: \`consumes Slot
@@ -1335,7 +1288,7 @@ ${particleStr1}
     `)).recipes[0];
     recipe.normalize();
     assert.lengthOf(recipe.handles, 2);
-  }));
+  });
   it('relies on the loader to combine paths', async () => {
     const registry = {};
     const loader = new class extends StubLoader {
@@ -1470,7 +1423,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     ]);
   });
-  it('resolves store names to ids', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves store names to ids', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestSource = `
         schema Thing
         store Store0 of [Thing] in 'entities.json'
@@ -1552,7 +1505,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       assert.match(e.message, /Consumed slot 'other' is not defined by 'TestParticle'/);
     }
   });
-  it('SLANDLES errors when the manifest references a missing consumed slot', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES errors when the manifest references a missing consumed slot', async () => {
     const manifest = `
         particle TestParticle in 'tp.js'
           root: \`consumes Slot
@@ -1565,7 +1518,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     } catch (e) {
       assert.match(e.message, /param 'other' is not defined by 'TestParticle'/);
     }
-  }));
+  });
 
   it('errors when the manifest references a missing provided slot', async () => {
     const manifest = `
@@ -1583,7 +1536,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       assert.match(e.message, /Provided slot 'noAction' is not defined by 'TestParticle'/);
     }
   });
-  it('SLANDLES errors when the manifest references a missing provided slot', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES errors when the manifest references a missing provided slot', async () => {
     const manifest = `
         particle TestParticle in 'tp.js'
           root: \`consumes Slot
@@ -1598,7 +1551,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     } catch (e) {
       assert.match(e.message, /param 'noAction' is not defined by 'TestParticle'/);
     }
-  }));
+  });
 
   it('errors when the manifest uses invalid connection constraints', async () => {
     // nonexistent fromParticle
@@ -1857,7 +1810,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
   });
-  it('can resolve a particle with a schema reference', async () => {
+  it('can resolve a particle with a schema reference', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         far: Text
@@ -1880,8 +1833,8 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: Reference<Foo {far: Text}>}
   modality dom`);
-  });
-  it('can resolve a particle with an inline schema reference', async () => {
+  }));
+  it('can resolve a particle with an inline schema reference', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifest = await Manifest.parse(`
       schema Foo
       particle P
@@ -1903,8 +1856,8 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: Reference<Foo {far: Text}>}
   modality dom`);
-  });
-  it('can resolve a particle with a collection of schema references', async () => {
+  }));
+  it('can resolve a particle with a collection of schema references', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         far: Text
@@ -1927,8 +1880,8 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
   modality dom`);
-  });
-  it('can resolve a particle with a collection of inline schema references', async () => {
+  }));
+  it('can resolve a particle with a collection of inline schema references', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifest = await Manifest.parse(`
       particle P
         bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
@@ -1949,7 +1902,7 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
   modality dom`);
-  });
+  }));
   it('can resolve inline schemas against out of line schemas', async () => {
     const manifest = await Manifest.parse(`
       schema T
@@ -2183,7 +2136,7 @@ resource SomeName
     assert.strictEqual(slotConnection.providedSlots.provideSlot.sourceConnection, slotConnection);
   });
 
-  it('SLANDLES can parse a recipe with slot constraints on verbs', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES can parse a recipe with slot constraints on verbs', async () => {
     const manifest = await Manifest.parse(`
       recipe
         provideSlot: \`slot
@@ -2202,7 +2155,7 @@ resource SomeName
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0].connections, 1);
     assert.strictEqual(recipe.handles[0].connections[0], slotConnection);
-  }));
+  });
 
   it('can parse particle arguments with tags', async () => {
     const manifest = await Manifest.parse(`
@@ -2233,7 +2186,7 @@ resource SomeName
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
   });
 
-  it('SLANDLES SYNTAX can round-trip particles with tags', Flags.withPostSlandlesSyntax(async () => {
+  it('can round-trip particles with tags', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -2246,20 +2199,7 @@ resource SomeName
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   }));
 
-  it('can round-trip particles with fields', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
-  input: reads [Product {}]
-    output: writes [Product {}]
-  thingy: reads ~a
-  modality dom
-  thing: consumes Slot {formFactor: big} #main #tagname
-    otherThing: provides Slot {handle: thingy} #testtag`;
-
-    const manifest = await Manifest.parse(manifestString);
-    assert.lengthOf(manifest.particles, 1);
-    assert.strictEqual(manifestString, manifest.particles[0].toString());
-  });
-  it('SLANDLES can round-trip particles with tags', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES can round-trip particles with tags', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -2271,25 +2211,13 @@ resource SomeName
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   }));
-  it('SLANDLES can round-trip particles with fields', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES can round-trip particles with fields', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
   thingy: reads ~a
   thing: \`consumes Slot {formFactor:big} #main #tagname
     otherThing: \`provides Slot {handle:thingy} #testtag
-  modality dom`;
-
-    const manifest = await Manifest.parse(manifestString);
-    assert.lengthOf(manifest.particles, 1);
-    assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
-  it('SLANDLES can round-trip particles with fields', Flags.withPostSlandlesSyntax(async () => {
-    const manifestString = `particle TestParticle in 'a.js'
-  input: reads [Product {}]
-    output: writes [Product {}]
-  thing: \`consumes Slot {formFactor:big}
-    otherThing: \`provides Slot {handle:thingy}
   modality dom`;
 
     const manifest = await Manifest.parse(manifestString);
@@ -2648,7 +2576,7 @@ resource SomeName
       `), `You cannot combine 'and' and 'or' operations in a single check expression.`);
     });
 
-    it('SLANDLES can round-trip particles with checks and claims', Flags.withPostSlandlesSyntax(async () => {
+    it('SLANDLES can round-trip particles with checks and claims', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
       const manifestString = `particle TestParticle in 'a.js'
   input1: reads T {}
   input2: reads T {}
@@ -2672,7 +2600,7 @@ resource SomeName
       const manifest = await Manifest.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
     }));
-    it('can round-trip particles with checks and claims', async () => {
+    it('can round-trip particles with checks and claims', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
       const manifestString = `particle TestParticle in 'a.js'
   input1: reads T {}
   input2: reads T {}
@@ -2695,7 +2623,7 @@ resource SomeName
 
       const manifest = await Manifest.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
-    });
+   }));
 
     it('fails for unknown handle names', async () => {
       assertThrowsAsync(async () => await Manifest.parse(`
@@ -3001,7 +2929,7 @@ particle A
     assert.equal(manifest.errors[0].key, 'externalSchemas');
   });
 
-  it('can round-trip external particles', async () => {
+  it('can round-trip external particles', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestString = `external particle TestParticle
   input: reads [Product {}]
   modality dom`;
@@ -3012,8 +2940,8 @@ particle A
     assert.isTrue(particle.external);
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
-  });
-}));
+  }));
+});
 
 describe('Manifest storage migration', () => {
   async function parseStoreFromManifest() {
