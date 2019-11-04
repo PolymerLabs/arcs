@@ -28,7 +28,7 @@ export const busReady = async (bus, {manifest}) => {
   bus.dispatcher.configure = async ({config}, tid, bus) => {
     // TODO(sjmiles): hack to allow configuring mainfest via runtime argument
     // for back-compat (deprecated)
-    config.manifest = config.manifest || manifest;
+    config.manifest = manifest || config.manifest;
     return await configureRuntime(config, bus);
   };
   bus.send({message: 'ready'});
