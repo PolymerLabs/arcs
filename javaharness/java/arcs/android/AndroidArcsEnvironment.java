@@ -3,29 +3,23 @@ package arcs.android;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
-import arcs.api.Constants;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import arcs.api.ArcsMessageSender;
+import arcs.api.Constants;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
@@ -46,9 +40,6 @@ final class AndroidArcsEnvironment {
 
   private static final Logger logger =
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
-
-  private static final String DYNAMIC_MANIFEST_URL =
-      "file:///android_asset/arcs/dynamic.manifest";
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -110,28 +101,8 @@ final class AndroidArcsEnvironment {
 
     dynamicManifest = manifests
         .stream()
-        .map(s -> String.format("import \'%s\'", s))
+        .map(s -> String.format("import \'https://$assets/%s\'", s))
         .collect(Collectors.joining("\n"));
-
-    webView.setWebViewClient(new WebViewClient() {
-      @Override
-      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-        Log.d(TAG, "Intercepting request " + request.getUrl());
-        if (TextUtils.equals(DYNAMIC_MANIFEST_URL, request.getUrl().toString())) {
-          try {
-            Log.d(TAG, "Intercepted dynamic manifest request, offering " + dynamicManifest);
-            return new WebResourceResponse(
-                "text/plain",
-                "utf-8",
-                new ByteArrayInputStream(dynamicManifest.getBytes(StandardCharsets.UTF_8)));
-          } catch (Exception e) {
-            Log.e(TAG, "Failed to return dynamic manifest.", e);
-          }
-        }
-
-        return super.shouldInterceptRequest(view, request);
-      }
-    });
 
     webView.addJavascriptInterface(this, "DeviceClient");
 
@@ -143,8 +114,8 @@ final class AndroidArcsEnvironment {
     //    android:usesCleartextTraffic="true"
     String url = settings.shellUrl();
     url += "log=" + settings.logLevel();
-    if (settings.useDevServerProxy()) {
-      url += "&explore-proxy";
+    if (settings.enableArcsExplorer()) {
+      url += "&explore-proxy=" + settings.devServerPort();
     }
 
     Log.i("Arcs", "runtime url: " + url);
@@ -216,16 +187,24 @@ final class AndroidArcsEnvironment {
   }
 
   private void configureShell() {
-    PortableJson msg =
-        jsonParser
-            .emptyObject()
-            .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
-            .put("config", jsonParser.emptyObject()
-                .put("rootPath", ".")
-                .put("storage", "volatile://")
-                .put("manifest", dynamicManifest)
-                .put("urlMap", jsonParser.emptyObject()
-                    .put("https://$build/", "")));
-    sendMessageToArcs(jsonParser.stringify(msg));
+    RuntimeSettings settings = runtimeSettings.get();
+    sendMessageToArcs(jsonParser.stringify(jsonParser
+        .emptyObject()
+        .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
+        .put("config", jsonParser.emptyObject()
+            .put("rootPath", ".")
+            .put("storage", "volatile://")
+            .put("manifest", dynamicManifest)
+            .put("urlMap", jsonParser.emptyObject()
+                .put("https://$build/", "") // For fetching bundled javascript.
+                .put("https://$assets/", settings.loadAssetsFromWorkstation()
+                    // Fetch .wasm modules and generated manifest from the build directory.
+                    ? jsonParser.emptyObject()
+                        .put("root", "http://localhost:" + settings.devServerPort() + "/")
+                        .put("buildDir", "bazel-bin/")
+                        .put("buildOutputRegex", "(\\\\.wasm)|(\\\\.root\\\\.arcs)$")
+                    // Fetch all assets from the APK assets directory.
+                    : "file:////android_asset/arcs/"
+                ))));
   }
 }

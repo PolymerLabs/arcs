@@ -26,7 +26,7 @@ class CrdtSingleton<T : Referencable>(
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
 ) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.Operation<T>, T?> {
-    private val set: CrdtSet<T>
+    private var set: CrdtSet<T>
 
     override val data: Data<T>
         get() = set.data as Data<T>
@@ -88,13 +88,13 @@ class CrdtSingleton<T : Referencable>(
 
     sealed class Operation<T : Referencable>(
         open val actor: Actor,
-        open val clock: VersionMap
-    ) : CrdtOperation {
+        override val clock: VersionMap
+    ) : CrdtOperationAtTime {
         /** Mutates [data] based on the implementation of the [Operation]. */
         internal abstract fun applyTo(set: CrdtSet<T>): Boolean
 
         /** An [Operation] to update the value stored by the [CrdtSingleton]. */
-        data class Update<T : Referencable> internal constructor(
+        open class Update<T : Referencable>(
             override val actor: Actor,
             override val clock: VersionMap,
             val value: T
@@ -114,7 +114,7 @@ class CrdtSingleton<T : Referencable>(
         }
 
         /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
-        data class Clear<T : Referencable> internal constructor(
+        open class Clear<T : Referencable>(
             override val actor: Actor,
             override val clock: VersionMap
         ) : Operation<T>(actor, clock) {
@@ -128,5 +128,13 @@ class CrdtSingleton<T : Referencable>(
                 return true
             }
         }
+    }
+
+    companion object {
+        /** Creates a [CrdtSingleton] from pre-existing data. */
+        fun <T : Referencable> createWithData(
+            data: Data<T>,
+            dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
+        ) = CrdtSingleton(dataBuilder).apply { set = CrdtSet(data, dataBuilder) }
     }
 }

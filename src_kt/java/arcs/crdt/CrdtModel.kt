@@ -85,8 +85,14 @@ interface CrdtData {
 /** Operation which can be performed on a particular [CrdtModel] instance. */
 interface CrdtOperation
 
-/** Extension of [CrdtOperation] tagged with when it occurred. */
+/** [CrdtOperation] tagged with a specific [VersionMap]. */
 interface CrdtOperationAtTime : CrdtOperation {
+  /**
+   * Time when the operation occurred.
+   *
+   * **Note:** Be sure this is a *copy* of the owning [CrdtData]'s [VersionMap] so it doesn't change
+   * out from under the operation when the model changes.
+   */
   val clock: VersionMap
 }
 

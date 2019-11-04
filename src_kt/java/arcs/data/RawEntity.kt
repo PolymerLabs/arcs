@@ -16,6 +16,8 @@ import arcs.common.ReferenceId
 
 /** Minimal representation of an unresolved [Entity]. */
 data class RawEntity(
+    /** Identifier for the raw entity. */
+    override val id: ReferenceId = NO_REFERENCE_ID,
     /** Singleton fields and the [Referencable] values. */
     val singletons: Map<FieldName, Referencable?> = emptyMap(),
     /**
@@ -23,14 +25,19 @@ data class RawEntity(
      * collections.
      */
     val collections: Map<FieldName, Set<Referencable>> = emptyMap()
-) {
+) : Referencable {
     /** Constructor for a [RawEntity] when only the field names are known. */
     constructor(
+        id: ReferenceId = NO_REFERENCE_ID,
         singletonFields: Set<FieldName> = emptySet(),
         collectionFields: Set<FieldName> = emptySet()
     ) : this(
+        id,
         singletonFields.associateWith { null },
         collectionFields.associateWith { emptySet<Referencable>() }
     )
 
+    companion object {
+        const val NO_REFERENCE_ID = "NO REFERENCE ID"
+    }
 }
