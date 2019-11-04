@@ -18,7 +18,6 @@ before_install:
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.
 install:
   - ./tools/setup
-  - npm list --depth=0
 
 script:
   # Bazel build & test everything. Can't use `bazel build ...` yet, because
