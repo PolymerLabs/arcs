@@ -47,7 +47,7 @@ script:
   - npm run build:rollup
   - npm --prefix=server test
 
-#cache: npm
+cache: false
 
 before_deploy:
   # build apidocs
