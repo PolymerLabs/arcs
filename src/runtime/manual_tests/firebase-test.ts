@@ -713,9 +713,9 @@ describe('firebase', function() {
             big: reads writes BigCollection<Data>
 
           recipe
-            handle0: use
-            handle1: use
-            handle2: use
+            handle0: use *
+            handle1: use *
+            handle2: use *
             P
               var: reads handle0
               col: writes handle1

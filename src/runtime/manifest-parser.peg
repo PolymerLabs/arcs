@@ -1370,6 +1370,13 @@ HandleRef
       tags: tags || [],
     });
   }
+  / '*' tags:SpaceTagList?
+  {
+    return toAstNode<AstNode.HandleRef>({
+      kind: 'handle-ref',
+      tags: tags || [],
+    });
+  }
   / tags:TagList
   {
     return toAstNode<AstNode.HandleRef>({
