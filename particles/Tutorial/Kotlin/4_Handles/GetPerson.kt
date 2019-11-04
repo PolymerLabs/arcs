@@ -8,27 +8,22 @@ import kotlin.native.internal.ExportForCppRuntime
  * Sample WASM Particle.
  */
 class GetPersonParticle : Particle() {
-    // private val person = Singleton { GetPerson_Person() }
+
+    private val person = Singleton { GetPerson_Person() }
 
     override fun getTemplate(slotName: String) = """
 <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-<div slotid="greetingSlot"></div>"""
+<div slotid="greetingSlot"></div>
+"""
 
     init {
-        //registerHandle("person", person)
-        //eventHandler("onNameInputChange", changeName)
-        // val newPerson = person.get()!!
-        // newPerson.name = "Human"
-        // this.person.set(newPerson);
-    }
+      //registerHandle("person", person)
 
-    fun changeName(data: String) {
-        log("data: ${data}")
-        // val newPerson = person.get()!!
-        // newPerson.name = "Sarah"
-        // this.person.set(newPerson);
+      eventHandler("onNameInputChange") {
+        log("Data: $it")
+        log("boo!")
+      }
     }
-
 
 }
 

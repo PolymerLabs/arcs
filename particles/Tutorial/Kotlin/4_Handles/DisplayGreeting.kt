@@ -10,8 +10,7 @@ class DisplayGreetingParticle : Particle() {
     //private val person = Singleton { DisplayGreeting_Person() }
 
     override fun getTemplate(slotName: String) = """
-<input value="{{name}}" placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-<div slotid="greetingSlot"></div>"""
+<span>{{name}}</span>"""
 
     // init {
     //     registerHandle("person", person)
@@ -21,9 +20,9 @@ class DisplayGreetingParticle : Particle() {
     //     populateModel("mySlot", mapOf("" to ""))
     // }
 
-    override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
+    override fun populateModel(slotName: String, model: Map<String, String?>): Map<String, String?> {
         return model + mapOf(
-            "name" to "person.name"
+            "name" to "Sarah"
         )
     }
 
