@@ -32,7 +32,11 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-/** An [ActiveStore] capable of communicating directly with a [Driver]. */
+/**
+ * An [ActiveStore] capable of communicating directly with a [Driver].
+ *
+ * This is what *directly* manages a [CrdtSingleton], [CrdtSet], or [CrdtCount].
+ */
 // TODO: generics here are sub-optimal, can we make this class generic itself?
 class DirectStore internal constructor(
   options: StoreOptions<CrdtData, CrdtOperation, Any?>,
@@ -97,14 +101,16 @@ class DirectStore internal constructor(
           callbacks.value[message.id]?.invoke(ProxyMessage.SyncRequest(message.id))
           false
         } else {
-          val change =
-            CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
-          processModelChange(
-            change,
-            otherChange = null,
-            version = version.value,
-            channel = message.id
-          )
+          if (message.operations.isNotEmpty()) {
+            val change =
+              CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
+            processModelChange(
+              change,
+              otherChange = null,
+              version = version.value,
+              channel = message.id
+            )
+          }
           true
         }
       }
