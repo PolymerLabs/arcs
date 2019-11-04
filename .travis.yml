@@ -24,8 +24,6 @@ script:
     //src/...
     //src_kt/...
   - npm run test-with-start
-  - npm run build:rollup
-  - npm --prefix=server test
 
 cache:
   npm: true
@@ -54,7 +52,6 @@ before_deploy:
   # Temporarily push node_modules to arcs-live,
   # with the exception of exe files as Github complains about them.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^\*\*\/node_modules$/\*\*\/node_modules\/\*\*\/\*\.exe/' .gitignore
-  - cd ${TRAVIS_BUILD_DIR} && rm -f server/node_modules/arcs
   # Configure for live.arcs.dev domain name and default web-shells redirect
   - cd ${TRAVIS_BUILD_DIR} && echo "live.arcs.dev" > CNAME
   - cd ${TRAVIS_BUILD_DIR} && echo '<head><meta http-equiv="refresh" content="0;/shells/web-shell/"></head>' > index.html
