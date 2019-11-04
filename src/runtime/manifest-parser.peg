@@ -1405,7 +1405,7 @@ RecipeSlotUnified
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace)+ '{' fields:(SchemaInlineField (',' whiteSpace SchemaInlineField)*)? '}'
+  = names:((upperIdent / '*') whiteSpace)+ '{' whiteSpace? fields:(SchemaInlineField (',' whiteSpace? SchemaInlineField)*)? whiteSpace? '}'
   {
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
@@ -1576,8 +1576,8 @@ ReservedWord
   = keyword:(DirectionArrow
   / DirectionPreSlandles
   / DirectionUnified
-  / SlotDirectionPreSlandle
   / SlotDirectionUnified
+  / SlotDirectionPreSlandle
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
