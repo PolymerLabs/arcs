@@ -5,6 +5,8 @@ dist: xenial
 sudo: required
 #addons:
 #  chrome: stable
+git:
+  depth: 5
 
 before_install:
   - >
