@@ -39,14 +39,14 @@ describe('FlowGraph', () => {
   it('works with two particles', async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     assert.lengthOf(graph.particles, 2);
     assert.lengthOf(graph.handles, 1);
@@ -62,12 +62,12 @@ describe('FlowGraph', () => {
   it('works with inout handle connections', async () => {
     const graph = await buildFlowGraph(`
       particle P
-        inout Foo {} foo
+        foo: reads writes Foo {}
         check foo is t1
         claim foo is t2
       recipe R
         P
-          foo <-> h
+          foo: reads writes h
     `);
     assert.lengthOf(graph.particles, 1);
     const particleNode = graph.particles[0];
@@ -95,18 +95,18 @@ describe('FlowGraph', () => {
   it('works with handles with multiple inputs', async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        out Foo {} bar
+        bar: writes Foo {}
       particle P3
-        in Foo {} baz
+        baz: reads Foo {}
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar -> h
+          bar: writes h
         P3
-          baz <- h
+          baz: reads h
     `);
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P3.baz', 'P2.bar -> P3.baz']);
@@ -115,18 +115,18 @@ describe('FlowGraph', () => {
   it('works with handles with multiple outputs', async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       particle P3
-        in Foo {} baz
+        baz: reads Foo {}
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
         P3
-          baz <- h
+          baz: reads h
     `);
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
@@ -135,18 +135,18 @@ describe('FlowGraph', () => {
   it('works with datastores with tag claims', async () => {
     const graph = await buildFlowGraph(`
       schema MyEntity
-        Text text
+        text: Text
       resource MyResource
         start
         [{"text": "asdf"}]
       store MyStore of MyEntity in MyResource
         claim is trusted
       particle P
-        in MyEntity input
+        input: reads MyEntity
       recipe R
-        use MyStore as s
+        s: use MyStore
         P
-          input <- s
+          input: reads s
     `);
     assert.lengthOf(graph.edges, 1);
     const modifier = graph.edges[0].modifier;
@@ -157,11 +157,11 @@ describe('FlowGraph', () => {
   it('copies particle claims to particle out-edges as a flow modifier', async () => {
     const graph = await buildFlowGraph(`
       particle P
-        out Foo {} foo
+        foo: writes Foo {}
         claim foo is trusted
       recipe R
         P
-          foo -> h
+          foo: writes h
     `);
     assert.lengthOf(graph.edges, 1);
     assert.isNotNull(graph.edges[0].modifier);
@@ -171,11 +171,11 @@ describe('FlowGraph', () => {
   it('copies particle checks to particle nodes and in-edges', async () => {
     const graph = await buildFlowGraph(`
       particle P
-        in Foo {} foo
+        foo: reads Foo {}
         check foo is trusted
       recipe R
         P
-          foo <- h
+          foo: reads h
     `);
     assert.lengthOf(graph.edges, 1);
     const check = graph.edges[0].check;
@@ -185,18 +185,18 @@ describe('FlowGraph', () => {
   it('supports making checks on slots', async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        consume root
-          provide slotToProvide
+        root: consumes
+          slotToProvide: provides
         check slotToProvide data is trusted
       particle P2
-        consume slotToConsume
+        slotToConsume: consumes
       recipe R
-        slot 'rootslotid-root' as root
+        root: slot 'rootslotid-root'
         P1
-          consume root as root
-            provide slotToProvide as slot0
+          root: consumes root
+            slotToProvide: provides slot0
         P2
-          consume slotToConsume as slot0
+          slotToConsume: consumes slot0
     `);
     assert.lengthOf(graph.slots, 2);
 
@@ -226,17 +226,17 @@ describe('FlowGraph', () => {
   it('resolves data store names and IDs', async () => {
     const graph = await buildFlowGraph(`
       schema MyEntity
-        Text text
+        text: Text
       resource MyResource
         start
         [{"text": "asdf"}]
       store MyStore of MyEntity 'my-store-id' in MyResource
       particle P
-        in MyEntity input
+        input: reads MyEntity
       recipe R
-        use MyStore as s
+        s: use MyStore
         P
-          input <- s
+          input: reads s
     `);
     assert.lengthOf(graph.handles, 1);
     const storeId = graph.handles[0].storeId;
@@ -250,22 +250,22 @@ describe('FlowGraph', () => {
   it('all node and edge IDs are unique', async () => {
     const graph = await buildFlowGraph(`
       particle P1
-        consume root
-          provide slotToProvide
+        root: consumes
+          slotToProvide: provides
         check slotToProvide data is trusted
-        in Foo {} input
+        input: reads Foo {}
       particle P2
-        consume slotToConsume
-        out Foo {} output
+        slotToConsume: consumes
+        output: writes Foo {}
       recipe R
-        slot 'rootslotid-root' as root
+        root: slot 'rootslotid-root'
         P1
-          consume root as root
-            provide slotToProvide as slot0
-          input <- h
+          root: consumes root
+            slotToProvide: provides slot0
+          input: reads h
         P2
-          consume slotToConsume as slot0
-          output -> h
+          slotToConsume: consumes slot0
+          output: writes h
     `);
     const allNodeIds = graph.nodes.map(n => n.nodeId);
     const allEdgeIds = graph.edges.map(e => e.edgeId);
@@ -284,17 +284,17 @@ describe('FlowGraph', () => {
     const runForHandleWithFate = async (fate: string) => {
       const graph = await buildFlowGraph(`
         schema MyEntity
-          Text text
+          text: Text
         resource MyResource
           start
           [{"text": "asdf"}]
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
-          in MyEntity foo
+          foo: reads MyEntity
         recipe R
-          ${fate} as foo
+          foo: ${fate}
           P
-            foo <- foo
+            foo: reads foo
       `);
       assert.lengthOf(graph.particles, 1);
       assert.isFalse(graph.particles[0].ingress);
@@ -313,14 +313,14 @@ describe('FlowGraph', () => {
     // and edge for foo2 had already been created).
     const graph = await buildFlowGraph(`
       particle P
-        inout Foo {} foo1
-        inout Foo {} foo2
+        foo1: reads writes Foo {}
+        foo2: reads writes Foo {}
         claim foo1 derives from foo2
         claim foo2 derives from foo1
       recipe R
         P
-          foo1 <-> h1
-          foo2 <-> h2
+          foo1: reads writes h1
+          foo2: reads writes h2
     `);
     assert.lengthOf(graph.edges, 4);
     const foo1Out = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.foo1') as ParticleOutput;
@@ -337,14 +337,14 @@ describe('FlowGraph', () => {
     it('derives from input with same type', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          in Foo {} foo
-          in Bar {} bar
-          out Reference<Foo {}> outRef
+          foo: reads Foo {}
+          bar: reads Bar {}
+          outRef: writes Reference<Foo {}>
         recipe R
           P
-            foo <- h1
-            bar <- h2
-            outRef -> h3
+            foo: reads h1
+            bar: reads h2
+            outRef: writes h3
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 1);
@@ -354,14 +354,14 @@ describe('FlowGraph', () => {
     it('derives from input with same reference type', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          in Reference<Foo {}> fooRef
-          in Bar {} bar
-          out Reference<Foo {}> outRef
+          fooRef: reads Reference<Foo {}>
+          bar: reads Bar {}
+          outRef: writes Reference<Foo {}>
         recipe R
           P
-            fooRef <- h1
-            bar <- h2
-            outRef -> h3
+            fooRef: reads h1
+            bar: reads h2
+            outRef: writes h3
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 1);
@@ -371,16 +371,16 @@ describe('FlowGraph', () => {
     it('derives from input collections of same type', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          in [Foo {}] fooCollection
-          in BigCollection<Foo {}> fooBigCollection
-          in Bar {} bar
-          out Reference<Foo {}> outRef
+          fooCollection: reads [Foo {}]
+          fooBigCollection: reads BigCollection<Foo {}>
+          bar: reads Bar {}
+          outRef: writes Reference<Foo {}>
         recipe R
           P
-            fooCollection <- h1
-            fooBigCollection <- h2
-            bar <- h3
-            outRef -> h4
+            fooCollection: reads h1
+            fooBigCollection: reads h2
+            bar: reads h3
+            outRef: writes h4
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 2);
@@ -391,18 +391,18 @@ describe('FlowGraph', () => {
     it('derives from input entity containing same reference', async () => {
       const graph = await buildFlowGraph(`
         schema Baz
-          Text abc
-          Number xyz
-          Reference<Foo {}> foo
+          abc: Text
+          xyz: Number
+          foo: Reference<Foo {}>
         particle P
-          in Baz baz
-          in Bar {} bar
-          out Reference<Foo {}> outRef
+          baz: reads Baz
+          bar: reads Bar {}
+          outRef: writes Reference<Foo {}>
         recipe R
           P
-            baz <- h1
-            bar <- h2
-            outRef -> h3
+            baz: reads h1
+            bar: reads h2
+            outRef: writes h3
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 1);
@@ -412,12 +412,12 @@ describe('FlowGraph', () => {
     it('derives from output of same type', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          out Reference<Foo {}> outRef
-          out Foo {} outFoo
+          outRef: writes Reference<Foo {}>
+          outFoo: writes Foo {}
         recipe R
           P
-            outRef -> h2
-            outFoo -> h3
+            outRef: writes h2
+            outFoo: writes h3
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef') as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 1);
@@ -427,12 +427,12 @@ describe('FlowGraph', () => {
     it('derives from output collection containing same type', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          out Reference<Foo {}> outRef
-          out [Foo {}] outFoo
+          outRef: writes Reference<Foo {}>
+          outFoo: writes [Foo {}]
         recipe R
           P
-            outRef -> h1
-            outFoo -> h2
+            outRef: writes h1
+            outFoo: writes h2
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef') as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 1);
@@ -442,12 +442,12 @@ describe('FlowGraph', () => {
     it('does not derive from output reference of same type', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          out Reference<Foo {}> outRef1
-          out Reference<Foo {}> outRef2
+          outRef1: writes Reference<Foo {}>
+          outRef2: writes Reference<Foo {}>
         recipe R
           P
-            outRef1 -> h1
-            outRef2 -> h2
+            outRef1: writes h1
+            outRef2: writes h2
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef1') as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 0);
@@ -456,16 +456,16 @@ describe('FlowGraph', () => {
     it('does not derive from output entity containing same reference', async () => {
       const graph = await buildFlowGraph(`
         schema Baz
-          Text abc
-          Number xyz
-          Reference<Foo {}> foo
+          abc: Text
+          xyz: Number
+          foo: Reference<Foo {}>
         particle P
-          out Reference<Foo {}> outRef
-          out Baz outBaz
+          outRef: writes Reference<Foo {}>
+          outBaz: writes Baz
         recipe R
           P
-            outRef -> h1
-            outBaz -> h2
+            outRef: writes h1
+            outBaz: writes h2
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput && e.label === 'P.outRef') as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 0);
@@ -474,15 +474,15 @@ describe('FlowGraph', () => {
     it('"derives from" claims override reference logic', async () => {
       const graph = await buildFlowGraph(`
         particle P
-          in Foo {} foo
-          in Bar {} bar
-          out Reference<Foo {}> outRef
+          foo: reads Foo {}
+          bar: reads Bar {}
+          outRef: writes Reference<Foo {}>
           claim outRef derives from bar
         recipe R
           P
-            foo <- h1
-            bar <- h2
-            outRef -> h3
+            foo: reads h1
+            bar: reads h2
+            outRef: writes h3
       `);
       const outEdge = graph.edges.find(e => e instanceof ParticleOutput) as ParticleOutput;
       assert.lengthOf(outEdge.derivesFrom, 1);
