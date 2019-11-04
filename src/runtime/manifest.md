@@ -69,7 +69,7 @@ A collection of slots will be provided for a handle that contains a collection o
 ```
 particle MySetParticle in 'my-set-particle.js'
   mything: reads [MyThing]
-  mySlot: consumes
+  mySlot: consumes Slot
     innerSlot: provides [Slot]
 
 particle MyItemParticle in 'my-item-particle.js'
@@ -184,8 +184,8 @@ recipe
   SomeParticle
     param1: reads handle1   // bind's SomeParticle's input param1 connection to handle1
     param2: writes handle2  // binds output connection
-    param3: reads writes handle3   // binds input and output connection
-    param4: reads handle4  // binds the copied handle.
+    param3: any handle3     // binds input and output connection
+    param4: reads handle4   // binds the copied handle.
 ```
 
 Can include how particles are connected to slots:
