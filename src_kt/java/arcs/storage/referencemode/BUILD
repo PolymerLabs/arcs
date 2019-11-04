@@ -3,11 +3,13 @@ package(default_visibility = ["//visibility:public"])
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "kt_jvm_and_js_library")
 
 kt_jvm_and_js_library(
-    name = "driver",
+    name = "referencemode",
     srcs = glob(["*.kt"]),
     deps = [
         "//src_kt/java/arcs/common",
-        "//src_kt/java/arcs/storage",
+        "//src_kt/java/arcs/crdt",
+        "//src_kt/java/arcs/crdt/internal",
+        "//src_kt/java/arcs/data:entity",
         "//src_kt/java/arcs/storage:storage_key",
         "//src_kt/java/arcs/storage:proxy_stuff",
         "//src_kt/java/arcs/util",
