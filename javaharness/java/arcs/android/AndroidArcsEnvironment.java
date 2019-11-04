@@ -41,6 +41,8 @@ final class AndroidArcsEnvironment {
   private static final Logger logger =
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
 
+  private static final String ASSETS_PREFIX = "https://$assets/";
+
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
   private static final String MESSAGE_CONTEXT = "context";
@@ -101,7 +103,7 @@ final class AndroidArcsEnvironment {
 
     dynamicManifest = manifests
         .stream()
-        .map(s -> String.format("import \'https://$assets/%s\'", s))
+        .map(s -> String.format("import \'%s%s\'", ASSETS_PREFIX, s))
         .collect(Collectors.joining("\n"));
 
     webView.addJavascriptInterface(this, "DeviceClient");
@@ -188,6 +190,22 @@ final class AndroidArcsEnvironment {
 
   private void configureShell() {
     RuntimeSettings settings = runtimeSettings.get();
+
+    PortableJson urlMap = jsonParser.emptyObject()
+        // For fetching bundled javascript.
+        .put("https://$build/", "");
+
+    if (settings.loadAssetsFromWorkstation()) {
+      // Fetch .wasm modules and generated manifest from the build directory.
+      urlMap.put(ASSETS_PREFIX, jsonParser.emptyObject()
+          .put("root", "http://localhost:" + settings.devServerPort() + "/")
+          .put("buildDir", "bazel-bin/")
+          .put("buildOutputRegex", "(\\\\.wasm)|(\\\\.root\\\\.arcs)$"));
+    } else {
+      // Fetch all assets from the APK assets directory.
+      urlMap.put(ASSETS_PREFIX, "file:////android_asset/arcs/");
+    }
+                
     sendMessageToArcs(jsonParser.stringify(jsonParser
         .emptyObject()
         .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
@@ -195,16 +213,6 @@ final class AndroidArcsEnvironment {
             .put("rootPath", ".")
             .put("storage", "volatile://")
             .put("manifest", dynamicManifest)
-            .put("urlMap", jsonParser.emptyObject()
-                .put("https://$build/", "") // For fetching bundled javascript.
-                .put("https://$assets/", settings.loadAssetsFromWorkstation()
-                    // Fetch .wasm modules and generated manifest from the build directory.
-                    ? jsonParser.emptyObject()
-                        .put("root", "http://localhost:" + settings.devServerPort() + "/")
-                        .put("buildDir", "bazel-bin/")
-                        .put("buildOutputRegex", "(\\\\.wasm)|(\\\\.root\\\\.arcs)$")
-                    // Fetch all assets from the APK assets directory.
-                    : "file:////android_asset/arcs/"
-                ))));
+            .put("urlMap", urlMap))));
   }
 }
