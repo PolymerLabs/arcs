@@ -51,7 +51,8 @@ final class AndroidArcsEnvironment {
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
 
   private static final String ASSETS_PREFIX = "https://$assets/";
-  private static final String APK_ASSETS_URL_PREFIX = "file:////android_asset/arcs/";
+  // Uses relative path to support multiple protocols i.e. file, https and etc.
+  private static final String APK_ASSETS_URL_PREFIX = "./";
   private static final String ROOT_MANIFEST_FILENAME = "Root.arcs";
 
   private static final String FIELD_MESSAGE = "message";
