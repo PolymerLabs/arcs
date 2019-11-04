@@ -3,13 +3,13 @@ dist: xenial
 
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
-addons:
-  chrome: stable
+#addons:
+#  chrome: stable
 
 before_install:
   - >
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-      openssl aes-256-cbc -K $ENCRYPT_PW -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d;
+      openssl aes-256-cbc -k $ENCRYPT_KEY -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d;
     fi
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
@@ -47,7 +47,7 @@ script:
   - npm run build:rollup
   - npm --prefix=server test
 
-cache: npm
+#cache: npm
 
 before_deploy:
   # build apidocs
