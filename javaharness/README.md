@@ -19,7 +19,7 @@ TODO: This code is undergoing refactoring, add packages descriptions, when compl
    * Project view: from project view file: `javaharness/.bazelproject`
 1. Add a new run configuration of type Bazel Command, with command
    `mobile-install` and target expression:
-   `//javaharness/java/arcs/android/demo/app:app`
+   `//javaharness/java/arcs/android/demo:demo`
 
 Before this will actually work, you will need to build pipes-shell
 
@@ -60,9 +60,9 @@ Follow the steps to inspect and debug Arcs:
   adb wait-for-device root
   adb reverse tcp:8786 tcp:8786
   ```
-4. Instructing the on-device Arcs runtime to use ALDS proxy before starting it:
+4. Instructing the on-device Arcs runtime to connect to the Arcs Explorer tool:
 * ```bash
-  adb shell setprop debug.arcs.runtime.use_alds true
+  adb shell setprop debug.arcs.runtime.enable_arcs_explorer true
   ```
 5. Launching the demo activity i.e. Autofill by pressing the Autofill button at the demo application.
 * > The button pressing starts the on-device Arcs runtime, connecting to the host ALDS then launching the demo activity.
@@ -78,11 +78,23 @@ Follow the steps to inspect and debug Arcs:
 
 > Re-visiting all steps if the device reboots.
 
+## Loading particles and recipes from the workstation
+Particles and recipes are by default loaded from the APK, but you can configure the device to load them from you workstation instead:
+
+1. Ensure you have ALDS running and can connect to it by following steps 2 and 3 from the Debugging and Inspection section.
+1. Ask for the assets to be loaded from the workstation:
+```bash
+  adb shell setprop debug.arcs.runtime.load_workstation_assets true
+```
+
+
 ## Properties
 Android properties are used to change and tweak Arcs settings at run-time.
 
 | Property | Description | Default |
 | -------- | ----------- | ------- |
 | debug.arcs.runtime.log | Change logging level of the JS Arcs runtime | 2 (the most verbose) |
-| debug.arcs.runtime.use_alds | Connect to the host ALDS while starting the JS Arcs runtime | false |
+| debug.arcs.runtime.enable_arcs_explorer | Connect to the Arcs Explorer frontend via ALDS proxy while starting the JS Arcs runtime | false |
+| debug.arcs.runtime.dev_server_port | The port to use for communication with ALDS | 8786 |
 | debug.arcs.runtime.shell_url | Specify which shell to use | file:///android_asset/index.html? (on-device pipes-shell) |
+| debug.arcs.runtime.load_workstation_assets | Whether to load recipes and particles from the workstation | false (assets from the APK) |

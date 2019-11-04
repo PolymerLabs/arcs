@@ -14,17 +14,26 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   // Equivalent to &log parameter
   private static final String LOG_LEVEL_PROPERTY = "debug.arcs.runtime.log";
   // Equivalent to &explore-proxy parameter
-  private static final String USE_DEV_SERVER_PROXY_PROPERTY = "debug.arcs.runtime.use_alds";
+  private static final String ENABLE_ARCS_EXPLORER_PROPERTY = "debug.arcs.runtime.enable_arcs_explorer";
   // The target shell to be loaded (on-device) or be connected (on-host)
   private static final String SHELL_URL_PROPERTY = "debug.arcs.runtime.shell_url";
+  // Whether to load particles and recipes from the workstation
+  private static final String LOAD_ASSETS_FROM_WORKSTATION_PROPERTY =
+      "debug.arcs.runtime.load_workstation_assets";
+  // Port to be used for the communication with the dev server.
+  private static final String DEV_SERVER_PORT_PROPERTY = "debug.arcs.runtime.dev_server_port";
 
   // Default settings:
-  // Logs the most information, loads the on-device pipes-shell
-  // and not uses ALDS proxy.
+  // Logs the most information
   private static final int DEFAULT_LOG_LEVEL = 2;
-  private static final boolean DEFAULT_USE_DEV_SERVER = false;
-  private static final String DEFAULT_SHELL_URL = "file:///android_asset/arcs/index.html?solo=dynamic.manifest&";
-  private static final String LOCALHOST_SHELL_URL = "http://localhost:8786/shells/pipes-shell/web/deploy/dist/?";
+  // Does *not* connect Arcs Explorer
+  private static final boolean DEFAULT_ENABLE_ARCS_EXPLORER = false;
+  // Loads the on-device pipes-shell
+  private static final String DEFAULT_SHELL_URL = "file:///android_asset/arcs/index.html?";
+  // Load the on-device assets
+  private static final boolean DEFAULT_ASSETS_FROM_WORKSTATION = false;
+  // Uses the standard 8786 port
+  private static final int DEFAULT_DEV_SERVER_PORT = 8786;
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());
@@ -32,8 +41,10 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   @AutoValue
   abstract static class Settings {
     abstract int logLevel();
-    abstract boolean useDevServerProxy();
+    abstract boolean enableArcsExplorer();
     abstract String shellUrl();
+    abstract boolean loadAssetsFromWorkstation();
+    abstract int devServerPort();
 
     static Builder builder() {
       return new AutoValue_AndroidRuntimeSettings_Settings.Builder();
@@ -42,8 +53,10 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
     @AutoValue.Builder
     abstract static class Builder {
       abstract Builder setLogLevel(int level);
-      abstract Builder setUseDevServerProxy(boolean useDevServerProxy);
+      abstract Builder setEnableArcsExplorer(boolean useDevServerProxy);
       abstract Builder setShellUrl(String shellUrl);
+      abstract Builder setLoadAssetsFromWorkstation(boolean loadAssetsFromWorkstation);
+      abstract Builder setDevServerPort(int devServerPort);
       abstract Settings build();
     }
   }
@@ -56,10 +69,15 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
     settings = Settings.builder()
         .setLogLevel(
             getProperty(LOG_LEVEL_PROPERTY, Integer::valueOf, DEFAULT_LOG_LEVEL))
-        .setUseDevServerProxy(
-            getProperty(USE_DEV_SERVER_PROXY_PROPERTY, Boolean::valueOf, DEFAULT_USE_DEV_SERVER))
+        .setEnableArcsExplorer(
+            getProperty(ENABLE_ARCS_EXPLORER_PROPERTY, Boolean::valueOf, DEFAULT_ENABLE_ARCS_EXPLORER))
         .setShellUrl(
             getProperty(SHELL_URL_PROPERTY, String::valueOf, DEFAULT_SHELL_URL))
+        .setLoadAssetsFromWorkstation(
+            getProperty(LOAD_ASSETS_FROM_WORKSTATION_PROPERTY, Boolean::valueOf,
+                DEFAULT_ASSETS_FROM_WORKSTATION))
+        .setDevServerPort(
+            getProperty(DEV_SERVER_PORT_PROPERTY, Integer::valueOf, DEFAULT_DEV_SERVER_PORT))
         .build();
   }
 
@@ -69,13 +87,23 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   }
 
   @Override
-  public boolean useDevServerProxy() {
-    return settings.useDevServerProxy();
+  public boolean enableArcsExplorer() {
+    return settings.enableArcsExplorer();
   }
 
   @Override
   public String shellUrl() {
     return settings.shellUrl();
+  }
+
+  @Override
+  public boolean loadAssetsFromWorkstation() {
+    return settings.loadAssetsFromWorkstation();
+  }
+
+  @Override
+  public int devServerPort() {
+    return settings.devServerPort();
   }
 
   /**
