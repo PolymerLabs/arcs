@@ -44,48 +44,47 @@ that it provides and consumes and the location of the particle implementation.
 
 ```
 particle MyParticle in 'my-particle.js'
-  in MyThing myinthing
-  out [MyThing] myoutthing
-  inout [AnotherThing] anotherthing
+  myinthing: reads MyThing
+  myoutthings: writes [MyThing]
+  otherthings: reads writes [AnotherThing] 
 ```
 
 ### Slots
-Particles that produce UI must define which slots they use for rendering. Slots may be declared required or optional. Even if all slots are optional, at least one of them must be provided in order for the particle to be instantiated. Each slot may be consumed by multiple particles.
+Particles that produce UI must define which slots they use for rendering. Slots may be declared required (default) or optional. Even if all slots are optional, at least one of them must be provided in order for the particle to be instantiated. Each slot may be consumed by multiple particles.
 
 "root" slot is a special slot that is provided by the system before any of the particles are rendered. If particle renders and creates slots for other particles to use, they are also defined in the manifest. The provided slots may restrict the handles to be rendered in the slot. The particle that consumes the provided slot must have the same handle bounded as one of its connections.
 
 ```
 particle MyParticle in 'my-particle.js'
-  in MyThing myinthing
-  out [MyThing] myoutthing
-  must consume mySlot
-    provide innerSlot
-    provide restrictedInnerSlot
-      handle myinthing
-  consume otherSlot
+  myinthing: reads MyThing
+  myoutthings: writes [MyThing]
+  mySlot: consumes  // required
+    innerSlot: provides?
+    restrictedInnerSlot: provides? Slot {handle: myinthing}
+  otherSlot: consumes?  // optional
 ```
 
-"Set slot" are a special type of slot that is provided for a handle that contains a collection of entities. A separate slot will be created for each individual element in the handle. The consuming particle must be explicitly defined to consume a set slot as well.
+A collection of slots will be provided for a handle that contains a collection of entities. A separate slot will be created for each individual element in the handle. The consuming particle must be explicitly defined to consume a colleciont of slots as well.
 
 ```
 particle MySetParticle in 'my-set-particle.js'
-  in [MyThing] mything
-  consume mySlot
-    provide set of innerSlot
+  mything: reads [MyThing]
+  mySlot: consumes Slot
+    innerSlot: provides [Slot]
 
 particle MyItemParticle in 'my-item-particle.js'
-  in [MyThing] mythis
-    consume set of innerSlot
+  mythis: reads [MyThing]
+    innerSlot: consumes [Slot]
 ```
 
 ### Descriptions
 Particle description defines how the Particle is represented in the recipe suggestion text. Description includes a sentence pattern, and optional individual argument descriptions.
 
 ```
-particle MyParticle in ‘my-particle.js’
-  in MyThing mything
-  consume main
-    provide secondary
+particle MyParticle in 'my-particle.js'
+  mything: reads MyThing
+  main: consumes
+    secondary: provides
   description `Do Something with ${mything}`
      mything `my special thing`
 ```
@@ -174,18 +173,19 @@ Can include how particle inputs are connected to handles:
 ```
 ...
 recipe
-  map as handle1                 // maps a store external to the arc; changes in the
+  handle1: map                   // maps a store external to the arc; changes in the
                                  // external store will be reflected locally, but the
                                  // local handle is read-only.
-  use as handle2                 // uses some handle already in the Arc
-  create as handle3              // creates a new empty handle
-  copy ImportedHandle as handle4 // creates a handle on a new store populated with entries
+  handle2: use                   // uses some handle already in the Arc
+  handle3: create                // creates a new empty handle
+  handle4: copy ImportedHandle   // creates a handle on a new store populated with entries
                                  // from a store defined in or imported by the manifest
                                  
   SomeParticle
-    param1 <- handle1  // bind's SomeParticle's 'in' param1 connection to handle1
-    param2 -> handle2  // binds 'out'
-    param3 = handle3   // binds 'inout'
+    param1: reads handle1   // bind's SomeParticle's input param1 connection to handle1
+    param2: writes handle2  // binds output connection
+    param3: any handle3     // binds input and output connection
+    param4: reads handle4   // binds the copied handle.
 ```
 
 Can include how particles are connected to slots:
@@ -193,16 +193,17 @@ Can include how particles are connected to slots:
 ...
 recipe
   TheirParticle
-    provides specialSlot as slot0
+    root: consumes
+      specialSlot: provides slot0
   MyParticle
-    consumes mySlot as slot0
+    mySlot: consumes slot0
 ```
 
 Can include a recipe description:
 ```
 ...
 particle MyParticle in '...'
-  in Thing myThing
+  myThing: reads Thing
 
 recipe
   MyParticle
