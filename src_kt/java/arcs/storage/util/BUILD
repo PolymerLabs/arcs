@@ -7,8 +7,12 @@ kt_jvm_and_js_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//src_kt/java/arcs/common",
+        "//src_kt/java/arcs/crdt",
         # TODO: should we move VersionMap to the top-level crdt package if it's being used here?
         "//src_kt/java/arcs/crdt/internal",
-        "//third_party/kotlin/kotlinx/kotlinx_atomicfu"
-    ]
+        "//src_kt/java/arcs/storage:proxy",
+        "//src_kt/java/arcs/storage/referencemode",
+        "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+    ],
 )

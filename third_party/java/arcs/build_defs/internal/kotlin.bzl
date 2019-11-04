@@ -45,7 +45,8 @@ def kt_jvm_and_js_library(
         name = None,
         srcs = [],
         deps = [],
-        visibility = None):
+        visibility = None,
+        **kwargs):
     """Simultaneously defines JVM and JS kotlin libraries.
     name: String; Name of the library
     srcs: List; List of sources
@@ -57,13 +58,18 @@ def kt_jvm_and_js_library(
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
         visibility = visibility,
+        **kwargs
     )
 
     if IS_BAZEL:
+        js_kwargs = dict(**kwargs)
+        if "exports" in js_kwargs:
+            js_kwargs.pop("exports")
         kt_js_library(
             name = "%s-js" % name,
             srcs = srcs,
             deps = [_to_js_dep(dep) for dep in deps],
+            **js_kwargs
         )
 
 def _to_jvm_dep(dep):
