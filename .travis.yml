@@ -3,8 +3,8 @@ dist: xenial
 
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
-#addons:
-#  chrome: stable
+addons:
+  chrome: stable
 git:
   depth: 5
 
