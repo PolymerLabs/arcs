@@ -2246,7 +2246,7 @@ resource SomeName
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   }));
 
-  it('SLANDLES SYNTAX can round-trip particles with fields', Flags.withPostSlandlesSyntax(async () => {
+  it('can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -2258,22 +2258,7 @@ resource SomeName
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
-  it('can round-trip particles with fields', Flags.withPreSlandlesSyntax(async () => {
-    const manifestString = `particle TestParticle in 'a.js'
-  in [Product {}] input
-    out [Product {}] output
-  in ~a thingy
-  modality dom
-  must consume thing #main #tagname
-    formFactor big
-    must provide otherThing #testtag
-      handle thingy`;
-
-    const manifest = await Manifest.parse(manifestString);
-    assert.lengthOf(manifest.particles, 1);
-    assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
+  });
   it('SLANDLES can round-trip particles with tags', Flags.withPostSlandlesSyntax(async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
@@ -3016,7 +3001,7 @@ particle A
     assert.equal(manifest.errors[0].key, 'externalSchemas');
   });
 
-  it('SLANDLES SYNTAX can round-trip external particles', Flags.withPostSlandlesSyntax(async () => {
+  it('can round-trip external particles', async () => {
     const manifestString = `external particle TestParticle
   input: reads [Product {}]
   modality dom`;
@@ -3027,20 +3012,7 @@ particle A
     assert.isTrue(particle.external);
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
-  }));
-
-  it('can round-trip external particles', Flags.withPreSlandlesSyntax(async () => {
-    const manifestString = `external particle TestParticle
-  in [Product {}] input
-  modality dom`;
-
-    const manifest = await Manifest.parse(manifestString);
-    assert.lengthOf(manifest.particles, 1);
-    const particle = manifest.particles[0];
-    assert.isTrue(particle.external);
-    assert.isNull(particle.implFile);
-    assert.strictEqual(manifestString, particle.toString());
-  }));
+  });
 }));
 
 describe('Manifest storage migration', () => {
