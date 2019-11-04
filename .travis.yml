@@ -7,7 +7,10 @@ addons:
   chrome: stable
 
 before_install:
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then openssl aes-256-cbc -K "$ENCRYPT_PW" -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d; fi
+  - >
+    if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      openssl aes-256-cbc -K $ENCRYPT_PW -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d;
+    fi
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.
