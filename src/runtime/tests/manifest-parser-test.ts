@@ -38,9 +38,9 @@ describe('manifest parser', () => {
     parse(`
       recipe Recipe
         SomeParticle
-          a -> #something
-          b <- #somethingElse
-          * = #someOtherParticle`);
+          a: writes #something
+          b: reads #somethingElse
+          any #someOtherParticle`);
   });
   it('parses trivial particles', () => {
     parse(`
@@ -50,7 +50,7 @@ describe('manifest parser', () => {
     parse(`
       recipe Recipe
         SomeParticle as thing
-        map #thing as anotherThing`);
+        anotherThing: map #thing`);
   });
   it('parses manifests with comments', () => {
     parse(`
@@ -67,18 +67,18 @@ describe('manifest parser', () => {
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
-        X -> Y
-        X.a -> Y.a
-        &foo.bar -> &far.#bash #fash
-        a = b
-        a.a = b.b
-        X.a #tag <- a.y`);
+        X: writes Y
+        X.a: writes Y.a
+        &foo.bar: writes &far.#bash #fash
+        a: any b
+        a.a: any b.b
+        X.a #tag: reads a.y`);
   });
   it('parses manifests with stores', () => {
     parse(`
       schema Person
-        Text lastName
-        Text firstName
+        lastName: Text
+        firstName: Text
         description \`person\`
           plural \`people\`
           value \`\${firstName} \${lastName}\`
@@ -87,49 +87,38 @@ describe('manifest parser', () => {
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
-  it('SLANDLES SYNTAX fails to parse an argument list that use a reserved word as an identifier', Flags.withPostSlandlesSyntax(async () => {
+  it('fails to parse an argument list that use a reserved word as an identifier', () => {
     try {
       parse(`
         particle MyParticle
-          consume: in MyThing
-          output: out? BigCollection<MyThing>`);
+          consumes: reads MyThing
+          output: writes? BigCollection<MyThing>`);
       assert.fail('this parse should have failed, identifiers should not be reserved words!');
     } catch (e) {
       assert.include(e.message, 'Expected', `bad error: '${e}'`);
     }
-  }));
-  it('fails to parse an argument list that use a reserved word as an identifier', Flags.withPreSlandlesSyntax(async () => {
-    try {
-      parse(`
-        particle MyParticle
-          in MyThing consume
-          out? BigCollection<MyThing> output`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected', `bad error: '${e}'`);
-    }
-  }));
+  });
   it('allows identifiers to start with reserved words', () => {
     parse(`
       particle MyParticle
-        in MyThing mapped
-        out? BigCollection<MyThing> import_export`);
+        mapped: reads MyThing
+        import_export: writes? BigCollection<MyThing>`);
   });
   it('allows reserved words for schema field names', () => {
     // Test with a non-word char following the token
     parse(`
       schema Reserved
-        Text schema  // comment`);
+        schema: Text // comment`);
     // Test with end-of-input following the token
     parse(`
       schema Reserved
-        URL map`);
+        map: URL`);
   });
   it('allows reserved words for inline schema field names', () => {
     parse(`
       particle Foo
-        in A {Text handle} a
-        out B {Boolean import, Number particle} b`);
+        a: reads A {handle: Text}
+        b: writes B {import: Boolean, particle: Number}`);
   });
   it('fails to parse an unterminated identifier', () => {
     try {
@@ -163,10 +152,10 @@ describe('manifest parser', () => {
   it('parses particles with optional handles', () => {
     parse(`
       particle MyParticle
-        in MyThing mandatory
-        in? MyThing optional1
-        out? [MyThing] optional2
-        out? BigCollection<MyThing> optional3`);
+        mandatory: reads MyThing
+        optional1: reads? MyThing
+        optional2: writes? [MyThing]
+        optional3: writes? BigCollection<MyThing>`);
   });
   it('parses manifests with search', () => {
     parse(`
@@ -184,94 +173,94 @@ describe('manifest parser', () => {
   it('parses manifests particle verbs', () => {
     parse(`
       particle SomeParticle
-        in Energy energy
-        out Height height
+        energy: reads Energy
+        height: writes Height
         modality dom`);
   });
   it('parses recipe with particle verbs', () => {
     parse(`
       recipe
         &jump
-          * <- energy
-          * -> height`);
+          reads energy
+          writes height`);
   });
   it('parses recipe with particle verb shorthand', () => {
     parse(`
       recipe
         &jump
-          * <- energy
-          * <- height`);
+          reads energy
+          reads height`);
   });
   it('parses inline schemas', () => {
     parse(`
       particle Foo
-        in MySchema {Text value} mySchema
+        mySchema: reads MySchema {value: Text}
     `);
     parse(`
       particle Foo
-        in [MySchema {Text value}] mySchema
+        mySchema: reads [MySchema {value: Text}]
     `);
     parse(`
       particle Foo
-        in [* {Text value, Number num}] anonSchema
+        anonSchema: reads [* {value: Text, num: Number}]
     `);
     parse(`
       particle Foo
-        in * {(Text or Number) value} union
+        union: reads * {value: (Text or Number)}
     `);
     parse(`
       particle Foo
-        in * {value} optionalType
+        optionalType: reads * {value}
     `);
   });
   it('parses a schema with a bytes field', () => {
     parse(`
       schema Avatar
-        Text name
-        Bytes profileImage
+        name: Text
+        profileImage: Bytes
       `);
   });
   it('parses a schema with a reference field', () => {
     parse(`
       schema Product
-        Reference<Review> review
+        review: Reference<Review>
     `);
   });
   it('parses a schema with a referenced inline schema', () => {
     parse(`
       schema Product
-        Reference<Review {Text reviewText}> review
+        review: Reference<Review {reviewText: Text}>
     `);
   });
   it('parses an inline schema with a reference to a schema', () => {
     parse(`
       particle Foo
-        in Product {Reference<Review> review} inReview
+        inReview: reads Product {review: Reference<Review>}
     `);
   });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
-        in Product {[Reference<Review>] review} inResult
+        inResult: reads Product {review: [Reference<Review>]}
     `);
   });
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
-      in Product {Reference<Review {Text reviewText}> review} inReview
+      inReview: reads Product {review: Reference<Review {reviewText: Text}> }
     `);
   });
   it('parses an inline schema with a collection of references to inline schemas', () => {
     parse(`
       particle Foo
-        in Product {[Reference<Review {Text reviewText}>] review} productReviews
+        productReviews: reads Product {review: [Reference<Review {reviewText: Text}>]}
     `);
   });
   it('parses reference types', () => {
     parse(`
       particle Foo
-        in Reference<Foo> inRef
-        out Reference<Bar> outRef
+        inRef: reads Reference<Foo>
+        outRef: writes Reference<Bar>
     `);
   });
   it('parses require section using local name', () => {
@@ -309,10 +298,10 @@ describe('manifest parser', () => {
       recipe
         require
           handle as thing
-          slot as thing2
+          thing2: slot
           Particle
-            * <- thing 
-            consume thing2
+            reads thing
+            consumes thing2
     `);
   });
   it('parses handle creation using the handle keyword', () => {
@@ -320,13 +309,13 @@ describe('manifest parser', () => {
       recipe
         handle as h0
         Particle
-          input <- h0
+          input: reads h0
     `);
   });
   it('parses handle with type with prefix "Slot"', () => {
     parse(`
       particle P in './p.js'
-        in Sloturnicus s
+        s: reads Sloturnicus
     `);
   });
   it('does not parse comment at start of manifest resource', () => {
