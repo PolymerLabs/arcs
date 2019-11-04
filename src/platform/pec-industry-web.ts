@@ -61,8 +61,8 @@ const expandUrls = urlMap => {
   Object.keys(urlMap).forEach(k => {
     const config = urlMap[k];
     remap[k] = typeof config === 'string'
-      ? transform(config)
-      : {...config, root: transform(config.root)};
+        ? transform(config)
+        : {...config, root: transform(config.root)};
   });
   return remap;
 };

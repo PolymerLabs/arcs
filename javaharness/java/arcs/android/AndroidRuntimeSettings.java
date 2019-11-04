@@ -14,7 +14,8 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   // Equivalent to &log parameter
   private static final String LOG_LEVEL_PROPERTY = "debug.arcs.runtime.log";
   // Equivalent to &explore-proxy parameter
-  private static final String ENABLE_ARCS_EXPLORER_PROPERTY = "debug.arcs.runtime.enable_arcs_explorer";
+  private static final String ENABLE_ARCS_EXPLORER_PROPERTY =
+      "debug.arcs.runtime.enable_arcs_explorer";
   // The target shell to be loaded (on-device) or be connected (on-host)
   private static final String SHELL_URL_PROPERTY = "debug.arcs.runtime.shell_url";
   // Whether to load particles and recipes from the workstation
@@ -36,7 +37,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final boolean DEFAULT_ASSETS_FROM_WORKSTATION = false;
   // Uses the standard 8786 port
   private static final int DEFAULT_DEV_SERVER_PORT = 8786;
-  private static final boolean DEFAULT_USE_DEV_SERVER = false;
+  // Deactivates the Arcs Cache Manager.
   private static final boolean DEFAULT_USE_CACHE_MANAGER = false;
 
   private static final Logger logger = Logger.getLogger(
@@ -76,7 +77,10 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
         .setLogLevel(
             getProperty(LOG_LEVEL_PROPERTY, Integer::valueOf, DEFAULT_LOG_LEVEL))
         .setEnableArcsExplorer(
-            getProperty(ENABLE_ARCS_EXPLORER_PROPERTY, Boolean::valueOf, DEFAULT_ENABLE_ARCS_EXPLORER))
+            getProperty(
+                ENABLE_ARCS_EXPLORER_PROPERTY,
+                Boolean::valueOf,
+                DEFAULT_ENABLE_ARCS_EXPLORER))
         .setShellUrl(
             getProperty(SHELL_URL_PROPERTY, String::valueOf, DEFAULT_SHELL_URL))
         .setLoadAssetsFromWorkstation(
