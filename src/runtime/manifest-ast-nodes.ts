@@ -348,7 +348,7 @@ export interface RecipeNode extends BaseNode {
 }
 
 export interface RecipeParticle extends BaseNode {
-  kind: 'particle';
+  kind: 'recipe-particle';
   name: string;
   ref: ParticleRef;
   connections: RecipeParticleConnection[];

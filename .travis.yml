@@ -9,7 +9,6 @@ sudo: required
 before_install:
   - >
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-      openssl aes-256-cbc -k $ENCRYPT_KEY -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json -d;
     fi
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?

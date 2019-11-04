@@ -14,7 +14,7 @@ class FlagDefaults {
   static useNewStorageStack = false;
   // Enables the parsing of both pre and post slandles (unified) syntaxes.
   // Preslandles syntax is to be deprecated.
-  static parseBothSyntaxes = false;
+  static parseBothSyntaxes = true;
   // Use pre slandles syntax for parsing and toString by default.
   // If parseBothSyntaxes is off, this will set which syntax is enabled.
   static defaultToPreSlandlesSyntax = true;

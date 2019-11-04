@@ -27,6 +27,6 @@ recipe CollectionRecipe
   map PeopleToGreetStore as data
 
   CollectionParticle
-    inputData <- data
+    inputData = data
 
   description `Javascript Tutorial 5: Collections`
