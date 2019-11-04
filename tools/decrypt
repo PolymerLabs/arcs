@@ -1,0 +1,3 @@
+#!/bin/sh
+cd $(dirname $0)/..
+openssl aes-256-cbc -d -md sha256 -k "$1" -in tools/arcs-build-key.json.enc -out tools/arcs-build-key.json
