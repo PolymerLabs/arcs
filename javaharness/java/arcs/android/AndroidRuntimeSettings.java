@@ -112,6 +112,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   @Override
   public int devServerPort() {
     return settings.devServerPort();
+  }
 
   @Override
   public boolean useCacheManager() {
