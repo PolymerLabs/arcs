@@ -93,36 +93,24 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
         }
 
         fun encodeList(list: List<Any>): String {
-          val sb = StringBuilder()
-          sb.append(list.size).append(":")
-          
-          for(value in list) {
-            sb.append(encodeValue(value))
-          }
-          return sb.toString()
+            return list.joinToString(separator = "", prefix = "${list.size}:") { encodeValue(it) } 
         }
 
         fun encodeValue(value: Any?): String {
-            val sb = StringBuilder()
-            when (value) {
-                is String -> {
-                    sb.append("T").append(value.length).append(":").append(value)
-                }
+            return when (value) {
+                is String -> "T${value.length}:$value"
                 is Map<*, *> -> {
                     @Suppress("UNCHECKED_CAST")
-                    val dictString = encodeDictionary(value as Map<String, Any>)
-                    sb.append("D").append(dictString.length).append(":").append(dictString)
+                    val dictString = encodeDictionary(value as Map<String, Any?>)
+                    "D${dictString.length}:$dictString"
                 }
                 is List<*> -> {
                     @Suppress("UNCHECKED_CAST")
-                    val arrString = encodeList(value as List<Any>)
-                    sb.append("A").append(arrString.length).append(":").append(arrString)
+                    val listString = encodeList(value as List<Any>)
+                    "A${listString.length}:$listString"
                 }
-                else -> {
-                    throw IllegalArgumentException("Unknown Expression.")
-                }
+                else -> throw IllegalArgumentException("Unknown expression.")
             }
-            return sb.toString(); 
         }
     }
 

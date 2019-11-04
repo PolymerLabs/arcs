@@ -14,11 +14,11 @@ resource PeopleData
     {"name": "Jen", "age": 50}
   ]
 
-// This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
+// This data store contains a collection of entities rather than a single entity, and is backed by the PeopleData resource defined above.
 store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionsParticle in 'collections.wasm'
-  // The input is a list of PersonDetails entities.
+  // The input is a collection of PersonDetails entities.
   in [PersonDetails] inputData
   consume root
 

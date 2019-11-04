@@ -7,12 +7,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [Store]. */
+/** Tests for [StringEncoder]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @RunWith(JUnit4::class)
 class StringEncoderTest {
 
-  @Test()
+  @Test
   fun encodeText() {
     val txt = "Kangaroo"
     val encodedString = StringEncoder.encodeValue(txt)
@@ -20,7 +20,7 @@ class StringEncoderTest {
     assertThat(encodedString).isEqualTo(expectedString)
   }
 
-  @Test()
+  @Test
   fun encodeDictionary() {
     val Dict = mapOf("name" to "Jill", "age" to "70.0")
     val encodedString = StringEncoder.encodeDictionary(Dict)
@@ -28,7 +28,7 @@ class StringEncoderTest {
     assertThat(encodedString).isEqualTo(expectedString)
   }
 
-  @Test()
+  @Test
   fun encodeList() {
     val list = listOf(
       mapOf("name" to "Jill", "age" to "70.0"),
@@ -40,7 +40,7 @@ class StringEncoderTest {
     assertThat(encodedString).isEqualTo(expectedString)
   }
 
-  @Test()
+  @Test
   fun encodeEntity() {
     val list = listOf(
       mapOf("name" to "Jill", "age" to "70.0"),

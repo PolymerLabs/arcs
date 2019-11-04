@@ -7,14 +7,14 @@ import kotlin.native.internal.ExportForCppRuntime
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class CollectionsParticle : Particle() {
-
    private val people = Collection { CollectionsParticle_InputData() }
+
    init {
        registerHandle("inputData", people)
    }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val peopleList = ArrayList<Map<String, String?>>()
+        val peopleList = mutableListOf<Map<String, String?>>()
         people.forEach { people -> peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) }
 
         return model + mapOf(
