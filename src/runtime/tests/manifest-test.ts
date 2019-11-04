@@ -34,7 +34,7 @@ function verifyPrimitiveType(field, type) {
   assert.deepEqual(copy, {kind: 'schema-primitive', type});
 }
 
-describe('manifest', () => {
+describe('manifest', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
   it('can parse a manifest containing a recipe', async () => {
     const manifest = await Manifest.parse(`
       schema S
@@ -3041,7 +3041,7 @@ particle A
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
   }));
-});
+}));
 
 describe('Manifest storage migration', () => {
   async function parseStoreFromManifest() {
