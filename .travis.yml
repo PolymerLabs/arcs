@@ -30,8 +30,7 @@ jobs:
       name: "Node Test: Shells"
 
 
-cache:
-  npm: true
+cache: false
 
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build
