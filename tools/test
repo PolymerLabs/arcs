@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT=$(dirname $0)/..
-$ROOT/tools/sigh test
-(cd $ROOT/extension && npm test)
-(cd $ROOT/shell && npm test)
+cd $(dirname $0)/..
+bazel test --noshow_progress --noshow_loading_progress --test_output=errors //particles/... //src/... //src_kt/...
+npm run tests-with-start
+npm --prefix=server test

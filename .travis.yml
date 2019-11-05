@@ -17,11 +17,7 @@ jobs:
     - stage: build
       script: bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/... && npm run build:rollup
     - stage: test
-      script: >
-      bazel test --noshow_progress --noshow_loading_progress --test_output=errors \
-      //particles/... //src/... //src_kt/... && \
-      npm run tests-with-start && \
-      npm --prefix=server test
+      script: tools/test
 
 cache:
   npm: true
