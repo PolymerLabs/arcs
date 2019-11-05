@@ -474,13 +474,11 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
       if (model.singletons[key]) {
         model.singletons[key].values = {};
         this.addFieldToValueList(model.singletons[key].values, entity.rawData[key], version);
-        //model.singletons[key].values = {[entity.rawData[key].id]: {value: entity.rawData[key], version}};
         model.singletons[key].version = version;
       } else if (model.collections[key]) {
         model.collections[key].values = {};
         for (const value of entity.rawData[key]) {
           this.addFieldToValueList(model.collections[key].values, value, version);
-          //model.collections[key].values[value.id] = {value, version};
         }
         model.collections[key].version = version;
       } else  {

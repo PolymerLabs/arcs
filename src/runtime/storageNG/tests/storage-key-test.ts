@@ -13,6 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {VolatileStorageKey} from '../drivers/volatile.js';
 import {FirebaseStorageKey} from '../drivers/firebase.js';
 import {RamDiskStorageKey} from '../drivers/ramdisk.js';
+import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 
 describe('StorageKey', () => {
 
@@ -48,6 +49,24 @@ describe('StorageKey', () => {
 
     assert.instanceOf(key, RamDiskStorageKey);
     assert.strictEqual(key.unique, 'first/second/');
+    assert.strictEqual(key.toString(), encoded);
+  });
+
+  it('can round-trip ReferenceModeStorageKey', () => {
+    const encoded = 'reference-mode://{firebase://my-project.test.domain:some-api-key/first/second/}{volatile://!1234:my-arc-id/first/second/}';
+
+    const key = StorageKeyParser.parse(encoded) as ReferenceModeStorageKey;
+
+    assert.instanceOf(key, ReferenceModeStorageKey);
+    assert.instanceOf(key.storageKey, VolatileStorageKey);
+    assert.instanceOf(key.backingKey, FirebaseStorageKey);
+    assert.strictEqual((key.storageKey as VolatileStorageKey).arcId.toString(), '!1234:my-arc-id');
+    assert.strictEqual((key.storageKey as VolatileStorageKey).unique, 'first/second/');
+    assert.strictEqual((key.backingKey as FirebaseStorageKey).databaseURL, 'my-project.test.domain');
+    assert.strictEqual((key.backingKey as FirebaseStorageKey).domain, 'test.domain');
+    assert.strictEqual((key.backingKey as FirebaseStorageKey).projectId, 'my-project');
+    assert.strictEqual((key.backingKey as FirebaseStorageKey).apiKey, 'some-api-key');
+    assert.strictEqual((key.backingKey as FirebaseStorageKey).location, 'first/second/');
     assert.strictEqual(key.toString(), encoded);
   });
 });

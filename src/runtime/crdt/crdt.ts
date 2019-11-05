@@ -69,4 +69,10 @@ export interface CRDTModel<T extends CRDTTypeRecord> {
 export enum ChangeType {Operations, Model}
 export type CRDTChange<T extends CRDTTypeRecord> = {changeType: ChangeType.Operations, operations: T['operation'][]} | {changeType: ChangeType.Model, modelPostChange: T['data']};
 
+export function isEmptyChange<T extends CRDTTypeRecord>(change: CRDTChange<T>): boolean {
+  return change.changeType === ChangeType.Operations && change.operations.length === 0;
+}
 
+export function createEmptyChange<T extends CRDTTypeRecord>(): CRDTChange<T> {
+  return {changeType: ChangeType.Operations, operations: []};
+}

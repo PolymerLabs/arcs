@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, createEmptyChange} from './crdt.js';
 import {Dictionary} from '../hot.js';
 import {assert} from '../../platform/assert-web.js';
 import {Entity} from '../entity.js';
@@ -65,7 +65,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
           }
         }
         if (entriesMatch) {
-          return {modelChange: {changeType: ChangeType.Operations, operations: []}, otherChange: {changeType: ChangeType.Operations, operations: []}};
+          return {modelChange: createEmptyChange(), otherChange: createEmptyChange()};
         }
       }
     }

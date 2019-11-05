@@ -129,9 +129,6 @@ describe('Arc new storage', () => {
     await colHandle.add(d2);
     await colHandle.add(d3);
     await refVarHandle.set(d4);
-    await 0;
-    await 0;
-    await 0;
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(varStore);

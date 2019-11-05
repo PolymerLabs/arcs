@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, isEmptyChange, createEmptyChange} from './crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, Referenceable} from './crdt-collection.js';
 import {Dictionary} from '../hot.js';
 
@@ -52,11 +52,11 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
 
     };
     let newOtherChange: SingletonChange<T> = newModelChange;
-    if (modelChange.changeType === ChangeType.Operations && modelChange.operations.length === 0) {
-      newModelChange = {changeType: ChangeType.Operations, operations: []};
+    if (isEmptyChange(modelChange)) {
+      newModelChange = createEmptyChange();
     }
-    if (otherChange.changeType === ChangeType.Operations && otherChange.operations.length === 0) {
-      newOtherChange = {changeType: ChangeType.Operations, operations: []};
+    if (isEmptyChange(otherChange)) {
+      newOtherChange = createEmptyChange();
     }
 
     return {modelChange: newModelChange, otherChange: newOtherChange};

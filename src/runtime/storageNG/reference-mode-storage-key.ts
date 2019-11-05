@@ -10,7 +10,6 @@
 
  import {StorageKey} from './storage-key.js';
 
-
 export class ReferenceModeStorageKey extends StorageKey {
   constructor(public backingKey: StorageKey, public storageKey: StorageKey) {
     super('reference-mode');
