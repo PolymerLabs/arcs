@@ -33,7 +33,7 @@ jobs:
 cache: false
 
 before_install:
-  - docker pull alxrsngrtn/arcs-travis-build
+  - docker pull alxrsngrtn/arcs-travis-build:first
 
 before_deploy:
   # build apidocs
