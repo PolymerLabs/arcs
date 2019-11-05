@@ -11,7 +11,8 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
-import {Schema, Type, SlotType, TypeVariable} from '../type.js';
+import {Schema} from '../schema.js';
+import {Type, SlotType, TypeVariable} from '../type.js';
 import {Slot} from './slot.js';
 import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
