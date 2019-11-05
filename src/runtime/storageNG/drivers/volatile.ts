@@ -55,15 +55,19 @@ export class VolatileMemory {
   token = Math.random() + '';
 }
 
+let id = 0;
+
 export class VolatileDriver<Data> extends Driver<Data> {
   private memory: VolatileMemory;
   private pendingVersion = 0;
   private pendingModel: Data | null = null;
   private receiver: ReceiveMethod<Data>;
   private data: VolatileEntry<Data>;
+  private id: number;
 
   constructor(storageKey: StorageKey, exists: Exists, memory: VolatileMemory) {
     super(storageKey, exists);
+    this.id = id++;
     const keyAsString = storageKey.toString();
     this.memory = memory;
     switch (exists) {

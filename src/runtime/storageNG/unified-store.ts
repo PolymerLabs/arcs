@@ -119,6 +119,9 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
         handleStr.push(`in '${info.source}'`);
       } else {
         handleStr.push(`in ${info.source}`);
+        if (info.includeKey) {
+          handleStr.push(`at '${info.includeKey}'`);
+        }
       }
     } else if (this.storageKey) {
       handleStr.push(`at '${this.storageKey}'`);
@@ -170,4 +173,5 @@ export type StoreInfo = {
 
   readonly versionToken?: string;
   readonly model?: {};
+  readonly includeKey?: string;
 };

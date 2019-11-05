@@ -193,6 +193,7 @@ ManifestStorage
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
       origin: source.origin,
+      storageKey: source['storageKey'] || null,
       description,
       claim,
     });
@@ -208,7 +209,15 @@ ManifestStorageFileSource
   = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({kind: 'manifest-storage-source', origin: 'file', source }); }
 
 ManifestStorageResourceSource
-  = 'in' whiteSpace source:upperIdent { return toAstNode<AstNode.ManifestStorageResourceSource>({kind: 'manifest-storage-source', origin: 'resource', source }); }
+  = 'in' whiteSpace source:upperIdent storageKey:(whiteSpace 'at' whiteSpace id)?
+  {
+    return toAstNode<AstNode.ManifestStorageResourceSource>({
+      kind: 'manifest-storage-source',
+      origin: 'resource',
+      source,
+      storageKey: optional(storageKey, sk => sk[3], null)
+    });
+  }
 
 ManifestStorageStorageSource
   = 'at' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageStorageSource>({kind: 'manifest-storage-source', origin: 'storage', source }); }

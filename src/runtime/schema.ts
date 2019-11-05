@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {EntityType, Type} from './type.js';

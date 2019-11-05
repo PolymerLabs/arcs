@@ -43,13 +43,23 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
 
   merge(other: SingletonData<T>):
       {modelChange: SingletonChange<T>, otherChange: SingletonChange<T>} {
-    this.collection.merge(other);
+    const {modelChange, otherChange} = this.collection.merge(other);
+
     // We cannot pass through the collection ops, so always return the updated model.
-    const change: SingletonChange<T> = {
+    let newModelChange: SingletonChange<T> = {
       changeType: ChangeType.Model,
       modelPostChange: this.collection.getData()
+
     };
-    return {modelChange: change, otherChange: change};
+    let newOtherChange: SingletonChange<T> = newModelChange;
+    if (modelChange.changeType === ChangeType.Operations && modelChange.operations.length === 0) {
+      newModelChange = {changeType: ChangeType.Operations, operations: []};
+    }
+    if (otherChange.changeType === ChangeType.Operations && otherChange.operations.length === 0) {
+      newOtherChange = {changeType: ChangeType.Operations, operations: []};
+    }
+
+    return {modelChange: newModelChange, otherChange: newOtherChange};
   }
 
   applyOperation(op: SingletonOperation<T>): boolean {

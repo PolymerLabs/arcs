@@ -132,6 +132,7 @@ export interface ManifestStorage extends BaseNode {
   origin: 'file' | 'resource' | 'storage';
   description: string|null;
   claim: ManifestStorageClaim;
+  storageKey?: string;
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -153,6 +154,7 @@ export interface ManifestStorageFileSource extends ManifestStorageSource {
 
 export interface ManifestStorageResourceSource extends ManifestStorageSource {
   origin: 'resource';
+  storageKey?: string;
 }
 
 export interface ManifestStorageStorageSource extends ManifestStorageSource {

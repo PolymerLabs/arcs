@@ -263,7 +263,7 @@ export class Manifest {
       if (typeof storageKey === 'string') {
         storageKey = StorageKeyParser.parse(storageKey);
       }
-      store = new Store({...opts, storageKey, exists: Exists.ShouldCreate});
+      store = new Store({...opts, storageKey, exists: Exists.MayExist});
     } else {
       if (opts.storageKey instanceof StorageKey) {
         throw new Error(`Can't use new-style storage keys with the old storage stack.`);
@@ -1245,9 +1245,10 @@ ${e.message}
     }
 
     if (Flags.useNewStorageStack) {
-      return manifest.newStore({type, name, id, storageKey: manifest.createLocalDataStorageKey(),
-        tags, originalId, claims, description: item.description, version: item.version || null,
-        source: item.source, origin: item.origin, referenceMode: false, model: entities});
+      const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+      return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
+        description: item.description, version: item.version || null, source: item.source,
+        origin: item.origin, referenceMode: false, model: entities});
     }
 
     // TODO: clean this up

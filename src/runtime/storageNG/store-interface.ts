@@ -47,8 +47,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   type: Type,
   mode: StorageMode,
   baseStore: Store<T>,
-  versionToken: string,
-  model?: T['data']
+  versionToken: string
 };
 
 export type StoreConstructor = {
