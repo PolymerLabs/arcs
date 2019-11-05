@@ -188,11 +188,11 @@ describe('Store', async () => {
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
     await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
-    assert.deepEqual(await activeStore.getLocalData(), count.getData());
+    assert.deepEqual(await activeStore.serializeContents(), count.getData());
     // Clone into another store.
     const activeStore2 = await createStore().activate();
     await activeStore2.cloneFrom(activeStore);
-    assert.deepEqual(await activeStore2.getLocalData(), count.getData());
+    assert.deepEqual(await activeStore2.serializeContents(), count.getData());
   });
 
   it(`won't send an update to the driver after driver-originated messages`, async () => {

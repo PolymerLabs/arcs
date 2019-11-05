@@ -34,10 +34,6 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     super(options);
   }
 
-  async getLocalData(): Promise<CRDTData> {
-    return this.localModel.getData();
-  }
-
   async serializeContents(): Promise<T['data']> {
     await this.idle();
     return this.localModel.getData();
