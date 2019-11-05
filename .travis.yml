@@ -18,7 +18,7 @@ addons:
 jobs:
   include:
     - stage: build
-      script: bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/... && npm run build:rollup
+      script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/... && npm run build:rollup"
     - stage: test
       script: tools/test
 
@@ -27,12 +27,8 @@ cache:
   directories:
     - /home/travis/.cache/bazel/
 
-# Thinking about adding install steps? Why not modify the tools/setup script instead?
-# The list command dumps the top-level packages with their versions, in case we need that for debugging.
-install:
-  - ./tools/setup
-  - npm list --depth=0
-
+before_install:
+  - docker pull alxrsngrtn/arcs-travis-build
 
 before_deploy:
   # build apidocs
