@@ -1,6 +1,3 @@
-import {StorageKey} from "./storage-key";
-//import {StorageKeyParser} from "./storage-key-parser";
-
 /**
  * @license
  * Copyright (c) 2019 Google Inc. All rights reserved.
@@ -10,6 +7,9 @@ import {StorageKey} from "./storage-key";
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+ import {StorageKey} from './storage-key.js';
+
 
 export class ReferenceModeStorageKey extends StorageKey {
   constructor(public backingKey: StorageKey, public storageKey: StorageKey) {

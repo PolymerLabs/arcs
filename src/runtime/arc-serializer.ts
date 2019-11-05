@@ -1,17 +1,25 @@
-import {Flags} from "./flags";
-import {UnifiedStore} from "./storageNG/unified-store";
-import {InterfaceType} from "./type";
-import {StorageKey} from "./storageNG/storage-key";
-import {KeyBase} from "./storage/key-base";
-import {StorageProviderBase} from "./storage/storage-provider-base";
-import {ParticleSpec} from "./particle-spec";
-import {Recipe} from "./recipe/recipe";
-import {StorageProviderFactory} from "./storage/storage-provider-factory";
-import {Manifest} from "./manifest";
-import {Id} from "./id";
-import {VolatileMemory} from "./storageNG/drivers/volatile";
-import {Store} from "./storageNG/store";
-import {Exists} from "./storageNG/drivers/driver-factory";
+/**
+ * @license
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+ import {Flags} from './flags.js';
+import {UnifiedStore} from './storageNG/unified-store.js';
+import {InterfaceType} from './type.js';
+import {StorageKey} from './storageNG/storage-key.js';
+import {KeyBase} from './storage/key-base.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Recipe} from './recipe/recipe.js';
+import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {Manifest} from './manifest.js';
+import {Id} from './id.js';
+import {VolatileMemory} from './storageNG/drivers/volatile.js';
 
 /**
  * @license
