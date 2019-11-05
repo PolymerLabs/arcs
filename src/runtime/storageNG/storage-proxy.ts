@@ -68,6 +68,9 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   registerHandle(handle: Handle<T>): VersionMap {
+    if (!handle.canRead) {
+      return this.versionCopy();
+    }
     this.handles.push(handle);
 
     // Attach an event listener to the backing store when the first readable handle is registered.
