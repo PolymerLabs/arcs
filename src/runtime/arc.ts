@@ -287,9 +287,6 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const options: IsValidOptions = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
     await arc.instantiate(recipe);
-    if (Flags.useNewStorageStack) {
-      // Put resources into arc memory.
-    }
     return arc;
   }
 
