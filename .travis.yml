@@ -17,10 +17,18 @@ addons:
 # javaharness doesn't build on Travis (needs working Android SDK).
 jobs:
   include:
-    - stage: build
-      script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/... && npm run build:rollup"
     - stage: test
-      script: tools/test
+      script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; bazel test --noshow_progress --noshow_loading_progress //particles/..."
+      name: "Bazel Test: //particles/..."
+    - script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; bazel test --noshow_progress --noshow_loading_progress //src/..."
+      name: "Bazel Test: //src/..."
+    - script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; bazel test --noshow_progress --noshow_loading_progress //src_kt/..."
+      name: "Bazel Test: //src_kt/..."
+    - script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; npm run tests-no-web"
+      name: "Node Test: Unit"
+    - script: docker run alxrsngrtn/arcs-travis-build:first /bin/sh -c "cd /usr/src/app; npm run tests-shells"
+      name: "Node Test: Shells"
+
 
 cache:
   npm: true
