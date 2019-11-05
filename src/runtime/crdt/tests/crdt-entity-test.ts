@@ -39,7 +39,7 @@ describe('CRDTEntity', () => {
     };
     const entity = new CRDTEntity(singletons, collections);
 
-    const value = {id: 'bob', value: 'bob'} as Referenceable;
+    const value = {id: 'bob', value: 'bob'};
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value, actor: 'me', clock: {'me': 1}}));
     assert.deepEqual(entity.getParticleView(),
       {singletons: {name: value}, collections: {tags: new Set<Referenceable>()}});
@@ -54,10 +54,10 @@ describe('CRDTEntity', () => {
     };
     const entity = new CRDTEntity(singletons, collections);
 
-    const value = {id: 'bob', value: 'bob'} as Referenceable;
+    const value = {id: 'bob', value: 'bob'};
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Clear, field: 'name', actor: 'me', clock: {'me': 1}}));
-    assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<Referenceable>()}});
+    assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<{id: string, value: string}>()}});
   });
 
   it('can apply an add operation to a collection field', () => {
@@ -69,9 +69,9 @@ describe('CRDTEntity', () => {
     };
     const entity = new CRDTEntity(singletons, collections);
 
-    const value = {id: 'bob', value: 'bob'} as Referenceable;
+    const value = {id: 'bob', value: 'bob'};
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: value, actor: 'me', clock: {'me': 1}}));
-    assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<Referenceable>([value])}});
+    assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<{id: string, value: string}>([value])}});
   });
 
   it('can apply a remove operation to a collection field', () => {
@@ -83,10 +83,10 @@ describe('CRDTEntity', () => {
     };
     const entity = new CRDTEntity(singletons, collections);
 
-    const value = {id: 'bob', value: 'bob'} as Referenceable;
+    const value = {id: 'bob', value: 'bob'};
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Add, field: 'tags', added: value, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Remove, field: 'tags', removed: value, actor: 'me', clock: {'me': 1}}));
-    assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<Referenceable>()}});
+    assert.deepEqual(entity.getParticleView(), {singletons: {name: null}, collections: {tags: new Set<{id: string, value: string}>()}});
   });
 
   it('can apply operations to multiple fields', () => {
@@ -96,15 +96,15 @@ describe('CRDTEntity', () => {
     };
     const collections = {
       tags: new CRDTCollection<{id: string, value: string}>(),
-      favoriteNumbers: new CRDTCollection<{id: string, value: string}>()
+      favoriteNumbers: new CRDTCollection<{id: string, value: number}>()
     };
     const entity = new CRDTEntity(singletons, collections);
 
-    const name = {id: 'bob', value: 'bob'} as Referenceable;
-    const age = {id: '42', value: 42} as Referenceable;
+    const name = {id: 'bob', value: 'bob'};
+    const age = {id: '42', value: 42};
 
-    const tag = {id: '#perf', value: '#perf'} as Referenceable;
-    const favoriteNumber = {id: '4', value: 4} as Referenceable;
+    const tag = {id: '#perf', value: '#perf'};
+    const favoriteNumber = {id: '4', value: 4};
 
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age, actor: 'me', clock: {'me': 1}}));
@@ -123,10 +123,10 @@ describe('CRDTEntity', () => {
     };
     const entity = new CRDTEntity(singletons, {});
 
-    const name1 = {id: 'bob', value: 'bob'} as Referenceable;
-    const name2 = {id: 'dave', value: 'dave'} as Referenceable;
-    const age1 = {id: '42', value: 42} as Referenceable;
-    const age2 = {id: '37', value: 37} as Referenceable;
+    const name1 = {id: 'bob', value: 'bob'};
+    const name2 = {id: 'dave', value: 'dave'};
+    const age1 = {id: '42', value: 42};
+    const age2 = {id: '37', value: 37};
 
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'name', value: name1, actor: 'me', clock: {'me': 1}}));
     assert.isTrue(entity.applyOperation({type: EntityOpTypes.Set, field: 'age', value: age1, actor: 'me', clock: {'me': 1}}));
