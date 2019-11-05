@@ -15,7 +15,7 @@ addons:
 jobs:
   include:
     - stage: build
-      script: bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/... && npm run build:rollup
+      script: bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/...
     - stage: test
       script: tools/test
 

@@ -3,4 +3,3 @@
 cd $(dirname $0)/..
 bazel test --noshow_progress --noshow_loading_progress --test_output=errors //particles/... //src/... //src_kt/...
 npm run tests-with-start
-npm --prefix=server test
