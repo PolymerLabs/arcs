@@ -12,8 +12,8 @@ WORKDIR /usr/src/app
 
 # First copy over the just the package.json files
 # so we can build a cached base image that only has node_modules
-COPY package.json package-lock.json ./
-COPY server/package.json server/package-lock.json server/
+COPY package.json ./
+COPY server/package.json server/
 RUN npm install && npm --prefix=server install
 
 # Copy Everything Else
