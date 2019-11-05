@@ -46,9 +46,6 @@ class DirectStore internal constructor(
   override val versionToken: String?
     get() = driver.token
 
-  override val localData: CrdtData
-    get() = synchronized(this) { localModel.data }
-
   /**
    * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
    * transitions into the Idle state.
@@ -65,6 +62,8 @@ class DirectStore internal constructor(
   private val callbacks = atomic(mapOf<Int, ProxyCallback<CrdtData, CrdtOperation, Any?>>())
 
   override suspend fun idle() = state.value.idle()
+
+  override suspend fun getLocalData(): CrdtData = synchronized(this) { localModel.data }
 
   override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
     val token = nextCallbackToken.getAndIncrement()

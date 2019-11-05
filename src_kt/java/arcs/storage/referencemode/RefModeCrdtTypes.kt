@@ -41,6 +41,8 @@ interface RefModeSingleton
 
 /** Backing crdt-styled data for a [arcs.storage.ReferenceModeStore]. */
 sealed class RefModeStoreData : CrdtData {
+    abstract val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
+
     data class Singleton(
         override var versionMap: VersionMap,
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
@@ -82,10 +84,10 @@ interface RefModeStoreOp : CrdtOperationAtTime {
         RefModeSet,
         CrdtSet.Operation.Add<RawEntity>(clock, actor, added)
 
-    class SetRemove(actor: Actor, clock: VersionMap, added: RawEntity)
+    class SetRemove(actor: Actor, clock: VersionMap, removed: RawEntity)
         : RefModeStoreOp,
         RefModeSet,
-        CrdtSet.Operation.Add<RawEntity>(clock, actor, added)
+        CrdtSet.Operation.Remove<RawEntity>(clock, actor, removed)
 }
 
 /** Consumer data value of the [arcs.storage.ReferenceModeStore]. */

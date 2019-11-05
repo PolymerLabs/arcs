@@ -43,8 +43,8 @@ class BackingStore(
     private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
 
     @Deprecated("Use getLocalData(muxId) instead", replaceWith = ReplaceWith("getLocalData(muxId)"))
-    override val localData: CrdtData
-        get() = throw UnsupportedOperationException("Use getLocalData(muxId) instead.")
+    override suspend fun getLocalData(): CrdtData =
+        throw UnsupportedOperationException("Use getLocalData(muxId) instead.")
 
     /**
      * Gets data from the store corresponding to the given [muxId].

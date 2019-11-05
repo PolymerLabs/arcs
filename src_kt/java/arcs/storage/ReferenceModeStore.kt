@@ -38,10 +38,10 @@ import arcs.storage.referencemode.ReferenceModeStorageKey
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.RefModeStoreOutput
-import arcs.storage.referencemode.toReferenceCrdt
+import arcs.storage.referencemode.toBridgingOp
+import arcs.storage.referencemode.toBridgingOps
+import arcs.storage.referencemode.toBridgingData
 import arcs.storage.referencemode.toReferenceModeMessage
-import arcs.storage.referencemode.toReferenceOperations
-import arcs.storage.referencemode.transformOp
 import arcs.storage.util.ProxyCallbackManager
 import arcs.storage.util.SendQueue
 import arcs.type.Type
@@ -49,6 +49,9 @@ import arcs.util.Random
 import arcs.util.Result
 import arcs.util.computeNotNull
 import arcs.util.nextSafeRandomLong
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlin.coroutines.coroutineContext
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -120,16 +123,26 @@ class ReferenceModeStore private constructor(
         ) { "Provided type must contain CrdtModelType" }.containedType
     }
 
-    override val localData: RefModeStoreData
-        get() = TODO("not implemented")
+    override suspend fun getLocalData(): RefModeStoreData {
+        val containerData = containerStore.getLocalData()
+        val (pendingIds, modelGetter) = constructPendingIdsAndModel(containerData)
+
+        if (pendingIds.isEmpty()) {
+            return modelGetter() as RefModeStoreData
+        }
+
+        val deferred = CompletableDeferred<RefModeStoreData>(coroutineContext[Job.Key])
+        sendQueue.enqueueBlocking(pendingIds) {
+            deferred.complete(modelGetter() as RefModeStoreData)
+        }
+        return deferred.await()
+    }
 
     override fun on(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
-    override fun off(callbackToken: Int) {
-        callbacks.unregister(callbackToken)
-    }
+    override fun off(callbackToken: Int) = callbacks.unregister(callbackToken)
 
     private fun registerStoreCallbacks() {
         backingStore.on(backingStoreCallback)
@@ -148,7 +161,31 @@ class ReferenceModeStore private constructor(
 
     override suspend fun onProxyMessage(
         message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-    ): Boolean = receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(message))
+    ): Boolean {
+        if (message is ProxyMessage.ModelUpdate<*, *, *>) {
+            if (type is CollectionType<*> && message.model !is CrdtSet.Data<*>) {
+                throw CrdtException(
+                    "ReferenceModeStore is managing a Set, Singleton messages not supported"
+                )
+            } else if (type is ReferenceType<*> && message.model !is CrdtSingleton.Data<*>) {
+                throw CrdtException(
+                    "ReferenceModeStore is managing a Singleton, Set messages not supported"
+                )
+            }
+        } else if (message is ProxyMessage.Operations<*, *, *>) {
+            val firstOp = message.operations.firstOrNull()
+            if (type is CollectionType<*> && firstOp !is CrdtSet.Operation<*>?) {
+                throw CrdtException(
+                    "ReferenceModeStore is managing a Set, Singleton messages not supported"
+                )
+            } else if (type is ReferenceType<*> && firstOp !is CrdtSingleton.Operation<*>?) {
+                throw CrdtException(
+                    "ReferenceModeStore is managing a Singleton, Set messages not supported"
+                )
+            }
+        }
+        return receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(message))
+    }
 
     @Suppress("UNCHECKED_CAST")
     private val backingStoreCallback: ProxyCallback<CrdtData, CrdtOperation, Any?> =
@@ -189,9 +226,9 @@ class ReferenceModeStore private constructor(
 
         return@fn when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
-                proxyMessage.operations.toReferenceOperations(containerStore.storageKey)
+                proxyMessage.operations.toBridgingOps(containerStore.storageKey)
                     .all { op ->
-                        op.entityValue?.let { updateBackingStore(it as RawEntity) }
+                        op.entityValue?.let { updateBackingStore(it) }
                         val response = containerStore.onProxyMessage(
                             ProxyMessage.Operations(listOf(op.containerOp), 1)
                         )
@@ -200,21 +237,18 @@ class ReferenceModeStore private constructor(
                                 callbacks.send(proxyMessage, requireNotNull(proxyMessage.id))
                             }
                             true
-                        } else {
-                            false
-                        }
+                        } else false
                     }
             }
             is ProxyMessage.ModelUpdate -> {
-                val newModelsResult = proxyMessage.model.toReferenceCrdt(
+                val newModelsResult = proxyMessage.model.toBridgingData(
                     backingStore.storageKey,
                     ::itemVersionGetter
                 )
                 when (newModelsResult) {
                     is Result.Ok -> {
                         val allBackingUpdatesSuccessful =
-                            newModelsResult.value.backingModels?.all { updateBackingStore(it) }
-                                ?: true
+                            newModelsResult.value.backingModels.all { updateBackingStore(it) }
                         if (allBackingUpdatesSuccessful) {
                             containerStore.onProxyMessage(
                                 ProxyMessage.ModelUpdate(
@@ -294,8 +328,13 @@ class ReferenceModeStore private constructor(
         when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
                 val containerOps = proxyMessage.operations
-                opLoop@for (op in containerOps.toReferenceOperations(containerStore.storageKey)) {
-                    val reference = op.referenceValue
+                opLoop@for (op in containerOps) {
+                    val reference = when (op) {
+                        is CrdtSet.Operation.Add<*> -> op.added as Reference
+                        is CrdtSet.Operation.Remove<*> -> op.removed as Reference
+                        is CrdtSingleton.Operation.Update<*> -> op.value as Reference
+                        else -> null
+                    }
                     val getEntity = if (reference != null) {
                         val entityCrdt = backingStore.getLocalData(reference.id) as? CrdtEntity.Data
                         if (entityCrdt == null) {
@@ -303,8 +342,12 @@ class ReferenceModeStore private constructor(
                                 val updated =
                                     backingStore.getLocalData(reference.id) as? CrdtEntity.Data
 
-                                val upstreamOps =
-                                    listOf(op.transformOp(updated?.toRawEntity(reference.id)))
+                                // Bridge the op from the collection using the RawEntity from the
+                                // backing store, and use the refModeOp for sending back to the
+                                // proxy.
+                                val upstreamOps = listOf(
+                                    op.toBridgingOp(updated?.toRawEntity(reference.id)).refModeOp
+                                )
 
                                 // TODO? Typescript doesn't pass an id.
                                 callbacks.send(ProxyMessage.Operations(upstreamOps, id = null))
@@ -317,7 +360,7 @@ class ReferenceModeStore private constructor(
                     }
 
                     sendQueue.enqueue {
-                        val upstream = listOf(op.transformOp(getEntity()))
+                        val upstream = listOf(op.toBridgingOp(getEntity()).refModeOp)
                         // TODO? Typescript doesn't pass an id.
                         callbacks.send(ProxyMessage.Operations(upstream, id = null))
                     }
@@ -357,8 +400,9 @@ class ReferenceModeStore private constructor(
     }
 
     /**
-     * Returns a function that can construct a CrdtData object of a Container of Entities based off
-     * the provided Container of References.
+     * Returns a function that can construct a [RefModeStoreData] object of a Container of Entities
+     * based off the provided Container of References or a container of references from a provided
+     * [RefModeStoreData].
      *
      * Any referenced IDs that are not yet available in the backing store are returned in the list
      * of pending [Reference]s. The returned function should not be invoked until all references in
@@ -368,7 +412,9 @@ class ReferenceModeStore private constructor(
      * [containerStore].
      */
     @Suppress("UNCHECKED_CAST")
-    private fun constructPendingIdsAndModel(data: CrdtData): Pair<List<Reference>, () -> CrdtData> {
+    private fun constructPendingIdsAndModel(
+        data: CrdtData
+    ): Pair<List<Reference>, () -> CrdtData> {
         val pendingIds = mutableListOf<Reference>()
 
         // We can use one mechanism to calculate pending values because both CrdtSet.Data and
