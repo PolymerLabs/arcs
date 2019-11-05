@@ -17,7 +17,17 @@ jobs:
     - stage: build
       script: bazel build --noshow_progress --noshow_loading_progress //particles/... //src/... //src_kt/...
     - stage: test
-      script: tools/test
+    - script: bazel test --noshow_progress --noshow_loading_progress --test_output=errors //particles/...
+      name: "Bazel Test: //particles/..."
+    - script: bazel test --noshow_progress --noshow_loading_progress --test_output=errors //src/...
+      name: "Bazel Test: //src/..."
+    - script: bazel test --noshow_progress --noshow_loading_progress --test_output=errors //src_kt/...
+      name: "Bazel Test: //src_kt/..."
+    - script: npm run tests-no-web
+      name: "Node Test: Unit"
+    - script: npm run tests-shells
+      name: "Node Test: Shells"
+
 
 cache:
   npm: true
