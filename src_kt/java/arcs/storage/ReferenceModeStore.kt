@@ -219,7 +219,7 @@ class ReferenceModeStore private constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private val handleProxyMessage: suspend (EnqueuedFromStorageProxy) -> Boolean = fn@{ message ->
-        fun itemVersionGetter(id: ReferenceId): VersionMap =
+        suspend fun itemVersionGetter(id: ReferenceId): VersionMap =
             requireNotNull(backingStore.getLocalData(id)?.versionMap?.copy()) {
                 "BackingStore had no local data for item with id = $id"
             }
@@ -412,15 +412,17 @@ class ReferenceModeStore private constructor(
      * [containerStore].
      */
     @Suppress("UNCHECKED_CAST")
-    private fun constructPendingIdsAndModel(
+    private suspend fun constructPendingIdsAndModel(
         data: CrdtData
-    ): Pair<List<Reference>, () -> CrdtData> {
+    ): Pair<List<Reference>, suspend () -> CrdtData> {
         val pendingIds = mutableListOf<Reference>()
 
         // We can use one mechanism to calculate pending values because both CrdtSet.Data and
         // CrdtSingleton.Data's `values` param are maps of ReferenceIds to CrdtSet.DataValue
         // objects.
-        fun calculatePendingIds(dataValues: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>) {
+        suspend fun calculatePendingIds(
+            dataValues: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>
+        ) {
             // Find any pending ids given the reference ids of the data values.
             dataValues.forEach { (refId, dataValue) ->
                 val version = dataValue.versionMap
@@ -441,7 +443,7 @@ class ReferenceModeStore private constructor(
 
         // Loads a CrdtSingleton/CrdtSet.Data object's values map with RawEntities, when that object
         // is intended to be sent to the storage proxy.
-        fun proxyFromCollection(
+        suspend fun proxyFromCollection(
             incoming: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>
         ) : MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>> {
             val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<RawEntity>>()
@@ -475,7 +477,7 @@ class ReferenceModeStore private constructor(
 
         // Just a function which returns a function that calls a function to return some CrdtData to
         // the caller of the returned function.
-        fun buildGetter(builder: () -> CrdtData): () -> CrdtData = { builder() }
+        fun buildGetter(builder: suspend () -> CrdtData): suspend () -> CrdtData = { builder() }
 
         // Incoming `data` is either CrdtSet.Data or CrdtSingleton.Data
         val dataVersionCopy = data.versionMap.copy()

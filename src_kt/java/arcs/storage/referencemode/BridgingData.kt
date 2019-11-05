@@ -20,7 +20,7 @@ import arcs.crdt.CrdtSingleton
 import arcs.crdt.internal.VersionMap
 import arcs.data.RawEntity
 import arcs.storage.StorageKey
-import arcs.util.resultOf
+import arcs.util.resultOfSuspend
 
 /**
  * Result of converting an incoming CRDT model into updated data for the backing and collection
@@ -35,11 +35,11 @@ data class BridgingData(
  * Converts a [RefModeStoreData] object seen by the [ReferenceModeStore] into a [Reference]-based
  * [CrdtData] object for use with the container store.
  */
-fun RefModeStoreData.toBridgingData(
+suspend fun RefModeStoreData.toBridgingData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: (ReferenceId) -> VersionMap
-): arcs.util.Result<BridgingData> = resultOf {
+    itemVersionGetter: suspend (ReferenceId) -> VersionMap
+): arcs.util.Result<BridgingData> = resultOfSuspend {
     when (this) {
         is RefModeStoreData.Set -> BridgingData(
             this.values.values.map { it.value }, // So many values.
@@ -56,10 +56,10 @@ fun RefModeStoreData.toBridgingData(
  * Converts a [RefModeStoreData.Set] object, where values are of [RawEntity] type, to a
  * container-store-friendly version with values of type [Reference].
  */
-private fun RefModeStoreData.Set.toReferenceData(
+private suspend fun RefModeStoreData.Set.toReferenceData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (ReferenceId) -> VersionMap
 ): CrdtSet.Data<Reference> = CrdtSet.DataImpl(
     versionMap.copy(),
     values.mapValues {
@@ -71,10 +71,10 @@ private fun RefModeStoreData.Set.toReferenceData(
  * Converts a [RefModeStoreData.Singleton] object, where values are of [RawEntity] type, to a
  * container-store-friendly version with values of type [Reference].
  */
-private fun RefModeStoreData.Singleton.toReferenceData(
+private suspend fun RefModeStoreData.Singleton.toReferenceData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (ReferenceId) -> VersionMap
 ): CrdtSingleton.Data<Reference> = CrdtSingleton.DataImpl(
     versionMap.copy(),
     values.mapValues {
@@ -83,10 +83,10 @@ private fun RefModeStoreData.Singleton.toReferenceData(
 )
 
 /** Converts a [CrdtSet.DataValue] based on [RawEntity] into one based on [Reference]. */
-private fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
+private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
     storageKey: StorageKey,
     valueVersion: VersionMap,
-    itemVersionGetter: (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (ReferenceId) -> VersionMap
 ): CrdtSet.DataValue<Reference> = CrdtSet.DataValue(
     valueVersion.copy(),
     Reference(value.id, storageKey, itemVersionGetter(value.id))

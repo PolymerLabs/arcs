@@ -28,6 +28,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 
 /**
  * An [ActiveStore] that allows multiple CRDT models to be stored as sub-keys of a single
@@ -38,11 +42,14 @@ import kotlinx.coroutines.launch
 class BackingStore(
     private val options: StoreOptions<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
-    private val defaultScope = CoroutineScope(Dispatchers.Default)
-    private val stores = atomic(mapOf<String, StoreRecord>())
+    private val storeMutex = Mutex()
+    private val stores = mutableMapOf<String, StoreRecord>()
     private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
 
-    @Deprecated("Use getLocalData(muxId) instead", replaceWith = ReplaceWith("getLocalData(muxId)"))
+    @Deprecated(
+        "Use getLocalData(muxId) instead",
+        replaceWith = ReplaceWith("getLocalData(muxId)")
+    )
     override suspend fun getLocalData(): CrdtData =
         throw UnsupportedOperationException("Use getLocalData(muxId) instead.")
 
@@ -52,22 +59,14 @@ class BackingStore(
      * @param coroutineScope Optional coroutine scope on which to place new [Pending] values'
      *   [CompletableDeferred]s on. *Most useful in tests.*
      */
-    suspend fun getLocalData(muxId: String, coroutineScope: CoroutineScope = defaultScope): CrdtData? {
-        var result: CrdtData? = null
-        stores.update { stores ->
-            val store = stores[muxId]
-            when (store) {
-                // Nothing yet, add a pending record.
-                null -> stores + (muxId to Pending(CompletableDeferred(coroutineScope.job)))
-                is Record -> {
-                    result = store.store.getLocalData()
-                    stores
-                }
-                // Must be pending, nothing to do.
-                else -> stores
-            }
+    suspend fun getLocalData(muxId: String): CrdtData? = storeMutex.withLock {
+        val store =
+            stores.getOrDefault(muxId, Pending(CompletableDeferred(coroutineContext[Job.Key])))
+        return when (store) {
+            is Record -> store.store.getLocalData()
+            // Must be pending, nothing to do.
+            else -> null
         }
-        return result
     }
 
     override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int =
@@ -77,10 +76,12 @@ class BackingStore(
         callbacks.unregister(callbackToken)
     }
 
-    override suspend fun idle() = coroutineScope {
-        stores.value.values.mapNotNull {
+    override suspend fun idle() = storeMutex.withLock {
+        stores.values.mapNotNull {
             (it as? Record)?.store?.let {
-                launch { it.idle() }
+                withContext(coroutineContext) {
+                    launch { it.idle() }
+                }
             }
         }.joinAll()
     }
@@ -92,7 +93,8 @@ class BackingStore(
         message: ProxyMessage<CrdtData, CrdtOperation, Any?>,
         muxId: String
     ): Boolean {
-        val resolvedRecord = when (val storeRecord = stores.value[muxId] ?: setupStore(muxId)) {
+        val storeRecord = storeMutex.withLock { stores[muxId] } ?: setupStore(muxId)
+        val resolvedRecord = when (storeRecord) {
             is Record -> storeRecord
             is Pending -> storeRecord.deferred.await()
         }
@@ -117,7 +119,7 @@ class BackingStore(
         val id = store.on(ProxyCallback { processStoreCallback(muxId, it) })
 
         // Return a new Record and add it to our local stores, keyed by muxId.
-        return Record(id, store).also { record -> stores.update { it + (muxId to record) } }
+        return Record(id, store).also { record -> storeMutex.withLock { stores[muxId] = record } }
     }
 
     private suspend fun processStoreCallback(
