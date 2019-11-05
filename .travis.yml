@@ -32,8 +32,6 @@ jobs:
 
 cache:
   npm: true
-  directories:
-    - /home/travis/.cache/bazel/
 
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build
