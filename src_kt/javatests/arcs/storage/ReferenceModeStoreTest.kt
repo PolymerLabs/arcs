@@ -48,7 +48,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for the [ReferenceModeStore]. */
-@Suppress("UNCHECKED_CAST", "OVERRIDE_BY_INLINE")
+@Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
 class ReferenceModeStoreTest {
