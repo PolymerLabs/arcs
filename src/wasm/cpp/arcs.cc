@@ -56,8 +56,6 @@ void renderSlot(Particle* particle, const char* slot_name, bool send_template, b
 
 EMSCRIPTEN_KEEPALIVE
 void fireEvent(Particle* particle, const char* slot_name, const char* handler, const char* eventData) {
-  //*(int*)0=0;
-  console("boo");
   particle->fireEvent(slot_name, handler, eventData);
 }
 
