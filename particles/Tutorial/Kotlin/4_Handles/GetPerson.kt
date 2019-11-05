@@ -20,8 +20,7 @@ class GetPersonParticle : Particle() {
       //registerHandle("person", person)
 
       eventHandler("onNameInputChange") {
-        log("Data: $it")
-        log("boo!")
+        log("Data: ${it.get("value")}")
       }
     }
 

@@ -12,7 +12,7 @@ class EventsTest : Particle() {
         registerHandle("output", output)
     }
 
-    override fun fireEvent(slotName: String, eventName: String) {
+    override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         output.set(Test_Data(txt = "event:$slotName:$eventName"))
     }
 }

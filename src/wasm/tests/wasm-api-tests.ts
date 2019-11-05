@@ -190,7 +190,7 @@ async function setup(manifestString) {
       const output = stores.get('output') as VolatileSingleton;
 
       const particle = slotComposer.consumers[0].consumeConn.particle;
-      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: 'ignored'});
+      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: 'fooBar'});
       await arc.idle;
 
       assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick'});
@@ -336,17 +336,25 @@ async function setup(manifestString) {
       const ioStore = stores.get('ioHandle') as VolatileSingleton;
 
       const sendEvent = async handler => {
+        console.log("I'm in SendEvent");
         await arc.idle;
+        console.log("I awaited arc.idle");
         arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+        console.log("I sent the thing to the pec");
         await arc.idle;
+        console.log("I made it through sendEvent");
       };
 
       // clear() on out/io with pre-populated stores
       await outStore.set({id: 'i1', rawData: {txt: 'out'}});
       await ioStore.set({id: 'i2', rawData: {txt: 'inout'}});
+      console.log("before sending case1");
       await sendEvent('case1');
+      console.log("after sending case1");
       assert.isNull(await outStore.get());
+      console.log("after first assert");
       assert.isNull(await ioStore.get());
+      console.log("after second assert");
 
       // in.get(), out.set()
       await inStore.set({id: 'i3', rawData: {num: 4}});

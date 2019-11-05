@@ -149,7 +149,7 @@ fun fireEvent(particlePtr: WasmAddress, slotNamePtr: WasmString, handlerNamePtr:
     particlePtr.toObject<Particle>().fireEvent(
         slotNamePtr.toKString(),
         handlerNamePtr.toKString(),
-        eventData.toKString()
+        StringDecoder.decodeDictionary(eventData.toKString())
     )
 }
 
