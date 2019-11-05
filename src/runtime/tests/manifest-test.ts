@@ -376,15 +376,15 @@ ${particleStr1}
         x: writes S
 
       recipe
-        handle1: use
-        handle2: use
+        handle1: use *
+        handle2: use *
         P1
           x: writes handle1
         P1
           x: writes handle2
       recipe
-        handle1: use
-        handle2: use
+        handle1: use *
+        handle2: use *
         P1
           x: writes handle2
         P1
