@@ -52,7 +52,7 @@ class BackingStore(
      * @param coroutineScope Optional coroutine scope on which to place new [Pending] values'
      *   [CompletableDeferred]s on. *Most useful in tests.*
      */
-    fun getLocalData(muxId: String, coroutineScope: CoroutineScope = defaultScope): CrdtData? {
+    suspend fun getLocalData(muxId: String, coroutineScope: CoroutineScope = defaultScope): CrdtData? {
         var result: CrdtData? = null
         stores.update { stores ->
             val store = stores[muxId]
@@ -60,7 +60,7 @@ class BackingStore(
                 // Nothing yet, add a pending record.
                 null -> stores + (muxId to Pending(CompletableDeferred(coroutineScope.job)))
                 is Record -> {
-                    result = store.store.localData
+                    result = store.store.getLocalData()
                     stores
                 }
                 // Must be pending, nothing to do.
