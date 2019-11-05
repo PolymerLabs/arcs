@@ -47,6 +47,8 @@ sealed class RefModeStoreData : CrdtData {
         override var versionMap: VersionMap,
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
     ) : RefModeStoreData(), RefModeSingleton, CrdtSingleton.Data<RawEntity> {
+        constructor(data: CrdtSingleton.Data<RawEntity>) : this(data.versionMap, data.values)
+
         override fun copy(): CrdtSingleton.Data<RawEntity> =
             Singleton(
                 versionMap.copy(),
@@ -59,6 +61,8 @@ sealed class RefModeStoreData : CrdtData {
         override var versionMap: VersionMap,
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
     ) : RefModeStoreData(), RefModeSet, CrdtSet.Data<RawEntity> {
+        constructor(data: CrdtSet.Data<RawEntity>) : this(data.versionMap, data.values)
+
         override fun copy(): CrdtSet.Data<RawEntity> =
             Set(
                 versionMap.copy(),

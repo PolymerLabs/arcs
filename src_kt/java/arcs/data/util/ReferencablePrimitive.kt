@@ -13,10 +13,11 @@ package arcs.data.util
 
 import arcs.common.Referencable
 import arcs.common.ReferenceId
+import arcs.util.Base64
 
-data class ReferencablePrimitive<T>(val value: T) : Referencable {
+data class ReferencablePrimitive<T>(val value: T, val valueRepr: String? = null) : Referencable {
     override val id: ReferenceId
-        get() = toString()
+        get() = valueRepr?.let { "ReferencablePrimitive($it)" } ?: toString()
 }
 
 fun Int.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitive(this.toDouble())
@@ -24,4 +25,5 @@ fun Float.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitiv
 fun Double.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitive(this)
 fun String.toReferencable(): ReferencablePrimitive<String> = ReferencablePrimitive(this)
 fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> = ReferencablePrimitive(this)
-fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> = ReferencablePrimitive(this)
+fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
+    ReferencablePrimitive(this, Base64.encode(this))

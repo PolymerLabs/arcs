@@ -38,7 +38,7 @@ data class BridgingData(
 suspend fun RefModeStoreData.toBridgingData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: suspend (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): arcs.util.Result<BridgingData> = resultOfSuspend {
     when (this) {
         is RefModeStoreData.Set -> BridgingData(
@@ -59,7 +59,7 @@ suspend fun RefModeStoreData.toBridgingData(
 private suspend fun RefModeStoreData.Set.toReferenceData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: suspend (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSet.Data<Reference> = CrdtSet.DataImpl(
     versionMap.copy(),
     values.mapValues {
@@ -74,7 +74,7 @@ private suspend fun RefModeStoreData.Set.toReferenceData(
 private suspend fun RefModeStoreData.Singleton.toReferenceData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
-    itemVersionGetter: suspend (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSingleton.Data<Reference> = CrdtSingleton.DataImpl(
     versionMap.copy(),
     values.mapValues {
@@ -86,8 +86,8 @@ private suspend fun RefModeStoreData.Singleton.toReferenceData(
 private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
     storageKey: StorageKey,
     valueVersion: VersionMap,
-    itemVersionGetter: suspend (ReferenceId) -> VersionMap
+    itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSet.DataValue<Reference> = CrdtSet.DataValue(
     valueVersion.copy(),
-    Reference(value.id, storageKey, itemVersionGetter(value.id))
+    Reference(value.id, storageKey, itemVersionGetter(value))
 )

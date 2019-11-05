@@ -27,6 +27,7 @@ import arcs.data.CollectionType
 import arcs.data.FieldName
 import arcs.data.RawEntity
 import arcs.data.ReferenceType
+import arcs.data.SingletonType
 import arcs.storage.referencemode.Message
 import arcs.storage.referencemode.Message.EnqueuedFromBackingStore
 import arcs.storage.referencemode.Message.EnqueuedFromContainer
@@ -72,8 +73,8 @@ import kotlin.coroutines.coroutineContext
  */
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
-    private val backingStore: BackingStore,
-    private val containerStore: DirectStore
+    internal val backingStore: BackingStore,
+    internal val containerStore: DirectStore
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
@@ -107,7 +108,7 @@ class ReferenceModeStore private constructor(
      * needs to synthesize updates. This key is used as the unique write key and
      * [arcs.crdt.internal.Actor] for those updates.
      */
-    private val crdtKey = Random.nextSafeRandomLong().toString()
+    internal val crdtKey = Random.nextSafeRandomLong().toString()
     /**
      * The [versions] map transitively tracks the maximum write version for each contained entity's
      * fields, to ensure synthesized updates can be correctly applied downstream.
@@ -219,10 +220,14 @@ class ReferenceModeStore private constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private val handleProxyMessage: suspend (EnqueuedFromStorageProxy) -> Boolean = fn@{ message ->
-        suspend fun itemVersionGetter(id: ReferenceId): VersionMap =
-            requireNotNull(backingStore.getLocalData(id)?.versionMap?.copy()) {
-                "BackingStore had no local data for item with id = $id"
-            }
+        suspend fun itemVersionGetter(item: RawEntity): VersionMap {
+            val localBackingVersion = backingStore.getLocalData(item.id).versionMap
+            if (localBackingVersion.isNotEmpty()) return localBackingVersion
+
+            updateBackingStore(item)
+
+            return requireNotNull(backingStore.getLocalData(item.id)).versionMap
+        }
 
         return@fn when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
@@ -257,7 +262,7 @@ class ReferenceModeStore private constructor(
                                 )
                             )
                             sendQueue.enqueue {
-                                callbacks.send(proxyMessage, requireNotNull(proxyMessage.id))
+                                callbacks.send(proxyMessage, proxyMessage.id)
                             }
                             true
                         } else throw CrdtException("Could not update one or more backing models")
@@ -362,7 +367,7 @@ class ReferenceModeStore private constructor(
                     sendQueue.enqueue {
                         val upstream = listOf(op.toBridgingOp(getEntity()).refModeOp)
                         // TODO? Typescript doesn't pass an id.
-                        callbacks.send(ProxyMessage.Operations(upstream, id = null))
+                        callbacks.send(ProxyMessage.Operations(upstream, id = proxyMessage.id))
                     }
                 }
             }
@@ -372,7 +377,9 @@ class ReferenceModeStore private constructor(
 
                 suspend fun sender() {
                     // TODO? Typescript doesn't pass an id.
-                    callbacks.send(ProxyMessage.ModelUpdate(model() as RefModeStoreData, id = null))
+                    callbacks.send(
+                        ProxyMessage.ModelUpdate(model() as RefModeStoreData, id = proxyMessage.id)
+                    )
                 }
 
                 if (pendingIds.isEmpty()) {
@@ -383,7 +390,7 @@ class ReferenceModeStore private constructor(
             }
             is ProxyMessage.SyncRequest -> sendQueue.enqueue {
                 // TODO? Typescript doesn't pass an id.
-                callbacks.send(ProxyMessage.SyncRequest(id = null))
+                callbacks.send(ProxyMessage.SyncRequest(id = proxyMessage.id))
             }
         }
         return@fn true
@@ -433,9 +440,9 @@ class ReferenceModeStore private constructor(
 
                 val backingModel = backingStore.getLocalData(refId)
 
-                // If there's no data in the backing store yet, or the version that was
-                // requested is newer than what the backing store has, consider it pending.
-                if (backingModel == null || version dominates backingModel.versionMap) {
+                // If the version that was requested is newer than what the backing store has,
+                // consider it pending.
+                if (version dominates backingModel.versionMap) {
                     pendingIds += Reference(refId, backingStore.storageKey, version)
                 }
             }
@@ -587,7 +594,7 @@ class ReferenceModeStore private constructor(
             val refType = if (options.type is CollectionType<*>) {
                 CollectionType(ReferenceType(type.containedType))
             } else {
-                ReferenceType(type.containedType)
+                SingletonType(ReferenceType(type.containedType))
             }
 
             val backingStore = BackingStore.CONSTRUCTOR(

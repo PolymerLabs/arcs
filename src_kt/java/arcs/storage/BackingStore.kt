@@ -13,19 +13,11 @@ package arcs.storage
 
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtOperation
-import arcs.storage.BackingStore.StoreRecord.Pending
-import arcs.storage.BackingStore.StoreRecord.Record
 import arcs.storage.ProxyMessage.ModelUpdate
 import arcs.storage.ProxyMessage.Operations
 import arcs.storage.ProxyMessage.SyncRequest
 import arcs.storage.util.ProxyCallbackManager
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -43,7 +35,7 @@ class BackingStore(
     private val options: StoreOptions<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
     private val storeMutex = Mutex()
-    private val stores = mutableMapOf<String, StoreRecord>()
+    internal val stores = mutableMapOf<String, StoreRecord>()
     private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
 
     @Deprecated(
@@ -55,18 +47,11 @@ class BackingStore(
 
     /**
      * Gets data from the store corresponding to the given [muxId].
-     *
-     * @param coroutineScope Optional coroutine scope on which to place new [Pending] values'
-     *   [CompletableDeferred]s on. *Most useful in tests.*
      */
-    suspend fun getLocalData(muxId: String): CrdtData? = storeMutex.withLock {
-        val store =
-            stores.getOrDefault(muxId, Pending(CompletableDeferred(coroutineContext[Job.Key])))
-        return when (store) {
-            is Record -> store.store.getLocalData()
-            // Must be pending, nothing to do.
-            else -> null
-        }
+    suspend fun getLocalData(muxId: String): CrdtData {
+        val record = storeMutex.withLock { stores[muxId] }
+            ?: return setupStore(muxId).store.getLocalData()
+        return record.store.getLocalData()
     }
 
     override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int =
@@ -78,10 +63,8 @@ class BackingStore(
 
     override suspend fun idle() = storeMutex.withLock {
         stores.values.mapNotNull {
-            (it as? Record)?.store?.let {
-                withContext(coroutineContext) {
-                    launch { it.idle() }
-                }
+            withContext(coroutineContext) {
+                launch { it.store.idle() }
             }
         }.joinAll()
     }
@@ -93,13 +76,7 @@ class BackingStore(
         message: ProxyMessage<CrdtData, CrdtOperation, Any?>,
         muxId: String
     ): Boolean {
-        val storeRecord = storeMutex.withLock { stores[muxId] } ?: setupStore(muxId)
-        val resolvedRecord = when (storeRecord) {
-            is Record -> storeRecord
-            is Pending -> storeRecord.deferred.await()
-        }
-
-        val (id, store) = resolvedRecord
+        val (id, store) = storeMutex.withLock { stores[muxId] } ?: setupStore(muxId)
         val deMuxedMessage: ProxyMessage<CrdtData, CrdtOperation, Any?> = when (message) {
             is SyncRequest -> SyncRequest(id)
             is ModelUpdate -> ModelUpdate(message.model, id)
@@ -111,15 +88,17 @@ class BackingStore(
     }
 
     @Suppress("UNCHECKED_CAST") // TODO: See if we can clean up this generics situation.
-    private suspend fun setupStore(muxId: String): Record {
+    internal suspend fun setupStore(muxId: String): StoreRecord {
         val store = DirectStore.CONSTRUCTOR(
             // Copy of our options, but with a child storage key using the muxId.
             options.copy(options.storageKey.childKeyWithComponent(muxId))
         ) as DirectStore
+
         val id = store.on(ProxyCallback { processStoreCallback(muxId, it) })
 
         // Return a new Record and add it to our local stores, keyed by muxId.
-        return Record(id, store).also { record -> storeMutex.withLock { stores[muxId] = record } }
+        return StoreRecord(id, store)
+            .also { record -> storeMutex.withLock { stores[muxId] = record } }
     }
 
     private suspend fun processStoreCallback(
@@ -127,23 +106,7 @@ class BackingStore(
         message: ProxyMessage<CrdtData, CrdtOperation, Any?>
     ) = callbacks.sendMultiplexed(message, muxId)
 
-    internal sealed class StoreRecord(open val type: StoreRecordType) {
-        data class Record(
-            val id: Int,
-            val store: DirectStore
-        ) : StoreRecord(StoreRecordType.Record)
-
-        data class Pending(
-            val deferred: CompletableDeferred<Record>
-        ) : StoreRecord(StoreRecordType.Pending)
-    }
-
-    internal enum class StoreRecordType {
-        Record, Pending
-    }
-
-    private val CoroutineScope.job: Job?
-        get() = coroutineContext[Job.Key]
+    data class StoreRecord(val id: Int, val store: DirectStore)
 
     companion object {
         @Suppress("UNCHECKED_CAST")

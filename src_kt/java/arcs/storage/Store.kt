@@ -12,6 +12,7 @@
 package arcs.storage
 
 import arcs.crdt.CrdtData
+import arcs.crdt.CrdtException
 import arcs.crdt.CrdtOperation
 import arcs.type.Type
 
@@ -47,11 +48,12 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     suspend fun activate(): ActiveStore<Data, Op, ConsumerData> {
         activeStore?.let { return it }
 
-        require(mode in CONSTRUCTORS) { "StorageMode $mode not yet implemented" }
-        val constructor =
-            requireNotNull(CONSTRUCTORS[mode]) { "No constructor registered for mode $mode" }
+        CrdtException.require(mode in CONSTRUCTORS) { "StorageMode $mode not yet implemented" }
+        val constructor = CrdtException.requireNotNull(CONSTRUCTORS[mode]) {
+            "No constructor registered for mode $mode"
+        }
 
-        val activeStore = checkNotNull(
+        val activeStore = CrdtException.requireNotNull(
             constructor(
                 StoreOptions(
                     storageKey = storageKey,

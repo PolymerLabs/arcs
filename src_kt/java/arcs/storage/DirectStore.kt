@@ -25,11 +25,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -140,7 +136,7 @@ class DirectStore internal constructor(
     )
   }
 
-  private suspend fun onReceive(data: CrdtData, version: Int) {
+  internal suspend fun onReceive(data: CrdtData, version: Int) {
     if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
       val pending = pendingDriverModels.getAndUpdate { emptyList() }
       applyPendingDriverModels(pending + PendingDriverModel(data, version))
@@ -203,13 +199,13 @@ class DirectStore internal constructor(
       thisChange is CrdtChange.Operations && thisChange.ops.isNotEmpty() -> {
         callbacks.value.filter { messageFromDriver || channel != it.key }
           .map { (id, callback) ->
-            coroutineScope { launch { callback(ProxyMessage.Operations(thisChange.ops, id)) } }
+            callback(ProxyMessage.Operations(thisChange.ops, id))
           }
       }
       thisChange is CrdtChange.Data -> {
         callbacks.value.filter { messageFromDriver || channel != it.key }
           .map { (id, callback) ->
-            coroutineScope { launch { callback(ProxyMessage.ModelUpdate(thisChange.data, id)) } }
+            callback(ProxyMessage.ModelUpdate(thisChange.data, id))
           }
       }
     }
