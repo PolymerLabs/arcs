@@ -498,7 +498,8 @@ class KotlinWasmDriver implements WasmDriver {
   initializeInstance(container: WasmContainer, instance: WebAssembly.Instance) {
     this.updateMemoryViews(container);
     // Kotlin main() must be invoked before everything else.
-    instance.exports.Konan_js_main(1, 0);
+    // TODO(alxrsngtn): Work out how to give Konan_js_main a type signature.
+    (instance.exports.Konan_js_main as (a: number, b: number) => void)(1, 0);
   }
 
   updateMemoryViews(container: WasmContainer) {
