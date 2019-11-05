@@ -14,14 +14,11 @@ ENV WORKSPACE /usr/src/app
 WORKDIR /usr/src/app
 
 
-# Install programs for runtime use (e.g. by Bazel)
+# Install programs for runtime use (e.g. by Bazel, Node-GYP)
 RUN apk update && apk upgrade && \
-    apk add --no-cache --virtual bash git openssh python g++ make
+    apk add --no-cache bash git openssh python g++ make
 
-# Install Project (using node-gyp)
-#  Reference: https://github.com/nodejs/docker-node/issues/282
-#  Added bash for use at CI time
-#  Added git for use by Bazel
+# Install Project
 COPY package.json /usr/src/app/package.json
 RUN npm install
 
