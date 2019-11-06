@@ -13,13 +13,17 @@ addons:
 script:
   # Bazel build & test everything. Can't use `bazel build ...` yet, because
   # javaharness doesn't build on Travis (needs working Android SDK).
+  #
+  # TODO(cromwellian): Ideally remove 'spawn_strategy=local' from the
+  # below once bazel sandboxing issue around paths which appears to be
+  # https://github.com/microsoft/TypeScript/issues/29221
   - >
-    bazel build --noshow_progress --noshow_loading_progress
+    bazel build --spawn_strategy=local --noshow_progress --noshow_loading_progress
     //particles/...
     //src/...
     //src_kt/...
   - >
-    bazel test --noshow_progress --noshow_loading_progress --test_output=errors
+    bazel test --spawn_strategy=local --noshow_progress --noshow_loading_progress --test_output=errors
     //particles/...
     //src/...
     //src_kt/...
