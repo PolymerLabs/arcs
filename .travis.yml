@@ -29,6 +29,9 @@ jobs:
     - script: docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run test-shells"
       name: "Node Test: Shells"
 
+# Use travis to cache a Bazel disk-cache.
+# This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
+# Bazel will store artifacts here due to the `--disk_cache=/disk-cache/` argument.
 cache:
   npm: true
   directories:
