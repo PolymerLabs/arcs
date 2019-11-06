@@ -12,6 +12,7 @@
 package arcs.data
 
 import arcs.crdt.CrdtEntity
+import arcs.crdt.internal.VersionMap
 import arcs.type.Type
 
 class Schema(
@@ -22,11 +23,12 @@ class Schema(
   val name: SchemaName?
     get() = names.firstOrNull()
 
+  val emptyRawEntity: RawEntity
+    get() = RawEntity(singletonFields = fields.singletons, collectionFields = fields.collections)
+
   fun toLiteral(): Literal = Literal(names, fields, description)
 
-  fun createCrdtEntityModel(): CrdtEntity {
-    TODO("Implement me.")
-  }
+  fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
   data class Literal(
     val names: List<SchemaName>,

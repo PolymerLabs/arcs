@@ -25,14 +25,14 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-/** An [ActiveStore] capable of communicating directly with a [Driver]. */
+/**
+ * An [ActiveStore] capable of communicating directly with a [Driver].
+ *
+ * This is what *directly* manages a [CrdtSingleton], [CrdtSet], or [CrdtCount].
+ */
 // TODO: generics here are sub-optimal, can we make this class generic itself?
 class DirectStore internal constructor(
   options: StoreOptions<CrdtData, CrdtOperation, Any?>,
@@ -41,9 +41,6 @@ class DirectStore internal constructor(
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
   override val versionToken: String?
     get() = driver.token
-
-  override val localData: CrdtData
-    get() = synchronized(this) { localModel.data }
 
   /**
    * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
@@ -61,6 +58,8 @@ class DirectStore internal constructor(
   private val callbacks = atomic(mapOf<Int, ProxyCallback<CrdtData, CrdtOperation, Any?>>())
 
   override suspend fun idle() = state.value.idle()
+
+  override suspend fun getLocalData(): CrdtData = synchronized(this) { localModel.data }
 
   override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int {
     val token = nextCallbackToken.getAndIncrement()
@@ -97,14 +96,16 @@ class DirectStore internal constructor(
           callbacks.value[message.id]?.invoke(ProxyMessage.SyncRequest(message.id))
           false
         } else {
-          val change =
-            CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
-          processModelChange(
-            change,
-            otherChange = null,
-            version = version.value,
-            channel = message.id
-          )
+          if (message.operations.isNotEmpty()) {
+            val change =
+              CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
+            processModelChange(
+              change,
+              otherChange = null,
+              version = version.value,
+              channel = message.id
+            )
+          }
           true
         }
       }
@@ -135,7 +136,7 @@ class DirectStore internal constructor(
     )
   }
 
-  private suspend fun onReceive(data: CrdtData, version: Int) {
+  internal suspend fun onReceive(data: CrdtData, version: Int) {
     if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
       val pending = pendingDriverModels.getAndUpdate { emptyList() }
       applyPendingDriverModels(pending + PendingDriverModel(data, version))
@@ -198,13 +199,13 @@ class DirectStore internal constructor(
       thisChange is CrdtChange.Operations && thisChange.ops.isNotEmpty() -> {
         callbacks.value.filter { messageFromDriver || channel != it.key }
           .map { (id, callback) ->
-            coroutineScope { launch { callback(ProxyMessage.Operations(thisChange.ops, id)) } }
+            callback(ProxyMessage.Operations(thisChange.ops, id))
           }
       }
       thisChange is CrdtChange.Data -> {
         callbacks.value.filter { messageFromDriver || channel != it.key }
           .map { (id, callback) ->
-            coroutineScope { launch { callback(ProxyMessage.ModelUpdate(thisChange.data, id)) } }
+            callback(ProxyMessage.ModelUpdate(thisChange.data, id))
           }
       }
     }

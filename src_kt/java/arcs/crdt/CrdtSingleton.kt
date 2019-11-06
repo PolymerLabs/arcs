@@ -29,7 +29,10 @@ class CrdtSingleton<T : Referencable>(
     private var set: CrdtSet<T>
 
     override val data: Data<T>
-        get() = set.data as Data<T>
+        get() {
+            val setData = set.data
+            return DataImpl(setData.versionMap, setData.values)
+        }
     override val consumerView: T?
         // Get any value, or null if no value is present.
         get() = set.consumerView.minBy { it.id }
@@ -78,7 +81,7 @@ class CrdtSingleton<T : Referencable>(
     }
 
     /** Concrete representation of the data stored by a [CrdtSingleton]. */
-    class DataImpl<T : Referencable>(
+    data class DataImpl<T : Referencable>(
         override var versionMap: VersionMap = VersionMap(),
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>> = mutableMapOf()
     ) : Data<T> {

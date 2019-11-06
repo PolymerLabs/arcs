@@ -9,10 +9,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.data
+package arcs.util
 
-/** TODO: This is super minimal for now. */
-class SchemaFields(
-    val singletons: Set<FieldName>,
-    val collections: Set<FieldName>
-)
+/** Implementation of Java's `compute` which expects, and returns, a non-null result. */
+fun <K, V> MutableMap<K, V>.computeNotNull(key: K, updater: (K, V?) -> V): V =
+    updater(key, this[key]).also { this[key] = it }
+

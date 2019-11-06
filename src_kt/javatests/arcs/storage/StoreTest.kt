@@ -221,12 +221,12 @@ class StoreTest {
     val count = CrdtCount()
     count.applyOperation(Increment("me", 0 to 1))
     activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
-    assertThat(activeStore.localData).isEqualTo(count.data)
+    assertThat(activeStore.getLocalData()).isEqualTo(count.data)
 
     // Clone into another store.
     val activeStore2 = createStore().activate()
     activeStore2.cloneFrom(activeStore)
-    assertThat(activeStore2.localData).isEqualTo(count.data)
+    assertThat(activeStore2.getLocalData()).isEqualTo(count.data)
   }
 
   @Test
@@ -325,7 +325,7 @@ class StoreTest {
 
     activeStore.idle()
 
-    assertThat(activeStore.localData).isEqualTo(driverModelCaptor.lastValue)
+    assertThat(activeStore.getLocalData()).isEqualTo(driverModelCaptor.lastValue)
   }
 
   private suspend fun setupMocks(): Pair<Driver<CrdtCount.Data>, DriverProvider> {
