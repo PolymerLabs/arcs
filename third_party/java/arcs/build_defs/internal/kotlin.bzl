@@ -22,21 +22,23 @@ def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
 
 def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
     """Performs final compilation of wasm and bundling if necessary."""
-    libname = name + "_lib"
 
-    # Declare a library because g3 kt_native_binary doesn't take srcs
-    kt_native_library(
-        name = libname,
-        srcs = srcs,
-        deps = _ARCS_KOTLIN_LIBS + deps,
-        tags = ["wasm"],
-        visibility = visibility
-    )
+    if srcs:
+        libname = name + "_lib"
+        # Declare a library because g3 kt_native_binary doesn't take srcs
+        kt_native_library(
+            name = libname,
+            srcs = srcs,
+            deps = _ARCS_KOTLIN_LIBS + deps,
+            visibility = visibility
+        )
+
+        deps = [":" + libname]
 
     kt_native_binary(
         name = name,
         entry_point = "arcs.main",
-        deps = _ARCS_KOTLIN_LIBS + [":%s" % libname] + deps,
+        deps = _ARCS_KOTLIN_LIBS + deps,
         tags = ["wasm"],
         visibility = visibility,
     )
