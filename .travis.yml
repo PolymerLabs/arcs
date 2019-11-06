@@ -23,9 +23,9 @@ jobs:
       name: "Bazel Test: //src/..."
     - script: bazel test --noshow_progress --noshow_loading_progress --test_output=errors //src_kt/...
       name: "Bazel Test: //src_kt/..."
-    - script: npm run tests-no-web
+    - script: npm run test-no-web
       name: "Node Test: Unit"
-    - script: npm run tests-shells
+    - script: npm run test-shells
       name: "Node Test: Shells"
 
 
