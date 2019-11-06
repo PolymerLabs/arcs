@@ -18,11 +18,11 @@ jobs:
     - stage: build
       script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel build //particles/... //src/... //src_kt/..."
     - stage: test
-      script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel test --noshow_progress --noshow_loading_progress //particles/..."
+      script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel test //particles/..."
       name: "Bazel Test: //particles/..."
-    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest/bin/sh -c "cd /usr/src/app; bazel test --noshow_progress --noshow_loading_progress //src/..."
+    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest/bin/sh -c "cd /usr/src/app; bazel test //src/..."
       name: "Bazel Test: //src/..."
-    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel test --noshow_progress --noshow_loading_progress //src_kt/..."
+    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel test //src_kt/..."
       name: "Bazel Test: //src_kt/..."
     - script: docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run tests-no-web"
       name: "Node Test: Unit"
@@ -30,12 +30,13 @@ jobs:
       name: "Node Test: Shells"
 
 cache:
+  npm: true
   directories:
     - /home/travis/.cache/bazel/
 
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build:latest
-  - docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest  /bin/sh -c "cd /usr/src/app; npm install"
+  - docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest  /bin/sh -c "cd /usr/src/app; npm install"
 
 install: false
 
