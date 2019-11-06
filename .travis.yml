@@ -24,9 +24,9 @@ jobs:
       name: "Bazel Test: //src/..."
     - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel test //src_kt/..."
       name: "Bazel Test: //src_kt/..."
-    - script: docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run tests-no-web"
+    - script: docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run test-no-web"
       name: "Node Test: Unit"
-    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run tests-shells"
+    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run test-shells"
       name: "Node Test: Shells"
 
 cache:
