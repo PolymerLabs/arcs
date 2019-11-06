@@ -14,7 +14,6 @@ script:
   # Bazel build & test everything. Can't use `bazel build ...` yet, because
   # javaharness doesn't build on Travis (needs working Android SDK).
   #
-  # TODO(csilvestrini): Restore //particles/... and //src/... to blaze
   # build/test below when they're operational on Travis again.
   # https://github.com/PolymerLabs/arcs/issues/4018
   - >
