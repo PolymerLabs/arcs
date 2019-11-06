@@ -49,9 +49,11 @@ function onError(error: NodeJS.ErrnoException): void {
     case 'EACCES':
       console.error(`${bind} requires elevated privileges`);
       process.exit(1);
+
     case 'EADDRINUSE':
       console.error(`${bind} is already in use`);
       process.exit(1);
+
     default:
       throw error;
   }
