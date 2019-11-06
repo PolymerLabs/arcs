@@ -482,10 +482,6 @@ class ReferenceModeStore private constructor(
             return outgoing
         }
 
-        // Just a function which returns a function that calls a function to return some CrdtData to
-        // the caller of the returned function.
-        fun buildGetter(builder: suspend () -> CrdtData): suspend () -> CrdtData = { builder() }
-
         // Incoming `data` is either CrdtSet.Data or CrdtSingleton.Data
         val dataVersionCopy = data.versionMap.copy()
         val modelGetter = when (data) {
