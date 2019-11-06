@@ -22,6 +22,3 @@ workspace_type: java
 
 build_flags:
   --incompatible_depset_is_not_iterable=false
-
-test_flags:
-  --nocache_test_results

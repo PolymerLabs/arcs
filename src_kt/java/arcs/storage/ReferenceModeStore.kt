@@ -500,19 +500,13 @@ class ReferenceModeStore private constructor(
                     // storage proxy.
                     containerData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        buildGetter {
-                            RefModeStoreData.Singleton(
-                                dataVersionCopy, proxyFromCollection(valuesCopy)
-                            )
-                        }
+                        suspend { RefModeStoreData.Singleton(dataVersionCopy, proxyFromCollection(valuesCopy)) }
                     }
                     // If its type is `RawEntity`, it must be coming from the proxy, so generate a
                     // Reference-based data that can be sent to the container store.
                     proxyData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        buildGetter {
-                            CrdtSingleton.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy))
-                        }
+                        suspend { CrdtSingleton.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy)) }
                     }
                     else -> throw CrdtException("Invalid data type for constructPendingIdsAndModel")
                 }
@@ -528,17 +522,13 @@ class ReferenceModeStore private constructor(
                     // storage proxy.
                     containerData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        buildGetter {
-                            RefModeStoreData.Set(dataVersionCopy, proxyFromCollection(valuesCopy))
-                        }
+                        suspend { RefModeStoreData.Set(dataVersionCopy, proxyFromCollection(valuesCopy)) }
                     }
                     // If its type is `RawEntity`, it must be coming from the proxy, so generate a
                     // Reference-based data that can be sent to the container store.
                     proxyData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        buildGetter {
-                            CrdtSet.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy))
-                        }
+                        suspend { CrdtSet.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy)) }
                     }
                     else -> throw CrdtException("Invalid data type for constructPendingIdsAndModel")
                 }
