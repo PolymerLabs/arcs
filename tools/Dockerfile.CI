@@ -22,3 +22,5 @@ RUN apk update && apk upgrade && \
 COPY package.json /usr/src/app/package.json
 RUN npm install
 
+# Create bazel cache directory
+RUN mkdir -p ~/.cache/bazel/
