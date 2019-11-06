@@ -1,4 +1,4 @@
-language: node_js  # https://docs.travis-ci.com/user/languages/javascript-with-nodejs/
+# language: node_js  # https://docs.travis-ci.com/user/languages/javascript-with-nodejs/
 dist: xenial
 env:
   global:
