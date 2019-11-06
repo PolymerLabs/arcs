@@ -114,7 +114,6 @@ fun init(particlePtr: WasmAddress) {
   particlePtr.toObject<Particle>().init()
 }
 
-
 @Retain
 @ExportForCppRuntime("_syncHandle")
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {

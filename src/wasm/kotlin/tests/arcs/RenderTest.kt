@@ -17,7 +17,7 @@ class RenderTest : Particle() {
         return "abc"
     }
 
-    override fun populateModel(slotName: String, model: Map<String, String?>): Map<String, String?> {
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         return mapOf("foo" to "bar")
     }
 
