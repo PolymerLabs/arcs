@@ -31,7 +31,10 @@ describe('wait for server', () => {
 
 const persona = `${marshalPersona('volatile')}`;
 describe(`WASM (${persona})`, () => {
-  it('loads Kotlin Tutorial 1', async function() {
+  // TODO(csilvestrini): Re-enable this test once Wasm particle
+  // blaze builds are operational again.
+  // https://github.com/PolymerLabs/arcs/issues/4018
+  it.skip('loads Kotlin Tutorial 1', async function() {
     console.log(`running "${this.test.fullTitle()}"`);
     await openArc(persona);
     await searchFor('Kotlin');
