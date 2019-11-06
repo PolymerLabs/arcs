@@ -104,5 +104,5 @@ sealed class RefModeStoreOutput : Referencable {
     data class DereferencedSet(
         override val id: ReferenceId,
         val value: Set<RawEntity>
-    ) : RefModeStoreOutput(), RefModeSet
+    ) : RefModeStoreOutput(), RefModeSet, Set<RawEntity> by value
 }
