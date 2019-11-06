@@ -70,7 +70,6 @@ abstract class Particle : WasmObject() {
     }
 
     open fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
-        log("particle.kt ${eventData}")
         eventHandlers[eventName]?.invoke(eventData)
         renderOutput()
     }
