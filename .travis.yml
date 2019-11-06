@@ -16,7 +16,7 @@ sudo: required
 jobs:
   include:
     - stage: build
-      script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel build //particles/... //src/... //src_kt/..."
+      script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel build //particles/... //src/... //src_kt/... --verbose_failures"
     - stage: test
       script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; bazel test //particles/..."
       name: "Bazel Test: //particles/..."
@@ -26,7 +26,7 @@ jobs:
       name: "Bazel Test: //src_kt/..."
     - script: docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run tests-no-web"
       name: "Node Test: Unit"
-    - script: docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run tests-shells"
+    - script: docker run -v $(pwd):/usr/src/app/ -v /home/travis/.cache/bazel:/root/.cache/bazel alxrsngrtn/arcs-travis-build:latest /bin/sh -c "cd /usr/src/app; npm run tests-shells"
       name: "Node Test: Shells"
 
 cache:
