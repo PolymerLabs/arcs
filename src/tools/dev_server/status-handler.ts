@@ -16,7 +16,8 @@ import {ExplorerProxy} from './explorer-proxy.js';
  *
  * Very simple at the moment, will likely grow as we add features.
  */
-export function status(proxy: ExplorerProxy) {
+// tslint:disable-next-line:no-any
+export function status(proxy: ExplorerProxy): any {
   // The following any is the return type defined in express-serve-static-core/index.d.ts.
   // It is needed here to resolve the type for tsc, which otherwise throws error TS2742.
   // tslint:disable-next-line no-any
