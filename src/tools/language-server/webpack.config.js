@@ -29,7 +29,7 @@ module.exports = {
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
       // Replace all the web variants with node ones.
-      /\/platform\/.*-web.js$/,
+      /\/.*-web.js$/,
       resource =>  resource.request = resource.request.replace(/-web.js$/, '-node.js')
     )
   ]
