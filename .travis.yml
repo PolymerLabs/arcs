@@ -41,7 +41,6 @@ before_install:
 install:
   - docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest  /bin/sh -c "cd /usr/src/app; npm install"
 
-
 before_deploy:
   # build apidocs
   - cd ${TRAVIS_BUILD_DIR} && npm run build:typedoc
