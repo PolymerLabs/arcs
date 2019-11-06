@@ -24,8 +24,6 @@ script:
     bazel test --noshow_progress --noshow_loading_progress --test_output=errors
     //src_kt/...
   - npm run test-with-start
-  - npm run build:rollup
-  - npm --prefix=server test
 
 cache:
   npm: true
