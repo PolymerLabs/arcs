@@ -2,6 +2,6 @@ import './schemas/Image.arcs'
 import './schemas/MlResource.arcs'
 
 particle ImageToTensor in './js/ImageToTensor.js'
-  in Image {(Text or URL) url} image
-  out TfTensor imageTensor
+  image: reads Image {url: (Text or URL)}
+  imageTensor: writes TfTensor
   //description `Converts an Image URL to a Tensor3D`

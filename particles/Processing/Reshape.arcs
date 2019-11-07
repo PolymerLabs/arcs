@@ -1,9 +1,9 @@
 import './schemas/MlResource.arcs'
 
 particle Reshape in './js/Reshape.js'
-  in TfTensor tensor
-  in [Shape] shape
-  out TfTensor newTensor
+  tensor: reads TfTensor
+  shape: reads [Shape]
+  newTensor: writes TfTensor
   //description `transforms the shape of the input tensor to the target, preserving number of elements`
 
 

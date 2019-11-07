@@ -1,10 +1,10 @@
 import './schemas/MlResource.arcs'
 
 particle ResizeBilinear in './js/ResizeBilinear.js'
-  in TfTensor images
-  in [Shape] size
-  in ResizeOptions options
-  out TfTensor resizedImages
+  images: reads TfTensor
+  size: reads [Shape]
+  options: reads ResizeOptions
+  resizedImages: writes TfTensor
   //description `use bilinear-interpolation to resize a batch of images`
 
 
