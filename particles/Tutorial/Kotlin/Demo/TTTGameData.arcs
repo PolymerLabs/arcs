@@ -1,0 +1,44 @@
+import 'TTTGameSchemas.arcs'
+
+resource ComputerDefault
+  start
+  [
+    {"name": "Computer", "avatar": "🤖"}
+  ]
+
+resource FirstComputer
+  start
+  [
+    {"name": "Computer One", "avatar": "🕹️"}
+  ]
+
+resource SecondComputer
+  start
+  [
+    {"name": "Computer Two", "avatar": "🚀"}
+  ]
+
+resource HumanDefault
+  start
+  [
+    {"name": "Human", "avatar": "🧑"}
+  ]
+
+resource FirstHuman
+  start
+  [
+    {"name": "Player One", "avatar": "👩‍🚀"}
+  ]
+
+resource SecondHuman
+  start
+  [
+    {"name": "Player Two", "avatar": "🦸"}
+  ]
+
+store ComputerStore of Person in ComputerDefault
+store ComputerOneStore of Person in FirstComputer
+store ComputerTwoStore of Person in SecondComputer
+store HumanStore of Person in HumanDefault
+store HumanOneStore of Person in FirstHuman
+store HumanTwoStore of Person in SecondHuman

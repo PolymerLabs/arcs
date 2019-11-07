@@ -1,0 +1,8 @@
+schema GameState
+  Text board
+  Number currentPlayer
+
+schema Event
+  Text type
+  Number move
+  Number time
