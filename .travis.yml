@@ -40,7 +40,6 @@ cache:
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build:latest
   - mkdir -p ./disk-cache/
-  - touch .bazelrc
 
 install:
   - tools/run_in_docker "npm install"
