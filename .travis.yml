@@ -16,7 +16,7 @@ sudo: required
 jobs:
   include:
     - stage: build
-      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/..."
+      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... //src/... //particles/..."
     - stage: test
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
       name: "Bazel Test: //src_kt/..."
