@@ -3,8 +3,6 @@ package arcs.android.demo;
 import android.app.Activity;
 import android.os.Bundle;
 
-import java.util.Arrays;
-import java.util.Collections;
 import javax.inject.Inject;
 
 import arcs.android.ArcsAndroidClient;
@@ -25,13 +23,6 @@ public class NotificationDemoActivity extends Activity {
     ((ArcsDemoApplication) getApplication()).getComponent().inject(this);
 
     arcsAndroidClient.connect(this);
-    arcsAndroidClient.addManifests(
-        Collections.singletonList(DemoConstants.ROOT_MANIFEST),
-        success ->  {
-          if (!success) {
-            throw new IllegalStateException("Failed to add manifest");
-          }
-        });
     arcsAndroidClient.registerRenderer("notification", notificationRenderer);
 
     setContentView(R.layout.notification_demo);

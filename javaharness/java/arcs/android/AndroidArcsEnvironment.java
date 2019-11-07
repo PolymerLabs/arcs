@@ -12,13 +12,10 @@ import android.webkit.WebView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import arcs.api.ArcsMessageSender;
 import arcs.api.Constants;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
@@ -42,6 +39,8 @@ final class AndroidArcsEnvironment {
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
 
   private static final String ASSETS_PREFIX = "https://$assets/";
+  private static final String APK_ASSETS_URL_PREFIX = "file:////android_asset/arcs/";
+  private static final String ROOT_MANIFEST_FILENAME = "Root.arcs";
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -64,7 +63,6 @@ final class AndroidArcsEnvironment {
   private final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
 
   private WebView webView;
-  private String dynamicManifest;
 
   AndroidArcsEnvironment(
       PortableJsonParser portableJsonParser,
@@ -77,12 +75,11 @@ final class AndroidArcsEnvironment {
     this.runtimeSettings = runtimeSettings;
   }
 
-
   void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
   }
 
-  void init(Context context, List<String> manifests) {
+  void init(Context context) {
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -100,11 +97,6 @@ final class AndroidArcsEnvironment {
     arcsSettings.setAllowFileAccessFromFileURLs(true);
     // needed to allow WebWorkers to work in FileURLs.
     arcsSettings.setAllowUniversalAccessFromFileURLs(true);
-
-    dynamicManifest = manifests
-        .stream()
-        .map(s -> String.format("import \'%s%s\'", ASSETS_PREFIX, s))
-        .collect(Collectors.joining("\n"));
 
     webView.addJavascriptInterface(this, "DeviceClient");
 
@@ -196,14 +188,19 @@ final class AndroidArcsEnvironment {
         .put("https://$build/", "");
 
     if (settings.loadAssetsFromWorkstation()) {
-      // Fetch .wasm modules and generated manifest from the build directory.
+      // Fetch generated root manifest from the APK assets directory.
+      urlMap.put(
+          ASSETS_PREFIX + ROOT_MANIFEST_FILENAME,
+          APK_ASSETS_URL_PREFIX + ROOT_MANIFEST_FILENAME);
+      // Fetch remaining assets from the workstation redirecting requests
+      // for .wasm modules to the build directory.
       urlMap.put(ASSETS_PREFIX, jsonParser.emptyObject()
           .put("root", "http://localhost:" + settings.devServerPort() + "/")
           .put("buildDir", "bazel-bin/")
           .put("buildOutputRegex", "(\\\\.wasm)|(\\\\.root\\\\.arcs)$"));
     } else {
       // Fetch all assets from the APK assets directory.
-      urlMap.put(ASSETS_PREFIX, "file:////android_asset/arcs/");
+      urlMap.put(ASSETS_PREFIX, APK_ASSETS_URL_PREFIX);
     }
                 
     sendMessageToArcs(jsonParser.stringify(jsonParser
@@ -212,7 +209,7 @@ final class AndroidArcsEnvironment {
         .put("config", jsonParser.emptyObject()
             .put("rootPath", ".")
             .put("storage", "volatile://")
-            .put("manifest", dynamicManifest)
+            .put("manifest", "import '" + ASSETS_PREFIX + ROOT_MANIFEST_FILENAME + "'")
             .put("urlMap", urlMap))));
   }
 }
