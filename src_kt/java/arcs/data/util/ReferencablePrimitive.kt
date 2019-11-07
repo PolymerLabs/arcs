@@ -14,10 +14,22 @@ package arcs.data.util
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.util.Base64
+import kotlin.reflect.KClass
 
 data class ReferencablePrimitive<T>(val value: T, val valueRepr: String? = null) : Referencable {
     override val id: ReferenceId
         get() = valueRepr?.let { "ReferencablePrimitive($it)" } ?: toString()
+
+    companion object {
+        /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
+        fun isSupportedPrimitive(klass: KClass<*>): Boolean =
+            klass == Int::class
+                || klass == Float::class
+                || klass == Double::class
+                || klass == String::class
+                || klass == Boolean::class
+                || klass == ByteArray::class
+    }
 }
 
 fun Int.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitive(this.toDouble())

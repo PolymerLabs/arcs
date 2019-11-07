@@ -14,6 +14,7 @@ package arcs.crdt
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtSet.Data as SetData
+import arcs.crdt.CrdtSet.IOperation as ISetOp
 import arcs.crdt.CrdtSet.Operation as SetOp
 import arcs.crdt.CrdtSingleton.Data as SingletonData
 import arcs.crdt.CrdtSingleton.Operation as SingletonOp
@@ -51,7 +52,7 @@ class CrdtEntity(
         val singletonChanges =
             mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, SingletonOp<Reference>>>()
         val collectionChanges =
-            mutableMapOf<FieldName, MergeChanges<SetData<Reference>, SetOp<Reference>>>()
+            mutableMapOf<FieldName, MergeChanges<SetData<Reference>, ISetOp<Reference>>>()
 
         var allOps = true
 
@@ -149,11 +150,10 @@ class CrdtEntity(
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
     }
 
-    private fun SetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
+    private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SetOp.Add -> Operation.AddToSet(actor, clock, fieldName, added)
         is SetOp.Remove -> Operation.RemoveFromSet(actor, clock, fieldName, removed)
-        is SetOp.FastForward ->
-            throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
+        else -> throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
     }
 
     /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */

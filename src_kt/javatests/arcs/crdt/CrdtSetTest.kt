@@ -176,12 +176,12 @@ class CrdtSetTest {
     val modelChange =
       requireNotNull(
         changes.modelChange
-          as? CrdtChange.Data<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>>
+          as? CrdtChange.Data<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
       )
     val otherChange =
       requireNotNull(
         changes.otherChange
-          as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>>
+          as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
       )
 
     assertThat(modelChange.data.versionMap).isEqualTo(expectedVersion)
@@ -257,7 +257,7 @@ class CrdtSetTest {
     val (_, otherChange) = bob.merge(alice.data)
 
     val operations = requireNotNull(
-      otherChange as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>>
+      otherChange as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
     )
 
     assertThat(operations.ops).containsExactlyElementsIn(expectedAdds)
