@@ -11,7 +11,7 @@ import fs from 'fs';
 import path from 'path';
 
 import {Logger} from './util.js';
-import {Loader} from '../../runtime/loader.js';
+import {Loader} from '../../platform/loader.js';
 
 export class LspLoader extends Loader {
   logger: Logger;
