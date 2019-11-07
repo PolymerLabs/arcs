@@ -27,4 +27,4 @@ particle OuterParticle in 'outer-particle.js'
 
 particle ConsumerParticle in 'consumer-particle.js'
   in Bar input
-  consume annotation
+  must consume annotation
