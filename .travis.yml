@@ -28,8 +28,9 @@ jobs:
       name: "Bazel Test: //particles/..."
     - script: tools/run_in_docker "npm run test-no-web"
       name: "Node Test: Unit"
-    - script: tools/run_in_docker "npm run test-shells"
-      name: "Node Test: Shells"
+#     # TODO(alxr): Add back into CI once docker issue fixed
+#    - script: tools/run_in_docker "npm run test-shells"
+#      name: "Node Test: Shells"
 
 # Use travis to cache a Bazel disk-cache.
 # This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
