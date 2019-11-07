@@ -1,5 +1,8 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_schema")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_library", "kt_native_binary")
+load("//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_schema",
+    "arcs_kt_library",
+    "arcs_kt_binary",
+)
 
 licenses(["notice"])
 
@@ -15,16 +18,15 @@ arcs_kt_schema(
     srcs = ["schemas.arcs"],
 )
 
-kt_native_library(
+arcs_kt_library(
     name = "test-module_lib",
     srcs = glob(["*.kt"]),
     visibility = ["//visibility:public"],
     deps = [":test_schemas"],
 )
 
-kt_native_binary(
+arcs_kt_binary(
     name = "test-module",
     visibility = ["//visibility:public"],
     deps = [":test-module_lib"],
 )
-

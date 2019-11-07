@@ -32,7 +32,7 @@ class ServiceParticle : Particle() {
                   </ul>"""
     }
 
-    override fun populateModel(slotName: String, model: Map<String, String?>): Map<String, String?> {
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         return model + mapOf(
             "imageUrl" to url,
             "label" to label,

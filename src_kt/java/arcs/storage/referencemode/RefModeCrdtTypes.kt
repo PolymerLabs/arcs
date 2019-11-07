@@ -41,10 +41,14 @@ interface RefModeSingleton
 
 /** Backing crdt-styled data for a [arcs.storage.ReferenceModeStore]. */
 sealed class RefModeStoreData : CrdtData {
+    abstract val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
+
     data class Singleton(
         override var versionMap: VersionMap,
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
     ) : RefModeStoreData(), RefModeSingleton, CrdtSingleton.Data<RawEntity> {
+        constructor(data: CrdtSingleton.Data<RawEntity>) : this(data.versionMap, data.values)
+
         override fun copy(): CrdtSingleton.Data<RawEntity> =
             Singleton(
                 versionMap.copy(),
@@ -57,6 +61,8 @@ sealed class RefModeStoreData : CrdtData {
         override var versionMap: VersionMap,
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>>
     ) : RefModeStoreData(), RefModeSet, CrdtSet.Data<RawEntity> {
+        constructor(data: CrdtSet.Data<RawEntity>) : this(data.versionMap, data.values)
+
         override fun copy(): CrdtSet.Data<RawEntity> =
             Set(
                 versionMap.copy(),
@@ -82,10 +88,10 @@ interface RefModeStoreOp : CrdtOperationAtTime {
         RefModeSet,
         CrdtSet.Operation.Add<RawEntity>(clock, actor, added)
 
-    class SetRemove(actor: Actor, clock: VersionMap, added: RawEntity)
+    class SetRemove(actor: Actor, clock: VersionMap, removed: RawEntity)
         : RefModeStoreOp,
         RefModeSet,
-        CrdtSet.Operation.Add<RawEntity>(clock, actor, added)
+        CrdtSet.Operation.Remove<RawEntity>(clock, actor, removed)
 }
 
 /** Consumer data value of the [arcs.storage.ReferenceModeStore]. */

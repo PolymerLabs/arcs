@@ -10,6 +10,8 @@ services:
 
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
+addons:
+  chrome: stable
 
 # Bazel build & test everything. Can't use `bazel build ...` yet, because
 # javaharness doesn't build on Travis (needs working Android SDK).
@@ -20,10 +22,10 @@ jobs:
     - stage: test
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
       name: "Bazel Test: //src_kt/..."
-    #- script: tools/run_in_docker  "bazel --bazelrc=tools/travis.bazelrc test //src/..."
-    #  name: "Bazel Test: //src/..."
-    #- script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //particles/..."
-    #  name: "Bazel Test: //particles/..."
+    - script: tools/run_in_docker  "bazel --bazelrc=tools/travis.bazelrc test //src/..."
+      name: "Bazel Test: //src/..."
+    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //particles/..."
+      name: "Bazel Test: //particles/..."
     - script: tools/run_in_docker "npm run test-no-web"
       name: "Node Test: Unit"
     - script: tools/run_in_docker "npm run test-shells"

@@ -6,11 +6,15 @@ kt_jvm_and_js_library(
     name = "data",
     srcs = glob(["*.kt"]),
     deps = [
+        ":entity",
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
         "//src_kt/java/arcs/type",
     ],
+    exports = [
+        ":entity"
+    ]
 )
 
 kt_jvm_and_js_library(

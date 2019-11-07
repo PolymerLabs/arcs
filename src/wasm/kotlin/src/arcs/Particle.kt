@@ -92,7 +92,7 @@ abstract class Particle : WasmObject() {
 
     open fun init() {}
     open fun getTemplate(slotName: String): String = ""
-    open fun populateModel(slotName: String, model: Map<String, String?> = mapOf()): Map<String, String?> = model
+    open fun populateModel(slotName: String, model: Map<String, Any?> = mapOf()): Map<String, Any?> = model
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
 
 }

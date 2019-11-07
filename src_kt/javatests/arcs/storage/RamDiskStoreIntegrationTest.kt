@@ -91,7 +91,7 @@ class RamDiskStoreIntegrationTest {
     activeStore.idle()
 
     val volatileEntry = RamDisk.memory.get<CrdtCount.Data>(storageKey)
-    assertThat(volatileEntry?.data).isEqualTo(activeStore.localData)
+    assertThat(volatileEntry?.data).isEqualTo(activeStore.getLocalData())
     assertThat(volatileEntry?.version).isEqualTo(3)
     println("Done")
   }
@@ -167,8 +167,8 @@ class RamDiskStoreIntegrationTest {
     activeStore2.idle()
 
     val volatileEntry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory[storageKey]
-    assertThat(volatileEntry?.data).isEqualTo(activeStore1.localData)
-    assertThat(volatileEntry?.data).isEqualTo(activeStore2.localData)
+    assertThat(volatileEntry?.data).isEqualTo(activeStore1.getLocalData())
+    assertThat(volatileEntry?.data).isEqualTo(activeStore2.getLocalData())
     assertThat(volatileEntry?.version).isEqualTo(5)
   }
 
@@ -215,8 +215,8 @@ class RamDiskStoreIntegrationTest {
     activeStore2.idle()
 
     val entry: VolatileEntry<CrdtCount.Data>? = RamDisk.memory[storageKey]
-    assertThat(entry?.data).isEqualTo(activeStore1.localData)
-    assertThat(entry?.data).isEqualTo(activeStore2.localData)
+    assertThat(entry?.data).isEqualTo(activeStore1.getLocalData())
+    assertThat(entry?.data).isEqualTo(activeStore2.getLocalData())
     assertThat(entry?.version).isEqualTo(4)
     assertThat(activeStore1.localModel.consumerView).isEqualTo(4)
     assertThat(activeStore2.localModel.consumerView).isEqualTo(4)

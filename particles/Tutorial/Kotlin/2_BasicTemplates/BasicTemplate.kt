@@ -9,7 +9,7 @@ import kotlin.native.internal.ExportForCppRuntime
  */
 class BasicTemplateParticle : Particle() {
 
-    override fun populateModel(slotName: String, model: Map<String, String?>): Map<String, String?> {
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         return model + mapOf(
             "name" to "Human"
         )
