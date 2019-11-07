@@ -12,38 +12,23 @@ class StringDecoder(private var str: String) {
 
     companion object {
 
-      fun decodeDictionary(str: String): Map<String, String> {
-        val decoder = StringDecoder(str)
-        val dict = mutableMapOf<String, String>()
+        fun decodeDictionary(str: String): Map<String, String> {
+            val decoder = StringDecoder(str)
+            val dict = mutableMapOf<String, String>()
 
-        var num = decoder.getInt(":")
-        while(num-- > 0){
-          val klen = decoder.getInt(":")
-          val key = decoder.chomp(klen)
+            var num = decoder.getInt(":")
+            while(num-- > 0){
+                val klen = decoder.getInt(":")
+                val key = decoder.chomp(klen)
 
-          val vlen = decoder.getInt(":")
-          val value = decoder.chomp(vlen)
+                val vlen = decoder.getInt(":")
+                val value = decoder.chomp(vlen)
 
-          dict[key] = value
+                dict[key] = value
+            }
+
+            return dict
         }
-
-        return dict
-      }
-
-      fun decodeList(str: String): List<String> {
-        val decoder = StringDecoder(str)
-
-        val list = mutableListOf<String>()
-
-        var num = decoder.getInt(":")
-        while(num-- > 0) {
-          val len = decoder.getInt(":")
-          val chunk = decoder.chomp(len)
-          list.add(chunk)
-        }
-
-        return list
-      }
     }
 
     fun done():Boolean {
@@ -96,18 +81,37 @@ class StringDecoder(private var str: String) {
 class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     companion object {
-      fun encodeDictionary(dict: Map<String, String?>): String {
-        val sb = StringBuilder()
-        sb.append(dict.size).append(":")
+        fun encodeDictionary(dict: Map<String, Any?>): String {
+            val sb = StringBuilder()
+            sb.append(dict.size).append(":")
 
-        for((key, value) in dict) {
-            value?.let {
+            for((key, value) in dict) {
                 sb.append(key.length).append(":").append(key)
-                sb.append(it.length).append(":").append(it)
+                sb.append(encodeValue(value))
+            }
+            return sb.toString()
+        }
+
+        fun encodeList(list: List<Any>): String {
+            return list.joinToString(separator = "", prefix = "${list.size}:") { encodeValue(it) } 
+        }
+
+        fun encodeValue(value: Any?): String {
+            return when (value) {
+                is String -> "T${value.length}:$value"
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val dictString = encodeDictionary(value as Map<String, Any?>)
+                    "D${dictString.length}:$dictString"
+                }
+                is List<*> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val listString = encodeList(value as List<Any>)
+                    "A${listString.length}:$listString"
+                }
+                else -> throw IllegalArgumentException("Unknown expression.")
             }
         }
-        return sb.toString()
-      }
     }
 
     fun result():String = sb.toString()

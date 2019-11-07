@@ -23,6 +23,8 @@ script:
     bazel test --noshow_progress --noshow_loading_progress --spawn_strategy=sandboxed  --test_output=errors
     //src_kt/... //src/... //particles/...
   - npm run test-with-start
+  - npm run build:rollup
+  - npm --prefix=server test
 
 cache:
   npm: true
