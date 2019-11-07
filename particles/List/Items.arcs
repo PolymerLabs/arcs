@@ -1,38 +1,35 @@
 interface HostedItemInterface
-  in ~anyType *
+  reads ~anyType
   // TODO(sjmiles): using slot-type for form-factor
   // all Interfaces are the same in List/* except for the slot
-  consume item
+  item: consumes Slot
 
 particle ItemMultiplexer in 'source/Multiplexer.js'
   // TODO(sjmiles): redundancies:
   // 1. slot is declared in HostedItemInterface and as `consume set of` here
   // 2. ~anyType is declared in HostedItemInterface and as `[~anyType]` here
-  in [~anyType] list
-  host HostedItemInterface hostedParticle
-  consume set of item
+  list: reads [~anyType]
+  hostedParticle: hosts HostedItemInterface
+  item: consumes? [Slot]
 
 particle Items in 'source/Items.js'
-  in [~anyType] list
-  consume root #items
-    provide preamble
-    provide set of item
-    provide set of annotation
-    provide action
-    provide postamble
+  list: reads [~anyType]
+  root: consumes #items
+    preamble: provides? Slot
+    item: provides? [Slot]
+    annotation: provides? [Slot]
+    action: provides? Slot
+    postamble: provides? Slot
 
 particle SelectableItems in 'source/Items.js'
-  in [~anyType] list
-  inout? ~anyType selected
-  consume root #items
-    provide preamble
-    must provide set of item
-      handle list
-    provide set of annotation
-      handle list
-    provide action
-      handle list
-    provide postamble
+  list: reads [~anyType]
+  selected: reads writes? ~anyType
+  root: consumes Slot #items
+    preamble: provides?
+    item: provides [Slot{handle: list}]
+    annotation: provides? [Slot {handle: list}]
+    action: provides? Slot {handle: list}
+    postamble: provides? Slot
   description `display ${list}`
 
 // TODO(sjmiles): recipes below would be for use by Coalescer, but they create
@@ -43,27 +40,27 @@ particle SelectableItems in 'source/Items.js'
 //recipe ItemMultiplexer
   // TODO(sjmiles): restricting fate
   // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
-//  use #items as list
+//  list: use #items
 //  ItemMultiplexer
-//    list = list
+//    list: any list
 
 // TODO(sjmiles): nearly duplicate recipes here because we want to support `use` and `copy` but not `create`,
 // maybe there should be a fate for this, or require `create` to be explicit
 
 //recipe SelectableCopyItemsRecipe
-//  copy #items as items
-//  create #selected as selected
+//  items: copy #items
+//  selected: create #selected
 //  SelectableItems
-//    items = items
-//    selected = selected
+//    items: any items
+//    selected: any selected
 //  ItemMultiplexer
-//    list = items
+//    list: any items
 
 //recipe SelectableUseItemsRecipe
-//  use #items as items
-//  create #selected as selected
+//  items: use #items
+//  selected: create #selected
 //  SelectableItems
-//    items = items
-//    selected = selected
+//    items: any items
+//    selected: any selected
 //  ItemMultiplexer
-//    list = items
+//    list: any items
