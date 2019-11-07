@@ -35,12 +35,13 @@ jobs:
 cache:
   npm: true
   directories:
-    - /home/travis/disk-cache/
+    - $(~/disk-cache/)
 
 # Pulling container from https://hub.docker.com/repository/docker/alxrsngrtn/arcs-travis-build
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build:latest
-  - mkdir -p ./disk-cache/
+  - pwd
+  - mkdir -p ~/disk-cache/
 
 install:
   - docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest  /bin/sh -c "cd /usr/src/app; npm install"
