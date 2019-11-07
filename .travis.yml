@@ -18,18 +18,19 @@ jobs:
     - stage: build
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... //src/... //particles/..."
     - stage: test
-      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
-      name: "Bazel Test: //src_kt/..."
-    - script: tools/run_in_docker  "bazel --bazelrc=tools/travis.bazelrc test //src/..."
-      name: "Bazel Test: //src/..."
-    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //particles/..."
-      name: "Bazel Test: //particles/..."
+      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/...  //src/... //particles/..."
+      name: "Bazel Test: //src_kt/... //src/... //particles/..."
+      after_success:
+        - aws s3 rm --recursive s3://travis-build-stages-shared-storage-test/$TRAVIS_BUILD_NUMBER
     - script: tools/run_in_docker "npm run test-no-web"
       name: "Node Test: Unit"
     - script: tools/run_in_docker "npm run test-shells"
       name: "Node Test: Shells"
     - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"
       name: "Node Test: Server"
+
+after_success:
+  - aws s3 sync ./disk-cache/ s3://travis-build-stages-shared-storage-test/$TRAVIS_BUILD_NUMBER/disk-cache
 
 # Use travis to cache a Bazel disk-cache.
 # This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
@@ -41,6 +42,8 @@ cache:
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build:latest
   - mkdir -p ./disk-cache/
+  - pip install --user awscli
+  - aws s3 sync s3://travis-build-stages-shared-storage-test/$TRAVIS_BUILD_NUMBER/disk-cache ./disk-cache/
 
 install:
   - tools/run_in_docker "npm install"
