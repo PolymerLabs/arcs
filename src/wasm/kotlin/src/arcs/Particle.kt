@@ -8,7 +8,7 @@ import kotlin.collections.set
 abstract class Particle : WasmObject() {
     private val handles: MutableMap<String, Handle> = mutableMapOf()
     private val toSync: MutableSet<Handle> = mutableSetOf()
-    private val eventHandlers: MutableMap<String, () -> Unit> = mutableMapOf()
+    private val eventHandlers: MutableMap<String, (Map<String, String>) -> Unit> = mutableMapOf()
 
     fun registerHandle(name: String, handle: Handle) {
         handle.name = name
@@ -17,7 +17,7 @@ abstract class Particle : WasmObject() {
         log("Registering $name")
     }
 
-    fun eventHandler(name: String, handler: () -> Unit) {
+    fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) {
         eventHandlers[name] = handler
     }
 
@@ -69,8 +69,8 @@ abstract class Particle : WasmObject() {
         )
     }
 
-    open fun fireEvent(slotName: String, eventName: String) {
-        eventHandlers[eventName]?.invoke()
+    open fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
+        eventHandlers[eventName]?.invoke(eventData)
         renderOutput()
     }
 

@@ -190,10 +190,10 @@ async function setup(manifestString) {
       const output = stores.get('output') as VolatileSingleton;
 
       const particle = slotComposer.consumers[0].consumeConn.particle;
-      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: 'ignored'});
+      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
-      assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick'});
+      assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {

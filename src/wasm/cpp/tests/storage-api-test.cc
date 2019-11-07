@@ -11,7 +11,7 @@ public:
     registerHandle("ioHandle", io_);
   }
 
-  void fireEvent(const std::string& slot_name, const std::string& handler) override {
+  void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
       out_.clear();
       io_.clear();
@@ -42,7 +42,7 @@ public:
     registerHandle("ioHandle", io_);
   }
 
-  void fireEvent(const std::string& slot_name, const std::string& handler) override {
+  void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
       out_.clear();
       io_.clear();

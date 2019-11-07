@@ -144,10 +144,11 @@ fun renderSlot(particlePtr: WasmAddress, slotNamePtr: WasmString, sendTemplate: 
 
 @Retain
 @ExportForCppRuntime("_fireEvent")
-fun fireEvent(particlePtr: WasmAddress, slotNamePtr: WasmString, handlerNamePtr: WasmString) {
+fun fireEvent(particlePtr: WasmAddress, slotNamePtr: WasmString, handlerNamePtr: WasmString, eventData: WasmString) {
     particlePtr.toObject<Particle>().fireEvent(
         slotNamePtr.toKString(),
-        handlerNamePtr.toKString()
+        handlerNamePtr.toKString(),
+        StringDecoder.decodeDictionary(eventData.toKString())
     )
 }
 

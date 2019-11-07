@@ -85,9 +85,9 @@ public:
     registerHandle("output", output_);
   }
 
-  void fireEvent(const std::string& slot_name, const std::string& handler) override {
+  void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     arcs::Test_Data out;
-    out.set_txt("event:" + slot_name + ":" + handler);
+    out.set_txt("event:" + slot_name + ":" + handler + ":" + eventData.find("info")->second);
     output_.set(out);
   }
 
