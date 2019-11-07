@@ -22,6 +22,7 @@ import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import arcs.data.FieldName
 import arcs.data.RawEntity
+import arcs.data.util.ReferencablePrimitive
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named
@@ -76,7 +77,15 @@ class CrdtEntity(
                 allOps = false
             }
         }
+        val oldVersionMap = _data.versionMap
         _data.versionMap = _data.versionMap mergeWith other.versionMap
+
+        if (oldVersionMap == _data.versionMap) {
+            return MergeChanges(
+                CrdtChange.Operations(mutableListOf<CrdtEntity.Operation>()),
+                CrdtChange.Operations(mutableListOf<CrdtEntity.Operation>())
+            )
+        }
 
         return if (allOps) {
             val modelOps = mutableListOf<Operation>()
@@ -166,7 +175,10 @@ class CrdtEntity(
     }
 
     /** Minimal [Reference] for contents of a singletons/collections in [Data]. */
-    data class ReferenceImpl(override val id: ReferenceId) : Reference
+    data class ReferenceImpl(override val id: ReferenceId) : Reference {
+        override fun tryDereference(): Referencable =
+            ReferencablePrimitive.tryDereference(id) ?: this
+    }
 
     /** Data contained within a [CrdtEntity]. */
     data class Data(
@@ -200,14 +212,14 @@ class CrdtEntity(
         )
 
         fun toRawEntity() = RawEntity(
-            singletons = singletons.mapValues { it.value.consumerView },
-            collections = collections.mapValues { it.value.consumerView }
+            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
+            collections = collections.mapValues { it.value.consumerView.map { item -> item.tryDereference() }.toSet() }
         )
 
         fun toRawEntity(id: ReferenceId) = RawEntity(
             id = id,
-            singletons = singletons.mapValues { it.value.consumerView },
-            collections = collections.mapValues { it.value.consumerView }
+            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
+            collections = collections.mapValues { it.value.consumerView.map { item -> item.tryDereference() }.toSet() }
         )
 
         /** Makes a deep copy of this [CrdtEntity.Data] object. */

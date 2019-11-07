@@ -162,11 +162,11 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         return ProxyMessage.SyncRequest(callbackId)
     }
 
-    override fun close() = runBlocking {
+    override fun close() = runBlocking(scope.coroutineContext) {
         if (initialized.isCompleted) {
             store.activate().off(callbackId)
         }
-        scope.cancel("Closed owning ArcsSet")
+        scope.cancel()
         Unit
     }
 
@@ -180,7 +180,7 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         activated.await()
 
         crdtMutex.withLock {
-            crdtSet.consumerView.contains(item)
+            crdtSet.consumerView.any { it.tryDereference() == item }
         }
     }
 

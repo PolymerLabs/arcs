@@ -11,7 +11,7 @@
 
 package arcs.storage
 
-import arcs.arcs.util.Log
+import arcs.arcs.util.TaggedLog
 import arcs.crdt.CrdtChange
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtException
@@ -42,6 +42,8 @@ class DirectStore internal constructor(
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
     override val versionToken: String?
         get() = driver.token
+
+    private val log = TaggedLog { "DirectStore(${state.value})" }
 
     /**
      * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
@@ -98,8 +100,9 @@ class DirectStore internal constructor(
                     false
                 } else {
                     if (message.operations.isNotEmpty()) {
-                        val change =
-                            CrdtChange.Operations<CrdtData, CrdtOperation>(message.operations.toMutableList())
+                        val change = CrdtChange.Operations<CrdtData, CrdtOperation>(
+                            message.operations.toMutableList()
+                        )
                         processModelChange(
                             change,
                             otherChange = null,
@@ -111,7 +114,9 @@ class DirectStore internal constructor(
                 }
             }
             is ProxyMessage.ModelUpdate -> {
-                val (modelChange, otherChange) = synchronized(this) { localModel.merge(message.model) }
+                val (modelChange, otherChange) = synchronized(this) {
+                    localModel.merge(message.model)
+                }
                 processModelChange(
                     modelChange,
                     otherChange,
@@ -120,6 +125,8 @@ class DirectStore internal constructor(
                 )
                 true
             }
+        }.also {
+            log.debug { "Model after proxy message: ${localModel.data}" }
         }
     }
 
@@ -129,6 +136,8 @@ class DirectStore internal constructor(
         version: Int,
         channel: Int?
     ) {
+        if (modelChange is CrdtChange.Operations && modelChange.isEmpty() && otherChange is CrdtChange.Operations && otherChange.isEmpty()) return
+
         deliverCallbacks(modelChange, messageFromDriver = false, channel = channel)
         updateStateAndAct(
             noDriverSideChanges(modelChange, otherChange, false),
@@ -138,6 +147,8 @@ class DirectStore internal constructor(
     }
 
     internal suspend fun onReceive(data: CrdtData, version: Int) {
+        log.debug { "onReceive($data, $version)" }
+
         if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
             val pending = pendingDriverModels.getAndUpdate { emptyList() }
             applyPendingDriverModels(pending + PendingDriverModel(data, version))
@@ -145,20 +156,23 @@ class DirectStore internal constructor(
             // If the current state doesn't allow us to apply the models yet, tack it onto our pending
             // list.
             pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
-            idle()
-        }
+       }
     }
 
     private suspend fun applyPendingDriverModels(models: List<PendingDriverModel>) {
         if (models.isEmpty()) return
 
-        Log.debug { "DirectStore: ${state.value} - Applying ${models.size} pending driver models: $models" }
+        log.debug { "Applying ${models.size} pending models: $models" }
 
         var noDriverSideChanges = true
         var theVersion = 0
         models.forEach { (model, version) ->
             try {
                 val (modelChange, otherChange) = synchronized(this) { localModel.merge(model) }
+                log.debug { "ModelChange: $modelChange" }
+                log.debug { "OtherChange: $otherChange" }
+                theVersion = version
+                if (modelChange is CrdtChange.Operations && modelChange.isEmpty() && otherChange is CrdtChange.Operations && otherChange.isEmpty()) return@forEach
                 deliverCallbacks(modelChange, messageFromDriver = true, channel = 0)
                 noDriverSideChanges =
                     noDriverSideChanges && noDriverSideChanges(
@@ -166,9 +180,8 @@ class DirectStore internal constructor(
                         otherChange,
                         messageFromDriver = true
                     )
-                theVersion = version
             } catch (e: Exception) {
-                Log.error(e) { "Error while applying pending driver models." }
+                log.error(e) { "Error while applying pending driver models." }
                 idleDeferred.value.completeExceptionally(e)
                 throw e
             }
