@@ -35,16 +35,15 @@ jobs:
 cache:
   npm: true
   directories:
-    - $(~/disk-cache/)
+    - /home/travis/build/PolymerLabs/arcs/disk-cache/
 
 # Pulling container from https://hub.docker.com/repository/docker/alxrsngrtn/arcs-travis-build
 before_install:
   - docker pull alxrsngrtn/arcs-travis-build:latest
-  - pwd
-  - mkdir -p ~/disk-cache/
+  - mkdir -p ./disk-cache/
 
 install:
-  - docker run -v $(pwd):/usr/src/app/ alxrsngrtn/arcs-travis-build:latest  /bin/sh -c "cd /usr/src/app; npm install"
+  - tools/run_in_docker "npm install"
 
 before_deploy:
   # build apidocs
