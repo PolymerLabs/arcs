@@ -10,8 +10,8 @@ import 'Event.schema'
 import '../Common/Description.schema'
 
 particle SlandleCalendar in 'source/Calendar.js'
-  inout Event event
-  out [Description] descriptions
-  `consume Slot action
-  `consume Slot modifier
+  event: reads writes Event
+  descriptions: writes [Description]
+  action: `consumes Slot
+  modifier: `consumes Slot
   description `Select a time from your calendar`
