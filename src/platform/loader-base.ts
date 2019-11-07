@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from './assert-web.js';
-import {fetch} from './fetch-web.js';
+import {fetch} from './fetch-node.js';
 import {JsonldToManifest} from '../runtime/converters/jsonldToManifest.js';
 import {ParticleExecutionContext} from '../runtime/particle-execution-context.js';
 import {ClientReference} from '../runtime/reference.js';
