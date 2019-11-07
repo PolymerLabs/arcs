@@ -9,6 +9,6 @@
 import '../Things/GeoCoordinates.schema'
 
 particle GoogleMap in 'source/GoogleMap.js'
-  in GeoCoordinates location
-  consume root
+  location: reads GeoCoordinates
+  root: consumes Slot
   description `Show ${location} on a map`
