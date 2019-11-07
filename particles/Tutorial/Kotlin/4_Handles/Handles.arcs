@@ -1,20 +1,20 @@
 // Define a schema that allows us to store a person's name 
 schema Person
-  Text name
+  name: Text
 
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
 particle GetPerson in 'GetPerson.wasm'
   person: writes Person
-  root: consumes Slot
+  root: consumes
     greetingSlot: provides
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
 particle DisplayGreeting in 'DisplayGreeting.wasm'
   person: reads Person
-  consume greetingSlot
+  greetingSlot: consumes
 
 recipe HandleRecipe
   GetPerson
