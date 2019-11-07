@@ -12,60 +12,60 @@ import '../Restaurants/schemas/Restaurant.arcs'
 import '../Common/schemas/Description.arcs'
 
 particle SlandleReservationForm in 'source/ReservationForm.js'
-  inout Event event
-  in Restaurant restaurant
-  `consume Slot action
-    `provide Slot annotation
+  event: reads writes Event
+  restaurant: reads Restaurant
+  action: `consumes Slot
+    annotation: `provides Slot
 
 // TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
 // so fork the particle
 particle SlandleDetailReservationForm in 'source/ReservationForm.js'
-  in Restaurant restaurant
-  inout Event event
-  `consume? Slot detailAction
-    `provide? Slot annotation
+  restaurant: reads Restaurant
+  event: reads writes Event
+  detailAction: `consumes? Slot
+    annotation: `provides? Slot
 
 particle SlandleReservationAnnotation in 'source/ReservationAnnotation.js'
-  in Restaurant restaurant
-  inout Event event
-  out [Description] descriptions
-  `consume? Slot annotation
+  restaurant: reads Restaurant
+  event: reads writes Event
+  descriptions: writes [Description]
+  annotation: `consumes? Slot
 
 // TODO(sjmiles): we don't have optional handles yet, so fork the particle
 // rather than having every instance generate descriptions
 particle SlandleReservationMultiAnnotation in 'source/ReservationAnnotation.js'
-  in Restaurant restaurant
-  inout Event annotationInfo
-  `consume? Slot annotation
+  restaurant: reads Restaurant
+  annotationInfo: reads writes Event
+  annotation: `consumes? Slot
 
 recipe SlandleMakeReservations
-  use as restaurants
-  use #selected as restaurant
-  create #reservation as event
-  create #volatile as calendarDescriptions
-  create #volatile as annotationDescriptions
-  `slot 'rootslotid-toproot' as toproot
+  restaurants: use *
+  restaurant: use #selected
+  event: create #reservation
+  calendarDescriptions: create #volatile
+  annotationDescriptions: create #volatile
+  toproot: `slot 'rootslotid-toproot'
   SlandleCalendar
-    event = event
-    descriptions = calendarDescriptions
+    event: any event
+    descriptions: any calendarDescriptions
   // top-of-frame event editor
   SlandleReservationForm
-    restaurant = restaurant
-    event = event
+    restaurant: any restaurant
+    event: any event
     action `consume toproot
   // per-restaurant tile scheduler
   SlandleAnnotationMultiplexer
-    list = restaurants
-    annotationInfo = event
-    hostedParticle = SlandleReservationMultiAnnotation
+    list: any restaurants
+    annotation: any event
+    hostedParticle: any SlandleReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   SlandleDetailReservationForm
-     restaurant = restaurant
-     event = event
+     restaurant: any restaurant
+     event: any event
      detailAction `consume
        annotation `provide detailAnnotation
   SlandleReservationAnnotation
-    restaurant = restaurant
-    event = event
-    descriptions = annotationDescriptions
+    restaurant: any restaurant
+    event: any event
+    descriptions: any annotationDescriptions
     annotation `consume detailAnnotation

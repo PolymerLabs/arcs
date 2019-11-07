@@ -8,29 +8,29 @@ import '../Layout/Layout.arcs'
 import 'FavoriteFoodAnnotation.arcs'
 
 recipe Restaurants
-  create #volatile as location
-  create #volatile as restaurants
-  create #volatile #selected as selected
-  slot 'rootslotid-root' as rootSlot
-  slot 'rootslotid-modal' as modalSlot
+  location: create #volatile
+  restaurants: create #volatile
+  selected: create #volatile #selected
+  rootSlot: slot 'rootslotid-root'
+  modalSlot: slot 'rootslotid-modal'
   Geolocate
-    consume root as rootSlot
-    location = location
+    root: consumes rootSlot
+    location: any location
   RestaurantFind
-    location = location
-    restaurants = restaurants
+    location: any location
+    restaurants: any restaurants
   SelectableTiles
-    list = restaurants
-    selected = selected
-    consume root as rootSlot
-      provide tile as tileSlot
+    list: any restaurants
+    selected: any selected
+    root: consumes rootSlot
+      tile: provides tileSlot
   TileMultiplexer
-    list = restaurants
-    hostedParticle = RestaurantTile
-    consume tile as tileSlot
+    list: any restaurants
+    hostedParticle: any RestaurantTile
+    tile: consumes tileSlot
   DetailSlider
-    selected = selected
-    consume modal as modalSlot
+    selected: any selected
+    modal: consumes modalSlot
   RestaurantDetail
-    restaurant = selected
+    restaurant: any selected
   description `find restaurants near ${RestaurantFind.location}`
