@@ -4,133 +4,134 @@ import 'TTTGameSchemas.arcs'
 import 'TTTGameData.arcs'
 
 particle Game in './source/TTTGame.js'
-  inout Person {name, avatar, id} playerOne
-  inout Person {name, avatar, id} playerTwo
-  inout GameState gameState
-  inout Move {move} playerOneMove
-  inout Move {move} playerTwoMove
-  inout [Event] events
-  consume root
-    provide gameSlot
+  playerOne: reads writes Person
+  playerTwo: reads writes Person
+  gameState: reads writes GameState
+  playerOneMove: reads writes Move
+  playerTwoMove: reads writes Move
+  events: reads writes [Event]
+  root: consumes
+    gameSlot: provides
 
 particle TicTacToeBoard in './source/TTTBoard.js'
-  in GameState {board, currentPlayer} gameState
-  out [Event] events
-  consume boardSlot
+  gameState: reads GameState
+  events: writes [Event]
+  boardSlot: consumes
 
 particle HumanPlayer in './source/TTTHumanPlayer.js'
-  in GameState {currentPlayer} gameState
-  in [Event] events
-  in Person {id} player
-  out Move {move} myMove
+  gameState: reads GameState
+  events: reads [Event]
+  player: reads Person
+  myMove: writes Move
 
 particle RandomComputer in './source/TTTRandomComputer.js'
-  out Move {move} computerMove
-  in GameState {board, currentPlayer} gameState
-  in Person {id} player
+  computerMove: writes Move
+  gameState: reads GameState
+  player: reads Person
 
 recipe GameDemoRecipe
-  create #volatile #humanMove as playerOneMove
-  create #volatile #computerMove as playerTwoMove
-  create #volatile as gameState  
-  use ComputerStore as playerTwo
-  use HumanStore as playerOne
+  playerOneMove: create
+  playerTwoMove: create
+  gameState: create
+  playerTwo: use ComputerStore
+  playerOne: use HumanStore
 
   Game
-    consume root 
-      provide gameSlot as board
-    gameState = gameState
-    playerOne = playerOne
-    playerTwo = playerTwo
-    playerOneMove = playerOneMove
-    playerTwoMove = playerTwoMove
-    events = events
+    root: consumes
+      gameSlot: provides board
+    gameState: any gameState
+    playerOne: any playerOne
+    playerTwo: any playerTwo
+    playerOneMove: any playerOneMove
+    playerTwoMove: any playerTwoMove
+    events: any events
 
   TicTacToeBoard
-    gameState = gameState
-    events = events
-    consume boardSlot as board
+    gameState: any gameState
+    events: any events
+    boardSlot: consumes board
   
   HumanPlayer
-    gameState = gameState
-    events <- events
-    myMove -> playerOneMove
-    player <- playerOne
+    gameState: any gameState
+    events: reads events
+    myMove: writes playerOneMove
+    player: reads playerOne
 
   RandomComputer
-    computerMove = playerTwoMove
-    player = playerTwo
-    gameState = gameState
+    computerMove: any playerTwoMove
+    player: reads playerTwo
+    gameState: reads gameState
 
   description `Javascript Tutorial One Player TicTacToe Demo`
 
 recipe GamePlayersDemoRecipe
-  create #volatile #PlayerOne as playerOneMove
-  create #volatile #PlayerTwo as playerTwoMove
-  create #volatile as gameState  
-  use HumanOneStore as playerOne
-  use HumanTwoStore as playerTwo
+  playerOneMove: create
+  playerTwoMove: create
+  gameState: create
+  playerOne: use HumanOneStore
+  playerTwo: use HumanTwoStore
 
   Game
-    consume root 
-      provide gameSlot as board
-    gameState = gameState
-    playerOne = playerOne
-    playerTwo = playerTwo
-    playerOneMove = playerOneMove
-    playerTwoMove = playerTwoMove
-    events = events
+    root: consumes
+      gameSlot: provides board
+    gameState: any gameState
+    playerOne: any playerOne
+    playerTwo: any playerTwo
+    playerOneMove: any playerOneMove
+    playerTwoMove: any playerTwoMove
+    events: any events
 
   TicTacToeBoard
-    gameState = gameState
-    events = events
-    consume boardSlot as board
+    gameState: any gameState
+    events: any events
+    boardSlot: consumes board
   
   HumanPlayer
-    gameState = gameState
-    events <- events
-    myMove -> playerOneMove
-    player <- playerOne
+    gameState: any gameState
+    events: reads events
+    myMove: writes playerOneMove
+    player: reads playerOne
 
   HumanPlayer
-    gameState = gameState
-    events <- events
-    myMove -> playerTwoMove
-    player <- playerTwo
+    gameState: any gameState
+    events: reads events
+    myMove: writes playerTwoMove
+    player: reads playerTwo
 
   description `Javascript Tutorial Two Players TicTacToe Demo`
 
 recipe GameComputersDemoRecipe
-  create #volatile #computerOne as playerOneMove
-  create #volatile #computerTwo as playerTwoMove
-  create #volatile as gameState  
-  use ComputerOneStore as playerOne
-  use ComputerTwoStore as playerTwo
+  playerOneMove: create
+  playerTwoMove: create
+  gameState: create
+  playerOne: use ComputerOneStore
+  playerTwo: use ComputerTwoStore
+
 
   Game
-    consume root 
-      provide gameSlot as board
-    gameState = gameState
-    playerOne = playerOne
-    playerTwo = playerTwo
-    playerOneMove = playerOneMove
-    playerTwoMove = playerTwoMove
-    events = events
+    root: consumes
+      gameSlot: provides board
+    gameState: any gameState
+    playerOne: any playerOne
+    playerTwo: any playerTwo
+    playerOneMove: any playerOneMove
+    playerTwoMove: any playerTwoMove
+    events: any events
 
   TicTacToeBoard
-    gameState = gameState
-    events = events
-    consume boardSlot as board
+    gameState: any gameState
+    events: any events
+    boardSlot: consumes board
   
   RandomComputer
-    computerMove = playerOneMove
-    player = playerOne
-    gameState = gameState
+    computerMove: any playerOneMove
+    player: reads playerOne
+    gameState: reads gameState
   
   RandomComputer
-    computerMove = playerTwoMove
-    player = playerTwo
-    gameState = gameState
+    computerMove: any playerTwoMove
+    player: reads playerTwo
+    gameState: reads gameState
 
   description `Javascript Tutorial Zero Players TicTacToe Demo`
 
