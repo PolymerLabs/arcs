@@ -1,6 +1,6 @@
 schema Avatar
-  URL url
+  url: URL
 
 import 'Share.arcs'
 schema AvatarShare extends Share
-  Reference<Avatar> ref
+  ref: Reference<Avatar>

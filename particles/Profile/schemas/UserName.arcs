@@ -1,6 +1,6 @@
 schema UserName
-  Text userName
+  userName: Text
 
 import 'Share.arcs'
 schema UserNameShare extends Share
-  Reference<UserName> ref
+  ref: Reference<UserName>

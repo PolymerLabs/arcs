@@ -1,6 +1,6 @@
 schema Friend
-  Text publicKey
+  publicKey: Text
 
 import 'Share.arcs'
 schema FriendShare extends Share
-  Reference<Friend> ref
+  ref: Reference<Friend>
