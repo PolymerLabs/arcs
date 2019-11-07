@@ -1,3 +1,2 @@
-import %workspace%/.bazelrc
 build --disk_cache=/disk-cache/ --verbose_failures --spawn_strategy=sandboxed
-test --disk_cache=/disk-cache/ --spawn_strategy=sandboxed --nocache_test_results
+test --disk_cache=/disk-cache/ --spawn_strategy=sandboxed --nocache_test_results --test_output=errors
