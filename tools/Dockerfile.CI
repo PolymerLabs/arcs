@@ -1,7 +1,7 @@
 FROM timbru31/java-node:8-slim
 
 # Install Bazel
-#  Reference: https://docs.bazel.build/versions/master/install-ubuntu.html)
+#  Reference: https://docs.bazel.build/versions/master/install-ubuntu.html
 RUN echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
 RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 RUN apt-get update && apt-get install bazel -y
@@ -17,17 +17,21 @@ RUN curl https://chromedriver.storage.googleapis.com/2.31/chromedriver_linux64.z
 RUN chmod +x /usr/local/bin/chromedriver
 
 # Set up workspace
-RUN mkdir -p /usr/src/app
 ENV WORKSPACE /usr/src/app
-WORKDIR /usr/src/app
+RUN mkdir -p $WORKSPACE
+WORKDIR $WORKSPACE
 
 
 # Install programs for runtime use (e.g. by Bazel, Node-GYP)
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install bash git python g++ make -y
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+      bash \
+      g++ \
+      git \
+      make \
+      python
 
 # Install Project
-COPY package.json /usr/src/app/package.json
+COPY package.json $WORKSPACE/package.json
 RUN npm install
 
 # Create bazel cache directory
