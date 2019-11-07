@@ -20,13 +20,13 @@ store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionParticle in 'collections.js'
   // The input is a collection of PersonDetails entities.
-  in [PersonDetails] inputData
-  consume root
+  inputData: reads [PersonDetails]
+  root: consumes Slot
 
 recipe CollectionRecipe
-  map PeopleToGreetStore as data
+  data: map PeopleToGreetStore
 
   CollectionParticle
-    inputData = data
+    inputData: reads data
 
   description `Javascript Tutorial 5: Collections`

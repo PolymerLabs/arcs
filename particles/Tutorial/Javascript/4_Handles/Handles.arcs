@@ -7,24 +7,24 @@ schema Person
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
 particle GetPerson in './source/GetPerson.js'
-  out Person person
-  consume root
-    provide greetingSlot
+  person: writes Person
+  root: consumes Slot
+    greetingSlot: provides
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
 particle DisplayGreeting in './source/DisplayGreeting.js'
-  in Person person
+  person: reads Person
   consume greetingSlot
 
 recipe HandleRecipe
   GetPerson
     // Pass the output person to the handle recipePerson.
-    person = recipePerson 
-    consume root 
-      provide greetingSlot as greeting
+    person: writes recipePerson 
+    root: consumes
+      greetingSlot: provides greeting
   DisplayGreeting
     // Define the input person to be the handle recipePerson.
-    person = recipePerson
-    consume greetingSlot as greeting
+    person: reads recipePerson
+    greetingSlot: consumes greeting
   description `Javascript Tutorial 4: Handles`
