@@ -1,18 +1,18 @@
 schema ArcMeta
-  Text description
-  Text icon
-  Text key
-  Text href
-  Text bg
-  Text color
-  Text profile
-  Text blurb
-  Number share
-  Number touched
-  Boolean deleted
-  Boolean starred
-  URL externalManifest
+  description: Text
+  icon: Text
+  key: Text
+  href: Text
+  bg: Text
+  color: Text
+  profile: Text
+  blurb: Text
+  share: Number
+  touched: Number
+  deleted: Boolean
+  starred: Boolean
+  externalManifest: URL
 
 import '../../Profile/schemas/Share.arcs'
 schema ArcMetaShare extends Share
-  Reference<ArcMeta> ref
+  ref: Reference<ArcMeta>

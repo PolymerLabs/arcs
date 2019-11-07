@@ -14,54 +14,54 @@ import '../Products/Interests.arcs'
 
 recipe Products
   // &displayProducts
-  copy #shoplist as shoplist
-  create #selected as selected
+  shoplist: copy #shoplist
+  selected: create #selected
   SelectableItems
-    consume root
-      provide annotation as annotationSlot
-      provide action as actionSlot
-    list = shoplist
-    selected = selected
+    root: consumes
+      annotation: provides annotationSlot
+      action: provides actionSlot
+    list: any shoplist
+    selected: any selected
   ItemMultiplexer
-    list = shoplist
-    hostedParticle = ProductItem
+    list: any shoplist
+    hostedParticle: any ProductItem
   //
   // &shopForOccasion
-  map #claire as person
+  person: map #claire
   GiftList
-    person = person
+    person: any person
   SimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = Arrivinator
-    consume annotation as annotationSlot
+    list: any shoplist
+    hostedParticle: any Arrivinator
+    annotation: consumes annotationSlot
   //
   // &addFromWishlist
-  map #wishlist as wishlist
-  create #volatile as recommendations
+  wishlist: map #wishlist
+  recommendations: create #volatile
   // annotates shoplist
   ChoicesMultiplexer
-    consume choice as annotationSlot
-    list = shoplist
-    choices = wishlist
-    hostedParticle = AlsoOn
+    choice: consumes annotationSlot
+    list: any shoplist
+    choices: any wishlist
+    hostedParticle: any AlsoOn
   // recommend products from wishlist
   Recommend
-    population = wishlist
-    known = shoplist
-    recommendations = recommendations
+    population: any wishlist
+    known: any shoplist
+    recommendations: any recommendations
   // present recommendations for adding to shoplist
   Chooser
-    consume action as actionSlot
-    person = person
-    choices = recommendations
-    resultList = shoplist
+    action: consumes actionSlot
+    person: any person
+    choices: any recommendations
+    resultList: any shoplist
   //
   // &manufacturerInfo
   SimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = ManufacturerInfo
+    list: any shoplist
+    hostedParticle: any ManufacturerInfo
   //
   // &productInterests
   Interests
-    list = shoplist
-    person = person
+    list: any shoplist
+    person: any person
