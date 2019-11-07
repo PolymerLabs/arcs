@@ -14,7 +14,7 @@ class UnconnectedHandlesTest : Particle() {
         registerHandle("data", data)
     }
 
-    override fun fireEvent(slotName: String, eventName: String) {
+    override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         data.set(Test_Data())
     }
 }

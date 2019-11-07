@@ -700,7 +700,7 @@ public:
   // Override to react to UI events triggered by handlers in the template provided above.
   // 'slot_name' will correspond to the rendering slot hosting the UI element associated with the
   // event indicated by 'handler'.
-  virtual void fireEvent(const std::string& slot_name, const std::string& handler) {}
+  virtual void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) {}
 
   // -- Services --
 

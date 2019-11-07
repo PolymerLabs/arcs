@@ -26,7 +26,7 @@ public:
   }
 
   // Responding to UI events
-  void fireEvent(const std::string& slot_name, const std::string& handler) override {
+  void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "clicky") {
       arcs::BasicParticle_Foo copy = arcs::clone_entity(foo_.get());  // does not copy internal entity id
       bar_.store(copy);    // 'copy' will be updated with a new internal id

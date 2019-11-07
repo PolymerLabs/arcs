@@ -3,10 +3,7 @@ package arcs.android;
 import android.content.Context;
 import android.os.RemoteException;
 
-import arcs.api.HandleFactory;
-import arcs.api.RuntimeSettings;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -15,11 +12,13 @@ import javax.inject.Singleton;
 
 import arcs.api.ArcData;
 import arcs.api.Constants;
+import arcs.api.HandleFactory;
 import arcs.api.PecInnerPort;
 import arcs.api.PecInnerPortProxy;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
+import arcs.api.RuntimeSettings;
 import arcs.api.UiBroker;
 
 @Singleton
@@ -30,9 +29,7 @@ class ArcsShellApi {
   private final PecPortManager pecPortManager;
   private final UiBroker uiBroker;
 
-  private Context context;
   private boolean arcsReady;
-  private boolean manifestsAdded;
 
   @Inject
   ArcsShellApi(PortableJsonParser portableJsonParser, HandleFactory handleFactory,
@@ -45,8 +42,8 @@ class ArcsShellApi {
   }
 
   void init(Context context) {
-    this.context = context;
     arcsReady = false;
+    environment.init(context);
     environment.addReadyListener(recipes -> arcsReady = true);
     environment.addReadyListener(recipes -> {
       recipes.forEach(recipe -> {
@@ -115,16 +112,6 @@ class ArcsShellApi {
 
   void sendMessageToArcs(String message) {
     runWhenReady(() -> environment.sendMessageToArcs(message));
-  }
-
-  boolean addManifests(List<String> manifests) {
-    if (manifestsAdded) {
-      return false;
-    } else {
-      manifestsAdded = true;
-      environment.init(context, manifests);
-      return true;
-    }
   }
 
   private String constructRunArcRequest(ArcData arcData) {

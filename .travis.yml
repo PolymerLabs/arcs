@@ -28,6 +28,8 @@ jobs:
       name: "Node Test: Unit"
     - script: tools/run_in_docker "npm run test-shells"
       name: "Node Test: Shells"
+    - script: npm run build:rollup && npm --prefix=server test
+      name: "Node Test: Server"
 
 # Use travis to cache a Bazel disk-cache.
 # This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
