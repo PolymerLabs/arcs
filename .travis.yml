@@ -35,8 +35,6 @@ jobs:
 # Bazel will store artifacts here due to the `--disk_cache=/disk-cache/` argument.
 cache:
   npm: true
-  directories:
-    - /home/travis/build/PolymerLabs/arcs/disk-cache/
 
 # Pulling container from https://hub.docker.com/repository/docker/alxrsngrtn/arcs-travis-build
 before_install:
