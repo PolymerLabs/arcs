@@ -26,7 +26,7 @@ object Log {
      *
      * Default implementation uses [println].
      */
-    var writer: (renderedMessage: String) -> Unit = DEFAULT_WRITER
+    var writer: (level: Level, renderedMessage: String) -> Unit = DEFAULT_WRITER
 
     /** Defines available logging-levels. */
     enum class Level {
@@ -63,7 +63,9 @@ object Log {
     }
 
     private fun maybeLog(level: Level, throwable: Throwable? = null, messageBuilder: () -> String) {
-        if (this.level <= level) writer(formatter(logIndex.incrementAndGet(), level, throwable, messageBuilder()))
+        if (this.level <= level) {
+            writer(level, formatter(logIndex.incrementAndGet(), level, throwable, messageBuilder()))
+        }
     }
 }
 
@@ -85,4 +87,4 @@ private val DEFAULT_FORMATTER: (index: Int, level: Log.Level, throwable: Throwab
             } else ""
     }
 
-private val DEFAULT_WRITER: (renderedMessage: String) -> Unit = ::println
+private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String) -> Unit = { _, msg -> println(msg) }

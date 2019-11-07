@@ -19,7 +19,7 @@ class LogTest {
         Log.logIndex.value = 0
         loggedMessages.clear()
 
-        Log.writer = { loggedMessages.add(it) }
+        Log.writer = { _, message -> loggedMessages.add(message) }
     }
 
     @Test

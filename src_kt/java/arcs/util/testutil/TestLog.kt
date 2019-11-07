@@ -8,7 +8,13 @@ import java.util.Locale
 /** Initializes [Log] for tests on the JVM. */
 fun initLogForTest() {
     Log.level = Log.Level.Debug
-    Log.writer = ::println
+    Log.writer = { level, renderedMessage ->
+        if (level == Log.Level.Warning || level == Log.Level.Error ||  level == Log.Level.Wtf) {
+            System.err.println(renderedMessage)
+        } else {
+            println(renderedMessage)
+        }
+    }
     Log.formatter = { index, level, throwable, rawMessage ->
         val stackTrace = throwable?.let {
             val writer = StringWriter()
