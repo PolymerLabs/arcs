@@ -17,10 +17,10 @@ script:
   # build/test below when they're operational on Travis again.
   # https://github.com/PolymerLabs/arcs/issues/4018
   - >
-    bazel build --noshow_progress --noshow_loading_progress
+    bazel build --noshow_progress --noshow_loading_progress --spawn_strategy=sandboxed
     //src_kt/... //src/... //particles/...
   - >
-    bazel test --noshow_progress --noshow_loading_progress --test_output=errors
+    bazel test --noshow_progress --noshow_loading_progress --spawn_strategy=sandboxed  --test_output=errors
     //src_kt/... //src/... //particles/...
   - npm run test-with-start
 
