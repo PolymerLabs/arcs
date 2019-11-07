@@ -10,8 +10,8 @@ import 'Post.schema'
 import '../Words/Stats.schema'
 
 particle WordsScoreRanker in 'source/WordsScoreRanker.js'
-  in [~a] input
-  in [Stats] stats
-  out [~a] output
+  input: reads [~a]
+  stats: reads [Stats]
+  output: writes [~a]
   description `rank and filter ${input}`
      output `Words games by descending score`
