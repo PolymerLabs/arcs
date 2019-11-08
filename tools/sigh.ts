@@ -1000,12 +1000,10 @@ function devServer(args: string[]) : boolean {
   return spawnNodeToolSync(devServerPath, args);
 }
 
-let devServerProcess: ChildProcess = null;
-
 function devServerAsync(args: string[]) : boolean {
   prepDevServerOptionalDeps();
-  devServerProcess = spawnNodeTool(devServerPath, args.slice(1));
-  process.on('exit', (code) => {
+  const devServerProcess = spawnNodeTool(devServerPath, args.slice(1));
+  process.on('exit', code => {
     devServerProcess.kill();
   });
   sighLog('ALDS child process running; continuing.');
@@ -1014,7 +1012,7 @@ function devServerAsync(args: string[]) : boolean {
 
 function testWdioShells(args: string[]) : boolean {
   return saneSpawnSync('node_modules/.bin/wdio', ['--baseUrl',
-      'http://localhost:8786/', fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))]);
+      'http://localhost:8786/', fixPathForWindows(path.resolve('shells/tests/wdio.conf.js')), ...args]);
 }
 
 /**
