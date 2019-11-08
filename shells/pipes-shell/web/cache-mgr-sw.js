@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// __ARCS_MD5__ will be replaced in place to reflect md5 checksum of dist/**
-// This is required prior to Chrome 78 since service worker can invalidate and
-// rebuild caches only when its source script is changed.
+// __ARCS_MD5__ will be replaced in place to reflect md5 checksum of the bazel
+// output directory. This is required prior to M78 since service worker can
+// invalidate and rebuild caches only when the content of its source script
+// changes.
 const SW_CACHES_VERSION='__ARCS_MD5__';
 
 // The storage of caches
