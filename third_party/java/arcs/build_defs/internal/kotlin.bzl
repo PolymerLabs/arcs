@@ -6,6 +6,7 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library", kt_js_import = "kt_js_import_fixed")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin"]
 
@@ -25,22 +26,29 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
 
     if srcs:
         libname = name + "_lib"
+
         # Declare a library because g3 kt_native_binary doesn't take srcs
         kt_native_library(
             name = libname,
             srcs = srcs,
             deps = _ARCS_KOTLIN_LIBS + deps,
-            visibility = visibility
+            visibility = visibility,
         )
 
         deps = [":" + libname]
 
+    bin_name = name + "_bin"
     kt_native_binary(
-        name = name,
+        name = bin_name,
         entry_point = "arcs.main",
         deps = _ARCS_KOTLIN_LIBS + deps,
         tags = ["wasm"],
         visibility = visibility,
+    )
+
+    wasm_kt_binary(
+        name = name,
+        kt_target = ":" + bin_name,
     )
 
 def kt_jvm_and_js_library(
