@@ -73,6 +73,10 @@ fun String.toWasmString(): WasmString {
     return array2.addressOfElement(0).toLong().toWasmAddress()
 }
 
+fun String?.toWasmNullableString(): WasmNullableString {
+    return  this?.let { it.toWasmString() } ?: 0
+}
+
 // these are exported methods in the C++ runtime
 @SymbolName("Kotlin_interop_malloc")
 private external fun kotlinMalloc(size: Long, align: Int): NativePtr
@@ -186,7 +190,7 @@ external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
 external fun render(particlePtr: WasmAddress, slotNamePtr: WasmString, templatePtr: WasmString, modelPtr: WasmString)
 
 @SymbolName("_onRenderOutput")
-external fun onRenderOutput(particlePtr: WasmAddress, templatePtr: WasmString, modelPtr: WasmString)
+external fun onRenderOutput(particlePtr: WasmAddress, templatePtr: WasmNullableString, modelPtr: WasmNullableString)
 
 @SymbolName("_serviceRequest")
 external fun serviceRequest(particlePtr: WasmAddress, callPtr: WasmString, argsPtr: WasmString, tagPtr: WasmString)

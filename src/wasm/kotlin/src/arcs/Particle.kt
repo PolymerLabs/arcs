@@ -47,8 +47,8 @@ abstract class Particle : WasmObject() {
         val slotName = ""
         val template = getTemplate(slotName)
         val dict = populateModel(slotName)
-        val model = StringEncoder.encodeDictionary(dict)
-        onRenderOutput(toWasmAddress(), template.toWasmString(), model.toWasmString())
+        val model = dict?.let { StringEncoder.encodeDictionary(dict) }
+        onRenderOutput(toWasmAddress(), template.toWasmNullableString(), model.toWasmNullableString())
     }
 
     /**
@@ -91,8 +91,8 @@ abstract class Particle : WasmObject() {
     }
 
     open fun init() {}
-    open fun getTemplate(slotName: String): String = ""
-    open fun populateModel(slotName: String, model: Map<String, Any?> = mapOf()): Map<String, Any?> = model
+    open fun getTemplate(slotName: String): String? = null
+    open fun populateModel(slotName: String, model: Map<String, Any?> = mapOf()): Map<String, Any?>? = model
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
 
 }
