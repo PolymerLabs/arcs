@@ -19,10 +19,12 @@ import arcs.crdt.internal.VersionMap
 /** A [CrdtModel] capable of managing a set of items [T]. */
 class CrdtSet<T : Referencable>(
     /** Initial data. */
-    private var _data: Data<T> = DataImpl(),
+    internal var _data: Data<T> = DataImpl(),
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
     private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
 ) : CrdtModel<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>> {
+    override val versionMap: VersionMap
+        get() = _data.versionMap.copy()
     override val data: Data<T>
         get() = _data.copy()
 

@@ -26,11 +26,13 @@ class CrdtSingleton<T : Referencable>(
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
 ) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.Operation<T>, T?> {
+    override val versionMap: VersionMap
+        get() = set._data.versionMap.copy()
     private var set: CrdtSet<T>
 
     override val data: Data<T>
         get() {
-            val setData = set.data
+            val setData = set._data
             return DataImpl(setData.versionMap, setData.values)
         }
     override val consumerView: T?

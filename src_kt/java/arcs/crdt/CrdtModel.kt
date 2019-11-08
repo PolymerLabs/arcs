@@ -36,6 +36,8 @@ import arcs.type.Type
  * apply. This is a serious error and will result in merge throwing a [CrdtException].
  */
 interface CrdtModel<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+  /** A copy of the current [VersionMap] of the [data]. */
+  val versionMap: VersionMap
   /** Internal (CRDT-friendly) representation of the data used by the model. */
   val data: Data
   /** External (application-friendly) representation of the data used by the model. */

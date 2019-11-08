@@ -1,10 +1,10 @@
 package arcs.arcs.storage.api
 
-import arcs.arcs.util.Log
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtChange
 import arcs.crdt.CrdtSet
+import arcs.crdt.CrdtSet.Operation.*
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import arcs.data.CollectionType
@@ -32,11 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
@@ -47,86 +43,202 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
     private val toStoreData: (CrdtSet.Data<T>) -> StoreData,
     private val toStoreOp: (CrdtSet.IOperation<T>) -> StoreOp,
     coroutineContext: CoroutineContext
-) : Referencable, AutoCloseable {
+) : Referencable {
     override val id: ReferenceId = store.storageKey.toString()
     private val crdtMutex = Mutex()
     private val crdtSet = CrdtSet<T>()
+    private var cachedVersion = VersionMap()
+    private var cachedConsumerData = emptySet<T>()
     private val scope = CoroutineScope(coroutineContext)
     private val initialized: CompletableJob = Job(scope.coroutineContext[Job.Key])
+    private var syncJob: CompletableJob? = null
     private var callbackId: Int = -1
     private val activated = CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
-    private val opChannel = BroadcastChannel<StoreOp>(OP_CHANNEL_CAPACITY)
     val actor: Actor = "ArcsSet@${hashCode()}"
 
-    private val activeStore: ActiveStore<StoreData, StoreOp, Set<T>>
-        get() {
-            if (activated.isCompleted) return activated.getCompleted()
-            return runBlocking(activated) { activated.await() }
+    init {
+        var activeStore: ActiveStore<StoreData, StoreOp, Set<T>>? = null
+        scope.launch {
+            activeStore = store.activate().also { activeStore ->
+                initialized.complete()
+                ProxyCallback<StoreData, StoreOp, Set<T>> { handleStoreCallback(it) }
+                    .also { callbackId = activeStore.on(it) }
+                activated.complete(activeStore)
+                sync().join()
+            }
         }
 
-    init {
-        scope.launch {
-            val activeStore = store.activate()
-            initialized.complete()
-            ProxyCallback<StoreData, StoreOp, Set<T>> { handleStoreCallback(it); true }
-                .also { callbackId = activeStore.on(it) }
-            activated.complete(activeStore)
-            activeStore.onProxyMessage(ProxyMessage.SyncRequest(callbackId))
+        // When the owning scope is finished, we should clean up after ourselves.
+        scope.coroutineContext[Job.Key]?.invokeOnCompletion { activeStore?.off(callbackId) }
+    }
 
-            opChannel.openSubscription().consume {
-                while (!isClosedForReceive) {
-                    val op = receive()
-                    Log.debug { "$actor sending op to activeStore: $op" }
-                    activeStore.onProxyMessage(ProxyMessage.Operations(listOf(op), callbackId))
+    suspend fun freeze(): Set<T> = crdtMutex.withLock { cachedConsumerData }
+
+    suspend fun iterator(
+        withSync: Boolean = false,
+        coroutineContext: CoroutineContext = scope.coroutineContext
+    ): SuspendingIterator<T, StoreData, StoreOp> {
+        activated.await()
+        return crdtMutex.withLock {
+            if (withSync) syncInternal(coroutineContext).join()
+            SuspendingIterator(this, cachedConsumerData.iterator())
+        }
+    }
+
+    suspend fun size(): Int {
+        activated.await()
+        return crdtMutex.withLock { cachedConsumerData.size }
+    }
+
+    suspend fun isEmpty(): Boolean {
+        activated.await()
+        return crdtMutex.withLock { cachedConsumerData.isEmpty() }
+    }
+
+    suspend fun isNotEmpty(): Boolean = !isEmpty()
+
+    suspend fun add(element: T): Boolean {
+        activated.await()
+
+        val (success, op) = crdtMutex.withLock {
+            makeAddOp(element).let {crdtSet.applyOperation(it) to it }.also {
+                cachedVersion = crdtSet.versionMap
+                cachedConsumerData = crdtSet.consumerView
+            }
+        }
+        return if (success) applyOperationToStore(op) else false
+    }
+
+    suspend fun addAsync(
+        element: T,
+        coroutineContext: CoroutineContext = scope.coroutineContext
+    ): Deferred<Boolean> = scope.async(coroutineContext) { add(element) }
+
+    /**
+     * Adds all of the [elements] to the set, if possible and returns the number of elements which
+     * were added successfully.
+     */
+    suspend fun addAll(elements: Iterable<T>): Int {
+        activated.await()
+        val (count, ops) = crdtMutex.withLock {
+            var successes = 0
+            val ops = mutableListOf<Add<T>>()
+            elements.map { makeAddOp(it) }.forEach {
+                if (crdtSet.applyOperation(it)) {
+                    successes++
+                    ops += it
                 }
             }
+            (successes to ops).also {
+                cachedVersion = crdtSet.versionMap
+                cachedConsumerData = crdtSet.consumerView
+            }
         }
+
+        return count.also { applyOperationsToStore(ops) }
     }
 
-    suspend fun iterator(): SuspendingIterator<T, StoreData, StoreOp> {
-        activated.await()
-        return SuspendingIterator(this, opChannel, crdtMutex.withLock { CrdtSet(crdtSet.data) } )
-    }
+    suspend fun addAllAsync(
+        elements: Iterable<T>,
+        coroutineContext: CoroutineContext = scope.coroutineContext
+    ): Deferred<Int> = scope.async(coroutineContext) { addAll(elements) }
 
-    suspend fun addAsync(element: T, coroutineScope: CoroutineScope = scope): Deferred<Boolean> {
+    suspend fun remove(element: T): Boolean {
         activated.await()
 
         val (success, op) = crdtMutex.withLock {
-            crdtSet.data.versionMap.copy().let {
-                it[actor]++
-                val op = CrdtSet.Operation.Add(it, actor, element)
-                crdtSet.applyOperation(op) to op
+            makeRemoveOp(element).let { crdtSet.applyOperation(it) to it }.also {
+                cachedVersion = crdtSet.versionMap
+                cachedConsumerData = crdtSet.consumerView
             }
         }
-        return if (success) coroutineScope.async { applyOperationToStore(op) } else CompletableDeferred(false)
+        return if (success) applyOperationToStore(op) else false
     }
 
-    suspend fun removeAsync(element: T, coroutineScope: CoroutineScope = scope): Deferred<Boolean> {
+    suspend fun removeAsync(
+        element: T,
+        coroutineContext: CoroutineContext = scope.coroutineContext
+    ): Deferred<Boolean> = scope.async(coroutineContext) { remove(element) }
+
+    /** Returns whether or not the [ArcsSet] contains the given [item]. */
+    suspend fun contains(item: T, requireSync: Boolean = false): Boolean {
         activated.await()
 
-        val (success, op) = crdtMutex.withLock {
-            crdtSet.data.versionMap.copy().let {
-                it[actor]++
-                val op = CrdtSet.Operation.Remove(it, actor, element)
-                crdtSet.applyOperation(op) to op
+        return if (requireSync) crdtMutex.withLock {
+            syncInternal().join()
+            cachedConsumerData.any { it.tryDereference() == item }
+        } else {
+            crdtMutex.withLock { cachedConsumerData.any { it.tryDereference() == item } }
+        }
+    }
+
+    /** Initiates a sync with the backing store. */
+    suspend fun sync(coroutineContext: CoroutineContext = scope.coroutineContext): Job =
+        crdtMutex.withLock { syncInternal(coroutineContext) }
+
+    /**
+     * Sends a [ProxyMessage.SyncRequest] to the proxy.
+     *
+     * **Note:** Must be called from within a lock of [crdtMutex].
+     */
+    private suspend fun syncInternal(
+        coroutineContext: CoroutineContext = scope.coroutineContext
+    ): Job {
+        check(crdtMutex.isLocked)
+        syncJob?.takeIf { it.isActive }?.let { return it }
+        return Job(coroutineContext[Job.Key]).also {
+            syncJob = it
+            scope.launch(coroutineContext) {
+                activated.await().onProxyMessage(ProxyMessage.SyncRequest(callbackId))
             }
         }
-        return if (success) coroutineScope.async { applyOperationToStore(op) } else CompletableDeferred(false)
+    }
+
+    /**
+     * Creates an [CrdtSet.Operation.Add] operation to apply to the local [crdtSet].
+     *
+     * **Note:** Must be called from within a lock of [crdtMutex].
+     */
+    private fun makeAddOp(element: T): Add<T> {
+        check(crdtMutex.isLocked)
+        cachedVersion[actor]++
+        return Add(cachedVersion.copy(), actor, element)
+    }
+
+    /**
+     * Creates a [CrdtSet.Operation.Remove] operation to apply to the local [crdtSet].
+     *
+     * **Note:** Must be called from within a lock of [crdtMutex].
+     */
+    private fun makeRemoveOp(element: T): Remove<T> {
+        check(crdtMutex.isLocked)
+        return Remove(cachedVersion.copy(), actor, element)
     }
 
     private suspend fun applyOperationToStore(op: CrdtSet.Operation<T>): Boolean =
-        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(toStoreOp(op)), callbackId))
+        applyOperationsToStore(listOf(op))
+
+    private suspend fun applyOperationsToStore(ops: List<CrdtSet.Operation<T>>): Boolean {
+        return activated.await()
+            .onProxyMessage(ProxyMessage.Operations(ops.map { toStoreOp(it) }, callbackId))
+    }
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun handleStoreCallback(message: ProxyMessage<StoreData, StoreOp, Set<T>>): Boolean {
         val messageBackToStore = crdtMutex.withLock {
             when (message) {
-                is ProxyMessage.ModelUpdate -> handleModelUpdateMessage(message)
-                is ProxyMessage.SyncRequest -> ProxyMessage.ModelUpdate(toStoreData(crdtSet.data), callbackId)
-                is ProxyMessage.Operations -> handleOperationsMessage(message)
+                is ProxyMessage.SyncRequest ->
+                    ProxyMessage.ModelUpdate(toStoreData(crdtSet.data), callbackId)
+                is ProxyMessage.Operations ->
+                    handleOperationsMessage(message)
+                is ProxyMessage.ModelUpdate ->
+                    handleModelUpdateMessage(message).also { syncJob?.complete() }
+            }.also {
+                cachedVersion = crdtSet.versionMap
+                cachedConsumerData = crdtSet.consumerView
             }
         }
-        return messageBackToStore?.let { activeStore.onProxyMessage(it) } ?: true
+        return messageBackToStore?.let { activated.await().onProxyMessage(it) } ?: true
     }
 
     private fun handleModelUpdateMessage(
@@ -162,79 +274,37 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         return ProxyMessage.SyncRequest(callbackId)
     }
 
-    override fun close() = runBlocking(scope.coroutineContext) {
-        if (initialized.isCompleted) {
-            store.activate().off(callbackId)
-        }
-        scope.cancel()
-        Unit
-    }
-
-    val size: Int
-        get() {
-            while (!crdtMutex.tryLock()) { /* Wait */ }
-            return crdtSet.consumerView.size.also { crdtMutex.unlock() }
-        }
-
-    operator fun contains(item: T): Boolean = runBlocking(scope.coroutineContext) {
-        activated.await()
-
-        crdtMutex.withLock {
-            crdtSet.consumerView.any { it.tryDereference() == item }
-        }
-    }
-
     class SuspendingIterator<T, StoreData, StoreOp> internal constructor(
         private val parent: ArcsSet<T, StoreData, StoreOp>,
-        private val removeChannel: BroadcastChannel<StoreOp>,
-        private val crdtSet: CrdtSet<T>
-    ) : AutoCloseable where T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.IOperation<T> {
-        private val mutex = Mutex()
         private var backingIterator: Iterator<T>
-        private var callbackId: Int = -1
+    ) : Iterator<T> where T : Referencable,
+                          StoreData : CrdtSet.Data<T>,
+                          StoreOp : CrdtSet.IOperation<T> {
         private var current: T? = null
 
-        init {
-            backingIterator = crdtSet.consumerView.iterator()
-            callbackId = parent.activeStore.on(ProxyCallback {
-                if (it is ProxyMessage.ModelUpdate) {
-                    mutex.withLock {
-                        crdtSet.merge(it.model)
-                        backingIterator = crdtSet.consumerView.iterator()
-                    }
-                }
-                true
-            })
+        override fun hasNext(): Boolean = backingIterator.hasNext()
+
+        override fun next(): T = backingIterator.next().also { current = it }
+
+        suspend fun removeAsync(
+            coroutineContext: CoroutineContext = parent.scope.coroutineContext
+        ): Deferred<Boolean> {
+            val current = this.current
+                ?: throw IllegalStateException("Cannot remove when iteration hasn't begun yet")
+            return parent.removeAsync(current, coroutineContext)
         }
 
-        fun hasNext(): Boolean = backingIterator.hasNext()
-
-        fun next(): T = backingIterator.next().also { current = it }
-
-        suspend fun remove() {
-            val current = this.current ?: throw IllegalStateException("Cannot remove when iteration hasn't begun")
-            val version = crdtSet.data.versionMap
-            version[parent.actor]++
-            removeChannel.send(parent.toStoreOp(CrdtSet.Operation.Remove(version, parent.actor, current)))
-        }
-
-        internal suspend fun sync() {
+        internal suspend fun sync(
+            coroutineContext: CoroutineContext = parent.scope.coroutineContext
+        ) {
             check(current == null) { "Syncs may only be performed before iteration has begun" }
-            parent.activeStore.onProxyMessage(ProxyMessage.SyncRequest(callbackId))
-        }
-
-        override fun close() {
-            parent.activeStore.off(callbackId)
+            parent.sync(coroutineContext).join()
+            backingIterator = parent.crdtMutex.withLock { parent.cachedConsumerData.iterator() }
         }
     }
 
     private fun Collection<CrdtSet.IOperation<T>>.hasStoreSafeOps(): Boolean =
-        none { it is CrdtSet.Operation.FastForward }
-
-    companion object {
-        private const val MAX_WAIT_SPINS = 100
-        private const val OP_CHANNEL_CAPACITY = 100
-    }
+        none { it is FastForward }
 }
 
 @ExperimentalCoroutinesApi
@@ -255,8 +325,8 @@ fun ArcsSet(
         toStoreData = { RefModeStoreData.Set(it) },
         toStoreOp = {
             when (it) {
-                is CrdtSet.Operation.Add -> RefModeStoreOp.SetAdd(it)
-                is CrdtSet.Operation.Remove -> RefModeStoreOp.SetRemove(it)
+                is Add -> RefModeStoreOp.SetAdd(it)
+                is Remove -> RefModeStoreOp.SetRemove(it)
                 else -> throw IllegalArgumentException("Invalid operation type: $it")
             }
         },

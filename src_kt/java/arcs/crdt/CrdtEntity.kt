@@ -31,6 +31,8 @@ import arcs.data.util.ReferencablePrimitive
 class CrdtEntity(
     private var _data: Data = Data()
 ) : CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> {
+    override val versionMap: VersionMap
+        get() = _data.versionMap.copy()
     override val data: Data
         get() = _data.copy()
     override val consumerView: RawEntity
