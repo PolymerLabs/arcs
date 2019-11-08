@@ -110,11 +110,6 @@ final class AndroidArcsEnvironment {
     // needed to allow WebWorkers to work in FileURLs.
     arcsSettings.setAllowUniversalAccessFromFileURLs(true);
 
-    dynamicManifest = manifests
-        .stream()
-        .map(s -> String.format("import \'%s%s\'", ASSETS_PREFIX, s))
-        .collect(Collectors.joining("\n"));
-
     // As trampolines to map https protocol to file protocol.
     // E.g. https://appassets.androidplatform.net/assets/foo is mapped to
     // file:///android_asset/foo
