@@ -29,13 +29,13 @@ import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
+import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable, SingletonType, ReferenceType} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
 import {Runtime} from './runtime.js';
-import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey, VolatileDriver} from './storageNG/drivers/volatile.js';
 import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
@@ -43,6 +43,8 @@ import {KeyBase} from './storage/key-base.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {Flags} from './flags.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
+import {ArcSerializer, ArcInterface} from './arc-serializer.js';
+import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -69,9 +71,7 @@ type DeserializeArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory;
 }>;
 
-type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
-
-export class Arc {
+export class Arc implements ArcInterface {
   private readonly _context: Manifest;
   private readonly pecFactories: PecFactory[];
   public readonly isSpeculative: boolean;
@@ -84,6 +84,7 @@ export class Arc {
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
   private readonly storesById = new Map<string, UnifiedStore>();
+  private readonly storesByKey = new Map<string | StorageKey, UnifiedStore>();
   // storage keys for referenced handles
   private storageKeys: Dictionary<string | StorageKey> = {};
   public readonly storageKey?: string | StorageKey;
@@ -97,6 +98,7 @@ export class Arc {
   public readonly inspector?: ArcInspector;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly instantiateMutex = new Mutex();
+
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
@@ -185,14 +187,14 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const messageCount = this.pec.messageCount;
-      const innerArcs = this.innerArcs;
+      const innerArcsLength = this.innerArcs.length;
 
       // tslint:disable-next-line: no-any
-      await Promise.all([this.pec.idle as Promise<any>, ...innerArcs.map(async arc => arc.idle)]);
+      await Promise.all([this.pec.idle as Promise<any>, ...this.innerArcs.map(async arc => arc.idle)]);
 
       // We're idle if no new inner arcs appeared and this.pec had exactly 2 messages,
       // one requesting the idle status, and one answering it.
-      if (this.innerArcs.length === innerArcs.length
+      if (this.innerArcs.length === innerArcsLength
         && this.pec.messageCount === messageCount + 2) break;
     }
   }
@@ -240,173 +242,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     return innerArc;
   }
 
-  private async _serializeStore(store: UnifiedStore, context: SerializeContext, name: string): Promise<void> {
-    const type = store.type.getContainedType() || store.type;
-    if (type instanceof InterfaceType) {
-      context.interfaces += type.interfaceInfo.toString() + '\n';
-    }
-    let key: StorageKey | KeyBase;
-    if (typeof store.storageKey === 'string') {
-      key = this.storageProviderFactory.parseStringAsKey(store.storageKey);
-    } else {
-      key = store.storageKey;
-    }
-    const tags: Set<string> = this.storeTags.get(store) || new Set();
-    const handleTags = [...tags];
-
-    const actualHandle = this.activeRecipe.findHandle(store.id);
-    const originalId = actualHandle ? actualHandle.originalId : null;
-    let combinedId = `'${store.id}'`;
-    if (originalId) {
-      combinedId += `!!'${originalId}'`;
-    }
-
-    switch (key.protocol) {
-      case 'firebase':
-      case 'pouchdb':
-        context.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
-        break;
-      case 'volatile': {
-        // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
-        const volatile = handleTags.includes('volatile');
-        let serializedData: {storageKey: string}[] | null = [];
-        if (!volatile) {
-          // TODO: include keys in serialized [big]collections?
-          const activeStore = await store.activate();
-          const model = await activeStore.serializeContents();
-          if (Flags.useNewStorageStack) {
-            serializedData = model;
-          } else {
-            serializedData = model.model.map((model) => {
-              const {id, value} = model;
-              const index = model['index']; // TODO: Invalid Type
-
-              if (value == null) {
-                return null;
-              }
-
-              let result;
-              if (value.rawData) {
-                result = {$id: id};
-                for (const field of Object.keys(value.rawData)) {
-                  result[field] = value.rawData[field];
-                }
-              } else {
-                result = value;
-              }
-              if (index !== undefined) {
-                result.$index = index;
-              }
-              return result;
-            });
-          }
-        }
-        if (store.referenceMode && serializedData.length > 0) {
-          const storageKey = serializedData[0].storageKey;
-          if (!context.dataResources.has(storageKey)) {
-            const storeId = `${name}_Data`;
-            context.dataResources.set(storageKey, storeId);
-            // TODO: can't just reach into the store for the backing Store like this, should be an
-            // accessor that loads-on-demand in the storage objects.
-            if (store instanceof StorageProviderBase) {
-              await store.ensureBackingStore();
-              await this._serializeStore(store.backingStore, context, storeId);
-            }
-          }
-          const storeId = context.dataResources.get(storageKey);
-          serializedData.forEach(a => {a.storageKey = storeId;});
-        }
-
-        const indent = '  ';
-        const data = JSON.stringify(serializedData);
-        const resourceName = `${name}Resource`;
-
-        context.resources += `resource ${resourceName}\n`
-          + indent + 'start\n'
-          + data.split('\n').map(line => indent + line).join('\n')
-          + '\n';
-
-        context.handles += store.toManifestString({handleTags, overrides: {name, source: resourceName, origin: 'resource'}}) + '\n';
-        break;
-      }
-      default:
-        throw new Error(`unknown storageKey protocol ${key.protocol}`);
-    }
-  }
-
-  private async _serializeHandles(): Promise<string> {
-    const context: SerializeContext = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
-
-    let id = 0;
-    const importSet: Set<string> = new Set();
-    const handlesToSerialize: Set<string> = new Set();
-    const contextSet = new Set(this.context.stores.map(store => store.id));
-    for (const handle of this._activeRecipe.handles) {
-      if (handle.fate === 'map') {
-        importSet.add(this.context.findManifestUrlForHandleId(handle.id));
-      } else {
-        // Immediate value handles have values inlined in the recipe and are not serialized.
-        if (handle.immediateValue) continue;
-
-        handlesToSerialize.add(handle.id);
-      }
-    }
-    for (const url of importSet.values()) {
-      context.resources += `import '${url}'\n`;
-    }
-
-    for (const store of this._stores) {
-      if (!handlesToSerialize.has(store.id) || contextSet.has(store.id)) {
-        continue;
-      }
-
-      await this._serializeStore(store, context, `Store${id++}`);
-    }
-
-    return context.resources + context.interfaces + context.handles;
-  }
-
-  private _serializeParticles(): string {
-    const particleSpecs = <ParticleSpec[]>[];
-    // Particles used directly.
-    particleSpecs.push(...this._activeRecipe.particles.map(entry => entry.spec));
-    // Particles referenced in an immediate mode.
-    particleSpecs.push(...this._activeRecipe.handles
-        .filter(h => h.immediateValue)
-        .map(h => h.immediateValue));
-
-    const results: string[] = [];
-    particleSpecs.forEach(spec => {
-      for (const connection of spec.handleConnections) {
-        if (connection.type instanceof InterfaceType) {
-          results.push(connection.type.interfaceInfo.toString());
-        }
-      }
-      results.push(spec.toString());
-    });
-    return results.join('\n');
-  }
-
-  private _serializeStorageKey(): string {
-    if (this.storageKey) {
-      return `storageKey: '${this.storageKey}'\n`;
-    }
-    return '';
-  }
-
   async serialize(): Promise<string> {
     await this.idle;
-    return `
-meta
-  name: '${this.id}'
-  ${this._serializeStorageKey()}
-
-${await this._serializeHandles()}
-
-${this._serializeParticles()}
-
-@active
-${this.activeRecipe.toString()}`;
+    return new ArcSerializer(this).serialize();
   }
 
   // Writes `serialization` to the ArcInfo child key under the Arc's storageKey.
@@ -438,6 +276,12 @@ ${this.activeRecipe.toString()}`;
       const tags = manifest.storeTags.get(storeStub);
       const store = await storeStub.activate();
       await arc._registerStore(store.baseStore, tags);
+      if (store.baseStore.storageKey instanceof VolatileStorageKey) {
+        const driver = new VolatileDriver<{}>(store.baseStore.storageKey, Exists.MayExist, arc.volatileMemory);
+        driver.registerReceiver(() => true);
+        await driver.send(store.baseStore.storeInfo.model, 1);
+        // TODO(shans): Remove driver from driver list
+      }
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
@@ -692,6 +536,12 @@ ${this.activeRecipe.toString()}`;
   async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
+    if (Flags.useNewStorageStack) {
+      if (this.storesByKey.has(storageKey)) {
+        return this.storesByKey.get(storageKey);
+      }
+    }
+
     if (type instanceof RelationType) {
       type = new CollectionType(type);
     }
@@ -719,7 +569,7 @@ ${this.activeRecipe.toString()}`;
       if (typeof storageKey === 'string') {
         throw new Error(`Can't use string storage keys with the new storage stack.`);
       }
-      store = new Store({storageKey, exists: Exists.ShouldCreate, type, id, name});
+      store = new Store({storageKey, exists: Exists.MayExist, type, id, name});
     } else {
       if (typeof storageKey !== 'string') {
         throw new Error(`Can't use new-style storage keys with the old storage stack.`);
@@ -729,6 +579,12 @@ ${this.activeRecipe.toString()}`;
       store.storeInfo.name = name;
     }
     await this._registerStore(store, tags);
+    if (storageKey instanceof ReferenceModeStorageKey && Flags.useNewStorageStack) {
+      const refContainedType = new ReferenceType(type.getContainedType());
+      const refType = type.isSingleton ? new SingletonType(refContainedType) : new CollectionType(refContainedType);
+      await this.createStore(refType, name ? name + '_referenceContainer' : null, null, [], storageKey.storageKey);
+      await this.createStore(new CollectionType(type.getContainedType()), name ? name + '_backingStore' : null, null, [], storageKey.backingKey);
+    }
     return store;
   }
 
@@ -739,6 +595,7 @@ ${this.activeRecipe.toString()}`;
 
 
     this.storesById.set(store.id, store);
+    this.storesByKey.set(store.storageKey, store);
 
     this.storeTags.set(store, new Set(tags));
 

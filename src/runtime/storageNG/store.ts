@@ -14,8 +14,9 @@ import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
-import {ReferenceModeStore, ReferenceModeStorageKey} from './reference-mode-store.js';
+import {ReferenceModeStore} from './reference-mode-store.js';
 import {UnifiedStore, StoreInfo} from './unified-store.js';
+import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
 export {
   ActiveStore,
@@ -89,8 +90,7 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
       type: this.type,
       mode: this.mode,
       baseStore: this,
-      versionToken: this.parsedVersionToken,
-      model: this.model
+      versionToken: this.parsedVersionToken
     });
     this.exists = Exists.ShouldExist;
     this.activeStore = activeStore;

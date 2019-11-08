@@ -328,7 +328,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         // Set the new handles to the new particle
         await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
         resolve();
-
         // Transfer the slot proxies from the old particle to the new one
         for (const name of oldParticle.getSlotNames()) {
           oldParticle.getSlot(name).rewire(particle);
@@ -440,7 +439,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     if (!this.busy) {
       return Promise.resolve();
     }
-    const busyParticlePromises = [...this.particles.values()].filter(async particle => particle.busy).map(async particle => particle.idle);
+    const busyParticlePromises = [...this.particles.values()].filter(particle => particle.busy).map(async particle => particle.idle);
     return Promise.all([this.scheduler.idle, ...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

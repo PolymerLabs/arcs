@@ -844,6 +844,9 @@ export class ReferenceType extends Type {
 
   constructor(reference: Type) {
     super('Reference');
+    if (reference == null) {
+      throw new Error('invalid type! Reference types must include a referenced type declaration');
+    }
     this.referredType = reference;
   }
 
@@ -905,6 +908,10 @@ export class ReferenceType extends Type {
 
   getEntitySchema(): Schema {
     return this.referredType.getEntitySchema();
+  }
+
+  crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
+    return this.referredType.crdtInstanceConstructor();
   }
 }
 
