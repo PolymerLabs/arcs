@@ -1,9 +1,9 @@
 package arcs.api;
 
-import arcs.crdt.CrdtSet;
-import arcs.crdt.CrdtSet.Operation;
-import arcs.common.Referenceable;
-import arcs.crdt.internal.VersionMap;
+import arcs.crdt.CRDTCollection;
+import arcs.crdt.CollectionOperation;
+import arcs.crdt.Referenceable;
+import arcs.crdt.VersionMap;
 import arcs.crdt.VersionedValue;
 import java.util.ArrayList;
 import java.util.Arrays;
