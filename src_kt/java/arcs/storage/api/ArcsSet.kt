@@ -37,14 +37,108 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Creates an [ArcsSet] which manages a set of [RawEntity] objects located at the given
+ * [storageKey], whose schemae are defined by the supplied [schema].
+ *
+ * **Note:** By supplying your [coroutineContext], any bindings to the storage layer are released
+ * when the context's primary job is completed, thus avoiding a memory leak.
+ */
+@Suppress("FunctionName")
 @ExperimentalCoroutinesApi
-class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.IOperation<T>>(
+fun ArcsSet(
+    storageKey: ReferenceModeStorageKey,
+    schema: Schema,
+    existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
+    coroutineContext: CoroutineContext = Dispatchers.Default
+): ArcsSet<RawEntity, RefModeStoreData.Set, RefModeStoreOp.Set> {
+    val storeOpts = StoreOptions<RefModeStoreData.Set, RefModeStoreOp.Set, Set<RawEntity>>(
+        storageKey = storageKey,
+        type = CollectionType(EntityType(schema)),
+        existenceCriteria = existenceCriteria,
+        mode = StorageMode.ReferenceMode
+    )
+    return ArcsSet(
+        store = Store(storeOpts),
+        toStoreData = { RefModeStoreData.Set(it) },
+        toStoreOp = {
+            when (it) {
+                is Add -> RefModeStoreOp.SetAdd(it)
+                is Remove -> RefModeStoreOp.SetRemove(it)
+                else -> throw IllegalArgumentException("Invalid operation type: $it")
+            }
+        },
+        coroutineContext = coroutineContext
+    )
+}
+
+/**
+ * Creates an [ArcsSet] which manages a set of [ReferencablePrimitive] objects of type <T> located
+ * at the given [storageKey].
+ *
+ * **Note:** By supplying your [coroutineContext], any bindings to the storage layer are released
+ * when the context's primary job is completed, thus avoiding a memory leak.
+ */
+@Suppress("FunctionName")
+@ExperimentalCoroutinesApi
+inline fun <reified T> ArcsSet(
+    storageKey: StorageKey,
+    existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
+    coroutineContext: CoroutineContext = Dispatchers.Default
+): ArcsSet<ReferencablePrimitive<T>,
+    CrdtSet.Data<ReferencablePrimitive<T>>,
+    CrdtSet.IOperation<ReferencablePrimitive<T>>> {
+
+    require(ReferencablePrimitive.isSupportedPrimitive(T::class)) {
+        "Unsupported type: ${T::class}"
+    }
+
+    val storeOps = StoreOptions<
+        CrdtSet.Data<ReferencablePrimitive<T>>,
+        CrdtSet.IOperation<ReferencablePrimitive<T>>,
+        Set<ReferencablePrimitive<T>>>(
+        storageKey = storageKey,
+        // TODO: this is wrong. There should probably be a PrimitiveType?
+        type = CollectionType(CountType()),
+        existenceCriteria = existenceCriteria,
+        mode = StorageMode.Direct
+    )
+    return ArcsSet(
+        store = Store(storeOps),
+        toStoreData = { it },
+        toStoreOp = { it },
+        coroutineContext = coroutineContext
+    )
+}
+
+/**
+ * [ArcsSet] is a [MutableSet]-like data structure which allows for easy interaction with [CrdtSet]s
+ * managed by Arcs' storage layer.
+ *
+ * All functions on [ArcsSet] are suspending functions, due to the fact that communicating with the
+ * storage layer is an inherently asynchronous process.
+ *
+ * **Note:** By supplying your [coroutineContext] to the constructor, any bindings to the storage
+ * layer are released when the context's primary job is completed, thus avoiding a memory leak.
+ */
+@ExperimentalCoroutinesApi
+class ArcsSet<T, StoreData, StoreOp>(
     private val store: Store<StoreData, StoreOp, Set<T>>,
     private val toStoreData: (CrdtSet.Data<T>) -> StoreData,
     private val toStoreOp: (CrdtSet.IOperation<T>) -> StoreOp,
     coroutineContext: CoroutineContext
-) : Referencable {
+) : Referencable
+    where T : Referencable,
+          StoreData : CrdtSet.Data<T>,
+          StoreOp : CrdtSet.IOperation<T> {
+
     override val id: ReferenceId = store.storageKey.toString()
+
+    /**
+     * The [Actor] this instance will use when performing Crdt operations on the underlying data.
+     */
+    val actor: Actor by lazy { "ArcsSet@${hashCode()}" }
+
     private val crdtMutex = Mutex()
     private val crdtSet = CrdtSet<T>()
     private var cachedVersion = VersionMap()
@@ -54,10 +148,12 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
     private var syncJob: CompletableJob? = null
     private var callbackId: Int = -1
     private val activated = CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
-    val actor: Actor = "ArcsSet@${hashCode()}"
 
     init {
         var activeStore: ActiveStore<StoreData, StoreOp, Set<T>>? = null
+
+        // Launch a coroutine to activate the backing store, register ourselves as a ProxyCallback,
+        // and perform an initial sync.
         scope.launch {
             activeStore = store.activate().also { activeStore ->
                 initialized.complete()
@@ -72,8 +168,12 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         scope.coroutineContext[Job.Key]?.invokeOnCompletion { activeStore?.off(callbackId) }
     }
 
+    /** Returns a snapshot of the current data in the set. */
     suspend fun freeze(): Set<T> = crdtMutex.withLock { cachedConsumerData }
 
+    /**
+     * Returns an iterator which supports concurrently removing items from the set during iteration.
+     */
     suspend fun iterator(
         withSync: Boolean = false,
         coroutineContext: CoroutineContext = scope.coroutineContext
@@ -85,38 +185,51 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         }
     }
 
+    /** Returns the current size of the set. */
     suspend fun size(): Int {
         activated.await()
         return crdtMutex.withLock { cachedConsumerData.size }
     }
 
+    /** Returns whether or not the set is empty. */
     suspend fun isEmpty(): Boolean {
         activated.await()
         return crdtMutex.withLock { cachedConsumerData.isEmpty() }
     }
 
+    /** Returns whether or not the set is non-empty. */
     suspend fun isNotEmpty(): Boolean = !isEmpty()
 
+    /**
+     * Adds the [element] to the set and suspends while applying it to the backing [store].
+     *
+     * Returns whether or not the element could be added.
+     */
     suspend fun add(element: T): Boolean {
         activated.await()
 
         val (success, op) = crdtMutex.withLock {
-            makeAddOp(element).let {crdtSet.applyOperation(it) to it }.also {
-                cachedVersion = crdtSet.versionMap
-                cachedConsumerData = crdtSet.consumerView
-            }
+            makeAddOp(element).let { crdtSet.applyOperation(it) to it }
+                .also { updateCache() }
         }
         return if (success) applyOperationToStore(op) else false
     }
 
+    /**
+     * Launches a coroutine to add an [element] to the set and returns a [Deferred] which will
+     * resolve to whether or not the element could be added.
+     */
     suspend fun addAsync(
         element: T,
         coroutineContext: CoroutineContext = scope.coroutineContext
     ): Deferred<Boolean> = scope.async(coroutineContext) { add(element) }
 
     /**
-     * Adds all of the [elements] to the set, if possible and returns the number of elements which
+     * Attempts to add all of the [elements] to the set and returns the number of elements which
      * were added successfully.
+     *
+     * Suspends execution of the current coroutine while applying the elements to the backing
+     * [store].
      */
     suspend fun addAll(elements: Iterable<T>): Int {
         activated.await()
@@ -129,32 +242,42 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
                     ops += it
                 }
             }
-            (successes to ops).also {
-                cachedVersion = crdtSet.versionMap
-                cachedConsumerData = crdtSet.consumerView
-            }
+            updateCache()
+            successes to ops
         }
 
         return count.also { applyOperationsToStore(ops) }
     }
 
+    /**
+     * Launches a coroutine to add all of the supplied [elements] to the set and returns a
+     * [Deferred] which resolves to the number of items which were added.
+     */
     suspend fun addAllAsync(
         elements: Iterable<T>,
         coroutineContext: CoroutineContext = scope.coroutineContext
     ): Deferred<Int> = scope.async(coroutineContext) { addAll(elements) }
 
+    /**
+     * Removes the specified [element] from the set and suspends execution while the removal is
+     * happening on the backing [store].
+     *
+     * Returns whether or not the element could be removed.
+     */
     suspend fun remove(element: T): Boolean {
         activated.await()
 
         val (success, op) = crdtMutex.withLock {
-            makeRemoveOp(element).let { crdtSet.applyOperation(it) to it }.also {
-                cachedVersion = crdtSet.versionMap
-                cachedConsumerData = crdtSet.consumerView
-            }
+            makeRemoveOp(element).let { crdtSet.applyOperation(it) to it }
+                .also { updateCache() }
         }
         return if (success) applyOperationToStore(op) else false
     }
 
+    /**
+     * Launches a coroutine to remove the specified [element] from the set (and the backing [store])
+     * and returns a [Deferred] which resolves to whether or not the item could be removed.
+     */
     suspend fun removeAsync(
         element: T,
         coroutineContext: CoroutineContext = scope.coroutineContext
@@ -233,10 +356,7 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
                     handleOperationsMessage(message)
                 is ProxyMessage.ModelUpdate ->
                     handleModelUpdateMessage(message).also { syncJob?.complete() }
-            }.also {
-                cachedVersion = crdtSet.versionMap
-                cachedConsumerData = crdtSet.consumerView
-            }
+            }.also { updateCache() }
         }
         return messageBackToStore?.let { activated.await().onProxyMessage(it) } ?: true
     }
@@ -274,6 +394,23 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         return ProxyMessage.SyncRequest(callbackId)
     }
 
+    /**
+     * Updates the [cachedVersion] and [cachedConsumerData].
+     *
+     * **Note:** This may only be called while the [crdtMutex] is locked.
+     */
+    private fun updateCache() {
+        check(crdtMutex.isLocked)
+        cachedVersion = crdtSet.versionMap
+        cachedConsumerData = crdtSet.consumerView
+    }
+
+    /**
+     * [Iterator] over the current elements of an [ArcsSet].
+     *
+     * The [removeAsync] function allows for concurrent removal of the iterator's current item from
+     * the [ArcsSet].
+     */
     class SuspendingIterator<T, StoreData, StoreOp> internal constructor(
         private val parent: ArcsSet<T, StoreData, StoreOp>,
         private var backingIterator: Iterator<T>
@@ -286,6 +423,10 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
 
         override fun next(): T = backingIterator.next().also { current = it }
 
+        /**
+         * Removes the iterator's current element from the parent [ArcsSet] and returns a [Deferred]
+         * which resolves to whether or not the element could be removed.
+         */
         suspend fun removeAsync(
             coroutineContext: CoroutineContext = parent.scope.coroutineContext
         ): Deferred<Boolean> {
@@ -307,57 +448,3 @@ class ArcsSet<T : Referencable, StoreData : CrdtSet.Data<T>, StoreOp : CrdtSet.I
         none { it is FastForward }
 }
 
-@ExperimentalCoroutinesApi
-fun ArcsSet(
-    storageKey: ReferenceModeStorageKey,
-    schema: Schema,
-    existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
-    coroutineContext: CoroutineContext = Dispatchers.IO
-): ArcsSet<RawEntity, RefModeStoreData.Set, RefModeStoreOp.Set> {
-    val storeOpts = StoreOptions<RefModeStoreData.Set, RefModeStoreOp.Set, Set<RawEntity>>(
-        storageKey = storageKey,
-        type = CollectionType(EntityType(schema)),
-        existenceCriteria = existenceCriteria,
-        mode = StorageMode.ReferenceMode
-    )
-    return ArcsSet(
-        store = Store(storeOpts),
-        toStoreData = { RefModeStoreData.Set(it) },
-        toStoreOp = {
-            when (it) {
-                is Add -> RefModeStoreOp.SetAdd(it)
-                is Remove -> RefModeStoreOp.SetRemove(it)
-                else -> throw IllegalArgumentException("Invalid operation type: $it")
-            }
-        },
-        coroutineContext = coroutineContext
-    )
-}
-
-@ExperimentalCoroutinesApi
-inline fun <reified T> ArcsSet(
-    storageKey: StorageKey,
-    existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
-    coroutineContext: CoroutineContext = Dispatchers.IO
-): ArcsSet<ReferencablePrimitive<T>,
-    CrdtSet.Data<ReferencablePrimitive<T>>,
-    CrdtSet.IOperation<ReferencablePrimitive<T>>> {
-
-    require(ReferencablePrimitive.isSupportedPrimitive(T::class)) { "Unsupported type: ${T::class.java}" }
-
-    val storeOps = StoreOptions<
-        CrdtSet.Data<ReferencablePrimitive<T>>,
-        CrdtSet.IOperation<ReferencablePrimitive<T>>,
-        Set<ReferencablePrimitive<T>>>(
-        storageKey = storageKey,
-        type = CollectionType(CountType()), // TODO: this is wrong. There should probably be a PrimitiveType?
-        existenceCriteria = existenceCriteria,
-        mode = StorageMode.Direct
-    )
-    return ArcsSet(
-        store = Store(storeOps),
-        toStoreData = { it },
-        toStoreOp = { it },
-        coroutineContext = coroutineContext
-    )
-}
