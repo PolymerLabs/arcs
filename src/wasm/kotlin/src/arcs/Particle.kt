@@ -39,8 +39,9 @@ abstract class Particle : WasmObject() {
         onHandleSync(handle, toSync.isEmpty())
     }
 
-    open fun onHandleUpdate(handle: Handle) {}
-    open fun onHandleSync(handle: Handle, allSynced: Boolean) {}
+    open fun init() {}
+    open fun onHandleUpdate(handle: Handle) = renderOutput()
+    open fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()
 
     fun renderOutput() {
         log("renderOutput")
@@ -90,7 +91,6 @@ abstract class Particle : WasmObject() {
         return resolved
     }
 
-    open fun init() {}
     open fun getTemplate(slotName: String): String? = null
     open fun populateModel(slotName: String, model: Map<String, Any?> = mapOf()): Map<String, Any?>? = model
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") {}
