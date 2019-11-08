@@ -27,6 +27,7 @@ import arcs.data.SchemaFields
 import arcs.data.SchemaName
 import arcs.data.SingletonType
 import arcs.data.util.ReferencablePrimitive
+import arcs.data.util.toReferencable
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.RefModeStoreOutput
@@ -149,10 +150,8 @@ class ReferenceModeStoreTest {
         assertThat(capturedBob.singletons["age"]?.data?.versionMap).isEqualTo(VersionMap(actor to 1))
         assertThat(capturedBob.toRawEntity().singletons)
             .containsExactly(
-                "name",
-                CrdtEntity.ReferenceImpl(ReferencablePrimitive("bob").id),
-                "age",
-                CrdtEntity.ReferenceImpl(ReferencablePrimitive(42).id)
+                "name", "bob".toReferencable(),
+                "age", 42.toReferencable()
             )
     }
 
@@ -216,7 +215,7 @@ class ReferenceModeStoreTest {
                     actor,
                     VersionMap(actor to 1),
                     "name",
-                    CrdtEntity.ReferenceImpl(ReferencablePrimitive("bob").id)
+                    CrdtEntity.ReferenceImpl("bob".toReferencable().id)
                 )
             )
         ).isTrue()
@@ -226,7 +225,7 @@ class ReferenceModeStoreTest {
                     actor,
                     VersionMap(actor to 1),
                     "age",
-                    CrdtEntity.ReferenceImpl(ReferencablePrimitive(42).id)
+                    CrdtEntity.ReferenceImpl(42.toReferencable().id)
                 )
             )
         ).isTrue()
@@ -336,7 +335,7 @@ class ReferenceModeStoreTest {
                 actor,
                 VersionMap(actor to 1),
                 "name",
-                CrdtEntity.Reference.buildReference(ReferencablePrimitive("bob"))
+                CrdtEntity.Reference.buildReference("bob".toReferencable())
             )
         )
         bobCrdt.applyOperation(
@@ -344,7 +343,7 @@ class ReferenceModeStoreTest {
                 actor,
                 VersionMap(actor to 1),
                 "age",
-                CrdtEntity.Reference.buildReference(ReferencablePrimitive(42))
+                CrdtEntity.Reference.buildReference(42.toReferencable())
             )
         )
 
@@ -528,9 +527,9 @@ class ReferenceModeStoreTest {
             if (it is ProxyMessage.ModelUpdate) {
                 val entityRecord = requireNotNull(it.model.values["an-id"]?.value)
                 assertThat(entityRecord.singletons["name"]?.id)
-                    .isEqualTo(ReferencablePrimitive("bob").id)
+                    .isEqualTo("bob".toReferencable().id)
                 assertThat(entityRecord.singletons["age"]?.id)
-                    .isEqualTo(ReferencablePrimitive(42).id)
+                    .isEqualTo(42.toReferencable().id)
                 job.complete()
             } else {
                 job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
@@ -550,7 +549,7 @@ class ReferenceModeStoreTest {
                 actor,
                 VersionMap(actor to 1),
                 "name",
-                CrdtEntity.Reference.buildReference(ReferencablePrimitive("bob"))
+                CrdtEntity.Reference.buildReference("bob".toReferencable())
             )
         )
         entityCrdt.applyOperation(
@@ -558,7 +557,7 @@ class ReferenceModeStoreTest {
                 actor,
                 VersionMap(actor to 1),
                 "age",
-                CrdtEntity.Reference.buildReference(ReferencablePrimitive(42))
+                CrdtEntity.Reference.buildReference(42.toReferencable())
             )
         )
 
@@ -591,8 +590,8 @@ class ReferenceModeStoreTest {
     private fun createPersonEntity(id: ReferenceId, name: String, age: Int): RawEntity = RawEntity(
         id = id,
         singletons = mapOf(
-            "name" to ReferencablePrimitive(name),
-            "age" to ReferencablePrimitive(age)
+            "name" to name.toReferencable(),
+            "age" to age.toReferencable()
         )
     )
 

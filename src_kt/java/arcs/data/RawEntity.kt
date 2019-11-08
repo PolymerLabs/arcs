@@ -26,6 +26,14 @@ data class RawEntity(
      */
     val collections: Map<FieldName, Set<Referencable>> = emptyMap()
 ) : Referencable {
+    override fun tryDereference(): Referencable {
+        return RawEntity(
+            id = id,
+            singletons = singletons.mapValues { it.value?.tryDereference() },
+            collections= collections.mapValues { it.value.map { item -> item.tryDereference() }.toSet() }
+        )
+    }
+
     /** Constructor for a [RawEntity] when only the field names are known. */
     constructor(
         id: ReferenceId = NO_REFERENCE_ID,

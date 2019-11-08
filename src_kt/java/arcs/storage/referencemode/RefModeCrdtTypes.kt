@@ -83,15 +83,21 @@ interface RefModeStoreOp : CrdtOperationAtTime {
         RefModeSingleton,
         CrdtSingleton.Operation.Clear<RawEntity>(actor, clock)
 
+    interface Set : RefModeStoreOp, CrdtSet.IOperation<RawEntity>
+
     class SetAdd(actor: Actor, clock: VersionMap, added: RawEntity)
-        : RefModeStoreOp,
+        : Set,
         RefModeSet,
-        CrdtSet.Operation.Add<RawEntity>(clock, actor, added)
+        CrdtSet.Operation.Add<RawEntity>(clock, actor, added) {
+        constructor(setOp: Add<RawEntity>) : this(setOp.actor, setOp.clock, setOp.added)
+    }
 
     class SetRemove(actor: Actor, clock: VersionMap, removed: RawEntity)
-        : RefModeStoreOp,
+        : Set,
         RefModeSet,
-        CrdtSet.Operation.Remove<RawEntity>(clock, actor, removed)
+        CrdtSet.Operation.Remove<RawEntity>(clock, actor, removed) {
+        constructor(setOp: Remove<RawEntity>) : this(setOp.actor, setOp.clock, setOp.removed)
+    }
 }
 
 /** Consumer data value of the [arcs.storage.ReferenceModeStore]. */
@@ -104,5 +110,5 @@ sealed class RefModeStoreOutput : Referencable {
     data class DereferencedSet(
         override val id: ReferenceId,
         val value: Set<RawEntity>
-    ) : RefModeStoreOutput(), RefModeSet
+    ) : RefModeStoreOutput(), RefModeSet, Set<RawEntity> by value
 }

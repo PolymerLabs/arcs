@@ -26,11 +26,13 @@ class CrdtSingleton<T : Referencable>(
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
 ) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.Operation<T>, T?> {
+    override val versionMap: VersionMap
+        get() = set._data.versionMap.copy()
     private var set: CrdtSet<T>
 
     override val data: Data<T>
         get() {
-            val setData = set.data
+            val setData = set._data
             return DataImpl(setData.versionMap, setData.values)
         }
     override val consumerView: T?
@@ -63,9 +65,21 @@ class CrdtSingleton<T : Referencable>(
     )
 
     override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
-        set.merge(other)
+        val result = set.merge(other)
         // Always return CrdtChange.Data change records, since we cannot perform an op-based change.
-        return MergeChanges(CrdtChange.Data(data), CrdtChange.Data(data))
+        var modelChange: CrdtChange<Data<T>, Operation<T>> = CrdtChange.Data(data)
+        var otherChange: CrdtChange<Data<T>, Operation<T>> = CrdtChange.Data(data)
+
+        // If the changes were empty, we should actually just return empty changes, rather than the
+        // model..
+        if (result.modelChange.isEmpty()) {
+            modelChange = CrdtChange.Operations(mutableListOf())
+        }
+        if (result.otherChange.isEmpty()) {
+            otherChange = CrdtChange.Operations(mutableListOf())
+        }
+
+        return MergeChanges(modelChange, otherChange)
     }
 
     override fun applyOperation(op: Operation<T>): Boolean = op.applyTo(set)
@@ -74,6 +88,8 @@ class CrdtSingleton<T : Referencable>(
 
     /** Makes a deep copy of this [CrdtSingleton]. */
     internal fun copy(): CrdtSingleton<T> = CrdtSingleton(singletonToCopy = this)
+
+    override fun toString(): String = "CrdtSingleton(data=${set.data})"
 
     /** Abstract representation of the data stored by a [CrdtSingleton]. */
     interface Data<T : Referencable> : CrdtSet.Data<T> {

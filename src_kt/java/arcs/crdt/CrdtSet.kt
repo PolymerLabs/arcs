@@ -19,10 +19,12 @@ import arcs.crdt.internal.VersionMap
 /** A [CrdtModel] capable of managing a set of items [T]. */
 class CrdtSet<T : Referencable>(
     /** Initial data. */
-    private var _data: Data<T> = DataImpl(),
+    internal var _data: Data<T> = DataImpl(),
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
     private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
-) : CrdtModel<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>> {
+) : CrdtModel<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>> {
+    override val versionMap: VersionMap
+        get() = _data.versionMap.copy()
     override val data: Data<T>
         get() = _data.copy()
 
@@ -36,7 +38,16 @@ class CrdtSet<T : Referencable>(
     internal val originalData: Data<T>
         get() = _data
 
-    override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
+    override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
+        if (versionMap == other.versionMap) {
+            // If we've got the same version clocks, there's nothing to do here.
+            @Suppress("RemoveExplicitTypeArguments") // Type inference was failing (?!)
+            return MergeChanges<Data<T>, IOperation<T>>(
+                CrdtChange.Operations(mutableListOf()),
+                CrdtChange.Operations(mutableListOf())
+            )
+        }
+
         val newClock = _data.versionMap mergeWith other.versionMap
         val mergedData = dataBuilder(newClock)
         val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
@@ -82,14 +93,20 @@ class CrdtSet<T : Referencable>(
         this._data = mergedData
 
         val otherOperations =
-            CrdtChange.Operations<Data<T>, Operation<T>>(fastForwardOp.simplify().toMutableList())
+            if (fastForwardOp.added.isNotEmpty() || fastForwardOp.removed.isNotEmpty()) {
+                CrdtChange.Operations<Data<T>, IOperation<T>>(
+                    fastForwardOp.simplify().toMutableList()
+                )
+            } else {
+                CrdtChange.Operations<Data<T>, IOperation<T>>(mutableListOf())
+            }
 
         return MergeChanges(
             modelChange = CrdtChange.Data(mergedData), otherChange = otherOperations
         )
     }
 
-    override fun applyOperation(op: Operation<T>): Boolean = op.applyTo(_data)
+    override fun applyOperation(op: IOperation<T>): Boolean = op.applyTo(_data)
 
     /** Checks whether or not a given [Operation] will succeed. */
     @Suppress("unused")
@@ -132,11 +149,14 @@ class CrdtSet<T : Referencable>(
         val value: T
     )
 
-    /** Operations which can be performed on a [CrdtSet]. */
-    sealed class Operation<T : Referencable> : CrdtOperationAtTime {
+    /** Generic Operation applicable to [CrdtSet]. */
+    interface IOperation<T : Referencable> : CrdtOperationAtTime {
         /** Performs the operation on the specified [DataImpl] instance. */
-        internal abstract fun applyTo(data: Data<T>, isDryRun: Boolean = false): Boolean
+        fun applyTo(data: Data<T>, isDryRun: Boolean = false): Boolean
+    }
 
+    /** Operations which can be performed on a [CrdtSet]. */
+    sealed class Operation<T : Referencable> : IOperation<T> {
         /**
          * Represents an addition of a new item into a [CrdtSet] and returns whether or not the
          * operation could be applied.

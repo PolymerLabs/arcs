@@ -18,8 +18,10 @@ import arcs.crdt.internal.VersionMap
 /** A [CrdtModel] capable of managing an increasing [Int] value. */
 class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
   private var _data: Data = Data()
+  override val versionMap: VersionMap
+    get() = _data.versionMap.copy()
   override val data: Data
-    get() = _data.copy(values = HashMap(_data.values), versionMap = VersionMap(_data.versionMap))
+    get() = _data.copy(values = HashMap(_data.values), versionMap = _data.versionMap.copy())
 
   override val consumerView: Int
     get() = _data.values.values.sum()

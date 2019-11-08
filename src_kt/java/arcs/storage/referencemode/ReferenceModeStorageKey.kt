@@ -31,6 +31,7 @@ data class ReferenceModeStorageKey(
         const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 
         private fun StorageKey.embed() =
-            toString().replace("\\{".toRegex(), "{{").replace("\\}".toRegex(), "}}")
+            toString().replace("\\{".toRegex(), "{{")
+                .replace("}".toRegex(), "}}")
     }
 }
