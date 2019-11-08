@@ -19,7 +19,7 @@ particle HelloWorldParticle in 'HelloWorld.wasm'
   // in the Arcs manifest language, so this is very important.
   // Don't worry about what this line does at the moment, we'll
   // be getting to root and slots in more detail soon.
-  root: consumes Slot
+  root: consumes
 
 // And now we are at the recipe definition!
 recipe HelloWorldRecipe
@@ -87,7 +87,7 @@ This interpolation occurs when `populateModel()` returns a dictionary with keys 
 
 ```
 particle BasicTemplateParticle in 'BasicTemplate.wasm'
-  root: consumes Slot
+  root: consumes
 
 recipe BasicTemplateRecipe
   BasicTemplateParticle
@@ -152,20 +152,20 @@ particle ParentParticle in 'ParentParticle.wasm'
   // This particle renders to the root slot ("consumes" it), and provides a slot inside it called
   // "mySlot" in which another particle can render itself. The child particle will be rendered inside
   // a special div with the identifier "mySlot", which this particle will need to provide in its HTML.
-  root: consumes Slot
+  root: consumes
     mySlot: provides
 
 // The "child" particle. Instead of consuming "root" it consumes "mySlot", which connects it to the
 // slot provided by ParentParticle.
 particle ChildParticle in 'ChildParticle.wasm'
-  mySlot: consumes
+  render: consumes
 
 recipe RenderSlotsRecipe
   ParentParticle
     root: consumes
-      mySlot: provides theSlot
+      mySlot: provides childSlot
   ChildParticle
-    mySlot: consumes theSlot
+    render: consumes childSlot
 
   description `Kotlin Tutorial 3: Render Slots`
 

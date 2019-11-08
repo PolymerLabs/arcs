@@ -21,7 +21,7 @@ particle HelloWorldParticle in 'HelloWorld.js'
   // in the Arcs manifest language, so this is very important.
   // Don't worry about what this line does at the moment, we'll
   // be getting to root and slots in more detail soon.
-  root: consumes Slot
+  root: consumes
 
 // And now we are at the recipe definition!
 recipe HelloWorldRecipe
@@ -66,7 +66,7 @@ This interpolation occurs when `render()` returns a dictionary with keys that ma
 
 ```
 particle BasicTemplateParticle in 'BasicTemplate.js.js'
-  root: consumes Slot
+  root: consumes
 
 recipe BasicTemplateRecipe
   BasicTemplateParticle
@@ -113,12 +113,12 @@ particle ParentParticle in 'parent.js'
   // called "mySlot" in which another particle can render. The
   // child particle will be rendered inside a special div with the identifier
   // "mySlot", which this particle will need to provide in its HTML.
-  root: consumes Slot
+  root: consumes
     mySlot: provides
 
 // The "child" particle. Instead of consuming "root" it consumes "mySlot"
 particle ChildParticle in 'child.js'
-  mySlot: consumes
+  render: consumes
 
 
 // Unlike previous recipes, this one includes two particles.
@@ -129,10 +129,10 @@ recipe RenderSlotsRecipe
       // ParentParticle also provides mySlot. Note the additional tab over.
       // The name "slot" is the name the recipe uses for the slot, and is how
       // the recipe connects the parent's mySlot and the child's mySlot
-      mySlot: provides theSlot
+      mySlot: provides childSlot
   ChildParticle
     // And the ChildParticle consumes the slot.
-    mySlot: consumes theSlot
+    render: consumes childSlot
 
   description `Javascript Tutorial 3: Render Slots`
 ```
@@ -188,21 +188,21 @@ As usual, we start with the Arcs Manifest file. Because we are going to be using
 ```
 // Define a schema that allows us to store a person's name 
 schema Person
-  Text name
+  name: Text
 
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
 particle GetPerson in './source/GetPerson.js'
   person: writes Person
-  root: consumes Slot
+  root: consumes
     greetingSlot: provides
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
 particle DisplayGreeting in './source/DisplayGreeting.js'
   person: reads Person
-  consume greetingSlot
+  greetingSlot: consumes
 
 recipe HandleRecipe
   GetPerson
@@ -297,8 +297,8 @@ Using some more sophisticated template interpolation, we can easily greet everyo
 We begin with the Arcs manifest file which includes the collection of `PersonDetails`.
 ```
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 // This is essentially a JSON file defined inside the manifest.
 resource PeopleData
@@ -316,7 +316,7 @@ store PeopleToGreetStore of [PersonDetails] in PeopleData
 particle CollectionParticle in 'collections.js'
   // The input is a collection of PersonDetails entities.
   inputData: reads [PersonDetails]
-  root: consumes Slot
+  root: consumes
 
 recipe CollectionRecipe
   data: map PeopleToGreetStore
@@ -378,8 +378,8 @@ the Arcs Manifest file (as a `resource`), we're going to load it from a separate
 ```
 // Defines a new Entity called PersonDetails, with two fields.
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
@@ -387,7 +387,7 @@ store PersonToGreetStore of PersonDetails in 'data.json'
 particle JsonStoreParticle in 'JsonStore.js'
   // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
   inputData: reads PersonDetails
-  root: consumes Slot
+  root: consumes
 
 recipe JsonStoreRecipe
   // This line connects this recipe to the data store above. It also creates a local alias for it called "data", which is how we will refer to
