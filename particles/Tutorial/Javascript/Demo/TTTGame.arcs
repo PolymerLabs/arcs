@@ -3,8 +3,14 @@
 import 'TTTGameSchemas.arcs'
 import 'TTTGameData.arcs'
 
+schema Person
+  name: Text
+  avatar: Text
+  id: Number
+
+
 particle Game in './source/TTTGame.js'
-  playerOne: reads writes Person
+  playerOne: reads writes Person {name: Text}
   playerTwo: reads writes Person
   gameState: reads writes GameState
   playerOneMove: reads writes Move
