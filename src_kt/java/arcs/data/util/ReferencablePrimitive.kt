@@ -17,13 +17,25 @@ import arcs.util.Base64
 import arcs.util.toBase64Bytes
 import kotlin.reflect.KClass
 
-data class ReferencablePrimitive<T>(private val klass: KClass<*>, val value: T, val valueRepr: String? = null) : Referencable {
+/**
+ * Like the name suggests, this represents a primitive which can be referenced - and thus used by
+ * Crdts.
+ */
+data class ReferencablePrimitive<T>(
+    /** Type of primitive being referencable-ified. */
+    private val klass: KClass<*>,
+    /** The actual value. */
+    val value: T,
+    /**
+     * A string-representation of the value, when `value.toString()` is unwieldy (e.g. ByteArrays).
+     */
+    val valueRepr: String = value.toString()
+) : Referencable {
     override val id: ReferenceId
-        get() = valueRepr?.let { "Primitive<$klass>($it)" } ?: toString()
+        // TODO: consider other 'serialization' mechanisms.
+        get() = "Primitive<$klass>($valueRepr)"
 
-    override fun toString(): String {
-        return "Primitive<$klass>($value)"
-    }
+    override fun toString(): String = id
 
     companion object {
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
@@ -37,6 +49,10 @@ data class ReferencablePrimitive<T>(private val klass: KClass<*>, val value: T, 
                 || klass == Boolean::class
                 || klass == ByteArray::class
 
+        /**
+         * If the given [ReferenceId] matches the type of `serialized` reference id created by
+         * [ReferencablePrimitive], this will return an instance of [ReferencablePrimitive].
+         */
         fun tryDereference(id: ReferenceId): Referencable? {
             val match = pattern.matchEntire(id) ?: return null
             val className = match.groups[1]?.value ?: return null
@@ -61,10 +77,31 @@ data class ReferencablePrimitive<T>(private val klass: KClass<*>, val value: T, 
     }
 }
 
-fun Int.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitive(Int::class, this.toDouble())
-fun Float.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitive(Float::class, this.toDouble())
-fun Double.toReferencable(): ReferencablePrimitive<Double> = ReferencablePrimitive(Double::class, this)
-fun String.toReferencable(): ReferencablePrimitive<String> = ReferencablePrimitive(String::class, this)
-fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> = ReferencablePrimitive(Boolean::class, this)
+/* Extension functions to make conversion easy. */
+
+/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Int]. */
+fun Int.toReferencable(): ReferencablePrimitive<Double> =
+    ReferencablePrimitive(Int::class, this.toDouble())
+
+/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Float]. */
+fun Float.toReferencable(): ReferencablePrimitive<Double> =
+    ReferencablePrimitive(Float::class, this.toDouble())
+
+/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Double]. */
+fun Double.toReferencable(): ReferencablePrimitive<Double> =
+    ReferencablePrimitive(Double::class, this)
+
+/** Makes a [String]-based [ReferencablePrimitive] from the receiving [String]. */
+fun String.toReferencable(): ReferencablePrimitive<String> =
+    ReferencablePrimitive(String::class, this)
+
+/** Makes a [Boolean]-based [ReferencablePrimitive] from the receiving [Boolean]. */
+fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
+    ReferencablePrimitive(Boolean::class, this)
+
+/**
+ * Makes a [ByteArray]-based [ReferencablePrimitive] from the receiving [ByteArray], with the
+ * [ReferencablePrimitive.valueRepr] equal to the Base64 encoding of the array.
+ */
 fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
     ReferencablePrimitive(ByteArray::class, this, Base64.encode(this))

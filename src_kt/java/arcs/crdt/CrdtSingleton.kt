@@ -72,10 +72,10 @@ class CrdtSingleton<T : Referencable>(
 
         // If the changes were empty, we should actually just return empty changes, rather than the
         // model..
-        if (result.modelChange is CrdtChange.Operations && result.modelChange.isEmpty()) {
+        if (result.modelChange.isEmpty()) {
             modelChange = CrdtChange.Operations(mutableListOf())
         }
-        if (result.otherChange is CrdtChange.Operations && result.otherChange.isEmpty()) {
+        if (result.otherChange.isEmpty()) {
             otherChange = CrdtChange.Operations(mutableListOf())
         }
 
