@@ -8,21 +8,31 @@ import kotlin.native.internal.ExportForCppRuntime
 
 class RenderTest : Particle() {
     private val flags = Singleton { Test_RenderFlags() }
+    private var shouldTemplate: Boolean = true
+    private var shouldPopulate: Boolean = true
 
     init {
         registerHandle("flags", flags)
     }
 
-    override fun getTemplate(slotName: String): String {
-        return "abc"
+    override fun init() {
+        renderOutput()
     }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        return mapOf("foo" to "bar")
+    override fun getTemplate(slotName: String): String? {
+        return if (shouldTemplate) "abc" else null
+    }
+
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?>? {
+        return if (shouldPopulate) mapOf("foo" to "bar") else null
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        flags.get()?.let { renderOutput() }
+        flags.get()?.let {
+            shouldTemplate = it.template ?: true
+            shouldPopulate = it.model ?: true
+        }
+        renderOutput()
     }
 }
 
