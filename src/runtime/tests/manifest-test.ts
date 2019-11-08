@@ -245,6 +245,16 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
+  it('can parse a manifest containing an inline schema', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+      particle Fooer
+        foo: reads Foo {value}`);
+    const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Foo.fields.value, 'Text');
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString(), {}));
+  });
   it('two manifests with stores with the same filename, store name and data have the same ids', async () => {
     const manifestA = await Manifest.parse(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
