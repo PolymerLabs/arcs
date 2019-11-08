@@ -23,7 +23,8 @@ script:
     //particles/...
     //src/...
     //src_kt/...
-  - npm run test-with-start
+  - ./tools/sigh
+  - npm run test-extension
   - npm run build:rollup
   - npm --prefix=server test
 
