@@ -248,9 +248,7 @@ async function setup(manifestString) {
       it(title, async () => {
         console.log('    »', title);
         // TODO(alxr): Remove check when kotlin tests are ready
-        if ( !env.includes('kotlin') ) {
-          await fn();
-        }
+        await fn();
       });
     }
 
@@ -291,6 +289,10 @@ async function setup(manifestString) {
     });
 
     prefix('reference class API', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {stores} = await setup(`
         import '${schemasFile}'
 
