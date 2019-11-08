@@ -132,10 +132,6 @@ async function setup(manifestString) {
     });
 
     it('autoRender', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores, slotComposer} = await setup(`
         import '${schemasFile}'
 
