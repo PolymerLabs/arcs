@@ -136,7 +136,7 @@ class DirectStore internal constructor(
         version: Int,
         channel: Int?
     ) {
-        if (modelChange is CrdtChange.Operations && modelChange.isEmpty() && otherChange is CrdtChange.Operations && otherChange.isEmpty()) return
+        if (modelChange.isEmpty() && otherChange?.isEmpty() != false) return
 
         deliverCallbacks(modelChange, messageFromDriver = false, channel = channel)
         updateStateAndAct(
@@ -172,7 +172,7 @@ class DirectStore internal constructor(
                 log.debug { "ModelChange: $modelChange" }
                 log.debug { "OtherChange: $otherChange" }
                 theVersion = version
-                if (modelChange is CrdtChange.Operations && modelChange.isEmpty() && otherChange is CrdtChange.Operations && otherChange.isEmpty()) return@forEach
+                if (modelChange.isEmpty() && otherChange.isEmpty()) return@forEach
                 deliverCallbacks(modelChange, messageFromDriver = true, channel = 0)
                 noDriverSideChanges =
                     noDriverSideChanges && noDriverSideChanges(
@@ -202,9 +202,9 @@ class DirectStore internal constructor(
         messageFromDriver: Boolean
     ): Boolean {
         return if (messageFromDriver) {
-            otherChange is CrdtChange.Operations && otherChange.ops.isEmpty()
+            otherChange?.isEmpty() ?: true
         } else {
-            thisChange is CrdtChange.Operations && thisChange.ops.isEmpty()
+            thisChange.isEmpty()
         }
     }
 
