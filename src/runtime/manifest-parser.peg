@@ -100,7 +100,7 @@ Manifest
     });
     checkNormal(result);
     if (preSlandlesSyntaxLocations.length > 0 && !Flags.defaultToPreSlandlesSyntax) {
-      if (!global['testFlags'].quiet) {
+      if (typeof global !== 'undefined' && !global['testFlags'].quiet) {
         console.warn('WARNING: Pre-Slandles Syntax is deprecated. Contact jopra@google.com for more information.');
         console.warn(`WARNING: Used in \n  ${
           preSlandlesSyntaxLocations.map(loc => `line ${loc.start.line} column ${loc.start.column}`).join("\n  ")
