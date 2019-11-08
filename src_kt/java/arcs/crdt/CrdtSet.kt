@@ -39,6 +39,15 @@ class CrdtSet<T : Referencable>(
         get() = _data
 
     override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
+        if (versionMap == other.versionMap) {
+            // If we've got the same version clocks, there's nothing to do here.
+            @Suppress("RemoveExplicitTypeArguments") // Type inference was failing (?!)
+            return MergeChanges<Data<T>, IOperation<T>>(
+                CrdtChange.Operations(mutableListOf()),
+                CrdtChange.Operations(mutableListOf())
+            )
+        }
+
         val newClock = _data.versionMap mergeWith other.versionMap
         val mergedData = dataBuilder(newClock)
         val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
@@ -83,11 +92,14 @@ class CrdtSet<T : Referencable>(
 
         this._data = mergedData
 
-        val otherOperations = if (fastForwardOp.added.isNotEmpty() || fastForwardOp.removed.isNotEmpty()) {
-            CrdtChange.Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
-        } else {
-            CrdtChange.Operations<Data<T>, IOperation<T>>(mutableListOf())
-        }
+        val otherOperations =
+            if (fastForwardOp.added.isNotEmpty() || fastForwardOp.removed.isNotEmpty()) {
+                CrdtChange.Operations<Data<T>, IOperation<T>>(
+                    fastForwardOp.simplify().toMutableList()
+                )
+            } else {
+                CrdtChange.Operations<Data<T>, IOperation<T>>(mutableListOf())
+            }
 
         return MergeChanges(
             modelChange = CrdtChange.Data(mergedData), otherChange = otherOperations

@@ -18,8 +18,7 @@ import arcs.util.toBase64Bytes
 import kotlin.reflect.KClass
 
 /**
- * Like the name suggests, this represents a primitive which can be referenced - and thus used by
- * Crdts.
+ * Represents a primitive which can be referenced - and thus used by Crdts.
  */
 data class ReferencablePrimitive<T>(
     /** Type of primitive being referencable-ified. */
@@ -31,9 +30,8 @@ data class ReferencablePrimitive<T>(
      */
     val valueRepr: String = value.toString()
 ) : Referencable {
-    override val id: ReferenceId
-        // TODO: consider other 'serialization' mechanisms.
-        get() = "Primitive<$klass>($valueRepr)"
+    // TODO: consider other 'serialization' mechanisms.
+    override val id: ReferenceId = "Primitive<$klass>($valueRepr)"
 
     override fun toString(): String = id
 

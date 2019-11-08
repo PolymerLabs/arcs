@@ -287,11 +287,9 @@ class ArcsSet<T, StoreData, StoreOp>(
     suspend fun contains(item: T, requireSync: Boolean = false): Boolean {
         activated.await()
 
-        return if (requireSync) crdtMutex.withLock {
-            syncInternal().join()
+        return crdtMutex.withLock {
+            if (requireSync) syncInternal().join()
             cachedConsumerData.any { it.tryDereference() == item }
-        } else {
-            crdtMutex.withLock { cachedConsumerData.any { it.tryDereference() == item } }
         }
     }
 
