@@ -22,5 +22,5 @@ test_script:
   - node --version
   - npm --version
   - npm list --depth=0
-  - tools\sigh
+  - tools\sigh test
   - npm run test-extension
