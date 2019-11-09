@@ -20,10 +20,8 @@ jobs:
     - stage: test
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/...  //src/... //particles/..."
       name: "Bazel Test: //src_kt/... //src/... //particles/..."
-    - script: tools/run_in_docker "npm run test-no-web"
-      name: "Node Test: Unit"
-    - script: tools/run_in_docker "tools/sigh"
-      name: "Node Test: Shells"
+    - script: tools/run_in_docker "tools/sigh""
+      name: "Node Test: Unit & Shells"
     - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"
       name: "Node Test: Server"
     - script: tools/run_in_docker "npm run test-extension"
