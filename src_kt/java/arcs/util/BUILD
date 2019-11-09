@@ -7,5 +7,6 @@ kt_jvm_and_js_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
     ],
 )
