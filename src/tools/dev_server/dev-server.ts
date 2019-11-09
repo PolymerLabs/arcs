@@ -45,7 +45,7 @@ async function launch() {
     // Allows COR as the pipes-shell can be loaded in https protocol
     // which requests Arcs manifests/recipes/particles at remote workstation
     // via adb-reverse socket connecting to http://localhost:port.
-    res.header("Access-Control-Allow-Origin", "*");
+    res.header('Access-Control-Allow-Origin', '*');
     next();
   });
   if (options['verbose']) {
