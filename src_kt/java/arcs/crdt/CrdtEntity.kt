@@ -17,6 +17,7 @@ import arcs.crdt.CrdtSet.Data as SetData
 import arcs.crdt.CrdtSet.IOperation as ISetOp
 import arcs.crdt.CrdtSet.Operation as SetOp
 import arcs.crdt.CrdtSingleton.Data as SingletonData
+import arcs.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.crdt.CrdtSingleton.Operation as SingletonOp
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
@@ -54,7 +55,7 @@ class CrdtEntity(
     override fun merge(other: Data): MergeChanges<Data, Operation> {
         /* ktlint-disable max-line-length */
         val singletonChanges =
-            mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, SingletonOp<Reference>>>()
+            mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, ISingletonOp<Reference>>>()
         /* ktlint-enable max-line-length */
         val collectionChanges =
             mutableMapOf<FieldName, MergeChanges<SetData<Reference>, ISetOp<Reference>>>()
@@ -81,13 +82,14 @@ class CrdtEntity(
                 allOps = false
             }
         }
-        val oldVersionMap = _data.versionMap
+        val oldVersionMap = _data.versionMap.copy()
         _data.versionMap = _data.versionMap mergeWith other.versionMap
 
         if (oldVersionMap == _data.versionMap) {
+            @Suppress("RemoveExplicitTypeArguments")
             return MergeChanges(
-                CrdtChange.Operations(mutableListOf<CrdtEntity.Operation>()),
-                CrdtChange.Operations(mutableListOf<CrdtEntity.Operation>())
+                CrdtChange.Operations(mutableListOf<Operation>()),
+                CrdtChange.Operations(mutableListOf<Operation>())
             )
         }
 
@@ -158,9 +160,10 @@ class CrdtEntity(
         _data = newData.copy()
     }
 
-    private fun SingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
+    private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
+        else -> throw CrdtException("Invalid operation")
     }
 
     private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {

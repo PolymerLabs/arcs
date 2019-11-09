@@ -43,7 +43,7 @@ class DirectStore internal constructor(
     override val versionToken: String?
         get() = driver.token
 
-    private val log = TaggedLog { "DirectStore(${state.value})" }
+    private val log = TaggedLog { "DirectStore(${state.value}, $storageKey)" }
 
     /**
      * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
@@ -141,7 +141,7 @@ class DirectStore internal constructor(
         version: Int,
         channel: Int?
     ) {
-        if (modelChange.isEmpty() && otherChange?.isEmpty() != false) return
+        if (modelChange.isEmpty() && otherChange?.isEmpty() == true) return
 
         deliverCallbacks(modelChange, messageFromDriver = false, channel = channel)
         updateStateAndAct(
@@ -173,6 +173,7 @@ class DirectStore internal constructor(
         var theVersion = 0
         models.forEach { (model, version) ->
             try {
+                log.debug { "Merging $model into ${localModel.data}" }
                 val (modelChange, otherChange) = synchronized(this) { localModel.merge(model) }
                 log.debug { "ModelChange: $modelChange" }
                 log.debug { "OtherChange: $otherChange" }
@@ -185,6 +186,7 @@ class DirectStore internal constructor(
                         otherChange,
                         messageFromDriver = true
                     )
+                log.debug { "No driver side changes? $noDriverSideChanges" }
             } catch (e: Exception) {
                 log.error(e) { "Error while applying pending driver models." }
                 idleDeferred.value.completeExceptionally(e)

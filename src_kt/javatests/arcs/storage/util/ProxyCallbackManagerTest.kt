@@ -58,7 +58,7 @@ class ProxyCallbackManagerTest {
 
         // Now check that the nextCallbackToken is correct (should be 201 if we didn't erroneously
         // attempt to increment outside of a lock.
-        assertThat(manager.nextCallbackToken).isEqualTo(201)
+        assertThat(manager.nextCallbackToken.value).isEqualTo(201)
         assertThat(manager.callbacks.size).isEqualTo(200)
     }
 

@@ -20,6 +20,7 @@ import arcs.crdt.CrdtSingleton
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import arcs.data.RawEntity
+import kotlin.math.sin
 
 /**
  * This file defines several classes and interfaces used to allow clients to interact with
@@ -75,13 +76,19 @@ sealed class RefModeStoreData : CrdtData {
 /** Valid crdt-style operations for a [arcs.storage.ReferenceModeStore]. */
 interface RefModeStoreOp : CrdtOperationAtTime {
     class SingletonUpdate(actor: Actor, clock: VersionMap, value: RawEntity) :
-        RefModeStoreOp,
+        Singleton,
         RefModeSingleton,
-        CrdtSingleton.Operation.Update<RawEntity>(actor, clock, value)
-    class SingletonClear(actor: Actor, clock: VersionMap) :
-        RefModeStoreOp,
+        CrdtSingleton.Operation.Update<RawEntity>(actor, clock, value) {
+        constructor(
+            singletonOp: Update<RawEntity>
+        ) : this(singletonOp.actor, singletonOp.clock, singletonOp.value)
+    }
+    class SingletonClear(actor: Actor, clock: VersionMap) : 
+        Singleton,
         RefModeSingleton,
-        CrdtSingleton.Operation.Clear<RawEntity>(actor, clock)
+        CrdtSingleton.Operation.Clear<RawEntity>(actor, clock) {
+        constructor(singletonOp: Clear<RawEntity>) : this(singletonOp.actor, singletonOp.clock)
+    }
 
     interface Set : RefModeStoreOp, CrdtSet.IOperation<RawEntity>
 

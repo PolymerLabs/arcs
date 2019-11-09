@@ -15,7 +15,6 @@ import arcs.storage.driver.RamDiskDriverProvider
 import arcs.storage.driver.RamDiskStorageKey
 import arcs.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitAll
@@ -57,6 +56,7 @@ class ArcsSetTest {
             personSchema,
             coroutineContext = coroutineContext
         )
+        log.debug { "Adding Bob to set" }
         set.addAsync(Person("bob", 42)).await()
 
         val otherSet = ArcsSet(
@@ -64,9 +64,12 @@ class ArcsSetTest {
             personSchema,
             coroutineContext = coroutineContext
         )
+        log.debug { "Adding Sue to otherSet" }
         otherSet.addAsync(Person("sue", 32)).await()
 
+        log.debug { "Testing for bob in otherSet" }
         assertThat(otherSet.contains(Person("bob", 42))).isTrue()
+        log.debug { "Testing for sue in set" }
         assertThat(set.contains(Person("sue", 32))).isTrue()
         assertThat(set.contains(Person("larry", 21))).isFalse()
     }
