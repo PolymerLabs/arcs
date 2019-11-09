@@ -36,6 +36,8 @@ import arcs.type.Type
  * apply. This is a serious error and will result in merge throwing a [CrdtException].
  */
 interface CrdtModel<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+  /** A copy of the current [VersionMap] of the [data]. */
+  val versionMap: VersionMap
   /** Internal (CRDT-friendly) representation of the data used by the model. */
   val data: Data
   /** External (application-friendly) representation of the data used by the model. */
@@ -114,11 +116,15 @@ data class MergeChanges<Data : CrdtData, Op : CrdtOperation>(
  * [Data] object will be represented as a [CrdtChange.Data].
  */
 sealed class CrdtChange<Data : CrdtData, Op : CrdtOperation> {
+  abstract fun isEmpty(): Boolean
+
   /** Representation of a change as a series of [CrdtOperation]s. */
   data class Operations<Data : CrdtData, Op : CrdtOperation>(
     /** Series of [Op]s required to complete the [CrdtChange]. */
     val ops: MutableList<Op> = mutableListOf()
-  ) : CrdtChange<Data, Op>(), MutableList<Op> by ops
+  ) : CrdtChange<Data, Op>(), MutableList<Op> by ops {
+    override fun isEmpty(): Boolean = ops.isEmpty()
+  }
 
   /**
    * Representation of a change where a series of [CrdtOperation]s is not possible - contains the
@@ -127,7 +133,9 @@ sealed class CrdtChange<Data : CrdtData, Op : CrdtOperation> {
   data class Data<Data : CrdtData, Op : CrdtOperation>(
     /** New representation of the internal data for the [CrdtModel]. */
     val data: Data
-  ) : CrdtChange<Data, Op>()
+  ) : CrdtChange<Data, Op>() {
+    override fun isEmpty(): Boolean = false
+  }
 }
 
 /** Defines a [Type] that's capable of generating a [CrdtModel]. */

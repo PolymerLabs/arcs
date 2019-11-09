@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, createEmptyChange} from './crdt.js';
 import {Dictionary} from '../hot.js';
 import {assert} from '../../platform/assert-web.js';
 import {Entity} from '../entity.js';
@@ -50,6 +50,26 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
   private model: CollectionData<T> = {values: {}, version: {}};
 
   merge(other: CollectionData<T>): {modelChange: CollectionChange<T>, otherChange: CollectionChange<T>} {
+    // Ensure we never send an update if the two versions are already the same.
+    // TODO(shans): Remove this once fast-forwarding is two-sided, and replace with
+    // a check for an effect-free fast-forward op in each direction instead.
+    if (sameVersions(this.model.version, other.version)) {
+      let entriesMatch = true;
+      const theseKeys = Object.keys(this.model.values);
+      const otherKeys = Object.keys(other.values);
+      if (theseKeys.length === otherKeys.length) {
+        for (const key of Object.keys(this.model.values)) {
+          if (!other.values[key]) {
+            entriesMatch = false;
+            break;
+          }
+        }
+        if (entriesMatch) {
+          return {modelChange: createEmptyChange(), otherChange: createEmptyChange()};
+        }
+      }
+    }
+
     const newClock = mergeVersions(this.model.version, other.version);
     const merged: Dictionary<{value: T, version: VersionMap}> = {};
 

@@ -154,7 +154,7 @@ describe('wasm', () => {
       }
     });
   });
-  
+
   it('decodes array', () => {
     const str = '3:D27:2:4:nameT4:Jill3:ageT4:70.0D27:2:4:nameT4:Jack3:ageT4:25.0D26:2:4:nameT3:Jen3:ageT4:50.0';
     const list = StringDecoder.decodeArray(str);

@@ -31,7 +31,7 @@ open class CollectionType<T : Type>(
   Type.TypeContainer<T>,
   Type.TypeVariableMerger,
   EntitySchemaProviderType,
-  CrdtModelType<CrdtSet.Data<Referencable>, CrdtSet.Operation<Referencable>, Set<Referencable>> {
+  CrdtModelType<CrdtSet.Data<Referencable>, CrdtSet.IOperation<Referencable>, Set<Referencable>> {
 
   override val tag = Tag.Collection
   override val containedType: T
@@ -61,7 +61,7 @@ open class CollectionType<T : Type>(
   }
 
   override fun createCrdtModel():
-    CrdtModel<CrdtSet.Data<Referencable>, CrdtSet.Operation<Referencable>, Set<Referencable>> {
+    CrdtModel<CrdtSet.Data<Referencable>, CrdtSet.IOperation<Referencable>, Set<Referencable>> {
     return CrdtSet()
   }
 

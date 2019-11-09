@@ -22,10 +22,12 @@ jobs:
       name: "Bazel Test: //src_kt/... //src/... //particles/..."
     - script: tools/run_in_docker "npm run test-no-web"
       name: "Node Test: Unit"
-    - script: tools/run_in_docker "npm run test-shells"
+    - script: tools/run_in_docker "tools/sigh"
       name: "Node Test: Shells"
     - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"
       name: "Node Test: Server"
+    - script: tools/run_in_docker "npm run test-extension"
+      name: "Node Test: Extension"
 
 # Use travis to cache a Bazel disk-cache.
 # This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).

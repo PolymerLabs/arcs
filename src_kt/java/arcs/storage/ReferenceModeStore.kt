@@ -438,7 +438,7 @@ class ReferenceModeStore private constructor(
                 // can be directly constructed rather than waiting for an update.
                 if (version.isEmpty()) return@forEach
 
-                val backingModel = backingStore.getLocalData(refId)
+               val backingModel = backingStore.getLocalData(refId)
 
                 // If the version that was requested is newer than what the backing store has,
                 // consider it pending.

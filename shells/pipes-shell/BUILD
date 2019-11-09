@@ -13,6 +13,7 @@ run_in_repo(
         ":android_deploy_bin",
         ":web_deploy_srcs",
         "//:all_srcs",
+        "//tools:sigh_webpack",
     ],
 )
 

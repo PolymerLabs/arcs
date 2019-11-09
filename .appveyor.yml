@@ -17,11 +17,10 @@ install:
 
 build: off
 
-# Instead of specific targets, this should use `npm test`.
-# But, that needs some work, and the tests themselves aren't stable so I'm
-# going to wait to add more sources of possible failure.
+# The following test suite should be the same as on travis.
 test_script:
   - node --version
   - npm --version
   - npm list --depth=0
-  - npm run test-no-web
+  - tools\sigh test
+  - npm run test-extension
