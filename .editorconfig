@@ -16,3 +16,8 @@ indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
+
+[*.kt]
+indent_size = 4
+insert_file_newline = true
+max_line_length = 100

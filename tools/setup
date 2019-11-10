@@ -103,6 +103,10 @@ append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
 # Makes the updates visible at this subshell i.e. bazel
 source ~/.profile
 
+status "6. Install ktlint"
+(cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -) || fail 'Failed to install ktlint'
+chmod a+x $HOME/bin/ktlint
+
 echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
 echo "node --version"
 node --version
@@ -110,6 +114,8 @@ echo "npm --version"
 npm --version
 echo "bazel --version"
 bazel --version
+echo "ktlint --version"
+ktlint --version
 echo "\nNext, try the following:\n"
 echo "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
 echo "- Serve the project: $CMD\`npm start\`$END"
