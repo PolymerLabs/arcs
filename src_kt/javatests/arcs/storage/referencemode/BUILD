@@ -11,6 +11,8 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
         deps = [
             "//src_kt/java/arcs/common",
             "//src_kt/java/arcs/crdt",
+            "//src_kt/java/arcs/storage",
+            "//src_kt/java/arcs/storage/driver",
             "//src_kt/java/arcs/storage/referencemode",
             "//third_party/java/junit",
             "//third_party/java/truth",

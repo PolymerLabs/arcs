@@ -38,10 +38,10 @@ data class VolatileStorageKey(
     override fun childKeyWithComponent(component: String): StorageKey =
         VolatileStorageKey(arcId, "$unique/$component")
 
-    override fun toString(): String = "$protocol://${toKeyString()}"
+    override fun toString(): String = super.toString()
 
     companion object {
-        private val VOLATILE_STORAGE_KEY_PATTERN = "".toRegex()
+        private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
 
         init {
             // When VolatileStorageKey is imported, this will register its parser with the storage
@@ -49,10 +49,10 @@ data class VolatileStorageKey(
             StorageKeyParser.addParser(VOLATILE_DRIVER_PROTOCOL, ::fromString)
         }
 
-        private fun fromString(raw: String): VolatileStorageKey {
+        private fun fromString(rawKeyString: String): VolatileStorageKey {
             val match =
-                requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(raw)) {
-                    "Not a valid VolatileStorageKey: $raw"
+                requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
+                    "Not a valid VolatileStorageKey: $rawKeyString"
                 }
 
             return VolatileStorageKey(match.groupValues[1].toArcId(), match.groupValues[2])
@@ -115,7 +115,7 @@ internal class VolatileDriver<Data : Any>(
             }
             ExistenceCriteria.ShouldExist ->
                 requireNotNull(memory.get<Data>(storageKey)) {
-                    "Requested connection to memory loc $storageKey can't proceed: doesn't exist"
+                    "Requested connection to memory location $storageKey failed: doesn't exist"
                 }.also {
                     pendingModel = it.data
                     pendingVersion = it.version

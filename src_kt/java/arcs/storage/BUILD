@@ -9,6 +9,7 @@ kt_jvm_and_js_library(
         exclude = [
             "ProxyInterface.kt",
             "StorageKey.kt",
+            "StorageKeyParser.kt",
         ],
     ),
     exports = [
@@ -36,6 +37,7 @@ kt_jvm_and_js_library(
     name = "storage_key",
     srcs = [
         "StorageKey.kt",
+        "StorageKeyParser.kt",
     ],
 )
 

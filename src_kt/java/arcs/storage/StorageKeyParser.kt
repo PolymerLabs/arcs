@@ -44,5 +44,5 @@ object StorageKeyParser {
     }
 }
 
-private val VALID_KEY_PATTERN = "^(\\w+)://(.*)$".toRegex()
+private val VALID_KEY_PATTERN = "^([\\w-]+)://(.*)$".toRegex()
 private val DEFAULT_PARSERS = mapOf<String, (contents: String) -> StorageKey>()

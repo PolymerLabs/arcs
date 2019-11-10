@@ -16,6 +16,7 @@ import arcs.storage.DriverFactory
 import arcs.storage.DriverProvider
 import arcs.storage.ExistenceCriteria
 import arcs.storage.StorageKey
+import arcs.storage.StorageKeyParser
 
 /** Protocol to be used with the ramdisk driver. */
 const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"
@@ -26,6 +27,27 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
 
     override fun childKeyWithComponent(component: String): StorageKey =
         RamDiskStorageKey("$unique/$component")
+
+    override fun toString(): String = super.toString()
+
+    companion object {
+        private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
+
+        init {
+            // When VolatileStorageKey is imported, this will register its parser with the storage
+            // key parsers.
+            StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
+        }
+
+        private fun fromString(rawKeyString: String): RamDiskStorageKey {
+            val match =
+                requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
+                    "Not a valid VolatileStorageKey: $rawKeyString"
+                }
+
+            return RamDiskStorageKey(match.groupValues[1])
+        }
+    }
 }
 
 /**
