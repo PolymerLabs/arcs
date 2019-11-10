@@ -2,7 +2,7 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-java_library(
+android_library(
     name = "dagger",
     exported_plugins = [":dagger_compiler"],
     exports = ["@maven//:com_google_dagger_dagger"],

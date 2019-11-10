@@ -5,16 +5,19 @@ package(default_visibility = [
     "//javaharness/javatests/arcs:__subpackages__",
 ])
 
-load("//tools/build_defs/android:rules.bzl", "android_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 android_library(
     name = "api-android",
     srcs = glob([
         "*.java",
+        "*.kt",
     ]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     deps = [
-        "//javaharness/java/arcs/crdt:crdt-android",
+        "//src_kt/java/arcs/common",
+        "//src_kt/java/arcs/crdt",
+        "//src_kt/java/arcs/crdt/internal",
         "//third_party/java/dagger",
         "//third_party/java/jsr330_inject",
     ],

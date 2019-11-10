@@ -1,6 +1,6 @@
 directories:
-  src_kt/java/arcs
-  src_kt/javatests/arcs
+  src_kt
+  javaharness
   src_kt/project
   build_defs
   tools
@@ -11,9 +11,12 @@ directories:
 targets:
   //src_kt/java/...
   //src_kt/javatests/...
+  //javaharness/java/...
+  //javaharness/javatests/...
 
 test_sources:
   src_kt/javatests/
+  javaharness/javatests/
 
 additional_languages:
   kotlin
