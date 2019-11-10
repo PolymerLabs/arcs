@@ -1,6 +1,8 @@
 package arcs.arcs.util
 
+import arcs.arcs.util.Log.formatter
 import arcs.arcs.util.Log.toString
+import arcs.arcs.util.Log.writer
 import kotlinx.atomicfu.atomic
 /**
  * Arcs-specific logging utility.
@@ -16,10 +18,12 @@ object Log {
     /**
      * Formatter for a given raw message and [Level].
      *
-     * Only prints the [toString] of the supplied [Throwable] and its causes if non-null because Kotlin's common library
-     * doesn't include `printStackTrace` (only JVM/Native do, JavaScript does not).
+     * Only prints the [toString] of the supplied [Throwable] and its causes if non-null because
+     * Kotlin's common library doesn't include `printStackTrace` (only JVM/Native do, JavaScript
+     * does not).
      */
-    var formatter: (index: Int, level: Level, throwable: Throwable?, rawMessage: String) -> String = DEFAULT_FORMATTER
+    var formatter: (index: Int, level: Level, throwable: Throwable?, rawMessage: String) -> String =
+        DEFAULT_FORMATTER
 
     /**
      * Writer of a fully-realized message.
@@ -71,7 +75,12 @@ object Log {
 
 private val DEFAULT_LEVEL = Log.Level.Error
 
-private val DEFAULT_FORMATTER: (index: Int, level: Log.Level, throwable: Throwable?, rawMessage: String) -> String =
+private val DEFAULT_FORMATTER: (
+    index: Int,
+    level: Log.Level,
+    throwable: Throwable?,
+    rawMessage: String
+) -> String =
     { index, level, throwable, rawMessage ->
         "$index - ${level.name}: $rawMessage" +
             if (throwable != null) {
@@ -87,4 +96,5 @@ private val DEFAULT_FORMATTER: (index: Int, level: Log.Level, throwable: Throwab
             } else ""
     }
 
-private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String) -> Unit = { _, msg -> println(msg) }
+private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String) -> Unit =
+    { _, msg -> println(msg) }

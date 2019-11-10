@@ -13,7 +13,6 @@ package arcs.storage.referencemode
 
 import arcs.storage.StorageKey
 
-
 /**
  * Special subclass of [StorageKey] used to identify data managed by a
  * [arcs.storage.ReferenceModeStore].

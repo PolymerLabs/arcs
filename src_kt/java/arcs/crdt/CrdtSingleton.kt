@@ -11,11 +11,11 @@
 
 package arcs.crdt
 
+import arcs.common.Referencable
+import arcs.common.ReferenceId
 import arcs.crdt.CrdtSet.Operation.Add
 import arcs.crdt.CrdtSet.Operation.Remove
 import arcs.crdt.internal.Actor
-import arcs.common.Referencable
-import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a mutable reference. */

@@ -9,7 +9,7 @@ import java.util.Locale
 fun initLogForTest() {
     Log.level = Log.Level.Debug
     Log.writer = { level, renderedMessage ->
-        if (level == Log.Level.Warning || level == Log.Level.Error ||  level == Log.Level.Wtf) {
+        if (level == Log.Level.Warning || level == Log.Level.Error || level == Log.Level.Wtf) {
             System.err.println(renderedMessage)
         } else {
             println(renderedMessage)

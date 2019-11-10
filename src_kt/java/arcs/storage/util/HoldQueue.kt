@@ -14,8 +14,6 @@ package arcs.storage.util
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 

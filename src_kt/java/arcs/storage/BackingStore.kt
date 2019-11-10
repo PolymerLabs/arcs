@@ -17,13 +17,12 @@ import arcs.storage.ProxyMessage.ModelUpdate
 import arcs.storage.ProxyMessage.Operations
 import arcs.storage.ProxyMessage.SyncRequest
 import arcs.storage.util.ProxyCallbackManager
-import kotlinx.coroutines.CompletableDeferred
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 
 /**
  * An [ActiveStore] that allows multiple CRDT models to be stored as sub-keys of a single

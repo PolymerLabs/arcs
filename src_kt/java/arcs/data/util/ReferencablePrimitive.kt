@@ -40,12 +40,12 @@ data class ReferencablePrimitive<T>(
 
         /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
         fun isSupportedPrimitive(klass: KClass<*>): Boolean =
-            klass == Int::class
-                || klass == Float::class
-                || klass == Double::class
-                || klass == String::class
-                || klass == Boolean::class
-                || klass == ByteArray::class
+            klass == Int::class ||
+                klass == Float::class ||
+                klass == Double::class ||
+                klass == String::class ||
+                klass == Boolean::class ||
+                klass == ByteArray::class
 
         /**
          * If the given [ReferenceId] matches the type of `serialized` reference id created by

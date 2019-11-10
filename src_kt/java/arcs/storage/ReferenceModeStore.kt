@@ -34,14 +34,14 @@ import arcs.storage.referencemode.Message.EnqueuedFromContainer
 import arcs.storage.referencemode.Message.EnqueuedFromStorageProxy
 import arcs.storage.referencemode.Message.PreEnqueuedFromBackingStore
 import arcs.storage.referencemode.MessageQueue
-import arcs.storage.referencemode.Reference
-import arcs.storage.referencemode.ReferenceModeStorageKey
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.RefModeStoreOutput
+import arcs.storage.referencemode.Reference
+import arcs.storage.referencemode.ReferenceModeStorageKey
+import arcs.storage.referencemode.toBridgingData
 import arcs.storage.referencemode.toBridgingOp
 import arcs.storage.referencemode.toBridgingOps
-import arcs.storage.referencemode.toBridgingData
 import arcs.storage.referencemode.toReferenceModeMessage
 import arcs.storage.util.ProxyCallbackManager
 import arcs.storage.util.SendQueue
@@ -50,9 +50,9 @@ import arcs.util.Random
 import arcs.util.Result
 import arcs.util.computeNotNull
 import arcs.util.nextSafeRandomLong
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
-import kotlin.coroutines.coroutineContext
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -82,7 +82,7 @@ class ReferenceModeStore private constructor(
     private val receiveQueue by lazy {
         MessageQueue(
             handleProxyMessage,
-            handleContainerStoreMessage,
+            handleContainerMessage,
             handleBackingStoreMessage
         )
     }
@@ -329,7 +329,7 @@ class ReferenceModeStore private constructor(
      *
      * Sync requests are propagated upwards to the storage proxy.
      */
-    private val handleContainerStoreMessage: suspend (EnqueuedFromContainer) -> Boolean = fn@{ message ->
+    private val handleContainerMessage: suspend (EnqueuedFromContainer) -> Boolean = fn@{ message ->
         when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
                 val containerOps = proxyMessage.operations
@@ -438,7 +438,7 @@ class ReferenceModeStore private constructor(
                 // can be directly constructed rather than waiting for an update.
                 if (version.isEmpty()) return@forEach
 
-               val backingModel = backingStore.getLocalData(refId)
+                val backingModel = backingStore.getLocalData(refId)
 
                 // If the version that was requested is newer than what the backing store has,
                 // consider it pending.
@@ -452,7 +452,7 @@ class ReferenceModeStore private constructor(
         // is intended to be sent to the storage proxy.
         suspend fun proxyFromCollection(
             incoming: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>
-        ) : MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>> {
+        ): MutableMap<ReferenceId, CrdtSet.DataValue<RawEntity>> {
             val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<RawEntity>>()
             incoming.forEach { (refId, value) ->
                 val version = value.versionMap
@@ -470,7 +470,7 @@ class ReferenceModeStore private constructor(
         // is intended to be sent to the collectionStore.
         fun collectionFromProxy(
             incoming: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>
-        ) : MutableMap<ReferenceId, CrdtSet.DataValue<Reference>> {
+        ): MutableMap<ReferenceId, CrdtSet.DataValue<Reference>> {
             val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<Reference>>()
             incoming.forEach { (refId, value) ->
                 val version = value.versionMap
@@ -496,13 +496,19 @@ class ReferenceModeStore private constructor(
                     // storage proxy.
                     containerData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        suspend { RefModeStoreData.Singleton(dataVersionCopy, proxyFromCollection(valuesCopy)) }
+                        suspend {
+                            RefModeStoreData.Singleton(
+                                dataVersionCopy, proxyFromCollection(valuesCopy)
+                            )
+                        }
                     }
                     // If its type is `RawEntity`, it must be coming from the proxy, so generate a
                     // Reference-based data that can be sent to the container store.
                     proxyData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        suspend { CrdtSingleton.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy)) }
+                        suspend {
+                            CrdtSingleton.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy))
+                        }
                     }
                     else -> throw CrdtException("Invalid data type for constructPendingIdsAndModel")
                 }
@@ -518,13 +524,19 @@ class ReferenceModeStore private constructor(
                     // storage proxy.
                     containerData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        suspend { RefModeStoreData.Set(dataVersionCopy, proxyFromCollection(valuesCopy)) }
+                        suspend {
+                            RefModeStoreData.Set(
+                                dataVersionCopy, proxyFromCollection(valuesCopy)
+                            )
+                        }
                     }
                     // If its type is `RawEntity`, it must be coming from the proxy, so generate a
                     // Reference-based data that can be sent to the container store.
                     proxyData != null -> {
                         val valuesCopy = HashMap(data.values)
-                        suspend { CrdtSet.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy)) }
+                        suspend {
+                            CrdtSet.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy))
+                        }
                     }
                     else -> throw CrdtException("Invalid data type for constructPendingIdsAndModel")
                 }

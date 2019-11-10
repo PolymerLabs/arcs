@@ -13,15 +13,15 @@ package arcs.storage
 
 /** Locator for a specific piece of data within the storage layer. */
 abstract class StorageKey(val protocol: String) {
-  val childKeyForArcInfo: StorageKey
-    get() = childKeyWithComponent("arc-info")
+    val childKeyForArcInfo: StorageKey
+        get() = childKeyWithComponent("arc-info")
 
-  abstract fun toKeyString(): String
+    abstract fun toKeyString(): String
 
-  abstract fun childKeyWithComponent(component: String): StorageKey
+    abstract fun childKeyWithComponent(component: String): StorageKey
 
-  fun childKeyForHandle(handleId: String): StorageKey =
-    childKeyWithComponent("handle/$handleId")
+    fun childKeyForHandle(handleId: String): StorageKey =
+        childKeyWithComponent("handle/$handleId")
 
-  override fun toString(): String = "$protocol://${toKeyString()}"
+    override fun toString(): String = "$protocol://${toKeyString()}"
 }

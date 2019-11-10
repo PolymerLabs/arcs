@@ -19,28 +19,29 @@ package arcs.storage
  * [reset] in the tear-down method.
  */
 object StorageKeyParser {
-  private var parsers = DEFAULT_PARSERS.toMutableMap()
+    private var parsers = DEFAULT_PARSERS.toMutableMap()
 
-  /** Parses a raw [key] into a [StorageKey]. */
-  fun parse(key: String): StorageKey {
-    val match = requireNotNull(VALID_KEY_PATTERN.matchEntire(key)) { "Illegal key: \"$key\"" }
+    /** Parses a raw [key] into a [StorageKey]. */
+    fun parse(key: String): StorageKey {
+        val match = requireNotNull(VALID_KEY_PATTERN.matchEntire(key)) { "Illegal key: \"$key\"" }
 
-    val protocol = match.groupValues[1]
-    val contents = match.groupValues[2]
-    val parser = requireNotNull(parsers[protocol]) { "Unknown protocol \"$protocol\" in \"$key\"" }
+        val protocol = match.groupValues[1]
+        val contents = match.groupValues[2]
+        val parser =
+            requireNotNull(parsers[protocol]) { "Unknown protocol \"$protocol\" in \"$key\"" }
 
-    return parser(contents)
-  }
+        return parser(contents)
+    }
 
-  /** Registers a new [StorageKey] parser for the given [protocol]. */
-  fun addParser(protocol: String, parser: (contents: String) -> StorageKey) {
-    parsers[protocol] = parser
-  }
+    /** Registers a new [StorageKey] parser for the given [protocol]. */
+    fun addParser(protocol: String, parser: (contents: String) -> StorageKey) {
+        parsers[protocol] = parser
+    }
 
-  /** Resets the registered parsers to the defaults. */
-  fun reset() {
-    parsers = DEFAULT_PARSERS.toMutableMap()
-  }
+    /** Resets the registered parsers to the defaults. */
+    fun reset() {
+        parsers = DEFAULT_PARSERS.toMutableMap()
+    }
 }
 
 private val VALID_KEY_PATTERN = "^(\\w+)://(.*)$".toRegex()

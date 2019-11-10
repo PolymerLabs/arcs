@@ -52,8 +52,10 @@ class CrdtEntity(
     ) : this(Data(versionMap, rawEntity, referenceBuilder))
 
     override fun merge(other: Data): MergeChanges<Data, Operation> {
+        /* ktlint-disable max-line-length */
         val singletonChanges =
             mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, SingletonOp<Reference>>>()
+        /* ktlint-enable max-line-length */
         val collectionChanges =
             mutableMapOf<FieldName, MergeChanges<SetData<Reference>, ISetOp<Reference>>>()
 
@@ -64,8 +66,8 @@ class CrdtEntity(
             if (otherSingleton != null) {
                 singletonChanges[fieldName] = singleton.merge(otherSingleton.data)
             }
-            if (singletonChanges[fieldName]?.modelChange is CrdtChange.Data
-                || singletonChanges[fieldName]?.otherChange is CrdtChange.Data) {
+            if (singletonChanges[fieldName]?.modelChange is CrdtChange.Data ||
+                singletonChanges[fieldName]?.otherChange is CrdtChange.Data) {
                 allOps = false
             }
         }
@@ -74,8 +76,8 @@ class CrdtEntity(
             if (otherCollection != null) {
                 collectionChanges[fieldName] = collection.merge(otherCollection.data)
             }
-            if (collectionChanges[fieldName]?.modelChange is CrdtChange.Data
-                || collectionChanges[fieldName]?.otherChange is CrdtChange.Data) {
+            if (collectionChanges[fieldName]?.modelChange is CrdtChange.Data ||
+                collectionChanges[fieldName]?.otherChange is CrdtChange.Data) {
                 allOps = false
             }
         }
@@ -156,7 +158,7 @@ class CrdtEntity(
         _data = newData.copy()
     }
 
-    private fun SingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when(this) {
+    private fun SingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
     }
@@ -171,7 +173,7 @@ class CrdtEntity(
     interface Reference : Referencable {
         companion object {
             /** Simple converter from [Referencable] to [Reference]. */
-            fun buildReference(referencable: Referencable) : Reference =
+            fun buildReference(referencable: Referencable): Reference =
                 ReferenceImpl(referencable.id)
         }
     }
@@ -215,13 +217,17 @@ class CrdtEntity(
 
         fun toRawEntity() = RawEntity(
             singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
-            collections = collections.mapValues { it.value.consumerView.map { item -> item.tryDereference() }.toSet() }
+            collections = collections.mapValues {
+                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+            }
         )
 
         fun toRawEntity(id: ReferenceId) = RawEntity(
             id = id,
             singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
-            collections = collections.mapValues { it.value.consumerView.map { item -> item.tryDereference() }.toSet() }
+            collections = collections.mapValues {
+                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+            }
         )
 
         /** Makes a deep copy of this [CrdtEntity.Data] object. */
@@ -334,4 +340,3 @@ class CrdtEntity(
         }
     }
 }
-

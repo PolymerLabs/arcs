@@ -11,9 +11,11 @@
 
 package arcs.crdt
 
-import arcs.crdt.internal.Actor
 import arcs.common.Referencable
 import arcs.common.ReferenceId
+import arcs.crdt.CrdtSet.Data
+import arcs.crdt.CrdtSet.IOperation
+import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -176,12 +178,12 @@ class CrdtSetTest {
         val modelChange =
             requireNotNull(
                 changes.modelChange
-                    as? CrdtChange.Data<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
+                    as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
             )
         val otherChange =
             requireNotNull(
                 changes.otherChange
-                    as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
+                    as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
             )
 
         assertThat(modelChange.data.versionMap).isEqualTo(expectedVersion)
@@ -263,7 +265,7 @@ class CrdtSetTest {
         val (_, otherChange) = bob.merge(alice.data)
 
         val operations = requireNotNull(
-            otherChange as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
+            otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
         )
 
         assertThat(operations.ops).containsExactlyElementsIn(expectedAdds)
@@ -541,4 +543,3 @@ class CrdtSetTest {
         id: ReferenceId
     ) = Add(actor, versions, id).also { applyOperation(it) }
 }
-
