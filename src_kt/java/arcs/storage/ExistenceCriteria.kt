@@ -13,10 +13,10 @@ package arcs.storage
 
 /** Storage existence criteria for data. */
 enum class ExistenceCriteria {
-  /** The data should already exist in storage. */
-  ShouldExist,
-  /** The data should **not** exist in storage yet. */
-  ShouldCreate,
-  /** The data may exist already, or may not.. no big whup. */
-  MayExist
+    /** The data should already exist in storage. */
+    ShouldExist,
+    /** The data should **not** exist in storage yet. */
+    ShouldCreate,
+    /** The data may exist already, or may not.. no big whup. */
+    MayExist
 }

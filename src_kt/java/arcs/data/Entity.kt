@@ -18,15 +18,15 @@ typealias FieldName = String
  * TODO: needs implementation
  */
 class Entity(
-  val name: String,
-  val data: MutableMap<FieldName, Any?>
+    val name: String,
+    val data: MutableMap<FieldName, Any?>
 ) : AbstractMutableMap<FieldName, Any?>() {
-  @Suppress("UNCHECKED_CAST")
-  override val entries: MutableSet<MutableMap.MutableEntry<FieldName, Any?>>
-    get() = data.entries
+    @Suppress("UNCHECKED_CAST")
+    override val entries: MutableSet<MutableMap.MutableEntry<FieldName, Any?>>
+        get() = data.entries
 
-  override fun put(key: FieldName, value: Any?): Any? {
-    require (key !in data) { "Illegal field $key, not part of $name's schema." }
-    return data.put(key, value)
-  }
+    override fun put(key: FieldName, value: Any?): Any? {
+        require(key !in data) { "Illegal field $key, not part of $name's schema." }
+        return data.put(key, value)
+    }
 }

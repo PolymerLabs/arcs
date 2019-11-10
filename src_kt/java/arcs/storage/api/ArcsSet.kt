@@ -4,7 +4,9 @@ import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtChange
 import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSet.Operation.*
+import arcs.crdt.CrdtSet.Operation.Add
+import arcs.crdt.CrdtSet.Operation.FastForward
+import arcs.crdt.CrdtSet.Operation.Remove
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import arcs.data.CollectionType
@@ -24,6 +26,7 @@ import arcs.storage.StoreOptions
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.ReferenceModeStorageKey
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +38,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Creates an [ArcsSet] which manages a set of [RawEntity] objects located at the given
@@ -147,7 +149,8 @@ class ArcsSet<T, StoreData, StoreOp>(
     private val initialized: CompletableJob = Job(scope.coroutineContext[Job.Key])
     private var syncJob: CompletableJob? = null
     private var callbackId: Int = -1
-    private val activated = CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
+    private val activated =
+        CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
 
     init {
         var activeStore: ActiveStore<StoreData, StoreOp, Set<T>>? = null
@@ -345,7 +348,9 @@ class ArcsSet<T, StoreData, StoreOp>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun handleStoreCallback(message: ProxyMessage<StoreData, StoreOp, Set<T>>): Boolean {
+    private suspend fun handleStoreCallback(
+        message: ProxyMessage<StoreData, StoreOp, Set<T>>
+    ): Boolean {
         val messageBackToStore = crdtMutex.withLock {
             when (message) {
                 is ProxyMessage.SyncRequest ->
@@ -445,4 +450,3 @@ class ArcsSet<T, StoreData, StoreOp>(
     private fun Collection<CrdtSet.IOperation<T>>.hasStoreSafeOps(): Boolean =
         none { it is FastForward }
 }
-

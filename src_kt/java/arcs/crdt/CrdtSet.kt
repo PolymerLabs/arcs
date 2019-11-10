@@ -9,11 +9,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+@file:Suppress("RemoveRedundantQualifierName")
+
 package arcs.crdt
 
-import arcs.crdt.internal.Actor
 import arcs.common.Referencable
 import arcs.common.ReferenceId
+import arcs.crdt.CrdtSet.Data
+import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
@@ -140,7 +143,6 @@ class CrdtSet<T : Referencable>(
             DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
     }
 
-
     /** A particular datum within a [CrdtSet]. */
     data class DataValue<T : Referencable>(
         /** The 'time' when the item was added. */
@@ -180,7 +182,10 @@ class CrdtSet<T : Referencable>(
             }
 
             override fun equals(other: Any?): Boolean =
-                other is Add<*> && other.clock == clock && other.actor == actor && other.added == added
+                other is Add<*> &&
+                    other.clock == clock &&
+                    other.actor == actor &&
+                    other.added == added
 
             override fun hashCode(): Int = toString().hashCode()
 
@@ -200,8 +205,8 @@ class CrdtSet<T : Referencable>(
                 // Ensure the remove op doesn't change the clock value.
                 if (clock[actor] != data.versionMap[actor]) return false
 
-                // Can't remove the item unless the clock value dominates that of the item already in the
-                // set.
+                // Can't remove the item unless the clock value dominates that of the item already
+                // in the set.
                 if (clock isDominatedBy existingDatum.versionMap) return false
 
                 // No need to edit actual data during a dry run.
@@ -213,10 +218,10 @@ class CrdtSet<T : Referencable>(
             }
 
             override fun equals(other: Any?): Boolean =
-                other is Remove<*>
-                    && other.clock == clock
-                    && other.actor == actor
-                    && other.removed == removed
+                other is Remove<*> &&
+                    other.clock == clock &&
+                    other.actor == actor &&
+                    other.removed == removed
 
             override fun hashCode(): Int = toString().hashCode()
 
@@ -236,8 +241,8 @@ class CrdtSet<T : Referencable>(
                 // Can't fast-forward when current data's clock is behind oldClock.
                 if (data.versionMap isDominatedBy oldClock) return false
 
-                // If the current data already knows about everything in the fast-forward op, we don't have
-                // to do anything.
+                // If the current data already knows about everything in the fast-forward op, we
+                // don't have to do anything.
                 if (data.versionMap dominates newClock) return true
 
                 // No need to edit actual data during a dry run.
@@ -271,8 +276,8 @@ class CrdtSet<T : Referencable>(
              *
              * Converts a simple fast-forward operation into a sequence of regular ops.
              *
-             * **Note:** Currently only supports converting add ops made by a single actor. Returns a list
-             * containing this [FastForward] op if it could not simplify.
+             * **Note:** Currently only supports converting add ops made by a single actor. Returns
+             * a list containing this [FastForward] op if it could not simplify.
              */
             fun simplify(): List<Operation<T>> {
                 // Remove ops can't be replayed in order.
@@ -281,7 +286,8 @@ class CrdtSet<T : Referencable>(
                 // This is just a version bump, since there are no additions and no removals.
                 if (added.isEmpty()) return listOf(this)
 
-                // Can only return a simplified list of ops if all additions come from a single actor.
+                // Can only return a simplified list of ops if all additions come from a single
+                // actor.
                 val versionDiff = newClock - oldClock
                 if (versionDiff.size != 1) return listOf(this)
                 val actor = versionDiff.actors.first()
@@ -289,15 +295,15 @@ class CrdtSet<T : Referencable>(
                 val sortedAdds = added.sortedBy { it.versionMap[actor] }
                 var expectedVersion = oldClock[actor]
                 sortedAdds.forEach { (itemVersion: VersionMap, _) ->
-                    // The add op's version for the actor wasn't just an increment-by-one from the previous
-                    // version.
+                    // The add op's version for the actor wasn't just an increment-by-one from the
+                    // previous version.
                     if (++expectedVersion != itemVersion[actor]) return listOf(this)
                 }
 
                 val expectedClock = VersionMap(oldClock).also { it[actor] = expectedVersion }
 
-                // If the final clock does not match an increment-by-one approach for each addition for the
-                // actor, we can't simplify.
+                // If the final clock does not match an increment-by-one approach for each addition
+                // for the actor, we can't simplify.
                 if (expectedClock != newClock) return listOf(this)
 
                 return added.map { Add(it.versionMap, actor, it.value) }

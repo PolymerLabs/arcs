@@ -21,25 +21,25 @@ import arcs.type.TypeLiteral
 
 /** [Type] representation for a singleton. */
 class SingletonType<T : Type>(override val containedType: T) :
-  Type,
-  Type.TypeContainer<T>,
-  CrdtModelType<
-    CrdtSingleton.Data<Referencable>,
-    CrdtSingleton.Operation<Referencable>,
-    Referencable?> {
-  override val tag = Tag.Singleton
+    Type,
+    Type.TypeContainer<T>,
+    CrdtModelType<
+        CrdtSingleton.Data<Referencable>,
+        CrdtSingleton.Operation<Referencable>,
+        Referencable?> {
+    override val tag = Tag.Singleton
 
-  override fun toLiteral() = Literal(tag, containedType.toLiteral())
+    override fun toLiteral() = Literal(tag, containedType.toLiteral())
 
-  override fun createCrdtModel() = CrdtSingleton<Referencable>()
+    override fun createCrdtModel() = CrdtSingleton<Referencable>()
 
-  data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
+    data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 
-  companion object {
-    init {
-      TypeFactory.registerBuilder(Tag.Singleton) { literal ->
-        SingletonType(TypeFactory.getType(literal.data))
-      }
+    companion object {
+        init {
+            TypeFactory.registerBuilder(Tag.Singleton) { literal ->
+                SingletonType(TypeFactory.getType(literal.data))
+            }
+        }
     }
-  }
 }

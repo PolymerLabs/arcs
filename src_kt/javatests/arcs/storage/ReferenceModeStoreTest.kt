@@ -26,7 +26,6 @@ import arcs.data.SchemaDescription
 import arcs.data.SchemaFields
 import arcs.data.SchemaName
 import arcs.data.SingletonType
-import arcs.data.util.ReferencablePrimitive
 import arcs.data.util.toReferencable
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
@@ -146,8 +145,10 @@ class ReferenceModeStoreTest {
 
         val bobDriver = activeStore.backingStore.getEntityDriver("an-id")
         val capturedBob = bobDriver.sentData.first()
-        assertThat(capturedBob.singletons["name"]?.data?.versionMap).isEqualTo(VersionMap(actor to 1))
-        assertThat(capturedBob.singletons["age"]?.data?.versionMap).isEqualTo(VersionMap(actor to 1))
+        assertThat(capturedBob.singletons["name"]?.data?.versionMap)
+            .isEqualTo(VersionMap(actor to 1))
+        assertThat(capturedBob.singletons["age"]?.data?.versionMap)
+            .isEqualTo(VersionMap(actor to 1))
         assertThat(capturedBob.toRawEntity().singletons)
             .containsExactly(
                 "name", "bob".toReferencable(),
@@ -167,7 +168,9 @@ class ReferenceModeStoreTest {
         collection.applyOperation(
             CrdtSet.Operation.Add(VersionMap("me" to 1), "me", entity)
         )
-        activeStore.onProxyMessage(ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1))
+        activeStore.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
 
         // Clone
         val activeStore2 = createReferenceModeStore()
@@ -189,7 +192,11 @@ class ReferenceModeStoreTest {
         val operation = CrdtSet.Operation.Add(VersionMap("me" to 1), "me", bob)
 
         val referenceCollection = CrdtSet<Reference>()
-        val bobRef = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
+        val bobRef = Reference(
+            "an-id",
+            activeStore.backingStore.storageKey,
+            VersionMap(actor to 1)
+        )
         val refOperation = CrdtSet.Operation.Add(VersionMap(actor to 1), actor, bobRef)
 
         val bobEntity = createPersonEntityCrdt()
@@ -605,7 +612,7 @@ class ReferenceModeStoreTest {
      * the [other] map of entities, on an ID-basis.
      */
     private fun Map<ReferenceId, CrdtSet.DataValue<RawEntity>>.assertEquals(
-        other : Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
+        other: Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
     ) {
         assertThat(keys).isEqualTo(other.keys)
         forEach { (refId, myEntity) ->

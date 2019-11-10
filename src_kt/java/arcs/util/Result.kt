@@ -20,13 +20,13 @@ sealed class Result<T> {
 /** Returns a [Result] object after trying to execute a block which returns [T]. */
 fun <T> resultOf(block: () -> T): Result<T> = try {
     Result.Ok(block())
-} catch(e : Throwable) {
+} catch (e: Throwable) {
     Result.Err(e)
 }
 
 /** Returns a [Result] object after trying to execute a suspending block which returns [T]. */
 suspend fun <T> resultOfSuspend(block: suspend () -> T): Result<T> = try {
     Result.Ok(block())
-} catch(e : Throwable) {
+} catch (e: Throwable) {
     Result.Err(e)
 }

@@ -30,7 +30,9 @@ data class RawEntity(
         return RawEntity(
             id = id,
             singletons = singletons.mapValues { it.value?.tryDereference() },
-            collections= collections.mapValues { it.value.map { item -> item.tryDereference() }.toSet() }
+            collections = collections.mapValues {
+                it.value.map { item -> item.tryDereference() }.toSet()
+            }
         )
     }
 

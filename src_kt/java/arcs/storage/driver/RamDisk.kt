@@ -12,9 +12,9 @@
 package arcs.storage.driver
 
 import arcs.storage.Driver
-import arcs.storage.ExistenceCriteria
 import arcs.storage.DriverFactory
 import arcs.storage.DriverProvider
+import arcs.storage.ExistenceCriteria
 import arcs.storage.StorageKey
 
 /** Protocol to be used with the ramdisk driver. */
@@ -22,10 +22,10 @@ const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"
 
 /** Storage key for a piece of data managed by the ramdisk driver. */
 data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DRIVER_PROTOCOL) {
-  override fun toKeyString(): String = unique
+    override fun toKeyString(): String = unique
 
-  override fun childKeyWithComponent(component: String): StorageKey =
-    RamDiskStorageKey("$unique/$component")
+    override fun childKeyWithComponent(component: String): StorageKey =
+        RamDiskStorageKey("$unique/$component")
 }
 
 /**
@@ -38,33 +38,35 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
  * running Arc.
  */
 class RamDiskDriverProvider : DriverProvider {
-  init {
-    DriverFactory.register(this)
-  }
+    init {
+        DriverFactory.register(this)
+    }
 
-  override fun willSupport(storageKey: StorageKey): Boolean = storageKey is RamDiskStorageKey
+    override fun willSupport(storageKey: StorageKey): Boolean = storageKey is RamDiskStorageKey
 
-  override suspend fun <Data : Any> getDriver(
-    storageKey: StorageKey,
-    existenceCriteria: ExistenceCriteria
-  ): Driver<Data> {
-    require(willSupport(storageKey)) { "This provider does not support StorageKey: $storageKey" }
-    return VolatileDriver(storageKey, existenceCriteria, RamDisk.memory)
-  }
+    override suspend fun <Data : Any> getDriver(
+        storageKey: StorageKey,
+        existenceCriteria: ExistenceCriteria
+    ): Driver<Data> {
+        require(willSupport(storageKey)) {
+            "This provider does not support StorageKey: $storageKey"
+        }
+        return VolatileDriver(storageKey, existenceCriteria, RamDisk.memory)
+    }
 
-  /*
-   * These ensure that if/when RamDiskDriverProvider is placed in a set, or used as a key for a map,
-   * it's only used once.
-   */
+    /*
+     * These ensure that if/when RamDiskDriverProvider is placed in a set, or used as a key for a
+     * map, it's only used once.
+     */
 
-  override fun equals(other: Any?): Boolean = other is RamDiskDriverProvider
-  override fun hashCode(): Int = this::class.hashCode()
+    override fun equals(other: Any?): Boolean = other is RamDiskDriverProvider
+    override fun hashCode(): Int = this::class.hashCode()
 }
 
-/** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs . */
+/** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */
 object RamDisk {
-  internal val memory = VolatileMemory()
+    internal val memory = VolatileMemory()
 
-  /** Clears every piece of data from the [RamDisk] memory. */
-  fun clear() = memory.clear()
+    /** Clears every piece of data from the [RamDisk] memory. */
+    fun clear() = memory.clear()
 }
