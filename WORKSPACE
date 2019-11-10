@@ -75,9 +75,9 @@ register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchai
 
 # Java deps from Maven.
 
-RULES_JVM_EXTERNAL_TAG = "2.8"
+RULES_JVM_EXTERNAL_TAG = "2.10"
 
-RULES_JVM_EXTERNAL_SHA = "79c9850690d7614ecdb72d68394f994fef7534b292c4867ce5e7dec0aa7bdfad"
+RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
 
 http_archive(
     name = "rules_jvm_external",
@@ -114,6 +114,7 @@ maven_install(
         "org.json:json:20141113",
         "org.mockito:mockito-core:2.23.0",
     ],
+    fetch_sources = True,
     repositories = [
         "https://jcenter.bintray.com/",
         "https://maven.google.com",
