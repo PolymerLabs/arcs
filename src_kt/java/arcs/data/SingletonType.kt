@@ -25,7 +25,7 @@ class SingletonType<T : Type>(override val containedType: T) :
     Type.TypeContainer<T>,
     CrdtModelType<
         CrdtSingleton.Data<Referencable>,
-        CrdtSingleton.Operation<Referencable>,
+        CrdtSingleton.IOperation<Referencable>,
         Referencable?> {
     override val tag = Tag.Singleton
 

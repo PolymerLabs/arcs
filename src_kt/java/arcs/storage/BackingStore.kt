@@ -61,7 +61,7 @@ class BackingStore(
     }
 
     override suspend fun idle() = storeMutex.withLock {
-        stores.values.mapNotNull {
+        stores.values.map {
             withContext(coroutineContext) {
                 launch { it.store.idle() }
             }

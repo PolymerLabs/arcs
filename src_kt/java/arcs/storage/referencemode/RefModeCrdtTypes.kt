@@ -74,14 +74,22 @@ sealed class RefModeStoreData : CrdtData {
 
 /** Valid crdt-style operations for a [arcs.storage.ReferenceModeStore]. */
 interface RefModeStoreOp : CrdtOperationAtTime {
+    interface Singleton : RefModeStoreOp, CrdtSingleton.IOperation<RawEntity>
+
     class SingletonUpdate(actor: Actor, clock: VersionMap, value: RawEntity) :
-        RefModeStoreOp,
+        Singleton,
         RefModeSingleton,
-        CrdtSingleton.Operation.Update<RawEntity>(actor, clock, value)
+        CrdtSingleton.Operation.Update<RawEntity>(actor, clock, value) {
+        constructor(
+            singletonOp: Update<RawEntity>
+        ) : this(singletonOp.actor, singletonOp.clock, singletonOp.value)
+    }
     class SingletonClear(actor: Actor, clock: VersionMap) :
-        RefModeStoreOp,
+        Singleton,
         RefModeSingleton,
-        CrdtSingleton.Operation.Clear<RawEntity>(actor, clock)
+        CrdtSingleton.Operation.Clear<RawEntity>(actor, clock) {
+        constructor(singletonOp: Clear<RawEntity>) : this(singletonOp.actor, singletonOp.clock)
+    }
 
     interface Set : RefModeStoreOp, CrdtSet.IOperation<RawEntity>
 

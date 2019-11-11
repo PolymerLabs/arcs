@@ -26,6 +26,8 @@ data class ReferenceModeStorageKey(
 
     override fun toKeyString(): String = "{${backingKey.embed()}}{${storageKey.embed()}}"
 
+    override fun toString(): String = "$protocol://${toKeyString()}"
+
     companion object {
         const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 

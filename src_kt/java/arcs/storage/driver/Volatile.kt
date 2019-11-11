@@ -11,6 +11,7 @@
 
 package arcs.storage.driver
 
+import arcs.arcs.util.TaggedLog
 import arcs.common.ArcId
 import arcs.common.toArcId
 import arcs.storage.Driver
@@ -87,6 +88,7 @@ internal class VolatileDriver<Data : Any>(
     override val existenceCriteria: ExistenceCriteria,
     private val memory: VolatileMemory
 ) : Driver<Data> {
+    private val log = TaggedLog { this.toString() }
     // The identifier is simply used to help differentiate between VolatileDrivers for the same
     // storage key.
     private val identifier = nextIdentifier.incrementAndGet()
@@ -133,6 +135,7 @@ internal class VolatileDriver<Data : Any>(
 
         // Add the data to the memory.
         memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
+        log.debug { "Created" }
     }
 
     override suspend fun registerReceiver(
@@ -147,6 +150,7 @@ internal class VolatileDriver<Data : Any>(
     }
 
     override suspend fun send(data: Data, version: Int): Boolean {
+        log.debug { "send($data, $version)" }
         val currentEntry: VolatileEntry<Data> = memory[storageKey]!!
 
         // If the new version isn't immediately after this one, return false.
@@ -157,13 +161,12 @@ internal class VolatileDriver<Data : Any>(
 
         newEntry.drivers.forEach { driver ->
             val receiver = driver.takeIf { it != this }?.receiver
+            log.debug { "Invoking receiver: $receiver" }
             receiver?.invoke(data, version)
         }
 
         return true
     }
-
-    override fun toString(): String = "VolatileDriver(id=$identifier, storageKey=$storageKey)"
 
     companion object {
         private var nextIdentifier = atomic(0)

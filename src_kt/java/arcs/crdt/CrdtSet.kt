@@ -15,6 +15,7 @@ package arcs.crdt
 
 import arcs.common.Referencable
 import arcs.common.ReferenceId
+import arcs.crdt.CrdtChange.Operations
 import arcs.crdt.CrdtSet.Data
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
@@ -25,7 +26,7 @@ class CrdtSet<T : Referencable>(
     internal var _data: Data<T> = DataImpl(),
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
     private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
-) : CrdtModel<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>> {
+) : CrdtModel<Data<T>, CrdtSet.IOperation<T>, Set<T>> {
     override val versionMap: VersionMap
         get() = _data.versionMap.copy()
     override val data: Data<T>
@@ -34,23 +35,8 @@ class CrdtSet<T : Referencable>(
     override val consumerView: Set<T>
         get() = HashSet<T>().apply { addAll(_data.values.values.map { it.value }) }
 
-    /**
-     * The original value (not a copy, as with [data]) of the backing data. Should only be used by
-     * other [CrdtModel] implementations which are backed by a [CrdtSet].
-     */
-    internal val originalData: Data<T>
-        get() = _data
-
     override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
-        if (versionMap == other.versionMap) {
-            // If we've got the same version clocks, there's nothing to do here.
-            @Suppress("RemoveExplicitTypeArguments") // Type inference was failing (?!)
-            return MergeChanges<Data<T>, IOperation<T>>(
-                CrdtChange.Operations(mutableListOf()),
-                CrdtChange.Operations(mutableListOf())
-            )
-        }
-
+        val oldClock = _data.versionMap.copy()
         val newClock = _data.versionMap mergeWith other.versionMap
         val mergedData = dataBuilder(newClock)
         val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
@@ -95,17 +81,20 @@ class CrdtSet<T : Referencable>(
 
         this._data = mergedData
 
-        val otherOperations =
-            if (fastForwardOp.added.isNotEmpty() || fastForwardOp.removed.isNotEmpty()) {
-                CrdtChange.Operations<Data<T>, IOperation<T>>(
-                    fastForwardOp.simplify().toMutableList()
-                )
-            } else {
-                CrdtChange.Operations<Data<T>, IOperation<T>>(mutableListOf())
-            }
+        val (myOperations, otherOperations) = if (
+            fastForwardOp.added.isNotEmpty() ||
+            fastForwardOp.removed.isNotEmpty() ||
+            oldClock isDominatedBy newClock
+        ) {
+            CrdtChange.Data<Data<T>, IOperation<T>>(mergedData) to
+                Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
+        } else {
+            Operations<Data<T>, IOperation<T>>(mutableListOf()) to
+                Operations<Data<T>, IOperation<T>>(mutableListOf())
+        }
 
         return MergeChanges(
-            modelChange = CrdtChange.Data(mergedData), otherChange = otherOperations
+            modelChange = myOperations, otherChange = otherOperations
         )
     }
 

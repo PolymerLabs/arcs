@@ -517,14 +517,14 @@ class CrdtSetTest {
 
         val (modelChange2, otherChange2) = alice.merge(bob.data)
         assertThat(modelChange2.isEmpty()).isTrue()
-        assertThat(modelChange2.isEmpty()).isTrue()
+        assertThat(otherChange2.isEmpty()).isTrue()
 
         val charlie = CrdtSet<Reference>()
         charlie.add("c", VersionMap("c" to 1), "baz")
         val (modelChange3, otherChange3) = alice.merge(charlie.data)
 
         assertThat(modelChange3.isEmpty()).isFalse()
-        assertThat(modelChange3.isEmpty()).isFalse()
+        assertThat(otherChange3.isEmpty()).isFalse()
     }
 
     private data class Reference(override val id: ReferenceId) : Referencable
