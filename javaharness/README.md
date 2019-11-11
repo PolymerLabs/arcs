@@ -88,7 +88,7 @@ Particles and recipes are by default loaded from the APK, but you can configure 
 ```
 
 ## The Arcs Cache Manager
-The Arcs Service Manager compiles javascript and webassembly sources eagerly and caches the compiled binaries at local storage to serve subsequent requests. Page loading time and compilation overhead are optimized when enabled.
+The Arcs Cache Manager compiles javascript and webassembly sources eagerly and caches the compiled binaries at local storage to serve subsequent requests. Page loading time and compilation overhead are optimized when enabled.
 
 Enabling the Arcs Cache Manager:
 1. Terminate the existing demo application.

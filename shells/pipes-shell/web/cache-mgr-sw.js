@@ -24,7 +24,7 @@ const PREBUILT_CACHES = [
   './shell.js',
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   async function buildCache() {
     console.log('building Arcs caches');
     const cache = await caches.open(SW_CACHES_FILE);
@@ -53,7 +53,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   async function cachedFetch(event) {
     const cache = await caches.open(SW_CACHES_FILE);
     let response = await cache.match(event.request);
@@ -64,7 +64,7 @@ self.addEventListener('fetch', (event) => {
     cache.put(event.request, response.clone());
     return response;
   }
-  // Quite: 'only-if-cached' can be set only with 'same-origin' mode
+  // Suppress warning: 'only-if-cached' can be set only with 'same-origin' mode
   if (event.request.mode !== 'same-origin' &&
       event.request.cache === 'only-if-cached') {
     return;

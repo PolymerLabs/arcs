@@ -136,8 +136,8 @@ final class AndroidArcsEnvironment {
       }
     });
 
-    ServiceWorkerController swController = ServiceWorkerController.getInstance();
-    swController.setServiceWorkerClient(new ServiceWorkerClient() {
+    ServiceWorkerController.getInstance()
+        .setServiceWorkerClient(new ServiceWorkerClient() {
       @Override
       public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
         // For the service worker thread to intercept the urls.
