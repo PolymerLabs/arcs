@@ -61,7 +61,7 @@ fun WasmNullableString.toNullableKString(): String? {
 @SymbolName("Kotlin_Arrays_getByteArrayAddressOfElement")
 external fun ByteArray.addressOfElement(index: Int): CPointer<ByteVar>
 
-// Convert a Kotlin String into a WasmAddress
+/** Convert a Kotlin String into a WasmAddress */
 fun String.toWasmString(): WasmString {
     // Ugh, this isn't null terminated
     val array = this.toUtf8()
@@ -73,6 +73,7 @@ fun String.toWasmString(): WasmString {
     return array2.addressOfElement(0).toLong().toWasmAddress()
 }
 
+/** Convert a Kotlin String to a WasmAddress, where `null` is a valid value. */
 fun String?.toWasmNullableString(): WasmNullableString {
     return  this?.let { it.toWasmString() } ?: 0
 }
