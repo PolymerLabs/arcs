@@ -9,9 +9,9 @@
 import 'Restaurant.schema'
 
 particle RestaurantDetail in 'source/RestaurantDetail.js'
-  in Restaurant selected
+  selected: reads Restaurant
   modality dom
-  consume detail
-    provide action
+  detail: consumes Slot
+    action: provides? Slot
 // removing description for now to clean up suggestions
 //  description `show restaurant details`

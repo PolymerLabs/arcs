@@ -9,8 +9,8 @@
 import 'Restaurant.schema'
 
 particle SlandleRestaurantMasterDetail in '../Common/source/MasterDetail.js'
-  in [Restaurant] list
-  inout Restaurant selected
-  `consume Slot masterdetail
-    `provide Slot {handle: list} master
-    `provide Slot {handle: selected} detail
+  list: reads [Restaurant]
+  selected: reads writes Restaurant
+  masterdetail: `consumes Slot
+    master: `provides? Slot {handle: list}
+    detail: `provides? Slot {handle: selected}
