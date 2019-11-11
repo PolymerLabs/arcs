@@ -23,24 +23,27 @@ package arcs.storage
  * current internal version.
  */
 interface Driver<Data : Any> {
-  /** Key identifying the [Driver]. */
-  val storageKey: StorageKey
+    /** Key identifying the [Driver]. */
+    val storageKey: StorageKey
 
-  /** Requirement for the existence of the [Driver]. */
-  val existenceCriteria: ExistenceCriteria
+    /** Requirement for the existence of the [Driver]. */
+    val existenceCriteria: ExistenceCriteria
 
-  /**
-   * Returns a token that represents the current state of the data.
-   *
-   * This can be provided to [registerReceiver], and will impact what data is delivered on
-   * initialization (only "new" data should be delivered, though note that this can be satisfied by
-   * sending a model for merging rather than by remembering a set of ops).
-   */
-  val token: String?
+    /**
+     * Returns a token that represents the current state of the data.
+     *
+     * This can be provided to [registerReceiver], and will impact what data is delivered on
+     * initialization (only "new" data should be delivered, though note that this can be satisfied
+     * by sending a model for merging rather than by remembering a set of ops).
+     */
+    val token: String?
 
-  /** Registers a listener for [Data]. */
-  suspend fun registerReceiver(token: String? = null, receiver: suspend (data: Data, version: Int) -> Unit)
+    /** Registers a listener for [Data]. */
+    suspend fun registerReceiver(
+        token: String? = null,
+        receiver: suspend (data: Data, version: Int) -> Unit
+    )
 
-  /** Sends data to the [Driver] for storage. */
-  suspend fun send(data: Data, version: Int): Boolean
+    /** Sends data to the [Driver] for storage. */
+    suspend fun send(data: Data, version: Int): Boolean
 }

@@ -18,6 +18,8 @@ import arcs.storage.MultiplexedProxyCallback
 import arcs.storage.ProxyCallback
 import arcs.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.Executors
+import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -29,8 +31,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.Executors
-import kotlin.random.Random
 
 /** Tests for the [ProxyCallbackManager]. */
 @ExperimentalCoroutinesApi
@@ -58,7 +58,7 @@ class ProxyCallbackManagerTest {
 
         // Now check that the nextCallbackToken is correct (should be 201 if we didn't erroneously
         // attempt to increment outside of a lock.
-        assertThat(manager.nextCallbackToken).isEqualTo(201)
+        assertThat(manager.nextCallbackToken.value).isEqualTo(201)
         assertThat(manager.callbacks.size).isEqualTo(200)
     }
 

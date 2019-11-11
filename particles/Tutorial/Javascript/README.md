@@ -21,7 +21,7 @@ particle HelloWorldParticle in 'HelloWorld.js'
   // in the Arcs manifest language, so this is very important.
   // Don't worry about what this line does at the moment, we'll
   // be getting to root and slots in more detail soon.
-  consume root
+  root: consumes
 
 // And now we are at the recipe definition!
 recipe HelloWorldRecipe
@@ -65,8 +65,8 @@ To get started, we want a way to make our UI dynamic. Simply returning static HT
 This interpolation occurs when `render()` returns a dictionary with keys that match elements in the template. The best way to explain how this works is to see it in action. The Arcs manifest file looks pretty much the same as with our Hello World example.
 
 ```
-particle BasicTemplateParticle in 'basic-template.js'
-  consume root
+particle BasicTemplateParticle in 'BasicTemplate.js.js'
+  root: consumes
 
 recipe BasicTemplateRecipe
   BasicTemplateParticle
@@ -113,26 +113,26 @@ particle ParentParticle in 'parent.js'
   // called "mySlot" in which another particle can render. The
   // child particle will be rendered inside a special div with the identifier
   // "mySlot", which this particle will need to provide in its HTML.
-  consume root
-    provide mySlot
+  root: consumes
+    mySlot: provides
 
 // The "child" particle. Instead of consuming "root" it consumes "mySlot"
 particle ChildParticle in 'child.js'
-  consume mySlot
+  render: consumes
 
 
 // Unlike previous recipes, this one includes two particles.
 recipe RenderSlotsRecipe
   ParentParticle
     // The ParentParticle consumes root just like particles in previous examples.
-    consume root
+    root: consumes
       // ParentParticle also provides mySlot. Note the additional tab over.
       // The name "slot" is the name the recipe uses for the slot, and is how
       // the recipe connects the parent's mySlot and the child's mySlot
-      provide mySlot as slot
+      mySlot: provides childSlot
   ChildParticle
     // And the ChildParticle consumes the slot.
-    consume mySlot as slot
+    render: consumes childSlot
 
   description `Javascript Tutorial 3: Render Slots`
 ```
@@ -188,32 +188,32 @@ As usual, we start with the Arcs Manifest file. Because we are going to be using
 ```
 // Define a schema that allows us to store a person's name 
 schema Person
-  Text name
+  name: Text
 
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
 particle GetPerson in './source/GetPerson.js'
-  out Person person
-  consume root
-    provide greetingSlot
+  person: writes Person
+  root: consumes
+    greetingSlot: provides
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
 particle DisplayGreeting in './source/DisplayGreeting.js'
-  in Person person
-  consume greetingSlot
+  person: reads Person
+  greetingSlot: consumes
 
 recipe HandleRecipe
   GetPerson
     // Pass the output person to the handle recipePerson.
-    person = recipePerson 
-    consume root 
-      provide greetingSlot as greeting
+    person: writes recipePerson 
+    root: consumes
+      greetingSlot: provides greeting
   DisplayGreeting
     // Define the input person to be the handle recipePerson.
-    person = recipePerson
-    consume greetingSlot as greeting
+    person: reads recipePerson
+    greetingSlot: consumes greeting
   description `Javascript Tutorial 4: Handles`
 ```
 
@@ -297,8 +297,8 @@ Using some more sophisticated template interpolation, we can easily greet everyo
 We begin with the Arcs manifest file which includes the collection of `PersonDetails`.
 ```
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 // This is essentially a JSON file defined inside the manifest.
 resource PeopleData
@@ -315,17 +315,16 @@ store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionParticle in 'collections.js'
   // The input is a collection of PersonDetails entities.
-  in [PersonDetails] inputData
-  consume root
+  inputData: reads [PersonDetails]
+  root: consumes
 
 recipe CollectionRecipe
-  map PeopleToGreetStore as data
+  data: map PeopleToGreetStore
 
   CollectionParticle
-    inputData <- data
+    inputData: reads data
 
   description `Javascript Tutorial 5: Collections`
-
 ```
 
 And the Javascript:
@@ -377,30 +376,27 @@ Hopefully by now you are starting to see how the different components of Arcs wo
 Alright, let’s get to the actual tutorial! This time, instead of embedding the store's data directly inside
 the Arcs Manifest file (as a `resource`), we're going to load it from a separate JSON file. Let’s start with the Arcs Manifest file:
 ```
-// Tutorial: JSON Store
-// Loads data stored in a JSON file.
-
 // Defines a new Entity called PersonDetails, with two fields.
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
 
 particle JsonStoreParticle in 'JsonStore.js'
   // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
-  in PersonDetails inputData
-  consume root
+  inputData: reads PersonDetails
+  root: consumes
 
 recipe JsonStoreRecipe
   // This line connects this recipe to the data store above. It also creates a local alias for it called "data", which is how we will refer to
   // it inside the scope of this recipe.
-  map PersonToGreetStore as data
+  PersonToGreetStore: map data
 
   JsonStoreParticle
     // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
-    inputData = data
+    inputData: reads data
 
   description `Javascript Tutorial 6: JSON Store`
 ```

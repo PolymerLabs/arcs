@@ -7,6 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle CopyCollection in 'source/CopyCollection.js'
-  in [~a] input
-  out [~a] output
+  input: reads [~a]
+  output: writes [~a]
   description `copy ${input} to ${output}`

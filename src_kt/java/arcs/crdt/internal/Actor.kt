@@ -13,4 +13,3 @@ package arcs.crdt.internal
 
 /** Denotes an individual actor responsible for modifications to a Crdt. */
 typealias Actor = String
-

@@ -20,4 +20,15 @@ public interface RuntimeSettings {
   // Used only by Javascript-based Arcs runtime to specify which shell
   // either on-device or on-host to connect with.
   String shellUrl();
+
+  // Used only by Javascript-based Arcs runtime to create the dedicated
+  // service worker thread (the Arcs Cache Manager) to match url requests to
+  // the generated responses at the cache_storage. The generated responses on
+  // js/wasm requests would trigger eager compilation rather than default lazy
+  // compilation.
+  //
+  // Note:
+  // This option only works when the runtime url is specified in "https"
+  // protocol complying with the security origin policy.
+  boolean useCacheManager();
 }

@@ -9,13 +9,13 @@
 import '../Things/Thing.schema'
 
 schema Person extends Thing
-  Text id
-  Text friends
-  Text foods
-  Text avatar
-  Text active
-  Text occasion
-  Text date
+  id: Text
+  friends: Text
+  foods: Text
+  avatar: Text
+  active: Text
+  occasion: Text
+  date: Text
   // TODO move back to a nested location when schemas support that.
-  Number latitude
-  Number longitude
+  latitude: Number
+  longitude: Number

@@ -9,58 +9,58 @@
 // TODO(jopra): Finish conversion to use SLANDLES
 interface HostedParticleInterface
   reads ~a
-  item: consumes?
+  item: `consumes Slot
 
 // row lists
 
 particle ItemMultiplexer in 'source/SLANDLESMultiplexer.js'
   hostedParticle: hosts HostedParticleInterface
   list: reads [~a]
-  item: consumes [Slot]
+  item: `consumes [Slot]
 
 particle List in 'source/List.js'
   items: reads [~a]
-  root: consumes Slot #content
-    preamble: provides? Slot
-    item: provides [Slot {handle: items}]
-    annotation: provides? [Slot {handle: items}]
-    action: provides? Slot {handle: items}
-    postamble: provides? Slot
+  root: `consumes Slot #content
+    preamble: `provides? Slot
+    item: `provides [Slot {handle: items}]
+    annotation: `provides? [Slot {handle: items}]
+    action: `provides? Slot {handle: items}
+    postamble: `provides? Slot
   description `show ${items}`
 
 particle SelectableList in 'source/List.js'
   items: reads writes [~a]
   selected: reads writes ~a
-  root: consumes Slot #content
-    preamble: provides? Slot
-    item: provides [Slot {handle: items}]
-    annotation: provides? [Slot {handle: items}]
-    action: provides? Slot {handle: items}
-    postamble: provides? Slot
+  root: `consumes Slot #content
+    preamble: `provides Slot
+    item: `provides [Slot {handle: items}]
+    annotation: `provides [Slot {handle: items}]
+    action: `provides Slot {handle: items}
+    postamble: `provides Slot
   description `show ${items}`
 
 // tile lists
 
 interface HostedTileParticleInterface
   reads ~a
-  tile: consumes
+  tile: `consumes Slot
 
 particle TileMultiplexer in 'source/SLANDLESMultiplexer.js'
   hostedParticle: hosts HostedTileParticleInterface
   list: reads [~a]
-  tile: consumes [Slot]
+  tile: `consumes [Slot]
 
 particle TileList in 'source/TileList.js'
   items: reads writes [~a]
-  root: consumes Slot #content
-    tile: provides [Slot]
-    action: provides? [Slot]
+  root: `consumes Slot #content
+    tile: `provides [Slot]
+    action: `provides? [Slot]
   description `show ${items} as tiles`
 
 particle SelectableTileList in 'source/TileList.js'
   items: reads writes [~a]
   selected: reads writes ~a
-  root: consumes Slot #content
-    tile: provides [Slot]
-    action: provides? [Slot]
+  root: `consumes Slot #content
+    tile: `provides [Slot]
+    action: `provides? [Slot]
   description `show ${items} as tiles`

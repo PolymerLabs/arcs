@@ -17,6 +17,7 @@ import arcs.crdt.CrdtSet.Data as SetData
 import arcs.crdt.CrdtSet.IOperation as ISetOp
 import arcs.crdt.CrdtSet.Operation as SetOp
 import arcs.crdt.CrdtSingleton.Data as SingletonData
+import arcs.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.crdt.CrdtSingleton.Operation as SingletonOp
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
@@ -52,8 +53,10 @@ class CrdtEntity(
     ) : this(Data(versionMap, rawEntity, referenceBuilder))
 
     override fun merge(other: Data): MergeChanges<Data, Operation> {
+        /* ktlint-disable max-line-length */
         val singletonChanges =
-            mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, SingletonOp<Reference>>>()
+            mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, ISingletonOp<Reference>>>()
+        /* ktlint-enable max-line-length */
         val collectionChanges =
             mutableMapOf<FieldName, MergeChanges<SetData<Reference>, ISetOp<Reference>>>()
 
@@ -64,8 +67,8 @@ class CrdtEntity(
             if (otherSingleton != null) {
                 singletonChanges[fieldName] = singleton.merge(otherSingleton.data)
             }
-            if (singletonChanges[fieldName]?.modelChange is CrdtChange.Data
-                || singletonChanges[fieldName]?.otherChange is CrdtChange.Data) {
+            if (singletonChanges[fieldName]?.modelChange is CrdtChange.Data ||
+                singletonChanges[fieldName]?.otherChange is CrdtChange.Data) {
                 allOps = false
             }
         }
@@ -74,18 +77,19 @@ class CrdtEntity(
             if (otherCollection != null) {
                 collectionChanges[fieldName] = collection.merge(otherCollection.data)
             }
-            if (collectionChanges[fieldName]?.modelChange is CrdtChange.Data
-                || collectionChanges[fieldName]?.otherChange is CrdtChange.Data) {
+            if (collectionChanges[fieldName]?.modelChange is CrdtChange.Data ||
+                collectionChanges[fieldName]?.otherChange is CrdtChange.Data) {
                 allOps = false
             }
         }
-        val oldVersionMap = _data.versionMap
+        val oldVersionMap = _data.versionMap.copy()
         _data.versionMap = _data.versionMap mergeWith other.versionMap
 
         if (oldVersionMap == _data.versionMap) {
+            @Suppress("RemoveExplicitTypeArguments")
             return MergeChanges(
-                CrdtChange.Operations(mutableListOf<CrdtEntity.Operation>()),
-                CrdtChange.Operations(mutableListOf<CrdtEntity.Operation>())
+                CrdtChange.Operations(mutableListOf<Operation>()),
+                CrdtChange.Operations(mutableListOf<Operation>())
             )
         }
 
@@ -156,9 +160,10 @@ class CrdtEntity(
         _data = newData.copy()
     }
 
-    private fun SingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when(this) {
+    private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
+        else -> throw CrdtException("Invalid operation")
     }
 
     private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
@@ -171,7 +176,7 @@ class CrdtEntity(
     interface Reference : Referencable {
         companion object {
             /** Simple converter from [Referencable] to [Reference]. */
-            fun buildReference(referencable: Referencable) : Reference =
+            fun buildReference(referencable: Referencable): Reference =
                 ReferenceImpl(referencable.id)
         }
     }
@@ -215,13 +220,17 @@ class CrdtEntity(
 
         fun toRawEntity() = RawEntity(
             singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
-            collections = collections.mapValues { it.value.consumerView.map { item -> item.tryDereference() }.toSet() }
+            collections = collections.mapValues {
+                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+            }
         )
 
         fun toRawEntity(id: ReferenceId) = RawEntity(
             id = id,
             singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
-            collections = collections.mapValues { it.value.consumerView.map { item -> item.tryDereference() }.toSet() }
+            collections = collections.mapValues {
+                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+            }
         )
 
         /** Makes a deep copy of this [CrdtEntity.Data] object. */
@@ -334,4 +343,3 @@ class CrdtEntity(
         }
     }
 }
-

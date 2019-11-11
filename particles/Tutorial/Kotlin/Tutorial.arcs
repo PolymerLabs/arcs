@@ -12,3 +12,5 @@ import '2_BasicTemplates/BasicTemplates.arcs'
 import '3_RenderSlots/RenderSlots.arcs'
 
 import '5_Collections/Collections.arcs'
+
+import '6_JsonStore/JsonStore.arcs'

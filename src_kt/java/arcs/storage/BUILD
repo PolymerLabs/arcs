@@ -2,14 +2,20 @@ package(default_visibility = ["//visibility:public"])
 
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "kt_jvm_and_js_library")
 
+PROXY_SRCS = [
+    "ProxyInterface.kt",
+]
+
+STORAGE_KEY_SRCS = [
+    "StorageKey.kt",
+    "StorageKeyParser.kt",
+]
+
 kt_jvm_and_js_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = [
-            "ProxyInterface.kt",
-            "StorageKey.kt",
-        ],
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS,
     ),
     exports = [
         ":proxy",
@@ -34,16 +40,12 @@ kt_jvm_and_js_library(
 
 kt_jvm_and_js_library(
     name = "storage_key",
-    srcs = [
-        "StorageKey.kt",
-    ],
+    srcs = STORAGE_KEY_SRCS,
 )
 
 kt_jvm_and_js_library(
     name = "proxy",
-    srcs = [
-        "ProxyInterface.kt",
-    ],
+    srcs = PROXY_SRCS,
     deps = [
         "//src_kt/java/arcs/crdt",
     ],
