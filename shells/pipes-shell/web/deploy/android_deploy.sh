@@ -14,3 +14,9 @@ cp ../../../lib/build/worker.js "$OUT_DIR/worker.js"
 
 # Copy over shell html.
 cp source/index.html "$OUT_DIR/index.html"
+
+# Arcs cache manager and versioning
+# Must be done at the last step to ensure the correct $OUT_DIR/** checksum
+cp -fR ../cache-mgr*.js $OUT_DIR/
+sed -i "s/__ARCS_MD5__/$(tar -cf - $OUT_DIR | md5sum | cut -d' ' -f1)/g" \
+  $OUT_DIR/cache-mgr-sw.js

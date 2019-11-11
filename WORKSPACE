@@ -96,6 +96,7 @@ KOTLINX_COROUTINES_VERSION = "1.3.2"
 
 maven_install(
     artifacts = [
+        "androidx.webkit:webkit:1.1.0-rc01",
         "com.google.flogger:flogger:0.4",
         "com.google.flogger:flogger-system-backend:0.4",
         "com.google.dagger:dagger:2.23.1",
