@@ -142,7 +142,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
 
     private val scope = CoroutineScope(coroutineContext)
     private val crdtMutex = Mutex()
-    private val crdtSingleton = CrdtSingleton<T>() // by guardWith(crdtMutex, CrdtSingleton<T>())
+    private val crdtSingleton by guardWith(crdtMutex, CrdtSingleton<T>())
     private var cachedVersion by guardWith(crdtMutex, VersionMap())
     @Suppress("RemoveExplicitTypeArguments")
     private var cachedConsumerData: T? by guardWith<T?>(crdtMutex, null)
