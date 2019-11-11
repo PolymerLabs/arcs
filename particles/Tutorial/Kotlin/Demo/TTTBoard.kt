@@ -1,37 +1,50 @@
 package arcs.tutorials.tictactoe
 
-import arcs.*
+import arcs.Collection
+import arcs.Particle
+import arcs.Singleton
+import arcs.TTTBoard_Events
+import arcs.TTTBoard_GameState
 import kotlin.native.internal.ExportForCppRuntime
-
 
 class TTTBoard : Particle() {
 
-  private val gameState = Singleton { TTTBoard_GameState() }
-  private val events = Collection { TTTBoard_Events() }
+    private val gameState = Singleton { TTTBoard_GameState() }
+    private val events = Collection { TTTBoard_Events() }
+    private var clicks = 0.0
 
+    init { registerHandle("gameState", gameState)
+        registerHandle("events", events)
 
-  init {
-    registerHandle("gameState", gameState)
-    registerHandle("events", events)
-  }
+        eventHandler("onClick") { eventData ->
+            this.events.store(TTTBoard_Events(
+                type = "move",
+                move = eventData["value"]?.toDouble() ?: -1.0,
+                time = clicks
+            ))
+            clicks++
+        }
+    }
 
-  override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
 
-      val boardArr = listOf(0, 0, 0, 0, 0, 0, 0, 0, 0)
-      val boardList = mutableListOf<Map<String, String?>>()
-      boardArr.forEachIndexed{ index, cell ->
-          boardList.add(mapOf("cell" to cell.toString(), "value" to index.toString()))
-      }
+        val board = this.gameState.get()?.board ?: ",,,,,,,,"
+        val boardArr = board.split(",").map { it.trim() }
+        val boardList = mutableListOf<Map<String, String?>>()
+        boardArr.forEachIndexed { index, cell ->
+            boardList.add(mapOf("cell" to cell, "value" to index.toString()))
+        }
 
-      return mapOf("hideReset" to "true",
-        "buttons" to mapOf(
-          "\$template" to "button",
-          "models" to boardList
-        ))
-  }
+        return mapOf("hideReset" to "true",
+            "buttons" to mapOf(
+                "\$template" to "button",
+                "models" to boardList
+            )
+        )
+    }
 
-  override fun getTemplate(slotName: String): String {
-    return """
+    override fun getTemplate(slotName: String): String {
+        return """
 <style>
   .grid-container {
     display: grid;
@@ -59,7 +72,7 @@ class TTTBoard : Particle() {
   </button>
 </template>
 """
-  }
+    }
 }
 
 @Retain

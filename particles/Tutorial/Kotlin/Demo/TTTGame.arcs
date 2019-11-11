@@ -1,15 +1,7 @@
 // Tutorial Demo
 // Shows how to use Arcs features to create a tic-tac-toe game.
-// import 'TTTGameSchemas.arcs'
-
-schema GameState
-  Text board
-  Number currentPlayer
-
-schema Event
-  Text type
-  Number move
-  Number time
+import 'TTTGameSchemas.arcs'
+import 'TTTGamedata.arcs'
 
 particle TTTBoard in 'TTTBoard.wasm'
   out [Event] events
@@ -17,19 +9,34 @@ particle TTTBoard in 'TTTBoard.wasm'
   boardSlot: consumes
 
 particle TTTGame in 'TTTGame.wasm'
+  inout GameState gameState
+  inout Person playerOne
   root: consumes
     boardSlot: provides
 
+particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
+  in GameState gameState
+  in [Event] events
+  in Person {id} player
+  out Move {move} myMove
 
 
 recipe GamePlayersDemoRecipe
+  use HumanStore as playerOne
   TTTGame
+    gameState = gameState
+    playerOne = playerOne
     root: consumes
       boardSlot: provides board
   TTTBoard
       boardSlot: consumes board
       gameState: any gameState
       events: any events
-  description `Kotlin Tutorial TicTacToe Demo`
+  TTTHumanPlayer
+    gameState = gameState
+    events <- events
+    myMove -> playerOneMove
+    player <- playerOne
+  description `Kotlin Tutorial TicTacToe Demo2`
 
 

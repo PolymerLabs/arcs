@@ -1,4 +1,10 @@
+schema Person
+  Text name
+  Text avatar
+  Number id
+
 schema GameState
+  Boolean gameOver
   Text board
   Number currentPlayer
 
@@ -6,3 +12,6 @@ schema Event
   Text type
   Number move
   Number time
+
+schema Move
+  Number move

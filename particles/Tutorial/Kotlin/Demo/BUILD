@@ -8,10 +8,19 @@ arcs_kt_schema(
 arcs_kt_binary(
     name = "TTTBoard",
     srcs = ["TTTBoard.kt"],
-    deps = [":game_schemas"],
+    deps = [
+        ":game_schemas",
+    ],
 )
 
 arcs_kt_binary(
     name = "TTTGame",
     srcs = ["TTTGame.kt"],
+    deps = [":game_schemas"],
 )
+
+arcs_kt_binary(
+     name = "TTTHumanPlayer",
+     srcs = ["TTTHumanPlayer.kt"],
+     deps = [":game_schemas"],
+ )
