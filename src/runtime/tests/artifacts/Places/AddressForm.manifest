@@ -10,6 +10,6 @@
 import 'PostalAddress.schema'
 
 particle AddressForm in 'source/AddressForm.js'
-  inout PostalAddress address
-  consume root
+  address: reads writes PostalAddress
+  root: consumes Slot
   description `edit address`

@@ -9,6 +9,6 @@ recipe Login &login
   create as key
   slot 'rootslotid-root' as root
   Login
-    key = key
-    consume root as root
+    key: any key
+    root: consumes root
   description `user sign in`

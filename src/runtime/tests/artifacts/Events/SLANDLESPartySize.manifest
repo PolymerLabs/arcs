@@ -9,8 +9,8 @@
 import 'Event.schema'
 
 particle SlandlePartySize in 'source/PartySize.js'
-  inout Event event
+  event: reads writes Event
   modality dom
-  `consume Slot modifier
+  modifier: `consumes Slot
 // removing description for now to clean up suggestions
 //  description `number of people`

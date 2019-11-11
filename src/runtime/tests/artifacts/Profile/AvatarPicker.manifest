@@ -10,8 +10,8 @@ import '../People/Avatar.schema'
 import '../People/Person.schema'
 
 particle AvatarPicker in 'source/AvatarPicker.js'
-  in Person person
-  inout Avatar avatar
-  consume root
+  person: reads Person
+  avatar: reads writes Avatar
+  root: consumes Slot
   description `select ${person}'s avatar`
     avatar `avatar`
