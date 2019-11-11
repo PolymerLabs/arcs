@@ -82,9 +82,9 @@ class CrdtSet<T : Referencable>(
         this._data = mergedData
 
         val (myOperations, otherOperations) = if (
-            fastForwardOp.added.isNotEmpty()
-            || fastForwardOp.removed.isNotEmpty()
-            || oldClock isDominatedBy newClock
+            fastForwardOp.added.isNotEmpty() ||
+            fastForwardOp.removed.isNotEmpty() ||
+            oldClock isDominatedBy newClock
         ) {
             CrdtChange.Data<Data<T>, IOperation<T>>(mergedData) to
                 Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())

@@ -17,6 +17,7 @@ import arcs.storage.ProxyMessage.ModelUpdate
 import arcs.storage.ProxyMessage.Operations
 import arcs.storage.ProxyMessage.SyncRequest
 import arcs.storage.util.ProxyCallbackManager
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -60,7 +61,7 @@ class BackingStore(
     }
 
     override suspend fun idle() = storeMutex.withLock {
-        stores.values.mapNotNull {
+        stores.values.map {
             withContext(coroutineContext) {
                 launch { it.store.idle() }
             }

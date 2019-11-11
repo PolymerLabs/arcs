@@ -224,4 +224,3 @@ internal class VolatileMemory {
     /** Clears everything from storage. */
     fun clear() = entries.clear()
 }
-

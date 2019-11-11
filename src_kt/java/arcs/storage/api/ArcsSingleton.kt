@@ -25,6 +25,8 @@ import arcs.storage.StoreOptions
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.ReferenceModeStorageKey
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
@@ -36,8 +38,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 /**
  * Creates an [ArcsSingleton] which manages a reference to a [RawEntity] object located at the given
@@ -142,7 +142,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
 
     private val scope = CoroutineScope(coroutineContext)
     private val crdtMutex = Mutex()
-    private val crdtSingleton = CrdtSingleton<T>()//by guardWith(crdtMutex, CrdtSingleton<T>())
+    private val crdtSingleton = CrdtSingleton<T>() // by guardWith(crdtMutex, CrdtSingleton<T>())
     private var cachedVersion by guardWith(crdtMutex, VersionMap())
     @Suppress("RemoveExplicitTypeArguments")
     private var cachedConsumerData: T? by guardWith<T?>(crdtMutex, null)

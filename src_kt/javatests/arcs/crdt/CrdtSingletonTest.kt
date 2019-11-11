@@ -14,7 +14,7 @@ package arcs.crdt
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtSingleton.Data
-import arcs.crdt.CrdtSingleton.Operation
+import arcs.crdt.CrdtSingleton.IOperation
 import arcs.crdt.CrdtSingleton.Operation.Clear
 import arcs.crdt.CrdtSingleton.Operation.Update
 import arcs.crdt.internal.VersionMap
@@ -112,43 +112,41 @@ class CrdtSingletonTest {
         assertThat(alice.consumerView).isNull()
     }
 
-  @Test
-  fun merge_mergesTwoSingletons() {
-    val one = Reference("1")
-    val two = Reference("2")
+    @Test
+    fun merge_mergesTwoSingletons() {
+        val one = Reference("1")
+        val two = Reference("2")
 
-    alice.applyOperation(Update("alice", VersionMap("alice" to 1), one))
-    bob.applyOperation(Update("bob", VersionMap("bob" to 1), two))
+        alice.applyOperation(Update("alice", VersionMap("alice" to 1), one))
+        bob.applyOperation(Update("bob", VersionMap("bob" to 1), two))
 
-    val result = alice.merge(bob.data)
-    val aliceModel = requireNotNull(
-      result.modelChange
-        as? CrdtChange.Data<CrdtSingleton.Data<Reference>, CrdtSingleton.IOperation<Reference>>
-    )
-    val bobModel = requireNotNull(
-      result.otherChange
-        as? CrdtChange.Data<CrdtSingleton.Data<Reference>, CrdtSingleton.IOperation<Reference>>
-    )
-    val expectedVersion = VersionMap("alice" to 1, "bob" to 1)
-    val expectedValues = mapOf(
-      one.id to CrdtSet.DataValue(VersionMap("alice" to 1), one),
-      two.id to CrdtSet.DataValue(VersionMap("bob" to 1), two)
-    )
+        val result = alice.merge(bob.data)
+        val aliceModel = requireNotNull(
+            result.modelChange as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
+        )
+        val bobModel = requireNotNull(
+            result.otherChange as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
+        )
+        val expectedVersion = VersionMap("alice" to 1, "bob" to 1)
+        val expectedValues = mapOf(
+            one.id to CrdtSet.DataValue(VersionMap("alice" to 1), one),
+            two.id to CrdtSet.DataValue(VersionMap("bob" to 1), two)
+        )
 
-    assertThat(aliceModel.data.versionMap).isEqualTo(expectedVersion)
-    assertThat(aliceModel.data.values).containsExactlyEntriesIn(expectedValues)
-    assertThat(bobModel.data.versionMap).isEqualTo(expectedVersion)
-    assertThat(bobModel.data.values).containsExactlyEntriesIn(expectedValues)
+        assertThat(aliceModel.data.versionMap).isEqualTo(expectedVersion)
+        assertThat(aliceModel.data.values).containsExactlyEntriesIn(expectedValues)
+        assertThat(bobModel.data.versionMap).isEqualTo(expectedVersion)
+        assertThat(bobModel.data.values).containsExactlyEntriesIn(expectedValues)
 
-    // Even though "2" is also in the set, "1" is returned because of sorting by reference id.
-    assertThat(alice.consumerView).isEqualTo(one)
+        // Even though "2" is also in the set, "1" is returned because of sorting by reference id.
+        assertThat(alice.consumerView).isEqualTo(one)
 
-    // We can now clear with the updated version.
-    assertThat(
-      alice.applyOperation(Clear("alice", expectedVersion))
-    ).isTrue()
-    assertThat(alice.consumerView).isNull()
-  }
+        // We can now clear with the updated version.
+        assertThat(
+            alice.applyOperation(Clear("alice", expectedVersion))
+        ).isTrue()
+        assertThat(alice.consumerView).isNull()
+    }
 
-  private data class Reference(override val id: ReferenceId) : Referencable
+    private data class Reference(override val id: ReferenceId) : Referencable
 }
