@@ -11,6 +11,8 @@ addons:
   chrome: stable
 
 script:
+  # Run ktlint against every kotlin file in the diff between the branch and master's head.
+  - git diff --name-only --relative $TRAVIS_COMMIT_RANGE | grep '\.kt[s"]\?$' | xargs ktlint --android --relative --verbose .
   # Bazel build & test everything. Can't use `bazel build ...` yet, because
   # javaharness doesn't build on Travis (needs working Android SDK).
   - >
