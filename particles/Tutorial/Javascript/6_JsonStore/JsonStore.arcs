@@ -3,24 +3,25 @@
 
 // Defines a new Entity called PersonDetails, with two fields.
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
 
 particle JsonStoreParticle in 'JsonStore.js'
   // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
-  in PersonDetails inputData
-  consume root
+  inputData: reads PersonDetails
+  root: consumes
 
 recipe JsonStoreRecipe
   // This line connects this recipe to the data store above. It also creates a local alias for it called "data", which is how we will refer to
   // it inside the scope of this recipe.
-  map PersonToGreetStore as data
+  data: map PersonToGreetStore
 
   JsonStoreParticle
     // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
-    inputData = data
+    inputData: reads data
+    root: consumes
 
   description `Javascript Tutorial 6: JSON Store`

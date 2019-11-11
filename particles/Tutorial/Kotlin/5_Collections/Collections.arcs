@@ -1,11 +1,11 @@
-// Tutorial 5: Collections
+// Tutorial: Collections
 // Shows how to use an input list, and store data in a manifest file.
 
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
-// This is essentially a JSON file, but defined inside the manifest itself rather than in a separate file.
+// This is essentially a JSON file defined inside the manifest.
 resource PeopleData
   start
   [
@@ -14,18 +14,19 @@ resource PeopleData
     {"name": "Jen", "age": 50}
   ]
 
-// This data store contains a collection of entities rather than a single entity, and is backed by the PeopleData resource defined above.
+// This data store contains a collection of entities rather than a single
+// entity, and is backed by the PeopleData resource defined above.
 store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionsParticle in 'collections.wasm'
   // The input is a collection of PersonDetails entities.
-  in [PersonDetails] inputData
-  consume root
+  inputData: reads [PersonDetails]
+  root: consumes
 
-recipe CollectionsRecipe
-  map PeopleToGreetStore as data
+recipe CollectionRecipe
+  data: map PeopleToGreetStore
 
   CollectionsParticle
-    inputData <- data
+    inputData: reads data
 
   description `Kotlin Tutorial 5: Collections`
