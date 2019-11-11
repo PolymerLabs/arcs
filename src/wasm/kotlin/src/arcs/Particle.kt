@@ -112,8 +112,7 @@ abstract class Particle : WasmObject() {
         log("renderOutput")
         val slotName = ""
         val template = getTemplate(slotName)
-        val dict = populateModel(slotName)
-        val model = dict?.let { StringEncoder.encodeDictionary(dict) }
+        val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
         onRenderOutput(toWasmAddress(), template.toWasmNullableString(), model.toWasmNullableString())
     }
 
