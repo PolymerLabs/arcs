@@ -21,7 +21,7 @@ import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
-class CrdtSet<T : Referencable>(
+class CrdtSet<T : Referencable> @JvmOverloads constructor(
     /** Initial data. */
     internal var _data: Data<T> = DataImpl(),
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */

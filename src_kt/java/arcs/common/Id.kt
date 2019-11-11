@@ -116,7 +116,7 @@ data class ArcId internal constructor(
     }
 }
 
-internal data class IdImpl(
+data class IdImpl(
     override val root: String,
     override val idTree: List<String> = emptyList()
 ) : Id {

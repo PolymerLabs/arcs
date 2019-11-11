@@ -87,7 +87,7 @@ class RamDiskDriverProvider : DriverProvider {
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */
 object RamDisk {
-    internal val memory = VolatileMemory()
+    val memory = VolatileMemory()
 
     /** Clears every piece of data from the [RamDisk] memory. */
     fun clear() = memory.clear()

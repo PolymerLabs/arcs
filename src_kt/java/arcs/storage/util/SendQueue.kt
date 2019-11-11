@@ -93,7 +93,7 @@ class SendQueue(
         holdQueue.processReferenceId(id, version)
 
     /** Utility to get the queued runnables from tests. */
-    internal suspend fun getQueueRunnables(): List<suspend () -> Unit> =
+    suspend fun getQueueRunnables(): List<suspend () -> Unit> =
         mutex.withLock { queue.map { it.fn } }
 
     /** Wrapper for a suspending function which is used as an item in a [SendQueue]. */

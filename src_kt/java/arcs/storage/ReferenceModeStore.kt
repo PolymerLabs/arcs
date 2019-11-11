@@ -73,8 +73,8 @@ import kotlinx.coroutines.Job
  */
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
-    internal val backingStore: BackingStore,
-    internal val containerStore: DirectStore
+    val backingStore: BackingStore,
+    val containerStore: DirectStore
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
@@ -108,7 +108,7 @@ class ReferenceModeStore private constructor(
      * needs to synthesize updates. This key is used as the unique write key and
      * [arcs.crdt.internal.Actor] for those updates.
      */
-    internal val crdtKey = Random.nextSafeRandomLong().toString()
+    val crdtKey = Random.nextSafeRandomLong().toString()
     /**
      * The [versions] map transitively tracks the maximum write version for each contained entity's
      * fields, to ensure synthesized updates can be correctly applied downstream.

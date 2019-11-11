@@ -14,6 +14,8 @@ package arcs.storage.util
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.internal.VersionMap
+import arcs.storage.util.HoldQueue.Entity
+import arcs.storage.util.HoldQueue.Record
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -26,7 +28,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class HoldQueue {
     private val mutex = Mutex()
-    internal val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
+    val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
 
     /**
      * Enqueues a collection of [Entities] into the [HoldQueue]. When they are ready, [onRelease]
@@ -78,7 +80,7 @@ class HoldQueue {
     data class Entity(val id: ReferenceId, val version: VersionMap)
 
     // Internal for testing.
-    internal data class Record(
+    data class Record(
         val ids: MutableMap<ReferenceId, VersionMap>,
         val onRelease: suspend () -> Unit
     )

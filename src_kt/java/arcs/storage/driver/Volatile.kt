@@ -83,7 +83,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 }
 
 /** [Driver] implementation for an in-memory store of data. */
-internal class VolatileDriver<Data : Any>(
+class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
     override val existenceCriteria: ExistenceCriteria,
     private val memory: VolatileMemory
@@ -174,7 +174,7 @@ internal class VolatileDriver<Data : Any>(
 }
 
 /** A single entry in a [VolatileDriver]. */
-internal data class VolatileEntry<Data : Any>(
+data class VolatileEntry<Data : Any>(
     val data: Data? = null,
     val version: Int = 0,
     val drivers: Set<VolatileDriver<Data>> = emptySet()
@@ -186,7 +186,7 @@ internal data class VolatileEntry<Data : Any>(
 /**
  * Lookup map of storage keys to entries, with a [token] that gets updated when data has changed.
  */
-internal class VolatileMemory {
+class VolatileMemory {
     private val lock = Any()
     private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
 

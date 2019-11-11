@@ -44,23 +44,23 @@ http_archive(
 
 # Kotlin
 
-RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
+RULES_KOTLIN_VERSION = "legacy-1.3.0-rc1"
 
-RULES_KOTLIN_SHA = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
+RULES_KOTLIN_SHA = "9de078258235ea48021830b1669bbbb678d7c3bdffd3435f4c0817c921a88e42"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
     sha256 = RULES_KOTLIN_SHA,
     strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
     type = "zip",
-    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
+    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.3.31"
+KOTLIN_VERSION = "1.3.50"
 
-KOTLINC_RELEASE_SHA = "107325d56315af4f59ff28db6837d03c2660088e3efeb7d4e41f3e01bb848d6a"
+KOTLINC_RELEASE_SHA = "69424091a6b7f52d93eed8bba2ace921b02b113dbb71388d704f8180a6bdc6ec"
 
 KOTLINC_RELEASE = {
     "urls": [

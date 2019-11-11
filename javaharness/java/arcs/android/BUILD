@@ -15,16 +15,20 @@ android_library(
     ],
     assets_dir = "",
     exports_manifest = 1,
-    idl_import_root = ".",
-    idl_srcs = glob(["*.aidl"]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
+        ":aidl",
         "//javaharness/java/arcs/api:api-android",
         "//third_party/java/auto:auto_value",
         "//third_party/java/dagger",
         "//third_party/java/flogger:android",
         "//third_party/java/jsr330_inject",
     ],
+)
+
+android_library(
+    name = "aidl",
+    idl_srcs = glob(["*.aidl"]),
 )

@@ -33,8 +33,8 @@ import kotlinx.coroutines.withContext
 class BackingStore(
     private val options: StoreOptions<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
+    val stores = mutableMapOf<String, StoreRecord>()
     private val storeMutex = Mutex()
-    internal val stores = mutableMapOf<String, StoreRecord>()
     private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
 
     @Deprecated(
@@ -87,7 +87,7 @@ class BackingStore(
     }
 
     @Suppress("UNCHECKED_CAST") // TODO: See if we can clean up this generics situation.
-    internal suspend fun setupStore(muxId: String): StoreRecord {
+    suspend fun setupStore(muxId: String): StoreRecord {
         val store = DirectStore.CONSTRUCTOR(
             // Copy of our options, but with a child storage key using the muxId.
             options.copy(options.storageKey.childKeyWithComponent(muxId))
