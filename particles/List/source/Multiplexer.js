@@ -23,7 +23,7 @@ recipe
   ${hostedParticle.name}
     ${hostedParticle.handleConnections[0].name}: reads handle1
     ${other.connections.join('\n')}
-    slot1: consume ${slot.name}
+    ${slot.name}: consumes slot1
 `;
 
   return class Multiplexer extends UiMultiplexerParticle {
