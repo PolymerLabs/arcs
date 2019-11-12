@@ -17,13 +17,25 @@ export abstract class StorageKey {
 
   abstract toString(): string;
 
+  // Where there's a distinction, childWithComponent produces
+  // a new key inside the serialization root of the parent
+  // key, while subKeyWithComponent produces a new serialization
+  // root and a new key.
   abstract childWithComponent(component: string): StorageKey;
 
+  subKeyWithComponent(component: string): StorageKey {
+    return this.childWithComponent(component);
+  }
+
+  childKeyForBackingElement(id: string) {
+    return this.childWithComponent(id);
+  }
+
   childKeyForArcInfo() {
-    return this.childWithComponent('arc-info');
+    return this.subKeyWithComponent('arc-info');
   }
 
   childKeyForHandle(id: string) {
-    return this.childWithComponent(`handle/${id}`);
+    return this.subKeyWithComponent(`handle/${id}`);
   }
 }

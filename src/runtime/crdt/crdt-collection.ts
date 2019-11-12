@@ -53,6 +53,13 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     // Ensure we never send an update if the two versions are already the same.
     // TODO(shans): Remove this once fast-forwarding is two-sided, and replace with
     // a check for an effect-free fast-forward op in each direction instead.
+    if (this.model.version == null) {
+      console.log('model', this.model);
+    }
+    if (other.version == null) {
+      console.log('other', other);
+      console.log(new Error().stack);
+    }
     if (sameVersions(this.model.version, other.version)) {
       let entriesMatch = true;
       const theseKeys = Object.keys(this.model.values);

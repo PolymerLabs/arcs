@@ -12,39 +12,50 @@ import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} fro
 import {StorageKey} from '../storage-key.js';
 import {Arc} from '../../arc.js';
 import {ArcId} from '../../id.js';
+import {RamDiskStorageKey} from './ramdisk.js';
+import {Dictionary} from '../../hot.js';
+import {assert} from '../../../platform/assert-web.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
+type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
 
 export class VolatileStorageKey extends StorageKey {
   readonly arcId: ArcId;
   readonly unique: string;
+  readonly path: string;
 
-  constructor(arcId: ArcId, unique: string) {
+  constructor(arcId: ArcId, unique: string, path: string='') {
     super('volatile');
     this.arcId = arcId;
     this.unique = unique;
+    this.path = path;
   }
 
   toString() {
-    return `${this.protocol}://${this.arcId}/${this.unique}`;
+    return `${this.protocol}://${this.arcId}/${this.unique}@${this.path}`;
   }
 
   childWithComponent(component: string) {
+    return new VolatileStorageKey(this.arcId, this.unique, `${this.path}/${component}`);
+  }
+
+  // Note that subKeys lose path information.
+  subKeyWithComponent(component: string) {
     return new VolatileStorageKey(this.arcId, `${this.unique}/${component}`);
   }
 
   static fromString(key: string): VolatileStorageKey {
-    const match = key.match(/^volatile:\/\/([^/]+)\/(.*)$/);
+    const match = key.match(/^volatile:\/\/([^/]+)\/([^@]*)@(.*)$/);
     if (!match) {
       throw new Error(`Not a valid VolatileStorageKey: ${key}.`);
     }
-    const [_, arcId, unique] = match;
-    return new VolatileStorageKey(ArcId.fromString(arcId), unique);
+    const [_, arcId, unique, path] = match;
+    return new VolatileStorageKey(ArcId.fromString(arcId), unique, path);
   }
 }
 
 export class VolatileMemory {
-  entries = new Map<string, VolatileEntry<unknown>>();
+  entries = new Map<string, VolatileEntryCollection<unknown>>();
   // Tokens can't just be an incrementing number as VolatileMemory is the basis for RamDiskMemory too;
   // if we were to use numbers here then a RamDisk could be reaped, restarted, and end up with the
   // same token as a previous iteration.
@@ -53,6 +64,17 @@ export class VolatileMemory {
   // per-operation updating number. For now, just a random value that is updated with each write
   // is sufficient.
   token = Math.random() + '';
+
+  deserialize(data, unique: string) {
+    assert(!this.entries.has(unique));
+    const entry: VolatileEntryCollection<unknown> = {root: null, locations: {}};
+    entry.root = {data: data.root, version: 0, drivers: []};
+    for (const [key, value] of Object.entries(data.locations)) {
+      entry.locations[key] = {data: value, version: 0, drivers: []};
+    }
+    this.entries.set(unique, entry);
+  }
+
 }
 
 let id = 0;
@@ -62,37 +84,41 @@ export class VolatileDriver<Data> extends Driver<Data> {
   private pendingVersion = 0;
   private pendingModel: Data | null = null;
   private receiver: ReceiveMethod<Data>;
-  private data: VolatileEntry<Data>;
+  private data: VolatileEntryCollection<Data>;
   private id: number;
+  private path: string;
 
-  constructor(storageKey: StorageKey, exists: Exists, memory: VolatileMemory) {
+  constructor(storageKey: VolatileStorageKey | RamDiskStorageKey, exists: Exists, memory: VolatileMemory) {
     super(storageKey, exists);
     this.id = id++;
-    const keyAsString = storageKey.toString();
     this.memory = memory;
+    this.path = null;
+    if (storageKey instanceof VolatileStorageKey && storageKey.path !== '') {
+      this.path = storageKey.path;
+    }
     switch (exists) {
       case Exists.ShouldCreate:
-        if (this.memory.entries.has(keyAsString)) {
+        if (this.memory.entries.has(storageKey.unique)) {
           throw new Error(`requested creation of memory location ${storageKey} can't proceed as location already exists`);
         }
-        this.data = {data: null, version: 0, drivers: []};
-        this.memory.entries.set(keyAsString, this.data as VolatileEntry<unknown>);
+        this.data = {root: null, locations: {}};
+        this.memory.entries.set(storageKey.unique, this.data as VolatileEntryCollection<unknown>);
         break;
       case Exists.ShouldExist:
-        if (!this.memory.entries.has(keyAsString)) {
+        if (!this.memory.entries.has(storageKey.unique)) {
           throw new Error(`requested connection to memory location ${storageKey} can't proceed as location doesn't exist`);
         }
       /* falls through */
       case Exists.MayExist:
         {
-          const data = this.memory.entries.get(keyAsString);
+          const data = this.memory.entries.get(storageKey.unique);
           if (data) {
-            this.data = data as VolatileEntry<Data>;
-            this.pendingModel = data.data as Data;
-            this.pendingVersion = data.version;
+            this.data = data as VolatileEntryCollection<Data>;
+            this.pendingModel = this.localData();
+            this.pendingVersion = this.localVersion();
           } else {
-            this.data = {data: null, version: 0, drivers: []};
-            this.memory.entries.set(keyAsString, this.data as VolatileEntry<unknown>);
+            this.data = {locations: {}, root: null};
+            this.memory.entries.set(storageKey.unique, this.data as VolatileEntryCollection<unknown>);
             this.memory.token = Math.random() + '';
           }
           break;
@@ -100,7 +126,40 @@ export class VolatileDriver<Data> extends Driver<Data> {
       default:
         throw new Error(`unknown Exists code ${exists}`);
     }
-    this.data.drivers.push(this);
+    this.pushLocalDriver(this);
+  }
+
+  private getOrCreateEntry() {
+    if (this.path) {
+      if (!this.data.locations[this.path]) {
+        this.data.locations[this.path] = {data: null, version: 0, drivers: []};
+      }
+      return this.data.locations[this.path];
+    }
+    if (!this.data.root) {
+      this.data.root = {data: null, version: 0, drivers: []};
+    }
+    return this.data.root;
+  }
+
+  private localData() {
+    return this.getOrCreateEntry().data;
+  }
+
+  private localVersion() {
+    return this.getOrCreateEntry().version;
+  }
+
+  private setLocalData(data: Data) {
+    this.getOrCreateEntry().data = data;
+  }
+
+  private incrementLocalVersion() {
+    this.getOrCreateEntry().version += 1;
+  }
+
+  private pushLocalDriver(driver: VolatileDriver<Data>) {
+    this.getOrCreateEntry().drivers.push(driver);
   }
 
   registerReceiver(receiver: ReceiveMethod<Data>, token?: string) {
@@ -118,16 +177,18 @@ export class VolatileDriver<Data> extends Driver<Data> {
     // a synchronous send / onReceive loop that can be established
     // between multiple Stores/Drivers writing to the same location.
     await 0;
-    if (this.data.version !== version - 1) {
+    if (this.localVersion() !== version - 1) {
       return false;
     }
-    this.data.data = model;
-    this.data.version += 1;
-    this.data.drivers.forEach(driver => {
+    this.setLocalData(model);
+    this.incrementLocalVersion();
+    this.getOrCreateEntry().drivers.forEach(driver => {
       if (driver === this) {
         return;
       }
-      driver.receiver(model, this.data.version);
+      if (driver.receiver) {
+        driver.receiver(model, this.localVersion());
+      }
     });
     return true;
   }
@@ -162,7 +223,7 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
 
-    return new VolatileDriver<Data>(storageKey, exists, this.arc.volatileMemory);
+    return new VolatileDriver<Data>(storageKey as VolatileStorageKey, exists, this.arc.volatileMemory);
   }
 
   static register(arc: Arc) {
