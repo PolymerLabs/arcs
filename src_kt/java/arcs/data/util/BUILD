@@ -12,4 +12,3 @@ kt_jvm_and_js_library(
         "//src_kt/java/arcs/util",
     ],
 )
-
