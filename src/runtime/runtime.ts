@@ -146,21 +146,6 @@ export class Runtime {
   destroy() {
   }
 
-  // TODO(shans): Clean up once old storage is removed.
-  // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
-  // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
-  // How best to provide default storage to an arc given whatever we decide?
-  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
-    const {loader, context} = this;
-    const id = IdGenerator.newSession().newArcId(name);
-    const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const storageKey = (typeof storageKeyPrefix === 'string')
-      ? `${storageKeyPrefix}${id.toString()}` : storageKeyPrefix(id);
-    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
-  }
-
-  // Stuff the shell needs
-
   /**
    * Given an arc name, return either:
    * (1) the already running arc
@@ -173,6 +158,19 @@ export class Runtime {
       this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));
     }
     return this.arcById.get(name);
+  }
+
+  // TODO(shans): Clean up once old storage is removed.
+  // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
+  // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
+  // How best to provide default storage to an arc given whatever we decide?
+  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
+    const {loader, context} = this;
+    const id = IdGenerator.newSession().newArcId(name);
+    const slotComposer = this.composerClass ? new this.composerClass() : null;
+    const storageKey = (typeof storageKeyPrefix === 'string')
+      ? `${storageKeyPrefix}${id.toString()}` : storageKeyPrefix(id);
+    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
   }
 
   stop(name: string) {
@@ -232,19 +230,12 @@ export class Runtime {
     return Manifest.load(fileName, loader, options);
   }
 
-  // stuff the strategizer needs
-
-  // TBD
-
-  // stuff from shells/lib/utils
-
   // TODO(sjmiles): there is redundancy vs `parse/loadManifest` above, but
   // this is temporary until we polish the Utils->Runtime integration.
 
   // TODO(sjmiles): These methods represent boilerplate factored out of
-  // various shells.
-  // These needs could be filled other ways or represented by other modules.
-  // Suggestions welcome.
+  // various shells.These needs could be filled other ways or represented
+  // by other modules. Suggestions welcome.
 
   async parse(content: string, options?): Promise<Manifest> {
     const {loader} = this;
