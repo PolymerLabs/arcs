@@ -174,9 +174,9 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onRender(particle: Particle, slotName: string, content: Content) {
-    if (this.arc.pec.slotComposer) {
-      this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
-    }
+    // if (this.arc.pec.slotComposer) {
+    //   this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
+    // }
   }
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
@@ -299,11 +299,11 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
-    let hostedSlotId;
-    if (this.arc.pec.slotComposer) {
-      hostedSlotId = this.arc.pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
-    }
-    this.CreateSlotCallback({}, callback, hostedSlotId);
+    // let hostedSlotId;
+    // if (this.arc.pec.slotComposer) {
+    //   hostedSlotId = this.arc.pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
+    // }
+    // this.CreateSlotCallback({}, callback, hostedSlotId);
   }
 
   async onArcLoadRecipe(arc: Arc, recipe: string, callback: number) {

@@ -777,14 +777,14 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
+    //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
     let slotsCreated = 0;
 
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
+    // slotComposer.createHostedSlot = (...args) => {
+    //   slotsCreated++;
+    //   return slotComposerCreateHostedSlot.apply(slotComposer, args);
+    // };
 
     const id = Id.fromString('test');
     const storageKey = storageKeyPrefix + id.toString();

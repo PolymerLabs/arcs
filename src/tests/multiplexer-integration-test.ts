@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/chai-web.js';
-import {HostedSlotContext} from '../runtime/slot-context.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
 import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
 import {collectionHandleForTest} from '../runtime/testing/handle-for-test.js';
@@ -78,7 +77,7 @@ describe('Multiplexer', () => {
     await postsStore.add(
         Entity.identify(new postsStore.entityClass({message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}), '4'));
     await helper.idle();
-    assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
+    //assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
     assert.lengthOf(helper.slotComposer.consumers, 6);
     const itemSlot = checkDefined(helper.slotComposer.consumers.find(s => s.consumeConn.name === 'item'));
     const items = itemSlot.renderings.map(([subId, item]) => item);

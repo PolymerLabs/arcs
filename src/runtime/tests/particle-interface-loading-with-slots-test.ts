@@ -13,7 +13,6 @@ import {Arc} from '../arc.js';
 import {ArcId} from '../id.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
@@ -24,8 +23,8 @@ describe.skip('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, slotComposer: MockSlotComposer, arc: Arc}> {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
-    const slotContext = slotComposer.getAvailableContexts()[0] as ProvidedSlotContext;
-    slotContext.spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
+    //const slotContext = slotComposer.getAvailableContexts()[0] as ProvidedSlotContext;
+    //slotContext.spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
 
     const manifest = await Manifest.parse(`
       import './src/runtime/tests/artifacts/transformations/test-slots-particles.manifest'
@@ -86,12 +85,12 @@ describe.skip('particle interface loading with slots', () => {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.lengthOf(slotComposer.consumers, 3);
-    assert.isTrue(slotComposer.consumers[0].slotContext instanceof ProvidedSlotContext);
-    assert.isTrue(slotComposer.consumers[1].slotContext instanceof HostedSlotContext);
-    assert.isTrue(slotComposer.consumers[2].slotContext instanceof HostedSlotContext);
-    const slot = slotComposer.consumers[0];
-    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
+    //assert.lengthOf(slotComposer.consumers, 3);
+    //assert.isTrue(slotComposer.consumers[0].slotContext instanceof ProvidedSlotContext);
+    //assert.isTrue(slotComposer.consumers[1].slotContext instanceof HostedSlotContext);
+    //assert.isTrue(slotComposer.consumers[2].slotContext instanceof HostedSlotContext);
+    //const slot = slotComposer.consumers[0];
+    //verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
@@ -103,7 +102,7 @@ describe.skip('particle interface loading with slots', () => {
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
-    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
+    //verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
   });
 
   it.skip('multiplex recipe with slots - init context later', async () => {
@@ -111,7 +110,7 @@ describe.skip('particle interface loading with slots', () => {
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
     const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc();
-    (slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = null;
+    //(slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = null;
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
     // Wait for the hosted slots to be initialized in slot-composer.
@@ -124,35 +123,35 @@ describe.skip('particle interface loading with slots', () => {
       }, 10);
     });
 
-    slotComposer
-      .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
+    // slotComposer
+    //   .newExpectations()
+    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
+    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
+    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
 
     // tslint:disable-next-line: no-any
-    (slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'} as any;
-    slotComposer.consumers[0].onContainerUpdate({}, undefined);
+    //(slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'} as any;
+    //slotComposer.consumers[0].onContainerUpdate({}, undefined);
 
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.lengthOf(slotComposer.consumers, 3);
-    const slot = slotComposer.consumers[0];
-    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
+    // assert.lengthOf(slotComposer.consumers, 3);
+    // const slot = slotComposer.consumers[0];
+    // verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
-    slotComposer
-      .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
+    // slotComposer
+    //   .newExpectations()
+    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
+    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
+    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
+    // verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
   });
 });

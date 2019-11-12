@@ -39,14 +39,14 @@ describe('Multiplexer', () => {
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
+    //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
     let slotsCreated = 0;
 
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
+    // slotComposer.createHostedSlot = (...args) => {
+    //   slotsCreated++;
+    //   return slotComposerCreateHostedSlot.apply(slotComposer, args);
+    // };
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
@@ -87,14 +87,14 @@ describe('Multiplexer', () => {
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
+    //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
     let slotsCreated = 0;
 
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
+    // slotComposer.createHostedSlot = (...args) => {
+    //   slotsCreated++;
+    //   return slotComposerCreateHostedSlot.apply(slotComposer, args);
+    // };
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');

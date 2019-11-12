@@ -149,9 +149,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
   }
 
   get modality(): Modality {
-    if (this.pec.slotComposer && this.pec.slotComposer.modality) {
-      return this.pec.slotComposer.modality;
-    }
+    // if (this.pec.slotComposer && this.pec.slotComposer.modality) {
+    //   return this.pec.slotComposer.modality;
+    // }
     if (!this.activeRecipe.isEmpty()) {
       return this.activeRecipe.modality;
     }
