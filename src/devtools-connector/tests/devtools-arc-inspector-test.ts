@@ -15,18 +15,7 @@ import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
-import {SingletonType} from '../../runtime/type.js';
-import {StorageKey} from '../../runtime/storageNG/storage-key.js';
-import {Flags} from '../../runtime/flags.js';
-import {ArcId} from '../../runtime/id.js';
-
-function getStorageKeyPrefix(): string|((arcId: ArcId) => StorageKey) {
-  if (Flags.useNewStorageStack) {
-    return arcId => new VolatileStorageKey(arcId, '');
-  }
-  return 'volatile://';
-}
+import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -50,7 +39,7 @@ describe('DevtoolsArcInspector', () => {
         P
           foo = foo`);
     const runtime = new Runtime(loader, MockSlotComposer, context);
-    const arc = runtime.newArc('demo', getStorageKeyPrefix(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = arc.context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');

@@ -15,20 +15,9 @@ import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {VolatileSingleton} from '../../runtime/storage/volatile-storage.js';
-import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 import {SingletonType} from '../../runtime/type.js';
-import {singletonHandleForTest} from '../../runtime/testing/handle-for-test.js';
-import {StorageKey} from '../../runtime/storageNG/storage-key.js';
+import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Flags} from '../../runtime/flags.js';
-import {ArcId} from '../../runtime/id.js';
-
-function getStorageKeyPrefix(): string|((arcId: ArcId) => StorageKey) {
-  if (Flags.useNewStorageStack) {
-    return arcId => new VolatileStorageKey(arcId, '');
-  }
-  return 'volatile://';
-}
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -39,7 +28,7 @@ describe('ArcStoresFetcher', () => {
       schema Foo
         Text value`);
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer, context);
-    const arc = runtime.newArc('demo', getStorageKeyPrefix(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = arc.context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
@@ -118,7 +107,7 @@ describe('ArcStoresFetcher', () => {
         P
           foo = foo`);
     const runtime = new Runtime(loader, FakeSlotComposer, context);
-    const arc = runtime.newArc('demo', getStorageKeyPrefix(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const recipe = arc.context.recipes[0];
     recipe.normalize();
