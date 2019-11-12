@@ -247,7 +247,6 @@ async function setup(manifestString) {
     function prefix(title, fn) {
       it(title, async () => {
         console.log('    »', title);
-        // TODO(alxr): Remove check when kotlin tests are ready
         await fn();
       });
     }
