@@ -34,7 +34,7 @@ export class UiSlotComposer {
   readonly _containerKind: string;
   readonly modality: Modality;
   readonly modalityHandler: ModalityHandler;
-  readonly _consumers: SlotConsumer[] = [];
+  private readonly _consumers: SlotConsumer[] = [];
   protected _contexts: SlotContext[] = [];
 
   /**

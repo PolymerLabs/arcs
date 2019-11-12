@@ -92,7 +92,7 @@ export class Runtime {
   }
 
   /**
-   * Call `init` to establishe a default Runtime environment (capturing the return value is optional).
+   * Call `init` to establish a default Runtime environment (capturing the return value is optional).
    * Systems can use `Runtime.getRuntime()` to access this environment instead of plumbing `runtime`
    * arguments through numerous functions.
    * Some static methods on this class automatically use the default environment.
@@ -102,7 +102,7 @@ export class Runtime {
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
     // TODO(sjmiles): UiSlotComposer type shenanigans are temporary pending complete replacement
-    // of SlotComposer by UiSlotCOmposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
+    // of SlotComposer by UiSlotComposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
     // doesn't bother tslint at all when done in other modules.
     return new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, null, pecFactory);
   }
