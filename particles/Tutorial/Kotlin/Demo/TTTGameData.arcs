@@ -21,7 +21,7 @@ resource SecondComputer
 resource HumanDefault
   start
   [
-    {"name": "Human", "avatar": "🧑"}
+    {"name": "Human", "avatar": ":)"}
   ]
 
 resource FirstHuman

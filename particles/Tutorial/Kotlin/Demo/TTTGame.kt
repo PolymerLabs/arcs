@@ -5,7 +5,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTGame_GameState
 import arcs.TTTGame_PlayerOne
-import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
@@ -18,23 +17,16 @@ class TTTGame : Particle() {
     }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        log("In TTTGame onHandleSync, ${this.gameState.get()}")
-
-        val gs = this.gameState.get() ?: TTTGame_GameState(
-            board = "Yo there",
-            currentPlayer = 57.0
-        )
-
-        val board = gs.board ?: ""
-
-        log("In TTTGame onHandleSync, gs = $gs")
-        log("In TTTGame onHandleSync, board = $board")
-
         if (this.gameState.get()?.board == null) {
             this.gameState.set(TTTGame_GameState(
                 board = ",,,,,,,,",
                 currentPlayer = 971.0
             ))
+        }
+        if (this.playerOne.get()?.id != 1.0) {
+            val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+            p1.id = 1.0
+            this.playerOne.set(p1)
         }
     }
 

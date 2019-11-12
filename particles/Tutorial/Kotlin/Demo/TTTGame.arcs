@@ -17,8 +17,8 @@ particle TTTGame in 'TTTGame.wasm'
 particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
   in GameState gameState
   in [Event] events
-  in Person {id} player
-  out Move {move} myMove
+  in Person player
+  out Move myMove
 
 
 recipe GamePlayersDemoRecipe
@@ -37,6 +37,6 @@ recipe GamePlayersDemoRecipe
     events <- events
     myMove -> playerOneMove
     player <- playerOne
-  description `Kotlin Tutorial TicTacToe Demo2`
+  description `Kotlin Tutorial TicTacToe Demo`
 
 
