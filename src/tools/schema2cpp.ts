@@ -165,7 +165,7 @@ class CppGenerator implements ClassGenerator {
   generate(fieldCount: number): string {
     const {name, aliases} = this.node;
 
-    // TODO: how to handle internal id here?
+    // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';
     if (this.ctor.length) {
       templateCtor = `\
