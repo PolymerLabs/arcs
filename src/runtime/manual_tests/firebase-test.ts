@@ -719,7 +719,7 @@ describe('firebase', function() {
             P
               var: reads handle0
               col: writes handle1
-              big: any handle2
+              big: handle2
         `,
         'a.js': `
           defineParticle(({Particle}) => class Noop extends Particle {});
