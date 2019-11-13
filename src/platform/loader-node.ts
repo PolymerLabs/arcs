@@ -35,7 +35,7 @@ export class Loader extends LoaderBase {
   }
   private async loadFileData(path: string, encoding?: string): Promise<string | Buffer> {
     return new Promise((resolve, reject) => {
-      fs.readFile(path, encoding, (err, data: string) => {
+      fs.readFile(path, {encoding}, (err, data: string) => {
         if (err) {
           reject(err);
         } else {
