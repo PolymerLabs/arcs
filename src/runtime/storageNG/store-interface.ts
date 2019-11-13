@@ -98,7 +98,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     assert(this.mode === activeStore.mode);
     await this.onProxyMessage({
       type: ProxyMessageType.ModelUpdate,
-      model: await activeStore.getLocalData()
+      model: await activeStore.serializeContents()
     });
   }
 
@@ -106,7 +106,6 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     return this.serializeContents();
   }
 
-  abstract getLocalData(): Promise<CRDTData>;
   abstract on(callback: ProxyCallback<T>): number;
   abstract off(callback: number): void;
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
