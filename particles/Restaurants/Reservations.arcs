@@ -15,7 +15,7 @@ particle ReservationForm in 'source/ReservationForm.js'
   event: reads writes Event
   restaurant: reads Restaurant
   action: consumes Slot
-    annotation: provides Slot
+    annotation: provides? Slot
 
 // TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
 // so fork the particle
@@ -23,7 +23,7 @@ particle DetailReservationForm in 'source/ReservationForm.js'
   event: reads writes Event
   restaurant: reads Restaurant
   detailAction: consumes Slot
-    annotation: provides Slot
+    annotation: provides? Slot
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   event: reads writes Event
