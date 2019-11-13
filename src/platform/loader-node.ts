@@ -19,9 +19,9 @@ export class Loader extends LoaderBase {
     return new Loader(this.urlMap);
   }
   async loadFile(path: string): Promise<string> {
-    const data = this.loadFileData(path, 'utf-8');
+    const data = await this.loadFileData(path, 'utf-8');
     if (typeof data !== 'string') {
-      throw new Error(`loadFileData returned non-String for utf-8 file [${path}]`);
+      throw new Error(`loadFileData returned type [${typeof data}] instead of non-String for utf-8 file [${path}]`);
     }
     return data;
   }
@@ -35,7 +35,7 @@ export class Loader extends LoaderBase {
   }
   private async loadFileData(path: string, encoding?: string): Promise<string | Buffer> {
     return new Promise((resolve, reject) => {
-      fs.readFile(path, {encoding}, (err, data: string) => {
+      fs.readFile(path, encoding, (err, data: string) => {
         if (err) {
           reject(err);
         } else {
