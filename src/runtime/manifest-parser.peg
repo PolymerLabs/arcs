@@ -608,14 +608,14 @@ NameWithColon
   }
 
 ParticleHandleConnectionBodyUnified
-  = name:NameWithColon? direction:DirectionUnified isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:(DirectionUnified '?'?)? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
     requireUsePostSlandleSyntax(6);
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
-      direction,
-      type: type,
-      isOptional: !!isOptional,
+      direction: optional(direction, d => d[0], 'any'),
+      type,
+      isOptional: optional(direction, d => !!d[1], false),
       dependentConnections: [],
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || []
@@ -630,7 +630,7 @@ DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide
   }
 
 DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
-  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any') &([^a-zA-Z0-9] / !.)
+  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides') &([^a-zA-Z0-9] / !.)
   {
     // TODO(jopra): Parse optionality properly.
     requireUsePostSlandleSyntax(8);
@@ -1039,13 +1039,13 @@ RecipeParticleConnection
   / RecipeParticleConnectionPreSlandle
 
 RecipeParticleConnectionUnified
-  = param:NameWithColon? dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:NameWithColon? dir:DirectionUnified? target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     requireUsePostSlandleSyntax(13);
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
-      dir,
+      dir: dir || 'any',
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
