@@ -17,18 +17,18 @@ recipe SlandleRestaurants
   restaurants: create *
   selected: create #volatile #selected
   SlandleGeolocate
-    location: any location
+    location: location
   SlandleRestaurantFind
-    location: any location
-    restaurants: any restaurants
+    location: location
+    restaurants: restaurants
   SlandleSelectableTiles
-    list: any restaurants
-    selected: any selected
+    list: restaurants
+    selected: selected
   SlandleTileMultiplexer
-    list: any restaurants
-    hostedParticle: any SlandleRestaurantTile
+    list: restaurants
+    hostedParticle: SlandleRestaurantTile
   SlandleDetailSlider
-    selected: any selected
+    selected: selected
   SlandleRestaurantDetail
-    restaurant: any selected
+    restaurant: selected
   description `find restaurants near ${RestaurantFind.location} using SLANDLES`

@@ -26,11 +26,11 @@ recipe BasicProfile
   avatars: map 'BOXED_avatar'
   userNames: map 'BOXED_userName'
   BasicProfile
-    avatar: any avatar
+    avatar: avatar
   UserNameForm
-    userName: any userName
+    userName: userName
   FriendsPicker
-    friends: any friends
-    avatars: any avatars
-    userNames: any userNames
+    friends: friends
+    avatars: avatars
+    userNames: userNames
   description `edit user profile (name, avatar, and friends)`

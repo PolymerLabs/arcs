@@ -42,7 +42,7 @@ particle SelectableItems in 'source/Items.js'
   // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
 //  list: use #items
 //  ItemMultiplexer
-//    list: any list
+//    list: list
 
 // TODO(sjmiles): nearly duplicate recipes here because we want to support `use` and `copy` but not `create`,
 // maybe there should be a fate for this, or require `create` to be explicit
@@ -51,16 +51,16 @@ particle SelectableItems in 'source/Items.js'
 //  items: copy #items
 //  selected: create #selected
 //  SelectableItems
-//    items: any items
-//    selected: any selected
+//    items: items
+//    selected: selected
 //  ItemMultiplexer
-//    list: any items
+//    list: items
 
 //recipe SelectableUseItemsRecipe
 //  items: use #items
 //  selected: create #selected
 //  SelectableItems
-//    items: any items
-//    selected: any selected
+//    items: items
+//    selected: selected
 //  ItemMultiplexer
-//    list: any items
+//    list: items

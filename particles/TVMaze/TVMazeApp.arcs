@@ -38,16 +38,16 @@ recipe TVMazeApp
   descriptions: create #volatile
   //
   TVMazeAppShell
-    user: any user
-    boxedShows: any boxedShows
-    selected: any selected
-    recentShows: any pipedShows
-    foundShows: any foundshows
-    boxedUserNames: any boxedUserNames
-    friends: any friends
-    watchers: any watchers
-    watcherText: any alsoWatch
-    descriptions: any descriptions
+    user: user
+    boxedShows: boxedShows
+    selected: selected
+    recentShows: pipedShows
+    foundShows: foundshows
+    boxedUserNames: boxedUserNames
+    friends: friends
+    watchers: watchers
+    watcherText: alsoWatch
+    descriptions: descriptions
     root: consumes root
       recommended: provides recommended
       shows: provides shows
@@ -57,70 +57,70 @@ recipe TVMazeApp
   // slot `shows` holds my primary show list
   uniqueProfileShows: create #volatile #uniqueProfile
   TVMazeDeduplicate
-    shows: any profileShows
-    uniqueShows: any uniqueProfileShows
+    shows: profileShows
+    uniqueShows: uniqueProfileShows
   SelectableTiles
     root: consumes shows
       tile: provides tile1
       annotation: provides action1
-    list: any uniqueProfileShows
-    selected: any selected
+    list: uniqueProfileShows
+    selected: selected
   TileMultiplexer
-    list: any uniqueProfileShows
-    hostedParticle: any TVMazeShowTile
+    list: uniqueProfileShows
+    hostedParticle: TVMazeShowTile
     tile: consumes tile1
   //
   // slot `recommended` holds recommendations
   // which are pulled from `allPipedShows`
   uniquePipedShows: create #volatile #uniquePiped
   TVMazeDeduplicate
-    shows: any allPipedShows
-    uniqueShows: any uniquePipedShows
+    shows: allPipedShows
+    uniqueShows: uniquePipedShows
   SelectableTiles
     root: consumes recommended
       tile: provides tile2
       annotation: provides action2
-    list: any uniquePipedShows
-    selected: any selected
+    list: uniquePipedShows
+    selected: selected
   TileMultiplexer
     tile: consumes tile2
-    list: any uniquePipedShows
-    hostedParticle: any TVMazeShowTile
+    list: uniquePipedShows
+    hostedParticle: TVMazeShowTile
   ActionMultiplexer
     action: consumes action2
-    list: any uniquePipedShows
-    shows: any myshows
-    hostedParticle: any TVMazeShowActions
+    list: uniquePipedShows
+    shows: myshows
+    hostedParticle: TVMazeShowActions
   //
   // slot `search` contains search ui
   query: create #volatile #query
   TVMazeSearchBar
     toproot: consumes searchbar
-    query: any query
+    query: query
   TVMazeSearchShows
-    query: any query
-    shows: any foundshows
+    query: query
+    shows: foundshows
   SelectableTiles
     root: consumes search
       tile: provides tile3
       annotation: provides action3
-    list: any foundshows
-    selected: any selected
+    list: foundshows
+    selected: selected
   TileMultiplexer
     tile: consumes tile3
-    hostedParticle: any TVMazeShowTile
-    list: any foundshows
+    hostedParticle: TVMazeShowTile
+    list: foundshows
   ActionMultiplexer
     action: consumes action3
-    hostedParticle: any TVMazeShowActions
-    list: any foundshows
-    shows: any myshows
+    hostedParticle: TVMazeShowActions
+    list: foundshows
+    shows: myshows
   //
   // standard slot 'modal' holds detail view
   DetailSlider
-    selected: any selected
+    selected: selected
   TVMazeShowPanel
-    show: any selected
-    alsoWatch: any alsoWatch
+    show: selected
+    alsoWatch: alsoWatch
   //
   description `${TVMazeAppShell}`

@@ -14,11 +14,11 @@ recipe StardateTOS
     randomData: writes randomTime
 
   StardateTOS
-    stardate: any stardate
-    destination: any destination
+    stardate: stardate
+    destination: destination
     randomTime: reads randomTime
     randomPlanet: reads randomPlanet
 
   StardateDisplay
-    stardate: any stardate
-    destination: any destination
+    stardate: stardate
+    destination: destination

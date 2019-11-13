@@ -46,26 +46,26 @@ recipe SlandleMakeReservations
   annotationDescriptions: create #volatile
   toproot: `slot 'rootslotid-toproot'
   SlandleCalendar
-    event: any event
-    descriptions: any calendarDescriptions
+    event: event
+    descriptions: calendarDescriptions
   // top-of-frame event editor
   SlandleReservationForm
-    restaurant: any restaurant
-    event: any event
+    restaurant: restaurant
+    event: event
     action `consume toproot
   // per-restaurant tile scheduler
   SlandleAnnotationMultiplexer
-    list: any restaurants
-    annotation: any event
-    hostedParticle: any SlandleReservationMultiAnnotation
+    list: restaurants
+    annotation: event
+    hostedParticle: SlandleReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   SlandleDetailReservationForm
-     restaurant: any restaurant
-     event: any event
+     restaurant: restaurant
+     event: event
      detailAction `consume
        annotation `provide detailAnnotation
   SlandleReservationAnnotation
-    restaurant: any restaurant
-    event: any event
-    descriptions: any annotationDescriptions
+    restaurant: restaurant
+    event: event
+    descriptions: annotationDescriptions
     annotation `consume detailAnnotation
