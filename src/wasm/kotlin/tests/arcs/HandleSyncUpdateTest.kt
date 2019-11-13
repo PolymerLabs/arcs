@@ -7,7 +7,6 @@ import arcs.Singleton
 import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
-
 class HandleSyncUpdateTest : Particle() {
     private val sng = Singleton { HandleSyncUpdateTest_Sng() }
     private val col = Collection { HandleSyncUpdateTest_Col() }
@@ -20,7 +19,7 @@ class HandleSyncUpdateTest : Particle() {
     }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:${allSynced}"))
+        res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced"))
     }
 
     override fun onHandleUpdate(handle: Handle) {

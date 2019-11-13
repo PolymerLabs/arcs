@@ -4,8 +4,7 @@ import arcs.Particle
 import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
-
-class MissingRegisterHandleTest : Particle() {}
+class MissingRegisterHandleTest : Particle()
 
 @Retain
 @ExportForCppRuntime("_newMissingRegisterHandleTest")
