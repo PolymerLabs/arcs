@@ -1,165 +1,165 @@
 // TODO: move this and the duplicate Kotlin version to a single file under src/wasm/tests
 
 particle HandleSyncUpdateTest in 'test-module.wasm'
-  in * {Number num, Text txt, URL lnk, Boolean flg, Reference<Foo {Text val}> ref} sng
-  in [* {Number num, Text txt, URL lnk, Boolean flg, Reference<Foo {Text val}> ref}] col
-  out [* {Text txt, Number num}] res
+  sng: reads * {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: Reference<Foo {val: Text}>}
+  col: reads [* {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: Reference<Foo {val: Text}>}]
+  res: writes [* {txt: Text, num: Number}]
 
 recipe HandleSyncUpdateTest
   HandleSyncUpdateTest
-    sng <- h1
-    col <- h2
-    res -> h3
+    sng: reads h1
+    col: reads h2
+    res: writes h3
 
 
 
 particle RenderTest in 'test-module.wasm'
-  consume root
-  in * {Boolean template, Boolean model} flags
+  root: consumes Slot
+  flags: reads * {template: Boolean, model: Boolean}
 
 recipe RenderTest
-  slot 'rootslotid-root' as slot1
+  s1: slot 'rootslotid-root'
   RenderTest
-    consume root as slot1
-    flags <- h1
+    root: consumes s1
+    flags: reads h1
 
 
 
 resource DataResource
   start
   [{"txt": "initial"}]
-store DataStore of * {Text txt} in DataResource
+store DataStore of * {txt: Text} in DataResource
 
 particle AutoRenderTest in 'test-module.wasm'
-  consume root
-  in * {Text txt} data
+  root: consumes Slot
+  data: reads * {txt: Text}
 
 recipe AutoRenderTest
-  copy DataStore as h1
-  slot 'rootslotid-root' as slot1
+  h1: copy DataStore
+  s1: slot 'rootslotid-root'
   AutoRenderTest
-    consume root as slot1
-    data <- h1
+    root: consumes s1
+    data: reads h1
 
 
 
 particle EventsTest in 'test-module.wasm'
-  consume root
-  out * {Text txt} output
+  root: consumes Slot
+  output: writes * {txt: Text}
 
 recipe EventsTest
-  slot 'rootslotid-root' as slot1
+  s1: slot 'rootslotid-root'
   EventsTest
-    consume root as slot1
-    output -> h1
+    root: consumes s1
+    output: writes h1
 
 
 
 particle ServicesTest in 'test-module.wasm'
-  out [* {Text call, Text tag, Text payload}] output
+  output: writes [* {call: Text, tag: Text, payload: Text}]
 
 recipe ServicesTest
   ServicesTest
-    output -> h1
+    output: writes h1
 
 
 
 particle MissingRegisterHandleTest in 'test-module.wasm'
-  in * {Number n} input
+  input: reads * {n: Number}
 
 recipe MissingRegisterHandleTest
   MissingRegisterHandleTest
-    input <- h1
+    input: reads h1
 
 
 
 particle EntityClassApiTest in 'test-module.wasm'
-  in * {Number num, Text txt, URL lnk, Boolean flg, Reference<Foo {Text val}> ref} data
-  in * {} empty
-  out [* {Text msg}] errors
+  data: reads * {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: Reference<Foo {val: Text}>}
+  empty: reads * {}
+  errors: writes [* {msg: Text}]
 
 recipe EntityClassApiTest
   EntityClassApiTest
-    data <- h1
-    empty <- h2
-    errors -> h3
+    data: reads h1
+    empty: reads h2
+    errors: writes h3
 
 
 
 particle SpecialSchemaFieldsTest in 'test-module.wasm'
-  in * {Text for, Number internal_id} fields
-  out [* {Text msg}] errors
+  fields: reads * {for: Text, internal_id: Number}
+  errors: writes [* {msg: Text}]
 
 recipe SpecialSchemaFieldsTest
   SpecialSchemaFieldsTest
-    fields <- h1
-    errors -> h2
+    fields: reads h1
+    errors: writes h2
 
 
 
 particle ReferenceClassApiTest in 'test-module.wasm'
-  in * {Number num, Text txt} data
-  out [* {Text msg}] errors
+  data: reads * {num: Number, txt: Text}
+  errors: writes [* {msg: Text}]
 
 recipe ReferenceClassApiTest
   ReferenceClassApiTest
-    data <- h1
-    errors -> h2
+    data: reads h1
+    errors: writes h2
 
 
 
 particle SingletonApiTest in 'test-module.wasm'
-  consume root
-  in * {Number num, Text txt} inHandle
-  out * {Number num, Text txt} outHandle
-  inout * {Number num, Text txt} ioHandle
+  root: consumes Slot
+  inHandle: reads * {num: Number, txt: Text}
+  outHandle: writes * {num: Number, txt: Text}
+  ioHandle: reads writes * {num: Number, txt: Text}
 
 recipe SingletonApiTest
-  slot 'rootslotid-root' as slot1
+  s1: slot 'rootslotid-root'
   SingletonApiTest
-    consume root as slot1
-    inHandle <- h1
-    outHandle -> h2
-    ioHandle = h3
+    root: consumes s1
+    inHandle: reads h1
+    outHandle: writes h2
+    ioHandle: reads writes h3
 
 
 
 particle CollectionApiTest in 'test-module.wasm'
-  consume root
-  in [* {Number num}] inHandle
-  out [* {Number num, Text txt, Boolean flg}] outHandle
-  inout [* {Number num, Text txt, Boolean flg}] ioHandle
+  root: consumes Slot
+  inHandle: reads [* {num: Number}]
+  outHandle: writes [* {num: Number, txt: Text, flg: Boolean}]
+  ioHandle: reads writes [* {num: Number, txt: Text, flg: Boolean}]
 
 recipe CollectionApiTest
-  slot 'rootslotid-root' as slot1
+  s1: slot 'rootslotid-root'
   CollectionApiTest
-    consume root as slot1
-    inHandle <- h1
-    outHandle -> h2
-    ioHandle = h3
+    root: consumes s1
+    inHandle: reads h1
+    outHandle: writes h2
+    ioHandle: reads writes h3
 
 
 
 particle ReferenceHandlesTest in 'test-module.wasm'
-  inout Reference<* {Number num, Text txt}> sng
-  inout [Reference<* {Number num, Text txt}>] col
-  out [* {Text txt}] res
+  sng: reads writes Reference<* {num: Number, txt: Text}>
+  col: reads writes [Reference<* {num: Number, txt: Text}>]
+  res: writes [* {txt: Text}]
 
 recipe ReferenceHandlesTest
   ReferenceHandlesTest
-    sng = h1
-    col = h2
-    res -> h3
+    sng: reads writes h1
+    col: reads writes h2
+    res: writes h3
 
 
 
 particle SchemaReferenceFieldsTest in 'test-module.wasm'
-  in * {Number num, Text txt, Reference<* {Text val}> ref} input
-  out * {Number num, Text txt, Reference<* {Text val}> ref} output
-  out [* {Text txt}] res
+  input: reads * {num: Number, txt: Text, ref: Reference<* {val: Text}>}
+  output: writes * {num: Number, txt: Text, ref: Reference<* {val: Text}>}
+  res: writes [* {txt: Text}]
 
 recipe SchemaReferenceFieldsTest
   SchemaReferenceFieldsTest
-    input <- h1
-    output -> h2
-    res -> h3
+    input: reads h1
+    output: writes h2
+    res: writes h3
