@@ -68,7 +68,7 @@ class KotlinGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode) {}
 
-  addField(field: string, typeChar: string, inherited: boolean) {
+  addField(field: string, typeChar: string) {
     const {type, decodeFn} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
@@ -82,7 +82,7 @@ class KotlinGenerator implements ClassGenerator {
     this.encode.push(`${fixed}?.let { encoder.encode("${field}:${typeChar}", it) }`);
   }
 
-  addReference(field: string, inherited: boolean, refName: string) {
+  addReference(field: string, refName: string) {
     throw new Error('TODO: support reference types in kotlin');
   }
 
@@ -103,12 +103,12 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
 
   override fun decodeEntity(encoded: String): ${name}? {
     if (encoded.isEmpty()) return null
-    
-    val decoder = StringDecoder(encoded) 
+
+    val decoder = StringDecoder(encoded)
     internalId = decoder.decodeText()
     decoder.validate("|")
     ${withFields(`  for (_i in 0 until ${fieldCount}) {
-         if (decoder.done()) break 
+         if (decoder.done()) break
          val name = decoder.upTo(":")
          when (name) {
            ${this.decode.join('\n           ')}
@@ -116,7 +116,7 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
          decoder.validate("|")
         }
    `)}
-    
+
     return this
   }
 
