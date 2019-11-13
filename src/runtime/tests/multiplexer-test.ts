@@ -77,7 +77,7 @@ describe('Multiplexer', () => {
         slot0: slot 'rootslotid-slotid'
         handle0: use 'test:1'
         SlandleMultiplexer
-          hostedParticle: any SlandleConsumerParticle
+          hostedParticle: SlandleConsumerParticle
           annotation: consumes slot0
           list: reads handle0
     `, {loader: new Loader(), fileName: ''});

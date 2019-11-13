@@ -86,6 +86,19 @@
       error(`using post slandles syntax (disabled by flag) #${tag}`);
     }
   }
+
+  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+    requireUsePostSlandleSyntax(2);
+    if (direction === 'host') {
+      error(`Interface cannot have arguments with a 'host' direction.`);
+    }
+    return toAstNode<AstNode.InterfaceArgument>({
+      kind: 'interface-argument',
+      direction,
+      type,
+      name
+    });
+  }
 }
 
 Manifest
@@ -283,20 +296,12 @@ InterfaceArgumentPreSlandlesSyntax
   }
 
 InterfaceArgumentUnified
-  = name:NameWithColon? direction:DirectionUnified type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
-  {
-    requireUsePostSlandleSyntax(2);
-    name = name || '*';
-    if (direction === 'host') {
-      error(`Interface cannot have arguments with a 'host' direction.`);
-    }
-    return toAstNode<AstNode.InterfaceArgument>({
-      kind: 'interface-argument',
-      direction,
-      type: optional(type, ty => ty[1], null),
-      name,
-    });
-  }
+  = name:NameWithColon direction:DirectionUnified? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument(name, direction || 'any', optional(type, t => t[1], null)); }
+  / direction:DirectionUnified type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument('*', direction || 'any', optional(type, t => t[1], null)); }
+  / type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
+  { return buildInterfaceArgument('*', 'any', type); }
 
 InterfaceSlot
   = InterfaceSlotPreSlandles
@@ -1039,14 +1044,25 @@ RecipeParticleConnection
   / RecipeParticleConnectionPreSlandle
 
 RecipeParticleConnectionUnified
-  = param:NameWithColon? dir:DirectionUnified? target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:NameWithColon? dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     requireUsePostSlandleSyntax(13);
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
-      dir: dir || 'any',
-      target: optional(target, target => target[1], null),
+      dir,
+      target: optional(target, t => t[1], null),
+      dependentConnections: optional(dependentConnections, extractIndented, []),
+    });
+  }
+  / param:NameWithColon? target:ParticleConnectionTargetComponents eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  {
+    requireUsePostSlandleSyntax(13);
+    return toAstNode<AstNode.RecipeParticleConnection>({
+      kind: 'handle-connection',
+      param: param || '*',
+      dir: 'any',
+      target,
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
   }
@@ -1066,7 +1082,7 @@ RecipeParticleConnectionPreSlandle
   }
 
 ParticleConnectionTargetComponents
-  = param:(upperIdent / lowerIdent)? whiteSpace? tags:(TagList)?
+  = param:(upperIdent / lowerIdent) tags:(whiteSpace TagList)?
   {
     param = optional(param, param => param, null);
     let name: string|null = null;
@@ -1083,7 +1099,17 @@ ParticleConnectionTargetComponents
       kind: 'handle-connection-components',
       name,
       particle,
-      tags: optional(tags, tags => tags, []),
+      tags: optional(tags, t => t[1], []),
+    });
+  }
+  / tags:TagList
+  {
+    let particle = null;
+    return toAstNode<AstNode.ParticleConnectionTargetComponents>({
+      kind: 'handle-connection-components',
+      name: null,
+      particle,
+      tags
     });
   }
 
@@ -1138,7 +1164,7 @@ RecipeConnection
   = RecipeConnectionUnified / RecipeConnectionPreSlandle
 
 RecipeConnectionUnified
-  = from:ConnectionTargetWithColon? direction:DirectionUnified whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTargetWithColon? direction:(DirectionUnified whiteSpace)? to:ConnectionTarget eolWhiteSpace
   {
     const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
       kind: 'connection-target',
@@ -1150,14 +1176,14 @@ RecipeConnectionUnified
     requireUsePostSlandleSyntax(17);
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
-      direction,
+      direction: optional(direction, d => d[0], 'any'),
       from: from || anyTarget,
       to,
     });
   }
 
 ConnectionTargetWithColon
-  = target: ConnectionTarget ':' whiteSpace?
+  = target:ConnectionTarget ':' whiteSpace?
   {
     return target;
   }
