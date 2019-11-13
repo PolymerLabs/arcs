@@ -27,7 +27,7 @@ resource HumanDefault
 resource FirstHuman
   start
   [
-    {"name": "Player One", "avatar": "X‍"}
+    {"name": "Player One", "avatar": "X"}
   ]
 
 resource SecondHuman

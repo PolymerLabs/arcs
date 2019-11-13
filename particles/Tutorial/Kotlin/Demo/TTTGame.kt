@@ -10,7 +10,6 @@ import arcs.TTTGame_PlayerOne
 import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
-import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
@@ -61,52 +60,50 @@ class TTTGame : Particle() {
         }
     }
 
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+        val winnerName = this.gameState.get()?.winnerAvatar ?: ""
+        val congrats = this.gameState.get()?.gameOver ?: false
+
+        val message = if (congrats) "Congratulations $winnerName, you won!" else ""
+        return model + mapOf(
+            "message" to message
+        )
+    }
+
     override fun onHandleUpdate(handle: Handle) {
-        log("in OnHandlUpdate in game")
         val gs = this.gameState.get() ?: TTTGame_GameState()
         val board = gs.board ?: ",,,,,,,,"
-        val boardArr = board.split(",").map { it.trim() }.toMutableList()
+        val boardArr = board.split(",").map { it }.toMutableList()
         var player = TTTGame_PlayerOne()
         var mv = -1
         if (!(gs.gameOver ?: false) && !handle.name.equals("gameState")) {
             if (gs.currentPlayer == 0.0) {
-                log("The current player is one!")
                 player = playerOne.get() ?: TTTGame_PlayerOne()
                 mv = playerOneMove.get()?.move?.toInt() ?: -1
             } else if (gs.currentPlayer == 1.0) {
-                log("The current player is Two!")
                 player = playerTwo.get() ?: TTTGame_PlayerTwo()
                 mv = playerTwoMove.get()?.move?.toInt() ?: -1
             }
             if (mv > -1 && mv < 10 && boardArr[mv] == "") {
-                log("the move is valid! $mv")
-                boardArr[mv.toInt()] = player.avatar ?: ""
-                log("the fixed board is $boardArr")
+                boardArr[mv] = player.avatar ?: ""
                 gs.board = boardArr.joinToString(",")
-                log("fixed boardStr = ${gs.board}")
 
                 winningSequences.forEach { sequence ->
-                    log("Sequence ${sequence[0]}, ${sequence[1]}, ${sequence[2]}")
-                    log("""Board[sequence]: 
-                        ${boardArr[sequence[0]]}, 
-                        ${boardArr[sequence[1]]}, 
-                        ${boardArr[sequence[2]]}""")
                     if (boardArr[sequence[0]] != "" &&
                         boardArr[sequence[0]] == boardArr[sequence[1]] &&
                         boardArr[sequence[0]] == boardArr[sequence[2]]) {
                         gs.gameOver = true
                         gs.winnerAvatar = player.avatar ?: ""
-                        log("We have a winner!")
                     }
                 }
 
                 val cp = gs.currentPlayer ?: 0.0
                 gs.currentPlayer = (cp + 1) % 2
-                log("gs.GameOver = ${gs.gameOver}")
                 this.gameState.set(gs)
                 this.events.clear()
             }
         }
+        this.renderOutput()
         super.onHandleUpdate(handle)
     }
 
@@ -114,6 +111,7 @@ class TTTGame : Particle() {
 
         return """
             <div slotid="boardSlot"></div>
+            <div><span>{{message}}</span></div>
             """
     }
 }
