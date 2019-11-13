@@ -29,7 +29,7 @@ import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable, SingletonType, ReferenceType} from './type.js';
+import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
@@ -568,6 +568,11 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     if (Flags.useNewStorageStack) {
       if (typeof storageKey === 'string') {
         throw new Error(`Can't use string storage keys with the new storage stack.`);
+      }
+      // Wrap entity types in a singleton.
+      if (type.isEntity) {
+        // TODO: Once recipes can handle singleton types this conversion can be removed.
+        type = new SingletonType(type);
       }
       store = new Store({storageKey, exists: Exists.MayExist, type, id, name});
     } else {
