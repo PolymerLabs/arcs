@@ -44,16 +44,16 @@ class TTTGame : Particle() {
         if (this.gameState.get()?.board == null) {
             this.gameState.set(TTTGame_GameState(
                 board = ",,,,,,,,",
-                currentPlayer = 1.0,
+                currentPlayer = 0.0,
                 gameOver = false
             ))
         }
-        if (this.playerOne.get()?.id != 0.0) {
+        if (handle.name.equals("playerOne") && this.playerOne.get()?.id != 0.0) {
             val p1 = playerOne.get() ?: TTTGame_PlayerOne()
             p1.id = 0.0
             this.playerOne.set(p1)
         }
-        if (this.playerTwo.get()?.id != 1.0) {
+        if (handle.name.equals("playerTwo") && this.playerTwo.get()?.id != 1.0) {
             val p2 = playerTwo.get() ?: TTTGame_PlayerOne()
             p2.id = 1.0
             this.playerTwo.set(p2)

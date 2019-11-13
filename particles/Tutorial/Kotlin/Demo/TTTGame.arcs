@@ -24,10 +24,17 @@ particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
   in Person player
   out Move myMove
 
+particle TTTRandomComputer in 'TTTRandomComputer.wasm'
+  in GameState gameState
+  in Person player
+  out Move myMove
+
 
 recipe GamePlayersDemoRecipe
   use HumanOneStore as playerOne
   use HumanTwoStore as playerTwo
+  create #humanMove as playerOneMove
+  create #computerMove as playerTwoMove
   TTTGame
     gameState = gameState
     playerOne = playerOne
@@ -46,9 +53,8 @@ recipe GamePlayersDemoRecipe
     events <- events
     myMove -> playerOneMove
     player <- playerOne
-  TTTHumanPlayer
+  TTTRandomComputer
       gameState = gameState
-      events <- events
       myMove -> playerTwoMove
       player <- playerTwo
   description `Kotlin Tutorial TicTacToe Demo`
