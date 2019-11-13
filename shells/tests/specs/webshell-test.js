@@ -31,11 +31,11 @@ describe('wait for server', () => {
 
 const persona = `${marshalPersona('volatile')}`;
 describe(`WASM (${persona})`, () => {
-  it('loads Kotlin Tutorial 1', async function() {
+  it('loads Wasm Particle', async function() {
     console.log(`running "${this.test.fullTitle()}"`);
     await openArc(persona);
-    await searchFor('Kotlin');
-    await chooseSuggestion('Kotlin Tutorial 1');
+    await searchFor('Integration');
+    await chooseSuggestion('Wasm Integration Test');
     // TODO(sjmiles): allowing time to settle, we should prefer explicit signal
     await sleep(5);
     await waitFor(`[particle="HelloWorldParticle"]`);
