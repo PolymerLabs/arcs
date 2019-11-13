@@ -30,9 +30,8 @@ export class Loader extends LoaderBase {
     if (!(data instanceof Buffer)) {
       throw new Error(`loadFileData returned non-Buffer for binary file [${path}]`);
     }
-    // convert Buffer to ArrayBuffer (slice because small Buffers are views on a shared ArrayBuffer)
-    const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-    return arrayBuffer;
+    // convert Buffer to ArrayBuffer (slice in case a small Buffer is a view on a shared ArrayBuffer)
+    return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   }
   private async loadFileData(path: string, encoding?: string): Promise<string | Buffer> {
     return new Promise((resolve, reject) => {
