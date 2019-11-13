@@ -37,14 +37,14 @@ class TTTGame : Particle() {
                 currentPlayer = 1.0
             ))
         }
-        if (this.playerOne.get()?.id != 1.0) {
+        if (this.playerOne.get()?.id != 0.0) {
             val p1 = playerOne.get() ?: TTTGame_PlayerOne()
-            p1.id = 1.0
+            p1.id = 0.0
             this.playerOne.set(p1)
         }
-        if (this.playerTwo.get()?.id != 2.0) {
+        if (this.playerTwo.get()?.id != 1.0) {
             val p2 = playerTwo.get() ?: TTTGame_PlayerOne()
-            p2.id = 2.0
+            p2.id = 1.0
             this.playerTwo.set(p2)
         }
     }
@@ -52,39 +52,29 @@ class TTTGame : Particle() {
     override fun onHandleUpdate(handle: Handle) {
         log("in OnHandlUpdate in game")
         val gs = this.gameState.get() ?: TTTGame_GameState()
-        if (gs.currentPlayer == 1.0) {
+        val board = gs.board ?: ",,,,,,,,"
+        val boardArr = board.split(",").map { it.trim() }.toMutableList()
+        var player = TTTGame_PlayerOne()
+        var mv = -1
+        if (gs.currentPlayer == 0.0) {
             log("The current player is one!")
-            val p1 = playerOne.get() ?: TTTGame_PlayerOne()
-            val mv = playerOneMove.get()?.move?.toInt() ?: -1
-            val board = gs.board ?: ",,,,,,,,"
-            var boardArr = board.split(",").map { it.trim() }.toMutableList()
-            if (mv > -1 && mv < 10 && boardArr[mv] == "") {
-                log("the move is valid! $mv")
-                boardArr[mv.toInt()] = p1.avatar ?: "X"
-                log("the fixed board is $boardArr")
-                gs.board = boardArr.joinToString(",")
-                log("fixed boardStr = ${gs.board}")
-                gs.currentPlayer = 2.0
-                this.gameState.set(gs)
-                this.events.clear()
-            }
-        }
-        if (gs.currentPlayer == 2.0) {
+            player = playerOne.get() ?: TTTGame_PlayerOne()
+            mv = playerOneMove.get()?.move?.toInt() ?: -1
+        } else if (gs.currentPlayer == 1.0) {
             log("The current player is Two!")
-            val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
-            val mv = playerTwoMove.get()?.move?.toInt() ?: -1
-            val board = gs.board ?: ",,,,,,,,"
-            var boardArr = board.split(",").map { it.trim() }.toMutableList()
-            if (mv > -1 && mv < 10 && boardArr[mv] == "") {
-                log("the move is valid! $mv")
-                boardArr[mv.toInt()] = p2.avatar ?: "O"
-                log("the fixed board is $boardArr")
-                gs.board = boardArr.joinToString(",")
-                log("fixed boardStr = ${gs.board}")
-                gs.currentPlayer = 1.0
-                this.gameState.set(gs)
-                this.events.clear()
-            }
+            player = playerTwo.get() ?: TTTGame_PlayerTwo()
+            mv = playerTwoMove.get()?.move?.toInt() ?: -1
+        }
+        if (mv > -1 && mv < 10 && boardArr[mv] == "") {
+            log("the move is valid! $mv")
+            boardArr[mv.toInt()] = player.avatar ?: ""
+            log("the fixed board is $boardArr")
+            gs.board = boardArr.joinToString(",")
+            log("fixed boardStr = ${gs.board}")
+            val cp = gs.currentPlayer ?: 0.0
+            gs.currentPlayer = (cp + 1) % 2
+            this.gameState.set(gs)
+            this.events.clear()
         }
         super.onHandleUpdate(handle)
     }
