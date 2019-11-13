@@ -12,35 +12,35 @@ import '../../../runtime/tests/artifacts/Products/test/ProductIsBook.manifest'
 
 import '../../../runtime/tests/artifacts/Products/Product.schema'
 particle ShowProduct in '../../../runtime/tests/artifacts/Products/source/ShowProduct.js'
-  in Product product
-  consume item
+  product: reads Product
+  item: consumes? Slot
 
 // Filter books and display them.
 recipe FilterAndDisplayBooks
-  map 'mylist' as mylist
-  create as books
-  slot 'rootslotid-root' as rootSlot
+  mylist: map 'mylist'
+  books: create *
+  rootSlot: slot 'rootslotid-root'
   ProductFilter
-    products <- mylist
-    hostedParticle = ProductIsBook
-    results -> books
+    products: reads mylist
+    hostedParticle: any ProductIsBook
+    results: writes books
   List
-    items = books
-    consume root as rootSlot
-      provide item as itemSlot
+    items: any books
+    root: consumes rootSlot
+      item: provides itemSlot
   ItemMultiplexer
-    list = books
-    hostedParticle = ShowProduct
-    consume item as itemSlot
+    list: any books
+    hostedParticle: hosts ShowProduct
+    item: consumes itemSlot
 
 // Filter books
 recipe FilterBooks
-  map 'mylist' as mylist
-  create as books
+  mylist: map 'mylist'
+  books: create *
   ProductFilter
-    products <- mylist
-    hostedParticle = ProductIsBook
-    results -> books
+    products: reads mylist
+    hostedParticle: any ProductIsBook
+    results: writes books
 
 resource ProductList
   start

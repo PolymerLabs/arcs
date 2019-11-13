@@ -1,8 +1,8 @@
 import '../Services/schemas/RandomData.arcs'
 
 particle StardateTOS in './js/StardateTOS.js'
-  out DestinationPlanet {Text name} destination
-  out ScriptDate {Text date} stardate
-  in RandomData randomTime
-  in RandomData randomPlanet
+  destination: writes DestinationPlanet {name: Text}
+  stardate: writes ScriptDate {date: Text}
+  randomTime: reads RandomData
+  randomPlanet: reads RandomData
   description `stardate ${stardate.date}, orbiting ${destination.name}`

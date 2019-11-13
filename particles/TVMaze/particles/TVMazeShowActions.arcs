@@ -1,17 +1,17 @@
 import '../schemas/TVMazeShow.arcs'
 
 particle TVMazeShowActions in './js/TVMazeShowActions.js'
-  in TVMazeShow show
-  inout [TVMazeShow] shows
-  consume action
+  show: reads TVMazeShow
+  shows: reads writes [TVMazeShow]
+  action: consumes Slot
 
 interface HostedActionParticleInterface
-  in TVMazeShow show
-  inout [TVMazeShow] shows
-  consume action
+  show: reads TVMazeShow
+  shows: reads writes [TVMazeShow]
+  action: consumes
 
 particle ActionMultiplexer in '../../List/source/Multiplexer.js'
-  host HostedActionParticleInterface hostedParticle
-  in [~a] list
-  in [TVMazeShow] shows
-  consume set of action
+  hostedParticle: hosts HostedActionParticleInterface
+  list: reads [~a]
+  shows: reads [TVMazeShow]
+  action: consumes [Slot]

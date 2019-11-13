@@ -8,33 +8,33 @@
 
 schema Post
   // Time this post was created in milliseconds since the epoch.
-  Number createdTimestamp
+  createdTimestamp: Number
   // The primary message content of the post.
-  Text message
+  message: Text
   // The opaque user id of the post author.
-  Text author
+  author: Text
   // An optional image associated with the message content for the post.
   // Populated only if the user chose to attach one when creating/editing.
-  URL image
+  image: URL
   // The width of the full size image in pixels, if an image is present.
-  Number imageWidth
+  imageWidth: Number
   // The height of the full size image in pixels, if an image is present.
-  Number imageHeight
+  imageHeight: Number
   // A recipe that can be used to display this post's content. Allows for
   // polymorphic display of and interaction with the post, as the
   // particles creating or updating the Post entity can set whatever
   // recipe they deem appropriate for the Post (or Post subclass).
-  Text renderRecipe
+  renderRecipe: Text
   // A JSON representation of the primary particle referenced in
   // |renderRecipe| intended for use in displaying this post.
-  Text renderParticleSpec
+  renderParticleSpec: Text
   // The opaque user id of the post author as populated by sharing logic.
   // Note this is only populated for friends of the viewing user, and so
   // is not always present, and one may as well just use the |author| field.
-  Text owner
+  owner: Text
   // The key of the arc from which this Post originated.
-  Text arcKey
+  arcKey: Text
   // Optional rank of this post amidst a collection of other posts. Useful when
   // sorting for output and passing on to another particle, until we have
   // support for ordered lists.
-  Number rank
+  rank: Number

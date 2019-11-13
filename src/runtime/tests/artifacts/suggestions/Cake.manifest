@@ -9,19 +9,18 @@
 // These schema and particles are used to test inline suggestion slots.
 
 schema Cake
-  Text name
-  Text occasion
+  name: Text
+  occasion: Text
 
 particle MakeCake in 'source/MakeCake.js'
-  in Cake cake
-  consume item
-    provide special
-      handle cake
+  cake: reads Cake
+  item: consumes Slot
+    special: provides? Slot {handle: cake}
   description `Make a ${cake} cake`
 
 particle LightCandles in 'source/LightCandles.js'
   // Note: birthday cake should is an input connection.
   // It is only made 'inout' to force speculative execution.
-  inout Cake birthdayCake
-  consume candles #special
+  birthdayCake: reads writes Cake
+  candles: consumes Slot #special
   description `Light candles on ${birthdayCake} cake`

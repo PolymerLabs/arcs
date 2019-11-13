@@ -1320,6 +1320,7 @@ ${particleStr1}
     assert(registry['somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
+    let broken = false;
     const verifyParticleManifests = (particlePaths) => {
       let count = 0;
       particlePaths.forEach(particleManifestFile => {
@@ -1329,8 +1330,8 @@ ${particleStr1}
             const model = parse(data);
             assert.isDefined(model);
           } catch (e) {
-            console.log(`Failed parsing ${particleManifestFile}`);
-            throw e;
+            console.log(`Failed parsing ${particleManifestFile} +${e.location.start.line}:${e.location.start.column}`);
+            broken = true;
           }
           ++count;
         }
@@ -1345,11 +1346,12 @@ ${particleStr1}
       if (fs.statSync(manifestFolderName).isDirectory()) {
         shellParticleNames = shellParticleNames.concat(
             fs.readdirSync(manifestFolderName)
-                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes'))
+                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes') || fileName.endsWith('.arcs'))
                 .map(fileName => path.join(manifestFolderName, fileName)));
       }
     });
-    assert.isAbove(verifyParticleManifests(shellParticleNames), 0);
+    assert.isAbove(verifyParticleManifests(shellParticleNames), 0, 'no particles parse');
+    assert.isFalse(broken, 'a particle doesn\'t parse correctly');
   });
   it('loads entities from json files', async () => {
     const manifestSource = `

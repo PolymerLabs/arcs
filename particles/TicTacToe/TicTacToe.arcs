@@ -2,9 +2,9 @@ import 'particles/DebugShowBoard.arcs'
 import 'particles/DebugMakeBoard.arcs'
 
 recipe TicTacToeShowBoard
-  create as board
+  board: create *
   DebugShowBoard
-    board <- board
+    board: reads board
   DebugMakeBoard
-    board -> board
+    board: writes board
   description `boardy boardy boardy!`

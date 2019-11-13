@@ -2,11 +2,11 @@ import './schemas/MlResource.arcs'
 import './schemas/MlModel.arcs'
 
 particle LoadGraphModel in './js/LoadGraphModel.js'
-  in MlModel modelSpec
-  out TfModel model
+  modelSpec: reads MlModel
+  model: writes TfModel
   //description `Load a Graph Tensorflow model into memory.`
 
 particle LoadLayersModel in './js/LoadLayersModel.js'
-  in MlModel modelSpec
-  out TfModel model
+  modelSpec: reads MlModel
+  model: writes TfModel
   //description `Load a Layers Tensorflow model into memory.`

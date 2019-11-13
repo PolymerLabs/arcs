@@ -9,11 +9,10 @@
 import 'Restaurant.schema'
 
 particle RestaurantList in 'source/RestaurantList.js'
-  in [Restaurant] list
-  inout Restaurant selected
-  consume master
-    provide modifier
-    provide set of annotation
-      handle list
+  list: reads [Restaurant]
+  selected: reads writes Restaurant
+  master: consumes Slot
+    modifier: provides? Slot
+    annotation: provides? [Slot{handle: list}]
 // removing description for now to clean up suggestions
 //  description `show ${list}`

@@ -17,13 +17,13 @@ defineParticle(({Particle, UiMultiplexerParticle}) => {
 
 ${hostedParticle}
 recipe
-  use '${itemHandle._id}' as handle1
+  handle1: use '${itemHandle._id}'
   ${other.handles.join('\n')}
-  slot '${slot.id}' as slot1
+  slot1: slot '${slot.id}'
   ${hostedParticle.name}
-    ${hostedParticle.handleConnections[0].name} <- handle1
+    ${hostedParticle.handleConnections[0].name}: reads handle1
     ${other.connections.join('\n')}
-    consume ${slot.name} as slot1
+    ${slot.name}: consumes slot1
 `;
 
   return class Multiplexer extends UiMultiplexerParticle {

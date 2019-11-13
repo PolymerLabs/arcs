@@ -9,10 +9,10 @@
 import 'Restaurant.schema'
 
 particle SlandleRestaurantList in 'source/RestaurantList.js'
-  in [Restaurant] list
-  inout Restaurant selected
-  `consume Slot master
-    `provide Slot modifier
-    `provide [Slot {handle: list}] annotation
+  list: reads [Restaurant]
+  selected: reads writes Restaurant
+  master: `consumes Slot
+    modifier: `provides? Slot
+    annotation: `provides? [Slot {handle: list}]
 // removing description for now to clean up suggestions
 //  description `show ${list}`

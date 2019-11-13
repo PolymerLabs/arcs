@@ -797,6 +797,7 @@ describe('Automatic resolution', () => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     for (const plan of plans) {
       plan.normalize();
+      console.log('PLAN ', plan.toString());
       assert.isTrue(plan.isResolved(), `Plans were not able to be resolved from ${manifestStr}.`);
     }
     return plans;
@@ -1016,7 +1017,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
   });
 
-  it('composes recipe rendering a list of items from the current arc', async () => {
+  it('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1033,23 +1034,24 @@ describe('Automatic resolution', () => {
 
     assert.lengthOf(recipes, 1);
     assert.strictEqual(recipes[0].toString(), `recipe SelectableUseListRecipe
-  use 'test-store' #items as handle0 // [Thing {}]
-  create #selected as handle1 // Thing {}
-  slot 'rootslotid-root' #root as slot1
+  handle0: use 'test-store' #items // [Thing {}]
+  handle1: create #selected // Thing {}
+  slot1: slot 'rootslotid-root' #root
   ItemMultiplexer as particle0
-    hostedParticle = ThingRenderer
-    list <- handle0
-    consume item as slot0
+    hostedParticle: hosts ThingRenderer
+    list: reads handle0
+    item: consumes slot0
   SelectableList as particle1
-    items <-> handle0
-    selected <-> handle1
-    consume root as slot1
-      provide action as slot2
-      provide annotation as slot3
-      provide item as slot0
-      provide postamble as slot4
-      provide preamble as slot5`);
-  });
+    items: reads writes handle0
+    selected: reads writes handle1
+    root: consumes slot1
+      action: provides slot2
+      annotation: provides slot3
+      item: provides slot0
+      postamble: provides slot4
+      preamble: provides slot5`);
+  }));
+
   it('coalesces resolved recipe with no UI', async () => {
     const recipes = await verifyResolvedPlans(`
       schema Thing

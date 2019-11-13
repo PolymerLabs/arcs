@@ -2,4 +2,4 @@
 // Recipes
 
 schema RandomData
-  Number next
+  next: Number

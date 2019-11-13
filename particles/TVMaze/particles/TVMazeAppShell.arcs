@@ -5,21 +5,21 @@ import '../schemas/TVMazeShow.arcs'
 import '../schemas/Text.arcs'
 
 particle TVMazeAppShell in './js/TVMazeAppShell.js'
-  in [TVMazeShow] recentShows
-  inout TVMazeShow selected
-  in User user
-  in [TVMazeShow] boxedShows
-  in [TVMazeShow] foundShows
-  in [User] friends
-  in [UserName] boxedUserNames
-  inout [User] watchers
-  out Text watcherText
-  out [Description] descriptions
-  consume root
-    provide shows
-    provide recommended
-    provide searchbar
-    provide search
+  recentShows: reads [TVMazeShow]
+  selected: reads TVMazeShow
+  user: reads User
+  boxedShows: reads [TVMazeShow]
+  foundShows: reads [TVMazeShow]
+  friends: reads [User]
+  boxedUserNames: reads [UserName]
+  watchers: reads writes [User]
+  watcherText: writes Text
+  descriptions: writes [Description]
+  root: consumes
+    shows: provides?
+    recommended: provides?
+    searchbar: provides?
+    search: provides?
   // TODO: add better description,
   // or fix recipe description to  not crash if one is missing.
   description `manage my TV shows (using TVMaze)`

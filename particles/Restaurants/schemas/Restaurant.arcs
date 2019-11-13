@@ -1,10 +1,10 @@
 schema Restaurant
-  Text identifier
-  Text reference
-  Text name
-  Text description
-  Text icon
-  Text photos
-  Text photo
-  Number rating
-  Text address
+  identifier: Text
+  reference: Text
+  name: Text
+  description: Text
+  icon: Text
+  photos: Text
+  photo: Text
+  rating: Number
+  address: Text
