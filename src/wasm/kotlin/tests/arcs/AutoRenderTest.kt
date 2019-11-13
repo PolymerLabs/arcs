@@ -6,7 +6,7 @@ import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class AutoRenderTest : Particle() {
-    private val data = Singleton { Test_Data() }
+    private val data = Singleton { AutoRenderTest_Data() }
 
     init {
         registerHandle("data", data)

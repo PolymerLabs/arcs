@@ -11,12 +11,21 @@ static size_t hash(const T& d) {
 }
 
 static auto converter() {
-  return [](const arcs::Test_Data& d) { return arcs::entity_to_str(d); };
+  return [](const arcs::EntityClassApiTest_Data& d) { return arcs::entity_to_str(d); };
 }
 
 
-class EntityClassApiTest : public TestBase {
+class EntityClassApiTest : public TestBase<arcs::EntityClassApiTest_Errors> {
 public:
+  EntityClassApiTest() {
+    // These handles are required so we can specify the desired inline schemas in the particle spec
+    // to get the generated classes for testing, but we don't actually use the handles themselves.
+    registerHandle("data", unused1_);
+    registerHandle("empty", unused2_);
+  }
+  arcs::Singleton<arcs::EntityClassApiTest_Data> unused1_;
+  arcs::Singleton<arcs::EntityClassApiTest_Empty> unused2_;
+
   void init() override {
     RUN(test_field_methods);
     RUN(test_id_equality);
@@ -35,7 +44,7 @@ public:
   }
 
   void test_field_methods() {
-    arcs::Test_Data d1;
+    arcs::EntityClassApiTest_Data d1;
 
     IS_FALSE(d1.has_num());
     EQUAL(d1.num(), 0);
@@ -81,15 +90,15 @@ public:
     IS_TRUE(d1.has_flg());
     IS_FALSE(d1.flg());
 
-    EQUAL(d1.ref(), arcs::Ref<arcs::Test_Data_Ref>());
-    EQUAL(d1.ref().entity(), arcs::Test_Data_Ref());
+    EQUAL(d1.ref(), arcs::Ref<arcs::EntityClassApiTest_Data_Ref>());
+    EQUAL(d1.ref().entity(), arcs::EntityClassApiTest_Data_Ref());
 
     // Binding a reference requires a valid id, storage key and type index on the
     // ref field itself, and an id on the entity being bound.
-    arcs::Test_Data d2;
+    arcs::EntityClassApiTest_Data d2;
     Accessor::decode_entity(&d2, "7:data-id|ref:R6:foo-id|3:key|4:|");
 
-    arcs::Test_Data_Ref foo;
+    arcs::EntityClassApiTest_Data_Ref foo;
     Accessor::set_id(&foo, "foo-id");
     foo.set_val("bar");
     d2.bind_ref(foo);
@@ -97,7 +106,7 @@ public:
   }
 
   void test_id_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
     EQUAL(Accessor::get_id(d1), "");
 
     // unset vs value
@@ -120,7 +129,7 @@ public:
   }
 
   void test_number_field_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
 
     // unset vs default value
     d2.set_num(0);
@@ -162,7 +171,7 @@ public:
   }
 
   void test_text_field_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
 
     // unset vs default value
     d2.set_txt("");
@@ -204,7 +213,7 @@ public:
   }
 
   void test_url_field_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
 
     // unset vs default value
     d2.set_lnk("");
@@ -246,7 +255,7 @@ public:
   }
 
   void test_boolean_field_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
 
     // unset vs default value
     d2.set_flg(false);
@@ -282,7 +291,7 @@ public:
   }
 
   void test_reference_field_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
 
     // empty vs populated
     Accessor::decode_entity(&d2, "0:|ref:R3:id1|4:key1|1:|");
@@ -304,7 +313,7 @@ public:
   }
 
   void test_entity_equality() {
-    arcs::Test_Data d1, d2;
+    arcs::EntityClassApiTest_Data d1, d2;
 
     // Empty entities are equal
     EQUAL(d1, d2);
@@ -314,7 +323,7 @@ public:
     EQUAL(hash(d1), hash(d2));
 
     // Entities with the same fields are equal
-    for (arcs::Test_Data* d : std::vector{&d1, &d2}) {
+    for (arcs::EntityClassApiTest_Data* d : std::vector{&d1, &d2}) {
       d->set_num(3);
       d->set_txt("abc");
       d->set_lnk("");
@@ -384,8 +393,8 @@ public:
   }
 
   void test_clone_entity() {
-    arcs::Test_Data src;
-    arcs::Test_Data d1 = arcs::clone_entity(src);
+    arcs::EntityClassApiTest_Data src;
+    arcs::EntityClassApiTest_Data d1 = arcs::clone_entity(src);
     EQUAL(d1, src);
     IS_TRUE(arcs::fields_equal(d1, src));
     EQUAL(hash(d1), hash(src));
@@ -393,7 +402,7 @@ public:
     src.set_num(8);
     src.set_txt("def");
     src.set_flg(false);
-    arcs::Test_Data d2 = arcs::clone_entity(src);
+    arcs::EntityClassApiTest_Data d2 = arcs::clone_entity(src);
     EQUAL(d2, src);
     IS_TRUE(arcs::fields_equal(d2, src));
     EQUAL(hash(d2), hash(src));
@@ -403,7 +412,7 @@ public:
 
     // Cloning doesn't include the internal id.
     Accessor::set_id(&src, "id");
-    arcs::Test_Data d3 = arcs::clone_entity(src);
+    arcs::EntityClassApiTest_Data d3 = arcs::clone_entity(src);
     EQUAL(Accessor::get_id(d3), "");
     NOT_EQUAL(d3, src);
     IS_TRUE(arcs::fields_equal(d3, src));
@@ -411,7 +420,7 @@ public:
   }
 
   void test_entity_to_str() {
-    arcs::Test_Data d;
+    arcs::EntityClassApiTest_Data d;
     EQUAL(arcs::entity_to_str(d), "{}");
 
     d.set_num(6);
@@ -426,12 +435,12 @@ public:
   }
 
   void test_stl_vector() {
-    arcs::Test_Data d1, d2, d3;
+    arcs::EntityClassApiTest_Data d1, d2, d3;
     d1.set_num(12);
     d2.set_num(12);
     Accessor::set_id(&d3, "id");
 
-    std::vector<arcs::Test_Data> v;
+    std::vector<arcs::EntityClassApiTest_Data> v;
     v.push_back(std::move(d1));
     v.push_back(std::move(d2));
     v.push_back(std::move(d3));
@@ -445,31 +454,31 @@ public:
   }
 
   void test_stl_set() {
-    arcs::Test_Data d1;
+    arcs::EntityClassApiTest_Data d1;
     d1.set_num(45);
     d1.set_txt("woop");
 
     // duplicate
-    arcs::Test_Data d2;
+    arcs::EntityClassApiTest_Data d2;
     d2.set_num(45);
     d2.set_txt("woop");
 
     // duplicate fields but with an id
-    arcs::Test_Data d3;
+    arcs::EntityClassApiTest_Data d3;
     Accessor::set_id(&d3, "id");
     d3.set_num(45);
     d3.set_txt("woop");
 
     // same id, different fields
-    arcs::Test_Data d4;
+    arcs::EntityClassApiTest_Data d4;
     Accessor::set_id(&d4, "id");
     d4.set_flg(false);
 
     // duplicate
-    arcs::Test_Data d5 = arcs::clone_entity(d4);
+    arcs::EntityClassApiTest_Data d5 = arcs::clone_entity(d4);
     Accessor::set_id(&d5, "id");
 
-    std::set<arcs::Test_Data> s;
+    std::set<arcs::EntityClassApiTest_Data> s;
     s.insert(std::move(d1));
     s.insert(std::move(d2));
     s.insert(std::move(d3));
@@ -485,31 +494,31 @@ public:
   }
 
   void test_stl_unordered_set() {
-    arcs::Test_Data d1;
+    arcs::EntityClassApiTest_Data d1;
     d1.set_num(45);
     d1.set_txt("woop");
 
     // duplicate
-    arcs::Test_Data d2;
+    arcs::EntityClassApiTest_Data d2;
     d2.set_num(45);
     d2.set_txt("woop");
 
     // duplicate fields but with an id
-    arcs::Test_Data d3;
+    arcs::EntityClassApiTest_Data d3;
     Accessor::set_id(&d3, "id");
     d3.set_num(45);
     d3.set_txt("woop");
 
     // same id, different fields
-    arcs::Test_Data d4;
+    arcs::EntityClassApiTest_Data d4;
     Accessor::set_id(&d4, "id");
     d4.set_flg(false);
 
     // duplicate
-    arcs::Test_Data d5 = arcs::clone_entity(d4);
+    arcs::EntityClassApiTest_Data d5 = arcs::clone_entity(d4);
     Accessor::set_id(&d5, "id");
 
-    std::unordered_set<arcs::Test_Data> s;
+    std::unordered_set<arcs::EntityClassApiTest_Data> s;
     s.insert(std::move(d1));
     s.insert(std::move(d2));
     s.insert(std::move(d3));
@@ -525,7 +534,7 @@ public:
   }
 
   void test_empty_schema() {
-    arcs::Test_Empty e1, e2;
+    arcs::EntityClassApiTest_Empty e1, e2;
 
     EQUAL(Accessor::get_id(e1), "");
     EQUAL(e1, e2);
@@ -551,21 +560,21 @@ public:
     IS_TRUE(arcs::fields_equal(e1, e2));
     EQUAL(hash(e1), hash(e2));
 
-    arcs::Test_Empty e3 = arcs::clone_entity(e1);
+    arcs::EntityClassApiTest_Empty e3 = arcs::clone_entity(e1);
     EQUAL(arcs::entity_to_str(e3), "{}");
 
-    auto converter = [](const arcs::Test_Empty& e) {
+    auto converter = [](const arcs::EntityClassApiTest_Empty& e) {
       return arcs::entity_to_str(e);
     };
     std::vector<std::string> expected = {"{id}", "{}"};
 
-    std::set<arcs::Test_Empty> s1;
+    std::set<arcs::EntityClassApiTest_Empty> s1;
     s1.insert(std::move(e1));
     s1.insert(std::move(e3));
     CHECK_UNORDERED(s1, converter, expected);
 
-    std::unordered_set<arcs::Test_Empty> s2;
-    arcs::Test_Empty e4;
+    std::unordered_set<arcs::EntityClassApiTest_Empty> s2;
+    arcs::EntityClassApiTest_Empty e4;
     s2.insert(std::move(e2));
     s2.insert(std::move(e4));
     CHECK_UNORDERED(s2, converter, expected);
@@ -575,8 +584,15 @@ public:
 DEFINE_PARTICLE(EntityClassApiTest)
 
 
-class SpecialSchemaFieldsTest : public TestBase {
+class SpecialSchemaFieldsTest : public TestBase<arcs::SpecialSchemaFieldsTest_Errors> {
 public:
+  SpecialSchemaFieldsTest() {
+    // This handle is required so we can specify the desired inline schema in the particle spec
+    // to get the generated class for testing, but we don't actually use the handle itself.
+    registerHandle("fields", unused_);
+  }
+  arcs::Singleton<arcs::SpecialSchemaFieldsTest_Fields> unused_;
+
   void init() override {
     RUN(test_language_keyword_field);
     RUN(test_internal_id_field);
@@ -585,7 +601,7 @@ public:
 
   // Test that language keywords can be field names.
   void test_language_keyword_field() {
-    arcs::Test_SpecialFields s;
+    arcs::SpecialSchemaFieldsTest_Fields s;
 
     IS_FALSE(s.has_for());
     EQUAL(s._for(), "");
@@ -601,7 +617,7 @@ public:
 
   // Test that a field called 'internal_id' doesn't conflict with the Arcs internal id.
   void test_internal_id_field() {
-    arcs::Test_SpecialFields s;
+    arcs::SpecialSchemaFieldsTest_Fields s;
     Accessor::set_id(&s, "real");
 
     IS_FALSE(s.has_internal_id());
@@ -619,7 +635,7 @@ public:
   }
 
   void test_general_usage() {
-    arcs::Test_SpecialFields s1;
+    arcs::SpecialSchemaFieldsTest_Fields s1;
     Accessor::set_id(&s1, "id");
     s1.set_for("abc");
     s1.set_internal_id(15);
@@ -627,7 +643,7 @@ public:
     EQUAL(arcs::entity_to_str(s1), "{id}, for: abc, internal_id: 15");
 
     // same fields, different ids
-    arcs::Test_SpecialFields s2 = arcs::clone_entity(s1);
+    arcs::SpecialSchemaFieldsTest_Fields s2 = arcs::clone_entity(s1);
     NOT_EQUAL(s1, s2);
     NOT_LESS(s1, s2);
     LESS(s2, s1);

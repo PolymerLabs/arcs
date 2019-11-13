@@ -6,14 +6,14 @@ import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class EventsTest : Particle() {
-    private val output = Singleton { Test_Data() }
+    private val output = Singleton { EventsTest_Output() }
 
     init {
         registerHandle("output", output)
     }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
-        output.set(Test_Data(txt = "event:$slotName:$eventName:${eventData["info"]}"))
+        output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))
     }
 }
 

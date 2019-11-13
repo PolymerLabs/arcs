@@ -1,31 +1,165 @@
-schema Foo
+// This is a duplicate of src/wasm/cpp/tests/schemas.arcs
 
-schema Data
-  Number num
-  Text txt
-  URL lnk
-  Boolean flg
-//Reference<Foo> ref // TODO(alxr): port references support to Kotlin
+particle HandleSyncUpdateTest in 'test-module.wasm'
+  in * {Number num, Text txt, URL lnk, Boolean flg, Reference<Foo {Text val}> ref} sng
+  in [* {Number num, Text txt, URL lnk, Boolean flg, Reference<Foo {Text val}> ref}] col
+  out [* {Text txt, Number num}] res
 
-schema Empty
+recipe HandleSyncUpdateTest
+  HandleSyncUpdateTest
+    sng <- h1
+    col <- h2
+    res -> h3
 
-schema RenderFlags
-  Boolean template
-  Boolean model
 
-schema ServiceResponse
-  Text call
-  Text tag
-  Text payload
 
-schema SpecialFields
-  Text for
-  Number internal_id
+particle RenderTest in 'test-module.wasm'
+  consume root
+  in * {Boolean template, Boolean model} flags
 
-particle Test
-  in Foo foo
-  in Data data
-  in Empty empty
-  in RenderFlags renderFlags
-  in ServiceResponse serviceResponse
-  in SpecialFields specialFields
+recipe RenderTest
+  slot 'rootslotid-root' as slot1
+  RenderTest
+    consume root as slot1
+    flags <- h1
+
+
+
+resource DataResource
+  start
+  [{"txt": "initial"}]
+store DataStore of * {Text txt} in DataResource
+
+particle AutoRenderTest in 'test-module.wasm'
+  consume root
+  in * {Text txt} data
+
+recipe AutoRenderTest
+  copy DataStore as h1
+  slot 'rootslotid-root' as slot1
+  AutoRenderTest
+    consume root as slot1
+    data <- h1
+
+
+
+particle EventsTest in 'test-module.wasm'
+  consume root
+  out * {Text txt} output
+
+recipe EventsTest
+  slot 'rootslotid-root' as slot1
+  EventsTest
+    consume root as slot1
+    output -> h1
+
+
+
+particle ServicesTest in 'test-module.wasm'
+  out [* {Text call, Text tag, Text payload}] output
+
+recipe ServicesTest
+  ServicesTest
+    output -> h1
+
+
+
+particle MissingRegisterHandleTest in 'test-module.wasm'
+  in * {Number n} input
+
+recipe MissingRegisterHandleTest
+  MissingRegisterHandleTest
+    input <- h1
+
+
+
+particle EntityClassApiTest in 'test-module.wasm'
+  in * {Number num, Text txt, URL lnk, Boolean flg, Reference<Foo {Text val}> ref} data
+  in * {} empty
+  out [* {Text msg}] errors
+
+recipe EntityClassApiTest
+  EntityClassApiTest
+    data <- h1
+    empty <- h2
+    errors -> h3
+
+
+
+particle SpecialSchemaFieldsTest in 'test-module.wasm'
+  in * {Text for, Number internal_id} fields
+  out [* {Text msg}] errors
+
+recipe SpecialSchemaFieldsTest
+  SpecialSchemaFieldsTest
+    fields <- h1
+    errors -> h2
+
+
+
+particle ReferenceClassApiTest in 'test-module.wasm'
+  in * {Number num, Text txt} data
+  out [* {Text msg}] errors
+
+recipe ReferenceClassApiTest
+  ReferenceClassApiTest
+    data <- h1
+    errors -> h2
+
+
+
+particle SingletonApiTest in 'test-module.wasm'
+  consume root
+  in * {Number num, Text txt} inHandle
+  out * {Number num, Text txt} outHandle
+  inout * {Number num, Text txt} ioHandle
+
+recipe SingletonApiTest
+  slot 'rootslotid-root' as slot1
+  SingletonApiTest
+    consume root as slot1
+    inHandle <- h1
+    outHandle -> h2
+    ioHandle = h3
+
+
+
+particle CollectionApiTest in 'test-module.wasm'
+  consume root
+  in [* {Number num}] inHandle
+  out [* {Number num, Text txt, Boolean flg}] outHandle
+  inout [* {Number num, Text txt, Boolean flg}] ioHandle
+
+recipe CollectionApiTest
+  slot 'rootslotid-root' as slot1
+  CollectionApiTest
+    consume root as slot1
+    inHandle <- h1
+    outHandle -> h2
+    ioHandle = h3
+
+
+
+particle ReferenceHandlesTest in 'test-module.wasm'
+  inout Reference<* {Number num, Text txt}> sng
+  inout [Reference<* {Number num, Text txt}>] col
+  out [* {Text txt}] res
+
+recipe ReferenceHandlesTest
+  ReferenceHandlesTest
+    sng = h1
+    col = h2
+    res -> h3
+
+
+
+particle SchemaReferenceFieldsTest in 'test-module.wasm'
+  in * {Number num, Text txt, Reference<* {Text val}> ref} input
+  out * {Number num, Text txt, Reference<* {Text val}> ref} output
+  out [* {Text txt}] res
+
+recipe SchemaReferenceFieldsTest
+  SchemaReferenceFieldsTest
+    input <- h1
+    output -> h2
+    res -> h3
