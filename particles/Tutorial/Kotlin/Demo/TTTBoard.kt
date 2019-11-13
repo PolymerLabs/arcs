@@ -1,6 +1,7 @@
 package arcs.tutorials.tictactoe
 
 import arcs.Collection
+import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
@@ -24,6 +25,11 @@ class TTTBoard : Particle() {
             ))
             clicks++
         }
+    }
+
+    override fun onHandleUpdate(handle: Handle) {
+        this.renderOutput()
+        super.onHandleUpdate(handle)
     }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {

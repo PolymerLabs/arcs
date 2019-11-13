@@ -8,7 +8,6 @@ import arcs.TTTHumanPlayer_Events
 import arcs.TTTHumanPlayer_GameState
 import arcs.TTTHumanPlayer_MyMove
 import arcs.TTTHumanPlayer_Player
-import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {
@@ -22,19 +21,12 @@ class TTTHumanPlayer : Particle() {
         registerHandle("events", events)
         registerHandle("myMove", myMove)
         registerHandle("player", player)
-        log("sync in TTTHumanPlayer called!")
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        log("OnHandleUpdate in TTTHumanPlayer called!")
-        this.events.forEach { event ->
-            log("Events: $event")
+        if (events.size > 0 && gameState.get()?.currentPlayer == player.get()?.id) {
+            this.myMove.set(TTTHumanPlayer_MyMove(move = events.elementAt(events.size - 1).move))
         }
-        log("gameState: ${gameState.get()}")
-        log("player: ${player.get()}")
-//        if (events.size > 0 && gameState.get()?.currentPlayer == player.get()?.id) {
-//            log("let's look at the events!")
-//        }
         super.onHandleUpdate(handle)
     }
 }

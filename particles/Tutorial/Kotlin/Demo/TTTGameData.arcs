@@ -27,13 +27,13 @@ resource HumanDefault
 resource FirstHuman
   start
   [
-    {"name": "Player One", "avatar": "👩‍🚀"}
+    {"name": "Player One", "avatar": "X‍"}
   ]
 
 resource SecondHuman
   start
   [
-    {"name": "Player Two", "avatar": "🦸"}
+    {"name": "Player Two", "avatar": "O"}
   ]
 
 store ComputerStore of Person in ComputerDefault

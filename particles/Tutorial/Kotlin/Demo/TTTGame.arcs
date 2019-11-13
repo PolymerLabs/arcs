@@ -11,6 +11,10 @@ particle TTTBoard in 'TTTBoard.wasm'
 particle TTTGame in 'TTTGame.wasm'
   inout GameState gameState
   inout Person playerOne
+  inout Move playerOneMove
+  inout Person playerTwo
+  inout Move playerTwoMove
+  out [Event] events
   root: consumes
     boardSlot: provides
 
@@ -22,10 +26,15 @@ particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
 
 
 recipe GamePlayersDemoRecipe
-  use HumanStore as playerOne
+  use HumanOneStore as playerOne
+  use HumanTwoStore as playerTwo
   TTTGame
     gameState = gameState
     playerOne = playerOne
+    playerOneMove = playerOneMove
+    playerTwo = playerTwo
+    playerTwoMove = playerTwoMove
+    events = events
     root: consumes
       boardSlot: provides board
   TTTBoard
@@ -37,6 +46,11 @@ recipe GamePlayersDemoRecipe
     events <- events
     myMove -> playerOneMove
     player <- playerOne
+  TTTHumanPlayer
+      gameState = gameState
+      events <- events
+      myMove -> playerTwoMove
+      player <- playerTwo
   description `Kotlin Tutorial TicTacToe Demo`
 
 
