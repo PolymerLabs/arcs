@@ -274,14 +274,11 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
+      if (storeStub.storageKey instanceof VolatileStorageKey) {
+        arc.volatileMemory.deserialize(storeStub.storeInfo.model, storeStub.storageKey.unique);
+      }
       const store = await storeStub.activate();
       await arc._registerStore(store.baseStore, tags);
-      if (store.baseStore.storageKey instanceof VolatileStorageKey) {
-        const driver = new VolatileDriver<{}>(store.baseStore.storageKey, Exists.MayExist, arc.volatileMemory);
-        driver.registerReceiver(() => true);
-        await driver.send(store.baseStore.storeInfo.model, 1);
-        // TODO(shans): Remove driver from driver list
-      }
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
