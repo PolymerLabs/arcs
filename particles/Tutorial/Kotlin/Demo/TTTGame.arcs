@@ -51,6 +51,6 @@ recipe GamePlayersDemoRecipe
       events <- events
       myMove -> playerTwoMove
       player <- playerTwo
-  description `Kotlin Tutorial TicTacToe Demo`
+  description `Kotlin Tutorial TicTacToe Demo2`
 
 
