@@ -20,4 +20,6 @@ import 'Tutorial/Kotlin/Tutorial.arcs'
 import 'TicTacToe/TicTacToe.arcs'
 // Other
 import 'Native/native.arcs'
+// Test
+import 'tests/WasmIntegrationTest.arcs'
 
