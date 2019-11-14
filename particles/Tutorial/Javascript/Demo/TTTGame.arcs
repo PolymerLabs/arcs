@@ -3,76 +3,70 @@
 import 'TTTGameSchemas.arcs'
 import 'TTTGameData.arcs'
 
-schema Person
-  name: Text
-  avatar: Text
-  id: Number
-
-
 particle Game in './source/TTTGame.js'
-  playerOne: reads writes Person {name: Text}
-  playerTwo: reads writes Person
+  playerOne: reads writes Person {name, avatar, id}
+  playerTwo: reads writes Person {name, avatar, id}
   gameState: reads writes GameState
-  playerOneMove: reads writes Move
-  playerTwoMove: reads writes Move
+  playerOneMove: reads writes Move {move}
+  playerTwoMove: reads writes Move {move}
   events: reads writes [Event]
   root: consumes
     gameSlot: provides
 
 particle TicTacToeBoard in './source/TTTBoard.js'
-  gameState: reads GameState
+  gameState: reads GameState {board, currentPlayer}
   events: writes [Event]
   boardSlot: consumes
 
 particle HumanPlayer in './source/TTTHumanPlayer.js'
-  gameState: reads GameState
+  gameState: reads GameState {currentPlayer}
   events: reads [Event]
-  player: reads Person
-  myMove: writes Move
+  player: reads Person {id}
+  myMove: writes Move {move}
 
 particle RandomComputer in './source/TTTRandomComputer.js'
-  computerMove: writes Move
-  gameState: reads GameState
-  player: reads Person
+  computerMove: writes Move {move}
+  gameState: reads GameState {board, currentPlayer}
+  player: reads Person {id}
 
 recipe GameDemoRecipe
-  playerOneMove: create
-  playerTwoMove: create
-  gameState: create
-  playerTwo: use ComputerStore
+  playerOneMove: create #humanMove
+  playerTwoMove: create #computerMove
   playerOne: use HumanStore
+  playerTwo: use ComputerStore
+  gameState: create
 
   Game
     root: consumes
       gameSlot: provides board
-    gameState: any gameState
-    playerOne: any playerOne
-    playerTwo: any playerTwo
-    playerOneMove: any playerOneMove
-    playerTwoMove: any playerTwoMove
-    events: any events
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerTwo: reads writes playerTwo
+    playerOneMove: reads writes playerOneMove
+    playerTwoMove: reads writes playerTwoMove
+    events: reads writes events
 
   TicTacToeBoard
-    gameState: any gameState
-    events: any events
+    gameState: reads gameState
+    events: writes events
     boardSlot: consumes board
   
   HumanPlayer
-    gameState: any gameState
+    gameState: reads gameState
     events: reads events
     myMove: writes playerOneMove
     player: reads playerOne
 
   RandomComputer
-    computerMove: any playerTwoMove
+    computerMove: writes playerTwoMove
     player: reads playerTwo
     gameState: reads gameState
 
   description `Javascript Tutorial One Player TicTacToe Demo`
 
 recipe GamePlayersDemoRecipe
-  playerOneMove: create
-  playerTwoMove: create
+  playerOneMove: create #playerOne
+  playerTwoMove: create #playerTwo
   gameState: create
   playerOne: use HumanOneStore
   playerTwo: use HumanTwoStore
@@ -80,26 +74,26 @@ recipe GamePlayersDemoRecipe
   Game
     root: consumes
       gameSlot: provides board
-    gameState: any gameState
-    playerOne: any playerOne
-    playerTwo: any playerTwo
-    playerOneMove: any playerOneMove
-    playerTwoMove: any playerTwoMove
-    events: any events
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerTwo: reads writes playerTwo
+    playerOneMove: reads writes playerOneMove
+    playerTwoMove: reads writes playerTwoMove
+    events: reads writes events
 
   TicTacToeBoard
-    gameState: any gameState
-    events: any events
+    gameState: reads gameState
+    events: writes events
     boardSlot: consumes board
   
   HumanPlayer
-    gameState: any gameState
+    gameState: reads gameState
     events: reads events
     myMove: writes playerOneMove
     player: reads playerOne
 
   HumanPlayer
-    gameState: any gameState
+    gameState: reads gameState
     events: reads events
     myMove: writes playerTwoMove
     player: reads playerTwo
@@ -107,8 +101,8 @@ recipe GamePlayersDemoRecipe
   description `Javascript Tutorial Two Players TicTacToe Demo`
 
 recipe GameComputersDemoRecipe
-  playerOneMove: create
-  playerTwoMove: create
+  playerOneMove: create #playerOne
+  playerTwoMove: create #playerTwo
   gameState: create
   playerOne: use ComputerOneStore
   playerTwo: use ComputerTwoStore
@@ -117,25 +111,25 @@ recipe GameComputersDemoRecipe
   Game
     root: consumes
       gameSlot: provides board
-    gameState: any gameState
-    playerOne: any playerOne
-    playerTwo: any playerTwo
-    playerOneMove: any playerOneMove
-    playerTwoMove: any playerTwoMove
-    events: any events
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerTwo: reads writes playerTwo
+    playerOneMove: reads playerOneMove
+    playerTwoMove: reads playerTwoMove
+    events: reads writes events
 
   TicTacToeBoard
-    gameState: any gameState
-    events: any events
+    gameState: reads gameState
+    events: writes events
     boardSlot: consumes board
   
   RandomComputer
-    computerMove: any playerOneMove
+    computerMove: writes playerOneMove
     player: reads playerOne
     gameState: reads gameState
   
   RandomComputer
-    computerMove: any playerTwoMove
+    computerMove: writes playerTwoMove
     player: reads playerTwo
     gameState: reads gameState
 

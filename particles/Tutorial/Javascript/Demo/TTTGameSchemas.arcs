@@ -1,4 +1,3 @@
-
 schema GameState
   gameOver: Boolean
   winnerId: Number
@@ -13,3 +12,8 @@ schema Event
 
 schema Move
   move: Number
+
+schema Person
+  name: Text
+  avatar: Text
+  id: Number
