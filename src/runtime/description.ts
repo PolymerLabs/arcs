@@ -19,6 +19,10 @@ import {CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorag
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Dictionary} from './hot.js';
+import {Flags} from './flags.js';
+import {StorageProxy} from './storageNG/storage-proxy.js';
+import {unifiedHandleFor} from './handle.js';
+import {SingletonHandle, CollectionHandle} from './storageNG/handle.js';
 
 export class Description {
   private constructor(
@@ -156,6 +160,20 @@ export class Description {
 
   private static async _prepareStoreValue(store: UnifiedStore): Promise<DescriptionValue|undefined> {
     if (!store) {
+      return undefined;
+    }
+    if (Flags.useNewStorageStack) {
+      const proxy = new StorageProxy('id', await store.activate(), store.type);
+      const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
+      if (handle instanceof SingletonHandle) {
+        const value = await handle.get();
+        return {entityValue: await handle.get()};
+      } else if (handle instanceof CollectionHandle) {
+        const values = await handle.toList();
+        if (values && values.length > 0) {
+          return {collectionValues: values};
+        }
+      }
       return undefined;
     }
     if (store.type instanceof CollectionType) {

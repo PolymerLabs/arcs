@@ -23,6 +23,8 @@ import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
 import {Flags} from '../../runtime/flags.js';
+import {StorageKey} from '../../runtime/storageNG/storage-key.js';
+import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -376,26 +378,33 @@ ${particlesSpec}
 ${recipeManifest}
     `));
 
+    let key: (input: string) => (string | StorageKey);
+    if (Flags.useNewStorageStack) {
+      key = unique => new RamDiskStorageKey(unique);
+    }  else {
+      key = key => key;
+    }
+
     const schema = manifest.findSchemaByName('Foo');
     manifest.newStore({
       type: schema.type.collectionOf(),
       name: 'Test1',
       id: 'test-1',
-      storageKey: 'storage-key-1',
+      storageKey: key('storage-key-1'),
       tags: ['tag1'],
     });
     manifest.newStore({
       type: schema.type.collectionOf(),
       name: 'Test2',
       id: 'test-2',
-      storageKey: 'storage-key-2',
+      storageKey: key('storage-key-2'),
       tags: ['tag2'],
     });
     manifest.newStore({
       type: schema.type.collectionOf(),
       name: 'Test2',
       id: 'test-3',
-      storageKey: 'storage-key-3',
+      storageKey: key('storage-key-3'),
       tags: [],
     });
 
