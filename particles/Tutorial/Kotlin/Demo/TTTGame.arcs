@@ -14,7 +14,7 @@ particle TTTGame in 'TTTGame.wasm'
   inout Move playerOneMove
   inout Person playerTwo
   inout Move playerTwoMove
-  out [Event] events
+  inout [Event] events
   root: consumes
     boardSlot: provides
 
@@ -28,7 +28,6 @@ particle TTTRandomComputer in 'TTTRandomComputer.wasm'
   in GameState gameState
   in Person player
   out Move myMove
-
 
 recipe GamePlayersDemoRecipe
   use HumanOneStore as playerOne

@@ -6,6 +6,7 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
+// import arcs.TTTBoard_Reset
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
@@ -14,8 +15,10 @@ class TTTBoard : Particle() {
     private val events = Collection { TTTBoard_Events() }
     private var clicks = 0.0
 
-    init { registerHandle("gameState", gameState)
+    init {
+        registerHandle("gameState", gameState)
         registerHandle("events", events)
+        // registerHandle("reset", reset)
 
         eventHandler("onClick") { eventData ->
             this.events.store(TTTBoard_Events(
@@ -27,7 +30,7 @@ class TTTBoard : Particle() {
         }
 
         eventHandler("reset") {
-            this.events.store(TTTBoard_Events(type = "reset"))
+            // this.reset.set(TTTBoard_Reset(reset = true))
         }
     }
 
