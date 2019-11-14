@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Utils} from '../../../lib/utils.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
 import {logsFactory} from '../../../../build/platform/logs-factory.js';
 
 const {log} = logsFactory('pipe::parse');
@@ -19,10 +19,10 @@ export const parse = async ({path, content}, tid, bus) => {
   let manifest;
   if (path) {
     log(`loading [${path}]`);
-    manifest = await Utils.parseFile(path);
+    manifest = await Runtime.parseFile(path);
   } else if (content) {
     log(`parsing [${content.length}] bytes`);
-    manifest = await Utils.parse(content);
+    manifest = await Runtime.parse(content);
   }
   let recipes = [];
   if (manifest) {

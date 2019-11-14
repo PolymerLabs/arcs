@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {App} from './app.js';
-import {Utils} from '../lib/utils.js';
+import {Runtime} from '../../build/runtime/runtime.js';
 import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 
 // notify user we are live
@@ -18,7 +18,7 @@ console.log('\n--- Arcs Shell ---\n');
 (async () => {
   try {
     // configure arcs environment
-    Utils.init('../..');
+    Runtime.init('../..');
     // create a composer
     const composer = new UiSlotComposer();
     await App(composer);

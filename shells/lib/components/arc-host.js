@@ -10,8 +10,8 @@
 
 import {ArcType} from '../../../build/runtime/type.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
 import {SyntheticStores} from '../synthetic-stores.js';
-import {Utils} from '../utils.js';
 
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
@@ -32,7 +32,7 @@ export class ArcHost {
   async spawn(config) {
     log('spawning arc', config);
     this.config = config;
-    const context = this.context || await Utils.parse(``);
+    const context = this.context || await Runtime.parse(``);
     const storage = config.storage || this.storage;
     this.serialization = await this.computeSerialization(config, storage);
     this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories);
@@ -71,14 +71,14 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(context, composer, storage, id, serialization, portFactories) {
-    return await Utils.spawn({id, context, composer, serialization, storage: `${storage}/${id}`, portFactories});
+    return await Runtime.spawnArc({id, context, composer, serialization, storage: `${storage}/${id}`, portFactories});
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
     try {
-      manifest = await Utils.parse(manifest);
+      manifest = await Runtime.parse(manifest);
       const recipe = manifest.allRecipes[0];
-      const plan = await Utils.resolve(arc, recipe);
+      const plan = await Runtime.resolveRecipe(arc, recipe);
       if (plan) {
         await this.instantiatePlan(arc, plan);
       }

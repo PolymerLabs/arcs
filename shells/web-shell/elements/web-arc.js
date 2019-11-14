@@ -36,8 +36,8 @@ const template = Xen.Template.html`
 
 /*
  * TODO(sjmiles): this is messed up, fix:
- * `config.manifest` is used by Utils.spawn to bootstrap a recipe
- * `manifest` is used by WebArc to add a recipe
+ * `config.manifest` is used by `Runtime.spawnArc` to bootstrap a recipe in a new Arc
+ * `manifest` is used by WebArc to add a recipe to an existing Arc
  */
 
 // config = {id, [serialization], [manifest]}
