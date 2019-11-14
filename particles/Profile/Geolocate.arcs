@@ -9,4 +9,4 @@ particle Geolocate in './source/Geolocate.js'
 recipe Geolocate
   location: create *
   Geolocate
-    location: any location
+    location: location

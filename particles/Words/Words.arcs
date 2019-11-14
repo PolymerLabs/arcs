@@ -19,11 +19,11 @@ recipe Words
   //posts: create #posts
   //post: create
   GamePane
-    move: any move
-    board: any board
-    stats: any stats
-    //posts: any posts
-    //post: any post
-    //person: any person
-    //renderParticle: any ShowSingleStats
-    //shellTheme: any shellTheme
+    move: move
+    board: board
+    stats: stats
+    //posts: posts
+    //post: post
+    //person: person
+    //renderParticle: ShowSingleStats
+    //shellTheme: shellTheme

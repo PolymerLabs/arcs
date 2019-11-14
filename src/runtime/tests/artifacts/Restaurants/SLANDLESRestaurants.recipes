@@ -27,7 +27,7 @@ recipe
 recipe &nearbyRestaurants
   restaurants: create #restaurants #volatile
   SlandleFindRestaurants
-    restaurants: any restaurants
+    restaurants: restaurants
 
 import '../Events/Event.schema'
 import '../Events/SLANDLESPartySize.manifest'
@@ -38,12 +38,12 @@ recipe &makeReservation
   event: create #event
   list: use #restaurants
   SlandleReservationForm
-    event: any event
+    event: event
   SlandleReservationAnnotation
-    event: any event
-    list: any list
+    event: event
+    list: list
   SlandlePartySize
-    event: any event
+    event: event
 
 import '../Events/SLANDLESEvents.recipes'
 

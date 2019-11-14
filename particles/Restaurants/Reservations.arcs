@@ -53,27 +53,27 @@ recipe MakeReservations
   annotationDescriptions: create #volatile
   toproot: slot 'rootslotid-toproot'
   Calendar
-    event: any event
-    descriptions: any calendarDescriptions
+    event: event
+    descriptions: calendarDescriptions
     action: consumes toproot
   // top-of-frame event editor
   ReservationForm
-    restaurant: any restaurant
-    event: any event
+    restaurant: restaurant
+    event: event
     action: consumes toproot
   // per-restaurant tile scheduler
   AnnotationMultiplexer
-    list: any restaurants
-    annotation: any event
-    hostedParticle: any ReservationMultiAnnotation
+    list: restaurants
+    annotation: event
+    hostedParticle: ReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   DetailReservationForm
-    restaurant: any restaurant
-    event: any event
+    restaurant: restaurant
+    event: event
     detailAction: consumes
       annotation: provides detailAnnotation
   ReservationAnnotation
-    restaurant: any restaurant
-    event: any event
-    descriptions: any annotationDescriptions
+    restaurant: restaurant
+    event: event
+    descriptions: annotationDescriptions
     annotation: consumes detailAnnotation

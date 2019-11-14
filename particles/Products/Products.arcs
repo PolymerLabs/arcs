@@ -12,20 +12,20 @@ import 'Interests.arcs'
 recipe Products
   products: use *
   Items
-    list: any products
+    list: products
   ItemMultiplexer
-    list: any products
-    hostedParticle: any ProductItem
+    list: products
+    hostedParticle: ProductItem
 
 // Entry point for Products Demo: create a shopping list from context data
 
 recipe CreateShoppingList
   products: copy *
   Items
-    list: any products
+    list: products
   ItemMultiplexer
-    list: any products
-    hostedParticle: any ProductItem
+    list: products
+    hostedParticle: ProductItem
   description `create shopping list from ${Items.list}`
 
 // Convert simple shopping list to a shopping list for an occasion, like a birthday
@@ -35,10 +35,10 @@ recipe ShopForOccasion
   shoplist: use *
   person: map
   GiftList
-    person: any person
+    person: person
   SimpleAnnotationMultiplexer
-    list: any shoplist
-    hostedParticle: any Arrivinator
+    list: shoplist
+    hostedParticle: Arrivinator
     annotation: consumes annotationSlot
   // description derives from GiftList particle
 
@@ -55,19 +55,19 @@ recipe UseWishlist
     // This is probably wrong, but it works now (instead of annotationSlot)
     // choice: consumes annotationSlot
     choice: consumes actionSlot
-    list: any shoplist
-    choices: any wishlist
-    hostedParticle: any AlsoOn
+    list: shoplist
+    choices: wishlist
+    hostedParticle: AlsoOn
   // recommend products from wishlist
   Recommend
-    population: any wishlist
-    known: any shoplist
-    recommendations: any recommendations
+    population: wishlist
+    known: shoplist
+    recommendations: recommendations
   // present recommendations for adding to shoplist
   Chooser
     action: consumes actionSlot
-    person: any person
-    choices: any recommendations
-    resultList: any shoplist
+    person: person
+    choices: recommendations
+    resultList: shoplist
 
 

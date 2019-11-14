@@ -17,12 +17,12 @@ recipe BasicUserProfile
   people: use #identities
   avatars: map #BOXED_avatar
   AvatarPicker
-    avatar: any avatar
+    avatar: avatar
     person: reads person
   FriendsPicker
     person: reads person
-    friends: any friends
+    friends: friends
     avatars: reads avatars
     people: reads people
   AddressForm
-    address: any address
+    address: address

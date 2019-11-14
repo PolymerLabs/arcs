@@ -8,8 +8,8 @@ recipe TMDBSearch
   query: use *
   results: create *
   TMDBSearch
-    query: any query
-    results: any results
+    query: query
+    results: results
   description `search TMDB(tm)`
 
 recipe TMDBShowTiles
@@ -22,10 +22,10 @@ recipe TMDBShowTiles
   SelectableTiles
     consume root as container
       provide tile as tile
-    list: any results
-    selected: any selected
+    list: results
+    selected: selected
   TileMultiplexer
-    hostedParticle: any TMDBTile
+    hostedParticle: TMDBTile
     consume tile as tile
-    list: any results
+    list: results
   description `show ${SelectableTiles.list}`

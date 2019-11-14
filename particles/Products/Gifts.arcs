@@ -32,14 +32,14 @@ particle AlternateShipping in 'source/AlternateShipping.js'
 //  shoplist: use #shoplist
 //  person: copy *
 //  GiftList
-//    person: any person
+//    person: person
 //  Multiplexer
-//    list: any shoplist
-//    hostedParticle: any Arrivinator
+//    list: shoplist
+//    hostedParticle: Arrivinator
 //    annotation: consumes annotationSlot
 //  Multiplexer
-//    list: any shoplist
-//    hostedParticle: any AlternateShipping
+//    list: shoplist
+//    hostedParticle: AlternateShipping
 //    annotation: consumes annotationSlot
 //  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
 

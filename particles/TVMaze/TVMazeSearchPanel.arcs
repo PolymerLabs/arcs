@@ -10,14 +10,14 @@ import '../Layout/Layout.arcs'
 recipe TVMazeSearchBar
   query: create #volatile
   TVMazeSearchBar
-    query: any query
+    query: query
 
 recipe TVMazeSearchShows
   query: use
   shows: create #tiles #shows
   TVMazeSearchShows
-    query: any query
-    shows: any shows
+    query: query
+    shows: shows
   description `use TVMaze(tm) to search for TV shows`
 
 recipe TVMazeShowTiles
@@ -27,18 +27,18 @@ recipe TVMazeShowTiles
     root: consumes
       tile: provides
       annotation: provides action
-    list: any shows
-    selected: any selected
+    list: shows
+    selected: selected
   TileMultiplexer
-    hostedParticle: any TVMazeShowTile
+    hostedParticle: TVMazeShowTile
     tile: consumes
-    list: any shows
+    list: shows
   description `show information about ${SelectableTiles.list}`
 
 recipe TVMazeShowPanel
   show: use
   descriptions: create #volatile
   TVMazeShowPanel
-    show: any show
-    descriptions: any descriptions
+    show: show
+    descriptions: descriptions
 

@@ -30,10 +30,10 @@ particle CakeMuxer in '../Common/source/Multiplexer.js'
 recipe &makeCakes
   cakesHandle: map #cakes
   List
-    items: any cakesHandle
+    items: cakesHandle
   CakeMuxer
-    list: any cakesHandle
-    hostedParticle: any MakeCake
+    list: cakesHandle
+    hostedParticle: MakeCake
   description `show ${List.items}`
 
 interface LightCandleInterface
@@ -51,8 +51,8 @@ particle CandleMuxer in '../Common/source/Multiplexer.js'
 //   map #cakes as cakesHandle
 //   slot #special as candlesSlot
 //   CandleMuxer
-//     list: any cakesHandle
-//     hostedParticle: any LightCandles
+//     list: cakesHandle
+//     hostedParticle: LightCandles
 //     consumes candles as candlesSlot
 //   description `light candles for ${CandleMuxer.list}`
 

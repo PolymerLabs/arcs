@@ -16,6 +16,6 @@ particle RestaurantFind in 'source/RestaurantFind.js'
 //recipe RestaurantFind
 //  restaurants: create #tiles
 //  RestaurantFind
-//    restaurants: any restaurants
+//    restaurants: restaurants
 //  description `find restaurants near ${RestaurantFind.location}`
 

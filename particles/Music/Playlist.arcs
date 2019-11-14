@@ -20,8 +20,8 @@ recipe PlaylistView
   items: map #items
   selected: create #selected
   ItemMultiplexer
-    list: any items
-    hostedParticle: any PlaylistItem
+    list: items
+    hostedParticle: PlaylistItem
   SelectableItems
-    list: any items
-    selected: any selected
+    list: items
+    selected: selected
