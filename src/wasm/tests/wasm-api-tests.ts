@@ -13,7 +13,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {RozSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
-import {assertThrowsAsync} from '../../runtime/testing/test-util.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ReferenceType} from '../../runtime/type.js';
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -230,7 +230,7 @@ async function setup(manifestString) {
 
     // TODO: fix PEC -> host error handling
     it.skip('missing registerHandle', async () => {
-      assertThrowsAsync(async () => await setup(`
+      await assertThrowsAsync(async () => await setup(`
         import '${schemasFile}'
 
         particle MissingRegisterHandleTest in '${buildDir}/test-module.wasm'
