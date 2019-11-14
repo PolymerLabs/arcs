@@ -33,18 +33,25 @@ abstract class Particle : WasmObject() {
      * synchronization.
      *
      * @param name Name of the handle
-     * @param willSync Mark handle for synchronization; depends if handle is readable
+     * @param canRead Mark handle with read access
+     * @param canWrite  Mark handle with write access
      * @return The name-associated handle, or null
      * @see [registerHandle]
      * @see [onHandleSync]
      */
-    fun connectHandle(name: String, willSync: Boolean): Handle? {
+    fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
         log("Connect called internal '$name'")
 
         handles[name]?.let {
-            if (willSync) toSync.add(it)
+            if (canRead) {
+              toSync.add(it)
+              it.direction = if (canWrite) Direction.InOut else Direction.In
+            } else {
+              it.direction = Direction.Out
+            }
             return it
         }
+
 
         log("Handle $name not registered")
         return null
@@ -185,9 +192,13 @@ abstract class Particle : WasmObject() {
 
 }
 
+enum class Direction { Unconnected, In, Out, InOut }
+
+
 abstract class Handle : WasmObject() {
     lateinit var name: String
     lateinit var particle: Particle
+    var direction: Direction = Direction.Unconnected
     abstract fun sync(encoded: String?)
     abstract fun update(added: String?, removed: String?)
 }

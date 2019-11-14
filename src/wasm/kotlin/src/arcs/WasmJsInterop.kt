@@ -108,9 +108,9 @@ fun _free(ptr: WasmAddress) {
 
 @Retain
 @ExportForCppRuntime("_connectHandle")
-fun connectHandle(particlePtr: WasmAddress, handleName: WasmString, willSync: Boolean):WasmAddress {
+fun connectHandle(particlePtr: WasmAddress, handleName: WasmString, canRead: Boolean, canWrite: Boolean): WasmAddress {
     log("Connect called")
-    return particlePtr.toObject<Particle>().connectHandle(handleName.toKString(), willSync)!!.toWasmAddress()
+    return particlePtr.toObject<Particle>().connectHandle(handleName.toKString(), canRead, canWrite)!!.toWasmAddress()
 }
 
 @Retain
