@@ -11,7 +11,6 @@
 
 package arcs.storage
 
-import arcs.arcs.util.TaggedLog
 import arcs.crdt.CrdtChange
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtException
@@ -21,6 +20,7 @@ import arcs.crdt.CrdtOperation
 import arcs.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.storage.DirectStore.State.Name.Idle
+import arcs.util.TaggedLog
 import kotlin.coroutines.coroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic

@@ -11,7 +11,7 @@
 
 package arcs.util.testutil
 
-import arcs.arcs.util.Log
+import arcs.util.Log
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.Locale

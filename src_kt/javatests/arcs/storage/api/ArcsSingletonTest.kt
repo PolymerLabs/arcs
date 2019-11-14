@@ -1,7 +1,5 @@
 package arcs.storage.api
 
-import arcs.arcs.util.Log
-import arcs.arcs.util.testutil.initLogForTest
 import arcs.data.RawEntity
 import arcs.data.Schema
 import arcs.data.SchemaDescription
@@ -12,6 +10,8 @@ import arcs.storage.driver.RamDisk
 import arcs.storage.driver.RamDiskDriverProvider
 import arcs.storage.driver.RamDiskStorageKey
 import arcs.storage.referencemode.ReferenceModeStorageKey
+import arcs.util.Log
+import arcs.util.testutil.initLogForTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
