@@ -1,4 +1,4 @@
-package arcs.arcs.storage.api
+package arcs.storage.api
 
 import arcs.arcs.util.guardWith
 import arcs.common.Referencable

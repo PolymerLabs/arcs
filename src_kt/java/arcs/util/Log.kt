@@ -1,4 +1,4 @@
-package arcs.arcs.util
+package arcs.util
 
 import arcs.arcs.util.Log.formatter
 import arcs.arcs.util.Log.toString
