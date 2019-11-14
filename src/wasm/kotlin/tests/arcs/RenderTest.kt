@@ -15,6 +15,9 @@ class RenderTest : Particle() {
         registerHandle("flags", flags)
     }
 
+    override fun init() {
+        renderOutput()
+    }
 
     override fun getTemplate(slotName: String): String? = if (shouldTemplate) "abc" else null
 

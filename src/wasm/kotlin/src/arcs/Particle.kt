@@ -100,7 +100,7 @@ abstract class Particle : WasmObject() {
      *
      * @param handle Singleton or Collection handle
      */
-    open fun onHandleUpdate(handle: Handle) = renderOutput()
+    open fun onHandleUpdate(handle: Handle) = Unit
 
     /**
      * React to handle synchronization.
@@ -112,7 +112,7 @@ abstract class Particle : WasmObject() {
      * @param handle  Singleton or Collection handle
      * @param allSynced flag indicating if all handles are synchronized
      */
-    open fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()
+    open fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
 
     /** Rendering through UiBroker */
     fun renderOutput() {
