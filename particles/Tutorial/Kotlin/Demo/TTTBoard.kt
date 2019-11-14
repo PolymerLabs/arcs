@@ -25,6 +25,10 @@ class TTTBoard : Particle() {
             ))
             clicks++
         }
+
+        eventHandler("reset") {
+            this.events.store(TTTBoard_Events(type = "reset"))
+        }
     }
 
     override fun onHandleUpdate(handle: Handle) {
@@ -41,7 +45,7 @@ class TTTBoard : Particle() {
             boardList.add(mapOf("cell" to cell, "value" to index.toString()))
         }
 
-        return mapOf("hideReset" to "true",
+        return mapOf(
             "buttons" to mapOf(
                 "\$template" to "button",
                 "models" to boardList
@@ -77,6 +81,7 @@ class TTTBoard : Particle() {
     <span>{{cell}}</span>
   </button>
 </template>
+Please hit reset to start a new game.<button on-click="reset">Reset</button>
 """
     }
 }
