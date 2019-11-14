@@ -84,25 +84,23 @@ public class ArcsAndroidClient {
     return arcData;
   }
 
-  public ArcData runArc(String recipe, String arcId, String pecId, Particle particle) {
+  public ArcData runArc(String recipe, String arcId, Particle particle) {
     ArcData arcData =
       new ArcData.Builder()
         .setRecipe(recipe)
         .setArcId(arcId)
-        .setPecId(pecId)
         .addParticleData(new ArcData.ParticleData().setParticle(particle))
         .build();
     runArc(arcData);
     return arcData;
   }
 
-  public ArcData runArc(String recipe, String arcId, String pecId,
+  public ArcData runArc(String recipe, String arcId,
                         List<? extends Particle> particles) {
     ArcData.Builder builder =
       new ArcData.Builder()
         .setRecipe(recipe)
-        .setArcId(arcId)
-        .setPecId(pecId);
+        .setArcId(arcId);
     particles.forEach(particle -> builder.addParticleData(
       new ArcData.ParticleData().setParticle(particle)
     ));
