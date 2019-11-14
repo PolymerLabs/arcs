@@ -1104,11 +1104,10 @@ ParticleConnectionTargetComponents
   }
   / tags:TagList
   {
-    let particle = null;
     return toAstNode<AstNode.ParticleConnectionTargetComponents>({
       kind: 'handle-connection-components',
       name: null,
-      particle,
+      particle: null,
       tags
     });
   }
