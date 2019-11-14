@@ -6,7 +6,7 @@ import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 
-class EntityClassApiTest: Particle() {
+class EntityClassApiTest: ParticleAsserter() {
 
 }
 
