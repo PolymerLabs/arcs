@@ -25,6 +25,7 @@ import {Id, ArcId} from '../../runtime/id.js';
 import {Flags} from '../../runtime/flags.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
 import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {EntityType} from '../../runtime/type.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -387,21 +388,21 @@ ${recipeManifest}
 
     const schema = manifest.findSchemaByName('Foo');
     manifest.newStore({
-      type: schema.type.collectionOf(),
+      type: new EntityType(schema).collectionOf(),
       name: 'Test1',
       id: 'test-1',
       storageKey: key('storage-key-1'),
       tags: ['tag1'],
     });
     manifest.newStore({
-      type: schema.type.collectionOf(),
+      type: new EntityType(schema).collectionOf(),
       name: 'Test2',
       id: 'test-2',
       storageKey: key('storage-key-2'),
       tags: ['tag2'],
     });
     manifest.newStore({
-      type: schema.type.collectionOf(),
+      type: new EntityType(schema).collectionOf(),
       name: 'Test2',
       id: 'test-3',
       storageKey: key('storage-key-3'),

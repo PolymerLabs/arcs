@@ -29,7 +29,7 @@ describe('Handle', () => {
 
   it('clear singleton store', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
-    const barStore = await arc.createStore(manifest.schemas.Bar.type) as SingletonStorageProvider;
+    const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar)) as SingletonStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
     assert.isNull(await barStore.get());
@@ -40,7 +40,7 @@ describe('Handle', () => {
     // referenceMode stores *can't* ignore duplicate stores of the same
     // entity value.
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
-    const store = await arc.createStore(manifest.schemas.Bar.type) as SingletonStorageProvider;
+    const store = await arc.createStore(new EntityType(manifest.schemas.Bar)) as SingletonStorageProvider;
     let version = 0;
     store.legacyOn(() => version++);
     assert.strictEqual(version, 0);
@@ -56,7 +56,7 @@ describe('Handle', () => {
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
-    const barStore = await arc.createStore(manifest.schemas.Bar.type.collectionOf()) as CollectionStorageProvider;
+    const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar).collectionOf()) as CollectionStorageProvider;
     let version = 0;
     barStore.legacyOn(({add: [{effective}]}) => {if (effective) version++;});
     assert.strictEqual(barStore._version, 0);
@@ -125,7 +125,7 @@ describe('Handle', () => {
 
   it('remove entry from store', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
-    const barStore = await arc.createStore(manifest.schemas.Bar.type.collectionOf()) as CollectionStorageProvider;
+    const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar).collectionOf()) as CollectionStorageProvider;
     const bar = {id: 'an id', value: 'a Bar'};
     await barStore.store(bar, ['key1']);
     await barStore.remove(bar.id, ['key1']);
@@ -149,9 +149,9 @@ describe('Handle', () => {
   it('createHandle only allows valid tags & types in stores', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
-    await arc.createStore(manifest.schemas.Bar.type, 'name', 'id1', ['#sufficient']);
-    await arc.createStore(manifest.schemas.Bar.type, 'name', 'id2', ['#valid']);
-    await arc.createStore(manifest.schemas.Bar.type, 'name', 'id3', ['#valid', '#good']);
+    await arc.createStore(new EntityType(manifest.schemas.Bar), 'name', 'id1', ['#sufficient']);
+    await arc.createStore(new EntityType(manifest.schemas.Bar), 'name', 'id2', ['#valid']);
+    await arc.createStore(new EntityType(manifest.schemas.Bar), 'name', 'id3', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>
       assert([...arc.storeTags.values()].find(tags => tags.has(tag)),
         `tags ${arc.storeTags.values()} should have included ${tag}`));
@@ -160,7 +160,7 @@ describe('Handle', () => {
   it('uses default storage keys', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), storageKey: 'pouchdb://memory/yyy/test',
                          context: manifest, loader});
-    const singleton = await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1') as SingletonStorageProvider;
+    const singleton = await arc.createStore(new EntityType(manifest.schemas.Bar), 'foo', 'test1') as SingletonStorageProvider;
     assert.strictEqual(singleton.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
   });
 });

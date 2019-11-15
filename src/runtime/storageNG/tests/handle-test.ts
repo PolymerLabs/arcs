@@ -87,7 +87,7 @@ describe('CollectionHandle', async () => {
   before(async () => {
     const loader = new Loader();
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    barType = manifest.schemas.Bar.type as EntityType;
+    barType = new EntityType(manifest.schemas.Bar);
     Bar = barType.getEntitySchema().entityClass();
   });
 

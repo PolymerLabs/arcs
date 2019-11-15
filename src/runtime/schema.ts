@@ -10,7 +10,6 @@
 
 import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
-import {EntityType, Type} from './type.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
@@ -118,10 +117,6 @@ export class Schema {
       }
     }
     return true;
-  }
-
-  get type(): Type {
-    return new EntityType(this);
   }
 
   entityClass(context: ParticleExecutionContext|null = null): EntityClass {
