@@ -20,4 +20,8 @@ describe('services: random', () => {
     assert.isAtLeast(randomValue, 0);
     assert.isAtMost(randomValue, 1);
   });
+
+  it('*** deliberately broken test to check travis cron notifications ***', () => {
+    assert.isFalse(true);
+  });
 });
