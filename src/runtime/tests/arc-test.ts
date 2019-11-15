@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import '../storage/firebase/firebase-provider.js';
-import '../storage/pouchdb/pouch-db-provider.js';
+//import '../storage/firebase/firebase-provider.js';
+//import '../storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
@@ -169,7 +169,7 @@ describe('Arc new storage', () => {
   }));
 });
 
-['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
+['volatile://'/*, 'pouchdb://memory/user-test/'*/].forEach((storageKeyPrefix) => {
 describe('Arc ' + storageKeyPrefix, () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();

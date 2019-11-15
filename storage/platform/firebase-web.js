@@ -7,5 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../storage/build/firebase.js';
-import '../../build/runtime/storage/firebase/firebase-provider.js';
+
+// `window.firebase` may contain configuration and other non-active ingredients, but
+// `window.firebase.firebase` only has a value if the (optional) firebase library is linked in.
+const firebase = window.firebase ? window.firebase.firebase : null;
+export {firebase};

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProviderFactory} from '../storage-provider-factory.js';
-import {PouchDbStorage} from './pouch-db-storage.js';
+// We use a non-standard way of importing Firebase, which means we don't get type definitions for it. This file just imports the official
+// Firebase type definitions and exports them.
 
-StorageProviderFactory.register('pouchdb', {storage: PouchDbStorage, isPersistent: true});
+import firebase from 'firebase';
+export {firebase};

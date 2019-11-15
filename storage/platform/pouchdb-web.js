@@ -7,5 +7,5 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../storage/build/firebase.js';
-import '../../build/runtime/storage/firebase/firebase-provider.js';
+const {PouchDB, PouchDbMemory, PouchDbDebug} = window.PouchDB;
+export {PouchDB, PouchDbMemory, PouchDbDebug};
