@@ -75,7 +75,7 @@ fun String.toWasmString(): WasmString {
 
 /** Convert a Kotlin String to a WasmAddress, where `null` is a valid value. */
 fun String?.toWasmNullableString(): WasmNullableString {
-    return  this?.let { it.toWasmString() } ?: 0
+    return this?.let { it.toWasmString() } ?: 0
 }
 
 // these are exported methods in the C++ runtime
@@ -116,7 +116,7 @@ fun connectHandle(particlePtr: WasmAddress, handleName: WasmString, canRead: Boo
 @Retain
 @ExportForCppRuntime("_init")
 fun init(particlePtr: WasmAddress) {
-  particlePtr.toObject<Particle>().init()
+    particlePtr.toObject<Particle>().init()
 }
 
 @Retain
@@ -160,16 +160,16 @@ fun fireEvent(particlePtr: WasmAddress, slotNamePtr: WasmString, handlerNamePtr:
 @Retain
 @ExportForCppRuntime("_serviceResponse")
 fun serviceResponse(particlePtr: WasmAddress, callPtr: WasmString, responsePtr: WasmString, tagPtr: WasmString) {
-  val dict = StringDecoder.decodeDictionary(responsePtr.toKString())
-  particlePtr.toObject<Particle>().serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
+    val dict = StringDecoder.decodeDictionary(responsePtr.toKString())
+    particlePtr.toObject<Particle>().serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
 
 }
 
 @Retain
 @ExportForCppRuntime("_renderOutput")
 fun renderOutput(particlePtr: WasmAddress) {
-  particlePtr.toObject<Particle>()
-    .renderOutput()
+    particlePtr.toObject<Particle>()
+        .renderOutput()
 }
 
 @SymbolName("_singletonSet")

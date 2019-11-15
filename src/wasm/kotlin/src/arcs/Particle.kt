@@ -44,10 +44,10 @@ abstract class Particle : WasmObject() {
 
         handles[name]?.let {
             if (canRead) {
-              toSync.add(it)
-              it.direction = if (canWrite) Direction.InOut else Direction.In
+                toSync.add(it)
+                it.direction = if (canWrite) Direction.InOut else Direction.In
             } else {
-              it.direction = Direction.Out
+                it.direction = Direction.Out
             }
             return it
         }
