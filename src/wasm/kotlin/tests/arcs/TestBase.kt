@@ -9,7 +9,7 @@ import kotlin.test.Asserter
 import kotlin.test.AssertionError
 
 
-class TestBase : Particle(), Asserter {
+open class TestBase : Particle(), Asserter {
     private val errors = Collection { Test_Data() }
 
     init {
