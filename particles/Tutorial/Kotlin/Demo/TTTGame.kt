@@ -103,6 +103,15 @@ class TTTGame : Particle() {
                 this.events.clear()
             }
         }
+        if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
+            this.gameState.set(TTTGame_GameState(
+                board = ",,,,,,,,",
+                currentPlayer = 0.0,
+                gameOver = false,
+                winnerAvatar = ""
+            ))
+            this.events.clear()
+        }
         this.renderOutput()
         super.onHandleUpdate(handle)
     }

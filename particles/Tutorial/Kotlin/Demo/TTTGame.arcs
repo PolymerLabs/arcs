@@ -14,7 +14,7 @@ particle TTTGame in 'TTTGame.wasm'
   inout Move playerOneMove
   inout Person playerTwo
   inout Move playerTwoMove
-  out [Event] events
+  inout [Event] events
   root: consumes
     boardSlot: provides
 
@@ -46,8 +46,8 @@ recipe GamePlayersDemoRecipe
       boardSlot: provides board
   TTTBoard
       boardSlot: consumes board
-      gameState: any gameState
-      events: any events
+      gameState: gameState
+      events: events
   TTTHumanPlayer
     gameState = gameState
     events <- events
