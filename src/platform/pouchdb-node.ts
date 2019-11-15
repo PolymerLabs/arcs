@@ -7,7 +7,5 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import PouchDB from 'pouchdb';
-import PouchDbMemory from 'pouchdb-adapter-memory';
-import PouchDbDebug from 'pouchdb-debug';
-export {PouchDB, PouchDbMemory, PouchDbDebug};
+
+export * from '../../storage/platform/pouchdb-node.js';

@@ -158,7 +158,7 @@ describe('Handle', () => {
         `tags ${arc.storeTags.values()} should have included ${tag}`));
   });
 
-  it('uses default storage keys', async () => {
+  it.skip('uses default storage keys', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), storageKey: 'pouchdb://memory/yyy/test',
                          context: manifest, loader});
     const singleton = await arc.createStore(new EntityType(manifest.schemas.Bar), 'foo', 'test1') as SingletonStorageProvider;

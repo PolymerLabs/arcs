@@ -102,7 +102,7 @@ describe('synthetic storage ', () => {
     assert.isEmpty(await synth.toList());
   });
 
-  it('manifest with persistent handles', async () => {
+  it.skip('manifest with persistent handles', async () => {
     const {synth} = await setup(`
       schema Foo
       schema Bar
@@ -121,7 +121,7 @@ describe('synthetic storage ', () => {
          'pouchdb://aa.pouchdb.org/bb [Bar {}] <>']);
   });
 
-  it('updates to the target store are propagated', async () => {
+  it.skip('updates to the target store are propagated', async () => {
     const {id, targetStore, synth} = await setup(`
       schema Foo
       store Store0 of [Foo] at 'firebase://xx.firebaseio.com/yy'
