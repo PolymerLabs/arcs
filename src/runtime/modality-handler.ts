@@ -9,28 +9,23 @@
  */
 
 import {DescriptionFormatter} from './description-formatter.js';
-//import {DescriptionDomFormatter} from './description-dom-formatter.js';
 import {SlotConsumer} from './slot-consumer.js';
-//import {SlotDomConsumer} from './slot-dom-consumer.js';
-//import {HeadlessSlotDomConsumer} from './headless-slot-dom-consumer.js';
 
 export class ModalityHandler {
   constructor(public readonly slotConsumerClass: typeof SlotConsumer,
               public descriptionFormatter?: typeof DescriptionFormatter) {}
 
   static createHeadlessHandler(): ModalityHandler {
-    return new ModalityHandler(SlotConsumer); //HeadlessSlotDomConsumer);
+    return new ModalityHandler(SlotConsumer);
   }
 
-  static readonly headlessHandler : ModalityHandler = new ModalityHandler(SlotConsumer); //HeadlessSlotDomConsumer);
+  static readonly headlessHandler : ModalityHandler = new ModalityHandler(
+    SlotConsumer
+  );
 
   static readonly basicHandler : ModalityHandler = new ModalityHandler(
     SlotConsumer,
     DescriptionFormatter
   );
 
-  //static readonly domHandler : ModalityHandler = new ModalityHandler(
-  //  SlotDomConsumer,
-  //  DescriptionDomFormatter
-  //);
 }

@@ -16,7 +16,7 @@ import {UnifiedStore} from './storageNG/unified-store.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
-import {UiSlotComposer} from './ui-slot-composer.js';
+import {UiSlotComposer as SlotComposer} from './ui-slot-composer.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
@@ -100,10 +100,7 @@ export class Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
-    // TODO(sjmiles): UiSlotComposer type shenanigans are temporary pending complete replacement
-    // of SlotComposer by UiSlotComposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
-    // doesn't bother tslint at all when done in other modules.
-    return new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, null, pecFactory);
+    return new Runtime(loader, SlotComposer, null, pecFactory);
   }
 
   static mapFromRootPath(root: string) {
