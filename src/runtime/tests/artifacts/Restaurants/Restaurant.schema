@@ -9,10 +9,10 @@
 import '../Things/Thing.schema'
 
 schema Restaurant extends Thing
-  Text id
-  Text reference
-  Text icon
-  Text photos
-  Text photo
-  Number rating
-  Text address
+  id: Text
+  reference: Text
+  icon: Text
+  photos: Text
+  photo: Text
+  rating: Number
+  address: Text

@@ -4,21 +4,21 @@ import './StardateDisplay.arcs'
 import '../Services/particles/Random.arcs'
 
 recipe StardateTOS
-  create as stardate
-  create as destination
+  stardate: create *
+  destination: create *
 
   RandomParticle
-    randomData -> randomPlanet
+    randomData: writes randomPlanet
 
   RandomParticle
-    randomData -> randomTime
+    randomData: writes randomTime
 
   StardateTOS
-    stardate = stardate
-    destination = destination
-    randomTime <- randomTime
-    randomPlanet <- randomPlanet
+    stardate: stardate
+    destination: destination
+    randomTime: reads randomTime
+    randomPlanet: reads randomPlanet
 
   StardateDisplay
-    stardate = stardate
-    destination = destination
+    stardate: stardate
+    destination: destination

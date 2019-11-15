@@ -15,8 +15,8 @@ import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 
 export interface ClassGenerator {
-  addField(field: string, typeChar: string, inherited: boolean);
-  addReference(field: string, inherited: boolean, refName: string);
+  addField(field: string, typeChar: string);
+  addReference(field: string, refName: string);
   generate(fieldCount: number): string;
 }
 
@@ -78,26 +78,25 @@ export abstract class Schema2Base {
         const fields = Object.entries(node.schema.fields);
 
         for (const [field, descriptor] of fields) {
-          const inherited = !node.extras.includes(field);
           switch (this.typeSummary(descriptor)) {
             case 'schema-primitive:Text':
-              generator.addField(field, 'T', inherited);
+              generator.addField(field, 'T');
               break;
 
             case 'schema-primitive:URL':
-              generator.addField(field, 'U', inherited);
+              generator.addField(field, 'U');
               break;
 
             case 'schema-primitive:Number':
-              generator.addField(field, 'N', inherited);
+              generator.addField(field, 'N');
               break;
 
             case 'schema-primitive:Boolean':
-              generator.addField(field, 'B', inherited);
+              generator.addField(field, 'B');
               break;
 
             case 'schema-reference':
-              generator.addReference(field, inherited, node.refs.get(field).name);
+              generator.addReference(field, node.refs.get(field).name);
               break;
 
             default:

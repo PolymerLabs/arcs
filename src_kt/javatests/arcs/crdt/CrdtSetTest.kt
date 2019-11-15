@@ -11,9 +11,11 @@
 
 package arcs.crdt
 
-import arcs.crdt.internal.Actor
 import arcs.common.Referencable
 import arcs.common.ReferenceId
+import arcs.crdt.CrdtSet.Data
+import arcs.crdt.CrdtSet.IOperation
+import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -176,12 +178,12 @@ class CrdtSetTest {
         val modelChange =
             requireNotNull(
                 changes.modelChange
-                    as? CrdtChange.Data<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
+                    as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
             )
         val otherChange =
             requireNotNull(
                 changes.otherChange
-                    as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
+                    as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
             )
 
         assertThat(modelChange.data.versionMap).isEqualTo(expectedVersion)
@@ -263,7 +265,7 @@ class CrdtSetTest {
         val (_, otherChange) = bob.merge(alice.data)
 
         val operations = requireNotNull(
-            otherChange as? CrdtChange.Operations<CrdtSet.Data<Reference>, CrdtSet.IOperation<Reference>>
+            otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
         )
 
         assertThat(operations.ops).containsExactlyElementsIn(expectedAdds)
@@ -515,14 +517,14 @@ class CrdtSetTest {
 
         val (modelChange2, otherChange2) = alice.merge(bob.data)
         assertThat(modelChange2.isEmpty()).isTrue()
-        assertThat(modelChange2.isEmpty()).isTrue()
+        assertThat(otherChange2.isEmpty()).isTrue()
 
         val charlie = CrdtSet<Reference>()
         charlie.add("c", VersionMap("c" to 1), "baz")
         val (modelChange3, otherChange3) = alice.merge(charlie.data)
 
         assertThat(modelChange3.isEmpty()).isFalse()
-        assertThat(modelChange3.isEmpty()).isFalse()
+        assertThat(otherChange3.isEmpty()).isFalse()
     }
 
     private data class Reference(override val id: ReferenceId) : Referencable
@@ -541,4 +543,3 @@ class CrdtSetTest {
         id: ReferenceId
     ) = Add(actor, versions, id).also { applyOperation(it) }
 }
-

@@ -15,6 +15,8 @@ http://polymer.github.io/PATENTS.txt
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <!-- No complains about missing favicon.ico from https requests. -->
+  <link rel="icon" href="data:,">
 
   <script>
     window.fetch = function fetchLocal(url) {
@@ -32,6 +34,7 @@ http://polymer.github.io/PATENTS.txt
     };
   </script>
 
+  <script type="text/javascript" src="./cache-mgr.js"></script>
   <script type="text/javascript" src="./shell.js"></script>
 
   <style>

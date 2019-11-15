@@ -38,80 +38,86 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class RamDiskBackingStoreIntegrationTest {
-  private lateinit var ramDiskProvider: DriverProvider
+    private lateinit var ramDiskProvider: DriverProvider
 
-  @Before
-  fun setup() {
-    ramDiskProvider = RamDiskDriverProvider()
-  }
-
-  @After
-  fun teardown() {
-    RamDisk.clear()
-    DriverFactory.clearRegistrationsForTesting()
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  @Test
-  fun allowsStorageOf_aNumberOfObjects() = runBlockingTest {
-    val storageKey = RamDiskStorageKey("unique")
-    val baseStore = Store<CrdtCount.Data, CrdtCount.Operation, Int>(
-      StoreOptions(storageKey, ExistenceCriteria.ShouldCreate, CountType(), StorageMode.Backing)
-    )
-    val store = baseStore.activate() as BackingStore
-
-    val count1 = CrdtCount()
-    count1.applyOperation(Increment("me", version = 0 to 1))
-
-    val count2 = CrdtCount()
-    count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
-
-    val id = store.on(MultiplexedProxyCallback { _, _ -> true })
-    assertThat(store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, id), "thing0")).isTrue()
-    assertThat(store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, id), "thing1")).isTrue()
-
-    store.idle()
-
-    val message = atomic<ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>?>(null)
-    val muxId = atomic<String?>(null)
-    var job = Job()
-
-    val id2 = store.on(MultiplexedProxyCallback { m, eventId ->
-      message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
-      muxId.value = eventId
-      job.complete()
-      return@MultiplexedProxyCallback true
-    })
-
-    store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing0")
-    job.join()
-    message.value.assertHasData(count1)
-    assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing0")
-
-    message.value = null
-    muxId.value = null
-    job = Job()
-    store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing1")
-    job.join()
-    message.value.assertHasData(count2)
-    assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing1")
-
-    message.value = null
-    muxId.value = null
-    job = Job()
-    store.onProxyMessage(ProxyMessage.SyncRequest(id2), "not-a-thing")
-    job.join()
-    message.value.assertHasData(CrdtCount())
-    assertThat(muxId.value ?: "huh, it was null.").isEqualTo("not-a-thing")
-  }
-
-  private fun <Data, Op, ConsumerData> ProxyMessage<Data, Op, ConsumerData>?.assertHasData(
-    expectedModel: CrdtModel<Data, Op, ConsumerData>
-  ) where Data : CrdtData, Op : CrdtOperation {
-    assertWithMessage("Message must be initialized.").that(this).isNotNull()
-    when (this) {
-      is ProxyMessage.ModelUpdate -> assertThat(model).isEqualTo(expectedModel.data)
-      else -> fail("Message $this is not a ModelUpdate")
+    @Before
+    fun setup() {
+        ramDiskProvider = RamDiskDriverProvider()
     }
-  }
+
+    @After
+    fun teardown() {
+        RamDisk.clear()
+        DriverFactory.clearRegistrationsForTesting()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun allowsStorageOf_aNumberOfObjects() = runBlockingTest {
+        val storageKey = RamDiskStorageKey("unique")
+        val baseStore = Store<CrdtCount.Data, CrdtCount.Operation, Int>(
+            StoreOptions(
+                storageKey, ExistenceCriteria.ShouldCreate, CountType(), StorageMode.Backing
+            )
+        )
+        val store = baseStore.activate() as BackingStore
+
+        val count1 = CrdtCount()
+        count1.applyOperation(Increment("me", version = 0 to 1))
+
+        val count2 = CrdtCount()
+        count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
+
+        val id = store.on(MultiplexedProxyCallback { _, _ -> true })
+        assertThat(
+            store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, id), "thing0")
+        ).isTrue()
+        assertThat(
+            store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, id), "thing1")
+        ).isTrue()
+
+        store.idle()
+
+        val message = atomic<ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>?>(null)
+        val muxId = atomic<String?>(null)
+        var job = Job()
+
+        val id2 = store.on(MultiplexedProxyCallback { m, eventId ->
+            message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
+            muxId.value = eventId
+            job.complete()
+            return@MultiplexedProxyCallback true
+        })
+
+        store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing0")
+        job.join()
+        message.value.assertHasData(count1)
+        assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing0")
+
+        message.value = null
+        muxId.value = null
+        job = Job()
+        store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing1")
+        job.join()
+        message.value.assertHasData(count2)
+        assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing1")
+
+        message.value = null
+        muxId.value = null
+        job = Job()
+        store.onProxyMessage(ProxyMessage.SyncRequest(id2), "not-a-thing")
+        job.join()
+        message.value.assertHasData(CrdtCount())
+        assertThat(muxId.value ?: "huh, it was null.").isEqualTo("not-a-thing")
+    }
+
+    private fun <Data, Op, ConsumerData> ProxyMessage<Data, Op, ConsumerData>?.assertHasData(
+        expectedModel: CrdtModel<Data, Op, ConsumerData>
+    ) where Data : CrdtData, Op : CrdtOperation {
+        assertWithMessage("Message must be initialized.").that(this).isNotNull()
+        when (this) {
+            is ProxyMessage.ModelUpdate -> assertThat(model).isEqualTo(expectedModel.data)
+            else -> fail("Message $this is not a ModelUpdate")
+        }
+    }
 }

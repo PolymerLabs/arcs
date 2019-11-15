@@ -13,7 +13,7 @@ import {Id, ArcId} from '../id.js';
 import {ChangeEvent, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
-import {assertThrowsAsync} from '../testing/test-util.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ArcType} from '../type.js';
 
 describe('synthetic storage ', () => {
@@ -42,12 +42,14 @@ describe('synthetic storage ', () => {
     const storage = new StorageProviderFactory(ArcId.newForTest('test'));
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
-    check('simplistic://arc/handles/volatile', 'unknown storage protocol');
-    check('synthetic://arc/handles/not-a-protocol://test', 'unknown storage protocol');
-    check('synthetic://archandles/volatile', 'invalid synthetic key');
-    check('synthetic://arc//volatile', 'invalid synthetic key');
-    check('synthetic://curve/handles/volatile://test', 'invalid scope');
-    check('synthetic://arc/cranks/volatile://test', 'invalid category');
+    await Promise.all([
+      check('simplistic://arc/handles/volatile', 'unknown storage protocol'),
+      check('synthetic://arc/handles/not-a-protocol://test', 'unknown storage protocol'),
+      check('synthetic://archandles/volatile', 'invalid synthetic key'),
+      check('synthetic://arc//volatile', 'invalid synthetic key'),
+      check('synthetic://curve/handles/volatile://test', 'invalid scope'),
+      check('synthetic://arc/cranks/volatile://test', 'invalid category'),
+    ]);
   });
 
   it('non-existent target key', async () => {

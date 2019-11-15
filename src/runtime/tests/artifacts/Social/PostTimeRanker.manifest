@@ -9,5 +9,5 @@
 import 'Post.schema'
 
 particle PostTimeRanker in 'source/PostTimeRanker.js'
-  in [Post] input
-  out [Post] output
+  input: reads [Post]
+  output: writes [Post]

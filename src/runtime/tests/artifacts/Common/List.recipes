@@ -13,43 +13,43 @@ import 'List.manifest'
 //----------------------------------
 
 recipe SelectableUseListRecipe
-  use #items as items
-  create #selected as selected
+  items: use #items
+  selected: create #selected
   SelectableList
-    items = items
-    selected = selected
+    items: items
+    selected: selected
   ItemMultiplexer
-    list = items
+    list: items
 
 recipe SelectableCopyListRecipe
-  copy #items as items
-  create #selected as selected
+  items: copy #items
+  selected: create #selected
   SelectableList
-    items = items
-    selected = selected
+    items: items
+    selected: selected
   ItemMultiplexer
-    list = items
+    list: items
 
 //----------------------------------------
 // Recipe: Generic Tiled List (Selectable)
 //----------------------------------------
 
 recipe SelectableCopyTilesRecipe
-  copy #tiles as items
-  create #selected as selected
+  items: copy #tiles
+  selected: create #selected
   SelectableTileList
-    items = items
-    selected = selected
+    items: items
+    selected: selected
   TileMultiplexer
-    list = items
+    list: items
   description `show ${SelectableTileList.items}`
 
 recipe SelectableUseTilesRecipe
-  use #tiles as items
-  create #selected as selected
+  items: use #tiles
+  selected: create #selected
   SelectableTileList
-    items = items
-    selected = selected
+    items: items
+    selected: selected
   TileMultiplexer
-    list = items
+    list: items
   description `show ${SelectableTileList.items}`

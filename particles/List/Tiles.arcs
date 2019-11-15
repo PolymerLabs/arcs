@@ -1,41 +1,41 @@
 interface HostedTileInterface
-  in ~anyType *
-  consume tile
+  reads ~anyType
+  tile: consumes Slot
 
 particle TileMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  host HostedTileInterface hostedParticle
-  consume set of tile
+  list: reads [~anyType]
+  hostedParticle: hosts HostedTileInterface
+  tile: consumes [Slot]
 
 particle SelectableTiles in 'source/Tiles.js'
-  in [~anyType] list
-  inout ~anyType selected
-  consume root #tiles
-    //must
-    provide set of tile
-    provide set of annotation
-    provide action
+  list: reads [~anyType]
+  selected: reads writes ~anyType
+  root: consumes #tiles
+    //must TODO(jopra): The 'must' here is not particularly clear.
+    tile: provides? [Slot]
+    annotation: provides? [Slot]
+    action: provides? Slot
 
 // TODO(sjmiles): recipes below would be for use by Coalescer, but they create
 // too much noise atm.
 
 //recipe TileMultiplexer
-//  use #tile as list
+//  list: use #tile
 //  TileMultiplexer
-//    list = list
+//    list: list
 
 //recipe SelectableCopyTilesRecipe
-//  copy #items as items
-//  create #selected as selected
+//  items: copy #items
+//  selected: create #selected
 //  SelectableTiles
-//    items = items
-//    selected = selected
+//    items: items
+//    selected: selected
 //  description `show ${SelectableTiles.items}`
 
 //recipe SelectableUseTilesRecipe
 //  use #items as items
 //  create #selected as selected
 //  SelectableTiles
-//    items = items
-//    selected = selected
+//    items: items
+//    selected: selected
 //  description `show ${SelectableTiles.items}`

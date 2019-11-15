@@ -15,9 +15,9 @@ import arcs.crdt.CrdtEntity.Operation.AddToSet
 import arcs.crdt.CrdtEntity.Operation.ClearSingleton
 import arcs.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.crdt.CrdtEntity.Operation.SetSingleton
+import arcs.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.crdt.internal.VersionMap
 import arcs.data.RawEntity
-import arcs.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

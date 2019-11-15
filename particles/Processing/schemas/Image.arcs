@@ -1,3 +1,2 @@
 schema Image
-   Text alt
-
+   alt: Text

@@ -11,7 +11,6 @@
 
 package arcs.storage.referencemode
 
-import arcs.common.Referencable
 import arcs.crdt.CrdtException
 import arcs.crdt.CrdtOperation
 import arcs.crdt.CrdtOperationAtTime

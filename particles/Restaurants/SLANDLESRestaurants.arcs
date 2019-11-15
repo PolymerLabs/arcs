@@ -13,22 +13,22 @@ import '../List/SLANDLESList.arcs'
 import '../Profile/SLANDLESGeolocate.arcs'
 
 recipe SlandleRestaurants
-  create #volatile as location
-  create as restaurants
-  create #volatile #selected as selected
+  location: create #volatile
+  restaurants: create *
+  selected: create #volatile #selected
   SlandleGeolocate
-    location = location
+    location: location
   SlandleRestaurantFind
-    location = location
-    restaurants = restaurants
+    location: location
+    restaurants: restaurants
   SlandleSelectableTiles
-    list = restaurants
-    selected = selected
+    list: restaurants
+    selected: selected
   SlandleTileMultiplexer
-    list = restaurants
-    hostedParticle = SlandleRestaurantTile
+    list: restaurants
+    hostedParticle: SlandleRestaurantTile
   SlandleDetailSlider
-    selected = selected
+    selected: selected
   SlandleRestaurantDetail
-    restaurant = selected
+    restaurant: selected
   description `find restaurants near ${RestaurantFind.location} using SLANDLES`

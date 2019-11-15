@@ -12,22 +12,22 @@ import 'SLANDLESRestaurantDetail.manifest'
 import '../Places/SLANDLESExtractLocation.manifest'
 
 recipe &displayRestaurants
-  ? as list
-  SlandleRestaurantMasterDetail.selected -> SlandleRestaurantList.selected
-  SlandleRestaurantDetail.selected -> SlandleRestaurantList.selected
-  SlandleRestaurantMasterDetail.list -> SlandleRestaurantList.list
+  list: ?
+  SlandleRestaurantMasterDetail.selected: writes SlandleRestaurantList.selected
+  SlandleRestaurantDetail.selected: writes SlandleRestaurantList.selected
+  SlandleRestaurantMasterDetail.list: writes SlandleRestaurantList.list
   SlandleRestaurantList
-    list <- list
+    list: reads list
 
 recipe
-  create as location
+  location: create *
   SlandleExtractLocation
-    location -> location
+    location: writes location
 
 recipe &nearbyRestaurants
-  create #restaurants #volatile as restaurants
+  restaurants: create #restaurants #volatile
   SlandleFindRestaurants
-    restaurants = restaurants
+    restaurants: restaurants
 
 import '../Events/Event.schema'
 import '../Events/SLANDLESPartySize.manifest'
@@ -35,23 +35,23 @@ import 'SLANDLESReservationForm.manifest'
 import 'SLANDLESReservationAnnotation.manifest'
 
 recipe &makeReservation
-  create #event as event
-  use #restaurants as list
+  event: create #event
+  list: use #restaurants
   SlandleReservationForm
-    event = event
+    event: event
   SlandleReservationAnnotation
-    event = event
-    list = list
+    event: event
+    list: list
   SlandlePartySize
-    event = event
+    event: event
 
 import '../Events/SLANDLESEvents.recipes'
 
 import 'SLANDLESFavoriteFoodAnnotation.manifest'
 
 recipe
-  map #favorite as food
-  use as restaurants
+  foo: map #favorite
+  restaurants: use *
   SlandleFavoriteFoodAnnotation
-    restaurants <- restaurants
-    food <- food
+    restaurants: reads restaurants
+    food: reads food

@@ -10,7 +10,7 @@ import 'Restaurant.schema'
 import '../Events/Event.schema'
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
-  in [Restaurant] list
-  inout Event event
-  consume set of annotation
+  list: reads [Restaurant]
+  event: reads writes Event
+  annotation: consumes [Slot]
   //description `reservation details`

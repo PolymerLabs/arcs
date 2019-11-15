@@ -11,7 +11,7 @@ import './config.js';
 
 // platform agnostic code
 import {DevtoolsConnection} from '../../build/devtools-connector/devtools-connection.js';
-import {Utils} from '../lib/utils.js';
+import {Runtime} from '../../build/runtime/runtime.js';
 import {ArcHost} from '../lib/components/arc-host.js';
 import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
 import {Const} from '../configuration/constants.js';
@@ -46,11 +46,11 @@ export class PlannerShellInterface {
     // connect to DevTools if running with --explore
     await maybeConnectToDevTools();
     // create an arcs environment
-    Utils.init(assetsPath);
+    Runtime.init(assetsPath);
     // observe user's arc list
     const userArcs = new UserArcs(storage, userid);
     // base context (particles & recipes) from static manifest
-    const context = await Utils.parse(contextManifest);
+    const context = await Runtime.parse(contextManifest);
     // userContext continually updates context based on user's arcs
     const userContext = new UserContext();
     // wait for context to spin up

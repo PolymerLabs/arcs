@@ -1,13 +1,13 @@
 schema TVMazeShow
-  Text showid
-  Text name
-  Text description
-  Text image
-  Text network
-  Text day
-  Text time
-  Text suggestion
-  Text extra
-  Boolean favorite
-  Boolean delete
+  showid: Text
+  name: Text
+  description: Text
+  image: Text
+  network: Text
+  day: Text
+  time: Text
+  suggestion: Text
+  extra: Text
+  favorite: Boolean
+  delete: Boolean
   //description `${name} is on ${network} at ${time} on {$day}`

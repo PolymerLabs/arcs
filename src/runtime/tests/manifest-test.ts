@@ -16,7 +16,7 @@ import {Manifest, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
-import {assertThrowsAsync} from '../testing/test-util.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
@@ -1320,6 +1320,7 @@ ${particleStr1}
     assert(registry['somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
+    let broken = false;
     const verifyParticleManifests = (particlePaths) => {
       let count = 0;
       particlePaths.forEach(particleManifestFile => {
@@ -1329,8 +1330,8 @@ ${particleStr1}
             const model = parse(data);
             assert.isDefined(model);
           } catch (e) {
-            console.log(`Failed parsing ${particleManifestFile}`);
-            throw e;
+            console.log(`Failed parsing ${particleManifestFile} +${e.location.start.line}:${e.location.start.column}`);
+            broken = true;
           }
           ++count;
         }
@@ -1345,11 +1346,12 @@ ${particleStr1}
       if (fs.statSync(manifestFolderName).isDirectory()) {
         shellParticleNames = shellParticleNames.concat(
             fs.readdirSync(manifestFolderName)
-                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes'))
+                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes') || fileName.endsWith('.arcs'))
                 .map(fileName => path.join(manifestFolderName, fileName)));
       }
     });
-    assert.isAbove(verifyParticleManifests(shellParticleNames), 0);
+    assert.isAbove(verifyParticleManifests(shellParticleNames), 0, 'no particles parse');
+    assert.isFalse(broken, 'a particle doesn\'t parse correctly');
   });
   it('loads entities from json files', async () => {
     const manifestSource = `
@@ -1711,7 +1713,7 @@ resource SomeName
       interface NoHandleType
         foo: reads writes
       interface NoHandleDirection
-        foo: any Foo
+        foo: Foo
       interface OnlyHandleDirection
         writes
       interface ManyHandles
@@ -1829,7 +1831,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1852,7 +1854,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1876,7 +1878,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1898,7 +1900,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1947,23 +1949,23 @@ resource SomeName
       recipe
         h0: create
         P
-          foo: any h0
+          foo: h0
         P2
-          foo: any h0
+          foo: h0
 
       recipe
         h0: create
         P2
-          foo: any h0
+          foo: h0
         P3
-          foo: any h0
+          foo: h0
 
       recipe
         h0: create
         P2
-          foo: any h0
+          foo: h0
         P4
-          foo: any h0
+          foo: h0
     `);
     const [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1993,9 +1995,9 @@ resource SomeName
       recipe
         h0: create
         P
-          foo: any h0
+          foo: h0
         P2
-          foo: any h0
+          foo: h0
     `);
     const [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -2579,7 +2581,7 @@ resource SomeName
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           input: reads T {}
           check input is property1 or is property2 and is property3
@@ -2636,13 +2638,13 @@ resource SomeName
    }));
 
     it('fails for unknown handle names', async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           output: writes T {}
           claim oops is trusted
       `), `Can't make a claim on unknown handle oops`);
 
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           input: reads T {}
           check oops is trusted
@@ -2650,7 +2652,7 @@ resource SomeName
     });
 
     it(`doesn't allow claims on inputs`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           foo: reads T {}
           claim foo is trusted
@@ -2658,7 +2660,7 @@ resource SomeName
     });
 
     it(`doesn't allow checks on outputs`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           foo: writes T {}
           check foo is trusted
@@ -2666,7 +2668,7 @@ resource SomeName
     });
 
     it(`doesn't allow multiple different claims for the same output`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           foo: writes T {}
           claim foo is trusted
@@ -2675,7 +2677,7 @@ resource SomeName
     });
 
     it(`doesn't allow multiple different checks for the same input`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           foo: reads T {}
           check foo is trusted
@@ -2684,7 +2686,7 @@ resource SomeName
     });
 
     it(`doesn't allow checks on consumed slots`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -2693,7 +2695,7 @@ resource SomeName
     });
 
     it(`doesn't allow checks on unknown slots`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -2702,7 +2704,7 @@ resource SomeName
     });
 
     it(`doesn't allow multiple provided slots with the same name`, async () => {
-      assertThrowsAsync(async () => await Manifest.parse(`
+      await assertThrowsAsync(async () => await Manifest.parse(`
         particle A
           firstSlot: consumes
             mySlot: provides

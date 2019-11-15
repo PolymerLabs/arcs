@@ -182,16 +182,6 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
     this.containerStore.on(this.onContainerStore.bind(this));
   }
 
-  async getLocalData(): Promise<CRDTData> {
-    const {pendingIds, model} = this.constructPendingIdsAndModel(this.containerStore.localModel.getData());
-    if (pendingIds.length === 0) {
-      return model();
-    } else {
-      return new Promise(resolve =>
-          this.enqueueBlockingSend(pendingIds, () => resolve(model())));
-    }
-  }
-
   /**
    * Messages are enqueued onto an object-wide queue and processed in order.
    * Internally, each handler (handleContainerStore, handleBackingStore, handleProxyMessage)

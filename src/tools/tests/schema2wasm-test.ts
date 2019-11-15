@@ -13,12 +13,13 @@ import {Schema} from '../../runtime/schema.js';
 import {Dictionary} from '../../runtime/hot.js';
 import {Schema2Base, ClassGenerator} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';
+import {Schema2Cpp} from '../schema2cpp.js';
+import {Schema2Kotlin} from '../schema2kotlin.js';
 
 /* eslint key-spacing: ["error", {"mode": "minimum"}] */
 
 class Schema2Mock extends Schema2Base {
-  res: Dictionary<[string, string, boolean][]> = {};
-  count: Dictionary<number> = {};
+  res: Dictionary<{count: number, adds: string[]}> = {};
 
   constructor(manifest: Manifest) {
     super({'_': []});
@@ -26,26 +27,26 @@ class Schema2Mock extends Schema2Base {
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
-    const mock = this;
-    mock.res[node.name] = [];
+    const collector = {count: 0, adds: []};
+    this.res[node.name] = collector;
     return {
-      addField(field: string, typeChar: string, inherited: boolean) {
-        mock.res[node.name].push([field, typeChar, inherited]);
+      addField(field: string, typeChar: string) {
+        collector.adds.push(field + ':' + typeChar);
       },
 
-      addReference(field: string, inherited: boolean, refName: string) {
-        mock.res[node.name].push([field, refName, inherited]);
+      addReference(field: string, refName: string) {
+        collector.adds.push(field + ':' + refName);
       },
 
       generate(fieldCount: number): string {
-        mock.count[node.name] = fieldCount;
+        collector.count = fieldCount;
         return '';
       }
     };
   }
 }
 
-describe('schema2base', () => {
+describe('schema2wasm', () => {
   it('generates one class per unique schema', async () => {
     const manifest = await Manifest.parse(`\
       particle Foo
@@ -54,7 +55,11 @@ describe('schema2base', () => {
         inout [Site {URL url, Reference<* {Text txt}> ref}] input3
     `);
     const mock = new Schema2Mock(manifest);
-    assert.sameMembers(Object.keys(mock.res), ['FooInternal1', 'Foo_Input2', 'Foo_Input3']);
+    assert.deepStrictEqual(mock.res, {
+      'FooInternal1': {count: 1, adds: ['txt:T']},
+      'Foo_Input3':   {count: 2, adds: ['url:U', 'ref:FooInternal1']},
+      'Foo_Input2':   {count: 2, adds: ['txt:T', 'num:N']},
+    });
   });
 
   it('supports all primitive types', async () => {
@@ -64,14 +69,8 @@ describe('schema2base', () => {
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_Input': [
-        ['txt', 'T', false],
-        ['url', 'U', false],
-        ['num', 'N', false],
-        ['flg', 'B', false],
-      ]
+      'Foo_Input': {count: 4, adds: ['txt:T', 'url:U', 'num:N', 'flg:B']}
     });
-    assert.deepStrictEqual(mock.count, {'Foo_Input': 4});
   });
 
   it('supports nested references with schema aliasing', async () => {
@@ -82,32 +81,23 @@ describe('schema2base', () => {
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1':     [['a', 'T', false], ['r', 'Foo_H1_R', false]],
-      'Foo_H1_R':   [['b', 'T', false]],
-      'Foo_H2':     [['s', 'Foo_H2_S', false]],
-      'Foo_H2_S':   [['f', 'B', false], ['t', 'Foo_H2_S_T', false]],
-      'Foo_H2_S_T': [['x', 'N', false]],
-    });
-    assert.deepStrictEqual(mock.count, {
-      'Foo_H1': 2, 'Foo_H1_R': 1, 'Foo_H2': 1, 'Foo_H2_S': 2, 'Foo_H2_S_T': 1
+      'Foo_H1':     {count: 2, adds: ['a:T', 'r:Foo_H1_R']},
+      'Foo_H1_R':   {count: 1, adds: ['b:T']},
+      'Foo_H2':     {count: 1, adds: ['s:Foo_H2_S']},
+      'Foo_H2_S':   {count: 2, adds: ['f:B', 't:Foo_H2_S_T']},
+      'Foo_H2_S_T': {count: 1, adds: ['x:N']},
     });
   });
 
-  it('indicates inherited fields for type slicing', async () => {
-    const manifest = await Manifest.parse(`\
-      particle Foo
-        in * {Text txt} h1
-        in * {Text txt, Number num} h2
-        in * {URL url} h3
-        in * {Text txt, Number num, URL url} h4
-    `);
-    const mock = new Schema2Mock(manifest);
-    assert.deepStrictEqual(mock.res, {
-      'Foo_H1': [['txt', 'T', false]],
-      'Foo_H2': [['txt', 'T', true], ['num', 'N', false]],
-      'Foo_H3': [['url', 'U', false]],
-      'Foo_H4': [['txt', 'T', true], ['num', 'N', true], ['url', 'U', true]],
-    });
-    assert.deepStrictEqual(mock.count, {'Foo_H1': 1, 'Foo_H2': 2, 'Foo_H3': 1, 'Foo_H4': 3});
+  it('converts manifest file names to appropriate header file names (C++)', () => {
+    const cpp = new Schema2Cpp({'_': []});
+    assert.strictEqual(cpp.outputName('simple.arcs'), 'simple.h');
+    assert.strictEqual(cpp.outputName('test-CPP.file_Name.arcs'), 'test-cpp-file-name.h');
+  });
+
+  it('converts manifest file names to appropriate source file names (Kotlin)', () => {
+    const kotlin = new Schema2Kotlin({'_': []});
+    assert.strictEqual(kotlin.outputName('simple.arcs'), 'Simple.kt');
+    assert.strictEqual(kotlin.outputName('test-KOTLIN.file_Name.arcs'), 'TestKotlinFileName.kt');
   });
 });

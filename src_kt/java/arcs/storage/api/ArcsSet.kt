@@ -1,10 +1,12 @@
-package arcs.arcs.storage.api
+package arcs.storage.api
 
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtChange
 import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSet.Operation.*
+import arcs.crdt.CrdtSet.Operation.Add
+import arcs.crdt.CrdtSet.Operation.FastForward
+import arcs.crdt.CrdtSet.Operation.Remove
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import arcs.data.CollectionType
@@ -24,6 +26,8 @@ import arcs.storage.StoreOptions
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.ReferenceModeStorageKey
+import arcs.util.guardWith
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +39,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Creates an [ArcsSet] which manages a set of [RawEntity] objects located at the given
@@ -118,7 +121,7 @@ inline fun <reified T> ArcsSet(
  * All functions on [ArcsSet] are suspending functions, due to the fact that communicating with the
  * storage layer is an inherently asynchronous process.
  *
- * **Note:** By supplying your [coroutineContext] to the constructor, any bindings to the storage
+ * **Note:** By supplying your [CoroutineContext] to the constructor, any bindings to the storage
  * layer are released when the context's primary job is completed, thus avoiding a memory leak.
  */
 @ExperimentalCoroutinesApi
@@ -140,14 +143,15 @@ class ArcsSet<T, StoreData, StoreOp>(
     val actor: Actor by lazy { "ArcsSet@${hashCode()}" }
 
     private val crdtMutex = Mutex()
-    private val crdtSet = CrdtSet<T>()
-    private var cachedVersion = VersionMap()
-    private var cachedConsumerData = emptySet<T>()
+    private val crdtSet by guardWith(crdtMutex, CrdtSet<T>())
+    private var cachedVersion by guardWith(crdtMutex, VersionMap())
+    private var cachedConsumerData by guardWith(crdtMutex, emptySet<T>())
     private val scope = CoroutineScope(coroutineContext)
     private val initialized: CompletableJob = Job(scope.coroutineContext[Job.Key])
     private var syncJob: CompletableJob? = null
     private var callbackId: Int = -1
-    private val activated = CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
+    private val activated =
+        CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
 
     init {
         var activeStore: ActiveStore<StoreData, StoreOp, Set<T>>? = null
@@ -179,8 +183,8 @@ class ArcsSet<T, StoreData, StoreOp>(
         coroutineContext: CoroutineContext = scope.coroutineContext
     ): SuspendingIterator<T, StoreData, StoreOp> {
         activated.await()
+        if (withSync) sync(coroutineContext).join()
         return crdtMutex.withLock {
-            if (withSync) syncInternal(coroutineContext).join()
             SuspendingIterator(this, cachedConsumerData.iterator())
         }
     }
@@ -287,8 +291,8 @@ class ArcsSet<T, StoreData, StoreOp>(
     suspend fun contains(item: T, requireSync: Boolean = false): Boolean {
         activated.await()
 
+        if (requireSync) sync().join()
         return crdtMutex.withLock {
-            if (requireSync) syncInternal().join()
             cachedConsumerData.any { it.tryDereference() == item }
         }
     }
@@ -305,7 +309,6 @@ class ArcsSet<T, StoreData, StoreOp>(
     private suspend fun syncInternal(
         coroutineContext: CoroutineContext = scope.coroutineContext
     ): Job {
-        check(crdtMutex.isLocked)
         syncJob?.takeIf { it.isActive }?.let { return it }
         return Job(coroutineContext[Job.Key]).also {
             syncJob = it
@@ -321,7 +324,6 @@ class ArcsSet<T, StoreData, StoreOp>(
      * **Note:** Must be called from within a lock of [crdtMutex].
      */
     private fun makeAddOp(element: T): Add<T> {
-        check(crdtMutex.isLocked)
         cachedVersion[actor]++
         return Add(cachedVersion.copy(), actor, element)
     }
@@ -332,7 +334,6 @@ class ArcsSet<T, StoreData, StoreOp>(
      * **Note:** Must be called from within a lock of [crdtMutex].
      */
     private fun makeRemoveOp(element: T): Remove<T> {
-        check(crdtMutex.isLocked)
         return Remove(cachedVersion.copy(), actor, element)
     }
 
@@ -345,7 +346,9 @@ class ArcsSet<T, StoreData, StoreOp>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun handleStoreCallback(message: ProxyMessage<StoreData, StoreOp, Set<T>>): Boolean {
+    private suspend fun handleStoreCallback(
+        message: ProxyMessage<StoreData, StoreOp, Set<T>>
+    ): Boolean {
         val messageBackToStore = crdtMutex.withLock {
             when (message) {
                 is ProxyMessage.SyncRequest ->
@@ -398,7 +401,6 @@ class ArcsSet<T, StoreData, StoreOp>(
      * **Note:** This may only be called while the [crdtMutex] is locked.
      */
     private fun updateCache() {
-        check(crdtMutex.isLocked)
         cachedVersion = crdtSet.versionMap
         cachedConsumerData = crdtSet.consumerView
     }
@@ -445,4 +447,3 @@ class ArcsSet<T, StoreData, StoreOp>(
     private fun Collection<CrdtSet.IOperation<T>>.hasStoreSafeOps(): Boolean =
         none { it is FastForward }
 }
-

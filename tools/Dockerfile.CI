@@ -1,4 +1,3 @@
-FROM timbru31/java-node:8-slim
 
 # Install Bazel
 #  Reference: https://docs.bazel.build/versions/master/install-ubuntu.html

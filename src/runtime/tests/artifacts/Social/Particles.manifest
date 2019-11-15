@@ -15,49 +15,49 @@ import 'Post.schema'
 import 'BlogMetadata.schema'
 
 particle ShowPosts in 'source/ShowPosts.js'
-  inout [Post] posts
-  inout BlogMetadata metadata
-  in Person user
-  in [Person] people
-  in [Avatar] avatars
-  consume root
+  posts: reads writes [Post]
+  metadata: reads writes BlogMetadata
+  user: reads Person
+  people: reads [Person]
+  avatars: reads [Avatar]
+  root: consumes Slot
   description `show ${posts}`
 
 particle OnlyShowPosts in 'source/ShowPosts.js'
-  in [Post] posts
-  in [Stats] stats
-  in Person user
-  in [Person] people
-  in [Avatar] avatars
-  consume root
+  posts: reads [Post]
+  stats: reads [Stats]
+  user: reads Person
+  people: reads [Person]
+  avatars: reads [Avatar]
+  root: consumes Slot
   description `show ${posts}`
 
 particle ShowSinglePost in 'source/ShowSinglePost.js'
-  in Post post
-  in [Avatar] avatars
-  in [Person] people
-  in Person user
-  consume item
+  post: reads Post
+  avatars: reads [Avatar]
+  people: reads [Person]
+  user: reads Person
+  item: consumes Slot
   description `show ${post}`
 
 particle WritePosts in 'source/WritePosts.js'
-  inout Post post
-  inout [Post] posts
-  consume root
+  post: reads writes Post
+  posts: reads writes [Post]
+  root: consumes Slot
   description `write posts`
 
 particle EditPost in 'source/EditPost.js'
-  host HostedParticleInterface renderParticle
-  inout Post post
-  inout [Post] posts
-  in Person user
-  in Theme shellTheme
-  consume content
+  renderParticle: hosts HostedParticleInterface
+  post: reads writes Post
+  posts: reads writes [Post]
+  user: reads Person
+  shellTheme: reads Theme
+  content: consumes Slot
   description `edit a post`
 
 particle PostMuxer in 'source/PostMuxer.js'
-  in [Post] list
-  consume set of item
+  list: reads [Post]
+  item: consumes [Slot]
 
 particle LeaderboardStatsTheme in 'source/LeaderboardStatsTheme.js'
-  consume toproot
+  toproot: consumes Slot

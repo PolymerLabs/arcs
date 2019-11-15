@@ -9,21 +9,21 @@ import 'GamePane.manifest'
 import 'ShowSingleStats.manifest'
 
 recipe
-  use #user as person
-  create #board as board
-  create #move as move
-  create #stats as stats
-  use #shelltheme as shellTheme
+  person: use #user
+  board: create #board
+  move: create #move
+  stats: create #stats
+  shellTheme: use #shelltheme
   // TODO(wkorman): We only need one post but currently we need a set to produce
   // the right boxing aggregation.
-  create #posts as posts
-  create as post
+  posts: create #posts
+  post: create
   GamePane
-    move = move
-    board = board
-    stats = stats
-    posts = posts
-    post = post
-    person <- person
-    renderParticle = ShowSingleStats
-    shellTheme <- shellTheme
+    move: move
+    board: board
+    stats: stats
+    posts: posts
+    post: post
+    person: reads person
+    renderParticle: ShowSingleStats
+    shellTheme: reads shellTheme

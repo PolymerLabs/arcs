@@ -41,6 +41,13 @@ async function launch() {
   await hotReloadServer.init();
 
   const app = express();
+  app.all('*', (req, res, next) => {
+    // Allows COR as the pipes-shell can be loaded in https protocol
+    // which requests Arcs manifests/recipes/particles at remote workstation
+    // via adb-reverse socket connecting to http://localhost:port.
+    res.header('Access-Control-Allow-Origin', '*');
+    next();
+  });
   if (options['verbose']) {
     app.use(morgan(':method :url :status - :response-time ms, :res[content-length] bytes'));
   }

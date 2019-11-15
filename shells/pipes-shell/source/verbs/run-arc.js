@@ -11,7 +11,7 @@
 import {logsFactory} from '../../../../build/platform/logs-factory.js';
 import {RecipeUtil} from '../../../../build/runtime/recipe/recipe-util.js';
 import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
-import {Utils} from '../../../lib/utils.js';
+import {Runtime} from '../../../../build/runtime/runtime.js';
 import {portIndustry} from '../pec-port.js';
 
 const {log, warn} = logsFactory('pipe');
@@ -29,10 +29,10 @@ export const runArc = async (msg, bus, runtime) => {
     return null;
   }
   const arc = runtime.runArc(arcId, storageKeyPrefix || 'volatile://', {
-      fileName: './serialized.manifest',
-      pecFactories: [].concat([runtime.pecFactory], [portIndustry(bus, pecId)]),
-      loader: runtime.loader,
-      inspectorFactory: devtoolsArcInspectorFactory,
+    fileName: './serialized.manifest',
+    pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
+    loader: runtime.loader,
+    inspectorFactory: devtoolsArcInspectorFactory
   });
   arc.pec.slotComposer.slotObserver = {
     observe: (content, arc) => {
@@ -50,7 +50,7 @@ export const runArc = async (msg, bus, runtime) => {
 };
 
 const instantiateRecipe = async (arc, recipe, particles) => {
-  let plan = await Utils.resolve(arc, recipe);
+  let plan = await Runtime.resolveRecipe(arc, recipe);
   if (!plan) {
     warn(`failed to resolve recipe ${recipe}`);
     return false;

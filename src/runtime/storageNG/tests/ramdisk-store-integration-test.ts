@@ -48,9 +48,9 @@ describe('RamDisk + Store Integration', async () => {
       {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}}
     ], id: 1});
 
-    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.toString());
-    assert.deepEqual(volatileEntry.data, activeStore['localModel'].getData());
-    assert.strictEqual(volatileEntry.version, 3);
+    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.unique);
+    assert.deepEqual(volatileEntry.root.data, activeStore['localModel'].getData());
+    assert.strictEqual(volatileEntry.root.version, 3);
   });
 
   it('will store operation updates from multiple sources', async () => {
@@ -88,9 +88,9 @@ describe('RamDisk + Store Integration', async () => {
     await activeStore1.idle();
     await activeStore2.idle();
 
-    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.toString());
-    assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
-    assert.strictEqual(volatileEntry.version, 3);
+    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.unique);
+    assert.deepEqual(volatileEntry.root.data, activeStore1['localModel'].getData());
+    assert.strictEqual(volatileEntry.root.version, 3);
   });
 
   it('will store operation updates from multiple sources with some timing delays', async () => {
@@ -133,8 +133,8 @@ describe('RamDisk + Store Integration', async () => {
     await activeStore1.idle();
     await activeStore2.idle();
 
-    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.toString());
-    assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
-    assert.strictEqual(volatileEntry.version, 4);
+    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.unique);
+    assert.deepEqual(volatileEntry.root.data, activeStore1['localModel'].getData());
+    assert.strictEqual(volatileEntry.root.version, 4);
   });
 });

@@ -11,6 +11,16 @@ services:
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
 
+# We want email to the whole team when the cron build fails. But regular PR
+# builds don't trigger email at all (per https://docs.travis-ci.com/user/notifications/#configuring-email-notifications),
+# so configuring email notifications should send them only from cron builds.
+notifications:
+  email:
+    recipients:
+      - arcs-team+cron@google.com
+    on_success: never # default: change
+    on_failure: always # default: always
+
 # Bazel build & test everything. Can't use `bazel build ...` yet, because
 # javaharness doesn't build on Travis (needs working Android SDK).
 jobs:
@@ -20,6 +30,9 @@ jobs:
     - stage: test
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/...  //src/... //particles/..."
       name: "Bazel Test: //src_kt/... //src/... //particles/..."
+      # run ktlint against every kotlin file in the diff between the branch and master's head.
+    - script: git diff --name-only --relative $travis_commit_range | grep '\.kt[s"]\?$' | xargs ktlint --android --relative --verbose .
+      name: "KtLint"
     - script: tools/run_in_docker "tools/sigh""
       name: "Node Test: Unit & Shells"
     - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"

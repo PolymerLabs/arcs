@@ -9,7 +9,7 @@
 import 'Event.schema'
 
 particle EmbeddedCalendar in 'source/Calendar.js'
-  inout [Event] event
-  consume action
-  consume modifier
+  event: reads writes [Event]
+  action: consumes Slot
+  modifier: consumes Slot
   description `embedded calendar`

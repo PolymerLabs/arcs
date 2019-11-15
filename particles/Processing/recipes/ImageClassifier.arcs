@@ -16,74 +16,74 @@ import './ClassifierStatics.arcs'
 
 recipe ImageClassifierUINoSpec
   // since we `use`, this recipe is incomplete and coalescer is triggered
-  use as imgUrl
-  use as predictions
+  imgUrl: use *
+  predictions: use *
 
   ImageSelector
-    image -> imgUrl
+    image: writes imgUrl
 
   PresentLabel
-    predictions <- predictions
+    predictions: reads predictions
 
   description `image classification`
 
 recipe ImageClassifierRoutineNoSpec
   // find a model specification
-  map as modelSpec
+  modelSpec: map *
 
   // static values from ClassifierStatics.manifest
-  map 'targetImageSize' as targetSize
-  map 'resizeOptions' as resizeOptions
-  map 'imagePixelRange' as range
-  map 'batchShape' as batchShape
+  targetSize: map 'targetImageSize'
+  resizeOptions: map 'resizeOptions'
+  range: map 'imagePixelRange'
+  batchShape: map 'batchShape'
 
   // working handles
-  create #volatile as model
-  create #volatile as imageTensor
-  create #volatile as normTensor
-  create #volatile as resizedImages
-  create #volatile as reshapedImages
-  create #volatile as yHat
-  create #volatile as predictions
-  create #volatile as labels
-  create #volatile as imgUrl
+  model: create #volatile
+  imageTensor: create #volatile
+  normTensor: create #volatile
+  resizedImages: create #volatile
+  reshapedImages: create #volatile
+  yHat: create #volatile
+  predictions: create #volatile
+  labels: create #volatile
+  imgUrl: create #volatile
 
   LoadGraphModel
-    modelSpec <- modelSpec
-    model -> model
+    modelSpec: reads modelSpec
+    model: writes model
 
   ParseLabels
-    url <- modelSpec
-    labels -> labels
+    url: reads modelSpec
+    labels: writes labels
 
   ImageToTensor
-    image <- imgUrl
-    imageTensor -> imageTensor
+    image: reads imgUrl
+    imageTensor: writes imageTensor
 
   Normalize
-    tensor <- imageTensor
-    range <- range
-    normTensor -> normTensor
+    tensor: reads imageTensor
+    range: reads range
+    normTensor: writes normTensor
 
   ResizeBilinear
-    images <- normTensor
-    size <- targetSize
-    options <- resizeOptions
-    resizedImages -> resizedImages
+    images: reads normTensor
+    size: reads targetSize
+    options: reads resizeOptions
+    resizedImages: writes resizedImages
 
   Reshape
-    tensor <- resizedImages
-    shape <- batchShape
-    newTensor -> reshapedImages
+    tensor: reads resizedImages
+    shape: reads batchShape
+    newTensor: writes reshapedImages
 
   Infer
-    tensor <- reshapedImages
-    model <- model
-    yHat -> yHat
+    tensor: reads reshapedImages
+    model: reads model
+    yHat: writes yHat
 
   TopLabels
-    yHat <- yHat
-    labels <- labels
-    predictions -> predictions
+    yHat: reads yHat
+    labels: reads labels
+    predictions: writes predictions
 
   description `${LoadGraphModel.modelSpec}`

@@ -10,7 +10,7 @@ import '../People/Person.schema'
 import '../Things/GeoCoordinates.schema'
 
 particle SlandleExtractLocation in 'source/ExtractLocation.js'
-  in Person person
-  out GeoCoordinates location
+  person: reads Person
+  location: writes GeoCoordinates
   description `extract ${person}'s location`
     location `${person}'s location`

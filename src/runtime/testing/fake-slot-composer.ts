@@ -13,6 +13,7 @@ import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
 import {SlotContext} from '../slot-context.js';
 import {Particle} from '../recipe/particle.js';
 import {Content} from '../slot-consumer.js';
+import {Arc} from '../arc.js';
 
 /**
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
@@ -66,5 +67,12 @@ export class RozSlotComposer extends FakeSlotComposer {
     }
     this.received.push([particle.name, slotName, copy]);
     super.renderSlot(particle, slotName, content);
+  }
+
+
+  /** Listener for experimental `output` implementation */
+  delegateOutput(arc: Arc, particle: Particle, content) {
+    const slotName: string = content && content.targetSlot && content.targetSlot.name || 'root';
+    this.received.push([particle.name, slotName, content]);
   }
 }

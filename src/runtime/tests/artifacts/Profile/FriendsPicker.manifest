@@ -10,9 +10,9 @@ import '../People/Avatar.schema'
 import '../People/Person.schema'
 
 particle FriendsPicker in 'source/FriendsPicker.js'
-  in Person person
-  inout [Person] friends
-  in [Person] people
-  in [Avatar] avatars
-  consume root
+  person: reads Person
+  friends: reads writes [Person]
+  people: reads [Person]
+  avatars: reads [Avatar]
+  root: consumes Slot
   description `select friends`

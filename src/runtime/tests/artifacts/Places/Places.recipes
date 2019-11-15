@@ -8,18 +8,18 @@
 import 'AddressForm.manifest'
 
 recipe
-  create #address as address
+  address: create #address
   AddressForm
-    address = address
+    address: address
 
 import 'ExtractLocation.manifest'
 import 'GoogleMap.manifest'
 
 recipe
-  use #user as person
-  create as location
+  person: use #user
+  location: create *
   ExtractLocation
-    person <- person
-    location -> location
+    person: reads person
+    location: writes location
   GoogleMap
-    location <- location
+    location: reads location

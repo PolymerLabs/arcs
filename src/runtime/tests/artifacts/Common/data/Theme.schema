@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Theme
-  Text mainBackground
-  Text mainColor
-  Text title
-  Text key
+  mainBackground: Text
+  mainColor: Text
+  title: Text
+  key: Text

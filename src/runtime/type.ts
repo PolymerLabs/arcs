@@ -179,6 +179,9 @@ export abstract class Type {
     return false;
   }
 
+  get isEntity(): boolean {
+    return false;
+  }
 
   collectionOf() {
     return new CollectionType(this);
@@ -313,6 +316,10 @@ export class SingletonType<T extends Type> extends Type {
 
   get isSingleton(): boolean {
     return true;
+  }
+
+  getEntitySchema(): Schema {
+    return this.innerType.getEntitySchema();
   }
 
   toString(options = undefined): string {

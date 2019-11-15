@@ -1,6 +1,6 @@
 import '../schemas/TVMazeShow.arcs'
 
 particle TVMazeShowTile in './js/TVMazeShowTile.js'
-  in TVMazeShow show
-  consume tile
-    provide set of action
+  show: reads TVMazeShow
+  tile: consumes
+    action: provides? [Slot]

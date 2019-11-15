@@ -107,7 +107,9 @@ class SendQueue(
         /**
          * Denotes a [PendingSend] which should not be executed until a certain [block] is recieved.
          */
-        data class Blocking(val block: String, override val fn: suspend () -> Unit): PendingSend(fn)
+        data class Blocking(
+            val block: String,
+            override val fn: suspend () -> Unit
+        ) : PendingSend(fn)
     }
 }
-

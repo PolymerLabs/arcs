@@ -7,4 +7,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema FavoriteFood
-  Text food
+  food: Text

@@ -11,11 +11,11 @@
 
 package arcs.storage.referencemode
 
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.coroutineContext
 
 /**
  * Thread-safe queue of [Message]s intended for the [arcs.storage.ReferenceModeStore] to process.

@@ -1,4 +1,4 @@
 schema User
-  Text id
-  Text name
+  id: Text
+  name: Text
   

@@ -11,15 +11,15 @@
 import './Cake.manifest'
 
 recipe
-  map #cake as cakeHandle
-  slot #root as rootSlot
+  cakeHandle: map #cake
+  rootSlot: slot #root
   MakeCake
-    cake <- cakeHandle
-    consume item as rootSlot
+    cake: reads cakeHandle
+    item: consumes rootSlot
 
 recipe
-  use #cake as cakeHandle
+  cakeHandle: use #cake
   LightCandles
-    birthdayCake <- cakeHandle
+    birthdayCake: reads cakeHandle
 
 store ACake of Cake #cake in 'cakes.json'

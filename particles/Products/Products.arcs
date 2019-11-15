@@ -10,64 +10,64 @@ import 'Interests.arcs'
 // TODO(sjmiles): ironically, not part of the Products demo. Remove?
 
 recipe Products
-  use as products
+  products: use *
   Items
-    list = products
+    list: products
   ItemMultiplexer
-    list = products
-    hostedParticle = ProductItem
+    list: products
+    hostedParticle: ProductItem
 
 // Entry point for Products Demo: create a shopping list from context data
 
 recipe CreateShoppingList
-  copy as products
+  products: copy *
   Items
-    list = products
+    list: products
   ItemMultiplexer
-    list = products
-    hostedParticle = ProductItem
+    list: products
+    hostedParticle: ProductItem
   description `create shopping list from ${Items.list}`
 
 // Convert simple shopping list to a shopping list for an occasion, like a birthday
 // add-on for Shopping List
 
 recipe ShopForOccasion
-  use as shoplist
-  map as person
+  shoplist: use *
+  person: map
   GiftList
-    person = person
+    person: person
   SimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = Arrivinator
-    consume annotation as annotationSlot
+    list: shoplist
+    hostedParticle: Arrivinator
+    annotation: consumes annotationSlot
   // description derives from GiftList particle
 
 // Make items from wishlist available to add to Shopping List
 // add-on for Shopping List
 
 recipe UseWishlist
-  map #wishlist as wishlist
-  create #volatile as recommendations
-  use as person
-  use as shoplist
+  wishlist: map #wishlist
+  recommendations: create #volatile
+  person: use *
+  shoplist: use *
   // annotates shoplist
   ChoicesMultiplexer
     // This is probably wrong, but it works now (instead of annotationSlot)
-    // consume choice as annotationSlot
-    consume choice as actionSlot
-    list = shoplist
-    choices = wishlist
-    hostedParticle = AlsoOn
+    // choice: consumes annotationSlot
+    choice: consumes actionSlot
+    list: shoplist
+    choices: wishlist
+    hostedParticle: AlsoOn
   // recommend products from wishlist
   Recommend
-    population = wishlist
-    known = shoplist
-    recommendations = recommendations
+    population: wishlist
+    known: shoplist
+    recommendations: recommendations
   // present recommendations for adding to shoplist
   Chooser
-    consume action as actionSlot
-    person = person
-    choices = recommendations
-    resultList = shoplist
+    action: consumes actionSlot
+    person: person
+    choices: recommendations
+    resultList: shoplist
 
 

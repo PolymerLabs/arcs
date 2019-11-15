@@ -11,7 +11,6 @@
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
-import {Utils} from '../../lib/utils.js';
 import {pec} from './verbs/pec.js';
 import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
@@ -35,13 +34,10 @@ export const busReady = async (bus, {manifest}) => {
 };
 
 const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
-  // configure arcs environment
-  Utils.init(rootPath, urlMap);
+  // configure arcs runtime environment
+  Runtime.init(rootPath, urlMap);
   // marshal context
   const context = await requireContext(manifest || config.manifest);
-  // configure Runtime
-  const runtime = new Runtime(Utils.env.loader, UiSlotComposer, context);
-  runtime.pecFactory = Utils.env.pecFactory;
   // attach verb-handlers to dispatcher
   populateDispatcher(dispatcher, storage, context);
   // send pipe identifiers to client

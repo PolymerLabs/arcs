@@ -7,13 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle DetailSlider in 'source/DetailSlider.js'
-  inout ~a selected
-  consume modal
-    must provide content
-      handle selected
+  selected: reads writes ~a
+  modal: consumes Slot
+    content: provides Slot {handle: selected}
   description `show details about ${selected}`
 
 recipe DetailSlider
-  use #selected as selected
+  selected: use #selected
   DetailSlider
-    selected = selected
+    selected: selected

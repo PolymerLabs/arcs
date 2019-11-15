@@ -18,7 +18,7 @@ import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 describe('StorageKey', () => {
 
   it('can round-trip VolatileStorageKey', () => {
-    const encoded = 'volatile://!1234:my-arc-id/first/second/';
+    const encoded = 'volatile://!1234:my-arc-id/first/second/@';
 
     const key = StorageKeyParser.parse(encoded) as VolatileStorageKey;
 
@@ -53,7 +53,7 @@ describe('StorageKey', () => {
   });
 
   it('can round-trip ReferenceModeStorageKey', () => {
-    const encoded = 'reference-mode://{firebase://my-project.test.domain:some-api-key/first/second/}{volatile://!1234:my-arc-id/first/second/}';
+    const encoded = 'reference-mode://{firebase://my-project.test.domain:some-api-key/first/second/}{volatile://!1234:my-arc-id/first/second/@}';
 
     const key = StorageKeyParser.parse(encoded) as ReferenceModeStorageKey;
 

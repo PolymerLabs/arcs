@@ -10,7 +10,7 @@
 
 <script type="module">
   import {App} from './app.js';
-  import {Utils} from '../lib/utils.js';
+  import {Runtime} from '../../build/runtime/runtime.js';
   import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
   import {attachRenderer} from '../lib/xen-renderer.js';
 
@@ -18,7 +18,7 @@
   (async () => {
     try {
       // configure arcs environment
-      Utils.init('../..');
+      Runtime.init('../..');
       // construct renderer
       const composer = new UiSlotComposer();
       composer.root = document.body;

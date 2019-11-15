@@ -1,5 +1,5 @@
 particle VisualizerParticle in './source/Visualizer.js'
-  consume root
+  root: consumes Slot
 
 recipe VisualizerRecipe
   VisualizerParticle

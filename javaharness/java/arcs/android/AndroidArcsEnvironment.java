@@ -1,13 +1,24 @@
 package arcs.android;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Trace;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JavascriptInterface;
+import android.webkit.ServiceWorkerClient;
+import android.webkit.ServiceWorkerController;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
+import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewAssetLoader.AssetsPathHandler;
+import androidx.webkit.WebViewAssetLoader.ResourcesPathHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +50,8 @@ final class AndroidArcsEnvironment {
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
 
   private static final String ASSETS_PREFIX = "https://$assets/";
-  private static final String APK_ASSETS_URL_PREFIX = "file:////android_asset/arcs/";
+  // Uses relative path to support multiple protocols i.e. file, https and etc.
+  private static final String APK_ASSETS_URL_PREFIX = "./";
   private static final String ROOT_MANIFEST_FILENAME = "Root.arcs";
 
   private static final String FIELD_MESSAGE = "message";
@@ -98,6 +110,41 @@ final class AndroidArcsEnvironment {
     // needed to allow WebWorkers to work in FileURLs.
     arcsSettings.setAllowUniversalAccessFromFileURLs(true);
 
+    // As trampolines to map https protocol to file protocol.
+    // E.g. https://appassets.androidplatform.net/assets/foo is mapped to
+    // file:///android_asset/foo
+    final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+        .addPathHandler("/assets/", new AssetsPathHandler(context))
+        .addPathHandler("/res/", new ResourcesPathHandler(context))
+        .build();
+
+    webView.setWebViewClient(new WebViewClient() {
+      @Override
+      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        // For the renderer main thread to intercept the urls.
+        return assetLoader.shouldInterceptRequest(request.getUrl());
+      }
+
+      @Override
+      public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        Trace.beginAsyncSection("AndroidArcsEnvironment::init::loadUrl", 0);
+      }
+
+      @Override
+      public void onPageFinished(WebView view, String url) {
+        Trace.endAsyncSection("AndroidArcsEnvironment::init::loadUrl", 0);
+      }
+    });
+
+    ServiceWorkerController.getInstance()
+        .setServiceWorkerClient(new ServiceWorkerClient() {
+      @Override
+      public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
+        // For the service worker thread to intercept the urls.
+        return assetLoader.shouldInterceptRequest(request.getUrl());
+      }
+    });
+
     webView.addJavascriptInterface(this, "DeviceClient");
 
     RuntimeSettings settings = runtimeSettings.get();
@@ -110,6 +157,9 @@ final class AndroidArcsEnvironment {
     url += "log=" + settings.logLevel();
     if (settings.enableArcsExplorer()) {
       url += "&explore-proxy=" + settings.devServerPort();
+    }
+    if (settings.useCacheManager()) {
+      url += "&use-cache";
     }
 
     Log.i("Arcs", "runtime url: " + url);
@@ -202,7 +252,7 @@ final class AndroidArcsEnvironment {
       // Fetch all assets from the APK assets directory.
       urlMap.put(ASSETS_PREFIX, APK_ASSETS_URL_PREFIX);
     }
-                
+
     sendMessageToArcs(jsonParser.stringify(jsonParser
         .emptyObject()
         .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)

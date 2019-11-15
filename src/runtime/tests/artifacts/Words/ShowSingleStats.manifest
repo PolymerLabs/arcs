@@ -14,13 +14,13 @@ import './Move.schema'
 import './Stats.schema'
 
 particle ShowSingleStats in 'source/ShowSingleStats.js'
-  in Post post
-  in [Board] boxedBoards
-  in [Move] boxedMoves
-  in [Stats] boxedStats
-  in GameIdStore {Text gameId} gameId
-  in Person user
-  in [Person] people
-  in [Avatar] avatars
-  consume item
+  post: reads Post
+  boxedBoards: reads [Board]
+  boxedMoves: reads [Move]
+  boxedStats: reads [Stats]
+  gameId: reads GameIdStore {gameId: Text}
+  user: reads Person
+  people: reads [Person]
+  avatars: reads [Avatar]
+  item: consumes Slot
   description `show Words ${stats}`
