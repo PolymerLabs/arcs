@@ -25,7 +25,7 @@ enclave/sdk
 enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
-build/
+build
 src/gen
 coverage
 .vscode
@@ -34,10 +34,10 @@ server/log.txt
 pack-stats.json
 default.profraw
 # pouch local database
-user-test/
+user-test
 test-output
-node_modules/.cache/
-server/node_modules/.cache/
+node_modules/.cache
+server/node_modules/.cache
 bazel-*
 .bazelrc
 .ijwb

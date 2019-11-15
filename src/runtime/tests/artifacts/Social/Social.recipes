@@ -25,22 +25,22 @@ recipe
   shellTheme: use #shelltheme
 
   WritePosts
-    posts: any posts
-    post: any post
+    posts: posts
+    post: post
   EditPost
-    posts: any posts
-    post: any post
+    posts: posts
+    post: post
     user: reads user
-    renderParticle: any ShowSinglePost
+    renderParticle: ShowSinglePost
     shellTheme: reads shellTheme
   ShowPosts
-    posts: any posts
-    metadata: any metadata
+    posts: posts
+    metadata: metadata
     user: reads user
     avatars: reads avatars
     people: reads people
   DetailSlider
-    selected: any post
+    selected: post
 
 // Non-muxed post feed. Deprecated and to be removed once the muxed feeds below
 // are fully operational.
@@ -63,12 +63,12 @@ recipe
   posts: map #BOXED_posts
   rankedPosts: create *
   PostTimeRanker
-    input: any posts
-    output: any rankedPosts
+    input: posts
+    output: rankedPosts
   PostList
-    items: any rankedPosts
+    items: rankedPosts
   PostMuxer
-    list: any rankedPosts
+    list: rankedPosts
 
 // Words game leaderboard feed.
 recipe
@@ -77,10 +77,10 @@ recipe
   rankedPosts: create *
   LeaderboardStatsTheme
   WordsScoreRanker
-    input: any posts
-    stats: any stats
-    output: any rankedPosts
+    input: posts
+    stats: stats
+    output: rankedPosts
   PostList
-    items: any rankedPosts
+    items: rankedPosts
   PostMuxer
-    list: any rankedPosts
+    list: rankedPosts

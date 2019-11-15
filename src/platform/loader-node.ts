@@ -19,12 +19,21 @@ export class Loader extends LoaderBase {
     return new Loader(this.urlMap);
   }
   async loadFile(path: string): Promise<string> {
-    return this.loadFileData(path, 'utf-8') as Promise<string>;
+    const data = await this.loadFileData(path, 'utf-8');
+    if (typeof data !== 'string') {
+      throw new Error(`loadFileData returned type [${typeof data}] instead of non-String for utf-8 file [${path}]`);
+    }
+    return data;
   }
   async loadBinaryFile(path: string): Promise<ArrayBuffer> {
-    return this.loadFileData(path) as Promise<ArrayBuffer>;
+    const data = await this.loadFileData(path);
+    if (!(data instanceof Buffer)) {
+      throw new Error(`loadFileData returned non-Buffer for binary file [${path}]`);
+    }
+    // convert Buffer to ArrayBuffer (slice in case a small Buffer is a view on a shared ArrayBuffer)
+    return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   }
-  private async loadFileData(path: string, encoding?: string): Promise<string | ArrayBuffer> {
+  private async loadFileData(path: string, encoding?: string): Promise<string | Buffer> {
     return new Promise((resolve, reject) => {
       fs.readFile(path, encoding, (err, data: string) => {
         if (err) {

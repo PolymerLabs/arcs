@@ -6,4 +6,4 @@ particle DetailSlider in 'source/DetailSlider.js'
 recipe DetailSlider
   selected: use #selected
   DetailSlider
-    selected: any selected
+    selected: selected

@@ -20,12 +20,12 @@ particle Interests in 'source/Interests.js'
 //  wishlist: map #wishlist
 //  person: use *
 //  Interests
-//    list: any wishlist
-//    person: any person
+//    list: wishlist
+//    person: person
 
 recipe ProductInterests
   list: use *
   person: use *
   Interests
-    list: any list
-    person: any person
+    list: list
+    person: person

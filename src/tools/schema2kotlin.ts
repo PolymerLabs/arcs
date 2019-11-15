@@ -83,7 +83,7 @@ class KotlinGenerator implements ClassGenerator {
   }
 
   addReference(field: string, refName: string) {
-    throw new Error('TODO: support reference types in kotlin');
+    // TODO: support reference types in kotlin
   }
 
   generate(fieldCount: number): string {

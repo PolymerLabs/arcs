@@ -6,7 +6,7 @@ import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class ServicesTest : Particle() {
-    private val output = Collection { Test_ServiceResponse() }
+    private val output = Collection { ServicesTest_Output() }
 
     init {
         registerHandle("output", output)
@@ -14,7 +14,7 @@ class ServicesTest : Particle() {
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
-        output.store(Test_ServiceResponse("resolveUrl", payload = url))
+        output.store(ServicesTest_Output("resolveUrl", payload = url))
 
         serviceRequest("random.next", mapOf(), "first")
         serviceRequest("random.next", mapOf(), "second")
@@ -28,7 +28,7 @@ class ServicesTest : Particle() {
             .forEach { str -> builder.append(str) }
         val payload = builder.toString()
 
-        output.store(Test_ServiceResponse(call, tag, payload))
+        output.store(ServicesTest_Output(call, tag, payload))
     }
 }
 

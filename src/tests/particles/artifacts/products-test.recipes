@@ -22,14 +22,14 @@ recipe FilterAndDisplayBooks
   rootSlot: slot 'rootslotid-root'
   ProductFilter
     products: reads mylist
-    hostedParticle: any ProductIsBook
+    hostedParticle: ProductIsBook
     results: writes books
   List
-    items: any books
+    items: books
     root: consumes rootSlot
       item: provides itemSlot
   ItemMultiplexer
-    list: any books
+    list: books
     hostedParticle: hosts ShowProduct
     item: consumes itemSlot
 
@@ -39,7 +39,7 @@ recipe FilterBooks
   books: create *
   ProductFilter
     products: reads mylist
-    hostedParticle: any ProductIsBook
+    hostedParticle: ProductIsBook
     results: writes books
 
 resource ProductList

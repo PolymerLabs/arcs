@@ -10,7 +10,7 @@ import 'AddressForm.manifest'
 recipe
   address: create #address
   AddressForm
-    address: any address
+    address: address
 
 import 'ExtractLocation.manifest'
 import 'GoogleMap.manifest'

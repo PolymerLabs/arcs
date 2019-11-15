@@ -1,19 +1,19 @@
-schema Person
-  Text name
-  Text avatar
-  Number id
-
 schema GameState
-  Boolean gameOver
-  Number winnerId
-  Text board
-  Number currentPlayer
-  Number lastMove
+  gameOver: Boolean
+  winnerId: Number
+  board: Text
+  currentPlayer: Number
+  lastMove: Number
 
 schema Event
-  Text type
-  Number move
-  Number time
+  type: Text
+  move: Number
+  time: Number
 
 schema Move
-  Number move
+  move: Number
+
+schema Person
+  name: Text
+  avatar: Text
+  id: Number

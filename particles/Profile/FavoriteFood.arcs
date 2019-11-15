@@ -15,5 +15,5 @@ particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
 recipe FavoriteFood
   foods: create #favoriteFoods
   FavoriteFoodPicker
-    foods: any foods
+    foods: foods
 

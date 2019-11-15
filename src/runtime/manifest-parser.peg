@@ -86,6 +86,19 @@
       error(`using post slandles syntax (disabled by flag) #${tag}`);
     }
   }
+
+  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+    requireUsePostSlandleSyntax(2);
+    if (direction === 'host') {
+      error(`Interface cannot have arguments with a 'host' direction.`);
+    }
+    return toAstNode<AstNode.InterfaceArgument>({
+      kind: 'interface-argument',
+      direction,
+      type,
+      name
+    });
+  }
 }
 
 Manifest
@@ -283,20 +296,12 @@ InterfaceArgumentPreSlandlesSyntax
   }
 
 InterfaceArgumentUnified
-  = name:NameWithColon? direction:DirectionUnified type:(whiteSpace ParticleHandleConnectionType)? eolWhiteSpace
-  {
-    requireUsePostSlandleSyntax(2);
-    name = name || '*';
-    if (direction === 'host') {
-      error(`Interface cannot have arguments with a 'host' direction.`);
-    }
-    return toAstNode<AstNode.InterfaceArgument>({
-      kind: 'interface-argument',
-      direction,
-      type: optional(type, ty => ty[1], null),
-      name,
-    });
-  }
+  = name:NameWithColon direction:DirectionUnified? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument(name, direction || 'any', optional(type, t => t[1], null)); }
+  / direction:DirectionUnified type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument('*', direction || 'any', optional(type, t => t[1], null)); }
+  / type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
+  { return buildInterfaceArgument('*', 'any', type); }
 
 InterfaceSlot
   = InterfaceSlotPreSlandles
@@ -608,14 +613,14 @@ NameWithColon
   }
 
 ParticleHandleConnectionBodyUnified
-  = name:NameWithColon? direction:DirectionUnified isOptional:'?'? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:(DirectionUnified '?'?)? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
     requireUsePostSlandleSyntax(6);
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
-      direction,
-      type: type,
-      isOptional: !!isOptional,
+      direction: optional(direction, d => d[0], 'any'),
+      type,
+      isOptional: optional(direction, d => !!d[1], false),
       dependentConnections: [],
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || []
@@ -630,7 +635,7 @@ DirectionPreSlandles "a direction (e.g. inout, in, out, host, `consume, `provide
   }
 
 DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
-  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides' / 'any') &([^a-zA-Z0-9] / !.)
+  = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides') &([^a-zA-Z0-9] / !.)
   {
     // TODO(jopra): Parse optionality properly.
     requireUsePostSlandleSyntax(8);
@@ -1046,7 +1051,18 @@ RecipeParticleConnectionUnified
       kind: 'handle-connection',
       param: param || '*',
       dir,
-      target: optional(target, target => target[1], null),
+      target: optional(target, t => t[1], null),
+      dependentConnections: optional(dependentConnections, extractIndented, []),
+    });
+  }
+  / param:NameWithColon? target:ParticleConnectionTargetComponents eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  {
+    requireUsePostSlandleSyntax(13);
+    return toAstNode<AstNode.RecipeParticleConnection>({
+      kind: 'handle-connection',
+      param: param || '*',
+      dir: 'any',
+      target,
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
   }
@@ -1066,7 +1082,7 @@ RecipeParticleConnectionPreSlandle
   }
 
 ParticleConnectionTargetComponents
-  = param:(upperIdent / lowerIdent)? whiteSpace? tags:(TagList)?
+  = param:(upperIdent / lowerIdent) tags:(whiteSpace TagList)?
   {
     param = optional(param, param => param, null);
     let name: string|null = null;
@@ -1083,7 +1099,16 @@ ParticleConnectionTargetComponents
       kind: 'handle-connection-components',
       name,
       particle,
-      tags: optional(tags, tags => tags, []),
+      tags: optional(tags, t => t[1], []),
+    });
+  }
+  / tags:TagList
+  {
+    return toAstNode<AstNode.ParticleConnectionTargetComponents>({
+      kind: 'handle-connection-components',
+      name: null,
+      particle: null,
+      tags
     });
   }
 
@@ -1138,7 +1163,7 @@ RecipeConnection
   = RecipeConnectionUnified / RecipeConnectionPreSlandle
 
 RecipeConnectionUnified
-  = from:ConnectionTargetWithColon? direction:DirectionUnified whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTargetWithColon? direction:(DirectionUnified whiteSpace)? to:ConnectionTarget eolWhiteSpace
   {
     const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
       kind: 'connection-target',
@@ -1150,14 +1175,14 @@ RecipeConnectionUnified
     requireUsePostSlandleSyntax(17);
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
-      direction,
+      direction: optional(direction, d => d[0], 'any'),
       from: from || anyTarget,
       to,
     });
   }
 
 ConnectionTargetWithColon
-  = target: ConnectionTarget ':' whiteSpace?
+  = target:ConnectionTarget ':' whiteSpace?
   {
     return target;
   }

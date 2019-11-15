@@ -20,19 +20,19 @@ recipe Products
     root: consumes
       annotation: provides annotationSlot
       action: provides actionSlot
-    list: any shoplist
-    selected: any selected
+    list: shoplist
+    selected: selected
   ItemMultiplexer
-    list: any shoplist
-    hostedParticle: any ProductItem
+    list: shoplist
+    hostedParticle: ProductItem
   //
   // &shopForOccasion
   person: map #claire
   GiftList
-    person: any person
+    person: person
   SimpleAnnotationMultiplexer
-    list: any shoplist
-    hostedParticle: any Arrivinator
+    list: shoplist
+    hostedParticle: Arrivinator
     annotation: consumes annotationSlot
   //
   // &addFromWishlist
@@ -41,27 +41,27 @@ recipe Products
   // annotates shoplist
   ChoicesMultiplexer
     choice: consumes annotationSlot
-    list: any shoplist
-    choices: any wishlist
-    hostedParticle: any AlsoOn
+    list: shoplist
+    choices: wishlist
+    hostedParticle: AlsoOn
   // recommend products from wishlist
   Recommend
-    population: any wishlist
-    known: any shoplist
-    recommendations: any recommendations
+    population: wishlist
+    known: shoplist
+    recommendations: recommendations
   // present recommendations for adding to shoplist
   Chooser
     action: consumes actionSlot
-    person: any person
-    choices: any recommendations
-    resultList: any shoplist
+    person: person
+    choices: recommendations
+    resultList: shoplist
   //
   // &manufacturerInfo
   SimpleAnnotationMultiplexer
-    list: any shoplist
-    hostedParticle: any ManufacturerInfo
+    list: shoplist
+    hostedParticle: ManufacturerInfo
   //
   // &productInterests
   Interests
-    list: any shoplist
-    person: any person
+    list: shoplist
+    person: person

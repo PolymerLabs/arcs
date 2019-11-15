@@ -17,6 +17,6 @@ particle ManufacturerInfo in 'source/ManufacturerInfo.js'
 recipe ProductManufacturerInfo
   shoplist: use *
   SimpleAnnotationMultiplexer
-    list: any shoplist
-    hostedParticle: any ManufacturerInfo
+    list: shoplist
+    hostedParticle: ManufacturerInfo
   description `check manufacturer information`

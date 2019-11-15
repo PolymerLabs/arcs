@@ -35,12 +35,12 @@ recipe FavoriteFoodAnnotation
   names: map 'BOXED_userName'
   descriptions: create *
   SharesFrom
-    shares: any foods
-    names: any names
-    descriptions: any descriptions
+    shares: foods
+    names: names
+    descriptions: descriptions
   AnnotationMultiplexerThree
-    list: any restaurants
-    choices: any foods
-    names: any names
-    hostedParticle: any FavoriteFoodAnnotation
+    list: restaurants
+    choices: foods
+    names: names
+    hostedParticle: FavoriteFoodAnnotation
   description `check restaurants for ${SharesFrom}'s favorite foods`

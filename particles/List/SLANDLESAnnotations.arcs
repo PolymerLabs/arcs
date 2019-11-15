@@ -41,5 +41,5 @@ particle SlandleCombinedAnnotationMultiplexer in 'source/Multiplexer.js'
 //  list: use #items
 //  annotation: use #annotation
 //  SlandleAnnotationMultiplexer
-//    list: any list
-//    annotation: any annotation
+//    list: list
+//    annotation: annotation
