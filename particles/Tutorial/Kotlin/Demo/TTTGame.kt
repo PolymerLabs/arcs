@@ -10,8 +10,6 @@ import arcs.TTTGame_PlayerOne
 import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
-// import arcs.TTTGame_Reset
-import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
@@ -63,18 +61,9 @@ class TTTGame : Particle() {
     }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val gs = this.gameState.get() ?: TTTGame_GameState()
-//        log("TTTGame: Is there a reset?")
-//        log("TTTGame: e size ${events.size}")
-//        if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
-//            log("TTTGame Boo!")
-//            gs.board = ",,,,,,,,"
-//            this.gameState.set(gs)
-//        }
 
-        val winnerName = gs.winnerAvatar ?: ""
-        val congrats = gs.gameOver ?: false
-
+        val winnerName = this.gameState.get()?.winnerAvatar ?: ""
+        val congrats = this.gameState.get()?.gameOver ?: false
         val message = if (congrats) "Congratulations $winnerName, you won!" else ""
         return model + mapOf(
             "message" to message
@@ -82,7 +71,6 @@ class TTTGame : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        log("TTTGame Handle update ${handle.name}")
         val gs = this.gameState.get() ?: TTTGame_GameState()
         val board = gs.board ?: ",,,,,,,,"
         val boardArr = board.split(",").map { it }.toMutableList()

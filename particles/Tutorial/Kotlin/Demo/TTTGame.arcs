@@ -45,8 +45,8 @@ recipe GamePlayersDemoRecipe
       boardSlot: provides board
   TTTBoard
       boardSlot: consumes board
-      gameState: gameState
-      events: events
+      gameState: any gameState
+      events: any events
   TTTHumanPlayer
     gameState = gameState
     events <- events
