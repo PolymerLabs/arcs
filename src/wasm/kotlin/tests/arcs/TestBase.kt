@@ -2,10 +2,10 @@ package wasm.kotlin.tests.arcs
 
 import arcs.Particle
 import arcs.Collection
+import arcs.Entity
 import kotlin.native.internal.ExportForCppRuntime
 
 import kotlin.test.Asserter
-import kotlin.test.AsserterContributor
 import kotlin.test.AssertionError
 
 
@@ -16,34 +16,31 @@ class ParticleAsserter : Particle(), Asserter {
         registerHandle("errors", errors)
     }
 
-    private fun <T> assertContainerEqualOrdered(container: Collection<T>, converter: (T) -> String, expected: List<String>, isOrdered: Boolean = true) {
-        if (container.size != expected.size) {
-            fail("expected container to have ${expected.size} items; " +
-                "actual size ${container.size}")
-        }
+    private fun <T : Entity<T>> assertContainerEqual(
+        container: Collection<T>,
+        converter: (T) -> String,
+        expected: List<String>,
+        isOrdered: Boolean = true
+    ) {
+        if (container.size != expected.size)
+            fail("expected container to have ${expected.size} items; actual size ${container.size}")
 
         // Convert result values to strings and sort them when checking an unordered container.
-        val res = mutableListOf<String>()
-        for (val it in container) {
-            res.add(converter(it))
-        }
-        if(!isOrdered) {
-            res.sort()
-        }
+        val converted = container.map(converter)
+        val res = if(isOrdered) converted else converted.sorted()
 
-        // Compare against expected.
-        val marks = mutableListOf<String>()
-        var ok = true
-        for (pair in expected zip res) {
-            val match = pair.first.equals(pair.second)
-            marks.add(if(match) " " else "*")
-            ok = ok && match
-        }
+        val comparison  = expected zip res
+        val marks = comparison.map { if(it.first == it.second) " " else "*"}
+        val ok = marks.none { it.contains("*") }
 
+        if (!ok) {
+            val ordering = if (isOrdered) "ordered" else "unordered"
+            val comparisonStrings = comparison.map { "Expected: ${it.first}\t|\tActual: ${it.second}"}
+            val mismatches = (marks zip comparisonStrings).map { "${it.first} ${it.second}" }
+
+            fail("Mismatched items in $ordering container: ${mismatches.joinToString(prefix="\n", separator = "\n")}")
+        }
     }
-
-    fun assertContainerEqualUnordered() = Unit
-
 
     override fun fail(message: String?): Nothing {
         val err = if (message == null) Test_Data(txt="Failure") else Test_Data(txt=message)
