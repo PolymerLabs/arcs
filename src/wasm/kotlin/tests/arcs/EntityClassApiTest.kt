@@ -1,12 +1,10 @@
 package wasm.kotlin.tests.arcs
 
-import arcs.Particle
-import arcs.Collection
 import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 
-class EntityClassApiTest: ParticleAsserter() {
+class EntityClassApiTest: TestBase() {
 
 }
 
