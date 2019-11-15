@@ -19,6 +19,7 @@ import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {SchemaFactory} from '../schema-factory.js';
 import {EntityType, CollectionType} from '../type.js';
+import {Entity} from '../entity.js';
 import {Runtime} from '../runtime.js';
 import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
@@ -152,7 +153,7 @@ describe('particle-api', () => {
       `
     });
 
-    const data = arc.context.findSchemaByName('Data').entityClass();
+    const data = Entity.createEntityClass(arc.context.findSchemaByName('Data'), null);
     const fooStore = await arc.createStore(data.type, 'foo', 'test:0');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     const resStore = await arc.createStore(data.type.collectionOf(), 'res', 'test:1');
@@ -245,7 +246,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle');
     const resultHandle = await collectionHandleForTest(arc, resultStore);
     const recipe = arc.context.recipes[0];
@@ -287,7 +288,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const resultHandle = await singletonHandleForTest(arc, resultStore);
 
@@ -371,7 +372,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const resultHandle = await singletonHandleForTest(arc, resultStore);
 
@@ -472,7 +473,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const resultHandle = await singletonHandleForTest(arc, resultStore);
 
@@ -570,7 +571,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const resultHandle = await singletonHandleForTest(arc, resultStore);
 
@@ -673,7 +674,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const resultHandle = await singletonHandleForTest(arc, resultStore);
 
@@ -774,7 +775,7 @@ describe('particle-api', () => {
       `
     });
 
-    const result = arc.context.findSchemaByName('Result').entityClass();
+    const result = Entity.createEntityClass(arc.context.findSchemaByName('Result'), null);
     const inputsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:1');
     const inputsHandle = await collectionHandleForTest(arc, inputsStore);
     await inputsHandle.add(new inputsHandle.entityClass({value: 'hello'}));
@@ -838,7 +839,7 @@ describe('particle-api', () => {
       `
     });
 
-    const dataClass = arc.context.findSchemaByName('Data').entityClass();
+    const dataClass = Entity.createEntityClass(arc.context.findSchemaByName('Data'), null);
     const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0') as BigCollectionStorageProvider;
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(bigStore);
@@ -895,7 +896,7 @@ describe('particle-api', () => {
       `
     });
 
-    const dataClass = arc.context.findSchemaByName('Data').entityClass();
+    const dataClass = Entity.createEntityClass(arc.context.findSchemaByName('Data'), null);
     const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0') as BigCollectionStorageProvider;
     const promises: Promise<void>[] = [];
     for (let i = 1; i <= 5; i++) {

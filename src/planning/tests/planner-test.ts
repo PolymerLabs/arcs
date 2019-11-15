@@ -26,6 +26,7 @@ import {Flags} from '../../runtime/flags.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
 import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
 import {EntityType} from '../../runtime/type.js';
+import {Entity} from '../../runtime/entity.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -973,7 +974,7 @@ describe('Automatic resolution', () => {
         A
       `,
       async (arc, manifest) => {
-        const thing = manifest.findSchemaByName('Thing').entityClass();
+        const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
         await arc.createStore(thing.type, undefined, 'test:1');
       }
     );
@@ -1039,7 +1040,7 @@ describe('Automatic resolution', () => {
           item: consumes Slot`,
         async (arcRef, manifest) => {
           arc = arcRef;
-          const thing = manifest.findSchemaByName('Thing').entityClass();
+          const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
           await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
         });
 

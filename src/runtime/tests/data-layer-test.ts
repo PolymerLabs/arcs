@@ -15,6 +15,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {Schema} from '../schema.js';
 import {SchemaFactory} from '../schema-factory.js';
 import {EntityType} from '../type.js';
+import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 
@@ -23,7 +24,7 @@ describe('entity', () => {
     const schema = SchemaFactory.createNew(['TestSchema'], {value: 'Text'});
 
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: null, loader: new Loader()});
-    const entity = new (schema.entityClass())({value: 'hello world'});
+    const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});
     assert.isDefined(entity);
 
     const collectionType = new EntityType(schema).collectionOf();

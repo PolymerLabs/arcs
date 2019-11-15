@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
@@ -117,10 +116,6 @@ export class Schema {
       }
     }
     return true;
-  }
-
-  entityClass(context: ParticleExecutionContext|null = null): EntityClass {
-    return Entity.createEntityClass(this, context);
   }
 
   crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {

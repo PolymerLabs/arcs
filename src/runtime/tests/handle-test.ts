@@ -15,6 +15,7 @@ import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Schema} from '../schema.js';
 import {EntityType, InterfaceType} from '../type.js';
+import {Entity} from '../entity.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {NoOpStorageProxy} from '../storage-proxy.js';
 
@@ -75,7 +76,7 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
     // tslint:disable-next-line: variable-name
-    const Foo = manifest.schemas.Foo.entityClass();
+    const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
     const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as StorageProviderBase, IdGenerator.newSession()) as Collection;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
@@ -88,7 +89,7 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
     // tslint:disable-next-line: variable-name
-    const Foo = manifest.schemas.Foo.entityClass();
+    const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
     const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as StorageProviderBase, IdGenerator.newSession()) as Collection;
 
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
@@ -101,7 +102,7 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
     // tslint:disable-next-line: variable-name
-    const Foo = manifest.schemas.Foo.entityClass();
+    const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
     const fooHandle = handleFor(await arc.createStore(Foo.type) as StorageProviderBase, IdGenerator.newSession()) as Singleton;
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
@@ -114,7 +115,7 @@ describe('Handle', () => {
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
     // tslint:disable-next-line: variable-name
-    const Foo = manifest.schemas.Foo.entityClass();
+    const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
     const fooStorage = await arc.createStore(Foo.type) as StorageProviderBase;
     const fooHandle = handleFor(fooStorage, IdGenerator.newSession()) as Singleton;
 

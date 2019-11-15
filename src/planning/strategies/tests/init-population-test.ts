@@ -18,6 +18,8 @@ import {InitPopulation} from '../../strategies/init-population.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
 
+import {Entity} from '../../../runtime/entity.js';
+
 describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {
     const manifest = await Manifest.parse(`
@@ -128,7 +130,7 @@ describe('InitPopulation', () => {
 
     async function openRestaurantWith(foodType) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
-      const foodEntity = manifest.findSchemaByName(foodType).entityClass();
+      const foodEntity = Entity.createEntityClass(manifest.findSchemaByName(foodType), null);
       const store = await arc.createStore(foodEntity.type, undefined, `test:${foodType}`);
       restaurant.handles[0].mapToStorage(store);
       restaurant.normalize();

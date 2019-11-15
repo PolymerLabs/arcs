@@ -15,6 +15,7 @@ import {Modality} from '../modality.js';
 import {Type} from '../type.js';
 
 import {Flags} from '../flags.js';
+import {Entity} from '../entity.js';
 
 describe('recipe', () => {
   it('normalize errors', async () => {
@@ -90,9 +91,9 @@ describe('recipe', () => {
           inMys: reads BigCollection<MyType>
     `);
 
-    const myType = manifest.findSchemaByName('MyType').entityClass()['type'];
-    const mySubType = manifest.findSchemaByName('MySubType').entityClass()['type'];
-    const otherType = manifest.findSchemaByName('OtherType').entityClass()['type'];
+    const myType = Entity.createEntityClass(manifest.findSchemaByName('MyType'), null)['type'];
+    const mySubType = Entity.createEntityClass(manifest.findSchemaByName('MySubType'), null)['type'];
+    const otherType = Entity.createEntityClass(manifest.findSchemaByName('OtherType'), null)['type'];
 
     // MyType and MySubType (sub class of MyType) are valid types for (in MyType)
     const p1ConnSpec = manifest.particles.find(p => p.name === 'P1').handleConnections[0];
