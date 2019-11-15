@@ -14,7 +14,6 @@ import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 import {EntityType, ReferenceType, CollectionType} from '../type.js';
 import {Id} from '../id.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
@@ -222,11 +221,12 @@ describe('references', () => {
 
     const inputStore = arc._stores[0] as SingletonStorageProvider;
     await inputStore.set({id: 'id:1', rawData: {value: 'what a result!'}});
+    await arc.idle;
 
-    const refStore = arc._stores[1];
+    const refStore = arc._stores[1] as SingletonStorageProvider;
     const baseStoreType = new EntityType(manifest.schemas.Result);
-    await assertSingletonWillChangeTo(arc, refStore, 'storageKey',
-                                      arc.storageProviderFactory.baseStorageKey(baseStoreType, 'volatile'));
+    const storageKey = arc.storageProviderFactory.baseStorageKey(baseStoreType, 'volatile');
+    assert.deepStrictEqual((await refStore.get()).rawData, {id: 'id:1', storageKey});
   });
 
   it('can deal with references in schemas', async () => {
@@ -283,8 +283,10 @@ describe('references', () => {
     const refStore = arc._stores[1] as SingletonStorageProvider;
     assert.strictEqual((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:2', rawData: {result: {id: 'id:1', storageKey: backingStore.storageKey}}});
+    await arc.idle;
 
-    await assertSingletonWillChangeTo(arc, arc._stores[0], 'value', 'what a result!');
+    const store = arc._stores[0] as SingletonStorageProvider;
+    assert.deepStrictEqual((await store.get()).rawData, {value: 'what a result!'});
   });
 
   it('can construct references in schemas', async () => {
