@@ -25,7 +25,6 @@ import {Slot} from '../runtime/recipe/slot.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {UiSlotComposer as SlotComposer} from '../runtime/ui-slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
-//import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
@@ -104,10 +103,7 @@ export class RecipeIndex {
       id: idGenerator.newArcId('index-stub'),
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
       loader: arc.loader,
-      slotComposer: new SlotComposer({
-        //modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
-        noRoot: true
-      }),
+      slotComposer: new SlotComposer({noRoot: true}),
       stub: true
     });
     const strategizer = new Strategizer(
