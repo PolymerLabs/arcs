@@ -59,10 +59,13 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   }
 
   private async setupStore(muxId: string): Promise<{type: 'record', store: DirectStore<T>, id: number}> {
-    const store = await DirectStore.construct<T>({...this.options, storageKey: this.storageKey.childWithComponent(muxId)});
-    const id = store.on(msg => this.processStoreCallback(muxId, msg));
-    const record: StoreRecord<T> = {store, id, type: 'record'};
+    const store = await DirectStore.construct<T>({...this.options, storageKey: this.storageKey.childKeyForBackingElement(muxId)});
+    const record: StoreRecord<T> = {store, id: 0, type: 'record'};
     this.stores[muxId] = record;
+    // Calling store.on may trigger an event; this will be delivered (via processStoreCallback) upstream and may in
+    // turn trigger a request for the localModel. It's important that there's a recorded store in place for the local
+    // model to be retrieved from, even though we don't have the correct id until store.on returns.
+    record.id = store.on(msg => this.processStoreCallback(muxId, msg));
     return record;
   }
 

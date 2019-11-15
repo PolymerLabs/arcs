@@ -3,8 +3,8 @@ import './schemas/MlModel.arcs'
 import './schemas/Inference.arcs'
 
 particle TopLabels in './js/TopLabels.js'
-  in TfTensor yHat
-  in [Label] labels
-  in? Shape k
-  out [Classification] predictions
+  yHat: reads TfTensor
+  labels: reads [Label]
+  k: reads? Shape
+  predictions: writes [Classification]
   //description `Convert raw inference into the top k labels (with confidence).`

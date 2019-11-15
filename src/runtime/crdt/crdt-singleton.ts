@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt.js';
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, isEmptyChange, createEmptyChange} from './crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, Referenceable} from './crdt-collection.js';
 import {Dictionary} from '../hot.js';
 
@@ -43,13 +43,23 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
 
   merge(other: SingletonData<T>):
       {modelChange: SingletonChange<T>, otherChange: SingletonChange<T>} {
-    this.collection.merge(other);
+    const {modelChange, otherChange} = this.collection.merge(other);
+
     // We cannot pass through the collection ops, so always return the updated model.
-    const change: SingletonChange<T> = {
+    let newModelChange: SingletonChange<T> = {
       changeType: ChangeType.Model,
       modelPostChange: this.collection.getData()
+
     };
-    return {modelChange: change, otherChange: change};
+    let newOtherChange: SingletonChange<T> = newModelChange;
+    if (isEmptyChange(modelChange)) {
+      newModelChange = createEmptyChange();
+    }
+    if (isEmptyChange(otherChange)) {
+      newOtherChange = createEmptyChange();
+    }
+
+    return {modelChange: newModelChange, otherChange: newOtherChange};
   }
 
   applyOperation(op: SingletonOperation<T>): boolean {

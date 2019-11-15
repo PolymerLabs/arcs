@@ -5,11 +5,11 @@ import '../TMDBSearch.arcs'
 import '../TMDBTile.arcs'
 
 recipe TMDBSearch
-  use as query
-  create as results
+  query: use *
+  results: create *
   TMDBSearch
-    query = query
-    results = results
+    query: query
+    results: results
   description `search TMDB(tm)`
 
 recipe TMDBShowTiles
@@ -22,10 +22,10 @@ recipe TMDBShowTiles
   SelectableTiles
     consume root as container
       provide tile as tile
-    list = results
-    selected = selected
+    list: results
+    selected: selected
   TileMultiplexer
-    hostedParticle = TMDBTile
+    hostedParticle: TMDBTile
     consume tile as tile
-    list = results
+    list: results
   description `show ${SelectableTiles.list}`

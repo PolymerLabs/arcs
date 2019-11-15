@@ -11,11 +11,12 @@
 
 package arcs.crdt
 
-import arcs.crdt.CrdtSet.Operation.Add
-import arcs.crdt.CrdtSet.Operation.Remove
-import arcs.crdt.internal.Actor
 import arcs.common.Referencable
 import arcs.common.ReferenceId
+import arcs.crdt.CrdtSet.Operation.Add
+import arcs.crdt.CrdtSet.Operation.Remove
+import arcs.crdt.CrdtSingleton.Data
+import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a mutable reference. */
@@ -25,11 +26,16 @@ class CrdtSingleton<T : Referencable>(
     initialVersion: VersionMap = VersionMap(),
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
-) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.Operation<T>, T?> {
-    private val set: CrdtSet<T>
+) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?> {
+    override val versionMap: VersionMap
+        get() = set._data.versionMap.copy()
+    private var set: CrdtSet<T>
 
     override val data: Data<T>
-        get() = set.data as Data<T>
+        get() {
+            val setData = set._data
+            return DataImpl(setData.versionMap, setData.values)
+        }
     override val consumerView: T?
         // Get any value, or null if no value is present.
         get() = set.consumerView.minBy { it.id }
@@ -59,18 +65,31 @@ class CrdtSingleton<T : Referencable>(
         initialData = data
     )
 
-    override fun merge(other: Data<T>): MergeChanges<Data<T>, Operation<T>> {
-        set.merge(other)
-        // Always return CrdtChange.Data change records, since we cannot perform an op-based change.
-        return MergeChanges(CrdtChange.Data(data), CrdtChange.Data(data))
+    override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
+        val result = set.merge(other)
+        // Always return CrdtChange.Data change record for the local update, since we cannot perform
+        // an op-based change.
+        val modelChange: CrdtChange<Data<T>, IOperation<T>> = CrdtChange.Data(data)
+
+        // If the other changes were empty, we should actually just return empty changes, rather
+        // than the model..
+        val otherChange: CrdtChange<Data<T>, IOperation<T>> = if (result.otherChange.isEmpty()) {
+            CrdtChange.Operations(mutableListOf())
+        } else {
+            CrdtChange.Data(data)
+        }
+
+        return MergeChanges(modelChange, otherChange)
     }
 
-    override fun applyOperation(op: Operation<T>): Boolean = op.applyTo(set)
+    override fun applyOperation(op: IOperation<T>): Boolean = op.applyTo(set)
 
     override fun updateData(newData: Data<T>) = set.updateData(newData)
 
     /** Makes a deep copy of this [CrdtSingleton]. */
     internal fun copy(): CrdtSingleton<T> = CrdtSingleton(singletonToCopy = this)
+
+    override fun toString(): String = "CrdtSingleton(data=${set.data})"
 
     /** Abstract representation of the data stored by a [CrdtSingleton]. */
     interface Data<T : Referencable> : CrdtSet.Data<T> {
@@ -78,7 +97,7 @@ class CrdtSingleton<T : Referencable>(
     }
 
     /** Concrete representation of the data stored by a [CrdtSingleton]. */
-    class DataImpl<T : Referencable>(
+    data class DataImpl<T : Referencable>(
         override var versionMap: VersionMap = VersionMap(),
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>> = mutableMapOf()
     ) : Data<T> {
@@ -86,15 +105,20 @@ class CrdtSingleton<T : Referencable>(
             DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
     }
 
-    sealed class Operation<T : Referencable>(
-        open val actor: Actor,
-        open val clock: VersionMap
-    ) : CrdtOperation {
-        /** Mutates [data] based on the implementation of the [Operation]. */
-        internal abstract fun applyTo(set: CrdtSet<T>): Boolean
+    /** General representation of an operation which can be applied to a [CrdtSingleton]. */
+    interface IOperation<T : Referencable> : CrdtOperationAtTime {
+        val actor: Actor
 
+        /** Mutates [data] based on the implementation of the [Operation]. */
+        fun applyTo(set: CrdtSet<T>): Boolean
+    }
+
+    sealed class Operation<T : Referencable>(
+        override val actor: Actor,
+        override val clock: VersionMap
+    ) : IOperation<T> {
         /** An [Operation] to update the value stored by the [CrdtSingleton]. */
-        data class Update<T : Referencable> internal constructor(
+        open class Update<T : Referencable>(
             override val actor: Actor,
             override val clock: VersionMap,
             val value: T
@@ -114,19 +138,27 @@ class CrdtSingleton<T : Referencable>(
         }
 
         /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
-        data class Clear<T : Referencable> internal constructor(
+        open class Clear<T : Referencable>(
             override val actor: Actor,
             override val clock: VersionMap
         ) : Operation<T>(actor, clock) {
             override fun applyTo(set: CrdtSet<T>): Boolean {
                 // Clear all existing values if our clock allows it.
 
-                val removeOps = set.originalData.values
+                val removeOps = set.data.values
                     .map { (_, value) -> Remove(clock, actor, value.value) }
 
                 removeOps.forEach { set.applyOperation(it) }
                 return true
             }
         }
+    }
+
+    companion object {
+        /** Creates a [CrdtSingleton] from pre-existing data. */
+        fun <T : Referencable> createWithData(
+            data: Data<T>,
+            dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
+        ) = CrdtSingleton(dataBuilder).apply { set = CrdtSet(data, dataBuilder) }
     }
 }

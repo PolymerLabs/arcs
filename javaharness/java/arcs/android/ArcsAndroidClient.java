@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
+import arcs.api.HandleFactory;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import arcs.api.ArcData;
-import arcs.api.ArcsMessageSender;
 import arcs.api.Particle;
 import arcs.api.PecInnerPort;
 import arcs.api.PecPortManager;
@@ -37,16 +37,14 @@ public class ArcsAndroidClient {
   private IArcsService arcsService;
   private Queue<Consumer<IArcsService>> pendingCalls = new ArrayDeque<>();
 
+
   @Inject
   ArcsAndroidClient(
-      PecPortManager pecPortManager,
       PortableJsonParser jsonParser,
-      ArcsMessageSender arcsMessageSender) {
-    this.pecPortManager = pecPortManager;
+      HandleFactory handleFactory) {
     this.jsonParser = jsonParser;
+    this.pecPortManager = new PecPortManager(this::sendMessageToArcs, jsonParser, handleFactory);
     this.serviceConnection = new HelperServiceConnection();
-
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
   }
 
   public void connect(Context context) {
@@ -86,25 +84,23 @@ public class ArcsAndroidClient {
     return arcData;
   }
 
-  public ArcData runArc(String recipe, String arcId, String pecId, Particle particle) {
+  public ArcData runArc(String recipe, String arcId, Particle particle) {
     ArcData arcData =
       new ArcData.Builder()
         .setRecipe(recipe)
         .setArcId(arcId)
-        .setPecId(pecId)
         .addParticleData(new ArcData.ParticleData().setParticle(particle))
         .build();
     runArc(arcData);
     return arcData;
   }
 
-  public ArcData runArc(String recipe, String arcId, String pecId,
+  public ArcData runArc(String recipe, String arcId,
                         List<? extends Particle> particles) {
     ArcData.Builder builder =
       new ArcData.Builder()
         .setRecipe(recipe)
-        .setArcId(arcId)
-        .setPecId(pecId);
+        .setArcId(arcId);
     particles.forEach(particle -> builder.addParticleData(
       new ArcData.ParticleData().setParticle(particle)
     ));
@@ -183,17 +179,6 @@ public class ArcsAndroidClient {
     executeArcsServiceCall(iArcsService -> {
       try {
         iArcsService.sendMessageToArcs(message);
-      } catch (RemoteException e) {
-        e.printStackTrace();
-      }
-    });
-  }
-
-  public void addManifests(List<String> manifests, Consumer<Boolean> callback) {
-    executeArcsServiceCall(iArcsService -> {
-      try {
-        boolean success = iArcsService.addManifests(manifests);
-        callback.accept(success);
       } catch (RemoteException e) {
         e.printStackTrace();
       }

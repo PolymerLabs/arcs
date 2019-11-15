@@ -1,9 +1,9 @@
 import './schemas/MlResource.arcs'
 
 particle ExpandDims in './js/ExpandDims.js'
-  in TfTensor tensor
-  in Shape axis
-  out TfTensor newTensor
+  tensor: reads TfTensor
+  axis: reads Shape
+  newTensor: writes TfTensor
   //description `Increase the number of dimensions of the tensor by one.`
 
 

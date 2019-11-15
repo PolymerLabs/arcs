@@ -9,7 +9,7 @@
  */
 
 import {Type} from '../../../../build/runtime/type.js';
-import {Utils} from '../../../lib/utils.js';
+import {Runtime} from '../../../../build/runtime/runtime.js';
 import {Schemas} from '../schemas.js';
 
 export const conformType = type => {
@@ -33,7 +33,7 @@ export const recipeByName = (manifest, name) => {
 };
 
 export const instantiateRecipe = async (arc, recipe) => {
-  const plan = await Utils.resolve(arc, recipe);
+  const plan = await Runtime.resolveRecipe(arc, recipe);
   if (plan) {
     await arc.instantiate(plan);
     return plan;

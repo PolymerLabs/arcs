@@ -22,6 +22,7 @@ android_library(
     resource_files = glob(["res/**"]),
     deps = [
         "//javaharness/java/arcs/api:api-android",
+        "//third_party/java/androidx/webkit",
         "//third_party/java/auto:auto_value",
         "//third_party/java/dagger",
         "//third_party/java/flogger:android",

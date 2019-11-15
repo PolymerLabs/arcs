@@ -1,6 +1,6 @@
 import './schemas/MlModel.arcs'
 
 particle ModelSelector in './js/ModelSelector.js'
-  out MlModel model
-  consume imageView
-    provide resultsView
+  model: writes MlModel
+  imageView: consumes Slot
+    resultsView: provides? Slot

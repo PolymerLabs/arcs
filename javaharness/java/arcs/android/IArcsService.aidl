@@ -27,9 +27,5 @@ interface IArcsService {
 
   // TODO: add unregisterRenderer method.
   void registerRenderer(String modality, IRemoteOutputCallback callback);
-
-  // Adds manifests to Arcs.
-  // Returns true if manifests are successfully added. Otherwise false.
-  boolean addManifests(in List<String> manifests);
 }
 

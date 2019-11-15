@@ -16,19 +16,19 @@ recipe SelectableUseListRecipe
   items: use #items
   selected: create #selected
   SelectableList
-    items: any items
-    selected: any selected
+    items: items
+    selected: selected
   ItemMultiplexer
-    list: any items
+    list: items
 
 recipe SelectableCopyListRecipe
   items: copy #items
   selected: create #selected
   SelectableList
-    items: any items
-    selected: any selected
+    items: items
+    selected: selected
   ItemMultiplexer
-    list: any items
+    list: items
 
 //----------------------------------------
 // Recipe: Generic Tiled List (Selectable)
@@ -38,18 +38,18 @@ recipe SelectableCopyTilesRecipe
   items: copy #tiles
   selected: create #selected
   SelectableTileList
-    items: any items
-    selected: any selected
+    items: items
+    selected: selected
   TileMultiplexer
-    list: any items
+    list: items
   description `show ${SelectableTileList.items}`
 
 recipe SelectableUseTilesRecipe
   items: use #tiles
   selected: create #selected
   SelectableTileList
-    items: any items
-    selected: any selected
+    items: items
+    selected: selected
   TileMultiplexer
-    list: any items
+    list: items
   description `show ${SelectableTileList.items}`

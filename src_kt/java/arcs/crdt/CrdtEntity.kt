@@ -14,13 +14,16 @@ package arcs.crdt
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtSet.Data as SetData
+import arcs.crdt.CrdtSet.IOperation as ISetOp
 import arcs.crdt.CrdtSet.Operation as SetOp
 import arcs.crdt.CrdtSingleton.Data as SingletonData
+import arcs.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.crdt.CrdtSingleton.Operation as SingletonOp
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.VersionMap
 import arcs.data.FieldName
 import arcs.data.RawEntity
+import arcs.data.util.ReferencablePrimitive
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named
@@ -29,6 +32,8 @@ import arcs.data.RawEntity
 class CrdtEntity(
     private var _data: Data = Data()
 ) : CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> {
+    override val versionMap: VersionMap
+        get() = _data.versionMap.copy()
     override val data: Data
         get() = _data.copy()
     override val consumerView: RawEntity
@@ -37,13 +42,23 @@ class CrdtEntity(
     /**
      * Builds a [CrdtEntity] from a [RawEntity] with its clock starting at the given [VersionMap].
      */
-    constructor(versionMap: VersionMap, rawEntity: RawEntity) : this(Data(versionMap, rawEntity))
+    constructor(
+        versionMap: VersionMap,
+        rawEntity: RawEntity,
+        /**
+         * Function to convert the [Referencable]s within [rawEntity] into [Reference] objects
+         * needed by [CrdtEntity].
+         */
+        referenceBuilder: (Referencable) -> Reference = Reference.Companion::buildReference
+    ) : this(Data(versionMap, rawEntity, referenceBuilder))
 
     override fun merge(other: Data): MergeChanges<Data, Operation> {
+        /* ktlint-disable max-line-length */
         val singletonChanges =
-            mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, SingletonOp<Reference>>>()
+            mutableMapOf<FieldName, MergeChanges<SingletonData<Reference>, ISingletonOp<Reference>>>()
+        /* ktlint-enable max-line-length */
         val collectionChanges =
-            mutableMapOf<FieldName, MergeChanges<SetData<Reference>, SetOp<Reference>>>()
+            mutableMapOf<FieldName, MergeChanges<SetData<Reference>, ISetOp<Reference>>>()
 
         var allOps = true
 
@@ -52,8 +67,8 @@ class CrdtEntity(
             if (otherSingleton != null) {
                 singletonChanges[fieldName] = singleton.merge(otherSingleton.data)
             }
-            if (singletonChanges[fieldName]?.modelChange is CrdtChange.Data
-                || singletonChanges[fieldName]?.otherChange is CrdtChange.Data) {
+            if (singletonChanges[fieldName]?.modelChange is CrdtChange.Data ||
+                singletonChanges[fieldName]?.otherChange is CrdtChange.Data) {
                 allOps = false
             }
         }
@@ -62,12 +77,21 @@ class CrdtEntity(
             if (otherCollection != null) {
                 collectionChanges[fieldName] = collection.merge(otherCollection.data)
             }
-            if (collectionChanges[fieldName]?.modelChange is CrdtChange.Data
-                || collectionChanges[fieldName]?.otherChange is CrdtChange.Data) {
+            if (collectionChanges[fieldName]?.modelChange is CrdtChange.Data ||
+                collectionChanges[fieldName]?.otherChange is CrdtChange.Data) {
                 allOps = false
             }
         }
+        val oldVersionMap = _data.versionMap.copy()
         _data.versionMap = _data.versionMap mergeWith other.versionMap
+
+        if (oldVersionMap == _data.versionMap) {
+            @Suppress("RemoveExplicitTypeArguments")
+            return MergeChanges(
+                CrdtChange.Operations(mutableListOf<Operation>()),
+                CrdtChange.Operations(mutableListOf<Operation>())
+            )
+        }
 
         return if (allOps) {
             val modelOps = mutableListOf<Operation>()
@@ -136,20 +160,32 @@ class CrdtEntity(
         _data = newData.copy()
     }
 
-    private fun SingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when(this) {
+    private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)
+        else -> throw CrdtException("Invalid operation")
     }
 
-    private fun SetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
+    private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SetOp.Add -> Operation.AddToSet(actor, clock, fieldName, added)
         is SetOp.Remove -> Operation.RemoveFromSet(actor, clock, fieldName, removed)
-        is SetOp.FastForward ->
-            throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
+        else -> throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
     }
 
-    /** Minimal [Referencable] for contents of a singletons/collections in [Data]. */
-    data class Reference(override val id: ReferenceId) : Referencable
+    /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */
+    interface Reference : Referencable {
+        companion object {
+            /** Simple converter from [Referencable] to [Reference]. */
+            fun buildReference(referencable: Referencable): Reference =
+                ReferenceImpl(referencable.id)
+        }
+    }
+
+    /** Minimal [Reference] for contents of a singletons/collections in [Data]. */
+    data class ReferenceImpl(override val id: ReferenceId) : Reference {
+        override fun tryDereference(): Referencable =
+            ReferencablePrimitive.tryDereference(id) ?: this
+    }
 
     /** Data contained within a [CrdtEntity]. */
     data class Data(
@@ -161,15 +197,40 @@ class CrdtEntity(
         val collections: Map<FieldName, CrdtSet<Reference>> = emptyMap()
     ) : CrdtData {
         /** Builds a [CrdtEntity.Data] object from an initial version and a [RawEntity]. */
-        constructor(versionMap: VersionMap, rawEntity: RawEntity) : this(
+        constructor(
+            versionMap: VersionMap,
+            rawEntity: RawEntity,
+            referenceBuilder: (Referencable) -> Reference
+        ) : this(
             versionMap,
-            rawEntity.buildCrdtSingletonMap(versionMap),
-            rawEntity.buildCrdtSetMap(versionMap)
+            rawEntity.buildCrdtSingletonMap({ versionMap }, referenceBuilder),
+            rawEntity.buildCrdtSetMap({ versionMap }, referenceBuilder)
         )
 
-        internal fun toRawEntity() = RawEntity(
-            singletons.mapValues { it.value.consumerView },
-            collections.mapValues { it.value.consumerView }
+        constructor(
+            rawEntity: RawEntity,
+            entityVersion: VersionMap,
+            versionProvider: (FieldName) -> VersionMap,
+            referenceBuilder: (Referencable) -> Reference
+        ) : this(
+            entityVersion,
+            rawEntity.buildCrdtSingletonMap(versionProvider, referenceBuilder),
+            rawEntity.buildCrdtSetMap(versionProvider, referenceBuilder)
+        )
+
+        fun toRawEntity() = RawEntity(
+            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
+            collections = collections.mapValues {
+                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+            }
+        )
+
+        fun toRawEntity(id: ReferenceId) = RawEntity(
+            id = id,
+            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
+            collections = collections.mapValues {
+                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+            }
         )
 
         /** Makes a deep copy of this [CrdtEntity.Data] object. */
@@ -183,22 +244,25 @@ class CrdtEntity(
 
         companion object {
             private fun RawEntity.buildCrdtSingletonMap(
-                versionMap: VersionMap
+                versionProvider: (FieldName) -> VersionMap,
+                referenceBuilder: (Referencable) -> Reference
             ): Map<FieldName, CrdtSingleton<Reference>> = singletons.mapValues { entry ->
                 CrdtSingleton(
-                    versionMap.copy(),
-                    entry.value?.let { Reference(it.id) }
+                    versionProvider(entry.key).copy(),
+                    entry.value?.let { referenceBuilder(it) }
                 )
             }
 
             @Suppress("UNCHECKED_CAST")
             private fun RawEntity.buildCrdtSetMap(
-                versionMap: VersionMap
+                versionProvider: (FieldName) -> VersionMap,
+                referenceBuilder: (Referencable) -> Reference
             ): Map<FieldName, CrdtSet<Reference>> = collections.mapValues { entry ->
+                val version = versionProvider(entry.key).copy()
                 CrdtSet(
                     CrdtSet.DataImpl(
-                        versionMap.copy(),
-                        entry.value.map { CrdtSet.DataValue(versionMap, Reference(it.id)) }
+                        version,
+                        entry.value.map { CrdtSet.DataValue(version.copy(), referenceBuilder(it)) }
                             .associateBy { it.value.id }
                             .toMutableMap()
                     )
@@ -279,4 +343,3 @@ class CrdtEntity(
         }
     }
 }
-

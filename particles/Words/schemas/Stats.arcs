@@ -1,27 +1,27 @@
 schema Stats
   // The unique game id of the associated Words game.
-  Text gameId
+  gameId: Text
   // Current or ending (if over) game score.
-  Number score
+  score: Number
   // Total number of moves made in game thus far (or total, if over).
-  Number moveCount
+  moveCount: Number
   // Timestamp at which the game was first created.
-  Number startstamp
+  startstamp: Number
   // Timestamp at which the game ended or undefined if not yet over.
-  Number endstamp
+  endstamp: Number
   // Longest word (text)
-  Text longestWord
+  longestWord: Text
   // Longest word (score)
-  Number longestWordScore
+  longestWordScore: Number
   // Highest scoring word (text)
-  Text highestScoringWord
+  highestScoringWord: Text
   // Highest scoring word (score)
-  Number highestScoringWordScore
+  highestScoringWordScore: Number
   // TODO(wkorman): Below are temporary fields copied from Post while we
   // rework social feed to use muxing embedded recipes.
   // Time this post was created in milliseconds since the epoch.
-  Number createdTimestamp
+  createdTimestamp: Number
   // The primary message content of the post.
-  Text message
+  message: Text
   // The opaque user id of the post author.
-  Text author
+  author: Text

@@ -13,7 +13,8 @@ import {Modality} from './modality.js';
 import {Direction, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {Schema, InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type.js';
+import {Schema} from './schema.js';
+import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
 import {Check, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
@@ -403,7 +404,8 @@ export class ParticleSpec {
         // TODO: Remove post slandles syntax
         results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
       } else {
-        results.push(`${indent}${connection.name}: ${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} ${connection.type.toString()}${tags}`);
+        const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
+        results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
       }
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');

@@ -10,7 +10,8 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {Schema, EntityType, SlotType, Type, TypeVariable, TypeLiteral} from './type.js';
+import {Schema} from './schema.js';
+import {EntityType, SlotType, Type, TypeVariable, TypeLiteral} from './type.js';
 
 interface TypeVariableInfoLiteral {
   name: string;

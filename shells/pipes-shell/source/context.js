@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Utils} from '../../lib/utils.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
 
 export const requireContext = async manifest => {
   if (!requireContext.promise) {
-    requireContext.promise = Utils.parse(manifest);
+    requireContext.promise = Runtime.parse(manifest);
     window.context = await requireContext.promise;
   }
   return await requireContext.promise;

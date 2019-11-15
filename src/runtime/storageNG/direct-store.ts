@@ -34,10 +34,6 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     super(options);
   }
 
-  async getLocalData(): Promise<CRDTData> {
-    return this.localModel.getData();
-  }
-
   async serializeContents(): Promise<T['data']> {
     await this.idle();
     return this.localModel.getData();
@@ -81,9 +77,6 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {
     const me = new DirectStore<T>(options);
     me.localModel = new (options.type.crdtInstanceConstructor<T>())();
-    if (options.model) {
-      me.localModel.merge(options.model);
-    }
     me.driver = await DriverFactory.driverInstance(options.storageKey, options.exists);
     if (me.driver == null) {
       throw new CRDTError(`No driver exists to support storage key ${options.storageKey}`);
@@ -101,7 +94,6 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
 
   private deliverCallbacks(thisChange: CRDTChange<T>, messageFromDriver: boolean, channel: number) {
-
     if (thisChange.changeType === ChangeType.Operations && thisChange.operations.length > 0) {
       this.callbacks.forEach((cb, id) => {
         if (messageFromDriver || channel !== id) {
@@ -256,6 +248,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   on(callback: ProxyCallback<T>) {
     const id = this.nextCallbackID++;
     this.callbacks.set(id, callback);
+    if (this.version > 0) {
+      noAwait(callback({type: ProxyMessageType.ModelUpdate, model: this.localModel.getData(), id}));
+    }
     return id;
   }
   off(callback: number) {

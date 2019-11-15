@@ -10,22 +10,22 @@ import '../People/schemas/Person.arcs'
 import 'schemas/Product.arcs'
 
 particle Interests in 'source/Interests.js'
-  in [Product] list
-  in Person person
-  consume postamble
+  list: reads [Product]
+  person: reads Person
+  postamble: consumes Slot
   description `find out about ${person.name}'s interests`
 
 // Recommendations based on Claire's interest in field hockey.
 //recipe InterestRecipe
-//  map #wishlist as wishlist
-//  use as person
+//  wishlist: map #wishlist
+//  person: use *
 //  Interests
-//    list = wishlist
-//    person = person
+//    list: wishlist
+//    person: person
 
 recipe ProductInterests
-  use as list
-  use as person
+  list: use *
+  person: use *
   Interests
-    list = list
-    person = person
+    list: list
+    person: person

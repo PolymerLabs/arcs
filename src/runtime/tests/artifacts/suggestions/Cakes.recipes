@@ -11,40 +11,39 @@
 import './Cake.manifest'
 
 particle List in '../Common/source/List.js'
-  in [~a] items
-  consume root
-    must provide set of item
-      handle items
+  items: reads [~a]
+  root: consumes Slot
+    item: provides [Slot {handle: items}]
   description `show ${items}`
 
 interface MakeCakeInterface
-  in Cake *
-  consume item
-  provide special
+  reads Cake
+  item: consumes Slot
+  special: provides? Slot
 
 particle CakeMuxer in '../Common/source/Multiplexer.js'
-  host MakeCakeInterface hostedParticle
-  in [Cake] list
-  consume set of item
-    provide set of special
+  hostedParticle: hosts MakeCakeInterface
+  list: reads [Cake]
+  item: consumes [Slot]
+    special: provides? [Slot]
 
 recipe &makeCakes
-  map #cakes as cakesHandle
+  cakesHandle: map #cakes
   List
-    items = cakesHandle
+    items: cakesHandle
   CakeMuxer
-    list = cakesHandle
-    hostedParticle = MakeCake
+    list: cakesHandle
+    hostedParticle: MakeCake
   description `show ${List.items}`
 
 interface LightCandleInterface
-  in Cake *
-  consume candles
+  reads Cake
+  candles: consumes Slot
 
 particle CandleMuxer in '../Common/source/Multiplexer.js'
-  host LightCandleInterface hostedParticle
-  in [Cake] list
-  consume set of candles
+  hostedParticle: hosts LightCandleInterface
+  list: reads [Cake]
+  candles: consumes [Slot]
 
 
 // TODO: this suggestion uses collection handle and should be inlined in the set-slot.
@@ -52,9 +51,9 @@ particle CandleMuxer in '../Common/source/Multiplexer.js'
 //   map #cakes as cakesHandle
 //   slot #special as candlesSlot
 //   CandleMuxer
-//     list = cakesHandle
-//     hostedParticle = LightCandles
-//     consume candles as candlesSlot
+//     list: cakesHandle
+//     hostedParticle: LightCandles
+//     consumes candles as candlesSlot
 //   description `light candles for ${CandleMuxer.list}`
 
 recipe

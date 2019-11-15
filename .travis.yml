@@ -10,7 +10,19 @@ sudo: required
 addons:
   chrome: stable
 
+# We want email to the whole team when the cron build fails. But regular PR
+# builds don't trigger email at all (per https://docs.travis-ci.com/user/notifications/#configuring-email-notifications),
+# so configuring email notifications should send them only from cron builds.
+notifications:
+  email:
+    recipients:
+      - arcs-team+cron@google.com
+    on_success: never # default: change
+    on_failure: always # default: always
+
 script:
+  # Run ktlint against every kotlin file in the diff between the branch and master's head.
+  - git diff --name-only --relative $TRAVIS_COMMIT_RANGE | grep '\.kt[s"]\?$' | xargs ktlint --android --relative --verbose .
   # Bazel build & test everything. Can't use `bazel build ...` yet, because
   # javaharness doesn't build on Travis (needs working Android SDK).
   - >
@@ -23,11 +35,13 @@ script:
     //particles/...
     //src/...
     //src_kt/...
-  - npm run test-with-start
+  - ./tools/sigh
+  - npm run test-extension
   - npm run build:rollup
   - npm --prefix=server test
 
-cache: npm
+cache:
+  npm: true
 
 # Thinking about adding install steps? Why not modify the tools/setup script instead?
 # The list command dumps the top-level packages with their versions, in case we need that for debugging.

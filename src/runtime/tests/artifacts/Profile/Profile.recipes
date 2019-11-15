@@ -10,19 +10,19 @@ import 'FriendsPicker.manifest'
 import '../Places/AddressForm.manifest'
 
 recipe BasicUserProfile
-  create #address as address
-  create #avatar as avatar
-  create #friends as friends
-  use #user as person
-  use #identities as people
-  map #BOXED_avatar as avatars
+  address: create #address
+  avatar: create #avatar
+  friends: create #friends
+  person: use #user
+  people: use #identities
+  avatars: map #BOXED_avatar
   AvatarPicker
-    avatar = avatar
-    person <- person
+    avatar: avatar
+    person: reads person
   FriendsPicker
-    person <- person
-    friends = friends
-    avatars <- avatars
-    people <- people
+    person: reads person
+    friends: friends
+    avatars: reads avatars
+    people: reads people
   AddressForm
-    address = address
+    address: address

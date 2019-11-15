@@ -7,25 +7,25 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface HostedAnnotationParticleInterface
-  in ~a *
-  consume annotation
+  reads ~a
+  annotation: consumes? Slot
 
 // TODO: This particle should use generic slot name.
 particle Multiplexer in 'source/Multiplexer.js'
-  host HostedAnnotationParticleInterface hostedParticle
-  in [~a] list
-  consume set of annotation
+  hostedParticle: hosts HostedAnnotationParticleInterface
+  list: reads [~a]
+  annotation: consumes? [Slot]
   description `${hostedParticle} for ${list}`
 
 // Same as Multiplexer above, but with an additional connection.
 interface HostedParticleInterface2
-  in ~a *
-  in [~a] *
-  consume
+  reads ~a
+  reads [~a]
+  consumes? Slot
 
 particle Multiplexer2 in 'source/Multiplexer.js'
-  host HostedParticleInterface2 hostedParticle
-  in [~a] list
-  in [~a] others
-  consume set of annotation
+  hostedParticle: hosts HostedParticleInterface2
+  list: reads [~a]
+  others: reads [~a]
+  annotation: consumes? [Slot]
   description `${hostedParticle} for ${list}`

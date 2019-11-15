@@ -7,19 +7,19 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Foo
-  Text value
+  value: Text
 
 particle SingleSlotParticle in 'test-single-slot-particle.js'
-  in Foo foo
-  consume annotation
+  foo: reads Foo
+  annotation: consumes Slot
   description `test slot particle0`
 
 interface HostedParticleInterface
-  in Foo foo
-  consume annotation
+  foo: reads Foo
+  annotation: consumes Slot
 
 particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'
-  host HostedParticleInterface particle0
-  in [Foo] foos
-  consume set of annotationsSet
+  particle0: hosts HostedParticleInterface
+  foos: reads [Foo]
+  annotationsSet: consumes [Slot]
   description `outer test slot particle0`

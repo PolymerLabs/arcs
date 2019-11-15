@@ -147,6 +147,20 @@ See [extension](extension/README.md).
 
 See [devtools](devtools/README.md).
 
+## IDE Setup
+Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
+
+### IntelliJ
+
+- Install IntelliJ, community edition is sufficient.
+- Open IntelliJ and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
+- Upon restarting IntelliJ, click "Import Bazel Project"
+- Select the workspace by navigating to the arcs folder, then click "Next".
+- Choose "Import project view file" and click on the three dots. 
+- Navigate to the arcs folder, and select the `.bazelproject` file. Click "OK".
+- Click "Next".
+- Click "Finish".
+
 ## Testing
 
 The simplest way to run tests is to let the targets do all the work. These

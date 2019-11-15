@@ -705,7 +705,7 @@ describe('firebase', function() {
       const loader = new StubLoader({
         manifest: `
           schema Data
-            Text value
+            value: Text
 
           particle P in 'a.js'
             var: reads Data
@@ -713,13 +713,13 @@ describe('firebase', function() {
             big: reads writes BigCollection<Data>
 
           recipe
-            handle0: use
-            handle1: use
-            handle2: use
+            handle0: use *
+            handle1: use *
+            handle2: use *
             P
               var: reads handle0
               col: writes handle1
-              big: any handle2
+              big: handle2
         `,
         'a.js': `
           defineParticle(({Particle}) => class Noop extends Particle {});

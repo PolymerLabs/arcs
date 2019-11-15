@@ -7,39 +7,39 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedAnnotationInterface
-  in ~anyType *
-  inout ~anyOther *
-  `consume Slot annotation
+  reads ~anyType
+  reads writes ~anyOther
+  annotation: `consumes Slot
 
 particle SlandleAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  inout ~anyOther annotationInfo
-  host SlandleHostedAnnotationInterface hostedParticle
-  `consume [Slot] annotation
+  list: reads [~anyType]
+  annotation: reads writes ~anyOther 
+  hostedParticle: hosts SlandleHostedAnnotationInterface
+  annotations: `consumes [Slot]
 
 interface SlandleHostedSimpleAnnotationInterface
-  in ~anyType *
-  `consume Slot annotation
+  reads ~anyType
+  annotation: `consumes Slot
 
 particle SlandleSimpleAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  host SlandleHostedSimpleAnnotationInterface hostedParticle
-  `consume [Slot] annotation
+  list: reads [~anyType]
+  hostedParticle: hosts SlandleHostedSimpleAnnotationInterface 
+  annotation: `consumes [Slot]
 
 interface SlandleHostedCombinedAnnotationInterface
-  in ~anyType *
-  in [~anyOther] *
-  `consume Slot annotation
+  reads ~anyType
+  reads [~anyOther]
+  annotation: `consumes Slot
 
 particle SlandleCombinedAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  in [~anyOther] choices
-  host SlandleHostedCombinedAnnotationInterface hostedParticle
-  `consume [Slot] annotation
+  list: reads [~anyType]
+  choices: reads [~anyOther]
+  hostedParticle: hosts SlandleHostedCombinedAnnotationInterface
+  annotation: `consumes [Slot]
 
 //recipe SlandleAnnotationMultiplexer
-//  use #items as list
-//  use #annotationInfo as annotationInfo
+//  list: use #items
+//  annotation: use #annotation
 //  SlandleAnnotationMultiplexer
-//    list = list
-//    annotationInfo = annotationInfo
+//    list: list
+//    annotation: annotation

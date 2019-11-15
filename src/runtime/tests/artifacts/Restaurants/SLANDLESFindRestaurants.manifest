@@ -10,9 +10,9 @@ import '../Things/GeoCoordinates.schema'
 import 'Restaurant.schema'
 
 particle SlandleFindRestaurants in 'source/FindRestaurants.js'
-  in GeoCoordinates location
-  inout [Restaurant] restaurants
+  location: reads GeoCoordinates
+  restaurants: reads writes [Restaurant]
   modality dom
-  `consume Slot root
-    `provide Slot {handle: restaurants} masterdetail
+  root: `consumes Slot
+     masterdetail: `provides? Slot {handle: restaurants}
   description `find restaurants near ${location}`

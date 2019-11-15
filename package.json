@@ -10,16 +10,8 @@
   "main": "dist/index.es.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
-    "test-with-start": "run-p --print-name --race start test",
-    "test": "run-s --print-name --continue-on-error test-no-web test-wdio-shells",
-    "test-no-web": "run-s --print-name --continue-on-error test-sigh test-extension",
-    "test-shells": "run-p --print-name --race start test-wdio-shells",
-    "test-sigh": "cross-env tools/sigh",
-    "test-health": "cross-env tools/sigh health",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix server run test:licenses",
-    "start": "cross-env tools/sigh devServer --install --port $npm_package_config_port",
-    "test-wdio-shells": "wdio --baseUrl http://localhost:8786/ shells/tests/wdio.conf.js",
     "build:rollup": "rollup -c --sourcemap",
     "watch:rollup": "rollup -c --sourcemap --watch",
     "build:typedoc": "typedoc --ignoreCompilerErrors --mode file --downLevelIteration -out dist/apidocs",
@@ -36,7 +28,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
-    "@types/express": "^4.17.0",
+    "@types/express": "4.17.1",
     "@types/jszip": "^3.1.6",
     "@types/minimist": "^1.2.0",
     "@types/mocha": "^5.2.7",
@@ -61,7 +53,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-header": "^3.0.0",
     "eslint-plugin-import": "^2.18.2",
-    "express": "^4.17.1",
+    "express": "4.17.1",
     "glob": "^7.1.4",
     "grammkit": "0.7.0",
     "js-green-licenses": "^1.1.0",
@@ -104,7 +96,7 @@
     "pouchdb-debug": "^7.1.1",
     "source-map-support": "^0.5.12",
     "sourcemapped-stacktrace": "^1.1.9",
-    "typescript": "^3.5.3",
+    "typescript": "3.7.2",
     "ws": "~6.0.0"
   },
   "repository": {

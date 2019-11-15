@@ -132,6 +132,7 @@ export interface ManifestStorage extends BaseNode {
   origin: 'file' | 'resource' | 'storage';
   description: string|null;
   claim: ManifestStorageClaim;
+  storageKey?: string;
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -153,6 +154,7 @@ export interface ManifestStorageFileSource extends ManifestStorageSource {
 
 export interface ManifestStorageResourceSource extends ManifestStorageSource {
   origin: 'resource';
+  storageKey?: string;
 }
 
 export interface ManifestStorageStorageSource extends ManifestStorageSource {
@@ -348,7 +350,7 @@ export interface RecipeNode extends BaseNode {
 }
 
 export interface RecipeParticle extends BaseNode {
-  kind: 'particle';
+  kind: 'recipe-particle';
   name: string;
   ref: ParticleRef;
   connections: RecipeParticleConnection[];
@@ -558,7 +560,7 @@ export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
 export interface InterfaceArgument extends BaseNode {
   kind: 'interface-argument';
   direction: Direction;
-  type: string;
+  type: ParticleHandleConnectionType;
   name: string;
 }
 

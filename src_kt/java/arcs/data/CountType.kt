@@ -20,17 +20,17 @@ import arcs.type.TypeLiteral
 
 /** [Type] representation for a counter. */
 class CountType : Type, CrdtModelType<CrdtCount.Data, CrdtCount.Operation, Int> {
-  override val tag = Tag.Count
+    override val tag = Tag.Count
 
-  override fun toLiteral() = Literal(tag)
+    override fun toLiteral() = Literal(tag)
 
-  override fun createCrdtModel() = CrdtCount()
+    override fun createCrdtModel() = CrdtCount()
 
-  data class Literal(override val tag: Tag) : TypeLiteral
+    data class Literal(override val tag: Tag) : TypeLiteral
 
-  companion object {
-    init {
-      TypeFactory.registerBuilder(Tag.Count) { CountType() }
+    companion object {
+        init {
+            TypeFactory.registerBuilder(Tag.Count) { CountType() }
+        }
     }
-  }
 }

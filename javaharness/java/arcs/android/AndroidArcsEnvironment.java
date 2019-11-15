@@ -1,31 +1,33 @@
 package arcs.android;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
+import android.os.Trace;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JavascriptInterface;
+import android.webkit.ServiceWorkerClient;
+import android.webkit.ServiceWorkerController;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import arcs.api.Constants;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewAssetLoader.AssetsPathHandler;
+import androidx.webkit.WebViewAssetLoader.ResourcesPathHandler;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import arcs.api.ArcsMessageSender;
+import arcs.api.Constants;
 import arcs.api.PecPortManager;
 import arcs.api.PortableJson;
 import arcs.api.PortableJsonParser;
@@ -47,8 +49,10 @@ final class AndroidArcsEnvironment {
   private static final Logger logger =
     Logger.getLogger(AndroidArcsEnvironment.class.getName());
 
-  private static final String DYNAMIC_MANIFEST_URL =
-      "file:///android_asset/arcs/dynamic.manifest";
+  private static final String ASSETS_PREFIX = "https://$assets/";
+  // Uses relative path to support multiple protocols i.e. file, https and etc.
+  private static final String APK_ASSETS_URL_PREFIX = "./";
+  private static final String ROOT_MANIFEST_FILENAME = "Root.arcs";
 
   private static final String FIELD_MESSAGE = "message";
   private static final String MESSAGE_READY = "ready";
@@ -61,36 +65,33 @@ final class AndroidArcsEnvironment {
   private static final String FIELD_PEC_ID = "id";
   private static final String FIELD_SESSION_ID = "sessionId";
 
-  @Inject
-  PortableJsonParser jsonParser;
-
-  @Inject
-  PecPortManager pecPortManager;
-
-  @Inject
-  UiBroker uiBroker;
-
+  private final PortableJsonParser jsonParser;
+  private final PecPortManager pecPortManager;
+  private final UiBroker uiBroker;
   // Fetches the up-to-date properties on every get().
-  @Inject
-  Provider<RuntimeSettings> runtimeSettings;
-
-  @Inject
-  ArcsMessageSender arcsMessageSender;
+  private final Provider<RuntimeSettings> runtimeSettings;
 
   private final List<ReadyListener> readyListeners = new ArrayList<>();
   private final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
 
   private WebView webView;
-  private String dynamicManifest;
 
-  @Inject
-  AndroidArcsEnvironment() {}
+  AndroidArcsEnvironment(
+      PortableJsonParser portableJsonParser,
+      PecPortManager pecPortManager,
+      UiBroker uiBroker,
+      Provider<RuntimeSettings> runtimeSettings) {
+    this.jsonParser = portableJsonParser;
+    this.pecPortManager = pecPortManager;
+    this.uiBroker = uiBroker;
+    this.runtimeSettings = runtimeSettings;
+  }
 
   void addReadyListener(ReadyListener listener) {
     readyListeners.add(listener);
   }
 
-  void init(Context context, List<String> manifests) {
+  void init(Context context) {
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
@@ -109,28 +110,38 @@ final class AndroidArcsEnvironment {
     // needed to allow WebWorkers to work in FileURLs.
     arcsSettings.setAllowUniversalAccessFromFileURLs(true);
 
-    dynamicManifest = manifests
-        .stream()
-        .map(s -> String.format("import \'%s\'", s))
-        .collect(Collectors.joining("\n"));
+    // As trampolines to map https protocol to file protocol.
+    // E.g. https://appassets.androidplatform.net/assets/foo is mapped to
+    // file:///android_asset/foo
+    final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+        .addPathHandler("/assets/", new AssetsPathHandler(context))
+        .addPathHandler("/res/", new ResourcesPathHandler(context))
+        .build();
 
     webView.setWebViewClient(new WebViewClient() {
       @Override
       public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-        Log.d(TAG, "Intercepting request " + request.getUrl());
-        if (TextUtils.equals(DYNAMIC_MANIFEST_URL, request.getUrl().toString())) {
-          try {
-            Log.d(TAG, "Intercepted dynamic manifest request, offering " + dynamicManifest);
-            return new WebResourceResponse(
-                "text/plain",
-                "utf-8",
-                new ByteArrayInputStream(dynamicManifest.getBytes(StandardCharsets.UTF_8)));
-          } catch (Exception e) {
-            Log.e(TAG, "Failed to return dynamic manifest.", e);
-          }
-        }
+        // For the renderer main thread to intercept the urls.
+        return assetLoader.shouldInterceptRequest(request.getUrl());
+      }
 
-        return super.shouldInterceptRequest(view, request);
+      @Override
+      public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        Trace.beginAsyncSection("AndroidArcsEnvironment::init::loadUrl", 0);
+      }
+
+      @Override
+      public void onPageFinished(WebView view, String url) {
+        Trace.endAsyncSection("AndroidArcsEnvironment::init::loadUrl", 0);
+      }
+    });
+
+    ServiceWorkerController.getInstance()
+        .setServiceWorkerClient(new ServiceWorkerClient() {
+      @Override
+      public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
+        // For the service worker thread to intercept the urls.
+        return assetLoader.shouldInterceptRequest(request.getUrl());
       }
     });
 
@@ -144,12 +155,14 @@ final class AndroidArcsEnvironment {
     //    android:usesCleartextTraffic="true"
     String url = settings.shellUrl();
     url += "log=" + settings.logLevel();
-    if (settings.useDevServerProxy()) {
-      url += "&explore-proxy";
+    if (settings.enableArcsExplorer()) {
+      url += "&explore-proxy=" + settings.devServerPort();
+    }
+    if (settings.useCacheManager()) {
+      url += "&use-cache";
     }
 
     Log.i("Arcs", "runtime url: " + url);
-    arcsMessageSender.attachProxy(this::sendMessageToArcs);
     webView.loadUrl(url);
   }
 
@@ -158,6 +171,21 @@ final class AndroidArcsEnvironment {
       webView.destroy();
     }
     readyListeners.clear();
+  }
+
+  void sendMessageToArcs(String msg) {
+    String escapedEnvelope = msg.replace("\\\"", "\\\\\"")
+        .replace("'", "\\'");
+    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
+
+    if (webView != null) {
+      // evaluateJavascript runs asynchronously by default
+      // and must be used from the UI thread
+      uiThreadHandler.post(
+          () -> webView.evaluateJavascript(script, (String unused) -> {}));
+    } else {
+      Log.e("Arcs", "webView is null");
+    }
   }
 
   @JavascriptInterface
@@ -202,32 +230,36 @@ final class AndroidArcsEnvironment {
     readyListeners.forEach(listener -> listener.onReady(recipes));
   }
 
-  private void sendMessageToArcs(String msg) {
-    String escapedEnvelope = msg.replace("\\\"", "\\\\\"")
-        .replace("'", "\\'");
-    String script = String.format("ShellApi.receive('%s');", escapedEnvelope);
-
-    if (webView != null) {
-      // evaluateJavascript runs asynchronously by default
-      // and must be used from the UI thread
-      uiThreadHandler.post(
-        () -> webView.evaluateJavascript(script, (String unused) -> {}));
-    } else {
-      Log.e("Arcs", "webView is null");
-    }
-  }
-
   private void configureShell() {
-    PortableJson msg =
-        jsonParser
-            .emptyObject()
-            .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
-            .put("config", jsonParser.emptyObject()
-                .put("rootPath", ".")
-                .put("storage", "volatile://")
-                .put("manifest", dynamicManifest)
-                .put("urlMap", jsonParser.emptyObject()
-                    .put("https://$build/", "")));
-    sendMessageToArcs(jsonParser.stringify(msg));
+    RuntimeSettings settings = runtimeSettings.get();
+
+    PortableJson urlMap = jsonParser.emptyObject()
+        // For fetching bundled javascript.
+        .put("https://$build/", "");
+
+    if (settings.loadAssetsFromWorkstation()) {
+      // Fetch generated root manifest from the APK assets directory.
+      urlMap.put(
+          ASSETS_PREFIX + ROOT_MANIFEST_FILENAME,
+          APK_ASSETS_URL_PREFIX + ROOT_MANIFEST_FILENAME);
+      // Fetch remaining assets from the workstation redirecting requests
+      // for .wasm modules to the build directory.
+      urlMap.put(ASSETS_PREFIX, jsonParser.emptyObject()
+          .put("root", "http://localhost:" + settings.devServerPort() + "/")
+          .put("buildDir", "bazel-bin/")
+          .put("buildOutputRegex", "(\\\\.wasm)|(\\\\.root\\\\.arcs)$"));
+    } else {
+      // Fetch all assets from the APK assets directory.
+      urlMap.put(ASSETS_PREFIX, APK_ASSETS_URL_PREFIX);
+    }
+
+    sendMessageToArcs(jsonParser.stringify(jsonParser
+        .emptyObject()
+        .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
+        .put("config", jsonParser.emptyObject()
+            .put("rootPath", ".")
+            .put("storage", "volatile://")
+            .put("manifest", "import '" + ASSETS_PREFIX + ROOT_MANIFEST_FILENAME + "'")
+            .put("urlMap", urlMap))));
   }
 }

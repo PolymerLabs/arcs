@@ -147,7 +147,7 @@ describe('ConvertConstraintsToConnections', () => {
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
     };
     // Test for all possible combination of connection constraints with 3 particles.
-    const constraints = [['A.b: any C.d', 'C.d: any A.b'], ['A.b: writes E.f', 'E.f: reads A.b'], ['C.d: writes E.f', 'E.f: reads C.d']];
+    const constraints = [['A.b: C.d', 'C.d: A.b'], ['A.b: writes E.f', 'E.f: reads A.b'], ['C.d: writes E.f', 'E.f: reads C.d']];
     for (let i = 0; i < constraints.length; ++i) {
       for (let j = 0; j < constraints.length; ++j) {
         if (i === j) continue;
@@ -420,7 +420,7 @@ describe('ConvertConstraintsToConnections', () => {
         handle1: use
         C
         A
-          b: any handle1`);
+          b: handle1`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
     const results = await cctc.generateFrom(generated);

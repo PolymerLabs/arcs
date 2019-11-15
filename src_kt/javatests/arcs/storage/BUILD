@@ -1,3 +1,5 @@
+licenses(["notice"])
+
 package(default_visibility = ["//visibility:public"])
 
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
@@ -11,8 +13,11 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
         deps = [
             "//src_kt/java/arcs/crdt",
             "//src_kt/java/arcs/data",
+            "//src_kt/java/arcs/data/util",
             "//src_kt/java/arcs/storage",
             "//src_kt/java/arcs/storage/driver",
+            "//src_kt/java/arcs/storage/referencemode",
+            "//src_kt/java/arcs/testutil",
             "//third_party/java/junit",
             "//third_party/java/mockito",
             "//third_party/java/truth",

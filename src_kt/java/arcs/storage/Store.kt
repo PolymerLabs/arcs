@@ -12,6 +12,7 @@
 package arcs.storage
 
 import arcs.crdt.CrdtData
+import arcs.crdt.CrdtException
 import arcs.crdt.CrdtOperation
 import arcs.type.Type
 
@@ -24,55 +25,57 @@ import arcs.type.Type
  * Calling [activate] will generate an interactive store and return it.
  */
 class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-  options: StoreOptions<Data, Op, ConsumerData>
+    options: StoreOptions<Data, Op, ConsumerData>
 ) : IStore<Data, Op, ConsumerData> {
-  override val storageKey: StorageKey = options.storageKey
-  override var existenceCriteria: ExistenceCriteria = options.existenceCriteria
-  override val mode: StorageMode = options.mode
-  override val type: Type = options.type
-  private var activeStore: ActiveStore<Data, Op, ConsumerData>? = null
-    get() = synchronized(this) { field }
-    set(value) = synchronized(this) { field = value }
+    override val storageKey: StorageKey = options.storageKey
+    override var existenceCriteria: ExistenceCriteria = options.existenceCriteria
+    override val mode: StorageMode = options.mode
+    override val type: Type = options.type
+    private var activeStore: ActiveStore<Data, Op, ConsumerData>? = null
+        get() = synchronized(this) { field }
+        set(value) = synchronized(this) { field = value }
 
-  /**
-   * If there's a parsed model then it's stored here and provided to [activate] when reconstituting
-   * an [ActiveStore].
-   */
-  var model: Data? = options.model
-  private val parsedVersionToken: String? = options.versionToken
-  val versionToken: String?
-    get() = activeStore?.versionToken ?: parsedVersionToken
+    /**
+     * If there's a parsed model then it's stored here and provided to [activate] when
+     * reconstituting an [ActiveStore].
+     */
+    var model: Data? = options.model
+    private val parsedVersionToken: String? = options.versionToken
+    val versionToken: String?
+        get() = activeStore?.versionToken ?: parsedVersionToken
 
-  @Suppress("UNCHECKED_CAST")
-  suspend fun activate(): ActiveStore<Data, Op, ConsumerData> {
-    activeStore?.let { return it }
+    @Suppress("UNCHECKED_CAST")
+    suspend fun activate(): ActiveStore<Data, Op, ConsumerData> {
+        activeStore?.let { return it }
 
-    require(mode in CONSTRUCTORS) { "StorageMode $mode not yet implemented" }
-    val constructor =
-      requireNotNull(CONSTRUCTORS[mode]) { "No constructor registered for mode $mode" }
+        CrdtException.require(mode in CONSTRUCTORS) { "StorageMode $mode not yet implemented" }
+        val constructor = CrdtException.requireNotNull(CONSTRUCTORS[mode]) {
+            "No constructor registered for mode $mode"
+        }
 
-    val activeStore = checkNotNull(
-      constructor(
-        StoreOptions(
-          storageKey = storageKey,
-          existenceCriteria = existenceCriteria,
-          type = type,
-          mode = mode,
-          baseStore = this,
-          versionToken = parsedVersionToken,
-          model = model
+        val activeStore = CrdtException.requireNotNull(
+            constructor(
+                StoreOptions(
+                    storageKey = storageKey,
+                    existenceCriteria = existenceCriteria,
+                    type = type,
+                    mode = mode,
+                    baseStore = this,
+                    versionToken = parsedVersionToken,
+                    model = model
+                )
+            ) as? ActiveStore<Data, Op, ConsumerData>
+        ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
+        existenceCriteria = ExistenceCriteria.ShouldExist
+        this.activeStore = activeStore
+        return activeStore
+    }
+
+    companion object {
+        private val CONSTRUCTORS = mapOf(
+            StorageMode.Direct to DirectStore.CONSTRUCTOR,
+            StorageMode.Backing to BackingStore.CONSTRUCTOR,
+            StorageMode.ReferenceMode to ReferenceModeStore.CONSTRUCTOR
         )
-      ) as? ActiveStore<Data, Op, ConsumerData>
-    ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
-    existenceCriteria = ExistenceCriteria.ShouldExist
-    this.activeStore = activeStore
-    return activeStore
-  }
-
-  companion object {
-    private val CONSTRUCTORS = mapOf(
-      StorageMode.Direct to DirectStore.CONSTRUCTOR,
-      StorageMode.Backing to BackingStore.CONSTRUCTOR
-    )
-  }
+    }
 }

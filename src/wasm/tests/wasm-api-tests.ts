@@ -13,7 +13,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {RozSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
-import {assertThrowsAsync} from '../../runtime/testing/test-util.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ReferenceType} from '../../runtime/type.js';
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -31,47 +31,39 @@ class TestLoader extends Loader {
   }
 }
 
-async function setup(manifestString) {
-  const loader = new TestLoader();
-  const manifest = await Manifest.parse(manifestString, {loader, fileName: process.cwd() + '/input.arcs'});
-  const runtime = new Runtime(loader, RozSlotComposer, manifest);
-  const arc = runtime.newArc('wasm-test', 'volatile://');
-
-  const recipe = arc.context.recipes[0];
-  recipe.normalize();
-  await arc.instantiate(recipe);
-  await arc.idle;
-
-  const [info] = arc.loadedParticleInfo.values();
-  return {arc, stores: info.stores, slotComposer: arc.pec.slotComposer as RozSlotComposer};
-}
-
-['cpp/tests/', 'kotlin/tests/arcs/'].forEach(env => {
-  const buildDir = `src/wasm/${env}`;
-  const schemasFile = `src/wasm/${env}schemas.arcs`;
+['cpp/tests', 'kotlin/tests/arcs'].forEach(env => {
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
+    let loader;
+    let manifestPromise;
     before(function() {
       if (!global['testFlags'].bazel) {
         this.skip();
+      } else {
+        const manifestText = `import 'src/wasm/${env}/schemas.arcs'`;
+        loader = new TestLoader();
+        manifestPromise = Manifest.parse(manifestText, {loader, fileName: process.cwd() + '/input.arcs'});
       }
     });
 
+    async function setup(recipeName) {
+      const runtime = new Runtime(loader, RozSlotComposer, await manifestPromise);
+      const arc = runtime.newArc('wasm-test', 'volatile://');
+
+      const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
+      if (!recipe) {
+        throw new Error(`Test recipe '${recipeName}' not found`);
+      }
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      const [info] = arc.loadedParticleInfo.values();
+      return {arc, stores: info.stores, slotComposer: arc.pec.slotComposer as RozSlotComposer};
+    }
+
     it('onHandleSync / onHandleUpdate', async () => {
-      const {arc, stores} = await setup(`
-        import '${schemasFile}'
-
-        particle HandleSyncUpdateTest in '${buildDir}/test-module.wasm'
-          in Data sng
-          in [Data] col
-          out [Data] res
-
-        recipe
-          HandleSyncUpdateTest
-            sng <- h1
-            col <- h2
-            res -> h3
-        `);
+      const {arc, stores} = await setup('HandleSyncUpdateTest');
       const sng = stores.get('sng') as VolatileSingleton;
       const col = stores.get('col') as VolatileCollection;
       const res = stores.get('res') as VolatileCollection;
@@ -97,23 +89,7 @@ async function setup(manifestString) {
     });
 
     it('getTemplate / populateModel / renderSlot', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
-      const {arc, stores, slotComposer} = await setup(`
-        import '${schemasFile}'
-
-        particle RenderTest in '${buildDir}/test-module.wasm'
-          consume root
-          in RenderFlags flags
-
-        recipe
-          slot 'rootslotid-root' as slot1
-          RenderTest
-            consume root as slot1
-            flags <- h1
-        `);
+      const {arc, stores, slotComposer} = await setup('RenderTest');
       const flags = stores.get('flags') as VolatileSingleton;
 
       await flags.set({id: 'i1', rawData: {template: false, model: true}});
@@ -136,29 +112,7 @@ async function setup(manifestString) {
     });
 
     it('autoRender', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
-      const {arc, stores, slotComposer} = await setup(`
-        import '${schemasFile}'
-
-        resource DataResource
-          start
-          [{"txt": "initial"}]
-        store DataStore of Data in DataResource
-
-        particle AutoRenderTest in '${buildDir}/test-module.wasm'
-          consume root
-          in Data data
-
-        recipe
-          copy DataStore as h1
-          slot 'rootslotid-root' as slot1
-          AutoRenderTest
-            consume root as slot1
-            data <- h1
-        `);
+      const {arc, stores, slotComposer} = await setup('AutoRenderTest');
       const data = stores.get('data') as VolatileSingleton;
 
       await data.set({id: 'i1', rawData: {txt: 'update'}});
@@ -174,39 +128,18 @@ async function setup(manifestString) {
     });
 
     it('fireEvent', async () => {
-      const {arc, stores, slotComposer} = await setup(`
-        import '${schemasFile}'
-
-        particle EventsTest in '${buildDir}/test-module.wasm'
-          consume root
-          out Data output
-
-        recipe
-          slot 'rootslotid-root' as slot1
-          EventsTest
-            consume root as slot1
-            output -> h1
-        `);
+      const {arc, stores, slotComposer} = await setup('EventsTest');
       const output = stores.get('output') as VolatileSingleton;
 
       const particle = slotComposer.consumers[0].consumeConn.particle;
-      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: 'ignored'});
+      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
-      assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick'});
+      assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
-      const {stores} = await setup(`
-        import '${schemasFile}'
-
-        particle ServicesTest in '${buildDir}/test-module.wasm'
-          out [ServiceResponse] output
-
-        recipe
-          ServicesTest
-            output -> h1
-        `);
+      const {stores} = await setup('ServicesTest');
       const output = stores.get('output') as VolatileCollection;
 
       const results = (await output.toList()).map(e => e.rawData);
@@ -230,16 +163,8 @@ async function setup(manifestString) {
 
     // TODO: fix PEC -> host error handling
     it.skip('missing registerHandle', async () => {
-      assertThrowsAsync(async () => await setup(`
-        import '${schemasFile}'
-
-        particle MissingRegisterHandleTest in '${buildDir}/test-module.wasm'
-          in Data input
-
-        recipe
-          MissingRegisterHandleTest
-            input <- h1
-      `), `Wasm particle failed to connect handle 'input'`);
+      await assertThrowsAsync(async () => await setup('MissingRegisterHandleTest'),
+                              `Wasm particle failed to connect handle 'input'`);
     });
 
     // Some wasm tests print out lists of test cases, and it is much more readable if these can be
@@ -255,54 +180,27 @@ async function setup(manifestString) {
     }
 
     prefix('entity class API', async () => {
-      const {stores} = await setup(`
-        import '${schemasFile}'
-
-        particle EntityClassApiTest in '${buildDir}/test-module.wasm'
-          out [Data] errors
-
-        recipe
-          EntityClassApiTest
-            errors -> h1
-        `);
+      const {stores} = await setup('EntityClassApiTest');
       const errStore = stores.get('errors') as VolatileCollection;
-      const errors = (await errStore.toList()).map(e => e.rawData.txt);
+      const errors = (await errStore.toList()).map(e => e.rawData.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
       }
     });
 
     prefix('special schema fields', async () => {
-      const {stores} = await setup(`
-        import '${schemasFile}'
-
-        particle SpecialSchemaFieldsTest in '${buildDir}/test-module.wasm'
-          out [Data] errors
-
-        recipe
-          SpecialSchemaFieldsTest
-            errors -> h1
-        `);
+      const {stores} = await setup('SpecialSchemaFieldsTest');
       const errStore = stores.get('errors') as VolatileCollection;
-      const errors = (await errStore.toList()).map(e => e.rawData.txt);
+      const errors = (await errStore.toList()).map(e => e.rawData.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
       }
     });
 
     prefix('reference class API', async () => {
-      const {stores} = await setup(`
-        import '${schemasFile}'
-
-        particle ReferenceClassApiTest in '${buildDir}/test-module.wasm'
-          out [Data] errors
-
-        recipe
-          ReferenceClassApiTest
-            errors -> h1
-        `);
+      const {stores} = await setup('ReferenceClassApiTest');
       const errStore = stores.get('errors') as VolatileCollection;
-      const errors = (await errStore.toList()).map(e => e.rawData.txt);
+      const errors = (await errStore.toList()).map(e => e.rawData.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
       }
@@ -314,23 +212,7 @@ async function setup(manifestString) {
       if (env.includes('kotlin')) {
         return;
       }
-      const {arc, stores} = await setup(`
-        import '${schemasFile}'
-
-        particle SingletonApiTest in '${buildDir}/test-module.wasm'
-          consume root
-          in Data inHandle
-          out Data outHandle
-          inout Data ioHandle
-
-        recipe
-          slot 'rootslotid-root' as slot1
-          SingletonApiTest
-            consume root as slot1
-            inHandle <- h1
-            outHandle -> h2
-            ioHandle = h3
-        `);
+      const {arc, stores} = await setup('SingletonApiTest');
       const inStore = stores.get('inHandle') as VolatileSingleton;
       const outStore = stores.get('outHandle') as VolatileSingleton;
       const ioStore = stores.get('ioHandle') as VolatileSingleton;
@@ -364,23 +246,7 @@ async function setup(manifestString) {
       if (env.includes('kotlin')) {
         return;
       }
-      const {arc, stores} = await setup(`
-        import '${schemasFile}'
-
-        particle CollectionApiTest in '${buildDir}/test-module.wasm'
-          consume root
-          in [Data] inHandle
-          out [Data] outHandle
-          inout [Data] ioHandle
-
-        recipe
-          slot 'rootslotid-root' as slot1
-          CollectionApiTest
-            consume root as slot1
-            inHandle <- h1
-            outHandle -> h2
-            ioHandle = h3
-        `);
+      const {arc, stores} = await setup('CollectionApiTest');
       const inStore = stores.get('inHandle') as VolatileCollection;
       const outStore = stores.get('outHandle') as VolatileCollection;
       const ioStore = stores.get('ioHandle') as VolatileCollection;
@@ -437,20 +303,7 @@ async function setup(manifestString) {
       if (env.includes('kotlin')) {
         return;
       }
-      const {arc, stores} = await setup(`
-        import '${schemasFile}'
-
-        particle ReferenceHandlesTest in '${buildDir}/test-module.wasm'
-          inout Reference<Data> sng
-          inout [Reference<Data>] col
-          out [Data] res
-
-        recipe
-          ReferenceHandlesTest
-            sng = h1
-            col = h2
-            res -> h3
-        `);
+      const {arc, stores} = await setup('ReferenceHandlesTest');
       const sng = stores.get('sng') as VolatileSingleton;
       const col = stores.get('col') as VolatileCollection;
       const res = stores.get('res') as VolatileCollection;
@@ -504,20 +357,7 @@ async function setup(manifestString) {
       if (env.includes('kotlin')) {
         return;
       }
-      const {arc, stores} = await setup(`
-        import '${schemasFile}'
-
-        particle SchemaReferenceFieldsTest in '${buildDir}/test-module.wasm'
-          in Data input
-          out Data output
-          out [Data] res
-
-        recipe
-          SchemaReferenceFieldsTest
-            input <- h1
-            output -> h2
-            res -> h3
-        `);
+      const {arc, stores} = await setup('SchemaReferenceFieldsTest');
       const input = stores.get('input') as VolatileSingleton;
       const output = stores.get('output') as VolatileSingleton;
       const res = stores.get('res') as VolatileCollection;

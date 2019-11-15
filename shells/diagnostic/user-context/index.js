@@ -7,10 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../lib/firebase-support.js';
 import '../../lib/platform/loglevel-web.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
 import {Const} from '../../configuration/constants.js';
-import {Utils} from '../../lib/utils.js';
 import {SyntheticStores} from '../../lib/synthetic-stores.js';
 import {StoreObserver} from '../../lib/store-observer.js';
 import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from '../../lib/context-listeners.js';
@@ -20,10 +19,7 @@ import '../../../modalities/dom/components/arc-tools/store-explorer.js';
 const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`;
 
 // configure arcs environment
-const paths = {
-  root: '../../..'
-};
-Utils.init(paths.root, paths.map);
+Runtime.init('../../../');
 
 let context;
 let UserObserverImpl;
@@ -31,7 +27,7 @@ let UserObserverImpl;
 const observe = async () => {
   // prepare context
   if (!context) {
-    context = await Utils.parse('');
+    context = await Runtime.parse('');
     //
     const ArcHandleListenerImpl = ArcHandleDisplayMixin(ArcHandleListener);
     //

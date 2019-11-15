@@ -32,7 +32,8 @@ import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {Schema, BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
+import {Schema} from './schema.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
@@ -262,7 +263,7 @@ export class Manifest {
       if (typeof storageKey === 'string') {
         storageKey = StorageKeyParser.parse(storageKey);
       }
-      store = new Store({...opts, storageKey, exists: Exists.ShouldCreate});
+      store = new Store({...opts, storageKey, exists: Exists.MayExist});
     } else {
       if (opts.storageKey instanceof StorageKey) {
         throw new Error(`Can't use new-style storage keys with the old storage stack.`);
@@ -793,7 +794,7 @@ ${e.message}
       byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
       requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
-      particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
+      particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
       bySlot: new Map<Slot, AstNode.RecipeSlot | AstNode.RecipeParticleSlotConnection>(),
@@ -1244,9 +1245,10 @@ ${e.message}
     }
 
     if (Flags.useNewStorageStack) {
-      return manifest.newStore({type, name, id, storageKey: manifest.createLocalDataStorageKey(),
-        tags, originalId, claims, description: item.description, version: item.version || null,
-        source: item.source, origin: item.origin, referenceMode: false, model: entities});
+      const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+      return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
+        description: item.description, version: item.version || null, source: item.source,
+        origin: item.origin, referenceMode: false, model: entities});
     }
 
     // TODO: clean this up

@@ -3,10 +3,7 @@ package arcs.api;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
 public final class UiBroker {
 
   private static final Logger logger = Logger.getLogger(UiBroker.class.getName());
@@ -15,8 +12,7 @@ public final class UiBroker {
 
   private final Map<String, UiRenderer> renderers = new HashMap<>();
 
-  @Inject
-  UiBroker() {}
+  public UiBroker() {}
 
   public void registerRenderer(String modality, UiRenderer renderer) {
     renderers.put(modality, renderer);

@@ -20,6 +20,10 @@ import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
 import {Manifest} from '../manifest.js';
 import {SerializedEntity} from '../storage-proxy.js';
 import {Entity} from '../entity.js';
+import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
+import {StorageKey} from '../../runtime/storageNG/storage-key.js';
+import {ArcId} from '../../runtime/id.js';
+
 
 /**
  * Creates a singleton handle for a store for testing purposes. Returns an
@@ -72,6 +76,17 @@ export async function collectionHandleForTest(arcOrManifest: Arc | Manifest, sto
       throw new Error('Expected Collection.');
     }
   }
+}
+
+/**
+ * Creates a storage key prefix for a store for testing purposes. Returns an
+ * appropriate string or NG storage key type depending on the storage migration flag.
+ */
+export function storageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey) {
+  if (Flags.useNewStorageStack) {
+    return arcId => new VolatileStorageKey(arcId, '');
+  }
+  return 'volatile://';
 }
 
 async function createStorageProxyForTest<T extends CRDTTypeRecord>(

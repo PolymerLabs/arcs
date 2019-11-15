@@ -11,6 +11,8 @@
 
 package arcs.data
 
-/** TODO: Everything. */
-class SchemaFields {
-}
+/** TODO: This is super minimal for now. */
+class SchemaFields(
+    val singletons: Set<FieldName>,
+    val collections: Set<FieldName>
+)

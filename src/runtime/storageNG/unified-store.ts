@@ -52,6 +52,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
 
   // Series of StoreInfo getters to make migration easier.
   get id() { return this.storeInfo.id; }
+  get apiChannelMappingId() { return this.id; }
   get name() { return this.storeInfo.name; }
   get type() { return this.storeInfo.type; }
   get originalId() { return this.storeInfo.originalId; }
@@ -119,6 +120,9 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
         handleStr.push(`in '${info.source}'`);
       } else {
         handleStr.push(`in ${info.source}`);
+        if (info.includeKey) {
+          handleStr.push(`at '${info.includeKey}'`);
+        }
       }
     } else if (this.storageKey) {
       handleStr.push(`at '${this.storageKey}'`);
@@ -170,4 +174,11 @@ export type StoreInfo = {
 
   readonly versionToken?: string;
   readonly model?: {};
+
+  /**
+   * If set, include this storage key in the serialization.
+   * Used to ensure that the location of volatile storage is stable
+   * across serialization/deserialization.
+   */
+  readonly includeKey?: string;
 };

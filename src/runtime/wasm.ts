@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
+import {Schema} from './schema.js';
 import {Loader} from '../platform/loader.js';
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {Schema, Type, EntityType, CollectionType, ReferenceType} from './type.js';
+import {Type, EntityType, CollectionType, ReferenceType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
@@ -35,6 +36,7 @@ type EntityTypeMap = BiMap<number, EntityType>;
 //    Boolean      B<zero-or-one>
 //    Reference    R<length>:<id>|<length>:<storage-key>|<type-index>:
 //    Dictionary   D<length>:<dictionary format>
+//    Array        A<length>:<array format>
 //
 //  <collection> = <num-entities>:<length>:<encoded><length>:<encoded> ...
 //
@@ -136,6 +138,9 @@ export abstract class StringEncoder {
   }
 
   protected static encodeStr(str: string) {
+    if (!str) {
+      return '0:';
+    }
     return str.length + ':' + str;
   }
 }
@@ -208,6 +213,28 @@ export abstract class StringDecoder {
     return dict;
   }
 
+  // TODO: make work in the new world.
+  static decodeArray(str: string): string[] {
+    const decoder = new EntityDecoder(null, null, null);
+    decoder.str = str;
+    const arr = [];
+    let num = Number(decoder.upTo(':'));
+    while (num--) {
+      // TODO(sjmiles): be backward compatible with encoders that only encode string values
+      const typeChar = decoder.chomp(1);
+      // if typeChar is a digit, it's part of a length specifier
+      if (typeChar >= '0' && typeChar <= '9') {
+        const len = Number(`${typeChar}${decoder.upTo(':')}`);
+        arr.push(decoder.chomp(len));
+      }
+      // otherwise typeChar is value-type specifier
+      else {
+        arr.push(decoder.decodeValue(typeChar));
+      }
+    }
+    return arr;
+  }
+
   protected upTo(char: string): string {
     const i = this.str.indexOf(char);
     if (i < 0) {
@@ -233,7 +260,7 @@ export abstract class StringDecoder {
     }
   }
 
-  protected decodeValue(typeChar: string): string|number|boolean|Reference|Dictionary<string> {
+  protected decodeValue(typeChar: string): string|number|boolean|Reference|Dictionary<string>|string[] {
     switch (typeChar) {
       case 'T':
       case 'U': {
@@ -255,7 +282,11 @@ export abstract class StringDecoder {
         const dictionary = this.chomp(len);
         return StringDecoder.decodeDictionary(dictionary);
       }
-
+      case 'A': {
+        const len = Number(this.upTo(':'));
+        const array = this.chomp(len);
+        return StringDecoder.decodeArray(array);
+      }
       default:
         throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
     }
@@ -497,7 +528,8 @@ class KotlinWasmDriver implements WasmDriver {
   initializeInstance(container: WasmContainer, instance: WebAssembly.Instance) {
     this.updateMemoryViews(container);
     // Kotlin main() must be invoked before everything else.
-    instance.exports.Konan_js_main(1, 0);
+    // TODO(alxrsngtn): Work out how to give Konan_js_main a type signature.
+    (instance.exports.Konan_js_main as (a: number, b: number) => void)(1, 0);
   }
 
   updateMemoryViews(container: WasmContainer) {
@@ -816,9 +848,13 @@ export class WasmParticle extends Particle {
 
   // render request call-back from wasm
   onRenderOutput(templatePtr: WasmAddress, modelPtr: WasmAddress) {
-    const content: Content = {templateName: 'default'};
-    content.template = this.container.read(templatePtr);
-    content.model = StringDecoder.decodeDictionary(this.container.read(modelPtr));
+    const content: Content = {};
+    if (templatePtr) {
+      content.template = this.container.read(templatePtr);
+    }
+    if (modelPtr) {
+      content.model = StringDecoder.decodeDictionary(this.container.read(modelPtr));
+    }
     this.output(content);
   }
 
@@ -835,7 +871,7 @@ export class WasmParticle extends Particle {
   }
 
   /**
-   * @deprecated for contexts using UiBroker (e.g Kotlin)
+   * @deprecated for systems using UiBroker (e.g Kotlin)
    */
   // TODO
   renderHostedSlot(slotName: string, hostedSlotId: string, content: Content) {
@@ -843,7 +879,7 @@ export class WasmParticle extends Particle {
   }
 
   /**
-   * @deprecated for contexts using UiBroker (e.g Kotlin)
+   * @deprecated for systems using UiBroker (e.g Kotlin)
    */
   // Actually renders the slot. May be invoked due to an external request via renderSlot(),
   // or directly from the wasm particle itself (e.g. in response to a data update).
@@ -899,7 +935,8 @@ export class WasmParticle extends Particle {
   fireEvent(slotName: string, event) {
     const sp = this.container.store(slotName);
     const hp = this.container.store(event.handler);
-    this.exports._fireEvent(this.innerParticle, sp, hp);
-    this.container.free(sp, hp);
+    const data = this.container.store(StringEncoder.encodeDictionary(event.data || {}));
+    this.exports._fireEvent(this.innerParticle, sp, hp, data);
+    this.container.free(sp, hp, data);
   }
 }

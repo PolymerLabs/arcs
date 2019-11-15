@@ -11,9 +11,9 @@ import '../Events/Event.schema'
 import '../Common/Description.schema'
 
 particle SlandleReservationForm in 'source/ReservationForm.js'
-  in Restaurant selected
-  inout Event event
-  out [Description] descriptions
-  `consume Slot action
+  selected: reads Restaurant
+  event: reads writes Event
+  descriptions: writes [Description]
+  action: `consumes Slot
   description `make a reservation`
     event `reservation`

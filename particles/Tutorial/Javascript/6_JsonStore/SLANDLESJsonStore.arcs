@@ -9,7 +9,7 @@ schema PersonDetails
 // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
 
-particle JsonStoreParticle in 'json-store.js'
+particle JsonStoreParticle in 'JsonStore.js'
   // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
   in PersonDetails inputData
   `consume Slot root

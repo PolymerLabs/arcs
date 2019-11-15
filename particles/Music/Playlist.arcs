@@ -13,15 +13,15 @@ import './schemas/Playlist.arcs'
 // as hostedParticle below
 
 particle PlaylistItem in 'source/PlaylistItem.js'
-  in Playlist playlist
-  consume item
+  playlist: reads Playlist
+  item: consumes Slot
 
 recipe PlaylistView
-  map #items as items
-  create #selected as selected
+  items: map #items
+  selected: create #selected
   ItemMultiplexer
-    list = items
-    hostedParticle = PlaylistItem
+    list: items
+    hostedParticle: PlaylistItem
   SelectableItems
-    list = items
-    selected = selected
+    list: items
+    selected: selected
