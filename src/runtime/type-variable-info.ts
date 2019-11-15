@@ -11,6 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Schema} from './schema.js';
+import {SchemaFactory} from './schema-factory.js';
 import {EntityType, SlotType, Type, TypeVariable, TypeLiteral} from './type.js';
 
 interface TypeVariableInfoLiteral {
@@ -63,7 +64,7 @@ export class TypeVariableInfo {
       return true;
     }
     if (this.canReadSubset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
+      const mergedSchema = SchemaFactory.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
         return false;
       }
@@ -94,7 +95,7 @@ export class TypeVariableInfo {
     }
 
     if (this.canWriteSuperset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+      const mergedSchema = SchemaFactory.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
         return false;
       }

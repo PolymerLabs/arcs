@@ -61,27 +61,6 @@ export class Schema {
     return {names: this.names, fields, description: this.description};
   }
 
-  static fromLiteral(data = {fields: {}, names: [], description: {}}) {
-    const fields = {};
-    const updateField = field => {
-      if (field.kind === 'schema-reference') {
-        const schema = field.schema;
-        return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
-      } else if (field.kind === 'schema-collection') {
-        return {kind: 'schema-collection', schema: updateField(field.schema)};
-      } else {
-        return field;
-      }
-    };
-    for (const key of Object.keys(data.fields)) {
-      fields[key] = updateField(data.fields[key]);
-    }
-
-    const result = new Schema(data.names, fields);
-    result.description = data.description || {};
-    return result;
-  }
-
   // TODO(cypher1): This should only be an ident used in manifest parsing.
   get name() {
     return this.names[0];
@@ -110,37 +89,6 @@ export class Schema {
       default:
         throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
     }
-  }
-
-  static union(schema1: Schema, schema2: Schema): Schema|null {
-    const names = [...new Set([...schema1.names, ...schema2.names])];
-    const fields = {};
-
-    for (const [field, type] of [...Object.entries(schema1.fields), ...Object.entries(schema2.fields)]) {
-      if (fields[field]) {
-        if (!Schema.typesEqual(fields[field], type)) {
-          return null;
-        }
-      } else {
-        fields[field] = type;
-      }
-    }
-
-    return new Schema(names, fields);
-  }
-
-  static intersect(schema1: Schema, schema2: Schema): Schema {
-    const names = [...schema1.names].filter(name => schema2.names.includes(name));
-    const fields = {};
-
-    for (const [field, type] of Object.entries(schema1.fields)) {
-      const otherType = schema2.fields[field];
-      if (otherType && Schema.typesEqual(type, otherType)) {
-        fields[field] = type;
-      }
-    }
-
-    return new Schema(names, fields);
   }
 
   equals(otherSchema: Schema): boolean {

@@ -25,6 +25,7 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Referenceable} from './crdt/crdt-collection.js';
 import {Flags} from './flags.js';
 import {Schema} from './schema.js';
+import {SchemaFactory} from './schema-factory.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -45,7 +46,7 @@ export abstract class Type {
   static fromLiteral(literal: TypeLiteral) : Type {
     switch (literal.tag) {
       case 'Entity':
-        return new EntityType(Schema.fromLiteral(literal.data));
+        return new EntityType(SchemaFactory.fromLiteral(literal.data));
       case 'TypeVariable':
         return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
       case 'Collection':
@@ -94,7 +95,7 @@ export abstract class Type {
         return false;
       }
       if (type1.canReadSubset instanceof EntityType && type2.canReadSubset instanceof EntityType) {
-        return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
+        return SchemaFactory.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
       }
       throw new Error(`_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
@@ -107,7 +108,7 @@ export abstract class Type {
         return false;
       }
       if (type1.canWriteSuperset instanceof EntityType && type2.canWriteSuperset instanceof EntityType) {
-        return Schema.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
+        return SchemaFactory.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
       }
     }
     return true;
@@ -340,7 +341,7 @@ export class EntityType extends Type {
   }
 
   static make(names: string[], fields: {}, description?): EntityType {
-    return new EntityType(new Schema(names, fields, description));
+    return new EntityType(SchemaFactory.createNew(names, fields, description));
   }
 
   // These type identifier methods are being left in place for non-runtime code.

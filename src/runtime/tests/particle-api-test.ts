@@ -17,7 +17,9 @@ import {Description} from '../description.js';
 import {IdGenerator} from '../id.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
+import {SchemaFactory} from '../schema-factory.js';
 import {EntityType, CollectionType} from '../type.js';
+import {EntityType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
@@ -949,8 +951,8 @@ describe('particle-api', () => {
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
-    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
-    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'faz', 'test:2');
+    const inStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {})), 'foo', 'test:1');
+    const outStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {result: 'Text'})), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
@@ -1001,8 +1003,8 @@ describe('particle-api', () => {
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
-    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
-    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'faz', 'test:2');
+    const inStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {})), 'foo', 'test:1');
+    const outStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {result: 'Text'})), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
@@ -1053,8 +1055,8 @@ describe('particle-api', () => {
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
-    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
-    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'faz', 'test:2');
+    const inStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {})), 'foo', 'test:1');
+    const outStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {result: 'Text'})), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
@@ -1105,8 +1107,8 @@ describe('particle-api', () => {
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
-     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
-    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'h1', 'test:1');
+     const inStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {})), 'h0', 'test:0');
+    const outStore = await arc.createStore(new EntityType(SchemaFactory.createNew([], {result: 'Text'})), 'h1', 'test:1');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
