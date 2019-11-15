@@ -1,6 +1,5 @@
 package arcs.util
 
-import arcs.arcs.util.guardWith
 import arcs.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -1,4 +1,4 @@
-package arcs.arcs.util
+package arcs.util
 
 /**
  * Allows the user to create a scoped log utility where everything logged will be prepended with the output of

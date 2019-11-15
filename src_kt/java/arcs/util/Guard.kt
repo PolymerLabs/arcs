@@ -1,4 +1,4 @@
-package arcs.arcs.util
+package arcs.util
 
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

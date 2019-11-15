@@ -1,6 +1,5 @@
 package arcs.util
 
-import arcs.arcs.util.Log
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.fail
 import org.junit.Before
