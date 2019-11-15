@@ -17,10 +17,11 @@ import {Type} from './type.js';
  * dependencies.
  */
 export class SchemaFactory {
+  // tslint:disable-next-line: no-any
   static createNew(names: string[], fields: Dictionary<any>, description?): Schema {
     return new Schema(names, fields, description);
   }
-  
+
   static fromLiteral(data = {fields: {}, names: [], description: {}}) {
     const fields = {};
     const updateField = field => {
@@ -41,7 +42,7 @@ export class SchemaFactory {
     result.description = data.description || {};
     return result;
   }
-  
+
   static union(schema1: Schema, schema2: Schema): Schema|null {
     const names = [...new Set([...schema1.names, ...schema2.names])];
     const fields = {};
@@ -72,6 +73,5 @@ export class SchemaFactory {
 
     return new Schema(names, fields);
   }
-
 
 }
