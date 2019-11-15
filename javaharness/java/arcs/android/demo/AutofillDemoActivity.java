@@ -99,6 +99,6 @@ public class AutofillDemoActivity extends Activity {
     CapturePerson capturePerson = new CapturePerson();
     capturePerson.setId("capture-person-particle");
     capturePerson.setJsonParser(jsonParser);
-    arcsAndroidClient.runArc("IngestPeople", "capture-person-arc", "capture-person-pec", capturePerson);
+    arcsAndroidClient.runArc("IngestPeople", "capture-person-arc", capturePerson);
   }
 }

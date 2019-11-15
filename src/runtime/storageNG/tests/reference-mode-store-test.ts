@@ -138,7 +138,7 @@ describe('Reference Mode Store', async () => {
     // Clone.
     const activeStore2 = await createReferenceModeStore();
     await activeStore2.cloneFrom(activeStore);
-    assert.deepEqual(await activeStore2.getLocalData(), await activeStore.getLocalData());
+    assert.deepEqual(await activeStore2.serializeContents(), await activeStore.serializeContents());
   });
 
   it('will apply and propagate operation updates from proxies to drivers', async () => {

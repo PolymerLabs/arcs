@@ -11,7 +11,6 @@
 
 package arcs.storage.driver
 
-import arcs.arcs.util.TaggedLog
 import arcs.common.ArcId
 import arcs.common.toArcId
 import arcs.storage.Driver
@@ -21,6 +20,7 @@ import arcs.storage.ExistenceCriteria
 import arcs.storage.StorageKey
 import arcs.storage.StorageKeyParser
 import arcs.util.Random
+import arcs.util.TaggedLog
 import kotlinx.atomicfu.atomic
 
 /** Protocol to be used with the volatile driver. */

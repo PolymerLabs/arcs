@@ -196,9 +196,15 @@ export class InterfaceInfo {
         if (Flags.defaultToPreSlandlesSyntax) {
           return `  ${h.direction || 'any'} ${h.type.toString()} ${h.name ? h.name : '*'}`;
         } else {
-          const nameStr = h.name ? `${h.name}: ` : '';
-          const direction = AstNode.preSlandlesDirectionToDirection(h.direction || 'any');
-          return `  ${nameStr}${direction} ${h.type.toString()}`;
+          const parts = [];
+          if (h.name) {
+            parts.push(`${h.name}:`);
+          }
+          if (h.direction !== undefined && h.direction !== 'any') {
+            parts.push(AstNode.preSlandlesDirectionToDirection(h.direction));
+          }
+          parts.push(h.type.toString());
+          return `  ${parts.join(' ')}`;
         }
       }).join('\n');
   }

@@ -16,19 +16,19 @@ public:
       out_.clear();
       io_.clear();
     } else if (handler == "case2") {
-      arcs::Test_Data d = arcs::clone_entity(in_.get());
+      arcs::SingletonApiTest_OutHandle d = arcs::clone_entity(in_.get());
       d.set_num(d.num() * 2);
       out_.set(d);
     } else if (handler == "case3") {
-      arcs::Test_Data d = arcs::clone_entity(io_.get());
+      arcs::SingletonApiTest_IoHandle d = arcs::clone_entity(io_.get());
       d.set_num(d.num() * 3);
       io_.set(d);
     }
   }
 
-  arcs::Singleton<arcs::Test_Data> in_;
-  arcs::Singleton<arcs::Test_Data> out_;
-  arcs::Singleton<arcs::Test_Data> io_;
+  arcs::Singleton<arcs::SingletonApiTest_InHandle> in_;
+  arcs::Singleton<arcs::SingletonApiTest_OutHandle> out_;
+  arcs::Singleton<arcs::SingletonApiTest_IoHandle> io_;
 };
 
 DEFINE_PARTICLE(SingletonApiTest)
@@ -54,7 +54,7 @@ public:
       // We can't read from out_ so use a previously stored entity to test remove().
       out_.remove(stored_);
     } else if (handler == "case4") {
-      arcs::Test_Data d1, d2, d3;
+      arcs::CollectionApiTest_OutHandle d1, d2, d3;
 
       // Test begin()/end() and WrappedIter operators
       auto i1 = in_.begin();
@@ -72,7 +72,8 @@ public:
       d3.set_flg(++i2 == in_.end());         // prefix op++
       out_.store(d3);
     } else if (handler == "case5") {
-      arcs::Test_Data extra, d1, d2, d3;
+      arcs::CollectionApiTest_OutHandle d1, d2, d3;
+      arcs::CollectionApiTest_IoHandle extra;
 
       // Store and remove an entity.
       extra.set_txt("abc");
@@ -87,11 +88,11 @@ public:
 
       // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
       std::string res[3];
-      for (const arcs::Test_Data& data : io_) {
+      for (const arcs::CollectionApiTest_IoHandle& data : io_) {
         res[static_cast<int>(data.num())] = arcs::entity_to_str(data);
       }
       for (size_t i = 0; i < io_.size(); i++) {
-        arcs::Test_Data d;
+        arcs::CollectionApiTest_OutHandle d;
         d.set_txt(res[i]);
         out_.store(d);
       }
@@ -103,10 +104,10 @@ public:
     }
   }
 
-  arcs::Collection<arcs::Test_Data> in_;
-  arcs::Collection<arcs::Test_Data> out_;
-  arcs::Collection<arcs::Test_Data> io_;
-  arcs::Test_Data stored_;
+  arcs::Collection<arcs::CollectionApiTest_InHandle> in_;
+  arcs::Collection<arcs::CollectionApiTest_OutHandle> out_;
+  arcs::Collection<arcs::CollectionApiTest_IoHandle> io_;
+  arcs::CollectionApiTest_OutHandle stored_;
 };
 
 DEFINE_PARTICLE(CollectionApiTest)
@@ -122,34 +123,37 @@ public:
 
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
-    report("s::empty", sng_.get());
-    dereference(sng_.get(), [this] { report("should not be reached", {}); });
+
+    const arcs::Ref<arcs::ReferenceHandlesTest_Sng>& ref = sng_.get();
+    report("s::empty", ref);
+    dereference(ref, [this, &ref] { report("should not be reached", ref); });
   }
 
   void onHandleUpdate(const std::string& name) override {
     if (name == "sng") {
-      const arcs::Ref<arcs::Test_Data>& ref = sng_.get();
+      const arcs::Ref<arcs::ReferenceHandlesTest_Sng>& ref = sng_.get();
       report("s::before", ref);
       dereference(ref, [this, &ref] { report("s::after", ref); });
     } else if (name == "col") {
-      for (arcs::Ref<arcs::Test_Data>& ref : col_) {
+      for (arcs::Ref<arcs::ReferenceHandlesTest_Col>& ref : col_) {
         report("c::before", ref);
         dereference(ref, [this, &ref] { report("c::after", ref); });
       }
     }
   }
 
-  void report(const std::string& label, const arcs::Ref<arcs::Test_Data>& ref) {
-    arcs::Test_Data d;
+  template<typename T>
+  void report(const std::string& label, const T& ref) {
+    arcs::ReferenceHandlesTest_Res d;
     const std::string& id = Accessor::get_id(ref);
-    const std::string& bang = ref.is_dereferenced() ? "" : "!";
+    std::string bang = ref.is_dereferenced() ? "" : "!";
     d.set_txt(label + " <" + id + "> " + bang + arcs::entity_to_str(ref.entity()));
     res_.store(d);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::Test_Data>> sng_;
-  arcs::Collection<arcs::Ref<arcs::Test_Data>> col_;
-  arcs::Collection<arcs::Test_Data> res_;
+  arcs::Singleton<arcs::Ref<arcs::ReferenceHandlesTest_Sng>> sng_;
+  arcs::Collection<arcs::Ref<arcs::ReferenceHandlesTest_Col>> col_;
+  arcs::Collection<arcs::ReferenceHandlesTest_Res> res_;
 };
 
 DEFINE_PARTICLE(ReferenceHandlesTest)
@@ -166,21 +170,21 @@ public:
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
 
-    const arcs::Ref<arcs::Test_Data_Ref>& ref = input_.get().ref();
+    const arcs::Ref<arcs::SchemaReferenceFieldsTest_Input_Ref>& ref = input_.get().ref();
     report("empty", ref);
-    dereference(ref, [this] { report("should not be reached", {}); });
+    dereference(ref, [this, &ref] { report("should not be reached", ref); });
   }
 
   void onHandleUpdate(const std::string& name) override {
-    const arcs::Ref<arcs::Test_Data_Ref>& ref = input_.get().ref();
+    const arcs::Ref<arcs::SchemaReferenceFieldsTest_Input_Ref>& ref = input_.get().ref();
     report("before", ref);
     dereference(ref, [this, &ref] {
       report("after", ref);
 
-      arcs::Test_Data_Ref foo;
+      arcs::SchemaReferenceFieldsTest_Output_Ref foo;
       Accessor::set_id(&foo, "foo1");
 
-      arcs::Test_Data data = arcs::clone_entity(input_.get());
+      arcs::SchemaReferenceFieldsTest_Output data = arcs::clone_entity(input_.get());
       data.set_txt("xyz");
       data.bind_ref(foo);
 
@@ -188,17 +192,18 @@ public:
     });
   }
 
-  void report(const std::string& label, const arcs::Ref<arcs::Test_Data_Ref>& ref) {
-    arcs::Test_Data d;
+  template<typename T>
+  void report(const std::string& label, const T& ref) {
+    arcs::SchemaReferenceFieldsTest_Res d;
     const std::string& id = Accessor::get_id(ref);
-    const std::string& bang = ref.is_dereferenced() ? "" : "!";
+    std::string bang = ref.is_dereferenced() ? "" : "!";
     d.set_txt(label + " <" + id + "> " + bang + arcs::entity_to_str(ref.entity()));
     res_.store(d);
   }
 
-  arcs::Singleton<arcs::Test_Data> input_;
-  arcs::Singleton<arcs::Test_Data> output_;
-  arcs::Collection<arcs::Test_Data> res_;
+  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Input> input_;
+  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Output> output_;
+  arcs::Collection<arcs::SchemaReferenceFieldsTest_Res> res_;
 };
 
 DEFINE_PARTICLE(SchemaReferenceFieldsTest)

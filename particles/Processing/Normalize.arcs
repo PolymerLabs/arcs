@@ -1,9 +1,9 @@
 import './schemas/MlResource.arcs'
 
 particle Normalize in './js/Normalize.js'
-  in TfTensor tensor
-  in [Shape] range
-  out TfTensor normTensor
+  tensor: reads TfTensor
+  range: reads [Shape]
+  normTensor: writes TfTensor
   //description `Normalizes all the input values to values between [-1, 1].`
 
 

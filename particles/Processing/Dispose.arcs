@@ -1,5 +1,5 @@
 import './schemas/MlResource.arcs'
 
 particle Dispose in './js/Dispose.js'
-  in * {Number ref} resource
+  resource: reads * {ref: Number}
   //description `Clean up resources.`

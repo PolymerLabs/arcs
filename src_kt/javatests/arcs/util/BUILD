@@ -1,3 +1,5 @@
+licenses(["notice"])
+
 package(default_visibility = ["//visibility:public"])
 
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
@@ -9,8 +11,8 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")
         srcs = [src_file],
         test_class = "arcs.util.%s" % src_file[:-3],
         deps = [
-            "//src_kt/java/arcs/util",
             "//src_kt/java/arcs/testutil",
+            "//src_kt/java/arcs/util",
             "//third_party/java/junit",
             "//third_party/java/truth",
             "//third_party/kotlin/kotlinx/kotlinx_atomicfu",

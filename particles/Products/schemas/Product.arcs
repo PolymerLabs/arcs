@@ -1,10 +1,10 @@
 schema Product
-  Text name
-  Text description
-  URL image
-  Text category
-  Text seller
-  Text price
-  Number shipDays
+  name: Text
+  description: Text
+  image: URL
+  category: Text
+  seller: Text
+  price: Text
+  shipDays: Number
   description `product`
     plural `products`

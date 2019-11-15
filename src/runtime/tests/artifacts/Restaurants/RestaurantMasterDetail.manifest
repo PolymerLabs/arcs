@@ -9,10 +9,8 @@
 import 'Restaurant.schema'
 
 particle RestaurantMasterDetail in '../Common/source/MasterDetail.js'
-  in [Restaurant] list
-  inout Restaurant selected
-  consume masterdetail
-    provide master
-      handle list
-    provide detail
-      handle selected
+  list: reads [Restaurant]
+  selected: reads writes Restaurant
+  masterdetail: consumes Slot
+    master: provides? Slot {handle: list}
+    detail: provides? Slot {handle: selected}

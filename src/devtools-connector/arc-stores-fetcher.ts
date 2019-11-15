@@ -14,6 +14,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
+import {Store} from '../runtime/storageNG/store.js';
 import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
 
 type Result = {
@@ -96,8 +97,17 @@ export class ArcStoresFetcher {
       return (store as CollectionStorageProvider).toList();
     } else if ((store as SingletonStorageProvider).get) {
       return (store as SingletonStorageProvider).get();
-    } else {
-      return `(don't know how to dereference)`;
+    } else if (store instanceof Store) {
+      // tslint:disable-next-line: no-any
+      const crdtData = await (await (store as Store<any>).activate()).serializeContents();
+      if (crdtData.values) {
+        if (Object.values(crdtData.values).length === 1) {
+          // Single value, extract the value only (discard the version).
+          return Object.values(crdtData.values)[0]['value'];
+        }
+      }
+      return crdtData;
     }
+    return `(don't know how to dereference)`;
   }
 }

@@ -14,7 +14,7 @@ import {Exists} from '../driver-factory.js';
 import {Runtime} from '../../../runtime.js';
 import {ArcId} from '../../../id.js';
 import {RamDiskStorageKey} from '../ramdisk.js';
-import {assertThrowsAsync} from '../../../testing/test-util.js';
+import {assertThrowsAsync} from '../../../../testing/test-util.js';
 
 describe('Volatile Driver', async () => {
 
@@ -135,7 +135,7 @@ describe('VolatileStorageDriverProvider', () => {
 
     await provider1.driver(storageKey1, Exists.ShouldCreate);
     await provider2.driver(storageKey2, Exists.ShouldCreate);
-    assertThrowsAsync(async () => await provider1.driver(storageKey1, Exists.ShouldCreate));
-    assertThrowsAsync(async () => await provider2.driver(storageKey2, Exists.ShouldCreate));
+    await assertThrowsAsync(async () => await provider1.driver(storageKey1, Exists.ShouldCreate));
+    await assertThrowsAsync(async () => await provider2.driver(storageKey2, Exists.ShouldCreate));
   });
 });

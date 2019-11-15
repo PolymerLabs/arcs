@@ -12,7 +12,7 @@ import {Runtime} from '../../../runtime.js';
 import {assert} from '../../../../platform/chai-web.js';
 import {Exists} from '../driver-factory.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../../testing/mock-firebase.js';
-import {assertThrowsAsync} from '../../../testing/test-util.js';
+import {assertThrowsAsync} from '../../../../testing/test-util.js';
 
 describe('Firebase Driver', async () => {
 

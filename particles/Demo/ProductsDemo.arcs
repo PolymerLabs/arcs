@@ -14,54 +14,54 @@ import '../Products/Interests.arcs'
 
 recipe Products
   // &displayProducts
-  copy #shoplist as shoplist
-  create #selected as selected
+  shoplist: copy #shoplist
+  selected: create #selected
   SelectableItems
-    consume root
-      provide annotation as annotationSlot
-      provide action as actionSlot
-    list = shoplist
-    selected = selected
+    root: consumes
+      annotation: provides annotationSlot
+      action: provides actionSlot
+    list: shoplist
+    selected: selected
   ItemMultiplexer
-    list = shoplist
-    hostedParticle = ProductItem
+    list: shoplist
+    hostedParticle: ProductItem
   //
   // &shopForOccasion
-  map #claire as person
+  person: map #claire
   GiftList
-    person = person
+    person: person
   SimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = Arrivinator
-    consume annotation as annotationSlot
+    list: shoplist
+    hostedParticle: Arrivinator
+    annotation: consumes annotationSlot
   //
   // &addFromWishlist
-  map #wishlist as wishlist
-  create #volatile as recommendations
+  wishlist: map #wishlist
+  recommendations: create #volatile
   // annotates shoplist
   ChoicesMultiplexer
-    consume choice as annotationSlot
-    list = shoplist
-    choices = wishlist
-    hostedParticle = AlsoOn
+    choice: consumes annotationSlot
+    list: shoplist
+    choices: wishlist
+    hostedParticle: AlsoOn
   // recommend products from wishlist
   Recommend
-    population = wishlist
-    known = shoplist
-    recommendations = recommendations
+    population: wishlist
+    known: shoplist
+    recommendations: recommendations
   // present recommendations for adding to shoplist
   Chooser
-    consume action as actionSlot
-    person = person
-    choices = recommendations
-    resultList = shoplist
+    action: consumes actionSlot
+    person: person
+    choices: recommendations
+    resultList: shoplist
   //
   // &manufacturerInfo
   SimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = ManufacturerInfo
+    list: shoplist
+    hostedParticle: ManufacturerInfo
   //
   // &productInterests
   Interests
-    list = shoplist
-    person = person
+    list: shoplist
+    person: person

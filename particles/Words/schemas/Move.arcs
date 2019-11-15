@@ -1,7 +1,7 @@
 schema Move
   // The unique game id of the associated Words game.
-  Text gameId
+  gameId: Text
   // A string list of tuples as [(x1, y1), (x2, y2)] representing the
   // contiguous characters selected by the user for the move.
   // TODO(wkorman): Change this to use Number.
-  Text coordinates
+  coordinates: Text

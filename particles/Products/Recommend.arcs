@@ -11,25 +11,24 @@ import '../People/schemas/Person.arcs'
 import '../List/List.arcs'
 
 particle Recommend in 'source/Recommend.js'
-  in [Product] known
-  in [Product] population
-  out [Product] recommendations
+  known: reads [Product]
+  population: reads [Product]
+  recommendations: writes [Product]
   description `recommend products from ${known} and ${population}`
     //recommendations `products recommended based on ${known}._name_ and ${population}._name_`
     recommendations `${population}._name_`
 
 particle Chooser in 'source/Chooser.js'
-  in Person person
-  in [~a] choices
-  inout [~a] resultList
-  consume action
-    provide set of annotation
-      handle choices
+  person: reads Person
+  choices: reads [~a]
+  resultList: reads writes [~a]
+  action: consumes Slot
+    annotation: provides [Slot {handle: choices}]
   description `add items from ${person}'s ${choices}`
 
 particle AlsoOn in 'source/AlsoOn.js'
-  in Product product
-  in [Product] choices
-  consume choice
+  product: reads Product
+  choices: reads [Product]
+  choice: consumes Slot
 
 

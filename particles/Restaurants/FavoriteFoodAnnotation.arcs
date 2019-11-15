@@ -5,42 +5,42 @@ import '../Common/schemas/Description.arcs'
 import './schemas/Restaurant.arcs'
 
 particle FavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
-  in Restaurant restaurant
-  in [FavoriteFoodShare] foods
-  in [UserNameShare] names
-  consume annotation
+  restaurant: reads Restaurant
+  foods: reads [FavoriteFoodShare]
+  names: reads [UserNameShare]
+  annotation: consumes Slot
 
 particle SharesFrom in 'source/SharesFrom.js'
-  in [~a] shares
-  //in [UserNameShare] names
-  in [~b] names
-  out [Description] descriptions
+  shares: reads [~a]
+  //names: reads [UserNameShare]
+  names: reads [~b]
+  descriptions: writes [Description]
 
 interface AnnotationInterfaceThree
-  in ~anyType *
-  in [~otherOne] *
-  in [~otherTwo] names
-  consume annotation
+  reads ~anyType
+  reads [~otherOne]
+  names: reads [~otherTwo]
+  annotation: consumes Slot
 
 particle AnnotationMultiplexerThree in '../List/source/Multiplexer.js'
-  in [~anyType] list
-  in [~otherOne] choices
-  in [~otherTwo] names
-  host AnnotationInterfaceThree hostedParticle
-  consume set of annotation
+  list: reads [~anyType]
+  choices: reads [~otherOne]
+  names: reads [~otherTwo]
+  hostedParticle: hosts AnnotationInterfaceThree
+  annotation: consumes [Slot]
 
 recipe FavoriteFoodAnnotation
-  use as restaurants
-  map #shared as foods
-  map 'BOXED_userName' as names
-  create as descriptions
+  restaurants: use *
+  foods: map #shared
+  names: map 'BOXED_userName'
+  descriptions: create *
   SharesFrom
-    shares = foods
-    names = names
-    descriptions = descriptions
+    shares: foods
+    names: names
+    descriptions: descriptions
   AnnotationMultiplexerThree
-    list = restaurants
-    choices = foods
-    names = names
-    hostedParticle = FavoriteFoodAnnotation
+    list: restaurants
+    choices: foods
+    names: names
+    hostedParticle: FavoriteFoodAnnotation
   description `check restaurants for ${SharesFrom}'s favorite foods`

@@ -1,7 +1,5 @@
 package arcs.storage.api
 
-import arcs.arcs.util.TaggedLog
-import arcs.arcs.util.guardWith
 import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtChange
@@ -25,6 +23,8 @@ import arcs.storage.StoreOptions
 import arcs.storage.referencemode.RefModeStoreData
 import arcs.storage.referencemode.RefModeStoreOp
 import arcs.storage.referencemode.ReferenceModeStorageKey
+import arcs.util.TaggedLog
+import arcs.util.guardWith
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred

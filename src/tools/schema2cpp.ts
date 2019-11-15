@@ -54,7 +54,7 @@ export class Schema2Cpp extends Schema2Base {
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
-    return new CppGenerator(node, this.scope.replace('.', '::'));
+    return new CppGenerator(node, this.scope.replace(/\./g, '::'));
   }
 }
 
@@ -65,6 +65,7 @@ function fixName(field: string): string {
 class CppGenerator implements ClassGenerator {
   fields: string[] = [];
   api: string[] = [];
+  ctor: string[] = [];
   clone: string[] = [];
   hash: string[] = [];
   equals: string[] = [];
@@ -75,23 +76,23 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  addField(field: string, typeChar: string, inherited: boolean) {
+  addField(field: string, typeChar: string) {
     const {type, defaultVal, isString} = typeMap[typeChar];
     const [r1, r2] = isString ? ['const ', '&'] : ['', ''];
+    const fixed = fixName(field);
     const valid = `${field}_valid_`;
 
-    // Fields inherited from a base class don't need member declarations or API methods in this one.
-    if (!inherited) {
-      this.fields.push(`${type} ${field}_${defaultVal};`,
-                       `bool ${valid} = false;`,
-                       ``);
+    this.fields.push(`${type} ${field}_${defaultVal};`,
+                     `bool ${valid} = false;`,
+                     ``);
 
-      this.api.push(`${r1}${type}${r2} ${fixName(field)}() const { return ${field}_; }`,
-                    `void set_${field}(${r1}${type}${r2} value) { ${field}_ = value; ${valid} = true; }`,
-                    `void clear_${field}() { ${field}_${defaultVal}; ${valid} = false; }`,
-                    `bool has_${field}() const { return ${valid}; }`,
-                    ``);
-    }
+    this.api.push(`${r1}${type}${r2} ${fixed}() const { return ${field}_; }`,
+                  `void set_${field}(${r1}${type}${r2} value) { ${field}_ = value; ${valid} = true; }`,
+                  `void clear_${field}() { ${field}_${defaultVal}; ${valid} = false; }`,
+                  `bool has_${field}() const { return ${valid}; }`,
+                  ``);
+
+    this.ctor.push(`${field}_(other.${fixed}()), ${valid}(other.has_${field}())`);
 
     this.clone.push(`clone.${field}_ = entity.${field}_;`,
                     `clone.${valid} = entity.${valid};`);
@@ -126,15 +127,18 @@ class CppGenerator implements ClassGenerator {
                         `  printer.add("${field}: ", entity.${field}_);`);
   }
 
-  addReference(field: string, inherited: boolean, refName: string) {
+  addReference(field: string, refName: string) {
     const type = `Ref<${refName}>`;
+    const fixed = fixName(field);
 
     this.fields.push(`${type} ${field}_;`,
                      ``);
 
-    this.api.push(`const ${type}& ${fixName(field)}() const { return ${field}_; }`,
+    this.api.push(`const ${type}& ${fixed}() const { return ${field}_; }`,
                   `void bind_${field}(const ${refName}& value) { internal::Accessor::bind(&${field}_, value); }`,
                   ``);
+
+    this.ctor.push(`${field}_(other.${fixed}())`);
 
     this.clone.push(`clone.${field}_ = entity.${field}_;`);
 
@@ -159,25 +163,17 @@ class CppGenerator implements ClassGenerator {
   }
 
   generate(fieldCount: number): string {
-    const {name, aliases, parents, children, sharesParent} = this.node;
+    const {name, aliases} = this.node;
 
-    let bases = '';
-    if (parents.length) {
-      // Add base classes. Use virtual inheritance if we know this schema shares a parent
-      // with another schema, and it also has descendant schemas. Note this means some
-      // false positives are possible, but that's not really a problem.
-      const spec = (sharesParent && children.length) ? 'virtual public' : 'public';
-      bases = ` : ${spec} ` + parents.map(p => p.name).join(`, ${spec} `);
-    } else {
-      // This class doesn't have any parents so it needs an id field (which
-      // will subsequently be inherited by any children of this class).
-      this.fields.push('std::string _internal_id_;');
-    }
-
-    // Use a virtual destructor for all schemas that participate in inheritance chains.
-    let dtor = '';
-    if (parents.length || children.length) {
-      dtor = `virtual ~${name}() {}\n`;
+    // Template constructor allows implicit type slicing from appropriately matching entities.
+    let templateCtor = '';
+    if (this.ctor.length) {
+      templateCtor = `\
+  template<typename T>
+  ${name}(const T& other) :
+    ${this.ctor.join(',\n    ')}
+  {}
+  `;
     }
 
     // 'using' declarations for equivalent entity types.
@@ -197,14 +193,15 @@ class CppGenerator implements ClassGenerator {
 
 namespace ${this.namespace} {
 ${aliasComment}
-class ${name}${bases} {
+class ${name} {
 public:
   // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
   // Move operations are ok (and will include the internal id).
   ${name}() = default;
   ${name}(${name}&&) = default;
   ${name}& operator=(${name}&&) = default;
-  ${dtor}
+
+${templateCtor}
   ${this.api.join('\n  ')}
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
@@ -225,6 +222,7 @@ protected:
   ${name}& operator=(const ${name}&) = default;
 
   ${this.fields.join('\n  ')}
+  std::string _internal_id_;
   static const int _FIELD_COUNT = ${fieldCount};
 
   friend class Singleton<${name}>;

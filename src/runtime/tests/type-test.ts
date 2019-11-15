@@ -297,46 +297,25 @@ describe('types', () => {
   });
 
   describe('serialization', () => {
-    it('SLANDLES SYNTAX serializes interfaces', Flags.withPostSlandlesSyntax(async () => {
+    it('serializes interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
       assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
-  foo: any Foo {value: Text}
-  any ~a
+  foo: Foo {value: Text}
+  ~a
   x: consumes? Slot`);
     }));
 
-    it('serializes interfaces', Flags.withPreSlandlesSyntax(async () => {
-      const entity = EntityType.make(['Foo'], {value: 'Text'});
-      const variable = TypeVariable.make('a', null, null);
-      const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
-      assert.strictEqual(iface.interfaceInfo.toString(),
-`interface i
-  any Foo {Text value} foo
-  any ~a *
-  consume x`);
-    }));
-
     // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
-    it('SLANDLES SYNTAX disregards type variable resolutions in interfaces', Flags.withPostSlandlesSyntax(async () => {
+    it('disregards type variable resolutions in interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
       const variable = TypeVariable.make('a', null, null);
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
       assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
-  any ~a
-`);
-    }));
-    // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
-    it('disregards type variable resolutions in interfaces', Flags.withPreSlandlesSyntax(async () => {
-      const variable = TypeVariable.make('a', null, null);
-      variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
-      const iface = InterfaceType.make('i', [{type: variable}], []);
-      assert.strictEqual(iface.interfaceInfo.toString(),
-`interface i
-  any ~a *
+  ~a
 `);
     }));
   });

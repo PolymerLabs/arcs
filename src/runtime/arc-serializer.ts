@@ -19,7 +19,7 @@ import {Recipe} from './recipe/recipe.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
-import {VolatileMemory} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 
 /**
  * @license
@@ -78,11 +78,16 @@ ${this.arc.activeRecipe.toString()}`;
     if (Flags.useNewStorageStack) {
       for (const [key, value] of this.arc.volatileMemory.entries.entries()) {
         this.memoryResourceNames.set(key, `VolatileMemoryResource${resourceNum}`);
+        const data = {root: value.root.data, locations: {}};
+        for (const [key, entry] of Object.entries(value.locations)) {
+          data.locations[key] = entry.data;
+        }
         serialization +=
           `resource VolatileMemoryResource${resourceNum++} // ${key}\n` +
           indent + 'start\n' +
-          JSON.stringify(value.data).split('\n').map(line => indent + line).join('\n') + '\n';
+          JSON.stringify(data).split('\n').map(line => indent + line).join('\n') + '\n';
       }
+
       return serialization;
     } else {
       return '';
@@ -118,8 +123,8 @@ ${this.arc.activeRecipe.toString()}`;
         break;
       case 'volatile':
         if (Flags.useNewStorageStack) {
-          const storageKey = store.storageKey.toString();
-          this.handles += store.toManifestString({handleTags, overrides: {name, source: this.memoryResourceNames.get(storageKey), origin: 'resource', includeKey: storageKey}}) + '\n';
+          const storageKey = store.storageKey as VolatileStorageKey;
+          this.handles += store.toManifestString({handleTags, overrides: {name, source: this.memoryResourceNames.get(storageKey.unique), origin: 'resource', includeKey: storageKey.toString()}}) + '\n';
         } else {
           // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
           const volatile = handleTags.includes('volatile');

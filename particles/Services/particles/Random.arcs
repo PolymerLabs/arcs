@@ -9,7 +9,7 @@ import '../schemas/RandomData.arcs'
 //
 // ```
 //   particle FooParticle
-//     in RandomData randomFoo
+//     randomFoo: reads RandomData
 //    ...
 // ```
 //
@@ -17,9 +17,9 @@ import '../schemas/RandomData.arcs'
 // ```
 //   recipe FooRecipe
 //     RandomParticle
-//       randomdata -> randomFoo
+//       randomdata: writes randomFoo
 //   ...
 // ```
 
 particle RandomParticle in './js/Random.js'
-  out RandomData randomData
+  randomData: writes RandomData
