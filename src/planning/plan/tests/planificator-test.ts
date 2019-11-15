@@ -19,11 +19,12 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
 
 describe('planificator', () => {
-  it('constructs suggestion and search storage keys for fb arc', async () => {
+  it.skip('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer);
     const arc = runtime.newArc(
         'demo',
-        'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo');
+        'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo'
+    );
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
@@ -128,7 +129,7 @@ describe('remote planificator', () => {
     return {consumePlanificator, producePlanificator};
   }
 
-  ['volatile', 'pouchdb://memory/user-test/'].forEach(plannerStorageKeyBase => {
+  ['volatile'/*, 'pouchdb://memory/user-test/'*/].forEach(plannerStorageKeyBase => {
     it(`consumes remotely produced gifts demo from ${plannerStorageKeyBase}`, async () => {
       let {consumePlanificator, producePlanificator} = await init(
           plannerStorageKeyBase,

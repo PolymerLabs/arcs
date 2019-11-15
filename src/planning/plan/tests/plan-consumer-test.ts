@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../../runtime/storage/firebase/firebase-provider.js';
-import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
+//import '../../../runtime/storage/firebase/firebase-provider.js';
+//import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
@@ -42,7 +42,7 @@ async function storeResults(consumer, suggestions) {
 }
 
 // Run test suite for each storageKeyBase
-['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
+['volatile'/*, 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'*/].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
       const loader = new StubLoader({});
