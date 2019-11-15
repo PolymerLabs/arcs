@@ -1,10 +1,10 @@
 schema MlModel
-  Text name
-  URL location
-  URL labelsUrl
-  Boolean strict
-  Text weightPathPrefix
-  Boolean fromTFHub
+  name: Text
+  location: URL
+  labelsUrl: URL
+  strict: Boolean
+  weightPathPrefix: Text
+  fromTFHub: Boolean
 
 schema Label
-  Text label
+  label: Text

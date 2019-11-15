@@ -1,5 +1,5 @@
 import '../schemas/TVMazeQuery.arcs'
 
 particle TVMazeSearchBar in './js/TVMazeSearchBar.js'
-  out TVMazeQuery query
-  consume toproot
+  query: writes TVMazeQuery
+  toproot: consumes

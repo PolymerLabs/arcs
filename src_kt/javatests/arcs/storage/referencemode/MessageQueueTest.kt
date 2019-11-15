@@ -20,6 +20,9 @@ import arcs.storage.referencemode.Message.PreEnqueuedFromBackingStore
 import arcs.storage.referencemode.Message.PreEnqueuedFromContainer
 import arcs.storage.referencemode.Message.PreEnqueuedFromStorageProxy
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.Executors
+import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
@@ -32,9 +35,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.Executors
-import kotlin.random.Random
 
 /** Tests for the [MessageQueue]. */
 @ExperimentalCoroutinesApi

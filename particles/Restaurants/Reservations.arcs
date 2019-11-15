@@ -12,31 +12,31 @@ import '../Restaurants/schemas/Restaurant.arcs'
 import '../Common/schemas/Description.arcs'
 
 particle ReservationForm in 'source/ReservationForm.js'
-  inout Event event
-  in Restaurant restaurant
-  consume action
-    provide annotation
+  event: reads writes Event
+  restaurant: reads Restaurant
+  action: consumes Slot
+    annotation: provides? Slot
 
 // TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
 // so fork the particle
 particle DetailReservationForm in 'source/ReservationForm.js'
-  inout Event event
-  in Restaurant restaurant
-  consume detailAction
-    provide annotation
+  event: reads writes Event
+  restaurant: reads Restaurant
+  detailAction: consumes Slot
+    annotation: provides? Slot
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
-  inout Event event
-  in Restaurant restaurant
-  out [Description] descriptions
-  consume annotation
+  event: reads writes Event
+  restaurant: reads Restaurant
+  descriptions: writes [Description]
+  annotation: consumes Slot
 
 // TODO(sjmiles): we don't have optional handles yet, so fork the particle
 // rather than having every instance generate descriptions
 particle ReservationMultiAnnotation in 'source/ReservationAnnotation.js'
-  in Restaurant restaurant
-  inout Event event
-  consume annotation
+  restaurant: reads Restaurant
+  event: reads writes Event
+  annotation: consumes Slot
 
 // TODO(sjmiles): below leaves out definition of the
 // list of restaurants to bind to annotators, but
@@ -46,34 +46,34 @@ particle ReservationMultiAnnotation in 'source/ReservationAnnotation.js'
 // when I do that.
 
 recipe MakeReservations
-  use as restaurants
-  use #selected as restaurant
-  create #reservation as event
-  create #volatile as calendarDescriptions
-  create #volatile as annotationDescriptions
-  slot 'rootslotid-toproot' as toproot
+  restaurants: use *
+  restaurant: use #selected
+  event: create #reservation
+  calendarDescriptions: create #volatile
+  annotationDescriptions: create #volatile
+  toproot: slot 'rootslotid-toproot'
   Calendar
-    event = event
-    descriptions = calendarDescriptions
-    consume action as toproot
+    event: event
+    descriptions: calendarDescriptions
+    action: consumes toproot
   // top-of-frame event editor
   ReservationForm
-    restaurant = restaurant
-    event = event
-    consume action as toproot
+    restaurant: restaurant
+    event: event
+    action: consumes toproot
   // per-restaurant tile scheduler
   AnnotationMultiplexer
-    list = restaurants
-    annotation = event
-    hostedParticle = ReservationMultiAnnotation
+    list: restaurants
+    annotation: event
+    hostedParticle: ReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   DetailReservationForm
-    restaurant = restaurant
-    event = event
-    consume detailAction
-      provide annotation as detailAnnotation
+    restaurant: restaurant
+    event: event
+    detailAction: consumes
+      annotation: provides detailAnnotation
   ReservationAnnotation
-    restaurant = restaurant
-    event = event
-    descriptions = annotationDescriptions
-    consume annotation as detailAnnotation
+    restaurant: restaurant
+    event: event
+    descriptions: annotationDescriptions
+    annotation: consumes detailAnnotation

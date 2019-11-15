@@ -10,13 +10,13 @@ import '../List/List.arcs'
 import 'schemas/Product.arcs'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
-  in Product product
-  consume annotation
+  product: reads Product
+  annotation: consumes Slot
 
 // Check manufacturer information for products.
 recipe ProductManufacturerInfo
-  use as shoplist
+  shoplist: use *
   SimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = ManufacturerInfo
+    list: shoplist
+    hostedParticle: ManufacturerInfo
   description `check manufacturer information`

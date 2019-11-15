@@ -26,61 +26,61 @@ import org.junit.runners.JUnit4
 /** Tests for [VolatileDriverProvider]. */
 @RunWith(JUnit4::class)
 class VolatileDriverProviderTest {
-  private lateinit var arcIdFoo: ArcId
-  private lateinit var arcIdBar: ArcId
-  private lateinit var fooProvider: VolatileDriverProvider
-  private lateinit var barProvider: VolatileDriverProvider
+    private lateinit var arcIdFoo: ArcId
+    private lateinit var arcIdBar: ArcId
+    private lateinit var fooProvider: VolatileDriverProvider
+    private lateinit var barProvider: VolatileDriverProvider
 
-  @Before
-  fun setup() {
-    arcIdFoo = ArcId.newForTest("foo")
-    arcIdBar = ArcId.newForTest("bar")
-    fooProvider = VolatileDriverProvider(arcIdFoo)
-    barProvider = VolatileDriverProvider(arcIdBar)
-  }
-
-  @After
-  fun tearDown() {
-    DriverFactory.clearRegistrationsForTesting()
-  }
-
-  @Test
-  fun constructor_registersSelfWithDriverFactory() {
-    // These also cover testing the happy-path of willSupport on VolatileDriverProvider itself.
-    assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdFoo, "myfoo"))).isTrue()
-    assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isTrue()
-
-    // Make sure it's not returning true for just anything.
-    assertThat(
-      DriverFactory.willSupport(VolatileStorageKey(ArcId.newForTest("baz"), "myBaz"))
-    ).isFalse()
-  }
-
-  @Test
-  fun willSupport_requiresVolatileStorageKey() {
-    class NonVolatileKey : StorageKey("nonvolatile") {
-      override fun toKeyString() = "blah"
-      override fun childKeyWithComponent(component: String) = NonVolatileKey()
+    @Before
+    fun setup() {
+        arcIdFoo = ArcId.newForTest("foo")
+        arcIdBar = ArcId.newForTest("bar")
+        fooProvider = VolatileDriverProvider(arcIdFoo)
+        barProvider = VolatileDriverProvider(arcIdBar)
     }
 
-    assertThat(fooProvider.willSupport(NonVolatileKey())).isFalse()
-  }
+    @After
+    fun tearDown() {
+        DriverFactory.clearRegistrationsForTesting()
+    }
 
-  @Test
-  fun willSupport_requiresArcIdMatch() {
-    assertThat(fooProvider.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isFalse()
-  }
+    @Test
+    fun constructor_registersSelfWithDriverFactory() {
+        // These also cover testing the happy-path of willSupport on VolatileDriverProvider itself.
+        assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdFoo, "myfoo"))).isTrue()
+        assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isTrue()
 
-  @Test
-  fun getDriver_getsDriverForExistenceCriteria() = runBlocking {
-    val driver =
-      fooProvider.getDriver<Int>(
-        VolatileStorageKey(arcIdFoo, "myfoo"),
-        ExistenceCriteria.ShouldCreate
-      )
+        // Make sure it's not returning true for just anything.
+        assertThat(
+            DriverFactory.willSupport(VolatileStorageKey(ArcId.newForTest("baz"), "myBaz"))
+        ).isFalse()
+    }
 
-    assertThat(driver).isNotNull()
-    assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
-    assertThat(driver.existenceCriteria).isEqualTo(ExistenceCriteria.ShouldCreate)
-  }
+    @Test
+    fun willSupport_requiresVolatileStorageKey() {
+        class NonVolatileKey : StorageKey("nonvolatile") {
+            override fun toKeyString() = "blah"
+            override fun childKeyWithComponent(component: String) = NonVolatileKey()
+        }
+
+        assertThat(fooProvider.willSupport(NonVolatileKey())).isFalse()
+    }
+
+    @Test
+    fun willSupport_requiresArcIdMatch() {
+        assertThat(fooProvider.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isFalse()
+    }
+
+    @Test
+    fun getDriver_getsDriverForExistenceCriteria() = runBlocking {
+        val driver =
+            fooProvider.getDriver<Int>(
+                VolatileStorageKey(arcIdFoo, "myfoo"),
+                ExistenceCriteria.ShouldCreate
+            )
+
+        assertThat(driver).isNotNull()
+        assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
+        assertThat(driver.existenceCriteria).isEqualTo(ExistenceCriteria.ShouldCreate)
+    }
 }

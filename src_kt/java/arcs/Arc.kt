@@ -12,5 +12,5 @@
 package arcs
 
 class Arc {
-  // TODO: everything(?)
+    // TODO: everything(?)
 }

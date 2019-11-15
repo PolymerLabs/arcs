@@ -3,6 +3,6 @@ import './schemas/MlModel.arcs'
 import './schemas/Inference.arcs'
 
 particle ParseLabels in './js/ParseLabels.js'
-  in MlModel {URL labelsUrl} url
-  out [Label] labels
+  url: reads MlModel {labelsUrl: URL}
+  labels: writes [Label]
   //description `Parse a URL to a text file into a list of labels`

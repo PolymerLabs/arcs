@@ -1,14 +1,14 @@
 schema MlResource
-  Number ref
+  ref: Number
 
 schema TfTensor
-  Number ref
+  ref: Number
 
 schema TfModel
-  Number ref
+  ref: Number
 
 schema Shape
-  Number dim
+  dim: Number
 
 schema ResizeOptions
-  Boolean alignCorners
+  alignCorners: Boolean

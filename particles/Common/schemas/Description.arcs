@@ -1,3 +1,3 @@
 schema Description
-  Text key
-  Text value
+  key: Text
+  value: Text

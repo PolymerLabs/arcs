@@ -15,12 +15,12 @@ import 'schemas/Stats.arcs'
 
 particle GamePane in 'source/GamePane.js'
   //host HostedParticleInterface renderParticle
-  in Person person
-  inout Board board
-  inout Move move
-  inout Stats stats
-  //inout [Post] posts
-  //inout Post post
-  //in Theme shellTheme
-  consume root
+  person: reads Person
+  board: reads writes Board
+  move: reads writes Move
+  stats: reads writes Stats
+  //posts: reads writes [Post]
+  //post: reads writes Post
+  //shellTheme: reads Theme
+  root: consumes Slot
   description `play Words`

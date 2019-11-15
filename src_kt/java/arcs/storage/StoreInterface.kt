@@ -18,10 +18,10 @@ import kotlin.reflect.KClass
 
 /** Base interface which all store implementations must extend from. */
 interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-  val storageKey: StorageKey
-  val existenceCriteria: ExistenceCriteria
-  val mode: StorageMode
-  val type: Type
+    val storageKey: StorageKey
+    val existenceCriteria: ExistenceCriteria
+    val mode: StorageMode
+    val type: Type
 }
 
 /**
@@ -29,28 +29,27 @@ interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
  * well as provide ample information to support looking the constructor up by expected types.
  */
 data class StoreConstructor(
-  internal val dataClass: KClass<out CrdtData>,
-  internal val opClass: KClass<out CrdtOperation>,
-  internal val consumerDataClass: KClass<*>,
-  private val constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
+    internal val dataClass: KClass<out CrdtData>,
+    internal val opClass: KClass<out CrdtOperation>,
+    internal val consumerDataClass: KClass<*>,
+    private val constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
 ) {
-  val typeParamString: String
-    get() = "<$dataClass, $opClass, $consumerDataClass>"
+    val typeParamString: String
+        get() = "<$dataClass, $opClass, $consumerDataClass>"
 
-  internal suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
-    options: StoreOptions<Data, Op, ConsumerData>
-  ) = constructor(options)
+    internal suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
+        options: StoreOptions<Data, Op, ConsumerData>
+    ) = constructor(options)
 }
 
 /**
  * Pseudo-constructor which can be used to denote a suspending function capable of generating an
  * [ActiveStore] instance as a [StoreConstructor].
  */
-inline fun <reified Data : CrdtData, reified Op : CrdtOperation, reified ConsumerData> StoreConstructor(
-  noinline constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
-): StoreConstructor {
-  return StoreConstructor(Data::class, Op::class, ConsumerData::class, constructor)
-}
+inline fun <reified Data, reified Op, reified ConsumerData> StoreConstructor(
+    noinline constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
+): StoreConstructor where Data : CrdtData, Op : CrdtOperation =
+    StoreConstructor(Data::class, Op::class, ConsumerData::class, constructor)
 
 /**
  * Modes for Storage.
@@ -58,21 +57,18 @@ inline fun <reified Data : CrdtData, reified Op : CrdtOperation, reified Consume
  * TODO: need actual, helpful kdoc for these.
  */
 enum class StorageMode {
-  Direct,
-  Backing,
-  ReferenceMode,
+    Direct,
+    Backing,
+    ReferenceMode,
 }
 
 /** Wrapper for options which will be used to construct a [Store]. */
 data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-  val storageKey: StorageKey,
-  val existenceCriteria: ExistenceCriteria,
-  val type: Type,
-  val mode: StorageMode = StorageMode.Direct,
-  //  if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode else StorageMode.Direct,
-  val baseStore: IStore<Data, Op, ConsumerData>? = null,
-  val versionToken: String? = null,
-  val model: Data? = null
+    val storageKey: StorageKey,
+    val existenceCriteria: ExistenceCriteria,
+    val type: Type,
+    val mode: StorageMode = StorageMode.Direct,
+    val baseStore: IStore<Data, Op, ConsumerData>? = null,
+    val versionToken: String? = null,
+    val model: Data? = null
 )
-
-

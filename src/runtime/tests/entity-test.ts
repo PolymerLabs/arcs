@@ -141,7 +141,11 @@ describe('Entity', () => {
     Entity.identify(e, '!test:uid:u0');
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
+    // Prevent console.dir from spamming the test output
+    const saveDir = console.dir;
+    console.dir = () => {};
     Entity.debugLog(e);
+    console.dir = saveDir;
     assert.strictEqual(JSON.stringify(e), fields);
     assert.strictEqual(JSON.stringify(e[SYMBOL_INTERNALS]), internals);
   });

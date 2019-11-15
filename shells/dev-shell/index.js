@@ -20,7 +20,6 @@ import {pecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
-import {Utils} from '../lib/utils.js';
 import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 
@@ -28,6 +27,7 @@ import '../../build/services/ml5-service.js';
 import '../../build/services/random-service.js';
 
 const root = '../..';
+const urlMap = Runtime.mapFromRootPath(root);
 
 // import DOM node references
 const {
@@ -103,7 +103,7 @@ async function wrappedExecute() {
   document.dispatchEvent(new Event('clear-arcs-explorer'));
   outputPane.reset();
 
-  const loader = new Loader(Utils.createPathMap(root), filePane.getFileMap());
+  const loader = new Loader(urlMap, filePane.getFileMap());
   // TODO(sjmiles): should be a static method
   loader.flushCaches();
 

@@ -10,37 +10,37 @@ import '../People/schemas/Person.arcs'
 import 'schemas/Product.arcs'
 
 particle GiftList in 'source/GiftList.js'
-  in Person person
-  consume preamble
+  person: reads Person
+  preamble: consumes? Slot
   description `buy gifts for ${person}'s ${person.occasion} on ${person.date}`
 
 particle Arrivinator in 'source/Arrivinator.js'
-  in Product product
-  consume annotation
+  product: reads Product
+  annotation: consumes Slot
   description `estimate arrival date`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`
     //product `my best product`
 
 particle AlternateShipping in 'source/AlternateShipping.js'
-  in Product product
-  consume annotation
+  product: reads Product
+  annotation: consumes Slot
   description `find alternate shipping for products which won't make it on time`
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 //recipe MakeIntoGiftList
-//  use #shoplist as shoplist
-//  copy as person
+//  shoplist: use #shoplist
+//  person: copy *
 //  GiftList
-//    person = person
+//    person: person
 //  Multiplexer
-//    list = shoplist
-//    hostedParticle = Arrivinator
-//    consume annotation as annotationSlot
+//    list: shoplist
+//    hostedParticle: Arrivinator
+//    annotation: consumes annotationSlot
 //  Multiplexer
-//    list = shoplist
-//    hostedParticle = AlternateShipping
-//    consume annotation as annotationSlot
+//    list: shoplist
+//    hostedParticle: AlternateShipping
+//    annotation: consumes annotationSlot
 //  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
 
 

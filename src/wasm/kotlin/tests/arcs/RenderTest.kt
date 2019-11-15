@@ -7,7 +7,7 @@ import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class RenderTest : Particle() {
-    private val flags = Singleton { Test_RenderFlags() }
+    private val flags = Singleton { RenderTest_Flags() }
     private var shouldTemplate: Boolean = true
     private var shouldPopulate: Boolean = true
 

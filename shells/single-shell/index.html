@@ -34,15 +34,15 @@ http://polymer.github.io/PATENTS.txt
 
 <script type="module">
   import '../services/ml5-service.js';
-  import {Utils} from '../lib/utils.js';
+  import '../configuration/whitelisted.js';
+  import {Runtime} from '../../build/runtime/runtime.js';
   import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
   import {App} from './app.js';
-  import '../configuration/whitelisted.js';
 
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);
   }
-  const utils = Utils.init('../..');
+  const runtime = Runtime.init('../..');
 
   const composer = new DomSlotComposer({
     rootContainer: document.body

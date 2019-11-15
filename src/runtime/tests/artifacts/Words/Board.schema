@@ -12,7 +12,7 @@ schema Board
   // Eventually this usage could be revised to either use the Board entity id,
   // or to have the social feed instantiate the source arc directly which would
   // then implicitly pull in all of the relevant entity data.
-  Text gameId
+  gameId: Text
   // A string list of (Character, Tile.Style) comprising the board laid out in
   // an NxN grid filled from left to right starting at top left. Tile.Style is
   // encoded as an integer used to map to the appropriate style enum. So an
@@ -26,9 +26,9 @@ schema Board
   // TS
   //
   // with the 'A' and 'T' as differing styles from 'C' and 'S'.
-  Text letters
+  letters: Text
   // The number of shuffle actions available to the user.
-  Number shuffleAvailableCount
+  shuffleAvailableCount: Number
   // Board state enum to note when the game is over and the board should
   // no longer be interactive. See TileBoard.State.
-  Number state
+  state: Number

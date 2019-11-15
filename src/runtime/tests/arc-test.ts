@@ -165,10 +165,8 @@ describe('Arc new storage', () => {
     const refVarStorageProxy2 = new StorageProxyNG('id-3', await refVarStore2.activate(), new SingletonType(dataClass.type));
     const refVarHandle2 = await handleNGFor('crdt-key-3', refVarStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
 
-    // TODO(shans): These currently timeout because the backing store isn't persisting properly. When that gets cleaned up,
-    // uncomment these lines.
-    // const refVarData = await refVarHandle2.get();
-    // assert.deepEqual(refVarData, d4);
+    const refVarData = await refVarHandle2.get();
+    assert.deepEqual(refVarData, d4);
   }));
 });
 

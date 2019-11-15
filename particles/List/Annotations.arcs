@@ -1,37 +1,45 @@
+// @license
+// Copyright (c) 2019 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
 interface HostedAnnotationInterface
-  in ~anyType *
-  inout ~anyOther *
-  consume annotation
+  reads ~anyType
+  reads writes ~anyOther
+  annotation: consumes Slot
 
 particle AnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  inout ~anyOther annotation
-  host HostedAnnotationInterface hostedParticle
-  consume set of annotation
+  list: reads [~anyType]
+  annotation: reads writes ~anyOther
+  hostedParticle: hosts HostedAnnotationInterface
+  annotation: consumes [Slot]
 
 interface HostedSimpleAnnotationInterface
-  in ~anyType *
-  consume annotation
+  reads ~anyType
+  annotation: consumes Slot
 
 particle SimpleAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  host HostedSimpleAnnotationInterface hostedParticle
-  consume set of annotation
+  list: reads [~anyType]
+  hostedParticle: hosts HostedSimpleAnnotationInterface
+  annotation: consumes [Slot]
 
 interface HostedCombinedAnnotationInterface
-  in ~anyType *
-  in [~anyOther] *
-  consume annotation
+  reads ~anyType
+  reads [~anyOther]
+  annotation: consumes Slot
 
 particle CombinedAnnotationMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  in [~anyOther] choices
-  host HostedCombinedAnnotationInterface hostedParticle
-  consume set of annotation
+  list: reads [~anyType]
+  choices: reads [~anyOther]
+  hostedParticle: hosts HostedCombinedAnnotationInterface
+  annotation: consumes [Slot]
 
 //recipe AnnotationMultiplexer
-//  use #items as list
-//  use #annotation as annotation
+//  list: use #items
+//  annotation: use #annotation
 //  AnnotationMultiplexer
-//    list = list
-//    annotation = annotation
+//    list: list
+//    annotation: annotation

@@ -11,7 +11,6 @@
 
 package arcs.storage.referencemode
 
-import arcs.common.ReferenceId
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtModel
 import arcs.crdt.CrdtOperationAtTime

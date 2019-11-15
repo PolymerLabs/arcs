@@ -166,11 +166,17 @@ export abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends 
 // parameter here?
 export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<CRDTCollectionTypeRecord<SerializedEntity>> {
   async get(id: string): Promise<T> {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
     const values: SerializedEntity[] = await this.toCRDTList();
     return this.deserialize(values.find(element => element.id === id)) as T;
   }
 
   async add(entity: T): Promise<boolean> {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
     this.ensureEntityHasId(entity);
 
     this.clock[this.key] = (this.clock[this.key] || 0) + 1;
@@ -188,6 +194,9 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
   }
 
   async remove(entity: T): Promise<boolean> {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
     const op: CRDTOperation = {
       type: CollectionOpTypes.Remove,
       removed: this.serialize(entity),
@@ -198,6 +207,9 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
   }
 
   async clear(): Promise<boolean> {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
     const values: SerializedEntity[] = await this.toCRDTList();
     for (const value of values) {
       const removeOp: CRDTOperation = {
@@ -214,6 +226,9 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
   }
 
   async toList(): Promise<T[]> {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
     const list = await this.toCRDTList();
     return list.map(entry => this.deserialize(entry) as T);
   }
@@ -225,6 +240,7 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
   }
 
   async onUpdate(op: CollectionOperation<SerializedEntity>, version: VersionMap): Promise<void> {
+    assert(this.canRead, 'onUpdate should not be called for non-readable handles');
     this.clock = version;
     // FastForward cannot be expressed in terms of ordered added/removed, so pass a full model to
     // the particle.
@@ -248,6 +264,7 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
   }
 
   async onSync(): Promise<void> {
+    assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
@@ -262,6 +279,9 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
  */
 export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<CRDTSingletonTypeRecord<SerializedEntity>> {
   async set(entity: T): Promise<boolean> {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
     this.ensureEntityHasId(entity);
 
     this.clock[this.key] = (this.clock[this.key] || 0) + 1;
@@ -275,6 +295,9 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
   }
 
   async clear(): Promise<boolean> {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,
@@ -284,13 +307,17 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
   }
 
   async get(): Promise<T> {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
     const [value, versionMap] = await this.storageProxy.getParticleView();
     this.clock = versionMap;
     return value == null ? null : this.deserialize(value) as T;
   }
 
   async onUpdate(op: SingletonOperation<SerializedEntity>, version: VersionMap): Promise<void> {
-     this.clock = version;
+    assert(this.canRead, 'onUpdate should not be called for non-readable handles');
+    this.clock = version;
     // Pass the change up to the particle.
     const update: {data?: Entity, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
@@ -306,6 +333,7 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
   }
 
   async onSync(): Promise<void> {
+    assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,

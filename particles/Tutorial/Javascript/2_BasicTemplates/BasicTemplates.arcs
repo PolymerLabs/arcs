@@ -1,8 +1,8 @@
 // Tutorial: Basic Templates
 // Shows how to use templates to render data. This recipe has the exact same structure as the Hello World tutorial, only the JS is different.
 
-particle BasicTemplateParticle in 'basic-template.js'
-  consume root
+particle BasicTemplateParticle in 'BasicTemplate.js'
+  root: consumes
 
 recipe BasicTemplateRecipe
   BasicTemplateParticle

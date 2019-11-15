@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Playlist
-  Text name
-  Text description
-  URL thumbnail
-  URL link
+  name: Text
+  description: Text
+  thumbnail: URL
+  link: URL
   // '|'-separated list of artist names
-  Text artists
+  artists: Text

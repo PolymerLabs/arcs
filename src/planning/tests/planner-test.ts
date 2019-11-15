@@ -167,7 +167,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   }));
 
-  it('SLANDLES resolves particles with multiple consumed slots with the any direction', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed slots with the implicit any direction', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes Slot
@@ -175,12 +175,12 @@ describe('Planner', () => {
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: any s0
+          one: s0
     `);
     assert.lengthOf(results, 1);
   }));
 
-  it('SLANDLES resolves particles with multiple consumed set with the any direction', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed set with the implicit any direction', Flags.withPostSlandlesSyntax(async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes [Slot]
@@ -188,7 +188,7 @@ describe('Planner', () => {
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: any s0
+          one: s0
     `);
     assert.lengthOf(results, 1);
   }));
@@ -204,10 +204,10 @@ describe('Planner', () => {
         s0: \`slot 'slot-id0'
         s1: \`slot 'slot-id1'
         P1
-          inSlot: any s0
-          outSlot: any s1
+          inSlot: s0
+          outSlot: s1
         P2
-          inSlot: any s1
+          inSlot: s1
     `);
     assert.lengthOf(results, 1);
   }));
@@ -223,10 +223,10 @@ describe('Planner', () => {
         s0: \`slot 'slot-id0'
         s1: \`slot 'slot-id1'
         P1
-          inSlot: any s0
-          outSlot: any s1
+          inSlot: s0
+          outSlot: s1
         P2
-          inSlot: any s1
+          inSlot: s1
     `);
     assert.lengthOf(results, 1);
   }));
@@ -242,10 +242,10 @@ describe('Planner', () => {
         s0: \`slot 'slot-id0'
         s1: \`slot 'slot-id1'
         P1
-          inSlot: any s0
-          outSlot: any s1
+          inSlot: s0
+          outSlot: s1
         P2
-          inSlot: any s1
+          inSlot: s1
     `);
     assert.lengthOf(results, 0);
   }));
@@ -312,7 +312,7 @@ describe('Planner', () => {
       recipe
         s0: \`slot 'slot-id0'
         P1
-          one: any s0
+          one: s0
     `);
     assert.lengthOf(results, 1);
   }));
@@ -797,6 +797,7 @@ describe('Automatic resolution', () => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     for (const plan of plans) {
       plan.normalize();
+      console.log('PLAN ', plan.toString());
       assert.isTrue(plan.isResolved(), `Plans were not able to be resolved from ${manifestStr}.`);
     }
     return plans;
@@ -972,51 +973,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
-  it('SLANDLES SYNTAX composes recipe rendering a list of items from a recipe', Flags.withPostSlandlesSyntax(async () => {
-    let arc = null;
-    const recipes = await verifyResolvedPlans(`
-      import './src/runtime/tests/artifacts/Common/SLANDLESListRecipes.arcs'
-      schema Thing
-
-      particle ThingProducer
-        things: writes [Thing]
-
-      particle ThingRenderer
-        thing: reads Thing
-        item: consumes? Slot
-
-      recipe ProducingRecipe
-        things: create #items
-        ThingProducer`, arcRef => arc = arcRef);
-
-    assert.lengthOf(recipes, 2);
-    const composedRecipes = recipes.filter(r => r.name !== 'ProducingRecipe');
-    assert.lengthOf(composedRecipes, 1);
-
-    const recipeString = `recipe
-  handle0: create #items // [Thing {}]
-  handle1: create #selected // Thing {}
-  slot1: slot 'rootslotid-root' #root
-  ItemMultiplexer as particle0
-    hostedParticle: hosts ThingRenderer
-    list: reads handle0
-    item: consumes slot0
-  SelectableList as particle1
-    items: reads writes handle0
-    selected: reads writes handle1
-    root: consumes slot1
-      action: provides slot2
-      annotation: provides slot3
-      item: provides slot0
-      postamble: provides slot4
-      preamble: provides slot5
-  ThingProducer as particle2
-    things: writes handle0`;
-    assert.strictEqual(composedRecipes[0].toString(), recipeString);
-    assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-  }));
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('composes recipe rendering a list of items from a recipe', Flags.withPreSlandlesSyntax(async () => {
+  it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1058,16 +1015,17 @@ describe('Automatic resolution', () => {
     things -> handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-  }));
-  it('SLANDLES SYNTAX composes recipe rendering a list of items from the current arc', Flags.withPostSlandlesSyntax(async () => {
+  });
+
+  it('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
-        import './src/runtime/tests/artifacts/Common/SLANDLESListRecipes.arcs'
+        import './src/runtime/tests/artifacts/Common/List.recipes'
         schema Thing
 
         particle ThingRenderer
-          thing: reads Thing
-          item: consumes? Slot`,
+          in Thing thing
+          consume item`,
         async (arcRef, manifest) => {
           arc = arcRef;
           const thing = manifest.findSchemaByName('Thing').entityClass();
@@ -1094,41 +1052,6 @@ describe('Automatic resolution', () => {
       preamble: provides slot5`);
   }));
 
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('composes recipe rendering a list of items from the current arc', Flags.withPreSlandlesSyntax(async () => {
-    let arc = null;
-    const recipes = await verifyResolvedPlans(`
-        import './src/runtime/tests/artifacts/Common/List.recipes'
-        schema Thing
-
-        particle ThingRenderer
-          in Thing thing
-          consume item`,
-        async (arcRef, manifest) => {
-          arc = arcRef;
-          const thing = manifest.findSchemaByName('Thing').entityClass();
-          await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
-        });
-
-    assert.lengthOf(recipes, 1);
-    assert.strictEqual(recipes[0].toString(), `recipe SelectableUseListRecipe
-  use 'test-store' #items as handle0 // [Thing {}]
-  create #selected as handle1 // Thing {}
-  slot 'rootslotid-root' #root as slot1
-  ItemMultiplexer as particle0
-    hostedParticle = ThingRenderer
-    list <- handle0
-    consume item as slot0
-  SelectableList as particle1
-    items <-> handle0
-    selected <-> handle1
-    consume root as slot1
-      provide action as slot2
-      provide annotation as slot3
-      provide item as slot0
-      provide postamble as slot4
-      provide preamble as slot5`);
-  }));
   it('coalesces resolved recipe with no UI', async () => {
     const recipes = await verifyResolvedPlans(`
       schema Thing

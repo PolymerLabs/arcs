@@ -52,6 +52,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
 
   // Series of StoreInfo getters to make migration easier.
   get id() { return this.storeInfo.id; }
+  get apiChannelMappingId() { return this.id; }
   get name() { return this.storeInfo.name; }
   get type() { return this.storeInfo.type; }
   get originalId() { return this.storeInfo.originalId; }

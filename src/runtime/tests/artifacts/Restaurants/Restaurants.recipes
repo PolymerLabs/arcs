@@ -12,22 +12,22 @@ import 'RestaurantDetail.manifest'
 import '../Places/ExtractLocation.manifest'
 
 recipe &displayRestaurants
-  ? as list
-  RestaurantMasterDetail.selected -> RestaurantList.selected
-  RestaurantDetail.selected -> RestaurantList.selected
-  RestaurantMasterDetail.list -> RestaurantList.list
+  list: ?
+  RestaurantMasterDetail.selected: writes RestaurantList.selected
+  RestaurantDetail.selected: writes RestaurantList.selected
+  RestaurantMasterDetail.list: writes RestaurantList.list
   RestaurantList
-    list <- list
+    list: reads list
 
 recipe
-  create as location
+  location: create *
   ExtractLocation
-    location -> location
+    location: writes location
 
 recipe &nearbyRestaurants
-  create #restaurants #volatile as restaurants
+  restaurants: create #restaurants #volatile
   FindRestaurants
-    restaurants = restaurants
+    restaurants: restaurants
 
 import '../Events/Event.schema'
 import '../Events/PartySize.manifest'
@@ -35,23 +35,23 @@ import 'ReservationForm.manifest'
 import 'ReservationAnnotation.manifest'
 
 recipe &makeReservation
-  create #event as event
-  use #restaurants as list
+  event: create #event
+  list: use #restaurants
   ReservationForm
-    event = event
+    event: event
   ReservationAnnotation
-    event = event
-    list = list
+    event: event
+    list: list
   PartySize
-    event = event
+    event: event
 
 import '../Events/Events.recipes'
 
 import 'FavoriteFoodAnnotation.manifest'
 
 recipe
-  map #favorite as food
-  use as restaurants
+  food: map #favorite
+  restaurants: use *
   FavoriteFoodAnnotation
-    restaurants <- restaurants
-    food <- food
+    restaurants: reads restaurants
+    food: reads food

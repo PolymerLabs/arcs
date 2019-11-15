@@ -560,7 +560,7 @@ export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
 export interface InterfaceArgument extends BaseNode {
   kind: 'interface-argument';
   direction: Direction;
-  type: string;
+  type: ParticleHandleConnectionType;
   name: string;
 }
 

@@ -87,6 +87,23 @@ Particles and recipes are by default loaded from the APK, but you can configure 
   adb shell setprop debug.arcs.runtime.load_workstation_assets true
 ```
 
+## The Arcs Cache Manager
+The Arcs Cache Manager compiles javascript and webassembly sources eagerly and caches the compiled binaries at local storage to serve subsequent requests. Page loading time and compilation overhead are optimized when enabled.
+
+Enabling the Arcs Cache Manager:
+1. Terminate the existing demo application.
+1. Activate the Arcs Cache Manager then launch demo application to reflect new settings.
+ ```bash
+  adb shell "setprop debug.arcs.runtime.use_cache_mgr true"
+  adb shell "setprop debug.arcs.runtime.shell_url 'https://appassets.androidplatform.net/assets/arcs/index.html?'"
+  ```
+Disabling the Arcs Cache Manager:
+1. Terminate the existing demo application.
+1. Deactivate the Arcs Cache Manager then launch demo application to reflect new settings.
+* ```bash
+  adb shell "setprop debug.arcs.runtime.use_cache_mgr false"
+  adb shell "setprop debug.arcs.runtime.shell_url ''"
+  ```
 
 ## Properties
 Android properties are used to change and tweak Arcs settings at run-time.
@@ -98,3 +115,4 @@ Android properties are used to change and tweak Arcs settings at run-time.
 | debug.arcs.runtime.dev_server_port | The port to use for communication with ALDS | 8786 |
 | debug.arcs.runtime.shell_url | Specify which shell to use | file:///android_asset/index.html? (on-device pipes-shell) |
 | debug.arcs.runtime.load_workstation_assets | Whether to load recipes and particles from the workstation | false (assets from the APK) |
+| debug.arcs.runtime.use_cache_mgr | Whether to use the Arcs Cache Manager | false

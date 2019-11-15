@@ -16,71 +16,71 @@ import '../Common/Detail.manifest'
 // Allows creating multiple posts by the author and viewing all posts created
 // in this Arc.
 recipe
-  create #posts as posts
-  create as post
-  create #blog_metadata as metadata
-  map #BOXED_avatar as avatars
-  use #user as user
-  use #identities as people
-  use #shelltheme as shellTheme
+  posts: create #posts
+  post: create *
+  metadata: create #blog_metadata
+  avatars: map #BOXED_avatar
+  user: use #user
+  people: use #identities
+  shellTheme: use #shelltheme
 
   WritePosts
-    posts = posts
-    post = post
+    posts: posts
+    post: post
   EditPost
-    posts = posts
-    post = post
-    user <- user
-    renderParticle = ShowSinglePost
-    shellTheme <- shellTheme
+    posts: posts
+    post: post
+    user: reads user
+    renderParticle: ShowSinglePost
+    shellTheme: reads shellTheme
   ShowPosts
-    posts = posts
-    metadata = metadata
-    user <- user
-    avatars <- avatars
-    people <- people
+    posts: posts
+    metadata: metadata
+    user: reads user
+    avatars: reads avatars
+    people: reads people
   DetailSlider
-    selected = post
+    selected: post
 
 // Non-muxed post feed. Deprecated and to be removed once the muxed feeds below
 // are fully operational.
 recipe
-  map #BOXED_posts as posts
-  map #BOXED_stats as stats
-  map #BOXED_avatar as avatars
-  use #user as user
-  use #identities as people
+  posts: map #BOXED_posts
+  stats: map #BOXED_stats
+  avatars: map #BOXED_avatar
+  user: use #user
+  people: use #identities
   description `Show social feed (original)`
   OnlyShowPosts
-    posts <- posts
-    stats <- stats
-    user <- user
-    avatars <- avatars
-    people <- people
+    posts: reads posts
+    stats: reads stats
+    user: reads user
+    avatars: reads avatars
+    people: reads people
 
 // Descending time ordered post feed.
 recipe
-  map #BOXED_posts as posts
-  create as rankedPosts
+  posts: map #BOXED_posts
+  rankedPosts: create *
   PostTimeRanker
-    input = posts
-    output = rankedPosts
+    input: posts
+    output: rankedPosts
   PostList
-    items = rankedPosts
+    items: rankedPosts
   PostMuxer
-    list = rankedPosts
+    list: rankedPosts
 
 // Words game leaderboard feed.
 recipe
-  map #BOXED_posts as posts
-  map #BOXED_stats as stats
-  create as rankedPosts
+  posts: map #BOXED_posts
+  stats: map #BOXED_stats
+  rankedPosts: create *
   LeaderboardStatsTheme
   WordsScoreRanker
-    input = posts
-    stats = stats
-    output = rankedPosts
+    input: posts
+    stats: stats
+    output: rankedPosts
   PostList
-    items = rankedPosts
+    items: rankedPosts
   PostMuxer
-    list = rankedPosts
+    list: rankedPosts

@@ -15,6 +15,9 @@ import arcs.crdt.internal.VersionMap
 import arcs.storage.driver.RamDiskStorageKey
 import arcs.storage.referencemode.Reference
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
+import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -26,9 +29,6 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
-import kotlin.random.Random
 
 /** Tests for [SendQueue]. */
 @Suppress("RedundantSuspendModifier")

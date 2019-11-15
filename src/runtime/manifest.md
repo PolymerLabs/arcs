@@ -176,16 +176,16 @@ recipe
   handle1: map                   // maps a store external to the arc; changes in the
                                  // external store will be reflected locally, but the
                                  // local handle is read-only.
-  handle2: use                   // uses some handle already in the Arc
-  handle3: create                // creates a new empty handle
+  handle2: use *                 // uses some handle already in the Arc
+  handle3: create *              // creates a new empty handle
   handle4: copy ImportedHandle   // creates a handle on a new store populated with entries
                                  // from a store defined in or imported by the manifest
                                  
   SomeParticle
-    param1: reads handle1   // bind's SomeParticle's input param1 connection to handle1
-    param2: writes handle2  // binds output connection
-    param3: any handle3     // binds input and output connection
-    param4: reads handle4   // binds the copied handle.
+    param1: reads handle1        // bind's SomeParticle's input param1 connection to handle1
+    param2: writes handle2       // binds output connection
+    param3: reads writes handle3 // binds input and output connection
+    param4: reads handle4        // binds the copied handle.
 ```
 
 Can include how particles are connected to slots:

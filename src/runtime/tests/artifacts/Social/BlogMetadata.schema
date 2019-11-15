@@ -8,6 +8,6 @@
 
 schema BlogMetadata
   // The brief user-entered description of the blog.
-  Text description
+  description: Text
   // The opaque user id of the blog owner.
-  Text blogOwner
+  blogOwner: Text

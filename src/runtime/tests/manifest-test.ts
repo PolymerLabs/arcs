@@ -1320,6 +1320,7 @@ ${particleStr1}
     assert(registry['somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
+    let broken = false;
     const verifyParticleManifests = (particlePaths) => {
       let count = 0;
       particlePaths.forEach(particleManifestFile => {
@@ -1329,8 +1330,8 @@ ${particleStr1}
             const model = parse(data);
             assert.isDefined(model);
           } catch (e) {
-            console.log(`Failed parsing ${particleManifestFile}`);
-            throw e;
+            console.log(`Failed parsing ${particleManifestFile} +${e.location.start.line}:${e.location.start.column}`);
+            broken = true;
           }
           ++count;
         }
@@ -1345,11 +1346,12 @@ ${particleStr1}
       if (fs.statSync(manifestFolderName).isDirectory()) {
         shellParticleNames = shellParticleNames.concat(
             fs.readdirSync(manifestFolderName)
-                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes'))
+                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes') || fileName.endsWith('.arcs'))
                 .map(fileName => path.join(manifestFolderName, fileName)));
       }
     });
-    assert.isAbove(verifyParticleManifests(shellParticleNames), 0);
+    assert.isAbove(verifyParticleManifests(shellParticleNames), 0, 'no particles parse');
+    assert.isFalse(broken, 'a particle doesn\'t parse correctly');
   });
   it('loads entities from json files', async () => {
     const manifestSource = `
@@ -1711,7 +1713,7 @@ resource SomeName
       interface NoHandleType
         foo: reads writes
       interface NoHandleDirection
-        foo: any Foo
+        foo: Foo
       interface OnlyHandleDirection
         writes
       interface ManyHandles
@@ -1829,7 +1831,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1852,7 +1854,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1876,7 +1878,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1898,7 +1900,7 @@ resource SomeName
       recipe
         h0: create
         P
-          bar: any h0
+          bar: h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1947,23 +1949,23 @@ resource SomeName
       recipe
         h0: create
         P
-          foo: any h0
+          foo: h0
         P2
-          foo: any h0
+          foo: h0
 
       recipe
         h0: create
         P2
-          foo: any h0
+          foo: h0
         P3
-          foo: any h0
+          foo: h0
 
       recipe
         h0: create
         P2
-          foo: any h0
+          foo: h0
         P4
-          foo: any h0
+          foo: h0
     `);
     const [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1993,9 +1995,9 @@ resource SomeName
       recipe
         h0: create
         P
-          foo: any h0
+          foo: h0
         P2
-          foo: any h0
+          foo: h0
     `);
     const [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());

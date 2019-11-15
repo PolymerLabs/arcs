@@ -7,66 +7,60 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface HostedParticleInterface
-  in ~a *
-  consume item
+  reads ~a
+  item: consumes? Slot
 
 // row lists
 
 particle ItemMultiplexer in 'source/Multiplexer.js'
-  host HostedParticleInterface hostedParticle
-  in [~a] list
-  consume set of item
+  hostedParticle: hosts HostedParticleInterface
+  list: reads [~a]
+  item: consumes? [Slot]
 
 particle List in 'source/List.js'
-  in [~a] items
-  consume root #content
-    provide preamble
-    must provide set of item
-      handle items
-    provide set of annotation
-      handle items
-    provide action
-      handle items
-    provide postamble
+  items: reads [~a]
+  root: consumes? Slot #content
+    preamble: provides? Slot
+    item: provides [Slot {handle: items}]
+    annotation: provides? [Slot {handle: items}]
+    action: provides? Slot {handle: items}
+    postamble: provides? Slot
   description `show ${items}`
 
 particle SelectableList in 'source/List.js'
-  inout [~a] items
-  inout ~a selected
-  consume root #content
-    provide preamble
-    must provide set of item
-      handle items
-    provide set of annotation
-      handle items
-    provide action
-      handle items
-    provide postamble
+  items: reads writes [~a]
+  selected: reads writes ~a
+  root: consumes? #content
+    preamble: provides? Slot
+    item: provides [Slot {handle: items}]
+    annotation: provides? [Slot {handle: items}]
+    action: provides? Slot {handle: items}
+    postamble: provides? Slot
   description `show ${items}`
 
 // tile lists
 
 interface HostedTileParticleInterface
-  in ~a *
-  consume tile
+  reads ~a
+  tile: consumes? Slot
 
 particle TileMultiplexer in 'source/Multiplexer.js'
-  host HostedTileParticleInterface hostedParticle
-  in [~a] list
-  consume set of tile
+  hostedParticle: hosts HostedTileParticleInterface
+  list: reads [~a]
+  tile: consumes? [Slot]
 
 particle TileList in 'source/TileList.js'
-  inout [~a] items
-  consume root #content
-    must provide set of tile
-    provide set of action
+  items: reads writes [~a]
+  root: consumes? #content
+    tile: provides [Slot]
+    action: provides? [Slot]
   description `show ${items} as tiles`
 
 particle SelectableTileList in 'source/TileList.js'
-  inout [~a] items
-  inout ~a selected
-  consume root #content
-    must provide set of tile
-    provide set of action
+  items: reads writes [~a]
+  selected: reads writes ~a
+  root: consumes? #content
+    tile: provides [Slot]
+    action: provides? [Slot]
   description `show ${items} as tiles`
 

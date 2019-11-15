@@ -1,3 +1,5 @@
+licenses(["notice"])
+
 package(default_visibility = ["//visibility:public"])
 
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_test")

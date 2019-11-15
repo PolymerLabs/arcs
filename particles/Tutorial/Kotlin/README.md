@@ -19,7 +19,7 @@ particle HelloWorldParticle in 'HelloWorld.wasm'
   // in the Arcs manifest language, so this is very important.
   // Don't worry about what this line does at the moment, we'll
   // be getting to root and slots in more detail soon.
-  consume root
+  root: consumes
 
 // And now we are at the recipe definition!
 recipe HelloWorldRecipe
@@ -87,7 +87,7 @@ This interpolation occurs when `populateModel()` returns a dictionary with keys 
 
 ```
 particle BasicTemplateParticle in 'BasicTemplate.wasm'
-  consume root
+  root: consumes
 
 recipe BasicTemplateRecipe
   BasicTemplateParticle
@@ -147,34 +147,28 @@ This all is a bit theoretical, so let's get to an example. To show how particles
 
 As usual, we start with the Arcs manifest file:
 ```
-// The "parent" particle. It provides a slot for another particle to render within.
+// The "parent" particle. It provides a slot for another particle to be rendered inside it.
 particle ParentParticle in 'ParentParticle.wasm'
-  // This particle renders to the root slot ("consumes" it), and provides a slot
-  // called "mySlot" in which another particle can render. The
-  // child particle will be rendered inside a special div with the identifier
-  // "mySlot", which this particle will need to provide in its HTML.
-  consume root
-    provide mySlot
+  // This particle renders to the root slot ("consumes" it), and provides a slot inside it called
+  // "mySlot" in which another particle can render itself. The child particle will be rendered inside
+  // a special div with the identifier "mySlot", which this particle will need to provide in its HTML.
+  root: consumes
+    mySlot: provides
 
-// The "child" particle. Instead of consuming "root" it consumes "mySlot"
+// The "child" particle. Instead of consuming "root" it consumes "mySlot", which connects it to the
+// slot provided by ParentParticle.
 particle ChildParticle in 'ChildParticle.wasm'
-  consume mySlot
+  render: consumes
 
-
-// Unlike previous recipes, this one includes two particles.
 recipe RenderSlotsRecipe
   ParentParticle
-    // The ParentParticle consumes root just like particles in previous examples.
-    consume root
-      // ParentParticle also provides mySlot. Note the additional tab over.
-      // The name "slot" is the name the recipe uses for the slot, and is how
-      // the recipe connects the parent's mySlot and the child's mySlot
-      provide mySlot as slot
+    root: consumes
+      mySlot: provides childSlot
   ChildParticle
-    // And the ChildParticle consumes the slot.
-    consume mySlot as slot
+    render: consumes childSlot
 
-  description `Javascript Tutorial 3: Render Slots`
+  description `Kotlin Tutorial 3: Render Slots`
+
 ```
 
 Next, we implement the parent and child particles in Kotlin. To do this, we will create a Kotlin file for each particle as outlined in the Arcs manifest file. We start with the ParentParticle which provides the slot.
