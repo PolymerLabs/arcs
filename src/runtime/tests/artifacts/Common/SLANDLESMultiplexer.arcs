@@ -21,7 +21,7 @@ particle SlandleMultiplexer in 'source/SlandleMultiplexer.js'
 interface SlandleHostedParticleInterface2
   reads ~a
   reads [~a]
-  `consumes? Slot
+  `consumes Slot
 
 particle SlandleMultiplexer2 in 'source/SlandleMultiplexer.js'
   hostedParticle: hosts SlandleHostedParticleInterface2
