@@ -1,14 +1,7 @@
 package arcs
 
 import kotlin.native.internal.ExportForCppRuntime
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointed
-import kotlinx.cinterop.NativePtr
-import kotlinx.cinterop.Retain
-import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.SymbolName
-import kotlinx.cinterop.toCPointer
-import kotlinx.cinterop.toUtf8
+import kotlinx.cinterop.*
 
 // Model WasmAddress as an Int
 typealias WasmAddress = Int
@@ -36,7 +29,7 @@ abstract class WasmObject {
 
 // Extension method to convert an Int into a Kotlin heap ptr
 fun WasmAddress.toPtr(): NativePtr {
-    return this.toLong().toCPointer<CPointed>().rawValue
+    return this.toLong().toCPointer<CPointed>()!!.rawValue
 }
 
 // Convert a WasmAddress back into a Kotlin Object reference
