@@ -14,6 +14,7 @@ import {IdGenerator, Id} from '../id.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
+import {ConCap} from '../../testing/test-util.js';
 
 describe('Entity', () => {
 
@@ -141,11 +142,22 @@ describe('Entity', () => {
     Entity.identify(e, '!test:uid:u0');
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
-    // Prevent console.dir from spamming the test output
-    const saveDir = console.dir;
-    console.dir = () => {};
-    Entity.debugLog(e);
-    console.dir = saveDir;
+
+    // debugLog uses a single call to console.dir with the entity copy as the first argument.
+    const cc = ConCap.capture(() => Entity.debugLog(e));
+    const dirArg = cc.dir[0][0];
+
+    // The dir'd object should be an Entity with an Internals object, both different from the original.
+    assert.instanceOf(dirArg, Entity);
+    assert.isDefined(dirArg[SYMBOL_INTERNALS]);
+    assert.notStrictEqual(dirArg, e);
+    assert.notStrictEqual(dirArg[SYMBOL_INTERNALS], e[SYMBOL_INTERNALS]);
+
+    // Spot check a couple of fields.
+    assert.strictEqual(dirArg.txt, 'abc');
+    assert.strictEqual(dirArg.num, 3.7);
+
+    // The original entity should not have been modified.
     assert.strictEqual(JSON.stringify(e), fields);
     assert.strictEqual(JSON.stringify(e[SYMBOL_INTERNALS]), internals);
   });

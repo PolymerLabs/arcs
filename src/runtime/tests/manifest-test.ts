@@ -16,7 +16,7 @@ import {Manifest, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
-import {assertThrowsAsync} from '../../testing/test-util.js';
+import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
@@ -423,7 +423,10 @@ ${particleStr1}
       'a': `import 'b'`,
       'b': `lol what is this`,
     });
-    await Manifest.load('a', loader);
+    const cc = await ConCap.capture(() => Manifest.load('a', loader));
+    assert.lengthOf(cc.warn, 2);
+    assert.match(cc.warn[0], /Parse error in 'b' line 1/);
+    assert.match(cc.warn[1], /Error importing 'b'/);
   });
   it('throws an error when a particle has invalid description', async () => {
     try {
@@ -1479,7 +1482,6 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
-      console.error(e.message);
       assert.match(e.message, /'out' not compatible with 'in' param of 'TestParticle'/);
     }
   });
@@ -1498,7 +1500,6 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
-      console.error(e.message);
       assert.match(e.message, /param 'b' is not defined by 'TestParticle'/);
     }
   });

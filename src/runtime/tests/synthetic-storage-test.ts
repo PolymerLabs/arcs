@@ -13,7 +13,7 @@ import {Id, ArcId} from '../id.js';
 import {ChangeEvent, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
-import {assertThrowsAsync} from '../../testing/test-util.js';
+import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ArcType} from '../type.js';
 
 describe('synthetic storage ', () => {
@@ -59,8 +59,9 @@ describe('synthetic storage ', () => {
   });
 
   it('invalid manifest', async () => {
-    const {synth} = await setup('bad manifest, no cookie for you');
-    assert.isEmpty(await synth.toList());
+    const cc = await ConCap.capture(() => setup('bad manifest, no cookie for you'));
+    assert.isEmpty(await cc.result.synth.toList());
+    assert.match(cc.warn[0], /Error parsing manifest/);
   });
 
   it('manifest with no active recipe', async () => {
