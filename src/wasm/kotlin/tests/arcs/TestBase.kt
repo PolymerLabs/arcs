@@ -8,6 +8,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.test.Asserter
 import kotlin.test.AssertionError
 
+annotation class Test
 
 open class TestBase : Particle(), Asserter {
     private val errors = Collection { Test_Data() }
