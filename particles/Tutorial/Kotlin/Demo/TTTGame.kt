@@ -103,12 +103,6 @@ class TTTGame : Particle() {
                 this.events.clear()
             }
         }
-//        if (reset.get()?.reset ?: false) {
-//            log("TTTGame Boo!")
-//            gs.board = ",,,,,,,,"
-//            this.gameState.set(gs)
-//            this.reset.set(TTTGame_Reset(reset = false))
-//        }
         this.renderOutput()
         super.onHandleUpdate(handle)
     }
