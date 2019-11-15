@@ -10,7 +10,6 @@ import arcs.TTTGame_PlayerOne
 import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
-// import arcs.TTTGame_Reset
 import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
@@ -64,13 +63,13 @@ class TTTGame : Particle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val gs = this.gameState.get() ?: TTTGame_GameState()
-//        log("TTTGame: Is there a reset?")
-//        log("TTTGame: e size ${events.size}")
-//        if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
-//            log("TTTGame Boo!")
-//            gs.board = ",,,,,,,,"
-//            this.gameState.set(gs)
-//        }
+        log("TTTGame: Is there a reset?")
+        log("TTTGame: e size ${events.size}")
+        if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
+            log("TTTGame Boo!")
+            gs.board = ",,,,,,,,"
+            this.gameState.set(gs)
+        }
 
         val winnerName = gs.winnerAvatar ?: ""
         val congrats = gs.gameOver ?: false
@@ -115,12 +114,6 @@ class TTTGame : Particle() {
                 this.events.clear()
             }
         }
-//        if (reset.get()?.reset ?: false) {
-//            log("TTTGame Boo!")
-//            gs.board = ",,,,,,,,"
-//            this.gameState.set(gs)
-//            this.reset.set(TTTGame_Reset(reset = false))
-//        }
         this.renderOutput()
         super.onHandleUpdate(handle)
     }
