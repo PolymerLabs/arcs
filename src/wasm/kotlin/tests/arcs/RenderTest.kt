@@ -24,7 +24,6 @@ class RenderTest : Particle() {
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?>? =
         if (shouldPopulate) mapOf("foo" to "bar") else null
 
-
     override fun onHandleUpdate(handle: Handle) {
         flags.get()?.let {
             shouldTemplate = it.template ?: true

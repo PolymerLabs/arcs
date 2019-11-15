@@ -17,7 +17,6 @@ class AutoRenderTest : Particle() {
     override fun onHandleUpdate(handle: Handle) = renderOutput()
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()
     override fun getTemplate(slotName: String): String = data.get()?.txt ?: "empty"
-
 }
 
 @Retain
