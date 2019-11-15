@@ -219,7 +219,7 @@ So now we’ve seen how multiple particles can be used in a single recipe. But w
 >- *Entity* - Entities are units of data in Arcs. They are created, exchanged and modified as means of communication between particles.
 >- *Handle* - Handles allow particles to read, write and listen for data updates.
 
-That was a lot of dense definitions. Let’s take a step back and understand how these concepts work in harmony to create working systems.
+Those were some dense definitions. Let’s take a step back and understand how these concepts work in harmony to create working systems.
 
 Schemas are used to define the data type. Entities are data, defined by a schema (data type). We use handles to pass this data between particles. The interaction between the handle and particle can be read and/or write. But don’t worry about this for the moment, we’ll cover these relationships in more detail in upcoming tutorials. 
 
@@ -277,7 +277,8 @@ class GetPersonParticle : Particle() {
 
     override fun getTemplate(slotName: String) = """
         <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-        <div slotid="greetingSlot"></div>""".trimIndent()
+        <div slotid="greetingSlot"></div>
+    """.trimIndent()
 
     init {
         // Here we register the handle "person" as defined in our Arcs manifest file to the local person variable
@@ -320,9 +321,8 @@ class DisplayGreetingParticle : Particle() {
     }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val n = person.get()?.name ?: "Human"
         return model + mapOf(
-            "name" to n
+            "name" to (person.get()?.name ?: "Human")
         )
     }
 }
@@ -394,7 +394,7 @@ resource PeopleData
 // entity, and is backed by the PeopleData resource defined above.
 store PeopleToGreetStore of [PersonDetails] in PeopleData
 
-particle CollectionsParticle in 'collections.wasm'
+particle CollectionsParticle in 'Collections.wasm'
   // The input is a collection of PersonDetails entities.
   inputData: reads [PersonDetails]
   root: consumes
@@ -427,33 +427,36 @@ class CollectionsParticle : Particle() {
    }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        // We begin by generating the list of models that should fill the template. Our template has name ang age so we
-        // will use these names.
+        // We begin by generating the list of models that should fill the template. Our template
+        // has name ang age so we will use these names.
         val peopleList = mutableListOf<Map<String, String?>>()
-        people.forEach { people -> peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) }
+        people.forEach { people -> 
+            peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) 
+        }
 
-        // This will fill in the "people" placeholder in the template above. We construct an object with special 
-        // properties named "$template" and "models", which defines how to render each item in the list.
+        // This will fill in the "people" placeholder in the template above. We construct an object
+        // with special properties named "$template" and "models", which defines how to render each
+        // item in the list.
         return model + mapOf(
             "people" to mapOf(
                 // $template gives the name of the template to use to render each element.
                 "\$template" to "person",
-                // Each model in this list will get passed into the person template. The template can access the 
-                // properties in this model (name and age) via placeholders.
+                // Each model in this list will get passed into the person template. The template
+                // can access the properties in this model (name and age) via placeholders.
                 "models" to peopleList
             )
         )   
     }
 
     override fun getTemplate(slotName: String): String {
-        // This template defines a subtemplate called "person". By filling in the "people" placeholder with a special
-        // construction given below in the render() method, we can apply the "person" template on every element in our 
-        // input list (which here turns it into an <li> element).
+        // This template defines a subtemplate called "person". By filling in the "people"
+        // placeholder with a special construction given below in the render() method, we can
+        // apply the "person" template on every element in our input list (which here turns it
+        // into an <li> element).
         return """Hello to everyone:
         <ul>{{people}}</ul>
 
         <template person>
-          <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->
           <li>Hello <span>{{name}}</span>, age <span>{{age}}</span>!</li>
         </template>"""
     }
@@ -480,7 +483,7 @@ arcs_kt_binary(
 )
 ```
 
-When you execute this recipe, you should see everyone being greeted. If you added or remove an entity from the `PeopleData` store, the number of people greeted will change accordingly thanks to the template interpolation.
+When you execute this recipe, you should see everyone being greeted. If you add or remove an entity from the `PeopleData` store, the number of people greeted will change accordingly thanks to the template interpolation.
 
 # The Lore of a JSON Store
 
@@ -545,7 +548,7 @@ class JsonStoreParticle : Particle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val person = res.get() ?: JsonStoreParticle_InputData("", 0.0);
-
+    
         return model + mapOf(
             "name" to person.name,
             "age" to person.age.toString()
@@ -554,7 +557,7 @@ class JsonStoreParticle : Particle() {
 
     override fun getTemplate(slotName: String): String {
         return "<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"
-    }
+    }   
 }
 
 @Retain
