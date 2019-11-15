@@ -34,7 +34,7 @@ abstract class Particle : WasmObject() {
      *
      * @param name Name of the handle
      * @param canRead Mark handle with read access
-     * @param canWrite  Mark handle with write access
+     * @param canWrite Mark handle with write access
      * @return The name-associated handle, or null
      * @see [registerHandle]
      * @see [onHandleSync]
@@ -51,7 +51,6 @@ abstract class Particle : WasmObject() {
             }
             return it
         }
-
 
         log("Handle $name not registered")
         return null
@@ -91,7 +90,6 @@ abstract class Particle : WasmObject() {
         onHandleSync(handle, toSync.isEmpty())
     }
 
-
     /**
      * React to handle updates.
      *
@@ -109,7 +107,7 @@ abstract class Particle : WasmObject() {
      * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
      * Default action is to trigger rendering.
      *
-     * @param handle  Singleton or Collection handle
+     * @param handle Singleton or Collection handle
      * @param allSynced flag indicating if all handles are synchronized
      */
     open fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
@@ -120,7 +118,11 @@ abstract class Particle : WasmObject() {
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
-        onRenderOutput(toWasmAddress(), template.toWasmNullableString(), model.toWasmNullableString())
+        onRenderOutput(
+            toWasmAddress(),
+            template.toWasmNullableString(),
+            model.toWasmNullableString()
+        )
     }
 
     /**
@@ -139,7 +141,10 @@ abstract class Particle : WasmObject() {
      * @return new model state
      * @see [renderOutput]
      */
-    open fun populateModel(slotName: String, model: Map<String, Any?> = mapOf()): Map<String, Any?>? = model
+    open fun populateModel(
+        slotName: String,
+        model: Map<String, Any?> = mapOf()
+    ): Map<String, Any?>? = model
 
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
@@ -173,7 +178,6 @@ abstract class Particle : WasmObject() {
      */
     open fun serviceResponse(call: String, response: Map<String, String>, tag: String = "") = Unit
 
-
     /**
      * Resolves urls like 'https://$particles/path/to/assets/pic.jpg'.
      *
@@ -189,11 +193,9 @@ abstract class Particle : WasmObject() {
         _free(r)
         return resolved
     }
-
 }
 
 enum class Direction { Unconnected, In, Out, InOut }
-
 
 abstract class Handle : WasmObject() {
     lateinit var name: String
