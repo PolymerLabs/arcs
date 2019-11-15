@@ -1,4 +1,22 @@
-FROM timbru31/java-node:8-slim
+# FROM timbru31/java-node:8-slim
+FROM ubuntu:xenial
+
+# Install programs for runtime use (e.g. by Bazel, Node-GYP)
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+      bash \
+      g++ \
+      git \
+      make \
+      openjdk-8-jdk \
+      python
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+      curl \
+      nodejs
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+      apt-transport-https \
+      ca-certificates
 
 # Install Bazel
 #  Reference: https://docs.bazel.build/versions/master/install-ubuntu.html
@@ -21,14 +39,8 @@ ENV WORKSPACE /usr/src/app
 RUN mkdir -p $WORKSPACE
 WORKDIR $WORKSPACE
 
-
-# Install programs for runtime use (e.g. by Bazel, Node-GYP)
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-      bash \
-      g++ \
-      git \
-      make \
-      python
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get install -y nodejs
 
 # Install Project
 COPY package.json $WORKSPACE/package.json
@@ -36,3 +48,8 @@ RUN npm install
 
 # Create bazel cache directory
 RUN mkdir -p /disk-cache/
+
+
+########
+
+COPY . .
