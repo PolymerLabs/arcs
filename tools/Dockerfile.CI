@@ -1,4 +1,3 @@
-# FROM timbru31/java-node:8-slim
 FROM ubuntu:xenial
 
 # Install programs for runtime use (e.g. by Bazel, Node-GYP)
@@ -12,7 +11,9 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
       make \
       nodejs \
       openjdk-8-jdk \
-      python
+      python \
+      unzip
+
 
 # Install Bazel
 #  Reference: https://docs.bazel.build/versions/master/install-ubuntu.html
@@ -20,21 +21,22 @@ RUN echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.
 RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 RUN apt-get update && apt-get install bazel -y
 
-
 # Install Chrome for Selenium
-#  Reference: https://jpmelos.com/articles/how-use-chrome-selenium-inside-docker-container-running-python/
-RUN curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /chrome.deb
-RUN dpkg -i /chrome.deb || apt-get install -yf
-RUN rm /chrome.deb
-# Install chromedriver for Selenium
-RUN curl https://chromedriver.storage.googleapis.com/2.31/chromedriver_linux64.zip -o /usr/local/bin/chromedriver
-RUN chmod +x /usr/local/bin/chromedriver
+#  Reference: https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/
+RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
+RUN echo "deb [arch=amd64]  http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+RUN apt-get -y update && apt-get -y install google-chrome-stable
+# Install Selenium
+RUN curl https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip -o  /usr/bin/chromedriver_linux64.zip
+RUN unzip /usr/bin/chromedriver_linux64.zip -d /usr/bin/chromedriver
+RUN chmod +x /usr/bin/chromedriver
 
 # Set up workspace
 ENV WORKSPACE /usr/src/app
 RUN mkdir -p $WORKSPACE
 WORKDIR $WORKSPACE
 
+# Install Nodejs & npm
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get install -y nodejs
 
