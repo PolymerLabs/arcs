@@ -30,8 +30,8 @@ jobs:
     - stage: test
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/...  //src/... //particles/..."
       name: "Bazel Test: //src_kt/... //src/... //particles/..."
-      # run ktlint against every kotlin file in the diff between the branch and master's head.
-    - script: git diff --name-only --relative $travis_commit_range | grep '\.kt[s"]\?$' | xargs ktlint --android --relative --verbose .
+    # run ktlint against every kotlin file in the diff between the branch and master's head.
+    - script: tools/run_in_docker "git diff --name-only --relative $travis_commit_range | grep '\.kt[s"]\?$' | xargs ktlint --android --relative --verbose ."
       name: "KtLint"
     - script: tools/run_in_docker "tools/sigh""
       name: "Node Test: Unit & Shells"
