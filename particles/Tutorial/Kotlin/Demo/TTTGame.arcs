@@ -59,4 +59,63 @@ recipe GamePlayersDemoRecipe
       player <- playerTwo
   description `Kotlin Tutorial TicTacToe Demo`
 
+recipe GameTwoPlayersDemoRecipe
+  use HumanOneStore as playerOne
+  use HumanTwoStore as playerTwo
+  create #humanMove as playerOneMove
+  create #computerMove as playerTwoMove
+  TTTGame
+    gameState = gameState
+    playerOne = playerOne
+    playerOneMove = playerOneMove
+    playerTwo = playerTwo
+    playerTwoMove = playerTwoMove
+    events = events
+    root: consumes
+      boardSlot: provides board
+  TTTBoard
+      boardSlot: consumes board
+      gameState: gameState
+      events: events
+  TTTHumanPlayer
+    gameState = gameState
+    events <- events
+    myMove -> playerOneMove
+    player <- playerOne
+  TTTHumanPlayer
+      gameState = gameState
+      events <- events
+      myMove -> playerTwoMove
+      player <- playerTwo
+  description `Kotlin Tutorial TicTacToe Two Players Demo`
+
+recipe GameTwoPlayersDemoRecipe
+  use HumanOneStore as playerOne
+  use HumanTwoStore as playerTwo
+  create #humanMove as playerOneMove
+  create #computerMove as playerTwoMove
+  TTTGame
+    gameState = gameState
+    playerOne = playerOne
+    playerOneMove = playerOneMove
+    playerTwo = playerTwo
+    playerTwoMove = playerTwoMove
+    events = events
+    root: consumes
+      boardSlot: provides board
+  TTTBoard
+    boardSlot: consumes board
+    gameState: gameState
+    events: events
+  TTTRandomComputer
+    gameState = gameState
+    myMove -> playerOneMove
+    player <- playerOne
+  TTTRandomComputer
+    gameState = gameState
+    myMove -> playerTwoMove
+    player <- playerTwo
+  description `Kotlin Tutorial TicTacToe Two Computers Demo`
+
+
 

@@ -19,6 +19,10 @@ class TTTRandomComputer : Particle() {
         registerHandle("player", player)
     }
 
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
+        onHandleUpdate(gameState)
+    }
+
     override fun onHandleUpdate(handle: Handle) {
         if (gameState.get()?.currentPlayer == player.get()?.id) {
             val board = gameState.get()?.board ?: ",,,,,,,,"

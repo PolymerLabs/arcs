@@ -42,9 +42,10 @@ class TTTGame : Particle() {
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (this.gameState.get()?.board == null) {
+            val cp = (0..1).random()
             this.gameState.set(TTTGame_GameState(
                 board = ",,,,,,,,",
-                currentPlayer = 0.0,
+                currentPlayer = cp.toDouble(),
                 gameOver = false
             ))
         }
@@ -65,8 +66,20 @@ class TTTGame : Particle() {
         val winnerName = this.gameState.get()?.winnerAvatar ?: ""
         val congrats = this.gameState.get()?.gameOver ?: false
         val message = if (congrats) "Congratulations $winnerName, you won!" else ""
+        val cp = this.gameState.get()?.currentPlayer ?: -1.0
+        val p1 = this.playerOne.get()?.id ?: 0.0
+        val playerDetails = if (cp == p1) {
+            val name = playerOne.get()?.name ?: ""
+            val avatar = playerOne.get()?.avatar ?: ""
+            name + " playing as " + avatar
+        } else {
+            val name = playerTwo.get()?.name ?: ""
+            val avatar = playerTwo.get()?.avatar ?: ""
+            name + " playering as " + avatar
+        }
         return model + mapOf(
-            "message" to message
+            "message" to message,
+            "playerDetails" to playerDetails
         )
     }
 
@@ -88,6 +101,8 @@ class TTTGame : Particle() {
                 boardArr[mv] = player.avatar ?: ""
                 gs.board = boardArr.joinToString(",")
 
+                gs.gameOver = !boardArr.contains("")
+
                 winningSequences.forEach { sequence ->
                     if (boardArr[sequence[0]] != "" &&
                         boardArr[sequence[0]] == boardArr[sequence[1]] &&
@@ -104,12 +119,15 @@ class TTTGame : Particle() {
             }
         }
         if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
+            val cp = (0..1).random()
             this.gameState.set(TTTGame_GameState(
                 board = ",,,,,,,,",
-                currentPlayer = 0.0,
+                currentPlayer = cp.toDouble(),
                 gameOver = false,
                 winnerAvatar = ""
             ))
+            this.playerOneMove.set(TTTGame_PlayerOneMove())
+            this.playerTwoMove.set(TTTGame_PlayerTwoMove())
             this.events.clear()
         }
         this.renderOutput()
@@ -119,9 +137,10 @@ class TTTGame : Particle() {
     override fun getTemplate(slotName: String): String {
 
         return """
+            It is your turn <span>{{playerDetails}}</span>.
             <div slotid="boardSlot"></div>
             <div><span>{{message}}</span></div>
-            """
+            """.trimIndent()
     }
 }
 
