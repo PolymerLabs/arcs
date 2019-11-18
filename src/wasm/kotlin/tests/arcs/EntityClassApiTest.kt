@@ -49,6 +49,19 @@ class EntityClassApiTest: TestBase() {
         assertFalse(message="setting flg property is successful: false", actual=d1.flg as Boolean)
     }
 
+    @Test
+    fun testEncodingDecoding() {
+        val empty = EntityClassApiTest_Data()
+        val emptyStr = empty.encodeEntity()
+        val decodedEmpty = EntityClassApiTest_Data().decodeEntity(emptyStr)
+        assertEquals("Encoding and Decoding an empty entity results in the same entity", empty, decodedEmpty)
+
+        val full = EntityClassApiTest_Data(num=10.0, txt="20", lnk="https://thirty.net", flg=true)
+        val fullStr = full.encodeEntity()
+        val decodedFull = EntityClassApiTest_Data().decodeEntity(fullStr)
+        assertEquals("Encoding and Decoding an full entity results in the same entity", full, decodedFull)
+    }
+
 }
 
 
