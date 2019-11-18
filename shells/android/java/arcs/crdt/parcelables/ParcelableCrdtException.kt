@@ -42,5 +42,8 @@ class ParcelableCrdtException(
     }
 }
 
-private fun Array<StackTraceElement>.toStrings(): Array<String> =
+/** Converts a [CrdtException] into a [ParcelableCrdtException]. */
+fun CrdtException.toParcelable(): ParcelableCrdtException = ParcelableCrdtException(this)
+
+internal fun Array<StackTraceElement>.toStrings(): Array<String> =
     Array(this.size) { index -> this[index].toString() }

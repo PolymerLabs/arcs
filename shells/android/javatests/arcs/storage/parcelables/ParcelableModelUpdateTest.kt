@@ -34,7 +34,6 @@ class ParcelableModelUpdateTest {
             VersionMap("Foo" to 1, "Bar" to 1)
         )
 
-
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
             writeParcelable(

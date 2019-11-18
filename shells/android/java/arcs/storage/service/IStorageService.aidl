@@ -17,7 +17,11 @@ import arcs.storage.parcelables.ParcelableSyncRequest;
 import arcs.storage.service.IResultCallback;
 import arcs.storage.service.IStorageServiceCallback;
 
-/** Exposed API for the StorageService. */
+/**
+ * Exposed API for the StorageService.
+ *
+ * TODO: subject to change.
+ */
 interface IStorageService {
     /**
      * Registers an {@link IStorageServiceCallback} with the StorageService and returns its callback

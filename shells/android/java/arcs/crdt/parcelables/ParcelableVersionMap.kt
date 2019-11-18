@@ -43,3 +43,6 @@ data class ParcelableVersionMap(
         override fun newArray(size: Int): Array<ParcelableVersionMap?> = arrayOfNulls(size)
     }
 }
+
+/** Converts a [VersionMap] into a [ParcelableVersionMap]. */
+fun VersionMap.toParcelable(): ParcelableVersionMap = ParcelableVersionMap(this)

@@ -67,7 +67,6 @@ object ParcelableCrdtCount {
         }
     }
 
-
     /**
      * Parcelable variants of [CrdtCount.Operation].
      *
@@ -172,12 +171,12 @@ object ParcelableCrdtCount {
 fun CrdtCount.Data.toParcelable(): ParcelableCrdtData<CrdtCount.Data> =
     ParcelableCrdtCount.Data(this)
 
+/** Converts a [CrdtCount.Operation] to a [Parcelable] variant. */
+fun CrdtCount.Operation.toParcelable(): ParcelableCrdtOperation<CrdtCount.Operation> = when (this) {
+    is CrdtCount.Operation.Increment -> ParcelableCrdtCount.Operation.Increment(this)
+    is CrdtCount.Operation.MultiIncrement -> ParcelableCrdtCount.Operation.MultiIncrement(this)
+}
+
 /** Returns a list of [ParcelableCrdtOperation]s based on the list of [CrdtCount.Operation]s. */
 fun List<CrdtCount.Operation>.toParcelables(): List<ParcelableCrdtOperation<CrdtCount.Operation>> =
-    map {
-        when(it) {
-            is CrdtCount.Operation.Increment -> ParcelableCrdtCount.Operation.Increment(it)
-            is CrdtCount.Operation.MultiIncrement ->
-                ParcelableCrdtCount.Operation.MultiIncrement(it)
-        }
-    }
+    map { it.toParcelable() }
