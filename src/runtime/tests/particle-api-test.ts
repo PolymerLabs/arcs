@@ -24,6 +24,8 @@ import {Speculator} from '../../planning/speculator.js';
 import {BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
+import {StorageProxy} from '../storageNG/storage-proxy.js';
+import {unifiedHandleFor} from '../handle.js';
 
 class ResultInspector {
   private readonly _arc: Arc;
@@ -49,7 +51,14 @@ class ResultInspector {
    */
   async verify(...expectations) {
     await this._arc.idle;
-    const received = await this._store.toList();
+    let handle;
+    if (Flags.useNewStorageStack) {
+      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type);
+      handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'pid'});
+    } else {
+      handle = this._store;
+    }
+    const received = await handle.toList();
     const misses = [];
     for (const item of received.map(r => r.rawData[this._field])) {
       const i = expectations.indexOf(item);
@@ -59,8 +68,11 @@ class ResultInspector {
         misses.push(item);
       }
     }
-    this._store.clearItemsForTesting();
-
+    if (Flags.useNewStorageStack) {
+      await handle.clear();
+    } else {
+      this._store.clearItemsForTesting();
+    }
     const errors: string[] = [];
     if (expectations.length) {
       errors.push(`Expected, not received: ${expectations.join(', ')}`);
@@ -82,11 +94,12 @@ class ResultInspector {
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
   const runtime = new Runtime(new StubLoader(fileMap), FakeSlotComposer, manifest);
-  return runtime.newArc('demo', 'volatile://');
+  return runtime.newArc('demo', Flags.useNewStorageStack ? null : 'volatile://');
 }
 
 describe('particle-api', () => {
-  it('StorageProxy integration test', async () => {
+  it.only('StorageProxy integration test', async () => {
+    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -114,10 +127,12 @@ describe('particle-api', () => {
             }
 
             onHandleSync(handle, model) {
+              console.log('sync', handle.name);
               this.addResult('sync:' + JSON.stringify(model));
             }
 
             onHandleUpdate(handle, update) {
+              console.log('update', handle.name);
               this.addResult('update:' + JSON.stringify(update));
             }
 
@@ -126,7 +141,7 @@ describe('particle-api', () => {
             }
 
             async addResult(value) {
-              await this.resHandle.store(new this.resHandle.entityClass({value}));
+              await this.resHandle.${addFunc}(new this.resHandle.entityClass({value}));
             }
           }
         });

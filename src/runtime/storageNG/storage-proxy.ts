@@ -11,18 +11,20 @@
 import {assert} from '../../platform/assert-web.js';
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 import {PropagatedException, SystemException} from '../arc-exceptions.js';
-import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
-import {Runnable} from '../hot.js';
+import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
+import {Runnable, Dictionary} from '../hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {EntityType, Type} from '../type.js';
 import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
+import {Identified, logWithIdentity} from '../testing/identity.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
  * directly connected to the StorageProxy.
  */
+@Identified
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
@@ -71,6 +73,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     if (!handle.canRead) {
       return this.versionCopy();
     }
+    logWithIdentity(this, 'registerHandle', handle.key, new Error().stack);
     this.handles.push(handle);
 
     // Attach an event listener to the backing store when the first readable handle is registered.
@@ -142,13 +145,28 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
+  private setSynchronized() {
+    if (!this.synchronized) {
+      this.synchronized = true;
+      this.notifySync();
+    }
+  }
+
+  private clearSynchronized() {
+    if (this.synchronized) {
+      this.synchronized = false;
+      this.notifyDesync();
+    }
+  }
+
   async onMessage(message: ProxyMessage<T>): Promise<boolean> {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
-        this.synchronized = true;
+        this.setSynchronized();
+        // NOTE: this.modelHasSynced used to run after this.synchronized
+        // was set to true but before notifySync() was called. Is that a problem?
         this.modelHasSynced();
-        this.notifySync();
         break;
       case ProxyMessageType.Operations: {
         // Bail if we're not in synchronized mode.
@@ -158,8 +176,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         for (const op of message.operations) {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
-            this.synchronized = false;
-            await this.notifyDesync();
+            this.clearSynchronized();
             return this.requestSynchronization();
           }
           this.notifyUpdate(op);
@@ -188,6 +205,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
             {type: HandleMessageType.Update, op: operation, version});
       } else if (handle.options.keepSynced) {
         // keepSynced but not notifyUpdate, notify of the new model.
+        // TODO(shans): Is this correct? Why do we send a Sync message here?
         this.scheduler.enqueue(
             handle.particle, handle, {type: HandleMessageType.Sync});
       }
@@ -195,6 +213,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   protected notifySync() {
+    logWithIdentity(this, this.handles.map(a => a.key));
     for (const handle of this.handles) {
       if (handle.options.notifySync) {
         this.scheduler.enqueue(

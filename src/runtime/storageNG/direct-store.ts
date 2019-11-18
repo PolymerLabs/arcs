@@ -16,6 +16,8 @@ import {noAwait} from '../util.js';
 
 export enum DirectStoreState {Idle = 'Idle', AwaitingResponse = 'AwaitingResponse', AwaitingResponseDirty = 'AwaitingResponseDirty', AwaitingDriverModel = 'AwaitingDriverModel'}
 
+let me = 0;
+
 export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   localModel: CRDTModel<T>;
   callbacks = new Map<number, ProxyCallback<T>>();
@@ -27,11 +29,13 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private pendingRejects: Function[] = [];
   private pendingDriverModels: {model: T['data']; version: number;}[] = [];
   private state: DirectStoreState = DirectStoreState.Idle;
+  private me: number;
   /*
    * This class should only ever be constructed via the static construct method
    */
   private constructor(options: StoreConstructorOptions<T>) {
     super(options);
+    this.me = me++;
   }
 
   async serializeContents(): Promise<T['data']> {
@@ -86,6 +90,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
   // The driver will invoke this method when it has an updated remote model
   async onReceive(model: T['data'], version: number): Promise<void> {
+    console.log(this.me, 'onReceive', model, version);
     this.pendingDriverModels.push({model, version});
     if (this.state === DirectStoreState.AwaitingResponse || this.state === DirectStoreState.AwaitingResponseDirty) {
       return;
@@ -122,7 +127,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     // Don't send to the driver if we're already in sync and there are no driver-side changes.
     if (noDriverSideChanges) {
       // Need to record the driver version so that we can continue to send.
-      this.setState(DirectStoreState.Idle);
+      if (messageFromDriver) {
+        this.setState(DirectStoreState.Idle);
+      }
       this.version = version;
       return;
     }
@@ -216,6 +223,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // a return value of true implies that the message was accepted, a
   // return value of false requires that the proxy send a model sync
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+    console.log(this.me, 'onProxyMessage', message);
     if (this.pendingException) {
       throw this.pendingException;
     }

@@ -369,7 +369,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       if (proxy instanceof StorageProxy) {
         proxy.register(particle, handle);
       } else if (proxy instanceof StorageProxyNG) {
-        proxy.registerHandle(handle as HandleNG<CRDTTypeRecord>);
+        // NG Handles appear to register themselves on construction
+        // proxy.registerHandle(handle as HandleNG<CRDTTypeRecord>);
       } else {
         throw new Error('Expecting a StorageProxy');
       }
