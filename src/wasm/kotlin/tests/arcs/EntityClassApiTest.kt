@@ -17,12 +17,12 @@ class EntityClassApiTest: TestBase() {
 
     /** Run tests on particle initialization */
     override fun init() {
-        fieldMethodsTest()
+        testFieldMutation()
 
     }
 
     @Test
-    fun fieldMethodsTest() {
+    fun testFieldMutation() {
         val d1 = EntityClassApiTest_Data()
 
         assertNull("num field is null before it's initialized", d1.num)
@@ -48,7 +48,6 @@ class EntityClassApiTest: TestBase() {
         assertNotNull("flg field is set", d1.flg)
         assertFalse(message="setting flg property is successful: false", actual=d1.flg as Boolean)
     }
-
 
 }
 
