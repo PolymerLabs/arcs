@@ -3,6 +3,7 @@ package wasm.kotlin.tests.arcs
 import arcs.Singleton
 import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.test.assertFalse
 
 
 class EntityClassApiTest: TestBase() {
@@ -22,8 +23,32 @@ class EntityClassApiTest: TestBase() {
 
     @Test
     fun fieldMethodsTest() {
+        val d1 = EntityClassApiTest_Data()
 
+        assertNull("num field is null before it's initialized", d1.num)
+        d1.num = 7.3
+        assertNotNull("num field is set", d1.num)
+        assertEquals("setting num property is successful", 7.3, d1.num)
+
+        assertNull("txt field is null before it's initialized", d1.txt)
+        d1.txt = "test"
+        assertNotNull("txt field is set", d1.txt)
+        assertEquals("setting txt property is successful", "test", d1.txt)
+
+        assertNull("lnk field is null before it's initialized", d1.lnk)
+        d1.lnk = "https://google.com"
+        assertNotNull("lnk field is set", d1.lnk)
+        assertEquals("setting lnk property is successful", "https://google.com", d1.lnk)
+
+        assertNull("flg field is null before it's initialized", d1.flg)
+        d1.flg = true
+        assertNotNull("flg field is set", d1.flg)
+        assertTrue("setting flg property is successful: true", d1.flg as Boolean)
+        d1.flg = false
+        assertNotNull("flg field is set", d1.flg)
+        assertFalse(message="setting flg property is successful: false", actual=d1.flg as Boolean)
     }
+
 
 }
 
