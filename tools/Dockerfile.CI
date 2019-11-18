@@ -8,11 +8,13 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
       curl \
       g++ \
       git \
+      lbzip2 \
       make \
       nodejs \
       openjdk-8-jdk \
       python \
-      unzip
+      unzip \
+      xz-utils
 
 
 # Install Bazel
