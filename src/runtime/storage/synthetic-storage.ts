@@ -118,7 +118,7 @@ export class SyntheticStorage extends StorageBase {
     if (targetStore === null) {
       return null;
     }
-    return new SyntheticCollection(synthKey.syntheticType, id, key, targetStore, this.storageFactory);
+    return SyntheticCollection.create(synthKey.syntheticType, id, key, targetStore, this.storageFactory);
   }
 
   async baseStorageFor(type: Type, key: string) : Promise<StorageProviderBase> {
@@ -138,20 +138,21 @@ export class SyntheticStorage extends StorageBase {
 class SyntheticCollection extends StorageProviderBase implements CollectionStorageProvider {
   private readonly targetStore: StorageProviderBase;
   private readonly storageFactory: StorageProviderFactory;
-  private readonly initialized: Promise<void>;
   private model: ArcHandle[] = [];
   backingStore = undefined;
 
-  constructor(type: Type, id: string, key:string, targetStore: SingletonStorageProvider, storageFactory: StorageProviderFactory) {
+  static async create(type: Type, id: string, key: string, targetStore: SingletonStorageProvider, storageFactory: StorageProviderFactory) {
+    const sc = new SyntheticCollection(type, id, key, targetStore, storageFactory);
+    const data = await targetStore.get();
+    await sc.process(data, false);
+    targetStore.legacyOn(details => sc.process(details.data, true));
+    return sc;
+  }
+
+  private constructor(type: Type, id: string, key: string, targetStore: SingletonStorageProvider, storageFactory: StorageProviderFactory) {
     super(type, undefined, id, key);
     this.targetStore = targetStore;
     this.storageFactory = storageFactory;
-
-    this.initialized = (async () => {
-      const data = await targetStore.get();
-      await this.process(data, false);
-      targetStore.legacyOn(details => this.process(details.data, true));
-    })();
   }
 
   private async process(data, fireEvent) {
@@ -185,7 +186,6 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   }
 
   async toList(): Promise<ModelValue[]> {
-    await this.initialized;
     return this.model;
   }
 
