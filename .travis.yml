@@ -46,9 +46,9 @@ jobs:
 cache:
   npm: true
 
-# Pulling container from https://hub.docker.com/repository/docker/alxrsngrtn/arcs-travis-build
+# Pulling container from https://hub.docker.com/repository/docker/arcproject/travis-build
 before_install:
-  - docker pull alxrsngrtn/arcs-travis-build:latest
+  - docker pull arcsproject/travis-build:latest
   - mkdir -p ./disk-cache/
 
 install:
