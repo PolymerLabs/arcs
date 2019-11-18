@@ -59,4 +59,4 @@ RUN mkdir -p /disk-cache/
 
 COPY . .
 
-RUN bazel sync
+RUN bazel fetch //particles/... //src/... //src_kt/...
