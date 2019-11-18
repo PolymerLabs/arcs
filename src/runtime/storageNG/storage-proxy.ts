@@ -18,11 +18,13 @@ import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {EntityType, Type} from '../type.js';
 import {Handle} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
+import {Identified, logWithIdentity} from '../testing/identity.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
  * directly connected to the StorageProxy.
  */
+@Identified
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
@@ -77,6 +79,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     if (!handle.canRead) {
       return this.versionCopy();
     }
+    logWithIdentity(this, 'registerHandle', handle.key, new Error().stack);
     this.handles.push(handle);
 
 
@@ -211,6 +214,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   protected notifySync() {
+    logWithIdentity(this, this.handles.map(a => a.key));
     for (const handle of this.handles) {
       if (handle.options.notifySync) {
         this.scheduler.enqueue(

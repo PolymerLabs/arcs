@@ -31,6 +31,7 @@ import {logsFactory} from '../platform/logs-factory.js';
 import {devtoolsArcInspectorFactory} from '../devtools-connector/devtools-arc-inspector.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
+import {Flags} from './flags.js';
 
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
