@@ -27,7 +27,8 @@ class TTTBoard : Particle() {
         }
 
         eventHandler("reset") {
-            this.events.store(TTTBoard_Events(type = "reset"))
+            this.events.store(TTTBoard_Events(type = "reset", time = clicks))
+            clicks++
         }
     }
 

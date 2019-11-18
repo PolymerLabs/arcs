@@ -89,11 +89,11 @@ class TTTGame : Particle() {
         val boardArr = board.split(",").map { it }.toMutableList()
         var player = TTTGame_PlayerOne()
         var mv = -1
-        if (!(gs.gameOver ?: false) && !handle.name.equals("gameState")) {
-            if (gs.currentPlayer == 0.0) {
+        if (!(gs.gameOver ?: false)) {
+            if (handle.name.equals("playerOneMove") && gs.currentPlayer == 0.0) {
                 player = playerOne.get() ?: TTTGame_PlayerOne()
                 mv = playerOneMove.get()?.move?.toInt() ?: -1
-            } else if (gs.currentPlayer == 1.0) {
+            } else if (handle.name.equals("playerTwoMove") && gs.currentPlayer == 1.0) {
                 player = playerTwo.get() ?: TTTGame_PlayerTwo()
                 mv = playerTwoMove.get()?.move?.toInt() ?: -1
             }
