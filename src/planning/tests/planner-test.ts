@@ -18,7 +18,7 @@ import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
 
-import {assertThrowsAsync} from '../../testing/test-util.js';
+import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
@@ -232,7 +232,7 @@ describe('Planner', () => {
   }));
 
   it('SLANDLES cannot resolve slots with set slots', Flags.withPostSlandlesSyntax(async () => {
-    const results = await planFromManifest(`
+    const cc = await ConCap.capture(() => planFromManifest(`
       particle P1 in './pass-through.js'
         inSlot: \`consumes Slot
         outSlot: \`provides Slot
@@ -246,8 +246,9 @@ describe('Planner', () => {
           outSlot: s1
         P2
           inSlot: s1
-    `);
-    assert.lengthOf(results, 0);
+    `));
+    assert.deepEqual(cc.result, []);
+    assert.match(cc.warn[0], /Type validations failed for handle/);
   }));
 
   it('SLANDLES cannot resolve multiple consumed slots with incorrect directions', Flags.withPostSlandlesSyntax(async () => {
@@ -797,7 +798,6 @@ describe('Automatic resolution', () => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     for (const plan of plans) {
       plan.normalize();
-      console.log('PLAN ', plan.toString());
       assert.isTrue(plan.isResolved(), `Plans were not able to be resolved from ${manifestStr}.`);
     }
     return plans;

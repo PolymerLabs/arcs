@@ -87,20 +87,20 @@ This tutorial passes user entered information using handles.
 
 ![Tutorial 4 image](screenshots/4-handles.png)
 
-Implement it in Javascript at [particles/Tutorial/Javascript/4_Handles] (https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#getting-a-grip-on-handles). 
+Implement it in Javascript at [particles/Tutorial/Javascript/4_Handles](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#getting-a-grip-on-handles) or in Kotlin at [particles/Tutorial/Kotlin/4_Handles](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Kotlin#getting-a-grip-on-handles). 
 
 ## Tutorial 5: Collections
 
 This tutorial shows how to use lists, and how to store data inline inside a manifest file.
 
-Implement it in Javascript at particles/Tutorial/Javascript/5_Collections (text coming soon). 
+Implement it in Javascript at [particles/Tutorial/Javascript/5_Collections](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#the-template-interpolation-revisitation) or in Kotlin at [particles/Tutorial/Kotlin/5_Collections](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Kotlin#the-template-interpolation-revisitation). 
 
 
 ![Tutorial 5 image](screenshots/5-collections.png)
 
 ## Tutorial 6: JSON Store
 
-Implement it in Javascript at particles/Tutorial/Javascript/6_JsonStore (text coming soon) or in Kotlin at particles/Tutorial/Kotlin/6_JsonStore (text coming soon). 
+Implement it in Javascript at [particles/Tutorial/Javascript/6_JsonStore](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Javascript#the-lore-of-a-json-store) or in Kotlin at [particles/Tutorial/Kotlin/6_JsonStore](https://github.com/PolymerLabs/arcs/tree/master/particles/Tutorial/Kotlin#the-lore-of-a-json-store). 
 
 ![Tutorial 6 image](screenshots/6-json-store.png)
 

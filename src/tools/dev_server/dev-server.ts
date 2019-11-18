@@ -60,8 +60,9 @@ async function launch() {
   hotReloadServer.start();
 
   console.log(`${green(bold('ALDS Started.'))}\n\nWeb server port: ${port}\nExplorer port: ${explorePort}\nHotReload port: ${hotReloadPort}`);
-  console.log(`\n${green('Next, try visiting:')}`);
-  console.log(`- An Arcs shell (web-shell, dev-shell, or pipes-shell)`);
+  console.log(`\n${green('Next, try visiting an Arcs shell at:')}`);
+  const shells = ['web-shell', 'dev-shell', 'pipes-shell'];
+  shells.map(shell => console.log(`- http://localhost:${port}/shells/${shell}`));
   console.log(`- https://live.arcs.dev/devtools/`);
 }
 
