@@ -13,6 +13,7 @@ package arcs.crdt.parcelables
 
 import android.os.Parcelable
 import arcs.crdt.CrdtData
+import arcs.crdt.CrdtModel
 import arcs.crdt.CrdtOperation
 
 /** Enumeration of the parcelable [CrdtModel] types. */
@@ -24,7 +25,7 @@ enum class ParcelableCrdtType(
         null
 ) {
     // TODO: provide creators for each CRDT data structure and remove the default values.
-    Count(ParcelableCrdtCount.Data.CREATOR),
+    Count(ParcelableCrdtCount.Data.CREATOR, ParcelableCrdtCount.Operation.CREATOR),
     Set,
     Singleton,
     Entity,

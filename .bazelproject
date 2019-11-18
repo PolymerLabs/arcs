@@ -27,7 +27,7 @@ test_sources:
 additional_languages:
   kotlin
 
-workspace_type: java
+java_language_level: 8
 
 android_sdk_platform: android-29
 

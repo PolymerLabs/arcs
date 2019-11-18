@@ -14,31 +14,36 @@ package arcs.storage.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.crdt.CrdtCount
-import arcs.crdt.internal.VersionMap
-import arcs.crdt.parcelables.ParcelableCrdtCount
 import arcs.crdt.parcelables.ParcelableCrdtType
-import arcs.crdt.parcelables.toParcelable
+import arcs.crdt.parcelables.toParcelables
 import arcs.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-/** Tests for [ParcelableModelUpdate]. */
+/** Tests for [ParcelableOperations]. */
 @RunWith(AndroidJUnit4::class)
-class ParcelableModelUpdateTest {
+class ParcelableOperationsTest {
     @Test
     fun parcelableRoundtrip_works() {
-        val data = CrdtCount.Data(
-            mutableMapOf("Foo" to 1, "Bar" to 2),
-            VersionMap("Foo" to 1, "Bar" to 1)
+        val data = listOf(
+            CrdtCount.Operation.Increment(
+                actor = "foo",
+                version = 0 to 1
+            ),
+            CrdtCount.Operation.MultiIncrement(
+                actor = "bar",
+                version = 0 to 20,
+                delta = 20
+            )
         )
-
 
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
             writeParcelable(
-                ParcelableModelUpdate(data.toParcelable(), 1, ParcelableCrdtType.Count),
+                ParcelableOperations(data.toParcelables(), 1, ParcelableCrdtType.Count),
                 0
             )
             marshall()
@@ -47,22 +52,19 @@ class ParcelableModelUpdateTest {
         // Now unmarshall the parcel, so we can verify the contents.
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
-            readParcelable<ParcelableModelUpdate>(ParcelableModelUpdate::class.java.classLoader)
+            readParcelable<ParcelableOperations>(ParcelableOperations::class.java.classLoader)
         }
 
-        // Now get them back out.
         assertThat(unmarshalled)
             .isEqualTo(
-                ParcelableModelUpdate(ParcelableCrdtCount.Data(data), 1, ParcelableCrdtType.Count)
+                ParcelableOperations(data.toParcelables(), 1, ParcelableCrdtType.Count)
             )
         val actualized = requireNotNull(
             unmarshalled?.actualize<CrdtCount.Data, CrdtCount.Operation, Int>()
         )
         when (actualized) {
-            is ProxyMessage.ModelUpdate ->
-                assertThat(actualized.model).isEqualTo(data)
-            else ->
-                fail("Illegal type.")
+            is ProxyMessage.Operations -> assertThat(actualized.operations).isEqualTo(data)
+            else -> fail("Illegal type.")
         }
     }
 }
