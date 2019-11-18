@@ -25,7 +25,9 @@ class TTTHumanPlayer : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
         if (events.size > 0 && gameState.get()?.currentPlayer == player.get()?.id) {
-            this.myMove.set(TTTHumanPlayer_MyMove(move = events.elementAt(events.size - 1).move))
+            val sortedEvents = events.sortedBy { it.time }
+            val newMove = TTTHumanPlayer_MyMove(move = sortedEvents.elementAt(events.size - 1).move)
+            this.myMove.set(newMove)
         }
         super.onHandleUpdate(handle)
     }

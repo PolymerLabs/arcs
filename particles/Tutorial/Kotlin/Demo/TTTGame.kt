@@ -115,7 +115,6 @@ class TTTGame : Particle() {
                 val cp = gs.currentPlayer ?: 0.0
                 gs.currentPlayer = (cp + 1) % 2
                 this.gameState.set(gs)
-                this.events.clear()
             }
         }
         if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
