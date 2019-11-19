@@ -44,17 +44,24 @@ http_archive(
 
 # Kotlin
 
-RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
-
-RULES_KOTLIN_SHA = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
-
-http_archive(
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+git_repository(
     name = "io_bazel_rules_kotlin",
-    sha256 = RULES_KOTLIN_SHA,
-    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
-    type = "zip",
-    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
+    remote = "https://github.com/cromwellian/rules_kotlin.git",
+    commit = "0768fe7355c9d9ac78c60411ac196da394b903d5"
 )
+
+#RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
+
+#RULES_KOTLIN_SHA = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
+
+#http_archive(
+#    name = "io_bazel_rules_kotlin",
+#    sha256 = RULES_KOTLIN_SHA,
+#    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
+#    type = "zip",
+#    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
+#)
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
