@@ -296,11 +296,11 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
-    // let hostedSlotId;
-    // if (this.arc.pec.slotComposer) {
-    //   hostedSlotId = this.arc.pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
-    // }
-    // this.CreateSlotCallback({}, callback, hostedSlotId);
+    let hostedSlotId;
+    if (this.arc.pec.slotComposer) {
+      hostedSlotId = this.arc.pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
+    }
+    this.CreateSlotCallback({}, callback, hostedSlotId);
   }
 
   async onArcLoadRecipe(arc: Arc, recipe: string, callback: number) {

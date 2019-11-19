@@ -15,9 +15,13 @@ import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
 import {logsFactory} from '../platform/logs-factory.js';
 
-const {log} = logsFactory('UiMultiplexerParticle');
+let log;
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
+  constructor() {
+    super();
+    log = logsFactory('UiMultiplexerParticle', 'navy').log;
+  }
 
   plexeds; //: any[];
 
@@ -47,15 +51,10 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     await super.setHandles(handles);
   }
 
-  async update({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {
-    arc: InnerArcHandle,
-    type: Type,
-    hostedParticle: ParticleSpec,
-    otherMappedHandles: string[],
-    otherConnections: string[]
-  }, oldProps, oldState) {
+  update(props, state, oldProps, oldState) {
+    const {list}: {list: Array<{}>} = props;
+    const {arc}: {arc: InnerArcHandle} = state;
     log(`[${this.spec.name}]::update`, list, arc);
-    debugger;
     if (!list || !arc) {
       return;
     }
@@ -65,25 +64,41 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     if (list.length > 0) {
       this.relevance = 0.1;
     }
+    // async
+    this.updateEntries(props, state, oldProps, oldState);
+  }
+
+  async updateEntries(props, state, oldProps, oldState) {
+    const {list} = props;
+    const {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {
+      arc: InnerArcHandle,
+      type: Type,
+      hostedParticle: ParticleSpec,
+      otherMappedHandles: string[],
+      otherConnections: string[]
+    } = state;
+    log('updateEntries...');
     // TODO(sjmiles): needs safety for re-entrant update
-    //const slotIds = [];
     for (const [index, item] of this.getListEntries(list)) {
-      //const id = await this.updateEntry(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
-      //slotIds.push(id);
       await this.updateEntry(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
     }
-    //console.warn('m-d-p', slotIds);
     // clear data from unused particles/handles
     for (let i=list.length, plexed; (plexed=this.plexeds[i]); i++) {
       plexed.then(plexed => plexed.handle['clear']());
     }
+    log('updateEntries::renderOutput()');
+    // TODO(sjmiles): need async rendering after updateEntries ...
+    // change so it's handled via normal state operations
+    //this.renderOutput(props, state, oldProps, oldState);
   }
 
   async updateEntry(index, item, {hostedParticle, arc, type, otherConnections, otherMappedHandles}) {
+    log('updateEntry', index);
     if (!hostedParticle && !item.renderParticleSpec) {
       // If we're muxing on behalf of an item with an embedded recipe, the
       // hosted particle should be retrievable from the item itself. Else we
       // just skip this item.
+      log('updateEntry::skip', index);
       return;
     }
     //console.log(`RenderEx:updateEntry: %c[${index}]`, 'color: #A00; font-weight: bold;');
@@ -99,12 +114,17 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   async requirePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles}) {
     let promise = this.plexeds[index];
     if (!promise) {
+      log('requirePlexed::makePromise', index);
       // eslint-disable-next-line no-async-promise-executor
       promise = new Promise(async resolve => {
+        //log('requirePlexed::await acquireItemHandle', index);
         const handle = await this.acquireItemHandle(index, {arc, item, type});
+        //log('requirePlexed::await resolveHosting', index);
         const hosting = await this.resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles});
         const result = {arc, handle, hosting, slotId: null};
+        log('requirePlexed::await createInnards', index);
         result.slotId = await this.createInnards(item, result);
+        log('requirePlexed::resolve', index);
         resolve(result);
       });
       this.plexeds[index] = promise;
@@ -173,6 +193,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   async createInnards(item, {arc, handle, hosting: {hostedParticle, otherMappedHandles, otherConnections}}) {
     const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
     const slotName = [...this.spec.slotConnections.values()][0].name;
+    log('createInnards::await createSlot');
     const slotId = await arc.createSlot(this, slotName, handle._id);
     if (slotId) {
       try {
@@ -181,12 +202,14 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
           {name: hostedSlotName, id: slotId},
           {connections: otherConnections, handles: otherMappedHandles}
         );
+        log('createInnards::await loadRecipe');
         await arc.loadRecipe(recipe);
       }
       catch (e) {
         console.warn(e);
       }
     }
+    log('createInnards::return slotId', slotId);
     return slotId;
   }
 

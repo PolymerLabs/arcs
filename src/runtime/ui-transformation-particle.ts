@@ -27,7 +27,6 @@ export class UiTransformationParticle extends UiParticle {
   }
 
   render(props, state) {
-    debugger;
     return state.renderModel;
   }
 

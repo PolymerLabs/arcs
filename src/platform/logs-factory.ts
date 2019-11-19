@@ -34,7 +34,6 @@ const stubFactory = () => () => {};
 
 export const logsFactory = (preamble: string, color: string = ''): Dictionary<Function> => {
   const level = getLogLevel();
-  console.warn('[logs-factory.js]::self.logLevel', self['logLevel'], 'getLogLevel', level, 'for', preamble);
   const logs = {};
   ['log', 'warn', 'error', 'group', 'groupCollapsed', 'groupEnd'].
     forEach(log => logs[log] = (level > 0 ? logFactory(preamble, color, log) : stubFactory));
