@@ -23,12 +23,21 @@ class SingletonApiTest : Particle() {
                 io_.clear()
             }
             "case2" -> {
+                val input = in_.get()
+                val d = SingletonApiTest_OutHandle(num=input?.num, txt=input?.txt)
+                d.num  = d.num?.times(2)
+                out_.set(d)
             }
-            "case3" -> {}
+            "case3" -> {
+                val input = in_.get()
+                val d = SingletonApiTest_IoHandle(num=input?.num, txt=input?.txt)
+                d.num = d.num?.times(3)
+                io_.set(d)
+            }
         }
     }
 }
 
 @Retain
 @ExportForCppRuntime("_newSingletonApiTest")
-fun constructEventTest(): WasmAddress = SingletonApiTest().toWasmAddress()
+fun constructSingletonApiTest(): WasmAddress = SingletonApiTest().toWasmAddress()
