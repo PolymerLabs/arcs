@@ -5,10 +5,11 @@ env:
     # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
     secure: "qFfvf0YAK5NWkH5fj708Z+1qIHtOFrmNhslB+n14rt5J3fJjY0A/4lbLbhx2jACYME+OU2m66maxh5abEZCF4ZGi4zpJa01IUYesTTa3qdM9kozB2TfFcl0d1xffuGpAh9kPchaadCvx/BU9fYFzkd8CLD5mQWCybwqM+6xpoO/KULDXhlcOPGbzg65xmPJANZH+ldH0NgfVLqofeFUg1j0bke1n+7DLf+Oh4ZiYZavciJjhuYx561TkkSEd1gqQGImEfkmKmhz82E8curx6uJW+kD9WagNbLj4FvEsBETIM7BSE8sei2vOVO42OnzvCej+P98IUelEqBS6sTeUNp79f8cC8n7nSYUJwTpshturBFoIFfcVQNoebdaao6gWpnxhUEnsc36AMl0DpIT0DsA9SxZQRjqhAEZmAWmASJMc5t/jWIjmJrqQxDy80HGJPEhIMTOAZfAiFqwyQwYTvJ0tOTW+jk2P9oriLHwi0Pr88uPGD5HWS6ULPoAutQAWMKCYgb5PoOiB8vbUZT9RTXfdLkHLkpw0ICaj5sam2o32CMLm8KZzfNVLJ/kUgdnkYUpC0vo+PGfguiJX8fvZxB06+niljW9iHteqVuoP1tADQwby4jS2ob3eL7TgCGuGk6gQkvHkLmOzlagKeXu1YZ0ow5vq6C+vSEfKEzIDrhXk="
 
+services:
+  - docker
+
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
-addons:
-  chrome: stable
 
 # We want email to the whole team when the cron build fails. But regular PR
 # builds don't trigger email at all (per https://docs.travis-ci.com/user/notifications/#configuring-email-notifications),
@@ -20,35 +21,40 @@ notifications:
     on_success: never # default: change
     on_failure: always # default: always
 
-script:
-  # Run ktlint against every kotlin file in the diff between the branch and master's head.
-  - git diff --name-only --relative $TRAVIS_COMMIT_RANGE | grep '\.kt[s"]\?$' | xargs ktlint --android --relative --verbose .
-  # Bazel build & test everything. Can't use `bazel build ...` yet, because
-  # javaharness doesn't build on Travis (needs working Android SDK).
-  - >
-    bazel build --noshow_progress --noshow_loading_progress
-    //particles/...
-    //src/...
-    //src_kt/...
-  - >
-    bazel test --noshow_progress --noshow_loading_progress --test_output=errors
-    //particles/...
-    //src/...
-    //src_kt/...
-  - ./tools/sigh
-  - npm run test-extension
-  - npm run build:rollup
-  - npm --prefix=server test
+# Bazel build & test everything. Can't use `bazel build ...` yet, because
+# javaharness doesn't build on Travis (needs working Android SDK).
+jobs:
+  include:
+    - stage: test
+      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... && bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
+      name: "Bazel: //src_kt/... "
+    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
+      name: "Bazel: //src/..."
+    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc test //particles/..."
+      name: "Bazel:  //particles/..."
+    # run ktlint against every kotlin file in the diff between the branch and master's head.
+    - script: tools/run_in_docker "git diff --name-only --relative $travis_commit_range | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose ."
+      name: "KtLint"
+    - script: tools/run_in_docker "tools/sigh test"
+      name: "Node Test: Unit"
+    - script: tools/run_in_docker "tools/sigh testShells"
+      name: "Node Test: Shells"
+    # - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"
+    #   name: "Node Test: Server"
 
+# Use travis to cache a Bazel disk-cache.
+# This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
+# Bazel will store artifacts here due to the `--disk_cache=/disk-cache/` argument.
 cache:
   npm: true
 
-# Thinking about adding install steps? Why not modify the tools/setup script instead?
-# The list command dumps the top-level packages with their versions, in case we need that for debugging.
-install:
-  - ./tools/setup
-  - npm list --depth=0
+# Pulling container from https://hub.docker.com/repository/docker/arcproject/travis-build
+before_install:
+  - docker pull arcsproject/travis-build:latest
+  - mkdir -p ./disk-cache/
 
+install:
+  - tools/run_in_docker "npm install"
 
 before_deploy:
   # build apidocs

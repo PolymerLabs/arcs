@@ -1,0 +1,4 @@
+#!/bin/sh
+# Script to run CI steps within a docker image (specified by tools/Dockerfile.CI)
+cd $(dirname $0)/..
+docker run -v $(pwd):/usr/src/app/ -v $(pwd)/disk-cache:/disk-cache/ arcsproject/travis-build:latest  /bin/sh -c "cd /usr/src/app; $1"
