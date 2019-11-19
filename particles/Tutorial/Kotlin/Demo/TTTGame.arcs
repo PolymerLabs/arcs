@@ -4,30 +4,30 @@ import 'TTTGameSchemas.arcs'
 import 'TTTGamedata.arcs'
 
 particle TTTBoard in 'TTTBoard.wasm'
-  out [Event] events
-  in GameState gameState
+  events: writes [Event]
+  gameState: reads GameState
   boardSlot: consumes
 
 particle TTTGame in 'TTTGame.wasm'
-  inout GameState gameState
-  inout Person playerOne
-  inout Move playerOneMove
-  inout Person playerTwo
-  inout Move playerTwoMove
-  inout [Event] events
+  gameState: reads writes GameState
+  playerOne: reads writes Person
+  playerOneMove: reads writes Move
+  playerTwo: reads writes Person
+  playerTwoMove: reads writes Move
+  events: reads writes [Event]
   root: consumes
     boardSlot: provides
 
 particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
-  in GameState gameState
-  in [Event] events
-  in Person player
-  out Move myMove
+  gameState: reads GameState
+  events: reads [Event]
+  player: reads Person
+  myMove: writes Move
 
 particle TTTRandomComputer in 'TTTRandomComputer.wasm'
-  in GameState gameState
-  in Person player
-  out Move myMove
+  gameState: reads GameState
+  player: reads Person
+  myMove: writes Move
 
 
 recipe GamePlayersDemoRecipe
@@ -36,86 +36,86 @@ recipe GamePlayersDemoRecipe
   create #humanMove as playerOneMove
   create #computerMove as playerTwoMove
   TTTGame
-    gameState = gameState
-    playerOne = playerOne
-    playerOneMove = playerOneMove
-    playerTwo = playerTwo
-    playerTwoMove = playerTwoMove
-    events = events
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerOneMove: reads writes playerOneMove
+    playerTwo: reads writes playerTwo
+    playerTwoMove: reads writes playerTwoMove
+    events: reads writes events
     root: consumes
       boardSlot: provides board
   TTTBoard
+      gameState: reads gameState
+      events: writes events
       boardSlot: consumes board
-      gameState: gameState
-      events: events
   TTTHumanPlayer
-    gameState = gameState
-    events <- events
-    myMove -> playerOneMove
-    player <- playerOne
+    gameState: reads gameState
+    events: reads events
+    myMove: writes playerOneMove
+    player: reads playerOne
   TTTRandomComputer
-      gameState = gameState
-      myMove -> playerTwoMove
-      player <- playerTwo
-  description `Kotlin Tutorial TicTacToe Demo`
+      gameState: reads gameState
+      myMove: writes playerTwoMove
+      player: reads playerTwo
+  description `Kotlin Tutorial TicTacToe One Player Demo`
 
-recipe GameTwoPlayersDemoRecipe
+recipe GamePlayersDemoRecipe
   use HumanOneStore as playerOne
   use HumanTwoStore as playerTwo
   create #humanMove as playerOneMove
   create #computerMove as playerTwoMove
   TTTGame
-    gameState = gameState
-    playerOne = playerOne
-    playerOneMove = playerOneMove
-    playerTwo = playerTwo
-    playerTwoMove = playerTwoMove
-    events = events
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerOneMove: reads writes playerOneMove
+    playerTwo: reads writes playerTwo
+    playerTwoMove: reads writes playerTwoMove
+    events: reads writes events
     root: consumes
       boardSlot: provides board
   TTTBoard
+      gameState: reads gameState
+      events: writes events
       boardSlot: consumes board
-      gameState: gameState
-      events: events
   TTTHumanPlayer
-    gameState = gameState
-    events <- events
-    myMove -> playerOneMove
-    player <- playerOne
+    gameState: reads gameState
+    events: reads events
+    myMove: writes playerOneMove
+    player: reads playerOne
   TTTHumanPlayer
-      gameState = gameState
-      events <- events
-      myMove -> playerTwoMove
-      player <- playerTwo
+      gameState: reads gameState
+      events: reads events
+      myMove: writes playerTwoMove
+      player: reads playerTwo
   description `Kotlin Tutorial TicTacToe Two Players Demo`
 
-recipe GameTwoPlayersDemoRecipe
+recipe GamePlayersDemoRecipe
   use HumanOneStore as playerOne
   use HumanTwoStore as playerTwo
   create #humanMove as playerOneMove
   create #computerMove as playerTwoMove
   TTTGame
-    gameState = gameState
-    playerOne = playerOne
-    playerOneMove = playerOneMove
-    playerTwo = playerTwo
-    playerTwoMove = playerTwoMove
-    events = events
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerOneMove: reads writes playerOneMove
+    playerTwo: reads writes playerTwo
+    playerTwoMove: reads writes playerTwoMove
+    events: reads writes events
     root: consumes
       boardSlot: provides board
   TTTBoard
-    boardSlot: consumes board
-    gameState: gameState
-    events: events
+      gameState: reads gameState
+      events: writes events
+      boardSlot: consumes board
   TTTRandomComputer
-    gameState = gameState
-    myMove -> playerOneMove
-    player <- playerOne
+        gameState: reads gameState
+        myMove: writes playerOneMove
+        player: reads playerOne
   TTTRandomComputer
-    gameState = gameState
-    myMove -> playerTwoMove
-    player <- playerTwo
-  description `Kotlin Tutorial TicTacToe Two Computers Demo`
+      gameState: reads gameState
+      myMove: writes playerTwoMove
+      player: reads playerTwo
+  description `Kotlin Tutorial TicTacToe Zero Players Demo`
 
 
 
