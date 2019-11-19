@@ -48,7 +48,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "io_bazel_rules_kotlin",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    commit = "0768fe7355c9d9ac78c60411ac196da394b903d5"
+    commit = "353329496db7817fa99d18ebec3c76410bdbc6a0"
 )
 
 #RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
