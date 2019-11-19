@@ -25,20 +25,28 @@ notifications:
 # javaharness doesn't build on Travis (needs working Android SDK).
 jobs:
   include:
+    - stage: "sigh build"
+      script: tools/run_in_docker "tools/sigh build"
+
+    - stage: nproc
+      script: nproc
+      name: "host nproc"
+    - script: tools/run_in_docker nproc
+      name: "docker nproc"
+
+    - stage: "bazel build"
+      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... //src/... //particles/..."
+
     - stage: test
-      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... && bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
-      name: "Bazel: //src_kt/... "
-    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
-      name: "Bazel: //src/..."
-    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc test //particles/..."
-      name: "Bazel:  //particles/..."
-    # run ktlint against every kotlin file in the diff between the branch and master's head.
-    - script: tools/run_in_docker "git diff --name-only --relative $travis_commit_range | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose ."
+      # run ktlint against every kotlin file in the diff between the branch and master's head.
+      script: tools/run_in_docker "git diff --name-only --relative $travis_commit_range | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose ."
       name: "KtLint"
     - script: tools/run_in_docker "tools/sigh test"
       name: "Node Test: Unit"
     - script: tools/run_in_docker "tools/sigh testShells"
       name: "Node Test: Shells"
+    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //src_kt/... //src/... //particles/..."
+      name: "Bazel test"
     # - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"
     #   name: "Node Test: Server"
 
