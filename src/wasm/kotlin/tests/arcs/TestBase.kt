@@ -10,8 +10,8 @@ import kotlin.AssertionError
 
 annotation class Test
 
-open class TestBase : Particle(), Asserter {
-    private val errors = Collection { EntityClassApiTest_Data() }
+open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), Asserter {
+    private val errors = Collection { ctor("") }
 
     init {
         registerHandle("errors", errors)
@@ -44,7 +44,7 @@ open class TestBase : Particle(), Asserter {
     }
 
     override fun fail(message: String?): Nothing {
-        val err = if (message == null) EntityClassApiTest_Data(txt="Failure") else EntityClassApiTest_Data(txt=message)
+        val err = if (message == null) ctor("Failure") else ctor(message)
         errors.store(err)
 
         if(message == null)

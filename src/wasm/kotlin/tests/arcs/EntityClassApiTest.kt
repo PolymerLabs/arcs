@@ -6,7 +6,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.test.assertFalse
 
 
-class EntityClassApiTest: TestBase() {
+class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<EntityClassApiTest_Errors>(ctor) {
     private val unused1 = Singleton { EntityClassApiTest_Data() }
     private val unused2 = Singleton { EntityClassApiTest_Empty() }
 
@@ -67,4 +67,4 @@ class EntityClassApiTest: TestBase() {
 
 @Retain
 @ExportForCppRuntime("_newEntityClassApiTest")
-fun constructEntityClassApiTest(): WasmAddress = EntityClassApiTest().toWasmAddress()
+fun constructEntityClassApiTest(): WasmAddress = EntityClassApiTest { txt: String -> EntityClassApiTest_Errors(txt) }.toWasmAddress()
