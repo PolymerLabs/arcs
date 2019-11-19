@@ -12,7 +12,7 @@ import 'Product.schema'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
   in Product product
-  consume annotation
+  must consume annotation
   description `check manufacturer information`
 
 // Check manufacturer information for products.

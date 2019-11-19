@@ -8,24 +8,24 @@
 
 interface SlandleHostedAnnotationParticleInterface
   reads ~a
-  annotation: consumes? Slot
+  annotation: `consumes Slot
 
 // TODO: This particle should use generic slot name.
 particle SlandleMultiplexer in 'source/SlandleMultiplexer.js'
   hostedParticle: hosts SlandleHostedAnnotationParticleInterface
   list: reads [~a]
-  annotation: consumes? [Slot]
+  annotation: `consumes? [Slot]
   description `${hostedParticle} for ${list}`
 
 // Same as SlandleMultiplexer above, but with an additional connection.
 interface SlandleHostedParticleInterface2
   reads ~a
   reads [~a]
-  consumes? Slot
+  `consumes Slot
 
 particle SlandleMultiplexer2 in 'source/SlandleMultiplexer.js'
   hostedParticle: hosts SlandleHostedParticleInterface2
   list: reads [~a]
   others: reads [~a]
-  annotation: consumes? [Slot]
+  annotation: `consumes? [Slot]
   description `${hostedParticle} for ${list}`

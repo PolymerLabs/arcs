@@ -8,7 +8,7 @@
 
 interface HostedAnnotationParticleInterface
   reads ~a
-  annotation: consumes? Slot
+  annotation: consumes Slot
 
 // TODO: This particle should use generic slot name.
 particle Multiplexer in 'source/Multiplexer.js'
@@ -21,11 +21,11 @@ particle Multiplexer in 'source/Multiplexer.js'
 interface HostedParticleInterface2
   reads ~a
   reads [~a]
-  consumes? Slot
+  consumes Slot
 
 particle Multiplexer2 in 'source/Multiplexer.js'
   hostedParticle: hosts HostedParticleInterface2
   list: reads [~a]
   others: reads [~a]
-  annotation: consumes? [Slot]
+  annotation: consumes [Slot]
   description `${hostedParticle} for ${list}`
