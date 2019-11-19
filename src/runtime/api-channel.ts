@@ -494,10 +494,10 @@ export abstract class PECOuterPort extends APIPort {
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
-  StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: Map<string, string>, @List(MappingType.Direct) contentTypes: string[]) {}
-  StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
+  //StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: Map<string, string>, @List(MappingType.Direct) contentTypes: string[]) {}
+  //StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
 
-  abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
+  //abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
 
   // TODO: Delete these when the old storage code is deleted. They won't be
   // needed anymore.
@@ -565,10 +565,10 @@ export abstract class PECInnerPort extends APIPort {
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
   abstract onSimpleCallback(callback: Consumer<{}>, data: {});
   abstract onAwaitIdle(version: number);
-  abstract onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]);
-  abstract onStopRender(particle: Particle, slotName: string);
+  //abstract onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]);
+  //abstract onStopRender(particle: Particle, slotName: string);
 
-  Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: Content) {}
+  //Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: Content) {}
   // TODO(sjmiles): alternate render path for slotObserver (UiBroker)
   Output(@Mapped particle: Particle, @Direct content: {}) {}
 

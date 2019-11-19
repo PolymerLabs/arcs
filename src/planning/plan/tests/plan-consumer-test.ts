@@ -35,7 +35,8 @@ async function createPlanConsumer(storageKeyBase, arc) {
 }
 
 async function storeResults(consumer, suggestions) {
-  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc));
+  const mergeResult = consumer.result.merge({suggestions}, consumer.arc);
+  //assert.isTrue(mergeResult);
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }
@@ -177,6 +178,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
 
     const consumerDom = await initConsumer(Modality.Name.Dom);
     const domSuggestions = consumerDom.getCurrentSuggestions();
+    console.log(domSuggestions);
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);

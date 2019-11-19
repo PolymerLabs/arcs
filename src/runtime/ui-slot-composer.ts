@@ -60,6 +60,54 @@ export class UiSlotComposer {
   }
 
   async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
+    const newConsumers = <SlotConsumer[]>[];
+    // Create slots for each of the recipe's particles slot connections.
+    recipeParticles.forEach(p => {
+      p.getSlandleConnections().forEach(cs => {
+        if (!cs.targetSlot) {
+          assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
+          return;
+        }
+        const slotConsumer = new SlotConsumer(arc, cs, '');
+        //const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, this._containerKind);
+        //const providedContexts = slotConsumer.createProvidedContexts();
+        //this._contexts = this._contexts.concat(providedContexts);
+        newConsumers.push(slotConsumer);
+      });
+    });
+    // Set context for each of the slots.
+    newConsumers.forEach(consumer => {
+      this._addSlotConsumer(consumer);
+      //const context = this.findContextById(consumer.consumeConn.targetSlot.id);
+      // TODO(sjmiles): disabling this assert for now because rendering to unregistered slots
+      // is allowed under new rendering factorisation. Maybe we bring this back as a validity
+      // test in the future, but it's not a requirement atm.
+      //assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
+      //if (context && context['addSlotConsumer']) {
+      //  context['addSlotConsumer'](consumer);
+      //}
+    });
+    // Calculate the Descriptions only once per-Arc
+    const allArcs = this.consumers.map(consumer => consumer.arc);
+    const uniqueArcs = [...new Set(allArcs).values()];
+    // get arc -> description
+    const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
+    // create a mapping from the zipped uniqueArcs and descriptions
+    const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
+    // ... and apply to each consumer
+    for (const consumer of this.consumers) {
+      consumer.description = consumerByArc.get(consumer.arc);
+    }
+  }
+
+ _addSlotConsumer(slot: SlotConsumer) {
+   // const pec = slot.arc.pec;
+    //slot.startRenderCallback = pec.startRender.bind(pec);
+    //slot.stopRenderCallback = pec.stopRender.bind(pec);
+    this._consumers.push(slot);
+  }
+
+  async XinitializeRecipe(arc: Arc, recipeParticles: Particle[]) {
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       p.getSlandleConnections().forEach(cs => {

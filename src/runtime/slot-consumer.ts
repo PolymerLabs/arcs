@@ -16,7 +16,7 @@ import {Description} from './description.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 //import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
-import {StartRenderOptions, StopRenderOptions} from './particle-execution-host.js';
+//import {StartRenderOptions, StopRenderOptions} from './particle-execution-host.js';
 
 export interface Content {
   templateName?: string | Map<string, string>;
@@ -44,8 +44,8 @@ export class SlotConsumer {
   //slotContext: SlotContext;
   //readonly directlyProvidedSlotContexts: ProvidedSlotContext[] = [];
   //readonly hostedSlotContexts: HostedSlotContext[] = [];
-  startRenderCallback: Consumer<StartRenderOptions>;
-  stopRenderCallback: Consumer<StopRenderOptions>;
+  //startRenderCallback: Consumer<StartRenderOptions>;
+  //stopRenderCallback: Consumer<StopRenderOptions>;
   eventHandler: Consumer<{}>;
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information

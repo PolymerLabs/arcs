@@ -13,6 +13,9 @@ import {UiTransformationParticle} from './ui-transformation-particle.js';
 import {Handle} from './handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
+import {logsFactory} from '../platform/logs-factory.js';
+
+const {log} = logsFactory('UiMultiplexerParticle');
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 
@@ -51,7 +54,8 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     otherMappedHandles: string[],
     otherConnections: string[]
   }, oldProps, oldState) {
-    //console.warn(`[${this.spec.name}]::update`, list, arc);
+    log(`[${this.spec.name}]::update`, list, arc);
+    debugger;
     if (!list || !arc) {
       return;
     }

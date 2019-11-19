@@ -75,13 +75,14 @@ defineParticle(({SimpleParticle, html, log}) => {
     }
     render({result}) {
       if (result) {
-        const {name, poster_path, overview} = result;
+        const {name, poster_path/*, overview*/} = result;
         const bg = poster_path ? `https://xenonjs.com/services/http/php/tmdb-image.php?w342${poster_path}` : null;
         return {
           style: bg ? {backgroundImage: `url("${bg}")`, color: 'white'} : {},
           name,
           //overview,
-          trigger: name
+          trigger: name,
+          subid: this.idFor(result)
         };
       } else {
         //log('result data missing');

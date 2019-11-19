@@ -17,9 +17,10 @@ self.onmessage = function(e) {
   self.onmessage = null;
   // snarf out scope data
   const {id, base, logLevel} = e.data;
+  console.warn('worker message getting logLevel', logLevel);
   // TODO(sjmiles): happens too late for modules that immediately construct loggers, but
   // soon enough for `log` injected into Particle.
-  global.logLevel = logLevel;
+  self.logLevel = logLevel;
   // construct execution context with scope data
   new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new Loader(base));
 };

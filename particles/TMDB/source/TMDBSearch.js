@@ -43,7 +43,7 @@ defineParticle(({SimpleParticle, log}) => {
     async receiveResults(results, resultsHandleName) {
       log('receiveResults', results);
       // chuck old data
-      await this.clearHandle(resultsHandleName);
+      await this.clear(resultsHandleName);
       // support filtering
       const filter = result => result.poster_path;
       // support mapping fields to our entity schema
@@ -51,7 +51,7 @@ defineParticle(({SimpleParticle, log}) => {
       // construct entity data
       const rawData = results.filter(filter).map(map);
       // store new data
-      await this.appendRawDataToHandle(resultsHandleName, rawData);
+      await this.add(resultsHandleName, rawData);
       log('stored this entity data:', rawData);
     }
     resultToEntity({id, name, title, media_type, adult, overview, backdrop_path, poster_path}) {

@@ -30,15 +30,17 @@ async function initSlotComposer(recipeStr) {
     slotComposer,
     loader
   });
-  const startRenderParticles: string[] = [];
-  arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };
+
+  //const startRenderParticles: string[] = [];
+  //arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };
+
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
   const plan = planner.strategizer.population[0].result;
-  return {arc, slotComposer, plan, startRenderParticles};
+  return {arc, slotComposer, plan/*, startRenderParticles*/};
 }
 
 describe('slot composer', function() {
@@ -69,7 +71,7 @@ recipe
   C
     otherSlot: consumes slot2
         `;
-    let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
+    let {arc, slotComposer, plan/*, startRenderParticles*/} = await initSlotComposer(manifestStr);
     slotComposer = slotComposer.expectRenderSlot('A', 'root', {'contentTypes': ['model']});
 
     //assert.lengthOf(slotComposer.getAvailableContexts(), 1);
@@ -90,7 +92,7 @@ recipe
     assert.isTrue(plan.isResolved());
     assert.strictEqual(arc.pec.slotComposer, slotComposer);
     await arc.instantiate(plan);
-    assert.deepEqual(['A'], startRenderParticles);
+    //assert.deepEqual(['A'], startRenderParticles);
     // assert.lengthOf(slotComposer.getAvailableContexts(), 3);
     // verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
     // verifyContext('mySlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
@@ -153,7 +155,7 @@ recipe
         item: consumes slot1
     `;
 
-    let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
+    let {arc, slotComposer, plan/*, startRenderParticles*/} = await initSlotComposer(manifestStr);
     slotComposer = slotComposer
       .expectRenderSlot('A', 'root', {'contentTypes': ['model']})
       .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
@@ -168,7 +170,7 @@ recipe
     assert.isTrue(plan.isResolved());
     await arc.instantiate(plan);
 
-    assert.deepEqual(['A'], startRenderParticles);
+    //assert.deepEqual(['A'], startRenderParticles);
 
     // const [particleA, particleB, particleC] = arc.activeRecipe.particles;
     // const rootSlot = slotComposer.getSlotConsumer(particleA, 'root');

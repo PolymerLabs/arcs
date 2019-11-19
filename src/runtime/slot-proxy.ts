@@ -34,20 +34,19 @@ export class SlotProxy {
     this.providedSlots = providedSlots;
   }
 
-  get isRendered() {
-    return this._isRendered;
-  }
+  // get isRendered() {
+  //   return this._isRendered;
+  // }
 
   /**
    * renders content to the slot.
    */
-  render(content: Content): void {
-    this.apiPort.Render(this.particle, this.slotName, content);
-
-    Object.keys(content).forEach(key => { this.requestedContentTypes.delete(key); });
-    // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
-    this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
-  }
+  // render(content: Content): void {
+  //   this.apiPort.Render(this.particle, this.slotName, content);
+  //   Object.keys(content).forEach(key => { this.requestedContentTypes.delete(key); });
+  //   // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
+  //   this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
+  // }
 
   /**
    * registers a callback to be invoked when 'name' event happens.
@@ -75,10 +74,9 @@ export class SlotProxy {
    */
   rewire(particle: Particle): void {
     this.particle.removeSlotProxy(this.slotName);
-
     this.particle = particle;
     this._isRendered = false;
     this.particle.addSlotProxy(this);
-    this.particle.renderSlot(this.slotName, ['model', 'template', 'templateName']);
+    //this.particle.renderSlot(this.slotName, ['model', 'template', 'templateName']);
   }
 }

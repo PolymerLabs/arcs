@@ -30,17 +30,17 @@ import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 
-export type StartRenderOptions = {
-  particle: Particle;
-  slotName: string;
-  providedSlots: Map<string, string>;
-  contentTypes: string[];
-};
+// export type StartRenderOptions = {
+//   particle: Particle;
+//   slotName: string;
+//   providedSlots: Map<string, string>;
+//   contentTypes: string[];
+// };
 
-export type StopRenderOptions = {
-  particle: Particle;
-  slotName: string;
-};
+// export type StopRenderOptions = {
+//   particle: Particle;
+//   slotName: string;
+// };
 
 export class ParticleExecutionHost {
   private readonly _apiPorts: PECOuterPort[];
@@ -144,13 +144,13 @@ export class ParticleExecutionHost {
     });
   }
 
-  startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
-    this.getPort(particle).StartRender(particle, slotName, providedSlots, contentTypes);
-  }
+  // startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
+  //   this.getPort(particle).StartRender(particle, slotName, providedSlots, contentTypes);
+  // }
 
-  stopRender({particle, slotName}: StopRenderOptions): void {
-    this.getPort(particle).StopRender(particle, slotName);
-  }
+  // stopRender({particle, slotName}: StopRenderOptions): void {
+  //   this.getPort(particle).StopRender(particle, slotName);
+  // }
 
   innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
     // Note: Transformations are not supported in Java PEC.
@@ -173,11 +173,8 @@ class PECOuterPortImpl extends PECOuterPort {
     this.arc = arc;
   }
 
-  onRender(particle: Particle, slotName: string, content: Content) {
-    // if (this.arc.pec.slotComposer) {
-    //   this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
-    // }
-  }
+  //onRender(particle: Particle, slotName: string, content: Content) {
+  //}
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};

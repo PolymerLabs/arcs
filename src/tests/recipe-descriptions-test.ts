@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/chai-web.js';
-import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
+//import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {Manifest} from '../runtime/manifest.js';
@@ -146,7 +146,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   it('generates DOM recipe description', async () => {
     const description = await generateRecipeDescription(
-        {includeSchemaDescription: false, includeStore: false, includeEntityName: false, formatter: DescriptionDomFormatter});
+        {includeSchemaDescription: false, includeStore: false, includeEntityName: false/*, formatter: DescriptionDomFormatter*/});
 
     assert.strictEqual('The winner is: \'box\' of all \'box list\'.', description.template);
     assert.isEmpty(description.model);
@@ -154,14 +154,14 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   it('generates DOM recipe description (with handle value)', async () => {
     const description = await generateRecipeDescription(
-      {includeSchemaDescription: false, includeStore: true, includeEntityName: false, formatter: DescriptionDomFormatter});
+      {includeSchemaDescription: false, includeStore: true, includeEntityName: false/*, formatter: DescriptionDomFormatter*/});
     assert.strictEqual('The winner is: \'box\' of all \'box list\'.', description.template);
     assert.isEmpty(description.model);
   });
 
   it('generates DOM recipe description (with handle value and name)', async () => {
     const description = await generateRecipeDescription(
-        {includeSchemaDescription: false, includeStore: true, includeEntityName: true, formatter: DescriptionDomFormatter});
+        {includeSchemaDescription: false, includeStore: true, includeEntityName: true/*, formatter: DescriptionDomFormatter*/});
     assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
         description.template);
     assert.deepEqual({
@@ -174,7 +174,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   it('generates DOM recipe description (with schema description)', async () => {
     const description = await generateRecipeDescription(
-        {includeSchemaDescription: true, includeStore: false, includeEntityName: false, formatter: DescriptionDomFormatter});
+        {includeSchemaDescription: true, includeStore: false, includeEntityName: false/*, formatter: DescriptionDomFormatter*/});
 
     assert.strictEqual('The winner is: \'booooox\' of all \'boxes\'.', description.template);
     assert.isEmpty(description.model);
@@ -182,7 +182,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   it('generates DOM recipe description (with schema description and handle value)', async () => {
     const description = await generateRecipeDescription(
-        {includeSchemaDescription: true, includeStore: true, includeEntityName: false, formatter: DescriptionDomFormatter});
+        {includeSchemaDescription: true, includeStore: true, includeEntityName: false/*, formatter: DescriptionDomFormatter*/});
     assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
                  description.template);
     assert.deepEqual({
@@ -195,7 +195,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   it('generates DOM recipe description with schema description and entity name', async () => {
     const description = await generateRecipeDescription(
-        {includeSchemaDescription: true, includeStore: true, includeEntityName: true, formatter: DescriptionDomFormatter});
+        {includeSchemaDescription: true, includeStore: true, includeEntityName: true/*, formatter: DescriptionDomFormatter*/});
 
     assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
                  description.template);
@@ -210,7 +210,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   it('generates DOM recipe description (with schema description and stores descriptions)', async () => {
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: true, includeEntityName: true,
-         includeAllDescription: true, formatter: DescriptionDomFormatter});
+         includeAllDescription: true/*, formatter: DescriptionDomFormatter*/});
     assert.strictEqual('<span>{{text1}}</span><b>{{biggestVar}}</b><span>{{text2}}</span><span>{{text3}}</span><span>{{text4}}</span>.',
         description.template);
     assert.deepEqual({
@@ -224,7 +224,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   it('generates DOM recipe description (everything)', async () => {
     const description = await generateRecipeDescription(
         {includeSchemaDescription: true, includeStore: true, includeEntityName: true,
-         includeAllDescription: true, includeAllStore: true, formatter: DescriptionDomFormatter});
+         includeAllDescription: true, includeAllStore: true/*, formatter: DescriptionDomFormatter*/});
     assert.strictEqual('<span>{{text3}}</span><b>{{biggestVar}}</b><span>{{text4}}</span><span>{{allDescription2}}</span> (<b>{{all1Length}}</b> items)<span>{{text5}}</span>.',
                 description.template);
     assert.deepEqual({
@@ -277,7 +277,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const description = await generateRecipeDescription({manifestString});
 
     assert.strictEqual('Do "hello foo"', description as string);
-    const domDescription = await generateRecipeDescription({manifestString, formatter: DescriptionDomFormatter});
+    const domDescription = await generateRecipeDescription({manifestString/*, formatter: DescriptionDomFormatter*/});
     assert.strictEqual(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
     assert.deepEqual(domDescription.model, {text2: 'Do "', foo1: 'foo', text3: '"'});
   });
