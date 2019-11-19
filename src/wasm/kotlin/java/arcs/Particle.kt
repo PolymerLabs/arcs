@@ -5,7 +5,7 @@ import kotlin.collections.set
 /**
  * Base class for all Wasm Particles.
  */
-abstract class Particle : WasmObject() {
+abstract class Particle : Addressable {
     private val handles: MutableMap<String, Handle> = mutableMapOf()
     private val toSync: MutableSet<Handle> = mutableSetOf()
     private val eventHandlers: MutableMap<String, (Map<String, String>) -> Unit> = mutableMapOf()
@@ -23,7 +23,7 @@ abstract class Particle : WasmObject() {
         handle.name = name
         handle.particle = this
         handles[name] = handle
-        log("Registering $name")
+        IRuntimeClient.log("Registering $name")
     }
 
     /**
@@ -85,7 +85,7 @@ abstract class Particle : WasmObject() {
 
     /** @param handle Handle to synchronize */
     fun sync(handle: Handle) {
-        log("Particle.sync called")
+        IRuntimeClient.log("Particle.sync called")
         toSync.remove(handle)
         onHandleSync(handle, toSync.isEmpty())
     }
@@ -114,7 +114,7 @@ abstract class Particle : WasmObject() {
 
     /** Rendering through UiBroker */
     fun renderOutput() {
-        log("renderOutput")
+        IRuntimeClient.log("renderOutput")
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
@@ -149,7 +149,7 @@ abstract class Particle : WasmObject() {
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
-        log("ignoring renderSlot")
+        IRuntimeClient.log("ignoring renderSlot")
     }
 
     /**
@@ -161,11 +161,11 @@ abstract class Particle : WasmObject() {
      */
     fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
         val encoded = StringEncoder.encodeDictionary(args)
-        serviceRequest(
-            toWasmAddress(),
-            call.toWasmString(),
-            encoded.toWasmString(),
-            tag.toWasmString()
+        IRuntimeClient.serviceRequest(
+            this,
+            call,
+            encoded,
+            tag
         )
     }
 
@@ -188,16 +188,14 @@ abstract class Particle : WasmObject() {
      * @return absolute URL
      */
     fun resolveUrl(url: String): String {
-        val r: WasmString = resolveUrl(url.toWasmString())
-        val resolved = r.toKString()
-        _free(r)
-        return resolved
+        return IRuntimeClient.resolveUrl(url)
+
     }
 }
 
 enum class Direction { Unconnected, In, Out, InOut }
 
-abstract class Handle : WasmObject() {
+abstract class Handle : Addressable {
     lateinit var name: String
     lateinit var particle: Particle
     var direction: Direction = Direction.Unconnected
@@ -221,16 +219,16 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     fun set(entity: T) {
         this.entity = entity
         val encoded = entity.encodeEntity()
-        singletonSet(
-            particle.toWasmAddress(),
-            toWasmAddress(),
-            encoded.toWasmString()
+        IRuntimeClient.singletonSet(
+            particle,
+            this,
+            encoded
         )
     }
 
     fun clear() {
         entity = entityCtor()
-        singletonClear(particle.toWasmAddress(), toWasmAddress())
+        IRuntimeClient.singletonClear(particle, this)
     }
 }
 
@@ -269,14 +267,14 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
     fun store(entity: T) {
         entities[entity.internalId] = entity
         val encoded = entities[entity.internalId]!!.encodeEntity()
-        collectionStore(particle.toWasmAddress(), toWasmAddress(), encoded.toWasmString())
+        IRuntimeClient.collectionStore(particle, this, encoded)
     }
 
     fun remove(entity: T) {
         entities[entity.internalId]?.let {
             val encoded: String = it.encodeEntity()
             entities.remove(entity.internalId)
-            collectionRemove(particle.toWasmAddress(), toWasmAddress(), encoded.toWasmString())
+            IRuntimeClient.collectionRemove(particle, this, encoded)
         }
     }
 
@@ -293,6 +291,6 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
 
     fun clear() {
         entities.clear()
-        collectionClear(particle.toWasmAddress(), toWasmAddress())
+        IRuntimeClient.collectionClear(particle, this)
     }
 }

@@ -3,15 +3,16 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
 
-alias(
+kt_jvm_library(
     name = "arcs",
-    actual = "//src/wasm/kotlin/java/arcs",
+    srcs = glob(["*.kt"]),
+    deps = ["//src/wasm/kotlin/java/arcs/jvm"],
     visibility = ["//visibility:public"],
 )
 
-alias(
+kt_native_library(
     name = "arcs_wasm",
-    actual = "//src/wasm/kotlin/java/arcs:arcs_wasm",
+    srcs = glob(["*.kt"]),
+    deps = ["//src/wasm/kotlin/java/arcs/wasm"],
     visibility = ["//visibility:public"],
 )
-

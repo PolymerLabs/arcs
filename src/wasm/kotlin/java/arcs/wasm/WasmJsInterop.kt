@@ -1,4 +1,4 @@
-package arcs
+package arcs.wasm
 
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.toUtf8
@@ -20,20 +20,19 @@ typealias WasmString = Int
 
 typealias WasmNullableString = Int
 
+
+internal val pinnedWasmObjects = kotlin.collections.mutableMapOf<Addressable, WasmAddress>()
+
 /**
- * Any object implementing this interface can be converted into a (pinned) stable heap pointer.
- * To avoid GC Leaks, eventually the ABI should have a Particle.dispose() method which releases
- * these pinned pointers. Right now, the lifetime of these objects depends on the Arcs Runtime
- * holding onto particle and handle references beyond the scope of the call.
+ * Create a pinned stable pointer in the WASM heap from an [Addressable].
  */
-abstract class WasmObject {
-    private var cachedWasmAddress: WasmAddress? = null
-    fun toWasmAddress(): WasmAddress {
-        if (cachedWasmAddress == null) {
-            cachedWasmAddress = StableRef.create(this).asCPointer().toLong().toWasmAddress()
-        }
-        return cachedWasmAddress as WasmAddress
+fun Addressable.toWasmAddress(): WasmAddress {
+    var cachedWasmAddress: WasmAddress? = pinnedWasmObjects[this]
+    if (cachedWasmAddress == null) {
+        cachedWasmAddress = StableRef.create(this).asCPointer().toLong().toWasmAddress()
+        pinnedWasmObjects[this] = cachedWasmAddress
     }
+    return cachedWasmAddress as WasmAddress
 }
 
 // Extension method to convert an Int into a Kotlin heap ptr
@@ -266,4 +265,5 @@ fun log(msg: String) {
 }
 
 fun main() {
+    RuntimeClient.impl = WasmRuntimeClient()
 }
