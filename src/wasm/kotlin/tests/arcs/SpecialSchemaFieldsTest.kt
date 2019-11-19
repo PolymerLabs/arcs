@@ -16,7 +16,7 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
     /** Run tests on particle initialization */
     override fun init() {
         testLanguageKeywordField()
-        testLanguageKeywordEncoding()
+//        testLanguageKeywordEncoding()
     }
 
     @Test

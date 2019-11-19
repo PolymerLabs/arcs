@@ -194,10 +194,6 @@ class TestLoader extends Loader {
     });
 
     prefix('special schema fields', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {stores} = await setup('SpecialSchemaFieldsTest');
       const errStore = stores.get('errors') as VolatileCollection;
       const errors = (await errStore.toList()).map(e => e.rawData.msg);
