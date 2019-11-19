@@ -173,7 +173,7 @@ So now we’ve seen how multiple particles can be used in a single recipe. But w
 >- *Entity* - Entities are units of data in Arcs. They are created, exchanged and modified as means of communication between particles.
 >- *Handle* - Handles allow particles to read, write and listen for data updates.
 
-That was a lot of dense definitions. Let’s take a step back and understand how these concepts work in harmony to create working systems.
+Those were some dense definitions. Let’s take a step back and understand how these concepts work in harmony to create working systems.
 
 Schemas are used to define the data type. Entities are data, defined by a schema (data type). We use handles to pass this data between particles. The interaction between the handle and particle can be read and/or write. But don’t worry about this for the moment, we’ll cover these relationships in more detail in upcoming tutorials. 
 
@@ -367,7 +367,7 @@ defineParticle(({SimpleParticle, html}) => {
 });
 ```
 
-When you execute this recipe, you should see everyone being greeted. If you added or remove an entity from the `PeopleData` store, the number of people greeted will change accordingly thanks to the template interpolation.
+When you execute this recipe, you should see everyone being greeted. If you add or remove an entity from the `PeopleData` store, the number of people greeted will change accordingly thanks to the template interpolation.
 
 # The Lore of a JSON Store
 

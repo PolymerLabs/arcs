@@ -6,25 +6,25 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Foo
-  Text value
+  value: Text
 schema Bar
-  Text value
+  value: Text
 schema Far
 
 particle TestParticle in 'test-particle.js'
-  in Foo foo
-  out Bar bar
+  foo: reads Foo
+  bar: writes Bar
   description `test particle`
 
 interface TestInterface
-  in Foo foo
-  out Bar bar
+  foo: reads Foo
+  bar: writes Bar
 
 particle OuterParticle in 'outer-particle.js'
-  host TestInterface particle0
-  in Foo input
-  out Bar output
+  particle0: hosts TestInterface
+  input: reads Foo
+  output: writes Bar
 
 particle ConsumerParticle in 'consumer-particle.js'
-  in Bar input
-  consume annotation
+  input: reads Bar
+  annotation: consumes Slot

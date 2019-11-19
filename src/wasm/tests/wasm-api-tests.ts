@@ -89,10 +89,6 @@ class TestLoader extends Loader {
     });
 
     it('getTemplate / populateModel / renderSlot', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores, slotComposer} = await setup('RenderTest');
       const flags = stores.get('flags') as VolatileSingleton;
 
@@ -116,10 +112,6 @@ class TestLoader extends Loader {
     });
 
     it('autoRender', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores, slotComposer} = await setup('AutoRenderTest');
       const data = stores.get('data') as VolatileSingleton;
 

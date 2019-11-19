@@ -15,7 +15,6 @@ android_library(
     ],
     assets_dir = "",
     exports_manifest = 1,
-    idl_import_root = ".",
     idl_srcs = glob(["*.aidl"]),
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     manifest = "AndroidManifest.xml",

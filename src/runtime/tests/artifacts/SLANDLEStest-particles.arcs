@@ -27,4 +27,4 @@ particle SlandleOuterParticle in 'SLANDLESSYNTAXouter-particle.js'
 
 particle SlandleConsumerParticle in 'consumer-particle.js'
   input: reads Bar
-  annotation: consumes? Slot
+  annotation: `consumes Slot

@@ -31,7 +31,7 @@ particle Chooser in 'source/Chooser.js'
 particle AlsoOn in 'source/AlsoOn.js'
   in Thing product
   in [Thing] choices
-  consume annotation
+  must consume annotation
 
 recipe &addFromWishlist
   use as shoplist

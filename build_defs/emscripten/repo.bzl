@@ -7,7 +7,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 ## The directory structure might change between versions without warning, so
 # the emsdk.BUILD file might need updating too (also, the bundled version of
 # node might change too).
-_emsdk_commit_hash = "efc64876db1473312587a3f346be000a733bc16d"
+_emsdk_commit_hash = "a5082b232617c762cb65832429f896c838df2483"
 _emscripten_version = "1.38.43"
 
 def emsdk_repo():

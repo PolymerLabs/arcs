@@ -26,7 +26,7 @@ const debug =
   || process.argv.includes('--wdio-debug')
   || process.env['DEBUG'] === 'true'
   ;
-const chromeArgs = debug ? [] : ['--headless'];
+const chromeArgs = debug ? [] : ['--headless', '--disable-extensions', '--no-sandbox'];
 
 exports.config = {
   //

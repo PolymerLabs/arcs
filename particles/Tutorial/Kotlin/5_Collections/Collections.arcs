@@ -18,7 +18,7 @@ resource PeopleData
 // entity, and is backed by the PeopleData resource defined above.
 store PeopleToGreetStore of [PersonDetails] in PeopleData
 
-particle CollectionsParticle in 'collections.wasm'
+particle CollectionsParticle in 'Collections.wasm'
   // The input is a collection of PersonDetails entities.
   inputData: reads [PersonDetails]
   root: consumes

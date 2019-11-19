@@ -17,7 +17,7 @@ class StringDecoder(private var str: String) {
             val dict = mutableMapOf<String, String>()
 
             var num = decoder.getInt(":")
-            while(num-- > 0){
+            while (num-- > 0) {
                 val klen = decoder.getInt(":")
                 val key = decoder.chomp(klen)
 
@@ -31,7 +31,7 @@ class StringDecoder(private var str: String) {
         }
     }
 
-    fun done():Boolean {
+    fun done(): Boolean {
         return str.isEmpty()
     }
 
@@ -85,7 +85,7 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
             val sb = StringBuilder()
             sb.append(dict.size).append(":")
 
-            for((key, value) in dict) {
+            for ((key, value) in dict) {
                 sb.append(key.length).append(":").append(key)
                 sb.append(encodeValue(value))
             }
@@ -93,7 +93,7 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
         }
 
         fun encodeList(list: List<Any>): String {
-            return list.joinToString(separator = "", prefix = "${list.size}:") { encodeValue(it) } 
+            return list.joinToString(separator = "", prefix = "${list.size}:") { encodeValue(it) }
         }
 
         fun encodeValue(value: Any?): String {
@@ -114,7 +114,7 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
         }
     }
 
-    fun result():String = sb.toString()
+    fun result(): String = sb.toString()
 
     fun encode(prefix: String, str: String) {
         sb.append("$prefix${str.length}:$str|")

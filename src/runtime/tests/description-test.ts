@@ -21,6 +21,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
 import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
+import {ConCap} from '../../testing/test-util.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
@@ -730,7 +731,7 @@ schema GitHubDash`));
   });
 
   it('fails gracefully (no asserts)', async () => {
-    const verifyNoAssert = async (manifestStr, expectedSuggestion) => {
+    const verifyNoAssert = async (manifestStr, expectedSuggestion, expectedWarning) => {
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
       const recipe = manifest.recipes[0];
@@ -738,7 +739,9 @@ schema GitHubDash`));
       assert.isTrue(recipe.isResolved());
       const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
-      assert.strictEqual(description.getArcDescription(), expectedSuggestion);
+      const arcDesc = ConCap.capture(() => description.getArcDescription());
+      assert.strictEqual(arcDesc.result, expectedSuggestion);
+      assert.match(arcDesc.warn[0], expectedWarning);
     };
 
     await verifyNoAssert(`
@@ -746,35 +749,35 @@ schema GitHubDash`));
       recipe
         Foo
         description \`\${Bar.things}\`
-    `, undefined);
+    `, undefined, /Cannot find particles with name Bar/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
       recipe
         Foo
         description \`Hello \${Bar.things}\`
-    `, `Hello .`);
+    `, `Hello .`, /Cannot find particles with name Bar/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
         description \`\${bar}\`
       recipe
         Foo
-    `, undefined);
+    `, undefined, /Unknown handle connection name 'bar'/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
         description \`\${bar.baz.boo}\`
       recipe
         Foo
-    `, undefined);
+    `, undefined, /Slot connections tokens must have exactly 2 names, found 3/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
       recipe
         Foo
         description \`\${foo.bar}\`
-    `, undefined);
+    `, undefined, /Invalid particle name 'foo'/);
   });
 });
 
