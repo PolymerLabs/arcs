@@ -32,6 +32,28 @@ class CollectionApiTest : Particle() {
                 out_.remove(stored)
             }
             "case4" -> {
+                val d1 = CollectionApiTest_OutHandle()
+                val iter = in_.iterator()
+                val i1 = iter.next()
+                d1.txt = i1.toString()
+                d1.num = d1.num?.times(2)
+                d1.flg = iter.hasNext()
+                out_.store(d1)
+
+                val d2 = CollectionApiTest_OutHandle()
+                val i2 = iter.next()
+                d2.txt = if (i1.equals(i2)) "eq" else "ne"
+                d2.flg = iter.hasNext()
+                out_.store(d2)
+
+                val d3 = CollectionApiTest_OutHandle()
+                val i3 = iter.next()
+                d3.txt = if (i2.equals(i1)) "ne" else "eq"
+                d3.flg = iter.hasNext()
+                out_.store(d3)
+            }
+            "case5" -> {
+                // TODO(alxr)
 
             }
         }
