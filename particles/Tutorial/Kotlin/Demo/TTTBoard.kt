@@ -33,12 +33,12 @@ class TTTBoard : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        this.renderOutput()
-        super.onHandleUpdate(handle)
+        if (handle.name.equals("gameState")) {
+            this.renderOutput()
+        }
     }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-
         val board = this.gameState.get()?.board ?: ",,,,,,,,"
         val boardArr = board.split(",").map { it.trim() }
         val boardList = mutableListOf<Map<String, String?>>()
