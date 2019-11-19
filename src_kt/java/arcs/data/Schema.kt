@@ -23,7 +23,7 @@ class Schema(
     val name: SchemaName?
         get() = names.firstOrNull()
 
-    val emptyRawEntity: RawEntity
+    private val emptyRawEntity: RawEntity
         get() = RawEntity(
             singletonFields = fields.singletons,
             collectionFields = fields.collections

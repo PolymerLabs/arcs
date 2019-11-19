@@ -11,9 +11,11 @@ kt_android_library(
     idl_parcelables = glob(["*.aidl"]),
     deps = [
         "//shells/android/java/arcs/crdt/parcelables",
+        "//shells/android/java/arcs/type/parcelables",
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
-        "//src_kt/java/arcs/storage"
+        "//src_kt/java/arcs/storage",
+        "//src_kt/java/arcs/type"
     ],
 )
