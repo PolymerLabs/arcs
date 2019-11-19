@@ -16,7 +16,7 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
     /** Run tests on particle initialization */
     override fun init() {
         testLanguageKeywordField()
-//        testLanguageKeywordEncoding()
+        testLanguageKeywordEncoding()
     }
 
     @Test
@@ -32,7 +32,6 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
         val s = SpecialSchemaFieldsTest_Fields(for_="test")
         val encoding: String = s.encodeEntity()
         assertTrue("The encoding uses the language keyword", encoding.contains("for"))
-        assertEquals("msg", "something", encoding)
     }
 
     @Test
