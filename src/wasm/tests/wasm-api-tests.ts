@@ -217,10 +217,6 @@ class TestLoader extends Loader {
 
     // TODO - check that writing to read-only handles throws and vice versa
     it('singleton storage API', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores} = await setup('SingletonApiTest');
       const inStore = stores.get('inHandle') as VolatileSingleton;
       const outStore = stores.get('outHandle') as VolatileSingleton;
