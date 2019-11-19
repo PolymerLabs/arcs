@@ -51,18 +51,6 @@ git_repository(
     commit = "353329496db7817fa99d18ebec3c76410bdbc6a0"
 )
 
-#RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
-
-#RULES_KOTLIN_SHA = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
-
-#http_archive(
-#    name = "io_bazel_rules_kotlin",
-#    sha256 = RULES_KOTLIN_SHA,
-#    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
-#    type = "zip",
-#    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
-#)
-
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 KOTLIN_VERSION = "1.3.31"
