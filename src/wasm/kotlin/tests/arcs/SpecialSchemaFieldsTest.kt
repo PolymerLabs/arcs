@@ -17,12 +17,14 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
     override fun init() {
         testLanguageKeywordField()
         testLanguageKeywordEncoding()
+        testInternalIdField()
+        testInternalIdEncoding()
     }
 
     @Test
     fun testLanguageKeywordField() {
         val s = SpecialSchemaFieldsTest_Fields()
-        assertNull("Keyword field `_for` should start as null", s.for_)
+        assertNull("Keyword field `for_` should start as null", s.for_)
         s.for_ = "for"
         assertEquals("language keyword field gets is mutable", "for", s.for_)
     }
@@ -36,7 +38,18 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
 
     @Test
     fun testInternalIdField() {
+        val s = SpecialSchemaFieldsTest_Fields()
+        assertNull("Keyword field `internalId_` should start as null", s.internalId_)
+        s.internalId_ = 10.0
+        assertEquals("language keyword field gets is mutable", 10.0, s.internalId_)
+        assertNotEquals("The internalId field should be different from the internal identifier", s.internalId_, s.internalId)
+    }
 
+    @Test
+    fun testInternalIdEncoding() {
+        val s = SpecialSchemaFieldsTest_Fields(internalId_=10.0)
+        val encoding: String = s.encodeEntity()
+        assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("internalId"))
     }
 }
 
