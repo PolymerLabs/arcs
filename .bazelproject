@@ -1,24 +1,35 @@
 directories:
-  src_kt/java/arcs
-  src_kt/javatests/arcs
-  src_kt/project
+  src_kt/java
+  src_kt/javatests
   build_defs
   tools
   third_party
   particles
   src
+  shells/android/java
+  shells/android/javatests
+  javaharness/java
+  javaharness/javatests
 
 targets:
   //src_kt/java/...
   //src_kt/javatests/...
+  //shells/android/java/...
+  //shells/android/javatests/...
+  //javaharness/java/...
+  //javaharness/javatests/...
 
 test_sources:
   src_kt/javatests/
+  shells/android/javatests/
+  javaharness/javatests/
 
 additional_languages:
   kotlin
 
-workspace_type: java
+java_language_level: 8
+
+android_sdk_platform: android-29
 
 build_flags:
   --incompatible_depset_is_not_iterable=false
