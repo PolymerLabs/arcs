@@ -10,12 +10,12 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
         android_local_test(
             name = src_file[:-3],
             size = "small",
-            test_class = "arcs.storage.parcelables.%s" % src_file[:-3],
             manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
+            test_class = "arcs.storage.parcelables.%s" % src_file[:-3],
             deps = [
                 ":%sLib" % src_file[:-3],
                 "@robolectric//bazel:android-all",
-            ]
+            ],
         ),
         kt_android_library(
             name = src_file[:-3] + "Lib",
@@ -26,6 +26,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
                 "//shells/android/java/arcs/storage/parcelables",
                 "//src_kt/java/arcs/crdt",
                 "//src_kt/java/arcs/storage",
+                "//src_kt/java/arcs/storage/driver",
                 "//third_party/android/androidx_test/core",
                 "//third_party/android/androidx_test/ext/junit",
                 "//third_party/java/junit",
@@ -33,7 +34,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
                 "//third_party/java/robolectric",
                 "//third_party/java/truth",
             ],
-        )
+        ),
     ]
     for src_file in glob(["*.kt"])
 ]

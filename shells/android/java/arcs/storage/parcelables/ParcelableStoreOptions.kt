@@ -27,7 +27,7 @@ import arcs.type.parcelables.writeType
 
 /** [Parcelable] variant for [StoreOptions]. */
 data class ParcelableStoreOptions(
-    val actual: StoreOptions<out CrdtData, out CrdtOperation, Any?>,
+    val actual: StoreOptions<out CrdtData, out CrdtOperation, out Any?>,
     val crdtType: ParcelableCrdtType
 ) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -71,3 +71,20 @@ data class ParcelableStoreOptions(
     }
 }
 
+/**
+ * Wraps the [StoreOptions] in a [ParcelableStoreOptions], using the [ParcelableCrdtType] as a hint.
+ */
+fun StoreOptions<out CrdtData, out CrdtOperation, out Any?>.toParcelable(
+    crdtType: ParcelableCrdtType
+): ParcelableStoreOptions = ParcelableStoreOptions(this, crdtType)
+
+/** Writes [StoreOptions] to the [Parcel]. */
+fun Parcel.writeStoreOptions(
+    storeOptions: StoreOptions<out CrdtData, out CrdtOperation, out Any?>,
+    representingCrdtType: ParcelableCrdtType,
+    flags: Int
+) = writeTypedObject(storeOptions.toParcelable(representingCrdtType), flags)
+
+/** Reads [StoreOptions] from the [Parcel]. */
+fun Parcel.readStoreOptions(): StoreOptions<out CrdtData, out CrdtOperation, out Any?>? =
+    readTypedObject(ParcelableStoreOptions.CREATOR)?.actual

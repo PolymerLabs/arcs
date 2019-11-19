@@ -34,8 +34,10 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     data class CollectionType(
         override val actual: arcs.data.CollectionType<*>
     ) : ParcelableType(actual) {
-        override fun writeToParcel(parcel: Parcel, flags: Int) =
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
             parcel.writeType(actual.collectionType, flags)
+        }
 
         companion object CREATOR : Parcelable.Creator<CollectionType> {
             override fun createFromParcel(parcel: Parcel): CollectionType =
@@ -49,7 +51,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     data class CountType(
         override val actual: arcs.data.CountType = arcs.data.CountType()
     ) : ParcelableType(actual) {
-        override fun writeToParcel(parcel: Parcel, flags: Int) = Unit // Nothing else needed.
+        // No need to override writeToParcel.
 
         companion object CREATOR : Parcelable.Creator<CountType> {
             override fun createFromParcel(parcel: Parcel): CountType = CountType()
@@ -61,8 +63,10 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     data class EntityType(
         override val actual: arcs.data.EntityType
     ) : ParcelableType(actual) {
-        override fun writeToParcel(parcel: Parcel, flags: Int) =
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
             parcel.writeSchema(actual.entitySchema, flags)
+        }
 
         companion object CREATOR : Parcelable.Creator<EntityType> {
             override fun createFromParcel(parcel: Parcel): EntityType =
@@ -76,8 +80,10 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     class ReferenceType(
         override val actual: arcs.data.ReferenceType<*>
     ) : ParcelableType(actual) {
-        override fun writeToParcel(parcel: Parcel, flags: Int) =
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
             parcel.writeType(actual.containedType, flags)
+        }
 
         companion object CREATOR : Parcelable.Creator<ReferenceType> {
             override fun createFromParcel(parcel: Parcel): ReferenceType =
@@ -91,8 +97,10 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     data class SingletonType(
         override val actual: arcs.data.SingletonType<*>
     ) : ParcelableType(actual) {
-        override fun writeToParcel(parcel: Parcel, flags: Int) =
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
             parcel.writeType(actual.containedType, flags)
+        }
 
         companion object CREATOR : Parcelable.Creator<SingletonType> {
             override fun createFromParcel(parcel: Parcel): SingletonType =
@@ -106,7 +114,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
 
     companion object CREATOR : Parcelable.Creator<ParcelableType> {
         override fun createFromParcel(parcel: Parcel): ParcelableType =
-            when(Tag.values()[parcel.readInt()]) {
+            when (Tag.values()[parcel.readInt()]) {
                 Tag.Collection -> CollectionType.createFromParcel(parcel)
                 Tag.Count -> CountType.createFromParcel(parcel)
                 Tag.Entity -> EntityType.createFromParcel(parcel)

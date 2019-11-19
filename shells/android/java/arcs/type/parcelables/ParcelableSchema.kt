@@ -20,7 +20,7 @@ import arcs.data.SchemaName
 data class ParcelableSchema(val actual: Schema) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeStringList(
-            actual.names.mapTo(mutableListOf()) {it.name}
+            actual.names.mapTo(mutableListOf()) { it.name }
         )
         parcel.writeSchemaFields(actual.fields, flags)
         parcel.writeSchemaDescription(actual.description, flags)
