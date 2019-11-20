@@ -26,7 +26,7 @@ describe('ArcStoresFetcher', () => {
   it('allows fetching a list of arc stores', async () => {
     const context = await Manifest.parse(`
       schema Foo
-        Text value`);
+        value: Text`);
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
@@ -99,13 +99,13 @@ describe('ArcStoresFetcher', () => {
     });
     const context = await Manifest.parse(`
       schema Foo
-        Text value
+        value: Text
       particle P in 'p.js'
-        inout Foo foo
+        foo: reads writes Foo
       recipe
-        create as foo
+        foo: create *
         P
-          foo = foo`);
+          foo: foo`);
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 

@@ -31,13 +31,13 @@ describe('DevtoolsArcInspector', () => {
     });
     const context = await Manifest.parse(`
       schema Foo
-        Text value
+        value: Text
       particle P in 'p.js'
-        inout Foo foo
+        foo: reads writes Foo
       recipe
-        use as foo
+        foo: use *
         P
-          foo = foo`);
+          foo: foo`);
     const runtime = new Runtime(loader, MockSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
