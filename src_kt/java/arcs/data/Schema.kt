@@ -15,7 +15,7 @@ import arcs.crdt.CrdtEntity
 import arcs.crdt.internal.VersionMap
 import arcs.type.Type
 
-class Schema(
+data class Schema(
     val names: List<SchemaName>,
     val fields: SchemaFields,
     val description: SchemaDescription
@@ -23,7 +23,7 @@ class Schema(
     val name: SchemaName?
         get() = names.firstOrNull()
 
-    val emptyRawEntity: RawEntity
+    private val emptyRawEntity: RawEntity
         get() = RawEntity(
             singletonFields = fields.singletons,
             collectionFields = fields.collections
