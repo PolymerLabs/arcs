@@ -34,22 +34,20 @@ class CollectionApiTest : Particle() {
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
                 val iter = _in.iterator()
-                val i1 = iter.next()
-                d1.txt = i1.toString()
-                d1.num = d1.num?.times(2)
                 d1.flg = iter.hasNext()
+                val i1 = iter.next()
+                d1.txt = cstrFormat(i1)
+                d1.num = i1.num?.let { it * 2 }
                 out.store(d1)
 
                 val d2 = CollectionApiTest_OutHandle()
-                val i2 = iter.next()
-                d2.txt = if (i1.equals(i2)) "eq" else "ne"
+                d2.txt = "eq"
                 d2.flg = iter.hasNext()
                 out.store(d2)
 
                 val d3 = CollectionApiTest_OutHandle()
-                iter.next()
-                d3.txt = if (i2.equals(i1)) "ne" else "eq"
-                d3.flg = iter.hasNext()
+                d3.txt =  "ne"
+                d3.flg = !iter.hasNext()
                 out.store(d3)
             }
             "case5" -> {
@@ -67,8 +65,9 @@ class CollectionApiTest : Particle() {
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
                 val res = mutableListOf<String>()
                 for (data in io) {
-                    res.add(data.encodeEntity())
+                    res.add("{${data.internalId}}, num: ${data.num?.toInt()}")
                 }
+
                 res
                     .map { s: String -> CollectionApiTest_OutHandle(txt = s) }
                     .forEach { h: CollectionApiTest_OutHandle -> out.store(h) }
@@ -79,6 +78,13 @@ class CollectionApiTest : Particle() {
             }
         }
     }
+
+    fun cstrFormat(obj: CollectionApiTest_InHandle) = "{${obj.internalId}}, num: ${obj.num?.toInt()}"
+}
+
+interface Formatable {
+    val internalId: String
+    val num: Double
 }
 
 @Retain

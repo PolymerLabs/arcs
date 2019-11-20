@@ -239,10 +239,6 @@ class TestLoader extends Loader {
     });
 
     it('collection storage API', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores} = await setup('CollectionApiTest');
       const inStore = stores.get('inHandle') as VolatileCollection;
       const outStore = stores.get('outHandle') as VolatileCollection;
@@ -271,6 +267,7 @@ class TestLoader extends Loader {
       assert.isEmpty(await outStore.toList());
 
       // in.begin(), in.end() and iterator methods
+      // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
         {txt: '{id3}, num: 3', num: 6, flg: true},
