@@ -984,7 +984,7 @@ describe('Automatic resolution', () => {
 
       particle ThingRenderer
         in Thing thing
-        consume item
+        must consume item
 
       recipe ProducingRecipe
         create #items as things
