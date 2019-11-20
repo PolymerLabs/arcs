@@ -17,26 +17,26 @@ describe('common particles test', () => {
   it('resolves after cloning', async () => {
     const manifest = await Manifest.parse(`
   schema Thing
-    Text name
-    Text description
-    URL image
-    URL url
-    Text identifier
+    name: Text
+    description: Text
+    image: URL
+    url: URL
+    identifier: Text
 
   particle CopyCollection in 'source/CopyCollection.js'
-    in [~a] input
-    out [~a] output
+    input: reads [~a]
+    output: writes [~a]
 
   recipe
-    map 'bigthings' as bigthings
-    map 'smallthings' as smallthings
-    create as things
+    bigthings: map 'bigthings'
+    smallthings: map 'smallthings'
+    things: create *
     CopyCollection
-      input <- bigthings
-      output -> things
+      input: reads bigthings
+      output: writes things
     CopyCollection
-      input <- smallthings
-      output -> things
+      input: reads smallthings
+      output: writes things
 
   resource BigThings
     start

@@ -526,7 +526,7 @@ ${recipesManifest}`);
     assert.strictEqual(particleP.connections.a.handle, particleQ.connections.b.handle);
     assert.strictEqual(particleP.connections.a.handle.connections[0].particle, particleP);
     assert.strictEqual(particleQ.connections.b.handle.connections[1].particle, particleQ);
-  });
+  }));
 
   it('carries slot assignments across verb substitution', async () => {
     const manifest = await Manifest.parse(`

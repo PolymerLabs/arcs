@@ -10,8 +10,8 @@ as inputs and outputs of Particles. See [schemas.md](../design/schemas.md) for m
 
 ```
 schema MyThing
-  Text someValue
-  URL someURL
+  someValue: Text
+  someURL: URL
 ```
 
 A schema can extend another schema defined or imported into the same manifest.
@@ -20,7 +20,7 @@ A schema can extend another schema defined or imported into the same manifest.
 schema YourThing
 
 schema MyThing extends YourThing
-  Text myStuff
+  myStuff: Text
 ```
 
 * TODO: value types
@@ -30,8 +30,8 @@ schema MyThing extends YourThing
 A schema can contain a description, which will override the default representation of the schema in recipe descriptions.
 ```
 schema USCity
-  Text name
-  Text state
+  name: Text
+  state: Text
   description `city` // used as singular type description
     plural `cities` // used as plural type description, instead of the default 'city list'
     value `${name}, ${state}` // used as the city value format, instead of the default ${name}.
@@ -140,7 +140,7 @@ Given the schema:
 
 ```
 schema Product
-  Text name
+  name: Text
 ```
 
 A corresponding JSON file might look like:
@@ -173,7 +173,7 @@ Can include how particle inputs are connected to handles:
 ```
 ...
 recipe
-  handle1: map                   // maps a store external to the arc; changes in the
+  handle1: map *                 // maps a store external to the arc; changes in the
                                  // external store will be reflected locally, but the
                                  // local handle is read-only.
   handle2: use *                 // uses some handle already in the Arc
