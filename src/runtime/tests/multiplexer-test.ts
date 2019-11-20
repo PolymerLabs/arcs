@@ -102,7 +102,6 @@ describe('Multiplexer', () => {
     recipe.handles[0].mapToStorage(barStore);
     const options = {errors: new Map()};
     const n = recipe.normalize(options);
-    console.log([...options.errors.entries()].map(x => x.map(x => x.toString())));
     assert(n, 'normalizes');
     assert(recipe.isResolved());
 
