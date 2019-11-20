@@ -639,7 +639,12 @@ DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consume
   {
     // TODO(jopra): Parse optionality properly.
     requireUsePostSlandleSyntax(8);
-    return AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
+    let dir = text();
+    if (dir === 'reads? writes') {
+      // Fix for faking proper capability set support with optionality.
+      dir = 'reads writes';
+    }
+    return AstNode.directionToPreSlandlesDirection(dir as AstNode.DirectionUnified);
   }
 
 // TODO(jopra): Remove when syntax is updated to not use arrows.
@@ -1136,7 +1141,7 @@ RecipeParticleSlotConnectionUnified
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
-      param,
+      param: param || '*',
       tags: tags || [],
       name: optional(name, name=>name[1], null),
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
