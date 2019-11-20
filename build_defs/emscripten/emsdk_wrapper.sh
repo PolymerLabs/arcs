@@ -21,9 +21,18 @@ export EMSDK="$repo"
 export EM_CONFIG="$repo/.emscripten"
 export EMSDK_NODE="$repo/node/12.9.1_64bit/bin/node"
 
-# Use a different location for emscripten's cache folder. The default one, which
+# Create a new tmp folder for emscripten's cache folder. The default one, which
 # is inside the emsdk folder, is read-only.
-export EM_CACHE="$PWD/bazel_emscripten"
+export EM_CACHE=$(mktemp -d -t emscripten-cache-XXXXXXXXXX)
+
+# Copy over the precompiled stdlibs that have been checked into the repo over to
+# the tmp cache folder.
+REPO_CACHE="${BASH_SOURCE[0]}.runfiles/__main__/emscripten_cache"
+cp -r "$REPO_CACHE/." "$EM_CACHE/"
 
 # Run the command line args that were passed to this script.
 exec "$@"
+
+# Delete the cache. Comment out this line to preserve the compiled artifacts
+# (e.g. if you want to copy them back to into the repo).
+rm -rf "$EM_CACHE"
