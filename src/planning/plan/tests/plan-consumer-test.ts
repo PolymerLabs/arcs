@@ -35,8 +35,8 @@ async function createPlanConsumer(storageKeyBase, arc) {
 }
 
 async function storeResults(consumer, suggestions) {
-  const mergeResult = consumer.result.merge({suggestions}, consumer.arc);
-  //assert.isTrue(mergeResult);
+  /*const mergeResult =*/ consumer.result.merge({suggestions}, consumer.arc);
+  /*assert.isTrue(mergeResult);*/
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }

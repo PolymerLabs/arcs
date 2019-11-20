@@ -51,10 +51,14 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     await super.setHandles(handles);
   }
 
+  // TODO(sjmiles): your average multiplexer doesn't render anything
+  // itself. Multiplexer creates inner arcs, the inner arcs own
+  // particles, and the particles render themselves.
+
   update(props, state, oldProps, oldState) {
     const {list}: {list: Array<{}>} = props;
     const {arc}: {arc: InnerArcHandle} = state;
-    log(`[${this.spec.name}]::update`, list, arc);
+    //log(`[${this.spec.name}]::update`, list, arc);
     if (!list || !arc) {
       return;
     }
@@ -77,7 +81,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       otherMappedHandles: string[],
       otherConnections: string[]
     } = state;
-    log('updateEntries...');
+    //log('updateEntries...');
     // TODO(sjmiles): needs safety for re-entrant update
     for (const [index, item] of this.getListEntries(list)) {
       await this.updateEntry(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
@@ -86,19 +90,19 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     for (let i=list.length, plexed; (plexed=this.plexeds[i]); i++) {
       plexed.then(plexed => plexed.handle['clear']());
     }
-    log('updateEntries::renderOutput()');
+    //log('updateEntries::renderOutput()');
     // TODO(sjmiles): need async rendering after updateEntries ...
     // change so it's handled via normal state operations
     //this.renderOutput(props, state, oldProps, oldState);
   }
 
   async updateEntry(index, item, {hostedParticle, arc, type, otherConnections, otherMappedHandles}) {
-    log('updateEntry', index);
+    //log('updateEntry', index);
     if (!hostedParticle && !item.renderParticleSpec) {
       // If we're muxing on behalf of an item with an embedded recipe, the
       // hosted particle should be retrievable from the item itself. Else we
       // just skip this item.
-      log('updateEntry::skip', index);
+      //log('updateEntry::skip', index);
       return;
     }
     //console.log(`RenderEx:updateEntry: %c[${index}]`, 'color: #A00; font-weight: bold;');
@@ -114,7 +118,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   async requirePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles}) {
     let promise = this.plexeds[index];
     if (!promise) {
-      log('requirePlexed::makePromise', index);
+      //log('requirePlexed::makePromise', index);
       // eslint-disable-next-line no-async-promise-executor
       promise = new Promise(async resolve => {
         //log('requirePlexed::await acquireItemHandle', index);
@@ -122,9 +126,9 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
         //log('requirePlexed::await resolveHosting', index);
         const hosting = await this.resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles});
         const result = {arc, handle, hosting, slotId: null};
-        log('requirePlexed::await createInnards', index);
+        //log('requirePlexed::await createInnards', index);
         result.slotId = await this.createInnards(item, result);
-        log('requirePlexed::resolve', index);
+        //log('requirePlexed::resolve', index);
         resolve(result);
       });
       this.plexeds[index] = promise;
@@ -193,7 +197,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   async createInnards(item, {arc, handle, hosting: {hostedParticle, otherMappedHandles, otherConnections}}) {
     const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
     const slotName = [...this.spec.slotConnections.values()][0].name;
-    log('createInnards::await createSlot');
+    //log('createInnards::await createSlot');
     const slotId = await arc.createSlot(this, slotName, handle._id);
     if (slotId) {
       try {
@@ -202,14 +206,14 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
           {name: hostedSlotName, id: slotId},
           {connections: otherConnections, handles: otherMappedHandles}
         );
-        log('createInnards::await loadRecipe');
+        //log('createInnards::await loadRecipe');
         await arc.loadRecipe(recipe);
       }
       catch (e) {
         console.warn(e);
       }
     }
-    log('createInnards::return slotId', slotId);
+    //log('createInnards::return slotId', slotId);
     return slotId;
   }
 

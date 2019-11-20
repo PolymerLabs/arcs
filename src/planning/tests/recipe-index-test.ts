@@ -12,8 +12,8 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
-import {UiSlotComposer} from '../../runtime/ui-slot-composer.js';
+//import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
+import {UiSlotComposer as SlotComposer} from '../../runtime/ui-slot-composer.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {ArcId} from '../../runtime/id.js';
@@ -30,7 +30,7 @@ describe('RecipeIndex', () => {
       id: ArcId.newForTest('test-plan-arc'),
       context: manifest,
       loader,
-      slotComposer: new UiSlotComposer()
+      slotComposer: new SlotComposer()
       //slotComposer: new MockSlotComposer()
     });
     const recipeIndex = RecipeIndex.create(arc);

@@ -30,6 +30,7 @@ export type SlotComposerOptions = {
 };
 
 export class UiSlotComposer {
+  readonly modality: string;
   readonly modalityHandler: ModalityHandler;
   private readonly _consumers: SlotConsumer[] = [];
 
@@ -47,7 +48,7 @@ export class UiSlotComposer {
       modalityHandler: ModalityHandler.basicHandler,
       ...options
     };
-
+    this.modality = opts.modalityName;
     this.modalityHandler = opts.modalityHandler;
   }
 
@@ -89,17 +90,7 @@ export class UiSlotComposer {
       });
     });
     // Set context for each of the slots.
-    newConsumers.forEach(consumer => {
-      this._addSlotConsumer(consumer);
-      //const context = this.findContextById(consumer.consumeConn.targetSlot.id);
-      // TODO(sjmiles): disabling this assert for now because rendering to unregistered slots
-      // is allowed under new rendering factorisation. Maybe we bring this back as a validity
-      // test in the future, but it's not a requirement atm.
-      //assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
-      //if (context && context['addSlotConsumer']) {
-      //  context['addSlotConsumer'](consumer);
-      //}
-    });
+    newConsumers.forEach(consumer => this._addSlotConsumer(consumer));
     // Calculate the Descriptions only once per-Arc
     const allArcs = this.consumers.map(consumer => consumer.arc);
     const uniqueArcs = [...new Set(allArcs).values()];
@@ -114,38 +105,12 @@ export class UiSlotComposer {
   }
 
  _addSlotConsumer(slot: SlotConsumer) {
-   // const pec = slot.arc.pec;
-    //slot.startRenderCallback = pec.startRender.bind(pec);
-    //slot.stopRenderCallback = pec.stopRender.bind(pec);
     this._consumers.push(slot);
-  }
-
-  async XinitializeRecipe(arc: Arc, recipeParticles: Particle[]) {
-    // Create slots for each of the recipe's particles slot connections.
-    recipeParticles.forEach(p => {
-      p.getSlandleConnections().forEach(cs => {
-        if (!cs.targetSlot) {
-          assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
-          return;
-        }
-      });
-    });
-    // Calculate the Descriptions only once per-Arc
-    const allArcs = this.consumers.map(consumer => consumer.arc);
-    const uniqueArcs = [...new Set(allArcs).values()];
-    // get arc -> description
-    const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
-    // create a mapping from the zipped uniqueArcs and descriptions
-    const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
-    // ... and apply to each consumer
-    for (const consumer of this.consumers) {
-      consumer.description = consumerByArc.get(consumer.arc);
-    }
   }
 
   dispose(): void {
     this.disposeConsumers();
-    //this.disposeObserver();
+    this.disposeObserver();
   }
 
   disposeConsumers() {
@@ -155,23 +120,23 @@ export class UiSlotComposer {
 
   // TODO(sjmiles): experimental slotObserver stuff below here
 
-  // observeSlots(slotObserver) {
-  //   this['slotObserver'] = slotObserver;
-  //   // TODO(sjmiles): this is weird, fix
-  //   slotObserver.dispatch = (pid, eventlet) => {
-  //     console.log('ui-slot-composer dispatch for pid', pid, eventlet);
-  //     this.sendEvent(pid, eventlet);
-  //   };
-  // }
+  observeSlots(slotObserver) {
+    this['slotObserver'] = slotObserver;
+    // TODO(sjmiles): this is weird, fix
+    slotObserver.dispatch = (pid, eventlet) => {
+      console.log('ui-slot-composer dispatch for pid', pid, eventlet);
+      this.sendEvent(pid, eventlet);
+    };
+  }
 
-  // // TODO(sjmiles): maybe better implemented as a slot dispose (arc dispose?) notification to
-  // // let client code clean up (so `slotObserver` details [like dispose()] can be hidden here)
-  // disposeObserver() {
-  //   const observer = this['slotObserver'];
-  //   if (observer) {
-  //     observer.dispose();
-  //   }
-  // }
+  // TODO(sjmiles): maybe better implemented as a slot dispose (arc dispose?) notification to
+  // let client code clean up (so `slotObserver` details [like dispose()] can be hidden here)
+  disposeObserver() {
+    const observer = this['slotObserver'];
+    if (observer) {
+      observer.dispose();
+    }
+  }
 
   sendEvent(particleId: string, eventlet) {
     log('sendEvent:', particleId, eventlet);

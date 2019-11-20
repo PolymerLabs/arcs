@@ -82,7 +82,7 @@ class TestPlanProducer extends PlanProducer {
 
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
-  describe('plan producer for ' + storageKeyBase, () => {
+  describe.skip('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
       const loader = new StubLoader({});
       const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);

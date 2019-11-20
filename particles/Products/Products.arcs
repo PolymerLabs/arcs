@@ -20,8 +20,10 @@ recipe Products
 // Entry point for Products Demo: create a shopping list from context data
 
 recipe CreateShoppingList
+  rootSlot: slot 'rootslotid-root'
   products: copy *
   Items
+    root: consumes rootSlot
     list: products
   ItemMultiplexer
     list: products

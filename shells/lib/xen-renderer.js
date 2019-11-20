@@ -128,7 +128,7 @@ export const SlotObserver = class {
         //console.warn('muxedNode:', muxedNode);
         //log('RenderEx:found multiplexed slot for', containerSlotName, data.subid);
         if (!slotNode) {
-          log(`couldn't find muxed slotNode`);
+          log(`couldn't find muxed slotNode, slotId=[${muxerSlotId}], subId=[${data.subid}]`);
           return false;
         }
       } else {
