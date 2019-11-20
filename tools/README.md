@@ -16,19 +16,19 @@
     docker build -f tools/Dockerfile.CI -t <tag-name-of-image> .
     ```
   
-3. Get the ID of the image you just built.
+4. Get the ID of the image you just built.
 
    ```
    docker images 
    ```
    
-4. Tag the image-to-upload to associate it with the target repository
+5. Tag the image-to-upload to associate it with the target repository
 
     ```
-    docker tag <image-from-step-three> arcsproject/travis-build:latest
+    docker tag <image-from-last-step> arcsproject/travis-build:latest
     ```
    
-5. Push the image
+6. Push the image
 
    ```
    docker push arcsproject/travis-build:latest
