@@ -1,8 +1,6 @@
 package arcs.test
 
-import arcs.Particle
-import arcs.log
-import arcs.WasmAddress
+import arcs.*
 import kotlin.native.internal.ExportForCppRuntime
 
 class ServiceParticle : Particle() {
@@ -57,7 +55,7 @@ class ServiceParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newServiceParticle")
-fun constructServiceParticle(): WasmAddress {
+fun constructServiceParticle(): Address {
   log("__newServiceParticle called")
-  return ServiceParticle().toWasmAddress()
+  return ServiceParticle().toAddress()
 }

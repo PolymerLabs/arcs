@@ -27,7 +27,8 @@ def _common_args(ctx, klibs):
     ])
 
     args.add_all(klibs, before_each = "-l")
-
+    for opt in ctx.attr.kotlincopts:
+        args.add(opt)
     args.add_all(ctx.files.srcs)
 
     return args
@@ -77,6 +78,10 @@ kt_wasm_binary = rule(
             default = "arcs.main",
             doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.main`.",
         ),
+        "kotlincopts": attr.string_list(
+            doc = """Flags to pass to kotlinc compiler.""",
+            default = []
+        ),
     },
     doc = "Builds a Wasm binary from Kotlin",
     outputs = {
@@ -119,6 +124,10 @@ kt_wasm_library = rule(
             default = Label("//build_defs/kotlin_native:kotlinc_wrapper"),
             executable = True,
             cfg = "host",
+        ),
+        "kotlincopts": attr.string_list(
+            doc = """Flags to pass to kotlinc compiler.""",
+            default = []
         ),
     },
     doc = "Builds a Wasm library (klib) from Kotlin files",

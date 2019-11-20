@@ -1,5 +1,6 @@
 package arcs.wasm
 
+import arcs.*
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.toUtf8
 import kotlinx.cinterop.ByteVar
@@ -13,7 +14,7 @@ import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.toLong
 
 // Model WasmAddress as an Int
-typealias WasmAddress = Int
+typealias WasmAddress = Address
 
 // Wasm Strings are also Int heap pointers
 typealias WasmString = Int
@@ -21,28 +22,9 @@ typealias WasmString = Int
 typealias WasmNullableString = Int
 
 
-internal val pinnedWasmObjects = kotlin.collections.mutableMapOf<Addressable, WasmAddress>()
-
-/**
- * Create a pinned stable pointer in the WASM heap from an [Addressable].
- */
-fun Addressable.toWasmAddress(): WasmAddress {
-    var cachedWasmAddress: WasmAddress? = pinnedWasmObjects[this]
-    if (cachedWasmAddress == null) {
-        cachedWasmAddress = StableRef.create(this).asCPointer().toLong().toWasmAddress()
-        pinnedWasmObjects[this] = cachedWasmAddress
-    }
-    return cachedWasmAddress as WasmAddress
-}
-
 // Extension method to convert an Int into a Kotlin heap ptr
 fun WasmAddress.toPtr(): NativePtr {
     return this.toLong().toCPointer<CPointed>()!!.rawValue
-}
-
-// Convert a WasmAddress back into a Kotlin Object reference
-inline fun <reified T : Any> WasmAddress.toObject(): T {
-    return this.toLong().toCPointer<CPointed>()!!.asStableRef<T>().get()
 }
 
 // Longs are only used for Kotlin-Native calls to ObjC/Desktop C targets
@@ -123,14 +105,14 @@ fun connectHandle(
     log("Connect called")
     return particlePtr
         .toObject<Particle>()
-        .connectHandle(handleName.toKString(), canRead, canWrite)!!
-        .toWasmAddress()
+        ?.connectHandle(handleName.toKString(), canRead, canWrite)
+        ?.toAddress() ?: 0
 }
 
 @Retain
 @ExportForCppRuntime("_init")
 fun init(particlePtr: WasmAddress) {
-    particlePtr.toObject<Particle>().init()
+    particlePtr.toObject<Particle>()?.init()
 }
 
 @Retain
@@ -139,10 +121,12 @@ fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNu
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
     val encodedStr: String? = encoded.toNullableKString()
-    log("Handle is '${handle.name}' syncing '$encodedStr'")
-    handle.sync(encodedStr)
-    log("Invoking sync on handle on particle")
-    particlePtr.toObject<Particle>().sync(handle)
+    handle?.let {
+        log("Handle is '${handle.name}' syncing '$encodedStr'")
+        log("Invoking sync on handle on particle")
+        handle.sync(encodedStr)
+        particlePtr.toObject<Particle>()?.sync(handle)
+    }
 }
 
 @Retain
@@ -154,8 +138,10 @@ fun updateHandle(
     encoded2Ptr: WasmNullableString
 ) {
     val handle = handlePtr.toObject<Handle>()
-    handle.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
-    particlePtr.toObject<Particle>().onHandleUpdate(handle)
+    handle?.let {
+        handle.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
+        particlePtr.toObject<Particle>()?.onHandleUpdate(handle)
+    }
 }
 
 @Retain
@@ -167,7 +153,7 @@ fun renderSlot(
     sendModel: Boolean
 ) {
     particlePtr.toObject<Particle>()
-        .renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
+        ?.renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
 }
 
 @Retain
@@ -178,7 +164,7 @@ fun fireEvent(
     handlerNamePtr: WasmString,
     eventData: WasmString
 ) {
-    particlePtr.toObject<Particle>().fireEvent(
+    particlePtr.toObject<Particle>()?.fireEvent(
         slotNamePtr.toKString(),
         handlerNamePtr.toKString(),
         StringDecoder.decodeDictionary(eventData.toKString())
@@ -194,14 +180,14 @@ fun serviceResponse(
     tagPtr: WasmString
 ) {
     val dict = StringDecoder.decodeDictionary(responsePtr.toKString())
-    particlePtr.toObject<Particle>().serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
+    particlePtr.toObject<Particle>()?.serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
 }
 
 @Retain
 @ExportForCppRuntime("_renderOutput")
 fun renderOutput(particlePtr: WasmAddress) {
     particlePtr.toObject<Particle>()
-        .renderOutput()
+        ?.renderOutput()
 }
 
 @SymbolName("_singletonSet")
@@ -264,6 +250,3 @@ fun log(msg: String) {
     flush()
 }
 
-fun main() {
-    RuntimeClient.impl = WasmRuntimeClient()
-}

@@ -2,47 +2,55 @@ package arcs
 
 import arcs.wasm.*
 
-class WasmRuntimeClient : IRuntimeClient {
-    override fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>) {
-        arcs.wasm.singletonClear(particle.toWasmAddress(), singleton.toWasmAddress())
+actual object RuntimeClient {
+    actual fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>) {
+        arcs.wasm.singletonClear(particle.toAddress(), singleton.toAddress())
     }
 
-    override fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: String) {
-        arcs.wasm.singletonSet(particle.toWasmAddress(), singleton.toWasmAddress(),
+    actual fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: String) {
+        arcs.wasm.singletonSet(particle.toAddress(), singleton.toAddress(),
             encoded.toWasmString())
     }
 
-    fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: String) {
-        arcs.wasm.collectionRemove(particle.toWasmAddress(), collection.toWasmAddress(),
+    actual fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: String) {
+        arcs.wasm.collectionRemove(particle.toAddress(), collection.toAddress(),
             encoded.toWasmString())
     }
 
-    fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>) {
-        arcs.wasm.collectionClear(particle.toWasmAddress(), collection.toWasmAddress())
+    actual fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>) {
+        arcs.wasm.collectionClear(particle.toAddress(), collection.toAddress())
     }
 
-    fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String) {
-        arcs.wasm.collectionStore(particle.toWasmAddress(), collection.toWasmAddress(), encoded.toWasmString())
+    actual fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String) {
+        arcs.wasm.collectionStore(particle.toAddress(), collection.toAddress(), encoded.toWasmString())
     }
 
-    fun log(msg: String) {
+    actual fun log(msg: String) {
         arcs.wasm.log(msg);
     }
 
-    fun onRenderOutput(particle: Particle, template: String, model: String) {
-        arcs.wasm.onRenderOutput(particle.toWasmAddress(), template.toWasmString(),
-            model.toWasmString())
+    actual fun onRenderOutput(particle: Particle, template: String?, model: String?) {
+        arcs.wasm.onRenderOutput(particle.toAddress(), template!!.toWasmString(),
+            model!!.toWasmString())
     }
 
-    fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String) {
-        arcs.wasm.serviceRequest(particle.toWasmAddress(), call.toWasmString(),
+    actual fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String) {
+        arcs.wasm.serviceRequest(particle.toAddress(), call.toWasmString(),
             encoded.toWasmString(), tag.toWasmString())
     }
 
-    fun resolveUrl(url: String): String {
+    actual fun resolveUrl(url: String): String {
         val r: WasmString = arcs.wasm.resolveUrl(url.toWasmString())
         val resolved = r.toKString()
         _free(r)
         return resolved
+    }
+
+    actual fun abort() {
+       arcs.wasm.abort();
+    }
+
+    actual fun assert(cond: Boolean) {
+        RuntimeClient.assert(cond);
     }
 }

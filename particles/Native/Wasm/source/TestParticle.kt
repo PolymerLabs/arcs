@@ -117,7 +117,7 @@ class TestParticle : Particle() {
             info.clear()
         }
         eventHandler("throw") {
-            throw Exception("this message doesn't get passed (yet?)")
+            throw kotlin.Exception("this message doesn't get passed (yet?)")
         }
         eventHandler("assert") {
             assert(2 + 2 == 3)
@@ -133,7 +133,7 @@ class TestParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTestParticle")
-fun construct(): WasmAddress {
+fun construct(): Address {
     log("__newTestParticle called")
-    return TestParticle().toWasmAddress()
+    return TestParticle().toAddress()
 }

@@ -1,7 +1,5 @@
 package arcs
 
-import kotlin.collections.set
-
 /**
  * Base class for all Wasm Particles.
  */
@@ -23,7 +21,7 @@ abstract class Particle : Addressable {
         handle.name = name
         handle.particle = this
         handles[name] = handle
-        IRuntimeClient.log("Registering $name")
+        RuntimeClient.log("Registering $name")
     }
 
     /**
@@ -40,7 +38,7 @@ abstract class Particle : Addressable {
      * @see [onHandleSync]
      */
     fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
-        log("Connect called internal '$name'")
+        RuntimeClient.log("Connect called internal '$name'")
 
         handles[name]?.let {
             if (canRead) {
@@ -52,7 +50,7 @@ abstract class Particle : Addressable {
             return it
         }
 
-        log("Handle $name not registered")
+        RuntimeClient.log("Handle $name not registered")
         return null
     }
 
@@ -85,7 +83,7 @@ abstract class Particle : Addressable {
 
     /** @param handle Handle to synchronize */
     fun sync(handle: Handle) {
-        IRuntimeClient.log("Particle.sync called")
+        RuntimeClient.log("Particle.sync called")
         toSync.remove(handle)
         onHandleSync(handle, toSync.isEmpty())
     }
@@ -114,14 +112,14 @@ abstract class Particle : Addressable {
 
     /** Rendering through UiBroker */
     fun renderOutput() {
-        IRuntimeClient.log("renderOutput")
+        RuntimeClient.log("renderOutput")
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
-        onRenderOutput(
-            toWasmAddress(),
-            template.toWasmNullableString(),
-            model.toWasmNullableString()
+        RuntimeClient.onRenderOutput(
+            this,
+            template,
+            model
         )
     }
 
@@ -149,7 +147,7 @@ abstract class Particle : Addressable {
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
-        IRuntimeClient.log("ignoring renderSlot")
+        RuntimeClient.log("ignoring renderSlot")
     }
 
     /**
@@ -161,7 +159,7 @@ abstract class Particle : Addressable {
      */
     fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
         val encoded = StringEncoder.encodeDictionary(args)
-        IRuntimeClient.serviceRequest(
+        RuntimeClient.serviceRequest(
             this,
             call,
             encoded,
@@ -188,7 +186,7 @@ abstract class Particle : Addressable {
      * @return absolute URL
      */
     fun resolveUrl(url: String): String {
-        return IRuntimeClient.resolveUrl(url)
+        return RuntimeClient.resolveUrl(url)
 
     }
 }
@@ -219,7 +217,7 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     fun set(entity: T) {
         this.entity = entity
         val encoded = entity.encodeEntity()
-        IRuntimeClient.singletonSet(
+        RuntimeClient.singletonSet(
             particle,
             this,
             encoded
@@ -228,7 +226,7 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
 
     fun clear() {
         entity = entityCtor()
-        IRuntimeClient.singletonClear(particle, this)
+        RuntimeClient.singletonClear(particle, this)
     }
 }
 
@@ -267,14 +265,14 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
     fun store(entity: T) {
         entities[entity.internalId] = entity
         val encoded = entities[entity.internalId]!!.encodeEntity()
-        IRuntimeClient.collectionStore(particle, this, encoded)
+        RuntimeClient.collectionStore(particle, this, encoded)
     }
 
     fun remove(entity: T) {
         entities[entity.internalId]?.let {
             val encoded: String = it.encodeEntity()
             entities.remove(entity.internalId)
-            IRuntimeClient.collectionRemove(particle, this, encoded)
+            RuntimeClient.collectionRemove(particle, this, encoded)
         }
     }
 
@@ -291,6 +289,6 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
 
     fun clear() {
         entities.clear()
-        IRuntimeClient.collectionClear(particle, this)
+        RuntimeClient.collectionClear(particle, this)
     }
 }
