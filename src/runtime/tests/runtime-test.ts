@@ -42,15 +42,15 @@ describe('Runtime', () => {
   it('parses a Manifest', async () => {
     const content = `
     schema Text
-      Text value
+      value: Text
 
     particle Hello in 'hello.js'
-      out Text {value} text
+      text: writes Text {value}
 
     recipe
-      create as handleA
+      handleA: create *
       Hello
-        text -> handleA`;
+        text: writes handleA`;
     const expected = await Manifest.parse(content);
     const actual = await Runtime.parseManifest(content);
     assertManifestsEqual(actual, expected);
@@ -79,17 +79,17 @@ describe('Runtime', () => {
       manifest: `
         schema Thing
         particle MyParticle in './my-particle.js'
-          out Thing t1
-          out Thing t2
-          out [Thing] t3
+          t1: writes Thing
+          t2: writes Thing
+          t3: writes [Thing]
         recipe
-          create #shared as t1
-          create as t2
-          create #shared #things as t3
+          t1: create #shared
+          t2: create *
+          t3: create #shared #things
           MyParticle
-            t1 -> t1
-            t2 -> t2
-            t3 -> t3
+            t1: writes t1
+            t2: writes t2
+            t3: writes t3
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });

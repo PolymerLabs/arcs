@@ -323,30 +323,30 @@ describe('types', () => {
   describe('integration', () => {
     const manifestText = `
       schema Product
-        Text name
+        name: Text
 
       schema Lego extends Product
-        Text setID
+        setId: Text
 
       particle WritesLego
-        out [Lego] lego
+        lego: writes [Lego]
 
       particle ReadsProduct
-        in [Product] product
+        product: reads [Product]
 
       recipe MatchBasic
-        create as v0
+        v0: create *
         WritesLego
-          lego -> v0
+          lego: writes v0
         ReadsProduct
-          product <- v0
+          product: reads v0
 
       recipe MatchExisting
-        use 'test:1' as v0
+        v0: use 'test:1'
         WritesLego
-          lego -> v0
+          lego: writes v0
         ReadsProduct
-          product <- v0`;
+          product: reads v0`;
 
     it('a subtype matches to a supertype that wants to be read', async () => {
       const manifest = await Manifest.parse(manifestText);

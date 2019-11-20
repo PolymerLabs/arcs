@@ -228,9 +228,9 @@ describe('schema', () => {
   it('enforces rules when storing reference types', async () => {
     const manifest = await Manifest.parse(`
       schema ReferencedOne
-        Text foo
+        foo: Text
       schema ReferencedTwo
-        Number bar
+        bar: Number
       schema References
         Reference<ReferencedOne> one
         Reference<ReferencedTwo> two`);
@@ -279,8 +279,8 @@ describe('schema', () => {
   it('enforces rules when storing tuple types', async () => {
     const manifest = await Manifest.parse(`
       schema Tuples
-        (Text, Number) t1
-        (URL, Number, Boolean) t2`);
+        t1: (Text, Number)
+        t2: (URL, Number, Boolean)`);
     const Tuples = manifest.findSchemaByName('Tuples').entityClass();
     const tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
     assert.deepEqual(tuples.t1, ['foo', 55]);
@@ -323,7 +323,7 @@ describe('schema', () => {
   it('field with a single parenthesised value is a tuple not a union', async () => {
     const manifest = await Manifest.parse(`
       schema SingleValueTuple
-        (Number) t`);
+        t: (Number)`);
     const SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
     const svt = new SingleValueTuple({t: [12]});
     assert.deepEqual(svt.t, [12]);

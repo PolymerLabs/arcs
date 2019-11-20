@@ -9,9 +9,9 @@
 import '../Things/Thing.schema'
 
 schema Product extends Thing
-  Text category
-  Text seller
-  Text price
-  Number shipDays
+  category: Text
+  seller: Text
+  price: Text
+  shipDays: Number
   description `product`
     plural `products`

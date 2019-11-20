@@ -25,12 +25,12 @@ describe('Multiplexer', () => {
       import 'src/runtime/tests/artifacts/test-particles.manifest'
 
       recipe
-        slot 'rootslotid-slotid' as slot0
-        use 'test:1' as handle0
+        slot0: slot 'rootslotid-slotid'
+        handle0: use 'test:1'
         Multiplexer
-          hostedParticle = ConsumerParticle
-          consume annotation as slot0
-          list <- handle0
+          hostedParticle: ConsumerParticle
+          annotation: consumes slot0
+          list: reads handle0
     `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];

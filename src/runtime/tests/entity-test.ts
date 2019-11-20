@@ -23,9 +23,9 @@ describe('Entity', () => {
   before(async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-        Text txt
-        Number num
-        Boolean flg
+        txt: Text
+        num: Number
+        flg: Boolean
     `);
     schema = manifest.schemas.Foo;
     entityClass = schema.entityClass();
@@ -85,14 +85,14 @@ describe('Entity', () => {
     const manifest = await Manifest.parse(`
       schema Shadow
         // internal fields
-        Text id
-        Boolean mutable
+        id: Text
+        mutable: Boolean
         // static fields
-        URL schema
-        Number type
+        schema: URL
+        type: Number
         // internal methods (exposed via Entity static methods)
-        Number toLiteral
-        Text makeImmutable
+        toLiteral: Number
+        makeImmutable: Text
     `);
     const schema = manifest.schemas.Shadow;
     const entityClass = schema.entityClass();
@@ -121,13 +121,13 @@ describe('Entity', () => {
   it(`Entity.debugLog doesn't affect the original entity`, async () => {
     const manifest = await Manifest.parse(`
       schema EntityDebugLog
-        Text txt
-        URL lnk
-        Number num
-        Boolean flg
-        Bytes buf
-        (Text or Number) union
-        (Text, Number) tuple
+        txt: Text
+        lnk: URL
+        num: Number
+        flg: Boolean
+        buf: Bytes
+        union: (Text or Number)
+        tuple: (Text, Number)
     `);
     const entityClass = manifest.schemas.EntityDebugLog.entityClass();
     const e = new entityClass({

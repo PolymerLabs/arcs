@@ -93,22 +93,22 @@ describe('interface', () => {
         schema NotTest
 
         particle P
-          in Test foo
+          foo: reads Test
 
         particle Q
-          in Test foo
-          in Test foo2
-          in Test foo3
+          foo: reads Test
+          foo2: reads Test
+          foo3: reads Test
 
         particle R
-          out NotTest foo
-          in NotTest bar
-          out Test far
+          foo: writes NotTest
+          bar: reads NotTest
+          far: writes Test
 
         particle S
-          in NotTest bar
-          out Test far
-          out NotTest foo
+          bar: reads NotTest
+          far: writes Test
+          foo: writes NotTest
       `);
     const type = new EntityType(manifest.schemas.Test);
     const iface = new InterfaceInfo('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'in' as Direction, type: TypeVariable.make('b')}, {type}], []);
@@ -123,22 +123,22 @@ describe('interface', () => {
         schema Test
 
         particle P
-          in Test foo
+          foo: reads Test
 
         particle Q
-          in Test foo
-          consume one
+          foo: reads Test
+          one: consumes Slot
 
         particle R
-          in Test foo
-          consume one
-            provide set of other
+          foo: reads Test
+          one: consumes Slot
+            other: provides? [Slot]
 
         particle S
-          in Test foo
-          consume notTest
-            provide one
-            provide set of randomSlot
+          foo: reads Test
+          notTest: consumes Slot
+            one: provides? Slot
+            randomSlot: provides? [Slot]
       `);
     const type = new EntityType(manifest.schemas.Test);
     const iface = new InterfaceInfo('Test', [
@@ -196,28 +196,28 @@ describe('interface', () => {
   it('restricted type constrains type variables in the recipe', async () => {
     const manifest = await Manifest.parse(`
       particle Transformer
-        in [~a] input
-        out [~a] output
+        input: reads [~a]
+        output: writes [~a]
 
       interface HostedInterface
-        in ~a *
+        reads ~a
 
       particle Multiplexer
-        host HostedInterface hostedParticle
-        in [~a] items
+        hostedParticle: hosts HostedInterface
+        items: reads [~a]
 
       recipe
-        use as items
-        create as transformed
+        items: use *
+        transformed: create *
         Transformer
-          input = items
-          output = transformed
+          input: items
+          output: transformed
         Multiplexer
-          items = transformed
+          items: transformed
 
       schema Burrito
       particle BurritoDisplayer
-        in Burrito burrito
+        burrito: reads Burrito
     `);
 
     const recipe = manifest.recipes[0];
@@ -261,36 +261,36 @@ describe('interface', () => {
       schema LesPaul extends Gibson
 
       particle Lower
-        in Instrument input
+        input: reads Instrument
 
       particle Upper
-        out Gibson output
+        output: writes Gibson
 
       interface HostedInterface
-        inout ~a *
+        reads writes ~a
       particle Host
-        host HostedInterface hosted
-        inout ~a item
+        hosted: hosts HostedInterface
+        item: reads writes ~a
 
       recipe
-        create as item
+        item: create *
         Lower
-          input = item
+          input: item
         Upper
-          output = item
+          output: item
         Host
-          item = item
+          item: item
 
       particle ThingCandidate
-        inout Thing thingy
+        thingy: reads writes Thing
       particle InstrumentCandidate
-        inout Instrument instrument
+        instrument: reads writes Instrument
       particle GuitarCandidate
-        inout Guitar guitar
+        guitar: reads writes Guitar
       particle GibsonCandidate
-        inout Gibson gibson
+        gibson: reads writes Gibson
       particle LesPaulCandidate
-        inout LesPaul lp
+        lp: reads writes LesPaul
     `);
 
     const recipe = manifest.recipes[0];
@@ -301,8 +301,8 @@ describe('interface', () => {
 
     const check = name => hostedInterface.particleMatches(manifest.findParticleByName(name));
 
-    // inout Thing is not be compatible with in Instrument input
-    // inout LesPaul is not be compatible with out Gibson output
+    // reads writes Thing is not be compatible with in Instrument input
+    // reads writes LesPaul is not be compatible with out Gibson output
     // Remaining 3 candidates are compatible with Lower and Upper particles.
     assert.isFalse(check('ThingCandidate'));
     assert.isTrue(check('InstrumentCandidate'));

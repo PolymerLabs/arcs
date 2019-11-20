@@ -22,17 +22,17 @@ describe('recipe', () => {
         schema S1
         schema S2
         particle P1
-          in S1 s1
-          out S2 s2
+          s1: reads S1
+          s2: writes S2
         recipe
-          map as handle1
-          map 'h0' as handle2
-          map 'h0' as handle3
-          slot 's0' as slot0
-          slot 's0' as slot1
+          handle1: map *
+          handle2: map 'h0'
+          handle3: map 'h0'
+          slot0: slot 's0'
+          slot1: slot 's0'
           P1
-            s1 = handle1
-            s2 -> handle2
+            s1: handle1
+            s2: writes handle2
     `);
     const recipe = manifest.recipes[0];
     recipe.handles[0].mappedType = recipe.particles[0].connections['s2'].type;
@@ -57,14 +57,14 @@ describe('recipe', () => {
   it('clones recipe with require section', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        consume details
+        details: consumes Slot
       recipe MyRecipe
         require
           A
-            consume root
-              provide details as s0
+            root: consumes
+              details: provides s0
         P1
-          consume details as s0
+          details: consumes s0
     `);
     const recipe = manifest.recipes[0];
     const clonedRecipe = recipe.clone();
@@ -77,17 +77,17 @@ describe('recipe', () => {
         schema MySubType extends MyType
         schema OtherType
         particle P1
-          in MyType inMy
+          inMy: reads MyType
         particle P2
-          out MyType outMy
+          outMy: writes MyType
         particle P3
-          in MySubType inMy
+          inMy: reads MySubType
         particle P4
-          out MySubType outMy
+          outMy: writes MySubType
         particle P5
-          in [MyType] inMys
+          inMys: reads [MyType]
         particle P6
-          in BigCollection<MyType> inMys
+          inMys: reads BigCollection<MyType>
     `);
 
     const myType = manifest.findSchemaByName('MyType').entityClass()['type'];
@@ -147,8 +147,8 @@ describe('recipe', () => {
       particle A in 'A.js'
 
       recipe
-        create #data as h0
-        slot #master as s0
+        h0: create #data
+        s0: slot #master
         A
     `);
 
@@ -162,8 +162,8 @@ describe('recipe', () => {
   it(`is resolved if an optional handle with dependents is not connected`, async () => {
     const manifest = await Manifest.parse(`
       particle A in 'A.js'
-        in? [Foo {}] optionalIn
-          out [Foo {}] dependentOut
+        optionalIn: reads? [Foo {}]
+          dependentOut: writes [Foo {}]
 
       recipe
         A
@@ -177,22 +177,22 @@ describe('recipe', () => {
   it(`is not resolved if a handle is connected but its parent isn't`, async () => {
     const manifest = await Manifest.parse(`
       particle A in 'A.js'
-        in? [Foo {}] optionalIn
-          out [Foo {}] dependentOut
+        optionalIn: reads? [Foo {}]
+          dependentOut: writes [Foo {}]
 
       particle B in 'B.js'
-        in [Foo {}] parentIn
-          out [Foo {}] dependentOut
+        parentIn: reads [Foo {}]
+          dependentOut: writes [Foo {}]
 
       recipe
-        create as h0
+        h0: create *
         A
-          dependentOut -> h0
+          dependentOut: writes h0
 
       recipe
         create as h0
         B
-          dependentOut -> h0
+          dependentOut: writes h0
     `);
 
     const [recipe1, recipe2] = manifest.recipes;
@@ -206,14 +206,14 @@ describe('recipe', () => {
   it(`is not resolved if a handle type is not resolved`, async () => {
     const manifest = await Manifest.parse(`
       particle A in 'B.js'
-        in ~a foo1
-        in ~a foo2
+        foo1: reads ~a
+        foo2: reads ~a
       recipe
-        create as h0 // ~a
-        use 'foo-id' as h1 // ~a
+        h0: create * // ~a
+        h1: use 'foo-id' // ~a
         A
-          foo1 <- h0
-          foo2 <- h1
+          foo1: reads h0
+          foo2: reads h1
     `);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
@@ -234,22 +234,22 @@ describe('recipe', () => {
   it('generates the same hash on manifest re-parse for immediates', async () => {
     const manifestContent = `
       interface HostedParticleInterface
-        in ~a *
-        consume
+        reads ~a
+        consumes Slot
 
       schema Foo
 
       particle A in 'A.js'
-        host HostedParticleInterface hostedParticle
-        consume set of annotation
+        hostedParticle: hosts HostedParticleInterface
+        annotation: consumes [Slot]
 
       particle B in 'B.js'
-        in Foo foo
-        consume annotation
+        foo: reads Foo
+        annotation: consumes Slot
 
       recipe
         A
-          hostedParticle <- B
+          hostedParticle: reads B
     `;
     const digestA = await getFirstRecipeHash(manifestContent);
     const digestB = await getFirstRecipeHash(manifestContent);
@@ -264,12 +264,12 @@ describe('recipe', () => {
          [{"nobId": "12345"}]
 
       particle A in 'A.js'
-        in NobIdStore {Text nobId} foo
+        foo: reads NobIdStore {nobId: Text}
 
       recipe
-        use NobId as foo
+        foo: use NobId
         A
-          foo <- foo
+          foo: reads foo
     `;
     const digestA = await getFirstRecipeHash(manifestContent);
     const digestB = await getFirstRecipeHash(manifestContent);
@@ -278,18 +278,18 @@ describe('recipe', () => {
 
   it('generates the same hash on manifest re-parse for stores of collections', async () => {
     const manifestContent = `
-      store NobId of [NobIdStore {Text nobId}] in NobIdJson
+      store NobId of [NobIdStore {nobId: Text}] in NobIdJson
        resource NobIdJson
          start
          [{"nobId": "12345"}, {"nobId": "67890"}]
 
       particle A in 'A.js'
-        in [NobIdStore {Text nobId}] foo
+        foo: reads [NobIdStore {nobId: Text}]
 
       recipe
-        use NobId as foo
+        foo: use NobId
         A
-          foo <- foo
+          foo: reads foo
     `;
     const digestA = await getFirstRecipeHash(manifestContent);
     const digestB = await getFirstRecipeHash(manifestContent);
@@ -312,54 +312,54 @@ describe('recipe', () => {
   it('verifies required consume and provide slot connections', async () => {
     const manifest = await Manifest.parse(`
       particle A
-        must consume slotA
-          must provide slotA1
-          provide slotA2
-        consume slotB
-          must provide slotB1
-          provide slotB2
+        slotA: consumes Slot
+          slotA1: provides Slot
+          slotA2: provides? Slot
+        slotB: consumes? Slot
+          slotB1: provides Slot
+          slotB2: provides? Slot
 
       particle AA
-        consume slotAA
+        slotAA: consumes Slot
 
       recipe NoRequiredConsumeSlot // 0
         A
 
       recipe NoRequireProvideSlot // 1
-        slot '0' as slot0
+        slot0: slot '0'
         A
-          consume slotA as slot0
+          slotA: consumes slot0
 
       recipe RequiredSlotsOk // 2
-        slot '0' as slot0
+        slot0: slot '0'
         A
-          consume slotA as slot0
-            provide slotA1 as slot1
+          slotA: consumes slot0
+            slotA1: provides slot1
         AA
-          consume slotAA as slot1
+          slotAA: consumes slot1
 
       recipe NoRequiredSlotsInOptionalConsume // 3
-        slot '0' as slot0
-        slot '2' as slot2
+        slot0: slot '0'
+        slot2: slot '2'
         A
-          consume slotA as slot0
-            provide slotA1 as slot1
-          consume slotB as slot2
+          slotA: consumes slot0
+            slotA1: provides slot1
+          slotB: consumes slot2
         AA
-          consume slotAA as slot1
+          slotAA: consumes slot1
 
       recipe AllRequiredSlotsOk // 4
-        slot '0' as slot0
-        slot '2' as slot2
+        slot0: slot '0'
+        slot2: slot '2'
         A
-          consume slotA as slot0
-            provide slotA1 as slot1
-          consume slotB as slot2
-            provide slotB1 as slot3
+          slotA: consumes slot0
+            slotA1: provides slot1
+          slotB: consumes slot2
+            slotB1: provides slot3
         AA
-          consume slotAA as slot1
+          slotAA: consumes slot1
         AA
-          consume slotAA as slot3
+          slotAA: consumes slot3
       `);
 
     assert.lengthOf(manifest.recipes, 5);
@@ -373,19 +373,19 @@ describe('recipe', () => {
   it('verifies required consume connection is provided by a fullfilled slot', async () => {
     const manifest = await Manifest.parse(`
       particle A
-        consume slot1
-          must provide slot2
-        consume slot3
+        slot1: consumes Slot
+          slot2: provides Slot
+        slot3: consumes? Slot
       particle B
-        must consume slot2
+        slot2: consumes Slot
       recipe
-        slot 'id-0' as remoteSlot0
+        remoteSlot0: slot 'id-0'
         A
-          consume slot1
-            provide slot2 as slot2 // provided by an unfulfilled slot connection
-          consume slot3 as remoteSlot0
+          slot1: consumes slot1
+            slot2: provides slot2 // provided by an unfulfilled slot connection
+          slot3: consumes remoteSlot0
         B
-          consume slot2 as slot2
+          slot2: consumes slot2
     `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
@@ -601,12 +601,12 @@ describe('recipe', () => {
       recipe
         slot 'slot-id' as root
         P0
-          consume root as root
+          root: consumes root
         P1
-          consume root as root
+          root: consumes root
         P2
         P3
-          consume root as root`;
+          root: consumes root`;
     return str;
   };
   it('verifies modalities - default', async () => {
@@ -704,12 +704,12 @@ describe('recipe', () => {
     const recipe = (await Manifest.parse(`
       schema Thing
       particle MyParticle in 'myparticle.js'
-        in Thing inThing
-        consume mySlot
+        inThing: reads Thing
+        mySlot: consumes Slot
       recipe
         create as handle0
         MyParticle as particle0
-          inThing <- handle0
+          inThing: reads handle0
     `)).recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isFalse(recipe.isResolved());
@@ -725,7 +725,7 @@ describe('recipe', () => {
       recipe
         create as handle0
         MyParticle as particle0
-          inThing <- handle0
+          inThing: reads handle0
     `)).recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isFalse(recipe.isResolved());
@@ -793,7 +793,7 @@ describe('recipe', () => {
             consume root
               provide details as s0
         A
-          input <- h0
+          input: reads h0
           consume details as s0
     `)).recipes[0];
     assert(recipe.requires[0].particles[0].spec === undefined);
