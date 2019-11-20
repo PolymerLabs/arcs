@@ -36,8 +36,9 @@ export const busReady = async (bus, {manifest}) => {
 const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs runtime environment
   Runtime.init(rootPath, urlMap);
-  // marshal context
+  // marshal and bind context
   const context = await requireContext(manifest || config.manifest);
+  Runtime.getRuntime().bindContext(context);
   // attach verb-handlers to dispatcher
   populateDispatcher(dispatcher, storage, context);
   // send pipe identifiers to client
