@@ -1125,15 +1125,15 @@ describe('particle-api', () => {
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
-  it('loadRecipe returns ids of provided slots', Flags.withPreSlandlesSyntax(async () => {
+  it('loadRecipe returns ids of provided slots', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
-        consume root
+        root: consumes Slot
 
       recipe
-        slot 'rootslotid-root' as slot0
+        slot0: slot 'rootslotid-root'
         TransformationParticle
-          consume root as slot0`);
+          root: consumes slot0`);
 
     const loader = new StubLoader({
       'TransformationParticle.js': `defineParticle(({DomParticle}) => {

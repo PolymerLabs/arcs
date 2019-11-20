@@ -13,7 +13,7 @@ import '../../../runtime/tests/artifacts/Products/test/ProductIsBook.manifest'
 import '../../../runtime/tests/artifacts/Products/Product.schema'
 particle ShowProduct in '../../../runtime/tests/artifacts/Products/source/ShowProduct.js'
   product: reads Product
-  item: consumes? Slot
+  item: consumes Slot
 
 // Filter books and display them.
 recipe FilterAndDisplayBooks
