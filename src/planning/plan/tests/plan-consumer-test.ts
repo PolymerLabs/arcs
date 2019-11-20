@@ -44,20 +44,20 @@ async function storeResults(consumer, suggestions) {
 import './src/runtime/tests/artifacts/Products/Products.recipes'
 
 particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
-  in [Product] products
-  consume root
-    provide other
+  products: reads [Product]
+  root: consumes Slot
+    other: provides? Slot
 particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
-  consume other
+  other: consumes Slot
 
 recipe
-  use #shoplist as list
+  list: use #shoplist
   Test1
-    products = list
-    consume root
-      provide other as other
+    products: list
+    root: consumes root
+      other: provides other
   Test2
-    consume other as other
+    other: consumes other
   description \`Test Recipe\`
 `
       });
@@ -117,10 +117,10 @@ describe('plan consumer', () => {
       const addRecipe = (particles) => {
         return `
   recipe
-    slot 'slot0' as rootSlot
+    rootSlot: slot 'slot0'
     ${particles.map(p => `
     ${p}
-      consume root as rootSlot
+      root: consumes rootSlot
     `).join('')}
         `;
       };
@@ -131,12 +131,12 @@ describe('plan consumer', () => {
         }),
         manifestString: `
   particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
-    consume root
+    root: consumes Slot
   particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
-    consume root
+    root: consumes Slot
     modality domTouch
   particle ParticleBoth in './src/runtime/tests/artifacts/consumer-particle.js'
-    consume root
+    root: consumes Slot
     modality dom
     modality domTouch
   ${addRecipe(['ParticleDom'])}

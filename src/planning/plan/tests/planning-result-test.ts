@@ -69,35 +69,35 @@ describe('planning result', () => {
 describe('planning result merge', () => {
   const commonManifestStr = `
 schema Thing
-  Text foo
+  foo: Text
 resource ThingJson
   start
   [{"foo": "bar"}]
 store ThingStore of Thing 'thing-id-0' in ThingJson
 particle P1
-  out Thing thing
+  thing: writes Thing
 particle P2
-  in Thing thing
+  thing: reads Thing
     `;
   const recipeOneStr = `
 recipe R1
-  create as thingHandle
+  thingHandle: create *
   P1
-    thing -> thingHandle
+    thing: writes thingHandle
     `;
   const recipeTwoStr = `
 recipe R2
-  map 'thing-id-0' as thingHandle
+  thingHandle: map 'thing-id-0'
   P2
-    thing <- thingHandle
+    thing: reads thingHandle
       `;
   const recipeThreeStr = `
 recipe R3
-  copy 'thing-id-0' as thingHandle
+  thingHandle: copy 'thing-id-0'
   P1
-    thing -> thingHandle
+    thing: writes thingHandle
   P2
-    thing <- thingHandle
+    thing: reads thingHandle
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
     const helper = await PlanningTestHelper.create();
@@ -159,12 +159,12 @@ recipe R3
   it('merges suggestions union with outdated suggestions', async () => {
     const recipeFourStr = `
 recipe R4
-  create as thing1Handle
-  create as thing2Handle
+  thing1Handle: create *
+  thing2Handle: create *
   P1
-    thing -> thing1Handle
+    thing: writes thing1Handle
   P1
-    thing -> thing1Handle
+    thing: writes thing1Handle
     `;
     const {helper, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeOneStr}${recipeTwoStr}${recipeThreeStr}`,

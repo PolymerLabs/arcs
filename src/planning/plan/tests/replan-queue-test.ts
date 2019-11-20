@@ -38,7 +38,7 @@ async function init(options?) {
   const loader = new Loader();
   const manifest = await Manifest.parse(`
     schema Bar
-      Text value
+      value: Text
   `);
   const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
 
