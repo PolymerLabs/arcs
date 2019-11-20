@@ -58,3 +58,5 @@ RUN mkdir -p /disk-cache/
 ########
 
 COPY . .
+
+RUN bazel fetch //src/... //src_kt/... //particles/...

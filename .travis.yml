@@ -50,7 +50,7 @@ cache:
 
 # Pulling container from https://hub.docker.com/repository/docker/arcproject/travis-build
 before_install:
-  - docker pull arcsproject/travis-build:latest
+  - docker pull csilvestrini/arcs-with-fetch:latest
   - mkdir -p ./disk-cache/
 
 install:
