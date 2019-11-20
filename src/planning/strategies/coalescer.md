@@ -38,31 +38,31 @@ Recipe has handle0 that is not resolved:
 ```
 schema Thing
 particle ShowThing
-  in Thing thing
+  thing: reads Thing
 particle CreateThing
-  out Thing thing
+  thing: writes Thing
 recipe
-  use as handle0
+  handle0: use *
   ShowThing
-    thing <- handle0
+    thing: reads handle0
 ```
 
 Recipe has a matching handle:
 ```
 recipe
-  create as handle0
+  handle0: create *
   CreateThing
-    thing -> handle0
+    thing: writes handle0
 ```
 
 The resulting coalesced recipe is:
 ```
  recipe
-  create as handle0 // Thing {}
+  handle0: create * // Thing {}
   ShowThing as particle0
-    thing1 <- handle0
+    thing1: reads handle0
   CreateThing as particle1
-    thing1 -> handle0
+    thing1: writes handle0
 ```
 
 ## Slots coalescing
@@ -96,18 +96,18 @@ When coalescing for slots, coalescing is also performed for all possible mathing
 Recipe has a slot that must be consumed, according to the particle spec that provided it:
 ```
 particle P1
-  consume root
-    must provide foo
+  root: consumes Slot
+    foo: provides Slot
 recipe
-  slot 'id0' as slot0
+  slot0: slot 'id0'
   P1
-    consume root as slot0
+    root: consumes slot0
 ```
 
 Recipe can consume this slot:
 ```
 particle P2
-  consume foo
+  foo: consumes Slot
 recipe
   P2
 ```
@@ -115,12 +115,12 @@ recipe
 The resulting coalesced recipe is:
 ```
 recipe
-  slot 'id0' as slot1
+  slot1: slot 'id0'
   P1 as particle0
-    consume root as slot1
-      provide foo as slot0
+    root: consumes slot1
+      foo: provides slot0
   P2 as particle1
-    consume foo as slot0
+    foo: consumes slot0
 ```
 
 ## Slot-connections coalescing
@@ -143,7 +143,7 @@ When coalescing for slots, coalescing is also performed for all possible mathing
 Recipe has a requied slot connection that isn't resolved:
 ```
 particle P1
-  must consume foo
+  foo: consumes Slot
 recipe
   P1
 ```
@@ -151,21 +151,21 @@ recipe
 Recipe provides a slot suitable for a slot connection above:
 ```
 particle P2
-  consume root
-    provide foo
+  root: consumes Slot
+    foo: provides Slot
 recipe
-  slot 'root-slot' as rootSlot
+  rootSlot: slot 'root-slot'
   P2
-    consume root as rootSlot
+    root: consumes rootSlot
 ```
 
 The resulting coalesced recipe:
 ```
 recipe
-  slot 'root-slot' as slot1
+  slot1: slot 'root-slot'
   P1 as particle0
-    consume foo as slot0
+    foo: consumes slot0
   P2 as particle1
-    consume root as slot1
-      provide foo as slot0
+    root: consumes slot1
+      foo: provides slot0
 ```

@@ -258,7 +258,7 @@ export class Planner implements InspectablePlanner {
     if (!this.speculator || this.noSpecEx) {
       return false;
     }
-    if (plan.handleConnections.some(({type}) => type.toString() === `[Description {Text key, Text value}]`)) {
+    if (plan.handleConnections.some(({type}) => type.toString() === `[Description {key: Text, value: Text}]`)) {
       return true;
     }
     const planPatternsWithTokens = plan.patterns.filter(p => p.includes('${'));

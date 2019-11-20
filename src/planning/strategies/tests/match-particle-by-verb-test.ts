@@ -22,32 +22,32 @@ describe('MatchParticleByVerb', () => {
     schema Energy
     schema Height
     particle SimpleJumper &jump in 'A.js'
-      in Energy e
-      out Height h
+      e: reads Energy
+      h: writes Height
       modality dom
-      consume root
+      root: consumes Slot
     particle StarJumper &jump in 'AA.js'
-      in Energy e
-      inout Height h
+      e: reads Energy
+      h: reads writes Height
       modality dom
-      consume root
+      root: consumes Slot
     particle VoiceStarJumper &jump in 'AA.js'  // wrong modality
-      in Energy e
-      out Height h
+      e: reads Energy
+      h: writes Height
       modality voice
-      consume root
+      root: consumes Slot
     particle GalaxyJumper &jump in 'AA.js'  // wrong connections
-      in Energy e
+      e: reads Energy
       modality dom
-      consume root
+      root: consumes Slot
     particle StarFlyer &fly in 'AA.js'  // wrong verb
 
     recipe
-      use as height
-      use as energy
+      height: use *
+      energy: use *
       &jump
-        * = height
-        * <- energy
+        height
+        reads energy
   `;
 
   it('particles by verb strategy', async () => {

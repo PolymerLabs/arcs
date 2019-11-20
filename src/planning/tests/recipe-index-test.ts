@@ -296,25 +296,25 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle A
-        in Thing thing
+        thing: reads Thing
       recipe A
-        map as thing
+        thing: map *
         A
-          thing = thing
+          thing: thing
 
       particle B
-        out Thing thing
+        thing: writes Thing
       recipe B
-        create as thing
+        thing: create *
         B
-          thing = thing
+          thing: thing
 
       particle C
-        in Thing thing
+        thing: reads Thing
       recipe C
-        use as thing
+        thing: use *
         C
-          thing = thing
+          thing: thing
     `);
 
     const recipe = checkDefined(index.recipes.find(r => r.name === 'C'), 'missing recipe C');
@@ -331,22 +331,22 @@ describe('RecipeIndex', () => {
       schema OtherThing
 
       particle ConsumerThing
-        in Thing thing
+        thing: reads Thing
       particle ProducerThing
-        out Thing thing
+        thing: writes Thing
       particle ProducerOtherThing
-        out OtherThing thing
+        thing: writes OtherThing
 
       recipe Selector
-        use as thing
+        thing: use *
         ConsumerThing
 
       recipe
-        create as thing
+        thing: create *
         ProducerThing
 
       recipe
-        create as otherThing
+        otherThing: create *
         ProducerOtherThing
     `);
 
@@ -363,28 +363,28 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
 
       recipe TakeMe1
-        create #loved as thing
+        thing: create #loved
         Producer
 
       recipe TakeMe2
-        create #loved #adored as thing
+        thing: create #loved #adored
         Producer
 
       recipe TakeMe3
-        create #appreciated as thing
+        thing: create #appreciated
         Producer
 
       recipe IgnoreMe
-        create #hated as thing
+        thing: create #hated
         Producer
 
       recipe Selector
-        use #loved #appreciated as thing
+        thing: use #loved #appreciated
         Consumer
     `);
 
@@ -401,20 +401,20 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
 
       recipe TakeMe1
-        create #loved as thing
+        thing: create #loved
         Producer
 
       recipe TakeMe2
-        create #hated as thing
+        thing: create #hated
         Producer
 
       recipe Selector
-        use as thing
+        thing: use *
         Consumer
     `);
 
@@ -431,28 +431,28 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer1
-        in Thing thing
+        thing: reads Thing
       particle Consumer2
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
       particle ProducerConsumer
-        inout Thing thing
+        thing: reads writes Thing
 
       recipe Selector
-        use as thing
+        thing: use *
         Consumer1
 
       recipe
-        create as thing
+        thing: create *
         Consumer2
 
       recipe
-        create as thing
+        thing: create *
         Producer
 
       recipe
-        create as thing
+        thing: create *
         ProducerConsumer
     `);
 
@@ -469,28 +469,28 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer1
-        in Thing thing
+        thing: reads Thing
       particle Consumer2
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
       particle ProducerConsumer
-        inout Thing thing
+        thing: reads writes Thing
 
       recipe Selector
-        use as thing
+        thing: use *
         Consumer1
 
       recipe
-        copy as thing
+        g: copy *
         Consumer2
 
       recipe
-        copy as thing
+        g: copy *
         Producer
 
       recipe
-        copy as thing
+        g: copy *
         ProducerConsumer
     `);
 
