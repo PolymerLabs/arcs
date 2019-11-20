@@ -9,7 +9,7 @@ import 'schemas/Event.arcs'
 import '../Common/schemas/Description.arcs'
 
 particle SlandleCalendar in 'source/Calendar.js'
-  inout Event event
-  out [Description] descriptions
-  `consume Slot action
+  event: reads writes Event
+  descriptions: writes [Description]
+  action: `consumes Slot
   description `Select a time from your calendar`

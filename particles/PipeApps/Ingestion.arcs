@@ -2,38 +2,38 @@ import './schemas/IncomingEntity.arcs'
 import './schemas/Person.arcs'
 
 schema Place
-  Text name
-  Text address
+  name: Text
+  address: Text
 
 schema Message
-  Text message
+  message: Text
 
 external particle CaptureEntity
-  out [IncomingEntity] entities
+  entities: writes [IncomingEntity]
 
 particle CopyEntities in './source/CopyEntities.js'
-  inout [IncomingEntity] source
-  out [Place] places
-  out [Person] people
-  out [Message] messages
+  source: reads writes [IncomingEntity]
+  places: writes [Place]
+  people: writes [Person]
+  messages: writes [Message]
 
 external particle ToastParticle
-  in [Message] alert
+  alert: reads [Message]
 
 recipe Ingestion
-  create #incomingEntities as incomingEntities
-  create #recentPlaces as recentPlaces
-  create #recentPeople as recentPeople
-  create #recentMessages as recentMessages
+  incomingEntities: create #incomingEntities
+  recentPlaces: create #recentPlaces
+  recentPeople: create #recentPeople
+  recentMessages: create #recentMessages
   CaptureEntity
-    entities -> incomingEntities
+    entities: writes incomingEntities
   CopyEntities
-    source <- incomingEntities
-    places -> recentPlaces
-    people -> recentPeople
-    messages -> recentMessages
+    source: reads incomingEntities
+    places: writes recentPlaces
+    people: writes recentPeople
+    messages: writes recentMessages
   ToastParticle
-    alert <- recentMessages
+    alert: reads recentMessages
   description `ingestion recipe`
 
 resource MessagesList
@@ -42,6 +42,6 @@ resource MessagesList
 store Messages of [Message] #demoMessages in MessagesList
 
 recipe Toast
-  map #demoMessages as demoMessages
+  demoMessages: map #demoMessages
   ToastParticle
-    alert <- demoMessages
+    alert: reads demoMessages

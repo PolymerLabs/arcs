@@ -1,4 +1,4 @@
 schema IncomingEntity
-  Text type
-  Text jsonData
-  Text source
+  type: Text
+  jsonData: Text
+  source: Text

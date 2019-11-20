@@ -77,15 +77,15 @@ export abstract class AppBase {
     router.get('/manifest', async (req, res, next) => {
       const content = `
     schema Text
-      Text value
+      value: Text
 
     particle Hello in 'hello.js'
-      out Text text
+      text: writes Text
 
     recipe
-      create as handleA
+      handleA: create *
       Hello
-        text -> handleA`;
+        text: writes handleA`;
 
       try {
         const manifest = await Runtime.parseManifest(content, {fileName: 'manifest'});
