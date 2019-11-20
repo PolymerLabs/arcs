@@ -62,6 +62,7 @@ fun Parcel.readModelData(expectedType: ParcelableCrdtType): CrdtData? =
 /** Writes a [CrdtOperation] to the [Parcel]. */
 fun Parcel.writeOperation(operation: CrdtOperation?, flags: Int) {
     when (operation) {
+        null -> writeTypedObject(null, flags)
         is CrdtCount.Operation ->
             writeTypedObject((operation as? CrdtCount.Operation)?.toParcelable(), flags)
         is CrdtSet.Operation<*> ->
@@ -70,9 +71,8 @@ fun Parcel.writeOperation(operation: CrdtOperation?, flags: Int) {
             TODO("Implement me when ParcelableSingleton is ready")
         is CrdtEntity.Operation ->
             TODO("Implement me when ParcelableEntity is ready")
-        else -> throw IllegalArgumentException(
-            "Unsupported CrdtOperation type: ${operation?.javaClass}"
-        )
+        else ->
+            throw IllegalArgumentException("Unsupported CrdtOperation type: ${operation.javaClass}")
     }
 }
 
