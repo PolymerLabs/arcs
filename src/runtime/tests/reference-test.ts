@@ -23,7 +23,7 @@ describe('references', () => {
   it('can parse & validate a recipe containing references', async () => {
     const manifest = await Manifest.parse(`
         schema Result
-          Text value
+          value: Text
 
         particle Referencer in 'referencer.js'
           in Result inResult
@@ -38,11 +38,11 @@ describe('references', () => {
           create 'reference:1' as handle1
           create 'output:1' as handle2
           Referencer
-            inResult <- handle0
-            outResult -> handle1
+            inResult: reads handle0
+            outResult: writes handle1
           Dereferencer
-            inResult <- handle1
-            outResult -> handle2
+            inResult: reads handle1
+            outResult: writes handle2
     `);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -57,7 +57,7 @@ describe('references', () => {
     const loader = new StubLoader({
       'manifest': `
         schema Result
-          Text value
+          value: Text
 
         particle Dereferencer in 'dereferencer.js'
           in Reference<Result> inResult
@@ -67,8 +67,8 @@ describe('references', () => {
           create 'input:1' as handle0
           create 'output:1' as handle1
           Dereferencer
-            inResult <- handle0
-            outResult -> handle1
+            inResult: reads handle0
+            outResult: writes handle1
       `,
       'dereferencer.js': `
         defineParticle(({Particle}) => {
@@ -114,7 +114,7 @@ describe('references', () => {
     const loader = new StubLoader({
       'manifest': `
         schema Result
-          Text value
+          value: Text
 
         particle Dereferencer in 'dereferencer.js'
           in [Reference<Result>] inResult
@@ -124,8 +124,8 @@ describe('references', () => {
           create 'input:1' as handle0
           create 'output:1' as handle1
           Dereferencer
-            inResult <- handle0
-            outResult -> handle1
+            inResult: reads handle0
+            outResult: writes handle1
       `,
       'dereferencer.js': `
         defineParticle(({Particle}) => {
@@ -178,7 +178,7 @@ describe('references', () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
-          Text value
+          value: Text
 
         particle Referencer in 'referencer.js'
           in Result inResult
@@ -188,8 +188,8 @@ describe('references', () => {
           create 'input:1' as handle0
           create 'output:1' as handle1
           Referencer
-            inResult <- handle0
-            outResult -> handle1
+            inResult: reads handle0
+            outResult: writes handle1
       `,
       'referencer.js': `
         defineParticle(({Particle, Reference}) => {
@@ -233,7 +233,7 @@ describe('references', () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
-          Text value
+          value: Text
 
         particle ExtractReference in 'extractReference.js'
           in Foo {Reference<Result> result} referenceIn
@@ -243,8 +243,8 @@ describe('references', () => {
           create 'input:1' as handle0
           create 'output:1' as handle1
           ExtractReference
-            referenceIn <- handle0
-            rawOut -> handle1
+            referenceIn: reads handle0
+            rawOut: writes handle1
         `,
       'extractReference.js': `
         defineParticle(({Particle}) => {
@@ -300,7 +300,7 @@ describe('references', () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
-          Text value
+          value: Text
 
         particle Referencer in 'referencer.js'
           in [Result] inResult
@@ -312,8 +312,8 @@ describe('references', () => {
           create 'input:2' as handle1
           create 'output:1' as handle2
           Referencer
-            inResult <- handle0
-            inFoo <- handle1
+            inResult: reads handle0
+            inFoo: reads handle1
             outResult = handle2
       `,
       'referencer.js': `
@@ -406,7 +406,7 @@ describe('references', () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
-          Text value
+          value: Text
 
         particle ExtractReferences in 'extractReferences.js'
           in Foo {[Reference<Result>] result} referenceIn
@@ -416,8 +416,8 @@ describe('references', () => {
           create 'input:1' as handle0
           create 'output:1' as handle1
           ExtractReferences
-            referenceIn <- handle0
-            rawOut -> handle1
+            referenceIn: reads handle0
+            rawOut: writes handle1
         `,
       'extractReferences.js': `
         defineParticle(({Particle}) => {
@@ -472,7 +472,7 @@ describe('references', () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
-          Text value
+          value: Text
 
         particle ConstructReferenceCollection in 'constructReferenceCollection.js'
           out Foo {[Reference<Result>] result} referenceOut
@@ -482,8 +482,8 @@ describe('references', () => {
           create 'input:1' as handle0
           create 'output:1' as handle1
           ConstructReferenceCollection
-            referenceOut -> handle0
-            rawIn <- handle1
+            referenceOut: writes handle0
+            rawIn: reads handle1
         `,
       'constructReferenceCollection.js': `
         defineParticle(({Particle, Reference}) => {

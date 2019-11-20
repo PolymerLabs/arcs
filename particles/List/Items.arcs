@@ -10,7 +10,7 @@ particle ItemMultiplexer in 'source/Multiplexer.js'
   // 2. ~anyType is declared in HostedItemInterface and as `[~anyType]` here
   list: reads [~anyType]
   hostedParticle: hosts HostedItemInterface
-  item: consumes? [Slot]
+  item: consumes [Slot]
 
 particle Items in 'source/Items.js'
   list: reads [~anyType]

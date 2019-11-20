@@ -1,38 +1,38 @@
 schema Cat
-    Text name
-    Text description
-    Text photo
+    name: Text
+    description: Text
+    photo: Text
 
 schema Notification
-    Boolean triggered
+    triggered: Boolean
 
 schema Date
-    Number day
+    day: Number
 
 particle TodaysCat in './source/TodaysCat.js'
-    in Date today
-    in [Cat] allCats
-    out Cat cat
+    today: reads Date
+    allCats: reads [Cat]
+    cat: writes Cat
 
 particle ShowCat in './source/ShowCat.js'
-    in Cat cat
-    consume root
+    cat: reads Cat
+    root: consumes Slot
 
 particle Today in './source/Today.js'
-    out Date today
+    today: writes Date
 
 store CatStore of [Cat] 'allMyCats' in 'cats.json'
 
 recipe CatOfTheDay
-    map 'allMyCats' as allCats
-    create as today
-    create as cat
+    allCats: map 'allMyCats'
+    today: create *
+    cat: create *
     Today
-        today = today
+        today: today
     TodaysCat
-        allCats = allCats
-        cat = cat
-        today = today
+        allCats: allCats
+        cat: cat
+        today: today
     ShowCat
-        cat = cat
+        cat: cat
     description `Get the cat of the day`

@@ -8,18 +8,18 @@
 
 interface HostedParticleInterface
   reads ~a
-  item: consumes? Slot
+  item: consumes Slot
 
 // row lists
 
 particle ItemMultiplexer in 'source/Multiplexer.js'
   hostedParticle: hosts HostedParticleInterface
   list: reads [~a]
-  item: consumes? [Slot]
+  item: consumes [Slot]
 
 particle List in 'source/List.js'
   items: reads [~a]
-  root: consumes? Slot #content
+  root: consumes Slot #content
     preamble: provides? Slot
     item: provides [Slot {handle: items}]
     annotation: provides? [Slot {handle: items}]
@@ -30,7 +30,7 @@ particle List in 'source/List.js'
 particle SelectableList in 'source/List.js'
   items: reads writes [~a]
   selected: reads writes ~a
-  root: consumes? #content
+  root: consumes #content
     preamble: provides? Slot
     item: provides [Slot {handle: items}]
     annotation: provides? [Slot {handle: items}]
@@ -42,16 +42,16 @@ particle SelectableList in 'source/List.js'
 
 interface HostedTileParticleInterface
   reads ~a
-  tile: consumes? Slot
+  tile: consumes Slot
 
 particle TileMultiplexer in 'source/Multiplexer.js'
   hostedParticle: hosts HostedTileParticleInterface
   list: reads [~a]
-  tile: consumes? [Slot]
+  tile: consumes [Slot]
 
 particle TileList in 'source/TileList.js'
   items: reads writes [~a]
-  root: consumes? #content
+  root: consumes #content
     tile: provides [Slot]
     action: provides? [Slot]
   description `show ${items} as tiles`
@@ -59,7 +59,7 @@ particle TileList in 'source/TileList.js'
 particle SelectableTileList in 'source/TileList.js'
   items: reads writes [~a]
   selected: reads writes ~a
-  root: consumes? #content
+  root: consumes #content
     tile: provides [Slot]
     action: provides? [Slot]
   description `show ${items} as tiles`

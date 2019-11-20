@@ -10,20 +10,20 @@ import '../Common/List.manifest'
 import 'Product.schema'
 
 particle ShowProduct in 'source/ShowProduct.js'
-  in Product product
-  consume item
+  product: reads Product
+  item: consumes Slot
 
 recipe MuxedProductItem &muxProduct
   ItemMultiplexer
 
 recipe ProductList &showShopList
-  copy #shoplist as newlist
+  newlist: copy #shoplist
   List
-    items = newlist
+    items: newlist
   description `show ${List.items}`
 
 // Show [person]'s wishlist
 recipe
-  use #claire as person
-  map #wishlist as wishlist
+  person: use #claire
+  wishlist: map #wishlist
   &showShopList

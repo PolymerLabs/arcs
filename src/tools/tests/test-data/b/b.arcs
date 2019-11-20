@@ -1,4 +1,4 @@
 schema Sweet
-  Text name
+  name: Text
 
 store SweetGoodness of [Sweet] #sweets in 'b.json'

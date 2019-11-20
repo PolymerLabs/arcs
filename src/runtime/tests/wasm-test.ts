@@ -18,11 +18,11 @@ import {BiMap} from '../bimap.js';
 async function setup() {
   const manifest = await Manifest.parse(`
     schema Foo
-      Text txt
-      URL lnk
-      Number num
-      Boolean flg
-      Reference<Bar {Text a}> ref
+      txt: Text
+      lnk: URL
+      num: Number
+      flg: Boolean
+      ref: Reference<Bar {a: Text}>
     `);
   const fooClass = manifest.schemas.Foo.entityClass();
   const barType = EntityType.make(['Bar'], {a: 'Text'});
@@ -102,11 +102,11 @@ describe('wasm', () => {
   it('entity packaging fails for not-yet-supported types', async () => {
     const multifest = await Manifest.parse(`
       schema BytesFail
-        Bytes value
+        value: Bytes
       schema UnionFail
-        (Text or URL or Number) value
+        value: (Text or URL or Number)
       schema TupleFail
-        (Text, Number) value
+        value: (Text, Number)
       `);
 
     const verify = (schema, value) => {
