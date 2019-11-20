@@ -11,4 +11,4 @@
 
 package arcs.storage.parcelables;
 
-parcelable ParcelableOperations;
+parcelable ParcelableProxyMessage;

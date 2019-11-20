@@ -16,9 +16,9 @@ import arcs.crdt.parcelables.ParcelableCrdtException;
 /** Mechanism allowing an asynchronous response from the StorageService. */
 interface IResultCallback {
     /**
-     * Handles success/failure of an async op.<br><br>
+     * Called to signal a successful/erroneous result from the StorageService or ServiceStore.
      *
-     * {@param exception} is nullable.
+     * <p>{@code exception} will be {@code null} when the result indicates success.
      */
-    void onResult(boolean success, in ParcelableCrdtException exception);
+    void onResult(in ParcelableCrdtException exception);
 }

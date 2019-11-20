@@ -14,9 +14,7 @@ package arcs.storage.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import arcs.storage.parcelables.ParcelableModelUpdate
-import arcs.storage.parcelables.ParcelableOperations
-import arcs.storage.parcelables.ParcelableSyncRequest
+import arcs.storage.parcelables.ParcelableProxyMessage
 
 class StorageService : Service() {
     override fun onBind(p0: Intent?): IBinder? = BindingContext()
@@ -26,22 +24,8 @@ class StorageService : Service() {
             TODO("implement me")
         }
 
-        override fun sendSyncRequest(
-            req: ParcelableSyncRequest,
-            resultCallback: IResultCallback
-        ) {
-            TODO("implement me")
-        }
-
-        override fun sendOperations(
-            operations: ParcelableOperations,
-            resultCallback: IResultCallback
-        ) {
-            TODO("implement me")
-        }
-
-        override fun sendModelUpdate(
-            update: ParcelableModelUpdate,
+        override fun sendProxyMessage(
+            message: ParcelableProxyMessage<*, *, *>,
             resultCallback: IResultCallback
         ) {
             TODO("implement me")
