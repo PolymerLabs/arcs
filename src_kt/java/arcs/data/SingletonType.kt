@@ -20,7 +20,7 @@ import arcs.type.TypeFactory
 import arcs.type.TypeLiteral
 
 /** [Type] representation for a singleton. */
-class SingletonType<T : Type>(override val containedType: T) :
+data class SingletonType<T : Type>(override val containedType: T) :
     Type,
     Type.TypeContainer<T>,
     CrdtModelType<
