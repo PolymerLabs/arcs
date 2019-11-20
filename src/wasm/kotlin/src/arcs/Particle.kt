@@ -267,9 +267,13 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
     fun isEmpty() = entities.isEmpty()
 
     fun store(entity: T) {
+        val encoded = entity.encodeEntity()
+        val id: WasmString = collectionStore(particle.toWasmAddress(), toWasmAddress(), encoded.toWasmString())
+        id.toNullableKString()?.let {
+            entity.internalId = it
+            _free(id)
+        }
         entities[entity.internalId] = entity
-        val encoded = entities[entity.internalId]!!.encodeEntity()
-        collectionStore(particle.toWasmAddress(), toWasmAddress(), encoded.toWasmString())
     }
 
     fun remove(entity: T) {

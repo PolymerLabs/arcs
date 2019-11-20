@@ -216,7 +216,7 @@ external fun collectionStore(
     particlePtr: WasmAddress,
     handlePtr: WasmAddress,
     stringPtr: WasmString
-)
+): WasmString
 
 @SymbolName("_collectionRemove")
 external fun collectionRemove(
