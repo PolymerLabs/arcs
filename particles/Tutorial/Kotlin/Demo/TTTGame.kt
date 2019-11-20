@@ -31,6 +31,12 @@ class TTTGame : Particle() {
         arrayOf(2, 4, 6)
     )
 
+    private val defaultGame = TTTGame_GameState(
+        board = ",,,,,,,,",
+        currentPlayer = (0..1).random().toDouble(),
+        gameOver = false
+    )
+
     init {
         registerHandle("gameState", gameState)
         registerHandle("playerOne", playerOne)
@@ -43,11 +49,7 @@ class TTTGame : Particle() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (this.gameState.get()?.board == null) {
             val cp = (0..1).random()
-            this.gameState.set(TTTGame_GameState(
-                board = ",,,,,,,,",
-                currentPlayer = cp.toDouble(),
-                gameOver = false
-            ))
+            this.gameState.set(defaultGame)
         }
         if (handle.name.equals("playerOne") && this.playerOne.get()?.id != 0.0) {
             val p1 = playerOne.get() ?: TTTGame_PlayerOne()
@@ -64,21 +66,21 @@ class TTTGame : Particle() {
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
 
         val winnerName = this.gameState.get()?.winnerAvatar ?: ""
-        val congrats = this.gameState.get()?.gameOver ?: false
-        val message = if (congrats) "Congratulations $winnerName, you won!" else ""
+        val message = if (winnerName != "")
+            "Congratulations $winnerName, you won!" else "It's a tie!"
         val cp = this.gameState.get()?.currentPlayer ?: -1.0
         val p1 = this.playerOne.get()?.id ?: 0.0
         val playerDetails = if (cp == p1) {
             val name = playerOne.get()?.name ?: ""
             val avatar = playerOne.get()?.avatar ?: ""
-            name + " playing as " + avatar
+            "$name playing as $avatar"
         } else {
             val name = playerTwo.get()?.name ?: ""
             val avatar = playerTwo.get()?.avatar ?: ""
-            name + " playering as " + avatar
+            "$name playing as $avatar"
         }
         return model + mapOf(
-            "message" to message,
+            "message" to if (gameState.get()?.gameOver ?: false) message else "",
             "playerDetails" to playerDetails
         )
     }
@@ -119,12 +121,7 @@ class TTTGame : Particle() {
         }
         if (events.size > 0 && events.elementAt(events.size - 1).type == "reset") {
             val cp = (0..1).random()
-            this.gameState.set(TTTGame_GameState(
-                board = ",,,,,,,,",
-                currentPlayer = cp.toDouble(),
-                gameOver = false,
-                winnerAvatar = ""
-            ))
+            this.gameState.set(defaultGame)
             this.playerOneMove.set(TTTGame_PlayerOneMove())
             this.playerTwoMove.set(TTTGame_PlayerTwoMove())
             this.events.clear()
