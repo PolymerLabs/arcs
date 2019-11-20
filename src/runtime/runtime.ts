@@ -57,7 +57,7 @@ let runtime: Runtime | null = null;
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
-  public readonly context: Manifest;
+  public context: Manifest;
   public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
@@ -144,6 +144,11 @@ export class Runtime {
   }
 
   destroy() {
+  }
+
+  // Allow dynamic context binding to this runtime.
+  bindContext(context: Manifest) {
+    this.context = context;
   }
 
   /**
