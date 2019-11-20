@@ -12,27 +12,136 @@
 package arcs.storage.service
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import arcs.crdt.CrdtData
+import arcs.crdt.CrdtException
+import arcs.crdt.CrdtOperation
+import arcs.crdt.parcelables.ParcelableCrdtType
+import arcs.crdt.parcelables.toParcelable
+import arcs.storage.ActiveStore
+import arcs.storage.ProxyCallback
+import arcs.storage.ProxyMessage
+import arcs.storage.Store
+import arcs.storage.StoreOptions
 import arcs.storage.parcelables.ParcelableProxyMessage
+import arcs.storage.parcelables.ParcelableStoreOptions
+import arcs.storage.parcelables.toParcelable
+import arcs.storage.util.ProxyCallbackManager
+import arcs.storage.util.SendQueue
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
+/**
+ * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
+ * the [IStorageService] interface when bound-to by a client.
+ */
 class StorageService : Service() {
-    override fun onBind(p0: Intent?): IBinder? = BindingContext()
+    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
+    private val scope = CoroutineScope(coroutineContext)
+    private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
 
-    class BindingContext : IStorageService.Stub() {
-        override fun registerCallback(callback: IStorageServiceCallback): Int {
-            TODO("implement me")
+    override fun onBind(intent: Intent): IBinder? {
+        val parcelableOptions = requireNotNull(
+            intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
+        ) { "No StoreOptions found in Intent" }
+
+        return BindingContext(
+            stores.computeIfAbsent(parcelableOptions.actual) { Store(it) },
+            parcelableOptions.crdtType,
+            coroutineContext
+        )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
+    }
+
+    private class BindingContext(
+        private val store: Store<*, *, *>,
+        private val crdtType: ParcelableCrdtType,
+        parentCoroutineContext: CoroutineContext
+    ) : IStorageService.Stub() {
+        private val id = nextId.incrementAndGet()
+        private val coroutineContext = parentCoroutineContext + CoroutineName("BindingContext-$id")
+        private val scope = CoroutineScope(coroutineContext)
+        private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
+        private val sendQueue = SendQueue()
+
+        override fun getLocalData(callback: IStorageServiceCallback) {
+            scope.launch {
+                val activeStore = store.activate()
+
+                val deferredResult = DeferredResult(coroutineContext)
+                sendQueue.enqueue {
+                    callback.onProxyMessage(
+                        ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
+                            model = activeStore.getLocalData(),
+                            id = null
+                        ).toParcelable(crdtType),
+                        deferredResult
+                    )
+                }
+
+                deferredResult.await()
+            }
         }
 
+        override fun registerCallback(callback: IStorageServiceCallback): Int =
+            callbacks.register(ProxyCallback {
+                // Asynchronously pass the message along to the callback. Use a supervisorScope here
+                // so that we catch any exceptions thrown within and re-throw on the same coroutine
+                // as the callback-caller.
+                supervisorScope {
+                    val deferredResult = DeferredResult(coroutineContext)
+                    callback.onProxyMessage(it.toParcelable(crdtType), deferredResult)
+                    deferredResult.await()
+                }
+            })
+
+        @Suppress("UNCHECKED_CAST")
         override fun sendProxyMessage(
             message: ParcelableProxyMessage,
             resultCallback: IResultCallback
         ) {
-            TODO("implement me")
+            scope.launch {
+                val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
+                val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
+                try {
+                    if (activeStore.onProxyMessage(actualMessage)) {
+                        resultCallback.onResult(null)
+                    } else throw CrdtException("Failed to process message")
+                } catch (e: CrdtException) {
+                    resultCallback.onResult(e.toParcelable())
+                }
+            }
         }
 
-        override fun unregisterCallback(token: Int) {
-            TODO("implement me")
+        override fun unregisterCallback(token: Int) = callbacks.unregister(token)
+
+        companion object {
+            private val nextId = atomic(0)
         }
+    }
+
+    companion object {
+        private const val EXTRA_OPTIONS = "storeOptions"
+
+        /**
+         * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
+         */
+        fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
+            Intent(context, StorageService::class.java).apply {
+                putExtra(EXTRA_OPTIONS, storeOptions)
+            }
     }
 }
