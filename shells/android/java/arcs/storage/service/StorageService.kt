@@ -25,7 +25,7 @@ class StorageService : Service() {
         }
 
         override fun sendProxyMessage(
-            message: ParcelableProxyMessage<*, *, *>,
+            message: ParcelableProxyMessage,
             resultCallback: IResultCallback
         ) {
             TODO("implement me")

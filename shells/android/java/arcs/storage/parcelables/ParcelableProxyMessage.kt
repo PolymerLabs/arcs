@@ -25,7 +25,7 @@ import arcs.storage.ProxyMessage
 import arcs.storage.ProxyMessage.Type
 
 /** Defines parcelable variants of the [ProxyMessage]s. */
-sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+sealed class ParcelableProxyMessage(
     /** Identifier for the [ProxyMessage]. */
     open val id: Int?,
     /** Type of CRDT this message is intended for. */
@@ -34,7 +34,7 @@ sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, Consume
     internal open val type: Type
 ) : Parcelable {
     /** Actual value. */
-    abstract val actual: ProxyMessage<Data, Op, ConsumerData>
+    abstract val actual: ProxyMessage<*, *, *>
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(type.ordinal)
@@ -51,7 +51,7 @@ sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, Consume
         val model: Data,
         override val id: Int?,
         override val crdtType: ParcelableCrdtType
-    ) : ParcelableProxyMessage<Data, Op, ConsumerData>(id, crdtType, Type.ModelUpdate) {
+    ) : ParcelableProxyMessage(id, crdtType, Type.ModelUpdate) {
         override val actual: ProxyMessage.ModelUpdate<Data, Op, ConsumerData> =
             ProxyMessage.ModelUpdate(model, id)
 
@@ -81,7 +81,7 @@ sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, Consume
         val operations: List<Op>,
         override val id: Int?,
         override val crdtType: ParcelableCrdtType
-    ) : ParcelableProxyMessage<Data, Op, ConsumerData>(id, crdtType, Type.Operations) {
+    ) : ParcelableProxyMessage(id, crdtType, Type.Operations) {
         override val actual: ProxyMessage.Operations<Data, Op, ConsumerData> =
             ProxyMessage.Operations(operations, id)
 
@@ -110,7 +110,7 @@ sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, Consume
     data class SyncRequest<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         override val id: Int?,
         override val crdtType: ParcelableCrdtType
-    ) : ParcelableProxyMessage<Data, Op, ConsumerData>(id, crdtType, Type.SyncRequest) {
+    ) : ParcelableProxyMessage(id, crdtType, Type.SyncRequest) {
         override val actual: ProxyMessage.SyncRequest<Data, Op, ConsumerData> =
             ProxyMessage.SyncRequest(id)
     }
@@ -119,28 +119,31 @@ sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, Consume
         /** Represents the absence of an [id] in a [ParcelableProxyMessage]. */
         const val NO_ID = -1
 
-        /* ktlint-disable max-line-length */
         @JvmField
-        val CREATOR = object : Parcelable.Creator<ParcelableProxyMessage<out CrdtData, out CrdtOperation, out Any?>> {
-            /* ktlint-enable max-line-length */
-            override fun createFromParcel(
-                parcel: Parcel
-            ): ParcelableProxyMessage<out CrdtData, out CrdtOperation, out Any?> {
+        val CREATOR = object : Parcelable.Creator<ParcelableProxyMessage> {
+            override fun createFromParcel(parcel: Parcel): ParcelableProxyMessage {
                 val type = Type.values()[parcel.readInt()]
                 val crdtType = ParcelableCrdtType.values()[parcel.readInt()]
                 val id = parcel.readInt().takeIf { it != NO_ID }
 
                 return when (type) {
-                    Type.ModelUpdate -> ModelUpdate.createFromParcel(parcel, crdtType, id)
-                    Type.Operations -> Operations.createFromParcel(parcel, crdtType, id)
-                    Type.SyncRequest -> SyncRequest(id, crdtType)
+                    Type.ModelUpdate ->
+                        ModelUpdate.createFromParcel<CrdtData, CrdtOperation, Any?>(
+                            parcel,
+                            crdtType,
+                            id
+                        )
+                    Type.Operations ->
+                        Operations.createFromParcel<CrdtData, CrdtOperation, Any?>(
+                            parcel,
+                            crdtType,
+                            id
+                        )
+                    Type.SyncRequest -> SyncRequest<CrdtData, CrdtOperation, Any?>(id, crdtType)
                 }
             }
 
-            override fun newArray(
-                size: Int
-            ): Array<ParcelableProxyMessage<out CrdtData, out CrdtOperation, out Any?>?> =
-                arrayOfNulls(size)
+            override fun newArray(size: Int): Array<ParcelableProxyMessage?> = arrayOfNulls(size)
         }
     }
 }
@@ -148,14 +151,14 @@ sealed class ParcelableProxyMessage<Data : CrdtData, Op : CrdtOperation, Consume
 /** Converts the [ProxyMessage] into its [Parcelable] variant. */
 fun <Data, Op, ConsumerData> ProxyMessage<Data, Op, ConsumerData>.toParcelable(
     crdtType: ParcelableCrdtType
-): ParcelableProxyMessage<Data, Op, ConsumerData> where Data : CrdtData, Op : CrdtOperation =
+): ParcelableProxyMessage where Data : CrdtData, Op : CrdtOperation =
     when (this) {
         is ProxyMessage.ModelUpdate ->
-            ParcelableProxyMessage.ModelUpdate(model, id, crdtType)
+            ParcelableProxyMessage.ModelUpdate<Data, Op, ConsumerData>(model, id, crdtType)
         is ProxyMessage.Operations ->
-            ParcelableProxyMessage.Operations(operations, id, crdtType)
+            ParcelableProxyMessage.Operations<Data, Op, ConsumerData>(operations, id, crdtType)
         is ProxyMessage.SyncRequest ->
-            ParcelableProxyMessage.SyncRequest(id, crdtType)
+            ParcelableProxyMessage.SyncRequest<Data, Op, ConsumerData>(id, crdtType)
     }
 
 /** Writes a [ProxyMessage] to the [Parcel]. */
