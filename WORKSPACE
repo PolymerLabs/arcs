@@ -128,6 +128,7 @@ maven_install(
         "androidx.test:runner:1.1.0",
         "androidx.test:rules:1.1.0",
         "com.google.flogger:flogger:0.4",
+        "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.4",
         "com.google.dagger:dagger:2.23.1",
         "com.google.dagger:dagger-compiler:2.23.1",

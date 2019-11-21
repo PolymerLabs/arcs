@@ -13,5 +13,6 @@ kt_android_library(
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
+        "//third_party/java/jsr305_annotations",
     ],
 )

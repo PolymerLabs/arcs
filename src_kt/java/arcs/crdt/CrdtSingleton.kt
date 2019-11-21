@@ -26,7 +26,7 @@ class CrdtSingleton<T : Referencable>(
     initialVersion: VersionMap = VersionMap(),
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
-) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?> {
+) : CrdtModel<Data<T>, CrdtSingleton.IOperation<T>, T?> {
     override val versionMap: VersionMap
         get() = set._data.versionMap.copy()
     private var set: CrdtSet<T>

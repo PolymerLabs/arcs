@@ -13,6 +13,7 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.common.Referencable
 import arcs.crdt.CrdtCount
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtEntity
@@ -36,13 +37,14 @@ interface ParcelableCrdtOperationAtTime<T : CrdtOperationAtTime> :
     ParcelableCrdtOperation<T>, CrdtOperationAtTime
 
 /** Writes [CrdtData] to the [Parcel]. */
+@Suppress("UNCHECKED_CAST")
 fun Parcel.writeModelData(model: CrdtData?, flags: Int) {
     when (model) {
         null -> writeTypedObject(null, flags)
         is CrdtCount.Data ->
             writeTypedObject((model as? CrdtCount.Data)?.toParcelable(), flags)
         is CrdtSet.Data<*> ->
-            TODO("Implement me when ParcelableSet is ready")
+            writeTypedObject((model as CrdtSet.Data<Referencable>).toParcelable(), flags)
         is CrdtSingleton.Data<*> ->
             TODO("Implement me when ParcelableSingleton is ready")
         is CrdtEntity.Data ->
@@ -64,9 +66,9 @@ fun Parcel.writeOperation(operation: CrdtOperation?, flags: Int) {
     when (operation) {
         null -> writeTypedObject(null, flags)
         is CrdtCount.Operation ->
-            writeTypedObject((operation as? CrdtCount.Operation)?.toParcelable(), flags)
+            writeTypedObject(operation.toParcelable(), flags)
         is CrdtSet.Operation<*> ->
-            TODO("Implement me when ParcelableSet is ready")
+            writeTypedObject(operation.toParcelable(), flags)
         is CrdtSingleton.Operation<*> ->
             TODO("Implement me when ParcelableSingleton is ready")
         is CrdtEntity.Operation ->
