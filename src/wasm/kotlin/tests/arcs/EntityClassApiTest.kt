@@ -46,7 +46,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<
         assertTrue("setting flg property is successful: true", d1.flg as Boolean)
         d1.flg = false
         assertNotNull("flg field is set", d1.flg)
-        assertFalse(message="setting flg property is successful: false", actual=d1.flg as Boolean)
+        assertFalse("setting flg property is successful: false", d1.flg as Boolean)
     }
 
     @Test

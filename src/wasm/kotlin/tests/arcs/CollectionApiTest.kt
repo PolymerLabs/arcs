@@ -36,7 +36,7 @@ class CollectionApiTest : Particle() {
                 val iter = _in.iterator()
                 d1.flg = iter.hasNext()
                 val i1 = iter.next()
-                d1.txt = cstrFormat(i1)
+                d1.txt = "{${i1.internalId}}, num: ${i1.num?.toInt()}"
                 d1.num = i1.num?.let { it * 2 }
                 out.store(d1)
 
@@ -78,14 +78,8 @@ class CollectionApiTest : Particle() {
             }
         }
     }
-
-    fun cstrFormat(obj: CollectionApiTest_InHandle) = "{${obj.internalId}}, num: ${obj.num?.toInt()}"
 }
 
-interface Formatable {
-    val internalId: String
-    val num: Double
-}
 
 @Retain
 @ExportForCppRuntime("_newCollectionApiTest")
