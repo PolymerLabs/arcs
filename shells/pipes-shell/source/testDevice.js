@@ -15,7 +15,46 @@ import 'https://$particles/Pipes/Pipes.arcs'
 import 'https://$particles/Notification/Notification.arcs'
 `;
 
-export const smokeTest = async (paths, storage, manifest, bus) => {
+let bus, send;
+
+export const createTestDevice = (paths, storage) => {
+  return {
+    init: _bus => {
+      bus = _bus;
+      send = envelope => bus.receive(envelope);
+    },
+    receive: json => {
+      const body = JSON.parse(json);
+      switch (body.message) {
+        case 'ready':
+          send({message: 'configure', config: {
+            rootPath: paths.root,
+            urlMap: paths.map,
+            storage,
+            manifest: defaultManifest
+          }});
+          break;
+        case 'context':
+          smokeTest(bus);
+          break;
+        default:
+          echo(json);
+          break;
+      }
+    }
+  };
+};
+
+const echo = json => {
+  const simple = JSON.stringify(JSON.parse(json));
+  document.body.appendChild(Object.assign(document.createElement('pre'), {
+    style: 'padding: 8px; border: 1px solid silver; margin: 8px;',
+    textContent: json,
+    title: simple/*.replace(/\n/g, '')*/.replace(/\"/g, '\'')
+  }));
+};
+
+const smokeTest = async (bus) => {
   const send = envelope => bus.receive(envelope);
   //
   const enqueue = (tests, delay) => {
@@ -60,23 +99,14 @@ export const smokeTest = async (paths, storage, manifest, bus) => {
     // spawn an arc using WASM particle
     send({message: 'spawn', modality: 'dom', recipe: 'HelloWorldRecipe'});
   };
-  // configure for smoke test
-  send({message: 'configure', config: {
-    rootPath: paths.root,
-    urlMap: paths.map,
-    storage,
-    manifest: defaultManifest
-  }});
+  //
   // perform tests
   enqueue([
-    // waste 500ms so configuration can complete
-    // TODO(sjmiles): instead, wait for ready message
-    () => {},
     enableIngestion,
     ingestionTest,
     autofillTest,
-    notificationTest,
-    parseTest,
-    wasmTest
+    //notificationTest,
+    //parseTest,
+    //wasmTest
   ], 500);
 };

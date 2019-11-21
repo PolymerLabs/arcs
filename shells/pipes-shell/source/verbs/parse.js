@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Runtime} from '../../../build/runtime/runtime.js';
+import {Runtime} from '../../../../build/runtime/runtime.js';
 import {logsFactory} from '../../../../build/platform/logs-factory.js';
 
 const {log} = logsFactory('pipe::parse');

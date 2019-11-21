@@ -21,24 +21,16 @@ import {DevtoolsSupport} from '../../lib/devtools-support.js';
 // main dependencies
 import {Bus} from '../source/bus.js';
 import {busReady} from '../source/pipe.js';
-import {smokeTest} from '../source/smoke.js';
 import {dispatcher} from '../source/dispatcher.js';
+//import {smokeTest} from '../source/smoke.js';
+import {createTestDevice} from '../source/testDevice.js';
 
 console.log(`${version} -- ${storage}`);
 
 const deviceTimeout = 1000;
 
 if (test) {
-  window.DeviceClient = {
-    receive: json => {
-      const simple = JSON.stringify(JSON.parse(json));
-      document.body.appendChild(Object.assign(document.createElement('pre'), {
-        style: 'padding: 8px; border: 1px solid silver; margin: 8px;',
-        textContent: json,
-        title: simple/*.replace(/\n/g, '')*/.replace(/\"/g, '\'')
-      }));
-    }
-  };
+  window.DeviceClient = createTestDevice(paths, storage);
 }
 
 const DeviceSupport = async () => {
@@ -68,15 +60,11 @@ const DeviceSupport = async () => {
   const client = nodevice ? {} : await DeviceSupport();
   // create a bus
   const bus = new Bus(dispatcher, client);
+  // configure smokeTest if requested
+  if (test) {
+    window.DeviceClient.init(bus);
+  }
   // export bus
   window.ShellApi = bus;
   busReady(bus, {manifest});
-  // run smokeTest if requested
-  if (test) {
-    smokeTest(paths, storage, manifest, bus);
-    // world's dumbest ui
-    window.onclick = () => {
-      bus.receive({message: 'ingest', entity: {type: 'notion', jsonData: 'Dogs are awesome'}});
-    };
-  }
 })();

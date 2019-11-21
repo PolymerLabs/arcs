@@ -33,37 +33,7 @@ describe('wait for server', () => {
 
 const persona = `${marshalPersona('volatile')}`;
 
-const client = {
-  receive(json) {
-    console.log(`\nclient.receive::${json}\n`);
-  }
-};
-
-const startPipeShell = async () => {
-  const pipesShellUrl = `shells/pipes-shell/web`;
-  const urlParams = [`test`, `log`];
-  const url = `${pipesShellUrl}/?${urlParams.join('&')}`;
-  await browser.url(url);
-  console.warn('installing DeviceClient')
-  return browser.execute(client => {
-    console.warn('installing DeviceClient')
-    window.DeviceClient = client;
-  }, client);
-}
-
-const waitForPipeMessage = async msg => {
-  return await waitFor(`[title="${msg}"]`);
-}
-
-describe(`pipes-shell (${persona})`, () => {
-  it('pipes-shell starts', async function() {
-    console.log(`running "${this.test.fullTitle()}"`);
-    await startPipeShell(persona);
-    await waitForPipeMessage(`{'message':'ready'}`);
-  });
-});
-
-describe.skip(`WASM (${persona})`, () => {
+describe(`WASM (${persona})`, () => {
   it('loads Wasm Particle', async function() {
     console.log(`running "${this.test.fullTitle()}"`);
     await openArc(persona);
@@ -76,7 +46,7 @@ describe.skip(`WASM (${persona})`, () => {
 });
 
 ['pouchdb', 'firebase'].forEach(async storageType => {
-  describe.skip('demo ' + storageType, () => {
+  describe('demo ' + storageType, () => {
     it('restaurants', async function() {
       await openNewArc(this.test.fullTitle(), storageType);
       await searchFor(`restaurants`);
@@ -105,7 +75,7 @@ describe.skip(`WASM (${persona})`, () => {
   });
 
   const persona = `${marshalPersona(storageType)}-persistence`;
-  describe.skip(`persistence (${persona})`, () => {
+  describe(`persistence (${persona})`, () => {
     it('persists BasicProfile arc', async function() {
       console.log(`running "${this.test.fullTitle()}"`);
       await openArc(persona);

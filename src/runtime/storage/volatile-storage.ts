@@ -321,6 +321,7 @@ export class VolatileCollection extends VolatileStorageProvider implements Colle
     }
 
     this._version++;
+    console.warn('store::_fire::add::', item, this.id);
     await this._fire(new ChangeEvent({add: [item], version: this._version, originatorId}));
   }
 
