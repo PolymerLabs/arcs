@@ -131,12 +131,10 @@ describe('particle-api', () => {
             }
 
             onHandleSync(handle, model) {
-              console.log('sync', handle.name);
               this.addResult('sync:' + JSON.stringify(model));
             }
 
             onHandleUpdate(handle, update) {
-              console.log('update', handle.name);
               this.addResult('update:' + JSON.stringify(update));
             }
 
@@ -256,7 +254,7 @@ describe('particle-api', () => {
     assert.deepStrictEqual(values, [{value: 'two'}]);
   });
 
-  it('contains a constructInnerArc call', async () => {
+  it.only('contains a constructInnerArc call', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
