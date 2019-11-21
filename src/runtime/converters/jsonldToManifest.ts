@@ -75,17 +75,18 @@ export class JsonldToManifest {
       if (domains.includes(theClass['@id'])) {
         const name = property['@id'].split(':')[1];
         let type = property['schema:rangeIncludes'];
-        if (!type) {
-          console.log(property);
-        }
-        if (!type.length) {
-          type = [type];
-        }
+        // The property can only be used if we know the type.
+        // If the type is not known, ignore the property.
+        if (type) {
+          if (!type.length) {
+            type = [type];
+          }
 
-        type = type.map(a => a['@id'].split(':')[1]);
-        type = type.filter(type => supportedTypes.includes(type));
-        if (type.length > 0) {
-          relevantProperties.push({name, type});
+          type = type.map(a => a['@id'].split(':')[1]);
+          type = type.filter(type => supportedTypes.includes(type));
+          if (type.length > 0) {
+            relevantProperties.push({name, type});
+          }
         }
       }
     }
@@ -111,7 +112,7 @@ export class JsonldToManifest {
         } else {
           type = property.type[0];
         }
-        s += `\n  ${type} ${property.name}`;
+        s += `\n  ${property.name}: ${type}`;
       }
     }
     s += '\n';

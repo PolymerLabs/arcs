@@ -113,13 +113,13 @@ describe('ConvertConstraintsToConnections', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
-        in S b
+        b: reads S
       particle C
-        in S d
+        d: reads S
 
       recipe
-        map as handle0
-        A.b = C.d`);
+        handle0: map
+        A.b: C.d`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(newArc(manifest));
     const results = await cctc.generateFrom(generated);

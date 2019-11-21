@@ -18,30 +18,30 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Flags} from '../../../runtime/flags.js';
 
 describe('FindRequiredParticles', () => {
-  it('find single required particle that provides a slot', Flags.withPreSlandlesSyntax(async () => {
+  it('find single required particle that provides a slot', async () => {
     const loader = new StubLoader({
       '*': `defineParticle(({Particle}) => class Noop extends Particle {});`
     });
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume root
-          provide x
-    
+        root: consumes Slot
+          x: provides? Slot
+
       particle C
-        consume c 
-      
-      recipe 
+        c: consumes Slot
+
+      recipe
         require
           A
-            consume root
-              provide x as s0
+            root: consumes
+              x: provides s0
         C
-          consume c as s0
-      
+          c: consumes s0
+
       recipe
-        slot 'rootslotid-root' as slot
+        slot0: slot 'rootslotid-root'
         A
-          consume root as slot
+          root: consumes slot0
     `));
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
@@ -55,7 +55,7 @@ describe('FindRequiredParticles', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
     assert.isTrue(arc.activeRecipe.normalize());
-  }));
+  });
 
   it('find single required particle that consumes slot', async () => {
     const loader = new StubLoader({
@@ -63,22 +63,22 @@ describe('FindRequiredParticles', () => {
     });
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume b
-    
+        b: consumes Slot
+
       particle C
-        consume b
-      
-      recipe 
+        b: consumes Slot
+
+      recipe
         require
           A
-            consume b as s0
+            b: consumes s0
         C
-          consume b as s0
-      
+          b: consumes s0
+
       recipe
-        slot 'rootslotid-root' as slot
+        slot0: slot 'rootslotid-root'
         A
-          consume b as slot
+          b: consumes slot0
     `));
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
@@ -100,40 +100,40 @@ describe('FindRequiredParticles', () => {
     });
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume b
-          provide c
+        b: consumes Slot
+          c: provides? Slot
       particle B in 'B.js'
-        consume root
-          provide b
-    
+        root: consumes Slot
+          b: provides? Slot
+
       particle C
-        consume c
-      particle D 
-        consume b
-      
-      recipe 
+        c: consumes Slot
+      particle D
+        b: consumes Slot
+
+      recipe
         require
           B
-            consume root
-              provide b as s1
+            root: consumes
+              b: provides s1
           A
-            consume b as s1
-              provide c as s0
+            b: consumes s1
+              c: provides s0
         C
-          consume c as s0
+          c: consumes s0
         D
-          consume b as s1
-      
+          b: consumes s1
+
       recipe
-        slot 'rootslotid-root' as slot
-        slot 'slot0' as slot1
-        slot 'slotIDs:A' as slot2
+        slot0: slot 'rootslotid-root'
+        slot1: slot 'slot0'
+        slot2: slot 'slotIDs:A'
         B
-          consume root as slot
-            provide b as slot1
+          root: consumes slot0
+            b: provides slot1
         A
-          consume b as slot1
-            provide c as slot2
+          b: consumes slot1
+            c: provides slot2
     `));
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
@@ -155,40 +155,40 @@ describe('FindRequiredParticles', () => {
     });
     const manifest = (await Manifest.parse(`
     particle A in 'A.js'
-      consume b
-        provide c
+      b: consumes Slot
+        c: provides? Slot
     particle B in 'B.js'
-      consume root
-        provide b
+      root: consumes Slot
+        b: provides? Slot
 
     particle C
-      consume c
-    particle D 
-      consume b
-    
-    recipe 
+      c: consumes Slot
+    particle D
+      b: consumes Slot
+
+    recipe
       require
         B
-          consume root
-            provide b as s1
+          root: consumes
+            b: provides s1
         A
-          consume b as s1
-            provide c as s0
+          b: consumes s1
+            c: provides s0
       C
-        consume c as s0
+        c: consumes s0
       D
-        consume b as s1
-      
+        b: consumes s1
+
     recipe
-      slot 'rootslotid-root' as slot
-      slot 'slot0' as slot1
-      slot 'slotIDs:A' as slot2
+      slot0: slot 'rootslotid-root'
+      slot1: slot 'slot0'
+      slot2: slot 'slotIDs:A'
       B
-        consume root as slot
-          provide b as slot1
+        root: consumes slot0
+          b: provides slot1
       A
-        consume b as slot
-          provide c as slot2
+        b: consumes slot0
+          c: provides slot2
     `));
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
@@ -207,41 +207,40 @@ describe('FindRequiredParticles', () => {
     // The require section expects A and B to consume the same slot. The active recipe has A and B consume different slots.
     const manifest = (await Manifest.parse(`
     particle A in 'A.js'
-      consume root
-        provide c
+      root: consumes Slot
+        c: provides? Slot
     particle B in 'B.js'
-      consume root
-        provide b
+      root: consumes Slot
+        b: provides? Slot
 
     particle C
-      consume b
+      b: consumes Slot
     particle D
-      consume c
-    
-    recipe 
+      c: consumes Slot
+
+    recipe
       require
         B
-          consume root as s1
-            provide b as s0
+          root: consumes s1
+            b: provides s0
         A
-          consume root as s1
-            provide c as s2
+          root: consumes s1
+            c: provides s2
       C
-        consume b as s0
-      D 
-        consume c as s2
+        b: consumes s0
+      D
+        c: consumes s2
 
-      
     recipe
-      slot 'rootslotid-root' as slot
-      slot 'slot0' as slot1
-      slot 'slotIDs:A' as slot2
+      slot0: slot 'rootslotid-root'
+      slot1: slot 'slot0'
+      slot2: slot 'slotIDs:A'
       B
-        consume root as slot
-          provide b as slot1
+        root: consumes slot0
+          b: provides slot1
       A
-        consume root as slot1
-          provide c as slot2
+        root: consumes slot1
+          c: provides slot2
     `));
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));

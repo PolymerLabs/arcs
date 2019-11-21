@@ -22,16 +22,16 @@ describe('trigger parsing', () => {
   it('trigger annotations parse with one key-value pair', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     assert.lengthOf(manifest.recipes, 1);
@@ -42,17 +42,17 @@ describe('trigger parsing', () => {
   it('trigger annotations parse with multipe key-value pairs', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
         key2 value2
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     assert.lengthOf(manifest.recipes, 1);
@@ -63,9 +63,9 @@ describe('trigger parsing', () => {
   it('trigger annotations parse with multipe triggers on one recipe', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
         key2 value2
@@ -73,9 +73,9 @@ describe('trigger parsing', () => {
         key3 value3
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     assert.lengthOf(manifest.recipes, 1);
@@ -88,16 +88,16 @@ describe('trigger parsing', () => {
   it('trigger value can have dots', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         app com.spotify.music
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     assert.lengthOf(manifest.recipes, 1);
@@ -113,14 +113,14 @@ describe('simple planner', () => {
   it('If no triggers are present, the table is empty', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const sp = new SimplePlanner(manifest.recipes);
@@ -129,18 +129,18 @@ describe('simple planner', () => {
   it('accepts duplicate triggers', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        out Foo {} foo
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
       @trigger
         key1 value1
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const sp = new SimplePlanner(manifest.recipes);
@@ -149,17 +149,17 @@ describe('simple planner', () => {
   it('works with one trigger with one key-value pair and one recipe', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        consume root
-        out Foo {} foo
+        root: consumes Slot
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const planner = new SimplePlanner(manifest.recipes);
@@ -175,18 +175,18 @@ describe('simple planner', () => {
   it('works with one trigger with multipe key-value pairs and one recipe', async () => {
     const manifest = await Manifest.parse(`
       particle P1
-        consume root
-        out Foo {} foo
+        root: consumes Slot
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
         key2 value2
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const planner = new SimplePlanner(manifest.recipes);
@@ -204,10 +204,10 @@ describe('simple planner', () => {
   it('works with two triggers for one recipe', async () => {
      const manifest = await Manifest.parse(`
       particle P1
-        consume root
-        out Foo {} foo
+        root: consumes Slot
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       @trigger
         key1 value1
         key2 value2
@@ -215,9 +215,9 @@ describe('simple planner', () => {
         key3 value3
       recipe R
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
     `);
     const recipe = checkDefined(manifest.recipes[0]);
     const planner = new SimplePlanner(manifest.recipes);
@@ -236,24 +236,24 @@ describe('simple planner', () => {
   it('works with two recipes, one with a trigger', async () => {
      const manifest = await Manifest.parse(`
       particle P1
-        consume root
-        out Foo {} foo
+        root: consumes Slot
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       particle P3
-        in Foo {} baz
+        baz: reads Foo {}
       recipe R1
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
       @trigger
         key1 value1
       recipe R2
         P1
-          foo -> h
+          foo: writes h
         P3
-          baz <- h
+          baz: reads h
     `);
     const recipe = checkDefined(manifest.recipes[1]);
     assert.lengthOf(manifest.recipes, 2);
@@ -268,27 +268,27 @@ describe('simple planner', () => {
   it('works with two recipes, both with triggers, preserving recipe order', async () => {
      const manifest = await Manifest.parse(`
       particle P1
-        consume root
-        out Foo {} foo
+        root: consumes Slot
+        foo: writes Foo {}
       particle P2
-        in Foo {} bar
+        bar: reads Foo {}
       particle P3
-        in Foo {} baz
+        baz: reads Foo {}
       @trigger
         key1 value1
         key2 value2
       recipe R1
         P1
-          foo -> h
+          foo: writes h
         P2
-          bar <- h
+          bar: reads h
       @trigger
         key3 value3
       recipe R2
         P1
-          foo -> h
+          foo: writes h
         P3
-          baz <- h
+          baz: reads h
     `);
     const recipe1 = checkDefined(manifest.recipes[0]);
     const recipe2 = checkDefined(manifest.recipes[1]);

@@ -28,13 +28,13 @@ describe('AddMissingHandles', () => {
     assert.isEmpty(await runStrategy(`
       schema Thing
       particle P1
-        out Thing thing
+        thing: writes Thing
 
       particle P2
-        in Thing thing
+        thing: reads Thing
 
       recipe
-        P1.thing -> P2.thing
+        P1.thing: writes P2.thing
         P1
         P2
     `));
@@ -43,10 +43,10 @@ describe('AddMissingHandles', () => {
     assert.isEmpty(await runStrategy(`
       schema Thing
       particle P1
-        in Thing thing
+        thing: reads Thing
 
       recipe
-        create as free
+        free: create *
         P1
     `));
   });
@@ -54,10 +54,10 @@ describe('AddMissingHandles', () => {
     const results = await runStrategy(`
       schema Thing
       particle P1
-        in Thing thing
-        out Thing otherThing
+        thing: reads Thing
+        otherThing: writes Thing
       particle P2
-        inout Thing yetAnother
+        yetAnother: reads writes Thing
 
       recipe
         P1
@@ -72,10 +72,10 @@ describe('AddMissingHandles', () => {
     const results = await runStrategy(`
       schema Thing
       interface HostedInterface
-        in ~a *
+        reads ~a
       particle P1
-        in Thing thing
-        host HostedInterface hosted
+        thing: reads Thing
+        hosted: hosts HostedInterface
       recipe
         P1
     `);

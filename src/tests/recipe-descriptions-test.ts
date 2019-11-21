@@ -32,36 +32,36 @@ describe('recipe descriptions test', () => {
     options = options || {};
     return `
 schema Box
-  Text name
-  Number height
-  Number width ${options.includeSchemaDescription ? `
+  name: Text
+  height: Number
+  width: Number ${options.includeSchemaDescription ? `
   description \`booooox\`
     plural \`boxes\`
     value \`\${height}*\${width}\`` : ''}
 particle CompareBoxes in 'test.js'
-  in [Box] all
-  out Box biggest
+  all: reads [Box]
+  biggest: writes Box
   description \`ignore this description\` ${options.includeAllDescription ? `
     all \`ALL\``: ''}
 particle ProvideBoxes in 'test.js'
-  out [Box] boxes
+  boxes: writes [Box]
   description \`ignore this description too\`
 particle DisplayBox in 'test.js'
-  in Box biggest
-  consume root
+  biggest: reads Box
+  root: consumes Slot
   description \`ignore this description too\`
 recipe
-  ${options.includeAllStore ? `copy 'allboxes'` : `create`} as handle0
-  ${options.includeStore ? `copy 'mybox'` : `create`} as handle1
-  slot 'root-id' as rootSlot
+  handle0: ${options.includeAllStore ? `copy 'allboxes'` : `create *`}
+  handle1: ${options.includeStore ? `copy 'mybox'` : `create *`}
+  rootSlot: slot 'root-id'
   ProvideBoxes
-    boxes -> handle0
+    boxes: writes handle0
   CompareBoxes
-    all <- handle0
-    biggest -> handle1
+    all: reads handle0
+    biggest: writes handle1
   DisplayBox
-    biggest <- handle1
-    consume root as rootSlot
+    biggest: reads handle1
+    root: consumes rootSlot
   description \`the winner is: '\${CompareBoxes.biggest}' of all '\${CompareBoxes.all}'\`
 
 ${options.includeStore ? `
@@ -238,9 +238,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       recipe
         create as fooHandle
         ShowFoo
-          foo -> fooHandle
+          foo: writes fooHandle
         ShowFoo
-          foo -> fooHandle
+          foo: writes fooHandle
         description \`cannot show duplicate \${ShowFoo.foo}\`
     `, loader}).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
@@ -251,16 +251,16 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const manifestString = `
       schema Foo
       particle HelloFoo in 'test.js'
-        in Foo foo
-        consume root
+        foo: reads Foo
+        root: consumes Slot
         description \`hello \${foo}\`
 
       recipe
-        create as h0
-        slot 'root-id' as rootSlot
+        h0: create *
+        rootSlot: slot 'root-id'
         HelloFoo
-          foo <- h0
-          consume root as rootSlot
+          foo: reads h0
+          root: consumes rootSlot
         description \`do "\${HelloFoo}"\`
     `;
     const description = await generateRecipeDescription({manifestString});
@@ -275,19 +275,19 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const helper = await PlanningTestHelper.createAndPlan({manifestString: `
       schema Foo
       particle ShowFoo in 'test.js'
-        out Foo foo
+        foo: writes Foo
       particle Dummy in 'test.js'
 
       recipe
-        create as fooHandle
+        fooHandle: create *
         ShowFoo
-          foo -> fooHandle
+          foo: writes fooHandle
         description \`show \${ShowFoo.foo}\`
 
       recipe
-        create as fooHandle
+        fooHandle: create *
         ShowFoo
-          foo -> fooHandle
+          foo: writes fooHandle
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
     `, loader});

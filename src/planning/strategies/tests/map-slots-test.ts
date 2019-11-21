@@ -19,14 +19,15 @@ import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../../runtime/id.js';
+import {Flags} from '../../../runtime/flags.js';
 
 describe('MapSlots', () => {
   const particlesSpec = `
       particle A in 'A.js'
-        consume root
+        root: consumes Slot
 
       particle B in 'B.js'
-        consume root`;
+        root: consumes Slot`;
 
   const testManifest = async (recipeManifest, expectedSlots) => {
     const manifest = (await Manifest.parse(`
@@ -67,7 +68,7 @@ ${recipeManifest}
     await testManifest(`
       recipe
         A as particle0
-          consume root
+          root: consumes
         B as particle1
     `, /* expectedSlots= */ 1);
   });
@@ -76,35 +77,35 @@ ${recipeManifest}
       recipe
         A as particle0
         B as particle1
-          consume root
+          root: consumes
     `, /* expectedSlots= */ 1);
   });
   it('predefined remote slots both have alias', async () => {
     await testManifest(`
       recipe
         A as particle0
-          consume root as slot0
+          root: consumes slot0
         B as particle1
-          consume root as slot0
+          root: consumes slot0
     `, /* expectedSlots= */ 1);
   });
   it('predefined remote slots both explicit', async () => {
     await testManifest(`
       recipe
         A as particle0
-          consume root
+          root: consumes
         B as particle1
-          consume root
+          root: consumes
     `, /* expectedSlots= */ 1);
   });
 
   it('map slots by tags', async () => {
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume master #fancy
+        master: consumes Slot #fancy
 
       recipe
-        slot 'id0' #fancy as s0
+        s0: slot 'id0' #fancy
         A
     `));
 
@@ -115,21 +116,21 @@ ${recipeManifest}
   it('allows to bind by name to any available slot', async () => {
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume root
-          provide detail
+        root: consumes Slot
+          detail: provides? Slot
 
       particle B in 'B.js'
-        consume root
-          provide detail
+        root: consumes Slot
+          detail: provides? Slot
 
       particle C in 'C.js'
-        consume detail
+        detail: consumes Slot
 
       recipe
         A
-          consume root
+          root: consumes
         B
-          consume root
+          root: consumes
         C
     `));
     const generated = [{result: manifest.recipes[0], score: 1}];
@@ -164,11 +165,11 @@ ${recipeManifest}
 
     const particles = `
       particle A in 'A.js'
-        consume root
-          provide action
+        root: consumes? Slot
+          action: provides? Slot
 
       particle B in 'B.js'
-        consume action`;
+        action: consumes? Slot`;
 
     async function assertActionSlotTags(recipe, tags) {
       const manifest = await Manifest.parse(
@@ -195,7 +196,7 @@ ${recipeManifest}
     await assertActionSlotTags(`
       recipe
         A
-          consume root
+          root: consumes
         B`,
       []);
   });

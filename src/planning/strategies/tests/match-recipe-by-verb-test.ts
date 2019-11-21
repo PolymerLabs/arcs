@@ -315,12 +315,12 @@ ${recipesManifest}`);
   it('listens to slot constraints', async () => {
     const manifest = await Manifest.parse(`
       particle P in 'A.js'
-        consume foo
-          provide bar
+        foo: consumes Slot
+          bar: provides? Slot
 
       particle Q in 'B.js'
-        consume boo
-          provide far
+        boo: consumes Slot
+          far: provides? Slot
 
       recipe &verb
         P
@@ -337,12 +337,12 @@ ${recipesManifest}`);
 
       recipe
         &verb
-          consume boo
+          boo: consumes
 
       recipe
         &verb
-          consume foo
-            provide bar
+          foo: consumes
+            bar: provides
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
@@ -528,72 +528,32 @@ ${recipesManifest}`);
     assert.strictEqual(particleQ.connections.b.handle.connections[1].particle, particleQ);
   }));
 
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('selects the appropriate generic binding when handle assignments carry type information', Flags.withPreSlandlesSyntax(async () => {
-    const manifest = await Manifest.parse(`
-
-      particle O in 'Z.js'
-        in R {} x
-        out S {} y
-
-      particle P in 'A.js'
-        in R {} x
-        out S {} y
-        in S {} a
-
-      particle Q in 'B.js'
-        out S {} b
-
-      recipe &verb
-        O
-        P
-
-      recipe
-        create as handle0
-        &verb
-          * <- handle0
-        Q
-          b -> handle0
-    `);
-
-    const arc = StrategyTestHelper.createTestArc(manifest);
-    const generated = [{result: manifest.recipes[1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
-    const results = await mrv.generateFrom(generated);
-    assert.lengthOf(results, 1);
-    const recipe = results[0].result;
-    const particleP = recipe.particles.find(p => p.name === 'P');
-    const particleQ = recipe.particles.find(p => p.name === 'Q');
-    assert.strictEqual(particleP.connections.a.handle, particleQ.connections.b.handle);
-    assert.strictEqual(particleP.connections.a.handle.connections[0].particle, particleP);
-    assert.strictEqual(particleQ.connections.b.handle.connections[1].particle, particleQ);
-  }));
   it('carries slot assignments across verb substitution', async () => {
     const manifest = await Manifest.parse(`
       particle P in 'A.js'
-        consume foo
-          provide bar
+        foo: consumes Slot
+          bar: provides? Slot
 
       particle S in 'B.js'
-        consume bar
-          provide foo
+        bar: consumes Slot
+          foo: provides? Slot
 
       recipe &verb
         P
 
       recipe
         &verb
-          consume foo
-            provide bar as s0
+          foo: consumes
+            bar: provides s0
         S
-          consume bar as s0
+          bar: consumes s0
 
       recipe
         &verb
-          consume foo as s0
+          foo: consumes s0
         S
-          consume bar
-            provide foo as s0
+          bar: consumes
+            foo: provides s0
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);
@@ -618,37 +578,37 @@ ${recipesManifest}`);
   it('carries slot assignments across when they\'re assigned elsewhere too', async () => {
     const manifest = await Manifest.parse(`
     particle P in 'A.js'
-      consume foo
-        provide bar
+      foo: consumes Slot
+        bar: provides? Slot
 
     particle S in 'B.js'
-      consume bar
-        provide foo
+      bar: consumes Slot
+        foo: provides? Slot
 
     particle T in 'C.js'
-      consume bar
-      consume foo
+      bar: consumes Slot
+      foo: consumes Slot
 
     recipe &verb
       P
 
     recipe
       &verb
-        consume foo
-          provide bar as s0
+        foo: consumes
+          bar: provides s0
       S
-        consume bar as s0
+        bar: consumes s0
       T
-        consume bar as s0
+        bar: consumes s0
 
     recipe
       &verb
-        consume foo as s0
+        foo: consumes s0
       S
-        consume bar
-          provide foo as s0
+        bar: consumes
+          foo: provides s0
       T
-        consume foo as s0
+        foo: consumes s0
   `);
 
   const arc = StrategyTestHelper.createTestArc(manifest);

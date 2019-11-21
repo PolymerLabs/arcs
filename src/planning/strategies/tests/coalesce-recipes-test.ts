@@ -49,16 +49,16 @@ describe('CoalesceRecipes', () => {
   it('coalesces required slots', async () => {
     const recipe = await doCoalesceRecipes(`
       particle P1
-        consume root
-          must provide foo
+        root: consumes Slot
+          foo: provides Slot
 
       particle P2
-        consume foo
+        foo: consumes Slot
 
       recipe
-        slot 'id0' as slot0
+        slot0: slot 'id0'
         P1
-          consume root as slot0
+          root: consumes slot0
       recipe
         P2
     `);
@@ -73,34 +73,33 @@ describe('CoalesceRecipes', () => {
       schema Thing
       schema OtherThing
       particle P1
-        in Thing thing
-        consume root
-          must provide foo
-            handle thing
+        thing: reads Thing
+        root: consumes Slot
+          foo: provides Slot {handle: thing}
 
       particle P2
-        in Thing thing
-        out OtherThing other
-        consume foo
+        thing: reads Thing
+        other: writes OtherThing
+        foo: consumes Slot
 
       particle P3
-        out Thing thing
+        thing: writes Thing
 
       recipe
-        slot 'id0' as slot0
-        copy 'mything' as thingHandle
+        slot0: slot 'id0'
+        thingHandle: copy 'mything'
         P1
-          thing = thingHandle
-          consume root as slot0
+          thing: thingHandle
+          root: consumes slot0
 
       recipe
-        use as thingHandle
-        create as otherHandle
+        thingHandle: use *
+        otherHandle: create *
         P2
-          thing = thingHandle
-          other = otherHandle
+          thing: thingHandle
+          other: otherHandle
         P3
-          thing = thingHandle
+          thing: thingHandle
 
       resource MyThing
           start
@@ -117,29 +116,28 @@ describe('CoalesceRecipes', () => {
     const recipe = await doCoalesceRecipes(`
       schema Thing
       particle P1
-        inout Thing thing
-        consume root
-          must provide foo
-            handle thing
+        thing: reads writes Thing
+        root: consumes Slot
+          foo: provides Slot {handle: thing}
 
       interface HostedInterface
-        in ~a *
+        reads ~a
       particle P2
-        host HostedInterface hostedParticle
-        in Thing thing
-        consume foo
+        hostedParticle: hosts HostedInterface
+        thing: reads Thing
+        foo: consumes Slot
 
       recipe
-        slot 'id0' as slot0
-        copy as thingHandle
+        slot0: slot 'id0'
+        thingHandle: copy *
         P1
-          thing = thingHandle
-          consume root as slot0
+          thing: thingHandle
+          root: consumes slot0
 
       recipe
-        use as thingHandle
+        thingHandle: use *
         P2
-          thing = thingHandle
+          thing: thingHandle
     `);
 
     assert.isTrue(Object.isFrozen(recipe), 'recipe should be valid');
@@ -156,18 +154,17 @@ describe('CoalesceRecipes', () => {
     await doNotCoalesceRecipes(`
       schema Thing
       particle P1
-        inout Thing thing
-        consume root
-          must provide foo
-            handle thing
+        thing: reads writes Thing
+        root: consumes Slot
+          foo: provides Slot {handle: thing}
       particle P2
-        consume foo
+        foo: consumes Slot
       recipe
-        slot 'id0' as slot0
-        create as thingHandle
+        slot0: slot 'id0'
+        thingHandle: create *
         P1
-          thing = thingHandle
-          consume root as slot0
+          thing: thingHandle
+          root: consumes slot0
       recipe
         P2
     `);
@@ -179,28 +176,27 @@ describe('CoalesceRecipes', () => {
         schema Thing
 
         particle P1
-          in Thing thing
-          consume root
-            must provide foo
-              handle thing
+          thing: reads Thing
+          root: consumes Slot
+            foo: provides Slot {handle: thing}
 
         particle P2
-          in Thing thing
-          ${options.outThingB ? 'out Thing outThing' : ''}
-          consume foo
+          thing: reads Thing
+          ${options.outThingB ? 'outThing: writes Thing' : ''}
+          foo: consumes Slot
 
         recipe A
-          slot 'id0' as slot0
-          ${options.fateA} as thingHandle
+          slot0: slot 'id0'
+          thingHandle: ${options.fateA}
           P1
-            thing = thingHandle
-            consume root as slot0
+            thing: thingHandle
+            root: consumes slot0
 
         recipe B
-          ${options.fateB ? `${options.fateB} as thingHandle` : ``}
+          thingHandle: ${options.fateB ? `${options.fateB}` : `?`}
           P2
-            ${options.fateB ? 'thing = thingHandle' : ''}
-            ${options.outThingB ? 'outThing = thingHandle' : ''}
+            ${options.fateB ? 'thing: thingHandle' : ''}
+            ${options.outThingB ? 'outThing: thingHandle' : ''}
       `;
     };
 
@@ -238,29 +234,29 @@ describe('CoalesceRecipes', () => {
       schema Thing2
       schema Thing3
       particle P1
-        in Thing1 thing1
-        in [Thing2] thing2
-        in BigCollection<Thing3> thing3
+        thing1: reads Thing1
+        thing2: reads [Thing2]
+        thing3: reads BigCollection<Thing3>
       particle P2
-        out Thing1 thing1
-        out [Thing2] thing2
-        out BigCollection<Thing3> thing3
+        thing1: writes Thing1
+        thing2: writes [Thing2]
+        thing3: writes BigCollection<Thing3>
       recipe
-        use as handle1
-        use as handle2
-        use as handle3
+        handle1: use *
+        handle2: use *
+        handle3: use *
         P1
-          thing1 <- handle1
-          thing2 <- handle2
-          thing3 <- handle3
+          thing1: reads handle1
+          thing2: reads handle2
+          thing3: reads handle3
       recipe
-        create as handle1
-        create as handle2
-        create as handle3
+        handle1: create *
+        handle2: create *
+        handle3: create *
         P2
-          thing1 -> handle1
-          thing2 -> handle2
-          thing3 -> handle3
+          thing1: writes handle1
+          thing2: writes handle2
+          thing3: writes handle3
       `);
     assert.lengthOf(recipe.handles, 3);
     recipe.handles.forEach(handle => assert.lengthOf(handle.connections, 2));
@@ -271,28 +267,28 @@ describe('CoalesceRecipes', () => {
       schema Thing1
       schema Thing2
       particle P1
-        consume root
-          provide action
-        inout Thing1 thing1
-        inout Thing2 thing2
+        root: consumes Slot
+          action: provides? Slot
+        thing1: reads writes Thing1
+        thing2: reads writes Thing2
       particle P2
-        must consume action
-        inout Thing1 thing1
-        inout Thing2 thing2
+        action: consumes Slot
+        thing1: reads writes Thing1
+        thing2: reads writes Thing2
       recipe
-        create as handle1
-        create as handle2
+        handle1: create *
+        handle2: create *
         P2
-          thing1 = handle1
-          thing2 = handle2
+          thing1: handle1
+          thing2: handle2
       recipe
-        create as handle1
-        create as handle2
-        slot 'rootslot-0' as slot0
+        handle1: create *
+        handle2: create *
+        slot0: slot 'rootslot-0'
         P1
-          thing1 = handle1
-          thing2 = handle2
-          consume root as slot0
+          thing1: handle1
+          thing2: handle2
+          root: consumes slot0
       `, {skipUnresolved: true});
     assert.lengthOf(recipe.handles, 2);
     recipe.handles.forEach(handle => assert.lengthOf(handle.connections, 2));
@@ -302,18 +298,18 @@ describe('CoalesceRecipes', () => {
     const recipe = await doCoalesceRecipes(`
       schema Thing
       particle P1
-        in Thing inThing
+        inThing: reads Thing
       recipe
-        ? as inHandle
+        inHandle: ?
         P1
-          inThing <- inHandle
+          inThing: reads inHandle
         description \`input thing\`
       particle P2
-        out Thing outThing
+        outThing: writes Thing
       recipe
-        create as outHandle
+        outHandle: create *
         P2
-          outThing -> outHandle
+          outThing: writes outHandle
         description \`output thing\`
     `);
     assert.isTrue(recipe.isResolved());
@@ -324,19 +320,19 @@ describe('CoalesceRecipes', () => {
     await doCoalesceRecipes(`
       schema Thing
       particle P1
-        out Thing outThing
-        must consume foo
+        outThing: writes Thing
+        foo: consumes Slot
       recipe
-        create as outHandle
+        outHandle: create *
         P1
-          outThing -> outHandle
+          outThing: writes outHandle
       particle P2
-        consume root
-          provide foo
+        root: consumes Slot
+          foo: provides Slot
       recipe
-        slot 'root-slot' as rootSlot
+        rootSlot: slot 'root-slot'
         P2
-          consume root as rootSlot
+          root: consumes rootSlot
     `);
   });
 });
