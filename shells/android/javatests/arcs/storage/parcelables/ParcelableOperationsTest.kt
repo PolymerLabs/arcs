@@ -15,10 +15,8 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.crdt.CrdtCount
 import arcs.crdt.parcelables.ParcelableCrdtType
-import arcs.crdt.parcelables.toParcelables
 import arcs.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -27,43 +25,32 @@ import org.junit.runner.RunWith
 class ParcelableOperationsTest {
     @Test
     fun parcelableRoundtrip_works() {
-        val data = listOf(
-            CrdtCount.Operation.Increment(
-                actor = "foo",
-                version = 0 to 1
+        val expected = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+            listOf(
+                CrdtCount.Operation.Increment(
+                    actor = "foo",
+                    version = 0 to 1
+                ),
+                CrdtCount.Operation.MultiIncrement(
+                    actor = "bar",
+                    version = 0 to 20,
+                    delta = 20
+                )
             ),
-            CrdtCount.Operation.MultiIncrement(
-                actor = "bar",
-                version = 0 to 20,
-                delta = 20
-            )
+            id = 1
         )
 
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
-            writeParcelable(
-                ParcelableOperations(data.toParcelables(), 1, ParcelableCrdtType.Count),
-                0
-            )
+            writeProxyMessage(expected, ParcelableCrdtType.Count, 0)
             marshall()
         }
 
         // Now unmarshall the parcel, so we can verify the contents.
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
-            readParcelable<ParcelableOperations>(ParcelableOperations::class.java.classLoader)
+            readProxyMessage()
         }
-
-        assertThat(unmarshalled)
-            .isEqualTo(
-                ParcelableOperations(data.toParcelables(), 1, ParcelableCrdtType.Count)
-            )
-        val actualized = requireNotNull(
-            unmarshalled?.actualize<CrdtCount.Data, CrdtCount.Operation, Int>()
-        )
-        when (actualized) {
-            is ProxyMessage.Operations -> assertThat(actualized.operations).isEqualTo(data)
-            else -> fail("Illegal type.")
-        }
+        assertThat(unmarshalled).isEqualTo(expected)
     }
 }
