@@ -157,7 +157,7 @@ export class Runtime {
    * (2) a deserialized arc (TODO: needs implementation)
    * (3) a newly created arc
    */
-  runArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
+  runArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     if (!this.arcById.has(name)) {
       // TODO: Support deserializing serialized arcs.
       this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));

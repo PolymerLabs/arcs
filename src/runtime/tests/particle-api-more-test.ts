@@ -14,7 +14,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
-import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../testing/handle-for-test.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
@@ -40,7 +40,7 @@ const getCollectionData = async (arc: Arc, index: number) => {
 
 const spawnTestArc = async (loader) => {
   const runtime = new Runtime(loader, FakeSlotComposer);
-  const arc = runtime.runArc('test-arc', 'volatile://');
+  const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
   const manifest = await Manifest.load('manifest', loader);
   const [recipe] = manifest.recipes;
   recipe.normalize();
@@ -175,6 +175,7 @@ describe('ui-particle-api', () => {
               stuff: stuff
               thing: thing
         `,
+
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update() {
