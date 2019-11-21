@@ -1,8 +1,8 @@
 schema Data
-  Number num
-  Text txt
-  URL lnk
-  Boolean flg
+  num: Number
+  txt: Text
+  lnk: URL
+  flg: Boolean
 
 resource DataResource
   start
@@ -13,8 +13,8 @@ store DataStore of Data in DataResource
 
 
 schema Info
-  Text for
-  Number val
+  for: Text
+  val: Number
 
 resource InfoResource
   start
@@ -27,18 +27,18 @@ store InfoStore of [Info] in InfoResource
 
 
 particle TestParticle in 'test_particle.wasm'
-  consume root
-  inout Data data
-  out Data res
-  inout [Info] info
+  root: consumes Slot
+  data: reads writes Data
+  res: writes Data
+  info: reads writes [Info]
 
 recipe KotlinTestRecipe
-  copy DataStore as h1
-  create as h2
-  copy InfoStore as h3
+  h1: copy DataStore
+  h2: create
+  h3: copy InfoStore
   TestParticle
-    data <- h1
-    res -> h2
-    info = h3
+    data: reads h1
+    res: writes h2
+    info: h3
 
   description `Wasm Test Harness`
