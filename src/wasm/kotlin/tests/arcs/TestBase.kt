@@ -43,6 +43,7 @@ open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), A
         }
     }
 
+
     override fun fail(message: String?): Nothing {
         val err = if (message == null) ctor("Failure") else ctor(message)
         errors.store(err)
@@ -52,5 +53,10 @@ open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), A
         else
             throw AssertionError(message)
     }
+
+    fun assertFalse(message: String?, actual: Boolean) = super.assertTrue(message, !actual)
+
+    fun assertFalse(lazyMessage: () -> String?, actual: Boolean) = super.assertTrue(lazyMessage, !actual)
+
 }
 

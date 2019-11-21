@@ -3,7 +3,6 @@ package wasm.kotlin.tests.arcs
 import arcs.Singleton
 import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
-import kotlin.test.assertFalse
 
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<EntityClassApiTest_Errors>(ctor) {
