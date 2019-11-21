@@ -45,8 +45,10 @@ fun Addressable?.toAddress(): Address {
  **/
 fun <T : Addressable> Address.toObject(): T? {
     if (this == 0) {
+        log("Got null ptr")
         return null
     }
+
     return address2Addressable[this]!! as T
 }
 

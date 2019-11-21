@@ -30,8 +30,8 @@ actual object RuntimeClient {
     }
 
     actual fun onRenderOutput(particle: Particle, template: String?, model: String?) {
-        arcs.wasm.onRenderOutput(particle.toAddress(), template!!.toWasmString(),
-            model!!.toWasmString())
+        arcs.wasm.onRenderOutput(particle.toAddress(), template.toWasmNullableString(),
+            model.toWasmNullableString())
     }
 
     actual fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String) {

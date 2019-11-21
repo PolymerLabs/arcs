@@ -1,11 +1,11 @@
 package wasm.kotlin.tests.arcs
 
 import arcs.Particle
-import arcs.WasmAddress
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class MissingRegisterHandleTest : Particle()
 
 @Retain
 @ExportForCppRuntime("_newMissingRegisterHandleTest")
-fun constructMissingRegisterHandleTest(): WasmAddress = MissingRegisterHandleTest().toWasmAddress()
+fun constructMissingRegisterHandleTest() = MissingRegisterHandleTest().toAddress()

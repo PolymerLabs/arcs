@@ -2,7 +2,7 @@ package wasm.kotlin.tests.arcs
 
 import arcs.Collection
 import arcs.Particle
-import arcs.WasmAddress
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class ServicesTest : Particle() {
@@ -34,4 +34,4 @@ class ServicesTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newServicesTest")
-fun constructServiceTest(): WasmAddress = ServicesTest().toWasmAddress()
+fun constructServiceTest() = ServicesTest().toAddress()

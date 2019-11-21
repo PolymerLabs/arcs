@@ -2,7 +2,7 @@ package wasm.kotlin.tests.arcs
 
 import arcs.Particle
 import arcs.Singleton
-import arcs.WasmAddress
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class EventsTest : Particle() {
@@ -19,4 +19,4 @@ class EventsTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newEventsTest")
-fun constructEventTest(): WasmAddress = EventsTest().toWasmAddress()
+fun constructEventTest() = EventsTest().toAddress()

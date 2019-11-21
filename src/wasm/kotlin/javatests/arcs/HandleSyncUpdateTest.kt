@@ -1,10 +1,6 @@
 package wasm.kotlin.tests.arcs
 
-import arcs.Collection
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
-import arcs.WasmAddress
+import arcs.*
 import kotlin.native.internal.ExportForCppRuntime
 
 class HandleSyncUpdateTest : Particle() {
@@ -40,4 +36,4 @@ class HandleSyncUpdateTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newHandleSyncUpdateTest")
-fun constructHandleSyncUpdateTest(): WasmAddress = HandleSyncUpdateTest().toWasmAddress()
+fun constructHandleSyncUpdateTest() = HandleSyncUpdateTest().toAddress()

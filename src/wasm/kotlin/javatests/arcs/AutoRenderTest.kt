@@ -1,9 +1,6 @@
 package wasm.kotlin.tests.arcs
 
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
-import arcs.WasmAddress
+import arcs.*
 import kotlin.native.internal.ExportForCppRuntime
 
 class AutoRenderTest : Particle() {
@@ -21,4 +18,4 @@ class AutoRenderTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newAutoRenderTest")
-fun constructAutoRenderTest(): WasmAddress = AutoRenderTest().toWasmAddress()
+fun constructAutoRenderTest() = AutoRenderTest().toAddress()

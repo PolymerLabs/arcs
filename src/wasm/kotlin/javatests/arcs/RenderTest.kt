@@ -1,9 +1,6 @@
 package wasm.kotlin.tests.arcs
 
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
-import arcs.WasmAddress
+import arcs.*
 import kotlin.native.internal.ExportForCppRuntime
 
 class RenderTest : Particle() {
@@ -35,4 +32,4 @@ class RenderTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newRenderTest")
-fun constructRenderTest(): WasmAddress = RenderTest().toWasmAddress()
+fun constructRenderTest() = RenderTest().toAddress()
