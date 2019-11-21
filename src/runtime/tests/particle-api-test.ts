@@ -26,6 +26,7 @@ import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle
 import {Flags} from '../flags.js';
 import {StorageProxy} from '../storageNG/storage-proxy.js';
 import {unifiedHandleFor} from '../handle.js';
+import {DirectStore} from '../storageNG/direct-store.js';
 
 class ResultInspector {
   private readonly _arc: Arc;
@@ -58,9 +59,12 @@ class ResultInspector {
     } else {
       handle = this._store;
     }
-    const received = await handle.toList();
+    let received = await handle.toList();
     const misses = [];
-    for (const item of received.map(r => r.rawData[this._field])) {
+    if (!Flags.useNewStorageStack) {
+      received = received.map(r => r.rawData);
+    }
+    for (const item of received.map(r => r[this._field])) {
       const i = expectations.indexOf(item);
       if (i >= 0) {
         expectations.splice(i, 1);
@@ -98,7 +102,7 @@ async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: s
 }
 
 describe('particle-api', () => {
-  it.only('StorageProxy integration test', async () => {
+  it('StorageProxy integration test', async () => {
     const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
@@ -127,12 +131,10 @@ describe('particle-api', () => {
             }
 
             onHandleSync(handle, model) {
-              console.log('sync', handle.name);
               this.addResult('sync:' + JSON.stringify(model));
             }
 
             onHandleUpdate(handle, update) {
-              console.log('update', handle.name);
               this.addResult('update:' + JSON.stringify(update));
             }
 
@@ -163,25 +165,51 @@ describe('particle-api', () => {
 
     // Drop event 2; desync is triggered by v3.
     await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
-    const fireFn = fooStore['_fire'];
-    fooStore['_fire'] = async () => {};
+    let fireFn;
+    const activeStore = await fooStore.activate();
+    if (Flags.useNewStorageStack) {
+      fireFn = activeStore['deliverCallbacks'];
+      activeStore['deliverCallbacks'] = () => {};
+    } else {
+      fireFn = fooStore['_fire'];
+      fooStore['_fire'] = async () => {};
+    }
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
-    fooStore['_fire'] = fireFn;
+    if (Flags.useNewStorageStack) {
+      activeStore['deliverCallbacks'] = (...args) => fireFn.bind(activeStore)(...args);
+    } else {
+      fooStore['_fire'] = fireFn;
+    }
     await fooHandle.set(new fooHandle.entityClass({value: 'v3'}));
-    await inspector.verify('update:{"data":{"value":"v1"}}',
-                           'desync',
-                           'sync:{"value":"v3"}');
+    if (Flags.useNewStorageStack) {
+      await inspector.verify('update:{"originator":false,"data":{"value":"v1"}}',
+                            'desync',
+                            'sync:{"value":"v3"}');
+    } else {
+      await inspector.verify('update:{"data":{"value":"v1"}}',
+                            'desync',
+                            'sync:{"value":"v3"}');
+    }
 
     // Check it includes the previous value (v3) in updates.
     await fooHandle.set(new fooHandle.entityClass({value: 'v4'}));
-    await inspector.verify('update:{"data":{"value":"v4"}}');
+    if (Flags.useNewStorageStack) {
+      await inspector.verify('update:{"originator":false,"data":{"value":"v4"}}');
+    } else {
+      await inspector.verify('update:{"data":{"value":"v4"}}');
+    }
 
     // Check clearing the store.
     await fooHandle.clear();
-    await inspector.verify('update:{"data":null}');
+    if (Flags.useNewStorageStack) {
+      await inspector.verify('update:{"originator":false}');
+    } else {
+      await inspector.verify('update:{"data":null}');
+    }
   });
 
   it('can sync/update and store/remove with collections', async () => {
+    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -200,8 +228,8 @@ describe('particle-api', () => {
           return class P extends Particle {
             onHandleSync(handle, model) {
               let result = handle;
-              result.store(new result.entityClass({value: 'one'}));
-              result.store(new result.entityClass({value: 'two'}));
+              result.${addFunc}(new result.entityClass({value: 'one'}));
+              result.${addFunc}(new result.entityClass({value: 'two'}));
             }
             async onHandleUpdate(handle) {
               for (let entity of await handle.toList()) {
@@ -226,7 +254,7 @@ describe('particle-api', () => {
     assert.deepStrictEqual(values, [{value: 'two'}]);
   });
 
-  it('contains a constructInnerArc call', async () => {
+  it.only('contains a constructInnerArc call', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result

@@ -29,6 +29,9 @@ import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
+import {Flags} from './flags.js';
+import {StorageKey} from './storageNG/storage-key.js';
+import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -286,7 +289,14 @@ class PECOuterPortImpl extends PECOuterPort {
     // recreated when an arc is deserialized. As a consequence of this, dynamically
     // created handles for inner arcs must always be volatile to prevent storage
     // in firebase.
-    const store = await arc.createStore(type, name, null, [], 'volatile');
+    let storageKey: string | StorageKey;
+    if (Flags.useNewStorageStack) {
+      // TODO(shans): should this have a well defined id?
+      storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
+    } else {
+      storageKey = 'volatile';
+    }
+    const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
     this.CreateHandleCallback(store, callback, type, name, store.id);

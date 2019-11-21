@@ -223,7 +223,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // a return value of true implies that the message was accepted, a
   // return value of false requires that the proxy send a model sync
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
-    console.log(this.me, 'onProxyMessage', message);
+    if (!message.id) {
+      throw new Error('Direct Store received message from StorageProxy without an ID');
+    }
     if (this.pendingException) {
       throw this.pendingException;
     }

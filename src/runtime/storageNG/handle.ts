@@ -106,9 +106,13 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   abstract onSync(): void;
 
   async onDesync(): Promise<void> {
-    await this.particle.callOnHandleDesync(
-        this,
-        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
+    assert(this.canRead, 'onSync should not be called for non-readable handles');
+    if (this.particle) {
+      console.log('calling onDesync');
+      await this.particle.callOnHandleDesync(
+          this,
+          e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
+    }
   }
 
   disable(particle?: Particle) {
@@ -338,7 +342,7 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
-          this.get() /*model*/,
+          await this.get() /*model*/,
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }
