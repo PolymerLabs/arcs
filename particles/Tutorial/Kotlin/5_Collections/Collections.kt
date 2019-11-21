@@ -1,6 +1,9 @@
 package arcs.tutorials
 
-import arcs.*
+import arcs.Collection
+import arcs.CollectionsParticle_InputData
+import arcs.Particle
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -38,4 +41,4 @@ class CollectionsParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newCollectionsParticle")
-fun constructCollectionsParticle(): WasmAddress = CollectionsParticle().toWasmAddress()
+fun constructCollectionsParticle() = CollectionsParticle().toAddress()

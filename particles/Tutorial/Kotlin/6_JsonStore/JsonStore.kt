@@ -1,8 +1,8 @@
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.WasmAddress
 import arcs.Singleton
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -31,4 +31,4 @@ class JsonStoreParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newJsonStoreParticle")
-fun constructJsonStoreParticle() = JsonStoreParticle().toWasmAddress()
+fun constructJsonStoreParticle() = JsonStoreParticle().toAddress()

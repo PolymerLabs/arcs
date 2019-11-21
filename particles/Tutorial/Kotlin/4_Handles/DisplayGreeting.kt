@@ -3,6 +3,7 @@ package arcs.tutorials
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -30,4 +31,4 @@ class DisplayGreetingParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime()
-fun _newDisplayGreeting() = DisplayGreetingParticle().toWasmAddress()
+fun _newDisplayGreeting() = DisplayGreetingParticle().toAddress()

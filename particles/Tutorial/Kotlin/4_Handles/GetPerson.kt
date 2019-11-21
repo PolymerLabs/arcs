@@ -2,6 +2,7 @@ package arcs.tutorials
 
 import arcs.Particle
 import arcs.Singleton
+import arcs.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -27,4 +28,4 @@ class GetPersonParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime()
-fun _newGetPerson() = GetPersonParticle().toWasmAddress()
+fun _newGetPerson() = GetPersonParticle().toAddress()
