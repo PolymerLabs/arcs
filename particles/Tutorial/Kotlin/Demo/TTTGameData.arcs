@@ -3,25 +3,25 @@ import 'TTTGameSchemas.arcs'
 resource ComputerDefault
   start
   [
-    {"name": "Computer", "avatar": "🤖"}
+    {"name": "Computer", "avatar": "O"}
   ]
 
 resource FirstComputer
   start
   [
-    {"name": "Computer One", "avatar": "🕹️"}
+    {"name": "Computer One", "avatar": "X"}
   ]
 
 resource SecondComputer
   start
   [
-    {"name": "Computer Two", "avatar": "🚀"}
+    {"name": "Computer Two", "avatar": "O"}
   ]
 
 resource HumanDefault
   start
   [
-    {"name": "Human", "avatar": ":)"}
+    {"name": "Human", "avatar": "X"}
   ]
 
 resource FirstHuman

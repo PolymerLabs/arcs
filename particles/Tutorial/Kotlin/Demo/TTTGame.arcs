@@ -31,10 +31,10 @@ particle TTTRandomComputer in 'TTTRandomComputer.wasm'
 
 
 recipe GamePlayersDemoRecipe
-  use HumanOneStore as playerOne
-  use HumanTwoStore as playerTwo
-  create #humanMove as playerOneMove
-  create #computerMove as playerTwoMove
+  playerOne: use HumanStore
+  playerTwo: use ComputerStore
+  playerOneMove: create #humanMove
+  playerTwoMove: create #computerMove
   TTTGame
     gameState: reads writes gameState
     playerOne: reads writes playerOne
@@ -60,10 +60,10 @@ recipe GamePlayersDemoRecipe
   description `Kotlin Tutorial TicTacToe One Player Demo`
 
 recipe GamePlayersDemoRecipe
-  use HumanOneStore as playerOne
-  use HumanTwoStore as playerTwo
-  create #humanMove as playerOneMove
-  create #computerMove as playerTwoMove
+  playerOne: use HumanOneStore
+  playerTwo: use HumanTwoStore
+  playerOneMove: create #firstHuman
+  playerTwoMove: create #secondHuman
   TTTGame
     gameState: reads writes gameState
     playerOne: reads writes playerOne
@@ -90,10 +90,10 @@ recipe GamePlayersDemoRecipe
   description `Kotlin Tutorial TicTacToe Two Players Demo`
 
 recipe GamePlayersDemoRecipe
-  use HumanOneStore as playerOne
-  use HumanTwoStore as playerTwo
-  create #humanMove as playerOneMove
-  create #computerMove as playerTwoMove
+  playerOne: use ComputerOneStore
+  playerTwo: use ComputerTwoStore
+  playerOneMove: create #firstComputer
+  playerTwoMove: create #secondComputer
   TTTGame
     gameState: reads writes gameState
     playerOne: reads writes playerOne

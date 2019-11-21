@@ -6,7 +6,6 @@ import arcs.Singleton
 import arcs.TTTRandomComputer_GameState
 import arcs.TTTRandomComputer_MyMove
 import arcs.TTTRandomComputer_Player
-import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {
@@ -30,16 +29,17 @@ class TTTRandomComputer : Particle() {
             val boardArr = board.split(",").map { it }.toMutableList()
             val emptyCells = mutableListOf<Double>()
 
+            // Find all the empty cells
             boardArr.forEachIndexed { index, cell ->
                 if (cell == "") emptyCells.add(index.toDouble())
             }
+
+            // Choose a random cell as the move
             if (emptyCells.size > 0) {
                 val mv = emptyCells.shuffled().first()
-                log("setting random computer move to $mv")
-                this.myMove.set(TTTRandomComputer_MyMove(move = mv))
+                myMove.set(TTTRandomComputer_MyMove(move = mv))
             }
         }
-        super.onHandleUpdate(handle)
     }
 }
 
