@@ -1,5 +1,5 @@
 particle ServiceParticle in 'service_particle.wasm'
-  consume root
+  root: consumes
 
 recipe ServicesAPI
   ServiceParticle
