@@ -19,7 +19,6 @@ import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {SchemaFactory} from '../schema-factory.js';
 import {EntityType, CollectionType} from '../type.js';
-import {EntityType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
