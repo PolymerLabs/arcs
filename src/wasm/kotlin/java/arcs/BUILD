@@ -8,7 +8,7 @@ kt_jvm_library(
     name = "arcs",
     srcs = glob(["*.kt", "jvm/**/*.kt"]),
     visibility = ["//visibility:public"],
-    kotlincopts = KOTLINC_OPTS,
+    kotlincopts = KOTLINC_OPTS + ["-Xallow-kotlin-package"],
 )
 
 kt_native_library(
