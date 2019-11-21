@@ -10,13 +10,13 @@
 
 // configure
 import '../../lib/platform/loglevel-web.js';
-import {version, test, paths, storage, manifest} from './config.js';
+import {version, nodevice, test, paths, storage, manifest} from './config.js';
 
 // optional
 //import '../../lib/pouchdb-support.js';
 //import '../../lib/firebase-support.js';
-import {DevtoolsSupport} from '../../lib/devtools-support.js';
 //import '../../configuration/whitelisted.js';
+import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // main dependencies
 import {Bus} from '../source/bus.js';
@@ -26,11 +26,46 @@ import {dispatcher} from '../source/dispatcher.js';
 
 console.log(`${version} -- ${storage}`);
 
-const client = window.DeviceClient || {};
+const deviceTimeout = 1000;
+
+if (test) {
+  window.DeviceClient = {
+    receive: json => {
+      const simple = JSON.stringify(JSON.parse(json));
+      document.body.appendChild(Object.assign(document.createElement('pre'), {
+        style: 'padding: 8px; border: 1px solid silver; margin: 8px;',
+        textContent: json,
+        title: simple/*.replace(/\n/g, '')*/.replace(/\"/g, '\'')
+      }));
+    }
+  };
+}
+
+const DeviceSupport = async () => {
+  const delay = 100;
+  return new Promise(resolve => {
+    let waits = Math.round(deviceTimeout / delay);
+    const wait = () => {
+      if (window.DeviceClient) {
+        console.log(window.DeviceClient);
+        resolve(window.DeviceClient);
+      } else {
+        if (waits-- === 0) {
+          resolve({});
+        } else {
+          setTimeout(wait, delay);
+        }
+      }
+    };
+    wait();
+  });
+};
 
 (async () => {
   // if remote DevTools are requested, wait for connect
   await DevtoolsSupport();
+  // acquire DeviceClient
+  const client = nodevice ? {} : await DeviceSupport();
   // create a bus
   const bus = new Bus(dispatcher, client);
   // export bus

@@ -84,9 +84,9 @@ const populateDispatcher = (dispatcher, storage, context) => {
     event: async (msg, tid, bus) => {
       return await event(msg, tid, bus);
     },
-    parse: async (msg, tid, bus) => {
-      return await parse(msg, tid, bus);
-    },
+    // parse: async (msg, tid, bus) => {
+    //   return await parse(msg, tid, bus);
+    // },
     enableIngestion: async (msg, tid, bus) => {
       // TODO(sjmiles): "live context" tool (for demos)
       // marshal ingestion arc

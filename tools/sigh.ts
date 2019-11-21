@@ -1012,7 +1012,7 @@ function devServerAsync(args: string[]) : boolean {
 
 function testWdioShells(args: string[]) : boolean {
   return saneSpawnSync('node_modules/.bin/wdio', ['--baseUrl',
-      'http://localhost:8786/', fixPathForWindows(path.resolve('shells/tests/wdio.conf.js')), ...args]);
+      'http://localhost:8786/', /*fixPathForWindows(*/path.resolve('shells/tests/wdio.conf.js')/*)*/, ...args]);
 }
 
 /**

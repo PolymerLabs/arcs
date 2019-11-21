@@ -21,12 +21,12 @@ export const Bus = class {
   receive(msg) {
     const body = this.parse(msg);
     const tid = this.assignTransactionId();
-    log(`[${tid}] :: received [${JSON.stringify(body)}]`);
+    log(`[${tid}] :: received [${JSON.stringify(body, null, '  ')}]`);
     this.mapAsyncValue(tid, async () => this.dispatcher.dispatch(body, tid, this));
     return tid;
   }
   send(msg) {
-    const json = typeof msg === 'string' ? msg : JSON.stringify(msg);
+    const json = typeof msg === 'string' ? msg : JSON.stringify(msg, null, '  ');
     log(`> send(${json})`);
     if (this.client && this.client.receive) {
       this.client.receive(json);
