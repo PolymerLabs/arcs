@@ -6,7 +6,7 @@ bazel build \
   --noshow_loading_progress \
   --test_output=errors \
   --incompatible_depset_is_not_iterable=false \
-  //src_kt/java/... //src_kt/javatests/... //shells/android/java/... //shells/android/javatests/...
+  //src_kt/... //shells/android/...
 TEST_RESULT=$?
 if [$TEST_RESULT != 1];
 then

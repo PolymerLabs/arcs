@@ -18,7 +18,7 @@ interface IResultCallback {
     /**
      * Called to signal a successful/erroneous result from the StorageService or ServiceStore.
      *
-     * <p>{@code exception} will be {@code null} when the result indicates success.
+     * @param exception will be {@code null} when the result indicates success.
      */
     void onResult(in ParcelableCrdtException exception);
 }
