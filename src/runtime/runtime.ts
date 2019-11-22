@@ -97,19 +97,14 @@ export class Runtime {
    * arguments through numerous functions.
    * Some static methods on this class automatically use the default environment.
    */
-  static async init(root?: string, urls?: {}, manifest?: Manifest|string): Promise<Runtime> {
+  static init(root?: string, urls?: {}): Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
     // TODO(sjmiles): UiSlotComposer type shenanigans are temporary pending complete replacement
     // of SlotComposer by UiSlotComposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
     // doesn't bother tslint at all when done in other modules.
-
-    if (typeof manifest === 'string') {
-      manifest = await Manifest.parse(manifest, {...Runtime.initManifestParseOptions(), loader});
-    }
-
-    return new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, manifest as Manifest, pecFactory);
+    return new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, null, pecFactory);
   }
 
   static mapFromRootPath(root: string) {
@@ -149,6 +144,11 @@ export class Runtime {
   }
 
   destroy() {
+  }
+
+  // Allow dynamic context binding to this runtime.
+  bindContext(context: Manifest) {
+    this.context = context;
   }
 
   /**
@@ -244,17 +244,13 @@ export class Runtime {
 
   async parse(content: string, options?): Promise<Manifest> {
     const {loader} = this;
-    const opts = {...Runtime.initManifestParseOptions(), loader, ...options};
-    return Manifest.parse(content, opts);
-  }
-
-  private static initManifestParseOptions(): {} {
     // TODO(sjmiles): this method of generating a manifest id is ad-hoc,
     // maybe should be using one of the id generators, or even better
     // we could eliminate it if the Manifest object takes care of this.
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    return {id, fileName: `./${id}`};
+    const opts = {id, fileName: `./${id}`, loader, ...options};
+    return Manifest.parse(content, opts);
   }
 
   async parseFile(path: string, options?): Promise<Manifest> {
