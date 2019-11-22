@@ -30,8 +30,10 @@ jobs:
       name: "Bazel: //src_kt/... "
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
       name: "Bazel: //src/..."
-    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc test //particles/... && tools/sigh testShells"
-      name: "Bazel: //particles/... + testShells"
+    - script: tools/run_in_docker "bazel --build_tag_filters kotlinc --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc --build_tag_filters kotlinc test //particles/... && tools/sigh testShells"
+      name: "Bazel: //particles/... (Kotlin) + testShells"
+    - script: tools/run_in_docker "bazel --build_tag_filters emscripten --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc --build_tag_filters emscripten test //particles/... && tools/sigh testShells"
+      name: "Bazel: //particles/... (C++) + testShells"
     # run ktlint against every kotlin file in the diff between the branch and master's head.
     - script: tools/run_in_docker "git diff --name-only --relative $travis_commit_range | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose ."
       name: "KtLint"

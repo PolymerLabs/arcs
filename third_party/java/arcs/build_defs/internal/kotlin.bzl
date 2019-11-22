@@ -12,16 +12,17 @@ _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin"]
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
-def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
+def arcs_kt_library(name, srcs = [], deps = [], visibility = None, tags = []):
     """Declares kotlin library targets for Kotlin particle sources."""
     kt_native_library(
         name = name,
         srcs = srcs,
         deps = _ARCS_KOTLIN_LIBS + deps,
         visibility = visibility,
+        tags = ["kotlinc"] + tags,
     )
 
-def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
+def arcs_kt_binary(name, srcs = [], deps = [], visibility = None, tags = []):
     """Performs final compilation of wasm and bundling if necessary."""
 
     if srcs:
@@ -33,6 +34,7 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
             srcs = srcs,
             deps = _ARCS_KOTLIN_LIBS + deps,
             visibility = visibility,
+            tags = ["kotlinc"] + tags,
         )
 
         deps = [":" + libname]
@@ -41,13 +43,15 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
         name = name,
         entry_point = "arcs.main",
         deps = _ARCS_KOTLIN_LIBS + deps,
-        tags = ["wasm"],
+        tags = ["wasm", "kotlinc"] + tags,
         visibility = visibility,
+
     )
 
     wasm_kt_binary(
         name = name + "_wasm",
         kt_target = ":" + name,
+        tags = ["kotlinc"] + tags,
     )
 
 def kt_jvm_and_js_library(
@@ -55,6 +59,7 @@ def kt_jvm_and_js_library(
         srcs = [],
         deps = [],
         visibility = None,
+        tags = [],
         **kwargs):
     """Simultaneously defines JVM and JS kotlin libraries.
     name: String; Name of the library
@@ -67,6 +72,7 @@ def kt_jvm_and_js_library(
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
         visibility = visibility,
+        tags = ["kotlinc"] + tags,
         **kwargs
     )
 
@@ -78,6 +84,7 @@ def kt_jvm_and_js_library(
             name = "%s-js" % name,
             srcs = srcs,
             deps = [_to_js_dep(dep) for dep in deps],
+            tags = ["kotlinc"] + tags,
             **js_kwargs
         )
 
