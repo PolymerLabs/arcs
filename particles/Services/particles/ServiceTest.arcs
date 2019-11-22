@@ -1,2 +1,2 @@
 particle ServiceTest in './js/ServiceTest.js'
-  consume root
+  root: consumes

@@ -1,5 +1,5 @@
 import './schemas/SearchQuery.arcs'
 
 particle SearchBar in './source/SearchBar.js'
-  out SearchQuery query
-  consume toproot
+  query: writes SearchQuery
+  toproot: consumes
