@@ -13,7 +13,7 @@ const params = (new URL(document.location)).searchParams;
 export const manifest = (params.has('solo')) ? `import '${params.get('solo')}'` : '';
 
 export const nodevice = params.has('nodevice');
-export const test = params.has('test') || nodevice;
+export const test = params.has('test');
 
 export {paths} from './paths.js';
 

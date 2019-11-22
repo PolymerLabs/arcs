@@ -50,11 +50,13 @@ export const createTestDevice = (paths, storage) => {
 };
 
 const echo = json => {
-  const simple = JSON.stringify(JSON.parse(json));
+  const data = JSON.parse(json);
+  const formatted = JSON.stringify(data, null, '  ');
+  const simple = JSON.stringify(data);
   document.body.appendChild(Object.assign(document.createElement('pre'), {
-    style: 'padding: 8px; border: 1px solid silver; margin: 8px;',
-    textContent: json,
-    title: simple/*.replace(/\n/g, '')*/.replace(/"/g, '\'')
+    style: 'padding: 8px; border: 1px solid silver; margin: 8px; overflow-x: hidden;',
+    textContent: formatted,
+    title: simple.replace(/"/g, '\'')
   }));
 };
 

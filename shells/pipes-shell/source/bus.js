@@ -26,7 +26,7 @@ export const Bus = class {
     return tid;
   }
   send(msg) {
-    const json = typeof msg === 'string' ? msg : JSON.stringify(msg, null, '  ');
+    const json = typeof msg === 'string' ? msg : JSON.stringify(msg);
     log(`> send(${json})`);
     if (this.client && this.client.receive) {
       this.client.receive(json);
