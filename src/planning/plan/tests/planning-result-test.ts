@@ -48,8 +48,6 @@ describe('planning result', () => {
   });
 
   it('appends search suggestions', async () => {
-    // const helper = await PlanningTestHelper.createAndPlan(
-    //     {manifestFilename: './src/runtime/tests/artifacts/Products/Products.recipes'});
     const loader = new StubLoader({});
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);
     const runtime = new Runtime(loader, FakeSlotComposer, context);
