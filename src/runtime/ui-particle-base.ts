@@ -151,6 +151,7 @@ export class UiParticleBase extends Particle {
     }
     return this._remove(handle, value);
   }
+  // tslint:disable-next-line: no-any
   private async _remove(handle: Collection|CollectionHandle<any>, value: Entity | {} | [Entity] | [{}]): Promise<void> {
     const data = Array.isArray(value) ? value : [value];
     return this.await(async p => Promise.all(
