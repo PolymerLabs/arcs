@@ -88,7 +88,7 @@ class TestPlanProducer extends PlanProducer {
       const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);
       const runtime = new Runtime(loader, FakeSlotComposer, context);
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-      let suggestions = await StrategyTestHelper.planForArc(
+      const suggestions = await StrategyTestHelper.planForArc(
           runtime.newArc('demo', storageKeyPrefixForTest()));
 
       const store = await Planificator['_initSuggestStore'](arc, storageKeyBase);
