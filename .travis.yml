@@ -42,7 +42,7 @@ jobs:
     # - script: tools/run_in_docker "npm run build:rollup && npm --prefix=server test"
     #   name: "Node Test: Server"
     - stage: deploy
-      if: branch = master
+      if: type != pull_request AND branch = master
       script: tools/deploy
       deploy:
         provider: pages
