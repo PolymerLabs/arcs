@@ -68,9 +68,7 @@ async function storeResults(consumer, suggestions) {
       `, {loader, fileName: ''});
       const runtime = new Runtime(loader, FakeSlotComposer, context);
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-      const planner = new Planner();
-      planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-      let suggestions = await planner.suggest();
+      let suggestions = await StrategyTestHelper.planForArc(arc);
 
       const consumer = await createPlanConsumer(storageKeyBase, arc);
 
@@ -84,6 +82,7 @@ async function storeResults(consumer, suggestions) {
 
       // Updates suggestions.
       assert.lengthOf(suggestions, 1);
+      assert.deepEqual(suggestions[0].plan.particles.map(p => p.name), ['ItemMultiplexer', 'List']);
       await storeResults(consumer, suggestions);
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 0);
@@ -111,8 +110,7 @@ async function storeResults(consumer, suggestions) {
       assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
       await suggestions[0].instantiate(arc);
-      planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-      suggestions = await planner.suggest();
+      suggestions = await StrategyTestHelper.planForArc(arc);
       await storeResults(consumer, suggestions);
       assert.lengthOf(consumer.result.suggestions, 3);
       // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
