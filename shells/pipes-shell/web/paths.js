@@ -11,8 +11,13 @@ export const paths = {
   root: '.',
   map: {
     'https://$arcs/': `../../../`,
-    'https://$particles/': `../../../particles/`,
-    'https://$build/': `../../lib/build/`
+    'https://$build/': `../../lib/build/`,
+    'https://$particles/': {
+      root: `../../../`,
+      path: `/particles/`,
+      buildDir: '/bazel-bin',
+      buildOutputRegex: /\.wasm$/.source
+    }
   }
 };
 

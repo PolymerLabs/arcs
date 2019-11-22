@@ -11,11 +11,13 @@
 const defaultManifest = `
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
-//import 'https://$particles/Restaurants/Restaurants.arcs'
 import 'https://$particles/Notification/Notification.arcs'
+import 'https://$particles/Tutorial/Kotlin/1_HelloWorld/HelloWorld.arcs'
+//import 'https://$particles/Restaurants/Restaurants.arcs'
 `;
 
-let bus, send;
+let bus;
+let send;
 
 export const createTestDevice = (paths, storage) => {
   return {
@@ -37,6 +39,8 @@ export const createTestDevice = (paths, storage) => {
         case 'context':
           smokeTest(bus);
           break;
+        case 'pec':
+          break;
         default:
           echo(json);
           break;
@@ -50,7 +54,7 @@ const echo = json => {
   document.body.appendChild(Object.assign(document.createElement('pre'), {
     style: 'padding: 8px; border: 1px solid silver; margin: 8px;',
     textContent: json,
-    title: simple/*.replace(/\n/g, '')*/.replace(/\"/g, '\'')
+    title: simple/*.replace(/\n/g, '')*/.replace(/"/g, '\'')
   }));
 };
 
@@ -85,14 +89,14 @@ const smokeTest = async (bus) => {
   //
   const notificationTest = () => {
     // spawn an arc
-    send({message: 'spawn', modality: 'dom', recipe: 'Notification'});
+    send({message: 'runArc', arcId: 'pipe-notification-test', modality: 'dom', recipe: 'Notification'});
   };
   //
   const parseTest = () => {
     // parse manifest content
-    send({message: 'parse', content: `import 'https://$particles/canonical.arcs'`});
+    send({message: 'parse', content: `import 'https://$particles/PipeApps/PipeApps.arcs'`});
     // parse manifest file
-    send({message: 'parse', path: `https://$particles/canonical.arcs`});
+    send({message: 'parse', path: `https://$particles/PipeApps/PipeApps.arcs`});
   };
   //
   const wasmTest = () => {
@@ -105,8 +109,8 @@ const smokeTest = async (bus) => {
     enableIngestion,
     ingestionTest,
     autofillTest,
-    //notificationTest,
-    //parseTest,
-    //wasmTest
+    notificationTest,
+    wasmTest,
+    parseTest
   ], 500);
 };
