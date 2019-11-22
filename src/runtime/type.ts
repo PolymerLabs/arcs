@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {EntityClass, Entity} from './entity.js';
 import {Id} from './id.js';
 import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
 import {SlotInfo} from './slot-info.js';
@@ -19,13 +18,10 @@ import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
-import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
-import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
-import {Referenceable} from './crdt/crdt-collection.js';
-import {Flags} from './flags.js';
+import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
 import {Schema} from './schema.js';
 import {SchemaFactory} from './schema-factory.js';
+import {FromLiteralFactory} from './from-literal-factory.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -46,7 +42,7 @@ export abstract class Type {
   static fromLiteral(literal: TypeLiteral) : Type {
     switch (literal.tag) {
       case 'Entity':
-        return new EntityType(SchemaFactory.fromLiteral(literal.data));
+        return new EntityType(FromLiteralFactory.schemaFromLiteral(literal.data));
       case 'TypeVariable':
         return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
       case 'Collection':

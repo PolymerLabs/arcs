@@ -17,6 +17,7 @@ import {Manifest} from '../manifest.js';
 import {Reference} from '../reference.js';
 import {Schema} from '../schema.js';
 import {SchemaFactory} from '../schema-factory.js';
+import {FromLiteralFactory} from '../from-literal-factory.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
@@ -403,7 +404,7 @@ describe('schema', () => {
   // Firebase doesn't store empty lists or objects, so we need to
   // handle instantiation of an empty schema from an undefined literal.
   it('handles schema instantiation from undefined spec', async () => {
-    const emptySchema = SchemaFactory.fromLiteral(undefined);
+    const emptySchema = FromLiteralFactory.schemaFromLiteral(undefined);
     assert.isEmpty(emptySchema.fields);
     assert.isEmpty(emptySchema.names);
     assert.strictEqual('* {}', emptySchema.toInlineSchemaString());

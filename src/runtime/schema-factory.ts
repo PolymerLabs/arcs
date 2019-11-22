@@ -11,6 +11,7 @@
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Type} from './type.js';
+import {FromLiteralFactory} from './from-literal-factory.js';
 /*
  * SchemaFactory contains all the constructor functions for a Schema, as
  * part of a PIMPL architecture, which is necessary to break cyclic
@@ -20,27 +21,6 @@ export class SchemaFactory {
   // tslint:disable-next-line: no-any
   static createNew(names: string[], fields: Dictionary<any>, description?): Schema {
     return new Schema(names, fields, description);
-  }
-
-  static fromLiteral(data = {fields: {}, names: [], description: {}}) {
-    const fields = {};
-    const updateField = field => {
-      if (field.kind === 'schema-reference') {
-        const schema = field.schema;
-        return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
-      } else if (field.kind === 'schema-collection') {
-        return {kind: 'schema-collection', schema: updateField(field.schema)};
-      } else {
-        return field;
-      }
-    };
-    for (const key of Object.keys(data.fields)) {
-      fields[key] = updateField(data.fields[key]);
-    }
-
-    const result = new Schema(data.names, fields);
-    result.description = data.description || {};
-    return result;
   }
 
   static union(schema1: Schema, schema2: Schema): Schema|null {
@@ -75,3 +55,27 @@ export class SchemaFactory {
   }
 
 }
+
+function fromLiteral(data = {fields: {}, names: [], description: {}}) {
+  const fields = {};
+  const updateField = field => {
+    if (field.kind === 'schema-reference') {
+      const schema = field.schema;
+      //return {kind: 'schema-reference', schema: {kind: schema.kind, model: FromLiteralFactory.typeFromLiteral(schema.model)}};
+      return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
+    } else if (field.kind === 'schema-collection') {
+      return {kind: 'schema-collection', schema: updateField(field.schema)};
+    } else {
+      return field;
+    }
+  };
+  for (const key of Object.keys(data.fields)) {
+    fields[key] = updateField(data.fields[key]);
+  }
+
+  const result = new Schema(data.names, fields);
+  result.description = data.description || {};
+  return result;
+}
+
+FromLiteralFactory.setSchemaMethod(fromLiteral);
