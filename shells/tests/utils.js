@@ -42,10 +42,11 @@ exports.waitForServer = async function() {
     await browser.url(statusUrl);
     const title = await browser.getTitle();
     if (title === 'ALDS') {
-      break;
+      return;
     }
     await browser.pause(interval);
   }
+  throw new Error('Failed to connect to ALDS');
 };
 
 const installUtils = async () => {
