@@ -19,10 +19,10 @@ import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
 import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {Planner} from '../planner.js';
-import {Speculator } from '../speculator.js';
+import {Speculator} from '../speculator.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 import {ConCap} from '../../testing/test-util.js';
-import {StrategyTestHelper} from '../testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   get suggestConsumers() {
@@ -124,7 +124,7 @@ describe('suggestion composer', () => {
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     // // Instantiate inner arc's suggestion.
-    const innerSuggestion = suggestions1.find(s => s.plan.particles.some(p => p.name == 'LightCandles'));
+    const innerSuggestion = suggestions1.find(s => s.plan.particles.some(p => p.name === 'LightCandles'));
     const innerArc = arc.innerArcs[0];
 
     await innerSuggestion.instantiate(innerArc);
@@ -132,7 +132,7 @@ describe('suggestion composer', () => {
     slotComposer.newExpectations()
       .expectRenderSlot('LightCandles', 'candles', {'contentTypes': ['template', 'model', 'templateName']});
     await arc.idle;
-    
+
     const suggestions2 = await StrategyTestHelper.planForArc(arc);
     assert.isEmpty(suggestions2);
 

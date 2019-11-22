@@ -15,7 +15,7 @@ import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Planner} from '../planning/planner.js';
-import {StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 
 describe('recipe descriptions test', () => {

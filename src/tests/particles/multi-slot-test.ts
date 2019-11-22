@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
+import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
 
 describe('multi-slot test', () => {
   async function init() {

@@ -15,7 +15,7 @@ import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
-import {StrategyTestHelper} from '../../planning/testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {

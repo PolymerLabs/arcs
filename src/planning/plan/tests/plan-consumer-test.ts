@@ -25,7 +25,7 @@ import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
 import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {Planner} from '../../planner.js';
-import {StrategyTestHelper} from '../../testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 async function createPlanConsumer(storageKeyBase, arc) {
   arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';

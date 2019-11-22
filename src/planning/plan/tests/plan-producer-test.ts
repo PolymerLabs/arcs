@@ -22,7 +22,7 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Planner} from '../../planner.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {StrategyTestHelper} from '../../testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
