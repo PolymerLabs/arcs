@@ -139,8 +139,8 @@ fun updateHandle(
 ) {
     val handle = handlePtr.toObject<Handle>()
     handle?.let {
-        handle.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
-        particlePtr.toObject<Particle>()?.onHandleUpdate(handle)
+        it.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
+        particlePtr.toObject<Particle>()?.onHandleUpdate(it)
     }
 }
 
