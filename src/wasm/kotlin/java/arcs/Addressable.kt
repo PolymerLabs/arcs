@@ -13,8 +13,8 @@ interface Addressable
 typealias Address = Int
 
 internal object AddressableMap {
-    internal val address2Addressable = mutableMapOf<Address, Addressable>()
-    internal val addressable2Address = mutableMapOf<Addressable, Address>()
+    internal val address2Addressable = mutableMapOf<Address, Any>()
+    internal val addressable2Address = mutableMapOf<Any, Address>()
     internal var nextAddress = 1;
 }
 
@@ -37,13 +37,7 @@ fun Addressable?.toAddress(): Address {
 /**
  *  Convert an Address back into a Kotlin Object reference. The
  *  zero Address is converted to null, however any other address
- *  that fails to map to an Adressable throws an exception.
+ *  that fails to map to an Addressable throws an exception.
  **/
-fun <T : Addressable> Address.toObject(): T? {
-    if (this == 0) {
-        return null
-    }
-
-    return address2Addressable[this] as T
-}
+fun  <T : Addressable> Address.toObject(): T? = if (this == 0) null else address2Addressable[this] as T?
 
