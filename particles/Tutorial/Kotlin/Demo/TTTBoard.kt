@@ -15,7 +15,8 @@ class TTTBoard : Particle() {
     private var clicks = 0.0
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
-    init { registerHandle("gameState", gameState)
+    init {
+        registerHandle("gameState", gameState)
         registerHandle("events", events)
 
         eventHandler("onClick") { eventData ->
@@ -33,9 +34,7 @@ class TTTBoard : Particle() {
         }
     }
 
-    override fun onHandleUpdate(handle: Handle) {
-        renderOutput()
-    }
+    override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val boardList = gameState.get()?.board?.split(",") ?: emptyBoard
@@ -52,8 +51,7 @@ class TTTBoard : Particle() {
         )
     }
 
-    override fun getTemplate(slotName: String): String {
-        return """
+    override fun getTemplate(slotName: String): String = """
             <style>
               .grid-container {
                 display: grid;
@@ -82,7 +80,6 @@ class TTTBoard : Particle() {
             </template>
             Please hit reset to start a new game.<button on-click="reset">Reset</button>
         """.trimIndent()
-    }
 }
 
 @Retain

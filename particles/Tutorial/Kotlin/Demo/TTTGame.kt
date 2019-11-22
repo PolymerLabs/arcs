@@ -50,12 +50,12 @@ class TTTGame : Particle() {
         if (gameState.get()?.board == null) {
             gameState.set(defaultGame)
         }
-        if (handle.name.equals("playerOne") && playerOne.get()?.id != 0.0) {
+        if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
             val p1 = playerOne.get() ?: TTTGame_PlayerOne()
             p1.id = 0.0
             playerOne.set(p1)
         }
-        if (handle.name.equals("playerTwo") && playerTwo.get()?.id != 1.0) {
+        if (handle.name == "playerTwo" && playerTwo.get()?.id != 1.0) {
             val p2 = playerTwo.get() ?: TTTGame_PlayerOne()
             p2.id = 1.0
             playerTwo.set(p2)
@@ -72,13 +72,12 @@ class TTTGame : Particle() {
         val cpName = if (cp == p1.id) p1.name else p2.name
         val cpAvatar = if (cp == p1.id) p1.avatar else p2.avatar
 
-        val winnerAvatar = gs.winnerAvatar ?: ""
-        val winnerName = if (winnerAvatar == p1.avatar) p1.name else p2.name
-        val congratsMessage = if (gs.winnerAvatar != null)
-            "Congratulations $winnerName, you won!" else "It's a tie!"
+        val congratsMessage = gs.winnerAvatar?.let {
+            if (it == p1.avatar) p1.name else p2.name
+        }?.let { "Congratulations $it, you won!" } ?: "It's a tie!"
 
         return model + mapOf(
-            "message" to if (gs.gameOver ?: false) congratsMessage else "",
+            "message" to if (gs.gameOver == true) congratsMessage else "",
             "playerDetails" to "$cpName playing as $cpAvatar"
         )
     }
@@ -86,18 +85,18 @@ class TTTGame : Particle() {
     override fun onHandleUpdate(handle: Handle) {
         val gs = gameState.get() ?: TTTGame_GameState()
         // Apply the moves
-        if (!(gs.gameOver ?: false)) {
+        if (gs.gameOver != true) {
             val board = gs.board ?: defaultGame.board!!
             val boardList = board.split(",").toMutableList()
             // Check the handle updated matches the current player
-            if (handle.name.equals("playerOneMove") && gs.currentPlayer == 0.0) {
+            if (handle.name == "playerOneMove" && gs.currentPlayer == 0.0) {
                 applyMove(
                     mv = playerOneMove.get()?.move?.toInt() ?: -1,
                     avatar = playerOne.get()?.avatar ?: "",
                     boardList = boardList,
                     gs = gs
                 )
-            } else if (handle.name.equals("playerTwoMove") && gs.currentPlayer == 1.0) {
+            } else if (handle.name == "playerTwoMove" && gs.currentPlayer == 1.0) {
                 applyMove(
                     mv = playerTwoMove.get()?.move?.toInt() ?: -1,
                     avatar = playerTwo.get()?.avatar ?: "",
@@ -115,14 +114,11 @@ class TTTGame : Particle() {
         renderOutput()
     }
 
-    override fun getTemplate(slotName: String): String {
-
-        return """
-            It is your turn <span>{{playerDetails}}</span>.
-            <div slotid="boardSlot"></div>
-            <div><span>{{message}}</span></div>
-            """.trimIndent()
-    }
+    override fun getTemplate(slotName: String): String = """
+        It is your turn <span>{{playerDetails}}</span>.
+        <div slotid="boardSlot"></div>
+        <div><span>{{message}}</span></div>
+        """.trimIndent()
 
     private fun applyMove(
         mv: Int,
@@ -130,20 +126,22 @@ class TTTGame : Particle() {
         boardList: MutableList<String>,
         gs: TTTGame_GameState
     ) {
-        if (mv > -1 && mv < 10 && boardList[mv] == "") {
-            boardList[mv] = avatar
-            gs.board = boardList.joinToString(",")
+        if (!mv.isValidMove(boardList)) return
+        boardList[mv] = avatar
+        gs.board = boardList.joinToString(",")
 
-            val cp = gs.currentPlayer ?: 0.0
-            gs.currentPlayer = (cp + 1) % 2
-            gameState.set(gs)
+        val cp = gs.currentPlayer ?: 0.0
+        gs.currentPlayer = (cp + 1) % 2
+        gameState.set(gs)
 
-            gameState.set(checkGameOver(boardList, gs, avatar))
-        }
+        gameState.set(checkGameOver(boardList, gs, avatar))
     }
 
-    private fun checkGameOver(boardList: List<String>, gs: TTTGame_GameState, avatar: String):
-        TTTGame_GameState {
+    private fun checkGameOver(
+        boardList: List<String>,
+        gs: TTTGame_GameState,
+        avatar: String
+    ): TTTGame_GameState {
         // Check if the board is full, meaning the game is tied
         gs.gameOver = !boardList.contains("")
 
@@ -159,13 +157,9 @@ class TTTGame : Particle() {
         return gs
     }
 
-    private fun hasReset(): Boolean {
-        events.forEach { event ->
-            if (event.type == "reset")
-                return true
-        }
-        return false
-    }
+    private fun hasReset() = events.any { it.type == "reset" }
+
+    private fun Int.isValidMove(boardList: List<String>) = this in 0..9 && boardList[this] == ""
 }
 
 @Retain

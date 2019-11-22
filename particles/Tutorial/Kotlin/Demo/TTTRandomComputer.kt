@@ -19,26 +19,24 @@ class TTTRandomComputer : Particle() {
         registerHandle("player", player)
     }
 
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        onHandleUpdate(gameState)
-    }
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
 
     override fun onHandleUpdate(handle: Handle) {
-        if (gameState.get()?.currentPlayer == player.get()?.id) {
-            val board = gameState.get()?.board ?: ",,,,,,,,"
-            val boardArr = board.split(",").map { it }.toMutableList()
-            val emptyCells = mutableListOf<Double>()
+        if (gameState.get()?.currentPlayer != player.get()?.id) return
 
-            // Find all the empty cells
-            boardArr.forEachIndexed { index, cell ->
-                if (cell == "") emptyCells.add(index.toDouble())
-            }
+        val board = gameState.get()?.board ?: ",,,,,,,,"
+        val boardArr = board.split(",")
+        val emptyCells = mutableListOf<Double>()
 
-            // Choose a random cell as the move
-            if (emptyCells.size > 0) {
-                val mv = emptyCells.shuffled().first()
-                myMove.set(TTTRandomComputer_MyMove(move = mv))
-            }
+        // Find all the empty cells
+        boardArr.forEachIndexed { index, cell ->
+            if (cell == "") emptyCells.add(index.toDouble())
+        }
+
+        // Choose a random cell as the move
+        if (emptyCells.isNotEmpty()) {
+            val mv = emptyCells.shuffled().first()
+            myMove.set(TTTRandomComputer_MyMove(move = mv))
         }
     }
 }

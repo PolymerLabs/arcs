@@ -1,7 +1,69 @@
 // Tutorial Demo
 // Shows how to use Arcs features to create a tic-tac-toe game.
-import 'TTTGameSchemas.arcs'
-import 'TTTGamedata.arcs'
+
+
+schema Person
+  name: Text
+  avatar: Text
+  id: Number
+
+schema GameState
+  gameOver: Boolean
+  board: Text
+  currentPlayer: Number
+  winnerAvatar: Text
+
+schema Event
+  type: Text
+  move: Number
+  time: Number
+
+schema Move
+  move: Number
+
+
+resource ComputerDefault
+  start
+  [
+    {"name": "Computer", "avatar": "O"}
+  ]
+
+resource FirstComputer
+  start
+  [
+    {"name": "Computer One", "avatar": "X"}
+  ]
+
+resource SecondComputer
+  start
+  [
+    {"name": "Computer Two", "avatar": "O"}
+  ]
+
+resource HumanDefault
+  start
+  [
+    {"name": "Human", "avatar": "X"}
+  ]
+
+resource FirstHuman
+  start
+  [
+    {"name": "Player One", "avatar": "X"}
+  ]
+
+resource SecondHuman
+  start
+  [
+    {"name": "Player Two", "avatar": "O"}
+  ]
+
+store ComputerStore of Person in ComputerDefault
+store ComputerOneStore of Person in FirstComputer
+store ComputerTwoStore of Person in SecondComputer
+store HumanStore of Person in HumanDefault
+store HumanOneStore of Person in FirstHuman
+store HumanTwoStore of Person in SecondHuman
 
 particle TTTBoard in 'TTTBoard.wasm'
   events: writes [Event]
@@ -45,18 +107,18 @@ recipe GamePlayersDemoRecipe
     root: consumes
       boardSlot: provides board
   TTTBoard
-      gameState: reads gameState
-      events: writes events
-      boardSlot: consumes board
+    gameState: reads gameState
+    events: writes events
+    boardSlot: consumes board
   TTTHumanPlayer
     gameState: reads gameState
     events: reads events
     myMove: writes playerOneMove
     player: reads playerOne
   TTTRandomComputer
-      gameState: reads gameState
-      myMove: writes playerTwoMove
-      player: reads playerTwo
+    gameState: reads gameState
+    myMove: writes playerTwoMove
+    player: reads playerTwo
   description `Kotlin Tutorial TicTacToe One Player Demo`
 
 recipe GamePlayersDemoRecipe
@@ -74,19 +136,19 @@ recipe GamePlayersDemoRecipe
     root: consumes
       boardSlot: provides board
   TTTBoard
-      gameState: reads gameState
-      events: writes events
-      boardSlot: consumes board
+    gameState: reads gameState
+    events: writes events
+    boardSlot: consumes board
   TTTHumanPlayer
     gameState: reads gameState
     events: reads events
     myMove: writes playerOneMove
     player: reads playerOne
   TTTHumanPlayer
-      gameState: reads gameState
-      events: reads events
-      myMove: writes playerTwoMove
-      player: reads playerTwo
+    gameState: reads gameState
+    events: reads events
+    myMove: writes playerTwoMove
+    player: reads playerTwo
   description `Kotlin Tutorial TicTacToe Two Players Demo`
 
 recipe GamePlayersDemoRecipe
@@ -104,17 +166,17 @@ recipe GamePlayersDemoRecipe
     root: consumes
       boardSlot: provides board
   TTTBoard
-      gameState: reads gameState
-      events: writes events
-      boardSlot: consumes board
+    gameState: reads gameState
+    events: writes events
+    boardSlot: consumes board
   TTTRandomComputer
-        gameState: reads gameState
-        myMove: writes playerOneMove
-        player: reads playerOne
+    gameState: reads gameState
+    myMove: writes playerOneMove
+    player: reads playerOne
   TTTRandomComputer
-      gameState: reads gameState
-      myMove: writes playerTwoMove
-      player: reads playerTwo
+    gameState: reads gameState
+    myMove: writes playerTwoMove
+    player: reads playerTwo
   description `Kotlin Tutorial TicTacToe Zero Players Demo`
 
 
