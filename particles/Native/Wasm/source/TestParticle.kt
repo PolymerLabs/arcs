@@ -1,6 +1,7 @@
 package arcs.test
 
 import arcs.*
+import kotlin.Exception
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -117,7 +118,7 @@ class TestParticle : Particle() {
             info.clear()
         }
         eventHandler("throw") {
-            throw kotlin.Exception("this message doesn't get passed (yet?)")
+            throw Exception("this message doesn't get passed (yet?)")
         }
         eventHandler("assert") {
             assert(2 + 2 == 3)
