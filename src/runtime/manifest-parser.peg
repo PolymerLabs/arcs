@@ -116,6 +116,7 @@ Manifest
       const hasTestFlags = typeof global !== 'undefined' && global['testFlags'];
       if (!hasTestFlags || !global['testFlags'].quiet) {
         console.warn('WARNING: Pre-Slandles Syntax is deprecated. Contact jopra@google.com for more information.');
+        console.warn('WARNING: in', options.filename);
         console.warn(`WARNING: Used in \n  ${
           preSlandlesSyntaxLocations.map(loc => `line ${loc.start.line} column ${loc.start.column}`).join("\n  ")
         }`);
@@ -416,7 +417,7 @@ Particle
     if (modality.length === 0) {
       // Add default modality
       modality.push('dom');
-    }    
+    }
 
     return  toAstNode<AstNode.Particle>({
       kind: 'particle',
