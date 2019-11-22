@@ -12,7 +12,11 @@ import {assert} from '../platform/chai-web.js';
 import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
-import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {Manifest} from '../runtime/manifest.js';
+import {Runtime} from '../runtime/runtime.js';
+import {Planner} from '../planning/planner.js';
+import {StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -84,11 +88,16 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const helper = await PlanningTestHelper.create({manifestString: options.manifestString || createManifestString(options), loader});
-    helper.arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
-    await helper.makePlans(options);
-    assert.lengthOf(helper.suggestions, 1);
-    return helper.suggestions[0].getDescription(helper.arc.modality.names[0]);
+    const context =  await Manifest.parse(options.manifestString || createManifestString(options), loader);
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://');
+    arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
+
+    const planner = new Planner();
+    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    const suggestions = await planner.suggest();
+    assert.lengthOf(suggestions, 1);
+    return suggestions[0].getDescription(arc.modality.names[0]);
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
@@ -231,18 +240,24 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('fails generating recipe description with duplicate particles', async () => {
-    await PlanningTestHelper.createAndPlan({manifestString: `
-      schema Foo
-      particle ShowFoo in 'test.js'
-        out Foo foo
-      recipe
-        create as fooHandle
-        ShowFoo
-          foo: writes fooHandle
-        ShowFoo
-          foo: writes fooHandle
-        description \`cannot show duplicate \${ShowFoo.foo}\`
-    `, loader}).then(() => assert('expected exception for duplicate particles'))
+    const context =  await Manifest.parse(`
+        schema Foo
+        particle ShowFoo in 'test.js'
+          out Foo foo
+        recipe
+          create as fooHandle
+          ShowFoo
+            foo: writes fooHandle
+          ShowFoo
+            foo: writes fooHandle
+          description \`cannot show duplicate \${ShowFoo.foo}\`
+      `, {loader, fileName: ''});
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://');
+
+    const planner = new Planner();
+    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    await planner.suggest().then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
@@ -272,7 +287,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('generates recipe description with duplicate particles', async () => {
-    const helper = await PlanningTestHelper.createAndPlan({manifestString: `
+    const context =  await Manifest.parse(`
       schema Foo
       particle ShowFoo in 'test.js'
         foo: writes Foo
@@ -290,18 +305,29 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo: writes fooHandle
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
-    `, loader});
-    assert.lengthOf(helper.suggestions, 2);
-    assert.strictEqual('Show foo.', await helper.suggestions[0].descriptionText);
+    `, {loader, fileName: ''});
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://');
+    // Plan for arc
+    const planner0 = new Planner();
+    planner0.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    const suggestions0 = await planner0.suggest();
+    assert.lengthOf(suggestions0, 2);
+    assert.strictEqual('Show foo.', await suggestions0[0].descriptionText);
 
-    await helper.acceptSuggestion({particles: ['ShowFoo']});
-    await helper.makePlans();
-    assert.lengthOf(helper.suggestions, 1);
+    // Instantiate suggestion
+    await suggestions0[0].instantiate(arc);
+    await arc.idle;
 
-    assert.strictEqual('Show foo with dummy.', await helper.suggestions[0].descriptionText);
+    // Plan again.
+    const planner1 = new Planner();
+    planner1.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    const suggestions1 = await planner1.suggest();
+    assert.lengthOf(suggestions1, 1);
+    assert.strictEqual('Show foo with dummy.', await suggestions1[0].descriptionText);
   });
   it('joins recipe descriptions', async () => {
-    const helper = await PlanningTestHelper.createAndPlan({manifestString: `
+    const context =  await Manifest.parse(`
       particle A in 'test.js'
       particle B in 'test.js'
       particle C in 'test.js'
@@ -315,25 +341,32 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       recipe
         C
         description \`do C\`
-    `, loader});
-    assert.lengthOf(helper.suggestions, 3);
+    `, {loader, fileName: ''});
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://');
+
+    const planner = new Planner();
+    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    const suggestions = await planner.suggest();
+
+    assert.lengthOf(suggestions, 3);
     const recipe1 = new Recipe();
-    helper.suggestions[0].plan.mergeInto(recipe1);
+    suggestions[0].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 1);
     assert.lengthOf(recipe1.patterns, 1);
 
-    helper.suggestions[1].plan.mergeInto(recipe1);
+    suggestions[1].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 2);
     assert.lengthOf(recipe1.patterns, 2);
 
-    helper.suggestions[2].plan.mergeInto(recipe1);
+    suggestions[2].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 3);
     assert.deepEqual(['do A', 'do B', 'do C'], recipe1.patterns);
 
     const recipe2 = new Recipe();
-    helper.suggestions[2].plan.mergeInto(recipe2);
-    helper.suggestions[0].plan.mergeInto(recipe2);
-    helper.suggestions[1].plan.mergeInto(recipe2);
+    suggestions[2].plan.mergeInto(recipe2);
+    suggestions[0].plan.mergeInto(recipe2);
+    suggestions[1].plan.mergeInto(recipe2);
     assert.deepEqual(['do C', 'do A', 'do B'], recipe2.patterns);
     assert.notDeepEqual(recipe1.patterns, recipe2.patterns);
 

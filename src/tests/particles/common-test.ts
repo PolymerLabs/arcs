@@ -9,9 +9,13 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {Planner} from '../../planning/planner.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
+import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
+import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {StrategyTestHelper} from '../../planning/testing/arcs-planning-testing.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -66,17 +70,25 @@ describe('common particles test', () => {
 
 
   it('copy handle test', async () => {
-    const helper = await PlanningTestHelper.createAndPlan({
-      manifestFilename: './src/tests/particles/artifacts/copy-collection-test.recipes',
-      expectedNumPlans: 1,
-      expectedSuggestions: ['Copy all things!']
-    });
-    assert.isEmpty(helper.arc._stores);
+    const loader = new StubLoader({});
+    const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader);
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://');
 
-    await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});
+    const planner = new Planner();
+    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    const suggestions = await planner.suggest();
+    assert.lengthOf(suggestions, 1);
+    const suggestion = suggestions[0];
+    assert.equal(suggestion.descriptionText, 'Copy all things!');
+
+    assert.isEmpty(arc._stores);
+
+    await suggestion.instantiate(arc);
+    await arc.idle;
 
     // Copied 2 and 3 entities from two collections.
-    const collection = helper.arc._stores[2] as VolatileCollection;
+    const collection = arc._stores[2] as VolatileCollection;
     assert.strictEqual(5, collection._model.size);
   });
 });
