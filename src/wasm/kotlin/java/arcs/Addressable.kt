@@ -44,6 +44,6 @@ fun <T : Addressable> Address.toObject(): T? {
         return null
     }
 
-    return address2Addressable[this]!! as T
+    return address2Addressable[this] as T
 }
 
