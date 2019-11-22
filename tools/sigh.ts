@@ -1011,8 +1011,15 @@ function devServerAsync(args: string[]) : boolean {
 }
 
 function testWdioShells(args: string[]) : boolean {
-  return saneSpawnSync('node_modules/.bin/wdio', ['--baseUrl',
-      'http://localhost:8786/', /*fixPathForWindows(*/path.resolve('shells/tests/wdio.conf.js')/*)*/, ...args]);
+  return saneSpawnSync('node_modules/.bin/wdio', [
+      '--baseUrl',
+      'http://localhost:8786/',
+      // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
+      // windows machine (`e:/path/` becomes `e:/e:/path/`)
+      //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
+      path.resolve('shells/tests/wdio.conf.js'),
+      ...args
+  ]);
 }
 
 /**
