@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+# Build typedocs
+npm run build:typedoc
+# Track Version
+git log -n 1 > VERSION
+# Move deployment artifacts to project root
+mv tools/deployment/* .
+
+
+

@@ -1,0 +1,19 @@
+# Blacklist all files/folders
+/*
+
+# Include key directories for arcs-live
+!build/
+!devtools/
+!dist/
+!extension/
+!modaliities/dom/
+!particles/
+!shells/
+
+# Include key files
+!.nojekyll
+!LICENSE
+!VERSION
+!index.html
+!README.md
+
