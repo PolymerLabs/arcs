@@ -24,18 +24,14 @@ internal object AddressableMap {
  */
 fun Addressable?.toAddress(): Address {
     // Null pointer maps to 0
-    if (this == null) {
-        return 0
-    }
+    if (this == null) return 0
 
-    if (addressable2Address[this] != null) {
-        return addressable2Address[this]!!
-    }
-
-    val address = nextAddress++
-    address2Addressable[address] = this
-    addressable2Address[this] = address
-    return address
+    return addressable2Address[this]?.let { it } ?: {
+        val address = nextAddress++
+        address2Addressable[address] = this
+        addressable2Address[this] = address
+        address
+    }()
 }
 
 /**
