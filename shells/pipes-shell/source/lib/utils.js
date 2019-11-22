@@ -11,6 +11,7 @@
 import {Type} from '../../../../build/runtime/type.js';
 import {Runtime} from '../../../../build/runtime/runtime.js';
 import {Schemas} from '../schemas.js';
+import {FromLiteralFactory} from '../../../../build/runtime/from-literal-factory.js';
 
 export const conformType = type => {
   return (type || 'com.music.spotify').replace(/\./g, '_');
@@ -53,7 +54,7 @@ export const marshalOutput = async arc => {
   let data;
   let store = arc.__outputStore;
   if (!store) {
-    const type = Type.fromLiteral(Schemas.Json);
+    const type = FromLiteralFactory.typeFromLiteral(Schemas.Json);
     const stores = arc.findStoresByType(type);
     store = stores[0];
     if (!store) {

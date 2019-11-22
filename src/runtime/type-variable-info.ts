@@ -13,6 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {SchemaFactory} from './schema-factory.js';
 import {EntityType, SlotType, Type, TypeVariable, TypeLiteral} from './type.js';
+import {FromLiteralFactory} from './from-literal-factory.js';
 
 interface TypeVariableInfoLiteral {
   name: string;
@@ -231,8 +232,8 @@ export class TypeVariableInfo {
   static fromLiteral(data: TypeVariableInfoLiteral) {
     return new TypeVariableInfo(
         data.name,
-        data.canWriteSuperset ? Type.fromLiteral(data.canWriteSuperset) : null,
-        data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null);
+        data.canWriteSuperset ? FromLiteralFactory.typeFromLiteral(data.canWriteSuperset) : null,
+        data.canReadSubset ? FromLiteralFactory.typeFromLiteral(data.canReadSubset) : null);
   }
 
   isResolved(): boolean {

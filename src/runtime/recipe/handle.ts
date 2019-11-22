@@ -24,6 +24,7 @@ import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Flags} from '../flags.js';
+import {FromLiteralFactory} from '../from-literal-factory.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -351,7 +352,7 @@ export class Handle implements Comparable<Handle> {
         // TODO: include the unresolved constraints in toString (ie in the hash).
         result.push(this.type.toString());
         if (options.showUnresolved && this.type.canEnsureResolved()) {
-          const type = Type.fromLiteral(this.type.toLiteral());
+          const type = FromLiteralFactory.typeFromLiteral(this.type.toLiteral());
           type.maybeEnsureResolved();
           result.push('//');
           result.push(type.resolvedType().toString({hideFields: options.hideFields == undefined ? true: options.hideFields}));

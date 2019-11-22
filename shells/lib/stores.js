@@ -10,10 +10,11 @@
 
 import {Type} from '../../build/runtime/type.js';
 import {Arc} from '../../build/runtime/arc.js';
+import {FromLiteralFactory} from '../../build/runtime/from-literal-factory.js';
 
 export class Stores {
   static async create(context, options) {
-    const schemaType = Type.fromLiteral(options.schema);
+    const schemaType = FromLiteralFactory.typeFromLiteral(options.schema);
     const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
     const store = await this.requireStore(context, typeOf, options);
     return store;

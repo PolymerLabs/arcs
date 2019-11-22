@@ -16,9 +16,10 @@ import {Type, TypeVariable, TypeLiteral} from './type.js';
 import {ParticleSpec} from './particle-spec.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {Flags} from './flags.js';
+import {FromLiteralFactory} from './from-literal-factory.js';
 
 function _typeFromLiteral(member: TypeLiteral): Type {
-  return Type.fromLiteral(member);
+  return FromLiteralFactory.typeFromLiteral(member);
 }
 
 function _typeVarOrStringFromLiteral(member: TypeLiteral | string): TypeVariable | string {

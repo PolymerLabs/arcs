@@ -13,6 +13,7 @@ import {Type, TypeLiteral} from './type.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
+type TypeMethod = (literal: TypeLiteral) => Type;
 
 export class FromLiteralFactory {
 
@@ -23,5 +24,13 @@ export class FromLiteralFactory {
 // tslint:disable-next-line: no-any
   static schemaFromLiteral(data?: {fields: {}; names: any[]; description: {};}) : Schema {
     return FromLiteralFactory.schemaMethod(data);
+  }
+
+  private static typeMethod: TypeMethod;
+  static setTypeMethod(meth: TypeMethod) {
+    FromLiteralFactory.typeMethod = meth;
+  }
+  static typeFromLiteral(literal: TypeLiteral) {
+    return FromLiteralFactory.typeMethod(literal);
   }
 }
