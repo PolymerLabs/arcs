@@ -10,22 +10,29 @@
 import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
-import {MockSlotComposer} from '../../../runtime/testing/mock-slot-composer.js';
-import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
+import {Runtime} from '../../../runtime/runtime.js';
+import {SlotComposerOptions} from '../../../runtime/slot-composer.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
+import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
+import {PlanningModalityHandler} from '../../planning-modality-handler.js';
+import {Planner} from '../../planner.js';
+import {StrategyTestHelper} from '../../testing/arcs-planning-testing.js';
 
-async function createPlanConsumer(arcKey, storageKeyBase, helper) {
-  helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
-  const store = await Planificator['_initSuggestStore'](helper.arc, storageKeyBase);
+async function createPlanConsumer(storageKeyBase, arc) {
+  arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
+  const store = await Planificator['_initSuggestStore'](arc, storageKeyBase);
   assert.isNotNull(store);
-  return new PlanConsumer(helper.arc, new PlanningResult(helper.envOptions, store));
+  return new PlanConsumer(
+      arc, new PlanningResult({context: arc.context, loader: arc.loader}, store));
 }
 
 async function storeResults(consumer, suggestions) {
@@ -38,30 +45,34 @@ async function storeResults(consumer, suggestions) {
 ['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
-      const helper = await PlanningTestHelper.createAndPlan({
-        slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
-        manifestString: `
-import './src/runtime/tests/artifacts/Products/Products.recipes'
+      const loader = new StubLoader({});
+      const context =  await Manifest.parse(`
+        import './src/runtime/tests/artifacts/Products/Products.recipes'
+        
+        particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
+          products: reads [Product]
+          root: consumes Slot
+            other: provides? Slot
+        particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
+          other: consumes Slot
+        
+        recipe
+          list: use #shoplist
+          Test1
+            products: list
+            root: consumes root
+              other: provides other
+          Test2
+            other: consumes other
+          description \`Test Recipe\`
+      `, {loader, fileName: ''});
+      const runtime = new Runtime(loader, FakeSlotComposer, context);
+      const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+      const planner = new Planner();
+      planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+      let suggestions = await planner.suggest();
 
-particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
-  products: reads [Product]
-  root: consumes Slot
-    other: provides? Slot
-particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
-  other: consumes Slot
-
-recipe
-  list: use #shoplist
-  Test1
-    products: list
-    root: consumes root
-      other: provides other
-  Test2
-    other: consumes other
-  description \`Test Recipe\`
-`
-      });
-      const consumer = await createPlanConsumer('volatile://!158405822139616:demo^^volatile-0', storageKeyBase, helper);
+      const consumer = await createPlanConsumer(storageKeyBase, arc);
 
       let suggestionsChangeCount = 0;
       const suggestionsCallback = (suggestions) => ++suggestionsChangeCount;
@@ -72,7 +83,8 @@ recipe
       assert.isEmpty(consumer.getCurrentSuggestions());
 
       // Updates suggestions.
-      await storeResults(consumer, helper.findSuggestionByParticleNames(['ItemMultiplexer', 'List']));
+      assert.lengthOf(suggestions, 1);
+      await storeResults(consumer, suggestions);
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 0);
       assert.strictEqual(suggestionsChangeCount, 1);
@@ -98,9 +110,10 @@ recipe
       assert.strictEqual(suggestionsChangeCount, 1);
       assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
-      await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List']});
-      await helper.makePlans();
-      await storeResults(consumer, helper.suggestions);
+      await suggestions[0].instantiate(arc);
+      planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+      suggestions = await planner.suggest();
+      await storeResults(consumer, suggestions);
       assert.lengthOf(consumer.result.suggestions, 3);
       // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
       assert.lengthOf(consumer.getCurrentSuggestions(), 2);
@@ -124,32 +137,38 @@ describe('plan consumer', () => {
     `).join('')}
         `;
       };
-      const helper = await PlanningTestHelper.create({
-        slotComposer: new MockSlotComposer({
-          modalityName,
-          modalityHandler: PlanningModalityHandler.createHeadlessHandler()
-        }),
-        manifestString: `
-  particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
-    root: consumes Slot
-  particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
-    root: consumes Slot
-    modality domTouch
-  particle ParticleBoth in './src/runtime/tests/artifacts/consumer-particle.js'
-    root: consumes Slot
-    modality dom
-    modality domTouch
-  ${addRecipe(['ParticleDom'])}
-  ${addRecipe(['ParticleTouch'])}
-  ${addRecipe(['ParticleDom', 'ParticleBoth'])}
-  ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
-  `});
-      assert.lengthOf(helper.arc.context.allRecipes, 4);
-      const consumer = await createPlanConsumer(
-          'volatile://!158405822139616:demo^^volatile-0', 'volatile', helper);
+      const loader = new StubLoader({});
+      const context =  await Manifest.parse(`
+particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
+  root: consumes Slot
+particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
+  root: consumes Slot
+  modality domTouch
+particle ParticleBoth in './src/runtime/tests/artifacts/consumer-particle.js'
+  root: consumes Slot
+  modality dom
+  modality domTouch
+${addRecipe(['ParticleDom'])}
+${addRecipe(['ParticleTouch'])}
+${addRecipe(['ParticleDom', 'ParticleBoth'])}
+${addRecipe(['ParticleTouch', 'ParticleBoth'])}
+        `, {loader, fileName: ''});
+      class ModalitySlotComposer extends FakeSlotComposer {
+        prototype: {};
+        constructor(options?: SlotComposerOptions) {
+          super({
+            modalityName,
+            modalityHandler: PlanningModalityHandler.createHeadlessHandler()
+          });
+        }
+      }
+      const runtime = new Runtime(loader, ModalitySlotComposer, context);
+      const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+      assert.lengthOf(arc.context.allRecipes, 4);
+      const consumer = await createPlanConsumer('volatile', arc);
       assert.isNotNull(consumer);
-      await storeResults(consumer, helper.arc.context.allRecipes.map((plan, index) => {
-        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(helper.arc, plan));
+      await storeResults(consumer, arc.context.allRecipes.map((plan, index) => {
+        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arc, plan));
         suggestion.descriptionByModality['text'] = `${plan.name}`;
         return suggestion;
       }));
