@@ -5,7 +5,4 @@ npm run build:typedoc
 # Track Version
 git log -n 1 > VERSION
 # Move deployment artifacts to project root
-mv tools/deployment/* .
-
-
-
+(shopt -s dotglob; mv tools/deployment/* .)
