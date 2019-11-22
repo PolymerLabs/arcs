@@ -41,7 +41,7 @@ describe(`pipes-shell (${persona})`, () => {
 
 const startPipeShell = async () => {
   const pipesShellUrl = `shells/pipes-shell/web`;
-  const urlParams = [`test`, `log`];
+  const urlParams = [`test`];
   const url = `${pipesShellUrl}/?${urlParams.join('&')}`;
   await browser.url(url);
   console.warn('installing DeviceClient');

@@ -11,6 +11,7 @@ export const paths = {
   root: '.',
   map: {
     'https://$arcs/': `../../../`,
+    'https://$shells/': `../../`,
     'https://$build/': `../../lib/build/`,
     'https://$particles/': {
       root: `../../../`,
