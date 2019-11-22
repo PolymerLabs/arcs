@@ -27,8 +27,7 @@ def _common_args(ctx, klibs):
     ])
 
     args.add_all(klibs, before_each = "-l")
-    for opt in ctx.attr.kotlincopts:
-        args.add(opt)
+    args.add_all(ctx.attr.kotlincopts)
     args.add_all(ctx.files.srcs)
 
     return args
