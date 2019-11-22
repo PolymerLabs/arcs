@@ -1,6 +1,7 @@
 package arcs.wasm
 
 import arcs.*
+import arcs.AddressableMap.address2Addressable
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.toUtf8
 import kotlinx.cinterop.ByteVar
@@ -20,6 +21,13 @@ typealias WasmAddress = Address
 typealias WasmString = Int
 
 typealias WasmNullableString = Int
+
+fun Any?.toAddress(): Address = (this as Addressable).toAddress()
+
+fun Address.toObject(): Any? {
+    if(this == 0) return null
+    return address2Addressable[this]
+}
 
 
 // Extension method to convert an Int into a Kotlin heap ptr

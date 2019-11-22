@@ -13,8 +13,8 @@ interface Addressable
 typealias Address = Int
 
 internal object AddressableMap {
-    internal val address2Addressable = kotlin.collections.mutableMapOf<Address, Addressable>()
-    internal val addressable2Address = kotlin.collections.mutableMapOf<Addressable, Address>()
+    internal val address2Addressable = mutableMapOf<Address, Addressable>()
+    internal val addressable2Address = mutableMapOf<Addressable, Address>()
     internal var nextAddress = 1;
 }
 

@@ -1,9 +1,9 @@
 package arcs
 
 /**
- * Base class for all Wasm Particles.
+ * Base class for all Particles.
  */
-abstract class Particle : Addressable {
+abstract class Particle {
     private val handles: MutableMap<String, Handle> = mutableMapOf()
     private val toSync: MutableSet<Handle> = mutableSetOf()
     private val eventHandlers: MutableMap<String, (Map<String, String>) -> Unit> = mutableMapOf()
@@ -190,7 +190,7 @@ abstract class Particle : Addressable {
 
 enum class Direction { Unconnected, In, Out, InOut }
 
-abstract class Handle : Addressable {
+abstract class Handle {
     lateinit var name: String
     lateinit var particle: Particle
     var direction: Direction = Direction.Unconnected
