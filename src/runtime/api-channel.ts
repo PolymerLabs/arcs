@@ -22,7 +22,7 @@ import {Content} from './slot-consumer.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
+import {Consumer, Literal, Runnable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
@@ -32,6 +32,8 @@ import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
+type fromLiteralMethod<T> = (l: Literal) => T;
+
 interface MappingInfo<T> {
   type: MappingType;
   initializer?: boolean;
@@ -39,7 +41,7 @@ interface MappingInfo<T> {
   overriding?: boolean;
   value?: MappingInfo<T>;
   key?: MappingInfo<T>;
-  converter?: Literalizable<T, Literal>;
+  converter?: fromLiteralMethod<T>;
   identifier?: boolean;
   ignore?: boolean;
 }
@@ -88,7 +90,7 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral<T>(constructor: Literalizable<T, Literal>) {
+function ByLiteral<T>(constructor: fromLiteralMethod<T>) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
     const info: MappingInfo<T> = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
@@ -325,6 +327,9 @@ function convert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingM
     case MappingType.List:
       return value.map(v => convert(info.value, v, mapper));
     case MappingType.ByLiteral:
+      if (!(value.toLiteral)) {
+        throw new Error(`Expected ${info.type} to have a toLiteral method but it doesn't`);
+      }
       return value.toLiteral();
     default:
       throw new Error(`Can't yet send MappingType ${info.type}`);
@@ -359,11 +364,11 @@ function unconvert<T>(info: MappingInfo<T> | undefined, value: any, mapper: Thin
       return value.map(v => unconvert(info.value, v, mapper));
     case MappingType.ByLiteral:
       if (!info.converter) {
-        throw new Error(`Expected ${info.type} to have a converter but it doesn't`);
+        throw new Error(`Expected ${info.type} to have a fromLiteral method but it doesn't`);
       }
-      return info.converter.fromLiteral(value);
+      return info.converter(value);
     default:
-      throw new Error(`Can't yet recieve MappingType ${info.type}`);
+      throw new Error(`Can't yet receive MappingType ${info.type}`);
   }
 }
 
@@ -486,9 +491,9 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
-  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
+  DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string) {}
+  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec.fromLiteral as fromLiteralMethod<ParticleSpec>) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
+  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec.fromLiteral as fromLiteralMethod<ParticleSpec>) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
   ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
@@ -520,13 +525,13 @@ export abstract class PECOuterPort extends APIPort {
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
-  GetBackingStoreCallback(@Initializer store: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  GetBackingStoreCallback(@Initializer store: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
-  CreateHandleCallback(@Initializer handle: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
+  CreateHandleCallback(@Initializer handle: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
@@ -593,13 +598,13 @@ export abstract class PECInnerPort extends APIPort {
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 
-  GetBackingStore(@LocalMapped callback: (proxy: StorageProxy, key: string) => void, @Direct storageKey: string, @ByLiteral(Type) type: Type) {}
+  GetBackingStore(@LocalMapped callback: (proxy: StorageProxy, key: string) => void, @Direct storageKey: string, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type) {}
   abstract onGetBackingStoreCallback(callback: (proxy: StorageProxy | StorageProxyNG<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
 
   ConstructInnerArc(@LocalMapped callback: Consumer<string>, @Mapped particle: Particle) {}
   abstract onConstructArcCallback(callback: Consumer<string>, arc: string);
 
-  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string) {}
   abstract onCreateHandleCallback(callback: Consumer<StorageProxy | StorageProxyNG<CRDTTypeRecord>>, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: Consumer<string>, id: string);
@@ -613,7 +618,7 @@ export abstract class PECInnerPort extends APIPort {
 
   ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: Consumer<{error?: string}>) {}
 
-  ReportExceptionInHost(@ByLiteral(PropagatedException) exception: PropagatedException) {}
+  ReportExceptionInHost(@ByLiteral(PropagatedException.fromLiteral as fromLiteralMethod<PropagatedException>) exception: PropagatedException) {}
 
   // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
   // send it along with the message. We only want to do this after a DevTools connection has been detected, which
