@@ -185,10 +185,7 @@ abstract class Particle : Addressable {
      * @param url URL with $variables
      * @return absolute URL
      */
-    fun resolveUrl(url: String): String {
-        return RuntimeClient.resolveUrl(url)
-
-    }
+    fun resolveUrl(url: String): String = RuntimeClient.resolveUrl(url)
 }
 
 enum class Direction { Unconnected, In, Out, InOut }
