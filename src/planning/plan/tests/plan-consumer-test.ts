@@ -10,22 +10,59 @@
 import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Loader} from '../../../platform/loader.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {Arc} from '../../../runtime/arc.js';
+import {Id} from '../../../runtime/id.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {MockSlotComposer} from '../../../runtime/testing/mock-slot-composer.js';
-import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
+import {Planner} from '../../planner.js';
+import {RecipeIndex} from '../../recipe-index.js';
+import {Speculator} from '../../speculator.js';
+import {PlanningModalityHandler} from '../../planning-modality-handler.js';
+import {devtoolsArcInspectorFactory} from '../../../devtools-connector/devtools-arc-inspector.js';
+import {devtoolsPlannerInspectorFactory} from '../../../devtools-connector/devtools-planner-inspector.js';
 
-async function createPlanConsumer(arcKey, storageKeyBase, helper) {
-  helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
-  const store = await Planificator['_initSuggestStore'](helper.arc, storageKeyBase);
+async function setup(slotComposer, storageKeyBase, manifestString) {
+  Planner.clearCache();
+  const loader = new Loader();
+  const context = await Manifest.parse(manifestString, {loader, fileName: ''});
+  const arc = new Arc({
+    id: Id.fromString('demo'),
+    slotComposer,
+    loader,
+    context,
+    storageKey: 'volatile://!158405822139616:demo^^volatile-0',
+    inspectorFactory: devtoolsArcInspectorFactory
+  });
+  const recipeIndex = RecipeIndex.create(arc);
+  const store = await Planificator['_initSuggestStore'](arc, storageKeyBase);
   assert.isNotNull(store);
-  return new PlanConsumer(helper.arc, new PlanningResult(helper.envOptions, store));
+  const consumer = new PlanConsumer(arc, new PlanningResult({context, loader}, store));
+  return {arc, recipeIndex, consumer};
+}
+
+function findSuggestionByParticleNames(suggestions, particlesNames: string[]): Suggestion[] {
+  return suggestions.filter(p => {
+    const planParticles = p.plan.particles.map(particle => particle.name);
+    return planParticles.length === particlesNames.length && planParticles.every(p => particlesNames.includes(p));
+  });
+}
+
+async function makePlans(arc, recipeIndex) {
+  const planner = new Planner();
+  planner.init(arc, {
+    strategyArgs: {recipeIndex},
+    speculator: new Speculator(),
+    inspectorFactory: devtoolsPlannerInspectorFactory
+  });
+  return planner.suggest();
 }
 
 async function storeResults(consumer, suggestions) {
@@ -38,31 +75,29 @@ async function storeResults(consumer, suggestions) {
 ['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
-      const helper = await PlanningTestHelper.createAndPlan({
-        slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
-        manifestString: `
-import './src/runtime/tests/artifacts/Products/Products.recipes'
+      const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+      const {arc, recipeIndex, consumer} = await setup(slotComposer, storageKeyBase, `
+        import './src/runtime/tests/artifacts/Products/Products.recipes'
 
-particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
-  products: reads [Product]
-  root: consumes Slot
-    other: provides? Slot
-particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
-  other: consumes Slot
+        particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
+          products: reads [Product]
+          root: consumes Slot
+            other: provides? Slot
+        particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
+          other: consumes Slot
 
-recipe
-  list: use #shoplist
-  Test1
-    products: list
-    root: consumes root
-      other: provides other
-  Test2
-    other: consumes other
-  description \`Test Recipe\`
-`
-      });
-      const consumer = await createPlanConsumer('volatile://!158405822139616:demo^^volatile-0', storageKeyBase, helper);
+        recipe
+          list: use #shoplist
+          Test1
+            products: list
+            root: consumes root
+              other: provides other
+          Test2
+            other: consumes other
+          description \`Test Recipe\`
+      `);
 
+      let suggestions = await makePlans(arc, recipeIndex);
       let suggestionsChangeCount = 0;
       const suggestionsCallback = (suggestions) => ++suggestionsChangeCount;
       let visibleSuggestionsChangeCount = 0;
@@ -72,7 +107,7 @@ recipe
       assert.isEmpty(consumer.getCurrentSuggestions());
 
       // Updates suggestions.
-      await storeResults(consumer, helper.findSuggestionByParticleNames(['ItemMultiplexer', 'List']));
+      await storeResults(consumer, findSuggestionByParticleNames(suggestions, ['ItemMultiplexer', 'List']));
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 0);
       assert.strictEqual(suggestionsChangeCount, 1);
@@ -98,9 +133,14 @@ recipe
       assert.strictEqual(suggestionsChangeCount, 1);
       assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
-      await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List']});
-      await helper.makePlans();
-      await storeResults(consumer, helper.suggestions);
+      const found = findSuggestionByParticleNames(suggestions, ['ItemMultiplexer', 'List']);
+      assert.lengthOf(found, 1);
+      await found[0].instantiate(arc);
+      await arc.idle;
+      await slotComposer.expectationsCompleted();
+
+      suggestions = await makePlans(arc, recipeIndex);
+      await storeResults(consumer, suggestions);
       assert.lengthOf(consumer.result.suggestions, 3);
       // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
       assert.lengthOf(consumer.getCurrentSuggestions(), 2);
@@ -113,43 +153,42 @@ recipe
 
 describe('plan consumer', () => {
   it('filters suggestions by modality', async () => {
+    const addRecipe = (particles) => {
+      return `
+        recipe
+          rootSlot: slot 'slot0'
+          ${particles.map(p => `
+          ${p}
+            root: consumes rootSlot
+          `).join('')}
+      `;
+    };
+
     const initConsumer = async (modalityName) => {
-      const addRecipe = (particles) => {
-        return `
-  recipe
-    rootSlot: slot 'slot0'
-    ${particles.map(p => `
-    ${p}
-      root: consumes rootSlot
-    `).join('')}
-        `;
-      };
-      const helper = await PlanningTestHelper.create({
-        slotComposer: new MockSlotComposer({
-          modalityName,
-          modalityHandler: PlanningModalityHandler.createHeadlessHandler()
-        }),
-        manifestString: `
-  particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
-    root: consumes Slot
-  particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
-    root: consumes Slot
-    modality domTouch
-  particle ParticleBoth in './src/runtime/tests/artifacts/consumer-particle.js'
-    root: consumes Slot
-    modality dom
-    modality domTouch
-  ${addRecipe(['ParticleDom'])}
-  ${addRecipe(['ParticleTouch'])}
-  ${addRecipe(['ParticleDom', 'ParticleBoth'])}
-  ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
-  `});
-      assert.lengthOf(helper.arc.context.allRecipes, 4);
-      const consumer = await createPlanConsumer(
-          'volatile://!158405822139616:demo^^volatile-0', 'volatile', helper);
-      assert.isNotNull(consumer);
-      await storeResults(consumer, helper.arc.context.allRecipes.map((plan, index) => {
-        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(helper.arc, plan));
+      const slotComposer = new MockSlotComposer({
+        modalityName,
+        modalityHandler: PlanningModalityHandler.createHeadlessHandler()
+      });
+
+      const {arc, recipeIndex, consumer} = await setup(slotComposer, 'volatile', `
+        particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
+          root: consumes Slot
+        particle ParticleTouch in './src/runtime/tests/artifacts/consumer-particle.js'
+          root: consumes Slot
+          modality domTouch
+        particle ParticleBoth in './src/runtime/tests/artifacts/consumer-particle.js'
+          root: consumes Slot
+          modality dom
+          modality domTouch
+        ${addRecipe(['ParticleDom'])}
+        ${addRecipe(['ParticleTouch'])}
+        ${addRecipe(['ParticleDom', 'ParticleBoth'])}
+        ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
+      `);
+      assert.lengthOf(arc.context.allRecipes, 4);
+
+      await storeResults(consumer, arc.context.allRecipes.map((plan, index) => {
+        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arc, plan));
         suggestion.descriptionByModality['text'] = `${plan.name}`;
         return suggestion;
       }));
