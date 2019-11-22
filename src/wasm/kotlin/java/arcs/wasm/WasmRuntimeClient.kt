@@ -39,6 +39,8 @@ actual object RuntimeClient {
 
     actual fun abort() = arcs.wasm.abort();
 
-    actual fun assert(cond: Boolean) = RuntimeClient.assert(cond);
+    actual fun assert(cond: Boolean) {
+        if(!cond) abort()
+    }
 
 }
