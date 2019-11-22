@@ -21,7 +21,7 @@ abstract class Particle : Addressable {
         handle.name = name
         handle.particle = this
         handles[name] = handle
-        RuntimeClient.log("Registering $name")
+        log("Registering $name")
     }
 
     /**
@@ -38,7 +38,7 @@ abstract class Particle : Addressable {
      * @see [onHandleSync]
      */
     fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
-        RuntimeClient.log("Connect called internal '$name'")
+        log("Connect called internal '$name'")
 
         handles[name]?.let {
             if (canRead) {
@@ -50,7 +50,7 @@ abstract class Particle : Addressable {
             return it
         }
 
-        RuntimeClient.log("Handle $name not registered")
+        log("Handle $name not registered")
         return null
     }
 
@@ -83,7 +83,7 @@ abstract class Particle : Addressable {
 
     /** @param handle Handle to synchronize */
     fun sync(handle: Handle) {
-        RuntimeClient.log("Particle.sync called")
+        log("Particle.sync called")
         toSync.remove(handle)
         onHandleSync(handle, toSync.isEmpty())
     }
@@ -112,7 +112,7 @@ abstract class Particle : Addressable {
 
     /** Rendering through UiBroker */
     fun renderOutput() {
-        RuntimeClient.log("renderOutput")
+        log("renderOutput")
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
@@ -147,7 +147,7 @@ abstract class Particle : Addressable {
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
-        RuntimeClient.log("ignoring renderSlot")
+        log("ignoring renderSlot")
     }
 
     /**
