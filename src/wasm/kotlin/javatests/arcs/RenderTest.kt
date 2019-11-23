@@ -1,6 +1,7 @@
 package wasm.kotlin.tests.arcs
 
 import arcs.*
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class RenderTest : Particle() {

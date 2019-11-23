@@ -2,7 +2,7 @@ package wasm.kotlin.tests.arcs
 
 import arcs.Collection
 import arcs.Particle
-import arcs.toAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class ServicesTest : Particle() {
