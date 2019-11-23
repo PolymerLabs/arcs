@@ -33,6 +33,22 @@ if (test) {
   window.DeviceClient = createTestDevice(paths, storage);
 }
 
+(async () => {
+  // if remote DevTools are requested, wait for connect
+  await DevtoolsSupport();
+  // acquire DeviceClient
+  const client = nodevice ? {} : await DeviceSupport();
+  // create a bus
+  const bus = new Bus(dispatcher, client);
+  // configure smokeTest if requested
+  if (test) {
+    window.DeviceClient.init(bus);
+  }
+  // export bus
+  window.ShellApi = bus;
+  busReady(bus, {manifest});
+})();
+
 const DeviceSupport = async () => {
   const delay = 100;
   return new Promise(resolve => {
@@ -53,18 +69,3 @@ const DeviceSupport = async () => {
   });
 };
 
-(async () => {
-  // if remote DevTools are requested, wait for connect
-  await DevtoolsSupport();
-  // acquire DeviceClient
-  const client = nodevice ? {} : await DeviceSupport();
-  // create a bus
-  const bus = new Bus(dispatcher, client);
-  // configure smokeTest if requested
-  if (test) {
-    window.DeviceClient.init(bus);
-  }
-  // export bus
-  window.ShellApi = bus;
-  busReady(bus, {manifest});
-})();

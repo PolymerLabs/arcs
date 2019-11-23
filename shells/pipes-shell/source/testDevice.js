@@ -13,7 +13,6 @@ const defaultManifest = `
 import 'https://$particles/Pipes/Pipes.arcs'
 import 'https://$particles/Notification/Notification.arcs'
 import 'https://$particles/Tutorial/Kotlin/1_HelloWorld/HelloWorld.arcs'
-//import 'https://$particles/Restaurants/Restaurants.arcs'
 `;
 
 let bus;
