@@ -47,18 +47,18 @@ defineParticle(({TransformationDomParticle}) => {
         const slotId = await arc.createSlot(this, slotName);
         const recipe = `
           schema Foo
-            Text value
+            value: Text
 
           particle ${hostedParticle.name} in '${hostedParticle.implFile}'
-            in Foo foo
-            consume ${hostedSlotName}
+            foo: reads Foo
+            ${hostedSlotName}: consumes Slot
 
           recipe
-            use '${fooHandle._id}' as handle1
-            slot '${slotId}' as slot1
+            handle1: use '${fooHandle._id}'
+            slot1: slot '${slotId}'
             ${hostedParticle.name}
-              foo <- handle1
-              consume ${hostedSlotName} as slot1
+              foo: reads handle1
+              ${hostedSlotName}: consumes slot1
         `;
 
         try {

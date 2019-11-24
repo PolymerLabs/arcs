@@ -20,14 +20,14 @@ describe('Particle Execution Context', () => {
   it('substitutes slot names for model references', async () => {
     const context = await Manifest.parse(`
       particle A in 'A.js'
-        consume root
-          provide detail
-          provide annotation
+        root: consumes Slot
+          detail: provides? Slot
+          annotation: provides? Slot
 
       recipe
-        slot 'rootslotid-root' as slot0
+        slot0: slot 'rootslotid-root'
         A
-          consume root as slot0`);
+          root: consumes slot0`);
     const loader = new StubLoader({
       'A.js': `defineParticle(({DomParticle}) => {
         return class extends DomParticle {

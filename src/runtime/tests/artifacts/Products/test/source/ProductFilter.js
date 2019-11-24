@@ -42,11 +42,11 @@ defineParticle(({Particle}) => {
         const recipe = Particle.buildManifest`
           ${this._hostedParticle}
           recipe
-            use '${productHandle._id}' as handle1
-            use '${resultHandle._id}' as handle2
+            handle1: use '${productHandle._id}'
+            handle2: use '${resultHandle._id}'
             ${this._hostedParticle.name}
-              ${this._hostedParticle.handleConnections[0].name} <- handle1
-              ${this._hostedParticle.handleConnections[1].name} -> handle2
+              ${this._hostedParticle.handleConnections[0].name}: reads handle1
+              ${this._hostedParticle.handleConnections[1].name}: writes handle2
           `;
 
         await this._arc.loadRecipe(recipe, this);

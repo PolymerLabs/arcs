@@ -30,7 +30,7 @@ describe('RecipeResolver', () => {
     const manifest = await buildManifest({
       manifest: `
       particle P in 'A.js'
-        consume root
+        root: consumes Slot
         modality dom
 
       recipe
@@ -57,8 +57,8 @@ describe('RecipeResolver', () => {
     const manifest = await buildManifest({
       manifest: `
       particle P in 'A.js'
-        out * {Text value} text
-        consume root
+        text: writes * {value: Text}
+        root: consumes Slot
         modality dom
 
       recipe
