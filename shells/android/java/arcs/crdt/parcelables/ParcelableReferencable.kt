@@ -72,4 +72,4 @@ interface ParcelableReferencable : Parcelable {
 
 /** Reads a [Referencable] from the [Parcel]. */
 fun Parcel.readReferencable(): Referencable? =
-    readTypedObject(ParcelableReferencable.Companion.CREATOR)!!.actual
+    readTypedObject(ParcelableReferencable.Companion.CREATOR)?.actual

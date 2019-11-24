@@ -32,7 +32,8 @@ data class ParcelableRawEntity(
 
     override fun describeContents(): Int = 0
 
-    companion object CREATOR : Parcelable.Creator<ParcelableRawEntity> {
+    /** Don't use this directly; use the [ParcelableReferencable] base class instead. */
+    internal companion object CREATOR : Parcelable.Creator<ParcelableRawEntity> {
         override fun createFromParcel(parcel: Parcel): ParcelableRawEntity {
             val id = requireNotNull(parcel.readString())
 

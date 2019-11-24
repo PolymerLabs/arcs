@@ -63,12 +63,13 @@ fun Parcel.readModelData(expectedType: ParcelableCrdtType): CrdtData? =
 
 /** Writes a [CrdtOperation] to the [Parcel]. */
 fun Parcel.writeOperation(operation: CrdtOperation?, flags: Int) {
+    @Suppress("UNCHECKED_CAST")
     when (operation) {
         null -> writeTypedObject(null, flags)
         is CrdtCount.Operation ->
-            writeTypedObject(operation.toParcelable(), flags)
+            writeTypedObject((operation as? CrdtCount.Operation)?.toParcelable(), flags)
         is CrdtSet.Operation<*> ->
-            writeTypedObject(operation.toParcelable(), flags)
+            writeTypedObject((operation as? CrdtSet.Operation<Referencable>)?.toParcelable(), flags)
         is CrdtSingleton.Operation<*> ->
             TODO("Implement me when ParcelableSingleton is ready")
         is CrdtEntity.Operation ->
