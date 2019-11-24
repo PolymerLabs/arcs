@@ -6,16 +6,16 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema StorageKey
-  Text key
+  key: Text
 
 particle SlandleSlandleLogin in 'source/Login.js'
-  out StorageKey key
-  `consume Slot root
+  key: writes StorageKey
+  root: `consumes Slot
 
 recipe SlandleSlandleLogin &login
-  create as key
-  `slot #root as root
+  key: create *
+  root: `slot #root
   SlandleSlandleLogin
-    key = key
-    root `consume root
+    key: key
+    root: `consumes root
   description `user sign in`

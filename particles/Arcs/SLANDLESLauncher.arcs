@@ -7,13 +7,13 @@
 import 'schemas/ArcMeta.arcs'
 
 particle SlandleLauncher in 'source/Launcher.js'
-  inout [ArcMeta] arcs
-  `consume Slot root
+  arcs: reads writes [ArcMeta]
+  root: `consumes Slot
   description `arcs launcher`
 
 recipe SlandleLauncher
-  create 'SYSTEM_arcs' as arcs
-  `slot 'rootslotid-root' as root
+  arcs: create 'SYSTEM_arcs'
+  root: `slot 'rootslotid-root'
   SlandleLauncher
-    arcs = arcs
-    root `consume root
+    arcs: arcs
+    root: `consumes root
