@@ -4,23 +4,23 @@
 import './Datastores.arcs'
 
 particle LongPressListener in 'empty.js'
-  in * {} screen
-  out Coords {} coords
+  screen: reads * {}
+  coords: writes Coords {}
 
 particle OCR in 'empty.js'
-  in * {} image
-  in Coords {} coords
-  out Text {} result
+  image: reads * {}
+  coords: reads Coords {}
+  result: writes Text {}
 
 particle TextClassifier in 'empty.js'
-  in Text {} text
-  in Model model
-  out Range {} selectedRange
+  text: reads Text {}
+  model: reads Model
+  selectedRange: writes Range {}
 
 particle SelectionUI in 'empty.js'
-  in Text {} text
-  inout Range {} selectedRange
-  out Text {} selectedText
+  text: reads Text {}
+  selectedRange: reads writes Range {}
+  selectedText: writes Text {}
 
   // The text to be selected must have come from the screen.
   check text is from store 'screen'
@@ -30,42 +30,42 @@ particle SelectionUI in 'empty.js'
   claim selectedText derives from text
 
 particle MatchMaker in 'empty.js'
-  in Text {} selectedText
-  out Action {} action
+  selectedText: reads Text {}
+  action: writes Action {}
 
 particle ActionUX in 'empty.js'
-  in Action {} action
+  action: reads Action {}
 
   // The action we're about to perform must be derived entirely from the screen
   // data.
   check action is from store 'screen'
 
 recipe OverviewActionRecipe
-  use Screen as screen
-  use PrivateModel as model
-  create as coords
-  create as ocrText
-  create as selectedRange
-  create as selectedText
-  create as action
+  screen: use Screen
+  model: use PrivateModel
+  coords: create *
+  ocrText: create *
+  selectedRange: create *
+  selectedText: create *
+  action: create *
 
   LongPressListener
-    screen <- screen
-    coords -> coords
+    screen: reads screen
+    coords: writes coords
   OCR
-    image <- screen
-    coords <- coords
-    result -> ocrText
+    image: reads screen
+    coords: reads coords
+    result: writes ocrText
   TextClassifier
-    text <- ocrText
-    model <- model
-    selectedRange -> selectedRange
+    text: reads ocrText
+    model: reads model
+    selectedRange: writes selectedRange
   SelectionUI
-    text <- ocrText
-    selectedRange <-> selectedRange
-    selectedText -> selectedText
+    text: reads ocrText
+    selectedRange: reads writes selectedRange
+    selectedText: writes selectedText
   MatchMaker
-    selectedText <- selectedText
-    action -> action
+    selectedText: reads selectedText
+    action: writes action
   ActionUX
-    action <- action
+    action: reads action

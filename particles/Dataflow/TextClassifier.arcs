@@ -4,37 +4,37 @@
 import './Datastores.arcs'
 
 particle TextClassifier in 'empty.js'
-  in Query {} input
-  in Model model
-  out Result {} result
+  input: reads Query {}
+  model: reads Model
+  result: writes Result {}
 
 particle APIResponse in 'empty.js'
-  in Result {} result
-  consume responseSlot
+  result: reads Result {}
+  responseSlot: consumes Slot
 
 particle ExposeAPI in 'empty.js'
-  out Query {} query
-  consume root
-    provide replySlot
+  query: writes Query {}
+  root: consumes Slot
+    replySlot: provides? Slot
   
   // Ensure that the reply slot is filled with data that is derived only from
   // the query, or from public data.
   check replySlot data is from handle query or is public
 
 recipe TextClassifierRecipe
-  slot 'rootslotid-root' as root
-  use PublicModel as model
-  create as query
-  create as result
+  root: slot 'rootslotid-root'
+  model: use PublicModel
+  query: create *
+  result: create *
 
   ExposeAPI
-    query -> query
-    consume root as root
-      provide replySlot as slot
+    query: writes query
+    root: consumes root
+      replySlot: provides slot
   TextClassifier
-    input <- query
-    model <- model
-    result -> result
+    input: reads query
+    model: reads model
+    result: writes result
   APIResponse
-    result <- result
-    consume responseSlot as slot
+    result: reads result
+    responseSlot: consumes slot

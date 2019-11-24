@@ -8,21 +8,21 @@ import './Datastores.arcs'
 // Particle that can only run on the public model. Includes a check for the
 // "public" tag.
 particle ParticleNeedingPublicData in 'empty.js'
-  in Model model
+  model: reads Model
   check model is public
 
 // Particle that can only run on the private model. Checks that the model is
 // *not* tagged with the "public" tag.
 particle ParticleNeedingPrivateData in 'empty.js'
-  in Model model
+  model: reads Model
   check model is not public
 
 recipe DataflowRecipe
-  use PublicModel as publicModel
-  use PrivateModel as privateModel
+  publicModel: use PublicModel
+  privateModel: use PrivateModel
 
   ParticleNeedingPublicData
-    model <- publicModel
+    model: reads publicModel
   
   ParticleNeedingPrivateData
-    model <- privateModel
+    model: reads privateModel

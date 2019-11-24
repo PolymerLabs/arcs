@@ -2,7 +2,7 @@
 
 // Define some dummy data to use in the data stores defined below.
 schema Model
-  Text modelData
+  modelData: Text
 resource DummyResource
   start
   [{"modelData": "asdf"}]
