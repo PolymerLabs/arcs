@@ -9,13 +9,13 @@ import 'schemas/Restaurant.arcs'
 import '../Profile/SLANDLESGeolocate.arcs'
 
 particle SlandleRestaurantFind in 'source/RestaurantFind.js'
-  in Geolocation location
-  inout [Restaurant] restaurants
+  location: reads Geolocation
+  restaurants: reads writes [Restaurant]
 
 // TODO: see what happens if we decimate Restaurants.arcs::Recipes into smaller pieces like this
 //recipe SlandleRestaurantFind
-//  create #tiles as restaurants
+//  restaurants: create #tiles
 //  RestaurantFind
-//    restaurants = restaurants
+//    restaurants: restaurants
 //  description `find restaurants near ${RestaurantFind.location}`
 
