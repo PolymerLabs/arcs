@@ -2,20 +2,20 @@ import '../PipeApps/schemas/PipeEntity.arcs'
 import 'SLANDLESArtist.arcs'
 
 particle SlandleArtistPipe in './source/ArtistPipe.js'
-  in PipeEntity pipe
-  out ArtistFind find
-  `consume Slot pipes
-    `provide Slot content
+  pipe: reads PipeEntity
+  find: writes ArtistFind
+  pipes: `consumes Slot
+    content: `provides Slot
 
 recipe SlandleArtistPipe
-  use #pipe_artist as pipe
-  create as find
-  create #piped #artist as artist
-  create as descriptions
+  pipe: use #pipe_artist
+  find: create *
+  artist: create #piped #artist
+  descriptions: create *
   SlandleArtistPipe
-    pipe = pipe
-    find = find
+    pipe: pipe
+    find: find
   SlandleArtistFinder
-    find = find
-    artist = artist
-    descriptions = descriptions
+    find: find
+    artist: artist
+    descriptions: descriptions
