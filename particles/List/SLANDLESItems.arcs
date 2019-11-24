@@ -10,7 +10,7 @@ interface SlandleHostedItemInterface
   reads ~anyType
   // TODO(sjmiles): using slot-type for form-factor
   // all Interfaces are the same in List/* except for the slot
-  `consume Slot item
+  item: `consumes Slot
 
 particle SlandleItemMultiplexer in 'source/SlandleMultiplexer.js'
   // TODO(sjmiles): redundancies:
