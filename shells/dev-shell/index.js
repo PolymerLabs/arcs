@@ -60,8 +60,8 @@ function init() {
 import 'https://$particles/Tutorial/Javascript/1_HelloWorld/HelloWorld.arcs'
 
 schema Data
-  Number num
-  Text txt
+  num: Number
+  txt: Text
 
 resource DataResource
   start
@@ -70,13 +70,13 @@ resource DataResource
 store DataStore of Data in DataResource
 
 particle P in 'a.js'
-  consume root
-  in Data data
+  root: consumes Slot
+  data: reads Data
 
 recipe
-  map DataStore as h0
+  h0: map DataStore
   P
-    data <- h0`;
+    data: reads h0`;
 
     const exampleParticle = `
 defineParticle(({SimpleParticle, html, log}) => {
