@@ -8,9 +8,16 @@ import java.lang.IllegalArgumentException
 import javax.annotation.OverridingMethodsMustInvokeSuper
 import kotlin.reflect.KClass
 
+/**
+ * Parcelable variant of the [Referencable] interface.
+ *
+ * All subclasses of [Referencable] need to have their own [Parcelable] implementation. [Type] is
+ * used to identify which subclass is being parceled.
+ */
 interface ParcelableReferencable : Parcelable {
     val actual: Referencable
 
+    /** Indicates which subclass of [ParcelableReferencable] is being parceled. */
     enum class Type(
         val creator: Parcelable.Creator<out ParcelableReferencable>
     ) : Parcelable {
@@ -63,5 +70,6 @@ interface ParcelableReferencable : Parcelable {
     }
 }
 
+/** Reads a [Referencable] from the [Parcel]. */
 fun Parcel.readReferencable(): Referencable? =
     readTypedObject(ParcelableReferencable.Companion.CREATOR)!!.actual

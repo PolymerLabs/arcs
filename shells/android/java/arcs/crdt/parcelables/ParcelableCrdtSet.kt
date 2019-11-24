@@ -6,7 +6,9 @@ import arcs.common.Referencable
 import arcs.common.ReferenceId
 import arcs.crdt.CrdtSet
 
+/** Container of [Parcelable] implementations for the data and ops classes of [CrdtSet]. */
 object ParcelableCrdtSet {
+    /** Parcelable variant of [CrdtSet.DataValue]. */
     data class DataValue(
         val actual: CrdtSet.DataValue<Referencable>
     ) : Parcelable {
@@ -28,6 +30,7 @@ object ParcelableCrdtSet {
         }
     }
 
+    /** Parcelable variant of [CrdtSet.Data]. */
     data class Data(
         override val actual: CrdtSet.Data<Referencable>
     ) : ParcelableCrdtData<CrdtSet.Data<Referencable>> {
@@ -64,6 +67,13 @@ object ParcelableCrdtSet {
         }
     }
 
+    /**
+     * Parcelable variants of [CrdtSet.Operation].
+     *
+     * This class is implemented such that it serves as a multiplexed parcelable for its subclasses.
+     * We write the ordinal value of [OpType] first, before parceling the contents of the subclass.
+     * The [OpType] is used to figure out the correct subtype when deserialising.
+     */
     sealed class Operation(
         private val opType: OpType
     ) : ParcelableCrdtOperation<CrdtSet.Operation<Referencable>> {
@@ -73,6 +83,7 @@ object ParcelableCrdtSet {
             parcel.writeInt(opType.ordinal)
         }
 
+        /** Parcelable variant of [CrdtSet.Operation.Add]. */
         data class Add(
             override val actual: CrdtSet.Operation.Add<Referencable>
         ) : Operation(OpType.Add) {
@@ -97,6 +108,7 @@ object ParcelableCrdtSet {
             }
         }
 
+        /** Parcelable variant of [CrdtSet.Operation.Remove]. */
         data class Remove(
             override val actual: CrdtSet.Operation.Remove<Referencable>
         ) : Operation(OpType.Remove) {
@@ -121,6 +133,7 @@ object ParcelableCrdtSet {
             }
         }
 
+        /** Parcelable variant of [CrdtSet.Operation.FastForward]. */
         data class FastForward(
             override val actual: CrdtSet.Operation.FastForward<Referencable>
         ) : Operation(OpType.FastForward) {
@@ -177,6 +190,7 @@ object ParcelableCrdtSet {
         }
     }
 
+    /** Identifiers for the subtypes of [Operation]. */
     internal enum class OpType {
         Add,
         Remove,
@@ -184,10 +198,13 @@ object ParcelableCrdtSet {
     }
 }
 
+/** Returns a [Parcelable] variant of the [CrdtSet.Data] object. */
 fun CrdtSet.Data<Referencable>.toParcelable(): ParcelableCrdtSet.Data =
     ParcelableCrdtSet.Data(this)
 
-fun CrdtSet.Operation<Referencable>.toParcelable(): ParcelableCrdtOperation<CrdtSet.Operation<Referencable>> =
+/** Returns a [Parcelable] variant of the [CrdtSet.Operation] object. */
+fun CrdtSet.Operation<Referencable>.toParcelable():
+    ParcelableCrdtOperation<CrdtSet.Operation<Referencable>> =
     when (this) {
         is CrdtSet.Operation.Add -> ParcelableCrdtSet.Operation.Add(this)
         is CrdtSet.Operation.Remove -> ParcelableCrdtSet.Operation.Remove(this)

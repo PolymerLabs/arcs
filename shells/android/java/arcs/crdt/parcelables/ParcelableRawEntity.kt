@@ -6,6 +6,7 @@ import arcs.common.Referencable
 import arcs.data.FieldName
 import arcs.data.RawEntity
 
+/** Parcelable variant of [RawEntity]. */
 data class ParcelableRawEntity(
     override val actual: RawEntity
 ) : ParcelableReferencable {
