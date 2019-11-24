@@ -2,20 +2,20 @@ import './schemas/PipeEntity.arcs'
 import './schemas/Json.arcs'
 
 particle SuggestAddress in './source/SuggestAddress.js'
-  in [PipeEntity] recentEntities
-  out Json suggestion
-  consume content
+  recentEntities: reads [PipeEntity]
+  suggestion: writes Json
+  content: consumes Slot
 
 particle RequireQuery in './source/Noop.js'
-  in PipeEntity query
+  query: reads PipeEntity
 
 recipe AutofillMaps &address_autofill
-  use #address_autofill as query
-  map 'pipe-entities' as recentEntities
-  create as suggestion
+  query: use #address_autofill
+  recentEntities: map 'pipe-entities'
+  suggestion: create
   RequireQuery
-    query = query
+    query: query
   SuggestAddress
-    recentEntities = recentEntities
-    suggestion = suggestion
+    recentEntities: recentEntities
+    suggestion: suggestion
   description `suggest address`

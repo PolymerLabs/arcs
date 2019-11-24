@@ -2,30 +2,30 @@ import './schemas/PipeEntity.arcs'
 import '../Music/Artist.arcs'
 
 particle ArtistPipe in 'source/ArtistPipe.js'
-  in PipeEntity pipe
-  out ArtistFind find
+  pipe: reads PipeEntity
+  find: writes ArtistFind
 
 recipe FindArtist
-  use #artist_ as entity
-  create as find
-  create as descriptions
-  create as artist
+  entity: use #artist_
+  find: create *
+  descriptions: create *
+  artist: create *
   ArtistPipe
-    pipe = entity
-    find = find
+    pipe: entity
+    find: find
   ArtistFinder
-    find = find
-    artist = artist
-    descriptions = descriptions
+    find: find
+    artist: artist
+    descriptions: descriptions
 
 particle ShowArtist in '../Music/source/ArtistShow.js'
-  in ArtistMusic artist
-  consume app
+  artist: reads ArtistMusic
+  app: consumes Slot
   description `Learn more about ${artist}`
 
 recipe ShowArtist
-  use as artist
+  artist: use *
   ShowArtist
-    artist = artist
+    artist: artist
   description `${ShowArtist}`
 
