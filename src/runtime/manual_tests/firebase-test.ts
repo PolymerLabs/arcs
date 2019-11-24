@@ -154,7 +154,7 @@ describe('firebase', function() {
       // related to FirebaseBackingStore.
       const manifest = await Manifest.parse(`
         schema Bar1
-          Text data
+          data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar1);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -341,7 +341,7 @@ describe('firebase', function() {
       // related to FirebaseBackingStore.
       const manifest = await Manifest.parse(`
         schema Bar2
-          Text data
+          data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar2);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -405,7 +405,7 @@ describe('firebase', function() {
     it('supports get, store and remove (including concurrently)', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -481,7 +481,7 @@ describe('firebase', function() {
     it('supports version-stable streamed reads forwards', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -558,7 +558,7 @@ describe('firebase', function() {
     it('supports version-stable streamed reads backwards', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
