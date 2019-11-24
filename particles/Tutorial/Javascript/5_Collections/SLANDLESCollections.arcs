@@ -2,8 +2,8 @@
 // Shows how to use an input list, and store data in a manifest file.
 
 schema PersonDetails
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 // This is essentially a JSON file, but defined inside the manifest itself rather than in a separate file.
 resource PeopleData
@@ -19,15 +19,15 @@ store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionParticle in 'collections.js'
   // The input is a list of PersonDetails entities.
-  in [PersonDetails] inputData
-  `consume Slot root
+  inputData: reads [PersonDetails]
+  root: `consumes Slot
 
 recipe CollectionRecipe
-  `slot 'rootslotid-root' as root
-  map PeopleToGreetStore as data
+  root: `slot 'rootslotid-root'
+  data: map PeopleToGreetStore
 
   CollectionParticle
-    root `consume root
-    inputData <- data
+    root: `consumes root
+    inputData: reads data
 
   description `Javascript Tutorial 5: Collections`

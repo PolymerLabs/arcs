@@ -2,31 +2,31 @@
 // Shows how to use a handle to pass information between particles.
 
 schema Person
-  Text name
+  name: Text
 
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
 particle GetPerson in './source/GetPerson.js'
-  out Person person
-  `consume Slot root
-    `provide Slot greetingSlot
+  person: writes Person
+  root: `consumes Slot
+    greetingSlot: `provides Slot
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
 particle DisplayGreeting in './source/DisplayGreeting.js'
-  in Person person
-  `consume Slot greetingSlot
+  person: reads Person
+  greetingSlot: `consumes Slot
 
 recipe HandleRecipe
-  `slot 'rootslotid-root' as root
+  root: `slot 'rootslotid-root'
   GetPerson
     // Pass the output person to the handle person.
-    person -> person
-    root `consume root
-      greetingSlot `provide greeting
+    person: writes person
+    root: `consumes root
+      greetingSlot: `provides greeting
   DisplayGreeting
     // Define the input person to be the handle person.
-    person <- person
-    greetingSlot `consume greeting
+    person: reads person
+    greetingSlot: `consumes greeting
   description `Javascript Tutorial 4: Handles`
