@@ -40,7 +40,7 @@ recipe SlandleProducts
   recommendations: create #volatile
   // annotates shoplist
   SlandleChoicesMultiplexer
-    choice `consume annotationSlot
+    choice: `consumes annotationSlot
     list: shoplist
     choices: wishlist
     hostedParticle: SlandleAlsoOn
@@ -51,7 +51,7 @@ recipe SlandleProducts
     recommendations: recommendations
   // present recommendations for adding to shoplist
   SlandleChooser
-    action `consume actionSlot
+    action: `consumes actionSlot
     person: person
     choices: recommendations
     resultList:shoplist
