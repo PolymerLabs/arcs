@@ -50,13 +50,36 @@ expect object RuntimeClient {
     /** @param msg Message to write to a logging system. */
     fun log(msg: String)
 
+    /**
+     * React to UI Rendering
+     *
+     * @param particle Particle in scope
+     * @param template String encoding of UI template
+     * @param model Data model to be interpolated in the template
+     */
     fun onRenderOutput(particle: Particle, template: String?, model: String?)
 
+    /**
+     * Request an action to be performed by a Service
+     *
+     * @param particle Particle in scope
+     * @param call A call string. Format: `<serviceName>.<functionName>`
+     * @param encoded Serialized key-value data to be passed to the service
+     * @param tag Name the request to the service
+     */
     fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String)
 
+    /** @param url translate to absolute location */
     fun resolveUrl(url: String): String
 
-    fun assert(cond: Boolean)
+    /**
+     * Ensure that a Boolean condition is true, otherwise [abort].
+     *
+     * @param message Description of assertion condition
+     * @param cond Evaluation of assertion condition
+     */
+    fun assert(message: String, cond: Boolean)
 
+    /** Halt the runtime. */
     fun abort()
 }

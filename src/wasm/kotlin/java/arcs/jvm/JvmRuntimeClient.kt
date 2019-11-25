@@ -29,6 +29,6 @@ actual object RuntimeClient {
 
     actual fun abort(): Unit = throw NotImplementedError()
 
-    actual fun assert(cond: Boolean): Unit = throw NotImplementedError()
+    actual fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
 }
 

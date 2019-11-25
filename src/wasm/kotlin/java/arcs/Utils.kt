@@ -6,6 +6,6 @@ import arcs.RuntimeClient
 
 fun log(msg: String) = RuntimeClient.log(msg)
 fun abort() = RuntimeClient.abort()
-fun assert(cond: Boolean) = RuntimeClient.assert(cond)
+fun assert(message: String, cond: Boolean) = RuntimeClient.assert(message, cond)
 
 
