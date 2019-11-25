@@ -50,9 +50,6 @@ expect object RuntimeClient {
     /** @param msg Message to write to a logging system. */
     fun log(msg: String)
 
-    /**
-     *
-     */
     fun onRenderOutput(particle: Particle, template: String?, model: String?)
 
     fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String)
