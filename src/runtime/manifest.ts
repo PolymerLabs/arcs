@@ -49,6 +49,7 @@ import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
 import {Entity} from './entity.js';
 import {SerializedEntity} from './storage-proxy.js';
+import {Runtime} from './runtime.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -1246,6 +1247,10 @@ ${e.message}
 
     if (Flags.useNewStorageStack) {
       const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+      if (storageKey instanceof RamDiskStorageKey) {
+        const memory = Runtime.getRuntime().getRamDiskMemory();
+        memory.deserialize(entities, storageKey.unique);
+      }
       return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
         description: item.description, version: item.version || null, source: item.source,
         origin: item.origin, referenceMode: false, model: entities});

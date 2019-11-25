@@ -11,7 +11,7 @@
 /** Arcs runtime flags. */
 
 class FlagDefaults {
-  static useNewStorageStack = true;
+  static useNewStorageStack = false;
   // Enables the parsing of both pre and post slandles (unified) syntaxes.
   // Preslandles syntax is to be deprecated.
   static parseBothSyntaxes = true;

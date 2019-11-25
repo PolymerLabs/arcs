@@ -499,14 +499,19 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           storageKey = this.keyForId(recipeHandle.id);
         }
         assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
-        const type = recipeHandle.type.resolvedType();
+        let type = recipeHandle.type.resolvedType();
         assert(type.isResolved());
         if (typeof storageKey === 'string') {
           const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
           assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
           await this._registerStore(store, recipeHandle.tags);
         } else {
-          throw new Error('Need to implement storageNG code path here!');
+          if (!type.isSingleton && !type.isCollectionType()) {
+            type = new SingletonType(type);
+          }
+          const store = new Store({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
+          assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
+          await this._registerStore(store, recipeHandle.tags);
         }
       }
     }
@@ -592,10 +597,14 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
   async _registerStore(store: UnifiedStore, tags?: string[]): Promise<void> {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
+    if (Flags.useNewStorageStack) {
+    }
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 
-
+    if (Flags.useNewStorageStack && !(store.type.isCollectionType() || store.type.isSingleton)) {
+      throw new Error('New storage stack currently only works with Collection and Singleton types');
+    }
     this.storesById.set(store.id, store);
     this.storesByKey.set(store.storageKey, store);
 
@@ -638,6 +647,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
   static _typeToKey(type: Type): string | InterfaceInfo | null {
+    if (type.isSingleton) {
+      type = type.getContainedType();
+    }
     const elementType = type.getContainedType();
     if (elementType) {
       const key = this._typeToKey(elementType);
@@ -665,7 +677,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           return true;
         }
       } else {
-        if (type instanceof TypeVariable && !type.isResolved() && handle.type instanceof EntityType) {
+        if (type instanceof TypeVariable && !type.isResolved() && handle.type instanceof EntityType || handle.type instanceof SingletonType) {
           return true;
         }
         // elementType will only be non-null if type is either Collection or BigCollection; the tag
@@ -684,8 +696,10 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!Handle.effectiveType(
-      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
+    return stores.filter(s => {
+      const storeType = s.type.isSingleton ? s.type.getContainedType() : s.type;
+      return !!Handle.effectiveType(type, [{type: storeType, direction: (storeType instanceof InterfaceType) ? 'host' : 'inout'}]);
+    });
   }
 
   findStoreById(id: string): UnifiedStore {

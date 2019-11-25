@@ -215,9 +215,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       async createHandle(type: Type, name: string, hostParticle?: Particle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
-            const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId});
+            const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId: Math.random() + '', particle: hostParticle});
             resolve(handle);
-            if (hostParticle) {
+            if (hostParticle && !Flags.useNewStorageStack) {
               proxy.register(hostParticle, handle);
             }
           }, arcId, type, name));

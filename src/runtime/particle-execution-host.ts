@@ -110,7 +110,6 @@ export class ParticleExecutionHost {
   instantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
-
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
@@ -299,7 +298,7 @@ class PECOuterPortImpl extends PECOuterPort {
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
-    this.CreateHandleCallback(store, callback, type, name, store.id);
+    this.CreateHandleCallback(store, callback, store.type, name, store.id);
   }
 
   onArcMapHandle(callback: number, arc: Arc, handle: Handle) {
