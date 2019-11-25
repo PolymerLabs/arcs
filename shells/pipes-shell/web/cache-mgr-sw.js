@@ -69,5 +69,10 @@ self.addEventListener('fetch', event => {
       event.request.cache === 'only-if-cached') {
     return;
   }
+  // Bypass non-sw-scope resource caching i.e. reflecting changes on workstation
+  // assets on the fly when enabling debug.arcs.runtime.load_workstation_assets
+  if (event.request.url.indexOf(self.location.host) === -1) {
+    return;
+  }
   event.respondWith(cachedFetch(event));
 });
