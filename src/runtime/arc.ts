@@ -597,6 +597,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
   async _registerStore(store: UnifiedStore, tags?: string[]): Promise<void> {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
+    if (Flags.useNewStorageStack) {
+    }
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 

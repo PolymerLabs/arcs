@@ -254,7 +254,7 @@ describe('particle-api', () => {
     assert.deepStrictEqual(values, [{value: 'two'}]);
   });
 
-  it.only('contains a constructInnerArc call', async () => {
+  it('contains a constructInnerArc call', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
