@@ -70,12 +70,14 @@ export class FlowGraph {
         this.edgeMap.set(edgeId, edge);
       };
 
-      if (connection.direction === 'inout') {
+      if (connection.direction === 'reads writes') {
         // An inout handle connection is represented by two edges.
         addEdgeWithDirection('in');
         addEdgeWithDirection('out');
-      } else if (connection.direction === 'in' || connection.direction === 'out') {
-        addEdgeWithDirection(connection.direction);
+      } else if (connection.direction === 'reads') {
+        addEdgeWithDirection('in');
+      } else if (connection.direction === 'writes') {
+        addEdgeWithDirection('out');
       } else {
         throw new Error(`Unsupported handle connection direction: ${connection.direction}`);
       }

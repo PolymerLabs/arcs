@@ -347,7 +347,7 @@ describe('particle-api', () => {
 
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
-  it.skip('can load a recipe referencing a manifest store', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it.skip('can load a recipe referencing a manifest store', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -441,7 +441,7 @@ describe('particle-api', () => {
 
     const newHandle = await singletonHandleForTest(arc, newStore);
     assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
-  }));
+  });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
     const arc = await loadFilesIntoNewArc({
@@ -1125,81 +1125,8 @@ describe('particle-api', () => {
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
-  it('loadRecipe returns ids of provided slots', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
-    const context = await Manifest.parse(`
-      particle TransformationParticle in 'TransformationParticle.js'
-        root: consumes Slot
-
-      recipe
-        slot0: slot 'rootslotid-root'
-        TransformationParticle
-          root: consumes slot0`);
-
-    const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
-          async setHandles(handles) {
-            super.setHandles(handles);
-
-            const innerArc = await this.constructInnerArc();
-            const hostedSlotId = await innerArc.createSlot(this, 'root');
-
-            const {providedSlotIds} = await innerArc.loadRecipe(\`
-              particle A in 'A.js'
-                content: consumes Slot
-                  detail: provides? Slot
-
-              recipe
-                hosted: slot '\` + hostedSlotId + \`'
-                A as a
-                  content: consumes hosted
-            \`);
-
-            await innerArc.loadRecipe(\`
-              particle B in 'B.js'
-                detail: consumes Slot
-
-              recipe
-                detail: slot '\` + providedSlotIds['a.detail'] + \`'
-                B
-                  detail: consumes detail
-            \`);
-          }
-
-          renderHostedSlot(slotName, hostedSlotId, content) {}
-        };
-      });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
-    });
-    // TODO(lindner): add strict rendering
-    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-
-    await arc.instantiate(recipe);
-    await arc.idle;
-
-    assert.lengthOf(arc.activeRecipe.particles, 1);
-    const [transformationParticle] = arc.activeRecipe.particles;
-
-    assert.lengthOf(arc.recipeDeltas, 1);
-    const [innerArc] = arc.findInnerArcs(transformationParticle);
-
-    const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
-    assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
-  slot0: slot '!${sessionId}:demo:inner2:slot1'
-  slot1: slot '!${sessionId}:demo:inner2:slot2'
-  A as particle0
-    content: consumes slot0
-      detail: provides slot1
-  B as particle1
-    detail: consumes slot1`,
-    'Particle B should consume the detail slot provided by particle A');
-  }));
   // TODO(jopra): Fix the slandle version of this, which throws an undefined in setHandles.
-  it.skip('SLANDLES SYNTAX loadRecipe returns ids of provided slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES SYNTAX loadRecipe returns ids of provided slots', async () => {
     const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
         root: consumes Slot
@@ -1271,5 +1198,5 @@ describe('particle-api', () => {
   B as particle1
     detail: consumes slot1`,
     'Particle B should consume the detail slot provided by particle A');
-  }));
+  });
 });

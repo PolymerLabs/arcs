@@ -14,7 +14,6 @@ import {TypeVariableInfo} from '../type-variable-info.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
-import {Flags} from '../flags.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -297,19 +296,19 @@ describe('types', () => {
   });
 
   describe('serialization', () => {
-    it('serializes interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('serializes interfaces', async () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
-      const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
+      const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consumes'}]);
       assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
   foo: Foo {value: Text}
   ~a
   x: consumes? Slot`);
-    }));
+    });
 
     // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
-    it('disregards type variable resolutions in interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('disregards type variable resolutions in interfaces', async () => {
       const variable = TypeVariable.make('a', null, null);
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
@@ -317,7 +316,7 @@ describe('types', () => {
 `interface i
   ~a
 `);
-    }));
+    });
   });
 
   describe('integration', () => {

@@ -17,6 +17,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
@@ -29,8 +30,8 @@ async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?,
     manifest = await Manifest.parse(manifest, {loader, fileName});
   }
 
-  arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc(manifest));
-  testSteps = testSteps || ((planner) => planner.plan(Infinity, []));
+  arcFactory = arcFactory || ((manifest: Manifest) => StrategyTestHelper.createTestArc(manifest));
+  testSteps = testSteps || ((planner: Planner) => planner.plan(Infinity, []));
 
   const arc = await arcFactory(manifest);
   const planner = new Planner();
@@ -39,7 +40,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?,
   return await testSteps(planner);
 }
 
-const assertRecipeResolved = recipe => {
+const assertRecipeResolved = (recipe: Recipe) => {
   assert(recipe.normalize());
   assert.isTrue(recipe.isResolved());
 };
@@ -48,10 +49,10 @@ class NullLoader extends StubLoader {
   constructor() {
     super({});
   }
-  join(prefix: string) {
+  join(_prefix: string) {
     return '';
   }
-  async loadResource(path: string): Promise<string> {
+  async loadResource(_path: string): Promise<string> {
     return '[]';
   }
 }
@@ -260,7 +261,7 @@ describe('Planner', () => {
           P1
             one: \`provides s0
       `);
-    }, 'not compatible with \'`consume\'');
+    }, 'not compatible with \'`consumes\'');
   });
 
   it('SLANDLES cannot resolve multiple consumed set slots with incorrect directions', async () => {
@@ -274,7 +275,7 @@ describe('Planner', () => {
           P1
             one: \`provides s0
       `);
-    }, 'not compatible with \'`consume\'');
+    }, 'not compatible with \'`consumes\'');
   });
 
   it('SLANDLES resolves particles with multiple consumed slots', async () => {
@@ -367,12 +368,12 @@ describe('AssignOrCopyRemoteHandles', () => {
         list: reads writes [Foo]
         root: consumes Slot
   `;
-  const testManifest = async (recipeManifest, expectedResults) => {
-    const manifest = (await Manifest.parse(`
+  const testManifest = async (recipeManifest: string, expectedResults: number): Promise<Recipe[]> => {
+    const manifest = await Manifest.parse(`
 ${particlesSpec}
 
 ${recipeManifest}
-    `));
+    `);
 
     const schema = manifest.findSchemaByName('Foo');
     manifest.newStore({

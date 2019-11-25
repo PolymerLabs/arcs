@@ -213,7 +213,7 @@ export class RecipeIndex {
       const counts = RecipeUtil.directionCounts(handle);
       const otherCounts = RecipeUtil.directionCounts(otherHandle);
       // Someone has to read and someone has to write.
-      if (otherCounts.in + counts.in === 0 || otherCounts.out + counts.out === 0) {
+      if (otherCounts.reads + counts.reads === 0 || otherCounts.writes + counts.writes === 0) {
         return false;
       }
     }
@@ -298,7 +298,7 @@ export class RecipeIndex {
       if (!providedHandleConn) continue;
 
       const matchingConns = Object.values(particle.connections).filter(handleConn => {
-        return handleConn.direction !== 'host'
+        return handleConn.direction !== 'hosts'
           && (!handleConn.handle || !handleConn.handle.id || handleConn.handle.id === providedHandleConn.handle.id)
           && Handle.effectiveType(providedHandleConn.handle.mappedType, [handleConn]);
       });

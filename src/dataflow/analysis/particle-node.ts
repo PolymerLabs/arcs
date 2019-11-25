@@ -189,7 +189,7 @@ export function createParticleNodes(particles: Particle[]) {
 function isTypeCompatibleWithReference(type: Type, target: ReferenceType, canBeReference: boolean) {
   switch (type.tag) {
     case 'Entity':
-      if (TypeChecker.compareTypes({type, direction: 'in'}, {type: target.getContainedType(), direction: 'out'})) {
+      if (TypeChecker.compareTypes({type, direction: 'reads'}, {type: target.getContainedType(), direction: 'writes'})) {
         return true;
       }
       if (canBeReference) {

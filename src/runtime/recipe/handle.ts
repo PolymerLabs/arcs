@@ -229,7 +229,7 @@ export class Handle implements Comparable<Handle> {
     const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
-      if (this.fate === 'map' && ['out', 'inout'].includes(connection.direction)) {
+      if (this.fate === 'map' && ['writes', 'reads writes'].includes(connection.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.getQualifiedName()} connection`);
         }

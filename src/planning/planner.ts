@@ -94,7 +94,7 @@ export class Planner implements InspectablePlanner {
   }
 
   // Specify a timeout value less than zero to disable timeouts.
-  async plan(timeout?: number, generations: Generation[] = []) {
+  async plan(timeout?: number, generations: Generation[] = []): Promise<Recipe[]> {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
     const allResolved: Recipe[] = [];
@@ -276,7 +276,7 @@ export class Planner implements InspectablePlanner {
         const particle = plan.particles.find(p => p.name === tokens[0]);
         assert(particle);
         const handleConn = particle.getConnectionByName(tokens[1]);
-        if (handleConn && handleConn.handle && RecipeUtil.directionCounts(handleConn.handle).out > 0) {
+        if (handleConn && handleConn.handle && RecipeUtil.directionCounts(handleConn.handle).writes > 0) {
           return true;
         }
       }
@@ -286,7 +286,7 @@ export class Planner implements InspectablePlanner {
       const allTokens = Description.getAllTokens(particle.spec.pattern);
       for (const tokens of allTokens) {
         const handleConn = particle.getConnectionByName(tokens[0]);
-        if (handleConn && handleConn.handle && RecipeUtil.directionCounts(handleConn.handle).out > 0) {
+        if (handleConn && handleConn.handle && RecipeUtil.directionCounts(handleConn.handle).writes > 0) {
           return true;
         }
       }

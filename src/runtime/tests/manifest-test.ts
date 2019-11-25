@@ -1261,8 +1261,8 @@ ${particleStr1}
 
     const directions = slotB.connections.map(c => c.direction);
     assert.lengthOf(directions, 2);
-    assert.include(directions, '`provide');
-    assert.include(directions, '`consume');
+    assert.include(directions, '`provides');
+    assert.include(directions, '`consumes');
   });
   it('parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
@@ -1482,7 +1482,8 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
       await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
-      assert.match(e.message, /'out' not compatible with 'in' param of 'TestParticle'/);
+      // TODO(cypher1): Move from using term 'param' to 'handle'.
+      assert.match(e.message, /'writes' not compatible with 'reads' param of 'TestParticle'/);
     }
   });
 
@@ -2163,7 +2164,7 @@ resource SomeName
     assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0].connections.foo;
     // TODO(jopra): Internalize new direction names
-    assert.strictEqual(slotConnection.direction, '`consume');
+    assert.strictEqual(slotConnection.direction, '`consumes');
 
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0].connections, 1);
@@ -2665,7 +2666,7 @@ resource SomeName
         particle A
           foo: writes T {}
           check foo is trusted
-      `), `Can't make a check on handle foo with direction out (not an input handle)`);
+      `), `Can't make a check on handle foo with direction writes (not an input handle)`);
     });
 
     it(`doesn't allow multiple different claims for the same output`, async () => {

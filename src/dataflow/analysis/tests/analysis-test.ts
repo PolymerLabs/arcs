@@ -478,24 +478,6 @@ describe('FlowGraph validation', () => {
     assertGraphFailures(graph, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
   });
 
-  it('fails when a different tag is claimed', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        out Foo {} foo
-        claim foo is notTrusted
-      particle P2
-        in Foo {} bar
-        check bar is trusted
-      recipe R
-        P1
-          foo -> h
-        P2
-          bar <- h
-    `);
-    markParticlesWithIngress(graph, 'P1');
-    assertGraphFailures(graph, [`'check bar is trusted' failed for path: P1.foo -> P2.bar`]);
-  });
-
   it('SLANDLES SYNTAX fails when no tag is claimed', async () => {
     const graph = await buildFlowGraph(`
       particle P1
@@ -1887,7 +1869,7 @@ describe('FlowGraph validation', () => {
     it('inherits claims from related outputs', async () => {
       const graph = await buildFlowGraph(`
         particle P1
-          ingree: reads Bar {}
+          ingress: reads Bar {}
           foo: writes Foo {}
           ref: writes Reference<Foo {}>
           claim foo is trusted

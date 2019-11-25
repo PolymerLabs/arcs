@@ -45,7 +45,7 @@ export class AssignHandles extends Strategy {
 
         const score = this._getScore(counts, handle.tags);
 
-        if (counts.out > 0 && handle.fate === 'map') {
+        if (counts.writes > 0 && handle.fate === 'map') {
           return undefined;
         }
         const stores = self.getMappableStores(handle.fate, handle.type, handle.tags, counts);

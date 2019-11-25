@@ -670,7 +670,7 @@ export class Recipe implements Cloneable<Recipe> {
     return this.allSpecifiedConnections.filter(
         ({particle, connSpec}) => !connSpec.isOptional &&
                                   connSpec.name !== 'descriptions' &&
-                                  connSpec.direction !== 'host' &&
+                                  connSpec.direction !== 'hosts' &&
                                   !particle.connections[connSpec.name] &&
                                   (!type || TypeChecker.compareTypes({type}, {type: connSpec.type})));
   }

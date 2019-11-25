@@ -121,14 +121,14 @@ export class HandleConnectionSpec {
   }
 
   get isInput() {
-    // TODO: we probably don't really want host to be here.
+    // TODO: we probably don't really want hosts to be here.
     // TODO: do we want to consider any here?
-    return this.direction === 'in' || this.direction === 'inout' || this.direction === 'host';
+    return this.direction === 'reads' || this.direction === 'reads writes' || this.direction === 'hosts';
   }
 
   get isOutput() {
     // TODO: do we want to consider any here?
-    return this.direction === 'out' || this.direction === 'inout';
+    return this.direction === 'writes' || this.direction === 'reads writes';
   }
 
   isCompatibleType(type: Type) {
@@ -174,7 +174,7 @@ export class ConsumeSlotConnectionSpec {
 
   // Getters to 'fake' being a Handle.
   get isOptional(): boolean { return !this.isRequired; }
-  get direction(): string { return '`consume'; }
+  get direction(): string { return '`consumes'; }
   get type(): Type {
     //TODO(jopra): FIXME make the null handle optional.
     const slotT = SlotType.make(this.formFactor, null);
@@ -399,7 +399,10 @@ export class ParticleSpec {
     const indent = '  ';
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
+      let dir = connection.direction === 'any' ? '' : `${connection.direction}${connection.isOptional ? '?' : ''} `;
+      if (dir == 'reads writes? ') {
+        dir = 'reads? writes? '; // fix for dir
+      }
       results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
@@ -420,7 +423,7 @@ export class ParticleSpec {
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
       const tokens: string[] = [];
       tokens.push(`${s.name}:`);
-      tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
+      tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
 
       const fieldSet = [];
       // TODO(jopra): Move the formFactor and handle to the slot type information.
@@ -442,12 +445,12 @@ export class ParticleSpec {
       results.push(`${indent}${tokens.join(' ')}`);
       if (s.provideSlotConnections) {
         // Provided slots.
-        s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));
+        s.provideSlotConnections.forEach(p => slotToString(p, 'provides', indent+'  '));
       }
     };
 
     this.slotConnections.forEach(
-      s => slotToString(s, 'consume', '  ')
+      s => slotToString(s, 'consumes', '  ')
     );
     // Description
     if (this.pattern) {
@@ -499,9 +502,9 @@ export class ParticleSpec {
             if (!handle) {
               throw new Error(`Can't make a check on unknown handle ${handleName}.`);
             }
-            if (handle.direction === '`consume' || handle.direction === '`provide') {
+            if (handle.direction === '`consumes' || handle.direction === '`provides') {
               // Do slandles versions of slots checks and claims.
-              if (handle.direction === '`consume') {
+              if (handle.direction === '`consumes') {
                   throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
 
               }

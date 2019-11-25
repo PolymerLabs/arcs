@@ -32,55 +32,6 @@ describe('Multiplexer', () => {
           annotation: consumes slot0
           list: reads handle0
     `, {loader: new Loader(), fileName: ''});
-
-    const recipe = manifest.recipes[0];
-
-    const barType = checkDefined(manifest.findTypeByName('Bar'));
-
-    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
-
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
-
-    let slotsCreated = 0;
-
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
-
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
-    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
-    const barHandle = await collectionHandleForTest(arc, barStore);
-    recipe.handles[0].mapToStorage(barStore);
-    assert(recipe.normalize(), 'normalize');
-    assert(recipe.isResolved());
-
-    await arc.instantiate(recipe);
-
-    await arc.idle;
-
-    await barHandle.add(new barHandle.entityClass({value: 'one'}));
-    await barHandle.add(new barHandle.entityClass({value: 'two'}));
-    await barHandle.add(new barHandle.entityClass({value: 'three'}));
-
-    await arc.idle;
-
-    assert.strictEqual(slotsCreated, 3);
-  });
-
-  it('SLANDLES SYNTAX Processes multiple inputs', Flags.withPostSlandlesSyntax(async () => {
-    const manifest = await Manifest.parse(`
-      import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
-      import 'src/runtime/tests/artifacts/test-particles.manifest'
-
-      recipe
-        slot0: slot 'rootslotid-slotid'
-        handle0: use 'test:1'
-        Multiplexer
-          hostedParticle: ConsumerParticle
-          annotation: consumes slot0
-          list: reads handle0
-    `, {loader: new Loader(), fileName: ''});
     const recipe = manifest.recipes[0];
 
     const barType = checkDefined(manifest.findTypeByName('Bar'));
@@ -116,6 +67,6 @@ describe('Multiplexer', () => {
     await arc.idle;
 
     assert.strictEqual(slotsCreated, 3);
-  }));
+  });
 
 });

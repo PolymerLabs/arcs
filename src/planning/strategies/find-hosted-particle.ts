@@ -45,7 +45,7 @@ export class FindHostedParticle extends Strategy {
         if (!connectionSpec) {
           return undefined;
         }
-        if (connectionSpec.direction !== 'host') {
+        if (connectionSpec.direction !== 'hosts') {
           return undefined;
         }
         assert(connectionType instanceof InterfaceType);

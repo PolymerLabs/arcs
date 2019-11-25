@@ -22,16 +22,16 @@ import {Dictionary} from '../hot.js';
 
 export function reverseDirection(direction: Direction): Direction {
   switch (direction) {
-    case 'in':
-      return 'out';
-    case 'out':
-      return 'in';
-    case 'inout':
-      return 'inout';
-    case '`consume':
-      return '`provide';
-    case '`provide':
-      return '`consume';
+    case 'reads':
+      return 'writes';
+    case 'writes':
+      return 'reads';
+    case 'reads writes':
+      return 'reads writes';
+    case '`consumes':
+      return '`provides';
+    case '`provides':
+      return '`consumes';
     case 'any':
       return 'any';
     default:
@@ -51,19 +51,19 @@ export function acceptedDirections(direction: Direction): Direction[] {
   //
   switch (direction) {
     case 'any':
-      return ['any', 'in', 'out', 'inout', 'host', '`consume', '`provide'];
-    case 'in':
-      return ['any', 'in', 'inout', 'host', '`consume'];
-    case 'out':
-      return ['any', 'out', 'inout', '`provide'];
-    case 'inout':
-      return ['any', 'inout'];
-    case 'host':
-      return ['any', 'host'];
-    case '`consume':
-      return ['any', '`consume'];
-    case '`provide':
-      return ['any', '`provide'];
+      return ['any', 'reads', 'writes', 'reads writes', 'hosts', '`consumes', '`provides'];
+    case 'reads':
+      return ['any', 'reads', 'reads writes', 'hosts', '`consumes'];
+    case 'writes':
+      return ['any', 'writes', 'reads writes', '`provides'];
+    case 'reads writes':
+      return ['any', 'reads writes'];
+    case 'hosts':
+      return ['any', 'hosts'];
+    case '`consumes':
+      return ['any', '`consumes'];
+    case '`provides':
+      return ['any', '`provides'];
     default:
       // Catch nulls and unsafe values from javascript.
       throw new Error(`Bad direction ${direction}`);
@@ -440,12 +440,12 @@ export class RecipeUtil {
   }
 
   static directionCounts(handle: Handle): DirectionCounts {
-    const counts: DirectionCounts = {'in': 0, 'out': 0, 'inout': 0, 'host': 0, '`consume': 0, '`provide': 0, 'any': 0};
+    const counts: DirectionCounts = {'reads': 0, 'writes': 0, 'reads writes': 0, 'hosts': 0, '`consumes': 0, '`provides': 0, 'any': 0};
     for (const connection of handle.connections) {
       counts[connection.direction]++;
     }
-    counts.in += counts.inout;
-    counts.out += counts.inout;
+    counts.reads += counts['reads writes'];
+    counts.writes += counts['reads writes'];
     return counts;
   }
 

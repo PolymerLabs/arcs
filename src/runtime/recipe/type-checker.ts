@@ -162,7 +162,7 @@ export class TypeChecker {
         }
       }
 
-      if (direction === 'out' || direction === 'inout' || direction === '`provide') {
+      if (direction === 'writes' || direction === 'reads writes' || direction === '`provides') {
         // the canReadSubset of the handle represents the maximal type that can be read from the
         // handle, so we need to intersect out any type that is more specific than the maximal type
         // that could be written.
@@ -170,7 +170,7 @@ export class TypeChecker {
           return false;
         }
       }
-      if (direction === 'in' || direction === 'inout' || direction === '`consume') {
+      if (direction === 'reads' || direction === 'reads writes' || direction === '`consumes') {
         // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
         // so we need to union it with the type that wants to be read here.
         if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset)) {
@@ -182,12 +182,12 @@ export class TypeChecker {
         return false;
       }
 
-      if (direction === 'out' || direction === 'inout') {
+      if (direction === 'writes' || direction === 'reads writes') {
         if (!TypeChecker._writeConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
           return false;
         }
       }
-      if (direction === 'in' || direction === 'inout') {
+      if (direction === 'reads' || direction === 'reads writes') {
         if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
           return false;
         }
@@ -289,16 +289,16 @@ export class TypeChecker {
     }
     const [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
 
-    // treat handle types as if they were 'inout' connections. Note that this
+    // treat handle types as if they were 'reads writes' connections. Note that this
     // guarantees that the handle's type will be preserved, and that the fact
     // that the type comes from a handle rather than a connection will also
     // be preserved.
-    const superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
-    const subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');
-    if (superDirection === 'in') {
+    const superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'reads writes');
+    const subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'reads writes');
+    if (superDirection === 'reads') {
       return true;
     }
-    if (subDirection === 'out') {
+    if (subDirection === 'writes') {
       return true;
     }
     return false;
