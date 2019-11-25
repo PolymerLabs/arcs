@@ -13,14 +13,15 @@
 defineParticle(({UiParticle, html, log}) => {
 
   return class extends UiParticle {
-    // get template() {
-    //   return html`<span></span>`;
-    // }
     update({recentEntities}, state) {
       if (recentEntities) {
         const json = this.query(recentEntities);
         this.set('suggestion', {json});
+        state.person = json;
       }
+    }
+    render(inputs, {person}) {
+      return {person};
     }
     query(entities) {
       const people = entities.filter(entity => entity.type === 'person');

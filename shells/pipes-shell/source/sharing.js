@@ -16,14 +16,10 @@ export const Sharing = {
     Sharing.shareStore = await Sharing.initShareStore();
     ingestionArc.storeTags.forEach(async (tags, store) => {
       if (tags.has('incomingEntities')) {
-        console.log('Found ingestion store');
+        console.log('Found ingestion store', store.id);
         await Sharing.setIngestionStore(store);
       }
     });
-  },
-  async setIngestionStore(store) {
-    Sharing.ingestionStore = store;
-    await Sharing.watchStore(store);
   },
   async initShareStore() {
     const context = await requireContext();
@@ -36,7 +32,8 @@ export const Sharing = {
       storageKey: null
     });
   },
-  async watchStore(store) {
-    await mirrorStore(store, Sharing.shareStore);
+  async setIngestionStore(store) {
+    Sharing.ingestionStore = store;
+    await mirrorStore(Sharing.ingestionStore, Sharing.shareStore);
   }
 };

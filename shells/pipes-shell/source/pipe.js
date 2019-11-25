@@ -16,6 +16,7 @@ import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
+import {parse} from './verbs/parse.js';
 import {instantiateRecipeByName} from './lib/utils.js';
 import {requireContext} from './context.js';
 import {dispatcher} from './dispatcher.js';
