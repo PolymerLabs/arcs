@@ -405,6 +405,7 @@ ${recipeManifest}
     planner.init(arc, options);
     const plans = await planner.plan(1000);
 
+    console.log('plans are', plans);
     assert.lengthOf(plans, expectedResults, recipeManifest);
     return plans;
   };
@@ -466,13 +467,14 @@ ${recipeManifest}
           list: reads list
     `, 3);
   });
-  it('finds remote untagged handles with unknown fate', async () => {
+  it.only('finds remote untagged handles with unknown fate', async () => {
     const plansA = await testManifest(`
       recipe
         list: ?
         A as particle0
           list: reads list
     `, 3);
+    debugger;
     assert.isTrue(plansA.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'map')));
 
     const plansB = await testManifest(`
@@ -483,7 +485,7 @@ ${recipeManifest}
     `, 3);
     assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
   });
-  it('finds remote tagged handles with unknown fate', async () => {
+  it.only('finds remote tagged handles with unknown fate', async () => {
     const plansA = await testManifest(`
       recipe
         list: ? #tag1
