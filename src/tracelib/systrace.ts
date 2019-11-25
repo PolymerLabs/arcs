@@ -11,7 +11,7 @@
 // Class decorator for installing system tracing capability
 // to a class and its subclasses.
 // tslint:disable-next-line:enforce-name-casing
-export function SystemTrace<T extends {new (...args): {}}>(ctor: T) {
+export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
   return class extends ctor {
     constructor(...args) {
       super(...args);
