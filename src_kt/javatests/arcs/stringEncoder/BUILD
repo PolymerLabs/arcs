@@ -10,12 +10,12 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
             name = src_file[:-3],
             size = "small",
             test_class = "arcs.stringEncoder.%s" % src_file[:-3],
-            runtime_deps = [":%sLib" % src_file[:-3]]
+            runtime_deps = [":%sLib" % src_file[:-3]],
         ),
         kt_jvm_library(
             name = "%sLib" % src_file[:-3],
-            srcs = [src_file],
             testonly = True,
+            srcs = [src_file],
             deps = [
                 "//src/wasm/kotlin:arcs",
                 "//third_party/java/junit",
@@ -23,7 +23,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
                 "//third_party/kotlin/kotlinx/kotlinx_coroutines",
                 "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
             ],
-        )
+        ),
     ]
     for src_file in glob(["*.kt"])
 ]
