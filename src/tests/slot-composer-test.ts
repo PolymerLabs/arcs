@@ -49,27 +49,27 @@ describe('slot composer', function() {
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'
-  consume root
-    provide mySlot
-    provide otherSlot
+  root: consumes Slot
+    mySlot: provides? Slot
+    otherSlot: provides? Slot
 particle B in 'b.js'
-  consume mySlot
+  mySlot: consumes Slot
 particle BB in 'bb.js'
-  consume mySlot
+  mySlot: consumes Slot
 particle C in 'c.js'
-  consume otherSlot
+  otherSlot: consumes Slot
 recipe
-  slot 'rootslotid-root' as slot0
+  slot0: slot 'rootslotid-root'
   A
-    consume root as slot0
-      provide mySlot as slot1
-      provide otherSlot as slot2
+    root: consumes slot0
+      mySlot: provides slot1
+      otherSlot: provides slot2
   B
-    consume mySlot as slot1
+    mySlot: consumes slot1
   BB
-    consume mySlot as slot1
+    mySlot: consumes slot1
   C
-    consume otherSlot as slot2
+    otherSlot: consumes slot2
         `;
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
     slotComposer = slotComposer.expectRenderSlot('A', 'root', {'contentTypes': ['model']});
@@ -138,21 +138,21 @@ recipe
   it('allows set slots to be consumed as a singleton slot', async () => {
     const manifestStr = `
     particle A in 'a.js'
-      consume root
-        provide set of item
+      root: consumes Slot
+        item: provides? [Slot]
     particle B in 'b.js'
-      consume item
+      item: consumes Slot
     particle C in 'c.js'
-      consume item
+      item: consumes Slot
     recipe
-      slot 'rootslotid-root' as slot0
+      slot0: slot 'rootslotid-root'
       A
-        consume root as slot0
-          provide item as slot1
+        root: consumes slot0
+          item: provides slot1
       B
-        consume item as slot1
+        item: consumes slot1
       C
-        consume item as slot1
+        item: consumes slot1
     `;
 
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
@@ -223,9 +223,9 @@ recipe
           consume root
 
         recipe
-          slot 'rootslotid-root' as slot0
+          slot0: slot 'rootslotid-root'
           TransformationParticle
-            consume root as slot0`,
+            root: consumes slot0`,
       loader: new StubLoader({
         'TransformationParticle.js': `defineParticle(({DomParticle}) => {
           return class extends DomParticle {
@@ -244,12 +244,12 @@ recipe
                   consume detail
 
                 recipe
-                  slot '\` + hostedSlotId + \`' as hosted
+                  hosted: slot '\` + hostedSlotId + \`'
                   A
-                    consume content as hosted
-                      provide detail as detail
+                    content: consumes hosted
+                      detail: provides detail
                   B
-                    consume detail as detail
+                    detail: consumes detail
               \`);
             }
 

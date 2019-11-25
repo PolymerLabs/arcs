@@ -1,6 +1,6 @@
 import '../schemas/TVMazeShow.arcs'
 
 particle SlandleTVMazeShowTile in './js/TVMazeShowTile.js'
-  in TVMazeShow show
-  `consume Slot tile
-    `provide [Slot] action
+  show: reads TVMazeShow
+  tile: `consumes Slot
+    action: `provides [Slot]

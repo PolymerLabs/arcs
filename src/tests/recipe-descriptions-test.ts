@@ -243,9 +243,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const context =  await Manifest.parse(`
         schema Foo
         particle ShowFoo in 'test.js'
-          out Foo foo
+          foo: writes Foo
         recipe
-          create as fooHandle
+          fooHandle: create *
           ShowFoo
             foo: writes fooHandle
           ShowFoo

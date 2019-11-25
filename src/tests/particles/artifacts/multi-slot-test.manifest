@@ -7,50 +7,50 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Thing
-  Text name
+  name: Text
 
 particle AskAndAnswer in 'source/AskAndAnswer.js'
-  in Thing thing
-  consume question
-  consume answer
-  consume set of hints
+  thing: reads Thing
+  question: consumes? Slot
+  answer: consumes? Slot
+  hints: consumes? [Slot]
 
 recipe
-  slot 'rootslotid-root' as rootSlot
-  map 'mything' as mything
+  rootSlot: slot 'rootslotid-root'
+  mything: map 'mything'
   AskAndAnswer
-    consume question as rootSlot
+    question: consumes rootSlot
   description `show question`
 
 recipe
-  slot 'rootslotid-root' as rootSlot
-  map 'mything' as mything
+  rootSlot: slot 'rootslotid-root'
+  mything: map 'mything'
   AskAndAnswer
-    consume answer as rootSlot
+    answer: consumes rootSlot
   description `show answer`
 
 recipe
-  map 'mything' as mything
-  slot 'rootslotid-root' as rootSlot
+  mything: map 'mything'
+  rootSlot: slot 'rootslotid-root'
   AskAndAnswer
-    consume question as rootSlot
-    consume answer as rootSlot
+    question: consumes rootSlot
+    answer: consumes rootSlot
   description `show question and answer`
 
 particle ShowHints in 'source/ShowHints.js'
-  consume root
-    provide question
-    provide set of hints
+  root: consumes? Slot
+    question: provides? Slot
+    hints: provides? [Slot]
 
 recipe
-  map 'mything' as mything
+  mything: map 'mything'
   ShowHints
-    consume root
-      provide question as questionSlot
-      provide hints as hintsSlot
+    root: consumes
+      question: provides questionSlot
+      hints: provides hintsSlot
   AskAndAnswer
-    consume question as questionSlot
-    consume hints as hintsSlot
+    question: consumes questionSlot
+    hints: consumes hintsSlot
   description `show question and hints`
 
 resource MyThing

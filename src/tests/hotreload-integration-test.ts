@@ -40,12 +40,12 @@ describe('Hot Code Reload for JS Particle', async () => {
   it('updates model and template', async () =>{
     const context = await Manifest.parse(`
       particle A in 'A.js'
-        consume root
+        root: consumes Slot
 
       recipe
-        slot 'rootslotid-root' as slot0
+        slot0: slot 'rootslotid-root'
         A
-          consume root as slot0`);
+          root: consumes slot0`);
     const loader = new StubLoader({
       'A.js': `defineParticle(({DomParticle}) => {
         return class extends DomParticle {
@@ -91,19 +91,19 @@ describe('Hot Code Reload for JS Particle', async () => {
   it('ensures new handles are working', async () => {
     const context = await Manifest.parse(`
       schema Person
-        Text name
-        Number age
+        name: Text
+        age: Number
 
       particle A in 'A.js'
-        in Person personIn
-        out Person personOut
+        personIn: reads Person
+        personOut: writes Person
 
       recipe
-        use as personIn
-        use as personOut
+        personIn: use *
+        personOut: use *
         A
-          personIn <- personIn
-          personOut -> personOut
+          personIn: reads personIn
+          personOut: writes personOut
     `);
 
     const loader = new StubLoader({
@@ -179,12 +179,12 @@ describe('Hot Code Reload for WASM Particle', async () => {
     // wasm-particle.wasm based on the reloaded flag
     const context = await Manifest.parse(`
       particle HotReloadTest in 'bazel-bin/src/tests/source/wasm-particle.wasm'
-        consume root
+        root: consumes Slot
 
       recipe
-        slot 'rootslotid-root' as slot0
+        slot0: slot 'rootslotid-root'
         HotReloadTest
-          consume root as slot0`);
+          root: consumes slot0`);
     const loader = new StubWasmLoader();
 
     const id = ArcId.newForTest('HotReload');
@@ -215,15 +215,15 @@ describe('Hot Code Reload for WASM Particle', async () => {
       import 'src/tests/source/schemas.arcs'
 
       particle ReloadHandleTest in 'build/tests/source/test-module.wasm'
-        in Person personIn
-        out Person personOut
+        personIn: reads Person
+        personOut: writes Person
 
       recipe
-        use as personIn
-        use as personOut
+        personIn: use *
+        personOut: use *
         ReloadHandleTest
-          personIn <- personIn
-          personOut -> personOut`, {loader, fileName: './input.arcs'});
+          personIn: reads personIn
+          personOut: writes personOut`, {loader, fileName: './input.arcs'});
 
     const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
     const personType = context.findTypeByName('Person');
