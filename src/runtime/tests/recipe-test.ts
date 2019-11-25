@@ -190,7 +190,7 @@ describe('recipe', () => {
           dependentOut: writes h0
 
       recipe
-        create as h0
+        h0: create *
         B
           dependentOut: writes h0
     `);
@@ -258,7 +258,7 @@ describe('recipe', () => {
 
   it('generates the same hash on manifest re-parse for stores', async () => {
     const manifestContent = `
-      store NobId of NobIdStore {Text nobId} in NobIdJson
+      store NobId of NobIdStore {nobId: Text} in NobIdJson
        resource NobIdJson
          start
          [{"nobId": "12345"}]
@@ -392,7 +392,7 @@ describe('recipe', () => {
     assert(recipe.normalize());
     assert.isFalse(recipe.isResolved());
   });
-  it('SLANDLES SYNTAX considers type resolution as recipe update', Flags.withPostSlandlesSyntax(async () => {
+  it('considers type resolution as recipe update', async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
@@ -400,7 +400,7 @@ describe('recipe', () => {
       particle Specific
         thing: reads Thing
       recipe
-        thingHandle: map
+        thingHandle: map *
         Generic
           anyA: reads thingHandle
         Specific
@@ -446,117 +446,8 @@ describe('recipe', () => {
     thing: reads handle0`, recipeClone.toString());
     assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notStrictEqual(hash, hashResolvedClone);
-  }));
-  it('SLANDLES SYNTAX considers type resolution as recipe update', Flags.withPostSlandlesSyntax(async () => {
-    const manifest = await Manifest.parse(`
-      schema Thing
-      particle Generic
-        anyA: reads ~a
-      particle Specific
-        thing: reads Thing
-      recipe
-        thingHandle: map
-        Generic
-          anyA: reads thingHandle
-        Specific
-          thing: reads thingHandle
-      store MyThings of Thing 'my-things' in ThingsJson
-      resource ThingsJson
-        start
-        [{}]
-    `);
-    assert.lengthOf(manifest.recipes, 1);
-    const recipe = manifest.recipes[0];
-    recipe.handles[0].id = 'my-things';
-    recipe.normalize();
-    assert.isFalse(recipe.isResolved());
-    assert.strictEqual(`recipe
-  handle0: map 'my-things' // ~
-  Generic as particle0
-    anyA: reads handle0
-  Specific as particle1
-    thing: reads handle0`, recipe.toString());
-    assert.strictEqual(`recipe
-  handle0: map 'my-things' // ~ // Thing {}  // unresolved handle: unresolved type
-  Generic as particle0
-    anyA: reads handle0
-  Specific as particle1
-    thing: reads handle0`, recipe.toString({showUnresolved: true}));
-    const hash = await recipe.digest();
+  });
 
-    const recipeClone = recipe.clone();
-    const hashClone = await recipeClone.digest();
-    assert.strictEqual(hash, hashClone);
-
-    const store = manifest.findStoreByName('MyThings');
-    recipeClone.handles[0].mapToStorage(store);
-    recipeClone.normalize();
-    assert.isTrue(recipeClone.isResolved());
-    const hashResolvedClone = await recipeClone.digest();
-    assert.strictEqual(`recipe
-  handle0: map 'my-things' // Thing {}
-  Generic as particle0
-    anyA: reads handle0
-  Specific as particle1
-    thing: reads handle0`, recipeClone.toString());
-    assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
-    assert.notStrictEqual(hash, hashResolvedClone);
-  }));
-  it('considers type resolution as recipe update', Flags.withPreSlandlesSyntax(async () => {
-    const manifest = await Manifest.parse(`
-      schema Thing
-      particle Generic
-        in ~a anyA
-      particle Specific
-        in Thing thing
-      recipe
-        map as thingHandle
-        Generic
-          anyA <- thingHandle
-        Specific
-          thing <- thingHandle
-      store MyThings of Thing 'my-things' in ThingsJson
-      resource ThingsJson
-        start
-        [{}]
-    `);
-    assert.lengthOf(manifest.recipes, 1);
-    const recipe = manifest.recipes[0];
-    recipe.handles[0].id = 'my-things';
-    recipe.normalize();
-    assert.isFalse(recipe.isResolved());
-    assert.strictEqual(`recipe
-  map 'my-things' as handle0 // ~
-  Generic as particle0
-    anyA <- handle0
-  Specific as particle1
-    thing <- handle0`, recipe.toString());
-    assert.strictEqual(`recipe
-  map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
-  Generic as particle0
-    anyA <- handle0
-  Specific as particle1
-    thing <- handle0`, recipe.toString({showUnresolved: true}));
-    const hash = await recipe.digest();
-
-    const recipeClone = recipe.clone();
-    const hashClone = await recipeClone.digest();
-    assert.strictEqual(hash, hashClone);
-
-    const store = manifest.findStoreByName('MyThings');
-    recipeClone.handles[0].mapToStorage(store);
-    recipeClone.normalize();
-    assert.isTrue(recipeClone.isResolved());
-    const hashResolvedClone = await recipeClone.digest();
-    assert.strictEqual(`recipe
-  map 'my-things' as handle0 // Thing {}
-  Generic as particle0
-    anyA <- handle0
-  Specific as particle1
-    thing <- handle0`, recipeClone.toString());
-    assert.strictEqual(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
-    assert.notStrictEqual(hash, hashResolvedClone);
-  }));
   const isResolved = (recipe) => {
     const recipeClone = recipe.clone();
     assert.isTrue(recipeClone.normalize());
@@ -589,7 +480,7 @@ describe('recipe', () => {
   const createParticleSpecString = (name, slotName, modalities = []) => {
     return `
       particle ${name}
-        ${slotName ? `consume ${slotName}` : ''}
+        ${slotName ? `${slotName}: consumes Slot` : ''}
         ${modalities.map(m => `modality ${m}`).join('\n        ')}`;
   };
   const createRecipeString = (modalities = {}) => {
@@ -599,7 +490,7 @@ describe('recipe', () => {
       ${createParticleSpecString('P2', null, modalities['P2'])}
       ${createParticleSpecString('P3', 'root', modalities['P3'])}
       recipe
-        slot 'slot-id' as root
+        root: slot 'slot-id'
         P0
           root: consumes root
         P1
@@ -646,7 +537,7 @@ describe('recipe', () => {
   const createSlandlesParticleSpecString = (name, slotName, modalities = []) => {
     return `
       particle ${name}
-        ${slotName ? `\`consume Slot ${slotName}` : ''}
+        ${slotName ? `${slotName}: \`consumes Slot` : ''}
         ${modalities.map(m => `modality ${m}`).join('\n        ')}`;
   };
   const createSlandlesRecipeString = (modalities = {}) => {
@@ -656,14 +547,14 @@ describe('recipe', () => {
       ${createSlandlesParticleSpecString('P2', null,   modalities['P2'])}
       ${createSlandlesParticleSpecString('P3', 'root', modalities['P3'])}
       recipe
-        \`slot 'slot-id' as root
+        root: \`slot 'slot-id'
         P0
-          root \`consume root
+          root: \`consumes root
         P1
-          root \`consume root
+          root: \`consumes root
         P2
         P3
-          root \`consume root`;
+          root: \`consumes root`;
     return str;
   };
   it('SLANDLES verifies modalities - default', async () => {
@@ -707,7 +598,7 @@ describe('recipe', () => {
         inThing: reads Thing
         mySlot: consumes Slot
       recipe
-        create as handle0
+        handle0: create *
         MyParticle as particle0
           inThing: reads handle0
     `)).recipes[0];
@@ -720,10 +611,10 @@ describe('recipe', () => {
     const recipe = (await Manifest.parse(`
       schema Thing
       particle MyParticle in 'myparticle.js'
-        in Thing inThing
-        \`consume Slot mySlot
+        inThing: reads Thing
+        mySlot: \`consumes Slot
       recipe
-        create as handle0
+        handle0: create *
         MyParticle as particle0
           inThing: reads handle0
     `)).recipes[0];
@@ -735,18 +626,18 @@ describe('recipe', () => {
   it('particles match if one particle is a subset of another', async () => {
     const recipes = (await Manifest.parse(`
       particle P0
-        consume root
-          provide details
+        root: consumes Slot
+          details: provides Slot
       particle P1
-        consume root
+        root: consumes Slot
 
       recipe
         require
           P1
-            consume root as s0
+            root: consumes s0
         P0
-          consume root as s0
-            provide details as s1
+          root: consumes s0
+            details: provides s1
 
       recipe
         P0
@@ -759,21 +650,22 @@ describe('recipe', () => {
   it('slots with local names are the same in the recipe as they are in the require section', async () => {
     const recipe = (await Manifest.parse(`
       particle P0
-        consume details
-          provide moreDetails
+        details: consumes Slot
+          moreDetails: provides? Slot
       particle P1
-        consume root
-          provide details
+        root: consumes Slot
+          details: provides? Slot
 
       recipe
         require
-          slot as s1
+          s1: slot *
           P1
-            consume root
-              provide details as s1
+            root: consumes
+              details: provides s1
         P0
-          consume details as s1
-            provide moreDetails
+          details: consumes s1
+            moreDetails: provides
+
     `)).recipes[0];
     const s1SlotRecipe = recipe.slots.find(slot => slot.name === 'details');
     const s1SlotRequire = recipe.requires[0].particles[0].getSlotConnectionByName('root').providedSlots['details'];
@@ -783,44 +675,43 @@ describe('recipe', () => {
     const recipe = (await Manifest.parse(`
       schema Type
       particle A
-        in Type input
-        consume details
+        input: reads Type
+        details: consumes Slot
 
       recipe
         require
           B
-            output -> h0
-            consume root
-              provide details as s0
+            output: writes h0
+            root: consumes
+              details: provides s0
         A
           input: reads h0
-          consume details as s0
+          details: consumes s0
     `)).recipes[0];
     assert(recipe.requires[0].particles[0].spec === undefined);
   });
   it('slots in require section with the same local name match', async () => {
     const recipe = (await Manifest.parse(`
       particle A
-        consume details
+        details: consumes Slot
       particle B
-        consume details
+        details: consumes Slot
       particle C
-        consume details
-
+        details: consumes Slot
 
       recipe
         require
           A
-            consume details as s0
+            details: consumes s0
           B
-            consume details as s0
+            details: consumes s0
         C
-          consume details as s0
+          details: consumes s0
     `)).recipes[0];
     assert.isTrue(recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot === recipe.requires[0].particles[1].getSlotConnectionByName('details').targetSlot, 'there is more than one slot');
     assert.strictEqual(recipe.slots[0], recipe.requires[0].particles[0].getSlotConnectionByName('details').targetSlot, 'slot in the require section doesn\'t match slot in the recipe');
   });
-  it('SLANDLES SYNTAX recipe with require section toString method works', Flags.withPostSlandlesSyntax(async () => {
+  it('recipe with require section toString method works', async () => {
     const recipe = (await Manifest.parse(`
       particle B
         root: consumes
@@ -833,21 +724,8 @@ describe('recipe', () => {
           root: consumes s0`)).recipes[0];
     const recipeString = 'recipe\n  require\n    A as p1\n      root: consumes\n  B as p2\n    root: consumes s0';
     assert.strictEqual(recipe.toString(), recipeString.toString(), 'incorrect recipe toString method');
-  }));
-  it('recipe with require section toString method works', Flags.withPreSlandlesSyntax(async () => {
-    const recipe = (await Manifest.parse(`
-      particle B
-        consume root
+  });
 
-      recipe
-        require
-          A as p1
-            consume root
-        B as p2
-          consume root as s0`)).recipes[0];
-    const recipeString = 'recipe\n  require\n    A as p1\n      consume root\n  B as p2\n    consume root as s0';
-    assert.strictEqual(recipe.toString(), recipeString.toString(), 'incorrect recipe toString method');
-  }));
   it('clones connections with type variables', async () => {
     const recipe = (await Manifest.parse(`
       schema Thing
@@ -858,14 +736,14 @@ describe('recipe', () => {
         ]
       store ThingStore of Thing 'mything' in ThingResource
       particle P
-        in ~a inThing
-        inout [~a] outThing
+        inThing: reads ~a
+        outThing: reads writes [~a]
       recipe
-        map 'mything' as handle0
-        create as handle1
+        handle0: map 'mything'
+        handle1: create *
         P
-          inThing = handle0
-          outThing = handle1
+          inThing: handle0
+          outThing: handle1
     `)).recipes[0];
     const verifyRecipe = (recipe, errorPrefix) => {
       const errors: string[] = [];

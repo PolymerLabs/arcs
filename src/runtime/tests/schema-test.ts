@@ -37,22 +37,22 @@ describe('schema', () => {
       'Product.schema': `
           import './src/runtime/tests/artifacts/Things/Thing.schema'
           schema Product extends Thing
-            Text category
-            Text seller
-            Text price
-            Number shipDays
-            Boolean isReal
+            category: Text
+            seller: Text
+            price: Text
+            shipDays: Number
+            isReal: Boolean
 
           schema Animal extends Thing
-            Boolean isReal
+            isReal: Boolean
 
           schema Person
-            Text name
-            Text surname
-            Number price
+            name: Text
+            surname: Text
+            price: Number
 
           schema AlienLife
-            Boolean isBasedOnDna
+            isBasedOnDna: Boolean
           `
     });
   });
@@ -194,8 +194,8 @@ describe('schema', () => {
   it('enforces rules when storing union types', async () => {
     const manifest = await Manifest.parse(`
       schema Unions
-        (Text or Number) u1
-        (URL or Number or Boolean) u2`);
+        u1: (Text or Number)
+        u2: (URL or Number or Boolean)`);
     const Unions = manifest.findSchemaByName('Unions').entityClass();
     const unions = new Unions({u1: 'foo', u2: true});
     assert.strictEqual(unions.u1, 'foo');
@@ -232,8 +232,8 @@ describe('schema', () => {
       schema ReferencedTwo
         bar: Number
       schema References
-        Reference<ReferencedOne> one
-        Reference<ReferencedTwo> two`);
+        one: Reference<ReferencedOne>
+        two: Reference<ReferencedTwo>`);
 
     const References = manifest.findSchemaByName('References').entityClass();
 
@@ -259,7 +259,7 @@ describe('schema', () => {
   it('enforces rules when storing collection types', async () => {
     const manifest = await Manifest.parse(`
       schema Collections
-        [Reference<Foo {Text value}>] collection
+        collection: [Reference<Foo {value: Text}>]
     `);
 
     const Collections = manifest.findSchemaByName('Collections').entityClass();
@@ -411,7 +411,7 @@ describe('schema', () => {
   it('handles Bytes fields', async () => {
     const manifest = await Manifest.parse(`
       schema Buffer
-        Bytes data`);
+        data: Bytes`);
     const Buffer = manifest.findSchemaByName('Buffer').entityClass();
     const b1 = new Buffer({data: Uint8Array.from([12, 34, 56])});
     assert.deepEqual(b1.data, Uint8Array.from([12, 34, 56]));
@@ -422,16 +422,16 @@ describe('schema', () => {
   it('handles Schema Catalogue syntax', async () => {
     const manifest = await Manifest.parse(`
       alias schema * as Base
-        Text name
-        Text phoneNumber
-        URL website
+        name: Text
+        phoneNumber: Text
+        website: URL
         
       schema Person extends Base
-        Text jobTitle
-        Number age
+        jobTitle: Text
+        age: Number
       
       particle P
-        in Person {name, age, Bytes custom} person`);
+        person: reads Person {name, age, custom: Bytes}`);
 
     const particle = manifest.particles[0];
     const connection = particle.handleConnections[0];
@@ -447,10 +447,10 @@ describe('schema', () => {
   it('handles multi named aliased schemas with extensions', async () => {
     const manifest = await Manifest.parse(`
       alias schema Event Occurrence as EventAlias
-        Text name
+        name: Text
         
       schema Accident extends EventAlias
-        Number financialCost
+        financialCost: Number
       
       schema Crisis extends Accident`);
 
@@ -478,7 +478,7 @@ describe('schema', () => {
   it('parses anonymous inline schemas', async () => {
     const manifest = await Manifest.parse(`
       particle P
-        in * {} thing`);
+        thing: reads * {}`);
 
     const particle = manifest.particles[0];
     const connection = particle.handleConnections[0];

@@ -32,12 +32,12 @@ describe('particle interface loading with slots', () => {
       import './src/runtime/tests/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
-        create as handle0
-        slot 'rootslotid-set-slotid-0' as slot0
+        handle0: create *
+        slot0: slot 'rootslotid-set-slotid-0'
         MultiplexSlotsParticle
-          particle0 = SingleSlotParticle
-          foos <- handle0
-          consume annotationsSet as slot0
+          particle0: SingleSlotParticle
+          foos: reads handle0
+          annotationsSet: consumes slot0
       `, {loader, fileName: ''});
     const recipe = manifest.recipes[0];
 
