@@ -1,4 +1,4 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_cc_schema", "arcs_ts_test")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_cc_schema")
 load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 
 filegroup(

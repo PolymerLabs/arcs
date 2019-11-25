@@ -3,8 +3,9 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
+load("@rules_java//java:defs.bzl", "java_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library", kt_js_import = "kt_js_import_fixed")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
 
@@ -73,7 +74,7 @@ def kt_jvm_and_js_library(
         # will wrap it in a java_library rule and export everything that is
         # needed from there.
         kt_name = name + "-kt"
-        native.java_library(
+        java_library(
             name = name,
             exports = exports + [kt_name],
             visibility = visibility,
