@@ -16,7 +16,6 @@ import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
 import {Particle} from './particle.js';
-import {Flags} from '../flags.js';
 
 export abstract class EndPoint implements Comparable<EndPoint> {
   abstract _compareTo(other: EndPoint): number;
@@ -173,9 +172,6 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     let unresolved = '';
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';
-    }
-    if (Flags.defaultToPreSlandlesSyntax) {
-      return `${this.from.toString(nameMap)} ${directionToArrow(this.direction)} ${this.to.toString(nameMap)}${unresolved}`;
     }
     return `${this.from.toString(nameMap)}: ${preSlandlesDirectionToDirection(this.direction)} ${this.to.toString(nameMap)}${unresolved}`;
   }
