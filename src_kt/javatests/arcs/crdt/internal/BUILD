@@ -17,6 +17,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
         kt_jvm_library(
             name = "%sLib" % src_file[:-3],
             srcs = [src_file],
+            testonly = True,
             deps = [
                 "//src_kt/java/arcs/crdt",
                 "//src_kt/java/arcs/crdt/internal",
