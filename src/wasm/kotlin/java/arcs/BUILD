@@ -12,7 +12,7 @@ kt_jvm_library(
 )
 
 kt_native_library(
-    name = "arcs_wasm",
+    name = "arcs-wasm",
     srcs = glob(["*.kt", "**/wasm/*.kt"]),
     visibility = ["//visibility:public"],
     kotlincopts = KOTLINC_OPTS,

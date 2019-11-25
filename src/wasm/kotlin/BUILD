@@ -10,8 +10,8 @@ alias(
 )
 
 alias(
-    name = "arcs_wasm",
-    actual = "//src/wasm/kotlin/java/arcs:arcs_wasm",
+    name = "arcs-wasm",
+    actual = "//src/wasm/kotlin/java/arcs:arcs-wasm",
     visibility = ["//visibility:public"],
 )
 

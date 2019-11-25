@@ -4,5 +4,10 @@ licenses(["notice"])
 
 alias(
     name = "kotlin",
-    actual = "//src/wasm/kotlin:arcs_wasm",
+    actual = "//src/wasm/kotlin:arcs",
+)
+
+alias(
+    name = "kotlin-wasm",
+    actual = "//src/wasm/kotlin:arcs-wasm",
 )
