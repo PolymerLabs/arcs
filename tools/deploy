@@ -5,7 +5,7 @@ git log -n 1 > VERSION
 # Ensure we have the correct node & npm versions
 nvm install
 nvm use
-nvm install-latest-npm
+npm install -g "npm@$(jq -r '.engines.npm' package.json)"
 # Produce build artifacts
 npm install
 tools/sigh webpack
