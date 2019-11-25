@@ -16,7 +16,8 @@ import {Loader} from '../platform/loader.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
-import {PlanningTestHelper, StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
+import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {Id, ArcId} from '../runtime/id.js';
 import {Manifest} from '../runtime/manifest.js';
 

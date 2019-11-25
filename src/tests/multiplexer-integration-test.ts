@@ -12,7 +12,7 @@ import {assert} from '../platform/chai-web.js';
 import {HostedSlotContext} from '../runtime/slot-context.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
-import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
 import {collectionHandleForTest} from '../runtime/testing/handle-for-test.js';
 import {Entity} from '../runtime/entity.js';
 

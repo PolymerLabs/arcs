@@ -15,7 +15,7 @@ import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Planner} from '../planning/planner.js';
-import {StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 
 describe('recipe descriptions test', () => {
@@ -93,9 +93,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const arc = runtime.newArc('demo', 'volatile://');
     arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
 
-    const planner = new Planner();
-    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-    const suggestions = await planner.suggest();
+    const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
     return suggestions[0].getDescription(arc.modality.names[0]);
   }
@@ -255,9 +253,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
 
-    const planner = new Planner();
-    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-    await planner.suggest().then(() => assert('expected exception for duplicate particles'))
+    await StrategyTestHelper.planForArc(arc).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
@@ -309,9 +305,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
     // Plan for arc
-    const planner0 = new Planner();
-    planner0.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-    const suggestions0 = await planner0.suggest();
+    const suggestions0 = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions0, 2);
     assert.strictEqual('Show foo.', await suggestions0[0].descriptionText);
 
@@ -320,9 +314,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     await arc.idle;
 
     // Plan again.
-    const planner1 = new Planner();
-    planner1.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-    const suggestions1 = await planner1.suggest();
+    const suggestions1 = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions1, 1);
     assert.strictEqual('Show foo with dummy.', await suggestions1[0].descriptionText);
   });
@@ -345,9 +337,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
 
-    const planner = new Planner();
-    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
-    const suggestions = await planner.suggest();
+    const suggestions = await StrategyTestHelper.planForArc(arc);
 
     assert.lengthOf(suggestions, 3);
     const recipe1 = new Recipe();
