@@ -68,10 +68,11 @@ def kotlin_native_repo():
             build_file = "//build_defs/kotlin_native:kotlinc.BUILD",
         )
 
-        [http_archive(
-            name = x,
-            urls = ["https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.{ext}".format(x, **p)],
-            type = p["ext"],
-            sha256 = sha,
-            build_file = "//build_defs/kotlin_native:kotlinc.BUILD",
-        ) for x, sha in p["deps"]]
+        for x, sha in p["deps"]:
+            http_archive(
+                name = x,
+                urls = ["https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.{ext}".format(x, **p)],
+                type = p["ext"],
+                sha256 = sha,
+                build_file = "//build_defs/kotlin_native:kotlinc.BUILD",
+            )
