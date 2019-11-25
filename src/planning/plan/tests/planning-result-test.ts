@@ -29,10 +29,6 @@ describe('planning result', () => {
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
     assert.isNotEmpty(suggestions);
-    // suggestions.forEach(s => {
-    //   s.relevance = Relevance.create(arc, s.plan);
-    //   s.relevance.apply(new Map([[s.plan.particles[0], [1]]]));
-    // });
     const result = new PlanningResult({context, loader});
     result.merge({suggestions}, arc);
 
