@@ -1,4 +1,5 @@
 """Implementation of Kotlin JS rules."""
+
 load("@io_bazel_rules_kotlin//kotlin/internal:defs.bzl", "KtJsInfo")
 
 def kt_js_import_impl(ctx):
