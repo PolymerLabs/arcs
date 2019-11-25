@@ -3,9 +3,9 @@
 # Track Version
 git log -n 1 > VERSION
 # Produce build artifacts
+npm install
 tools/sigh webpack
 npm run build:typedoc
-npm --prefix devtools install
 # Move deployment artifacts to project root
 mv tools/deployment/* .
 mv tools/deployment/.gitignore .gitignore
