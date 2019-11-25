@@ -15,7 +15,6 @@ import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
-import {Flags} from './flags.js';
 
 export class Schema {
   readonly names: string[];
@@ -204,9 +203,6 @@ export class Schema {
   // tslint:disable-next-line: no-any
   static fieldToString([name, type]: [string, any]) {
     const typeStr = Schema._typeString(type);
-    if (Flags.defaultToPreSlandlesSyntax) {
-      return `${typeStr} ${name}`;
-    }
     return `${name}: ${typeStr}`;
   }
 
