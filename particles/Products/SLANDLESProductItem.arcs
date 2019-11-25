@@ -1,5 +1,5 @@
 import 'schemas/Product.arcs'
 
 particle SlandleProductItem in 'source/ProductItem.js'
-  in Product product
-  `consume Slot item
+  product: reads Product
+  item: `consumes Slot

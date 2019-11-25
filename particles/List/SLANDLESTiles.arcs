@@ -7,39 +7,39 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedTileInterface
-  in ~anyType *
-  `consume Slot tile
+  reads ~anyType
+  tile: `consumes Slot
 
 particle SlandleTileMultiplexer in 'source/Multiplexer.js'
-  in [~anyType] list
-  host SlandleHostedTileInterface hostedParticle
-  `consume [Slot] tile
+  list: reads [~anyType]
+  hostedParticle: hosts SlandleHostedTileInterface
+  tile: `consumes [Slot]
 
 //recipe SlandleTileMultiplexer
 //  use #tile as list
 //  TileMultiplexer
-//    list = list
+//    list: list
 
 particle SlandleSelectableTiles in 'source/Tiles.js'
-  in [~anyType] list
-  inout ~anyType selected
-  `consume Slot root #tiles
-    `provide [Slot] tile
-    `provide? [Slot] annotation
-    `provide? Slot action
+  list: reads [~anyType]
+  selected: reads writes ~anyType
+  root: `consumes Slot #tiles
+    tile: `provides [Slot]
+    annotation: `provides? [Slot]
+    action: `provides? Slot
 
 //recipe SlandleSelectableCopyTilesRecipe
-//  copy #items as items
-//  create #selected as selected
+//  items: copy #items
+//  selected: create #selected
 //  SelectableTiles
-//    items = items
-//    selected = selected
+//    items: items
+//    selected: selected
 //  description `show ${SelectableTiles.items}`
 
 //recipe SlandleSelectableUseTilesRecipe
-//  use #items as items
-//  create #selected as selected
+//  items: use #items
+//  selected: create #selected
 //  SelectableTiles
-//    items = items
-//    selected = selected
+//    items: items
+//    selected: selected
 //  description `show ${SelectableTiles.items}`

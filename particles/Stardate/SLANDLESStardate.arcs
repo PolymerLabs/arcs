@@ -4,23 +4,23 @@ import './SLANDLESStardateDisplay.arcs'
 import '../Services/particles/Random.arcs'
 
 recipe SlandleStardateTOS
-  create as stardate
-  create as destination
-  `slot 'rootslotid-root' as root
+  stardate: create *
+  destination: create *
+  root: `slot 'rootslotid-root'
 
   RandomParticle
-    randomData -> randomPlanet
+    randomData: writes randomPlanet
 
   RandomParticle
-    randomData -> randomTime
+    randomData: writes randomTime
 
   SlandleStardateTOS
-    stardate -> stardate
-    destination -> destination
-    randomTime <- randomTime
-    randomPlanet <- randomPlanet
+    stardate: writes stardate
+    destination: writes destination
+    randomTime: reads randomTime
+    randomPlanet: reads randomPlanet
 
   SlandleStardateDisplay
-    stardate <- stardate
-    destination <- destination
-    root `consume root
+    stardate: reads stardate
+    destination: reads destination
+    root: `consumes root

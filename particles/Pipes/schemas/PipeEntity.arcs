@@ -1,7 +1,7 @@
 schema PipeEntity
-  Text id
-  Text type
-  Text name
-  Number timestamp
-  Number count
-  Text source
+  id: Text
+  type: Text
+  name: Text
+  timestamp: Number
+  count: Number
+  source: Text
