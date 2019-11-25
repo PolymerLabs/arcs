@@ -23,4 +23,4 @@ recipe JsonStoreRecipe
     // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
     inputData: reads data
 
-  description `Kotlin Tutorial 6: JSON Store`
+  description `Kotlin Tutorial 6: JSON Store2`
