@@ -7,8 +7,8 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 kt_android_library(
     name = "parcelables",
     srcs = glob(["*.kt"]),
-    manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
     idl_parcelables = glob(["*.aidl"]),
+    manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
     deps = [
         "//shells/android/java/arcs/crdt/parcelables",
         "//shells/android/java/arcs/type/parcelables",
@@ -16,6 +16,6 @@ kt_android_library(
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
         "//src_kt/java/arcs/storage",
-        "//src_kt/java/arcs/type"
+        "//src_kt/java/arcs/type",
     ],
 )

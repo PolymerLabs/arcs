@@ -6,4 +6,3 @@ alias(
     name = "webkit",
     actual = "@maven//:androidx_webkit_webkit",
 )
-

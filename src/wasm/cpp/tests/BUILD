@@ -25,7 +25,6 @@ cc_wasm_binary(
         "entities.h",
         "test-base.h",
     ],
-    deps = ["//src/wasm/cpp:arcs"],
     visibility = ["//visibility:public"],
+    deps = ["//src/wasm/cpp:arcs"],
 )
-
