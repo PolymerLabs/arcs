@@ -1,8 +1,10 @@
 package arcs
 
-import arcs.Address
-import arcs.Addressable
-import arcs.RuntimeClient
+/**
+ * Utilities for ease-of-use
+ *
+ * Sugar to delegate function calls to methods on the current [RuntimeClient].
+ */
 
 fun log(msg: String) = RuntimeClient.log(msg)
 fun abort() = RuntimeClient.abort()
