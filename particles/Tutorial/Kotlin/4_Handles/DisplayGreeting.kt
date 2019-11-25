@@ -3,7 +3,7 @@ package arcs.tutorials
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import arcs.toAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**

@@ -1,6 +1,7 @@
 package arcs.test
 
 import arcs.*
+import arcs.wasm.toAddress
 import kotlin.Exception
 import kotlin.native.internal.ExportForCppRuntime
 

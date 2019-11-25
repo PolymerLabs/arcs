@@ -1,7 +1,7 @@
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.toAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
