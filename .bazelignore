@@ -1,9 +1,9 @@
-# Some npm modules include their own WORKSPACE, so we need to ignore them from
-# our build.
-node_modules
+# Some npm modules include their own WORKSPACE/BUILD files, so we need to ignore
+# them from our build. Manually listing them is not ideal, but we can't ignore
+# the entire node_modules folder, because we need it for our bazel builds.
+node_modules/@tensorflow/tfjs-core/src
 server/node_modules
 
 # Shell deploy scripts create symlinks to directories which include BUILD files.
 # These fail to resolve, so we need to ignore them too.
 shells/pipes-shell/web/deploy/dist
-
