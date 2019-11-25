@@ -543,11 +543,12 @@ function buildifier(args: string[]): boolean {
     boolean: ['fix'],
   });
 
-  const mode = options.fix ? '--mode=fix' : '--mode=check';
+  const modeOpts = options.fix ? ['--lint=fix', '--mode=fix'] : ['--lint=warn', '--mode=check'];
+
   return saneSpawnSync('find', [
     '.',
-    '-name', 'BUILD', '-o', '-name', 'BUILD.bazel', '-o', '-name', 'WORKSPACE',
-    '-exec', 'node_modules/@bazel/buildifier/buildifier.js', mode, '{}', '\\;'
+    '-name', 'BUILD', '-o', '-name', 'BUILD.bazel', '-o', '-name', 'WORKSPACE', '-o', '-name', '*.bzl',
+    '-exec', 'node_modules/@bazel/buildifier/buildifier.js', ...modeOpts, '--warnings=-module-docstring,-bzl-visibility', '{}', '\\;'
   ]);
 }
 
