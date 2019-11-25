@@ -107,7 +107,6 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   async onDesync(): Promise<void> {
     assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
-      console.log('calling onDesync');
       await this.particle.callOnHandleDesync(
           this,
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
