@@ -72,7 +72,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
-  lint: [peg, build, lint, tslint],
+  lint: [peg, build, lint, tslint, buildifier],
   tslint: [peg, build, tslint],
   check: [check],
   clean: [clean],
@@ -535,6 +535,20 @@ function lint(args: string[]): boolean {
   }
 
   return report.errorCount === 0;
+}
+
+/** Runs buildifier on all BUILD files. */
+function buildifier(args: string[]): boolean {
+  const options = minimist(args, {
+    boolean: ['fix'],
+  });
+
+  const mode = options.fix ? '--mode=fix' : '--mode=check';
+  return saneSpawnSync('find', [
+    '.',
+    '-name', 'BUILD', '-o', '-name', 'BUILD.bazel', '-o', '-name', 'WORKSPACE',
+    '-exec', 'node_modules/@bazel/buildifier/buildifier.js', mode, '{}', '\\;'
+  ]);
 }
 
 function licenses(): boolean {
