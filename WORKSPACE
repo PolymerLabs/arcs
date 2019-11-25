@@ -48,7 +48,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "io_bazel_rules_kotlin",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    commit = "e1a4f61521b9bba4b0584ef55f5cb621093d705d"
+    commit = "e1a4f61521b9bba4b0584ef55f5cb621093d705d",
+    shallow_since = "1574206775 -0800",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
