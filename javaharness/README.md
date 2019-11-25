@@ -113,6 +113,6 @@ Android properties are used to change and tweak Arcs settings at run-time.
 | debug.arcs.runtime.log | Change logging level of the JS Arcs runtime | 2 (the most verbose) |
 | debug.arcs.runtime.enable_arcs_explorer | Connect to the Arcs Explorer frontend via ALDS proxy while starting the JS Arcs runtime | false |
 | debug.arcs.runtime.dev_server_port | The port to use for communication with ALDS | 8786 |
-| debug.arcs.runtime.shell_url | Specify which shell to use | https://appassets.androidplatform.net/assets/arcs/index.html? (on-device pipes-shell with the Arcs Cache Manager) |
+| debug.arcs.runtime.shell_url | Specify which shell to use | https://appassets.androidplatform.net/<br/>assets/arcs/index.html? (on-device pipes-shell with the Arcs Cache Manager) |
 | debug.arcs.runtime.load_workstation_assets | Whether to load recipes and particles from the workstation | false (assets from the APK) |
 | debug.arcs.runtime.use_cache_mgr | Whether to use the Arcs Cache Manager | true
