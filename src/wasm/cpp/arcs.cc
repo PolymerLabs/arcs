@@ -305,6 +305,10 @@ std::string num_to_str(double num) {
 // --- Storage classes ---
 
 // Handle
+Handle::Handle(const char* name, Particle* particle) : name_(name), particle_(particle) {
+  particle_->registerHandle(this);
+}
+
 bool Handle::failForDirection(Direction bad_dir) const {
   if (dir_ == bad_dir) {
     std::string action = (bad_dir == In) ? "write to" : "read from";
@@ -317,10 +321,8 @@ bool Handle::failForDirection(Direction bad_dir) const {
 }
 
 // Particle
-void Particle::registerHandle(const std::string& name, Handle& handle) {
-  handle.name_ = name;
-  handle.particle_ = this;
-  handles_[handle.name_] = &handle;
+void Particle::registerHandle(Handle* handle) {
+  handles_[handle->name()] = handle;
 }
 
 void Particle::autoRender(const std::string& slot_name) {

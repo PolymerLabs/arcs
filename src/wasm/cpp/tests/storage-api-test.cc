@@ -5,12 +5,6 @@ using arcs::internal::Accessor;
 
 class SingletonApiTest : public arcs::Particle {
 public:
-  SingletonApiTest() {
-    registerHandle("inHandle", in_);
-    registerHandle("outHandle", out_);
-    registerHandle("ioHandle", io_);
-  }
-
   void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
       out_.clear();
@@ -26,9 +20,9 @@ public:
     }
   }
 
-  arcs::Singleton<arcs::SingletonApiTest_InHandle> in_;
-  arcs::Singleton<arcs::SingletonApiTest_OutHandle> out_;
-  arcs::Singleton<arcs::SingletonApiTest_IoHandle> io_;
+  arcs::Singleton<arcs::SingletonApiTest_InHandle> in_{"inHandle", this};
+  arcs::Singleton<arcs::SingletonApiTest_OutHandle> out_{"outHandle", this};
+  arcs::Singleton<arcs::SingletonApiTest_IoHandle> io_{"ioHandle", this};
 };
 
 DEFINE_PARTICLE(SingletonApiTest)
@@ -36,12 +30,6 @@ DEFINE_PARTICLE(SingletonApiTest)
 
 class CollectionApiTest : public arcs::Particle {
 public:
-  CollectionApiTest() {
-    registerHandle("inHandle", in_);
-    registerHandle("outHandle", out_);
-    registerHandle("ioHandle", io_);
-  }
-
   void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
       out_.clear();
@@ -104,9 +92,9 @@ public:
     }
   }
 
-  arcs::Collection<arcs::CollectionApiTest_InHandle> in_;
-  arcs::Collection<arcs::CollectionApiTest_OutHandle> out_;
-  arcs::Collection<arcs::CollectionApiTest_IoHandle> io_;
+  arcs::Collection<arcs::CollectionApiTest_InHandle> in_{"inHandle", this};
+  arcs::Collection<arcs::CollectionApiTest_OutHandle> out_{"outHandle", this};
+  arcs::Collection<arcs::CollectionApiTest_IoHandle> io_{"ioHandle", this};
   arcs::CollectionApiTest_OutHandle stored_;
 };
 
@@ -115,12 +103,6 @@ DEFINE_PARTICLE(CollectionApiTest)
 
 class ReferenceHandlesTest : public arcs::Particle {
 public:
-  ReferenceHandlesTest() {
-    registerHandle("sng", sng_);
-    registerHandle("col", col_);
-    registerHandle("res", res_);
-  }
-
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
 
@@ -151,9 +133,9 @@ public:
     res_.store(d);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::ReferenceHandlesTest_Sng>> sng_;
-  arcs::Collection<arcs::Ref<arcs::ReferenceHandlesTest_Col>> col_;
-  arcs::Collection<arcs::ReferenceHandlesTest_Res> res_;
+  arcs::Singleton<arcs::Ref<arcs::ReferenceHandlesTest_Sng>> sng_{"sng", this};
+  arcs::Collection<arcs::Ref<arcs::ReferenceHandlesTest_Col>> col_{"col", this};
+  arcs::Collection<arcs::ReferenceHandlesTest_Res> res_{"res", this};
 };
 
 DEFINE_PARTICLE(ReferenceHandlesTest)
@@ -161,12 +143,6 @@ DEFINE_PARTICLE(ReferenceHandlesTest)
 
 class SchemaReferenceFieldsTest : public arcs::Particle {
 public:
-  SchemaReferenceFieldsTest() {
-    registerHandle("input", input_);
-    registerHandle("output", output_);
-    registerHandle("res", res_);
-  }
-
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
 
@@ -201,9 +177,9 @@ public:
     res_.store(d);
   }
 
-  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Input> input_;
-  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Output> output_;
-  arcs::Collection<arcs::SchemaReferenceFieldsTest_Res> res_;
+  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Input> input_{"input", this};
+  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Output> output_{"output", this};
+  arcs::Collection<arcs::SchemaReferenceFieldsTest_Res> res_{"res", this};
 };
 
 DEFINE_PARTICLE(SchemaReferenceFieldsTest)

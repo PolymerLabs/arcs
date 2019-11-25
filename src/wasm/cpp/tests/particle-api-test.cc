@@ -3,12 +3,6 @@
 
 class HandleSyncUpdateTest : public arcs::Particle {
 public:
-  HandleSyncUpdateTest() {
-    registerHandle("sng", sng_);
-    registerHandle("col", col_);
-    registerHandle("res", res_);
-  }
-
   void onHandleSync(const std::string& name, bool all_synced) override {
     arcs::HandleSyncUpdateTest_Res out;
     out.set_txt("sync:" + name + (all_synced ? ":true" : ":false"));
@@ -28,9 +22,9 @@ public:
     res_.store(out);
   }
 
-  arcs::Singleton<arcs::HandleSyncUpdateTest_Sng> sng_;
-  arcs::Collection<arcs::HandleSyncUpdateTest_Col> col_;
-  arcs::Collection<arcs::HandleSyncUpdateTest_Res> res_;
+  arcs::Singleton<arcs::HandleSyncUpdateTest_Sng> sng_{"sng", this};
+  arcs::Collection<arcs::HandleSyncUpdateTest_Col> col_{"col", this};
+  arcs::Collection<arcs::HandleSyncUpdateTest_Res> res_{"res", this};
 };
 
 DEFINE_PARTICLE(HandleSyncUpdateTest)
@@ -38,10 +32,6 @@ DEFINE_PARTICLE(HandleSyncUpdateTest)
 
 class RenderTest : public arcs::Particle {
 public:
-  RenderTest() {
-    registerHandle("flags", flags_);
-  }
-
   std::string getTemplate(const std::string& slot_name) override {
     return "abc";
   }
@@ -55,7 +45,7 @@ public:
     renderSlot("root", flags._template(), flags.model());
   }
 
-  arcs::Singleton<arcs::RenderTest_Flags> flags_;
+  arcs::Singleton<arcs::RenderTest_Flags> flags_{"flags", this};
 };
 
 DEFINE_PARTICLE(RenderTest)
@@ -64,7 +54,6 @@ DEFINE_PARTICLE(RenderTest)
 class AutoRenderTest : public arcs::Particle {
 public:
   AutoRenderTest() {
-    registerHandle("data", data_);
     autoRender();
   }
 
@@ -73,7 +62,7 @@ public:
     return data.has_txt() ? data.txt() : "empty";
   }
 
-  arcs::Singleton<arcs::AutoRenderTest_Data> data_;
+  arcs::Singleton<arcs::AutoRenderTest_Data> data_{"data", this};
 };
 
 DEFINE_PARTICLE(AutoRenderTest)
@@ -81,10 +70,6 @@ DEFINE_PARTICLE(AutoRenderTest)
 
 class EventsTest : public arcs::Particle {
 public:
-  EventsTest() {
-    registerHandle("output", output_);
-  }
-
   void fireEvent(const std::string& slot_name, const std::string& handler,
                  const arcs::Dictionary& eventData) override {
     arcs::EventsTest_Output out;
@@ -92,7 +77,7 @@ public:
     output_.set(out);
   }
 
-  arcs::Singleton<arcs::EventsTest_Output> output_;
+  arcs::Singleton<arcs::EventsTest_Output> output_{"output", this};
 };
 
 DEFINE_PARTICLE(EventsTest)
@@ -100,10 +85,6 @@ DEFINE_PARTICLE(EventsTest)
 
 class ServicesTest : public arcs::Particle {
 public:
-  ServicesTest() {
-    registerHandle("output", output_);
-  }
-
   void init() override {
     std::string url = resolveUrl("$resolve-me");
     arcs::ServicesTest_Output out;
@@ -130,7 +111,7 @@ public:
     output_.store(out);
   }
 
-  arcs::Collection<arcs::ServicesTest_Output> output_;
+  arcs::Collection<arcs::ServicesTest_Output> output_{"output", this};
 };
 
 DEFINE_PARTICLE(ServicesTest)
