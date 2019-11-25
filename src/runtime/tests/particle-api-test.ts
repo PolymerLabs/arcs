@@ -390,11 +390,11 @@ describe('particle-api', () => {
   });
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
-  // it.skip('can load a recipe referencing a manifest store', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
-  it('can load a recipe referencing a manifest store', async () => {
+  it.skip('can load a recipe referencing a manifest store', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     RamDiskStorageDriverProvider.register();
     const nobType = Flags.useNewStorageStack ? '![NobIdStore {nobId: Text}]' : 'NobIdStore {nobId: Text}';
     const nobData = Flags.useNewStorageStack ? '{"root": {"values": {"nid": {"value": {"id": "nid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}' : '[{"nobId": "12345"}]';
+
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
