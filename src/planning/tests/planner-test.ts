@@ -150,7 +150,7 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with multiple consumed set slots', async () => {
     const results = await planFromManifest(`
@@ -163,7 +163,7 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with multiple consumed slots with the implicit any direction', async () => {
     const results = await planFromManifest(`
@@ -176,7 +176,7 @@ describe('Planner', () => {
           one: s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with multiple consumed set with the implicit any direction', async () => {
     const results = await planFromManifest(`
@@ -189,7 +189,7 @@ describe('Planner', () => {
           one: s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with slots with other slots', async () => {
     const results = await planFromManifest(`
@@ -208,7 +208,7 @@ describe('Planner', () => {
           inSlot: s1
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with set slots with other set slots', async () => {
     const results = await planFromManifest(`
@@ -227,7 +227,7 @@ describe('Planner', () => {
           inSlot: s1
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES cannot resolve slots with set slots', async () => {
     const cc = await ConCap.capture(() => planFromManifest(`
@@ -247,7 +247,7 @@ describe('Planner', () => {
     `));
     assert.deepEqual(cc.result, []);
     assert.match(cc.warn[0], /Type validations failed for handle/);
-  }));
+  });
 
   it('SLANDLES cannot resolve multiple consumed slots with incorrect directions', async () => {
     await assertThrowsAsync(async () => {
@@ -261,7 +261,7 @@ describe('Planner', () => {
             one: \`provides s0
       `);
     }, 'not compatible with \'`consume\'');
-  }));
+  });
 
   it('SLANDLES cannot resolve multiple consumed set slots with incorrect directions', async () => {
     await assertThrowsAsync(async () => {
@@ -275,7 +275,7 @@ describe('Planner', () => {
             one: \`provides s0
       `);
     }, 'not compatible with \'`consume\'');
-  }));
+  });
 
   it('SLANDLES resolves particles with multiple consumed slots', async () => {
     const results = await planFromManifest(`
@@ -288,7 +288,7 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with multiple consumed set SLANDLES with consume', async () => {
     const results = await planFromManifest(`
@@ -301,7 +301,7 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('SLANDLES resolves particles with multiple consumed set slots with any', async () => {
     const results = await planFromManifest(`
@@ -314,7 +314,7 @@ describe('Planner', () => {
           one: s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('can speculate in parallel', async () => {
     const manifest = `
@@ -892,7 +892,7 @@ describe('Automatic resolution', () => {
     something: reads handle1
   D as particle3
     location: reads writes handle2`, result.toString({hideFields: false}));
-  }));
+  });
 
   it('uses existing handle from the arc', async () => {
     // An existing handle from the arc can be used as input to a recipe
