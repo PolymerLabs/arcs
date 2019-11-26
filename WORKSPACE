@@ -122,6 +122,7 @@ KOTLINX_COROUTINES_VERSION = "1.3.2"
 
 maven_install(
     artifacts = [
+        "androidx.annotation:annotation:1.1.0",
         "androidx.webkit:webkit:1.1.0-rc01",
         "androidx.test:core:1.0.0",
         "androidx.test.ext:junit:1.0.0",
