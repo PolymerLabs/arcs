@@ -72,7 +72,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
-  lint: [peg, build, lint, tslint],
+  lint: [peg, build, lint, tslint, buildifier],
   tslint: [peg, build, tslint],
   check: [check],
   clean: [clean],
@@ -535,6 +535,31 @@ function lint(args: string[]): boolean {
   }
 
   return report.errorCount === 0;
+}
+
+/** Runs buildifier on all BUILD files. */
+function buildifier(args: string[]): boolean {
+  const options = minimist(args, {
+    boolean: ['fix'],
+  });
+
+  const buildifierOptions = ['--warnings=-module-docstring,-bzl-visibility'];
+  if (options.fix) {
+    buildifierOptions.push('--lint=fix', '--mode=fix');
+  } else {
+    buildifierOptions.push('--lint=warn', '--mode=check');
+  }
+
+  const exclude = /\bnode_modules\b/;
+  const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
+  let allSucceeded = true;
+  for (const file of findProjectFiles(process.cwd(), exclude, include)) {
+    const result = saneSpawnSync('npx', ['buildifier', ...buildifierOptions, file]);
+    if (!result) {
+      allSucceeded = false;
+    }
+  }
+  return allSucceeded;
 }
 
 function licenses(): boolean {
