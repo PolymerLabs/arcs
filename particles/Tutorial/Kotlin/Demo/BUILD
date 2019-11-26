@@ -18,9 +18,9 @@ arcs_kt_binary(
 )
 
 arcs_kt_binary(
-     name = "TTTHumanPlayer",
-     srcs = ["TTTHumanPlayer.kt"],
-     deps = [":game_schemas"],
+    name = "TTTHumanPlayer",
+    srcs = ["TTTHumanPlayer.kt"],
+    deps = [":game_schemas"],
 )
 
 arcs_kt_binary(
