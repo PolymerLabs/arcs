@@ -34,6 +34,7 @@ WORKDIR $WORKSPACE
 # Install Bazel
 COPY tools/install_bazel.sh $WORKSPACE/tools/install_bazel.sh
 RUN ./tools/install_bazel.sh
+ENV PATH="/root/bin:${PATH}"
 
 # Install ktlint
 RUN (cd /usr/bin/ && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -)
