@@ -187,6 +187,10 @@ export abstract class Type {
     return new CollectionType(this);
   }
 
+  singletonOf() {
+    return new SingletonType(this);
+  }
+
   bigCollectionOf() {
     return new BigCollectionType(this);
   }

@@ -14,4 +14,3 @@ alias(
     actual = "//src/wasm/kotlin/java/arcs:arcs-wasm",
     visibility = ["//visibility:public"],
 )
-

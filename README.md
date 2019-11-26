@@ -150,16 +150,24 @@ See [devtools](devtools/README.md).
 ## IDE Setup
 Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
 
-### IntelliJ
+### Android Studio
 
-- Install IntelliJ, community edition is sufficient.
-- Open IntelliJ and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
-- Upon restarting IntelliJ, click "Import Bazel Project"
+- Install Android Studio. When prompted, install the needed SDK Android 10 (SDK version 29).
+- Open Android Studio and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
+- Upon restarting Android, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots. 
 - Navigate to the arcs folder, and select the `.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
+
+If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
+- Go to Android Studio -> Preferences -> Bazel Settings
+- Find the Bazel binary location, and click the three dots next to it.
+- Navigate to the correct location, and select the Bazel binary.
+  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
+- Click "Apply" then "OK"
+- Re-import the project by hitting the bazel logo in the upper right hand corner.
 
 ## Testing
 
