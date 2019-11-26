@@ -15,7 +15,7 @@ particle AnnotationMultiplexer in 'source/Multiplexer.js'
   list: reads [~anyType]
   annotation: reads writes ~anyOther
   hostedParticle: hosts HostedAnnotationInterface
-  annotation: consumes [Slot]
+  annotationSlot: consumes [Slot]
 
 interface HostedSimpleAnnotationInterface
   reads ~anyType

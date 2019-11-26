@@ -16,6 +16,14 @@ import {Recipe, RequireSection} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 
+// type SlotThingie = {
+//   name?: string;
+//   spec?;
+//   tags?;
+// };
+
+type SlotThingie = Slot;
+
 export class SlotUtils {
   // Helper methods.
   static getClonedSlot(recipe: Recipe, selectedSlot): Slot {
@@ -60,34 +68,38 @@ export class SlotUtils {
 
   // Returns all possible slot candidates, sorted by "quality"
   static findAllSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, arc) {
+    // Note: during manfiest parsing, target slot is only set in slot connection, if the slot exists in the recipe.
+    // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
+    // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
     const slotConn = particle.getSlandleConnectionByName(slotSpec.name);
-    return {
-      // Note: during manfiest parsing, target slot is only set in slot connection, if the slot exists in the recipe.
-      // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
-      // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
-      local: !slotConn || !slotConn.targetSlot ? SlotUtils._findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [],
-      remote: SlotUtils._findSlotCandidates(particle, slotSpec, []) //arc.pec.slotComposer.getAvailableContexts())
-    };
+    const local = !slotConn || !slotConn.targetSlot
+      ? SlotUtils._findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [];
+    console.warn(
+      'findAllSlotCandidates', particle.name,
+      'activeRecipe.slots:', arc.activeRecipe && arc.activeRecipe.slots
+    );
+    const remote = SlotUtils._findSlotCandidates(particle, slotSpec, arc.activeRecipe && arc.activeRecipe.slots);
+      //[]);
+      //arc.pec.slotComposer.getAvailableContexts());
+    return {local, remote};
   }
 
   // Returns the given slot candidates, sorted by "quality".
-  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots) {
-    const possibleSlots = slots.filter(s => this.slotMatches(particle, slotSpec, s));
-    possibleSlots.sort((slot1, slot2) => {
-        // TODO: implement.
-        return slot1.name < slot2.name;
-    });
+  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots: Array<SlotThingie>) {
+    const possibleSlots = slots ? slots.filter(s => this.slotMatches(particle, slotSpec, s)) : [];
+    // TODO: implement.
+    possibleSlots.sort((slot1, slot2) => slot1.name.localeCompare(slot2.name));
     return possibleSlots;
   }
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
-  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot): boolean {
+  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot: SlotThingie): boolean {
     if (!SlotUtils.specMatch(slotSpec, slot.spec)) {
       return false;
     }
 
     const potentialSlotConn = particle.getSlandleConnectionBySpec(slotSpec);
-    if (!SlotUtils.tagsOrNameMatch(slotSpec, slot.spec, potentialSlotConn, slot)) {
+    if (!SlotUtils.tagsOrNameMatch(slotSpec, slot.spec as ProvideSlotConnectionSpec, potentialSlotConn, slot)) {
       return false;
     }
 
@@ -116,23 +128,25 @@ export class SlotUtils {
     });
   }
 
-  static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn?: SlotConnection, provideSlot?: Slot) {
+  static tagsOrNameMatch(
+      consumeSlotSpec: ConsumeSlotConnectionSpec,
+      provideSlotSpec: ProvideSlotConnectionSpec,
+      consumeSlotConn?: SlotConnection,
+      provideSlot?: SlotThingie //Slot
+  ) {
     const consumeTags: string[] = ([] as string[]).concat(
       consumeSlotSpec.tags || [],
       consumeSlotConn ? consumeSlotConn.tags : [],
       consumeSlotConn && consumeSlotConn.targetSlot ? consumeSlotConn.targetSlot.tags : []
     );
-
     const provideTags = ([] as string[]).concat(
       provideSlotSpec.tags || [],
       provideSlot ? provideSlot.tags : [],
       provideSlot ? provideSlot.name : (provideSlotSpec.name ? provideSlotSpec.name : [])
     );
-
     if (consumeTags.length > 0 && consumeTags.some(t => provideTags.includes(t))) {
       return true;
     }
-
     return consumeSlotSpec.name === (provideSlot ? provideSlot.name : provideSlotSpec.name);
   }
 

@@ -53,18 +53,15 @@ export class MapSlots extends Strategy {
         if (slotConnection.getSlotSpec() == undefined) {
           return undefined;
         }
-
         if (slotConnection.isConnected()) {
-          return;
+          return undefined;
         }
         const slotSpec = slotConnection.getSlotSpec();
         const particle = slotConnection.particle;
-
         const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
         if (local.length + remote.length < 2) {
           return undefined;
         }
-
         // If there are any local slots, prefer them over remote slots.
         const slotList = local.length > 0 ? local : remote;
         return slotList.map(slot => ((recipe, slotConnection) => {
