@@ -44,8 +44,9 @@ expect object RuntimeClient {
      * @param particle Particle in scope
      * @param collection target to be mutated
      * @param encoded Serialized representation of an entity
+     * @return The ID [String] of the stored entity, or null.
      */
-    fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String)
+    fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String): String?
 
     /** @param msg Message to write to a logging system. */
     fun log(msg: String)

@@ -17,8 +17,14 @@ actual object RuntimeClient {
     actual fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>) =
         collectionClear(particle.toAddress(), collection.toAddress())
 
-    actual fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String) =
-        collectionStore(particle.toAddress(), collection.toAddress(), encoded.toWasmString())
+    actual fun <T : Entity<T>> collectionStore(
+        particle: Particle,
+        collection: Collection<T>,
+        encoded: String): String? {
+        val wasmId = collectionStore(particle.toAddress(), collection.toAddress(), encoded.toWasmString())
+        return wasmId.toNullableKString()?.let { _free(wasmId); it }
+
+    }
 
     actual fun log(msg: String) = arcs.wasm.log(msg);
 

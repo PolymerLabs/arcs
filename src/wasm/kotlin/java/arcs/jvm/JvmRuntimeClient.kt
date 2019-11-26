@@ -14,8 +14,10 @@ actual object RuntimeClient {
     actual fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>): Unit =
         throw NotImplementedError()
 
-    actual fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String): Unit =
-        throw NotImplementedError()
+    actual fun <T : Entity<T>> collectionStore(
+        particle: Particle,
+        collection: Collection<T>,
+        encoded: String): String? = throw NotImplementedError()
 
     actual fun log(msg: String): Unit = throw NotImplementedError()
 
