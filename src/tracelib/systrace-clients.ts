@@ -8,14 +8,43 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-interface ClientInterface {
-  asyncTraceBegin(tag: string, cookie: number): void;
-  asyncTraceEnd(tag: string, cookie: number): void;
+const SELECTOR_URL_PARAMETER = 'systrace';
+const CONSOLE_CLIENT_NAME = 'console';
+const ANDROID_CLIENT_NAME = 'android';
+
+abstract class Client {
+  asyncTraceBegin(tag: string, cookie: number): void {}
+  asyncTraceEnd(tag: string, cookie: number): void {}
 }
 
-// TODO: Client: console.log
+class ConsoleClient extends Client {
+  asyncTraceBegin(tag: string, cookie: number) {
+    console.log(`S|${tag}|${cookie}`);
+  }
 
-// TODO: Client: Android Trace.* APIs
+  asyncTraceEnd(tag: string, cookie: number) {
+    console.log(`F|${tag}|${cookie}`);
+  }
+}
 
-// TODO: Client selector
-// Using url parameter to choose among clients (default: Android Trace client)
+// TODO: Client: using Android Arcs Tracing APIs
+
+/**
+ * System Trace Client Selector
+ * Query the target class of system tracing client by ${SELECTOR_URL_PARAMETER}
+ * ${SELECTOR_URL_PARAMETER}:
+ *   ${CONSOLE_CLIENT_NAME}: using console.log
+ *   ${ANDROID_CLIENT_NAME}: using Android Arcs Tracing APIs
+ */
+export const clientClass: typeof Client = (() => {
+  const params = new URLSearchParams(location.search);
+  let clz = class extends Client {};
+  switch (params.get(SELECTOR_URL_PARAMETER)) {
+    case CONSOLE_CLIENT_NAME:
+      clz = ConsoleClient;
+      break;
+    default:
+      break;
+  }
+  return clz;
+})();
