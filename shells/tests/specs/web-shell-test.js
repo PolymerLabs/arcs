@@ -38,7 +38,7 @@ describe(`WASM (${persona})`, () => {
     console.log(`running "${this.test.fullTitle()}"`);
     await openArc(persona);
     await searchFor('Integration');
-    await chooseSuggestion('Wasm Integration Test');
+    await chooseSuggestion('Kotlin Tutorial 1: Hello World');
     // TODO(sjmiles): allowing time to settle, we should prefer explicit signal
     await sleep(5);
     await waitFor(`[particle="HelloWorldParticle"]`);

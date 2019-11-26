@@ -9,7 +9,9 @@ particle HelloWorldParticle in 'HelloWorld.wasm'
 
 // Defines a new recipe, containing nothing other than our HelloWorldParticle.
 recipe HelloWorldRecipe
+  root: slot 'rootslotid-root'
   HelloWorldParticle
+    root: consumes root
 
   // This sets a nicer name for our recipe in the shell. Otherwise it would be displayed as "HelloWorldRecipe".
   description `Kotlin Tutorial 1: Hello World`

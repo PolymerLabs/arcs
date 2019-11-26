@@ -50,7 +50,7 @@ recipe MakeReservations
   restaurant: use #selected
   event: create #reservation
   calendarDescriptions: create #volatile
-  annotationDescriptions: create #volatile
+  //annotationDescriptions: create #volatile
   toproot: slot 'rootslotid-toproot'
   Calendar
     event: event
@@ -67,13 +67,13 @@ recipe MakeReservations
     annotation: event
     hostedParticle: ReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
-  DetailReservationForm
-    restaurant: restaurant
-    event: event
-    detailAction: consumes
-      annotation: provides detailAnnotation
-  ReservationAnnotation
-    restaurant: restaurant
-    event: event
-    descriptions: annotationDescriptions
-    annotation: consumes detailAnnotation
+  //DetailReservationForm
+  //  restaurant: restaurant
+  //  event: event
+  //  detailAction: consumes
+  //    annotation: provides detailAnnotation
+  //ReservationAnnotation
+  //  restaurant: restaurant
+  //  event: event
+  //  descriptions: annotationDescriptions
+  //  annotation: consumes detailAnnotation

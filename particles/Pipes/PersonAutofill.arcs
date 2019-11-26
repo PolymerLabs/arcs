@@ -10,9 +10,10 @@ particle SuggestPerson in './source/SuggestPerson.js'
 //  query: reads IncomingEntity
 
 recipe PersonAutofill &autofill
+  root: slot 'rootslotid-root'
   recentEntities: map 'pipe-entities'
-  //recentEntities: create *
   suggestion: create *
   SuggestPerson
     recentEntities: recentEntities
     suggestion: suggestion
+    root: consumes root
