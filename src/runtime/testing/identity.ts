@@ -24,7 +24,7 @@ const filter: Dictionary<string[]> = {};
 
 // Annotate classes with @Identified to assign a unique identity to each instance
 // tslint:disable-next-line no-any
-export function Identified<T extends {new (...args:any[]):{}}>(constructor:T) {
+export function Identified<T extends {new(...args:any[]):{}}>(constructor:T) {
   if (!nameRegistry[constructor.name]) {
     nameRegistry[constructor.name] = 0;
   }
@@ -70,6 +70,6 @@ export function proxyMessage<T extends CRDTTypeRecord>(message: ProxyMessage<T>)
     case ProxyMessageType.SyncRequest:
       return output + 'SyncRequest';
     default:
-      return output + "!?!?";
+      return output + '!?!?';
   }
 }
