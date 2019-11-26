@@ -44,8 +44,8 @@ java_test(
 
 kt_jvm_library(
     name = "Base64PerformanceTestLib",
-    srcs = ["Base64PerformanceTest.kt"],
     testonly = True,
+    srcs = ["Base64PerformanceTest.kt"],
     deps = [
         "//src_kt/java/arcs/util",
         "//third_party/java/junit",
