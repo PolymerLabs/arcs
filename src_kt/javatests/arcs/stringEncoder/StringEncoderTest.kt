@@ -12,6 +12,22 @@ import org.junit.runners.JUnit4
 class StringEncoderTest {
 
     @Test
+    fun encodeTrueBoolean() {
+        val b = true
+        val encodedString = StringEncoder.encodeValue(b)
+        val expectedString = "B1"
+        assertThat(encodedString).isEqualTo(expectedString)
+    }
+
+    @Test
+    fun encodeFalseBoolean() {
+        val b = false
+        val encodedString = StringEncoder.encodeValue(b)
+        val expectedString = "B0"
+        assertThat(encodedString).isEqualTo(expectedString)
+    }
+
+    @Test
     fun encodeText() {
         val txt = "Kangaroo"
         val encodedString = StringEncoder.encodeValue(txt)
