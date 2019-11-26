@@ -39,7 +39,7 @@ class ConsoleClient extends Client {
  *   ${CONSOLE_CLIENT_NAME}: using console.log
  *   ${ANDROID_CLIENT_NAME}: using Android Arcs Tracing APIs
  */
-export const getClientClass = (): typeof Client => {
+export const getClientClass = (): typeof Client & {new(...args): Client} => {
   const params = new URLSearchParams(location.search);
   let clientClass = class extends Client {};
   switch (params.get(SELECTOR_URL_PARAMETER)) {

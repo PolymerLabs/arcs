@@ -11,7 +11,7 @@
 import {getClientClass, Client} from './systrace-clients.js';
 
 // Determines the client class asap at the very first script evaluation.
-const clientClass: typeof Client = getClientClass();
+const clientClass: ReturnType<typeof getClientClass> = getClientClass();
 
 /**
  * Class decorator for installing system tracing capability
@@ -22,14 +22,14 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
   return class extends ctor {
     constructor(...args) {
       super(...args);
-      traceAllFunctions(this);
+      traceAllFunctions(this, new clientClass());
     }
   };
 }
 
 // TODO: dynamic injection of system tracing capabilities
 
-function traceAllFunctions(obj: object) {
+function traceAllFunctions(obj: object, client: Client) {
   const that: object = obj;
   let properties: string[] = [];
 
