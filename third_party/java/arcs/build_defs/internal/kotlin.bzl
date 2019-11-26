@@ -12,6 +12,7 @@ load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_b
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
 _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
+_KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
@@ -102,7 +103,7 @@ def kt_jvm_and_js_library(
       deps: List; List of dependencies
       exports: List; List of exported dependencies
       visibility: List; List of visibilities
-      **kwargs: other arguments to foward to the kt_jvm_library and
+      **kwargs: other arguments to forward to the kt_jvm_library and
         kt_js_library rules
     """
 
@@ -113,7 +114,7 @@ def kt_jvm_and_js_library(
         # kt_jvm_library doesn't support the "exports" property. Instead, we
         # will wrap it in a java_library rule and export everything that is
         # needed from there.
-        kt_name = name + "-kt"
+        kt_name = name + _KT_SUFFIX
         java_library(
             name = name,
             exports = exports + [kt_name],
@@ -156,4 +157,4 @@ def _to_js_dep(dep):
     if (index_of_colon == -1):
         return dep + (":%s%s" % (last_part, _JS_SUFFIX))
     else:
-        return dep + "-js"
+        return dep + _JS_SUFFIX
