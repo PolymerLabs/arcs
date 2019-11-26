@@ -8,8 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// Class decorator for installing system tracing capability
-// to a class and its subclasses.
+import {getClientClass, Client} from './systrace-clients.js';
+
+// Determines the client class asap at the very first script evaluation.
+const clientClass: typeof Client = getClientClass();
+
+/**
+ * Class decorator for installing system tracing capability
+ * to a class and its subclasses.
+ */
 // tslint:disable-next-line:enforce-name-casing
 export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
   return class extends ctor {

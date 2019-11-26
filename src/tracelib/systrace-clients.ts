@@ -12,11 +12,13 @@ const SELECTOR_URL_PARAMETER = 'systrace';
 const CONSOLE_CLIENT_NAME = 'console';
 const ANDROID_CLIENT_NAME = 'android';
 
-abstract class Client {
+/** Abstraction of System Trace Client */
+export abstract class Client {
   asyncTraceBegin(tag: string, cookie: number): void {}
   asyncTraceEnd(tag: string, cookie: number): void {}
 }
 
+/** Client: JS Console Logging */
 class ConsoleClient extends Client {
   asyncTraceBegin(tag: string, cookie: number) {
     console.log(`S|${tag}|${cookie}`);
@@ -27,7 +29,8 @@ class ConsoleClient extends Client {
   }
 }
 
-// TODO: Client: using Android Arcs Tracing APIs
+/** Client: Android Arcs Tracing */
+// TODO: impl.
 
 /**
  * System Trace Client Selector
@@ -36,15 +39,15 @@ class ConsoleClient extends Client {
  *   ${CONSOLE_CLIENT_NAME}: using console.log
  *   ${ANDROID_CLIENT_NAME}: using Android Arcs Tracing APIs
  */
-export const clientClass: typeof Client = (() => {
+export const getClientClass = (): typeof Client => {
   const params = new URLSearchParams(location.search);
-  let clz = class extends Client {};
+  let clientClass = class extends Client {};
   switch (params.get(SELECTOR_URL_PARAMETER)) {
     case CONSOLE_CLIENT_NAME:
-      clz = ConsoleClient;
+        clientClass = ConsoleClient;
       break;
     default:
       break;
   }
-  return clz;
-})();
+  return clientClass;
+};
