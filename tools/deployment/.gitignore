@@ -6,7 +6,7 @@
 !devtools/
 !dist/
 !extension/
-!modalities/dom
+!modalities/dom/
 !particles/
 !shells/
 
