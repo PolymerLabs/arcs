@@ -28,4 +28,27 @@ class ParcelableRawEntityTest {
 
         assertThat(unmarshalled?.actual).isEqualTo(entity)
     }
+
+    @Test
+    fun parcelableRoundTrip_withNestedRawEntities_works() {
+        val entity1 = RawEntity("entity1", setOf(), setOf())
+        val entity2 = RawEntity("entity2", setOf(), setOf())
+        val entity3 = RawEntity("entity3", setOf(), setOf())
+        val uberEntity = RawEntity(
+            id = "uberEntity",
+            singletons = mapOf("a" to entity1),
+            collections = mapOf("b" to setOf(entity2, entity3))
+        )
+
+        val marshalled = with(Parcel.obtain()) {
+            writeTypedObject(ParcelableRawEntity(uberEntity), 0)
+            marshall()
+        }
+        val unmarshalled = with(Parcel.obtain()) {
+            unmarshall(marshalled, 0, marshalled.size)
+            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+        }
+
+        assertThat(unmarshalled?.actual).isEqualTo(uberEntity)
+    }
 }

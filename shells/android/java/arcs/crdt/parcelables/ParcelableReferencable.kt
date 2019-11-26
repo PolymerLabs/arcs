@@ -70,6 +70,9 @@ interface ParcelableReferencable : Parcelable {
     }
 }
 
+/** Converts a [Referencable] into a [ParcelableReferencable]. */
+fun Referencable.toParcelable(): ParcelableReferencable = ParcelableReferencable(this)
+
 /** Reads a [Referencable] from the [Parcel]. */
 fun Parcel.readReferencable(): Referencable? =
     readTypedObject(ParcelableReferencable.Companion.CREATOR)?.actual
