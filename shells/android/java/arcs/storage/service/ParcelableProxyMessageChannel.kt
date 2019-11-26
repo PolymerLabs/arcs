@@ -63,8 +63,6 @@ class ParcelableProxyMessageChannel(
                     }
                 } catch (e: CrdtException) {
                     resultCallback.onResult(e.toParcelable())
-                } catch (e: Throwable) {
-                    // log.error(e) { "Unknown error while waiting for result." }
                 }
             }
         }
