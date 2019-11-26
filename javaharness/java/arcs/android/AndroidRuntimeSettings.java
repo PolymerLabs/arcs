@@ -32,13 +32,18 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   // Does *not* connect Arcs Explorer
   private static final boolean DEFAULT_ENABLE_ARCS_EXPLORER = false;
   // Loads the on-device pipes-shell
-  private static final String DEFAULT_SHELL_URL = "file:///android_asset/arcs/index.html?";
+  // Multiple protocols are supported, i.e.
+  // file:///android_asset/arcs/index.html?
+  // https://appassets.androidplatform.net/assets/arcs/index.html?
+  // The Arcs Cache Manager only works at https secure origin.
+  private static final String DEFAULT_SHELL_URL =
+      "https://appassets.androidplatform.net/assets/arcs/index.html?";
   // Load the on-device assets
   private static final boolean DEFAULT_ASSETS_FROM_WORKSTATION = false;
   // Uses the standard 8786 port
   private static final int DEFAULT_DEV_SERVER_PORT = 8786;
-  // Deactivates the Arcs Cache Manager.
-  private static final boolean DEFAULT_USE_CACHE_MANAGER = false;
+  // Activates the Arcs Cache Manager.
+  private static final boolean DEFAULT_USE_CACHE_MANAGER = true;
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());
