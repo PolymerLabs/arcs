@@ -24,6 +24,10 @@ import {Speculator} from '../../planning/speculator.js';
 import {BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
+import {StorageProxy} from '../storageNG/storage-proxy.js';
+import {unifiedHandleFor} from '../handle.js';
+import {DirectStore} from '../storageNG/direct-store.js';
+import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 
 class ResultInspector {
   private readonly _arc: Arc;
@@ -49,9 +53,19 @@ class ResultInspector {
    */
   async verify(...expectations) {
     await this._arc.idle;
-    const received = await this._store.toList();
+    let handle;
+    if (Flags.useNewStorageStack) {
+      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type);
+      handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'pid'});
+    } else {
+      handle = this._store;
+    }
+    let received = await handle.toList();
     const misses = [];
-    for (const item of received.map(r => r.rawData[this._field])) {
+    if (!Flags.useNewStorageStack) {
+      received = received.map(r => r.rawData);
+    }
+    for (const item of received.map(r => r[this._field])) {
       const i = expectations.indexOf(item);
       if (i >= 0) {
         expectations.splice(i, 1);
@@ -59,8 +73,11 @@ class ResultInspector {
         misses.push(item);
       }
     }
-    this._store.clearItemsForTesting();
-
+    if (Flags.useNewStorageStack) {
+      await handle.clear();
+    } else {
+      this._store.clearItemsForTesting();
+    }
     const errors: string[] = [];
     if (expectations.length) {
       errors.push(`Expected, not received: ${expectations.join(', ')}`);
@@ -82,11 +99,12 @@ class ResultInspector {
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
   const runtime = new Runtime(new StubLoader(fileMap), FakeSlotComposer, manifest);
-  return runtime.newArc('demo', 'volatile://');
+  return runtime.newArc('demo', Flags.useNewStorageStack ? null : 'volatile://');
 }
 
 describe('particle-api', () => {
   it('StorageProxy integration test', async () => {
+    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -126,7 +144,7 @@ describe('particle-api', () => {
             }
 
             async addResult(value) {
-              await this.resHandle.store(new this.resHandle.entityClass({value}));
+              await this.resHandle.${addFunc}(new this.resHandle.entityClass({value}));
             }
           }
         });
@@ -148,25 +166,51 @@ describe('particle-api', () => {
 
     // Drop event 2; desync is triggered by v3.
     await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
-    const fireFn = fooStore['_fire'];
-    fooStore['_fire'] = async () => {};
+    let fireFn;
+    const activeStore = await fooStore.activate();
+    if (Flags.useNewStorageStack) {
+      fireFn = activeStore['deliverCallbacks'];
+      activeStore['deliverCallbacks'] = () => {};
+    } else {
+      fireFn = fooStore['_fire'];
+      fooStore['_fire'] = async () => {};
+    }
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
-    fooStore['_fire'] = fireFn;
+    if (Flags.useNewStorageStack) {
+      activeStore['deliverCallbacks'] = (...args) => fireFn.bind(activeStore)(...args);
+    } else {
+      fooStore['_fire'] = fireFn;
+    }
     await fooHandle.set(new fooHandle.entityClass({value: 'v3'}));
-    await inspector.verify('update:{"data":{"value":"v1"}}',
-                           'desync',
-                           'sync:{"value":"v3"}');
+    if (Flags.useNewStorageStack) {
+      await inspector.verify('update:{"originator":false,"data":{"value":"v1"}}',
+                            'desync',
+                            'sync:{"value":"v3"}');
+    } else {
+      await inspector.verify('update:{"data":{"value":"v1"}}',
+                            'desync',
+                            'sync:{"value":"v3"}');
+    }
 
     // Check it includes the previous value (v3) in updates.
     await fooHandle.set(new fooHandle.entityClass({value: 'v4'}));
-    await inspector.verify('update:{"data":{"value":"v4"}}');
+    if (Flags.useNewStorageStack) {
+      await inspector.verify('update:{"originator":false,"data":{"value":"v4"}}');
+    } else {
+      await inspector.verify('update:{"data":{"value":"v4"}}');
+    }
 
     // Check clearing the store.
     await fooHandle.clear();
-    await inspector.verify('update:{"data":null}');
+    if (Flags.useNewStorageStack) {
+      await inspector.verify('update:{"originator":false}');
+    } else {
+      await inspector.verify('update:{"data":null}');
+    }
   });
 
   it('can sync/update and store/remove with collections', async () => {
+    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -185,8 +229,8 @@ describe('particle-api', () => {
           return class P extends Particle {
             onHandleSync(handle, model) {
               let result = handle;
-              result.store(new result.entityClass({value: 'one'}));
-              result.store(new result.entityClass({value: 'two'}));
+              result.${addFunc}(new result.entityClass({value: 'one'}));
+              result.${addFunc}(new result.entityClass({value: 'two'}));
             }
             async onHandleUpdate(handle) {
               for (let entity of await handle.toList()) {
@@ -344,10 +388,13 @@ describe('particle-api', () => {
     const newHandle = await singletonHandleForTest(arc, newStore);
     assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
   });
-
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
   it.skip('can load a recipe referencing a manifest store', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    RamDiskStorageDriverProvider.register();
+    const nobType = Flags.useNewStorageStack ? '![NobIdStore {nobId: Text}]' : 'NobIdStore {nobId: Text}';
+    const nobData = Flags.useNewStorageStack ? '{"root": {"values": {"nid": {"value": {"id": "nid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}' : '[{"nobId": "12345"}]';
+
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -376,10 +423,10 @@ describe('particle-api', () => {
                   schema Result
                     value: Text
 
-                  store NobId of NobIdStore {nobId: Text} in NobIdJson
+                  store NobId of ${nobType} in NobIdJson
                    resource NobIdJson
                      start
-                     [{"nobId": "12345"}]
+                     ${nobData}
 
                    particle PassThrough in 'pass-through.js'
                      nobId: reads NobIdStore {nobId: Text}
@@ -413,7 +460,7 @@ describe('particle-api', () => {
             setHandles(handles) {
               handles.get('a').get().then(resultA => {
                 handles.get('nobId').get().then(resultNob => {
-                  if (resultNob.nobId === '12345') {
+                  if (resultNob && resultNob.nobId === '12345') {
                     handles.get('b').set(resultA);
                   }
                 })
@@ -645,6 +692,7 @@ describe('particle-api', () => {
   });
 
   it('multiplexing', async () => {
+    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -693,15 +741,15 @@ describe('particle-api', () => {
                         b: writes handle2
                   \`);
                   inHandle.set(input);
-                  this.resHandle.store(new this.resHandle.entityClass({value: 'done'}));
+                  this.resHandle.${addFunc}(new this.resHandle.entityClass({value: 'done'}));
                 } catch (e) {
-                  this.resHandle.store(new this.resHandle.entityClass({value: e}));
+                  this.resHandle.${addFunc}(new this.resHandle.entityClass({value: e}));
                 }
               }
             }
             async onHandleUpdate(handle, update) {
               if (handle.name === 'the-out') {
-                this.resHandle.store(update.data);
+                this.resHandle.${addFunc}(update.data);
               }
             }
           }
