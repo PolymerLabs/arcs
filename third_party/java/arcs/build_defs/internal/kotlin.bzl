@@ -21,7 +21,7 @@ def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
     kt_jvm_and_wasm_library(
         name = name,
         srcs = srcs,
-        deps = _ARCS_KOTLIN_LIBS + deps
+        deps = _ARCS_KOTLIN_LIBS + deps,
     )
 
 def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
