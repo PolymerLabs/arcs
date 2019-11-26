@@ -1408,35 +1408,73 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     }
   });
   it('loads entities from a resource section', async () => {
-    const manifest = await Manifest.parse(`
-      schema Thing
-        someProp: Text
+    if (Flags.useNewStorageStack) {
+      const manifest = await Manifest.parse(`
+        schema Thing
+          someProp: Text
 
-      resource EntityList
-        start
-        [
-          {"someProp": "someValue"},
-          {"$id": "entity-id", "someProp": "someValue2"}
-        ]
+        resource EntityList
+          start
+          {
+            "root": {
+              "values": {
+                "eid2": {"value": {"id": "eid2", "rawData": {"someProp": "someValue"}}, "version": {"u": 1}},
+                "entity-id": {"value": {"id": "entity-id", "rawData": {"someProp": "someValue2"}}, "version": {"u": 1}}
+              },
+              "version": {"u": 1}
+            },
+            "locations": {}
+          }
 
-      store Store0 of [Thing] in EntityList
-    `, {fileName: 'the.manifest'});
-    const store = (await manifest.findStoreByName('Store0').activate());
-    assert(store);
-    const handle = await collectionHandleForTest(manifest, store.baseStore);
+        store Store0 of [Thing] in EntityList
+      `, {fileName: 'the.manifest'});
+      const store = (await manifest.findStoreByName('Store0').activate());
+      assert(store);
+      const handle = await collectionHandleForTest(manifest, store.baseStore);
 
-    const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
+      const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
 
-    // TODO(shans): address as part of storage refactor
-    assert.deepEqual((await handle.toList()).map(Entity.serialize), [
-      {
-        id: `!${sessionId}:the.manifest::0`,
-        rawData: {someProp: 'someValue'},
-      }, {
-        id: 'entity-id',
-        rawData: {someProp: 'someValue2'},
-      }
-    ]);
+      // TODO(shans): address as part of storage refactor
+      assert.deepEqual((await handle.toList()).map(Entity.serialize), [
+        {
+          id: `eid2`,
+          rawData: {someProp: 'someValue'},
+        }, {
+          id: 'entity-id',
+          rawData: {someProp: 'someValue2'},
+        }
+      ]);
+    } else {
+      const manifest = await Manifest.parse(`
+        schema Thing
+          someProp: Text
+
+        resource EntityList
+          start
+          [
+            {"someProp": "someValue"},
+            {"$id": "entity-id", "someProp": "someValue2"}
+          ]
+
+        store Store0 of [Thing] in EntityList
+      `, {fileName: 'the.manifest'});
+      const store = (await manifest.findStoreByName('Store0').activate());
+      assert(store);
+      const handle = await collectionHandleForTest(manifest, store.baseStore);
+
+      const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
+
+      // TODO(shans): address as part of storage refactor
+      assert.deepEqual((await handle.toList()).map(Entity.serialize), [
+        {
+          id: `!${sessionId}:the.manifest::0`,
+          rawData: {someProp: 'someValue'},
+        }, {
+          id: 'entity-id',
+          rawData: {someProp: 'someValue2'},
+        }
+      ]);
+    }
   });
   it('resolves store names to ids', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const manifestSource = `
@@ -2957,24 +2995,28 @@ particle A
 });
 
 describe('Manifest storage migration', () => {
-  async function parseStoreFromManifest() {
-    const manifest = await Manifest.parse(`
-store NobId of NobIdStore {nobId: Text} in NobIdJson
-resource NobIdJson
-  start
-  [{"nobId": "12345"}]
-    `);
-    assert.lengthOf(manifest.stores, 1);
-    return manifest.stores[0];
-  }
-
   afterEach(() => {
     Flags.reset();
   });
 
   it('works with new storage stack', async () => {
     Flags.useNewStorageStack = true;
-    const store = await parseStoreFromManifest();
+    const manifest = await Manifest.parse(`
+store NobId of NobIdStore {nobId: Text} in NobIdJson
+resource NobIdJson
+  start
+  {
+    "root": {
+      "values": {
+        "eid2": {"value": {"id": "eid2", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }
+`);
+    assert.lengthOf(manifest.stores, 1);
+    const store = manifest.stores[0];
 
     assert.instanceOf(store, Store);
     assert.strictEqual(store.name, 'NobId');
@@ -2985,7 +3027,14 @@ resource NobIdJson
 
   it('works with old storage stack', async () => {
     Flags.useNewStorageStack = false;
-    const store = await parseStoreFromManifest();
+    const manifest = await Manifest.parse(`
+store NobId of NobIdStore {nobId: Text} in NobIdJson
+resource NobIdJson
+  start
+  [{"nobId": "12345"}]
+`);
+    assert.lengthOf(manifest.stores, 1);
+    const store = manifest.stores[0];
 
     assert.instanceOf(store, StorageStub);
     assert.strictEqual(store.name, 'NobId');

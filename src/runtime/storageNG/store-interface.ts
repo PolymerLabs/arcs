@@ -93,12 +93,15 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   abstract async serializeContents(): Promise<T['data']>;
 
   async cloneFrom(store: UnifiedActiveStore): Promise<void> {
+    // TODO(shans): work out what ID to use for messages that aren't from an established
+    // channel, like these.
     assert(store instanceof ActiveStore);
     const activeStore: ActiveStore<T> = store as ActiveStore<T>;
     assert(this.mode === activeStore.mode);
     await this.onProxyMessage({
       type: ProxyMessageType.ModelUpdate,
-      model: await activeStore.serializeContents()
+      model: await activeStore.serializeContents(),
+      id: 0
     });
   }
 

@@ -21,7 +21,7 @@ import {UiSlotComposer} from './ui-slot-composer.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
-import {VolatileMemory} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
@@ -151,6 +151,27 @@ export class Runtime {
     this.context = context;
   }
 
+  // TODO(shans): Clean up once old storage is removed.
+  // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
+  // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
+  // How best to provide default storage to an arc given whatever we decide?
+  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey) | null, options?: RuntimeArcOptions): Arc {
+    const {loader, context} = this;
+    const id = IdGenerator.newSession().newArcId(name);
+    const slotComposer = this.composerClass ? new this.composerClass() : null;
+    let storageKey : string | StorageKey;
+    if (typeof storageKeyPrefix === 'string') {
+      storageKey = `${storageKeyPrefix}${id.toString()}`;
+    } else if (storageKeyPrefix == null) {
+      storageKey = new VolatileStorageKey(id, '');
+    } else {
+      storageKey = storageKeyPrefix(id);
+    }
+    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
+  }
+
+  // Stuff the shell needs
+
   /**
    * Given an arc name, return either:
    * (1) the already running arc
@@ -163,19 +184,6 @@ export class Runtime {
       this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));
     }
     return this.arcById.get(name);
-  }
-
-  // TODO(shans): Clean up once old storage is removed.
-  // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
-  // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
-  // How best to provide default storage to an arc given whatever we decide?
-  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
-    const {loader, context} = this;
-    const id = IdGenerator.newSession().newArcId(name);
-    const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const storageKey = (typeof storageKeyPrefix === 'string')
-      ? `${storageKeyPrefix}${id.toString()}` : storageKeyPrefix(id);
-    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
   }
 
   stop(name: string) {
