@@ -76,8 +76,9 @@ class TTTGame : Particle() {
             if (it == p1.avatar) p1.name else p2.name
         }?.let { "Congratulations $it, you won!" } ?: "It's a tie!"
 
-        return model + mapOf(
-            "message" to if (gs.gameOver == true) congratsMessage else "",
+        return mapOf(
+            "message" to congratsMessage,
+            "hideCongrats" to !(gs.gameOver ?: false),
             "playerDetails" to "$cpName playing as $cpAvatar"
         )
     }
@@ -117,7 +118,7 @@ class TTTGame : Particle() {
     override fun getTemplate(slotName: String): String = """
         It is your turn <span>{{playerDetails}}</span>.
         <div slotid="boardSlot"></div>
-        <div><span>{{message}}</span></div>
+        <div hidden="{{hideCongrats}}"><span>{{message}}</span></div>
         """.trimIndent()
 
     private fun applyMove(
