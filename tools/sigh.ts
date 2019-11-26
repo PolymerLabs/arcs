@@ -14,7 +14,6 @@ const path = require('path');
 const minimist = require('minimist');
 const semver = require('semver');
 import {ChildProcess} from 'child_process';
-import {triggerAsyncId} from 'async_hooks';
 
 // Use saneSpawn[Sync] or saneSpawnSyncWithOutput instead, as the arguments to
 // child_process.spawn[Sync] calls must be massaged to be cross-platform.
