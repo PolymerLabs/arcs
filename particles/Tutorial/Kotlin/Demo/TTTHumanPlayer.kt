@@ -8,6 +8,7 @@ import arcs.TTTHumanPlayer_Events
 import arcs.TTTHumanPlayer_GameState
 import arcs.TTTHumanPlayer_MyMove
 import arcs.TTTHumanPlayer_Player
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {
@@ -37,4 +38,4 @@ class TTTHumanPlayer : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTTTHumanPlayer")
-fun constructTTTHumanPlayer() = TTTHumanPlayer().toWasmAddress()
+fun constructTTTHumanPlayer() = TTTHumanPlayer().toAddress()

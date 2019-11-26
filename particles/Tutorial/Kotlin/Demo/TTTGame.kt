@@ -10,6 +10,7 @@ import arcs.TTTGame_PlayerOne
 import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
@@ -165,4 +166,4 @@ class TTTGame : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTTTGame")
-fun constructTTTGame() = TTTGame().toWasmAddress()
+fun constructTTTGame() = TTTGame().toAddress()

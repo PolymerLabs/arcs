@@ -6,6 +6,7 @@ import arcs.Singleton
 import arcs.TTTRandomComputer_GameState
 import arcs.TTTRandomComputer_MyMove
 import arcs.TTTRandomComputer_Player
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {
@@ -43,4 +44,4 @@ class TTTRandomComputer : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTTTRandomComputer")
-fun constructTTTHRandomComputer() = TTTRandomComputer().toWasmAddress()
+fun constructTTTHRandomComputer() = TTTRandomComputer().toAddress()

@@ -6,6 +6,7 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
@@ -84,4 +85,4 @@ class TTTBoard : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTTTBoard")
-fun constructTTTBoard() = TTTBoard().toWasmAddress()
+fun constructTTTBoard() = TTTBoard().toAddress()
