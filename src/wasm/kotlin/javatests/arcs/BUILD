@@ -23,7 +23,10 @@ arcs_kt_library(
     name = "test-module_lib",
     srcs = glob(["*.kt"]),
     visibility = ["//visibility:public"],
-    deps = [":test_schemas"],
+    deps = [
+        ":test_schemas",
+        "//third_party/kotlin/kotlin:kotlin_test",
+        ],
 )
 
 arcs_kt_binary(
