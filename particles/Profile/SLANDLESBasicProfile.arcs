@@ -3,34 +3,34 @@ import 'schemas/UserName.arcs'
 import 'schemas/Avatar.arcs'
 
 particle SlandleUserNameForm in 'source/UserNameForm.js'
-  inout UserName userName
-  `consume Slot userNameForm
+  userName: reads writes UserName
+  userNameForm: `consumes Slot
 
 particle SlandleFriendsPicker in 'source/FriendsPicker.js'
-  inout [Friend] friends
-  in [Avatar] avatars
-  in [UserName] userNames
-  `consume Slot friendsSlot
+  friends: reads writes [Friend]
+  avatars: reads [Avatar]
+  userNames: reads [UserName]
+  friendsSlot: `consumes Slot
   description `select friends`
 
 particle SlandleBasicProfile in 'source/BasicProfile.js'
-  inout Avatar avatar
-  `consume Slot root
-    `provide Slot userNameForm
-    `provide Slot friendsSlot
+  avatar: reads writes Avatar
+  root: `consumes Slot
+    userNameForm: `provides Slot
+    friendsSlot: `provides Slot
 
 recipe SlandleBasicProfile
-  create #avatar as avatar
-  create #userName as userName
-  create #friends as friends
-  map 'BOXED_avatar' as avatars
-  map 'BOXED_userName' as userNames
+  avatar: create #avatar
+  userName: create #userName
+  friends: create #friends
+  avatars: map 'BOXED_avatar'
+  userNames: map 'BOXED_userName'
   SlandleBasicProfile
-    avatar = avatar
+    avatar: avatar
   SlandleUserNameForm
-    userName = userName
+    userName: userName
   SlandleFriendsPicker
-    friends = friends
-    avatars = avatars
-    userNames = userNames
+    friends: friends
+    avatars: avatars
+    userNames: userNames
   description `edit user profile (name, avatar, and friends)`

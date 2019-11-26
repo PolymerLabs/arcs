@@ -1,3 +1,5 @@
+load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
@@ -14,18 +16,17 @@ kt_android_library(
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
-        "//src_kt/java/arcs/storage"
+        "//src_kt/java/arcs/storage",
     ],
 )
 
 android_library(
     name = "aidl",
-    manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
-    idl_srcs = glob(["*.aidl"]),
     idl_import_root = ".",
+    idl_srcs = glob(["*.aidl"]),
+    manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
     deps = [
         "//shells/android/java/arcs/crdt/parcelables",
         "//shells/android/java/arcs/storage/parcelables",
     ],
 )
-

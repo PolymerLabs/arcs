@@ -13,7 +13,9 @@ package arcs.storage.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.crdt.CrdtCount
 import arcs.crdt.parcelables.ParcelableCrdtType
+import arcs.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,22 +25,18 @@ import org.junit.runner.RunWith
 class ParcelableSyncRequestTest {
     @Test
     fun parcelableRoundtrip_works() {
-        val expected = listOf(
-            ParcelableSyncRequest(1, ParcelableCrdtType.Count),
-            ParcelableSyncRequest(null, ParcelableCrdtType.Set),
-            ParcelableSyncRequest(25, ParcelableCrdtType.Singleton),
-            ParcelableSyncRequest(null, ParcelableCrdtType.Entity)
+        val expected: List<ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>> = listOf(
+            ProxyMessage.SyncRequest(id = 1),
+            ProxyMessage.SyncRequest(id = null)
         )
         val marshalled = with(Parcel.obtain()) {
-            expected.forEach { writeParcelable(it, 0) }
+            expected.forEach { writeProxyMessage(it, ParcelableCrdtType.Count, 0) }
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
-            0.until(4).map {
-                readParcelable<ParcelableSyncRequest>(ParcelableSyncRequest::class.java.classLoader)
-            }
+            0.until(expected.size).map { readProxyMessage() }
         }
 
         assertThat(unmarshalled).containsExactlyElementsIn(expected)

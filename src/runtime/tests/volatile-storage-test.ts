@@ -42,7 +42,7 @@ describe('volatile', () => {
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -57,7 +57,7 @@ describe('volatile', () => {
     it('resolves concurrent set', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -71,7 +71,7 @@ describe('volatile', () => {
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
 
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -93,7 +93,7 @@ describe('volatile', () => {
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
 
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -116,7 +116,7 @@ describe('volatile', () => {
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -134,7 +134,7 @@ describe('volatile', () => {
     it('resolves concurrent add of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -149,7 +149,7 @@ describe('volatile', () => {
     it('resolves concurrent add/remove of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -167,7 +167,7 @@ describe('volatile', () => {
     it('resolves concurrent add of different id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -183,7 +183,7 @@ describe('volatile', () => {
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
 
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -208,7 +208,7 @@ describe('volatile', () => {
     it('supports removeMultiple', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -224,7 +224,7 @@ describe('volatile', () => {
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
 
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -250,7 +250,7 @@ describe('volatile', () => {
     it('supports get, store and remove (including concurrently)', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -299,7 +299,7 @@ describe('volatile', () => {
     it('supports version-stable streamed reads forwards', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
@@ -342,7 +342,7 @@ describe('volatile', () => {
     it('supports version-stable streamed reads backwards', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
       const storage = new StorageProviderFactory(arc.id);

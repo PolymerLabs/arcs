@@ -1,9 +1,9 @@
 import 'schemas/PipeEntity.arcs'
 
 particle BackgroundPipes in './source/Noop.js'
-  in [PipeEntity] entities
+  entities: reads [PipeEntity]
 
 recipe BackgroundPipes
-  create #pipeEntities as entities
+  entities: create #pipeEntities
   BackgroundPipes
-    entities = entities
+    entities: entities

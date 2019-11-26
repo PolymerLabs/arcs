@@ -14,58 +14,58 @@ import 'SLANDLESManufacturer.arcs'
 import 'SLANDLESInterests.arcs'
 
 recipe SlandleProducts
-  use as products
+  products: use *
   SlandleItems
-    list = products
+    list: products
   SlandleItemMultiplexer
-    list = products
-    hostedParticle = SlandleProductItem
+    list: products
+    hostedParticle: SlandleProductItem
 
 recipe SlandleCreateShoppingList
-  copy as products
-  `slot 'rootslotid-root' as root
+  products: copy *
+  root: `slot 'rootslotid-root'
   SlandleItems
-    root `consume root
-    list = products
+    root: `consumes root
+    list: products
   SlandleItemMultiplexer
-    list = products
-    hostedParticle = SlandleProductItem
+    list: products
+    hostedParticle: SlandleProductItem
   description `create shopping list from ${SlandleItems.list} using Slandles`
 
 recipe SlandleShopForOccasion
-  use as shoplist
-  map as person
+  shoplist: use *
+  person: map *
   SlandleGiftList
-    person = person
+    person: person
   SlandleSimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = SlandleArrivinator
-    annotation `consume annotationSlot
+    list: shoplist
+    hostedParticle: SlandleArrivinator
+    annotation: `consumes annotationSlot
 
 recipe SlandleUseWishlist
-  map #wishlist as wishlist
-  create #volatile as recommendations
-  use as person
-  use as shoplist
-  `slot as actionSlot
+  wishlist: map #wishlist
+  recommendations: create #volatile
+  person: use *
+  shoplist: use *
+  actionSlot: `slot *
   // annotates shoplist
   SlandleChoicesMultiplexer
     // This is probably wrong, but it works now (instead of annotationSlot)
-    // choice `consume annotationSlot
-    choice `consume actionSlot
-    list = shoplist
-    choices = wishlist
-    hostedParticle = SlandleAlsoOn
+    // choice: `consumes annotationSlot
+    choice: `consumes actionSlot
+    list: shoplist
+    choices: wishlist
+    hostedParticle: SlandleAlsoOn
   // recommend products from wishlist
   SlandleRecommend
-    population = wishlist
-    known = shoplist
-    recommendations = recommendations
+    population: wishlist
+    known: shoplist
+    recommendations: recommendations
   // present recommendations for adding to shoplist
   SlandleChooser
-    action `consume actionSlot
-    person = person
-    choices = recommendations
-    resultList = shoplist
+    action: `consumes actionSlot
+    person: person
+    choices: recommendations
+    resultList: shoplist
 
 

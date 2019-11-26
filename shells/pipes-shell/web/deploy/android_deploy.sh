@@ -17,6 +17,10 @@ cp source/index.html "$OUT_DIR/index.html"
 
 # Arcs cache manager and versioning
 # Must be done at the last step to ensure the correct $OUT_DIR/** checksum
+# OSX needs explicit backup extension for sed command while Linux does not.
+# For compatibility, explicitly specify backup file as cache-mgr-sw.js.tmp
+# that gets deleted after patching cache-mgr-sw.js.
 cp -fR ../cache-mgr*.js $OUT_DIR/
-sed -i "s/__ARCS_MD5__/$(tar -cf - $OUT_DIR | md5sum | cut -d' ' -f1)/g" \
+sed -i'.tmp' "s/__ARCS_MD5__/$(tar -cf - $OUT_DIR | shasum | cut -d' ' -f1)/g" \
   $OUT_DIR/cache-mgr-sw.js
+rm -f $OUT_DIR/cache-mgr-sw.js.tmp

@@ -9,23 +9,23 @@ import '../Profile/schemas/UserName.arcs'
 import '../Profile/schemas/Avatar.arcs'
 
 particle Launcher in 'source/Launcher.js'
-  inout [ArcMeta] arcs
-  in [ArcMetaShare] shared
-  in [AvatarShare] avatars
-  in [UserNameShare] names
-  consume root
+  arcs: reads writes [ArcMeta] 
+  shared: reads [ArcMetaShare]
+  avatars: reads [AvatarShare] 
+  names: reads [UserNameShare] 
+  root: consumes 
   description `arcs launcher`
 
 recipe Launcher
-  slot 'rootslotid-root' as root
-  create 'SYSTEM_arcs' #arcs as arcs
-  map 'BOXED_arcs' as shared
-  map 'BOXED_userName' as names
-  map 'BOXED_avatar' as avatars
+  root: slot 'rootslotid-root' 
+  arcs: create 'SYSTEM_arcs' #arcs
+  shared: map 'BOXED_arcs' 
+  names: map 'BOXED_userName'
+  avatars: map 'BOXED_avatar'
   Launcher
-    consume root as root
-    arcs = arcs
-    shared = shared
-    names = names
-    avatars = avatars
+    root: consumes root
+    arcs: arcs
+    shared: shared
+    names: names
+    avatars: avatars
 

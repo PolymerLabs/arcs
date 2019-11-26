@@ -359,6 +359,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap,
                              registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[], p) {
     await particle.callSetHandles(handleMap, err => {
+      if (typeof err === 'string') {
+        err = new Error(err); // Convert to a real error.
+      }
       const exc = new UserException(err, 'setHandles', id, spec.name);
       this.apiPort.ReportExceptionInHost(exc);
     });

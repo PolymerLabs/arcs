@@ -16,6 +16,7 @@ import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
 import {spawn} from './verbs/spawn.js';
 import {ingest} from './verbs/ingest.js';
+import {parse} from './verbs/parse.js';
 import {instantiateRecipeByName} from './lib/utils.js';
 import {requireContext} from './context.js';
 import {dispatcher} from './dispatcher.js';
@@ -36,8 +37,9 @@ export const busReady = async (bus, {manifest}) => {
 const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs runtime environment
   Runtime.init(rootPath, urlMap);
-  // marshal context
+  // marshal and bind context
   const context = await requireContext(manifest || config.manifest);
+  Runtime.getRuntime().bindContext(context);
   // attach verb-handlers to dispatcher
   populateDispatcher(dispatcher, storage, context);
   // send pipe identifiers to client

@@ -26,6 +26,7 @@ module.exports = {
     filename: '[name].js',
     path: path.resolve(__dirname, `../../dist/tools`)
   },
+  externals: ['bufferutil', 'utf-8-validate'],
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
       // Replace all the web variants with node ones.

@@ -13,39 +13,39 @@ import '../Restaurants/RestaurantDisplay.arcs'
 import '../Restaurants/Reservations.arcs'
 
 recipe RestaurantsDemo
-  create as location
-  create as restaurants
-  create #restaurant as selected
-  create #event as event
-  create as descriptions
-  slot #toproot as toproot
+  location: create *
+  restaurants: create *
+  selected: create #restaurant
+  event: create #event
+  descriptions: create *
+  toproot: slot #toproot
   ReservationForm
-    restaurant = selected
-    event = event
-    consume action as toproot
+    restaurant: selected
+    event: event
+    action: consumes toproot
   Geolocate
-    location = location
+    location: location
   RestaurantFind
-    location = location
-    restaurants = restaurants
+    location: location
+    restaurants: restaurants
   SelectableTiles
-    list = restaurants
-    selected = selected
+    list: restaurants
+    selected: selected
   TileMultiplexer
-    list = restaurants
-    hostedParticle = RestaurantTile
+    list: restaurants
+    hostedParticle: RestaurantTile
   AnnotationMultiplexer
-    list = restaurants
-    annotation = event
-    hostedParticle = ReservationAnnotation
+    list: restaurants
+    annotation: event
+    hostedParticle: ReservationAnnotation
   DetailSlider
-    selected = selected
+    selected: selected
   RestaurantDetail
-    restaurant = selected
-    consume content
-      provide detailAction as actionSlot
+    restaurant: selected
+    content: consumes
+      detailAction: provides actionSlot
   ReservationForm
-    restaurant = selected
-    event = event
-    consume action as actionSlot
+    restaurant: selected
+    event: event
+    action: consumes actionSlot
   description `[demo] find restaurants and make reservations near ${RestaurantFind.location}`

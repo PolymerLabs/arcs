@@ -3,8 +3,9 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
+load("@rules_java//java:defs.bzl", "java_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library", kt_js_import = "kt_js_import_fixed")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
 
@@ -80,19 +81,36 @@ def kt_jvm_and_wasm_library(
     )
 
 def kt_jvm_and_js_library(
-        name = None,
+        name,
         srcs = [],
         deps = [],
         visibility = None,
+        exports = [],
         **kwargs):
     """Simultaneously defines JVM and JS kotlin libraries.
     name: String; Name of the library
     srcs: List; List of sources
     deps: List; List of dependencies
+    exports: List; List of exported dependencies
     visibility: List; List of visibilities
     """
+
+    kt_name = name
+    js_name = "%s%s" % (name, _JS_SUFFIX)
+
+    if exports:
+        # kt_jvm_library doesn't support the "exports" property. Instead, we
+        # will wrap it in a java_library rule and export everything that is
+        # needed from there.
+        kt_name = name + "-kt"
+        java_library(
+            name = name,
+            exports = exports + [kt_name],
+            visibility = visibility,
+        )
+
     kt_jvm_library(
-        name = name,
+        name = kt_name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
         visibility = visibility,
@@ -101,10 +119,8 @@ def kt_jvm_and_js_library(
 
     if IS_BAZEL:
         js_kwargs = dict(**kwargs)
-        if "exports" in js_kwargs:
-            js_kwargs.pop("exports")
         kt_js_library(
-            name = "%s%s" % (name, _JS_SUFFIX),
+            name = js_name,
             srcs = srcs,
             deps = [_to_js_dep(dep) for dep in deps],
             **js_kwargs

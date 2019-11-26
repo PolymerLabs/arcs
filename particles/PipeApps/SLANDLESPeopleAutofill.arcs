@@ -2,13 +2,13 @@ import './schemas/PipeEntity.arcs'
 import './schemas/Json.arcs'
 
 particle SlandleSuggestPerson in './source/SuggestPerson.js'
-  in [PipeEntity] recentEntities
-  out Json suggestion
-  `consume Slot app
+  recentEntities: reads [PipeEntity]
+  suggestion: writes Json
+  app: `consumes Slot
 
 recipe SlandleCom_google_android_gm &autofill
-  map 'pipe-entities' as recentEntities
-  create as suggestion
+  recentEntities: map 'pipe-entities'
+  suggestion: create *
   SlandleSuggestPerson
-    recentEntities = recentEntities
-    suggestion = suggestion
+    recentEntities: recentEntities
+    suggestion: suggestion

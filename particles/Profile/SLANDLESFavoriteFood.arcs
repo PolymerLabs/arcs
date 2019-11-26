@@ -6,17 +6,17 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema FavoriteFood
-  Text food
+  food: Text
 
 particle SlandleFavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
-  inout [FavoriteFood] foods
-  `consume Slot root #root
+  foods: reads writes [FavoriteFood]
+  root: `consumes Slot #root
   description `select favorite foods (slandles)`
     foods `favorite foods`
 
 recipe SlandleFavoriteFood
-  create #favoriteFoods as foods
-  `slot 'rootslotid-root' #root as root
+  foods: create #favoriteFoods
+  root: `slot 'rootslotid-root' #root
   SlandleFavoriteFoodPicker
-    foods <-> foods
-    root `consume root
+    foods: reads writes foods
+    root: `consumes root

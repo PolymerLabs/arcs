@@ -7,79 +7,79 @@
 // http://polymer.github.io/PATENTS.txt
 
 interface SlandleHostedItemInterface
-  in ~anyType *
+  reads ~anyType
   // TODO(sjmiles): using slot-type for form-factor
   // all Interfaces are the same in List/* except for the slot
-  `consume Slot item
+  item: `consumes Slot
 
 particle SlandleItemMultiplexer in 'source/SlandleMultiplexer.js'
   // TODO(sjmiles): redundancies:
   // 1. slot is declared in HostedItemInterface and as `consume [Slot]  here
   // 2. ~anyType is declared in HostedItemInterface and as `[~anyType]` here
-  in [~anyType] list
-  host SlandleHostedItemInterface hostedParticle
-  `consume [Slot] item
+  list: reads [~anyType]
+  hostedParticle: hosts SlandleHostedItemInterface
+  item: `consumes [Slot]
 
 // TODO(sjmiles): recipe is the minimum coalescable artifact, which is good because we need to be able specify
 // handle fates before colascing ... is there a way to combine the declarations when the recipe has only one Particle?
 //recipe SlandleItemMultiplexer
   // TODO(sjmiles): restricting fate
   // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
-//  use #items as list
+//  list: use #items
 //  SlandleItemMultiplexer
-//    list = list
+//    list: list
 
 //particle SlandleList in 'source/List.js'
-//  in [~anyType] list
-//  `consume Slot root #items
-//    `provide? [Slot {handle: items}] item
+//  list: reads [~anyType]
+//  root: `consumes Slot #items
+//    item: `provides? [Slot {handle: items}]
 //  description `show ${list}`
 
 //recipe SlandleList
-//  use #items as items
+//  items: use #items
 //  SlandleList
-//    items = items
+//    items: items
 //  SlandleItemMultiplexer
-//    list = items
+//    list: items
 
 particle SlandleItems in 'source/Items.js'
-  in [~anyType] list
-  `consume Slot root #items
-    `provide? Slot preamble
-    `provide? [Slot {handle: list}] item
-    `provide? [Slot {handle: list}] annotation
-    `provide? Slot action
-    `provide? Slot postamble
+  list: reads [~anyType]
+  root: `consumes Slot #items
+    preamble: `provides? Slot
+    item: `provides? [Slot {handle: list}]
+    annotation: `provides? [Slot {handle: list}]
+    action: `provides? Slot
+    postamble: `provides? Slot
   description `display ${list}`
 
 particle SlandleSelectableItems in 'source/Items.js'
-  in [~anyType] list
-  inout? ~anyType selected
-  `consume Slot root #items
-    `provide? Slot preamble
-    `provide [Slot {handle: list}] item
-    `provide? [Slot {handle: list}] annotation
-    `provide? Slot action
-    `provide? Slot postamble
+  list: reads [~anyType]
+  selected: reads? writes? ~anyType
+  root: `consumes Slot #items
+    preamble: `provides? Slot
+    item: `provides [Slot {handle: list}]
+    annotation: `provides? [Slot {handle: list}]
+    action: `provides? Slot
+    postamble: `provides? Slot
   description `display ${list}`
 
 // TODO(sjmiles): nearly duplicate recipes here because we want to support `use` and `copy` but not `create`,
 // maybe there should be a fate for this, or require `create` to be explicit
 
 //recipe SlandleSelectableCopyItemsRecipe
-//  copy #items as items
-//  create #selected as selected
+//  items: copy #items
+//  selected: create #selected
 //  SlandleSelectableItems
-//    items = items
-//    selected = selected
+//    items: items
+//    selected: selected
 //  SlandleItemMultiplexer
-//    list = items
+//    list: items
 
 //recipe SlandleSelectableUseItemsRecipe
-//  use #items as items
-//  create #selected as selected
+//  items: use #items
+//  selected: create #selected
 //  SlandleSelectableItems
-//    items = items
-//    selected = selected
+//    items: items
+//    selected: selected
 //  SlandleItemMultiplexer
-//    list = items
+//    list: items

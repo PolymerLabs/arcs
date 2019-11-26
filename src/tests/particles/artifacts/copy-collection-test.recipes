@@ -9,15 +9,15 @@ import '../../../runtime/tests/artifacts/Common/CopyCollection.manifest'
 import '../../../runtime/tests/artifacts/Things/Thing.schema'
 
 recipe
-  map 'bigthings' as bigthings
-  map 'smallthings' as smallthings
-  create as things
+  bigthings: map 'bigthings'
+  smallthings: map 'smallthings'
+  things: create *
   CopyCollection
-    input <- bigthings
-    output -> things
+    input: reads bigthings
+    output: writes things
   CopyCollection
-    input <- smallthings
-    output -> things
+    input: reads smallthings
+    output: writes things
   description `copy all things!`
 
 

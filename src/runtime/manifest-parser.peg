@@ -113,8 +113,10 @@ Manifest
     });
     checkNormal(result);
     if (preSlandlesSyntaxLocations.length > 0 && !Flags.defaultToPreSlandlesSyntax) {
-      if (typeof global !== 'undefined' && !global['testFlags'].quiet) {
+      const hasTestFlags = typeof global !== 'undefined' && global['testFlags'];
+      if (!hasTestFlags || !global['testFlags'].quiet) {
         console.warn('WARNING: Pre-Slandles Syntax is deprecated. Contact jopra@google.com for more information.');
+        console.warn('WARNING: in', options.filename);
         console.warn(`WARNING: Used in \n  ${
           preSlandlesSyntaxLocations.map(loc => `line ${loc.start.line} column ${loc.start.column}`).join("\n  ")
         }`);
@@ -415,7 +417,7 @@ Particle
     if (modality.length === 0) {
       // Add default modality
       modality.push('dom');
-    }    
+    }
 
     return  toAstNode<AstNode.Particle>({
       kind: 'particle',
@@ -639,7 +641,12 @@ DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consume
   {
     // TODO(jopra): Parse optionality properly.
     requireUsePostSlandleSyntax(8);
-    return AstNode.directionToPreSlandlesDirection(text() as AstNode.DirectionUnified);
+    let dir = text();
+    if (dir === 'reads? writes') {
+      // Fix for faking proper capability set support with optionality.
+      dir = 'reads writes';
+    }
+    return AstNode.directionToPreSlandlesDirection(dir as AstNode.DirectionUnified);
   }
 
 // TODO(jopra): Remove when syntax is updated to not use arrows.
@@ -1136,7 +1143,7 @@ RecipeParticleSlotConnectionUnified
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
-      param,
+      param: param || '*',
       tags: tags || [],
       name: optional(name, name=>name[1], null),
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),

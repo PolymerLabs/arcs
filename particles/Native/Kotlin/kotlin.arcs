@@ -1,31 +1,31 @@
 schema Caption
-  Text text
+  text: Text
 
 particle KotlinJsTest in 'src/build/bundle/main.bundle.js'
-  consume root
-  out Caption caption
+  root: consumes Slot
+  caption: writes Caption
 
 particle KotlinWasmTest in 'src/wasm/arcs/WasmParticle.js'
-  consume root
-  out Caption caption
+  root: consumes Slot
+  caption: writes Caption
 
 particle CaptionDisplay in 'src/captiondisplay.js'
-  consume root
-  inout Caption caption
+  root: consumes Slot
+  caption: reads writes Caption
 
 recipe KotlinJsTest
-  create as caption
+  caption: create *
   KotlinJsTest
-    consume root
-    caption = caption
+    root: consumes
+    caption: caption
 
 recipe KotlinWasmTest
-  create #caption as caption
+  caption: create #caption
   KotlinWasmTest
-    consume root
-    caption = caption
+    root: consumes
+    caption: caption
 
 recipe CaptionDisplayRecipe
-  copy #caption as caption
+  caption: copy #caption
   CaptionDisplay
-    caption = caption
+    caption: caption

@@ -1,6 +1,6 @@
 schema Person
-  Text firstName
-  Text lastName
-  Text password
-  Text phone
-  Text postalAddress
+  firstName: Text
+  lastName: Text
+  password: Text
+  phone: Text
+  postalAddress: Text

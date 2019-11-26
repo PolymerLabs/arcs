@@ -260,9 +260,10 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
     fun isEmpty() = entities.isEmpty()
 
     fun store(entity: T) {
+        val encoded = entity.encodeEntity()
+        val id: String? = RuntimeClient.collectionStore(particle, this, encoded)
+        id?.let { entity.internalId = it }
         entities[entity.internalId] = entity
-        val encoded = entities[entity.internalId]!!.encodeEntity()
-        RuntimeClient.collectionStore(particle, this, encoded)
     }
 
     fun remove(entity: T) {

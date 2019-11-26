@@ -6,12 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Text
-  Text value
+  value: Text
 
 particle Hello in 'hello.js'
-  out Text {value} text
+  text: writes Text {value}
 
 recipe
-  create as handleA
+  handleA: create *
   Hello
-    text -> handleA
+    text: writes handleA

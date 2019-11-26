@@ -13,16 +13,16 @@ import '../Events/schemas/Event.arcs'
 import './SLANDLESReservations.arcs'
 
 particle SlandleFavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
-  in Restaurant restaurant
-  in [FavoriteFood] foods
-  `consume Slot annotation
+  restaurant: reads Restaurant
+  foods: reads [FavoriteFood]
+  annotation: `consumes Slot
 
 recipe SlandleFavoriteFoodAnnotation
-  use as restaurants
-  map 'PROFILE_favoriteFoods' as foods
+  restaurants: use *
+  foods: map 'PROFILE_favoriteFoods'
   SlandleCombinedAnnotationMultiplexer
-    list = restaurants
-    choices = foods
-    hostedParticle = SlandleFavoriteFoodAnnotation
+    list: restaurants
+    choices: foods
+    hostedParticle: SlandleFavoriteFoodAnnotation
   description `[inline] check restaurants for favorite foods`
 

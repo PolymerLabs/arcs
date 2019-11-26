@@ -49,20 +49,20 @@ recipe SomeRecipe &someVerb1 &someVerb2
     handle0 \`best handle\``;
     it('can revert to an old syntax', async () => {
       const newManifest = await Flags.withPostSlandlesSyntax(Manifest.parse)(newManifestStr);
-      await Flags.withPreSlandlesSyntax(async () => {
+      await Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, async () => {
         assert.strictEqual(newManifest.toString(), oldManifestStr, 'old syntax should convert to new syntax');
       })();
     });
     it('can update from an old syntax', async () => {
-      const oldManifest = await Flags.withPreSlandlesSyntax(Manifest.parse)(oldManifestStr);
+      const oldManifest = await Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, Manifest.parse)(oldManifestStr);
       await Flags.withPostSlandlesSyntax(async () => {
         assert.strictEqual(oldManifest.toString(), newManifestStr, 'new syntax should convert to old syntax');
       })();
     });
     it('parser can read two different syntaxes', async () => {
-      const oldManifest = await Flags.withPreSlandlesSyntax(Manifest.parse)(oldManifestStr);
+      const oldManifest = await Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, Manifest.parse)(oldManifestStr);
       const newManifest = await Flags.withPostSlandlesSyntax(Manifest.parse)(newManifestStr);
-      await Flags.withPreSlandlesSyntax(async () => {
+      await Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, async () => {
         assert.strictEqual(oldManifest.toString(), newManifest.toString(), 'new syntax should convert to old syntax');
       })();
       await Flags.withPostSlandlesSyntax(async () => {

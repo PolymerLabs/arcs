@@ -20,7 +20,7 @@ import arcs.type.TypeFactory
 import arcs.type.TypeLiteral
 
 /** [Type] representation of an entity. */
-class EntityType(override val entitySchema: Schema) :
+data class EntityType(override val entitySchema: Schema) :
     Type,
     EntitySchemaProviderType,
     CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> {

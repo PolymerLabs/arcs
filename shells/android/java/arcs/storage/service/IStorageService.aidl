@@ -11,9 +11,7 @@
 
 package arcs.storage.service;
 
-import arcs.storage.parcelables.ParcelableModelUpdate;
-import arcs.storage.parcelables.ParcelableOperations;
-import arcs.storage.parcelables.ParcelableSyncRequest;
+import arcs.storage.parcelables.ParcelableProxyMessage;
 import arcs.storage.service.IResultCallback;
 import arcs.storage.service.IStorageServiceCallback;
 
@@ -32,12 +30,6 @@ interface IStorageService {
     /** Unregisters the callback associated with the given {@param token}. */
     void unregisterCallback(int token);
 
-    /** Sends the StorageService a SyncRequest ParcelableProxyMessage. */
-    void sendSyncRequest(in ParcelableSyncRequest req, IResultCallback resultCallback);
-
-    /** Sends the StorageService a ModelUpdate ParcelableProxyMessage. */
-    void sendModelUpdate(in ParcelableModelUpdate update, IResultCallback resultCallback);
-
-    /** Sends the StorageService an Operations ParcelableProxyMessage. */
-    void sendOperations(in ParcelableOperations operations, IResultCallback resultCallback);
+    /** Sends a proxy message to the StorageService. */
+    void sendProxyMessage(in ParcelableProxyMessage message, IResultCallback resultCallback);
 }

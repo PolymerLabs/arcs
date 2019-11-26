@@ -1,6 +1,6 @@
 
 particle Notification in './source/Notification.js'
-  consume root
+  root: consumes Slot
 
 recipe Notification
   Notification

@@ -172,10 +172,7 @@ class TestLoader extends Loader {
     function prefix(title, fn) {
       it(title, async () => {
         console.log('    »', title);
-        // TODO(alxr): Remove check when kotlin tests are ready
-        if ( !env.includes('kotlin') ) {
-          await fn();
-        }
+        await fn();
       });
     }
 
@@ -198,6 +195,10 @@ class TestLoader extends Loader {
     });
 
     prefix('reference class API', async () => {
+      // TODO(alxr): Remove when tests are ready
+      if (env.includes('kotlin')) {
+        return;
+      }
       const {stores} = await setup('ReferenceClassApiTest');
       const errStore = stores.get('errors') as VolatileCollection;
       const errors = (await errStore.toList()).map(e => e.rawData.msg);
@@ -208,10 +209,6 @@ class TestLoader extends Loader {
 
     // TODO - check that writing to read-only handles throws and vice versa
     it('singleton storage API', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores} = await setup('SingletonApiTest');
       const inStore = stores.get('inHandle') as VolatileSingleton;
       const outStore = stores.get('outHandle') as VolatileSingleton;
@@ -242,10 +239,6 @@ class TestLoader extends Loader {
     });
 
     it('collection storage API', async () => {
-      // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
-        return;
-      }
       const {arc, stores} = await setup('CollectionApiTest');
       const inStore = stores.get('inHandle') as VolatileCollection;
       const outStore = stores.get('outHandle') as VolatileCollection;
@@ -274,6 +267,7 @@ class TestLoader extends Loader {
       assert.isEmpty(await outStore.toList());
 
       // in.begin(), in.end() and iterator methods
+      // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
         {txt: '{id3}, num: 3', num: 6, flg: true},

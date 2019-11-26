@@ -2,6 +2,9 @@
 sh_binary(
     name = "emsdk_wrapper",
     srcs = ["emsdk_wrapper.sh"],
-    data = ["@emsdk//:all_files"],
+    data = [
+        "//emscripten_cache",
+        "@emsdk//:all_files",
+    ],
     visibility = ["//visibility:public"],
 )

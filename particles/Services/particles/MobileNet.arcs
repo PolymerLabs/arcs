@@ -1,2 +1,2 @@
 particle MobileNet in './js/MobileNet.js'
-  consume root
+  root: consumes Slot

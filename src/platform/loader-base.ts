@@ -23,7 +23,6 @@ import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../runtime/hot.js';
 
-type Ctor = typeof Object;
 type ParticleCtor = typeof Particle;
 
 type UrlMap = Dictionary<string | {

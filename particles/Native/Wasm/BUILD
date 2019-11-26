@@ -6,7 +6,6 @@ load(
     "arcs_kt_schema",
     "arcs_manifest",
     "arcs_manifest_bundle",
-    "arcs_ts_test",
 )
 
 licenses(["notice"])

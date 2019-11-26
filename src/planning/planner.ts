@@ -258,7 +258,10 @@ export class Planner implements InspectablePlanner {
     if (!this.speculator || this.noSpecEx) {
       return false;
     }
-    if (plan.handleConnections.some(({type}) => type.toString() === `[Description {Text key, Text value}]`)) {
+
+    // TODO(cypher1): Remove handling for preslandles syntax once preslandles syntax is not supported.
+    if (plan.handleConnections.some(({type}) => type.toString() === `[Description {key: Text, value: Text}]`)
+     || plan.handleConnections.some(({type}) => type.toString() === `[Description {Text key, Text value}]`)) {
       return true;
     }
     const planPatternsWithTokens = plan.patterns.filter(p => p.includes('${'));

@@ -474,7 +474,7 @@ ${e.message}
 
     let items: AstNode.All[] = [];
     try {
-      items = parse(content) as AstNode.All[];
+      items = parse(content, {filename: fileName}) as AstNode.All[];
     } catch (e) {
       throw processError(e, true);
     }

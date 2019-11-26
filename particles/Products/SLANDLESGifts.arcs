@@ -10,36 +10,36 @@ import '../People/schemas/Person.arcs'
 import 'schemas/Product.arcs'
 
 particle SlandleGiftList in 'source/GiftList.js'
-  in Person person
-  `consume Slot preamble
+  person: reads Person
+  preamble: `consumes Slot
   description `buy gifts for ${person}'s ${person.occasion} on ${person.date}`
 
 particle SlandleArrivinator in 'source/Arrivinator.js'
-  in Product product
-  `consume Slot annotation
+  product: reads Product
+  annotation: `consumes Slot
   description `estimate arrival date`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`
     //product `my best product`
 
 particle SlandleAlternateShipping in 'source/AlternateShipping.js'
-  in Product product
-  `consume Slot annotation
+  product: reads Product
+  annotation: `consumes Slot
   description `find alternate shipping for products which won't make it on time`
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 //recipe SlandleMakeIntoGiftList
-//  use #shoplist as shoplist
-//  copy as person
+//  shoplist: use #shoplist
+//  person: copy *
 //  GiftList
-//    person = person
+//    person: person
 //  Multiplexer
-//    list = shoplist
-//    hostedParticle = Arrivinator
+//    list: shoplist
+//    hostedParticle: Arrivinator
 //    annotation `consume annotationSlot
 //  Multiplexer
-//    list = shoplist
-//    hostedParticle = AlternateShipping
+//    list: shoplist
+//    hostedParticle: AlternateShipping
 //    annotation `consume annotationSlot
 //  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
 

@@ -87,7 +87,7 @@ recipe EntityClassApiTest
 
 
 particle SpecialSchemaFieldsTest in 'test-module.wasm'
-  fields: reads * {for: Text, internal_id: Number}
+  fields: reads * {for: Text, internalId: Number}
   errors: writes [* {msg: Text}]
 
 recipe SpecialSchemaFieldsTest

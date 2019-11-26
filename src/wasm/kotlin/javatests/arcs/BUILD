@@ -1,21 +1,22 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_schema",
-    "arcs_kt_library",
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_binary",
+    "arcs_kt_library",
+    "arcs_kt_schema",
 )
 
 licenses(["notice"])
 
 filegroup(
-  name = "schemas_srcs",
-  srcs = ["schemas.arcs"],
-  visibility = ["//visibility:public"],
+    name = "schemas_srcs",
+    srcs = ["schemas.arcs"],
+    visibility = ["//visibility:public"],
 )
 
 arcs_kt_schema(
     name = "test_schemas",
-    package = "wasm.kotlin.tests.arcs",
     srcs = ["schemas.arcs"],
+    package = "wasm.kotlin.tests.arcs",
 )
 
 arcs_kt_library(

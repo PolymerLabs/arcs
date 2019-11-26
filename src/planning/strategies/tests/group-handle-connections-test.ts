@@ -17,21 +17,21 @@ describe('GroupHandleConnections', () => {
       schema Thing
       schema OtherThing
       particle A
-        in Thing ithingA1
+        ithingA1: reads Thing
       particle B
-        in Thing ithingB1
-        in Thing ithingB2
-        in [OtherThing] iotherthingB1
+        ithingB1: reads Thing
+        ithingB2: reads Thing
+        iotherthingB1: reads [OtherThing]
       particle C
-        in Thing ithingC1
-        out Thing othingC2
-        inout [OtherThing] iootherthingC1
+        ithingC1: reads Thing
+        othingC2: writes Thing
+        iootherthingC1: reads writes [OtherThing]
       particle D
-        in Thing ithingD1
-        in Thing ithingD2
-        out Thing othingD3
+        ithingD1: reads Thing
+        ithingD2: reads Thing
+        othingD3: writes Thing
       particle E
-        out Thing othingE1
+        othingE1: writes Thing
       `;
   it('group in and out handle connections', async () => {
     // TODO: add another Type handle connections to the recipe!
@@ -60,11 +60,11 @@ ${schemaAndParticlesStr}
     const manifest = (await Manifest.parse(`
       ${schemaAndParticlesStr}
       recipe
-        create as thing
+        thing: create *
         E
-          othingE1 -> thing
+          othingE1: writes thing
         A
-          ithingA1 <- thing
+          ithingA1: reads thing
         B
     `));
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};

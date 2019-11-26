@@ -57,7 +57,7 @@ let runtime: Runtime | null = null;
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
-  public readonly context: Manifest;
+  public context: Manifest;
   public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
@@ -146,13 +146,18 @@ export class Runtime {
   destroy() {
   }
 
+  // Allow dynamic context binding to this runtime.
+  bindContext(context: Manifest) {
+    this.context = context;
+  }
+
   /**
    * Given an arc name, return either:
    * (1) the already running arc
    * (2) a deserialized arc (TODO: needs implementation)
    * (3) a newly created arc
    */
-  runArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
+  runArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     if (!this.arcById.has(name)) {
       // TODO: Support deserializing serialized arcs.
       this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));

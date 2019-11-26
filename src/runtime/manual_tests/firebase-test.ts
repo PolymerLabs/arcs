@@ -69,7 +69,7 @@ describe('firebase', function() {
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -91,7 +91,7 @@ describe('firebase', function() {
     it('resolves concurrent set', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -109,7 +109,7 @@ describe('firebase', function() {
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -131,7 +131,7 @@ describe('firebase', function() {
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
 
@@ -154,7 +154,7 @@ describe('firebase', function() {
       // related to FirebaseBackingStore.
       const manifest = await Manifest.parse(`
         schema Bar1
-          Text data
+          data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar1);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -190,7 +190,7 @@ describe('firebase', function() {
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -216,7 +216,7 @@ describe('firebase', function() {
     it('resolves concurrent add of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -233,7 +233,7 @@ describe('firebase', function() {
     it('resolves concurrent add/remove of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -253,7 +253,7 @@ describe('firebase', function() {
     it('resolves concurrent add of different id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -271,7 +271,7 @@ describe('firebase', function() {
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
 
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -299,7 +299,7 @@ describe('firebase', function() {
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
 
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -323,7 +323,7 @@ describe('firebase', function() {
     it('supports removeMultiple', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text value
+          value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -341,7 +341,7 @@ describe('firebase', function() {
       // related to FirebaseBackingStore.
       const manifest = await Manifest.parse(`
         schema Bar2
-          Text data
+          data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar2);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
@@ -405,7 +405,7 @@ describe('firebase', function() {
     it('supports get, store and remove (including concurrently)', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -481,7 +481,7 @@ describe('firebase', function() {
     it('supports version-stable streamed reads forwards', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -558,7 +558,7 @@ describe('firebase', function() {
     it('supports version-stable streamed reads backwards', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
-          Text data
+          data: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
@@ -636,15 +636,15 @@ describe('firebase', function() {
       const fileMap = {
         manifest: `
           schema Data
-            Text value
+            value: Text
 
           particle P in 'a.js'
-            inout BigCollection<Data> big
+            big: reads writes BigCollection<Data>
 
           recipe
-            use 'test:0' as handle0
+            handle0: use 'test:0'
             P
-              big = handle0
+              big: handle0
         `,
         'a.js': `
           'use strict';
@@ -861,7 +861,7 @@ describe('firebase', function() {
       // related to FirebaseBackingStore.
       const manifest = await Manifest.parse(`
         schema Bar3
-          Text data
+          data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar3);
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});

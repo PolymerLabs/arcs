@@ -2,14 +2,14 @@ import './schemas/Json.arcs'
 import './schemas/PipeEntity.arcs'
 
 particle CaptionThis in './source/CaptionThis.js'
-  in PipeEntity query
-  out Json output
-  consume content
+  query: reads PipeEntity
+  output: writes Json
+  content: consumes Slot
 
 recipe CaptionThis &pipe_caption
-  use #pipe_caption as query
-  create as suggestion
+  query: use #pipe_caption
+  suggestion: create *
   CaptionThis
-    query = query
-    output = suggestion
+    query: query
+    output: suggestion
   description `caption this`

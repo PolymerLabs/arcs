@@ -1,13 +1,13 @@
 schema StorageKey
-  Text key
+  key: Text
 
 particle Login in 'source/Login.js'
-  out StorageKey key
-  consume root
+  key: writes StorageKey
+  root: consumes Slot
 
 recipe Login &login
-  create as key
-  slot 'rootslotid-root' as root
+  key: create *
+  root: slot 'rootslotid-root'
   Login
     key: key
     root: consumes root

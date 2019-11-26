@@ -45,10 +45,12 @@ http_archive(
 # Kotlin
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
 git_repository(
     name = "io_bazel_rules_kotlin",
+    commit = "e1a4f61521b9bba4b0584ef55f5cb621093d705d",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    commit = "e1a4f61521b9bba4b0584ef55f5cb621093d705d"
+    shallow_since = "1574206775 -0800",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
@@ -72,12 +74,26 @@ register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchai
 
 http_archive(
     name = "robolectric",
-    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
     sha256 = "2ee850ca521288db72b0dedb9ecbda55b64d11c470435a882f8daf615091253d",
     strip_prefix = "robolectric-bazel-4.1",
+    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
 )
+
 load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
+
 robolectric_repositories()
+
+# Python
+
+http_archive(
+    name = "rules_python",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
+    sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
 
 # Java deps from Maven.
 

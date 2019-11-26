@@ -27,7 +27,7 @@ fun <T : Type> T?.collectionOf(): CollectionType<T>? =
     if (this == null) null else CollectionType(this)
 
 /** [Type] representation of a collection. */
-open class CollectionType<T : Type>(
+data class CollectionType<T : Type>(
     val collectionType: T
 ) : Type,
     Type.TypeContainer<T>,

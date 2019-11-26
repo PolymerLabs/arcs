@@ -104,39 +104,39 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 describe('Planner', () => {
   it('can map remote handles structurally', async () => {
     const results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './src/runtime/tests/artifacts/Things/empty.json'
+      store AStore of * {text: Text, moreText: Text} in './src/runtime/tests/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
-        in * {Text text} text
+        text: reads * {text: Text}
       recipe
-        map as h0
+        h0: map *
         P1
-          text <- h0
+          text: reads h0
     `);
     assert.lengthOf(results, 1);
   });
 
   it('can copy remote handles structurally', async () => {
     const results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './src/runtime/tests/artifacts/Things/empty.json'
+      store AStore of * {text: Text, moreText: Text} in './src/runtime/tests/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
-        in * {Text text} text
+        text: reads * {text: Text}
       recipe
-        copy as h0
+        h0: copy *
         P1
-          text <- h0
+          text: reads h0
     `);
     assert.lengthOf(results, 1);
   });
 
-  it('resolves particles with multiple consumed slots', async () => {
+  it('resolves particles with multiple optional consumed slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        consume one
-        consume two
+        one: consumes? Slot
+        two: consumes? Slot
       recipe
-        slot 'slot-id0' as s0
+        s0: slot 'slot-id0'
         P1
-          consume one as s0
+          one: consumes s0
     `);
     assert.lengthOf(results, 1);
   });
@@ -321,26 +321,26 @@ describe('Planner', () => {
   it('can speculate in parallel', async () => {
     const manifest = `
           schema Thing
-            Text name
+            name: Text
 
           particle A in 'A.js'
-            out Thing thing
-            consume root
+            thing: writes Thing
+            root: consumes Slot
             description \`Make \${thing}\`
 
           recipe
-            create as handle1
-            slot 'root-slot' as slot0
+            handle1: create *
+            slot0: slot 'root-slot'
             A
-              thing -> handle1
-              consume root as slot0
+              thing: writes handle1
+              root: consumes slot0
 
           recipe
-            create as handle2
-            slot 'root-slot2' as slot1
+            handle2: create *
+            slot1: slot 'root-slot2'
             A
-              thing -> handle2
-              consume root as slot1
+              thing: writes handle2
+              root: consumes slot1
           `;
     const {plans} = await loadTestArcAndRunSpeculation(manifest,
       manifest => {
@@ -362,12 +362,12 @@ describe('AssignOrCopyRemoteHandles', () => {
       schema Foo
 
       particle A in 'A.js'
-        in [Foo] list
-        consume root
+        list: reads [Foo]
+        root: consumes Slot
 
       particle B in 'A.js'
-        inout [Foo] list
-        consume root
+        list: reads writes [Foo]
+        root: consumes Slot
   `;
   const testManifest = async (recipeManifest, expectedResults) => {
     const manifest = (await Manifest.parse(`
@@ -413,92 +413,92 @@ ${recipeManifest}
     // map one
     await testManifest(`
       recipe
-        map #tag1 as list
+        list: map #tag1
         A as particle0
-          list <- list
+          list: reads list
     `, 1);
     await testManifest(`
       recipe
-        map #tag2 as list
+        list: map #tag2
         A as particle0
-          list <- list
+          list: reads list
     `, 1);
     await testManifest(`
       recipe
-        map #tag3 as list
+        list: map #tag3
         A as particle0
-          list <- list
+          list: reads list
     `, 0);
   });
   it('maps untagged remote handle', async () => {
     await testManifest(`
       recipe
-        map as list
+        list: map *
         A as particle0
-          list <- list
+          list: reads list
     `, 3);
   });
   it('copies tagged remote handle', async () => {
     // copy one
     await testManifest(`
       recipe
-        copy #tag1 as list
+        list: copy #tag1
         A as particle0
-          list <- list
+          list: reads list
     `, 1);
     await testManifest(`
       recipe
-        copy #tag2 as list
+        list: copy #tag2
         A as particle0
-          list <- list
+          list: reads list
     `, 1);
     await testManifest(`
       recipe
-        copy #tag3 as list
+        list: copy #tag3
         A as particle0
-          list <- list
+          list: reads list
     `, 0);
   });
   it('copies untagged remote handle', async () => {
     await testManifest(`
       recipe
-        copy as list
+        list: copy
         A as particle0
-          list <- list
+          list: reads list
     `, 3);
   });
   it('finds remote untagged handles with unknown fate', async () => {
     const plansA = await testManifest(`
       recipe
-        ? as list
+        list: ?
         A as particle0
-          list <- list
+          list: reads list
     `, 3);
     assert.isTrue(plansA.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'map')));
 
     const plansB = await testManifest(`
       recipe
-        ? as list
+        list: ?
         B as particle0
-          list = list
+          list: list
     `, 3);
     assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
   });
   it('finds remote tagged handles with unknown fate', async () => {
     const plansA = await testManifest(`
       recipe
-        ? #tag1 as list
+        list: ? #tag1
         A as particle0
-          list <- list
+          list: reads list
     `, 1);
     assert.lengthOf(plansA[0].handles, 1);
     assert.strictEqual('map', plansA[0].handles[0].fate);
 
     const plansB = await testManifest(`
       recipe
-        ? #tag2 as list
+        list: ? #tag2
         B as particle0
-          list = list
+          list: list
     `, 1);
     assert.lengthOf(plansB[0].handles, 1);
     assert.strictEqual('copy', plansB[0].handles[0].fate);
@@ -507,52 +507,52 @@ ${recipeManifest}
     // both at once
     await testManifest(`
       recipe
-        map #tag1 as list
-        copy #tag2 as list2
+        list: map #tag1
+        list2: copy #tag2
         A as particle0
-          list <- list
+          list: reads list
         B as particle1
-          list = list2
+          list: list2
     `, 1);
     await testManifest(`
       recipe
-        map #tag1 as list
-        copy #tag3 as list2
+        list: map #tag1
+        list2: copy #tag3
         A as particle0
-          list <- list
+          list: reads list
         B as particle1
-          list = list2
+          list: list2
     `, 0);
 
     // both, but only one has a tag
     await testManifest(`
       recipe
-        map #tag1 as list
-        copy as list2
+        list: map #tag1
+        list2: copy
         A as particle0
-          list <- list
+          list: reads list
         B as particle1
-          list = list2
+          list: list2
     `, 2);
     await testManifest(`
       recipe
-        map as list
-        copy #tag2 as list2
+        list: map *
+        list2: copy #tag2
         A as particle0
-          list <- list
+          list: reads list
         B as particle1
-          list = list2
+          list: list2
     `, 2);
 
     // no tags leads to all possible permutations of 3 matching handles
     await testManifest(`
       recipe
-        map as list
-        copy as list2
+        list: map *
+        list2: copy
         A as particle0
-          list <- list
+          list: reads list
         B as particle1
-          list = list2
+          list: list2
     `, 6);
   });
 });
@@ -585,22 +585,22 @@ describe('Type variable resolution', () => {
     await verifyUnresolvedPlan(`
       schema Thing
       particle P
-        in ~a thing
+        thing: reads ~a
       recipe
-        map #mythings as mythings
+        mythings: map #mythings
         P
-          thing <- mythings
+          thing: reads mythings
       store MyThings of [Thing] #mythings in 'things.json'`);
 
     // ~a doesn't resolve to [Thing]
     await verifyUnresolvedPlan(`
       schema Thing
       particle P
-        in [~a] things
+        things: reads [~a]
       recipe
-        map #mything as mything
+        mything: map #mything
         P
-          things <- mything
+          things: reads mything
       store MyThing of Thing #mything in 'thing.json'`);
 
     // Different handles using the same type variable don't resolve to different type storages.
@@ -608,14 +608,14 @@ describe('Type variable resolution', () => {
       schema Thing1
       schema Thing2
       particle P
-        in [~a] manyThings
-        out ~a oneThing
+        manyThings: reads [~a]
+        oneThing: writes ~a
       recipe
-        map #manything as manythings
-        copy #onething as onething
+        manythings: map #manything
+        onething: copy #onething
         P
-          manyThings <- manythings
-          oneThing -> onething
+          manyThings: reads manythings
+          oneThing: writes onething
       store ManyThings of [Thing1] #manythings in 'things.json'
       store OneThing of Thing2 #onething in 'thing.json'`);
   });
@@ -624,29 +624,29 @@ describe('Type variable resolution', () => {
     await verifyResolvedPlan(`
       schema Thing1
       particle P1
-        in [Thing1] things
+        things: reads [Thing1]
       particle P2
-        in [~a] things
+        things: reads [~a]
       recipe
-        map #mythings as mythings
+        mythings: map #mythings
         P1
-          things <- mythings
+          things: reads mythings
         P2
-          things <- mythings
+          things: reads mythings
       store MyThings of [Thing1] #mythings in 'things.json'`);
 
     await verifyResolvedPlan(`
       schema Thing1
       schema Thing2
       particle P2
-        in [~a] things
+        things: reads [~a]
       recipe
-        map #mythings1 as mythings1
-        map #mythings2 as mythings2
+        mythings1: map #mythings1
+        mythings2: map #mythings2
         P2
-          things <- mythings1
+          things: reads mythings1
         P2
-          things <- mythings2
+          things: reads mythings2
       store MyThings1 of [Thing1] #mythings1 in 'things1.json'
       store MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
 
@@ -654,51 +654,51 @@ describe('Type variable resolution', () => {
       schema Thing1
       schema Thing2
       particle P2
-        in [~a] things
-        in [Thing2] things2
+        things: reads [~a]
+        things2: reads [Thing2]
       recipe
-        map #mythings1 as mythings1
-        map #mythings2 as mythings2
+        mythings1: map #mythings1
+        mythings2: map #mythings2
         P2
-          things <- mythings1
-          things2 <- mythings2
+          things: reads mythings1
+          things2: reads mythings2
       store MyThings1 of [Thing1] #mythings1 in 'things1.json'
       store MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
 
     await verifyResolvedPlan(`
       schema Thing
       particle P1
-        in [~a] things1
+        things1: reads [~a]
       particle P2
-        in [~b] things2
+        things2: reads [~b]
       recipe
-        map #mythings as mythings
+        mythings: map #mythings
         P1
-          things1 <- mythings
+          things1: reads mythings
         P2
-          things2 <- mythings
+          things2: reads mythings
       store MyThings of [Thing] #mythings in 'things.json'`);
   });
 
   it('transformation particles type variable resolution', async () => {
     const particleSpecs = `
 interface HostedInterface
-  in ~a *
+  reads ~a
 particle P1
-  in Thing1 input
+  input: reads Thing1
 particle Muxer in 'Muxer.js'
-  host HostedInterface hostedParticle
-  in [~a] list
+  hostedParticle: hosts HostedInterface
+  list: reads [~a]
 `;
 
     // One transformation particle
     await verifyResolvedPlan(`
 ${particleSpecs}
 recipe
-  map #mythings as mythings
+  mythings: map #mythings
   Muxer
-    hostedParticle = P1
-    list <- mythings
+    hostedParticle: P1
+    list: reads mythings
 schema Thing1
 store MyThings of [Thing1] #mythings in 'things.json'`);
 
@@ -706,14 +706,14 @@ store MyThings of [Thing1] #mythings in 'things.json'`);
     await verifyResolvedPlan(`
 ${particleSpecs}
 recipe
-  map #mythings1 as mythings1
-  map #mythings2 as mythings2
+  mythings1: map #mythings1
+  mythings2: map #mythings2
   Muxer
-    hostedParticle = P1
-    list <- mythings1
+    hostedParticle: P1
+    list: reads mythings1
   Muxer
-    hostedParticle = P1
-    list <- mythings2
+    hostedParticle: P1
+    list: reads mythings2
 schema Thing1
 store MyThings1 of [Thing1] #mythings1 in 'things.json'
 store MyThings2 of [Thing1] #mythings2 in 'things.json'`);
@@ -722,10 +722,10 @@ store MyThings2 of [Thing1] #mythings2 in 'things.json'`);
     await verifyUnresolvedPlan(`
 ${particleSpecs}
 recipe
-  map #mythings as mythings
+  mythings: map #mythings
   Muxer
-    hostedParticle = P1
-    list <- mythings
+    hostedParticle: P1
+    list: reads mythings
 schema Thing1
 schema Thing2
 store MyThings of [Thing2] #mythings in 'things.json'`);
@@ -737,16 +737,17 @@ store MyThings of [Thing2] #mythings in 'things.json'`);
     await verifyResolvedPlan(`
 ${particleSpecs}
 particle P2
-  P2(in [~a] inthings)
+  P2
+  inthings: reads [~a]
 recipe
-  map #mythings1 as mythings1
-  map #mythings2 as mythings2
+  mythings1: map #mythings1
+  mythings2: map #mythings2
   Muxer
-    hostedParticle = P1
-    list <- mythings1
+    hostedParticle: P1
+    list: reads mythings1
   Muxer
-    hostedParticle = P1
-    list <- mythings2
+    hostedParticle: P1
+    list: reads mythings2
 schema Thing1
 store MyThings1 of [Thing1] #mythings1 in 'things.json'
 schema Thing2
@@ -759,19 +760,19 @@ describe('Description', () => {
   it('description generated from speculative execution arc', async () => {
     const manifest = `
     schema Thing
-      Text name
+      name: Text
 
     particle A in 'A.js'
-      out Thing thing
-      consume root
+      thing: writes Thing
+      root: consumes Slot
       description \`Make \${thing}\`
 
     recipe
-      create as handle1
-      slot 'root-slot' as slot0
+      handle1: create *
+      slot0: slot 'root-slot'
       A
-        thing -> handle1
-        consume root as slot0
+        thing: writes handle1
+        root: consumes slot0
     `;
     const {plans, arc} = await loadTestArcAndRunSpeculation(manifest,
       manifest => {
@@ -813,13 +814,13 @@ describe('Automatic resolution', () => {
   };
 
   it('introduces create handles for particle communication', async () => {
-    // A new handle can be introduced to facilitate A -> B communication.
+    // A new handle can be introduced to facilitate A: writes B communication.
     const recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
-        out Thing thing
+        thing: writes Thing
       particle B
-        in Thing thing
+        thing: reads Thing
 
       recipe
         A
@@ -831,9 +832,9 @@ describe('Automatic resolution', () => {
     await verifyUnresolvedPlan(`
       schema Thing
       particle A
-        in Thing thing
+        thing: reads Thing
       particle B
-        in Thing thing
+        thing: reads Thing
 
       recipe
         A
@@ -956,7 +957,7 @@ describe('Automatic resolution', () => {
     const recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
-        in Thing thing
+        thing: reads Thing
 
       recipe
         A
@@ -973,21 +974,21 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
-  it('composes recipe rendering a list of items from a recipe', async () => {
+  it('composes recipe rendering a list of items from a recipe', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
       schema Thing
 
       particle ThingProducer
-        out [Thing] things
+        things: writes [Thing]
 
       particle ThingRenderer
-        in Thing thing
-        consume item
+        thing: reads Thing
+        item: consumes Slot
 
       recipe ProducingRecipe
-        create #items as things
+        things: create #items
         ThingProducer`, arcRef => arc = arcRef);
 
     assert.lengthOf(recipes, 2);
@@ -995,27 +996,27 @@ describe('Automatic resolution', () => {
     assert.lengthOf(composedRecipes, 1);
 
     const recipeString = `recipe
-  create #items as handle0 // [Thing {}]
-  create #selected as handle1 // Thing {}
-  slot 'rootslotid-root' #root as slot1
+  handle0: create #items // [Thing {}]
+  handle1: create #selected // Thing {}
+  slot1: slot 'rootslotid-root' #root
   ItemMultiplexer as particle0
-    hostedParticle = ThingRenderer
-    list <- handle0
-    consume item as slot0
+    hostedParticle: hosts ThingRenderer
+    list: reads handle0
+    item: consumes slot0
   SelectableList as particle1
-    items <-> handle0
-    selected <-> handle1
-    consume root as slot1
-      provide action as slot2
-      provide annotation as slot3
-      provide item as slot0
-      provide postamble as slot4
-      provide preamble as slot5
+    items: reads writes handle0
+    selected: reads writes handle1
+    root: consumes slot1
+      action: provides slot2
+      annotation: provides slot3
+      item: provides slot0
+      postamble: provides slot4
+      preamble: provides slot5
   ThingProducer as particle2
-    things -> handle0`;
+    things: writes handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-  });
+  }));
 
   it('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     let arc = null;
@@ -1024,8 +1025,8 @@ describe('Automatic resolution', () => {
         schema Thing
 
         particle ThingRenderer
-          in Thing thing
-          consume item`,
+          thing: reads Thing
+          item: consumes Slot`,
         async (arcRef, manifest) => {
           arc = arcRef;
           const thing = manifest.findSchemaByName('Thing').entityClass();
@@ -1056,20 +1057,20 @@ describe('Automatic resolution', () => {
     const recipes = await verifyResolvedPlans(`
       schema Thing
       particle A in 'a.js'
-        out Thing thing
+        thing: writes Thing
       recipe
-        create as thingHandle
+        thingHandle: create *
         A
-          thing -> thingHandle
+          thing: writes thingHandle
       particle B in 'b.js'
-        inout Thing thing
-        consume root
+        thing: reads writes Thing
+        root: consumes Slot
       recipe
-        slot '0' as root
-        create as thingHandle
+        root: slot '0'
+        thingHandle: create *
         B
-          thing = thingHandle
-          consume root as root
+          thing: thingHandle
+          root: consumes root
     `);
     // Both explicit recipes are resolved, and a new coalesced one is produced.
     assert.lengthOf(recipes, 3);
@@ -1087,40 +1088,40 @@ describe('Automatic resolution', () => {
       schema Account
       schema Transaction
       particle TransactionFilter
-        in Account account
-        in [Transaction] transactions
-        inout [Transaction] accountTransactions
+        account: reads Account
+        transactions: reads [Transaction]
+        accountTransactions: reads writes [Transaction]
       recipe TransacationsByAccount
-        create #xactions #items as accountTransactions
-        create #selected as account  //use #selected as account
-        map 'myTransactions' as transactions
+        accountTransactions: create #xactions #items
+        account: create #selected //use #selected
+        transactions: map 'myTransactions'
         TransactionFilter
-          account = account
-          transactions = transactions
-          accountTransactions = accountTransactions
+          account: account
+          transactions: transactions
+          accountTransactions: accountTransactions
       store TransationList of [Transaction] 'myTransactions' in './src/runtime/tests/artifacts/Things/empty.json'
 
       interface HostedInterface
-        in ~a *
+        reads ~a
       particle ShowTransation
-        in Transaction transaction
+        transaction: reads Transaction
 
       particle ItemMultiplexer
-        host HostedInterface hostedParticle
-        in [~a] list
+        hostedParticle: hosts HostedInterface
+        list: reads [~a]
 
       particle List
-        inout [~a] items
-        inout ~a selected
+        items: reads writes [~a]
+        selected: reads writes ~a
 
       recipe
-        use #items as items
-        create #selected as selected
+        items: use #items
+        selected: create #selected
         List
-          items = items
-          selected = selected
+          items: items
+          selected: selected
         ItemMultiplexer
-          list = items
+          list: items
     `);
     assert.lengthOf(recipes, 2);
     const coalesced = recipes.find(r => r.particles.length === 3);

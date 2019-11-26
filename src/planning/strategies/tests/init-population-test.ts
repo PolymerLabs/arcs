@@ -24,12 +24,12 @@ describe('InitPopulation', () => {
       schema Product
 
       particle A in 'A.js'
-        in Product product
+        product: reads Product
 
       recipe
-        create as handle1
+        handle1: create *
         A
-          product <- handle1`);
+          product: reads handle1`);
     const loader = new StubLoader({
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
@@ -79,49 +79,49 @@ describe('InitPopulation', () => {
 
       // Binds to handle Burrito
       particle EatBurrito
-        in Burrito burrito
+        burrito: reads Burrito
       recipe EatBurrito
         EatBurrito
 
       // Binds to slot tortilla
       particle FillsTortilla
-        consume tortilla
+        tortilla: consumes Slot
       recipe FillsTortilla
         FillsTortilla
 
       // Provides handle Burrito and slot tortilla
       particle BurritoRestaurant
-        out Burrito burrito
-        consume root
-          provide tortilla
+        burrito: writes Burrito
+        root: consumes Slot
+          tortilla: provides? Slot
       recipe BurritoRestaurant
-        create as burrito
+        burrito: create *
         BurritoRestaurant
-          burrito -> burrito
+          burrito: writes burrito
 
       schema Burger
 
       // Binds to handle Burger
       particle EatBurger
-        in Burger burger
+        burger: reads Burger
       recipe EatBurger
         EatBurger
 
       // Binds to slot bun
       particle FillsBun
-        consume bun
+        bun: consumes Slot
       recipe FillsBun
         FillsBun
 
       // Provides handle Burger and slot bun
       particle BurgerRestaurant
-        out Burger burger
-        consume root
-          provide bun
+        burger: writes Burger
+        root: consumes Slot
+          bun: provides? Slot
       recipe BurgerRestaurant
-        create as burger
+        burger: create *
         BurgerRestaurant
-          burger -> burger
+          burger: writes burger
     `);
 
     const arc = StrategyTestHelper.createTestArc(manifest);

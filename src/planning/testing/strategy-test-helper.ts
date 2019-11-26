@@ -17,6 +17,8 @@ import {Modality} from '../../runtime/modality.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
+import {Planner} from '../planner.js';
+import {Suggestion} from '../plan/suggestion.js';
 
 export class StrategyTestHelper {
   static createTestArc(context: Manifest, options: {arcId?: Id, modalityName?: string, loader?: Loader} = {}) {
@@ -29,6 +31,11 @@ export class StrategyTestHelper {
   }
   static createTestStrategyArgs(arc: Arc, args?) {
     return {recipeIndex: RecipeIndex.create(arc), ...args};
+  }
+  static async planForArc(arc: Arc): Promise<Suggestion[]> {
+    const planner = new Planner();
+    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    return planner.suggest();
   }
 
   static run(arc: Arc, clazz, recipe) {

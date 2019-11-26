@@ -9,4 +9,3 @@ filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
 )
-

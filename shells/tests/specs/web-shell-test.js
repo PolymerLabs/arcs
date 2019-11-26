@@ -20,6 +20,8 @@ const chooseSuggestion = async name => {
 
 // TODO(sjmiles): replace this with some WDIO work to
 // poll the server until it's up
+// TODO(sjmiles): this should not be a faux-test, there must
+// be a proper way to make mocha wait for a condition
 describe('wait for server', () => {
   it('is not a test', async function() {
     // wait for ALDS to finish init ...
@@ -30,6 +32,7 @@ describe('wait for server', () => {
 });
 
 const persona = `${marshalPersona('volatile')}`;
+
 describe(`WASM (${persona})`, () => {
   it('loads Wasm Particle', async function() {
     console.log(`running "${this.test.fullTitle()}"`);

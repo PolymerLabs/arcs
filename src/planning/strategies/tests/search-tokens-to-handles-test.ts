@@ -19,13 +19,13 @@ describe('SearchTokensToHandles', () => {
     const manifest = (await Manifest.parse(`
       schema Thing
       particle ShowThing &show in 'A.js'
-        in Thing inThing
+        inThing: reads Thing
 
       recipe
         search \`show mything\`
-        ? as h0
+        h0: ?
         ShowThing
-          inThing <- h0
+          inThing: reads h0
       store Things of Thing #mything in ThingsJson
       resource ThingsJson
         start
@@ -62,16 +62,16 @@ store Things of [Foo] #manythings in ThingsJson
     const manifest = (await Manifest.parse(`
 import 'src/runtime/tests/artifacts/test-particles.manifest'
 particle ChooseFoo &choose in 'A.js'
-  in [Foo] inFoos
-  out Foo outFoo
+  inFoos: reads [Foo]
+  outFoo: writes Foo
 
 recipe
   search \`choose mything from manythings \`
-  ? as h0
-  ? as h1
+  h0: ?
+  h1: ?
   ChooseFoo
-    inFoos <- h0
-    outFoo -> h1
+    inFoos: reads h0
+    outFoo: writes h1
     `, {loader, fileName: ''}));
     const arc = StrategyTestHelper.createTestArc(manifest);
     arc.context.imports.push(storeManifest);

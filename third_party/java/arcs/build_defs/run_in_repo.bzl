@@ -73,7 +73,7 @@ _RUN_RULE_ATTRS = {
     "cmd": attr.string(
         doc = """
 Command to run in the repo root. You can use standard python format placeholders
-of the form \{SRCS\}, which will be substituted when the command is run.
+of the form \\{SRCS\\}, which will be substituted when the command is run.
 Placeholders are:
  * SRCS: list of input source files (relative to repo root).
  * OUTS: list of output files (absolute filesystem paths).
