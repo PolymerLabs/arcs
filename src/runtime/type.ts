@@ -931,7 +931,7 @@ export class HandleType extends Type {
 function fromLiteral(literal: TypeLiteral) : Type {
   switch (literal.tag) {
     case 'Entity':
-      return new EntityType(FromLiteralFactory.schemaFromLiteral(literal.data));
+      return new EntityType(Schema.fromLiteral(literal.data));
     case 'TypeVariable':
       return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
     case 'Collection':

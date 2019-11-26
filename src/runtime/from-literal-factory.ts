@@ -11,20 +11,9 @@
 import {Schema} from './schema.js';
 import {Type, TypeLiteral} from './type.js';
 
-// tslint:disable-next-line: no-any
-type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
 type TypeMethod = (literal: TypeLiteral) => Type;
 
 export class FromLiteralFactory {
-
-  private static schemaMethod: SchemaMethod;
-  static setSchemaMethod(meth: SchemaMethod) {
-    FromLiteralFactory.schemaMethod = meth;
-  }
-// tslint:disable-next-line: no-any
-  static schemaFromLiteral(data?: {fields: {}; names: any[]; description: {};}) : Schema {
-    return FromLiteralFactory.schemaMethod(data);
-  }
 
   private static typeMethod: TypeMethod;
   static setTypeMethod(meth: TypeMethod) {

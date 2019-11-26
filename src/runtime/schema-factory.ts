@@ -61,7 +61,6 @@ function fromLiteral(data = {fields: {}, names: [], description: {}}) {
   const updateField = field => {
     if (field.kind === 'schema-reference') {
       const schema = field.schema;
-      //return {kind: 'schema-reference', schema: {kind: schema.kind, model: FromLiteralFactory.typeFromLiteral(schema.model)}};
       return {kind: 'schema-reference', schema: {kind: schema.kind, model: FromLiteralFactory.typeFromLiteral(schema.model)}};
     } else if (field.kind === 'schema-collection') {
       return {kind: 'schema-collection', schema: updateField(field.schema)};
@@ -78,4 +77,4 @@ function fromLiteral(data = {fields: {}, names: [], description: {}}) {
   return result;
 }
 
-FromLiteralFactory.setSchemaMethod(fromLiteral);
+Schema.setSchemaMethod(fromLiteral);

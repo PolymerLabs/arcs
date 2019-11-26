@@ -15,12 +15,16 @@ import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 
+// tslint:disable-next-line: no-any
+type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
+
 export class Schema {
   readonly names: string[];
   // tslint:disable-next-line: no-any
   readonly fields: Dictionary<any>;
   description: Dictionary<string> = {};
   isAlias: boolean;
+  private static schemaMethod: SchemaMethod;
 
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
@@ -57,6 +61,15 @@ export class Schema {
     }
 
     return {names: this.names, fields, description: this.description};
+  }
+
+  static setSchemaMethod(meth: SchemaMethod) {
+    Schema.schemaMethod = meth;
+  }
+
+  // tslint:disable-next-line: no-any
+  static fromLiteral(data?: { fields: {}; names: any[]; description: {}; }): Schema {
+    return Schema.schemaMethod(data);
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
