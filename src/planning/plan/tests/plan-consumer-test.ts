@@ -14,7 +14,7 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
-import {SlotComposerOptions} from '../../../runtime/slot-composer.js';
+import {SlotComposerOptions} from '../../../runtime/ui-slot-composer.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
@@ -23,7 +23,7 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-import {PlanningModalityHandler} from '../../planning-modality-handler.js';
+//import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 async function createPlanConsumer(storageKeyBase, arc) {
@@ -156,7 +156,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
         constructor(options?: SlotComposerOptions) {
           super({
             modalityName,
-            modalityHandler: PlanningModalityHandler.createHeadlessHandler()
+           // modalityHandler: PlanningModalityHandler.createHeadlessHandler()
           });
         }
       }
