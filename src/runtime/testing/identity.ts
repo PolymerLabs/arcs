@@ -8,6 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+// A set of routines that help with debugging. Use the @Identified annotation
+// on classes to give every instance a unique id, optionally filter on that id,
+// then use logWithIdentity to opt into filtering and display of the id.
+
 import {Dictionary} from '../hot.js';
 import {ProxyMessage, ProxyMessageType} from '../storageNG/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
@@ -18,6 +22,7 @@ const originalConstructor = Symbol('Original_constructor');
 
 const filter: Dictionary<string[]> = {};
 
+// Annotate classes with @Identified to assign a unique identity to each instance
 // tslint:disable-next-line no-any
 export function Identified<T extends {new (...args:any[]):{}}>(constructor:T) {
   if (!nameRegistry[constructor.name]) {
@@ -30,6 +35,7 @@ export function Identified<T extends {new (...args:any[]):{}}>(constructor:T) {
   };
 }
 
+// Log (potentially filtered) messages to the console, including the unique identity of the first argument.
 export function logWithIdentity(item, ...args) {
   const allowed = filter[item[originalConstructor]];
   if (allowed && !allowed.includes(item[name])) {
@@ -38,6 +44,7 @@ export function logWithIdentity(item, ...args) {
   console.log(item[name], ...args);
 }
 
+// Filter log messages from the class with the provided name to just be the ones that come from the provided identity number.
 export function setLogFilterById(name, id: number) {
   filter[name] = [`${name}${id}`];
 }

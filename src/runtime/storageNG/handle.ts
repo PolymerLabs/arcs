@@ -83,7 +83,6 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.canRead = canRead;
     this.canWrite = canWrite;
 
-
     this.clock = this.storageProxy.registerHandle(this);
   }
 

@@ -31,7 +31,6 @@ import {logsFactory} from '../platform/logs-factory.js';
 import {devtoolsArcInspectorFactory} from '../devtools-connector/devtools-arc-inspector.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
-import {Flags} from './flags.js';
 
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
@@ -160,7 +159,7 @@ export class Runtime {
     const {loader, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    let storageKey;
+    let storageKey : string | StorageKey;
     if (typeof storageKeyPrefix === 'string') {
       storageKey = `${storageKeyPrefix}${id.toString()}`;
     } else if (storageKeyPrefix == null) {

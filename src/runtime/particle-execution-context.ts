@@ -190,9 +190,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
         if (id == null) {
           id = await idPromise;
-        }
-        if (id == undefined) {
-          throw new Error('undefined id received .. somehow');
+          if (id == null) {
+            throw new Error('undefined id received .. somehow');
+          }
         }
         message.id = id;
         return new Promise((resolve) =>
@@ -380,7 +380,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         proxy.register(particle, handle);
       } else if (proxy instanceof StorageProxyNG) {
         // NG Handles appear to register themselves on construction
-        // proxy.registerHandle(handle as HandleNG<CRDTTypeRecord>);
       } else {
         throw new Error('Expecting a StorageProxy');
       }
