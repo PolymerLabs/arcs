@@ -23,7 +23,14 @@ def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
     )
 
 def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
-    """Performs final compilation of wasm and bundling if necessary."""
+    """Performs final compilation of wasm and bundling if necessary.
+
+    Args:
+      name: name of the target to create
+      srcs: list of source files to include
+      deps: list of dependencies
+      visibility: list of visibilities
+    """
 
     if srcs:
         libname = name + "_lib"
@@ -59,11 +66,15 @@ def kt_jvm_and_js_library(
         exports = [],
         **kwargs):
     """Simultaneously defines JVM and JS kotlin libraries.
-    name: String; Name of the library
-    srcs: List; List of sources
-    deps: List; List of dependencies
-    exports: List; List of exported dependencies
-    visibility: List; List of visibilities
+
+    Args:
+      name: String; Name of the library
+      srcs: List; List of sources
+      deps: List; List of dependencies
+      exports: List; List of exported dependencies
+      visibility: List; List of visibilities
+      **kwargs: other arguments to foward to the kt_jvm_library and
+        kt_js_library rules
     """
 
     kt_name = name

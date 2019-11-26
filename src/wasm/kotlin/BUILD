@@ -5,7 +5,7 @@ licenses(["notice"])
 
 kt_jvm_library(
     name = "arcs",
-    srcs = glob(["src/arcs/Entity.kt"]),
+    srcs = ["src/arcs/Entity.kt"],
     visibility = ["//visibility:public"],
 )
 

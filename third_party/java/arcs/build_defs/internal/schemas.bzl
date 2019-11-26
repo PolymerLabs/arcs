@@ -48,7 +48,13 @@ def arcs_cc_schema(name, src, out = None, package = "arcs"):
     )
 
 def arcs_kt_schema(name, srcs, package = "arcs"):
-    """Generates a Kotlin file for the given .arcs schema file."""
+    """Generates a Kotlin file for the given .arcs schema file.
+
+    Args:
+      name: name of the target to create
+      srcs: list of Arcs manifest files to include
+      package: package name to use for the generated source code
+    """
     outs = []
     for src in srcs:
         out = _output_name(src, "_GeneratedSchemas.kt")
