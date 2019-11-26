@@ -57,6 +57,10 @@ module.exports = {
           compilation.errors.push(new Error(
             `Detected ${numCyclesDetected} cycles which exceeds configured limit of ${MAX_CYCLES}`
           ));
+        } else if (numCyclesDetected > 0) {
+          compilation.warnings.unshift(new Error(
+            `Detected ${numCyclesDetected} cycles (configured limit is ${MAX_CYCLES})`
+          ));
         }
       },
       allowAsyncCycles: false,
