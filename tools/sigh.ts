@@ -14,6 +14,7 @@ const path = require('path');
 const minimist = require('minimist');
 const semver = require('semver');
 import {ChildProcess} from 'child_process';
+import {triggerAsyncId} from 'async_hooks';
 
 // Use saneSpawn[Sync] or saneSpawnSyncWithOutput instead, as the arguments to
 // child_process.spawn[Sync] calls must be massaged to be cross-platform.
@@ -543,13 +544,23 @@ function buildifier(args: string[]): boolean {
     boolean: ['fix'],
   });
 
-  const modeOpts = options.fix ? ['--lint=fix', '--mode=fix'] : ['--lint=warn', '--mode=check'];
+  const buildifierOptions = ['--warnings=-module-docstring,-bzl-visibility'];
+  if (options.fix) {
+    buildifierOptions.push('--lint=fix', '--mode=fix');
+  } else {
+    buildifierOptions.push('--lint=warn', '--mode=check');
+  }
 
-  return saneSpawnSync('find', [
-    '.',
-    '-name', 'BUILD', '-o', '-name', 'BUILD.bazel', '-o', '-name', 'WORKSPACE', '-o', '-name', '*.bzl',
-    '-exec', 'node_modules/@bazel/buildifier/buildifier.js', ...modeOpts, '--warnings=-module-docstring,-bzl-visibility', '{}', '\\;'
-  ]);
+  const exclude = /\bnode_modules\b/;
+  const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
+  let allSucceeded = true;
+  for (const file of findProjectFiles(process.cwd(), exclude, include)) {
+    const result = saneSpawnSync('npx', ['buildifier', ...buildifierOptions, file]);
+    if (!result) {
+      allSucceeded = false;
+    }
+  }
+  return allSucceeded;
 }
 
 function licenses(): boolean {
