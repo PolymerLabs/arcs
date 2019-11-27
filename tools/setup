@@ -78,7 +78,7 @@ status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 status "4. Install dependencies"
-(cd $ROOT && npm install && npm --prefix=server install) || fail 'Failed to install dependencies.'
+(cd $ROOT && npm install && npm --prefix=cloud install) || fail 'Failed to install dependencies.'
 
 # chokidar is useful when developing, but we don't want to require it for all installations
 status "4.1. Install useful optional dependencies"
