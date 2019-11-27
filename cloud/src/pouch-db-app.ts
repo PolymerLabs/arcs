@@ -13,8 +13,8 @@ import PouchDbServer from 'express-pouchdb';
 import PouchDB from 'pouchdb';
 import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 
-import {AppBase} from './app-base';
-import {ON_DISK_DB, VM_URL_PREFIX} from './deployment/utils';
+import {AppBase} from './app-base.ts';
+import {ON_DISK_DB, VM_URL_PREFIX} from './deployment/utils.ts';
 
 /**
  * An app server that additionally configures a pouchdb.
