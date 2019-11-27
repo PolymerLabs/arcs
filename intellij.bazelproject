@@ -15,7 +15,6 @@ targets:
 
 test_sources:
   src_kt/javatests/
-  javaharness/javatests/
 
 java_language_level: 8
 
