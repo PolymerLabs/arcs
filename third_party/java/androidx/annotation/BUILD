@@ -6,4 +6,3 @@ alias(
     name = "annotation",
     actual = "@maven//:androidx_annotation_annotation",
 )
-
