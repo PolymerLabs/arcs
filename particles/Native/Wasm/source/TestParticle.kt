@@ -1,6 +1,14 @@
 package arcs.test
 
-import arcs.*
+import arcs.Collection
+import arcs.Handle
+import arcs.Particle
+import arcs.Singleton
+import arcs.TestParticle_Data
+import arcs.TestParticle_Info
+import arcs.TestParticle_Res
+import arcs.abort
+import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -9,45 +17,54 @@ import kotlin.native.internal.ExportForCppRuntime
 class TestParticle : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
-      log("A handle was updated!")
+        log("A handle was updated!")
         if (handle.name.equals("data")) {
-          log("data was updated")
-          updated = 1
+            log("data was updated")
+            updated = 1
         } else if (handle.name.equals("info")) {
-          log("info was updated.")
-          updated = 2
+            log("info was updated.")
+            updated = 2
         }
     }
 
-    override fun getTemplate(slotName: String): String {
-      log("getting template")
-      val dataCol = if (updated == 1) "color: blue;" else ""
-      val dataStr = "${data.get().toString()}\n"
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?>? {
+        val dataCol = if (updated == 1) "color: blue;" else ""
+        val dataStr = "${data.get()}\n"
 
-      val infoCol = if (updated == 2) "color: blue;" else ""
+        val infoCol = if (updated == 2) "color: blue;" else ""
         var infoStr = "Size: ${info.size}\n"
         if (!info.isEmpty()) {
-          var i = 0
-          info.forEach { info ->
-            infoStr += "${(++i)}. $info | \n"
-          }
+            var i = 0
+            info.forEach { info ->
+                infoStr += "${(++i)}. $info | \n"
+            }
         } else {
-          infoStr = "<i>(empty)</i>"
+            infoStr = "<i>(empty)</i>"
         }
+        return mapOf(
+            "dataCol" to dataCol,
+            "dataStr" to dataStr,
+            "infoCol" to infoCol,
+            "infoStr" to infoStr
+        )
+    }
+
+    override fun getTemplate(slotName: String): String {
+        log("getting template")
 
         return """
             <style>
-            #data {""" + dataCol + """}
-            #info {""" + infoCol + """}
+            #data {{dataCol}}
+            #info {{infoCol}}
             #panel { margin: 10px; }
             #panel pre { margin-left: 20px; }
             th,td { padding: 4px 16px; }
             </style>
             <div id="panel">
             <b id="data">[data]</b>
-            <pre>""" + dataStr + """</pre>
+            <pre>{{dataStr}}</pre>
             <b id="info">[info]</b>
-            <pre>""" + infoStr + """</pre>
+            <pre>{{infoStr}}</pre>
             </div>
             <table>
             <tr>
@@ -76,7 +93,7 @@ class TestParticle : Particle() {
             <td><button on-click="infoclear">Clear</button></td>
             </tr>
              </table>""".trimIndent()
-      }
+    }
 
     private val data = Singleton { TestParticle_Data() }
     private val res = Singleton { TestParticle_Res() }
@@ -90,21 +107,21 @@ class TestParticle : Particle() {
         registerHandle("info", info)
 
         eventHandler("add") {
-          val newData = data.get()!!
-          newData.num = newData.num?.let { it + 2 } ?: 0.0
-          newData.txt = (newData.txt ?: "") + "!!!!!!"
-          this.data.set(newData)
+            val newData = data.get() ?: TestParticle_Data()
+            newData.num = newData.num?.let { it + 2 } ?: 0.0
+            newData.txt = (newData.txt ?: "") + "!!!!!!"
+            this.data.set(newData)
         }
 
         eventHandler("dataclear") {
-          data.clear()
+            data.clear()
         }
 
         eventHandler("store") {
-          val info = TestParticle_Info()
-          info.internalId = "wasm" + (++storeCount)
-          info.val_ = (this.info.size + storeCount).toDouble()
-          this.info.store(info)
+            val info = TestParticle_Info()
+            info.internalId = "wasm" + (++storeCount)
+            info.val_ = (this.info.size + storeCount).toDouble()
+            this.info.store(info)
         }
 
         eventHandler("remove") {
@@ -133,7 +150,4 @@ class TestParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTestParticle")
-fun construct(): WasmAddress {
-    log("__newTestParticle called")
-    return TestParticle().toWasmAddress()
-}
+fun construct() = TestParticle().toWasmAddress()
