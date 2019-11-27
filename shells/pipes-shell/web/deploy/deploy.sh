@@ -14,9 +14,12 @@ npx webpack --display=errors-only
 # Arcs cache manager and versioning
 # Must be done at the last step to ensure the correct dist/** checksum
 # OSX needs explicit backup extension for sed command while Linux does not.
-# For compatibility, explicitly specify backup file as cache-mgr-sw.js.tmp
-# that gets deleted after patching cache-mgr-sw.js.
+# For compatibility, explicitly specify backup file as cache-mgr*.js.tmp
+# that gets deleted after patching cache-mgr*.js.
 cp -fR ../cache-mgr*.js dist/
-sed -i'.tmp' "s/__ARCS_MD5__/$(tar -cf - dist | shasum | cut -d' ' -f1)/g" \
+CACHE_MGR_VERSION=$(tar cf - dist | shasum | cut -d' ' -f1)
+sed -i'.tmp' "s/__ARCS_MD5__/${CACHE_MGR_VERSION}/g" \
+  dist/cache-mgr.js
+sed -i'.tmp' "s/__ARCS_MD5__/${CACHE_MGR_VERSION}/g" \
   dist/cache-mgr-sw.js
-rm -f dist/cache-mgr-sw.js.tmp
+rm -f dist/cache-mgr*.js.tmp
