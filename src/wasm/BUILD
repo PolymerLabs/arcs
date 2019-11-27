@@ -1,5 +1,10 @@
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_ts_test")
 
+alias(
+    name = "wasm-api-tests",
+    actual = ":wasm-api-test",
+)
+
 arcs_ts_test(
     name = "wasm-api-test",
     src = "tests/wasm-api-tests.ts",
