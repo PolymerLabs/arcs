@@ -1,5 +1,4 @@
 load("//build_defs:bazel_version_check.bzl", "bazel_version_check")
-load("//:versions.bzl", "KOTLIN_VERSION", "RULES_JVM_EXTERNAL_TAG", "AUTO_VALUE_VERSION", "KOTLINX_ATOMICFU_VERSION", "KOTLINX_COROUTINES_VERSION")
 
 bazel_version_check()
 
@@ -60,6 +59,7 @@ git_repository(
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
+KOTLIN_VERSION = "1.3.31"
 
 KOTLINC_RELEASE_SHA = "107325d56315af4f59ff28db6837d03c2660088e3efeb7d4e41f3e01bb848d6a"
 
@@ -101,6 +101,7 @@ py_repositories()
 
 # Java deps from Maven.
 
+RULES_JVM_EXTERNAL_TAG = "2.10"
 
 RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
 
@@ -112,6 +113,12 @@ http_archive(
 )
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+AUTO_VALUE_VERSION = "1.7"
+
+KOTLINX_ATOMICFU_VERSION = "0.13.1"
+
+KOTLINX_COROUTINES_VERSION = "1.3.2"
 
 maven_install(
     artifacts = [
@@ -130,8 +137,6 @@ maven_install(
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
-        "org.jetbrains.kotlin:kotlin-test:" + KOTLIN_VERSION,
-        "org.jetbrains.kotlin:kotlin-test-js:" + KOTLIN_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
