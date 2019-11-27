@@ -11,11 +11,6 @@ alias(
     actual = "@maven//:org_jetbrains_kotlin_kotlin_test",
 )
 
-kt_native_library(
-    name = "kotlin_test-wasm",
-    srcs = ["@maven//:org_jetbrains_kotlin_kotlin_test"],
-)
-
 kt_js_import(
     name = "kotlin_test-js",
     jars = [
