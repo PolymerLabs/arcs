@@ -180,10 +180,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, deps = []):
             name = class_name,
             size = "small",
             test_class = "%s.%s" % (package, class_name),
-            runtime_deps = [
-                ":%s" % name,
-                "@robolectric//bazel:android-all",
-            ],
+            runtime_deps = [":%s" % name],
         )
 
 def _to_jvm_dep(dep):
