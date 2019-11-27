@@ -91,7 +91,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const context =  await Manifest.parse(options.manifestString || createManifestString(options), loader);
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
-    arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
+    //arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);

@@ -9,22 +9,22 @@
  */
 
 import {DescriptionFormatter} from './description-formatter.js';
-import {SlotConsumer} from './slot-consumer.js';
+//import {SlotConsumer} from './slot-consumer.js';
 
 export class ModalityHandler {
-  constructor(public readonly slotConsumerClass: typeof SlotConsumer,
+  constructor(public readonly slotConsumerClass?,
               public descriptionFormatter?: typeof DescriptionFormatter) {}
 
   static createHeadlessHandler(): ModalityHandler {
-    return new ModalityHandler(SlotConsumer);
+    return new ModalityHandler(); //SlotConsumer);
   }
 
   static readonly headlessHandler : ModalityHandler = new ModalityHandler(
-    SlotConsumer
+    null, //SlotConsumer
   );
 
   static readonly basicHandler : ModalityHandler = new ModalityHandler(
-    SlotConsumer,
+    null, //SlotConsumer,
     DescriptionFormatter
   );
 

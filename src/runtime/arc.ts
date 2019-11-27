@@ -149,10 +149,10 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
   }
 
   get modality(): Modality {
-    if (this.pec.slotComposer && this.pec.slotComposer.modality) {
-      return Modality.create([this.pec.slotComposer.modality]);
+    //if (this.pec.slotComposer && this.pec.slotComposer.modality) {
+    //  return Modality.create([this.pec.slotComposer.modality]);
       //return this.pec.slotComposer.modality;
-    }
+    //}
     if (!this.activeRecipe.isEmpty()) {
       return this.activeRecipe.modality;
     }
@@ -171,7 +171,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     if (!this.isInnerArc && this.pec.slotComposer) {
       // Just a sanity check that we're not disposing a SlotComposer used by some other arc.
       const allArcs = this.allDescendingArcs;
-      this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
+      //this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
       this.pec.slotComposer.dispose();
     }
 

@@ -246,9 +246,9 @@ export class Planner implements InspectablePlanner {
     suggestion.setDescription(
         description,
         this.arc.modality,
-        this.arc.pec.slotComposer ?
-          this.arc.pec.slotComposer.modalityHandler.descriptionFormatter
-          : undefined
+        //this.arc.pec.slotComposer ?
+          //this.arc.pec.slotComposer.modalityHandler.descriptionFormatter
+          //: undefined
     );
     suggestionByHash().set(hash, suggestion);
     return suggestion;

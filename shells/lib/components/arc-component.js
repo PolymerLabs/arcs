@@ -15,7 +15,7 @@ import {logsFactory} from '../../../build/platform/logs-factory.js';
 
 const {log, warn} = logsFactory('ArcComponent', '#cb23a6');
 
-// TODO(sjmiles): custom elements must derive from HTMLElement. Because we want to choose whether to make this an
+// TODO(sjmiles): custom elements must extend HTMLElement. Because we want to choose whether to make this an
 // element or not (flexible derivation), we implement as a mixin.
 export const ArcComponentMixin = Base => class extends Base {
   // TODO(sjmiles): Although this is strictly speaking a CustomElement API, we use it WLOG to

@@ -17,8 +17,6 @@ import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
-import {SlotProxy} from './slot-proxy.js';
-import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Handle as HandleNG} from './storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
@@ -105,9 +103,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return [hostedSlotId, () => callback(hostedSlotId)];
       }
 
-      onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content) {
-        transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
-      }
+      //onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content) {
+      //  transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
+      //}
 
       onStop(): void {
         if (global['close']) {
@@ -147,15 +145,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         particle.fireEvent(slotName, event);
       }
 
-      onStartRender(particle: Particle, slotName: string, providedSlots: ReadonlyMap<string, string>, contentTypes: string[]) {
-        particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots));
-        particle.renderSlot(slotName, contentTypes);
-      }
-
-      onStopRender(particle: Particle, slotName: string) {
-        assert(particle.hasSlotProxy(slotName), `Stop render called for particle ${particle.spec.name} slot ${slotName} without start render being called.`);
-        particle.removeSlotProxy(slotName);
-      }
     }(port);
 
     this.pecId = pecId;
@@ -188,7 +177,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return new Promise((resolve) =>
           pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
       },
-
       setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
         id = new Promise<number>((resolve) =>
           pec.apiPort.Register(storageProxy, x => storageProxy.onMessage(x), retId => resolve(retId)));
@@ -329,9 +317,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
         resolve();
         // Transfer the slot proxies from the old particle to the new one
-        for (const name of oldParticle.getSlotNames()) {
-          oldParticle.getSlot(name).rewire(particle);
-        }
+        //for (const name of oldParticle.getSlotNames()) {
+        //  oldParticle.getSlot(name).rewire(particle);
+        //}
       }]);
     }
     return result;

@@ -183,20 +183,21 @@ export class MockSlotComposer extends FakeSlotComposer {
   // fix. It's particularly bad here as there's no guarantee that the backingStore
   // exists - should await ensureBackingStore() before accessing it.
   _getHostedParticleNames(particle: Particle) {
-    return Object.values(particle.connections)
-        .filter(conn => conn.type instanceof InterfaceType)
-        .map(conn => {
-          const allArcs = this.consumers.reduce((arcs, consumer) => arcs.add(consumer.arc), new Set<Arc>());
-          const store = [...allArcs].map(arc => arc.findStoreById(conn.handle.id)).find(store => !!store) as StorageProviderBase;
-          if (store.referenceMode) {
-            // TODO(cypher1): Unsafe. _stored does not exist on StorageProviderBase.
-            // tslint:disable-next-line: no-any
-            return store.backingStore._model.getValue((store as any)._stored.id).name;
-          }
-          // TODO(cypher1): Unsafe. _stored does not exist on StorageProviderBase.
-          // tslint:disable-next-line: no-any
-          return (store as any)._stored.name;
-        });
+    // return Object.values(particle.connections)
+    //     .filter(conn => conn.type instanceof InterfaceType)
+    //     .map(conn => {
+    //       const allArcs = this.consumers.reduce((arcs, consumer) => arcs.add(consumer.arc), new Set<Arc>());
+    //       const store = [...allArcs].map(arc => arc.findStoreById(conn.handle.id)).find(store => !!store) as StorageProviderBase;
+    //       if (store.referenceMode) {
+    //         // TODO(cypher1): Unsafe. _stored does not exist on StorageProviderBase.
+    //         // tslint:disable-next-line: no-any
+    //         return store.backingStore._model.getValue((store as any)._stored.id).name;
+    //       }
+    //       // TODO(cypher1): Unsafe. _stored does not exist on StorageProviderBase.
+    //       // tslint:disable-next-line: no-any
+    //       return (store as any)._stored.name;
+    //     });
+    return [];
   }
 
   _verifyRenderContent(particle, slotName, content) {

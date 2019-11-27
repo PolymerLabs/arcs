@@ -10,26 +10,32 @@ particle FriendsPicker in 'source/FriendsPicker.js'
   friends: reads writes [Friend]
   avatars: reads [AvatarShare]
   userNames: reads [UserNameShare]
-  friends: consumes Slot
+  friendsSlot: consumes Slot
   description `select friends`
 
 particle BasicProfile in 'source/BasicProfile.js'
   avatar: reads writes Avatar
   root: consumes Slot
     userNameSlot: provides? Slot
-    friends: provides? Slot
+    friendsSlot: provides? Slot
 
 recipe BasicProfile
+  root: slot 'rootslotid-root'
   avatar: create #avatar
   userName: create #userName
   friends: create #friends
   avatars: map 'BOXED_avatar'
   userNames: map 'BOXED_userName'
   BasicProfile
+    root: consumes root
+      userNameSlot: provides userNameSlot
+      friendsSlot: provides friendsSlot
     avatar: avatar
   UserNameForm
+    userNameSlot: consumes userNameSlot
     userName: userName
   FriendsPicker
+    friendsSlot: consumes friendsSlot
     friends: friends
     avatars: avatars
     userNames: userNames

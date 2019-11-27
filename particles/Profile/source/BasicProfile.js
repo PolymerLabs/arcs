@@ -57,12 +57,12 @@ defineParticle(({SimpleParticle, html, resolver}) => {
     </firebase-upload>
   </div>
   <div name center>
-    <div slotid="userName"></div>
+    <div slotid="userNameSlot"></div>
   </div>
 </div>
 <div bottom>
   <div title>My friends</div>
-  <div slotid="friends"></div>
+  <div slotid="friendsSlot"></div>
 </div>
 
   `;

@@ -131,8 +131,8 @@ class TestLoader extends Loader {
       const {arc, stores, slotComposer} = await setup('EventsTest');
       const output = stores.get('output') as VolatileSingleton;
 
-      const particle = slotComposer.consumers[0].consumeConn.particle;
-      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
+      //const particle = slotComposer.consumers[0].consumeConn.particle;
+      //arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
       assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick:fooBar'});
@@ -216,7 +216,7 @@ class TestLoader extends Loader {
 
       const sendEvent = async handler => {
         await arc.idle;
-        arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+        //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
 
@@ -246,7 +246,7 @@ class TestLoader extends Loader {
 
       const sendEvent = async handler => {
         await arc.idle;
-        arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+        //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
 

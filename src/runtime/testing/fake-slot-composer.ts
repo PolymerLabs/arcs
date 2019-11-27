@@ -19,14 +19,16 @@ import {Particle} from '../recipe/particle.js';
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
  */
 export class FakeSlotComposer extends SlotComposer {
+
   constructor(options: SlotComposerOptions = {}) {
-    if (options.modalityHandler === undefined) {
-      options.modalityHandler = ModalityHandler.createHeadlessHandler();
-    }
-    super({
-      rootContainer: {'root': 'root-context'},
-      ...options
-    });
+    // if (options.modalityHandler === undefined) {
+    //   options.modalityHandler = ModalityHandler.createHeadlessHandler();
+    // }
+    // super({
+    //   rootContainer: {'root': 'root-context'},
+    //   ...options
+    // });
+    super();
   }
 
   //renderSlot(particle: Particle, slotName: string, content: Content) {

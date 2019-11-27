@@ -21,7 +21,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {UiSlotComposer as SlotComposer} from './ui-slot-composer.js';
-import {Content} from './slot-consumer.js';
+//import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
@@ -152,11 +152,11 @@ export class ParticleExecutionHost {
   //   this.getPort(particle).StopRender(particle, slotName);
   // }
 
-  innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
-    // Note: Transformations are not supported in Java PEC.
-    this.getPort(transformationParticle).InnerArcRender(
-        transformationParticle, transformationSlotName, hostedSlotId, content);
-  }
+  // innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
+  //   // Note: Transformations are not supported in Java PEC.
+  //   this.getPort(transformationParticle).InnerArcRender(
+  //       transformationParticle, transformationSlotName, hostedSlotId, content);
+  // }
 
   resolveIfIdle(version: number, relevance: Map<Particle, number[]>) {
     if (version === this.idleVersion) {

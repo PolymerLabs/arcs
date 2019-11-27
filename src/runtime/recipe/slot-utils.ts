@@ -74,10 +74,10 @@ export class SlotUtils {
     const slotConn = particle.getSlandleConnectionByName(slotSpec.name);
     const local = !slotConn || !slotConn.targetSlot
       ? SlotUtils._findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [];
-    console.warn(
-      'findAllSlotCandidates', particle.name,
-      'activeRecipe.slots:', arc.activeRecipe && arc.activeRecipe.slots
-    );
+    // console.warn(
+    //   'findAllSlotCandidates', particle.name,
+    //   'activeRecipe.slots:', arc.activeRecipe && arc.activeRecipe.slots
+    // );
     const remote = SlotUtils._findSlotCandidates(particle, slotSpec, arc.activeRecipe && arc.activeRecipe.slots);
       //[]);
       //arc.pec.slotComposer.getAvailableContexts());

@@ -290,8 +290,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     return this._dom.$('[slotid="suggestions"]');
   }
   async recordArcMeta(meta) {
+    const data = {id: meta.key, rawData: meta};
     if (this.state.store) {
-      await this.state.store.store({id: meta.key, rawData: meta}, [generateId()]);
+      warn('recording arc metadata:', data, generateId(), this.state.store);
+      await this.state.store.store(data, [generateId()]);
     } else {
       log('failed to record arc metadata: no store');
     }

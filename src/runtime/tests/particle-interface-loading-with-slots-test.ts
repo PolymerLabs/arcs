@@ -22,7 +22,7 @@ import {Entity} from '../entity.js';
 describe.skip('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, slotComposer: MockSlotComposer, arc: Arc}> {
     const loader = new Loader();
-    const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
+    const slotComposer = new MockSlotComposer(); //{rootContainer: {'set-slotid-0': contextContainer || {}}});
     //const slotContext = slotComposer.getAvailableContexts()[0] as ProvidedSlotContext;
     //slotContext.spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
 
@@ -114,14 +114,14 @@ describe.skip('particle interface loading with slots', () => {
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
     // Wait for the hosted slots to be initialized in slot-composer.
-    await new Promise((resolve, reject) => {
-      const myInterval = setInterval(() => {
-        if (slotComposer.consumers.length === 3) { // last 2 are hosted slots
-          resolve();
-          clearInterval(myInterval);
-        }
-      }, 10);
-    });
+    // await new Promise((resolve, reject) => {
+    //   const myInterval = setInterval(() => {
+    //     if (slotComposer.consumers.length === 3) { // last 2 are hosted slots
+    //       resolve();
+    //       clearInterval(myInterval);
+    //     }
+    //   }, 10);
+    // });
 
     // slotComposer
     //   .newExpectations()
