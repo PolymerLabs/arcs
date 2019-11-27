@@ -784,6 +784,14 @@ export class InterfaceType extends Type {
   toPrettyString(): string {
     return this.interfaceInfo.toPrettyString();
   }
+
+  handleConstructor<T>() {
+    return SingletonHandle;
+  }
+
+  crdtInstanceConstructor() {
+    return CRDTSingleton;
+  }
 }
 
 

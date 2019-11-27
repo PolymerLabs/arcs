@@ -37,7 +37,7 @@ async function getCollectionHandle(primitiveType: Type, particle?: MockParticle,
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
-      canWrite) as CollectionHandle<Entity>;
+      canWrite) as unknown as CollectionHandle<Entity>;
   // Initialize the model.
   await handle.storageProxy.onMessage({
     type: ProxyMessageType.ModelUpdate,
@@ -59,7 +59,7 @@ async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, 
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
-      canWrite) as SingletonHandle<Entity>;
+      canWrite) as unknown as  SingletonHandle<Entity>;
   // Initialize the model.
   await handle.storageProxy.onMessage({
     type: ProxyMessageType.ModelUpdate,

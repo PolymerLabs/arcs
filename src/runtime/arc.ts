@@ -41,6 +41,9 @@ import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
+import {StorageProxy} from './storageNG/storage-proxy.js';
+import {SingletonHandle} from './storageNG/handle.js';
+import {unifiedHandleFor} from './handle.js';
 import {Flags} from './flags.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
@@ -455,7 +458,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
         const newStore = await this.createStore(type, /* name= */ null, this.generateID().toString(),
-            recipeHandle.tags, recipeHandle.immediateValue ? 'volatile' : null);
+            recipeHandle.tags);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -465,7 +468,14 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           particleClone.id = newStore.id;
           // TODO(shans): clean this up when we have interfaces for Singleton, Collection, etc.
           // tslint:disable-next-line: no-any
-          await (newStore as any).set(particleClone);
+          if (Flags.useNewStorageStack) {
+            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type);
+            const handle = unifiedHandleFor({proxy, idGenerator: this.idGenerator, particleId: this.generateID().toString()});
+            // tslint:disable-next-line: no-any
+            await (handle as SingletonHandle<any>).set(particleClone);
+          } else {
+            await (newStore as SingletonStorageProvider).set(particleClone);
+          }
         } else if (['copy', 'map'].includes(recipeHandle.fate)) {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
           const copiedActiveStore = await copiedStoreRef.activate();
@@ -600,8 +610,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 
-    if (Flags.useNewStorageStack && !(store.type.isCollectionType() || store.type.isSingleton)) {
-      throw new Error('New storage stack currently only works with Collection and Singleton types');
+    if (Flags.useNewStorageStack && !(store.type.handleConstructor)) {
+      throw new Error(`Type not supported by new storage stack: '${store.type.tag}'`);
     }
     this.storesById.set(store.id, store);
     this.storesByKey.set(store.storageKey, store);
