@@ -8,10 +8,6 @@
 template<typename T>
 class TestBase : public arcs::Particle {
 public:
-  TestBase() {
-    registerHandle("errors", errors_);
-  }
-
   virtual void before_each() {}
 
   bool check(bool ok, const std::string& condition, std::string file, int line) {
@@ -75,7 +71,7 @@ public:
   }
 
   std::string test_name_;
-  arcs::Collection<T> errors_;
+  arcs::Collection<T> errors_{"errors", this};
   char marker_;
 };
 

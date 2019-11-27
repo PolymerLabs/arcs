@@ -12,10 +12,17 @@
 package arcs.storage.service
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import arcs.storage.Store
 import arcs.storage.parcelables.ParcelableProxyMessage
+import arcs.storage.parcelables.ParcelableStoreOptions
 
+/**
+ * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
+ * the [IStorageService] interface when bound-to by a client.
+ */
 class StorageService : Service() {
     override fun onBind(p0: Intent?): IBinder? = BindingContext()
 
@@ -34,5 +41,17 @@ class StorageService : Service() {
         override fun unregisterCallback(token: Int) {
             TODO("implement me")
         }
+    }
+
+    companion object {
+        private const val EXTRA_OPTIONS = "storeOptions"
+
+        /**
+         * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
+         */
+        fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
+            Intent(context, StorageService::class.java).apply {
+                putExtra(EXTRA_OPTIONS, storeOptions)
+            }
     }
 }

@@ -6,7 +6,7 @@
 !devtools/
 !dist/
 !extension/
-!modalities/dom
+!modalities/
 !particles/
 !shells/
 
@@ -18,3 +18,6 @@
 !index.html
 !README.md
 
+# Include Wasm artifacts
+!**.wasm.js
+!**.wasm

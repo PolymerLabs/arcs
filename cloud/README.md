@@ -1,5 +1,16 @@
 # Arcs Cloud Server
 
+## NOTE
+
+As of the time of writing (Nov 4, 2019) code in this directory is in
+need of review and updating. Things known to be broken:
+
+* Use of `rollup` to build and reference Arcs Runtime dependencies
+* Use of Docker to build images and hook in to cloud build
+
+All example usage and notes below are subject to this notice and are
+likely to require edits or other rework to be functional.
+
 ## Basic Usage
 
 Execute the following commands to start the Arcs cloud server
@@ -50,7 +61,6 @@ directories.  The following are common commands that you will want to use:
 - `npm test` builds code, runs tests and then lints.
 - `npm run lint` just lints.
 - `npm run lint:fix` lints and fixes.
-- `npm run prettier` formats source code.
 - `npm run watch` starts a server and runs test as you make changes.
 
 For many of these commands you can pass optional arguments.  For

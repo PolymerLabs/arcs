@@ -26,7 +26,7 @@ enum class ParcelableCrdtType(
 ) {
     // TODO: provide creators for each CRDT data structure and remove the default values.
     Count(ParcelableCrdtCount.Data.CREATOR, ParcelableCrdtCount.Operation.CREATOR),
-    Set,
+    Set(ParcelableCrdtSet.Data.CREATOR, ParcelableCrdtSet.Operation.CREATOR),
     Singleton,
     Entity,
 }
