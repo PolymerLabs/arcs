@@ -1,34 +1,23 @@
-load("@rules_java//java:defs.bzl", "java_test")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_jvm_test_suite",
+)
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
-
-[
-    [
-        java_test(
-            name = src_file[:-3],
-            size = "small",
-            test_class = "arcs.storage.driver.%s" % src_file[:-3],
-            runtime_deps = [":%sLib" % src_file[:-3]],
-        ),
-        kt_jvm_library(
-            name = "%sLib" % src_file[:-3],
-            testonly = True,
-            srcs = [src_file],
-            deps = [
-                "//src_kt/java/arcs/common",
-                "//src_kt/java/arcs/storage",
-                "//src_kt/java/arcs/storage/driver",
-                "//src_kt/java/arcs/util",
-                "//third_party/java/junit",
-                "//third_party/java/truth",
-                "//third_party/kotlin/kotlinx/kotlinx_coroutines",
-                "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
-            ],
-        ),
-    ]
-    for src_file in glob(["*.kt"])
-]
+arcs_kt_jvm_test_suite(
+    name = "driver",
+    package = "arcs.storage.driver",
+    deps = [
+        "//src_kt/java/arcs/common",
+        "//src_kt/java/arcs/storage",
+        "//src_kt/java/arcs/storage/driver",
+        "//src_kt/java/arcs/util",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
+    ],
+)
