@@ -75,8 +75,8 @@ data class ReferenceModeStorageKey(
     }
 }
 
-internal fun String.unEmbed(): StorageKey =
+/* internal */ fun String.unEmbed(): StorageKey =
     StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("}}".toRegex(), "}"))
 
-internal fun StorageKey.embed() =
+/* internal */ fun StorageKey.embed() =
     toString().replace("\\{".toRegex(), "{{").replace("}".toRegex(), "}}")

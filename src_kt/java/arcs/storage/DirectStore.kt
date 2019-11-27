@@ -37,8 +37,8 @@ import kotlinx.coroutines.Job
 // TODO: generics here are sub-optimal, can we make this class generic itself?
 class DirectStore internal constructor(
     options: StoreOptions<CrdtData, CrdtOperation, Any?>,
-    internal val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
-    internal val driver: Driver<CrdtData>
+    /* internal */ val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
+    /* internal */ val driver: Driver<CrdtData>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
     override val versionToken: String?
         get() = driver.token

@@ -236,7 +236,7 @@ class CrdtEntity(
         /** Makes a deep copy of this [CrdtEntity.Data] object. */
         // We can't rely on the Data Class's .copy(param=val,..) because it doesn't deep-copy the
         // inners, unfortunately.
-        internal fun copy(): Data = Data(
+        /* internal */ fun copy(): Data = Data(
             versionMap.copy(),
             HashMap(singletons.mapValues { it.value.copy() }),
             HashMap(collections.mapValues { it.value.copy() })

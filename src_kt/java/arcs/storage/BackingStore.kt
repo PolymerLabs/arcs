@@ -34,7 +34,7 @@ class BackingStore(
     private val options: StoreOptions<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
     private val storeMutex = Mutex()
-    internal val stores = mutableMapOf<String, StoreRecord>()
+    /* internal */ val stores = mutableMapOf<String, StoreRecord>()
     private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
 
     @Deprecated(
