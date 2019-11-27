@@ -13,7 +13,6 @@ import {assert} from '../../platform/chai-web.js';
 import {handleFor, HandleOld, Singleton, Collection} from '../handle.js';
 import {ArcId, IdGenerator} from '../id.js';
 import {Schema} from '../schema.js';
-import {SchemaFactory} from '../schema-factory.js';
 import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, SingletonProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
@@ -184,7 +183,7 @@ class TestParticle {
 }
 
 class TestEngine {
-  schema = SchemaFactory.createNew(['Thing'], {value: 'Text'});
+  schema = new Schema(['Thing'], {value: 'Text'});
   type = new EntityType(this.schema);
   _idCounters = [1, 1, 1]; // particle, proxy, entity
   _stores = new Map();

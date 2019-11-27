@@ -19,7 +19,6 @@ import {CRDTCollection, CollectionOpTypes, CollectionData, CollectionOperation, 
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {CountType, CollectionType, EntityType, SingletonType} from '../../type.js';
 import {Schema} from '../../schema.js';
-import {SchemaFactory} from '../../schema-factory.js';
 import {SerializedEntity} from '../../storage-proxy.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 
@@ -44,7 +43,7 @@ class MyEntity {
 
 class MyEntityCollection extends CRDTCollection<SerializedEntity> {}
 
-const schema = SchemaFactory.createNew(['Thing'], {name: 'Text', age: 'Number'});
+const schema = new Schema(['Thing'], {name: 'Text', age: 'Number'});
 const collectionType = new CollectionType(new EntityType(schema));
 
 async function createReferenceModeStore() {

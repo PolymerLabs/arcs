@@ -13,7 +13,6 @@ import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {Schema} from '../schema.js';
-import {SchemaFactory} from '../schema-factory.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
@@ -21,7 +20,7 @@ import {collectionHandleForTest} from '../testing/handle-for-test.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {
-    const schema = SchemaFactory.createNew(['TestSchema'], {value: 'Text'});
+    const schema = new Schema(['TestSchema'], {value: 'Text'});
 
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: null, loader: new Loader()});
     const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});

@@ -16,7 +16,6 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Reference} from '../reference.js';
 import {Schema} from '../schema.js';
-import {SchemaFactory} from '../schema-factory.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
@@ -342,8 +341,8 @@ describe('schema', () => {
     const Animal = manifest.findSchemaByName('Animal');
 
     const fields = {...Person.fields, ...Animal.fields};
-    const expected = deleteLocations(SchemaFactory.createNew(['Person', 'Animal', 'Thing'], fields));
-    const actual = deleteLocations(SchemaFactory.union(Person, Animal));
+    const expected = deleteLocations(new Schema(['Person', 'Animal', 'Thing'], fields));
+    const actual = deleteLocations(Schema.union(Person, Animal));
     assert.deepEqual(actual, expected);
   });
 
@@ -352,7 +351,7 @@ describe('schema', () => {
     const Person = manifest.findSchemaByName('Person');
     const Product = manifest.findSchemaByName('Product');
 
-    assert.isNull(SchemaFactory.union(Person, Product),
+    assert.isNull(Schema.union(Person, Product),
       'price fields of different types forbid an union');
   });
 
@@ -361,8 +360,8 @@ describe('schema', () => {
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
 
-    assert.deepEqual(SchemaFactory.intersect(Product, Thing), Thing);
-    assert.deepEqual(SchemaFactory.intersect(Thing, Product), Thing);
+    assert.deepEqual(Schema.intersect(Product, Thing), Thing);
+    assert.deepEqual(Schema.intersect(Thing, Product), Thing);
   });
 
   it('handles schema intersection for shared supertypes', async () => {
@@ -372,8 +371,8 @@ describe('schema', () => {
     const Animal = manifest.findSchemaByName('Animal');
 
     const fields = {...Thing.fields, isReal: 'Boolean'};
-    const expected = deleteLocations(SchemaFactory.createNew(['Thing'], fields));
-    const actual = deleteLocations(SchemaFactory.intersect(Animal, Product));
+    const expected = deleteLocations(new Schema(['Thing'], fields));
+    const actual = deleteLocations(Schema.intersect(Animal, Product));
     assert.deepEqual(actual, expected);
   });
 
@@ -381,15 +380,15 @@ describe('schema', () => {
     const manifest = await Manifest.load('Product.schema', loader);
     const Product = manifest.findSchemaByName('Product');
     const Person = manifest.findSchemaByName('Person');
-    const intersection = SchemaFactory.intersect(Person, Product);
+    const intersection = Schema.intersect(Person, Product);
 
     assert.isDefined(Person.fields.price);
     assert.isDefined(Product.fields.price);
     assert.isFalse(Schema.typesEqual(Person.fields.price, Product.fields.price));
     assert.isUndefined(intersection.fields.price);
 
-    const expected = deleteLocations(SchemaFactory.createNew([], {name: 'Text'}));
-    const actual = deleteLocations(SchemaFactory.intersect(Person, Product));
+    const expected = deleteLocations(new Schema([], {name: 'Text'}));
+    const actual = deleteLocations(Schema.intersect(Person, Product));
     assert.deepEqual(actual, expected);
   });
 
@@ -397,7 +396,7 @@ describe('schema', () => {
     const manifest = await Manifest.load('Product.schema', loader);
     const Person = manifest.findSchemaByName('Person');
     const AlienLife = manifest.findSchemaByName('AlienLife');
-    assert.deepEqual(SchemaFactory.intersect(Person, AlienLife), SchemaFactory.createNew([], {}));
+    assert.deepEqual(Schema.intersect(Person, AlienLife), new Schema([], {}));
   });
 
   // Firebase doesn't store empty lists or objects, so we need to

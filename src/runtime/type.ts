@@ -20,7 +20,7 @@ import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
 import {Schema} from './schema.js';
-import {SchemaFactory} from './schema-factory.js';
+import './schema-from-literal.js';
 import {FromLiteralFactory} from './from-literal-factory.js';
 
 export interface TypeLiteral extends Literal {
@@ -62,7 +62,7 @@ export abstract class Type {
         return false;
       }
       if (type1.canReadSubset instanceof EntityType && type2.canReadSubset instanceof EntityType) {
-        return SchemaFactory.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
+        return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
       }
       throw new Error(`_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
@@ -75,7 +75,7 @@ export abstract class Type {
         return false;
       }
       if (type1.canWriteSuperset instanceof EntityType && type2.canWriteSuperset instanceof EntityType) {
-        return SchemaFactory.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
+        return Schema.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
       }
     }
     return true;
@@ -308,7 +308,7 @@ export class EntityType extends Type {
   }
 
   static make(names: string[], fields: {}, description?): EntityType {
-    return new EntityType(SchemaFactory.createNew(names, fields, description));
+    return new EntityType(new Schema(names, fields, description));
   }
 
   // These type identifier methods are being left in place for non-runtime code.

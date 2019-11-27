@@ -33,7 +33,6 @@ import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Schema} from './schema.js';
-import {SchemaFactory} from './schema-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
@@ -588,9 +587,9 @@ ${e.message}
               }
               fields[name] = type;
             }
-            let schema = SchemaFactory.createNew(names, fields);
+            let schema = new Schema(names, fields);
             for (const alias of aliases) {
-              schema = SchemaFactory.union(alias, schema);
+              schema = Schema.union(alias, schema);
               if (!schema) {
                 throw new ManifestError(node.location, `Could not merge schema aliases`);
               }
@@ -698,7 +697,7 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = SchemaFactory.createNew(names, fields, description);
+    const schema = new Schema(names, fields, description);
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
