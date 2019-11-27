@@ -1,0 +1,25 @@
+directories:
+  src_kt/java
+  src_kt/javatests
+  build_defs
+  tools
+  third_party
+  particles
+  src
+  javaharness/java
+  javaharness/javatests
+
+targets:
+  //src_kt/java/...
+  //src_kt/javatests/...
+  //javaharness/java/...
+  //javaharness/javatests/...
+
+test_sources:
+  src_kt/javatests/
+  javaharness/javatests/
+
+java_language_level: 8
+
+build_flags:
+  --incompatible_depset_is_not_iterable=false
