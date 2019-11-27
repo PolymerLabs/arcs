@@ -1,4 +1,5 @@
-
+# TODO(cromwellian): Make the below defaults and allow devs to set their own env vars.
+# https://github.com/dylanaraps/pure-sh-bible#default-value
 export PROJECT_ID=arcs-project-223901
 export COMPUTE_ZONE=us-central1-a
 export CLUSTER_NAME=personal-cloud
