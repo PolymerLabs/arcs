@@ -172,7 +172,7 @@ If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, 
 ### IntelliJ
 
 - Install IntelliJ. Community Edition is sufficient.
-- Open Android Studio and install the Bazel extension.
+- Open IntelliJ and install the Bazel extension.
 - Upon restarting IntelliJ, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots. 
