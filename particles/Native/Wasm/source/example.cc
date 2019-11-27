@@ -4,8 +4,6 @@
 class BasicParticle : public arcs::Particle {
 public:
   BasicParticle() {
-    registerHandle("foo", foo_);  // required for each handle declared in the manifest
-    registerHandle("bar", bar_);
     autoRender();  // automatically render once handles are ready, and then when updated
   }
 
@@ -26,9 +24,10 @@ public:
   }
 
   // Responding to UI events
-  void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
+  void fireEvent(const std::string& slot_name, const std::string& handler,
+                 const arcs::Dictionary& eventData) override {
     if (handler == "clicky") {
-      arcs::BasicParticle_Foo copy = arcs::clone_entity(foo_.get());  // does not copy internal entity id
+      arcs::BasicParticle_Foo copy = arcs::clone_entity(foo_.get());  // does not copy internal id
       bar_.store(copy);    // 'copy' will be updated with a new internal id
 
       // Basic printf-style logging; note the c_str() for std::string variables
@@ -40,8 +39,9 @@ public:
   }
 
 private:
-  arcs::Singleton<arcs::BasicParticle_Foo> foo_;
-  arcs::Collection<arcs::BasicParticle_Bar> bar_;
+  // name arg must match the manifest, particle arg must be 'this'; note the {} brace style
+  arcs::Singleton<arcs::BasicParticle_Foo> foo_{"foo", this};
+  arcs::Collection<arcs::BasicParticle_Bar> bar_{"bar", this};
   int num_clicks_ = 0;
 };
 
@@ -49,7 +49,6 @@ private:
 class Watcher : public arcs::Particle {
 public:
   Watcher() {
-    registerHandle("bar", bar_);
     autoRender();
   }
 
@@ -62,7 +61,7 @@ public:
   }
 
 private:
-  arcs::Collection<arcs::Watcher_Bar> bar_;
+  arcs::Collection<arcs::Watcher_Bar> bar_{"bar", this};
 };
 
 
