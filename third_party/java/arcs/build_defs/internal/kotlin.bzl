@@ -67,10 +67,12 @@ def kt_jvm_and_wasm_library(
         visibility = None,
         **kwargs):
     """Simultaneously defines JVM and WASM kotlin libraries.
-    name: String; Name of the library
-    srcs: List; List of sources
-    deps: List; List of dependencies
-    visibility: List; List of visibilities
+
+    Args:
+      name: String; Name of the library
+      srcs: List; List of sources
+      deps: List; List of dependencies
+      visibility: List; List of visibilities
     """
     kt_jvm_library(
         name = name,

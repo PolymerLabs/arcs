@@ -3,6 +3,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
 
+# TODO(alxr): Justify extra aliases with a comment, or remove
 alias(
     name = "arcs",
     actual = "//src/wasm/kotlin/java/arcs",
