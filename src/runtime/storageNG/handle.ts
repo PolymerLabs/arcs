@@ -57,7 +57,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   get type(): Type {
-    return this.storageProxy.type;
+    return this.storageProxy.type.getContainedType() || this.storageProxy.type;
   }
 
   // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
@@ -69,6 +69,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
   }
 
+<<<<<<< HEAD
   toManifestString(): string {
     return `'${this._id}'`;
   }
@@ -80,6 +81,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     const containedType = this.type.getContainedType();
     if (containedType instanceof EntityType) {
       return Entity.createEntityClass(containedType.entitySchema, null);
+=======
+  get entityClass(): EntityClass {
+    if (this.type instanceof EntityType) {
+      return this.type.entitySchema.entityClass();
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
     }
     return null;
   }
@@ -107,12 +113,17 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.canWrite = canWrite;
 
     this.clock = this.storageProxy.registerHandle(this);
+<<<<<<< HEAD
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
       this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e));
     } else if (this.type.getContainedType() instanceof EntityType) {
       this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e));
+=======
+    if (this.type instanceof EntityType) {
+      this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e));
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
     } else {
       this.serializer = new ImmediateSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
@@ -163,7 +174,11 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
 
   constructor(type: Type, createIdentityFor: (entity: Entity) => void) {
     if (type instanceof EntityType) {
+<<<<<<< HEAD
       this.entityClass = Entity.createEntityClass(type.entitySchema, null);
+=======
+      this.entityClass = type.entitySchema.entityClass();
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
       this.createIdentityFor = createIdentityFor;
      } else {
        throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
@@ -191,7 +206,11 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
 
 /* Pass through the object to the storage stack, checking that it has an ID. */
 // tslint:disable-next-line no-any
+<<<<<<< HEAD
 class ImmediateSerializer implements Serializer<ParticleSpec, Referenceable> {
+=======
+class ImmediateSerializer implements Serializer<any, Referenceable> {
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
   createIdentityFor: () => string;
 
   constructor(createIdentityFor: () => string) {
@@ -199,17 +218,28 @@ class ImmediateSerializer implements Serializer<ParticleSpec, Referenceable> {
   }
 
   serialize(value) {
+<<<<<<< HEAD
     // TODO(shanestephens): There should be IDs for particleSpecs that we use here at some point.
+=======
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
     const id = value.id? value.id : this.createIdentityFor();
     return {id, rawData: value};
   }
 
+<<<<<<< HEAD
   ensureHasId(vlue) {
+=======
+  ensureHasId(entity) {
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
     // ID is checked in serialize method.
   }
 
   deserialize(value)  {
+<<<<<<< HEAD
     return ParticleSpec.fromLiteral(value.rawData);
+=======
+    return value.rawData;
+>>>>>>> update handle to deal with non-entities, eg interfaces/particlespec, to fix find-hosted-particle-test
   }
 }
 
