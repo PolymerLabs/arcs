@@ -26,7 +26,9 @@ import {Store} from '../storageNG/store.js';
 import {StorageStub} from '../storage-stub.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {digest} from '../../platform/digest-web.js';
+import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -256,36 +258,60 @@ ${particleStr1}
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('two manifests with stores with the same filename, store name and data have the same ids', async () => {
-    const manifestA = await Manifest.parse(`
-        store NobId of NobIdStore {nobId: Text} in NobIdJson
-        resource NobIdJson
-          start
-          [{"nobId": "12345"}]
-        `, {fileName: 'the.manifest'});
+    let manifestText: string;
+    if (Flags.useNewStorageStack) {
+      manifestText = `
+      store NobId of NobIdStore {nobId: Text} in NobIdJson
+      resource NobIdJson
+        start
+        {
+          "root": {
+            "values": {"anid": {"value": {"id": "anid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}},
+            "version": {"u": 1}
+          },
+          "locations": {}
+        }
+      `;
+    } else {
+      manifestText = `
+      store NobId of NobIdStore {nobId: Text} in NobIdJson
+      resource NobIdJson
+        start
+        [{"nobId": "12345"}]
+      `;
+    }
+    const manifestA = await Manifest.parse(manifestText, {fileName: 'the.manifest'});
 
-    const manifestB = await Manifest.parse(`
-        store NobId of NobIdStore {nobId: Text} in NobIdJson
-        resource NobIdJson
-          start
-          [{"nobId": "12345"}]
-        `, {fileName: 'the.manifest'});
+    const manifestB = await Manifest.parse(manifestText, {fileName: 'the.manifest'});
 
     assert.strictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('two manifests with stores with the same filename and store name but different data have different ids', async () => {
-    const manifestA = await Manifest.parse(`
-        store NobId of NobIdStore {nobId: Text} in NobIdJson
-        resource NobIdJson
-          start
-          [{"nobId": "12345"}]
-        `, {fileName: 'the.manifest'});
+    let manifestText: (id: number) => string;
+    if (Flags.useNewStorageStack) {
+      manifestText = id => `
+      store NobId of NobIdStore {nobId: Text} in NobIdJson
+      resource NobIdJson
+        start
+        {
+          "root": {
+            "values": {"anid": {"value": {"id": "anid", "rawData": {"nobId": "${id}"}}, "version": {"u": 1}}},
+            "version": {"u": 1}
+          },
+          "locations": {}
+        }
+      `;
+    } else {
+      manifestText = id => `
+      store NobId of NobIdStore {nobId: Text} in NobIdJson
+      resource NobIdJson
+        start
+        [{"nobId": "${id}"}]
+      `;
+    }
+    const manifestA = await Manifest.parse(manifestText(12345), {fileName: 'the.manifest'});
 
-    const manifestB = await Manifest.parse(`
-        store NobId of NobIdStore {nobId: Text} in NobIdJson
-         resource NobIdJson
-           start
-           [{"nobId": "67890"}]
-          `, {fileName: 'the.manifest'});
+    const manifestB = await Manifest.parse(manifestText(67890), {fileName: 'the.manifest'});
 
     assert.notStrictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
@@ -1357,10 +1383,11 @@ ${particleStr1}
     assert.isFalse(broken, 'a particle doesn\'t parse correctly');
   });
   it('loads entities from json files', async () => {
+    RamDiskStorageDriverProvider.register();
     const manifestSource = `
         schema Thing
           someProp: Text
-        store Store0 of [Thing] in 'entities.json'`;
+        store Store0 of [Thing] in '${Flags.useNewStorageStack ? 'new-entities.json' : 'entities.json'}'`;
     const entitySource = JSON.stringify([
       {someProp: 'someValue'},
       {
@@ -1368,9 +1395,17 @@ ${particleStr1}
         someProp: 'someValue2'
       },
     ]);
+    const newEntitySource = JSON.stringify(
+      {root: {values:
+        {
+          e1: {value: {id: 'e1', rawData: {someProp: 'someValue'}}, version: {u: 1}},
+          'entity-id': {value: {id: 'entity-id', rawData: {someProp: 'someValue2'}}, version: {u: 1}}
+        }, version: {u: 1}
+      }, locations: {}});
     const loader = new StubLoader({
       'the.manifest': manifestSource,
       'entities.json': entitySource,
+      'new-entities.json': newEntitySource
     });
     const manifest = await Manifest.load('the.manifest', loader);
     const storageStub = manifest.findStoreByName('Store0');
@@ -1382,13 +1417,14 @@ ${particleStr1}
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
-        id: `!${sessionId}:the.manifest::0`,
+        id: Flags.useNewStorageStack ? 'e1' : `!${sessionId}:the.manifest::0`,
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
         rawData: {someProp: 'someValue2'},
       }
     ]);
+    DriverFactory.clearRegistrationsForTesting();
   });
   it('throws an error when a store has invalid json', async () => {
     try {
@@ -1409,6 +1445,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
   });
   it('loads entities from a resource section', async () => {
     if (Flags.useNewStorageStack) {
+      RamDiskStorageDriverProvider.register();
       const manifest = await Manifest.parse(`
         schema Thing
           someProp: Text
@@ -1444,6 +1481,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
           rawData: {someProp: 'someValue2'},
         }
       ]);
+      DriverFactory.clearRegistrationsForTesting();
     } else {
       const manifest = await Manifest.parse(`
         schema Thing
@@ -1482,14 +1520,18 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         store Store0 of [Thing] in 'entities.json'
         recipe
           myStore: map Store0`;
-    const entitySource = JSON.stringify([]);
+    const entitySource = JSON.stringify(Flags.useNewStorageStack ? {root: {}, locations: {}} : []);
     const loader = new StubLoader({
       'the.manifest': manifestSource,
       'entities.json': entitySource,
     });
     const manifest = await Manifest.load('the.manifest', loader);
     const recipe = manifest.recipes[0];
-    assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
+    if (Flags.useNewStorageStack) {
+      assert.deepEqual(recipe.toString(), `recipe\n  myStore: map '!manifest:the.manifest:store0:${await digest(entitySource)}'`);
+    } else {
+      assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
+    }
   }));
   it('has prettyish syntax errors', async () => {
     try {
@@ -1717,7 +1759,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     assert.deepEqual(['good'], search.resolvedTokens);
   });
   it('can parse a manifest containing stores', async () => {
-    const loader = new StubLoader({'*': '[]'});
+    const loader = new StubLoader({'*': Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]'});
     const manifest = await Manifest.parse(`
   schema Product
   store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
@@ -2074,7 +2116,7 @@ resource SomeName
       particle P
         foo: reads Bar
 
-      store Foo of Bar 'test' @0 at 'firebase://testing'
+      store Foo of Bar 'test' @0 at 'firebase://testing.testing:testing/testing'
 
       recipe
         myHandle: map Foo
@@ -2142,6 +2184,7 @@ resource SomeName
   });
 
   it('can relate inline schemas to generic connections', async () => {
+    const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]';
     const manifest = await Manifest.parse(`
       schema Thing
         value: Text
@@ -2153,7 +2196,7 @@ resource SomeName
 
       resource Things
         start
-        []
+        ${data}
 
       store ThingStore of Thing in Things
 
@@ -2603,12 +2646,14 @@ resource SomeName
     });
 
     it('data stores can make claims', async () => {
+      const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[{"nobId": "12345"}]';
+
       const manifest = await Manifest.parse(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
           claim is property1 and is property2
         resource NobIdJson
           start
-          [{"nobId": "12345"}]
+          ${data}
       `);
       assert.lengthOf(manifest.stores, 1);
       const store = manifest.stores[0];
@@ -2873,7 +2918,19 @@ resource SomeName
         particle Bar
           recipe Food
             Bar`;
-        const jsonStr = `
+        const jsonStr = Flags.useNewStorageStack ?
+        `
+        {
+          "root": {
+            "values": {
+              "anid": {"value": {"id": "anid", "rawData": {"name": "Jack", "age": 7}}, "version": {"u": 1}}
+            },
+            "version": {"u": 1}
+          },
+          "locations": {}
+        }`
+        :
+        `
         [
           {
               "name": "Jack",
@@ -2894,6 +2951,12 @@ resource SomeName
         assert.isDefined(result[0].fields.age);
       });
       it('handles multiple schemas with internal and external stores and passing them via handles', async () => {
+        const inlineJson = Flags.useNewStorageStack ?
+          `{"root": {"values": {"anid": {"value": {"id": "anid", "rawData": {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}`
+          :
+          `[{"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}]`;
+
+
         const manifestStr = `
         schema Data
           num: Number
@@ -2903,9 +2966,8 @@ resource SomeName
 
         resource DataResource
           start
-          [
-            {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}
-          ]
+          ${inlineJson}
+
         store DataStore of Data in DataResource
 
 
@@ -2938,7 +3000,22 @@ resource SomeName
         recipe ServicesAPI
           ServiceParticle
         `;
-        const jsonStr = `
+        const jsonStr = Flags.useNewStorageStack ?
+        `
+        {
+          "root": {
+            "values": {
+              "ida": {"value": {"id": "ida", "rawData": {"for": "xx", "val": -5.8}}, "version": {"v": 1}},
+              "idb": {"value": {"id": "idb", "rawData": {"val": 107}}, "version": {"w": 1}},
+              "idc": {"value": {"id": "idc", "rawData": {"for": "yy"}}, "version": {"x": 1}}
+            },
+            "version": {"v": 1, "w": 1, "x": 1}
+          },
+          "locations": {}
+        }
+        `
+        :
+        `
         [
             {"for": "xx", "val": -5.8},
             {"val": 107},

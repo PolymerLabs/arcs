@@ -1251,6 +1251,12 @@ ${e.message}
         const memory = Runtime.getRuntime().getRamDiskMemory();
         memory.deserialize(entities, storageKey.unique);
       }
+      // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
+      // cleaner not to rely on that.
+      if (!item.id) {
+        const entityHash = await digest(json);
+        id = `${id}:${entityHash}`;
+      }
       return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
         description: item.description, version: item.version || null, source: item.source,
         origin: item.origin, referenceMode: false, model: entities});
