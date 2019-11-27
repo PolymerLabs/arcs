@@ -1,4 +1,4 @@
-package wasm.kotlin.tests.arcs
+package wasm.kotlin.javatests.arcs
 
 import arcs.Collection
 import arcs.Particle
