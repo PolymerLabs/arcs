@@ -12,7 +12,7 @@
 // output directory. This is required prior to M78 since service worker can
 // invalidate and rebuild caches only when the content of its source script
 // changes.
-const SW_CACHES_VERSION='__ARCS_MD5__';
+const SW_CACHES_VERSION = '__ARCS_MD5__';
 
 // The storage of caches
 const SW_CACHES_FILE = `arcs_${SW_CACHES_VERSION}`;
