@@ -3,7 +3,6 @@ package wasm.kotlin.javatests.arcs
 import arcs.Collection
 import arcs.Particle
 import arcs.wasm.toAddress
-import arcs.wasm.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
@@ -85,4 +84,4 @@ class CollectionApiTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newCollectionApiTest")
-fun constructCollectionApiTest(): WasmAddress = CollectionApiTest().toAddress()
+fun constructCollectionApiTest() = CollectionApiTest().toAddress()

@@ -2,10 +2,8 @@ package wasm.kotlin.javatests.arcs
 
 import arcs.Singleton
 import arcs.wasm.toAddress
-import arcs.wasm.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
-
 
 class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) : TestBase<SpecialSchemaFieldsTest_Errors>(ctor) {
     private val unused = Singleton { SpecialSchemaFieldsTest_Fields() }
@@ -57,5 +55,5 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
 
 @Retain
 @ExportForCppRuntime("_newSpecialSchemaFieldsTest")
-fun constructSpecialSchemaFieldsTest(): WasmAddress = SpecialSchemaFieldsTest { txt: String -> SpecialSchemaFieldsTest_Errors(txt) }.toAddress()
+fun constructSpecialSchemaFieldsTest() = SpecialSchemaFieldsTest { txt: String -> SpecialSchemaFieldsTest_Errors(txt) }.toAddress()
 
