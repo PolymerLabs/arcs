@@ -42,7 +42,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     abstract val refModeOp: RefModeStoreOp
 
     /** Denotes an update to the [CrdtSingleton] managed by the store. */
-    data class UpdateSingleton internal constructor(
+    data class UpdateSingleton /* internal */ constructor(
         override val entityValue: RawEntity?,
         override val referenceValue: Reference?,
         override val containerOp: CrdtSingleton.Operation.Update<Reference>,
@@ -52,7 +52,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     }
 
     /** Denotes a clearing of the [CrdtSingleton] managed by the store. */
-    data class ClearSingleton internal constructor(
+    data class ClearSingleton /* internal */ constructor(
         override val containerOp: CrdtSingleton.Operation.Clear<Reference>,
         override val refModeOp: RefModeStoreOp.SingletonClear
     ) : BridgingOperation() {
@@ -62,7 +62,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     }
 
     /** Denotes an addition to the [CrdtSet] managed by the store. */
-    class AddToSet internal constructor(
+    class AddToSet /* internal */ constructor(
         override val entityValue: RawEntity?,
         override val referenceValue: Reference?,
         override val containerOp: CrdtSet.Operation.Add<Reference>,
@@ -72,7 +72,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     }
 
     /** Denotes a removal from the [CrdtSet] managed by the store. */
-    class RemoveFromSet internal constructor(
+    class RemoveFromSet /* internal */ constructor(
         override val entityValue: RawEntity?,
         override val referenceValue: Reference?,
         override val containerOp: CrdtSet.Operation.Remove<Reference>,

@@ -97,7 +97,7 @@ interface Id {
 fun String.toArcId(): ArcId = toId().let { ArcId(it.root, it.idTree) }
 
 /** [Id] for an Arc. */
-data class ArcId internal constructor(
+data class ArcId /* internal */ constructor(
     override val root: String,
     override val idTree: List<String>
 ) : Id {

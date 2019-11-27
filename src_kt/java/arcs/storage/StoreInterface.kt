@@ -37,7 +37,7 @@ data class StoreConstructor(
     val typeParamString: String
         get() = "<$dataClass, $opClass, $consumerDataClass>"
 
-    internal suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
+    /* internal */ suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ) = constructor(options)
 }

@@ -87,7 +87,7 @@ class BackingStore(
     }
 
     @Suppress("UNCHECKED_CAST") // TODO: See if we can clean up this generics situation.
-    internal suspend fun setupStore(muxId: String): StoreRecord {
+    /* internal */ suspend fun setupStore(muxId: String): StoreRecord {
         val store = DirectStore.CONSTRUCTOR(
             // Copy of our options, but with a child storage key using the muxId.
             options.copy(options.storageKey.childKeyWithComponent(muxId))
