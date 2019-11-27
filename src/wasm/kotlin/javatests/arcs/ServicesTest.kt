@@ -4,6 +4,7 @@ import arcs.Collection
 import arcs.Particle
 import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class ServicesTest : Particle() {
     private val output = Collection { ServicesTest_Output() }

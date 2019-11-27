@@ -19,18 +19,19 @@ arcs_kt_schema(
     package = "wasm.kotlin.tests.arcs",
 )
 
-arcs_kt_library(
-    name = "test-module_lib",
-    srcs = glob(["*.kt"]),
-    visibility = ["//visibility:public"],
-    deps = [
-        ":test_schemas",
-        "//third_party/kotlin/kotlin:kotlin_test",
-        ],
-)
+#arcs_kt_library(
+#    name = "test-module_lib",
+#    srcs = ,
+#    visibility = ["//visibility:public"],
+#    deps = [
+#        ":test_schemas",
+#        "//third_party/kotlin/kotlin:kotlin_test",
+#        ],
+#)
 
 arcs_kt_binary(
     name = "test-module",
+    srcs = glob(["*.kt"]),
     visibility = ["//visibility:public"],
-    deps = [":test-module_lib"],
+    deps = [":test_schemas"],
 )

@@ -2,8 +2,10 @@ package wasm.kotlin.tests.arcs
 
 import arcs.Particle
 import arcs.Singleton
-import arcs.WasmAddress
+import arcs.wasm.toAddress
+import arcs.wasm.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class SingletonApiTest : Particle() {
     private val in_ = Singleton { SingletonApiTest_InHandle() }
@@ -40,4 +42,4 @@ class SingletonApiTest : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newSingletonApiTest")
-fun constructSingletonApiTest(): WasmAddress = SingletonApiTest().toWasmAddress()
+fun constructSingletonApiTest(): WasmAddress = SingletonApiTest().toAddress()

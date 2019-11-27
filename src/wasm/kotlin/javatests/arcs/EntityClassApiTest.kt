@@ -1,8 +1,10 @@
 package wasm.kotlin.tests.arcs
 
 import arcs.Singleton
-import arcs.WasmAddress
+import arcs.wasm.toAddress
+import arcs.wasm.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<EntityClassApiTest_Errors>(ctor) {
@@ -66,4 +68,4 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<
 
 @Retain
 @ExportForCppRuntime("_newEntityClassApiTest")
-fun constructEntityClassApiTest(): WasmAddress = EntityClassApiTest { txt: String -> EntityClassApiTest_Errors(txt) }.toWasmAddress()
+fun constructEntityClassApiTest(): WasmAddress = EntityClassApiTest { txt: String -> EntityClassApiTest_Errors(txt) }.toAddress()

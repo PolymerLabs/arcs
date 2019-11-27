@@ -3,6 +3,7 @@ package wasm.kotlin.tests.arcs
 import arcs.*
 import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class HandleSyncUpdateTest : Particle() {
     private val sng = Singleton { HandleSyncUpdateTest_Sng() }

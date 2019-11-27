@@ -3,7 +3,6 @@ package wasm.kotlin.tests.arcs
 import arcs.Particle
 import arcs.Collection
 import arcs.Entity
-import kotlin.native.internal.ExportForCppRuntime
 
 import kotlin.test.Asserter
 import kotlin.AssertionError
