@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# A basic script to locally semi-simulate the build and test
+# operations performed by our continuous integration service. Note
+# that this does not do a clean and reinstall of npm modules and
+# sigh/bazel artifacts.
+set -e
+
+source $(dirname $0)/logging.sh
+
+cd $ROOT
+status "Testing all of the things (except shells/android and javaharness)."
+
+./tools/sigh webpack
+bazel test //src_kt/... //src/... //particles/...
+./tools/sigh testShells
+./tools/ktlint
+./tools/sigh lint
+./tools/sigh test
+
+# TODO(yuangu): Add Android testing when we start doing it in our CI.
