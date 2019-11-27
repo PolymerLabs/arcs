@@ -40,7 +40,7 @@ class ParcelableCrdtSetTest {
         ))
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(ParcelableCrdtSet.Data(data), 0)
+            writeTypedObject(data.toParcelable(), 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {

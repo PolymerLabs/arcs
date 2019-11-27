@@ -46,7 +46,7 @@ fun Parcel.writeModelData(model: CrdtData?, flags: Int) {
         is CrdtSet.Data<*> ->
             writeTypedObject((model as? CrdtSet.Data<Referencable>)?.toParcelable(), flags)
         is CrdtSingleton.Data<*> ->
-            TODO("Implement me when ParcelableSingleton is ready")
+            writeTypedObject((model as? CrdtSingleton.Data<Referencable>)?.toParcelable(), flags)
         is CrdtEntity.Data ->
             TODO("Implement me when ParcelableEntity is ready")
         else -> throw IllegalArgumentException("Unsupported CrdtData type: ${model.javaClass}")
@@ -71,7 +71,8 @@ fun Parcel.writeOperation(operation: CrdtOperation?, flags: Int) {
         is CrdtSet.Operation<*> ->
             writeTypedObject((operation as? CrdtSet.Operation<Referencable>)?.toParcelable(), flags)
         is CrdtSingleton.Operation<*> ->
-            TODO("Implement me when ParcelableSingleton is ready")
+            writeTypedObject(
+                (operation as? CrdtSingleton.Operation<Referencable>)?.toParcelable(), flags)
         is CrdtEntity.Operation ->
             TODO("Implement me when ParcelableEntity is ready")
         else ->

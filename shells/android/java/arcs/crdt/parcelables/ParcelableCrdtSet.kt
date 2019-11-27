@@ -97,7 +97,7 @@ object ParcelableCrdtSet {
                 super.writeToParcel(parcel, flags)
                 parcel.writeTypedObject(actual.clock.toParcelable(), flags)
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(ParcelableReferencable(actual.added), flags)
+                parcel.writeTypedObject(actual.added.toParcelable(), flags)
             }
 
             companion object CREATOR : Parcelable.Creator<Add> {
@@ -126,7 +126,7 @@ object ParcelableCrdtSet {
                 super.writeToParcel(parcel, flags)
                 parcel.writeTypedObject(actual.clock.toParcelable(), flags)
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(ParcelableReferencable(actual.removed), flags)
+                parcel.writeTypedObject(actual.removed.toParcelable(), flags)
             }
 
             companion object CREATOR : Parcelable.Creator<Remove> {
@@ -163,7 +163,7 @@ object ParcelableCrdtSet {
 
                 parcel.writeInt(actual.removed.size)
                 actual.removed.forEach {
-                    parcel.writeTypedObject(ParcelableReferencable(it), flags)
+                    parcel.writeTypedObject(it.toParcelable(), flags)
                 }
             }
 
