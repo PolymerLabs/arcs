@@ -8,7 +8,7 @@ load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_l
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library", "kt_android_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin"]
 
@@ -113,7 +113,7 @@ def kt_jvm_and_js_library(
 
 def arcs_kt_android_test_suite(name, manifest, package, srcs = None, deps = []):
     """Defines Kotlin Android test targets for a directory.
-    
+
     Defines a Kotlin Android library (kt_android_library) for all of the sources
     in the current directory, and then defines an Android test target
     (android_local_test) for each individual test file.
@@ -152,7 +152,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, deps = []):
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, deps = []):
     """Defines Kotlin JVM test targets for a directory.
-    
+
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
     in the current directory, and then defines an JVM test target (java_test)
     for each individual test file.

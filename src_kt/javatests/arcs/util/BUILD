@@ -13,11 +13,11 @@ PERFORMANCE_SRCS = [
 
 arcs_kt_jvm_test_suite(
     name = "util",
-    package = "arcs.util",
     srcs = glob(
         ["*.kt"],
         exclude = PERFORMANCE_SRCS,
     ),
+    package = "arcs.util",
     deps = [
         "//src_kt/java/arcs/testutil",
         "//src_kt/java/arcs/util",
@@ -31,8 +31,8 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_jvm_test_suite(
     name = "util_performance",
-    package = "arcs.util",
     srcs = PERFORMANCE_SRCS,
+    package = "arcs.util",
     deps = [
         "//src_kt/java/arcs/util",
         "//third_party/java/junit",
