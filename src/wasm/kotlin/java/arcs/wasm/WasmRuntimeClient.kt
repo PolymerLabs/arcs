@@ -57,7 +57,6 @@ actual object RuntimeClient {
             encoded.toWasmString()
         )
         return wasmId.toNullableKString()?.let { _free(wasmId); it }
-
     }
 
     actual fun log(msg: String) = arcs.wasm.log(msg);
@@ -91,5 +90,4 @@ actual object RuntimeClient {
         log("AssertionError: $message")
         abort()
     }
-
 }
