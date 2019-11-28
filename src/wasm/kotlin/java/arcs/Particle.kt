@@ -261,8 +261,7 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
 
     fun store(entity: T) {
         val encoded = entity.encodeEntity()
-        val id: String? = RuntimeClient.collectionStore(particle, this, encoded)
-        id?.let { entity.internalId = it }
+        RuntimeClient.collectionStore(particle, this, encoded)?.let { entity.internalId = it }
         entities[entity.internalId] = entity
     }
 
