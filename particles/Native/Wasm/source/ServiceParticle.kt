@@ -1,6 +1,8 @@
 package arcs.test
 
-import arcs.*
+import arcs.Address
+import arcs.Particle
+import arcs.log
 import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
