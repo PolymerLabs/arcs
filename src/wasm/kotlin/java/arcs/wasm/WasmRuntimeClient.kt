@@ -9,7 +9,21 @@
  */
 package arcs
 
-import arcs.wasm.*
+import arcs.wasm._free
+import arcs.wasm.collectionClear
+import arcs.wasm.collectionRemove
+import arcs.wasm.collectionStore
+import arcs.wasm.onRenderOutput
+import arcs.wasm.resolveUrl
+import arcs.wasm.singletonClear
+import arcs.wasm.singletonSet
+import arcs.wasm.serviceRequest
+import arcs.wasm.toAddress
+import arcs.wasm.toKString
+import arcs.wasm.toNullableKString
+import arcs.wasm.toWasmNullableString
+import arcs.wasm.toWasmString
+import arcs.wasm.WasmString
 
 actual object RuntimeClient {
     actual fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>) =
