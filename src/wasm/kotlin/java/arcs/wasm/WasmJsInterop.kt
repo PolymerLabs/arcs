@@ -9,12 +9,15 @@
  */
 package arcs.wasm
 
-import arcs.*
-import arcs.Collection
+import arcs.Address
+import arcs.Handle
+import arcs.Particle
+import arcs.StringDecoder
 import arcs.AddressableMap.address2Addressable
 import arcs.AddressableMap.addressable2Address
 import arcs.AddressableMap.nextAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 import kotlin.native.toUtf8
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointed
@@ -150,8 +153,8 @@ fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNu
     handle?.let {
         log("Handle is '${handle.name}' syncing '$encodedStr'")
         log("Invoking sync on handle on particle")
-        handle.sync(encodedStr)
-        particlePtr.toObject<Particle>()?.sync(handle)
+        it.sync(encodedStr)
+        particlePtr.toObject<Particle>()?.sync(it)
     }
 }
 
