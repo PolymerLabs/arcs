@@ -40,5 +40,7 @@ fun Addressable?.toAddress(): Address {
  *  zero Address is converted to null, however any other address
  *  that fails to map to an Addressable throws an exception.
  **/
-fun  <T : Addressable> Address.toObject(): T? = if (this == 0) null else address2Addressable[this] as T?
+@Suppress("UNCHECKED_CAST")
+fun  <T : Addressable> Address.toObject(): T? =
+    if (this == 0) null else address2Addressable[this] as T?
 
