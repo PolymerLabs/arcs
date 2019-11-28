@@ -16,31 +16,38 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import arcs.storage.Store
-import arcs.storage.parcelables.ParcelableProxyMessage
+import arcs.storage.StoreOptions
 import arcs.storage.parcelables.ParcelableStoreOptions
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
 class StorageService : Service() {
-    override fun onBind(p0: Intent?): IBinder? = BindingContext()
+    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
+    private val scope = CoroutineScope(coroutineContext)
+    private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
 
-    class BindingContext : IStorageService.Stub() {
-        override fun registerCallback(callback: IStorageServiceCallback): Int {
-            TODO("implement me")
-        }
+    override fun onBind(intent: Intent): IBinder? {
+        val parcelableOptions = requireNotNull(
+            intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
+        ) { "No StoreOptions found in Intent" }
 
-        override fun sendProxyMessage(
-            message: ParcelableProxyMessage,
-            resultCallback: IResultCallback
-        ) {
-            TODO("implement me")
-        }
+        return BindingContext(
+            stores.computeIfAbsent(parcelableOptions.actual) { Store(it) },
+            parcelableOptions.crdtType,
+            coroutineContext
+        )
+    }
 
-        override fun unregisterCallback(token: Int) {
-            TODO("implement me")
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
     }
 
     companion object {
