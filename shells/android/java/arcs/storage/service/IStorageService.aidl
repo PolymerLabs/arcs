@@ -22,7 +22,7 @@ import arcs.storage.service.IStorageServiceCallback;
  */
 interface IStorageService {
     /**
-     * Issues a one-shot request for the current state of the binding context's CrdtData.
+     * Issues a one-shot request for the current state of the binding context's {@code CrdtData}.
      *
      * <p>Will respond by calling the {@code callback} with a
      * {@code ParcelableProxyMessage.ModelUpdate} containing the requested data.

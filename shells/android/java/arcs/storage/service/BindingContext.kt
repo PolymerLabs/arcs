@@ -47,9 +47,7 @@ class BindingContext(
      * for transmission via IBinder interfaces.
      */
     private val crdtType: ParcelableCrdtType,
-    /**
-     *
-     */
+    /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext
 ) : IStorageService.Stub() {
     @VisibleForTesting
