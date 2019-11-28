@@ -26,12 +26,13 @@ fun Addressable?.toAddress(): Address {
     // Null pointer maps to 0
     if (this == null) return 0
 
-    return addressable2Address[this]?.let { it } ?: {
-        val address = nextAddress++
-        address2Addressable[address] = this
-        addressable2Address[this] = address
-        address
-    }()
+    val existingAddress = addressable2Address[this]
+    if (existingAddress != null) return existingAddress
+
+    val address = nextAddress++
+    address2Addressable[address] = this
+    addressable2Address[this] = address
+    return address
 }
 
 /**
