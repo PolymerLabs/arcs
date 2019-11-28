@@ -20,7 +20,6 @@ import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
 import {Schema} from './schema.js';
-import {FromLiteralFactory} from './from-literal-factory.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -36,6 +35,35 @@ export abstract class Type {
 
   protected constructor(tag: Tag) {
     this.tag = tag;
+  }
+
+  static fromLiteral(literal: TypeLiteral) : Type {
+    switch (literal.tag) {
+      case 'Entity':
+        return new EntityType(Schema.fromLiteral(literal.data));
+      case 'TypeVariable':
+        return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
+      case 'Collection':
+        return new CollectionType(Type.fromLiteral(literal.data));
+      case 'BigCollection':
+        return new BigCollectionType(Type.fromLiteral(literal.data));
+      case 'Relation':
+        return new RelationType(literal.data.map(t => Type.fromLiteral(t)));
+      case 'Interface':
+        return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
+      case 'Slot':
+        return new SlotType(SlotInfo.fromLiteral(literal.data));
+      case 'Reference':
+        return new ReferenceType(Type.fromLiteral(literal.data));
+      case 'Arc':
+        return new ArcType();
+      case 'Handle':
+        return new HandleType();
+      case 'Singleton':
+        return new SingletonType(Type.fromLiteral(literal.data));
+      default:
+        throw new Error(`fromLiteral: unknown type ${literal}`);
+    }
   }
 
   abstract toLiteral(): TypeLiteral;
@@ -205,7 +233,7 @@ export abstract class Type {
   }
 
   protected _clone(variableMap: Map<string, Type>) {
-    return FromLiteralFactory.typeFromLiteral(this.toLiteral());
+    return Type.fromLiteral(this.toLiteral());
   }
 
   /**
@@ -215,7 +243,7 @@ export abstract class Type {
    * cloned.
    */
   _cloneWithResolutions(variableMap): Type {
-    return FromLiteralFactory.typeFromLiteral(this.toLiteral());
+    return Type.fromLiteral(this.toLiteral());
   }
 
   // TODO: is this the same as _applyExistenceTypeTest
@@ -531,7 +559,7 @@ export class CollectionType<T extends Type> extends Type {
 
   _clone(variableMap: Map<string, Type>) {
     const data = this.collectionType.clone(variableMap).toLiteral();
-    return FromLiteralFactory.typeFromLiteral({tag: this.tag, data});
+    return Type.fromLiteral({tag: this.tag, data});
   }
 
   _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): CollectionType<Type> {
@@ -625,7 +653,7 @@ export class BigCollectionType<T extends Type> extends Type {
 
   _clone(variableMap: Map<string, Type>) {
     const data = this.bigCollectionType.clone(variableMap).toLiteral();
-    return FromLiteralFactory.typeFromLiteral({tag: this.tag, data});
+    return Type.fromLiteral({tag: this.tag, data});
   }
 
   _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): BigCollectionType<Type> {
@@ -733,7 +761,7 @@ export class InterfaceType extends Type {
 
   _clone(variableMap: Map<string, Type>) {
     const data = this.interfaceInfo.clone(variableMap).toLiteral();
-    return FromLiteralFactory.typeFromLiteral({tag: this.tag, data});
+    return Type.fromLiteral({tag: this.tag, data});
   }
 
   _cloneWithResolutions(variableMap): InterfaceType {
@@ -865,7 +893,7 @@ export class ReferenceType extends Type {
 
   _clone(variableMap: Map<string, Type>) {
     const data = this.referredType.clone(variableMap).toLiteral();
-    return FromLiteralFactory.typeFromLiteral({tag: this.tag, data});
+    return Type.fromLiteral({tag: this.tag, data});
   }
 
   _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType {
@@ -926,35 +954,3 @@ export class HandleType extends Type {
     return {tag: this.tag};
   }
 }
-
-function fromLiteral(literal: TypeLiteral) : Type {
-  switch (literal.tag) {
-    case 'Entity':
-      return new EntityType(Schema.fromLiteral(literal.data));
-    case 'TypeVariable':
-      return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
-    case 'Collection':
-      return new CollectionType(FromLiteralFactory.typeFromLiteral(literal.data));
-    case 'BigCollection':
-      return new BigCollectionType(FromLiteralFactory.typeFromLiteral(literal.data));
-    case 'Relation':
-      return new RelationType(literal.data.map(t => FromLiteralFactory.typeFromLiteral(t)));
-    case 'Interface':
-      return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
-    case 'Slot':
-      return new SlotType(SlotInfo.fromLiteral(literal.data));
-    case 'Reference':
-      return new ReferenceType(FromLiteralFactory.typeFromLiteral(literal.data));
-    case 'Arc':
-      return new ArcType();
-    case 'Handle':
-      return new HandleType();
-    case 'Singleton':
-      return new SingletonType(FromLiteralFactory.typeFromLiteral(literal.data));
-    default:
-      throw new Error(`fromLiteral: unknown type ${literal}`);
-  }
-}
-
-
-FromLiteralFactory.setTypeMethod(fromLiteral);

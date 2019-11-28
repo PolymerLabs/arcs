@@ -9,14 +9,14 @@
  */
 
 import {Schema} from './schema.js';
-import {FromLiteralFactory} from './from-literal-factory.js';
+import {Type} from './type.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}}) {
   const fields = {};
   const updateField = field => {
     if (field.kind === 'schema-reference') {
       const schema = field.schema;
-      return {kind: 'schema-reference', schema: {kind: schema.kind, model: FromLiteralFactory.typeFromLiteral(schema.model)}};
+      return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
     } else if (field.kind === 'schema-collection') {
       return {kind: 'schema-collection', schema: updateField(field.schema)};
     } else {

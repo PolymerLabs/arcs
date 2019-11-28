@@ -16,7 +16,6 @@ import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, Inte
 import {Direction} from '../manifest-ast-nodes.js';
 import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
-import {FromLiteralFactory} from '../from-literal-factory.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -43,7 +42,7 @@ describe('types', () => {
         tag: 'Entity',
         data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', type: 'Text'}}, description: {}}
       });
-      deepEqual(entity, FromLiteralFactory.typeFromLiteral(entity.toLiteral()));
+      deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));
     });
 
@@ -53,7 +52,7 @@ describe('types', () => {
         tag: 'TypeVariable',
         data: {name: 'a', canWriteSuperset: null, canReadSubset: null}
       });
-      deepEqual(variable, FromLiteralFactory.typeFromLiteral(variable.toLiteral()));
+      deepEqual(variable, Type.fromLiteral(variable.toLiteral()));
       deepEqual(variable, variable.clone(new Map()));
     });
 
@@ -62,7 +61,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const col1   = new CollectionType(entity);
       deepEqual(col1.toLiteral(), {tag: 'Collection', data: entity.toLiteral()});
-      deepEqual(col1, FromLiteralFactory.typeFromLiteral(col1.toLiteral()));
+      deepEqual(col1, Type.fromLiteral(col1.toLiteral()));
       deepEqual(col1, col1.clone(new Map()));
 
       // Collection of collection of variables
@@ -73,7 +72,7 @@ describe('types', () => {
         tag: 'Collection',
         data: {tag: 'Collection', data: variable.toLiteral()}
       });
-      deepEqual(col2, FromLiteralFactory.typeFromLiteral(col2.toLiteral()));
+      deepEqual(col2, Type.fromLiteral(col2.toLiteral()));
       deepEqual(col2, col2.clone(new Map()));
 
       // Collection of references to slots
@@ -81,7 +80,7 @@ describe('types', () => {
       const reference = new ReferenceType(slot);
       const col3      = new CollectionType(reference);
       deepEqual(col3.toLiteral(), {tag: 'Collection', data: reference.toLiteral()});
-      deepEqual(col3, FromLiteralFactory.typeFromLiteral(col3.toLiteral()));
+      deepEqual(col3, Type.fromLiteral(col3.toLiteral()));
       deepEqual(col3, col3.clone(new Map()));
     });
 
@@ -90,7 +89,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const big1   = new BigCollectionType(entity);
       deepEqual(big1.toLiteral(), {tag: 'BigCollection', data: entity.toLiteral()});
-      deepEqual(big1, FromLiteralFactory.typeFromLiteral(big1.toLiteral()));
+      deepEqual(big1, Type.fromLiteral(big1.toLiteral()));
       deepEqual(big1, big1.clone(new Map()));
 
       // BigCollection of BigCollection of variables
@@ -101,7 +100,7 @@ describe('types', () => {
         tag: 'BigCollection',
         data: {tag: 'BigCollection', data: variable.toLiteral()}
       });
-      deepEqual(big2, FromLiteralFactory.typeFromLiteral(big2.toLiteral()));
+      deepEqual(big2, Type.fromLiteral(big2.toLiteral()));
       deepEqual(big2, big2.clone(new Map()));
 
       // BigCollection of references to slots
@@ -109,7 +108,7 @@ describe('types', () => {
       const reference = new ReferenceType(slot);
       const big3      = new BigCollectionType(reference);
       deepEqual(big3.toLiteral(), {tag: 'BigCollection', data: reference.toLiteral()});
-      deepEqual(big3, FromLiteralFactory.typeFromLiteral(big3.toLiteral()));
+      deepEqual(big3, Type.fromLiteral(big3.toLiteral()));
       deepEqual(big3, big3.clone(new Map()));
     });
 
@@ -122,7 +121,7 @@ describe('types', () => {
         tag: 'Relation',
         data: [entity.toLiteral(), variable.toLiteral(), col.toLiteral()]
       });
-      deepEqual(relation, FromLiteralFactory.typeFromLiteral(relation.toLiteral()));
+      deepEqual(relation, Type.fromLiteral(relation.toLiteral()));
       deepEqual(relation, relation.clone(new Map()));
     });
 
@@ -139,14 +138,14 @@ describe('types', () => {
           slots: [{name: 'x'}]
         }
       });
-      deepEqual(iface, FromLiteralFactory.typeFromLiteral(iface.toLiteral()));
+      deepEqual(iface, Type.fromLiteral(iface.toLiteral()));
       deepEqual(iface, iface.clone(new Map()));
     });
 
     it('Slot', async () => {
       const slot = SlotType.make('f', 'h');
       deepEqual(slot.toLiteral(), {tag: 'Slot', data: {formFactor: 'f', handle: 'h'}});
-      deepEqual(slot, FromLiteralFactory.typeFromLiteral(slot.toLiteral()));
+      deepEqual(slot, Type.fromLiteral(slot.toLiteral()));
       deepEqual(slot, slot.clone(new Map()));
     });
 
@@ -155,7 +154,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const ref1   = new ReferenceType(entity);
       deepEqual(ref1.toLiteral(), {tag: 'Reference', data: entity.toLiteral()});
-      deepEqual(ref1, FromLiteralFactory.typeFromLiteral(ref1.toLiteral()));
+      deepEqual(ref1, Type.fromLiteral(ref1.toLiteral()));
       deepEqual(ref1, ref1.clone(new Map()));
 
       // Reference to reference variable
@@ -166,7 +165,7 @@ describe('types', () => {
         tag: 'Reference',
         data: {tag: 'Reference', data: variable.toLiteral()}
       });
-      deepEqual(ref2, FromLiteralFactory.typeFromLiteral(ref2.toLiteral()));
+      deepEqual(ref2, Type.fromLiteral(ref2.toLiteral()));
       deepEqual(ref2, ref2.clone(new Map()));
 
       // Reference to collection of slots
@@ -174,21 +173,21 @@ describe('types', () => {
       const col = new CollectionType(slot);
       const ref3 = new ReferenceType(col);
       deepEqual(ref3.toLiteral(), {tag: 'Reference', data: col.toLiteral()});
-      deepEqual(ref3, FromLiteralFactory.typeFromLiteral(ref3.toLiteral()));
+      deepEqual(ref3, Type.fromLiteral(ref3.toLiteral()));
       deepEqual(ref3, ref3.clone(new Map()));
     });
 
     it('ArcInfo', async () => {
       const arcInfo = new ArcType();
       deepEqual(arcInfo.toLiteral(), {tag: 'Arc'});
-      deepEqual(arcInfo, FromLiteralFactory.typeFromLiteral(arcInfo.toLiteral()));
+      deepEqual(arcInfo, Type.fromLiteral(arcInfo.toLiteral()));
       deepEqual(arcInfo, arcInfo.clone(new Map()));
     });
 
     it('HandleInfo', async () => {
       const handleInfo = new HandleType();
       deepEqual(handleInfo.toLiteral(), {tag: 'Handle'});
-      deepEqual(handleInfo, FromLiteralFactory.typeFromLiteral(handleInfo.toLiteral()));
+      deepEqual(handleInfo, Type.fromLiteral(handleInfo.toLiteral()));
       deepEqual(handleInfo, handleInfo.clone(new Map()));
     });
 
@@ -207,7 +206,7 @@ describe('types', () => {
       const relation   = new RelationType([reference, iface, handleInfo]);
       const collection = new CollectionType(relation);
 
-      deepEqual(collection, FromLiteralFactory.typeFromLiteral(collection.toLiteral()));
+      deepEqual(collection, Type.fromLiteral(collection.toLiteral()));
       deepEqual(collection, collection.clone(new Map()));
     });
   });

@@ -20,7 +20,6 @@ import {Check, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {FromLiteralFactory} from './from-literal-factory.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -35,7 +34,7 @@ type SerializedHandleConnectionSpec = {
 };
 
 function asType(t: Type | TypeLiteral) : Type {
-  return (t instanceof Type) ? t : FromLiteralFactory.typeFromLiteral(t);
+  return (t instanceof Type) ? t : Type.fromLiteral(t);
 }
 
 function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {

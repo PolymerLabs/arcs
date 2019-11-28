@@ -29,7 +29,6 @@ import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {FromLiteralFactory} from './from-literal-factory.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -492,7 +491,7 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(FromLiteralFactory.typeFromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string) {}
+  DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string) {}
   InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec.fromLiteral as fromLiteralMethod<ParticleSpec>) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
   ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec.fromLiteral as fromLiteralMethod<ParticleSpec>) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
   ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
@@ -526,13 +525,13 @@ export abstract class PECOuterPort extends APIPort {
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
-  GetBackingStoreCallback(@Initializer store: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(FromLiteralFactory.typeFromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  GetBackingStoreCallback(@Initializer store: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
-  CreateHandleCallback(@Initializer handle: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(FromLiteralFactory.typeFromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
+  CreateHandleCallback(@Initializer handle: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
@@ -599,13 +598,13 @@ export abstract class PECInnerPort extends APIPort {
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 
-  GetBackingStore(@LocalMapped callback: (proxy: StorageProxy, key: string) => void, @Direct storageKey: string, @ByLiteral(FromLiteralFactory.typeFromLiteral as fromLiteralMethod<Type>) type: Type) {}
+  GetBackingStore(@LocalMapped callback: (proxy: StorageProxy, key: string) => void, @Direct storageKey: string, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type) {}
   abstract onGetBackingStoreCallback(callback: (proxy: StorageProxy | StorageProxyNG<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
 
   ConstructInnerArc(@LocalMapped callback: Consumer<string>, @Mapped particle: Particle) {}
   abstract onConstructArcCallback(callback: Consumer<string>, arc: string);
 
-  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(FromLiteralFactory.typeFromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string) {}
+  ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type.fromLiteral as fromLiteralMethod<Type>) type: Type, @Direct name: string) {}
   abstract onCreateHandleCallback(callback: Consumer<StorageProxy | StorageProxyNG<CRDTTypeRecord>>, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: Consumer<string>, id: string);
