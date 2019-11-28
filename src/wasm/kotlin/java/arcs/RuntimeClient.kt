@@ -55,7 +55,11 @@ expect object RuntimeClient {
      * @param encoded serialized representation of an entity
      * @return the ID [String] of the stored entity, or null.
      */
-    fun <T : Entity<T>> collectionStore(particle: Particle, collection: Collection<T>, encoded: String): String?
+    fun <T : Entity<T>> collectionStore(
+        particle: Particle,
+        collection: Collection<T>,
+        encoded: String
+    ): String?
 
     /** @param msg message to write to a logging system. */
     fun log(msg: String)
