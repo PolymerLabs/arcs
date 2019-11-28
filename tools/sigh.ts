@@ -543,7 +543,7 @@ function buildifier(args: string[]): boolean {
     boolean: ['fix'],
   });
 
-  const buildifierOptions = ['--warnings=-module-docstring,-bzl-visibility'];
+  const buildifierOptions = ['--warnings=+out-of-order-load,-module-docstring,-bzl-visibility'];
   if (options.fix) {
     buildifierOptions.push('--lint=fix', '--mode=fix');
   } else {
