@@ -32,6 +32,10 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
   }
 
   _connectViaWebRtc(remoteExploreKey) {
+    if (!database) {
+      throw new Error('Firebase not available, but required to exchange WebRTC signalling.');
+    }
+
     console.log(`Attempting a connection with remote Arcs Explorer.`);
 
     const connection = new RTCPeerConnection({
