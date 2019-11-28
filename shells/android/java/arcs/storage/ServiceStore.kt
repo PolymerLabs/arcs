@@ -53,20 +53,28 @@ class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val context: Context,
     private val lifecycle: Lifecycle,
     private val crdtType: ParcelableCrdtType,
-    private val coroutineContext: CoroutineContext = Dispatchers.IO
+    private val coroutineContext: CoroutineContext = Dispatchers.IO,
+    private val connectionFactory: ConnectionFactory? = null
 ) {
     suspend operator fun invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
-        return ServiceStore(options, crdtType, context, lifecycle, storeContext).initialize()
+        return ServiceStore(
+            options = options,
+            crdtType = crdtType,
+            context = context,
+            lifecycle = lifecycle,
+            coroutineContext = storeContext,
+            connectionFactory = connectionFactory ?: DefaultConnectionFactory(context, storeContext)
+        ).initialize()
     }
 }
 
 /** Implementation of [ActiveStore] which pipes [ProxyMessage]s to and from the [StorageService]. */
 @UseExperimental(FlowPreview::class)
 @ExperimentalCoroutinesApi
-class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> internal constructor(
+class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val options: StoreOptions<Data, Op, ConsumerData>,
     private val crdtType: ParcelableCrdtType,
     context: Context,

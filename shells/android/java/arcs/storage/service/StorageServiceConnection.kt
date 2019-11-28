@@ -15,7 +15,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
-import androidx.annotation.VisibleForTesting
 import arcs.crdt.parcelables.ParcelableCrdtType
 import arcs.storage.StoreOptions
 import arcs.storage.parcelables.ParcelableStoreOptions
@@ -41,62 +40,82 @@ typealias ConnectionFactory =
 @ExperimentalCoroutinesApi
 fun DefaultConnectionFactory(
     context: Context,
+    bindingDelegate: StorageServiceBindingDelegate = DefaultStorageServiceBindingDelegate(context),
     coroutineContext: CoroutineContext = Dispatchers.Default
 ): ConnectionFactory = { options, crdtType ->
-    StorageServiceConnectionImpl(context, options.toParcelable(crdtType), coroutineContext)
+    StorageServiceConnection(bindingDelegate, options.toParcelable(crdtType), coroutineContext)
 }
 
-/**
- * Interface for implementations capable of connecting-to and disconnecting-from the
- * [StorageService].
- */
-interface StorageServiceConnection {
+/** Defines an object capable of binding-to and unbinding-from the [StorageService]. */
+interface StorageServiceBindingDelegate {
+    fun bindStorageService(
+        conn: ServiceConnection,
+        flags: Int,
+        options: ParcelableStoreOptions
+    ): Boolean
+
+    fun unbindStorageService(conn: ServiceConnection)
+}
+
+/** Default implementation of the [StorageServiceBindingDelegate]. */
+class DefaultStorageServiceBindingDelegate(
+    private val context: Context
+) : StorageServiceBindingDelegate {
+    override fun bindStorageService(
+        conn: ServiceConnection,
+        flags: Int,
+        options: ParcelableStoreOptions
+    ): Boolean = context.bindService(StorageService.createBindIntent(context, options), conn, flags)
+
+    override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
+}
+
+/** Object capable of managing a connection to the [StorageService]. */
+@UseExperimental(ExperimentalCoroutinesApi::class)
+class StorageServiceConnection(
+    /**
+     * Delegate which is responsible for actually initiating and tearing-down a binding to the
+     * [StorageService].
+     */
+    private val bindingDelegate: StorageServiceBindingDelegate,
+    /** Parcelable [StoreOptions] to pass to the [StorageService] when connecting. */
+    private val storeOptions: ParcelableStoreOptions,
+    /** Parent [CoroutineContext] for the [Deferred] returned by [connectAsync]. */
+    private val coroutineContext: CoroutineContext = Dispatchers.Default
+) : ServiceConnection {
+    private var needsDisconnect = false
+    private var service = atomic(CompletableDeferred<IStorageService>(coroutineContext[Job.Key]))
+
     /** Whether or not the connection is active/alive. */
     val isConnected: Boolean
+        get() = needsDisconnect &&
+            service.value.let { it.isCompleted && it.getCompleted().asBinder().isBinderAlive }
 
     /**
      * Initiates a connection with the [StorageService], returns a [Deferred] which will be resolved
      * with the [IStorageService] binder.
      */
-    fun connectAsync(): Deferred<IStorageService>
-
-    /** Disconnects from the [StorageService]. */
-    fun disconnect()
-}
-
-/** Default implementation of the [StorageServiceConnection]. */
-@ExperimentalCoroutinesApi
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class StorageServiceConnectionImpl(
-    /** Android [Context] to use when connecting to the [StorageService]. */
-    private val context: Context,
-    /** Parcelable [StoreOptions] to pass to the [StorageService] when connecting. */
-    private val storeOptions: ParcelableStoreOptions,
-    /** Parent [CoroutineContext] for the [Deferred] returned by [connectAsync]. */
-    private val coroutineContext: CoroutineContext = Dispatchers.Default
-) : StorageServiceConnection, ServiceConnection {
-    private var needsDisconnect = false
-    private var service = atomic(CompletableDeferred<IStorageService>(coroutineContext[Job.Key]))
-
-    override val isConnected: Boolean
-        get() = needsDisconnect &&
-            service.value.let { it.isCompleted && it.getCompleted().asBinder().isBinderAlive }
-
-    override fun connectAsync(): Deferred<IStorageService> {
+    fun connectAsync(): Deferred<IStorageService> {
         if (isConnected) return service.value
 
         val deferred = CompletableDeferred<IStorageService>(coroutineContext[Job.Key])
         service.value = deferred
-        needsDisconnect = context.bindService(
-            StorageService.createBindIntent(context, storeOptions),
-            /* conn = */ this,
-            /* flags = */ 0
+        needsDisconnect = bindingDelegate.bindStorageService(
+            this,
+            flags = 0,
+            options = storeOptions
         )
+        if (!needsDisconnect) {
+            deferred.completeExceptionally(
+                IllegalStateException("Could not initiate connection to the StorageService")
+            )
+        }
         return deferred
     }
 
-    override fun disconnect() {
-        if (needsDisconnect) context.unbindService(this)
+    /** Disconnects from the [StorageService]. */
+    fun disconnect() {
+        if (needsDisconnect) bindingDelegate.unbindStorageService(this)
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder) {
