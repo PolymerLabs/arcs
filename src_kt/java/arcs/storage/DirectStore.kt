@@ -35,10 +35,10 @@ import kotlinx.coroutines.Job
  * This is what *directly* manages a [CrdtSingleton], [CrdtSet], or [CrdtCount].
  */
 // TODO: generics here are sub-optimal, can we make this class generic itself?
-class DirectStore internal constructor(
+class DirectStore /* internal */ constructor(
     options: StoreOptions<CrdtData, CrdtOperation, Any?>,
-    internal val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
-    internal val driver: Driver<CrdtData>
+    /* internal */ val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
+    /* internal */ val driver: Driver<CrdtData>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
     override val versionToken: String?
         get() = driver.token
@@ -151,7 +151,7 @@ class DirectStore internal constructor(
         )
     }
 
-    internal suspend fun onReceive(data: CrdtData, version: Int) {
+    /* internal */ suspend fun onReceive(data: CrdtData, version: Int) {
         log.debug { "onReceive($data, $version)" }
 
         if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
