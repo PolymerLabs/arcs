@@ -11,7 +11,6 @@ arcs_kt_jvm_test_suite(
     name = "common",
     package = "arcs.crdt.internal",
     deps = [
-        "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
         "//third_party/java/junit",
         "//third_party/java/truth",
