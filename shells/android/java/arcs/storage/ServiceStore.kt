@@ -12,6 +12,7 @@
 package arcs.storage
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
@@ -63,10 +64,10 @@ class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return ServiceStore(
             options = options,
             crdtType = crdtType,
-            context = context,
             lifecycle = lifecycle,
-            coroutineContext = storeContext,
-            connectionFactory = connectionFactory ?: DefaultConnectionFactory(context, storeContext)
+            connectionFactory = connectionFactory
+                ?: DefaultConnectionFactory(context, coroutineContext = storeContext),
+            coroutineContext = storeContext
         ).initialize()
     }
 }
@@ -77,11 +78,9 @@ class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val options: StoreOptions<Data, Op, ConsumerData>,
     private val crdtType: ParcelableCrdtType,
-    context: Context,
     lifecycle: Lifecycle,
-    private val coroutineContext: CoroutineContext,
-    private val connectionFactory: ConnectionFactory =
-        DefaultConnectionFactory(context, coroutineContext)
+    private val connectionFactory: ConnectionFactory,
+    private val coroutineContext: CoroutineContext
 ) : ActiveStore<Data, Op, ConsumerData>(options), LifecycleObserver {
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
@@ -125,7 +124,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return result.await()
     }
 
-    internal suspend fun initialize() = apply {
+    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    suspend fun initialize() = apply {
         check(serviceConnection == null ||
             storageService == null ||
             storageService?.asBinder()?.isBinderAlive != true) {
@@ -148,7 +148,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    private fun onLifecycleDestroyed() {
+    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
         storageService?.unregisterCallback(serviceCallbackToken)
         storageService = null

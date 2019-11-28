@@ -21,6 +21,7 @@ import arcs.storage.parcelables.ParcelableStoreOptions
 import arcs.storage.parcelables.toParcelable
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -84,42 +85,55 @@ class StorageServiceConnection(
     private val coroutineContext: CoroutineContext = Dispatchers.Default
 ) : ServiceConnection {
     private var needsDisconnect = false
-    private var service = atomic(CompletableDeferred<IStorageService>(coroutineContext[Job.Key]))
+    private var service = atomic<CompletableDeferred<IStorageService>?>(null)
 
     /** Whether or not the connection is active/alive. */
     val isConnected: Boolean
         get() = needsDisconnect &&
-            service.value.let { it.isCompleted && it.getCompleted().asBinder().isBinderAlive }
+            service.value?.let {
+                it.isCompleted && it.getCompleted().asBinder().isBinderAlive
+            } == true
 
     /**
      * Initiates a connection with the [StorageService], returns a [Deferred] which will be resolved
      * with the [IStorageService] binder.
      */
     fun connectAsync(): Deferred<IStorageService> {
-        if (isConnected) return service.value
+        if (isConnected) {
+            return requireNotNull(service.value) {
+                "isConnected is true, but the deferred was null"
+            }
+        }
 
         val deferred = CompletableDeferred<IStorageService>(coroutineContext[Job.Key])
-        service.value = deferred
-        needsDisconnect = bindingDelegate.bindStorageService(
-            this,
-            flags = 0,
-            options = storeOptions
-        )
-        if (!needsDisconnect) {
-            deferred.completeExceptionally(
-                IllegalStateException("Could not initiate connection to the StorageService")
-            )
+        service.update {
+            it?.cancel()
+            deferred
         }
+        needsDisconnect =
+            bindingDelegate.bindStorageService(this, flags = 0, options = storeOptions).also {
+                if (!it) {
+                    deferred.completeExceptionally(
+                        IllegalStateException("Could not initiate connection to the StorageService")
+                    )
+                }
+            }
         return deferred
     }
 
     /** Disconnects from the [StorageService]. */
     fun disconnect() {
-        if (needsDisconnect) bindingDelegate.unbindStorageService(this)
+        if (needsDisconnect) {
+            bindingDelegate.unbindStorageService(this)
+            service.value?.takeIf { !it.isCompleted }
+                ?.completeExceptionally(
+                    IllegalStateException("Can't expect an IStorageService binder after disconnect")
+                )
+        }
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-        this.service.value.complete(service as IStorageService)
+        this.service.value?.complete(service as IStorageService)
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
