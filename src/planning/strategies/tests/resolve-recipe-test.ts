@@ -12,6 +12,7 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {Entity} from '../../../runtime/entity.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
@@ -222,7 +223,7 @@ describe('resolve recipe', () => {
 
     const arc = createTestArc(manifest);
 
-    const car = manifest.findSchemaByName('Car').entityClass();
+    const car = Entity.createEntityClass(manifest.findSchemaByName('Car'), null);
     await arc.createStore(car.type, /* name= */ null, 'batmobile');
 
     const recipe = manifest.recipes[0];

@@ -15,6 +15,7 @@ import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, Inte
         ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
 import {Flags} from '../flags.js';
+import {Entity} from '../entity.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -363,7 +364,7 @@ describe('types', () => {
       const recipe = manifest.recipes[1];
       recipe.handles[0].mapToStorage({
         id: 'test1',
-        type: manifest.findSchemaByName('Product').entityClass().type.collectionOf()
+        type: Entity.createEntityClass(manifest.findSchemaByName('Product'), null).type.collectionOf()
       });
       assert(recipe.normalize());
       assert(recipe.isResolved());
@@ -376,7 +377,7 @@ describe('types', () => {
       const recipe = manifest.recipes[1];
       recipe.handles[0].mapToStorage({
         id: 'test1',
-        type: manifest.findSchemaByName('Lego').entityClass().type.collectionOf()
+        type: Entity.createEntityClass(manifest.findSchemaByName('Lego'), null).type.collectionOf()
       });
       assert(recipe.normalize());
       assert(recipe.isResolved());

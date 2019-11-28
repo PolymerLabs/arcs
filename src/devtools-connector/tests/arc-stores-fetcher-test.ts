@@ -19,6 +19,8 @@ import {SingletonType} from '../../runtime/type.js';
 import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Flags} from '../../runtime/flags.js';
 
+import {Entity} from '../../runtime/entity.js';
+
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
@@ -30,7 +32,7 @@ describe('ArcStoresFetcher', () => {
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
-    const foo = arc.context.findSchemaByName('Foo').entityClass();
+    const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     await fooHandle.set(new foo({value: 'persistence is useful'}));

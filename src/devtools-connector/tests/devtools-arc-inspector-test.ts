@@ -17,6 +17,8 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
+import {Entity} from '../../runtime/entity.js';
+
 describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
@@ -41,7 +43,7 @@ describe('DevtoolsArcInspector', () => {
     const runtime = new Runtime(loader, MockSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
-    const foo = arc.context.findSchemaByName('Foo').entityClass();
+    const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');
 
     const recipe = arc.context.recipes[0];

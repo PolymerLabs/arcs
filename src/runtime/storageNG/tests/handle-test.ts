@@ -87,8 +87,8 @@ describe('CollectionHandle', async () => {
   before(async () => {
     const loader = new Loader();
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    barType = manifest.schemas.Bar.type as EntityType;
-    Bar = barType.getEntitySchema().entityClass();
+    barType = new EntityType(manifest.schemas.Bar);
+    Bar = Entity.createEntityClass(barType.getEntitySchema(), null);
   });
 
   it('can add and remove elements', async () => {

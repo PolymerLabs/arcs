@@ -8,14 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
-import {EntityType, Type} from './type.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
+
+// tslint:disable-next-line: no-any
+type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
 
 export class Schema {
   readonly names: string[];
@@ -23,6 +24,9 @@ export class Schema {
   readonly fields: Dictionary<any>;
   description: Dictionary<string> = {};
   isAlias: boolean;
+  // The implementation of fromLiteral creates a cyclic dependency, so it is
+  // separated out. This variable serves the purpose of an abstract static.
+  static fromLiteral: SchemaMethod = null;
 
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
@@ -59,27 +63,6 @@ export class Schema {
     }
 
     return {names: this.names, fields, description: this.description};
-  }
-
-  static fromLiteral(data = {fields: {}, names: [], description: {}}) {
-    const fields = {};
-    const updateField = field => {
-      if (field.kind === 'schema-reference') {
-        const schema = field.schema;
-        return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
-      } else if (field.kind === 'schema-collection') {
-        return {kind: 'schema-collection', schema: updateField(field.schema)};
-      } else {
-        return field;
-      }
-    };
-    for (const key of Object.keys(data.fields)) {
-      fields[key] = updateField(data.fields[key]);
-    }
-
-    const result = new Schema(data.names, fields);
-    result.description = data.description || {};
-    return result;
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
@@ -170,14 +153,6 @@ export class Schema {
       }
     }
     return true;
-  }
-
-  get type(): Type {
-    return new EntityType(this);
-  }
-
-  entityClass(context: ParticleExecutionContext|null = null): EntityClass {
-    return Entity.createEntityClass(this, context);
   }
 
   crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {
