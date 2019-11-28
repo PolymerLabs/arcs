@@ -1,3 +1,14 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.crdt.parcelables
 
 import android.os.Parcel
@@ -7,7 +18,10 @@ import arcs.common.ReferenceId
 import arcs.crdt.CrdtSet
 import arcs.crdt.CrdtSingleton
 
+/** Container of [Parcelable] implementations for the data and ops classes of [CrdtSingleton]. */
 object ParcelableCrdtSingleton {
+
+    /** Parcelable variant of [CrdtSingleton.Data]. */
     data class Data(
         override val actual: CrdtSingleton.Data<Referencable>
     ) : ParcelableCrdtData<CrdtSingleton.Data<Referencable>> {
@@ -35,10 +49,10 @@ object ParcelableCrdtSingleton {
                 repeat(items) {
                     values[requireNotNull(parcel.readString())] =
                         requireNotNull(
-                            parcel.readTypedObject(ParcelableCrdtSet.DataValue.CREATOR)
+                            parcel.readTypedObject(ParcelableCrdtSet.DataValue.CREATOR)?.actual
                         ) {
                             "No DataValue found in parcel when reading ParcelableCrdtSingleton.Data"
-                        }.actual
+                        }
                 }
 
                 return Data(CrdtSingleton.DataImpl(versionMap.actual, values))
@@ -48,6 +62,13 @@ object ParcelableCrdtSingleton {
         }
     }
 
+    /**
+     * Parcelable variants of [CrdtSingleton.Operation].
+     *
+     * This class is implemented such that it serves as a multiplexed parcelable for its subclasses.
+     * We write the ordinal value of [OpType] first, before parceling the contents of the subclass.
+     * The [OpType] is used to figure out the correct subtype when deserialising.
+     */
     sealed class Operation(
         private val opType: OpType
     ) : ParcelableCrdtOperation<CrdtSingleton.Operation<Referencable>> {
