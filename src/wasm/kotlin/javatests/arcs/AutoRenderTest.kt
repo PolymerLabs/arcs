@@ -9,7 +9,9 @@
  */
 package wasm.kotlin.javatests.arcs
 
-import arcs.*
+import arcs.Particle
+import arcs.Handle
+import arcs.Singleton
 import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain

@@ -9,9 +9,9 @@
  */
 package wasm.kotlin.javatests.arcs
 
-import arcs.Particle
 import arcs.Collection
 import arcs.Entity
+import arcs.Particle
 
 import kotlin.test.Asserter
 import kotlin.AssertionError
