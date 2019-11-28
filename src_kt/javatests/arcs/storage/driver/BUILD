@@ -14,7 +14,6 @@ arcs_kt_jvm_test_suite(
         "//src_kt/java/arcs/common",
         "//src_kt/java/arcs/storage",
         "//src_kt/java/arcs/storage/driver",
-        "//src_kt/java/arcs/util",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",
