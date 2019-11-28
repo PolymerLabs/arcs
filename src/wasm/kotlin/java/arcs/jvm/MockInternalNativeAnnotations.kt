@@ -9,7 +9,10 @@
  */
 package kotlin.native.internal
 
-import kotlin.annotation.AnnotationTarget.*
+import kotlin.annotation.AnnotationTarget.CONSTRUCTOR
+import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.annotation.AnnotationTarget.PROPERTY_GETTER
+import kotlin.annotation.AnnotationTarget.PROPERTY_SETTER
 
 /**
  * Allows functions to be called by their given name from C++ part of runtime using C ABI.
