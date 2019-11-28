@@ -3,11 +3,12 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("@rules_java//java:defs.bzl", "java_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
+load("//tools/build_defs/android:rules.bzl", "android_local_test")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin"]
 
@@ -108,6 +109,78 @@ def kt_jvm_and_js_library(
             srcs = srcs,
             deps = [_to_js_dep(dep) for dep in deps],
             **js_kwargs
+        )
+
+def arcs_kt_android_test_suite(name, manifest, package, srcs = None, deps = []):
+    """Defines Kotlin Android test targets for a directory.
+
+    Defines a Kotlin Android library (kt_android_library) for all of the sources
+    in the current directory, and then defines an Android test target
+    (android_local_test) for each individual test file.
+
+    Args:
+      name: name to use for the kt_android_library target
+      manifest: label of the Android manifest file to use
+      package: package the test classes are in
+      srcs: Optional list of source files. If not supplied, a glob of all *.kt
+        files will be used.
+      deps: list of dependencies for the kt_android_library
+    """
+    if not srcs:
+        srcs = native.glob(["*.kt"])
+
+    kt_android_library(
+        name = name,
+        srcs = native.glob(["*.kt"]),
+        manifest = manifest,
+        testonly = True,
+        deps = deps,
+    )
+
+    for src in native.glob(["*.kt"]):
+        class_name = src[:-3]
+        android_local_test(
+            name = class_name,
+            size = "small",
+            manifest = manifest,
+            test_class = "%s.%s" % (package, class_name),
+            deps = [
+                ":%s" % name,
+                "@robolectric//bazel:android-all",
+            ],
+        )
+
+def arcs_kt_jvm_test_suite(name, package, srcs = None, deps = []):
+    """Defines Kotlin JVM test targets for a directory.
+
+    Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
+    in the current directory, and then defines an JVM test target (java_test)
+    for each individual test file.
+
+    Args:
+      name: name to use for the kt_jvm_library target
+      package: package the test classes are in
+      srcs: Optional list of source files. If not supplied, a glob of all *.kt
+        files will be used.
+      deps: list of dependencies for the kt_jvm_library
+    """
+    if not srcs:
+        srcs = native.glob(["*.kt"])
+
+    kt_jvm_library(
+        name = name,
+        srcs = srcs,
+        testonly = True,
+        deps = deps,
+    )
+
+    for src in srcs:
+        class_name = src[:-3]
+        java_test(
+            name = class_name,
+            size = "small",
+            test_class = "%s.%s" % (package, class_name),
+            runtime_deps = [":%s" % name],
         )
 
 def _to_jvm_dep(dep):
