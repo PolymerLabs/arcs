@@ -52,6 +52,23 @@ export type Mapper<I, O> = (input: I) => O;
 export interface Literal {
 }
 
+/**
+ * An interface for types that can be converted to and from a `Literal` type.
+ *
+ * @param T the origin type
+ * @param Lit a Literal type, akin to JSON.
+ */
+export interface Literalizable<T, Lit extends Literal> {
+
+  /** Convert the current instance into a Literal */
+  prototype: {
+    toLiteral(): Lit;
+  };
+
+  /** @return the original type from a Literal, statically */
+  fromLiteral(literal: Lit): T;
+}
+
 /** A light-weight, parameterized key-value store Type */
 export interface Dictionary<T> {
   [key: string]: T;
