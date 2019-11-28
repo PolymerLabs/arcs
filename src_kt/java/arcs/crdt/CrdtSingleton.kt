@@ -135,6 +135,16 @@ class CrdtSingleton<T : Referencable>(
                 // After removal of all existing values, we simply need to add the new value.
                 return set.applyOperation(Add(clock, actor, value))
             }
+
+            override fun equals(other: Any?): Boolean =
+                other is Update<*> &&
+                    other.clock == clock &&
+                    other.actor == actor &&
+                    other.value == value
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Update($clock, $actor, $value)"
         }
 
         /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
@@ -151,6 +161,15 @@ class CrdtSingleton<T : Referencable>(
                 removeOps.forEach { set.applyOperation(it) }
                 return true
             }
+
+            override fun equals(other: Any?): Boolean =
+                other is Clear<*> &&
+                    other.clock == clock &&
+                    other.actor == actor
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
         }
     }
 

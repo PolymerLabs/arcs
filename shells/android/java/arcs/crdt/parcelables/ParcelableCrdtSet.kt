@@ -1,3 +1,14 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.crdt.parcelables
 
 import android.os.Parcel
@@ -97,7 +108,7 @@ object ParcelableCrdtSet {
                 super.writeToParcel(parcel, flags)
                 parcel.writeTypedObject(actual.clock.toParcelable(), flags)
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(ParcelableReferencable(actual.added), flags)
+                parcel.writeTypedObject(actual.added.toParcelable(), flags)
             }
 
             companion object CREATOR : Parcelable.Creator<Add> {
@@ -126,7 +137,7 @@ object ParcelableCrdtSet {
                 super.writeToParcel(parcel, flags)
                 parcel.writeTypedObject(actual.clock.toParcelable(), flags)
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(ParcelableReferencable(actual.removed), flags)
+                parcel.writeTypedObject(actual.removed.toParcelable(), flags)
             }
 
             companion object CREATOR : Parcelable.Creator<Remove> {
@@ -163,7 +174,7 @@ object ParcelableCrdtSet {
 
                 parcel.writeInt(actual.removed.size)
                 actual.removed.forEach {
-                    parcel.writeTypedObject(ParcelableReferencable(it), flags)
+                    parcel.writeTypedObject(it.toParcelable(), flags)
                 }
             }
 
