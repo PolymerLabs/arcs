@@ -27,6 +27,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
                 "//shells/android/java/arcs/storage/parcelables",
                 "//shells/android/java/arcs/storage/service",
                 "//src_kt/java/arcs/crdt",
+                "//src_kt/java/arcs/crdt/internal",
                 "//src_kt/java/arcs/storage",
                 "//src_kt/java/arcs/storage/driver",
                 "//src_kt/java/arcs/testutil",
