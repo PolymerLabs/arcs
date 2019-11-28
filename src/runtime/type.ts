@@ -20,7 +20,6 @@ import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
 import {Schema} from './schema.js';
-import './schema-from-literal.js';
 import {FromLiteralFactory} from './from-literal-factory.js';
 
 export interface TypeLiteral extends Literal {
