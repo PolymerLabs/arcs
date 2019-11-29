@@ -12,6 +12,7 @@ import {ArcType} from '../../../build/runtime/type.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {SyntheticStores} from '../synthetic-stores.js';
+import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/devtools-arc-inspector.js';
 
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
@@ -71,7 +72,15 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(context, composer, storage, id, serialization, portFactories) {
-    return await Runtime.spawnArc({id, context, composer, serialization, storage: `${storage}/${id}`, portFactories});
+    return await Runtime.spawnArc({
+      id,
+      context,
+      composer,
+      serialization,
+      storage: `${storage}/${id}`,
+      portFactories,
+      inspectorFactory: devtoolsArcInspectorFactory,
+    });
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
