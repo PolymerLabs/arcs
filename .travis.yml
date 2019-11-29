@@ -41,5 +41,10 @@ before_install:
   - mkdir -p ./disk-cache/
 
 install:
+  - find node_modules -name tsc
+  - find node_modules/.bin
+  - tools/run_in_docker "find node_modules -name tsc"
+  - tools/run_in_docker "find node_modules/.bin"
   - tools/run_in_docker "npm install"
-  - tools/run_in_docker "find node_modules"
+  - tools/run_in_docker "find node_modules -name tsc"
+  - tools/run_in_docker "find node_modules/.bin"
