@@ -47,11 +47,3 @@ RUN apt-get install -y nodejs
 # Install Project
 COPY package.json $WORKSPACE/package.json
 RUN npm install
-
-# Create bazel cache directory
-RUN mkdir -p /disk-cache/
-
-
-########
-
-COPY . .
