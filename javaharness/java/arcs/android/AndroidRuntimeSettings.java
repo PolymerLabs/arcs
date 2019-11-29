@@ -143,6 +143,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
    * @param <T> The expected type of returned data.
    * @return the resolved content of property in type T.
    */
+  @SuppressWarnings("RuntimeExec")
   private <T> T getProperty(String property, Function<String, T> converter, T defaultValue) {
     try {
       // Property-read is granted at the public domain of selinux policies.
