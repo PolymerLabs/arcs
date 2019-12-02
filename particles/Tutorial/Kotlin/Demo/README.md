@@ -88,9 +88,3 @@ with the untrusted particle highlighted, we can see the handles with personal da
 connect to the Board. So the data should be safe.
 
 ![Tic Tac Toe Untrusted](diagrams/TTTUntrusted.jpg) 
-
-## Defining Identities with Entities
-
-Now that we have a design for the system, we need to define 
-
-![Tic Tac Toe Handle Types](diagrams/TTTHandleTypes.jpg)  
