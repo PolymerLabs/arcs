@@ -1,6 +1,25 @@
-package arcs
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
+package arcs.wasm
+
+import arcs.Address
+import arcs.Handle
+import arcs.Particle
+import arcs.StringDecoder
+import arcs.AddressableMap.address2Addressable
+import arcs.AddressableMap.addressable2Address
+import arcs.AddressableMap.nextAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 import kotlin.native.toUtf8
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointed
@@ -13,37 +32,32 @@ import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.toLong
 
 // Model WasmAddress as an Int
-typealias WasmAddress = Int
+typealias WasmAddress = Address
 
 // Wasm Strings are also Int heap pointers
 typealias WasmString = Int
 
 typealias WasmNullableString = Int
 
-/**
- * Any object implementing this interface can be converted into a (pinned) stable heap pointer.
- * To avoid GC Leaks, eventually the ABI should have a Particle.dispose() method which releases
- * these pinned pointers. Right now, the lifetime of these objects depends on the Arcs Runtime
- * holding onto particle and handle references beyond the scope of the call.
- */
-abstract class WasmObject {
-    private var cachedWasmAddress: WasmAddress? = null
-    fun toWasmAddress(): WasmAddress {
-        if (cachedWasmAddress == null) {
-            cachedWasmAddress = StableRef.create(this).asCPointer().toLong().toWasmAddress()
-        }
-        return cachedWasmAddress as WasmAddress
-    }
+fun Any?.toAddress(): Address {
+    // Null pointer maps to 0
+    if (this == null) return 0
+
+    val existingAddress = addressable2Address[this]
+    if (existingAddress != null) return existingAddress
+
+    val address = nextAddress++
+    address2Addressable[address] = this
+    addressable2Address[this] = address
+
+    return address
 }
+
+fun <T> Address?.toObject(): T? = if (this == 0) null else address2Addressable[this] as T
 
 // Extension method to convert an Int into a Kotlin heap ptr
 fun WasmAddress.toPtr(): NativePtr {
     return this.toLong().toCPointer<CPointed>()!!.rawValue
-}
-
-// Convert a WasmAddress back into a Kotlin Object reference
-inline fun <reified T : Any> WasmAddress.toObject(): T {
-    return this.toLong().toCPointer<CPointed>()!!.asStableRef<T>().get()
 }
 
 // Longs are only used for Kotlin-Native calls to ObjC/Desktop C targets
@@ -124,14 +138,14 @@ fun connectHandle(
     log("Connect called")
     return particlePtr
         .toObject<Particle>()
-        .connectHandle(handleName.toKString(), canRead, canWrite)!!
-        .toWasmAddress()
+        ?.connectHandle(handleName.toKString(), canRead, canWrite)
+        ?.toAddress() ?: 0
 }
 
 @Retain
 @ExportForCppRuntime("_init")
 fun init(particlePtr: WasmAddress) {
-    particlePtr.toObject<Particle>().init()
+    particlePtr.toObject<Particle>()?.init()
 }
 
 @Retain
@@ -140,10 +154,12 @@ fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNu
     log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
     val encodedStr: String? = encoded.toNullableKString()
-    log("Handle is '${handle.name}' syncing '$encodedStr'")
-    handle.sync(encodedStr)
-    log("Invoking sync on handle on particle")
-    particlePtr.toObject<Particle>().sync(handle)
+    handle?.let {
+        log("Handle is '${handle.name}' syncing '$encodedStr'")
+        log("Invoking sync on handle on particle")
+        it.sync(encodedStr)
+        particlePtr.toObject<Particle>()?.sync(it)
+    }
 }
 
 @Retain
@@ -155,8 +171,10 @@ fun updateHandle(
     encoded2Ptr: WasmNullableString
 ) {
     val handle = handlePtr.toObject<Handle>()
-    handle.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
-    particlePtr.toObject<Particle>().onHandleUpdate(handle)
+    handle?.let {
+        it.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
+        particlePtr.toObject<Particle>()?.onHandleUpdate(it)
+    }
 }
 
 @Retain
@@ -168,7 +186,7 @@ fun renderSlot(
     sendModel: Boolean
 ) {
     particlePtr.toObject<Particle>()
-        .renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
+        ?.renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
 }
 
 @Retain
@@ -179,7 +197,7 @@ fun fireEvent(
     handlerNamePtr: WasmString,
     eventData: WasmString
 ) {
-    particlePtr.toObject<Particle>().fireEvent(
+    particlePtr.toObject<Particle>()?.fireEvent(
         slotNamePtr.toKString(),
         handlerNamePtr.toKString(),
         StringDecoder.decodeDictionary(eventData.toKString())
@@ -195,14 +213,14 @@ fun serviceResponse(
     tagPtr: WasmString
 ) {
     val dict = StringDecoder.decodeDictionary(responsePtr.toKString())
-    particlePtr.toObject<Particle>().serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
+    particlePtr.toObject<Particle>()?.serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
 }
 
 @Retain
 @ExportForCppRuntime("_renderOutput")
 fun renderOutput(particlePtr: WasmAddress) {
     particlePtr.toObject<Particle>()
-        .renderOutput()
+        ?.renderOutput()
 }
 
 @SymbolName("_singletonSet")
@@ -265,5 +283,3 @@ fun log(msg: String) {
     flush()
 }
 
-fun main() {
-}

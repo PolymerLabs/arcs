@@ -1,16 +1,14 @@
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_library")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
-
 licenses(["notice"])
 
-kt_jvm_library(
+# TODO(alxr): Justify extra aliases with a comment, or remove
+alias(
     name = "arcs",
-    srcs = ["src/arcs/Entity.kt"],
+    actual = "//src/wasm/kotlin/java/arcs",
     visibility = ["//visibility:public"],
 )
 
-kt_native_library(
-    name = "arcs_wasm",
-    srcs = glob(["src/arcs/*.kt"]),
+alias(
+    name = "arcs-wasm",
+    actual = "//src/wasm/kotlin/java/arcs:arcs-wasm",
     visibility = ["//visibility:public"],
 )

@@ -1,7 +1,7 @@
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.WasmAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -13,4 +13,4 @@ class HelloWorldParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newHelloWorldParticle")
-fun constructHelloWorldParticle() = HelloWorldParticle().toWasmAddress()
+fun constructHelloWorldParticle() = HelloWorldParticle().toAddress()

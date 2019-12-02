@@ -1,3 +1,14 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.tutorials.tictactoe
 
 import arcs.Collection
@@ -8,6 +19,7 @@ import arcs.TTTHumanPlayer_Events
 import arcs.TTTHumanPlayer_GameState
 import arcs.TTTHumanPlayer_MyMove
 import arcs.TTTHumanPlayer_Player
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {
@@ -37,4 +49,4 @@ class TTTHumanPlayer : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTTTHumanPlayer")
-fun constructTTTHumanPlayer() = TTTHumanPlayer().toWasmAddress()
+fun constructTTTHumanPlayer() = TTTHumanPlayer().toAddress()

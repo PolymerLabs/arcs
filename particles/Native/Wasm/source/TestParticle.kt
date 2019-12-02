@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.test
 
 import arcs.Collection
@@ -9,6 +18,8 @@ import arcs.TestParticle_Info
 import arcs.TestParticle_Res
 import arcs.abort
 import arcs.log
+import arcs.wasm.toAddress
+import kotlin.Exception
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -53,46 +64,46 @@ class TestParticle : Particle() {
         log("getting template")
 
         return """
-            <style>
-            #data {{dataCol}}
-            #info {{infoCol}}
-            #panel { margin: 10px; }
-            #panel pre { margin-left: 20px; }
-            th,td { padding: 4px 16px; }
-            </style>
-            <div id="panel">
-            <b id="data">[data]</b>
-            <pre>{{dataStr}}</pre>
-            <b id="info">[info]</b>
-            <pre>{{infoStr}}</pre>
-            </div>
-            <table>
-            <tr>
-            <th>Singleton</th>
-            <th>Collection</th>
-            <th>Errors</th>
-            </tr>
-            <tr>
-            <td><button on-click="add">Add</button></td>
-            <td><button on-click="store">Store</button></td>
-            <td>
-            <button on-click="throw">Throw</button> &nbsp;
-            <button on-click="abort">Abort</button>
-            </td>
-            </tr>
-            <tr>
-            <td><button on-click="dataclear">Clear</button></td>
-            <td><button on-click="remove">Remove</button></td>
-            <td>
-            <button on-click="assert">Assert</button> &nbsp;
-            <button on-click="exit">Exit</button>
-            </td>
-            </tr>
-            <tr>
-            <td></td>
-            <td><button on-click="infoclear">Clear</button></td>
-            </tr>
-             </table>""".trimIndent()
+                <style>
+                #data {{dataCol}}
+                #info {{infoCol}}
+                #panel { margin: 10px; }
+                #panel pre { margin-left: 20px; }
+                th,td { padding: 4px 16px; }
+                </style>
+                <div id="panel">
+                <b id="data">[data]</b>
+                <pre>{{dataStr}}</pre>
+                <b id="info">[info]</b>
+                <pre>{{infoStr}}</pre>
+                </div>
+                <table>
+                <tr>
+                <th>Singleton</th>
+                <th>Collection</th>
+                <th>Errors</th>
+                </tr>
+                <tr>
+                <td><button on-click="add">Add</button></td>
+                <td><button on-click="store">Store</button></td>
+                <td>
+                <button on-click="throw">Throw</button> &nbsp;
+                <button on-click="abort">Abort</button>
+                </td>
+                </tr>
+                <tr>
+                <td><button on-click="dataclear">Clear</button></td>
+                <td><button on-click="remove">Remove</button></td>
+                <td>
+                <button on-click="assert">Assert</button> &nbsp;
+                <button on-click="exit">Exit</button>
+                </td>
+                </tr>
+                <tr>
+                <td></td>
+                <td><button on-click="infoclear">Clear</button></td>
+                </tr>
+                 </table>""".trimIndent()
     }
 
     private val data = Singleton { TestParticle_Data() }
@@ -143,11 +154,11 @@ class TestParticle : Particle() {
             abort()
         }
         eventHandler("exit") {
-//              exit(1)
+            //              exit(1)
         }
     }
 }
 
 @Retain
 @ExportForCppRuntime("_newTestParticle")
-fun construct() = TestParticle().toWasmAddress()
+fun construct() = TestParticle().toAddress()

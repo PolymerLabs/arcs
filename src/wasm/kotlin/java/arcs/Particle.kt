@@ -1,11 +1,20 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs
 
-import kotlin.collections.set
-
 /**
- * Base class for all Wasm Particles.
+ * Base class for all Particles.
  */
-abstract class Particle : WasmObject() {
+abstract class Particle {
     private val handles: MutableMap<String, Handle> = mutableMapOf()
     private val toSync: MutableSet<Handle> = mutableSetOf()
     private val eventHandlers: MutableMap<String, (Map<String, String>) -> Unit> = mutableMapOf()
@@ -118,10 +127,10 @@ abstract class Particle : WasmObject() {
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
-        onRenderOutput(
-            toWasmAddress(),
-            template.toWasmNullableString(),
-            model.toWasmNullableString()
+        RuntimeClient.onRenderOutput(
+            this,
+            template,
+            model
         )
     }
 
@@ -161,11 +170,11 @@ abstract class Particle : WasmObject() {
      */
     fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
         val encoded = StringEncoder.encodeDictionary(args)
-        serviceRequest(
-            toWasmAddress(),
-            call.toWasmString(),
-            encoded.toWasmString(),
-            tag.toWasmString()
+        RuntimeClient.serviceRequest(
+            this,
+            call,
+            encoded,
+            tag
         )
     }
 
@@ -187,17 +196,12 @@ abstract class Particle : WasmObject() {
      * @param url URL with $variables
      * @return absolute URL
      */
-    fun resolveUrl(url: String): String {
-        val r: WasmString = resolveUrl(url.toWasmString())
-        val resolved = r.toKString()
-        _free(r)
-        return resolved
-    }
+    fun resolveUrl(url: String): String = RuntimeClient.resolveUrl(url)
 }
 
 enum class Direction { Unconnected, In, Out, InOut }
 
-abstract class Handle : WasmObject() {
+abstract class Handle {
     lateinit var name: String
     lateinit var particle: Particle
     var direction: Direction = Direction.Unconnected
@@ -221,16 +225,16 @@ open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     fun set(entity: T) {
         this.entity = entity
         val encoded = entity.encodeEntity()
-        singletonSet(
-            particle.toWasmAddress(),
-            toWasmAddress(),
-            encoded.toWasmString()
+        RuntimeClient.singletonSet(
+            particle,
+            this,
+            encoded
         )
     }
 
     fun clear() {
         entity = entityCtor()
-        singletonClear(particle.toWasmAddress(), toWasmAddress())
+        RuntimeClient.singletonClear(particle, this)
     }
 }
 
@@ -268,11 +272,7 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
 
     fun store(entity: T) {
         val encoded = entity.encodeEntity()
-        val id: WasmString = collectionStore(particle.toWasmAddress(), toWasmAddress(), encoded.toWasmString())
-        id.toNullableKString()?.let {
-            entity.internalId = it
-            _free(id)
-        }
+        RuntimeClient.collectionStore(particle, this, encoded)?.let { entity.internalId = it }
         entities[entity.internalId] = entity
     }
 
@@ -280,7 +280,7 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
         entities[entity.internalId]?.let {
             val encoded: String = it.encodeEntity()
             entities.remove(entity.internalId)
-            collectionRemove(particle.toWasmAddress(), toWasmAddress(), encoded.toWasmString())
+            RuntimeClient.collectionRemove(particle, this, encoded)
         }
     }
 
@@ -297,6 +297,6 @@ class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Ite
 
     fun clear() {
         entities.clear()
-        collectionClear(particle.toWasmAddress(), toWasmAddress())
+        RuntimeClient.collectionClear(particle, this)
     }
 }

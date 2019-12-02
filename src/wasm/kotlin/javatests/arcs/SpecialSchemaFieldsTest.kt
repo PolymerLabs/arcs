@@ -1,10 +1,20 @@
-package wasm.kotlin.tests.arcs
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+package wasm.kotlin.javatests.arcs
 
 import arcs.Singleton
-import arcs.WasmAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
-import kotlin.test.assertFalse
-
+import kotlin.native.Retain
 
 class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) : TestBase<SpecialSchemaFieldsTest_Errors>(ctor) {
     private val unused = Singleton { SpecialSchemaFieldsTest_Fields() }
@@ -56,5 +66,5 @@ class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) 
 
 @Retain
 @ExportForCppRuntime("_newSpecialSchemaFieldsTest")
-fun constructSpecialSchemaFieldsTest(): WasmAddress = SpecialSchemaFieldsTest { txt: String -> SpecialSchemaFieldsTest_Errors(txt) }.toWasmAddress()
+fun constructSpecialSchemaFieldsTest() = SpecialSchemaFieldsTest { txt: String -> SpecialSchemaFieldsTest_Errors(txt) }.toAddress()
 

@@ -9,19 +9,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.tutorials
+package wasm.kotlin.javatests.arcs
 
 import arcs.Particle
 import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
-/**
- * Sample WASM Particle.
- */
-class ChildParticle : Particle() {
-    override fun getTemplate(slotName: String) = "Child"
-}
+class MissingRegisterHandleTest : Particle()
 
 @Retain
-@ExportForCppRuntime()
-fun _newChildParticle() = ChildParticle().toAddress()
+@ExportForCppRuntime("_newMissingRegisterHandleTest")
+fun constructMissingRegisterHandleTest() = MissingRegisterHandleTest().toAddress()

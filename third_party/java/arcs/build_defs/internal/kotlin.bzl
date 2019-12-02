@@ -10,13 +10,16 @@ load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
-_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin"]
+_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
+_WASM_SUFFIX = "-wasm"
+_JS_SUFFIX = "-js"
+_KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
 def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
     """Declares kotlin library targets for Kotlin particle sources."""
-    kt_native_library(
+    kt_jvm_and_wasm_library(
         name = name,
         srcs = srcs,
         deps = _ARCS_KOTLIN_LIBS + deps,
@@ -38,9 +41,9 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
 
         # Declare a library because g3 kt_native_binary doesn't take srcs
         kt_native_library(
-            name = libname,
+            name = libname + _WASM_SUFFIX,
             srcs = srcs,
-            deps = _ARCS_KOTLIN_LIBS + deps,
+            deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
             visibility = visibility,
         )
 
@@ -49,7 +52,7 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
     kt_native_binary(
         name = name,
         entry_point = "arcs.main",
-        deps = _ARCS_KOTLIN_LIBS + deps,
+        deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
         tags = ["wasm"],
         visibility = visibility,
     )
@@ -57,6 +60,37 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
     wasm_kt_binary(
         name = name + "_wasm",
         kt_target = ":" + name,
+    )
+
+def kt_jvm_and_wasm_library(
+        name = None,
+        srcs = [],
+        deps = [],
+        visibility = None,
+        **kwargs):
+    """Simultaneously defines JVM and WASM kotlin libraries.
+
+    Args:
+      name: String; Name of the library
+      srcs: List; List of sources
+      deps: List; List of dependencies
+      visibility: List; List of visibilities
+      **kwargs: other arguments to feed into kt_jvm_library and kt_native_library
+    """
+    kt_jvm_library(
+        name = name,
+        srcs = srcs,
+        deps = [_to_jvm_dep(dep) for dep in deps],
+        visibility = visibility,
+        **kwargs
+    )
+
+    kt_native_library(
+        name = name + _WASM_SUFFIX,
+        srcs = srcs,
+        deps = [_to_wasm_dep(dep) for dep in deps],
+        visibility = visibility,
+        **kwargs
     )
 
 def kt_jvm_and_js_library(
@@ -74,18 +108,18 @@ def kt_jvm_and_js_library(
       deps: List; List of dependencies
       exports: List; List of exported dependencies
       visibility: List; List of visibilities
-      **kwargs: other arguments to foward to the kt_jvm_library and
+      **kwargs: other arguments to forward to the kt_jvm_library and
         kt_js_library rules
     """
 
     kt_name = name
-    js_name = name + "-js"
+    js_name = "%s%s" % (name, _JS_SUFFIX)
 
     if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
         # will wrap it in a java_library rule and export everything that is
         # needed from there.
-        kt_name = name + "-kt"
+        kt_name = name + _KT_SUFFIX
         java_library(
             name = name,
             exports = exports + [kt_name],
@@ -102,14 +136,21 @@ def kt_jvm_and_js_library(
 
     if IS_BAZEL:
         js_kwargs = dict(**kwargs)
-        if "exports" in js_kwargs:
-            js_kwargs.pop("exports")
         kt_js_library(
             name = js_name,
             srcs = srcs,
             deps = [_to_js_dep(dep) for dep in deps],
             **js_kwargs
         )
+
+def _to_wasm_dep(dep):
+    last_part = dep.split("/")[-1]
+
+    index_of_colon = dep.find(":")
+    if (index_of_colon == -1):
+        return dep + (":%s%s" % (last_part, _WASM_SUFFIX))
+    else:
+        return dep + _WASM_SUFFIX
 
 def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = []):
     """Defines Kotlin Android test targets for a directory.
@@ -195,6 +236,6 @@ def _to_js_dep(dep):
 
     index_of_colon = dep.find(":")
     if (index_of_colon == -1):
-        return dep + (":%s-js" % last_part)
+        return dep + (":%s%s" % (last_part, _JS_SUFFIX))
     else:
-        return dep + "-js"
+        return dep + _JS_SUFFIX

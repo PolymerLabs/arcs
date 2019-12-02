@@ -1,3 +1,14 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.tutorials.tictactoe
 
 import arcs.Collection
@@ -6,6 +17,7 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
@@ -84,4 +96,4 @@ class TTTBoard : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newTTTBoard")
-fun constructTTTBoard() = TTTBoard().toWasmAddress()
+fun constructTTTBoard() = TTTBoard().toAddress()
