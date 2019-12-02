@@ -75,20 +75,13 @@
   }
 
   function requireUsePreSlandleSyntax(tag: number) {
-    if (!Flags.parseBothSyntaxes && !Flags.defaultToPreSlandlesSyntax) {
+    if (!Flags.parseBothSyntaxes) {
       error(`using pre slandles syntax (disabled by flag) #${tag}`);
     }
     preSlandlesSyntaxLocations.push(location());
   }
 
-  function requireUsePostSlandleSyntax(tag: number) {
-    if (!Flags.parseBothSyntaxes && Flags.defaultToPreSlandlesSyntax) {
-      error(`using post slandles syntax (disabled by flag) #${tag}`);
-    }
-  }
-
   function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
-    requireUsePostSlandleSyntax(2);
     if (direction === 'host') {
       error(`Interface cannot have arguments with a 'host' direction.`);
     }
@@ -112,7 +105,7 @@ Manifest
       return manifestItem;
     });
     checkNormal(result);
-    if (preSlandlesSyntaxLocations.length > 0 && !Flags.defaultToPreSlandlesSyntax) {
+    if (preSlandlesSyntaxLocations.length > 0) {
       const hasTestFlags = typeof global !== 'undefined' && global['testFlags'];
       if (!hasTestFlags || !global['testFlags'].quiet) {
         console.warn('WARNING: Pre-Slandles Syntax is deprecated. Contact jopra@google.com for more information.');
@@ -326,7 +319,6 @@ InterfaceSlotPreSlandles
 InterfaceSlotUnified
   = name:NameWithColon? direction:('consumes' / 'provides') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
   {
-    requireUsePostSlandleSyntax(4);
     let isSet = false;
     if (type) {
       type = type[1]; // remove the whitespace.
@@ -617,7 +609,6 @@ NameWithColon
 ParticleHandleConnectionBodyUnified
   = name:NameWithColon? direction:(DirectionUnified '?'?)? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
   {
-    requireUsePostSlandleSyntax(6);
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
       direction: optional(direction, d => d[0], 'any'),
@@ -640,7 +631,6 @@ DirectionUnified "a direction (e.g. reads writes, reads, writes, hosts, `consume
   = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides') &([^a-zA-Z0-9] / !.)
   {
     // TODO(jopra): Parse optionality properly.
-    requireUsePostSlandleSyntax(8);
     let dir = text();
     if (dir === 'reads? writes') {
       // Fix for faking proper capability set support with optionality.
@@ -813,7 +803,6 @@ ParticleSlotConnectionUnified
   = name:NameWithColon? 'consumes' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotConnectionItem)*)?
   {
-    requireUsePostSlandleSyntax(10);
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     items = optional(items, extractIndented, []);
     items.forEach(item => {
@@ -900,7 +889,6 @@ ParticleProvidedSlotPreSlandles
 ParticleProvidedSlotUnified
   = name:NameWithColon? 'provides' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
   {
-    requireUsePostSlandleSyntax(12);
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     let formFactor: AstNode.SlotFormFactor|null = null;
     const handles: AstNode.ParticleProvidedSlotHandle[] = [];
@@ -1053,7 +1041,6 @@ RecipeParticleConnection
 RecipeParticleConnectionUnified
   = param:NameWithColon? dir:DirectionUnified target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
-    requireUsePostSlandleSyntax(13);
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
@@ -1064,7 +1051,6 @@ RecipeParticleConnectionUnified
   }
   / param:NameWithColon? target:ParticleConnectionTargetComponents eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
-    requireUsePostSlandleSyntax(13);
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
@@ -1139,7 +1125,6 @@ RecipeParticleSlotConnectionPreSlandle
 RecipeParticleSlotConnectionUnified
   = param: NameWithColon? direction:SlotDirectionUnified name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
-    requireUsePostSlandleSyntax(16);
     return toAstNode<AstNode.RecipeParticleSlotConnection>({
       kind: 'slot-connection',
       direction,
@@ -1179,7 +1164,6 @@ RecipeConnectionUnified
       param: '*',
       tags: [],
     });
-    requireUsePostSlandleSyntax(17);
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction: optional(direction, d => d[0], 'any'),
@@ -1293,7 +1277,6 @@ RecipeHandle
       error('cannot provide both name and localName for RecipeHandle.');
     }
     if (name) {
-      requireUsePostSlandleSyntax(19);
     }
     if (namePreSlandles) {
       requireUsePreSlandleSyntax(20);
@@ -1444,7 +1427,6 @@ RecipeSlotPreSlandles
 RecipeSlotUnified
   = name:NameWithColon? 'slot' ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
-    requireUsePostSlandleSyntax(22);
     return toAstNode<AstNode.RecipeSlot>({
       kind: 'slot',
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
@@ -1472,7 +1454,6 @@ SchemaInlineField
       requireUsePreSlandleSyntax(23);
       type = optional(preSlandlesType, ty => ty[0], null);
     } else if (type) {
-      requireUsePostSlandleSyntax(24);
       type = optional(type, ty => ty[2], null);
     }
     return toAstNode<AstNode.SchemaInlineField>({
