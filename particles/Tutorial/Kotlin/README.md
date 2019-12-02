@@ -39,8 +39,9 @@ package arcs.tutorials
 
 // We start with the required imports.
 import arcs.Particle
-import arcs.WasmAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 // We define the HelloWorldParticle class to be a child
 // of the Particle class.
@@ -54,7 +55,7 @@ class HelloWorldParticle : Particle() {
 // available outside the wasm modue.
 @Retain
 @ExportForCppRuntime("_newHelloWorldParticle")
-fun constructHelloWorldParticle() = HelloWorldParticle().toWasmAddress()
+fun constructHelloWorldParticle() = HelloWorldParticle().toAddress()
 ```
 
 Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. Here's an example Bazel BUILD file for HelloWorld:
@@ -100,8 +101,9 @@ Meanwhile, the Kotlin looks quite different, as this is where the magic occurs:
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.WasmAddress
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class BasicTemplateParticle : Particle() {
     // Returns a map that goes from placeholder name to value.
@@ -120,7 +122,7 @@ class BasicTemplateParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newBasicTemplateParticle")
-fun constructBasicTemplateParticle() = BasicTemplateParticle().toWasmAddress()
+fun constructBasicTemplateParticle() = BasicTemplateParticle().toAddress()
 ```
 
 Finally, the Bazel BUILD file, which looks nearly identical to the one we used in the hello world program.
@@ -180,7 +182,7 @@ class ParentParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime()
-fun _newParentParticle() = ParentParticle().toWasmAddress()
+fun _newParentParticle() = ParentParticle().toAddress()
 ```
 
 The ChildParticle looks nearly identical to the particles we created in our first tutorials.
@@ -191,7 +193,7 @@ class ChildParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime()
-fun _newChildParticle() = ChildParticle().toWasmAddress()
+fun _newChildParticle() = ChildParticle().toAddress()
 ```
 
 And finally the BUILD file, which is the same as in the previous tutorials, but has a second rule.
@@ -300,7 +302,7 @@ class GetPersonParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime()
-fun _newGetPerson() = GetPersonParticle().toWasmAddress()
+fun _newGetPerson() = GetPersonParticle().toAddress()
 ```
 Next we have the DisplayGreeting.kt particle:
 
@@ -329,7 +331,7 @@ class DisplayGreetingParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime()
-fun _newDisplayGreeting() = DisplayGreetingParticle().toWasmAddress()
+fun _newDisplayGreeting() = DisplayGreetingParticle().toAddress()
 ```
 
 And finally, the BUILD file. Note the `arcs_kt_schema` rule which will generate schemas of the form 
@@ -413,8 +415,9 @@ And the Kotlin:
 package arcs.tutorials
 
 import arcs.*
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
-
+import kotlin.native.Retain
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
@@ -464,7 +467,7 @@ class CollectionsParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newCollectionsParticle")
-fun constructCollectionsParticle(): WasmAddress = CollectionsParticle().toWasmAddress()
+fun constructCollectionsParticle(): Address = CollectionsParticle().toAddress()
 ```
 
 And the BUILD file:
@@ -532,10 +535,10 @@ And finally, the Kotlin which should look fairly familiar:
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.WasmAddress
 import arcs.Singleton
+import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
-
+import kotlin.native.Retain
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
@@ -562,7 +565,7 @@ class JsonStoreParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newJsonStoreParticle")
-fun constructJsonStoreParticle() = JsonStoreParticle().toWasmAddress()
+fun constructJsonStoreParticle() = JsonStoreParticle().toAddress()
 ```
 
 
