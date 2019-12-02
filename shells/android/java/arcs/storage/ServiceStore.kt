@@ -36,12 +36,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -100,8 +103,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         service.getLocalData(channel)
         val flow = channel.asFlow()
         val modelUpdate =
-            flow.flowOn(coroutineContext)
-                .onEach { it.result.complete(true) }
+            flow.onEach { it.result.complete(true) }
                 .mapNotNull {
                     it.message.actual as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
                 }
@@ -139,9 +141,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             service.registerCallback(messageChannel)
         }
 
-        messageChannel.asFlow()
-            .flowOn(coroutineContext)
-            .onEach(this::handleMessageAndResultFromService)
+        scope.launch {
+            messageChannel.openSubscription().consumeEach { handleMessageAndResultFromService(it) }
+        }
 
         this.serviceConnection = connection
         this.storageService = service
@@ -153,7 +155,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         serviceConnection?.disconnect()
         storageService?.unregisterCallback(serviceCallbackToken)
         storageService = null
-        scope.cancel()
+        scope.coroutineContext[Job.Key]?.cancelChildren()
     }
 
     @Suppress("UNCHECKED_CAST")

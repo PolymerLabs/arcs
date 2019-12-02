@@ -37,8 +37,10 @@ import kotlinx.coroutines.Job
 // TODO: generics here are sub-optimal, can we make this class generic itself?
 class DirectStore /* internal */ constructor(
     options: StoreOptions<CrdtData, CrdtOperation, Any?>,
-    /* internal */ val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
-    /* internal */ val driver: Driver<CrdtData>
+    /* internal */
+    val localModel: CrdtModel<CrdtData, CrdtOperation, Any?>,
+    /* internal */
+    val driver: Driver<CrdtData>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
     override val versionToken: String?
         get() = driver.token
@@ -223,13 +225,13 @@ class DirectStore /* internal */ constructor(
         when {
             thisChange is CrdtChange.Operations && thisChange.ops.isNotEmpty() -> {
                 callbacks.value.filter { messageFromDriver || channel != it.key }
-                    .map { (id, callback) ->
+                    .forEach { (id, callback) ->
                         callback(ProxyMessage.Operations(thisChange.ops, id))
                     }
             }
             thisChange is CrdtChange.Data -> {
                 callbacks.value.filter { messageFromDriver || channel != it.key }
-                    .map { (id, callback) ->
+                    .forEach { (id, callback) ->
                         callback(ProxyMessage.ModelUpdate(thisChange.data, id))
                     }
             }
