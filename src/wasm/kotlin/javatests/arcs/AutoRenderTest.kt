@@ -11,10 +11,10 @@
 
 package wasm.kotlin.javatests.arcs
 
+import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Handle
 import arcs.Singleton
-import arcs.addressable.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
