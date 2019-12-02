@@ -1248,7 +1248,7 @@ describe('particle-api', () => {
     'Particle B should consume the detail slot provided by particle A');
   }));
   // TODO(jopra): Fix the slandle version of this, which throws an undefined in setHandles.
-  it.skip('SLANDLES SYNTAX loadRecipe returns ids of provided slots', Flags.withPostSlandlesSyntax(async () => {
+  it.skip('loadRecipe returns ids of provided slots', async () => {
     const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
         root: consumes Slot
@@ -1320,5 +1320,5 @@ describe('particle-api', () => {
   B as particle1
     detail: consumes slot1`,
     'Particle B should consume the detail slot provided by particle A');
-  }));
+  });
 });
