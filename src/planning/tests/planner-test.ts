@@ -907,62 +907,6 @@ describe('Automatic resolution', () => {
     location: reads writes handle2`, result.toString({hideFields: false}));
   });
 
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('coalesces recipes to resolve connections', Flags.withPreSlandlesSyntax(async () => {
-    const result = await verifyResolvedPlan(`
-      schema Thing
-        Text id
-      schema Product extends Thing
-        Text name
-      schema Other
-        Number count
-      schema Location
-        Number lat
-        Number lng
-
-      particle A
-        out Product product
-      particle B
-        in Thing thing
-        out Other other
-      particle C
-        in * {Number count} something
-        in Location location
-      particle D
-        inout Location location
-
-      recipe
-        ? as product
-        A
-          product -> product
-      recipe
-        ? as other
-        B
-          other -> other
-      recipe
-        C
-      recipe
-        ? as location
-        D
-          location <-> location
-`);
-
-    assert.strictEqual(`recipe
-  create as handle0 // ~
-  create as handle1 // ~
-  create as handle2 // Location {Number lat, Number lng}
-  A as particle0
-    product -> handle0
-  B as particle1
-    other -> handle1
-    thing <- handle0
-  C as particle2
-    location <- handle2
-    something <- handle1
-  D as particle3
-    location <-> handle2`, result.toString({hideFields: false}));
-  }));
-
   it('uses existing handle from the arc', async () => {
     // An existing handle from the arc can be used as input to a recipe
     const recipe = await verifyResolvedPlan(`
@@ -985,7 +929,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
-  it('composes recipe rendering a list of items from a recipe', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1027,9 +971,9 @@ describe('Automatic resolution', () => {
     things: writes handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-  }));
+  });
 
-  it('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1062,7 +1006,7 @@ describe('Automatic resolution', () => {
       item: provides slot0
       postamble: provides slot4
       preamble: provides slot5`);
-  }));
+  });
 
   it('coalesces resolved recipe with no UI', async () => {
     const recipes = await verifyResolvedPlans(`
