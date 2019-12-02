@@ -322,25 +322,14 @@ export class Handle implements Comparable<Handle> {
     // TODO: type? maybe output in a comment
     const result: string[] = [];
     const name = (nameMap && nameMap.get(this)) || this.localName;
-    if (Flags.defaultToPreSlandlesSyntax) {
-      result.push(this.fate);
-      if (this.id) {
-        result.push(`'${this.id}'`);
-      }
-      result.push(...this.tags.map(a => `#${a}`));
-      if (name) {
-        result.push(`as ${name}`);
-      }
-    } else {
-      if (name) {
-        result.push(`${name}:`);
-      }
-      result.push(this.fate);
-      if (this.id) {
-        result.push(`'${this.id}'`);
-      }
-      result.push(...this.tags.map(a => `#${a}`));
+    if (name) {
+      result.push(`${name}:`);
     }
+    result.push(this.fate);
+    if (this.id) {
+      result.push(`'${this.id}'`);
+    }
+    result.push(...this.tags.map(a => `#${a}`));
 
     // Debug information etc.
     if (this.type) {

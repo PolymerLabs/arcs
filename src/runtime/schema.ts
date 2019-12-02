@@ -179,9 +179,6 @@ export class Schema {
   // tslint:disable-next-line: no-any
   static fieldToString([name, type]: [string, any]) {
     const typeStr = Schema._typeString(type);
-    if (Flags.defaultToPreSlandlesSyntax) {
-      return `${typeStr} ${name}`;
-    }
     return `${name}: ${typeStr}`;
   }
 
