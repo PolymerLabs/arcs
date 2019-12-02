@@ -391,7 +391,7 @@ describe('particle-api', () => {
   });
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
-  it.skip('can load a recipe referencing a manifest store', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it.skip('can load a recipe referencing a manifest store', async () => {
     RamDiskStorageDriverProvider.register();
     const nobType = Flags.useNewStorageStack ? '![NobIdStore {nobId: Text}]' : 'NobIdStore {nobId: Text}';
     const nobData = Flags.useNewStorageStack ? '{"root": {"values": {"nid": {"value": {"id": "nid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}' : '[{"nobId": "12345"}]';
@@ -489,7 +489,7 @@ describe('particle-api', () => {
 
     const newHandle = await singletonHandleForTest(arc, newStore);
     assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
-  }));
+  });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
     const arc = await loadFilesIntoNewArc({
@@ -1174,7 +1174,7 @@ describe('particle-api', () => {
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
-  it('loadRecipe returns ids of provided slots', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('loadRecipe returns ids of provided slots', async () => {
     const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
         root: consumes Slot
@@ -1246,7 +1246,7 @@ describe('particle-api', () => {
   B as particle1
     detail: consumes slot1`,
     'Particle B should consume the detail slot provided by particle A');
-  }));
+  });
   // TODO(jopra): Fix the slandle version of this, which throws an undefined in setHandles.
   it.skip('loadRecipe returns ids of provided slots', async () => {
     const context = await Manifest.parse(`

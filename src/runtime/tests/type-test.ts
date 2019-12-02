@@ -298,7 +298,7 @@ describe('types', () => {
   });
 
   describe('serialization', () => {
-    it('serializes interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('serializes interfaces', async () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
@@ -307,10 +307,10 @@ describe('types', () => {
   foo: Foo {value: Text}
   ~a
   x: consumes? Slot`);
-    }));
+    });
 
     // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
-    it('disregards type variable resolutions in interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('disregards type variable resolutions in interfaces', async () => {
       const variable = TypeVariable.make('a', null, null);
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
@@ -318,7 +318,7 @@ describe('types', () => {
 `interface i
   ~a
 `);
-    }));
+    });
   });
 
   describe('integration', () => {
