@@ -16,6 +16,6 @@ kt_android_library(
         "//src_kt/java/arcs/crdt",
         "//src_kt/java/arcs/crdt/internal",
         "//src_kt/java/arcs/storage",
-        "//third_party/java/androidx/lifecycle"
+        "//third_party/java/androidx/lifecycle",
     ],
 )
