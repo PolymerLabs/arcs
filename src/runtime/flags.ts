@@ -27,11 +27,6 @@ export class Flags extends FlagDefaults {
   }
 
   // tslint:disable-next-line: no-any
-  static withPreSlandlesSyntax<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
-    return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, f);
-  }
-
-  // tslint:disable-next-line: no-any
   static withNewStorageStack<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({useNewStorageStack: true}, f);
   }
