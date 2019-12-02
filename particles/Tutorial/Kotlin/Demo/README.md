@@ -24,15 +24,15 @@ particles must be balanced against having too many.
 
 #### Bounds of Data Knowledge
 Arcs' mission statement says that users have sovereignty over their data and its use. To ensure
-data only travels as intended, Arcs uses data flow analysis to make grantees about data flow. But,
+data only travels as intended, Arcs uses data flow analysis to make guarantees about data flow. But,
 for this to work properly, particles must delineate knowledge boundaries. Just as each nation has a 
 border so customs and immigration can know where to operate, we need to create systems with well 
-defined boundaries so Arcs can know where data should (and more importantly, shouldn't) exist.
+defined boundaries so Arcs can know where data should (and more importantly, shouldn't) go.
 
 
 #### Functional Components
 When we create recipes, there are going to be occasions when it makes sense to extract some 
-functionality its own particle. This is easiest to understand with an example, which we provide in
+functionality into its own particle. This is easiest to understand with an example, which we provide in
 more detail below.
 
 ### Tic-Tac-Toe, here we go!
@@ -42,14 +42,15 @@ engineering project, we need a set of requirements. Here are ours:
  1. Play Tic Tac Toe with the traditional rules.
  2. Be able to have a human play against a computer.
  3. The players (human or computer) may make invalid moves at invalid times.
- 4. The main UI should not be trusted with any personal information, such as names.
+ 4. Personal information, such as names, should be restricted to the components that need to know about them.
  5. The system should say who's turn it is.
  6. The system should congratulate the winner by name.
  7. The system should let you reset the game.
  
 Based on these requirements, we can see right off the bat that we are going to need to have some 
-way to create a barrier since since the winner must be congratulated by name, but the UI can't know
-any personal information. This tells us we need a Board particle, and a Game particle. We also know
+way to create a barrier since since the winner must be congratulated by name, but we want to restrict the
+particles that know any personal information. To meet this requirement, we will devide the system into a
+main game particle that can know personal information, and a board which cannot. We also know
 we need a human and computer player. Thus, we start with these four particles. 
 
 ![Tic Tac Toe Particles](diagrams/TTTParticles.jpg) 
