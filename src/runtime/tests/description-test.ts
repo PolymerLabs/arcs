@@ -19,6 +19,7 @@ import {Relevance} from '../relevance.js';
 import {SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
+import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 import {ConCap} from '../../testing/test-util.js';
@@ -99,7 +100,7 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+    const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     if (recipe.handles.length > 1) {
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
@@ -209,7 +210,7 @@ ${recipeManifest}
             root: consumes slot0`);
 
       const recipe = manifest.recipes[0];
-      const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+      const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
 
       recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.bigCollectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType});
@@ -411,7 +412,7 @@ recipe
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
       const recipe = manifest.recipes[0];
-      const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+      const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
       recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
       recipe.normalize();
@@ -533,7 +534,7 @@ recipe
       `;
       const manifest = (await Manifest.parse(manifestStr));
       const recipe = manifest.recipes[0];
-      const scriptDateType = manifest.findSchemaByName('ScriptDate').entityClass().type;
+      const scriptDateType = Entity.createEntityClass(manifest.findSchemaByName('ScriptDate'), null).type;
       recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType});
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
@@ -566,7 +567,7 @@ recipe
         const manifest = (await Manifest.parse(manifestStr));
         assert.lengthOf(manifest.recipes, 1);
         const recipe = manifest.recipes[0];
-        const myBESTType = manifest.findSchemaByName('MyBESTType').entityClass().type;
+        const myBESTType = Entity.createEntityClass(manifest.findSchemaByName('MyBESTType'), null).type;
         recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType});
         recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()});
         recipe.normalize();
@@ -806,8 +807,8 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const fooType = manifest.findSchemaByName('Foo').entityClass().type;
-    const descriptionType = manifest.findSchemaByName('Description').entityClass().type;
+    const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
+    const descriptionType = Entity.createEntityClass(manifest.findSchemaByName('Description'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()});
     recipe.normalize();
@@ -820,7 +821,7 @@ recipe
       arc,
       recipe,
       fooStore,
-      DescriptionType: (descriptionStore.type.getContainedType() as EntityType).entitySchema.entityClass(),
+      DescriptionType: Entity.createEntityClass((descriptionStore.type.getContainedType() as EntityType).entitySchema, null),
       descriptionHandle: await collectionHandleForTest(arc, descriptionStore),
     };
   }

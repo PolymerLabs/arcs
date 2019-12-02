@@ -10,7 +10,7 @@ import kotlinx.atomicfu.atomic
  * Allows for pluggable log-output sinks (see [writer]) and message [formatter]s.
  */
 object Log {
-    internal val logIndex = atomic(0)
+    /* internal */ val logIndex = atomic(0)
 
     /** The current log level. See [Level]. */
     var level = DEFAULT_LEVEL

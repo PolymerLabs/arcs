@@ -1,15 +1,14 @@
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
-
 kt_android_library(
     name = "service",
     srcs = glob(["*.kt"]),
-    manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
+    manifest = "AndroidManifest.xml",
     deps = [
         ":aidl",
         "//shells/android/java/arcs/crdt/parcelables",

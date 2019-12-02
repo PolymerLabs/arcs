@@ -1,6 +1,5 @@
 """Arcs BUILD rules."""
 
-load(":sigh.bzl", "sigh_command")
 load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
@@ -19,6 +18,7 @@ load(
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_schema = "arcs_kt_schema",
 )
+load(":sigh.bzl", "sigh_command")
 
 # Re-export rules from various other files.
 

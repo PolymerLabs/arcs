@@ -506,7 +506,7 @@ export function handleFor(storage: Store, idGenerator: IdGenerator, name: string
 
   const schema = storage.type.getEntitySchema();
   if (schema) {
-    handle.entityClass = schema.entityClass(storage.pec);
+    handle.entityClass = Entity.createEntityClass(schema, storage.pec);
   }
   return handle;
 }

@@ -134,7 +134,7 @@ export abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends 
 
     const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
     if (type instanceof EntityType) {
-      this.entityClass = type.entitySchema.entityClass();
+      this.entityClass = Entity.createEntityClass(type.entitySchema, null);
     } else {
       throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
     }

@@ -24,7 +24,7 @@ async function setup() {
       flg: Boolean
       ref: Reference<Bar {a: Text}>
     `);
-  const fooClass = manifest.schemas.Foo.entityClass();
+  const fooClass = Entity.createEntityClass(manifest.schemas.Foo, null);
   const barType = EntityType.make(['Bar'], {a: 'Text'});
 
   const typeMap = new BiMap<number, EntityType>();
@@ -110,7 +110,7 @@ describe('wasm', () => {
       `);
 
     const verify = (schema, value) => {
-      const entityClass = schema.entityClass();
+      const entityClass = Entity.createEntityClass(schema, null);
       const e = new entityClass({value});
       Entity.identify(e, 'test');
       assert.throws(() => StringEncoder.create(entityClass.type, null).encodeSingleton(e), 'not yet supported');

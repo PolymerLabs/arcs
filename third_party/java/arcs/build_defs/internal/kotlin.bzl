@@ -3,10 +3,10 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
+load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_test")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 
@@ -151,7 +151,7 @@ def _to_wasm_dep(dep):
     else:
         return dep + _WASM_SUFFIX
 
-def arcs_kt_android_test_suite(name, manifest, package, srcs = None, deps = []):
+def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = []):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -164,6 +164,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, deps = []):
       package: package the test classes are in
       srcs: Optional list of source files. If not supplied, a glob of all *.kt
         files will be used.
+      tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_android_library
     """
     if not srcs:
@@ -184,13 +185,14 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, deps = []):
             size = "small",
             manifest = manifest,
             test_class = "%s.%s" % (package, class_name),
+            tags = tags,
             deps = [
                 ":%s" % name,
                 "@robolectric//bazel:android-all",
             ],
         )
 
-def arcs_kt_jvm_test_suite(name, package, srcs = None, deps = []):
+def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
     """Defines Kotlin JVM test targets for a directory.
 
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
@@ -202,6 +204,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, deps = []):
       package: package the test classes are in
       srcs: Optional list of source files. If not supplied, a glob of all *.kt
         files will be used.
+      tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_jvm_library
     """
     if not srcs:
@@ -221,6 +224,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, deps = []):
             size = "small",
             test_class = "%s.%s" % (package, class_name),
             runtime_deps = [":%s" % name],
+            tags = tags,
         )
 
 def _to_jvm_dep(dep):

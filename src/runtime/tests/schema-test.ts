@@ -81,7 +81,7 @@ describe('schema', () => {
 
   it('constructs an appropriate entity subclass', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
-    const Product = manifest.findSchemaByName('Product').entityClass();
+    const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     assert.strictEqual(Product.name, 'Product');
     const product = new Product({name: 'Pickled Chicken Sandwich',
                                description: 'A sandwich with pickles and chicken',
@@ -101,7 +101,7 @@ describe('schema', () => {
 
   it('stores a copy of the constructor arguments', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
-    const Product = manifest.findSchemaByName('Product').entityClass();
+    const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     const data: {name: string, category: string, description?: string} = {name: 'Seafood Ice Cream', category: 'Terrible Food'};
     const product = new Product(data);
     data.category = 'whyyyyyy';
@@ -113,7 +113,7 @@ describe('schema', () => {
 
   it('has getters for all schema fields', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
-    const Product = manifest.findSchemaByName('Product').entityClass();
+    const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
 
     const product = new Product({
       name: 'Deep Fried Pizza',
@@ -140,7 +140,7 @@ describe('schema', () => {
 
   it('has setters for schema fields only', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
-    const Product = manifest.findSchemaByName('Product').entityClass();
+    const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     assert.throws(() => { new Product({sku: 'sku'}); }, 'not in schema');
 
     const product = new Product({});
@@ -150,7 +150,7 @@ describe('schema', () => {
 
   it('performs type checking', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
-    const Product = manifest.findSchemaByName('Product').entityClass();
+    const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     assert.throws(() => { new Product({name: 6}); }, TypeError, 'Type mismatch setting field name');
     assert.throws(() => { new Product({url: 7}); }, TypeError, 'Type mismatch setting field url');
     assert.throws(() => { new Product({shipDays: '2'}); }, TypeError, 'Type mismatch setting field shipDays');
@@ -173,7 +173,7 @@ describe('schema', () => {
 
   it('makes a copy of the data when cloning', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
-    const Product = manifest.findSchemaByName('Product').entityClass();
+    const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
 
     const product = new Product({name: 'Tomato Soup',
                                description: 'Soup that tastes like tomato',
@@ -196,7 +196,7 @@ describe('schema', () => {
       schema Unions
         u1: (Text or Number)
         u2: (URL or Number or Boolean)`);
-    const Unions = manifest.findSchemaByName('Unions').entityClass();
+    const Unions = Entity.createEntityClass(manifest.findSchemaByName('Unions'), null);
     const unions = new Unions({u1: 'foo', u2: true});
     assert.strictEqual(unions.u1, 'foo');
     assert.strictEqual(unions.u2, true);
@@ -235,7 +235,7 @@ describe('schema', () => {
         one: Reference<ReferencedOne>
         two: Reference<ReferencedTwo>`);
 
-    const References = manifest.findSchemaByName('References').entityClass();
+    const References = Entity.createEntityClass(manifest.findSchemaByName('References'), null);
 
     const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
     assert.doesNotThrow(() => {
@@ -262,7 +262,7 @@ describe('schema', () => {
         collection: [Reference<Foo {value: Text}>]
     `);
 
-    const Collections = manifest.findSchemaByName('Collections').entityClass();
+    const Collections = Entity.createEntityClass(manifest.findSchemaByName('Collections'), null);
     const FooType = EntityType.make(['Foo'], {value: 'Text'});
     const BarType = EntityType.make(['Bar'], {value: 'Text'});
     new Collections({collection: new Set()});
@@ -281,7 +281,7 @@ describe('schema', () => {
       schema Tuples
         t1: (Text, Number)
         t2: (URL, Number, Boolean)`);
-    const Tuples = manifest.findSchemaByName('Tuples').entityClass();
+    const Tuples = Entity.createEntityClass(manifest.findSchemaByName('Tuples'), null);
     const tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
     assert.deepEqual(tuples.t1, ['foo', 55]);
     assert.deepEqual(tuples.t2, [null, undefined, true]);
@@ -324,7 +324,7 @@ describe('schema', () => {
     const manifest = await Manifest.parse(`
       schema SingleValueTuple
         t: (Number)`);
-    const SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
+    const SingleValueTuple = Entity.createEntityClass(manifest.findSchemaByName('SingleValueTuple'), null);
     const svt = new SingleValueTuple({t: [12]});
     assert.deepEqual(svt.t, [12]);
     Entity.mutate(svt, s => s.t = [34]);
@@ -412,7 +412,7 @@ describe('schema', () => {
     const manifest = await Manifest.parse(`
       schema Buffer
         data: Bytes`);
-    const Buffer = manifest.findSchemaByName('Buffer').entityClass();
+    const Buffer = Entity.createEntityClass(manifest.findSchemaByName('Buffer'), null);
     const b1 = new Buffer({data: Uint8Array.from([12, 34, 56])});
     assert.deepEqual(b1.data, Uint8Array.from([12, 34, 56]));
   });

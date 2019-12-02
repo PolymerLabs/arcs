@@ -12,6 +12,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.common",
     deps = [
         "//src_kt/java/arcs/common",
+        "//src_kt/java/arcs/util",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

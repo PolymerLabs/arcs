@@ -12,6 +12,7 @@ import path from 'path';
 import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
+import {EntityType} from '../runtime/type.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 
 export interface ClassGenerator {
@@ -117,7 +118,7 @@ export abstract class Schema2Base {
         return `schema-primitive:${descriptor.type}`;
 
       case 'schema-collection':
-        return `schema-collection:${descriptor.schema.type}`;
+        return `schema-collection:${new EntityType(descriptor.schema)}`;
 
       default:
         return descriptor.kind;
