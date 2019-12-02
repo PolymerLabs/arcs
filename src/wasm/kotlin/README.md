@@ -1,4 +1,4 @@
-# Kotlin --> WASM particles
+# Kotlin --> Wasm particles
 
 ## Build & Test
 0. Make sure the project is [setup](../../../README.md#install)!
