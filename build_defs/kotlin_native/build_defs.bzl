@@ -79,7 +79,7 @@ kt_wasm_binary = rule(
         ),
         "kotlincopts": attr.string_list(
             doc = """Flags to pass to kotlinc compiler.""",
-            default = []
+            default = [],
         ),
     },
     doc = "Builds a Wasm binary from Kotlin",
@@ -126,7 +126,7 @@ kt_wasm_library = rule(
         ),
         "kotlincopts": attr.string_list(
             doc = """Flags to pass to kotlinc compiler.""",
-            default = []
+            default = [],
         ),
     },
     doc = "Builds a Wasm library (klib) from Kotlin files",

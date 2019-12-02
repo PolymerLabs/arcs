@@ -75,6 +75,7 @@ def kt_jvm_and_wasm_library(
       srcs: List; List of sources
       deps: List; List of dependencies
       visibility: List; List of visibilities
+      **kwargs: other arguments to feed into kt_jvm_library and kt_native_library
     """
     kt_jvm_library(
         name = name,

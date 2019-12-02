@@ -1,6 +1,3 @@
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_library")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
-
 licenses(["notice"])
 
 # TODO(alxr): Justify extra aliases with a comment, or remove
