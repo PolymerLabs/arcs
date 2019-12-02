@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import Mocha from '../../tools/node_modules/mocha';
-//export const mocha = new Mocha();
+import {StorageProviderFactory} from '../storage-provider-factory.js';
+import {PouchDbStorage} from './pouch-db-storage.js';
 
-export * from '../../tools/platform/mocha-node.js';
+StorageProviderFactory.register('pouchdb', {storage: PouchDbStorage, isPersistent: true});

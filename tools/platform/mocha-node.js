@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import Mocha from '../../tools/node_modules/mocha';
+//const Mocha = require('mocha');
+//import Mocha from 'mocha';
 //export const mocha = new Mocha();
-
-export * from '../../tools/platform/mocha-node.js';

@@ -8,5 +8,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import protobufjs from 'protobufjs';
+import protobufjs from '../../tools/node_modules/protobufjs';
 export {protobufjs};

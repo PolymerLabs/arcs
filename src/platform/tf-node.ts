@@ -8,6 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as tf from '@tensorflow/tfjs';
-export const requireTf = async () => tf;
+//import * as tf from '@tensorflow/tfjs';
+export const requireTf = async () => null; //tf;
 

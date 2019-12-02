@@ -1,0 +1,84 @@
+{
+  "name": "arcs",
+  "version": "0.0.0",
+  "private": true,
+  "config": {
+    "port": "8786"
+  },
+  "browser": "dist/webmain.js",
+  "module": "dist/webmain.js",
+  "main": "dist/index.es.js",
+  "scripts": {
+    "prepare": "cross-env sigh check",
+    "test-extension": "mocha-chrome extension/tests/index.test.html",
+    "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix cloud run test:licenses",
+    "build:rollup": "rollup -c --sourcemap",
+    "watch:rollup": "rollup -c --sourcemap --watch",
+    "build:typedoc": "typedoc --ignoreCompilerErrors --mode file --downLevelIteration -out dist/apidocs",
+    "cloud": "npm install && cross-env tools/sigh && npm run build:rollup && npm --prefix cloud install && npm --prefix cloud run test",
+    "cloud:start": "npm --prefix cloud start",
+    "build:tsc": "tsc",
+    "watch:tsc": "tsc -w",
+    "install:vscodeclient": "npm install && cross-env tools/sigh languageServer --install && cd src && cd tools && cd vscode-language-client && npm run installDevExtension",
+    "build:webpack": "webpack",
+    "build:webpack-tools": "webpack --config ./src/tools/webpack.config.js",
+    "build:webpack-languageserver": "webpack --config ./src/tools/language-server/webpack.config.js",
+    "watch:webpack": "webpack --watch",
+    "watch": "concurrently npm:watch:*"
+  },
+  "devDependencies": {
+    "@types/chai": "4.2.4",
+    "@types/ws": "6.0.3",
+    "chai": "4.2.0",
+    "concurrently": "4.1.2",
+    "cross-env": "5.2.1",
+    "express": "4.17.1",
+    "grammkit": "0.7.0",
+    "js-green-licenses": "1.1.0",
+    "mocha": "5.2.0",
+    "mocha-chrome": "2.2.0",
+    "morgan": "1.9.1",
+    "npm-run-all": "4.1.5",
+    "pegjs": "0.10.0",
+    "rollup": "1.26.3",
+    "rollup-plugin-commonjs": "9.3.4",
+    "rollup-plugin-ignore": "1.0.5",
+    "rollup-plugin-multi-entry": "2.1.0",
+    "rollup-plugin-node-resolve": "4.2.4",
+    "rollup-plugin-typescript2": "0.21.2",
+    "sloc": "0.2.1",
+    "ts-pegjs": "0.2.6",
+    "type-coverage": "2.3.0",
+    "typedoc": "0.15.0",
+    "typescript": "3.7.2",
+    "wdio-chromedriver-service": "5.0.2",
+    "webdriverio": "5.16.0",
+    "webpack": "4.41.2",
+    "webpack-cli": "3.3.10",
+    "@bazel/buildifier": "0.29.0",
+    "@tensorflow/tfjs": "1.3.1",
+    "assert": "1.5.0",
+    "circular-dependency-plugin": "5.2.0",
+    "esm": "3.2.25",
+    "jszip": "3.2.2",
+    "source-map-support": "0.5.16",
+    "ws": "6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PolymerLabs/arcs.git"
+  },
+  "author": "The Polymer Project Authors",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/PolymerLabs/arcs",
+  "bugs": {
+    "url": "https://github.com/PolymerLabs/arcs/issues"
+  },
+  "engines": {
+    "node": ">= 10.13.0",
+    "npm": ">= 6.9.0"
+  },
+  "dependencies": {
+    "protobufjs": "^6.8.8"
+  }
+}

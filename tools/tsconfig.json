@@ -3,6 +3,6 @@
   "compilerOptions": {
     "declaration": false,
     "sourceMap": false,
-    "outDir": "../build"
+    "outDir": "builds"
   }
 }
