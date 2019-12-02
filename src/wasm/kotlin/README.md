@@ -51,3 +51,6 @@ See [here](../../../particles/Native/Wasm) or [here](../../../particles/Tutorial
 - Visit [localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs)
 
 
+## Test
+
+`bazel test //src/wasm:wasm-api-test`

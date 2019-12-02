@@ -53,3 +53,7 @@ See [here](../../../particles/Native/Wasm) for a working example.
 - `npm start`
 - Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs](http://localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs)
   **(TODO(csilvestrini): update this path)**
+  
+# Test
+
+`bazel test //src/wasm:wasm-api-test`
