@@ -34,7 +34,10 @@ arcs_kt_jvm_test_suite(
     srcs = PERFORMANCE_SRCS,
     package = "arcs.util",
     # Disabled due to unreliable performance characteristics.
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "notap",
+    ],
     deps = [
         "//src_kt/java/arcs/util",
         "//third_party/java/junit",
