@@ -11,8 +11,8 @@
 
 package arcs.test
 
+import arcs.addressable.Address
 import arcs.addressable.toAddress
-import arcs.Address
 import arcs.Particle
 import arcs.log
 import kotlin.native.internal.ExportForCppRuntime
