@@ -111,7 +111,7 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
             return when (value) {
                 is String -> "T${value.length}:$value"
                 is Boolean -> "B${if (value) 1 else 0}"
-                is Double -> "N${value.toString().length}:$value"
+                is Double -> "N$value:"
                 is Map<*, *> -> {
                     @Suppress("UNCHECKED_CAST")
                     val dictString = encodeDictionary(value as Map<String, Any?>)

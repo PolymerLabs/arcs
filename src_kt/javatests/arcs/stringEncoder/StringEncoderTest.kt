@@ -31,7 +31,7 @@ class StringEncoderTest {
     fun encodeNumber() {
         val n = 127.89
         val encodedString = StringEncoder.encodeValue(n)
-        val expectedString = "N6:127.89"
+        val expectedString = "N127.89:"
         assertThat(encodedString).isEqualTo(expectedString)
     }
 
@@ -47,7 +47,7 @@ class StringEncoderTest {
     fun encodeDictionary() {
         val Dict = mapOf("name" to "Jill", "age" to 70.0)
         val encodedString = StringEncoder.encodeDictionary(Dict)
-        val expectedString = "2:4:nameT4:Jill3:ageN4:70.0"
+        val expectedString = "2:4:nameT4:Jill3:ageN70.0:"
         assertThat(encodedString).isEqualTo(expectedString)
     }
 
@@ -61,7 +61,7 @@ class StringEncoderTest {
         val encodedString = StringEncoder.encodeList(list)
         /* ktlint-disable max-line-length */
         val expectedString =
-            "3:D27:2:4:nameT4:Jill3:ageN4:70.0D26:2:4:nameT4:Jack3:ageN3:2.0D27:2:4:nameT3:Jen3:ageN5:150.0"
+            "3:D26:2:4:nameT4:Jill3:ageN70.0:D25:2:4:nameT4:Jack3:ageN2.0:D26:2:4:nameT3:Jen3:ageN150.0:"
         /* ktlint-enable max-line-length */
         assertThat(encodedString).isEqualTo(expectedString)
     }
