@@ -75,10 +75,7 @@
   }
 
   function requireUsePreSlandleSyntax(tag: number) {
-    if (!Flags.parseBothSyntaxes) {
-      error(`using pre slandles syntax (disabled by flag) #${tag}`);
-    }
-    preSlandlesSyntaxLocations.push(location());
+    error(`using pre slandles syntax (disabled by flag) #${tag}`);
   }
 
   function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {

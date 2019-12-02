@@ -12,9 +12,6 @@
 
 class FlagDefaults {
   static useNewStorageStack = false;
-  // Enables the parsing of both pre and post slandles (unified) syntaxes.
-  // Preslandles syntax is to be deprecated.
-  static parseBothSyntaxes = false;
 }
 
 export class Flags extends FlagDefaults {
