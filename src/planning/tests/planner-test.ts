@@ -476,7 +476,7 @@ ${recipeManifest}
           list: reads list
     `, 3);
   });
-  it('finds remote untagged handles with unknown fate', async () => {
+  it('finds remote untagged handles with unknown fate (map)', async () => {
     const plansA = await testManifest(`
       recipe
         list: ?
@@ -484,16 +484,8 @@ ${recipeManifest}
           list: reads list
     `, 3);
     assert.isTrue(plansA.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'map')));
-
-    const plansB = await testManifest(`
-      recipe
-        list: ?
-        B as particle0
-          list: list
-    `, 3);
-    assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
   });
-  it('finds remote tagged handles with unknown fate', async () => {
+  it('finds remote tagged handles with unknown fate (map)', async () => {
     const plansA = await testManifest(`
       recipe
         list: ? #tag1
@@ -502,7 +494,17 @@ ${recipeManifest}
     `, 1);
     assert.lengthOf(plansA[0].handles, 1);
     assert.strictEqual('map', plansA[0].handles[0].fate);
-
+  });
+  it('finds remote untagged handles with unknown fate (copy)', async () => {
+    const plansB = await testManifest(`
+      recipe
+        list: ?
+        B as particle0
+          list: list
+    `, 3);
+    assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
+  });
+  it('finds remote tagged handles with unknown fate (copy)', async () => {
     const plansB = await testManifest(`
       recipe
         list: ? #tag2
