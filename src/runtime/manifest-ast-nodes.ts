@@ -696,50 +696,6 @@ export function directionToPreSlandlesDirection(direction: DirectionUnified): Di
   }
 }
 
-export function arrowToDirection(arrow: DirectionArrow): Direction {
-  // TODO(jopra): Remove after syntax unification.
-  // Use switch for totality checking.
-  switch (arrow) {
-    case '->':
-      return 'out';
-    case '<-':
-      return 'in';
-    case '<->':
-      return 'inout';
-    case '`consume':
-      return '`consume';
-    case '`provide':
-      return '`provide';
-    case '=':
-      return 'any';
-    default:
-      // Catch nulls and unsafe values from javascript.
-      throw new Error(`Bad arrow ${arrow}`);
-  }
-}
-
-export function directionToArrow(dir: Direction): DirectionArrow {
-  // TODO(jopra): Remove after syntax unification.
-  switch (dir) {
-    case 'in':
-      return '<-';
-    case 'out':
-      return '->';
-    case 'inout':
-      return '<->';
-    case 'host':
-      return '=';
-    case '`consume':
-      return '`consume';
-    case '`provide':
-      return '`provide';
-    case 'any':
-      return '=';
-    default:
-      throw new Error(`Unexpected direction ${dir}`);
-  }
-}
-
 export type SlotDirection = 'provide' | 'consume';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 

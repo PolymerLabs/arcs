@@ -20,7 +20,7 @@ import {acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
-import {Direction, directionToArrow, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
+import {Direction, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
 import {Flags} from '../flags.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {

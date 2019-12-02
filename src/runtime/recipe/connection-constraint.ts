@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction, directionToArrow, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
+import {Direction, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';

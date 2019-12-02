@@ -556,10 +556,6 @@ Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `pro
     return AstNode.directionToPreSlandlesDirection(dir as AstNode.DirectionUnified);
   }
 
-// TODO(jopra): Remove when syntax is updated to not use arrows.
-DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, `consume, `provide)"
-  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide'
-
 ParticleHandleConnectionType
   = TypeVariable
   / SingletonType
@@ -1370,8 +1366,7 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 
 // Should only be used as a negative match.
 ReservedWord
-  = keyword:(DirectionArrow
-  / Direction
+  = keyword:( Direction
   / SlotDirection
   / RecipeHandleFate
   / 'particle'
