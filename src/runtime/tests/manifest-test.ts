@@ -86,7 +86,7 @@ describe('manifest', async () => {
     assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('can parse a manifest containing a particle specification', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
 schema Product
 schema Person
@@ -122,8 +122,8 @@ ${particleStr1}
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
-  }));
-  it('SLANDLES can parse a manifest containing a particle specification', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  });
+  it('SLANDLES can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
 schema Product
 schema Person
@@ -159,7 +159,7 @@ ${particleStr1}
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
-  }));
+  });
   it('can parse a manifest containing a particle with an argument list', async () => {
     const manifest = await Manifest.parse(`
     particle TestParticle in 'a.js'
@@ -204,7 +204,7 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].handleConnections, 4);
   });
-  it('can round-trip particles with dependent handles', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('can round-trip particles with dependent handles', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -215,8 +215,8 @@ ${particleStr1}
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
-  it('SLANDLES can round-trip particles with dependent handles', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  });
+  it('SLANDLES can round-trip particles with dependent handles', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -227,7 +227,7 @@ ${particleStr1}
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
+  });
   it('can parse a manifest containing a schema', async () => {
     const manifest = await Manifest.parse(`
       schema Bar
@@ -1476,7 +1476,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       ]);
     }
   });
-  it('resolves store names to ids', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('resolves store names to ids', async () => {
     const manifestSource = `
         schema Thing
         store Store0 of [Thing] in 'entities.json'
@@ -1490,7 +1490,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     const manifest = await Manifest.load('the.manifest', loader);
     const recipe = manifest.recipes[0];
     assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
-  }));
+  });
   it('has prettyish syntax errors', async () => {
     try {
       await Manifest.parse('recipe ?', {fileName: 'bad-file'});
@@ -1861,7 +1861,7 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
   });
-  it('can resolve a particle with a schema reference', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('can resolve a particle with a schema reference', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         far: Text
@@ -1884,8 +1884,8 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: Reference<Foo {far: Text}>}
   modality dom`);
-  }));
-  it('can resolve a particle with an inline schema reference', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  });
+  it('can resolve a particle with an inline schema reference', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
       particle P
@@ -1907,8 +1907,8 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: Reference<Foo {far: Text}>}
   modality dom`);
-  }));
-  it('can resolve a particle with a collection of schema references', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  });
+  it('can resolve a particle with a collection of schema references', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         far: Text
@@ -1931,8 +1931,8 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
   modality dom`);
-  }));
-  it('can resolve a particle with a collection of inline schema references', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  });
+  it('can resolve a particle with a collection of inline schema references', async () => {
     const manifest = await Manifest.parse(`
       particle P
         bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
@@ -1953,7 +1953,7 @@ resource SomeName
 `particle P
   bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
   modality dom`);
-  }));
+  });
   it('can resolve inline schemas against out of line schemas', async () => {
     const manifest = await Manifest.parse(`
       schema T
@@ -2237,7 +2237,7 @@ resource SomeName
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
   });
 
-  it('can round-trip particles with tags', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('can round-trip particles with tags', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -2248,9 +2248,9 @@ resource SomeName
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
+  });
 
-  it('SLANDLES can round-trip particles with tags', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('SLANDLES can round-trip particles with tags', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -2261,8 +2261,8 @@ resource SomeName
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
-  it('SLANDLES can round-trip particles with fields', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  });
+  it('SLANDLES can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   input: reads [Product {}]
     output: writes [Product {}]
@@ -2274,7 +2274,7 @@ resource SomeName
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
-  }));
+  });
 
   it('can parse recipes with an implicit create handle', async () => {
     const manifest = await Manifest.parse(`
@@ -2627,7 +2627,7 @@ resource SomeName
       `), `You cannot combine 'and' and 'or' operations in a single check expression.`);
     });
 
-    it('SLANDLES can round-trip particles with checks and claims', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('SLANDLES can round-trip particles with checks and claims', async () => {
       const manifestString = `particle TestParticle in 'a.js'
   input1: reads T {}
   input2: reads T {}
@@ -2650,8 +2650,8 @@ resource SomeName
 
       const manifest = await Manifest.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
-    }));
-    it('can round-trip particles with checks and claims', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    });
+    it('can round-trip particles with checks and claims', async () => {
       const manifestString = `particle TestParticle in 'a.js'
   input1: reads T {}
   input2: reads T {}
@@ -2674,7 +2674,7 @@ resource SomeName
 
       const manifest = await Manifest.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
-   }));
+   });
 
     it('fails for unknown handle names', async () => {
       await assertThrowsAsync(async () => await Manifest.parse(`
@@ -2980,7 +2980,7 @@ particle A
     assert.equal(manifest.errors[0].key, 'externalSchemas');
   });
 
-  it('can round-trip external particles', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('can round-trip external particles', async () => {
     const manifestString = `external particle TestParticle
   input: reads [Product {}]
   modality dom`;
@@ -2991,7 +2991,7 @@ particle A
     assert.isTrue(particle.external);
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
-  }));
+  });
 });
 
 describe('Manifest storage migration', () => {
