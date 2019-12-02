@@ -40,7 +40,7 @@ describe('RecipeIndex', () => {
     return (await createIndex(manifestContent)).recipes.map(r => r.toString());
   }
 
-  it('SLANDLES SYNTAX adds use handles', Flags.withPostSlandlesSyntax(async () => {
+  it('adds use handles', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
       schema Lumberjack
@@ -59,7 +59,7 @@ describe('RecipeIndex', () => {
     lumberjack: writes handle0
     person: reads handle1`
     ]);
-  }));
+  });
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('adds use handles', Flags.withPreSlandlesSyntax(async () => {
@@ -83,7 +83,7 @@ describe('RecipeIndex', () => {
     ]);
   }));
 
-  it('SLANDLES SYNTAX matches free handles to connections', Flags.withPostSlandlesSyntax(async () => {
+  it('matches free handles to connections', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
 
@@ -99,7 +99,7 @@ describe('RecipeIndex', () => {
   A as particle0
     person: reads writes handle0`
     ]);
-  }));
+  });
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('matches free handles to connections', Flags.withPreSlandlesSyntax(async () => {
@@ -120,7 +120,7 @@ describe('RecipeIndex', () => {
     ]);
   }));
 
-  it('SLANDLES SYNTAX resolves local slots, but not a root slot', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves local slots, but not a root slot', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       particle A
         root: consumes
@@ -140,7 +140,7 @@ describe('RecipeIndex', () => {
   B as particle1
     detail: consumes slot0`
     ]);
-  }));
+  });
 
   it('resolves local slots, but not a root slot', Flags.withPreSlandlesSyntax(async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
@@ -164,7 +164,7 @@ describe('RecipeIndex', () => {
     ]);
   }));
 
-  it('SLANDLES SYNTAX resolves constraints', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves constraints', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema A
       schema B
@@ -191,7 +191,7 @@ describe('RecipeIndex', () => {
     b: reads handle1
     c: writes handle2`
     ]);
-  }));
+  });
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('resolves constraints', Flags.withPreSlandlesSyntax(async () => {
@@ -256,7 +256,7 @@ describe('RecipeIndex', () => {
     ]);
   });
 
-  it('SLANDLES SYNTAX finds matching handles by fate', Flags.withPostSlandlesSyntax(async () => {
+  it('finds matching handles by fate', async () => {
     const index = await createIndex(`
       schema Thing
 
@@ -288,7 +288,7 @@ describe('RecipeIndex', () => {
 
     assert.deepEqual(['A'], index.findHandleMatch(handle, ['map']).map(h => h.recipe.name));
     assert.deepEqual(['B'], index.findHandleMatch(handle, ['create']).map(h => h.recipe.name));
-  }));
+  });
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('finds matching handles by fate', async () => {

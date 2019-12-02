@@ -852,7 +852,7 @@ describe('Automatic resolution', () => {
         B`);
   });
 
-  it('SLANDLES SYNTAX coalesces recipes to resolve connections', Flags.withPostSlandlesSyntax(async () => {
+  it('coalesces recipes to resolve connections', async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
         id: Text
@@ -905,7 +905,7 @@ describe('Automatic resolution', () => {
     something: reads handle1
   D as particle3
     location: reads writes handle2`, result.toString({hideFields: false}));
-  }));
+  });
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('coalesces recipes to resolve connections', Flags.withPreSlandlesSyntax(async () => {

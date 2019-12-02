@@ -701,7 +701,7 @@ describe('firebase', function() {
       assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
-    it('SLANDLES SYNTAX serialization roundtrip re-attaches to the same firebase stores', Flags.withPostSlandlesSyntax(async () => {
+    it('serialization roundtrip re-attaches to the same firebase stores', async () => {
       const loader = new StubLoader({
         manifest: `
           schema Data
@@ -778,7 +778,7 @@ describe('firebase', function() {
       assert.isFalse(done);
       assert.deepEqual(value.map(e => e.rawData.value), ['v3', 'v6']);
       assert.isTrue((await bigStore.cursorNext(cursorId)).done);
-    }));
+    });
     it('serialization roundtrip re-attaches to the same firebase stores', Flags.withPreSlandlesSyntax(async () => {
       const loader = new StubLoader({
         manifest: `

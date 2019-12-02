@@ -19,7 +19,7 @@ import {Flags} from '../../../runtime/flags.js';
 const {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
 
 describe('A Strategy Sequence', () => {
-  it('SLANDLES SYNTAX resolves a verb substitution and slot mapping', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves a verb substitution and slot mapping', async () => {
     const manifest = await Manifest.parse(`
       particle P in 'A.js'
         foo: consumes
@@ -48,7 +48,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
 
     assert.isTrue(recipe.isResolved());
-  }));
+  });
 
   it('resolves a verb substitution and slot mapping', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
@@ -81,7 +81,7 @@ describe('A Strategy Sequence', () => {
     assert.isTrue(recipe.isResolved());
   }));
 
-  it('SLANDLES SYNTAX resolves a verb substitution, constraint resolution, and slot mapping', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves a verb substitution, constraint resolution, and slot mapping', async () => {
     const manifest = await Manifest.parse(`
       schema S
 
@@ -113,7 +113,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
 
     assert.isTrue(recipe.isResolved());
-  }));
+  });
 
   it('resolves a verb substitution, constraint resolution, and slot mapping', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
@@ -149,7 +149,7 @@ describe('A Strategy Sequence', () => {
     assert.isTrue(recipe.isResolved());
   }));
 
-  it('SLANDLES SYNTAX resolves a verb substitution, constraint resolution, and slot mapping', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves a verb substitution, constraint resolution, and slot mapping', async () => {
     const manifest = await Manifest.parse(`
       schema S
 
@@ -186,7 +186,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
 
     assert.isTrue(recipe.isResolved());
-  }));
+  });
 
   it('resolves a verb substitution, constraint resolution, and slot mapping', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
@@ -227,7 +227,7 @@ describe('A Strategy Sequence', () => {
     assert.isTrue(recipe.isResolved());
   }));
 
-  it('SLANDLES SYNTAX resolves a complex verb use case', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves a complex verb use case', async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       schema Product extends Thing
@@ -318,7 +318,7 @@ describe('A Strategy Sequence', () => {
     const recipes = await theResults(arc, ConvertConstraintsToConnections, recipe);
     assert.lengthOf(recipes, 2);
     recipe = await onlyResult(arc, ResolveRecipe, recipes[1]);
-  }));
+  });
 
   it('resolves a complex verb use case', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
@@ -418,7 +418,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, ResolveRecipe, recipes[1]);
   }));
 
-  it('SLANDLES SYNTAX connects particles together when there\'s only one possible connection', Flags.withPostSlandlesSyntax(async () => {
+  it('connects particles together when there\'s only one possible connection', async () => {
     const manifest = await Manifest.parse(`
       particle A
         o: writes S {}
@@ -435,7 +435,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
-  }));
+  });
 
   it('connects particles together when there\'s only one possible connection', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
@@ -456,7 +456,7 @@ describe('A Strategy Sequence', () => {
     assert.isTrue(recipe.isResolved());
   }));
 
-    it(`SLANDLES SYNTAX connects particles together when there's extra things that can't connect`, Flags.withPostSlandlesSyntax(async () => {
+    it(`connects particles together when there's extra things that can't connect`, async () => {
     const manifest = await Manifest.parse(`
       particle A
         o: writes S {}
@@ -477,7 +477,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
     assert.isEmpty(recipe.obligations);
-  }));
+  });
 
     it(`connects particles together when there's extra things that can't connect`, Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
@@ -502,7 +502,7 @@ describe('A Strategy Sequence', () => {
     assert.isEmpty(recipe.obligations);
   }));
 
-  it('SLANDLES SYNTAX connects particles together with multiple connections', Flags.withPostSlandlesSyntax(async () => {
+  it('connects particles together with multiple connections', async () => {
     const manifest = await Manifest.parse(`
       particle A
         o: writes S {}
@@ -522,7 +522,7 @@ describe('A Strategy Sequence', () => {
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
-  }));
+  });
   it('connects particles together with multiple connections', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       particle A

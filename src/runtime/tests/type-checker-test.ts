@@ -259,7 +259,7 @@ describe('TypeChecker', () => {
     }
   });
 
-  it('SLANDLES SYNTAX correctly applies then resolves a one-sided Entity constraint', Flags.withPostSlandlesSyntax(async () => {
+  it('correctly applies then resolves a one-sided Entity constraint', async () => {
     const manifest = await Manifest.parse(`
       interface Interface
         item: reads ~a
@@ -288,7 +288,7 @@ describe('TypeChecker', () => {
 
     recipe.normalize();
     assert.strictEqual(true, recipe.isResolved());
-  }));
+  });
 
   it('correctly applies then resolves a one-sided Entity constraint', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`

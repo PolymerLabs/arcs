@@ -17,7 +17,7 @@ import {Direction} from '../manifest-ast-nodes.js';
 import {Flags} from '../flags.js';
 
 describe('interface', () => {
-  it('SLANDLES SYNTAX round trips interface info', Flags.withPostSlandlesSyntax(async () => {
+  it('round trips interface info', async () => {
     const interfStr = `interface HostedInterface
   reads ~a
   name: writes Text {name: Text}
@@ -29,7 +29,7 @@ describe('interface', () => {
     const interf = manifest.interfaces[0];
 
     assert.strictEqual(interf.toString(), interfStr);
-  }));
+  });
 
   it('round trips interface info', Flags.withPreSlandlesSyntax(async () => {
     const interfStr = `interface HostedInterface
