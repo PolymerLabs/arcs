@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {Direction, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
+import {DirectionPreSlandles, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {Schema} from './schema.js';
@@ -24,7 +24,7 @@ import * as AstNode from './manifest-ast-nodes.js';
 // TODO: clean up the real vs. literal separation in this file
 
 type SerializedHandleConnectionSpec = {
-  direction: Direction,
+  direction: DirectionPreSlandles,
   name: string,
   type: Type | TypeLiteral,
   isOptional: boolean,
@@ -66,7 +66,7 @@ export function isRoot({name, tags, id, type, fate}: {name: string, tags: string
 
 export class HandleConnectionSpec {
   rawData: SerializedHandleConnectionSpec;
-  direction: Direction;
+  direction: DirectionPreSlandles;
   name: string;
   type: Type;
   isOptional: boolean;

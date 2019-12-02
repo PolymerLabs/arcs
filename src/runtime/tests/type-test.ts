@@ -13,8 +13,6 @@ import {Manifest} from '../manifest.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';
-import {Direction} from '../manifest-ast-nodes.js';
-import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
 
 // For reference, this is a list of all the types and their contained data:
@@ -129,12 +127,12 @@ describe('types', () => {
       const entity   = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
       const col      = new CollectionType(entity);
-      const iface    = InterfaceType.make('i', [{type: entity, direction: 'any' as Direction}, {type: variable, direction: 'any' as Direction}, {type: col, direction: 'any' as Direction}], [{name: 'x'}]);
+      const iface    = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}, {type: col, direction: 'any'}], [{name: 'x'}]);
       deepEqual(iface.toLiteral(), {
         tag: 'Interface',
         data: {
           name: 'i',
-          handleConnections: [{type: entity.toLiteral(), direction: 'any' as Direction}, {type: variable.toLiteral(), direction: 'any' as Direction}, {type: col.toLiteral(), direction: 'any' as Direction}],
+          handleConnections: [{type: entity.toLiteral(), direction: 'any'}, {type: variable.toLiteral(), direction: 'any'}, {type: col.toLiteral(), direction: 'any'}],
           slots: [{name: 'x'}]
         }
       });
@@ -199,7 +197,7 @@ describe('types', () => {
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a', null, null);
       const arcInfo    = new ArcType();
-      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any' as Direction}, {type: variable, direction: 'any' as Direction}, {type: arcInfo, direction: 'any' as Direction}], []);
+      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}, {type: arcInfo, direction: 'any'}], []);
 
       const handleInfo = new HandleType();
 

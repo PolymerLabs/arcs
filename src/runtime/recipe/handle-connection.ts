@@ -20,7 +20,7 @@ import {acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
-import {Direction, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
+import {DirectionPreSlandles, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
 import {Flags} from '../flags.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {
@@ -28,7 +28,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
   private _name: string;
   private _tags: string[] = [];
   private resolvedType?: Type = undefined;
-  private _direction: Direction = 'any';
+  private _direction: DirectionPreSlandles = 'any';
   private _particle: Particle;
   _handle?: Handle = undefined;
 
@@ -100,7 +100,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     return spec ? spec.type : undefined;
   }
 
-  get direction(): Direction {
+  get direction(): DirectionPreSlandles {
     // TODO: Should take the most strict of the direction and the spec direction.
     if (this._direction !== 'any') {
       return this._direction;
@@ -124,8 +124,8 @@ export class HandleConnection implements Comparable<HandleConnection> {
     this._resetHandleType();
   }
 
-  set direction(direction: Direction) {
-    if (direction as Direction === null) {
+  set direction(direction: DirectionPreSlandles) {
+    if (direction === null) {
       throw new Error(`Invalid direction '${direction}' for handle connection '${this.getQualifiedName()}'`);
     }
     this._direction = direction;
@@ -170,7 +170,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
 
   _isValid(options: IsValidOptions): boolean {
     // Note: The following casts are necessary to catch invalid values that typescript does not manage to check).
-    if (this.direction as Direction === null || this.direction as Direction === undefined) {
+    if (this.direction === null || this.direction === undefined) {
       if (options && options.errors) {
         options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
       }

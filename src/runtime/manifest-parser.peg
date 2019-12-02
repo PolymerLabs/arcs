@@ -72,7 +72,7 @@
     return {...data, location: location()} as T;
   }
 
-  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+  function buildInterfaceArgument(name: string, direction: AstNode.DirectionPreSlandles, type: AstNode.ParticleHandleConnectionType) {
     if (direction === 'host') {
       error(`Interface cannot have arguments with a 'host' direction.`);
     }
