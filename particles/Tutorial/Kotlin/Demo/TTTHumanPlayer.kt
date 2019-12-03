@@ -11,6 +11,7 @@
 
 package arcs.tutorials.tictactoe
 
+import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
@@ -19,7 +20,6 @@ import arcs.TTTHumanPlayer_Events
 import arcs.TTTHumanPlayer_GameState
 import arcs.TTTHumanPlayer_MyMove
 import arcs.TTTHumanPlayer_Player
-import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {

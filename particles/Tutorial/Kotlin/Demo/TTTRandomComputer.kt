@@ -11,13 +11,13 @@
 
 package arcs.tutorials.tictactoe
 
+import arcs.addressable.toAddress
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
 import arcs.TTTRandomComputer_GameState
 import arcs.TTTRandomComputer_MyMove
 import arcs.TTTRandomComputer_Player
-import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {

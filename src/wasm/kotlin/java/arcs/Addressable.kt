@@ -9,17 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs
+package arcs.addressable
 
-import arcs.AddressableMap.address2Addressable
-import arcs.AddressableMap.addressable2Address
-import arcs.AddressableMap.nextAddress
-
-/**
- * Any object implementing this interface can be converted into a stable identifier. This
- * could a platform specific pointer, identity hashcode, or id as long as it is guaranteed unique.
- */
-interface Addressable
+import arcs.addressable.AddressableMap.address2Addressable
+import arcs.addressable.AddressableMap.addressable2Address
+import arcs.addressable.AddressableMap.nextAddress
 
 typealias Address = Int
 
@@ -30,10 +24,10 @@ internal object AddressableMap {
 }
 
 /**
- * Convert an [Addressable] object into an [Address]. Null references
+ * Converts [Any] into an [Address]. Null references
  * are converted to the 0 Address.
  */
-fun Addressable?.toAddress(): Address {
+fun Any?.toAddress(): Address {
     // Null pointer maps to 0
     if (this == null) return 0
 
@@ -51,7 +45,5 @@ fun Addressable?.toAddress(): Address {
  *  zero Address is converted to null, however any other address
  *  that fails to map to an Addressable throws an exception.
  **/
-@Suppress("UNCHECKED_CAST")
-fun  <T : Addressable> Address.toObject(): T? =
-    if (this == 0) null else address2Addressable[this] as T?
+fun <T> Address?.toObject(): T? = if (this == 0) null else address2Addressable[this] as T
 
