@@ -50,7 +50,7 @@ See [here](../../../particles/Native/Wasm) for a working example.
 
 ## Execute
 
-- `npm start`
+- `tools/sigh devServer`
 - Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs](http://localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs)
   **(TODO(csilvestrini): update this path)**
   

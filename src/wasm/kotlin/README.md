@@ -56,7 +56,7 @@ See [here](../../../particles/Native/Wasm) or [here](../../../particles/Tutorial
 
 ## Execute
 
-- `npm start`
+- `tools/sigh devServer`
 - Visit [localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs)
 
 
