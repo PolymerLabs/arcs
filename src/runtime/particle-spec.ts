@@ -400,13 +400,8 @@ export class ParticleSpec {
     const indent = '  ';
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      if (Flags.defaultToPreSlandlesSyntax) {
-        // TODO: Remove post slandles syntax
-        results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
-      } else {
-        const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
-        results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
-      }
+      const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
+      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }
@@ -425,48 +420,27 @@ export class ParticleSpec {
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
       const tokens: string[] = [];
-      if (Flags.defaultToPreSlandlesSyntax) {
-        if (s.isRequired) {
-          tokens.push('must');
-        }
-        tokens.push(direction);
-        if (s.isSet) {
-          tokens.push('set of');
-        }
-        tokens.push(s.name);
-        if (s.tags.length > 0) {
-          tokens.push(s.tags.map(a => `#${a}`).join(' '));
-        }
-        results.push(`${indent}${tokens.join(' ')}`);
-        if (s.formFactor) {
-          results.push(`${indent}  formFactor ${s.formFactor}`);
-        }
-        for (const handle of s.handles) {
-          results.push(`${indent}  handle ${handle}`);
-        }
-      } else {
-        tokens.push(`${s.name}:`);
-        tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
+      tokens.push(`${s.name}:`);
+      tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
 
-        const fieldSet = [];
-        // TODO(jopra): Move the formFactor and handle to the slot type information.
-        if (s.formFactor) {
-          fieldSet.push(`formFactor: ${s.formFactor}`);
-        }
-        for (const handle of s.handles) {
-          fieldSet.push(`handle: ${handle}`);
-        }
-        const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
-        if (s.isSet) {
-          tokens.push(`[Slot${fields}]`);
-        } else {
-          tokens.push(`Slot${fields}`);
-        }
-        if (s.tags.length > 0) {
-          tokens.push(s.tags.map(a => `#${a}`).join(' '));
-        }
-        results.push(`${indent}${tokens.join(' ')}`);
+      const fieldSet = [];
+      // TODO(jopra): Move the formFactor and handle to the slot type information.
+      if (s.formFactor) {
+        fieldSet.push(`formFactor: ${s.formFactor}`);
       }
+      for (const handle of s.handles) {
+        fieldSet.push(`handle: ${handle}`);
+      }
+      const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
+      if (s.isSet) {
+        tokens.push(`[Slot${fields}]`);
+      } else {
+        tokens.push(`Slot${fields}`);
+      }
+      if (s.tags.length > 0) {
+        tokens.push(s.tags.map(a => `#${a}`).join(' '));
+      }
+      results.push(`${indent}${tokens.join(' ')}`);
       if (s.provideSlotConnections) {
         // Provided slots.
         s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));

@@ -820,9 +820,6 @@ describe('Arc ' + storageKeyPrefix, () => {
       this.skip();
     }
 
-    // TODO(cypher1): This should function should be the 'whole' test, but does
-    // not capture 'this' properly.
-    const testBody = Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -911,8 +908,6 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.deepEqual(await (await varStore2.activate()).serializeContents(), varData);
     assert.deepEqual(await colStore2.serializeContents(), colData);
     assert.deepEqual(await bigStore2.serializeContents(), bigData);
-  });
-  await testBody();
   });
 
   it('serializes immediate value handles correctly', async () => {
