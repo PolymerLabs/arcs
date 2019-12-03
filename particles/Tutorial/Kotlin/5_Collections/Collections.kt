@@ -21,22 +21,24 @@ import kotlin.native.internal.ExportForCppRuntime
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class CollectionsParticle : Particle() {
-   private val people = Collection { CollectionsParticle_InputData() }
+    private val people = Collection { CollectionsParticle_InputData() }
 
-   init {
-       registerHandle("inputData", people)
-   }
+    init {
+        registerHandle("inputData", people)
+    }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val peopleList = mutableListOf<Map<String, String?>>()
-        people.forEach { people -> peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) }
+        val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
+        people.forEach { people ->
+            peopleList.add(mapOf("name" to people.name, "age" to people.age))
+        }
 
         return model + mapOf(
             "people" to mapOf(
                 "\$template" to "person",
                 "models" to peopleList
             )
-        )   
+        )
     }
 
     override fun getTemplate(slotName: String): String {

@@ -429,9 +429,9 @@ class CollectionsParticle : Particle() {
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         // We begin by generating the list of models that should fill the template. Our template
         // has name ang age so we will use these names.
-        val peopleList = mutableListOf<Map<String, String?>>()
-        people.forEach { people -> 
-            peopleList.add(mapOf("name" to people.name, "age" to people.age.toString())) 
+        val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
+        people.forEach { people ->
+            peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 
         // This will fill in the "people" placeholder in the template above. We construct an object
@@ -551,7 +551,7 @@ class JsonStoreParticle : Particle() {
     
         return model + mapOf(
             "name" to person.name,
-            "age" to person.age.toString()
+            "age" to person.age
         )
     }
 
