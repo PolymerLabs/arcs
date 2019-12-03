@@ -13,6 +13,7 @@ package arcs.storage
 
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtOperation
+import arcs.storage.referencemode.ReferenceModeStorageKey
 import arcs.type.Type
 import kotlin.reflect.KClass
 
@@ -67,7 +68,9 @@ data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     val storageKey: StorageKey,
     val existenceCriteria: ExistenceCriteria,
     val type: Type,
-    val mode: StorageMode = StorageMode.Direct,
+    val mode: StorageMode =
+        if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode
+        else StorageMode.Direct,
     val baseStore: IStore<Data, Op, ConsumerData>? = null,
     val versionToken: String? = null,
     val model: Data? = null

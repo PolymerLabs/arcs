@@ -8,11 +8,12 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_test_suite(
-    name = "service",
+    name = "store",
     manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
-    package = "arcs.storage.service",
+    package = "arcs.storage",
     deps = [
         "//shells/android/java/arcs/crdt/parcelables",
+        "//shells/android/java/arcs/storage",
         "//shells/android/java/arcs/storage/parcelables",
         "//shells/android/java/arcs/storage/service",
         "//src_kt/java/arcs/crdt",
