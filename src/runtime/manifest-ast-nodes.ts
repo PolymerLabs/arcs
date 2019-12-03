@@ -640,7 +640,7 @@ export type eol = string;
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
 export type DirectionPreSlandles = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
-export type DirectionUnified = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
+export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
 
 export function preSlandlesDirectionToDirection(direction: DirectionPreSlandles, isOptional: boolean = false): string {
   // TODO(jopra): Remove after syntax unification.
@@ -667,7 +667,7 @@ export function preSlandlesDirectionToDirection(direction: DirectionPreSlandles,
   }
 }
 
-export function directionToPreSlandlesDirection(direction: DirectionUnified): DirectionPreSlandles {
+export function directionToPreSlandlesDirection(direction: Direction): DirectionPreSlandles {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
   switch (direction) {

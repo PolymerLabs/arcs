@@ -553,7 +553,7 @@ Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `pro
       // Fix for faking proper capability set support with optionality.
       dir = 'reads writes';
     }
-    return AstNode.directionToPreSlandlesDirection(dir as AstNode.DirectionUnified);
+    return AstNode.directionToPreSlandlesDirection(dir as AstNode.Direction);
   }
 
 ParticleHandleConnectionType
