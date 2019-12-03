@@ -43,7 +43,7 @@ class StorageServiceConnectionTest {
     private lateinit var serviceMock: IStorageService
 
     @Before
-    fun setup() {
+    fun setUp() {
         delegateMock = mock {
             on { bindStorageService(any(), any(), any()) }.doReturn(true)
         }

@@ -50,7 +50,7 @@ class ServiceStoreTest {
     )
 
     @Before
-    fun setup() {
+    fun setUp() {
         RamDisk.clear()
         RamDiskDriverProvider()
         lifecycle = mock()

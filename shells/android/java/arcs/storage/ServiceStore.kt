@@ -49,7 +49,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Factory which can be supplied to [Store.activate] to force store creation to use the
- * ServiceStore.
+ * [ServiceStore].
  */
 @ExperimentalCoroutinesApi
 @UseExperimental(FlowPreview::class)
