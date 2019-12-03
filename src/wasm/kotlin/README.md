@@ -28,18 +28,27 @@ See [here](../../../particles/Native/Wasm) or [here](../../../particles/Tutorial
   )
   ```
 - Write your Kotlin particle(s): See [the Kotlin tutorial](../../../particles/Tutorial/Kotlin) for greater detail.
-- Add a `wasm_cc_binary` build rule for your C++ particle(s) to your `BUILD`
-  file:
+- To target both Wasm and the JVM, add `arcs_kt_library` and `arcs_kt_binary` to the `BUILD` file.
   ```
-  arcs_kt_binary(
+  arcs_kt_library(
       # Name of the BUILD rule (tell Bazel to build this particle using this name).
-      name = "example_particle",
+      name = "example_particle-lib",
       # Input Kotlin particle source files to compile.
       srcs = ["Example.kt"],
       # Specify the Bazel rule visibility 
       visibility = ["//visibility:public"],
-      # Other Kotlin dependencies this binary depends on (for example, the generated schemas).
+      # Other Kotlin dependencies this library depends on (for example, the generated schemas).
       deps = [":example_schema"],
+  )
+  
+  arcs_kt_binary(
+      name = "example_particle", 
+      # Specify other sources to compile (optional)
+      srcs = [], 
+      # Specify the Bazel rule visibility 
+      visibility = ["//visibility:public"],
+      # Other Kotlin dependencies this binary depends on (for example, the compiled library).
+      deps = [":example_particle-lib"],
   )
   ```
 - Build your particle using Bazel: `bazel build //particles/path/to/BUILD/file:example_particle`.
