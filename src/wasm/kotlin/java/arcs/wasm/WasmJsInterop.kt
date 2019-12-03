@@ -11,13 +11,12 @@
 
 package arcs.wasm
 
-import arcs.Address
+import arcs.addressable.Address
+import arcs.addressable.toAddress
+import arcs.addressable.toObject
 import arcs.Handle
 import arcs.Particle
 import arcs.StringDecoder
-import arcs.AddressableMap.address2Addressable
-import arcs.AddressableMap.addressable2Address
-import arcs.AddressableMap.nextAddress
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 import kotlin.native.toUtf8
@@ -38,22 +37,6 @@ typealias WasmAddress = Address
 typealias WasmString = Int
 
 typealias WasmNullableString = Int
-
-fun Any?.toAddress(): Address {
-    // Null pointer maps to 0
-    if (this == null) return 0
-
-    val existingAddress = addressable2Address[this]
-    if (existingAddress != null) return existingAddress
-
-    val address = nextAddress++
-    address2Addressable[address] = this
-    addressable2Address[this] = address
-
-    return address
-}
-
-fun <T> Address?.toObject(): T? = if (this == 0) null else address2Addressable[this] as T
 
 // Extension method to convert an Int into a Kotlin heap ptr
 fun WasmAddress.toPtr(): NativePtr {

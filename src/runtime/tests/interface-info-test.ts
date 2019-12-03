@@ -14,10 +14,9 @@ import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {CollectionType, EntityType, InterfaceType, Type, TypeVariable} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
-import {Flags} from '../flags.js';
 
 describe('interface', () => {
-  it('SLANDLES SYNTAX round trips interface info', Flags.withPostSlandlesSyntax(async () => {
+  it('round trips interface info', async () => {
     const interfStr = `interface HostedInterface
   reads ~a
   name: writes Text {name: Text}
@@ -29,21 +28,7 @@ describe('interface', () => {
     const interf = manifest.interfaces[0];
 
     assert.strictEqual(interf.toString(), interfStr);
-  }));
-
-  it('round trips interface info', Flags.withPreSlandlesSyntax(async () => {
-    const interfStr = `interface HostedInterface
-  in ~a *
-  out Text {Text name} name
-  consume root
-  must provide set of other`;
-    const manifest = await Manifest.parse(interfStr);
-
-    assert.lengthOf(manifest.interfaces, 1);
-    const interf = manifest.interfaces[0];
-
-    assert.strictEqual(interf.toString(), interfStr);
-  }));
+  });
 
   it('finds type variable references in handle connections', () => {
     const iface = new InterfaceInfo('Test', [{type: TypeVariable.make('a')}], []);

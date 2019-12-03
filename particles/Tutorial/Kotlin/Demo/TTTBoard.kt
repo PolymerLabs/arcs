@@ -11,13 +11,13 @@
 
 package arcs.tutorials.tictactoe
 
+import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
-import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {

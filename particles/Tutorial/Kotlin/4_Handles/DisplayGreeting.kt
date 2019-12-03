@@ -11,10 +11,10 @@
 
 package arcs.tutorials
 
+import arcs.addressable.toAddress
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import arcs.wasm.toAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**

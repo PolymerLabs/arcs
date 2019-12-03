@@ -9,6 +9,7 @@
  */
 package arcs.test
 
+import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
@@ -18,7 +19,6 @@ import arcs.TestParticle_Info
 import arcs.TestParticle_Res
 import arcs.abort
 import arcs.log
-import arcs.wasm.toAddress
 import kotlin.Exception
 import kotlin.native.internal.ExportForCppRuntime
 

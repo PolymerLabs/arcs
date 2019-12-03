@@ -11,6 +11,7 @@
 
 package arcs
 
+import arcs.addressable.toAddress
 import arcs.wasm._free
 import arcs.wasm.collectionClear
 import arcs.wasm.collectionRemove
@@ -20,7 +21,6 @@ import arcs.wasm.resolveUrl
 import arcs.wasm.singletonClear
 import arcs.wasm.singletonSet
 import arcs.wasm.serviceRequest
-import arcs.wasm.toAddress
 import arcs.wasm.toKString
 import arcs.wasm.toNullableKString
 import arcs.wasm.toWasmNullableString
