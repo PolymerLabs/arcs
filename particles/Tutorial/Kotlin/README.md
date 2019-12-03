@@ -430,8 +430,8 @@ class CollectionsParticle : Particle() {
         // We begin by generating the list of models that should fill the template. Our template
         // has name ang age so we will use these names.
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
-        people.forEach {
-            people -> peopleList.add(mapOf("name" to people.name, "age" to people.age))
+        people.forEach { people ->
+            peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 
         // This will fill in the "people" placeholder in the template above. We construct an object

@@ -29,8 +29,8 @@ class CollectionsParticle : Particle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
-        people.forEach {
-            people -> peopleList.add(mapOf("name" to people.name, "age" to people.age))
+        people.forEach { people ->
+            peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 
         return model + mapOf(
