@@ -6,9 +6,7 @@ Our code is built by Bazel. It uses Kotlin Mutliplatform to target JVM and Wasm
 runtimes. Bazel must be installed to build and run the code and tests, which
 reside in `src/wasm/`.
 
-1. **Installing Bazel:** run the `tools/setup` script to install Bazel on Linux
-   and MacOS (or otherwise look at that script to see which version of Bazel to 
-   download and how to set it up).
+1. **Installing Bazel:** Follow [project install instructions](../../../README.md#install).
 
 ## Build
 
