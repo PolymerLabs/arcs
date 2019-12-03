@@ -85,7 +85,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   run: [peg, build, runNodeScript],
   licenses: [build],
   default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack,
-            webpackTools, lint, tslint, devServerAsync, testWdioShells],
+            webpackTools, lint, devServerAsync, testWdioShells],
 };
 
 /**

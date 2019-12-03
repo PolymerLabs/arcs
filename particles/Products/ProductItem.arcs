@@ -1,5 +1,3 @@
-import 'schemas/Product.arcs'
-
 particle ProductItem in 'source/ProductItem.js'
-  product: reads Product
+  product: reads Product {name: Text, description: Text, image: URL, category: Text, seller: Text, price: Text, shipDays: Number}
   item: consumes Slot

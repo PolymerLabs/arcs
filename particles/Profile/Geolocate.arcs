@@ -2,9 +2,9 @@ import './schemas/Geolocation.arcs'
 
 particle Geolocate in './source/Geolocate.js'
   root: consumes Slot
-  location: writes Geolocation
-  description `you`
-    location `you`
+  location: writes Geolocation {latitude: Number, longitude: Number}
+  description `your location`
+    location `your location`
 
 recipe Geolocate
   location: create *

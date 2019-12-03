@@ -171,6 +171,7 @@ export class ResolveWalker extends RecipeWalker {
       return 1;
     };
   }
+
   // TODO(lindner): add typeof checks here and figure out where handle is coming from.
   onObligation(recipe: Recipe, obligation: ConnectionConstraint) {
     // TODO(jopra): Log errors from here.
@@ -207,7 +208,6 @@ export class RecipeResolver {
   constructor(arc: Arc) {
     this.resolver = new ResolveRecipeAction(arc);
   }
-
   // Attempts to run basic resolution on the given recipe. Returns a new
   // instance of the recipe normalized and resolved if possible. Returns null if
   // normalization or attempting to resolve slot connection fails.

@@ -1,0 +1,10 @@
+import 'particles/DebugShowBoard.arcs'
+import 'particles/DebugMakeBoard.arcs'
+
+recipe TicTacToeShowBoard
+  board: create *
+  DebugShowBoard
+    board: reads board
+  DebugMakeBoard
+    board: writes board
+  description `boardy boardy boardy!`

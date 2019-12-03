@@ -1,10 +1,10 @@
-import 'RestaurantFind.arcs'
-import 'RestaurantDisplay.arcs'
-import 'Reservations.arcs'
 import '../List/List.arcs'
-import '../Profile/Geolocate.arcs'
 import '../Layout/Layout.arcs'
-
+import '../Profile/Geolocate.arcs'
+import 'RestaurantFind.arcs'
+import 'RestaurantTile.arcs'
+import 'RestaurantDetail.arcs'
+import 'Reservations.arcs'
 import 'FavoriteFoodAnnotation.arcs'
 
 recipe Restaurants

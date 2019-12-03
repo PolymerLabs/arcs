@@ -1,0 +1,19 @@
+import './Ingestion.arcs'
+import './schemas/Json.arcs'
+
+particle SuggestPerson in './source/SuggestPerson.js'
+  recentEntities: reads [IncomingEntity]
+  suggestion: writes Json
+  root: consumes Slot
+
+//particle RequireQuery in './source/Noop.js'
+//  query: reads IncomingEntity
+
+recipe PersonAutofill &autofill
+  root: slot 'rootslotid-root'
+  recentEntities: map 'pipe-entities'
+  suggestion: create *
+  SuggestPerson
+    recentEntities: recentEntities
+    suggestion: suggestion
+    root: consumes root

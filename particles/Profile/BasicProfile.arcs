@@ -3,7 +3,7 @@ import 'schemas/UserName.arcs'
 import 'schemas/Avatar.arcs'
 
 particle UserNameForm in 'source/UserNameForm.js'
-  userName: reads writes UserName
+  userName: reads writes UserName {userName: Text}
   userNameSlot: consumes Slot
 
 particle FriendsPicker in 'source/FriendsPicker.js'
@@ -14,7 +14,7 @@ particle FriendsPicker in 'source/FriendsPicker.js'
   description `select friends`
 
 particle BasicProfile in 'source/BasicProfile.js'
-  avatar: reads writes Avatar
+  avatar: reads writes Avatar {url: URL}
   root: consumes Slot
     userNameSlot: provides? Slot
     friendsSlot: provides? Slot

@@ -20,7 +20,7 @@ import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
-describe('planning result', () => {
+describe.skip('planning result', () => {
   async function testResultSerialization(manifestFilename) {
     const loader = new StubLoader({});
     const context = await Manifest.load(manifestFilename, loader);

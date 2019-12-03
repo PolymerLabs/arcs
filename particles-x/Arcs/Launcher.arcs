@@ -1,0 +1,31 @@
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+
+import 'schemas/ArcMeta.arcs'
+import '../Profile/schemas/UserName.arcs'
+import '../Profile/schemas/Avatar.arcs'
+
+particle Launcher in 'source/Launcher.js'
+  arcs: reads writes [ArcMeta] 
+  shared: reads [ArcMetaShare]
+  avatars: reads [AvatarShare] 
+  names: reads [UserNameShare] 
+  root: consumes 
+  description `arcs launcher`
+
+recipe Launcher
+  root: slot 'rootslotid-root' 
+  arcs: create 'SYSTEM_arcs' #arcs
+  shared: map 'BOXED_arcs' 
+  names: map 'BOXED_userName'
+  avatars: map 'BOXED_avatar'
+  Launcher
+    root: consumes root
+    arcs: arcs
+    shared: shared
+    names: names
+    avatars: avatars
+

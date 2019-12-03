@@ -1,0 +1,5 @@
+schema Event
+  endDate: Text
+  startDate: Text
+  participants: Number
+  description: Text

@@ -1,0 +1,12 @@
+import './schemas/Geolocation.arcs'
+
+particle SlandleGeolocate in './source/Geolocate.js'
+  root: `consumes Slot
+  location: writes Geolocation
+  description `you`
+    location `you`
+
+recipe SlandleGeolocate
+  location: create *
+  SlandleGeolocate
+    location: location

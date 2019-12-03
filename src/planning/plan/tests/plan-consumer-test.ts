@@ -123,8 +123,9 @@ async function storeResults(consumer, suggestions) {
 }); // end forEach
 
 describe('plan consumer', () => {
-  it('filters suggestions by modality', async () => {
+  it.skip('filters suggestions by modality', async () => {
     const initConsumer = async (modalityName) => {
+      //
       const addRecipe = (particles) => {
         return `
   recipe
@@ -135,6 +136,7 @@ describe('plan consumer', () => {
     `).join('')}
         `;
       };
+      //
       const loader = new StubLoader({});
       const context =  await Manifest.parse(`
 particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
@@ -175,7 +177,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       consumer.suggestFilter = new SuggestFilter(true);
       return consumer;
     };
-
+    //
     const consumerDom = await initConsumer(Modality.Name.Dom);
     const domSuggestions = consumerDom.getCurrentSuggestions();
     console.log(domSuggestions);

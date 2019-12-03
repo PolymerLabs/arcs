@@ -46,24 +46,25 @@ const tests = [
       return description;
     }
   },
-  {
-    name: 'dom',
-    verifySuggestion: async ({arc, relevance}: VerifySuggestionOptions, expectedSuggestion) => {
-      const description = await Description.create(arc, relevance);
+  // {
+  //   name: 'dom',
+  //   verifySuggestion: async ({arc, relevance}: VerifySuggestionOptions, expectedSuggestion) => {
+  //     const description = await Description.create(arc, relevance);
 
-      // Use an any variable to override the default string return type
-      // tslint:disable-next-line: no-any
-      const suggestion = {template: '', model: {}}; //description.getArcDescription(DescriptionDomFormatter) as any;
-      let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
-      Object.keys(suggestion.model).forEach(m => {
-        assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
-        result = result.replace(new RegExp(`{{${m}}}`, 'g'), suggestion.model[m]);
-        assert.isFalse(result.indexOf(`{{${m}}}`) >= 0);
-      });
-      assert.strictEqual(result, expectedSuggestion);
-      return description;
-    }
-  },
+  //     // Use an any variable to override the default string return type
+  //     // tslint:disable-next-line: no-any
+  //     //const suggestion = {template: '', model: {}}; //description.getArcDescription(DescriptionDomFormatter) as any;
+  //     const suggestion = description.getArcDescription() as any;
+  //     let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
+  //     Object.keys(suggestion.model).forEach(m => {
+  //       assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
+  //       result = result.replace(new RegExp(`{{${m}}}`, 'g'), suggestion.model[m]);
+  //       assert.isFalse(result.indexOf(`{{${m}}}`) >= 0);
+  //     });
+  //     assert.strictEqual(result, expectedSuggestion);
+  //     return description;
+  //   }
+  // },
 ];
 
 describe('Description', () => {
@@ -710,8 +711,8 @@ recipe
 
       const recipeDescription = description.getRecipeSuggestion();
       assert.strictEqual(recipeDescription, expectedDescription);
-      const recipeDescriptionWithFormatter = ''; //description.getRecipeSuggestion(DescriptionDomFormatter);
-      assert.deepEqual(recipeDescriptionWithFormatter, expectedDescription);
+      //const recipeDescriptionWithFormatter = ''; //description.getRecipeSuggestion(DescriptionDomFormatter);
+      //assert.deepEqual(recipeDescriptionWithFormatter, expectedDescription);
     };
 
     await verify(`recipe`, undefined);
@@ -860,7 +861,7 @@ recipe
 
   tests.forEach((test) => {
     it('particle recipe description ' + test.name, async () => {
-      const {arc, recipe, fooStore, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
+      const {arc, recipe, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
 
       const description = await Description.create(arc);
       assert.isUndefined(description.getArcDescription());
@@ -884,7 +885,7 @@ recipe
 
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
-      const {arc, recipe, fooStore, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
+      const {arc, fooStore, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
       await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'return my ${ofoo} (text)'}));
       await descriptionHandle.add(new DescriptionType({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
       await descriptionHandle.add(new DescriptionType({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));

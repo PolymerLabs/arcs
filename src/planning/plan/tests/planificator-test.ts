@@ -18,7 +18,7 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
 
-describe('planificator', () => {
+describe.skip('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer);
     const arc = runtime.newArc(
@@ -43,7 +43,7 @@ describe('planificator', () => {
   });
 });
 
-describe('remote planificator', () => {
+describe.skip('remote planificator', () => {
   const userid = 'test-user';
   // TODO: support arc storage key be in PouchDB as well.
   const storageKey = 'volatile://!123:demo^^abcdef';

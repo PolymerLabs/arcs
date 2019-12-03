@@ -56,7 +56,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   // particles, and the particles render themselves.
 
   update(props, state, oldProps, oldState) {
-    const {list}: {list: Array<{}>} = props;
+    const {list}: {list: {}[]} = props;
     const {arc}: {arc: InnerArcHandle} = state;
     //log(`[${this.spec.name}]::update`, list, arc);
     if (!list || !arc) {
@@ -69,6 +69,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       this.relevance = 0.1;
     }
     // async
+    // tslint-disable-next-line no-floating-promises
     this.updateEntries(props, state, oldProps, oldState);
   }
 
@@ -178,12 +179,14 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
         // TODO(lindner): type erasure to avoid mismatch of Store vs Handle in arc.mapHandle
         // tslint:disable-next-line: no-any
         const otherHandleStore = otherHandle.storage as any;
-        otherMappedHandles.push(`use '${await arc.mapHandle(otherHandleStore)}' as v${index}`);
+        otherMappedHandles.push(`v${index}: use '${await arc.mapHandle(otherHandleStore)}'`);
+        //otherMappedHandles.push(`use '${await arc.mapHandle(otherHandleStore)}' as v${index}`);
         //
         const hostedOtherConnection =
           hostedParticle.handleConnections.find(conn => conn.isCompatibleType(otherHandle.type));
         if (hostedOtherConnection) {
-          otherConnections.push(`${hostedOtherConnection.name} = v${index++}`);
+          otherConnections.push(`${hostedOtherConnection.name}: v${index++}`);
+          //otherConnections.push(`${hostedOtherConnection.name} = v${index++}`);
           // TODO(wkorman): For items with embedded recipes where we may have a
           // different particle rendering each item, we need to track
           // |connByHostedConn| keyed on the particle type.

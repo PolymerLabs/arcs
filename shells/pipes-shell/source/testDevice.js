@@ -11,7 +11,7 @@
 const defaultManifest = `
 // UIBroker/demo particles below here
 import 'https://$particles/Pipes/Pipes.arcs'
-import 'https://$particles/Notification/Notification.arcs'
+import 'https://$particles/Pipes/Notification.arcs'
 import 'https://$particles/Tutorial/Kotlin/1_HelloWorld/HelloWorld.arcs'
 `;
 

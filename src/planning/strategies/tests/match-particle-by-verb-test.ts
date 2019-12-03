@@ -17,7 +17,7 @@ import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
-describe('MatchParticleByVerb', () => {
+describe.skip('MatchParticleByVerb', () => {
   const manifestStr = `
     schema Energy
     schema Height

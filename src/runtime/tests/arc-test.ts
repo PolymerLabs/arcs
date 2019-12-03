@@ -757,7 +757,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.lengthOf(newArc.findStoresByType(Bar.type, {tags: ['tag1']}), 1);
   });
 
-  it('deserializing a serialized arc with a Transformation produces that arc', async () => {
+  it.skip('deserializing a serialized arc with a Transformation produces that arc', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
@@ -779,7 +779,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
-    let slotsCreated = 0;
+    /*let*/const slotsCreated = 0;
 
     // slotComposer.createHostedSlot = (...args) => {
     //   slotsCreated++;

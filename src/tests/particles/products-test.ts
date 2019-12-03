@@ -18,7 +18,7 @@ import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 
-describe('products test', () => {
+describe.skip('products test', () => {
   const manifestFilename = './src/tests/particles/artifacts/products-test.recipes';
 
   const verifyFilteredBook = async (arc) => {

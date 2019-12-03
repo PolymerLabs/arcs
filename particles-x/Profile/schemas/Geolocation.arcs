@@ -1,0 +1,3 @@
+schema Geolocation
+  latitude: Number
+  longitude: Number

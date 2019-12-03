@@ -5,14 +5,13 @@ import '../Common/schemas/Description.arcs'
 import './schemas/Restaurant.arcs'
 
 particle FavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
-  restaurant: reads Restaurant
+  restaurant: reads Restaurant {identifier: Text, reference: Text, name: Text, description: Text, icon: Text, photos: Text, photo: Text, rating: Number, address: Text}
   foods: reads [FavoriteFoodShare]
   names: reads [UserNameShare]
   annotation: consumes Slot
 
 particle SharesFrom in 'source/SharesFrom.js'
   shares: reads [~a]
-  //names: reads [UserNameShare]
   names: reads [~b]
   descriptions: writes [Description]
 

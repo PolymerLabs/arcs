@@ -1,0 +1,19 @@
+schema FavoriteFood
+  foo: Text
+
+import 'schemas/Share.arcs'
+
+schema FavoriteFoodShare extends Share
+  ref: Reference<FavoriteFood>
+
+particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
+  foods: reads writes [FavoriteFood]
+  root: consumes Slot
+  description `select favorite foods`
+    foods `favorite foods`
+
+recipe FavoriteFood
+  foods: create #favoriteFoods
+  FavoriteFoodPicker
+    foods: foods
+

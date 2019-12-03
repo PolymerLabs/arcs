@@ -9,13 +9,13 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Planner} from '../../planning/planner.js';
+//import {Planner} from '../../planning/planner.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
-import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
+//import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -69,24 +69,24 @@ describe('common particles test', () => {
   });
 
 
-  it('copy handle test', async () => {
-    const loader = new StubLoader({});
-    const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
-    const arc = runtime.newArc('demo', 'volatile://');
+  // it('copy handle test', async () => {
+  //   const loader = new StubLoader({});
+  //   const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader);
+  //   const runtime = new Runtime(loader, FakeSlotComposer, context);
+  //   const arc = runtime.newArc('demo', 'volatile://');
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
-    assert.lengthOf(suggestions, 1);
-    const suggestion = suggestions[0];
-    assert.equal(suggestion.descriptionText, 'Copy all things!');
+  //   const suggestions = await StrategyTestHelper.planForArc(arc);
+  //   assert.lengthOf(suggestions, 1);
+  //   const suggestion = suggestions[0];
+  //   assert.equal(suggestion.descriptionText, 'Copy all things!');
 
-    assert.isEmpty(arc._stores);
+  //   assert.isEmpty(arc._stores);
 
-    await suggestion.instantiate(arc);
-    await arc.idle;
+  //   await suggestion.instantiate(arc);
+  //   await arc.idle;
 
-    // Copied 2 and 3 entities from two collections.
-    const collection = arc._stores[2] as VolatileCollection;
-    assert.strictEqual(5, collection._model.size);
-  });
+  //   // Copied 2 and 3 entities from two collections.
+  //   const collection = arc._stores[2] as VolatileCollection;
+  //   assert.strictEqual(5, collection._model.size);
+  // });
 });

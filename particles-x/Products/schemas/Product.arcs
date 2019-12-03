@@ -1,0 +1,10 @@
+schema Product
+  name: Text
+  description: Text
+  image: URL
+  category: Text
+  seller: Text
+  price: Text
+  shipDays: Number
+  description `product`
+    plural `products`

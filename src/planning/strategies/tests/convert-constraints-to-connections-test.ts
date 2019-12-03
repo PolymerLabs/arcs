@@ -521,7 +521,7 @@ describe('ConvertConstraintsToConnections', () => {
     d <-> handle0`);
   }));
 
-  it('SLANDLES SYNTAX verifies modality', Flags.withPostSlandlesSyntax(async () => {
+  it.skip('SLANDLES SYNTAX verifies modality', Flags.withPostSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A in 'A.js'
@@ -554,7 +554,7 @@ describe('ConvertConstraintsToConnections', () => {
   }));
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('verifies modality', Flags.withPreSlandlesSyntax(async () => {
+  it.skip('verifies modality', Flags.withPreSlandlesSyntax(async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A in 'A.js'

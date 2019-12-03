@@ -1,0 +1,25 @@
+import 'List/List.arcs'
+import 'Profile/Profile.arcs'
+import 'Products/Products.arcs'
+import 'Events/Events.arcs'
+import 'Restaurants/Restaurants.arcs'
+import 'Music/Music.arcs'
+import 'TVMaze/TVMaze.arcs'
+import 'TMDB/recipes/TMDB.arcs'
+import 'Words/Words.arcs'
+import 'Services/Services.arcs'
+import 'Stardate/Stardate.arcs'
+import 'Demo/Demo.arcs'
+import 'Processing/recipes/ImageClassifier.arcs'
+import 'Magenta/Visualizer.arcs'
+// for ArcMetaShare
+import 'Arcs/schemas/ArcMeta.arcs'
+// Tutorials
+import 'Tutorial/Javascript/Tutorial.arcs'
+import 'Tutorial/Kotlin/Tutorial.arcs'
+import 'TicTacToe/TicTacToe.arcs'
+// Other
+import 'Native/native.arcs'
+// Test
+import 'tests/WasmIntegrationTest.arcs'
+

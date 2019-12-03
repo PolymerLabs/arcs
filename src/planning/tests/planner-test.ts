@@ -357,7 +357,7 @@ describe('Planner', () => {
   });
 });
 
-describe('AssignOrCopyRemoteHandles', () => {
+describe.skip('AssignOrCopyRemoteHandles', () => {
   const particlesSpec = `
       schema Foo
 
@@ -974,7 +974,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
-  it('composes recipe rendering a list of items from a recipe', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it.skip('composes recipe rendering a list of items from a recipe', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1018,7 +1018,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
   }));
 
-  it('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it.skip('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1147,14 +1147,14 @@ describe('Automatic resolution', () => {
     return recipes[0];
   };
 
-  it('searches and coalesces nearby restaurants by recipe name', async () => {
+  it.skip('searches and coalesces nearby restaurants by recipe name', async () => {
     const recipe = await verifyRestaurantsPlanSearch('nearby restaurants');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
     assert.lengthOf(recipe.handles, 4);
   });
 
-  it('searches and coalesces make reservation by recipe name', async () => {
+  it.skip('searches and coalesces make reservation by recipe name', async () => {
     const recipe = await verifyRestaurantsPlanSearch('make reservation');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
@@ -1172,7 +1172,7 @@ describe('Automatic resolution', () => {
     }));
   });
 
-  it('searches and coalesces "nearby restaurants make reservation"', async () => {
+  it.skip('searches and coalesces "nearby restaurants make reservation"', async () => {
     const recipe = await verifyRestaurantsPlanSearch('nearby restaurants make reservation');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
@@ -1189,7 +1189,7 @@ describe('Automatic resolution', () => {
     }));
   });
 
-  it('searches and coalesces "nearby restaurants calendar"', async () => {
+  it.skip('searches and coalesces "nearby restaurants calendar"', async () => {
     const recipe = await verifyRestaurantsPlanSearch('nearby restaurants calendar');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['Calendar', 'FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());

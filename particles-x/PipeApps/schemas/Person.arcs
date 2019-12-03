@@ -1,0 +1,6 @@
+schema Person
+  firstName: Text
+  lastName: Text
+  password: Text
+  phone: Text
+  postalAddress: Text

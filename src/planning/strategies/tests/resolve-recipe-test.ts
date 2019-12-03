@@ -143,7 +143,7 @@ describe('resolve recipe', () => {
     assert.isTrue(recipe.isResolved());
   });
 
-  it('map slots by slot connection tags', async () => {
+  it.skip('map slots by slot connection tags', async () => {
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
         master: consumes Slot #root

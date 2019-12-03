@@ -286,7 +286,7 @@ export class Suggestion {
       return false;
     }
     const usesRemoteNonRootSlots = this.plan.slots.some(slot => {
-      return !isRoot(slot) /*&& Boolean(arc.pec.slotComposer.findContextById(slot.id))*/;
+      return !isRoot(slot)/* && Boolean(arc.pec.slotComposer.findContextById(slot.id))*/;
     });
     if (!usesRemoteNonRootSlots) {
       logReason(`No remote non-root slots.`);

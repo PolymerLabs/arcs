@@ -1,0 +1,5 @@
+particle RestaurantTile in 'source/RestaurantTile.js'
+  restaurant: reads Restaurant {identifier: Text, reference: Text, name: Text, description: Text, icon: Text, photos: Text, photo: Text, rating: Number, address: Text}
+  tile: consumes Slot
+    annotation: provides? Slot
+

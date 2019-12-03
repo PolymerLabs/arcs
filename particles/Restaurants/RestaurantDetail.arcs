@@ -1,0 +1,5 @@
+particle RestaurantDetail in 'source/RestaurantDetail.js'
+  restaurant: reads Restaurant {identifier: Text, reference: Text, name: Text, description: Text, icon: Text, photos: Text, photo: Text, rating: Number, address: Text}
+  content: consumes Slot
+    detailAction: provides? Slot
+

@@ -1,0 +1,14 @@
+schema StorageKey
+  key: Text
+
+particle Login in 'source/Login.js'
+  key: writes StorageKey
+  root: consumes Slot
+
+recipe Login &login
+  key: create *
+  root: slot 'rootslotid-root'
+  Login
+    key: key
+    root: consumes root
+  description `user sign in`

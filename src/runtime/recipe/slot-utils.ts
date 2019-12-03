@@ -85,7 +85,7 @@ export class SlotUtils {
   }
 
   // Returns the given slot candidates, sorted by "quality".
-  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots: Array<SlotThingie>) {
+  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots: SlotThingie[]) {
     const possibleSlots = slots ? slots.filter(s => this.slotMatches(particle, slotSpec, s)) : [];
     // TODO: implement.
     possibleSlots.sort((slot1, slot2) => slot1.name.localeCompare(slot2.name));
@@ -94,6 +94,7 @@ export class SlotUtils {
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
   static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot: SlotThingie): boolean {
+    // TODO(sjmiles): only tests `isSet`
     if (!SlotUtils.specMatch(slotSpec, slot.spec)) {
       return false;
     }

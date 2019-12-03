@@ -1,0 +1,6 @@
+schema Avatar
+  url: URL
+
+import 'Share.arcs'
+schema AvatarShare extends Share
+  ref: Reference<Avatar>

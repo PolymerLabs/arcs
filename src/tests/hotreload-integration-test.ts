@@ -195,7 +195,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     await arc.instantiate(recipe);
     await arc.idle;
-    
+
     //const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
     //assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});
     //assert.deepStrictEqual(slotConsumer._content.template, `<div>Hello <span>{{name}}</span>, old age: <span>{{age}}</span></div>`);

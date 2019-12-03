@@ -9,13 +9,5 @@ import 'schemas/Restaurant.arcs'
 import '../Profile/Geolocate.arcs'
 
 particle RestaurantFind in 'source/RestaurantFind.js'
-  location: reads Geolocation
+  location: reads Geolocation {latitude: Number, longitude: Number}
   restaurants: reads writes [Restaurant]
-
-// TODO: see what happens if we decimate Restaurants.arcs::Recipes into smaller pieces like this
-//recipe RestaurantFind
-//  restaurants: create #tiles
-//  RestaurantFind
-//    restaurants: restaurants
-//  description `find restaurants near ${RestaurantFind.location}`
-

@@ -1,0 +1,12 @@
+schema IncomingEntity
+  type: Text
+  jsonData: Text
+  source: Text
+
+particle Ingestion in './source/Noop.js'
+  entities: reads [IncomingEntity]
+
+recipe Ingestion
+  entities: create #incomingEntities
+  Ingestion
+    entities: entities

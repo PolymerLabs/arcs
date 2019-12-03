@@ -28,7 +28,7 @@ export class UiSlotComposer {
   dispose(): void {
   }
 
-  async initializeRecipe(arc: Arc, particles: Array<Particle>) {
+  async initializeRecipe(arc: Arc, particles: Particle[]) {
     //const newConsumers = <SlotConsumer[]>[];
     // Create slots for each of the recipe's particles slot connections.
     //particles.forEach(p => this.initializeParticleSlots(p));
@@ -53,7 +53,7 @@ export class UiSlotComposer {
     log('sendEvent:', this, particleId, eventlet);
     const particles = this.arc.activeRecipe.particles;
     //log('active particles: ', particles.map(p => p.id.toString()));
-    const particle = particles.find(p => p.id.toString() == particleId);
+    const particle = particles.find(p => p.id.toString() === particleId);
     this.arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
   }
 
@@ -111,7 +111,7 @@ export class UiSlotComposer {
     };
   }
 
-  buildSlotMap(connections: Array<SlotConnection>) {
+  buildSlotMap(connections: SlotConnection[]) {
     // map slots names to slot ids
     const slotMap = {};
     connections.forEach(({providedSlots}) => {
@@ -119,5 +119,4 @@ export class UiSlotComposer {
     });
     return slotMap;
   }
-  
 }

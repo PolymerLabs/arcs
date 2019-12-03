@@ -21,7 +21,7 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {Id, ArcId} from '../../../runtime/id.js';
 import {Flags} from '../../../runtime/flags.js';
 
-describe('MapSlots', () => {
+describe.skip('MapSlots', () => {
   const particlesSpec = `
       particle A in 'A.js'
         root: consumes Slot

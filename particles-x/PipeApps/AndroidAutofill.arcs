@@ -1,0 +1,40 @@
+import './schemas/IncomingEntity.arcs'
+import './schemas/Person.arcs'
+
+schema AutofillRequest
+  hint: Text
+
+// An Android particle which powers the Android AutofillService.
+external particle AutofillParticle
+  // TODO: Use a Singleton instead, when that is supported in Java.
+  request: writes [AutofillRequest]
+  root: consumes Slot
+    fillSlot: provides? Slot
+  modality autofill
+
+// A dummy JS particle which handles the Autofill requests.
+particle DummyAutofillResponder in './source/DummyAutofillResponder.js'
+  recentPeople: reads [Person]
+  request: reads [AutofillRequest]
+  fillSlot: consumes Slot
+  modality autofill
+
+recipe AndroidAutofill
+  recentPeople: map #recentPeople
+  rootSlot: slot *
+  AutofillParticle
+    request: writes request
+    root: consumes rootSlot
+      fillSlot: provides fillSlot
+  DummyAutofillResponder
+    recentPeople: reads recentPeople
+    request: reads request
+    fillSlot: consumes fillSlot
+
+external particle CapturePerson
+  people: reads writes [Person]
+
+recipe IngestPeople
+  people: create #recentPeople #shared
+  CapturePerson
+    people: writes people

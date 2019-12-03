@@ -1,0 +1,7 @@
+store PageProducts of [Product {name: Text, description: Text, image: URL, category: Text, seller: Text, price: Text, shipDays: Number}] #shoplist in 'products.json'
+  description `products from your browsing context`
+
+store ClairesWishlist of [Product {name: Text, description: Text, image: URL, category: Text, seller: Text, price: Text, shipDays: Number}] #items #wishlist in 'wishlist.json'
+  description `wishlist`
+
+store Claire of Person {id: Text, name: Text, occasion: Text, date: Text} #claire in 'Claire.json'

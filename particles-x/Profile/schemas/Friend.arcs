@@ -1,0 +1,6 @@
+schema Friend
+  publicKey: Text
+
+import 'Share.arcs'
+schema FriendShare extends Share
+  ref: Reference<Friend>
