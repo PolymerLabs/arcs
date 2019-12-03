@@ -21,6 +21,7 @@ import arcs.TTTHumanPlayer_GameState
 import arcs.TTTHumanPlayer_MyMove
 import arcs.TTTHumanPlayer_Player
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class TTTHumanPlayer : Particle() {
     private val gameState = Singleton { TTTHumanPlayer_GameState() }

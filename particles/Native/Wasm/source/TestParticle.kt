@@ -21,6 +21,7 @@ import arcs.abort
 import arcs.log
 import kotlin.Exception
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 /**
  * Sample WASM Particle.

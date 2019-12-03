@@ -14,6 +14,7 @@ package arcs.tutorials
 import arcs.addressable.toAddress
 import arcs.Particle
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 /**
  * Sample WASM Particle.

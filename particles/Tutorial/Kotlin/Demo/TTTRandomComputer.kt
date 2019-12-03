@@ -19,6 +19,7 @@ import arcs.TTTRandomComputer_GameState
 import arcs.TTTRandomComputer_MyMove
 import arcs.TTTRandomComputer_Player
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class TTTRandomComputer : Particle() {
     private val gameState = Singleton { TTTRandomComputer_GameState() }
