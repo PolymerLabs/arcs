@@ -9,7 +9,7 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
-import {Id, ArcId} from '../../../runtime/id.js';
+import {ArcId} from '../../../runtime/id.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
@@ -20,9 +20,11 @@ import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
-import {Planner} from '../../planner.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+// database providers are optional, this tests uses this providers
+import '../../../runtime/storage/firebase/firebase-provider.js';
+import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -81,7 +83,7 @@ class TestPlanProducer extends PlanProducer {
 }
 
 // Run test suite for each storageKeyBase
-['volatile'/*, 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'*/].forEach(storageKeyBase => {
+['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
   describe.skip('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
       const loader = new StubLoader({});
