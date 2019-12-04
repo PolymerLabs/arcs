@@ -23,6 +23,7 @@ import arcs.api.UiBroker;
 
 @Singleton
 class ArcsShellApi {
+
   private final PortableJsonParser jsonParser;
   private final AndroidArcsEnvironment environment;
   private final PecPortManager pecPortManager;
