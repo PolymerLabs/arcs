@@ -50,9 +50,9 @@ describe('schema2wasm', () => {
   it('generates one class per unique schema', async () => {
     const manifest = await Manifest.parse(`\
       particle Foo
-        in * {Text txt} input1
-        out Reference<* {Text txt, Number num}> input2
-        inout [Site {URL url, Reference<* {Text txt}> ref}] input3
+        input1: reads * {txt: Text}
+        input2: writes Reference<* {txt: Text, num: Number}>
+        input3: reads writes [Site {url: URL, ref: Reference<* {txt: Text}>}]
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
@@ -65,7 +65,7 @@ describe('schema2wasm', () => {
   it('supports all primitive types', async () => {
     const manifest = await Manifest.parse(`\
       particle Foo
-        in * {Text txt, URL url, Number num, Boolean flg} input
+        input: reads * {txt: Text, url: URL, num: Number, flg: Boolean}
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
@@ -76,8 +76,8 @@ describe('schema2wasm', () => {
   it('supports nested references with schema aliasing', async () => {
     const manifest = await Manifest.parse(`\
       particle Foo
-        in * {Text a, Reference<* {Text b}> r} h1
-        in * {Reference<* {Boolean f, Reference<* {Number x}> t}> s} h2
+        h1: reads * {a: Text, r: Reference<* {b: Text}>}
+        h2: reads * {s: Reference<* {f: Boolean, t: Reference<* {x: Number}>}>}
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {

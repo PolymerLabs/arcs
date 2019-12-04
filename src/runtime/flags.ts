@@ -12,27 +12,12 @@
 
 class FlagDefaults {
   static useNewStorageStack = false;
-  // Enables the parsing of both pre and post slandles (unified) syntaxes.
-  // Preslandles syntax is to be deprecated.
-  static parseBothSyntaxes = true;
-  // Use pre slandles syntax for parsing and toString by default.
-  // If parseBothSyntaxes is off, this will set which syntax is enabled.
-  static defaultToPreSlandlesSyntax = true;
 }
 
 export class Flags extends FlagDefaults {
   /** Resets flags. To be called in test teardown methods. */
   static reset() {
     Object.assign(Flags, FlagDefaults);
-  }
-
-  // tslint:disable-next-line: no-any
-  static withPreSlandlesSyntax<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
-    return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: true}, f);
-  }
-  // tslint:disable-next-line: no-any
-  static withPostSlandlesSyntax<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
-    return Flags.withFlags({parseBothSyntaxes: false, defaultToPreSlandlesSyntax: false}, f);
   }
 
   // tslint:disable-next-line: no-any

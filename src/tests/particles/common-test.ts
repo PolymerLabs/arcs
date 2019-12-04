@@ -9,34 +9,38 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {Planner} from '../../planning/planner.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
+import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
+import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
     const manifest = await Manifest.parse(`
   schema Thing
-    Text name
-    Text description
-    URL image
-    URL url
-    Text identifier
+    name: Text
+    description: Text
+    image: URL
+    url: URL
+    identifier: Text
 
   particle CopyCollection in 'source/CopyCollection.js'
-    in [~a] input
-    out [~a] output
+    input: reads [~a]
+    output: writes [~a]
 
   recipe
-    map 'bigthings' as bigthings
-    map 'smallthings' as smallthings
-    create as things
+    bigthings: map 'bigthings'
+    smallthings: map 'smallthings'
+    things: create *
     CopyCollection
-      input <- bigthings
-      output -> things
+      input: reads bigthings
+      output: writes things
     CopyCollection
-      input <- smallthings
-      output -> things
+      input: reads smallthings
+      output: writes things
 
   resource BigThings
     start
@@ -66,17 +70,23 @@ describe('common particles test', () => {
 
 
   it('copy handle test', async () => {
-    const helper = await PlanningTestHelper.createAndPlan({
-      manifestFilename: './src/tests/particles/artifacts/copy-collection-test.recipes',
-      expectedNumPlans: 1,
-      expectedSuggestions: ['Copy all things!']
-    });
-    assert.isEmpty(helper.arc._stores);
+    const loader = new StubLoader({});
+    const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader);
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://');
 
-    await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});
+    const suggestions = await StrategyTestHelper.planForArc(arc);
+    assert.lengthOf(suggestions, 1);
+    const suggestion = suggestions[0];
+    assert.equal(suggestion.descriptionText, 'Copy all things!');
+
+    assert.isEmpty(arc._stores);
+
+    await suggestion.instantiate(arc);
+    await arc.idle;
 
     // Copied 2 and 3 entities from two collections.
-    const collection = helper.arc._stores[2] as VolatileCollection;
+    const collection = arc._stores[2] as VolatileCollection;
     assert.strictEqual(5, collection._model.size);
   });
 });

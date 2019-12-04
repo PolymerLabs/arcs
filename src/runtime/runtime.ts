@@ -21,14 +21,13 @@ import {UiSlotComposer} from './ui-slot-composer.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
-import {VolatileMemory} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
-import {devtoolsArcInspectorFactory} from '../devtools-connector/devtools-arc-inspector.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -48,7 +47,8 @@ type SpawnArgs = {
   context: Manifest,
   composer: SlotComposer,
   storage: string,
-  portFactories: []
+  portFactories: [],
+  inspectorFactory?: ArcInspectorFactory
 };
 
 let runtime: Runtime | null = null;
@@ -57,7 +57,7 @@ let runtime: Runtime | null = null;
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
-  public readonly context: Manifest;
+  public context: Manifest;
   public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
@@ -146,31 +146,44 @@ export class Runtime {
   destroy() {
   }
 
-  /**
-   * Given an arc name, return either:
-   * (1) the already running arc
-   * (2) a deserialized arc (TODO: needs implementation)
-   * (3) a newly created arc
-   */
-  runArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions): Arc {
-    if (!this.arcById.has(name)) {
-      // TODO: Support deserializing serialized arcs.
-      this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));
-    }
-    return this.arcById.get(name);
+  // Allow dynamic context binding to this runtime.
+  bindContext(context: Manifest) {
+    this.context = context;
   }
 
   // TODO(shans): Clean up once old storage is removed.
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
-  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
+  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey) | null, options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const storageKey = (typeof storageKeyPrefix === 'string')
-      ? `${storageKeyPrefix}${id.toString()}` : storageKeyPrefix(id);
+    let storageKey : string | StorageKey;
+    if (typeof storageKeyPrefix === 'string') {
+      storageKey = `${storageKeyPrefix}${id.toString()}`;
+    } else if (storageKeyPrefix == null) {
+      storageKey = new VolatileStorageKey(id, '');
+    } else {
+      storageKey = storageKeyPrefix(id);
+    }
     return new Arc({id, storageKey, loader, slotComposer, context, ...options});
+  }
+
+  // Stuff the shell needs
+
+  /**
+   * Given an arc name, return either:
+   * (1) the already running arc
+   * (2) a deserialized arc (TODO: needs implementation)
+   * (3) a newly created arc
+   */
+  runArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
+    if (!this.arcById.has(name)) {
+      // TODO: Support deserializing serialized arcs.
+      this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));
+    }
+    return this.arcById.get(name);
   }
 
   stop(name: string) {
@@ -287,7 +300,7 @@ export class Runtime {
 
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
-  async spawnArc({id, serialization, context, composer, storage, portFactories}: SpawnArgs): Promise<Arc> {
+  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory}: SpawnArgs): Promise<Arc> {
     const params = {
       id: IdGenerator.newSession().newArcId(id),
       fileName: './serialized.manifest',
@@ -297,9 +310,7 @@ export class Runtime {
       slotComposer: composer,
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,
-      // TODO(sjmiles): maybe doesn't belong here, but empirically it's
-      // wanted in (almost?) all Arc instantiations
-      inspectorFactory: devtoolsArcInspectorFactory
+      inspectorFactory,
     };
     return serialization ? Arc.deserialize(params) : new Arc(params);
   }

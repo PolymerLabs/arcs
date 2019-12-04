@@ -12,6 +12,7 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {Entity} from '../../../runtime/entity.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
@@ -19,17 +20,17 @@ describe('resolve recipe', () => {
   it('does not resolve a mapping of a handle with an invalid type', async () => {
     const manifest = await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
       schema Tesla extends Car
-        Boolean bioweaponDefenceMode
+        bioweaponDefenceMode: Boolean
 
       particle P in 'p.js'
-        in Tesla param
+        param: reads Tesla
 
       recipe
-        copy as h0
+        h0: copy *
         P
-          param <- h0
+          param: reads h0
 
       store TestStore of Car in EmptyListJson
       resource EmptyListJson
@@ -46,17 +47,17 @@ describe('resolve recipe', () => {
   it('resolves a mapping of a handle with a less specific entity type', async () => {
     const manifest = await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
       schema Tesla extends Car
-        Boolean bioweaponDefenceMode
+        bioweaponDefenceMode: Boolean
 
       particle P in 'p.js'
-        out Tesla param
+        param: writes Tesla
 
       recipe
-        copy as h0
+        h0: copy *
         P
-          param -> h0
+          param: writes h0
 
       store TestStore of Car in EmptyListJson
       resource EmptyListJson
@@ -74,17 +75,17 @@ describe('resolve recipe', () => {
   it('resolves a mapping of a handle with a more specific entity type', async () => {
     const manifest = await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
       schema Tesla extends Car
-        Boolean bioweaponDefenceMode
+        bioweaponDefenceMode: Boolean
 
       particle P in 'p.js'
-        in Car param
+        param: reads Car
 
       recipe
-        copy as h0
+        h0: copy *
         P
-          param <- h0
+          param: reads h0
 
       store TestStore of Tesla in EmptyListJson
       resource EmptyListJson
@@ -102,17 +103,17 @@ describe('resolve recipe', () => {
   it('resolves a mapping of a handle with an equivalent entity type', async () => {
     const manifest = await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
       schema Tesla extends Car
-        Boolean bioweaponDefenceMode
+        bioweaponDefenceMode: Boolean
 
       particle P in 'p.js'
-        in Tesla param
+        param: reads Tesla
 
       recipe
-        copy as h0
+        h0: copy *
         P
-          param <- h0
+          param: reads h0
 
       store TestStore of Tesla in EmptyListJson
       resource EmptyListJson
@@ -130,10 +131,10 @@ describe('resolve recipe', () => {
   it('maps slots by tags', async () => {
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume master #parent
+        master: consumes Slot #parent
 
       recipe
-        slot 'id0' #parent as s0
+        s0: slot 'id0' #parent
         A
     `));
     let [recipe] = manifest.recipes;
@@ -146,15 +147,15 @@ describe('resolve recipe', () => {
   it('map slots by slot connection tags', async () => {
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        consume master #root
-          provide detail #info #detail
+        master: consumes Slot #root
+          detail: provides? Slot #info #detail
       particle B in 'B.js'
-        consume info
+        info: consumes Slot
       recipe
         A
-          consume master #root
+          master: consumes #root
         B
-          consume info #detail
+          info: consumes #detail
     `));
 
     const strategy = new ResolveRecipe(createTestArc(manifest));
@@ -170,7 +171,7 @@ describe('resolve recipe', () => {
   it(`maps 'map' handles specified by id to storage`, async () => {
     const context = await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
 
       store TestStore of Car 'batmobile' in EmptyListJson
       resource EmptyListJson
@@ -182,15 +183,15 @@ describe('resolve recipe', () => {
     // manifest parser maps to storage all by itself itself.
     const recipe = (await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
 
       particle P in 'p.js'
-        in Car param
+        param: reads Car
 
       recipe
-        map 'batmobile' as h0
+        h0: map 'batmobile'
         P
-          param <- h0
+          param: reads h0
     `)).recipes[0];
 
     recipe.normalize();
@@ -209,20 +210,20 @@ describe('resolve recipe', () => {
   it(`maps 'use' handles specified by id to storage`, async () => {
     const manifest = await Manifest.parse(`
       schema Car
-        Number doors
+        doors: Number
 
       particle P in 'p.js'
-        in Car param
+        param: reads Car
 
       recipe
-        use 'batmobile' as h0
+        h0: use 'batmobile'
         P
-          param <- h0
+          param: reads h0
     `);
 
     const arc = createTestArc(manifest);
 
-    const car = manifest.findSchemaByName('Car').entityClass();
+    const car = Entity.createEntityClass(manifest.findSchemaByName('Car'), null);
     await arc.createStore(car.type, /* name= */ null, 'batmobile');
 
     const recipe = manifest.recipes[0];

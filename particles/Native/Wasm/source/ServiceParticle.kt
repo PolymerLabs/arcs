@@ -1,8 +1,20 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.test
 
+import arcs.addressable.Address
+import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.log
-import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 class ServiceParticle : Particle() {
@@ -57,7 +69,7 @@ class ServiceParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newServiceParticle")
-fun constructServiceParticle(): WasmAddress {
+fun constructServiceParticle(): Address {
   log("__newServiceParticle called")
-  return ServiceParticle().toWasmAddress()
+  return ServiceParticle().toAddress()
 }

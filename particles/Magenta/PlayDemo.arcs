@@ -1,7 +1,7 @@
 import 'schemas/Sequence.arcs'
 
 particle PlayDemoParticle in './source/PlayDemo.js'
-  consume root
+  root: consumes Slot
 
 recipe PlayDemoRecipe
   PlayDemoParticle

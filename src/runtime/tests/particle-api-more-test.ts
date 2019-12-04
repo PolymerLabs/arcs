@@ -14,7 +14,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
-import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../testing/handle-for-test.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
@@ -40,7 +40,7 @@ const getCollectionData = async (arc: Arc, index: number) => {
 
 const spawnTestArc = async (loader) => {
   const runtime = new Runtime(loader, FakeSlotComposer);
-  const arc = runtime.runArc('test-arc', 'volatile://');
+  const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
   const manifest = await Manifest.load('manifest', loader);
   const [recipe] = manifest.recipes;
   recipe.normalize();
@@ -57,11 +57,11 @@ describe('ui-particle-api', () => {
       const loader = new StubLoader({
         manifest: `
           particle TestParticle in 'test-particle.js'
-            out Result {Boolean ok} result
+            result: writes Result {ok: Boolean}
           recipe
-            create as result
+            result: create *
             TestParticle
-              result = result
+              result: result
         `,
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
@@ -100,26 +100,26 @@ describe('ui-particle-api', () => {
           particle TestParticle in 'test-particle.js'
             // TODO(sjmiles): file issue: bad syntax below results in an error suggesting
             // that "in" is a bad token, which is misleading (the type decl is bad)
-            //in Stuff [{Text value}] stuff
+            //in Stuff [{value: Text}] stuff
             //
-            out Result {Boolean ok} result
-            out Result2 {Boolean ok} result2
-            out [Stuff {Text value}] stuff
-            out Thing {Text value} thing
-            out Thing2 {Text value} thing2
+            result: writes Result {ok: Boolean}
+            result2: writes Result2 {ok: Boolean}
+            stuff: writes [Stuff {value: Text}]
+            thing: writes Thing {value: Text}
+            thing2: writes Thing2 {value: Text}
           recipe
             // TODO(sjmiles): 'create with id' parses but doesn't work
-            create 'stuff-store' as stuff
-            create as thing
-            create as thing2
-            create as result
-            create as result2
+            stuff: create 'stuff-store'
+            thing: create *
+            thing2: create *
+            result: create *
+            result2: create *
             TestParticle
-              stuff = stuff
-              thing = thing
-              thing2 = thing2
-              result = result
-              result2 = result2
+              stuff: stuff
+              thing: thing
+              thing2: thing2
+              result: result
+              result2: result2
         `,
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
@@ -163,18 +163,19 @@ describe('ui-particle-api', () => {
       const loader = new StubLoader({
         manifest: `
           particle TestParticle in 'test-particle.js'
-            out [Stuff {Text value}] stuff
-            out Thing {Text value} thing
-            out Result {Boolean ok} result
+            stuff: writes [Stuff {value: Text}]
+            thing: writes Thing {value: Text}
+            result: writes Result {ok: Boolean}
           recipe
-            create as result
-            create as stuff
-            create as thing
+            result: create *
+            stuff: create *
+            thing: create *
             TestParticle
-              result = result
-              stuff = stuff
-              thing = thing
+              result: result
+              stuff: stuff
+              thing: thing
         `,
+
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update() {
@@ -215,17 +216,17 @@ describe('ui-particle-api', () => {
       const loader = new StubLoader({
         manifest: `
           particle TestParticle in 'test-particle.js'
-            inout [Stuff {Text value}] stuff
-            out Thing {Text value} thing
-            out Result {Boolean ok} result
+            stuff: reads writes [Stuff {value: Text}]
+            thing: writes Thing {value: Text}
+            result: writes Result {ok: Boolean}
           recipe
-            create as result
-            create as stuff
-            create as thing
+            result: create *
+            stuff: create *
+            thing: create *
             TestParticle
-              result = result
-              stuff = stuff
-              thing = thing
+              result: result
+              stuff: stuff
+              thing: thing
         `,
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async

@@ -14,6 +14,7 @@ import {IdGenerator, Id} from '../id.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
+import {ConCap} from '../../testing/test-util.js';
 
 describe('Entity', () => {
 
@@ -22,12 +23,12 @@ describe('Entity', () => {
   before(async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-        Text txt
-        Number num
-        Boolean flg
+        txt: Text
+        num: Number
+        flg: Boolean
     `);
     schema = manifest.schemas.Foo;
-    entityClass = schema.entityClass();
+    entityClass = Entity.createEntityClass(schema, null);
   });
 
   it('behaves like a regular object except writing to any field fails', () => {
@@ -84,17 +85,17 @@ describe('Entity', () => {
     const manifest = await Manifest.parse(`
       schema Shadow
         // internal fields
-        Text id
-        Boolean mutable
+        id: Text
+        mutable: Boolean
         // static fields
-        URL schema
-        Number type
+        schema: URL
+        type: Number
         // internal methods (exposed via Entity static methods)
-        Number toLiteral
-        Text makeImmutable
+        toLiteral: Number
+        makeImmutable: Text
     `);
     const schema = manifest.schemas.Shadow;
-    const entityClass = schema.entityClass();
+    const entityClass = Entity.createEntityClass(schema, null);
     const data = {id: 'schema-id', mutable: false, schema: 'url', type: 81, toLiteral: 23, makeImmutable: 'make'};
     const e = new entityClass(data);
     Entity.identify(e, 'arcs-id');
@@ -120,15 +121,15 @@ describe('Entity', () => {
   it(`Entity.debugLog doesn't affect the original entity`, async () => {
     const manifest = await Manifest.parse(`
       schema EntityDebugLog
-        Text txt
-        URL lnk
-        Number num
-        Boolean flg
-        Bytes buf
-        (Text or Number) union
-        (Text, Number) tuple
+        txt: Text
+        lnk: URL
+        num: Number
+        flg: Boolean
+        buf: Bytes
+        union: (Text or Number)
+        tuple: (Text, Number)
     `);
-    const entityClass = manifest.schemas.EntityDebugLog.entityClass();
+    const entityClass = Entity.createEntityClass(manifest.schemas.EntityDebugLog, null);
     const e = new entityClass({
       txt: 'abc',
       lnk: 'http://wut',
@@ -141,11 +142,22 @@ describe('Entity', () => {
     Entity.identify(e, '!test:uid:u0');
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
-    // Prevent console.dir from spamming the test output
-    const saveDir = console.dir;
-    console.dir = () => {};
-    Entity.debugLog(e);
-    console.dir = saveDir;
+
+    // debugLog uses a single call to console.dir with the entity copy as the first argument.
+    const cc = ConCap.capture(() => Entity.debugLog(e));
+    const dirArg = cc.dir[0][0];
+
+    // The dir'd object should be an Entity with an Internals object, both different from the original.
+    assert.instanceOf(dirArg, Entity);
+    assert.isDefined(dirArg[SYMBOL_INTERNALS]);
+    assert.notStrictEqual(dirArg, e);
+    assert.notStrictEqual(dirArg[SYMBOL_INTERNALS], e[SYMBOL_INTERNALS]);
+
+    // Spot check a couple of fields.
+    assert.strictEqual(dirArg.txt, 'abc');
+    assert.strictEqual(dirArg.num, 3.7);
+
+    // The original entity should not have been modified.
     assert.strictEqual(JSON.stringify(e), fields);
     assert.strictEqual(JSON.stringify(e[SYMBOL_INTERNALS]), internals);
   });

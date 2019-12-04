@@ -1,6 +1,6 @@
 particle TabbedLayout in 'source/Tabbed.js'
-  consume root
-    provide content
+  root: consumes
+    content: provides
   description `tabbed layout`
 
 recipe TabbedLayout

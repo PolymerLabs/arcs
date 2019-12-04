@@ -14,6 +14,7 @@ import {SchemaNode} from './schema2graph.js';
 
 // https://kotlinlang.org/docs/reference/keyword-reference.html
 // [...document.getElementsByTagName('code')].map(x => x.innerHTML);
+// Includes reserve words for Entity Interface
 const keywords = [
   'as', 'as?', 'break', 'class', 'continue', 'do', 'else', 'false', 'for', 'fun', 'if', 'in', '!in', 'interface', 'is',
   '!is', 'null', 'object', 'package', 'return', 'super', 'this', 'throw', 'true', 'try', 'typealias', 'val', 'var',
@@ -21,7 +22,7 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'field', 'it'
+  'suspend', 'tailrec', 'vararg', 'field', 'it', 'internalId'
 ];
 
 const typeMap = {

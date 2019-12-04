@@ -40,7 +40,7 @@ describe('RecipeIndex', () => {
     return (await createIndex(manifestContent)).recipes.map(r => r.toString());
   }
 
-  it('SLANDLES SYNTAX adds use handles', Flags.withPostSlandlesSyntax(async () => {
+  it('adds use handles', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
       schema Lumberjack
@@ -59,31 +59,9 @@ describe('RecipeIndex', () => {
     lumberjack: writes handle0
     person: reads handle1`
     ]);
-  }));
+  });
 
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('adds use handles', Flags.withPreSlandlesSyntax(async () => {
-    assert.sameMembers(await extractIndexRecipeStrings(`
-      schema Person
-      schema Lumberjack
-
-      particle Transform
-        in Person person
-        out Lumberjack lumberjack
-
-      recipe
-        Transform
-    `), [
-`recipe
-  ? as handle0 // ~
-  ? as handle1 // ~
-  Transform as particle0
-    lumberjack -> handle0
-    person <- handle1`
-    ]);
-  }));
-
-  it('SLANDLES SYNTAX matches free handles to connections', Flags.withPostSlandlesSyntax(async () => {
+  it('matches free handles to connections', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
 
@@ -99,28 +77,9 @@ describe('RecipeIndex', () => {
   A as particle0
     person: reads writes handle0`
     ]);
-  }));
+  });
 
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('matches free handles to connections', Flags.withPreSlandlesSyntax(async () => {
-    assert.sameMembers(await extractIndexRecipeStrings(`
-      schema Person
-
-      particle A
-        inout Person person
-
-      recipe
-        create as person
-        A
-    `), [
-`recipe
-  create as handle0 // Person {}
-  A as particle0
-    person <-> handle0`
-    ]);
-  }));
-
-  it('SLANDLES SYNTAX resolves local slots, but not a root slot', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves local slots, but not a root slot', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       particle A
         root: consumes
@@ -140,31 +99,9 @@ describe('RecipeIndex', () => {
   B as particle1
     detail: consumes slot0`
     ]);
-  }));
+  });
 
-  it('resolves local slots, but not a root slot', Flags.withPreSlandlesSyntax(async () => {
-    assert.sameMembers(await extractIndexRecipeStrings(`
-      particle A
-        consume root
-          provide detail
-      particle B
-        consume detail
-
-      recipe
-        A
-          consume root
-        B
-    `), [
-`recipe
-  A as particle0
-    consume root
-      provide detail as slot0
-  B as particle1
-    consume detail as slot0`
-    ]);
-  }));
-
-  it('SLANDLES SYNTAX resolves constraints', Flags.withPostSlandlesSyntax(async () => {
+  it('resolves constraints', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema A
       schema B
@@ -191,37 +128,7 @@ describe('RecipeIndex', () => {
     b: reads handle1
     c: writes handle2`
     ]);
-  }));
-
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('resolves constraints', Flags.withPreSlandlesSyntax(async () => {
-    assert.sameMembers(await extractIndexRecipeStrings(`
-      schema A
-      schema B
-      schema C
-
-      particle Transform
-        in A a
-        out B b
-      particle TransformAgain
-        in B b
-        out C c
-
-      recipe
-        Transform.b -> TransformAgain.b
-    `), [
-`recipe
-  ? as handle0 // ~
-  create as handle1 // B {}
-  ? as handle2 // ~
-  Transform as particle0
-    a <- handle0
-    b -> handle1
-  TransformAgain as particle1
-    b <- handle1
-    c -> handle2`
-    ]);
-  }));
+  });
 
   it('does not resolve verbs', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
@@ -256,7 +163,7 @@ describe('RecipeIndex', () => {
     ]);
   });
 
-  it('SLANDLES SYNTAX finds matching handles by fate', Flags.withPostSlandlesSyntax(async () => {
+  it('finds matching handles by fate', async () => {
     const index = await createIndex(`
       schema Thing
 
@@ -288,7 +195,7 @@ describe('RecipeIndex', () => {
 
     assert.deepEqual(['A'], index.findHandleMatch(handle, ['map']).map(h => h.recipe.name));
     assert.deepEqual(['B'], index.findHandleMatch(handle, ['create']).map(h => h.recipe.name));
-  }));
+  });
 
   // TODO(jopra): Remove once slandles unification syntax is implemented.
   it('finds matching handles by fate', async () => {
@@ -296,25 +203,25 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle A
-        in Thing thing
+        thing: reads Thing
       recipe A
-        map as thing
+        thing: map *
         A
-          thing = thing
+          thing: thing
 
       particle B
-        out Thing thing
+        thing: writes Thing
       recipe B
-        create as thing
+        thing: create *
         B
-          thing = thing
+          thing: thing
 
       particle C
-        in Thing thing
+        thing: reads Thing
       recipe C
-        use as thing
+        thing: use *
         C
-          thing = thing
+          thing: thing
     `);
 
     const recipe = checkDefined(index.recipes.find(r => r.name === 'C'), 'missing recipe C');
@@ -331,22 +238,22 @@ describe('RecipeIndex', () => {
       schema OtherThing
 
       particle ConsumerThing
-        in Thing thing
+        thing: reads Thing
       particle ProducerThing
-        out Thing thing
+        thing: writes Thing
       particle ProducerOtherThing
-        out OtherThing thing
+        thing: writes OtherThing
 
       recipe Selector
-        use as thing
+        thing: use *
         ConsumerThing
 
       recipe
-        create as thing
+        thing: create *
         ProducerThing
 
       recipe
-        create as otherThing
+        otherThing: create *
         ProducerOtherThing
     `);
 
@@ -363,28 +270,28 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
 
       recipe TakeMe1
-        create #loved as thing
+        thing: create #loved
         Producer
 
       recipe TakeMe2
-        create #loved #adored as thing
+        thing: create #loved #adored
         Producer
 
       recipe TakeMe3
-        create #appreciated as thing
+        thing: create #appreciated
         Producer
 
       recipe IgnoreMe
-        create #hated as thing
+        thing: create #hated
         Producer
 
       recipe Selector
-        use #loved #appreciated as thing
+        thing: use #loved #appreciated
         Consumer
     `);
 
@@ -401,20 +308,20 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
 
       recipe TakeMe1
-        create #loved as thing
+        thing: create #loved
         Producer
 
       recipe TakeMe2
-        create #hated as thing
+        thing: create #hated
         Producer
 
       recipe Selector
-        use as thing
+        thing: use *
         Consumer
     `);
 
@@ -431,28 +338,28 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer1
-        in Thing thing
+        thing: reads Thing
       particle Consumer2
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
       particle ProducerConsumer
-        inout Thing thing
+        thing: reads writes Thing
 
       recipe Selector
-        use as thing
+        thing: use *
         Consumer1
 
       recipe
-        create as thing
+        thing: create *
         Consumer2
 
       recipe
-        create as thing
+        thing: create *
         Producer
 
       recipe
-        create as thing
+        thing: create *
         ProducerConsumer
     `);
 
@@ -469,28 +376,28 @@ describe('RecipeIndex', () => {
       schema Thing
 
       particle Consumer1
-        in Thing thing
+        thing: reads Thing
       particle Consumer2
-        in Thing thing
+        thing: reads Thing
       particle Producer
-        out Thing thing
+        thing: writes Thing
       particle ProducerConsumer
-        inout Thing thing
+        thing: reads writes Thing
 
       recipe Selector
-        use as thing
+        thing: use *
         Consumer1
 
       recipe
-        copy as thing
+        g: copy *
         Consumer2
 
       recipe
-        copy as thing
+        g: copy *
         Producer
 
       recipe
-        copy as thing
+        g: copy *
         ProducerConsumer
     `);
 

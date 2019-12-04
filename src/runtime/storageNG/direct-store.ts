@@ -122,7 +122,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     // Don't send to the driver if we're already in sync and there are no driver-side changes.
     if (noDriverSideChanges) {
       // Need to record the driver version so that we can continue to send.
-      this.setState(DirectStoreState.Idle);
+      if (messageFromDriver) {
+        this.setState(DirectStoreState.Idle);
+      }
       this.version = version;
       return;
     }
@@ -216,6 +218,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // a return value of true implies that the message was accepted, a
   // return value of false requires that the proxy send a model sync
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+    if (typeof message.id !== 'number') {
+      throw new Error('Direct Store received message from StorageProxy without an ID');
+    }
     if (this.pendingException) {
       throw this.pendingException;
     }

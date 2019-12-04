@@ -1,3 +1,7 @@
+load("//build_defs:bazel_version_check.bzl", "bazel_version_check")
+
+bazel_version_check()
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # NodeJS
@@ -44,16 +48,13 @@ http_archive(
 
 # Kotlin
 
-RULES_KOTLIN_VERSION = "legacy-modded-1_0_0-01"
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-RULES_KOTLIN_SHA = "b7984b28e0a1e010e225a3ecdf0f49588b7b9365640af783bd01256585cbb3ae"
-
-http_archive(
+git_repository(
     name = "io_bazel_rules_kotlin",
-    sha256 = RULES_KOTLIN_SHA,
-    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
-    type = "zip",
-    urls = ["https://github.com/cgruber/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
+    commit = "e1a4f61521b9bba4b0584ef55f5cb621093d705d",
+    remote = "https://github.com/cromwellian/rules_kotlin.git",
+    shallow_since = "1574206775 -0800",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
@@ -73,6 +74,31 @@ kotlin_repositories(compiler_release = KOTLINC_RELEASE)
 
 register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchain")
 
+# Robolectric
+
+http_archive(
+    name = "robolectric",
+    sha256 = "2ee850ca521288db72b0dedb9ecbda55b64d11c470435a882f8daf615091253d",
+    strip_prefix = "robolectric-bazel-4.1",
+    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
+)
+
+load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
+
+robolectric_repositories()
+
+# Python
+
+http_archive(
+    name = "rules_python",
+    sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
 # Java deps from Maven.
 
 RULES_JVM_EXTERNAL_TAG = "2.10"
@@ -88,6 +114,8 @@ http_archive(
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
+ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
+
 AUTO_VALUE_VERSION = "1.7"
 
 KOTLINX_ATOMICFU_VERSION = "0.13.1"
@@ -96,8 +124,17 @@ KOTLINX_COROUTINES_VERSION = "1.3.2"
 
 maven_install(
     artifacts = [
+        "androidx.annotation:annotation:1.1.0",
+        "androidx.lifecycle:lifecycle-common:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
+        "androidx.test:core:1.0.0",
+        "androidx.test.ext:junit:1.0.0",
+        "androidx.test:runner:1.1.0",
+        "androidx.test:rules:1.1.0",
         "com.google.flogger:flogger:0.4",
+        "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.4",
         "com.google.dagger:dagger:2.23.1",
         "com.google.dagger:dagger-compiler:2.23.1",
@@ -114,6 +151,7 @@ maven_install(
         "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
         "org.json:json:20141113",
         "org.mockito:mockito-core:2.23.0",
+        "org.robolectric:robolectric:4.1",
     ],
     fetch_sources = True,
     repositories = [

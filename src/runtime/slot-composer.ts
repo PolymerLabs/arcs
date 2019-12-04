@@ -93,8 +93,9 @@ export class SlotComposer {
       console.warn(`No containers for '${name}'`);
     } else if (contexts.length === 1) {
       return contexts[0].container;
+    } else {
+      console.warn(`Ambiguous containers for '${name}'`);
     }
-    console.warn(`Ambiguous containers for '${name}'`);
     return undefined;
   }
 

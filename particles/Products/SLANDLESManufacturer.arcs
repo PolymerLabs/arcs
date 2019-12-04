@@ -10,13 +10,13 @@ import '../List/SLANDLESList.arcs'
 import 'schemas/Product.arcs'
 
 particle SlandleManufacturerInfo in 'source/ManufacturerInfo.js'
-  in Product product
-  `consume Slot annotation
+  product: reads Product
+  annotation: `consumes Slot
 
 // Check manufacturer information for products.
 recipe SlandleProductManufacturerInfo
-  use as shoplist
+  shoplist: use *
   SlandleSimpleAnnotationMultiplexer
-    list = shoplist
-    hostedParticle = SlandleManufacturerInfo
+    list: shoplist
+    hostedParticle: SlandleManufacturerInfo
   description `check manufacturer information`

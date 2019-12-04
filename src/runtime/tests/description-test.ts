@@ -19,8 +19,10 @@ import {Relevance} from '../relevance.js';
 import {SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
+import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
+import {ConCap} from '../../testing/test-util.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
@@ -68,37 +70,37 @@ const tests = [
 describe('Description', () => {
   const schemaManifest = `
 schema Foo
-  Text name
-  Text fooValue
+  name: Text
+  fooValue: Text
 schema Bar
-  Text name
-  Text barValue
+  name: Text
+  barValue: Text
 schema Far
-  Text name
-  Text farValue`;
+  name: Text
+  farValue: Text`;
   const aParticleManifest = `
 particle A
-  in Foo ifoo
-  out [Foo] ofoos
-  consume root`;
+  ifoo: reads Foo
+  ofoos: writes [Foo]
+  root: consumes Slot`;
   const bParticleManifest = `
 particle B
-  out Foo ofoo`;
+  ofoo: writes Foo`;
   const recipeManifest = `
 recipe
-  create as fooHandle   // Foo
-  create as foosHandle  // [Foo]
-  slot 'rootslotid-root' as slot0
+  fooHandle: create * // Foo
+  foosHandle: create * // [Foo]
+  slot0: slot 'rootslotid-root'
   A
-    ifoo <- fooHandle
-    ofoos -> foosHandle
-    consume root as slot0`;
+    ifoo: reads fooHandle
+    ofoos: writes foosHandle
+    root: consumes slot0`;
 
   async function prepareRecipeAndArc(manifestStr: string) {
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+    const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     if (recipe.handles.length > 1) {
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
@@ -189,26 +191,26 @@ ${recipeManifest}
     it('one particle with BigCollection descriptions ' + test.name, async () => {
       const manifest = await Manifest.parse(`
         schema Foo
-          Text name
-          Text fooValue
+          name: Text
+          fooValue: Text
         particle A
-          in BigCollection<Foo> ifoos
-          out Foo ofoo
-          consume root
+          ifoos: reads BigCollection<Foo>
+          ofoo: writes Foo
+          root: consumes Slot
           description \`read from \${ifoos} and write \${ofoo}\`
             ifoos \`my-in-foos\`
             ofoo \`my-out-foo\`
         recipe
-          create as foosHandle  // BigCollection<Foo>
-          create as fooHandle   // Foo
-          slot 'rootslotid-root' as slot0
+          foosHandle: create * // BigCollection<Foo>
+          fooHandle: create * // Foo
+          slot0: slot 'rootslotid-root'
           A
-            ifoos <- foosHandle
-            ofoo -> fooHandle
-            consume root as slot0`);
+            ifoos: reads foosHandle
+            ofoo: writes fooHandle
+            root: consumes slot0`);
 
       const recipe = manifest.recipes[0];
-      const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+      const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
 
       recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.bigCollectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType});
@@ -313,7 +315,7 @@ ${bParticleManifest}
     ofoo \`best-new-foo\`
 ${recipeManifest}
   B
-    ofoo -> fooHandle
+    ofoo: writes fooHandle
     `));
 
       let description = await test.verifySuggestion({arc}, 'Read from best-new-foo and populate my-foos.');
@@ -337,35 +339,35 @@ ${recipeManifest}
       const {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
-  out Foo ofoo
-  consume action
+  ofoo: writes Foo
+  action: consumes Slot
   description \`create X1::\${ofoo}\`
     ofoo \`X1-foo\`
 particle X2
-  out Foo ofoo
-  consume action
+  ofoo: writes Foo
+  action: consumes Slot
   description \`create X2::\${ofoo}\`
     ofoo \`X2-foo\`
 particle A
-  in Foo ifoo
-  consume root
-    provide action
+  ifoo: reads Foo
+  root: consumes Slot
+    action: provides? Slot
   description \`display \${ifoo}\`
     ifoo \`A-foo\`
 
 recipe
-  create as fooHandle   // Foo
-  slot 'r0' as slot0
+  fooHandle: create * // Foo
+  slot0: slot 'r0'
   X1
-    ofoo -> fooHandle
-    consume action as slot1
+    ofoo: writes fooHandle
+    action: consumes slot1
   X2
-    ofoo -> fooHandle
-    consume action as slot1
+    ofoo: writes fooHandle
+    action: consumes slot1
   A
-    ifoo <- fooHandle
-    consume root as slot0
-      provide action as slot1
+    ifoo: reads fooHandle
+    root: consumes slot0
+      action: provides slot1
     `));
       const aFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo').handle;
 
@@ -391,26 +393,26 @@ recipe
       const manifestStr = `
 ${schemaManifest}
 particle X
-  out [Foo] ofoo
-  consume root
+  ofoo: writes [Foo]
+  root: consumes Slot
   description \`write to \${ofoo}\`
     ofoo \`X-foo\`
 
 recipe
-  create as fooHandle1   // Foo
-  create as fooHandle2   // Foo
-  slot 'r0' as slot0
+  fooHandle1: create * // Foo
+  fooHandle2: create * // Foo
+  slot0: slot 'r0'
   X
-    ofoo -> fooHandle1
-    consume root as slot0
+    ofoo: writes fooHandle1
+    root: consumes slot0
   X
-    ofoo -> fooHandle2
-    consume root as slot0
+    ofoo: writes fooHandle2
+    root: consumes slot0
     `;
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
       const recipe = manifest.recipes[0];
-      const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+      const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
       recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
       recipe.normalize();
@@ -445,30 +447,30 @@ recipe
       const {arc, recipe, ifooHandle, fooStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-    provide action
+    action: provides Slot
   description \`do A with \${ifoo}\`
     ifoo \`a-foo\`
 ${bParticleManifest}
-  consume action
+  action: consumes Slot
   description \`output B to \${ofoo}\`
     ofoo \`b-foo\`
 
 recipe
-  create as fooHandle1    // Foo
-  create as foosHandle    // [Foo]
-  create as fooHandle2    // Foo
-  slot 'r0' as slot0
+  fooHandle1: create * // Foo
+  foosHandle: create * // [Foo]
+  fooHandle2: create * // Foo
+  slot0: slot 'r0'
   B
-    ofoo -> fooHandle1
-    consume action as slot1
+    ofoo: writes fooHandle1
+    action: consumes slot1
   A
-    ifoo <- fooHandle1
-    ofoos -> foosHandle
-    consume root as slot0
-      provide action as slot1
+    ifoo: reads fooHandle1
+    ofoos: writes foosHandle
+    root: consumes slot0
+      action: provides slot1
   B
-    ofoo -> fooHandle2
-    consume action as slot1
+    ofoo: writes fooHandle2
+    action: consumes slot1
     `));
 
       // Add values to both Foo handles
@@ -495,17 +497,17 @@ recipe
       const {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle A
-  out Foo ofoo
-  consume root
+  ofoo: writes Foo
+  root: consumes Slot
   description \`create <new> <\${ofoo}>\`
     ofoo \`<my-foo>\`
 
 recipe
-  create as fooHandle   // Foo
-  slot 'r0' as slot0
+  fooHandle: create * // Foo
+  slot0: slot 'r0'
   A
-    ofoo -> fooHandle
-    consume root as slot0
+    ofoo: writes fooHandle
+    root: consumes slot0
     `));
 
       const description = await test.verifySuggestion({arc}, 'Create &lt;new> &lt;&lt;my-foo>>.');
@@ -518,21 +520,21 @@ recipe
     it('uses store value property ' + test.name, async () => {
       const manifestStr = `
       schema ScriptDate
-        Text date
+        date: Text
       particle Stardate in './source/Stardate.js'
-        inout ScriptDate stardate
-        consume root
+        stardate: reads writes ScriptDate
+        root: consumes Slot
         description \`stardate \${stardate.date}\`
       recipe
-        create as stardateHandle
-        slot 'slotid' as slot0
+        stardateHandle: create *
+        slot0: slot 'slotid'
         Stardate
-          stardate = stardateHandle
-          consume root as slot0
+          stardate: stardateHandle
+          root: consumes slot0
       `;
       const manifest = (await Manifest.parse(manifestStr));
       const recipe = manifest.recipes[0];
-      const scriptDateType = manifest.findSchemaByName('ScriptDate').entityClass().type;
+      const scriptDateType = Entity.createEntityClass(manifest.findSchemaByName('ScriptDate'), null).type;
       recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType});
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
@@ -548,24 +550,24 @@ recipe
     it('multiword type and no name property in description ' + test.name, async () => {
       const manifestStr = `
         schema MyBESTType
-          Text property
+          property: Text
         particle P
-          in MyBESTType t
-          out [MyBESTType] ts
+          t: reads MyBESTType
+          ts: writes [MyBESTType]
           description \`make \${ts} from \${t}\`
-          consume root
+          root: consumes Slot
         recipe
-          create as tHandle
-          create as tsHandle
-          slot 'rootslotid-root' as slot0
+          tHandle: create *
+          tsHandle: create *
+          slot0: slot 'rootslotid-root'
           P
-           t = tHandle
-           ts = tsHandle
-           consume root as slot0`;
+           t: tHandle
+           ts: tsHandle
+           root: consumes slot0`;
         const manifest = (await Manifest.parse(manifestStr));
         assert.lengthOf(manifest.recipes, 1);
         const recipe = manifest.recipes[0];
-        const myBESTType = manifest.findSchemaByName('MyBESTType').entityClass().type;
+        const myBESTType = Entity.createEntityClass(manifest.findSchemaByName('MyBESTType'), null).type;
         recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType});
         recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()});
         recipe.normalize();
@@ -596,42 +598,42 @@ recipe
     it('particle slots description ' + test.name, async () => {
       const manifestStr = `
 schema Foo
-  Text name
+  name: Text
 particle A
-  inout Foo foo
-  consume root
-    provide aslot
-    provide otherslot
+  foo: reads writes Foo
+  root: consumes Slot
+    aslot: provides? Slot
+    otherslot: provides? Slot
   description \`hello \${root.aslot}, see you at \${root.otherslot}\`
 particle B1
-  out Foo foo
-  consume aslot
+  foo: writes Foo
+  aslot: consumes Slot
   description \`first b\`
 particle B2
-  out Foo foo
-  consume aslot
+  foo: writes Foo
+  aslot: consumes Slot
   description \`second b\`
 particle C
-  in Foo foo
-  consume otherslot
+  foo: reads Foo
+  otherslot: consumes Slot
   description \`only c\`
 recipe
-  create 'test:1' as handle0  // Foo
-  slot 'rootslotid-root' as slot0
+  handle0: create 'test:1' // Foo
+  slot0: slot 'rootslotid-root'
   A as particle1
-    foo = handle0
-    consume root as slot0
-      provide aslot as slot1
-      provide otherslot as slot2
+    foo: handle0
+    root: consumes slot0
+      aslot: provides slot1
+      otherslot: provides slot2
   B1
-    foo -> handle0
-    consume aslot as slot1
+    foo: writes handle0
+    aslot: consumes slot1
   B2
-    foo -> handle0
-    consume aslot as slot1
+    foo: writes handle0
+    aslot: consumes slot1
   C
-    foo <- handle0
-    consume otherslot as slot2
+    foo: reads handle0
+    otherslot: consumes slot2
 `;
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
@@ -651,9 +653,9 @@ ${schemaManifest}
 ${bParticleManifest}
   description \`Populate \${ofoo}\`
 recipe
-  create as fooHandle   // Foo
+  fooHandle: create * // Foo
   B
-    ofoo -> fooHandle
+    ofoo: writes fooHandle
       `));
 
       await test.verifySuggestion({arc}, 'Populate foo.');
@@ -670,22 +672,22 @@ recipe
 interface DummyInterface
 particle NoDescription
 particle NoDescMuxer
-  host DummyInterface hostedParticle
-  consume root
-    provide myslot
+  hostedParticle: hosts DummyInterface
+  root: consumes Slot
+    myslot: provides? Slot
   description \`\${hostedParticle} description\`
 particle HasDescription
-  consume myslot
+  myslot: consumes Slot
   description \`start with capital letter\`
 recipe
-  slot 'rootslotid-root' as slot0
-  copy 'hosted-particle-handle' as hostedParticleHandle
+  slot0: slot 'rootslotid-root'
+  hostedParticleHandle: copy 'hosted-particle-handle'
   NoDescMuxer
-    hostedParticle = hostedParticleHandle
-    consume root as slot0
-      provide myslot as slot1
+    hostedParticle: hostedParticleHandle
+    root: consumes slot0
+      myslot: provides slot1
   HasDescription
-    consume myslot as slot1
+    myslot: consumes slot1
       `));
       const recipe = manifest.recipes[0];
       const arc = createTestArc(recipe, manifest);
@@ -730,7 +732,7 @@ schema GitHubDash`));
   });
 
   it('fails gracefully (no asserts)', async () => {
-    const verifyNoAssert = async (manifestStr, expectedSuggestion) => {
+    const verifyNoAssert = async (manifestStr, expectedSuggestion, expectedWarning) => {
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
       const recipe = manifest.recipes[0];
@@ -738,7 +740,9 @@ schema GitHubDash`));
       assert.isTrue(recipe.isResolved());
       const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
-      assert.strictEqual(description.getArcDescription(), expectedSuggestion);
+      const arcDesc = ConCap.capture(() => description.getArcDescription());
+      assert.strictEqual(arcDesc.result, expectedSuggestion);
+      assert.match(arcDesc.warn[0], expectedWarning);
     };
 
     await verifyNoAssert(`
@@ -746,35 +750,35 @@ schema GitHubDash`));
       recipe
         Foo
         description \`\${Bar.things}\`
-    `, undefined);
+    `, undefined, /Cannot find particles with name Bar/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
       recipe
         Foo
         description \`Hello \${Bar.things}\`
-    `, `Hello .`);
+    `, `Hello .`, /Cannot find particles with name Bar/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
         description \`\${bar}\`
       recipe
         Foo
-    `, undefined);
+    `, undefined, /Unknown handle connection name 'bar'/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
         description \`\${bar.baz.boo}\`
       recipe
         Foo
-    `, undefined);
+    `, undefined, /Slot connections tokens must have exactly 2 names, found 3/);
 
     await verifyNoAssert(`
       particle Foo in 'foo.js'
       recipe
         Foo
         description \`\${foo.bar}\`
-    `, undefined);
+    `, undefined, /Invalid particle name 'foo'/);
   });
 });
 
@@ -782,29 +786,29 @@ describe('Dynamic description', () => {
   async function prepareRecipeAndArc() {
     const manifestStr = `
 schema Foo
-  Text name
-  Text fooValue
+  name: Text
+  fooValue: Text
 schema Description
-  Text key
-  Text value
+  key: Text
+  value: Text
 particle B
-  out Foo ofoo
-  out [Description] descriptions
-  consume root
+  ofoo: writes Foo
+  descriptions: writes [Description]
+  root: consumes Slot
 recipe
-  create 'test:1' as handle0  // Foo
-  create 'test:2' as handle1  // [Description]
-  slot 'rootslotid-root' as slot0
+  handle0: create 'test:1' // Foo
+  handle1: create 'test:2' // [Description]
+  slot0: slot 'rootslotid-root'
   B as particle1
-    ofoo -> handle0
-    descriptions -> handle1
-    consume root as slot0
+    ofoo: writes handle0
+    descriptions: writes handle1
+    root: consumes slot0
 `;
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const fooType = manifest.findSchemaByName('Foo').entityClass().type;
-    const descriptionType = manifest.findSchemaByName('Description').entityClass().type;
+    const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
+    const descriptionType = Entity.createEntityClass(manifest.findSchemaByName('Description'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()});
     recipe.normalize();
@@ -817,7 +821,7 @@ recipe
       arc,
       recipe,
       fooStore,
-      DescriptionType: (descriptionStore.type.getContainedType() as EntityType).entitySchema.entityClass(),
+      DescriptionType: Entity.createEntityClass((descriptionStore.type.getContainedType() as EntityType).entitySchema, null),
       descriptionHandle: await collectionHandleForTest(arc, descriptionStore),
     };
   }

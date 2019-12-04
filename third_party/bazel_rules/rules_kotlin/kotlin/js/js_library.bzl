@@ -1,4 +1,5 @@
 """Kotlin JS Rules"""
+
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", _kt_js_import = "kt_js_import", _kt_js_library = "kt_js_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:defs.bzl", "KtJsInfo")
 load("//third_party/bazel_rules/rules_kotlin/kotlin/js:impl.bzl", "kt_js_import_impl")

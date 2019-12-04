@@ -19,9 +19,9 @@ import arcs.type.TypeFactory
 import arcs.type.TypeLiteral
 
 /** [Type] representation for a counter. */
-class CountType : Type, CrdtModelType<CrdtCount.Data, CrdtCount.Operation, Int> {
-    override val tag = Tag.Count
-
+data class CountType(
+    override val tag: Tag = Tag.Count
+) : Type, CrdtModelType<CrdtCount.Data, CrdtCount.Operation, Int> {
     override fun toLiteral() = Literal(tag)
 
     override fun createCrdtModel() = CrdtCount()

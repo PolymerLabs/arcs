@@ -8,16 +8,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
+import {assert} from '../../platform/chai-web.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Runtime} from '../../runtime/runtime.js';
+import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
+import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
+import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 
 describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
-    const helper = await PlanningTestHelper.createAndPlan({
-      manifestFilename: './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest',
-      expectedNumPlans: 1
-    });
+    const loader = new StubLoader({});
+    const context = await Manifest.load(
+        './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest', loader);
+    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
 
-    helper.slotComposer
+    slotComposer
       .newExpectations()
         .expectRenderSlot('FooList', 'root', {contentTypes: ['template', 'model']})
         .expectRenderSlot('ShowFoo', 'item', {contentTypes: ['template']})
@@ -33,6 +41,9 @@ describe('transformation slots', () => {
           return content.model && content.model.items && content.model.items.length === 2;
         }});
 
-    await helper.acceptSuggestion();
+    const suggestions = await StrategyTestHelper.planForArc(arc);
+    assert.lengthOf(suggestions, 1);
+    await suggestions[0].instantiate(arc);
+    await arc.idle;
   });
 });

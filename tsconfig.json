@@ -11,7 +11,7 @@
   },
   "exclude": [
     "build/**/*",
-    "server/**/*",
+    "cloud/**/*",
     "./src/tools/language-server/**/*",
     "./src/tools/vscode-language-client/**/*"
   ]

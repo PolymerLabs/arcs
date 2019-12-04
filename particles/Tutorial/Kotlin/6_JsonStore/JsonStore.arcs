@@ -10,7 +10,7 @@ schema PersonDetails
 store PersonToGreetStore of PersonDetails in 'data.json'
 
 particle JsonStoreParticle in 'JsonStore.wasm'
-  // This particle has an input parameter called inputData. We can use this parameter in the particle's JavaScript file.
+  // This particle has an input parameter called inputData. We can use this parameter in the particle's Kotlin file.
   inputData: reads PersonDetails
   root: consumes
 

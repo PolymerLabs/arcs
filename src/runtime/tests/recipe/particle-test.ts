@@ -17,16 +17,16 @@ describe('Recipe Particle', () => {
   it('cloning maints type variable mapping', async () => {
     const manifest = await Manifest.parse(`
       interface HostedInterface
-        in ~a *
+        reads ~a
 
       particle Multiplexer
-        host HostedInterface hostedParticle
-        in [~a] list
+        hostedParticle: hosts HostedInterface
+        list: reads [~a]
 
       recipe
-        create as items
+        items: create *
         Multiplexer
-          list = items
+          list: items
     `);
 
     let recipe = manifest.recipes[0];
@@ -59,9 +59,9 @@ describe('Recipe Particle', () => {
     const particleManifest = `
       schema Thing
       particle P
-        out? Thing thing0
-          out Thing thing1
-            out Thing thing2
+        thing0: writes? Thing
+          thing1: writes Thing
+            thing2: writes Thing
     `;
     const verifyRecipe = async (recipeManifest, expectedResolved) => {
       const manifest = await Manifest.parse(`${particleManifest}${recipeManifest}`);
@@ -75,17 +75,17 @@ describe('Recipe Particle', () => {
     `, true);
     await verifyRecipe(`
       recipe
-        create as handle0
+        handle0: create *
         P
-          thing0 = handle0
+          thing0: handle0
     `, false);
     await verifyRecipe(`
       recipe
-        create as handle0
-        create as handle1
+        handle0: create *
+        handle1: create *
         P
-          thing0 = handle0
-          thing1 = handle1
+          thing0: handle0
+          thing1: handle1
     `, false);
   });
 });

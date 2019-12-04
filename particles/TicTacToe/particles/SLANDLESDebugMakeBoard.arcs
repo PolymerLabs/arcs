@@ -1,3 +1,3 @@
 particle SLANDLESDebugMakeBoard in './js/DebugMakeBoard.js'
-  out Board {Number p00, Number p01, Number p02, Number p10, Number p11, Number p12, Number p20, Number p21, Number p22} board
-  `consume Slot root
+  board: writes Board {p00: Number, p01: Number, p02: Number, p10: Number, p11: Number, p12: Number, p20: Number, p21: Number, p22: Number}
+  root: `consumes Slot

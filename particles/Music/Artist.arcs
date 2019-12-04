@@ -9,30 +9,30 @@
 import '../Common/schemas/Description.arcs'
 
 schema ArtistFind
-  Text name
+  name: Text
 
 schema ArtistMusic
-  Text artistid
-  Text type
-  Text name
-  URL url
-  URL imageUrl
-  Text description
-  Text detailedDescription
+  artistid: Text
+  type: Text
+  name: Text
+  url: URL
+  imageUrl: URL
+  description: Text
+  detailedDescription: Text
 
 particle ArtistFinder in 'source/ArtistFinder.js'
-  in ArtistFind find
-  out ArtistMusic artist
-  out [Description] descriptions
+  find: reads ArtistFind
+  artist: writes ArtistMusic
+  descriptions: writes [Description]
   description `Learn more about ${artist}`
 
 particle ArtistShow in 'source/ArtistShow.js'
-  in ArtistMusic artist
-  consume content
+  artist: reads ArtistMusic
+  content: consumes Slot
   description `Learn more about ${artist}`
 
 recipe ArtistInfo
-  use as artist
+  artist: use *
   ArtistShow
-    artist = artist
+    artist: artist
   description `${ArtistShow}`

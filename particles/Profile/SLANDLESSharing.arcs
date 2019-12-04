@@ -24,22 +24,22 @@ store BOXED_userName of [UserName] 'BOXED_userName' @0 #boxed in BOXED_userNameR
 // the below is required to make the arc aware of these stores
 
 particle SlandleSharing in './source/Sharing.js'
-  in [Avatar] boxedAvatar
-  in [Avatar] profileAvatar
+  boxedAvatar: reads [Avatar]
+  profileAvatar: reads [Avatar]
   //
-  in [UserName] profileUserName
-  in [UserName] boxedUserName
+  profileUserName: reads [UserName]
+  boxedUserName: reads [UserName]
 
 recipe SlandleSharing
-  use 'PROFILE_avatar' as profileAvatar
-  use 'BOXED_avatar' as boxedAvatar
+  profileAvatar: use 'PROFILE_avatar'
+  boxedAvatar: use 'BOXED_avatar'
   //
-  use 'PROFILE_userName' as profileUserName
-  use 'BOXED_userName' as boxedUserName
+  profileUserName: use 'PROFILE_userName'
+  boxedUserName: use 'BOXED_userName'
   //
   SlandleSharing
-    profileAvatar = profileAvatar
-    boxedAvatar = boxedAvatar
+    profileAvatar: profileAvatar
+    boxedAvatar: boxedAvatar
     //
-    profileUserName = profileUserName
-    boxedUserName = boxedUserName
+    profileUserName: profileUserName
+    boxedUserName: boxedUserName

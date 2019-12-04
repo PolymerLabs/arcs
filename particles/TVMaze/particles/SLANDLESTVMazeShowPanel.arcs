@@ -3,10 +3,10 @@ import '../schemas/TVMazeShow.arcs'
 import '../schemas/Text.arcs'
 
 particle SlandleTVMazeShowPanel in './js/TVMazeShowPanel.js'
-  in TVMazeShow show
-  in? Text alsoWatch
-  out [Description] descriptions
-  `consume Slot content #tv_show_panel
-    `provide Slot action
-    `provide Slot items
+  show: reads TVMazeShow
+  alsoWatch: reads? Text
+  descriptions: writes [Description]
+  content: `consumes Slot #tv_show_panel
+    action: `provides? Slot
+    items: `provides? Slot
   description `${show} details`

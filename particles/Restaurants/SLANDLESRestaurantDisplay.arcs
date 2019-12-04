@@ -8,12 +8,12 @@
 import 'schemas/Restaurant.arcs'
 
 particle SlandleRestaurantTile in 'source/RestaurantTile.js'
-  in Restaurant restaurant
-  `consume Slot tile
-    `provide Slot annotation
+  restaurant: reads Restaurant
+  tile: `consumes Slot
+    annotation: `provides Slot
 
 particle SlandleRestaurantDetail in 'source/RestaurantDetail.js'
-  in Restaurant restaurant
-  `consume Slot content
-    `provide Slot detailAction
+  restaurant: reads Restaurant
+  content: `consumes Slot
+    detailAction: `provides Slot
 

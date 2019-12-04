@@ -1,0 +1,28 @@
+{
+  "packageWhitelist": [
+    /* ourselves */
+    "arcs@file:../",
+    /* no license */
+    "base62",
+    /* License in LICENSE.md: W3C 3-clause BSD License */
+    "abab",
+    /* WTFPL */
+    "left-pad",
+    /* no license */
+    "prompts",
+    /* WTFPL */
+    "truncate-utf8-bytes",
+    /* WTFPL */
+    "utf8-byte-length",
+    /* WTFPL */
+    "argsarray",
+    /* WTFPL */
+    "expand-template",
+    /* WTFPL */
+    "spark-md5",
+    /* Unknown version */
+    "esprima-fb",
+    "esprima-fb@~3001.1.0-dev-harmony-fb"
+  ]
+}
+  

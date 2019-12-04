@@ -24,8 +24,8 @@ export const requireContext = async manifest => {
 
 export const mirrorStore = async (sourceStore, contextStore) => {
   cloneStore(sourceStore, contextStore);
-  const change = change => cloneStoreChange(contextStore, change);
-  sourceStore.on(change);
+  const change = change => cloneStoreChange(sourceStore, contextStore, change);
+  sourceStore.legacyOn(change);
 };
 
 const cloneStore = async (sourceStore, contextStore) => {
@@ -33,15 +33,14 @@ const cloneStore = async (sourceStore, contextStore) => {
   const values = await sourceStore.toList();
   if (values.length) {
     values.forEach(value => change.add.push({value}));
-    cloneStoreChange(contextStore, change);
+    cloneStoreChange(sourceStore, contextStore, change);
   }
 };
 
-const cloneStoreChange = async (store, change) => {
-  console.log('mirroring store change', change);
-  if (store && change && change.add) {
+const cloneStoreChange = async (sourceStore, cloneStore, change) => {
+  if (cloneStore && change && change.add) {
     await Promise.all(change.add.map(
-      async add => store.store(add.value, [Math.random()]))
+      async add => cloneStore.store(add.value, [Math.random()]))
     );
   }
 };

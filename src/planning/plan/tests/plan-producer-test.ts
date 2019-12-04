@@ -9,16 +9,20 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
+import {Id, ArcId} from '../../../runtime/id.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
+import {Runtime} from '../../../runtime/runtime.js';
 import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
+import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
-import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
+import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
+import {Planner} from '../../planner.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {Id, ArcId} from '../../../runtime/id.js';
+import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -80,24 +84,28 @@ class TestPlanProducer extends PlanProducer {
 ['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
   describe('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
-      const helper = await PlanningTestHelper.createAndPlan({
-        manifestFilename: './src/runtime/tests/artifacts/Products/Products.recipes',
-        storageKey: 'firebase://xxx.firebaseio.com/yyy/serialization/demo'
-      });
-      const store = await Planificator['_initSuggestStore'](helper.arc, storageKeyBase);
+      const loader = new StubLoader({});
+      const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);
+      const runtime = new Runtime(loader, FakeSlotComposer, context);
+      const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+      const suggestions = await StrategyTestHelper.planForArc(
+          runtime.newArc('demo', storageKeyPrefixForTest()));
+
+      const store = await Planificator['_initSuggestStore'](arc, storageKeyBase);
       assert.isNotNull(store);
-      const producer = new TestPlanProducer(helper.arc, store);
-      return {helper, producer};
+      const producer = new TestPlanProducer(arc, store);
+      return {suggestions, producer};
     }
 
   it('produces suggestions', async () => {
-    const {helper, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const {suggestions, producer} =
+        await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
     await producer.produceSuggestions();
     assert.lengthOf(producer.result.suggestions, 0);
 
-    producer.plannerReturnResults(helper.suggestions);
+    producer.plannerReturnResults(suggestions);
     await producer.allPlanningDone();
     assert.lengthOf(producer.result.suggestions, 1);
     assert.strictEqual(producer.produceCalledCount, 1);
@@ -106,15 +114,15 @@ class TestPlanProducer extends PlanProducer {
   });
 
   it('throttles requests to produce suggestions', async () => {
-    const {helper, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const {suggestions, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
     for (let i = 0; i < 10; ++i) {
       await producer.produceSuggestions({test: i});
     }
 
-    producer.plannerReturnResults(helper.suggestions);
-    producer.plannerReturnResults(helper.suggestions);
+    producer.plannerReturnResults(suggestions);
+    producer.plannerReturnResults(suggestions);
     await producer.allPlanningDone();
     assert.strictEqual(producer.produceCalledCount, 10);
     assert.strictEqual(producer.plannerRunCount, 2);
@@ -124,13 +132,13 @@ class TestPlanProducer extends PlanProducer {
   });
 
   it('cancels planning', async () => {
-    const {helper, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const {suggestions, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
     await producer.produceSuggestions();
     await producer.produceSuggestions({cancelOngoingPlanning: true});
 
-    producer.plannerReturnResults(helper.suggestions);
+    producer.plannerReturnResults(suggestions);
     await producer.allPlanningDone();
     assert.strictEqual(producer.produceCalledCount, 2);
     assert.strictEqual(producer.plannerRunCount, 2);
@@ -162,7 +170,7 @@ describe('plan producer - search', () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Bar
-        Text value
+        value: Text
     `);
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
                          storageKey: 'volatile://test^^123'});

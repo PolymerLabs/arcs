@@ -8,42 +8,42 @@ import '../List/SLANDLESList.arcs'
 import '../Layout/SLANDLESLayout.arcs'
 
 recipe SlandleTVMazeSearchBar
-  `slot 'rootslotid-root' as root
-  create #volatile as query
+  root: `slot 'rootslotid-root'
+  query: create #volatile
   SlandleTVMazeSearchBar
-    query = query
+    query: query
   description `use TVMaze(tm) to search for TV shows with Slandles`
 
 recipe SlandleTVMazeSearchShows
-  `slot 'rootslotid-root' as root
-  use as query
-  create #tiles #shows as shows
+  root: `slot 'rootslotid-root'
+  query: use *
+  shows: create #tiles #shows
   SlandleTVMazeSearchShows
-    query = query
-    shows = shows
+    query: query
+    shows: shows
   description `use TVMaze(tm) to search for TV shows with Slandles`
 
 recipe SlandleTVMazeShowTiles
-  `slot 'rootslotid-root' as root
-  use as shows
-  create #selected as selected
+  root: `slot 'rootslotid-root'
+  shows: use *
+  selected: create #selected
   SlandleSelectableTiles
-    root `consume
-      tile `provide
-      annotation `provide action
-    list = shows
-    selected = selected
+    root: `consumes
+      tile: `provides
+      annotation: `provides action
+    list: shows
+    selected: selected
   SlandleTileMultiplexer
-    hostedParticle = SlandleTVMazeShowTile
-    tile `consume
-    list = shows
+    hostedParticle: SlandleTVMazeShowTile
+    tile: `consumes
+    list: shows
   description `show information about ${SelectableTiles.list}`
 
 recipe SlandleTVMazeShowPanel
-  `slot 'rootslotid-root' as root
-  use as show
-  create #volatile as descriptions
+  root: `slot 'rootslotid-root'
+  show: use *
+  descriptions: create #volatile
   SlandleTVMazeShowPanel
-    show = show
-    descriptions = descriptions
+    show: show
+    descriptions: descriptions
 

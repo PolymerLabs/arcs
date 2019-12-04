@@ -26,11 +26,11 @@ defineParticle(({Particle}) => {
           ${model}
 
           recipe
-            use ${this.inHandle} as handle1
-            use ${this.outHandle} as handle2
+            handle1: use ${this.inHandle}
+            handle2: use ${this.outHandle}
             ${model.name}
-              foo <- handle1
-              bar -> handle2
+              foo: reads handle1
+              bar: writes handle2
         `);
       }
     }

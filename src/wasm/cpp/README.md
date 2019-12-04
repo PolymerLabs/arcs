@@ -5,9 +5,7 @@
 Our C++ code is built by Bazel. You will need to install Bazel, and use it to
 build and run the wasm code/tests (everything under `src/wasm/`).
 
-1. **Installing Bazel:** run the `tools/setup` script to install Bazel on Linux
-   and MacOS (or otherwise look at that script to see which version of Bazel to 
-   download and how to set it up).
+1. **Installing Bazel:** Follow [project install instructions](../../../README.md#install).
 
 ## Build
 
@@ -50,6 +48,10 @@ See [here](../../../particles/Native/Wasm) for a working example.
 
 ## Execute
 
-- `npm start`
+- `tools/sigh devServer`
 - Visit [localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs](http://localhost:8786/shells/dev-shell/?m=https://$arcs/particles/Native/Wasm/example.arcs)
   **(TODO(csilvestrini): update this path)**
+  
+# Test
+
+`bazel test //src/wasm:wasm-api-test`

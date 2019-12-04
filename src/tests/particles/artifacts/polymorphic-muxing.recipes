@@ -11,19 +11,19 @@ import '../../../runtime/tests/artifacts/Social/Particles.manifest'
 import '../../../runtime/tests/artifacts/Social/Post.schema'
 
 particle ShowOne in 'source/ShowPostOne.js'
-  in Post post
-  consume item
+  post: reads Post
+  item: consumes Slot
 
 particle ShowTwo in 'source/ShowPostTwo.js'
-  in Post post
-  consume item
+  post: reads Post
+  item: consumes Slot
 
 recipe
-  copy #recipes as h0
+  h0: copy #recipes
   List
-    items = h0
+    items: h0
   PostMuxer
-    list = h0
+    list: h0
 
 resource MuxedRecipes
   start

@@ -72,7 +72,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
-  lint: [peg, build, lint, tslint],
+  lint: [peg, build, lint, tslint, buildifier],
   tslint: [peg, build, tslint],
   check: [check],
   clean: [clean],
@@ -114,7 +114,7 @@ const cleanFiles = ['manifest-railroad.html', eslintCache];
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', 'user-test', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
-const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|hackathon|server|javaharness|Kotlin|particles[/\\]Native)\b/;
+const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|hackathon|cloud|javaharness|Kotlin|particles[/\\]Native)\b/;
 
 // RE pattern to exclude when finding within project built files.
 const buildExclude = /\b(node_modules|deps|src|third_party|javaharness|Kotlin)\b/;
@@ -535,6 +535,31 @@ function lint(args: string[]): boolean {
   }
 
   return report.errorCount === 0;
+}
+
+/** Runs buildifier on all BUILD files. */
+function buildifier(args: string[]): boolean {
+  const options = minimist(args, {
+    boolean: ['fix'],
+  });
+
+  const buildifierOptions = ['--warnings=+out-of-order-load,-module-docstring,-bzl-visibility'];
+  if (options.fix) {
+    buildifierOptions.push('--lint=fix', '--mode=fix');
+  } else {
+    buildifierOptions.push('--lint=warn', '--mode=check');
+  }
+
+  const exclude = /\bnode_modules\b/;
+  const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
+  let allSucceeded = true;
+  for (const file of findProjectFiles(process.cwd(), exclude, include)) {
+    const result = saneSpawnSync('npx', ['buildifier', ...buildifierOptions, file]);
+    if (!result) {
+      allSucceeded = false;
+    }
+  }
+  return allSucceeded;
 }
 
 function licenses(): boolean {
@@ -1011,8 +1036,15 @@ function devServerAsync(args: string[]) : boolean {
 }
 
 function testWdioShells(args: string[]) : boolean {
-  return saneSpawnSync('node_modules/.bin/wdio', ['--baseUrl',
-      'http://localhost:8786/', fixPathForWindows(path.resolve('shells/tests/wdio.conf.js')), ...args]);
+  return saneSpawnSync('node_modules/.bin/wdio', [
+      '--baseUrl',
+      'http://localhost:8786/',
+      // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
+      // windows machine (`e:/path/` becomes `e:/e:/path/`)
+      //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
+      path.resolve('shells/tests/wdio.conf.js'),
+      ...args
+  ]);
 }
 
 /**

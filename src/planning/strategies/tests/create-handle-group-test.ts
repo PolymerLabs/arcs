@@ -19,20 +19,20 @@ describe('CreateHandleGroup', () => {
   it('connects variables and inline schemas', async () => {
     const manifest = await Manifest.parse(`
       schema Human
-        Text name
+        name: Text
       schema Child extends Human
-        Text toy
+        toy: Text
 
       particle Bear
-        out ~a with Child infant
+        infant: writes ~a with Child
       particle Describe
-        in * {Text name} thing
+        thing: reads * {name: Text}
       particle Entertain
-        inout Child child
+        child: reads writes Child
       particle Notify
-        in ~a something
+        something: reads ~a
       particle Employ
-        in Human human
+        human: reads Human
 
       recipe
         Bear
@@ -51,14 +51,14 @@ describe('CreateHandleGroup', () => {
   it('requires read-write connection between particles', async () => {
     const manifest = await Manifest.parse(`
       schema Human
-        Text name
+        name: Text
       schema Child extends Human
-        Text toy
+        toy: Text
 
       particle Entertain
-        in Child child
+        child: reads Child
       particle Employ
-        in Human human
+        human: reads Human
 
       recipe
         Entertain
@@ -71,12 +71,12 @@ describe('CreateHandleGroup', () => {
   it('does not connect a single particle', async () => {
     const manifest = await Manifest.parse(`
       schema Human
-        Text name
+        name: Text
 
       particle Clone
-        in Human before
-        out Human after
-        inout Human researcher
+        before: reads Human
+        after: writes Human
+        researcher: reads writes Human
 
       recipe
         Clone
@@ -91,22 +91,22 @@ describe('CreateHandleGroup', () => {
     // should be updated if we do something smarter.
     const manifest = await Manifest.parse(`
       particle ReaderA
-        in * {Text a} a
+        a: reads * {a: Text}
       particle ReaderB
-        in * {Text b} b
+        b: reads * {b: Text}
       particle ReaderC
-        in * {Text c} c
+        c: reads * {c: Text}
       particle ReaderD
-        in * {Text d} d
+        d: reads * {d: Text}
       particle ReaderE
-        in * {Text e} e
+        e: reads * {e: Text}
 
       particle WriterAB
-        out * {Text a, Text b} ab
+        ab: writes * {a: Text, b: Text}
       particle WriterBCD
-        out * {Text b, Text c, Text d} bcd
+        bcd: writes * {b: Text, c: Text, d: Text}
       particle WriterDE
-        out * {Text d, Text e} de
+        de: writes * {d: Text, e: Text}
 
       recipe
         WriterAB

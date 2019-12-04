@@ -22,8 +22,8 @@ import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../runtime/hot.js';
+import '../runtime/schema-from-literal.js';
 
-type Ctor = typeof Object;
 type ParticleCtor = typeof Particle;
 
 type UrlMap = Dictionary<string | {

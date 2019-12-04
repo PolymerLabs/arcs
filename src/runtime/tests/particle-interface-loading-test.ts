@@ -45,11 +45,11 @@ describe('particle interface loading', () => {
                     \${model}
 
                     recipe
-                      use \${this.inHandle} as handle1
-                      use \${this.outHandle} as handle2
+                      handle1: use \${this.inHandle}
+                      handle2: use \${this.outHandle}
                       \${model.name}
-                        foo <- handle1
-                        bar -> handle2
+                        foo: reads handle1
+                        bar: writes handle2
                   \`);
                 }
               }
@@ -125,12 +125,12 @@ describe('particle interface loading', () => {
       import './src/runtime/tests/artifacts/test-particles.manifest'
 
       recipe
-        create as h0
-        create as h1
+        h0: create *
+        h1: create *
         OuterParticle
-          particle0 <- TestParticle
-          output -> h0
-          input <- h1
+          particle0: reads TestParticle
+          output: writes h0
+          input: reads h1
       `, {loader, fileName: './test.manifest'});
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
@@ -159,19 +159,19 @@ describe('particle interface loading', () => {
   it('updates transformation particle on inner handle', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-        Text value
+        value: Text
       particle UpdatingParticle in 'updating-particle.js'
-        out Foo innerFoo
+        innerFoo: writes Foo
       interface TestInterface
-        out Foo *
+        writes Foo
       particle MonitoringParticle in 'monitoring-particle.js'
-        host TestInterface hostedParticle
-        out Foo foo
+        hostedParticle: hosts TestInterface
+        foo: writes Foo
       recipe
-        use as h0
+        h0: use *
         MonitoringParticle
-          foo = h0
-          hostedParticle = UpdatingParticle
+          foo: h0
+          hostedParticle: UpdatingParticle
     `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
@@ -190,9 +190,9 @@ describe('particle interface loading', () => {
                 await this.arc.loadRecipe(Particle.buildManifest\`
                   \${model}
                   recipe
-                    use \${this.innerFooHandle} as h0
+                    h0: use \${this.innerFooHandle}
                     \${model.name}
-                      innerFoo = h0
+                      innerFoo: h0
                 \`);
               }
             }

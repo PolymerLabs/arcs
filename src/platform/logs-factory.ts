@@ -25,7 +25,10 @@ const getLogLevel = () => {
   return ('logLevel' in g) ? g['logLevel'] : 0;
 };
 
-console.log(`log-factory: binding logFactory to level [${getLogLevel()}]`);
+// if reporting at all, report log level
+if (getLogLevel() > 0) {
+  console.log(`log-factory: log level is [${getLogLevel()}]`);
+}
 
 const stubFactory = () => () => {};
 

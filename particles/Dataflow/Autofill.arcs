@@ -4,34 +4,34 @@
 import './Datastores.arcs'
 
 schema CapturedEntity
-  Text entity
-  Text source
+  entity: Text
+  source: Text
 
 particle ContentCapture in 'empty.js'
-  in * {} recentApps
-  out Text {} text
-  out Source {} source
+  recentApps: reads * {}
+  text: writes Text {}
+  source: writes Source {}
   claim source is trusted
 
 particle TextClassifier in 'empty.js'
-  in Text {} text
-  out [Entity {}] entities
+  text: reads Text {}
+  entities: writes [Entity {}]
 
 particle CaptureEntity in 'empty.js'
-  in [Entity {}] entities
-  in Source {} source
-  out [CapturedEntity] capturedEntities
+  entities: reads [Entity {}]
+  source: reads Source {}
+  capturedEntities: writes [CapturedEntity]
 
 particle AutofillMatcher in 'empty.js'
-  in AutofillContext {} autofillContext
-  in [CapturedEntity] capturedEntities
+  autofillContext: reads AutofillContext {}
+  capturedEntities: reads [CapturedEntity]
 
   // By outputting a reference, the dataflow analyser can see that this must
   // have come from capturedEntities only.
-  out Reference<CapturedEntity> autofillEntity
+  autofillEntity: writes Reference<CapturedEntity>
 
 particle AutofillUX in 'empty.js'
-  in Reference<CapturedEntity> autofillEntity
+  autofillEntity: reads Reference<CapturedEntity>
 
   // Check that the autofill dialog is being filled with an entity from a
   // recent trusted source.
@@ -40,28 +40,28 @@ particle AutofillUX in 'empty.js'
   check autofillEntity is trusted or is from store 'recent-apps'
 
 recipe AutofillRecipe
-  use RecentApps as recentApps
-  create as text
-  create as source
-  create as classifiedEntities
-  create as capturedEntities
-  create as autofillContext
-  create as autofillEntity
+  recentApps: use RecentApps
+  text: create *
+  source: create *
+  classifiedEntities: create *
+  capturedEntities: create *
+  autofillContext: create *
+  autofillEntity: create *
 
   ContentCapture
-    recentApps <- recentApps
-    text -> text
-    source -> source
+    recentApps: reads recentApps
+    text: writes text
+    source: writes source
   TextClassifier
-    text <- text
-    entities -> classifiedEntities
+    text: reads text
+    entities: writes classifiedEntities
   CaptureEntity
-    entities <- classifiedEntities
-    source <- source
-    capturedEntities -> capturedEntities
+    entities: reads classifiedEntities
+    source: reads source
+    capturedEntities: writes capturedEntities
   AutofillMatcher
-    autofillContext <- autofillContext
-    capturedEntities <- capturedEntities
-    autofillEntity -> autofillEntity
+    autofillContext: reads autofillContext
+    capturedEntities: reads capturedEntities
+    autofillEntity: writes autofillEntity
   AutofillUX
-    autofillEntity <- autofillEntity
+    autofillEntity: reads autofillEntity

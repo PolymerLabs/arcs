@@ -1,3 +1,9 @@
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "java_library",
+    "java_plugin",
+)
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])

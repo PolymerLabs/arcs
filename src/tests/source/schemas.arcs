@@ -1,6 +1,6 @@
 schema Person
-  Text name
-  Number age
+  name: Text
+  age: Number
 
 particle Test
-  in Person person
+  person: reads Person

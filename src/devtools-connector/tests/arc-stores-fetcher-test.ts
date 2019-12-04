@@ -19,6 +19,8 @@ import {SingletonType} from '../../runtime/type.js';
 import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Flags} from '../../runtime/flags.js';
 
+import {Entity} from '../../runtime/entity.js';
+
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
@@ -26,11 +28,11 @@ describe('ArcStoresFetcher', () => {
   it('allows fetching a list of arc stores', async () => {
     const context = await Manifest.parse(`
       schema Foo
-        Text value`);
+        value: Text`);
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
-    const foo = arc.context.findSchemaByName('Foo').entityClass();
+    const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     await fooHandle.set(new foo({value: 'persistence is useful'}));
@@ -99,13 +101,13 @@ describe('ArcStoresFetcher', () => {
     });
     const context = await Manifest.parse(`
       schema Foo
-        Text value
+        value: Text
       particle P in 'p.js'
-        inout Foo foo
+        foo: reads writes Foo
       recipe
-        create as foo
+        foo: create *
         P
-          foo = foo`);
+          foo: foo`);
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 

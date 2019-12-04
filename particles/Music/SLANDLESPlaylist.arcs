@@ -13,15 +13,15 @@ import './schemas/Playlist.arcs'
 // as hostedParticle below
 
 particle SlandlePlaylistItem in 'source/PlaylistItem.js'
-  in Playlist playlist
-  `consume Slot item
+  playlist: reads Playlist
+  item: `consumes Slot
 
 recipe SlandlePlaylistView
-  map #items as items
-  create #selected as selected
+  items: map #items
+  selected: create #selected
   SlandleItemMultiplexer
-    list = items
-    hostedParticle = SlandlePlaylistItem
+    list: items
+    hostedParticle: SlandlePlaylistItem
   SlandleSelectableItems
-    list = items
-    selected = selected
+    list: items
+    selected: selected

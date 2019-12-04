@@ -1,10 +1,10 @@
 import 'schemas/Sequence.arcs'
 
 particle PlayDemoParticle in './source/PlayDemo.js'
-  `consume Slot root
+  root: `consumes Slot
 
 recipe PlayDemoRecipe
-  `slot 'rootslotid-root' as root
+  root: `slot 'rootslotid-root'
   PlayDemoParticle
-    root `consume root
+    root: `consumes root
   description `Play a simple demo song with Magenta`

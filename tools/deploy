@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+# Track Version
+git log -n 1 > VERSION
+# Ensure we have the correct node & npm versions
+nvm install
+nvm use
+npm install -g "npm@$(jq -r '.engines.npm' package.json)"
+# Produce build artifacts
+npm install
+tools/sigh webpack
+npm run build:typedoc
+# Move deployment artifacts to project root
+mv tools/deployment/* .
+mv tools/deployment/.gitignore .gitignore

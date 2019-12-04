@@ -15,6 +15,7 @@ import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, Inte
         ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
 import {Flags} from '../flags.js';
+import {Entity} from '../entity.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -297,7 +298,7 @@ describe('types', () => {
   });
 
   describe('serialization', () => {
-    it('serializes interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('serializes interfaces', async () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
@@ -306,10 +307,10 @@ describe('types', () => {
   foo: Foo {value: Text}
   ~a
   x: consumes? Slot`);
-    }));
+    });
 
     // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
-    it('disregards type variable resolutions in interfaces', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+    it('disregards type variable resolutions in interfaces', async () => {
       const variable = TypeVariable.make('a', null, null);
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
@@ -317,36 +318,36 @@ describe('types', () => {
 `interface i
   ~a
 `);
-    }));
+    });
   });
 
   describe('integration', () => {
     const manifestText = `
       schema Product
-        Text name
+        name: Text
 
       schema Lego extends Product
-        Text setID
+        setId: Text
 
       particle WritesLego
-        out [Lego] lego
+        lego: writes [Lego]
 
       particle ReadsProduct
-        in [Product] product
+        product: reads [Product]
 
       recipe MatchBasic
-        create as v0
+        v0: create *
         WritesLego
-          lego -> v0
+          lego: writes v0
         ReadsProduct
-          product <- v0
+          product: reads v0
 
       recipe MatchExisting
-        use 'test:1' as v0
+        v0: use 'test:1'
         WritesLego
-          lego -> v0
+          lego: writes v0
         ReadsProduct
-          product <- v0`;
+          product: reads v0`;
 
     it('a subtype matches to a supertype that wants to be read', async () => {
       const manifest = await Manifest.parse(manifestText);
@@ -363,7 +364,7 @@ describe('types', () => {
       const recipe = manifest.recipes[1];
       recipe.handles[0].mapToStorage({
         id: 'test1',
-        type: manifest.findSchemaByName('Product').entityClass().type.collectionOf()
+        type: Entity.createEntityClass(manifest.findSchemaByName('Product'), null).type.collectionOf()
       });
       assert(recipe.normalize());
       assert(recipe.isResolved());
@@ -376,7 +377,7 @@ describe('types', () => {
       const recipe = manifest.recipes[1];
       recipe.handles[0].mapToStorage({
         id: 'test1',
-        type: manifest.findSchemaByName('Lego').entityClass().type.collectionOf()
+        type: Entity.createEntityClass(manifest.findSchemaByName('Lego'), null).type.collectionOf()
       });
       assert(recipe.normalize());
       assert(recipe.isResolved());

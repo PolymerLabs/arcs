@@ -44,7 +44,7 @@ export const runArc = async (msg, bus, runtime) => {
 
   // optionally instantiate recipe
   if (action && await instantiateRecipe(arc, action, particles || [])) {
-    log(`successfully instantiated ${recipe} in ${arc}`);
+    log(`successfully instantiated ${recipe} in ${arc.id}`);
   }
   return arc;
 };

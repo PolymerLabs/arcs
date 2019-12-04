@@ -16,9 +16,11 @@ import {Loader} from '../platform/loader.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
-import {PlanningTestHelper, StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
+import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {Id, ArcId} from '../runtime/id.js';
 import {Manifest} from '../runtime/manifest.js';
+import {Runtime} from '../runtime/runtime.js';
+import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 async function initSlotComposer(recipeStr) {
   const slotComposer = new MockSlotComposer().newExpectations();
@@ -49,27 +51,27 @@ describe('slot composer', function() {
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'
-  consume root
-    provide mySlot
-    provide otherSlot
+  root: consumes Slot
+    mySlot: provides? Slot
+    otherSlot: provides? Slot
 particle B in 'b.js'
-  consume mySlot
+  mySlot: consumes Slot
 particle BB in 'bb.js'
-  consume mySlot
+  mySlot: consumes Slot
 particle C in 'c.js'
-  consume otherSlot
+  otherSlot: consumes Slot
 recipe
-  slot 'rootslotid-root' as slot0
+  slot0: slot 'rootslotid-root'
   A
-    consume root as slot0
-      provide mySlot as slot1
-      provide otherSlot as slot2
+    root: consumes slot0
+      mySlot: provides slot1
+      otherSlot: provides slot2
   B
-    consume mySlot as slot1
+    mySlot: consumes slot1
   BB
-    consume mySlot as slot1
+    mySlot: consumes slot1
   C
-    consume otherSlot as slot2
+    otherSlot: consumes slot2
         `;
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
     slotComposer = slotComposer.expectRenderSlot('A', 'root', {'contentTypes': ['model']});
@@ -116,18 +118,28 @@ recipe
   });
 
   it.skip('initialize recipe and render hosted slots', async () => {
-    const slotComposer = new MockSlotComposer().newExpectations()
+    const loader = new StubLoader({});
+    const context = await Manifest.load(
+        './src/tests/particles/artifacts/products-test.recipes', loader);
+    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+
+    slotComposer
+      .newExpectations()
       .expectRenderSlot('List', 'root', {'contentTypes': ['template', 'model', 'templateName']})
       .expectRenderSlot('List', 'root', {'contentTypes': ['model', 'templateName']})
       .expectRenderSlot('ShowProduct', 'item', {'contentTypes': ['template', 'model', 'templateName']})
       .expectRenderSlot('ItemMultiplexer', 'item', {'contentTypes': ['template', 'model', 'templateName']});
 
-    const helper = await PlanningTestHelper.createAndPlan({
-      manifestFilename: './src/tests/particles/artifacts/products-test.recipes',
-      slotComposer
-    });
+    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
+    assert.deepEqual(
+        suggestion.plan.particles.map(p => p.name).sort(),
+        ['ItemMultiplexer', 'List', 'ProductFilter']);
+    await suggestion.instantiate(arc);
+    await arc.idle;
 
-    await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List', 'ProductFilter']});
     assert.lengthOf(slotComposer.consumers, 3);
     assert.strictEqual(ProvidedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'ItemMultiplexer').slotContext.constructor);
     assert.strictEqual(ProvidedSlotContext, slotComposer.consumers.find(c => c.consumeConn.particle.name === 'List').slotContext.constructor);
@@ -138,21 +150,21 @@ recipe
   it('allows set slots to be consumed as a singleton slot', async () => {
     const manifestStr = `
     particle A in 'a.js'
-      consume root
-        provide set of item
+      root: consumes Slot
+        item: provides? [Slot]
     particle B in 'b.js'
-      consume item
+      item: consumes Slot
     particle C in 'c.js'
-      consume item
+      item: consumes Slot
     recipe
-      slot 'rootslotid-root' as slot0
+      slot0: slot 'rootslotid-root'
       A
-        consume root as slot0
-          provide item as slot1
+        root: consumes slot0
+          item: provides slot1
       B
-        consume item as slot1
+        item: consumes slot1
       C
-        consume item as slot1
+        item: consumes slot1
     `;
 
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
@@ -208,25 +220,7 @@ recipe
   });
 
   it.skip('renders inner slots in transformations without intercepting', async () => {
-    const slotComposer = new MockSlotComposer().newExpectations()
-      .expectRenderSlot('A', 'content', {'contentTypes': ['template', 'model', 'templateName']})
-      .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['template', 'model', 'templateName']})
-      .expectRenderSlot('B', 'detail', {'contentTypes': ['template', 'model', 'templateName']})
-      .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['model', 'templateName']})
-      .expectRenderSlot('A', 'content', {'contentTypes': ['model', 'templateName']})
-      .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['model', 'templateName']})
-      .expectRenderSlot('B', 'detail', {'contentTypes': ['model', 'templateName']});
-
-    const {arc} = await PlanningTestHelper.create({
-      manifestString: `
-        particle TransformationParticle in 'TransformationParticle.js'
-          consume root
-
-        recipe
-          slot 'rootslotid-root' as slot0
-          TransformationParticle
-            consume root as slot0`,
-      loader: new StubLoader({
+    const loader = new StubLoader({
         'TransformationParticle.js': `defineParticle(({DomParticle}) => {
           return class extends DomParticle {
             async setHandles(handles) {
@@ -237,19 +231,19 @@ recipe
 
               innerArc.loadRecipe(\`
                 particle A in 'A.js'
-                  consume content
-                    provide detail
+                  content: consumes
+                    detail: provides
 
                 particle B in 'B.js'
-                  consume detail
+                  detail: consumes
 
                 recipe
-                  slot '\` + hostedSlotId + \`' as hosted
+                  hosted: slot '\` + hostedSlotId + \`'
                   A
-                    consume content as hosted
-                      provide detail as detail
+                    content: consumes hosted
+                      detail: provides detail
                   B
-                    consume detail as detail
+                    detail: consumes detail
               \`);
             }
 
@@ -294,9 +288,26 @@ recipe
             }
           };
         });`
-      }),
-      slotComposer
-    });
+      });
+      const context = await Manifest.parse(`
+      particle TransformationParticle in 'TransformationParticle.js'
+        root: consumes
+
+      recipe
+        slot0: slot 'rootslotid-root'
+        TransformationParticle
+          root: consumes slot0`, {loader, fileName: ''});
+    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+    slotComposer.newExpectations()
+        .expectRenderSlot('A', 'content', {'contentTypes': ['template', 'model', 'templateName']})
+        .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['template', 'model', 'templateName']})
+        .expectRenderSlot('B', 'detail', {'contentTypes': ['template', 'model', 'templateName']})
+        .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['model', 'templateName']})
+        .expectRenderSlot('A', 'content', {'contentTypes': ['model', 'templateName']})
+        .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['model', 'templateName']})
+        .expectRenderSlot('B', 'detail', {'contentTypes': ['model', 'templateName']});
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();

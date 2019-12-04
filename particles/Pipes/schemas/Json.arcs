@@ -1,2 +1,2 @@
 schema Json
-  Text json
+  json: Text

@@ -411,7 +411,7 @@ class ArcsSet<T, StoreData, StoreOp>(
      * The [removeAsync] function allows for concurrent removal of the iterator's current item from
      * the [ArcsSet].
      */
-    class SuspendingIterator<T, StoreData, StoreOp> internal constructor(
+    class SuspendingIterator<T, StoreData, StoreOp> /* internal */ constructor(
         private val parent: ArcsSet<T, StoreData, StoreOp>,
         private var backingIterator: Iterator<T>
     ) : Iterator<T> where T : Referencable,
@@ -435,7 +435,7 @@ class ArcsSet<T, StoreData, StoreOp>(
             return parent.removeAsync(current, coroutineContext)
         }
 
-        internal suspend fun sync(
+        /* internal */ suspend fun sync(
             coroutineContext: CoroutineContext = parent.scope.coroutineContext
         ) {
             check(current == null) { "Syncs may only be performed before iteration has begun" }

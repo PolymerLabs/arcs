@@ -9,18 +9,21 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {Runtime} from '../../../runtime/runtime.js';
 import {Loader} from '../../../platform/loader.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
-import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
+import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
-    const helper = await PlanningTestHelper.create(
-      {storageKey: 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo'});
-    const arc = helper.arc;
+    const runtime = new Runtime(new StubLoader({}), FakeSlotComposer);
+    const arc = runtime.newArc(
+        'demo',
+        'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo');
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
@@ -46,8 +49,13 @@ describe('remote planificator', () => {
   const storageKey = 'volatile://!123:demo^^abcdef';
 
   async function createArc(options, storageKey) {
-    return (await PlanningTestHelper.createAndPlan(
-      {...options, slotComposer: new FakeSlotComposer(), storageKey})).arc;
+    const {manifestString, manifestFilename} = options;
+    const loader = new StubLoader({});
+    const context = manifestString
+        ? await Manifest.parse(manifestString, {loader, fileName: ''})
+        : await Manifest.load(manifestFilename, loader);
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    return runtime.newArc('demo', storageKey);
   }
   async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {
     return Planificator.create(

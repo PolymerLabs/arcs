@@ -1,12 +1,12 @@
 particle SlandleAnimatedTiles in 'source/AnimatedTiles.js'
-  `consume Slot root
+  root: `consumes Slot
   description `animated tiles`
 
 recipe SlandleAnimatedTiles
   SlandleAnimatedTiles
 
 particle SlandleRepeaterTiles in 'source/RepeaterTiles.js'
-  `consume Slot root
+  root: `consumes Slot
   description `repeater tiles`
 
 recipe SlandleRepeaterTiles

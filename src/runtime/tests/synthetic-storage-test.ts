@@ -13,7 +13,7 @@ import {Id, ArcId} from '../id.js';
 import {ChangeEvent, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
-import {assertThrowsAsync} from '../../testing/test-util.js';
+import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ArcType} from '../type.js';
 
 describe('synthetic storage ', () => {
@@ -59,14 +59,15 @@ describe('synthetic storage ', () => {
   });
 
   it('invalid manifest', async () => {
-    const {synth} = await setup('bad manifest, no cookie for you');
-    assert.isEmpty(await synth.toList());
+    const cc = await ConCap.capture(() => setup('bad manifest, no cookie for you'));
+    assert.isEmpty(await cc.result.synth.toList());
+    assert.match(cc.warn[0], /Error parsing manifest/);
   });
 
   it('manifest with no active recipe', async () => {
     const {synth} = await setup(`
       schema Thing
-        Text value`);
+        value: Text`);
     assert.isEmpty(await synth.toList());
   });
 
@@ -91,13 +92,13 @@ describe('synthetic storage ', () => {
       resource Store1Resource
         start
         [{"id":"!461465520498027:demo:0:inner:1:0","storageKey":"Store1_Data"}]
-      store Store0 of Data {Text value} 'test:0' @0  in Store0Resource
-      store Store1_Data of [Data {Text value}] 'Data {Text value}' @1  in Store1_DataResource
-      store Store1 of [Data {Text value}] 'test:1' @1  in Store1Resource
+      store Store0 of Data {value: Text} 'test:0' @0  in Store0Resource
+      store Store1_Data of [Data {value: Text}] 'Data {value: Text}' @1  in Store1_DataResource
+      store Store1 of [Data {value: Text}] 'test:1' @1  in Store1Resource
       @active
       recipe
-        use 'test:0' as handle0 // Data {...}
-        use 'test:1' as handle1 // [Data {...}]`);
+        handle0: use 'test:0' // Data {...}
+        handle1: use 'test:1' // [Data {...}]`);
     assert.isEmpty(await synth.toList());
   });
 
@@ -109,8 +110,8 @@ describe('synthetic storage ', () => {
       store Store1 of [Bar] at 'pouchdb://aa.pouchdb.org/bb'
       @active
       recipe
-        use Store0 #taggy #waggy as handle0
-        use Store1 as handle1`);
+        handle0: use Store0 #taggy #waggy
+        handle1: use Store1`);
 
     synth.legacyOn(() => assert.fail('change event should not fire for initial value'));
 
@@ -126,7 +127,7 @@ describe('synthetic storage ', () => {
       store Store0 of [Foo] at 'firebase://xx.firebaseio.com/yy'
       @active
       recipe
-        use Store0 as handle0`);
+        handle0: use Store0`);
 
     let list = await synth.toList();
     assert.deepEqual(list.map(h => flatten(h)), ['firebase://xx.firebaseio.com/yy [Foo {}] <>']);
@@ -142,7 +143,7 @@ describe('synthetic storage ', () => {
       store Store0 of [Bar] at 'pouchdb://aa.pouchdb.org/bb'
       @active
       recipe
-        use Store0 #bars as handle0`.trim()));
+        handle0: use Store0 #bars`.trim()));
 
     const e = await eventPromise;
     assert.deepEqual(e.add.map(x => flatten(x.value)), ['pouchdb://aa.pouchdb.org/bb [Bar {}] <bars>']);
