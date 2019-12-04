@@ -30,7 +30,7 @@ export class StorageKeyParser {
   private static getDefaultParsers(): Map<string, Parser> {
     return new Map<string, Parser>([
       ['volatile', VolatileStorageKey.fromString],
-      //['firebase', FirebaseStorageKey.fromString],
+      ['firebase', FirebaseStorageKey.fromString],
       ['ramdisk', RamDiskStorageKey.fromString],
       ['reference-mode', ReferenceModeStorageKey.fromString]
     ]);

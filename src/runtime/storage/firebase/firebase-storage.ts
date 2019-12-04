@@ -21,6 +21,8 @@ import {KeyBase} from '../key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from '../storage-provider-base.js';
 import {Dictionary} from '../../hot.js';
 
+export {firebase};
+
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
   const app = firebase.initializeApp({
