@@ -12,7 +12,7 @@ import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} fro
 import {StorageKey} from '../storage-key.js';
 import {Runtime} from '../../runtime.js';
 import {assert} from '../../../platform/assert-web.js';
-import {firebase} from '../../../../storage/platform/firebase-web.js';
+import {firebase} from '../../../../storage/firebase.js';
 
 export {firebase};
 

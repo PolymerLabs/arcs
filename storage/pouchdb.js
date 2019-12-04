@@ -8,4 +8,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export * from '../../storage/platform/firebase-node.js';
+// -web.js replaced with -node.js as needed by loaders/tools
+export * from './platform/pouchdb-web.js';

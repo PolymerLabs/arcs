@@ -8,8 +8,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// We use a non-standard way of importing Firebase, which means we don't get type definitions for it. This file just imports the official
-// Firebase type definitions and exports them.
-
-import firebase from 'firebase';
-export {firebase};
+// -web.js replaced with -node.js as needed by loaders/tools
+export * from './platform/firebase-web.js';

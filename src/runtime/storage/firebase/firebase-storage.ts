@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {firebase} from '../../../../storage/firebase.js';
 import {assert} from '../../../platform/assert-web.js';
 import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
-import {firebase} from '../../../platform/firebase-web.js';
 import {Id} from '../../id.js';
 import {Runnable} from '../../hot.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
