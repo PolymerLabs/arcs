@@ -23,6 +23,7 @@ import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class TTTGame : Particle() {
     private val gameState = Singleton { TTTGame_GameState() }

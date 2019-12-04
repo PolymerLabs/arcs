@@ -16,6 +16,7 @@ import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 /**
  * Sample WASM Particle.

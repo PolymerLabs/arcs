@@ -16,6 +16,7 @@ import arcs.Collection
 import arcs.CollectionsParticle_InputData
 import arcs.Particle
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.

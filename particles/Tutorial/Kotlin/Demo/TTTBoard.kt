@@ -19,6 +19,7 @@ import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
 import kotlin.native.internal.ExportForCppRuntime
+import kotlin.native.Retain
 
 class TTTBoard : Particle() {
 
