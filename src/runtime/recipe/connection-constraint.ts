@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction, directionToArrow, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
+import {DirectionPreSlandles, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
@@ -135,10 +135,10 @@ export class TagEndPoint extends EndPoint {
 export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
   from: EndPoint;
   to: EndPoint;
-  direction: Direction;
+  direction: DirectionPreSlandles;
   type: 'constraint' | 'obligation';
 
-  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, type: 'constraint' | 'obligation') {
+  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: DirectionPreSlandles, type: 'constraint' | 'obligation') {
     assert(direction);
     assert(type);
     this.from = fromConnection;

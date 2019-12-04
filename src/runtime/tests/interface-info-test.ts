@@ -13,7 +13,6 @@ import {InterfaceInfo} from '../interface-info.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {CollectionType, EntityType, InterfaceType, Type, TypeVariable} from '../type.js';
-import {Direction} from '../manifest-ast-nodes.js';
 
 describe('interface', () => {
   it('round trips interface info', async () => {
@@ -96,7 +95,7 @@ describe('interface', () => {
           foo: writes NotTest
       `);
     const type = new EntityType(manifest.schemas.Test);
-    const iface = new InterfaceInfo('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'in' as Direction, type: TypeVariable.make('b')}, {type}], []);
+    const iface = new InterfaceInfo('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'in', type: TypeVariable.make('b')}, {type}], []);
     assert(!iface.particleMatches(manifest.particles[0]));
     assert(iface.particleMatches(manifest.particles[1]));
     assert(iface.particleMatches(manifest.particles[2]));

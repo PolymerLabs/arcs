@@ -72,7 +72,7 @@
     return {...data, location: location()} as T;
   }
 
-  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+  function buildInterfaceArgument(name: string, direction: AstNode.DirectionPreSlandles, type: AstNode.ParticleHandleConnectionType) {
     if (direction === 'host') {
       error(`Interface cannot have arguments with a 'host' direction.`);
     }
@@ -553,12 +553,8 @@ Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `pro
       // Fix for faking proper capability set support with optionality.
       dir = 'reads writes';
     }
-    return AstNode.directionToPreSlandlesDirection(dir as AstNode.DirectionUnified);
+    return AstNode.directionToPreSlandlesDirection(dir as AstNode.Direction);
   }
-
-// TODO(jopra): Remove when syntax is updated to not use arrows.
-DirectionArrow "a direction arrow (e.g. <-, ->, <->, =, `consume, `provide)"
-  = '<->' / '<-' / '->' / '=' / '`consume' / '`provide'
 
 ParticleHandleConnectionType
   = TypeVariable
@@ -1370,8 +1366,7 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 
 // Should only be used as a negative match.
 ReservedWord
-  = keyword:(DirectionArrow
-  / Direction
+  = keyword:( Direction
   / SlotDirection
   / RecipeHandleFate
   / 'particle'

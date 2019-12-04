@@ -77,13 +77,13 @@ const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 export interface HandleConnection {
   type: Type;
   name?: string|TypeVariable;
-  direction?: AstNode.Direction; // TODO make required
+  direction?: AstNode.DirectionPreSlandles; // TODO make required
 }
 
 interface HandleConnectionLiteral {
   type?: TypeLiteral;
   name?: string|TypeLiteral;
-  direction?: AstNode.Direction;
+  direction?: AstNode.DirectionPreSlandles;
 }
 
 // TODO(lindner) only tests use optional props
@@ -112,7 +112,7 @@ export interface InterfaceInfoLiteral {
   slots: SlotLiteral[];
 }
 
-type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.Direction};
+type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.DirectionPreSlandles};
 
 export class InterfaceInfo {
   name: string;

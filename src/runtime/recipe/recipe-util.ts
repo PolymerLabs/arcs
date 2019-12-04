@@ -13,14 +13,14 @@ import {ParticleSpec, HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {DirectionPreSlandles} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
 
-export function reverseDirection(direction: Direction): Direction {
+export function reverseDirection(direction: DirectionPreSlandles): DirectionPreSlandles {
   switch (direction) {
     case 'in':
       return 'out';
@@ -40,11 +40,11 @@ export function reverseDirection(direction: Direction): Direction {
   }
 }
 
-export function connectionMatchesHandleDirection(connectionDirection: Direction, handleDirection: Direction): boolean {
+export function connectionMatchesHandleDirection(connectionDirection: DirectionPreSlandles, handleDirection: DirectionPreSlandles): boolean {
   return acceptedDirections(connectionDirection).includes(handleDirection);
 }
 
-export function acceptedDirections(direction: Direction): Direction[] {
+export function acceptedDirections(direction: DirectionPreSlandles): DirectionPreSlandles[] {
   // @param direction: the direction of a handleconnection.
   // @return acceptedDirections: the list of directions a handle can have that
   // are allowed with this handle connection.
@@ -92,9 +92,9 @@ class Shape {
     }
   }
 }
-type DirectionCounts = {[K in Direction]: number};
+type DirectionCounts = {[K in DirectionPreSlandles]: number};
 
-export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: Direction};
+export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: DirectionPreSlandles};
 
 type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
 
