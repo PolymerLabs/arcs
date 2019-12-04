@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import '../../../storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../../platform/chai-web.js';
 import {Arc} from '../../../arc.js';
 import {Loader} from '../../../../platform/loader.js';

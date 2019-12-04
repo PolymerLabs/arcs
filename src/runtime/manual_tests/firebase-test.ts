@@ -21,7 +21,6 @@ import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorag
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Flags} from '../flags.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
