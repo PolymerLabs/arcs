@@ -22,7 +22,7 @@ See [here](../../../particles/Native/Wasm) or [here](../../../particles/Tutorial
       # Input source.
       src = "example.arcs",
       # Optionally, specify package where entities will reside.
-      package: "arcs.example",
+      package = "arcs.example",
   )
   ```
 - Write your Kotlin particle(s): See [the Kotlin tutorial](../../../particles/Tutorial/Kotlin) for greater detail.
