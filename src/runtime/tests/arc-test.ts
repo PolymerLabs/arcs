@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import '../storage/firebase/firebase-provider.js';
-//import '../storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
@@ -39,6 +37,9 @@ import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+// database providers are optional, this tests uses these provider(s)
+import '../storage/firebase/firebase-provider.js';
+import '../storage/pouchdb/pouch-db-provider.js';
 
 async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) {
   const loader = new Loader();
@@ -169,7 +170,7 @@ describe('Arc new storage', () => {
   }));
 });
 
-['volatile://'/*, 'pouchdb://memory/user-test/'*/].forEach((storageKeyPrefix) => {
+['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
 describe('Arc ' + storageKeyPrefix, () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
