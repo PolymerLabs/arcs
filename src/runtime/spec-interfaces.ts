@@ -12,36 +12,37 @@ import {DirectionPreSlandles} from './manifest-ast-nodes.js';
 import {Claim} from './particle-claim.js';
 import {Type} from './type.js';
 
-export type CheckTarget = HandleConnectionSpecIntf | ProvideSlotConnectionSpecIntf;
+export type CheckTarget = HandleConnectionSpecInterface | ProvideSlotConnectionSpecInterface;
 
-export interface CheckIntf {
+export interface CheckInterface {
   target: CheckTarget;
+  // TODO: The following should be a CheckExpression, or rather an interface.
   // tslint:disable-next-line: no-any
   expression: any;
   toManifestString();
 }
 
-export interface HandleConnectionSpecIntf {
+export interface HandleConnectionSpecInterface {
   discriminator: 'HCS';
   direction: DirectionPreSlandles;
   name: string;
   type: Type;
   isOptional: boolean;
   tags: string[];
-  dependentConnections: HandleConnectionSpecIntf[];
+  dependentConnections: HandleConnectionSpecInterface[];
   pattern?: string;
-  parentConnection: HandleConnectionSpecIntf | null;
+  parentConnection: HandleConnectionSpecInterface | null;
   claims?: Claim[];
-  check?: CheckIntf;
+  check?: CheckInterface;
   isInput: boolean;
   isOutput: boolean;
 
   instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void;
-  toSlotConnectionSpec(): ConsumeSlotConnectionSpecIntf;
+  toSlotConnectionSpec(): ConsumeSlotConnectionSpecInterface;
   isCompatibleType(type: Type): boolean;
 }
 
-export interface ConsumeSlotConnectionSpecIntf {
+export interface ConsumeSlotConnectionSpecInterface {
   discriminator: 'CSCS';
   name: string;
   isRequired: boolean;
@@ -49,14 +50,14 @@ export interface ConsumeSlotConnectionSpecIntf {
   tags: string[];
   formFactor: string;
   handles: string[];
-  provideSlotConnections: ProvideSlotConnectionSpecIntf[];
+  provideSlotConnections: ProvideSlotConnectionSpecInterface[];
   isOptional: boolean;
   direction: string;
   type: Type;
-  dependentConnections: ProvideSlotConnectionSpecIntf[];
+  dependentConnections: ProvideSlotConnectionSpecInterface[];
 }
 
-export interface ProvideSlotConnectionSpecIntf extends ConsumeSlotConnectionSpecIntf {
+export interface ProvideSlotConnectionSpecInterface extends ConsumeSlotConnectionSpecInterface {
   discriminator: 'CSCS';
-  check?: CheckIntf;
+  check?: CheckInterface;
 }

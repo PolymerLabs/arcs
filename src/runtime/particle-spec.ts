@@ -20,7 +20,7 @@ import {createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {CheckIntf, HandleConnectionSpecIntf, ConsumeSlotConnectionSpecIntf, ProvideSlotConnectionSpecIntf} from './spec-interfaces.js';
+import {CheckInterface, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface} from './spec-interfaces.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -65,7 +65,7 @@ export function isRoot({name, tags, id, type, fate}: {name: string, tags: string
   return rootNames.includes(name) || tags.some(tag => rootNames.includes(tag));
 }
 
-export class HandleConnectionSpec implements HandleConnectionSpecIntf {
+export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   private rawData: SerializedHandleConnectionSpec;
   discriminator: 'HCS';
   direction: DirectionPreSlandles;
@@ -77,7 +77,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecIntf {
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
   claims?: Claim[];
-  check?: CheckIntf;
+  check?: CheckInterface;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.discriminator = 'HCS';
@@ -98,7 +98,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecIntf {
     }
   }
 
-  toSlotConnectionSpec(): ConsumeSlotConnectionSpecIntf {
+  toSlotConnectionSpec(): ConsumeSlotConnectionSpecInterface {
     // TODO: Remove in SLANDLESv2
     const slotType = this.type.slandleType();
     if (!slotType) {
@@ -149,10 +149,10 @@ type SerializedSlotConnectionSpec = {
   formFactor?: string,
   handles?: string[],
   provideSlotConnections?: SerializedSlotConnectionSpec[],
-  check?: CheckIntf,
+  check?: CheckInterface,
 };
 
-export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecIntf {
+export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInterface {
   discriminator: 'CSCS';
   name: string;
   isRequired: boolean;
@@ -193,8 +193,8 @@ export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecIntf 
   get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
 
-export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec implements ProvideSlotConnectionSpecIntf {
-  check?: CheckIntf;
+export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec implements ProvideSlotConnectionSpecInterface {
+  check?: CheckInterface;
   discriminator: 'CSCS';
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
@@ -230,7 +230,7 @@ export class ParticleSpec {
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
   trustClaims: ParticleClaim[];
-  trustChecks: CheckIntf[];
+  trustChecks: CheckInterface[];
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -495,8 +495,8 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks: ParticleCheckStatement[]): CheckIntf[] {
-    const results: CheckIntf[] = [];
+  private validateTrustChecks(checks: ParticleCheckStatement[]): CheckInterface[] {
+    const results: CheckInterface[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();
       checks.forEach(check => {

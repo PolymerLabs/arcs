@@ -9,7 +9,7 @@
  */
 
 import * as AstNode from './manifest-ast-nodes.js';
-import {CheckTarget, HandleConnectionSpecIntf, ProvideSlotConnectionSpecIntf, CheckIntf} from './spec-interfaces.js';
+import {CheckTarget, HandleConnectionSpecInterface, ProvideSlotConnectionSpecInterface, CheckInterface} from './spec-interfaces.js';
 import {assert} from '../platform/assert-web.js';
 
 /** The different types of trust checks that particles can make. */
@@ -20,7 +20,7 @@ export enum CheckType {
   IsFromStore = 'is-from-store',
 }
 
-export class Check implements CheckIntf {
+export class Check implements CheckInterface {
   constructor(readonly target: CheckTarget, readonly expression: CheckExpression) {}
 
   toManifestString() {
@@ -74,9 +74,9 @@ export class CheckHasTag {
 export class CheckIsFromHandle {
   readonly type: CheckType.IsFromHandle = CheckType.IsFromHandle;
 
-  constructor(readonly parentHandle: HandleConnectionSpecIntf, readonly isNot: boolean) {}
+  constructor(readonly parentHandle: HandleConnectionSpecInterface, readonly isNot: boolean) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpecIntf>) {
+  static fromASTNode(astNode: AstNode.ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
     if (!parentHandle) {
       throw new Error(`Unknown "check is from handle" handle name: ${astNode.parentHandle}.`);
@@ -93,9 +93,9 @@ export class CheckIsFromHandle {
 export class CheckIsFromOutput {
   readonly type: CheckType.IsFromOutput = CheckType.IsFromOutput;
 
-  constructor(readonly output: HandleConnectionSpecIntf, readonly isNot: boolean) {}
+  constructor(readonly output: HandleConnectionSpecInterface, readonly isNot: boolean) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckIsFromOutput, handleConnectionMap: Map<string, HandleConnectionSpecIntf>) {
+  static fromASTNode(astNode: AstNode.ParticleCheckIsFromOutput, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
     const output = handleConnectionMap.get(astNode.output);
     if (!output) {
       throw new Error(`Unknown "check is from output" output name: ${astNode.output}.`);
@@ -135,7 +135,7 @@ export class CheckIsFromStore {
 }
 
 /** Converts the given AST node into a CheckCondition object. */
-function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpecIntf>): CheckCondition {
+function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckCondition {
   switch (astNode.checkType) {
     case CheckType.HasTag:
       return CheckHasTag.fromASTNode(astNode);
@@ -151,7 +151,7 @@ function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleCon
 }
 
 /** Converts the given AST node into a CheckExpression object. */
-function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpecIntf>): CheckExpression {
+function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckExpression {
   if (astNode.kind === 'particle-trust-check-boolean-expression') {
     assert(astNode.children.length >= 2, 'Boolean check expressions must have at least two children.');
     return new CheckBooleanExpression(astNode.operator, astNode.children.map(child => createCheckExpression(child, handleConnectionMap)));
@@ -164,7 +164,7 @@ function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleC
 export function createCheck(
     checkTarget: CheckTarget,
     astNode: AstNode.ParticleCheckStatement,
-    handleConnectionMap: Map<string, HandleConnectionSpecIntf>): Check {
+    handleConnectionMap: Map<string, HandleConnectionSpecInterface>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
   return new Check(checkTarget, expression);
 }
