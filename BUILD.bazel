@@ -38,6 +38,7 @@ filegroup(
         "devtools/shared/**",
         "shells/**/*.js",
         "modalities/**/*",
+        "concrete-storage/**/*",
     ]) + [
         "//src/tools:all_srcs",
         "//tools:tools_srcs",
