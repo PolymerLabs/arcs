@@ -55,6 +55,7 @@ import {ClaimType} from '../../runtime/particle-claim.js';
 const build = buildPath('.', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
+const webpackStorage = webpackPkg('storage');
 
 const buildLS = buildPath('./src/tools/language-server', () => {
   getOptionalDependencies(['vscode-jsonrpc', 'vscode-languageserver'], 'Build the languageServer');
@@ -69,6 +70,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   testShells: [peg, railroad, build, webpack, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
   webpack: [peg, railroad, build, webpack],
+  webpackStorage: [webpackStorage],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],

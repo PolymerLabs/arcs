@@ -45,6 +45,7 @@ class TestLoader extends Loader {
 
     let loader;
     let manifestPromise;
+
     before(function() {
       if (!global['testFlags'].bazel) {
         this.skip();

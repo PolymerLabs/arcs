@@ -13,11 +13,12 @@ import {handleFor, Collection, Singleton} from '../handle.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
-import {Schema} from '../schema.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {Entity} from '../entity.js';
-import {Id, ArcId, IdGenerator} from '../id.js';
+import {ArcId, IdGenerator} from '../id.js';
 import {NoOpStorageProxy} from '../storage-proxy.js';
+// database providers are optional, this tests uses these provider(s)
+import '../storage/pouchdb/pouch-db-provider.js';
 
 describe('Handle', () => {
 
@@ -158,7 +159,7 @@ describe('Handle', () => {
         `tags ${arc.storeTags.values()} should have included ${tag}`));
   });
 
-  it.skip('uses default storage keys', async () => {
+  it('uses default storage keys', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), storageKey: 'pouchdb://memory/yyy/test',
                          context: manifest, loader});
     const singleton = await arc.createStore(new EntityType(manifest.schemas.Bar), 'foo', 'test1') as SingletonStorageProvider;
