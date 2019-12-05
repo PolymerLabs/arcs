@@ -21,8 +21,6 @@ import {CallbackTracker} from '../../../testing/callback-tracker.js';
 import {EntityType, ReferenceType} from '../../../type.js';
 import {Id, ArcId} from '../../../id.js';
 
-const testUrl = 'pouchdb://memory/user-test';
-
 // TODO(lindner): run tests for remote and local variants
 ['pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((testUrl) => {
 
