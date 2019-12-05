@@ -16,7 +16,7 @@ import {Node, Edge, FlowCondition, FlowCheck} from './graph-internals.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/assert-web.js';
 import {StoreReference, CheckIsFromHandle, CheckIsFromOutput, CheckIsFromStore, CheckType, CheckCondition, CheckExpression, Check} from '../../runtime/particle-check.js';
-import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpecIntf} from '../../runtime/spec-interfaces.js';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -33,8 +33,8 @@ export class FlowGraph {
   /** Maps from particle name to node. */
   readonly particleMap: Map<string, ParticleNode>;
 
-  /** Maps from HandleConnectionSpec to HandleNode. */
-  private readonly handleSpecMap: Map<HandleConnectionSpec, HandleNode> = new Map();
+  /** Maps from HandleConnectionSpecIntf to HandleNode. */
+  private readonly handleSpecMap: Map<HandleConnectionSpecIntf, HandleNode> = new Map();
 
   private readonly manifest: Manifest;
 

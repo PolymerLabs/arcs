@@ -16,10 +16,11 @@ import {TypeVariableInfo} from './type-variable-info.js';
 import {Schema} from './schema.js';
 import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
-import {Check, createCheck} from './particle-check.js';
+import {createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
+import {CheckIntf, HandleConnectionSpecIntf, ConsumeSlotConnectionSpecIntf, ProvideSlotConnectionSpecIntf} from './spec-interfaces.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -64,8 +65,9 @@ export function isRoot({name, tags, id, type, fate}: {name: string, tags: string
   return rootNames.includes(name) || tags.some(tag => rootNames.includes(tag));
 }
 
-export class HandleConnectionSpec {
-  rawData: SerializedHandleConnectionSpec;
+export class HandleConnectionSpec implements HandleConnectionSpecIntf {
+  private rawData: SerializedHandleConnectionSpec;
+  discriminator: 'HCS';
   direction: DirectionPreSlandles;
   name: string;
   type: Type;
@@ -75,9 +77,10 @@ export class HandleConnectionSpec {
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
   claims?: Claim[];
-  check?: Check;
+  check?: CheckIntf;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
+    this.discriminator = 'HCS';
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
@@ -95,7 +98,7 @@ export class HandleConnectionSpec {
     }
   }
 
-  toSlotConnectionSpec(): ConsumeSlotConnectionSpec {
+  toSlotConnectionSpec(): ConsumeSlotConnectionSpecIntf {
     // TODO: Remove in SLANDLESv2
     const slotType = this.type.slandleType();
     if (!slotType) {
@@ -106,6 +109,7 @@ export class HandleConnectionSpec {
     const slotInfo = slotType.getSlot();
 
     return {
+      discriminator: 'CSCS',
       name: this.name,
       isOptional: this.isOptional,
       direction: this.direction,
@@ -145,10 +149,11 @@ type SerializedSlotConnectionSpec = {
   formFactor?: string,
   handles?: string[],
   provideSlotConnections?: SerializedSlotConnectionSpec[],
-  check?: Check,
+  check?: CheckIntf,
 };
 
-export class ConsumeSlotConnectionSpec {
+export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecIntf {
+  discriminator: 'CSCS';
   name: string;
   isRequired: boolean;
   isSet: boolean;
@@ -158,6 +163,7 @@ export class ConsumeSlotConnectionSpec {
   provideSlotConnections: ProvideSlotConnectionSpec[];
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
+    this.discriminator = 'CSCS';
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired || false;
     this.isSet = slotModel.isSet || false;
@@ -187,8 +193,9 @@ export class ConsumeSlotConnectionSpec {
   get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
 
-export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {
-  check?: Check;
+export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec implements ProvideSlotConnectionSpecIntf {
+  check?: CheckIntf;
+  discriminator: 'CSCS';
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
     super(slotModel);
@@ -223,7 +230,7 @@ export class ParticleSpec {
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
   trustClaims: ParticleClaim[];
-  trustChecks: Check[];
+  trustChecks: CheckIntf[];
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -488,8 +495,8 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks: ParticleCheckStatement[]): Check[] {
-    const results: Check[] = [];
+  private validateTrustChecks(checks: ParticleCheckStatement[]): CheckIntf[] {
+    const results: CheckIntf[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();
       checks.forEach(check => {
