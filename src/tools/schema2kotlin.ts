@@ -43,7 +43,7 @@ export class Schema2Kotlin extends Schema2Base {
   fileHeader(outName: string): string {
     const withCustomPackage = (populate: string) => this.scope !== 'arcs' ? populate : '';
     return `\
-@file:Suppress("PackageName")
+@file:Suppress("PackageName", "TopLevelName")
 package ${this.scope}
 
 //
