@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {firebase} from '../../../../storage/firebase.js';
+import {firebase} from '../../../../concrete-storage/firebase.js';
 import {assert} from '../../../platform/assert-web.js';
 import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';

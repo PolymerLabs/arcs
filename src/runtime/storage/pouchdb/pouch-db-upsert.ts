@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PouchDB} from '../../../../storage/pouchdb.js';
+import {PouchDB} from '../../../../concrete-storage/pouchdb.js';
 
 export interface UpsertDoc {
   version: number;

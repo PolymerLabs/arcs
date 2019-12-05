@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {firebase} from '../../build/platform/firebase-web.js';
+import {firebase} from '../../concrete-storage/firebase.js';
 
 const config = {
   server: 'arcs-storage.firebaseio.com',
