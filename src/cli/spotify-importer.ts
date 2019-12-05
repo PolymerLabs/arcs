@@ -14,9 +14,9 @@ import {Id} from '../runtime/id.js';
 import {Manifest} from '../runtime/manifest.js';
 import {EntityType} from '../runtime/type.js';
 import {StorageProviderFactory} from '../runtime/storage/storage-provider-factory.js';
-//import {resetStorageForTesting} from '../runtime/storage/firebase/firebase-storage.js';
-//import '../runtime/storage/firebase/firebase-provider.js';
-//import '../runtime/storage/pouchdb-provider.js';
+import {resetStorageForTesting} from '../runtime/storage/firebase/firebase-storage.js';
+import '../runtime/storage/firebase/firebase-provider.js';
+import '../runtime/storage/pouchdb-provider.js';
 
 // Imports Spotify playlists from JSON files, formatted as per the API
 // described on https://developer.spotify.com/console/get-playlist
@@ -119,7 +119,7 @@ void (async () => {
         console.error(usage);
       }
     } else if (args[0] === '--clear') {
-      //await resetStorageForTesting(key);
+      await resetStorageForTesting(key);
       const collection = await construct();
       if (args.length > 1) {
         await importFiles(collection, args.slice(1));
