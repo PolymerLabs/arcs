@@ -10,20 +10,20 @@ KOTLINC_OPTS = [
 
 kt_jvm_library(
     name = "arcs",
-    srcs = glob([
-        "*.kt",
-        "jvm/**/*.kt",
-    ]),
+    srcs = glob(
+        ["**/*.kt"],
+        exclude = ["wasm/**"],
+    ),
     kotlincopts = KOTLINC_OPTS + ["-Xallow-kotlin-package"],
     visibility = ["//visibility:public"],
 )
 
 kt_native_library(
     name = "arcs-wasm",
-    srcs = glob([
-        "*.kt",
-        "**/wasm/*.kt",
-    ]),
+    srcs = glob(
+        ["**/*.kt"],
+        exclude = ["jvm/**"],
+    ),
     kotlincopts = KOTLINC_OPTS,
     visibility = ["//visibility:public"],
 )

@@ -11,7 +11,7 @@ arcs_kt_jvm_test_suite(
     name = "stringEncoder",
     package = "arcs.stringEncoder",
     deps = [
-        "//src/wasm/kotlin:arcs",
+        "//src/wasm/kotlin/java/arcs",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",

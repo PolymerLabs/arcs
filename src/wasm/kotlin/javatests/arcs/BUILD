@@ -15,7 +15,7 @@ filegroup(
 arcs_kt_schema(
     name = "test_schemas",
     srcs = ["schemas.arcs"],
-    package = "wasm.kotlin.javatests.arcs",
+    package = "sdk.kotlin.javatests.arcs",
 )
 
 arcs_kt_binary(
