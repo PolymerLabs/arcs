@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PouchDB} from '../../../../storage/pouchdb.js';
+import {PouchDB} from '../../../../concrete-storage/pouchdb.js';
 import {assert} from '../../../platform/assert-web.js';
 import {Type} from '../../type.js';
 import {ChangeEvent, SingletonStorageProvider} from '../storage-provider-base.js';

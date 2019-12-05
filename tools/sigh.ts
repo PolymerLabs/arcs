@@ -66,8 +66,8 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   languageServer: [peg, build, buildLS, webpackLS],
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, runTests],
-  testShells: [peg, railroad, build, webpack, devServerAsync, testWdioShells],
+  test: [peg, railroad, build, lint, tslint, runTests],
+  testShells: [peg, railroad, build, lint, tslint, webpack, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
   webpack: [peg, railroad, build, webpack],
   webpackStorage: [webpackStorage],
@@ -88,8 +88,10 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   flowcheck: runNodeScriptSteps('flowcheck'),
   run: [peg, build, runNodeScript],
   licenses: [build],
-  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack,
-            webpackTools, lint, tslint, buildifier, cycles, devServerAsync, testWdioShells],
+  default: [
+    check, peg, railroad, build, lint, tslint, buildifier, cycles, runTestsOrHealthOnCron,
+    webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
+  ]
 };
 
 /**
