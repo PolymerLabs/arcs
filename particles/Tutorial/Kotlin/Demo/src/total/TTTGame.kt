@@ -11,7 +11,6 @@
 
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
@@ -22,8 +21,9 @@ import arcs.TTTGame_PlayerOne
 import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
     private val gameState = Singleton { TTTGame_GameState() }

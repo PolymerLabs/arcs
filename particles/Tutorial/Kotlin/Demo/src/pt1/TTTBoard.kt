@@ -11,15 +11,15 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
@@ -34,9 +34,9 @@ class TTTBoard : Particle() {
 
         eventHandler("onClick") { eventData ->
             events.store(TTTBoard_Events(
-                type = "move",
-                move = eventData["value"]?.toDouble() ?: -1.0,
-                time = clicks
+                    type = "move",
+                    move = eventData["value"]?.toDouble() ?: -1.0,
+                    time = clicks
             ))
             clicks++
         }
@@ -57,10 +57,10 @@ class TTTBoard : Particle() {
         }
 
         return mapOf(
-            "buttons" to mapOf(
-                "\$template" to "button",
-                "models" to boardModel
-            )
+                "buttons" to mapOf(
+                        "\$template" to "button",
+                        "models" to boardModel
+                )
         )
     }
 
