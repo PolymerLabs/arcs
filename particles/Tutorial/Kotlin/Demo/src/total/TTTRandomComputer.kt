@@ -11,15 +11,15 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.addressable.toAddress
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
 import arcs.TTTRandomComputer_GameState
 import arcs.TTTRandomComputer_MyMove
 import arcs.TTTRandomComputer_Player
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {
     private val gameState = Singleton { TTTRandomComputer_GameState() }
