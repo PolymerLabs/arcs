@@ -13,7 +13,8 @@ import {StorageMode, StoreConstructor} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
 import {ReferenceModeStore} from './reference-mode-store.js';
 
-
+// Inject into Store to avoid a direct reference to ReferenceModeStore from Store,
+// which causes a cyclic dependency.
 Store.constructors = new Map<StorageMode, StoreConstructor>([
     [StorageMode.Direct, DirectStore],
     [StorageMode.ReferenceMode, ReferenceModeStore as StoreConstructor]
