@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import {PouchDB} from '../../../../concrete-storage/pouchdb.js';
+import {PouchDB} from '../../../../concrete-storage/pouchdb.js';
 import {Type} from '../../type.js';
 import {Runnable} from '../../hot.js';
 import {StorageProviderBase} from '../storage-provider-base.js';
