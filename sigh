@@ -1,2 +1,2 @@
 #!/bin/sh
-exec $(dirname $0)/tools/sigh
+exec $(dirname $0)/tools/sigh "$@"
