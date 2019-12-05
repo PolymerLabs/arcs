@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package wasm.kotlin.javatests.arcs
+package sdk.kotlin.javatests.arcs
 
 import arcs.addressable.toAddress
 import arcs.Collection
