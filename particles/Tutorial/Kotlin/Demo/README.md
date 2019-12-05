@@ -88,3 +88,81 @@ with the untrusted particle highlighted, we can see the handles with personal da
 connect to the Board. So the data should be safe.
 
 ![Tic Tac Toe Untrusted](diagrams/TTTUntrusted.jpg) 
+
+## Designing the Best Manifest
+
+Alright, so now we've got the basic design for our system, it's
+time to go put it all together! Let's start by writing our Arcs
+Manifest file. To do this, we know the particles and handles, 
+and how they fit together. But we don't know what the entities 
+the handles point to look like.
+
+By looking at our diagram again, it becomes obvious we need four
+schemas: Person, GameState, Event, and Move. These different types
+are colored in the graph below to show where schemas are reused.
+
+![Tic Tac Toe Handle Types](diagrams/TTTHandleTypes.jpg) 
+
+For now, let's not worry about what fields each of these schemas
+has. This will become apparent as we start implementing the
+system.
+
+To start with, let's create the Board and the Game.  To do this,
+we will also need to implement at least basic versions of the
+GameState and Event handles. The Board needs to know what it 
+should display, thus GameState must include a representation of
+the board. Meanwhile, the Board needs to provide the type of 
+move (it could be a reset or an actual move) and the move. 
+Because collections are not ordered, we also need some sort of
+time so we can sort the Events and ensure only the most recent
+Event is processed. In total, this gives us the following Schemas.
+
+```
+schema GameState
+  board: Text
+
+schema Event
+  type: Text
+  move: Number
+  time: Number
+```
+
+Next comes the particles. Based on our diagram, we know the basic
+flow of data. However, the diagram is slightly misleading. In Arcs,
+if a handle is only listed as a "writes", then the particle cannot
+read it. As a result, some of our outputs also need to be inputs
+so we can store our own state. Taking this into account, we get the
+following particles:
+
+```
+particle TTTBoard in 'TTTBoard.wasm'
+  events: writes [Event]
+  gameState: reads GameState
+  boardSlot: consumes
+
+particle TTTGame in 'TTTGame.wasm'
+  gameState: reads writes GameState
+  events: reads writes [Event]
+  root: consumes
+    boardSlot: provides
+```
+
+And finally, we need to put it together in the recipe:
+
+```
+recipe GamePlayersDemoRecipe
+  TTTGame
+    gameState: reads writes gameState
+    events: reads writes events
+    root: consumes
+      boardSlot: provides board
+  TTTBoard
+    gameState: reads gameState
+    events: writes events
+    boardSlot: consumes board
+  description `Kotlin Tutorial TicTacToe Demo`
+
+```
+
+Putting these three components together, we have the start of our
+Tic-Tac-Toe game! Next up, we'll implement the Board particle.
