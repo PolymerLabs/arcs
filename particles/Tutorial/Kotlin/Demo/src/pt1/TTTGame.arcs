@@ -3,10 +3,7 @@
 
 
 schema GameState
-  gameOver: Boolean
   board: Text
-  currentPlayer: Number
-  winnerAvatar: Text
 
 schema Event
   type: Text

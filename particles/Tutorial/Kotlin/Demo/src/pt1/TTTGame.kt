@@ -30,11 +30,7 @@ class TTTGame : Particle() {
         registerHandle("events", events)
     }
 
-    private val defaultGame = TTTGame_GameState(
-            board = ",,,,,,,,",
-            currentPlayer = (0..1).random().toDouble(),
-            gameOver = false
-    )
+    private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get()?.board == null) {
