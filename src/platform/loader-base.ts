@@ -23,6 +23,8 @@ import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../runtime/hot.js';
 import '../runtime/schema-from-literal.js';
+import '../runtime/type-from-literal.js';
+import '../runtime/storageNG/store-constructors.js';
 
 type ParticleCtor = typeof Particle;
 

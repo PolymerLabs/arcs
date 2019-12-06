@@ -14,7 +14,6 @@ import {Exists} from './drivers/driver-factory.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {DirectStore} from './direct-store.js';
-import {ReferenceModeStore} from './reference-mode-store.js';
 import {UnifiedStore, StoreInfo} from './unified-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
@@ -51,10 +50,9 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
 
   private activeStore: ActiveStore<T> | null;
 
-  static readonly constructors = new Map<StorageMode, StoreConstructor>([
-    [StorageMode.Direct, DirectStore],
-    [StorageMode.ReferenceMode, ReferenceModeStore as StoreConstructor]
-  ]);
+  // This map creates a cyclic dependency, so it is inject from store-constructors
+  // instead of being defined here.
+  static constructors : Map<StorageMode, StoreConstructor> = null;
 
   constructor(opts: StoreInfo & {storageKey: StorageKey, exists: Exists}) {
     super(opts);
