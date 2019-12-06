@@ -21,11 +21,7 @@ import kotlin.AssertionError
 annotation class Test
 
 open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), Asserter {
-    private val errors = Collection { ctor("") }
-
-    init {
-        registerHandle("errors", errors)
-    }
+    private val errors = Collection(this, "errors", { ctor("") })
 
     private fun <T : Entity<T>> assertContainerEqual(
         container: Collection<T>,

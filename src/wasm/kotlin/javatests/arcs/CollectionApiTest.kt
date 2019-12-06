@@ -18,16 +18,10 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class CollectionApiTest : Particle() {
-    private val _in = Collection { CollectionApiTest_InHandle() }
-    private val out = Collection { CollectionApiTest_OutHandle() }
-    private val io = Collection { CollectionApiTest_IoHandle() }
+    private val _in = Collection(this, "inHandle", { CollectionApiTest_InHandle() })
+    private val out = Collection(this, "outHandle", { CollectionApiTest_OutHandle() })
+    private val io = Collection(this, "ioHandle", { CollectionApiTest_IoHandle() })
     private val stored = CollectionApiTest_OutHandle()
-
-    init {
-        registerHandle("inHandle", _in)
-        registerHandle("outHandle", out)
-        registerHandle("ioHandle", io)
-    }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
