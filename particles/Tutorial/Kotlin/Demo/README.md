@@ -166,3 +166,222 @@ recipe GamePlayersDemoRecipe
 
 Putting these three components together, we have the start of our
 Tic-Tac-Toe game! Next up, we'll implement the Board particle.
+
+## DevTools Rule
+
+Before we can get to the Board, we need a very basic implementation
+of the Game as this is what provides the slot for the Board. This
+is shown below:
+
+```kotlin
+package arcs.tutorials
+
+import arcs.Collection
+import arcs.Handle
+import arcs.Particle
+import arcs.Singleton
+import arcs.TTTGame_Events
+import arcs.TTTGame_GameState
+import arcs.addressable.toAddress
+import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
+
+class TTTGame : Particle() {
+    private val gameState = Singleton { TTTGame_GameState() }
+    private val events = Collection { TTTGame_Events() }
+
+    init {
+        registerHandle("gameState", gameState)
+        registerHandle("events", events)
+    }
+
+    // We represent the board as a comma seperated string
+    private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
+
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
+        // If the gameState doesn't exist, set it.
+        if (gameState.get()?.board == null) {
+            gameState.set(defaultGame)
+        }
+    }
+
+    // Provide the boardSlot
+    override fun getTemplate(slotName: String): String = """
+        <div slotid="boardSlot"></div>
+        """.trimIndent()
+}
+
+@Retain
+@ExportForCppRuntime("_newTTTGame")
+fun constructTTTGame() = TTTGame().toAddress()
+```
+
+Next, we implement the Game. This is explained in more detail
+in the comments.
+```kotlin
+package arcs.tutorials.tictactoe
+
+import arcs.Collection
+import arcs.Handle
+import arcs.Particle
+import arcs.Singleton
+import arcs.TTTBoard_Events
+import arcs.TTTBoard_GameState
+import arcs.addressable.toAddress
+import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
+
+class TTTBoard : Particle() {
+
+    private val gameState = Singleton { TTTBoard_GameState() }
+    private val events = Collection { TTTBoard_Events() }
+    
+    // We use clicks as the way to sort Events in other particles.
+    private var clicks = 0.0
+    // The empty board will be used in multiple null checks.
+    private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
+
+    init {
+        registerHandle("gameState", gameState)
+        registerHandle("events", events)
+
+        // When a cell is clicked, add the click to the Events.
+        eventHandler("onClick") { eventData ->
+            events.store(TTTBoard_Events(
+                    type = "move",
+                    move = eventData["value"]?.toDouble() ?: -1.0,
+                    time = clicks
+            ))
+            clicks++
+        }
+
+        // When the reset button is clicked, add it to the Events.
+        eventHandler("reset") {
+            events.store(TTTBoard_Events(type = "reset", time = clicks))
+            clicks++
+        }
+    }
+
+    // When a handle is updated, we want to update the board.
+    override fun onHandleUpdate(handle: Handle) = renderOutput()
+
+    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+        // We use template interpolation to easily create the board. To
+        // do this, we need to create a model of the board to return.
+        val boardList = gameState.get()?.board?.split(",") ?: emptyBoard
+        val boardModel = mutableListOf<Map<String, String?>>()
+        boardList.forEachIndexed { index, cell ->
+            // Map what should be displayed in the cell and the index.
+            // This is what lets the onClick work as "value" becomes
+            // the move.
+            boardModel.add(mapOf("cell" to cell, "value" to index.toString()))
+        }
+
+        return mapOf(
+                "buttons" to mapOf(
+                        "\$template" to "button",
+                        "models" to boardModel
+                )
+        )
+    }
+
+    override fun getTemplate(slotName: String): String = """
+            <style>
+              .grid-container {
+                display: grid;
+                grid-template-columns: 50px 50px 50px;
+                grid-column-gap: 0px;
+              }
+            
+              .valid-butt {
+                border: 1px outset blue;
+                height: 50px;
+                width: 50px;
+                cursor: pointer;
+                background-color: lightblue;
+              }
+            
+              .valid-butt:hover {
+                background-color: blue;
+                color: white;
+              }
+            </style>
+            <div class="grid-container">{{buttons}}</div>
+            <template button>
+              <button class="valid-butt" type="button" on-click="onClick" value="{{value}}" \>
+                <span>{{cell}}</span>
+              </button>
+            </template>
+            Please hit reset to start a new game.<button on-click="reset">Reset</button>
+        """.trimIndent()
+}
+
+@Retain
+@ExportForCppRuntime("_newTTTBoard")
+fun constructTTTBoard() = TTTBoard().toAddress()
+```
+
+And finally, to build it all we need the BUILD file:
+```BUILD
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+
+arcs_kt_schema(
+    name = "game_schemas",
+    srcs = ["TTTGame.arcs"],
+)
+
+arcs_kt_binary(
+    name = "TTTBoard",
+    srcs = ["TTTBoard.kt"],
+    deps = [":game_schemas"],
+)
+
+arcs_kt_binary(
+    name = "TTTGame",
+    srcs = ["TTTGame.kt"],
+    deps = [":game_schemas"],
+)
+```
+
+Alright, go ahead and pat yourself on the back. We are well on our
+way to having Tic-Tac-Toe working. I know it doesn't seem that way
+but don't worry, you're further along than you think. I know you
+probably don't believe this, and your probably would like to see
+something working. But how can we do this?
+
+This is where the DevTools are your new best friend. Go ahead and
+load your recipe in the Web Shell and then open the DevTools in 
+Chrome, make sure you've gone to the Arcs tab, and selected the
+correct recipe.
+
+![Tic Tac Toe DevTools](diagrams/TTTDevTools.png) 
+
+We can see here our particles are correct connected using the
+handles we specified in the recipe. This is cool, but in our case
+not particularly useful. Now, navigate to the Storage tab.
+
+![Tic Tac Toe Storage](diagrams/TTTDevToolsStorage.png)
+
+Here we can see the two handles. Now, click on one of the cells in
+your Tic Tac Toe board. The Events handle should flash yellow when
+you click on the board as the handle is being updated.
+
+![Tic Tac Toe onClick](diagrams/TTTDevToolsOnClick.png)
+
+Now if you click on Events, then values, then object you can see
+the value of the event! In our case, we clicked on the first cell
+which you can see because the move has a value of 0.
+
+![Tic Tac Toe Event Move](diagrams/TTTDevToolsOnMove.png) 
+
+You can also click reset, and see this update in Events. In this
+case, we can also see that the `time` is also updating properly.
+
+![Tic Tac Toe Reset](diagrams/TTTDevToolsOnReset.png)
+
+Ta-da! We've managed to successfully create the Tic Tac Toe board,
+and using the DevTools can see our handles update accordingly.
+
+Next, we'll implement our players so you can actually play the
+game!
+
