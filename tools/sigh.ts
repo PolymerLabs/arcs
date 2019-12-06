@@ -560,9 +560,9 @@ function buildifier(args: string[]): boolean {
   const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
   let allSucceeded = true;
   for (const file of findProjectFiles(process.cwd(), exclude, include)) {
-    console.log('BUILDIFIER target: ' + file);
     const result = saneSpawnSync('npx', ['buildifier', ...buildifierOptions, file]);
     if (!result) {
+      console.log('failed target was ' + file);
       allSucceeded = false;
     }
   }
