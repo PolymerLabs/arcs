@@ -20,9 +20,8 @@ import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
-import {SerializedEntity} from '../../storage-proxy.js';
 import {Manifest} from '../../manifest.js';
-import {EntityClass, Entity} from '../../entity.js';
+import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):

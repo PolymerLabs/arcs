@@ -47,8 +47,7 @@ import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
-import {Entity} from './entity.js';
-import {SerializedEntity} from './storage-proxy.js';
+import {Entity, SerializedEntity} from './entity.js';
 import {Runtime} from './runtime.js';
 
 export enum ErrorSeverity {
