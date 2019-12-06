@@ -9,7 +9,9 @@
  */
 
 import * as AstNode from './manifest-ast-nodes.js';
-import {CheckTarget, HandleConnectionSpecInterface, ProvideSlotConnectionSpecInterface, CheckInterface} from './spec-interfaces.js';
+import {DirectionPreSlandles} from './manifest-ast-nodes.js';
+import {Claim} from './particle-claim.js';
+import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
 
 /** The different types of trust checks that particles can make. */
@@ -20,7 +22,49 @@ export enum CheckType {
   IsFromStore = 'is-from-store',
 }
 
-export class Check implements CheckInterface {
+export type CheckTarget = HandleConnectionSpecInterface | ProvideSlotConnectionSpecInterface;
+
+export interface HandleConnectionSpecInterface {
+  discriminator: 'HCS';
+  direction: DirectionPreSlandles;
+  name: string;
+  type: Type;
+  isOptional: boolean;
+  tags: string[];
+  dependentConnections: HandleConnectionSpecInterface[];
+  pattern?: string;
+  parentConnection: HandleConnectionSpecInterface | null;
+  claims?: Claim[];
+  check?: Check;
+  isInput: boolean;
+  isOutput: boolean;
+
+  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void;
+  toSlotConnectionSpec(): ConsumeSlotConnectionSpecInterface;
+  isCompatibleType(type: Type): boolean;
+}
+
+export interface ConsumeSlotConnectionSpecInterface {
+  discriminator: 'CSCS';
+  name: string;
+  isRequired: boolean;
+  isSet: boolean;
+  tags: string[];
+  formFactor: string;
+  handles: string[];
+  provideSlotConnections: ProvideSlotConnectionSpecInterface[];
+  isOptional: boolean;
+  direction: string;
+  type: Type;
+  dependentConnections: ProvideSlotConnectionSpecInterface[];
+}
+
+export interface ProvideSlotConnectionSpecInterface extends ConsumeSlotConnectionSpecInterface {
+  discriminator: 'CSCS';
+  check?: Check;
+}
+
+export class Check {
   constructor(readonly target: CheckTarget, readonly expression: CheckExpression) {}
 
   toManifestString() {

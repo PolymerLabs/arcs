@@ -16,11 +16,10 @@ import {TypeVariableInfo} from './type-variable-info.js';
 import {Schema} from './schema.js';
 import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
-import {createCheck} from './particle-check.js';
+import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {CheckInterface, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface} from './spec-interfaces.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -77,7 +76,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
   claims?: Claim[];
-  check?: CheckInterface;
+  check?: Check;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.discriminator = 'HCS';
@@ -149,7 +148,7 @@ type SerializedSlotConnectionSpec = {
   formFactor?: string,
   handles?: string[],
   provideSlotConnections?: SerializedSlotConnectionSpec[],
-  check?: CheckInterface,
+  check?: Check,
 };
 
 export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInterface {
@@ -194,7 +193,7 @@ export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInter
 }
 
 export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec implements ProvideSlotConnectionSpecInterface {
-  check?: CheckInterface;
+  check?: Check;
   discriminator: 'CSCS';
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
@@ -230,7 +229,7 @@ export class ParticleSpec {
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
   trustClaims: ParticleClaim[];
-  trustChecks: CheckInterface[];
+  trustChecks: Check[];
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -495,8 +494,8 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks: ParticleCheckStatement[]): CheckInterface[] {
-    const results: CheckInterface[] = [];
+  private validateTrustChecks(checks: ParticleCheckStatement[]): Check[] {
+    const results: Check[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();
       checks.forEach(check => {
