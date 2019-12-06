@@ -39,11 +39,11 @@ filegroup(
         "shells/**/*.js",
         "modalities/**/*",
         "concrete-storage/**/*",
-        "config/*"
+        "config/*",
     ]) + [
         "//src/tools:all_srcs",
         "//tools:tools_srcs",
-        ".eslintrc.json"
+        ".eslintrc.json",
     ],
     visibility = ["//visibility:public"],
 )
