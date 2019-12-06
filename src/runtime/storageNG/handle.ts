@@ -14,12 +14,11 @@ import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection.js';
 import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton.js';
 import {Particle} from '../particle.js';
-import {Entity, EntityClass} from '../entity.js';
+import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
 import {EntityType, Type} from '../type.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
-import {SerializedEntity} from '../storage-proxy.js';
 
 export interface HandleOptions {
   keepSynced: boolean;

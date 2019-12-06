@@ -19,7 +19,7 @@ import {CRDTCollection, CollectionOpTypes, CollectionData, CollectionOperation, 
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {CountType, CollectionType, EntityType, SingletonType} from '../../type.js';
 import {Schema} from '../../schema.js';
-import {SerializedEntity} from '../../storage-proxy.js';
+import {SerializedEntity} from '../../entity.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 
 /* eslint-disable no-async-promise-executor */

@@ -13,9 +13,8 @@ import {SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
-import {SerializedEntity, StorageProxy} from './storage-proxy.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType} from './type.js';
-import {EntityClass, Entity} from './entity.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, Type} from './type.js';
+import {EntityClass, Entity, SerializedEntity} from './entity.js';
 import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './store.js';
 import {IdGenerator, Id} from './id.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
@@ -57,6 +56,8 @@ function restore(entry: SerializedEntity, entityClass: EntityClass) {
 
 export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notifyUpdate: boolean; notifyDesync: boolean;}
 
+type NoOpStorageAllocator = (id: string, type: Type) => Store;
+
 /**
  * Base class for Collections and Singletons.
  */
@@ -69,6 +70,8 @@ export abstract class HandleOld {
   readonly _particleId: string|null;
   readonly options: HandleOptions;
   entityClass: EntityClass|null;
+
+  static noOpStorageAllocator : NoOpStorageAllocator = null;
 
   abstract _notify(kind: string, particle: Particle, details: {});
 
@@ -156,12 +159,17 @@ export abstract class HandleOld {
    * storage proxy
    */
   disable(particle?: Particle): void {
-    if (this.storage instanceof StorageProxy) {
-      this.storage.deregister(particle, this);
+    // This used to check that storage is a StorageProxy, but we are trying
+    // to remove all references to StorageProxy to break cyclic dependencies.
+    // tslint:disable-next-line: no-any
+    if (typeof (this.storage as any).deregister === 'function') {
+      // tslint:disable-next-line: no-any
+      (this.storage as any).deregister(particle, this);
     }
     // Set this handle's storage to a no-operation storage proxy so any actions that need to be
     // taken by this handle in the future (due to some async operations) will do nothing and finish quietly
-    this._storage = StorageProxy.newNoOpProxy(this.storage.id, this.storage.type);
+    //this._storage = StorageProxy.newNoOpProxy(this.storage.id, this.storage.type);
+    this._storage = HandleOld.noOpStorageAllocator(this.storage.id, this.storage.type);
   }
 }
 
