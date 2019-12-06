@@ -551,7 +551,7 @@ function buildifier(args: string[]): boolean {
     buildifierOptions.push('--lint=warn', '--mode=check');
   }
 
-  const exclude = /node_modules|dist/;
+  const exclude = /^(node_modules|dist)$/;
   const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
   let allSucceeded = true;
   for (const file of findProjectFiles(process.cwd(), exclude, include)) {
