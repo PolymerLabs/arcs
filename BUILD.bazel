@@ -38,11 +38,12 @@ filegroup(
         "devtools/shared/**",
         "shells/**/*.js",
         "modalities/**/*",
-        "concrete-storage/**/*",
-        "**/.eslintrc.json"
+        "concrete-storage/**/*"
     ]) + [
         "//src/tools:all_srcs",
-        "//tools:tools_srcs"
+        "//tools:tools_srcs",
+        ".eslintrc.json",
+        "config/.eslintrc.json"
     ],
     visibility = ["//visibility:public"],
 )
