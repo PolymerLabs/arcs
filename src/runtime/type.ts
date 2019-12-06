@@ -18,7 +18,6 @@ import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
-import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
 import {Schema} from './schema.js';
 
 export interface TypeLiteral extends Literal {
@@ -267,6 +266,7 @@ export class CountType extends Type {
 
 export class SingletonType<T extends Type> extends Type {
   private readonly innerType: T;
+  static handleClass = null;
   constructor(type: T) {
     super('Singleton');
     this.innerType = type;
@@ -285,7 +285,7 @@ export class SingletonType<T extends Type> extends Type {
   }
 
   handleConstructor<T>() {
-    return SingletonHandle;
+    return SingletonType.handleClass;
   }
 
   get isSingleton(): boolean {
@@ -482,6 +482,7 @@ export class TypeVariable extends Type {
 
 export class CollectionType<T extends Type> extends Type {
   readonly collectionType: T;
+  static handleClass = null;
 
   constructor(collectionType: T) {
     super('Collection');
@@ -570,7 +571,7 @@ export class CollectionType<T extends Type> extends Type {
   }
 
   handleConstructor<T>() {
-    return CollectionHandle;
+    return CollectionType.handleClass;
   }
 }
 
