@@ -13,7 +13,7 @@ import {SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType} from './type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, Type} from './type.js';
 import {EntityClass, Entity, SerializedEntity} from './entity.js';
 import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './store.js';
 import {IdGenerator, Id} from './id.js';
@@ -56,6 +56,8 @@ function restore(entry: SerializedEntity, entityClass: EntityClass) {
 
 export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notifyUpdate: boolean; notifyDesync: boolean;}
 
+type NoOpStorageAllocator = (id: string, type: Type) => Store;
+
 /**
  * Base class for Collections and Singletons.
  */
@@ -69,7 +71,7 @@ export abstract class HandleOld {
   readonly options: HandleOptions;
   entityClass: EntityClass|null;
 
-  static noOpStorageAllocator = null;
+  static noOpStorageAllocator : NoOpStorageAllocator = null;
 
   abstract _notify(kind: string, particle: Particle, details: {});
 
