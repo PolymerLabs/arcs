@@ -42,7 +42,7 @@ esac
 
 # Get only relevant platform's dependencies
 set -f
-_ALL_DEPS=(${_DEPENDENCIES//|/ })
+_ALL_DEPS=(${_DEPENDENCIES//$/ })
 set +f
 DEPENDENCIES=${_ALL_DEPS[idx]}
 
