@@ -43,7 +43,7 @@ filegroup(
         "//src/tools:all_srcs",
         "//tools:tools_srcs",
         ".eslintrc.json",
-        "config/.eslintrc.json"
+        "//config/.eslintrc.json"
     ],
     visibility = ["//visibility:public"],
 )
