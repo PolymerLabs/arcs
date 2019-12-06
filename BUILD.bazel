@@ -38,7 +38,9 @@ filegroup(
         "devtools/shared/**",
         "shells/**/*.js",
         "modalities/**/*",
-        "concrete-storage/**/*",
+        "concrete-storage/*",
+        "concrete-storage/build/*",
+        "concrete-storage/platform/*",
         "config/*",
     ]) + [
         "//src/tools:all_srcs",
