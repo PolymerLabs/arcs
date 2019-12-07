@@ -1,6 +1,0 @@
-particle RenderNotification in './source/RenderNotification.js'
-  root: consumes Slot
-  modality notification 
-
-recipe NotificationTest
-  RenderNotification

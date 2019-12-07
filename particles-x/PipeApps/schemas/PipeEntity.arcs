@@ -1,7 +1,0 @@
-schema PipeEntity
-  id: Text
-  type: Text
-  name: Text
-  timestamp: Number
-  count: Number
-  source: Text

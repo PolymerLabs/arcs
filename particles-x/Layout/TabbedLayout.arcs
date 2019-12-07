@@ -1,8 +1,0 @@
-particle TabbedLayout in 'source/Tabbed.js'
-  root: consumes
-    content: provides
-  description `tabbed layout`
-
-recipe TabbedLayout
-  TabbedLayout
-

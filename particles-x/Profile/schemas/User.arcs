@@ -1,4 +1,0 @@
-schema User
-  id: Text
-  name: Text
-  

@@ -1,5 +1,0 @@
-import 'schemas/Product.arcs'
-
-particle ProductItem in 'source/ProductItem.js'
-  product: reads Product
-  item: consumes Slot

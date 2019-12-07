@@ -1,8 +1,0 @@
-import '../Services/schemas/RandomData.arcs'
-
-particle SlandleStardateTOS in './js/StardateTOS.js'
-  destination: writes DestinationPlanet {name: Text}
-  stardate: writes ScriptDate {date: Text}
-  randomTime: reads RandomData
-  randomPlanet: reads RandomData
-  description `slandle stardate ${stardate.date}, orbiting ${destination.name}`

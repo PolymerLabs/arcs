@@ -1,6 +1,0 @@
-particle VisualizerParticle in './source/Visualizer.js'
-  root: consumes Slot
-
-recipe VisualizerRecipe
-  VisualizerParticle
-  description `Visualize a song with Magenta`

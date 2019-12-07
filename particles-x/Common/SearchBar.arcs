@@ -1,5 +1,0 @@
-import './schemas/SearchQuery.arcs'
-
-particle SearchBar in './source/SearchBar.js'
-  query: writes SearchQuery
-  toproot: consumes

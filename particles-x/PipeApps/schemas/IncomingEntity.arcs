@@ -1,4 +1,0 @@
-schema IncomingEntity
-  type: Text
-  jsonData: Text
-  source: Text

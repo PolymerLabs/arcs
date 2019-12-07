@@ -1,6 +1,0 @@
-import '../schemas/TVMazeShow.arcs'
-
-particle SlandleTVMazeShowTile in './js/TVMazeShowTile.js'
-  show: reads TVMazeShow
-  tile: `consumes Slot
-    action: `provides [Slot]

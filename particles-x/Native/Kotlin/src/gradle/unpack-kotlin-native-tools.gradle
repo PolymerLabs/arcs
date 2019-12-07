@@ -1,9 +1,0 @@
-
-task unpackKotlinNativeTools(type: Copy) {
-//    from(configurations.kotlinNative.singleFile)
-//    into "$buildDir/kotlin-native/"
-//    from zipTree("src/resources/thirdPartyResources.zip")
-//    into "$buildDir/resources"
-}
-
-tasks["jsinterop"].dependsOn unpackKotlinNativeTools

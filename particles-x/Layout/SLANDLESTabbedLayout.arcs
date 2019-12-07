@@ -1,8 +1,0 @@
-particle SlandleTabbedLayout in 'source/Tabbed.js'
-  root: `consumes Slot
-    content: `provides Slot
-  description `tabbed layout`
-
-recipe SlandleTabbedLayout
-  SlandleTabbedLayout
-

@@ -1,5 +1,0 @@
-//import 'Ml5.arcs'
-//import 'MobileNet.arcs'
-import 'ServiceTest.arcs'
-//import 'ImageClassifier.arcs'
-import 'Random.arcs'

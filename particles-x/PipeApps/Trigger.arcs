@@ -1,6 +1,0 @@
-import './schemas/PipeEntity.arcs'
-
-particle Trigger in './source/Trigger.js'
-  pipe: reads PipeEntity
-  root: consumes Slot
-    content: provides Slot

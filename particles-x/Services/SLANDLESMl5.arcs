@@ -1,4 +1,0 @@
-import 'particles/SLANDLESMl5.arcs'
-recipe SlandleMl5
-  SlandleMl5
-  description `image classification using ml5 (service)`

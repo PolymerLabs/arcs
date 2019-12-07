@@ -1,3 +1,0 @@
-schema Share
-  fromKey: Text
-  fromArc: Text

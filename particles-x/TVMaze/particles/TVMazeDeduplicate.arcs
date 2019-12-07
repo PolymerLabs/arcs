@@ -1,5 +1,0 @@
-import '../schemas/TVMazeShow.arcs'
-
-particle TVMazeDeduplicate in './js/TVMazeDeduplicate.js'
-  shows: reads [TVMazeShow]
-  uniqueShows: reads writes [TVMazeShow]

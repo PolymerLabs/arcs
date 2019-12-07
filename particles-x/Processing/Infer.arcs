@@ -1,7 +1,0 @@
-import './schemas/MlResource.arcs'
-
-particle Infer in './js/Infer.js'
-  tensor: reads TfTensor
-  model: reads TfModel
-  yHat: writes TfTensor
-  //description `Perform inference on an input tensor given a model.`

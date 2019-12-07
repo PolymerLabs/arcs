@@ -1,4 +1,0 @@
-particle SlandleStardateDisplay in './js/StardateDisplay.js'
-  root: `consumes Slot
-  destination: reads DestinationPlanet {name: Text}
-  stardate: reads ScriptDate {date: Text}

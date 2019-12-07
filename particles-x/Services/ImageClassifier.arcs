@@ -1,5 +1,0 @@
-import 'particles/ImageClassifier.arcs'
-recipe ImageClassifier
-  ImageClassifier
-  description `image classification using modular model`
-

@@ -1,8 +1,0 @@
-import './schemas/MlResource.arcs'
-import './schemas/MlModel.arcs'
-import './schemas/Inference.arcs'
-
-particle ParseLabels in './js/ParseLabels.js'
-  url: reads MlModel {labelsUrl: URL}
-  labels: writes [Label]
-  //description `Parse a URL to a text file into a list of labels`

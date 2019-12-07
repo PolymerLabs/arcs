@@ -1,3 +1,0 @@
-schema TVMazeQuery
-  query: Text
-  type: Text

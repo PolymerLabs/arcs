@@ -1,9 +1,0 @@
-import 'schemas/PipeEntity.arcs'
-
-particle SlandleBackgroundPipes in './source/Noop.js'
-  entities: reads [PipeEntity]
-
-recipe SlandleBackgroundPipes
-  entities: create #pipeEntities
-  SlandleBackgroundPipes
-    entities: entities

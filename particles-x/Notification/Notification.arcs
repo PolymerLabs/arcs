@@ -1,7 +1,0 @@
-particle Notification in './source/Notification.js'
-  root: consumes Slot
-
-recipe Notification
-  root: slot 'rootslotid-root'
-  Notification
-    root: consumes root

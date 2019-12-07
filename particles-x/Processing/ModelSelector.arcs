@@ -1,6 +1,0 @@
-import './schemas/MlModel.arcs'
-
-particle ModelSelector in './js/ModelSelector.js'
-  model: writes MlModel
-  imageView: consumes Slot
-    resultsView: provides? Slot

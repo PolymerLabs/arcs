@@ -1,8 +1,0 @@
-schema TMDBSearchResult
-  id: Text
-  name: Text
-  media_type: Text
-  adult: Boolean
-  backdrop_path: Text
-  poster_path: Text
-  overview: Text

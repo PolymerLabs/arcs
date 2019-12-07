@@ -1,3 +1,0 @@
-schema SearchQuery
-  query: Text
-  type: Text

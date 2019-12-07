@@ -1,6 +1,0 @@
-import '../schemas/TVMazeShow.arcs'
-
-particle TVMazeShowTile in './js/TVMazeShowTile.js'
-  show: reads TVMazeShow
-  tile: consumes
-    action: provides? [Slot]

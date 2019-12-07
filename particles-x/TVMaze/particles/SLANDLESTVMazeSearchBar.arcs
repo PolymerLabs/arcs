@@ -1,5 +1,0 @@
-import '../schemas/TVMazeQuery.arcs'
-
-particle SlandleTVMazeSearchBar in './js/TVMazeSearchBar.js'
-  query: writes TVMazeQuery
-  toproot: `consumes Slot

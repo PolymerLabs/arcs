@@ -1,5 +1,0 @@
-import '../schemas/TVMazeQuery.arcs'
-
-particle TVMazeSearchBar in './js/TVMazeSearchBar.js'
-  query: writes TVMazeQuery
-  toproot: consumes

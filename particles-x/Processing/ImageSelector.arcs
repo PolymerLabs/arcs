@@ -1,6 +1,0 @@
-import './schemas/Image.arcs'
-
-particle ImageSelector in 'js/ImageSelector.js'
-  image: writes Image {url: (Text or URL)}
-  root: consumes Slot
-    imageView: provides Slot

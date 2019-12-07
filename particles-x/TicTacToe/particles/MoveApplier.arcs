@@ -1,6 +1,0 @@
-particle MoveApplier in './js/MoveApplier.js'
-  board: reads Board {p00: Number, p01: Number, p02: Number, p10: Number, p11: Number, p12: Number, p20: Number, p21: Number, p22: Number}
-  nextMove: reads Move {x: Number, y: Number, player: Number} // column: 0,1,2; row: 0,1,2;  player:   1,2
-  state: reads State {state: Number} // 0: turn of player 1, 1: turn of player 2; 2: player 1 won, 3: player 2 won; 4: draw
-  boardResult: writes Board {p00: Number, p01: Number, p02: Number, p10: Number, p11: Number, p12: Number, p20: Number, p21: Number, p22: Number}
-  messageResult: writes Message {msg: Text}

@@ -1,5 +1,0 @@
-import './schemas/TMDBSearchResult.arcs'
-
-particle TMDBTile in './source/TMDBTile.js'
-  result: reads TMDBSearchResult
-  tile: consumes Slot

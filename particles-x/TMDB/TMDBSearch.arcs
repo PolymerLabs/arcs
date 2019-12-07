@@ -1,6 +1,0 @@
-import '../Common/schemas/SearchQuery.arcs'
-import './schemas/TMDBSearchResult.arcs'
-
-particle TMDBSearch in './source/TMDBSearch.js'
-  query: reads SearchQuery
-  results: writes [TMDBSearchResult]

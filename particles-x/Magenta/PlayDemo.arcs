@@ -1,8 +1,0 @@
-import 'schemas/Sequence.arcs'
-
-particle PlayDemoParticle in './source/PlayDemo.js'
-  root: consumes Slot
-
-recipe PlayDemoRecipe
-  PlayDemoParticle
-  description `Play a simple demo song with Magenta`

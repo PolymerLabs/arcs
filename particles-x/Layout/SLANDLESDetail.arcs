@@ -1,9 +1,0 @@
-particle SlandleDetailSlider in 'source/DetailSlider.js'
-  selected: reads writes ~a
-  modal: `consumes? Slot
-    content: `provides Slot {handle: selected}
-
-recipe SlandleDetailSlider
-  selected: use #selected
-  SlandleDetailSlider
-    selected: selected

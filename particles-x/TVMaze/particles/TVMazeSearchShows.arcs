@@ -1,6 +1,0 @@
-import '../schemas/TVMazeQuery.arcs'
-import '../schemas/TVMazeShow.arcs'
-
-particle TVMazeSearchShows in './js/TVMazeSearchShows.js'
-  query: reads TVMazeQuery
-  shows: reads writes [TVMazeShow]

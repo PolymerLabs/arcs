@@ -1,6 +1,0 @@
-import './schemas/StyleSheet.arcs'
-
-particle StyleSheet in './source/StyleSheet.js'
-  //sheet: reads StyleSheet
-  parent: consumes Slot
-    container: provides? Slot

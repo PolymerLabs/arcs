@@ -1,4 +1,0 @@
-import 'particles/Ml5.arcs'
-recipe Ml5
-  Ml5
-  description `image classification using ml5 (service)`

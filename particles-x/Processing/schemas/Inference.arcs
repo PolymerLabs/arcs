@@ -1,8 +1,0 @@
-schema Prediction
-  confidence: Number
-
-schema Classification extends Prediction
-  label: Text
-
-schema Regression extends Prediction
-  value: Number

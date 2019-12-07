@@ -1,4 +1,0 @@
-import 'particles/ServiceTest.arcs'
-recipe ServiceTest
-  ServiceTest
-  description `test service infrastructure`
