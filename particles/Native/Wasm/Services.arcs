@@ -1,0 +1,6 @@
+particle ServiceParticle in 'service_particle.wasm'
+  root: consumes
+
+recipe ServicesAPI
+  ServiceParticle
+  description `Wasm Services`

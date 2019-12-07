@@ -25,7 +25,6 @@ class TestLoader extends Loader {
   resolve(path: string) {
     return (path[0] === '$') ? `RESOLVED(${path})` : path;
   }
-
   clone(): TestLoader {
     return this;
   }
@@ -34,8 +33,10 @@ class TestLoader extends Loader {
 ['cpp/tests', 'kotlin/tests/arcs'].forEach(env => {
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
+
     let loader;
     let manifestPromise;
+
     before(function() {
       if (!global['testFlags'].bazel) {
         this.skip();
@@ -55,6 +56,7 @@ class TestLoader extends Loader {
         throw new Error(`Test recipe '${recipeName}' not found`);
       }
       recipe.normalize();
+
       await arc.instantiate(recipe);
       await arc.idle;
 
@@ -128,11 +130,12 @@ class TestLoader extends Loader {
     });
 
     it('fireEvent', async () => {
-      const {arc, stores, slotComposer} = await setup('EventsTest');
+      const {arc, stores} = await setup('EventsTest');
       const output = stores.get('output') as VolatileSingleton;
 
       //const particle = slotComposer.consumers[0].consumeConn.particle;
-      //arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
+      const particle = arc.activeRecipe.particles[0];
+      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
       assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick:fooBar'});
@@ -216,6 +219,7 @@ class TestLoader extends Loader {
 
       const sendEvent = async handler => {
         await arc.idle;
+        arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
         //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
@@ -246,6 +250,7 @@ class TestLoader extends Loader {
 
       const sendEvent = async handler => {
         await arc.idle;
+        arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
         //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };

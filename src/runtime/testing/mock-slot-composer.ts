@@ -55,20 +55,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     this.strict = options.strict != undefined ? options.strict : true;
     this.logging = Boolean(options.logging);
     this.debugMessages = [];
-    // Clear all cached templates
-    //HeadlessSlotDomConsumer.clearCache();
   }
-
-   // Overriding this method to investigate AppVeyor failures.
-   // TODO: get rid of it once the problem is fixed.
-  // _addSlotConsumer(slot) {
-  //   super._addSlotConsumer(slot);
-  //   const startCallback = slot.startRenderCallback;
-  //   slot.startRenderCallback = ({particle, slotName, providedSlots, contentTypes}) => {
-  //     this._addDebugMessages(`  StartRender: ${slot.consumeConn.getQualifiedName()}`);
-  //     startCallback({particle, slotName, providedSlots, contentTypes});
-  //   };
-  // }
 
   /**
    * Reinitializes expectations queue.

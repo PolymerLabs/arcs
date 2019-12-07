@@ -10,19 +10,10 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
-
 import {Particle} from './particle.js';
 import {Recipe, RequireSection} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-
-// type SlotThingie = {
-//   name?: string;
-//   spec?;
-//   tags?;
-// };
-
-type SlotThingie = Slot;
 
 export class SlotUtils {
   // Helper methods.
@@ -74,18 +65,14 @@ export class SlotUtils {
     const slotConn = particle.getSlandleConnectionByName(slotSpec.name);
     const local = !slotConn || !slotConn.targetSlot
       ? SlotUtils._findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [];
-    // console.warn(
-    //   'findAllSlotCandidates', particle.name,
-    //   'activeRecipe.slots:', arc.activeRecipe && arc.activeRecipe.slots
-    // );
-    const remote = SlotUtils._findSlotCandidates(particle, slotSpec, arc.activeRecipe && arc.activeRecipe.slots);
-      //[]);
-      //arc.pec.slotComposer.getAvailableContexts());
+    const remote = SlotUtils._findSlotCandidates(particle, slotSpec,
+        arc.activeRecipe && arc.activeRecipe.slots);
+        //arc.pec.slotComposer.getAvailableContexts());
     return {local, remote};
   }
 
   // Returns the given slot candidates, sorted by "quality".
-  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots: SlotThingie[]) {
+  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots: Slot[]) {
     const possibleSlots = slots ? slots.filter(s => this.slotMatches(particle, slotSpec, s)) : [];
     // TODO: implement.
     possibleSlots.sort((slot1, slot2) => slot1.name.localeCompare(slot2.name));
@@ -93,17 +80,15 @@ export class SlotUtils {
   }
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
-  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot: SlotThingie): boolean {
+  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot: Slot): boolean {
     // TODO(sjmiles): only tests `isSet`
     if (!SlotUtils.specMatch(slotSpec, slot.spec)) {
       return false;
     }
-
     const potentialSlotConn = particle.getSlandleConnectionBySpec(slotSpec);
     if (!SlotUtils.tagsOrNameMatch(slotSpec, slot.spec as ProvideSlotConnectionSpec, potentialSlotConn, slot)) {
       return false;
     }
-
     // Match handles of the provided slot with the slot-connection particle's handles.
     if (!SlotUtils.handlesMatch(particle, slot)) {
       return false;
@@ -116,7 +101,6 @@ export class SlotUtils {
             providedSlotSpec &&
             slotSpec.isSet === providedSlotSpec.isSet;
   }
-
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.
   // TODO: should we move some of this logic to the recipe? Or type matching?
   static handlesMatch(particle: Particle, slot): boolean {
@@ -133,7 +117,7 @@ export class SlotUtils {
       consumeSlotSpec: ConsumeSlotConnectionSpec,
       provideSlotSpec: ProvideSlotConnectionSpec,
       consumeSlotConn?: SlotConnection,
-      provideSlot?: SlotThingie //Slot
+      provideSlot?: Slot
   ) {
     const consumeTags: string[] = ([] as string[]).concat(
       consumeSlotSpec.tags || [],
@@ -158,15 +142,12 @@ export class SlotUtils {
         const clonedSlot = SlotUtils.getClonedSlot(oldSlot.sourceConnection.recipe, newSlot);
         oldSlot.sourceConnection.providedSlots[oldSlot.name] = clonedSlot;
       }
-
       while (oldSlot.consumeConnections.length > 0) {
         const conn = oldSlot.consumeConnections[0];
         conn.disconnectFromSlot();
         SlotUtils.connectSlotConnection(conn, newSlot);
       }
-
     }
-
     return true;
   }
 }
