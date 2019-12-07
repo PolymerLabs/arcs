@@ -16,7 +16,6 @@ import {Dictionary} from '../../runtime/hot.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Modality} from '../../runtime/modality.js';
-import {Particle} from '../../runtime/recipe/particle.js';
 import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Search} from '../../runtime/recipe/search.js';

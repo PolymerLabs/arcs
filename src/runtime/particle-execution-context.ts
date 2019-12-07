@@ -103,10 +103,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return [hostedSlotId, () => callback(hostedSlotId)];
       }
 
-      //onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content) {
-      //  transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
-      //}
-
       onStop(): void {
         if (global['close']) {
           global['close']();

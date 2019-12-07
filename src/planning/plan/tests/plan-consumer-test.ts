@@ -23,7 +23,6 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-//import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 async function createPlanConsumer(storageKeyBase, arc) {
@@ -156,10 +155,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       class ModalitySlotComposer extends FakeSlotComposer {
         prototype: {};
         constructor(options?: SlotComposerOptions) {
-          super({
-            modalityName,
-           // modalityHandler: PlanningModalityHandler.createHeadlessHandler()
-          });
+          super({modalityName});
         }
       }
       const runtime = new Runtime(loader, null /*ModalitySlotComposer*/, context);
@@ -180,7 +176,6 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     //
     const consumerDom = await initConsumer(Modality.Name.Dom);
     const domSuggestions = consumerDom.getCurrentSuggestions();
-    console.log(domSuggestions);
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);

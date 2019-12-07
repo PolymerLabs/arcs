@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import {ModalityHandler} from '../../../build/runtime/modality-handler.js';
 import {UiSlotComposer as SlotComposer} from '../../../build/runtime/ui-slot-composer.js';
 
 export class RamSlotComposer extends SlotComposer {
