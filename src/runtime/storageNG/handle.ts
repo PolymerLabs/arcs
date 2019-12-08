@@ -19,6 +19,7 @@ import {IdGenerator, Id} from '../id.js';
 import {EntityType, Type} from '../type.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
+import {ParticleSpec} from '../particle-spec.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -70,7 +71,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
-      return this.type.entitySchema.entityClass();
+      return Entity.createEntityClass(this.type.entitySchema, null);
     }
     return null;
   }
@@ -150,7 +151,7 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
 
   constructor(type: Type, createIdentityFor: (entity: Entity) => void) {
     if (type instanceof EntityType) {
-      this.entityClass = type.entitySchema.entityClass();
+      this.entityClass = Entity.createEntityClass(type.entitySchema, null);
       this.createIdentityFor = createIdentityFor;
      } else {
        throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
@@ -178,7 +179,7 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
 
 /* Pass through the object to the storage stack, checking that it has an ID. */
 // tslint:disable-next-line no-any
-class ImmediateSerializer implements Serializer<any, Referenceable> {
+class ImmediateSerializer implements Serializer<ParticleSpec, Referenceable> {
   createIdentityFor: () => string;
 
   constructor(createIdentityFor: () => string) {
@@ -186,11 +187,12 @@ class ImmediateSerializer implements Serializer<any, Referenceable> {
   }
 
   serialize(value) {
+    // TODO(shanestephens): There should be IDs for particleSpecs that we use here at some point.
     const id = value.id? value.id : this.createIdentityFor();
     return {id, rawData: value};
   }
 
-  ensureHasId(entity) {
+  ensureHasId(vlue) {
     // ID is checked in serialize method.
   }
 
