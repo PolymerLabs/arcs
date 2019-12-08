@@ -394,6 +394,11 @@ describe('Solver', () => {
   });
 });
 
+const entityString = Flags.useNewStorageStack ?
+'{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}'
+:
+'[{"text": "asdf"}]';
+
 describe('FlowGraph validation', () => {
   it('succeeds when there are no checks', async () => {
     const graph = await buildFlowGraph(`
@@ -899,7 +904,7 @@ describe('FlowGraph validation', () => {
         text: Text
       resource MyResource
         start
-        [{"text": "asdf"}]
+        ${entityString}
       store MyStore of MyEntity in MyResource
         claim is trusted
       particle P
@@ -1156,7 +1161,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity in MyResource
         particle P
           input: reads MyEntity
@@ -1175,7 +1180,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           input: reads MyEntity
@@ -1194,7 +1199,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           input: reads MyEntity
@@ -1214,7 +1219,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           input: reads MyEntity
@@ -1255,7 +1260,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P
@@ -1274,7 +1279,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P
