@@ -778,7 +778,8 @@ export class InterfaceType extends Type {
   }
 
   handleConstructor<T>() {
-    return SingletonHandle;
+    // XXX this is wrong
+    return SingletonType.handleClass;
   }
 
   crdtInstanceConstructor() {
