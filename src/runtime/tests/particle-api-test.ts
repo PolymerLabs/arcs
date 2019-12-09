@@ -27,7 +27,6 @@ import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle
 import {Flags} from '../flags.js';
 import {StorageProxy} from '../storageNG/storage-proxy.js';
 import {unifiedHandleFor} from '../handle.js';
-import {DirectStore} from '../storageNG/direct-store.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 
 class ResultInspector {
