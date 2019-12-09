@@ -1532,7 +1532,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     } else {
       assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
     }
-  }));
+  });
 
   it('has prettyish syntax errors', async () => {
     try {
