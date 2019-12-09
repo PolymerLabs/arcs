@@ -70,9 +70,9 @@ object ParcelableCrdtSet {
                 val items = parcel.readInt()
                 repeat(items) {
                     values[requireNotNull(parcel.readString())] =
-                        requireNotNull(parcel.readTypedObject(DataValue.CREATOR)) {
+                        requireNotNull(parcel.readTypedObject(DataValue.CREATOR)?.actual) {
                             "No DataValue found in parcel when reading ParcelableCrdtSet.Data"
-                        }.actual
+                        }
                 }
 
                 return Data(CrdtSet.DataImpl(versionMap, values))

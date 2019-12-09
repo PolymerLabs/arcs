@@ -60,7 +60,8 @@ object ParcelableCrdtEntity {
             actual.singletons.forEach { (field, value) ->
                 parcel.writeString(field)
                 parcel.writeTypedObject(
-                    (value.data as CrdtSingleton.Data<Referencable>).toParcelable(), flags
+                    (value.data as CrdtSingleton.Data<Referencable>).toParcelable(),
+                    flags
                 )
             }
 
@@ -68,7 +69,8 @@ object ParcelableCrdtEntity {
             actual.collections.forEach { (field, value) ->
                 parcel.writeString(field)
                 parcel.writeTypedObject(
-                    (value.data as CrdtSet.Data<Referencable>).toParcelable(), flags
+                    (value.data as CrdtSet.Data<Referencable>).toParcelable(),
+                    flags
                 )
             }
         }
