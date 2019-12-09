@@ -19,14 +19,12 @@ import arcs.crdt.CrdtOperation
 /** Enumeration of the parcelable [CrdtModel] types. */
 enum class ParcelableCrdtType(
     /** [Parcelable.Creator] for the type's [ParcelableCrdtData] class. */
-    val crdtDataCreator: Parcelable.Creator<out ParcelableCrdtData<out CrdtData>>? = null,
+    val crdtDataCreator: Parcelable.Creator<out ParcelableCrdtData<out CrdtData>>,
     /** [Parcelable.Creator] for the type's [ParcelableCrdtOperation] classes. */
-    val crdtOperationCreator: Parcelable.Creator<out ParcelableCrdtOperation<out CrdtOperation>>? =
-        null
+    val crdtOperationCreator: Parcelable.Creator<out ParcelableCrdtOperation<out CrdtOperation>>
 ) {
-    // TODO: provide creators for each CRDT data structure and remove the default values.
     Count(ParcelableCrdtCount.Data.CREATOR, ParcelableCrdtCount.Operation.CREATOR),
     Set(ParcelableCrdtSet.Data.CREATOR, ParcelableCrdtSet.Operation.CREATOR),
     Singleton(ParcelableCrdtSingleton.Data.CREATOR, ParcelableCrdtSingleton.Operation.CREATOR),
-    Entity,
+    Entity(ParcelableCrdtEntity.Data.CREATOR, ParcelableCrdtEntity.Operation.CREATOR),
 }
