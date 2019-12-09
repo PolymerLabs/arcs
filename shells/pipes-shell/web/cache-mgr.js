@@ -38,7 +38,18 @@ const ARCS_CACHE_MANAGER = './cache-mgr-sw.js';
     return;
   }
 
-  navigator.serviceWorker.register(ARCS_CACHE_MANAGER)
+  // crbug/971571: reverts "Stop resurrecting uninstalled workers"
+  // After the revert, the stale-but-still-alive service worker will resurrect
+  // to serve all requests at its responsible scope. The problem behind is even
+  // if we modify source codes, re-deploy, re-build/install application but
+  // the resurrected service worker still serves resources and compiled binaries
+  // with the stale caches.
+  // The Arcs Manager version is appended as one url parameter will trigger the
+  // service worker registration process instantiates a new service worker when
+  // there is a version change detected. The new service worker instance then
+  // checks whether to update caches and/or migrate cache database at the script
+  // ${ARCS_CACHE_MANAGER}.
+  serviceWorker.register(ARCS_CACHE_MANAGER + '?version=__ARCS_MD5__')
     .then(reg => {
       console.log(`Arcs Cache Manager registered, scope: ${reg.scope}`);
     })
