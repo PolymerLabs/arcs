@@ -58,5 +58,5 @@ object TypeFactory {
     }
 
     /** For use in `teardown()` methods in test cases. Clears any registered type builders. */
-    internal fun clearRegistrationsForTesting() = synchronized(lock) { builders.clear() }
+    /* internal */ fun clearRegistrationsForTesting() = synchronized(lock) { builders.clear() }
 }

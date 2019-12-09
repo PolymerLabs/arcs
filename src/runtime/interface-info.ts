@@ -77,13 +77,13 @@ const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 export interface HandleConnection {
   type: Type;
   name?: string|TypeVariable;
-  direction?: AstNode.Direction; // TODO make required
+  direction?: AstNode.DirectionPreSlandles; // TODO make required
 }
 
 interface HandleConnectionLiteral {
   type?: TypeLiteral;
   name?: string|TypeLiteral;
-  direction?: AstNode.Direction;
+  direction?: AstNode.DirectionPreSlandles;
 }
 
 // TODO(lindner) only tests use optional props
@@ -112,7 +112,7 @@ export interface InterfaceInfoLiteral {
   slots: SlotLiteral[];
 }
 
-type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.Direction};
+type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.DirectionPreSlandles};
 
 export class InterfaceInfo {
   name: string;
@@ -193,19 +193,15 @@ export class InterfaceInfo {
   _handleConnectionsToManifestString() {
     return this.handleConnections
       .map(h => {
-        if (Flags.defaultToPreSlandlesSyntax) {
-          return `  ${h.direction || 'any'} ${h.type.toString()} ${h.name ? h.name : '*'}`;
-        } else {
-          const parts = [];
-          if (h.name) {
-            parts.push(`${h.name}:`);
-          }
-          if (h.direction !== undefined && h.direction !== 'any') {
-            parts.push(AstNode.preSlandlesDirectionToDirection(h.direction));
-          }
-          parts.push(h.type.toString());
-          return `  ${parts.join(' ')}`;
+        const parts = [];
+        if (h.name) {
+          parts.push(`${h.name}:`);
         }
+        if (h.direction !== undefined && h.direction !== 'any') {
+          parts.push(AstNode.preSlandlesDirectionToDirection(h.direction));
+        }
+        parts.push(h.type.toString());
+        return `  ${parts.join(' ')}`;
       }).join('\n');
   }
 
@@ -213,12 +209,8 @@ export class InterfaceInfo {
     // TODO deal with isRequired
     return this.slots
       .map(slot => {
-        if (Flags.defaultToPreSlandlesSyntax) {
-          return `  ${slot.isRequired ? 'must ' : ''}${slot.direction} ${slot.isSet ? 'set of ' : ''}${slot.name || ''}`;
-        } else {
-          const nameStr = slot.name ? `${slot.name}: ` : '';
-          return `  ${nameStr}${slot.direction}s${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
-        }
+        const nameStr = slot.name ? `${slot.name}: ` : '';
+        return `  ${nameStr}${slot.direction}s${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
       })
       .join('\n');
   }

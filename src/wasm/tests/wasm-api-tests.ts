@@ -31,7 +31,7 @@ class TestLoader extends Loader {
   }
 }
 
-['cpp/tests', 'kotlin/tests/arcs'].forEach(env => {
+['cpp/tests', 'kotlin/javatests/arcs'].forEach(env => {
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
     let loader;

@@ -57,8 +57,8 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
   return {
     arc,
     recipe: manifest.recipes[0],
-    Foo: manifest.findSchemaByName('Foo').entityClass(),
-    Bar: manifest.findSchemaByName('Bar').entityClass(),
+    Foo: Entity.createEntityClass(manifest.findSchemaByName('Foo'), null),
+    Bar: Entity.createEntityClass(manifest.findSchemaByName('Bar'), null),
     loader
   };
 }
@@ -99,7 +99,7 @@ describe('Arc new storage', () => {
       `
     });
     const manifest = await Manifest.load('manifest', loader);
-    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = ArcId.fromString('test');
     const storageKey = new VolatileStorageKey(id, 'unique');
     const arc = new Arc({id, storageKey, loader, context: manifest});
@@ -252,7 +252,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -331,7 +331,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     }
 
     const arc = await runtime.newArc('test2', storageKeyPrefix);
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const thingStore = await arc.createStore(thingClass.type, 'name', 'storeInArc');
     const resolver = new RecipeResolver(arc);
 
@@ -374,7 +374,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -427,7 +427,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       const storageKey = storageKeyPrefix + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
       const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
       const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -473,7 +473,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       const storageKey = storageKeyPrefix + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
       const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
       const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -521,7 +521,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -576,7 +576,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       const storageKey = storageKeyPrefix + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
       const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
       const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -626,7 +626,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -683,7 +683,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -820,9 +820,6 @@ describe('Arc ' + storageKeyPrefix, () => {
       this.skip();
     }
 
-    // TODO(cypher1): This should function should be the 'whole' test, but does
-    // not capture 'this' properly.
-    const testBody = Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -848,7 +845,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       `
     });
     const manifest = await Manifest.load('manifest', loader);
-    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = Id.fromString('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({id, storageKey, loader, context: manifest});
@@ -911,8 +908,6 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.deepEqual(await (await varStore2.activate()).serializeContents(), varData);
     assert.deepEqual(await colStore2.serializeContents(), colData);
     assert.deepEqual(await bigStore2.serializeContents(), bigData);
-  });
-  await testBody();
   });
 
   it('serializes immediate value handles correctly', async () => {
@@ -1099,7 +1094,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
     assert.isNotNull(arc);
 
-    const favoriteFoodClass = manifest.findSchemaByName('FavoriteFood').entityClass();
+    const favoriteFoodClass = Entity.createEntityClass(manifest.findSchemaByName('FavoriteFood'), null);
     assert.isNotNull(favoriteFoodClass);
 
     const recipe = manifest.recipes[0];

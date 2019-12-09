@@ -143,7 +143,7 @@ public class ArcsAndroidClient {
             }
           });
       } catch (RemoteException e) {
-        e.printStackTrace();
+        Log.e(TAG, "Error calling ArcsService.startArc()", e);
       }
     });
   }
@@ -153,7 +153,7 @@ public class ArcsAndroidClient {
       try {
         iArcsService.stopArc(arcData.getArcId(), arcData.getPecId());
       } catch (RemoteException e) {
-        e.printStackTrace();
+        Log.e(TAG, "Error calling ArcsService.stopArc()", e);
       }
     });
   }
@@ -170,7 +170,7 @@ public class ArcsAndroidClient {
             }
           });
       } catch (RemoteException e) {
-        e.printStackTrace();
+        Log.e(TAG, "Error calling ArcsService.registerRenderer()", e);
       }
     });
   }
@@ -180,7 +180,7 @@ public class ArcsAndroidClient {
       try {
         iArcsService.sendMessageToArcs(message);
       } catch (RemoteException e) {
-        e.printStackTrace();
+        Log.e(TAG, "Error calling ArcsService.sendMessageToArcs()", e);
       }
     });
   }

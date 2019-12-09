@@ -10,13 +10,13 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {Direction, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
+import {DirectionPreSlandles, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {Schema} from './schema.js';
 import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral} from './type.js';
 import {Literal} from './hot.js';
-import {Check, createCheck} from './particle-check.js';
+import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
@@ -24,7 +24,7 @@ import * as AstNode from './manifest-ast-nodes.js';
 // TODO: clean up the real vs. literal separation in this file
 
 type SerializedHandleConnectionSpec = {
-  direction: Direction,
+  direction: DirectionPreSlandles,
   name: string,
   type: Type | TypeLiteral,
   isOptional: boolean,
@@ -64,9 +64,10 @@ export function isRoot({name, tags, id, type, fate}: {name: string, tags: string
   return rootNames.includes(name) || tags.some(tag => rootNames.includes(tag));
 }
 
-export class HandleConnectionSpec {
-  rawData: SerializedHandleConnectionSpec;
-  direction: Direction;
+export class HandleConnectionSpec implements HandleConnectionSpecInterface {
+  private rawData: SerializedHandleConnectionSpec;
+  discriminator: 'HCS';
+  direction: DirectionPreSlandles;
   name: string;
   type: Type;
   isOptional: boolean;
@@ -78,6 +79,7 @@ export class HandleConnectionSpec {
   check?: Check;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
+    this.discriminator = 'HCS';
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
@@ -95,7 +97,7 @@ export class HandleConnectionSpec {
     }
   }
 
-  toSlotConnectionSpec(): ConsumeSlotConnectionSpec {
+  toSlotConnectionSpec(): ConsumeSlotConnectionSpecInterface {
     // TODO: Remove in SLANDLESv2
     const slotType = this.type.slandleType();
     if (!slotType) {
@@ -106,6 +108,7 @@ export class HandleConnectionSpec {
     const slotInfo = slotType.getSlot();
 
     return {
+      discriminator: 'CSCS',
       name: this.name,
       isOptional: this.isOptional,
       direction: this.direction,
@@ -148,7 +151,8 @@ type SerializedSlotConnectionSpec = {
   check?: Check,
 };
 
-export class ConsumeSlotConnectionSpec {
+export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInterface {
+  discriminator: 'CSCS';
   name: string;
   isRequired: boolean;
   isSet: boolean;
@@ -158,6 +162,7 @@ export class ConsumeSlotConnectionSpec {
   provideSlotConnections: ProvideSlotConnectionSpec[];
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
+    this.discriminator = 'CSCS';
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired || false;
     this.isSet = slotModel.isSet || false;
@@ -187,8 +192,9 @@ export class ConsumeSlotConnectionSpec {
   get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
 
-export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {
+export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec implements ProvideSlotConnectionSpecInterface {
   check?: Check;
+  discriminator: 'CSCS';
 
   constructor(slotModel: SerializedSlotConnectionSpec) {
     super(slotModel);
@@ -400,13 +406,8 @@ export class ParticleSpec {
     const indent = '  ';
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      if (Flags.defaultToPreSlandlesSyntax) {
-        // TODO: Remove post slandles syntax
-        results.push(`${indent}${connection.direction}${connection.isOptional ? '?' : ''} ${connection.type.toString()} ${connection.name}${tags}`);
-      } else {
-        const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
-        results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
-      }
+      const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
+      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }
@@ -425,48 +426,27 @@ export class ParticleSpec {
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
     const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
       const tokens: string[] = [];
-      if (Flags.defaultToPreSlandlesSyntax) {
-        if (s.isRequired) {
-          tokens.push('must');
-        }
-        tokens.push(direction);
-        if (s.isSet) {
-          tokens.push('set of');
-        }
-        tokens.push(s.name);
-        if (s.tags.length > 0) {
-          tokens.push(s.tags.map(a => `#${a}`).join(' '));
-        }
-        results.push(`${indent}${tokens.join(' ')}`);
-        if (s.formFactor) {
-          results.push(`${indent}  formFactor ${s.formFactor}`);
-        }
-        for (const handle of s.handles) {
-          results.push(`${indent}  handle ${handle}`);
-        }
-      } else {
-        tokens.push(`${s.name}:`);
-        tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
+      tokens.push(`${s.name}:`);
+      tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
 
-        const fieldSet = [];
-        // TODO(jopra): Move the formFactor and handle to the slot type information.
-        if (s.formFactor) {
-          fieldSet.push(`formFactor: ${s.formFactor}`);
-        }
-        for (const handle of s.handles) {
-          fieldSet.push(`handle: ${handle}`);
-        }
-        const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
-        if (s.isSet) {
-          tokens.push(`[Slot${fields}]`);
-        } else {
-          tokens.push(`Slot${fields}`);
-        }
-        if (s.tags.length > 0) {
-          tokens.push(s.tags.map(a => `#${a}`).join(' '));
-        }
-        results.push(`${indent}${tokens.join(' ')}`);
+      const fieldSet = [];
+      // TODO(jopra): Move the formFactor and handle to the slot type information.
+      if (s.formFactor) {
+        fieldSet.push(`formFactor: ${s.formFactor}`);
       }
+      for (const handle of s.handles) {
+        fieldSet.push(`handle: ${handle}`);
+      }
+      const fields = (fieldSet.length !== 0) ? ` {${fieldSet.join(', ')}}` : '';
+      if (s.isSet) {
+        tokens.push(`[Slot${fields}]`);
+      } else {
+        tokens.push(`Slot${fields}`);
+      }
+      if (s.tags.length > 0) {
+        tokens.push(s.tags.map(a => `#${a}`).join(' '));
+      }
+      results.push(`${indent}${tokens.join(' ')}`);
       if (s.provideSlotConnections) {
         // Provided slots.
         s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));

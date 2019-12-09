@@ -17,7 +17,6 @@ import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
-import {Direction} from '../manifest-ast-nodes.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
 
@@ -79,9 +78,9 @@ describe('particle interface loading', () => {
       verbs: [],
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'host' as Direction, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false},
-        {direction: 'in' as Direction, type: fooType, name: 'input', dependentConnections: [], isOptional: false},
-        {direction: 'out' as Direction, type: barType, name: 'output', dependentConnections: [], isOptional: false}
+        {direction: 'host', type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false},
+        {direction: 'in', type: fooType, name: 'input', dependentConnections: [], isOptional: false},
+        {direction: 'out', type: barType, name: 'output', dependentConnections: [], isOptional: false}
       ],
     });
 

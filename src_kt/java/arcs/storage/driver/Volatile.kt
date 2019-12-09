@@ -83,7 +83,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 }
 
 /** [Driver] implementation for an in-memory store of data. */
-internal class VolatileDriver<Data : Any>(
+/* internal */ class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
     override val existenceCriteria: ExistenceCriteria,
     private val memory: VolatileMemory
@@ -92,7 +92,7 @@ internal class VolatileDriver<Data : Any>(
     // The identifier is simply used to help differentiate between VolatileDrivers for the same
     // storage key.
     private val identifier = nextIdentifier.incrementAndGet()
-    internal var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
+    /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
     private var pendingModel: Data? = null
     private var pendingVersion: Int = 0
 
@@ -174,7 +174,7 @@ internal class VolatileDriver<Data : Any>(
 }
 
 /** A single entry in a [VolatileDriver]. */
-internal data class VolatileEntry<Data : Any>(
+/* internal */ data class VolatileEntry<Data : Any>(
     val data: Data? = null,
     val version: Int = 0,
     val drivers: Set<VolatileDriver<Data>> = emptySet()
@@ -186,7 +186,7 @@ internal data class VolatileEntry<Data : Any>(
 /**
  * Lookup map of storage keys to entries, with a [token] that gets updated when data has changed.
  */
-internal class VolatileMemory {
+/* internal */ class VolatileMemory {
     private val lock = Any()
     private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
 

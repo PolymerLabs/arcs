@@ -13,6 +13,7 @@ package arcs.storage
 
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtOperation
+import arcs.storage.referencemode.ReferenceModeStorageKey
 import arcs.type.Type
 import kotlin.reflect.KClass
 
@@ -29,15 +30,15 @@ interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
  * well as provide ample information to support looking the constructor up by expected types.
  */
 data class StoreConstructor(
-    internal val dataClass: KClass<out CrdtData>,
-    internal val opClass: KClass<out CrdtOperation>,
-    internal val consumerDataClass: KClass<*>,
+    /* internal */ val dataClass: KClass<out CrdtData>,
+    /* internal */ val opClass: KClass<out CrdtOperation>,
+    /* internal */ val consumerDataClass: KClass<*>,
     private val constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
 ) {
     val typeParamString: String
         get() = "<$dataClass, $opClass, $consumerDataClass>"
 
-    internal suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
+    /* internal */ suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ) = constructor(options)
 }
@@ -67,7 +68,9 @@ data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     val storageKey: StorageKey,
     val existenceCriteria: ExistenceCriteria,
     val type: Type,
-    val mode: StorageMode = StorageMode.Direct,
+    val mode: StorageMode =
+        if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode
+        else StorageMode.Direct,
     val baseStore: IStore<Data, Op, ConsumerData>? = null,
     val versionToken: String? = null,
     val model: Data? = null

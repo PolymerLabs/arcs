@@ -68,7 +68,7 @@ curl -L -s -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/in
 
 status "1.1 ensure nvm is in your current process"
 # shellcheck disable=SC1090
-. ~/.nvm/nvm.sh
+. $NVM_DIR/nvm.sh || fail "Nvm load failed"
 
 status "2. Install node"
 cd $ROOT && nvm install && nvm use || fail 'Failed to install target node version.'
@@ -78,7 +78,7 @@ status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 status "4. Install dependencies"
-(cd $ROOT && npm install && npm --prefix=server install) || fail 'Failed to install dependencies.'
+(cd $ROOT && npm install && npm --prefix=cloud install) || fail 'Failed to install dependencies.'
 
 # chokidar is useful when developing, but we don't want to require it for all installations
 status "4.1. Install useful optional dependencies"

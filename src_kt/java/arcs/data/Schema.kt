@@ -45,7 +45,7 @@ data class Schema(
     }
 
     companion object {
-        fun fromLiteral(literal: arcs.common.Literal): Schema {
+        fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.common.Literal): Schema {
             TODO("Implement me.")
         }
     }

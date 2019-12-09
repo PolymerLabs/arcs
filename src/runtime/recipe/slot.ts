@@ -162,24 +162,13 @@ export class Slot implements Comparable<Slot> {
   toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     const result: string[] = [];
     const name = (nameMap && nameMap.get(this)) || this.localName;
-    if (Flags.defaultToPreSlandlesSyntax) {
-      result.push('slot');
-      if (this.id) {
-        result.push(`'${this.id}'`);
-      }
-      if (this.tags.length > 0) {
-        result.push(this.tags.map(tag => `#${tag}`).join(' '));
-      }
-      result.push(`as ${name}`);
-    } else {
-      result.push(`${name}:`);
-      result.push('slot');
-      if (this.id) {
-        result.push(`'${this.id}'`);
-      }
-      if (this.tags.length > 0) {
-        result.push(this.tags.map(tag => `#${tag}`).join(' '));
-      }
+    result.push(`${name}:`);
+    result.push('slot');
+    if (this.id) {
+      result.push(`'${this.id}'`);
+    }
+    if (this.tags.length > 0) {
+      result.push(this.tags.map(tag => `#${tag}`).join(' '));
     }
     const includeUnresolved = options.showUnresolved && !this.isResolved(options);
     if (includeUnresolved) {

@@ -22,6 +22,13 @@ import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {Dictionary} from '../runtime/hot.js';
+// The following imports just run the code in them on loading. These assign
+// static functions into classes in order to break circular dependencies.
+import '../runtime/schema-from-literal.js';
+import '../runtime/type-from-literal.js';
+import '../runtime/handle-constructors.js';
+import '../runtime/noop-proxy.js';
+import '../runtime/storageNG/store-constructors.js';
 
 type ParticleCtor = typeof Particle;
 

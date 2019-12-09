@@ -1,7 +1,7 @@
 package arcs.tutorials
 
+import arcs.addressable.toAddress
 import arcs.Particle
-import arcs.WasmAddress
 import kotlin.native.internal.ExportForCppRuntime
 
 /**
@@ -20,4 +20,4 @@ class BasicTemplateParticle : Particle() {
 
 @Retain
 @ExportForCppRuntime("_newBasicTemplateParticle")
-fun constructBasicTemplateParticle() = BasicTemplateParticle().toWasmAddress()
+fun constructBasicTemplateParticle() = BasicTemplateParticle().toAddress()

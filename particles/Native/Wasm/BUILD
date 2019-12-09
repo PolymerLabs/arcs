@@ -1,4 +1,3 @@
-load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_cc_schema",
@@ -7,6 +6,7 @@ load(
     "arcs_manifest",
     "arcs_manifest_bundle",
 )
+load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
 
 licenses(["notice"])
 

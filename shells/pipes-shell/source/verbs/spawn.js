@@ -13,6 +13,7 @@ import {Runtime} from '../../../../build/runtime/runtime.js';
 import {recipeByName, instantiateRecipe} from '../lib/utils.js';
 import {portIndustry} from '../pec-port.js';
 import {logsFactory} from '../../../../build/platform/logs-factory.js';
+import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/devtools-arc-inspector.js';
 
 const {warn} = logsFactory('pipe');
 
@@ -28,7 +29,8 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
       //storage,
       id: generateId(),
       composer: composerFactory(modality, bus, tid),
-      portFactories: [portIndustry(bus)]
+      portFactories: [portIndustry(bus)],
+      inspectorFactory: devtoolsArcInspectorFactory,
     });
     if (contextRecipe) {
       // instantiate optional recipe
@@ -37,4 +39,3 @@ export const spawn = async ({modality, recipe}, tid, bus, composerFactory, stora
     return arc;
   }
 };
-

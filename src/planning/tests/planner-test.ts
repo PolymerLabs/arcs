@@ -25,6 +25,8 @@ import {Id, ArcId} from '../../runtime/id.js';
 import {Flags} from '../../runtime/flags.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
 import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {EntityType} from '../../runtime/type.js';
+import {Entity} from '../../runtime/entity.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -143,7 +145,7 @@ describe('Planner', () => {
     assert.lengthOf(results, 1);
   });
 
-  it('SLANDLES resolves particles with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes Slot
@@ -154,9 +156,9 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with multiple consumed set slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed set slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes [Slot]
@@ -167,9 +169,9 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with multiple consumed slots with the implicit any direction', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed slots with the implicit any direction', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes Slot
@@ -180,9 +182,9 @@ describe('Planner', () => {
           one: s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with multiple consumed set with the implicit any direction', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed set with the implicit any direction', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes [Slot]
@@ -193,9 +195,9 @@ describe('Planner', () => {
           one: s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with slots with other slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with slots with other slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
         inSlot: \`consumes Slot
@@ -212,9 +214,9 @@ describe('Planner', () => {
           inSlot: s1
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with set slots with other set slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with set slots with other set slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './pass-through.js'
         inSlot: \`consumes Slot
@@ -231,9 +233,9 @@ describe('Planner', () => {
           inSlot: s1
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES cannot resolve slots with set slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES cannot resolve slots with set slots', async () => {
     const cc = await ConCap.capture(() => planFromManifest(`
       particle P1 in './pass-through.js'
         inSlot: \`consumes Slot
@@ -251,9 +253,9 @@ describe('Planner', () => {
     `));
     assert.deepEqual(cc.result, []);
     assert.match(cc.warn[0], /Type validations failed for handle/);
-  }));
+  });
 
-  it('SLANDLES cannot resolve multiple consumed slots with incorrect directions', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES cannot resolve multiple consumed slots with incorrect directions', async () => {
     await assertThrowsAsync(async () => {
       await planFromManifest(`
         particle P1 in './some-particle.js'
@@ -265,9 +267,9 @@ describe('Planner', () => {
             one: \`provides s0
       `);
     }, 'not compatible with \'`consume\'');
-  }));
+  });
 
-  it('SLANDLES cannot resolve multiple consumed set slots with incorrect directions', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES cannot resolve multiple consumed set slots with incorrect directions', async () => {
     await assertThrowsAsync(async () => {
       await planFromManifest(`
         particle P1 in './some-particle.js'
@@ -279,9 +281,9 @@ describe('Planner', () => {
             one: \`provides s0
       `);
     }, 'not compatible with \'`consume\'');
-  }));
+  });
 
-  it('SLANDLES resolves particles with multiple consumed slots', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed slots', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes Slot
@@ -292,9 +294,9 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with multiple consumed set SLANDLES with consume', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed set SLANDLES with consume', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes [Slot]
@@ -305,9 +307,9 @@ describe('Planner', () => {
           one: \`consumes s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
-  it('SLANDLES resolves particles with multiple consumed set slots with any', Flags.withPostSlandlesSyntax(async () => {
+  it('SLANDLES resolves particles with multiple consumed set slots with any', async () => {
     const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         one: \`consumes [Slot]
@@ -318,7 +320,7 @@ describe('Planner', () => {
           one: s0
     `);
     assert.lengthOf(results, 1);
-  }));
+  });
 
   it('can speculate in parallel', async () => {
     const manifest = `
@@ -387,21 +389,21 @@ ${recipeManifest}
 
     const schema = manifest.findSchemaByName('Foo');
     manifest.newStore({
-      type: schema.type.collectionOf(),
+      type: new EntityType(schema).collectionOf(),
       name: 'Test1',
       id: 'test-1',
       storageKey: key('storage-key-1'),
       tags: ['tag1'],
     });
     manifest.newStore({
-      type: schema.type.collectionOf(),
+      type: new EntityType(schema).collectionOf(),
       name: 'Test2',
       id: 'test-2',
       storageKey: key('storage-key-2'),
       tags: ['tag2'],
     });
     manifest.newStore({
-      type: schema.type.collectionOf(),
+      type: new EntityType(schema).collectionOf(),
       name: 'Test2',
       id: 'test-3',
       storageKey: key('storage-key-3'),
@@ -476,7 +478,7 @@ ${recipeManifest}
           list: reads list
     `, 3);
   });
-  it('finds remote untagged handles with unknown fate', async () => {
+  it('finds remote untagged handles with unknown fate (map)', async () => {
     const plansA = await testManifest(`
       recipe
         list: ?
@@ -484,16 +486,8 @@ ${recipeManifest}
           list: reads list
     `, 3);
     assert.isTrue(plansA.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'map')));
-
-    const plansB = await testManifest(`
-      recipe
-        list: ?
-        B as particle0
-          list: list
-    `, 3);
-    assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
   });
-  it('finds remote tagged handles with unknown fate', async () => {
+  it('finds remote tagged handles with unknown fate (map)', async () => {
     const plansA = await testManifest(`
       recipe
         list: ? #tag1
@@ -502,7 +496,17 @@ ${recipeManifest}
     `, 1);
     assert.lengthOf(plansA[0].handles, 1);
     assert.strictEqual('map', plansA[0].handles[0].fate);
-
+  });
+  it('finds remote untagged handles with unknown fate (copy)', async () => {
+    const plansB = await testManifest(`
+      recipe
+        list: ?
+        B as particle0
+          list: list
+    `, 3);
+    assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
+  });
+  it('finds remote tagged handles with unknown fate (copy)', async () => {
     const plansB = await testManifest(`
       recipe
         list: ? #tag2
@@ -850,7 +854,7 @@ describe('Automatic resolution', () => {
         B`);
   });
 
-  it('SLANDLES SYNTAX coalesces recipes to resolve connections', Flags.withPostSlandlesSyntax(async () => {
+  it('coalesces recipes to resolve connections', async () => {
     const result = await verifyResolvedPlan(`
       schema Thing
         id: Text
@@ -903,63 +907,7 @@ describe('Automatic resolution', () => {
     something: reads handle1
   D as particle3
     location: reads writes handle2`, result.toString({hideFields: false}));
-  }));
-
-  // TODO(jopra): Remove once slandles unification syntax is implemented.
-  it('coalesces recipes to resolve connections', Flags.withPreSlandlesSyntax(async () => {
-    const result = await verifyResolvedPlan(`
-      schema Thing
-        Text id
-      schema Product extends Thing
-        Text name
-      schema Other
-        Number count
-      schema Location
-        Number lat
-        Number lng
-
-      particle A
-        out Product product
-      particle B
-        in Thing thing
-        out Other other
-      particle C
-        in * {Number count} something
-        in Location location
-      particle D
-        inout Location location
-
-      recipe
-        ? as product
-        A
-          product -> product
-      recipe
-        ? as other
-        B
-          other -> other
-      recipe
-        C
-      recipe
-        ? as location
-        D
-          location <-> location
-`);
-
-    assert.strictEqual(`recipe
-  create as handle0 // ~
-  create as handle1 // ~
-  create as handle2 // Location {Number lat, Number lng}
-  A as particle0
-    product -> handle0
-  B as particle1
-    other -> handle1
-    thing <- handle0
-  C as particle2
-    location <- handle2
-    something <- handle1
-  D as particle3
-    location <-> handle2`, result.toString({hideFields: false}));
-  }));
+  });
 
   it('uses existing handle from the arc', async () => {
     // An existing handle from the arc can be used as input to a recipe
@@ -972,7 +920,7 @@ describe('Automatic resolution', () => {
         A
       `,
       async (arc, manifest) => {
-        const thing = manifest.findSchemaByName('Thing').entityClass();
+        const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
         await arc.createStore(thing.type, undefined, 'test:1');
       }
     );
@@ -983,7 +931,7 @@ describe('Automatic resolution', () => {
     assert.strictEqual('test:1', handle.id);
   });
 
-  it('composes recipe rendering a list of items from a recipe', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1025,9 +973,9 @@ describe('Automatic resolution', () => {
     things: writes handle0`;
     assert.strictEqual(composedRecipes[0].toString(), recipeString);
     assert.strictEqual(composedRecipes[0].toString({showUnresolved: true}), recipeString);
-  }));
+  });
 
-  it('composes recipe rendering a list of items from the current arc', Flags.withFlags({defaultToPreSlandlesSyntax: false}, async () => {
+  it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
@@ -1038,7 +986,7 @@ describe('Automatic resolution', () => {
           item: consumes Slot`,
         async (arcRef, manifest) => {
           arc = arcRef;
-          const thing = manifest.findSchemaByName('Thing').entityClass();
+          const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
           await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
         });
 
@@ -1060,7 +1008,7 @@ describe('Automatic resolution', () => {
       item: provides slot0
       postamble: provides slot4
       preamble: provides slot5`);
-  }));
+  });
 
   it('coalesces resolved recipe with no UI', async () => {
     const recipes = await verifyResolvedPlans(`

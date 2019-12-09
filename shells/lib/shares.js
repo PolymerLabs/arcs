@@ -10,6 +10,7 @@
 
 import {Stores} from './stores.js';
 import {logsFactory} from '../../build/platform/logs-factory.js';
+import {EntityType} from '../../build/runtime/type.js';
 
 const {log} = logsFactory('Shares', '#999900');
 
@@ -35,7 +36,7 @@ export const initShares = context => {
 };
 
 const createShare = async (context, name, schema) => {
-  const type = schema.type.collectionOf();
+  const type = (new EntityType(schema)).collectionOf();
   await Stores.requireStore(context, type, {
     name,
     id: name,

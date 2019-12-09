@@ -1,4 +1,4 @@
-load("@rules_java//java:defs.bzl", "java_test")
+load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_test")
 
 licenses(["notice"])
 

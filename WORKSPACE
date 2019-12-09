@@ -114,6 +114,8 @@ http_archive(
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
+ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
+
 AUTO_VALUE_VERSION = "1.7"
 
 KOTLINX_ATOMICFU_VERSION = "0.13.1"
@@ -122,6 +124,10 @@ KOTLINX_COROUTINES_VERSION = "1.3.2"
 
 maven_install(
     artifacts = [
+        "androidx.annotation:annotation:1.1.0",
+        "androidx.lifecycle:lifecycle-common:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
         "androidx.test:core:1.0.0",
         "androidx.test.ext:junit:1.0.0",

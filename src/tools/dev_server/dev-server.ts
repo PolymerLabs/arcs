@@ -62,7 +62,7 @@ async function launch() {
   console.log(`${green(bold('ALDS Started.'))}\n\nWeb server port: ${port}\nExplorer port: ${explorePort}\nHotReload port: ${hotReloadPort}`);
   console.log(`\n${green('Next, try visiting an Arcs shell at:')}`);
   const shells = ['web-shell', 'dev-shell', 'pipes-shell'];
-  shells.map(shell => console.log(`- http://localhost:${port}/shells/${shell}`));
+  shells.forEach(shell => console.log(`- http://localhost:${port}/shells/${shell}`));
   console.log(`- https://live.arcs.dev/devtools/`);
 }
 

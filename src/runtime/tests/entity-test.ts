@@ -28,7 +28,7 @@ describe('Entity', () => {
         flg: Boolean
     `);
     schema = manifest.schemas.Foo;
-    entityClass = schema.entityClass();
+    entityClass = Entity.createEntityClass(schema, null);
   });
 
   it('behaves like a regular object except writing to any field fails', () => {
@@ -95,7 +95,7 @@ describe('Entity', () => {
         makeImmutable: Text
     `);
     const schema = manifest.schemas.Shadow;
-    const entityClass = schema.entityClass();
+    const entityClass = Entity.createEntityClass(schema, null);
     const data = {id: 'schema-id', mutable: false, schema: 'url', type: 81, toLiteral: 23, makeImmutable: 'make'};
     const e = new entityClass(data);
     Entity.identify(e, 'arcs-id');
@@ -129,7 +129,7 @@ describe('Entity', () => {
         union: (Text or Number)
         tuple: (Text, Number)
     `);
-    const entityClass = manifest.schemas.EntityDebugLog.entityClass();
+    const entityClass = Entity.createEntityClass(manifest.schemas.EntityDebugLog, null);
     const e = new entityClass({
       txt: 'abc',
       lnk: 'http://wut',

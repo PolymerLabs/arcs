@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
 class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     private val mutex = Mutex()
     val nextCallbackToken = atomic(1)
-    internal val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
+    /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
     fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {

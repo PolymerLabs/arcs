@@ -292,7 +292,7 @@ export interface ParticleModality extends BaseNode {
 
 export interface ParticleHandleConnection extends BaseNode {
   kind: 'particle-argument';
-  direction: Direction;
+  direction: DirectionPreSlandles;
   type: ParticleHandleConnectionType;
   isOptional: boolean;
   dependentConnections: ParticleHandleConnection[];
@@ -373,7 +373,7 @@ export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | 
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
-  dir: Direction;
+  dir: DirectionPreSlandles;
   target: ParticleConnectionTargetComponents;
   dependentConnections: RecipeParticleConnection[];
 }
@@ -413,7 +413,7 @@ export interface RecipeSlotConnectionRef extends BaseNode {
 
 export interface RecipeConnection extends BaseNode {
   kind: 'connection';
-  direction: Direction;
+  direction: DirectionPreSlandles;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }
@@ -559,7 +559,7 @@ export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
 
 export interface InterfaceArgument extends BaseNode {
   kind: 'interface-argument';
-  direction: Direction;
+  direction: DirectionPreSlandles;
   type: ParticleHandleConnectionType;
   name: string;
 }
@@ -574,7 +574,7 @@ export interface InterfaceSlot extends BaseNode {
   kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
-  direction: Direction;
+  direction: DirectionPreSlandles;
   isSet: boolean;
 }
 
@@ -639,15 +639,10 @@ export type eol = string;
 
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
-export type Direction = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
-export type DirectionUnified = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
+export type DirectionPreSlandles = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
+export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
 
-// Temporary move of DirectionArrow type definition and conversions so allow
-// DirectionArrow to be removed from the runtime.
-// TODO(jopra): Remove after syntax unification.
-export type DirectionArrow = '<-' | '->' | '<->' | '`consume' | '`provide' | '=';
-
-export function preSlandlesDirectionToDirection(direction: Direction, isOptional: boolean = false): string {
+export function preSlandlesDirectionToDirection(direction: DirectionPreSlandles, isOptional: boolean = false): string {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
   const opt: string = isOptional ? '?' : '';
@@ -672,7 +667,7 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
   }
 }
 
-export function directionToPreSlandlesDirection(direction: DirectionUnified): Direction {
+export function directionToPreSlandlesDirection(direction: Direction): DirectionPreSlandles {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
   switch (direction) {
@@ -693,50 +688,6 @@ export function directionToPreSlandlesDirection(direction: DirectionUnified): Di
     default:
       // Catch nulls and unsafe values from javascript.
       throw new Error(`Bad direction ${direction}`);
-  }
-}
-
-export function arrowToDirection(arrow: DirectionArrow): Direction {
-  // TODO(jopra): Remove after syntax unification.
-  // Use switch for totality checking.
-  switch (arrow) {
-    case '->':
-      return 'out';
-    case '<-':
-      return 'in';
-    case '<->':
-      return 'inout';
-    case '`consume':
-      return '`consume';
-    case '`provide':
-      return '`provide';
-    case '=':
-      return 'any';
-    default:
-      // Catch nulls and unsafe values from javascript.
-      throw new Error(`Bad arrow ${arrow}`);
-  }
-}
-
-export function directionToArrow(dir: Direction): DirectionArrow {
-  // TODO(jopra): Remove after syntax unification.
-  switch (dir) {
-    case 'in':
-      return '<-';
-    case 'out':
-      return '->';
-    case 'inout':
-      return '<->';
-    case 'host':
-      return '=';
-    case '`consume':
-      return '`consume';
-    case '`provide':
-      return '`provide';
-    case 'any':
-      return '=';
-    default:
-      throw new Error(`Unexpected direction ${dir}`);
   }
 }
 

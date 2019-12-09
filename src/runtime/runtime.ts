@@ -28,7 +28,6 @@ import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
-import {devtoolsArcInspectorFactory} from '../devtools-connector/devtools-arc-inspector.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -48,7 +47,8 @@ type SpawnArgs = {
   context: Manifest,
   composer: SlotComposer,
   storage: string,
-  portFactories: []
+  portFactories: [],
+  inspectorFactory?: ArcInspectorFactory
 };
 
 let runtime: Runtime | null = null;
@@ -300,7 +300,7 @@ export class Runtime {
 
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
-  async spawnArc({id, serialization, context, composer, storage, portFactories}: SpawnArgs): Promise<Arc> {
+  async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory}: SpawnArgs): Promise<Arc> {
     const params = {
       id: IdGenerator.newSession().newArcId(id),
       fileName: './serialized.manifest',
@@ -310,9 +310,7 @@ export class Runtime {
       slotComposer: composer,
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,
-      // TODO(sjmiles): maybe doesn't belong here, but empirically it's
-      // wanted in (almost?) all Arc instantiations
-      inspectorFactory: devtoolsArcInspectorFactory
+      inspectorFactory,
     };
     return serialization ? Arc.deserialize(params) : new Arc(params);
   }

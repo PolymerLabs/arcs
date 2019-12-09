@@ -250,6 +250,11 @@ enum Direction { Unconnected, In, Out, InOut };
 
 class Handle {
 public:
+  // Handle members for a Particle need to be given the name declared for that handle in the
+  // particle manifest, and the 'this' pointer of the particle itself. For example:
+  //   arcs::Singleton<arcs::Data> data_{"data", this};
+  Handle(const char* name, Particle* particle);
+
   virtual ~Handle() {}
 
   const std::string& name() const { return name_; }
@@ -261,10 +266,9 @@ public:
 protected:
   bool failForDirection(Direction bad_dir) const;
 
-  // These are initialized by the Particle class.
   std::string name_;
   Particle* particle_;
-  Direction dir_ = Unconnected;
+  Direction dir_ = Unconnected;  // initialized by the Particle class
 
   friend class Particle;
 };
@@ -272,6 +276,8 @@ protected:
 template<typename T>
 class Singleton : public Handle {
 public:
+  using Handle::Handle;
+
   void sync(const char* model) override {
     failForDirection(Out);
     entity_ = T();
@@ -344,6 +350,8 @@ class Collection : public Handle {
   using Map = std::unordered_map<std::string, std::unique_ptr<T>>;
 
 public:
+  using Handle::Handle;
+
   void sync(const char* model) override {
     entities_.clear();
     add(model);
@@ -616,9 +624,6 @@ public:
 
   // -- Setup --
 
-  // Particle constructors must call this for each handle declared in the particle manifest.
-  void registerHandle(const std::string& name, Handle& handle);
-
   // Particle constructors may call this to indicate that the particle should automatically invoke
   // renderSlot() with the given slot name once all connected handles are synced, and thereafter
   // whenever a handle is updated.
@@ -700,7 +705,8 @@ public:
   // Override to react to UI events triggered by handlers in the template provided above.
   // 'slot_name' will correspond to the rendering slot hosting the UI element associated with the
   // event indicated by 'handler'.
-  virtual void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) {}
+  virtual void fireEvent(const std::string& slot_name, const std::string& handler,
+                         const arcs::Dictionary& eventData) {}
 
   // -- Services --
 
@@ -717,7 +723,10 @@ public:
       const std::string& call, const Dictionary& response, const std::string& tag) {}
 
   // -- Internal API --
-  // These are public to allow access from the runtime, but should not be called by sub-classes.
+  // These are public to allow internal and runtime access, but should not be called by sub-classes.
+
+  // Called by the Handle constructor to build the handles_ map.
+  void registerHandle(Handle* handle);
 
   // Called by the runtime to associate the inner handle instance with the outer object.
   Handle* connectHandle(const char* name, bool can_read, bool can_write);

@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {EntityClass, Entity} from './entity.js';
 import {Id} from './id.js';
 import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
 import {SlotInfo} from './slot-info.js';
@@ -19,11 +18,6 @@ import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
-import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
-import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
-import {Referenceable} from './crdt/crdt-collection.js';
-import {Flags} from './flags.js';
 import {Schema} from './schema.js';
 
 export interface TypeLiteral extends Literal {
@@ -35,6 +29,8 @@ export interface TypeLiteral extends Literal {
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
   'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
 
+type TypeFromLiteral = (literal: TypeLiteral) => Type;
+
 export abstract class Type {
   tag: Tag;
 
@@ -42,34 +38,7 @@ export abstract class Type {
     this.tag = tag;
   }
 
-  static fromLiteral(literal: TypeLiteral) : Type {
-    switch (literal.tag) {
-      case 'Entity':
-        return new EntityType(Schema.fromLiteral(literal.data));
-      case 'TypeVariable':
-        return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
-      case 'Collection':
-        return new CollectionType(Type.fromLiteral(literal.data));
-      case 'BigCollection':
-        return new BigCollectionType(Type.fromLiteral(literal.data));
-      case 'Relation':
-        return new RelationType(literal.data.map(t => Type.fromLiteral(t)));
-      case 'Interface':
-        return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
-      case 'Slot':
-        return new SlotType(SlotInfo.fromLiteral(literal.data));
-      case 'Reference':
-        return new ReferenceType(Type.fromLiteral(literal.data));
-      case 'Arc':
-        return new ArcType();
-      case 'Handle':
-        return new HandleType();
-      case 'Singleton':
-        return new SingletonType(Type.fromLiteral(literal.data));
-      default:
-        throw new Error(`fromLiteral: unknown type ${literal}`);
-    }
-  }
+  static fromLiteral : TypeFromLiteral = null;
 
   abstract toLiteral(): TypeLiteral;
 
@@ -297,6 +266,7 @@ export class CountType extends Type {
 
 export class SingletonType<T extends Type> extends Type {
   private readonly innerType: T;
+  static handleClass = null;
   constructor(type: T) {
     super('Singleton');
     this.innerType = type;
@@ -315,7 +285,7 @@ export class SingletonType<T extends Type> extends Type {
   }
 
   handleConstructor<T>() {
-    return SingletonHandle;
+    return SingletonType.handleClass;
   }
 
   get isSingleton(): boolean {
@@ -512,6 +482,7 @@ export class TypeVariable extends Type {
 
 export class CollectionType<T extends Type> extends Type {
   readonly collectionType: T;
+  static handleClass = null;
 
   constructor(collectionType: T) {
     super('Collection');
@@ -600,7 +571,7 @@ export class CollectionType<T extends Type> extends Type {
   }
 
   handleConstructor<T>() {
-    return CollectionHandle;
+    return CollectionType.handleClass;
   }
 }
 
