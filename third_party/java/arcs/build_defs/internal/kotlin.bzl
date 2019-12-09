@@ -8,7 +8,8 @@ load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "k
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
 load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_test")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_jvm_library")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
 _WASM_SUFFIX = "-wasm"
@@ -77,7 +78,7 @@ def kt_jvm_and_wasm_library(
       visibility: List; List of visibilities
       **kwargs: other arguments to feed into kt_jvm_library and kt_native_library
     """
-    kt_jvm_library(
+    arcs_kt_jvm_library(
         name = name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
@@ -126,7 +127,7 @@ def kt_jvm_and_js_library(
             visibility = visibility,
         )
 
-    kt_jvm_library(
+    arcs_kt_jvm_library(
         name = kt_name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
@@ -211,7 +212,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
     if not srcs:
         srcs = native.glob(["*.kt"])
 
-    kt_jvm_library(
+    arcs_kt_jvm_library(
         name = name,
         srcs = srcs,
         testonly = True,

@@ -8,7 +8,6 @@ KOTLINC_OPTS = [
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
-
 arcs_kt_jvm_library(
     name = "arcs",
     srcs = glob([
