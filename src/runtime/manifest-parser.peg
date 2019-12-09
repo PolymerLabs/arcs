@@ -1401,10 +1401,12 @@ dottedName "a name conforming to the rules of an android app name, per https://d
 simpleName "a name starting with a letter and containing letters, digits and underscores"
   = [a-zA-Z][a-zA-Z0-9_]* {return text();}
 whiteSpace "one or more whitespace characters"
-  = " "+
+  = spaceChar+
+spaceChar "a 'plain' space (use whiteSpace instead)"
+  = ' ' / ("\u00A0" / "\t" / "\f" / "\r" / "\v") {expected('space');}
 eolWhiteSpace "a group of new lines (and optionally comments)"
-  = [ ]* !.
-  / [ ]* '//' [^\n]* eolWhiteSpace
-  / [ ]* eol eolWhiteSpace?
+  = spaceChar* !.
+  / spaceChar* '//' [^\n]* eolWhiteSpace
+  / spaceChar* eol eolWhiteSpace?
 eol "a new line"
   = "\r"? "\n" "\r"?
