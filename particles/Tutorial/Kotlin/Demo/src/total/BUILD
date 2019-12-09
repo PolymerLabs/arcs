@@ -2,7 +2,7 @@ load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arc
 
 arcs_kt_schema(
     name = "game_schemas",
-    srcs = ["TTTGame.arcs"],
+    src = "TTTGame.arcs",
 )
 
 arcs_kt_binary(

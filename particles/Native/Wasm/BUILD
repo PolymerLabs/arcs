@@ -25,7 +25,7 @@ cc_wasm_binary(
 
 arcs_kt_schema(
     name = "wasm_schemas",
-    srcs = ["Harness.arcs"],
+    src = "Harness.arcs",
 )
 
 arcs_kt_binary(

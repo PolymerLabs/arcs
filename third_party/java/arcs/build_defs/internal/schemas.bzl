@@ -15,10 +15,6 @@ def _run_schema2wasm(name, src, out, language_name, language_flag, package):
 
     Runs sigh schema2wasm to generate the output.
     """
-
-    if not src.endswith(".arcs"):
-        fail("src must be a .arcs file")
-
     sigh_command(
         name = name,
         srcs = [src],
@@ -37,39 +33,36 @@ def _run_schema2wasm(name, src, out, language_name, language_flag, package):
 
 def arcs_cc_schema(name, src, out = None, package = "arcs"):
     """Generates a C++ header file for the given .arcs schema file."""
-    out = out or _output_name(src, ".h")
     _run_schema2wasm(
         name = name + "_genrule",
         src = src,
-        out = out,
+        out = out or _output_name(src, ".h"),
         language_flag = "--cpp",
         language_name = "C++",
         package = package,
     )
 
-def arcs_kt_schema(name, srcs, package = "arcs"):
+def arcs_kt_schema(name, src, out = None, package = "arcs"):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
       name: name of the target to create
-      srcs: list of Arcs manifest files to include
+      src: an Arcs manifest file to process
+      out: filename for the generated source code
       package: package name to use for the generated source code
     """
-    outs = []
-    for src in srcs:
-        out = _output_name(src, "_GeneratedSchemas.kt")
-        outs.append(out)
-        _run_schema2wasm(
-            name = _output_name(src) + "_genrule",
-            src = src,
-            out = out,
-            language_flag = "--kotlin",
-            language_name = "Kotlin",
-            package = package,
-        )
+    out = out or _output_name(src, "_GeneratedSchemas.kt")
+    _run_schema2wasm(
+        name = name + "_genrule",
+        src = src,
+        out = out,
+        language_flag = "--kotlin",
+        language_name = "Kotlin",
+        package = package,
+    )
 
     arcs_kt_library(
         name = name,
-        srcs = outs,
+        srcs = [out],
         deps = [],
     )
