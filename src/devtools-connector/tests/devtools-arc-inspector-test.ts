@@ -78,7 +78,7 @@ describe('DevtoolsArcInspector', () => {
         trustChecks: [],
         args: [{
           dependentConnections: [],
-          direction: 'inout',
+          direction: 'reads writes',
           isOptional: false,
           name: 'foo'
         }]

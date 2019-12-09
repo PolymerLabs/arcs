@@ -220,7 +220,7 @@ export class Collection extends HandleOld {
   /**
    * Returns the Entity specified by id contained by the handle, or null if this id is not
    * contained by the handle.
-   * @throws {Error} if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
+   * @throws {Error} if this handle is not configured as a readable handle (i.e. 'reads' or 'reads writes')
    * in the particle's manifest.
    */
   async get(id: string) {
@@ -232,7 +232,7 @@ export class Collection extends HandleOld {
 
   /**
    * @returns a list of the Entities contained by the handle.
-   * @throws {Error} if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
+   * @throws {Error} if this handle is not configured as a readable handle (i.e. 'reads' or 'reads writes')
    * in the particle's manifest.
    */
   async toList() {
@@ -258,7 +258,7 @@ export class Collection extends HandleOld {
 
   /**
    * Stores a new entity into the Handle.
-   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async store(entity: Storable) {
@@ -272,7 +272,7 @@ export class Collection extends HandleOld {
 
   /**
    * Removes all known entities from the Handle.
-   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async clear() {
@@ -288,7 +288,7 @@ export class Collection extends HandleOld {
 
   /**
    * Removes an entity from the Handle.
-   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async remove(entity: Storable) {
@@ -335,7 +335,7 @@ export class Singleton extends HandleOld {
 
   /**
    * @returns the Entity contained by the Singleton, or undefined if the Singleton is cleared.
-   * @throws {Error} if this Singleton is not configured as a readable handle (i.e. 'in' or 'inout')
+   * @throws {Error} if this Singleton is not configured as a readable handle (i.e. 'reads' or 'reads writes')
    * in the particle's manifest.
    */
   async get() {
@@ -364,7 +364,7 @@ export class Singleton extends HandleOld {
 
   /**
    * Stores a new entity into the Singleton, replacing any existing entity.
-   * @throws {Error} if this Singleton is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this Singleton is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async set(entity: Storable) {
@@ -382,7 +382,7 @@ export class Singleton extends HandleOld {
 
   /**
    * Clears any entity currently in the Singleton.
-   * @throws {Error} if this Singleton is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this Singleton is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async clear() {
@@ -454,7 +454,7 @@ export class BigCollection extends HandleOld {
 
   /**
    * Stores a new entity into the Handle.
-   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async store(entity: Storable) {
@@ -468,7 +468,7 @@ export class BigCollection extends HandleOld {
 
   /**
    * Removes an entity from the Handle.
-   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
    */
   async remove(entity: Entity) {
@@ -488,7 +488,7 @@ export class BigCollection extends HandleOld {
    * caveat that items removed during a streamed read may be returned at the end). Set `forward`
    * to false to return items in reverse insertion order.
    *
-   * @throws {Error} if this Singleton is not configured as a readable handle (i.e. 'in' or 'inout')
+   * @throws {Error} if this Singleton is not configured as a readable handle (i.e. 'reads' or 'reads writes')
    * in the particle's manifest.
    */
   async stream({pageSize, forward = true}: {pageSize: number, forward: boolean}) {

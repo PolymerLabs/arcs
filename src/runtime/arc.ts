@@ -35,7 +35,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
 import {Runtime} from './runtime.js';
-import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey, VolatileDriver} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
@@ -696,7 +696,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => {
       const storeType = s.type.isSingleton ? s.type.getContainedType() : s.type;
-      return !!Handle.effectiveType(type, [{type: storeType, direction: (storeType instanceof InterfaceType) ? 'host' : 'inout'}]);
+      return !!Handle.effectiveType(type, [{type: storeType, direction: (storeType instanceof InterfaceType) ? 'hosts' : 'reads writes'}]);
     });
   }
 

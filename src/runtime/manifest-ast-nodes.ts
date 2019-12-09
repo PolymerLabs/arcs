@@ -292,7 +292,7 @@ export interface ParticleModality extends BaseNode {
 
 export interface ParticleHandleConnection extends BaseNode {
   kind: 'particle-argument';
-  direction: DirectionPreSlandles;
+  direction: Direction;
   type: ParticleHandleConnectionType;
   isOptional: boolean;
   dependentConnections: ParticleHandleConnection[];
@@ -373,7 +373,7 @@ export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | 
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
-  dir: DirectionPreSlandles;
+  dir: Direction;
   target: ParticleConnectionTargetComponents;
   dependentConnections: RecipeParticleConnection[];
 }
@@ -413,7 +413,7 @@ export interface RecipeSlotConnectionRef extends BaseNode {
 
 export interface RecipeConnection extends BaseNode {
   kind: 'connection';
-  direction: DirectionPreSlandles;
+  direction: Direction;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }
@@ -559,7 +559,7 @@ export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
 
 export interface InterfaceArgument extends BaseNode {
   kind: 'interface-argument';
-  direction: DirectionPreSlandles;
+  direction: Direction;
   type: ParticleHandleConnectionType;
   name: string;
 }
@@ -574,7 +574,7 @@ export interface InterfaceSlot extends BaseNode {
   kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
-  direction: DirectionPreSlandles;
+  direction: Direction;
   isSet: boolean;
 }
 
@@ -639,25 +639,24 @@ export type eol = string;
 
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
-export type DirectionPreSlandles = 'in' | 'out' | 'inout' | 'host' | '`consume' | '`provide' | 'any';
 export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
 
-export function preSlandlesDirectionToDirection(direction: DirectionPreSlandles, isOptional: boolean = false): string {
+export function preSlandlesDirectionToDirection(direction: Direction, isOptional: boolean = false): string {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
   const opt: string = isOptional ? '?' : '';
   switch (direction) {
-    case 'in':
+    case 'reads':
       return `reads${opt}`;
-    case 'out':
+    case 'writes':
       return `writes${opt}`;
-    case 'inout':
+    case 'reads writes':
       return `reads${opt} writes${opt}`;
-    case '`consume':
+    case '`consumes':
       return `\`consumes${opt}`;
-    case '`provide':
+    case '`provides':
       return `\`provides${opt}`;
-    case 'host':
+    case 'hosts':
       return `hosts${opt}`;
     case 'any':
       return `any${opt}`;
@@ -667,31 +666,7 @@ export function preSlandlesDirectionToDirection(direction: DirectionPreSlandles,
   }
 }
 
-export function directionToPreSlandlesDirection(direction: Direction): DirectionPreSlandles {
-  // TODO(jopra): Remove after syntax unification.
-  // Use switch for totality checking.
-  switch (direction) {
-    case 'reads':
-      return 'in';
-    case 'writes':
-      return 'out';
-    case 'reads writes':
-      return 'inout';
-    case '`consumes':
-      return '`consume';
-    case '`provides':
-      return '`provide';
-    case 'hosts':
-      return 'host';
-    case 'any':
-      return 'any';
-    default:
-      // Catch nulls and unsafe values from javascript.
-      throw new Error(`Bad direction ${direction}`);
-  }
-}
-
-export type SlotDirection = 'provide' | 'consume';
+export type SlotDirection = 'provides' | 'consumes';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|

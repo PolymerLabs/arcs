@@ -18,7 +18,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Fate, DirectionPreSlandles} from '../manifest-ast-nodes.js';
+import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 
@@ -210,7 +210,7 @@ export class Handle implements Comparable<Handle> {
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
 
-  static effectiveType(handleType: Type, connections: {type?: Type, direction?: DirectionPreSlandles}[]) {
+  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
@@ -227,7 +227,7 @@ export class Handle implements Comparable<Handle> {
     const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
-      if (this.fate === 'map' && ['out', 'inout'].includes(connection.direction)) {
+      if (this.fate === 'map' && ['writes', 'reads writes'].includes(connection.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.getQualifiedName()} connection`);
         }
@@ -354,7 +354,7 @@ export class Handle implements Comparable<Handle> {
     return result.join(' ');
   }
 
-  findConnectionByDirection(dir: string): HandleConnection|undefined {
+  findConnectionByDirection(dir: Direction): HandleConnection|undefined {
     return this._connections.find(conn => conn.direction === dir);
   }
 }

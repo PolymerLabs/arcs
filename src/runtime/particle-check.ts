@@ -9,7 +9,7 @@
  */
 
 import * as AstNode from './manifest-ast-nodes.js';
-import {DirectionPreSlandles} from './manifest-ast-nodes.js';
+import {Direction} from './manifest-ast-nodes.js';
 import {Claim} from './particle-claim.js';
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
@@ -26,7 +26,7 @@ export type CheckTarget = HandleConnectionSpecInterface | ProvideSlotConnectionS
 
 export interface HandleConnectionSpecInterface {
   discriminator: 'HCS';
-  direction: DirectionPreSlandles;
+  direction: Direction;
   name: string;
   type: Type;
   isOptional: boolean;

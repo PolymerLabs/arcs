@@ -291,7 +291,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 let color;
                 let arrows;
                 switch (connSpec.direction) {
-                  case '`consume':
+                  case '`consumes':
                     arrows = {
                       from: {
                         enabled: true,
@@ -300,11 +300,11 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                     };
                     color = this._cssVar('--green');
                     break;
-                  case 'in':
+                  case 'reads':
                     arrows = 'from';
                     color = this._cssVar('--dark-green');
                     break;
-                  case '`provide':
+                  case '`provides':
                     arrows = {
                       to: {
                         enabled: true,
@@ -313,15 +313,15 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                     };
                     color = this._cssVar('--red');
                     break;
-                  case 'out':
+                  case 'writes':
                     arrows = 'to';
                     color = this._cssVar('--dark-red');
                     break;
-                  case 'inout':
+                  case 'reads writes':
                     arrows = 'to, from';
                     color = this._cssVar('--highlight-blue');
                     break;
-                  case 'host':
+                  case 'hosts':
                     arrows = {
                       from: {
                         enabled: true,

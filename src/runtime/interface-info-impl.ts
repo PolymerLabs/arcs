@@ -147,7 +147,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
           parts.push(`${h.name}:`);
         }
         if (h.direction !== undefined && h.direction !== 'any') {
-          parts.push(AstNode.preSlandlesDirectionToDirection(h.direction));
+          parts.push(h.direction);
         }
         parts.push(h.type.toString());
         return `  ${parts.join(' ')}`;
@@ -159,7 +159,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     return this.slots
       .map(slot => {
         const nameStr = slot.name ? `${slot.name}: ` : '';
-        return `  ${nameStr}${slot.direction}s${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
+        return `  ${nameStr}${slot.direction}${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
       })
       .join('\n');
   }
@@ -374,9 +374,9 @@ ${this._slotsToManifestString()}`;
 
     const particleSlots: Slot[] = [];
     particleSpec.slotConnections.forEach(consumedSlot => {
-      particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
+      particleSlots.push({name: consumedSlot.name, direction: 'consumes', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
       consumedSlot.provideSlotConnections.forEach(providedSlot => {
-        particleSlots.push({name: providedSlot.name, direction: 'provide', isRequired: false, isSet: providedSlot.isSet});
+        particleSlots.push({name: providedSlot.name, direction: 'provides', isRequired: false, isSet: providedSlot.isSet});
       });
     });
     const slotsThatMatch = this.slots.map(slot => particleSlots.filter(particleSlot => InterfaceInfo.slotsMatch(slot, particleSlot)));

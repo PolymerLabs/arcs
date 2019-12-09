@@ -298,7 +298,7 @@ describe('types', () => {
     it('serializes interfaces', async () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a', null, null);
-      const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
+      const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consumes'}]);
       assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
   foo: Foo {value: Text}

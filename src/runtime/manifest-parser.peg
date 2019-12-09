@@ -72,9 +72,9 @@
     return {...data, location: location()} as T;
   }
 
-  function buildInterfaceArgument(name: string, direction: AstNode.DirectionPreSlandles, type: AstNode.ParticleHandleConnectionType) {
-    if (direction === 'host') {
-      error(`Interface cannot have arguments with a 'host' direction.`);
+  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+    if (direction === 'hosts') {
+      error(`Interface cannot have arguments with a 'hosts' direction.`);
     }
     return toAstNode<AstNode.InterfaceArgument>({
       kind: 'interface-argument',
@@ -269,12 +269,6 @@ InterfaceSlot
       type.fields.forEach(({name, value}) => {
         error(`interface slots do not currently support fields`);
       });
-    }
-    if (direction === 'consumes') {
-      direction = 'consume';
-    }
-    if (direction === 'provides') {
-      direction = 'provide';
     }
     return toAstNode<AstNode.InterfaceSlot>({
       kind: 'interface-slot',
@@ -553,7 +547,7 @@ Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `pro
       // Fix for faking proper capability set support with optionality.
       dir = 'reads writes';
     }
-    return AstNode.directionToPreSlandlesDirection(dir as AstNode.Direction);
+    return dir as AstNode.Direction;
   }
 
 ParticleHandleConnectionType
@@ -957,8 +951,7 @@ RecipeSlotConnectionRef
   }
 
 SlotDirection
-  = 'provides' { return 'provide'; }
-  / 'consumes' { return 'consume'; }
+  = 'provides' / 'consumes'
 
 RecipeConnection
   = from:ConnectionTargetWithColon? direction:(Direction whiteSpace)? to:ConnectionTarget eolWhiteSpace

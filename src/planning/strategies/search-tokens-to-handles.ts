@@ -24,8 +24,8 @@ export class SearchTokensToHandles extends Strategy {
       stores = arc.findStoresByType(handle.type, {tags: [`${token}`]});
       let fate = 'use';
       if (stores.length === 0) {
-        stores = arc.context.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
-        fate = counts.out === 0 ? 'map' : 'copy';
+        stores = arc.context.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.writes === 0});
+        fate = counts.writes === 0 ? 'map' : 'copy';
       }
       stores = stores.filter(store => !handle.recipe.handles.find(handle => handle.id === store.id));
       return stores.map(store => ({store, fate, token}));

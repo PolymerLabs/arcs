@@ -20,15 +20,14 @@ import {acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
-import {DirectionPreSlandles, preSlandlesDirectionToDirection} from '../manifest-ast-nodes.js';
-import {Flags} from '../flags.js';
+import {Direction} from '../manifest-ast-nodes.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {
   private readonly _recipe: Recipe;
   private _name: string;
   private _tags: string[] = [];
   private resolvedType?: Type = undefined;
-  private _direction: DirectionPreSlandles = 'any';
+  private _direction: Direction = 'any';
   private _particle: Particle;
   _handle?: Handle = undefined;
 
@@ -100,7 +99,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     return spec ? spec.type : undefined;
   }
 
-  get direction(): DirectionPreSlandles {
+  get direction(): Direction {
     // TODO: Should take the most strict of the direction and the spec direction.
     if (this._direction !== 'any') {
       return this._direction;
@@ -110,10 +109,10 @@ export class HandleConnection implements Comparable<HandleConnection> {
   }
 
   get isInput(): boolean {
-    return this.direction === 'in' || this.direction === 'inout';
+    return this.direction === 'reads' || this.direction === 'reads writes';
   }
   get isOutput(): boolean {
-    return this.direction === 'out' || this.direction === 'inout';
+    return this.direction === 'writes' || this.direction === 'reads writes';
   }
   get handle(): Handle|undefined { return this._handle; } // Handle?
   get particle() { return this._particle; } // never null
@@ -124,7 +123,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     this._resetHandleType();
   }
 
-  set direction(direction: DirectionPreSlandles) {
+  set direction(direction: Direction) {
     if (direction === null) {
       throw new Error(`Invalid direction '${direction}' for handle connection '${this.getQualifiedName()}'`);
     }
@@ -276,7 +275,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
     result.push(`${this.name || '*'}:`);
-    result.push(preSlandlesDirectionToDirection(this.direction)); // TODO(jopra): support optionality.
+    result.push(this.direction); // TODO(jopra): support optionality.
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);
