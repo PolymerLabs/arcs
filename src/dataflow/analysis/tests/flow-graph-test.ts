@@ -13,6 +13,12 @@ import {checkDefined} from '../../../runtime/testing/preconditions.js';
 import {ParticleNode, ParticleOutput, ParticleInput} from '../particle-node.js';
 import {buildFlowGraph} from '../testing/flow-graph-testing.js';
 import {FlowModifier} from '../graph-internals.js';
+import {Flags} from '../../../runtime/flags.js';
+
+const entityString = Flags.useNewStorageStack ?
+  '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}'
+  :
+  '[{"text": "asdf"}]';
 
 describe('FlowGraph', () => {
   it('works with empty recipe', async () => {
@@ -138,7 +144,7 @@ describe('FlowGraph', () => {
         text: Text
       resource MyResource
         start
-        [{"text": "asdf"}]
+        ${entityString}
       store MyStore of MyEntity in MyResource
         claim is trusted
       particle P
@@ -229,7 +235,7 @@ describe('FlowGraph', () => {
         text: Text
       resource MyResource
         start
-        [{"text": "asdf"}]
+        ${entityString}
       store MyStore of MyEntity 'my-store-id' in MyResource
       particle P
         input: reads MyEntity
@@ -287,7 +293,7 @@ describe('FlowGraph', () => {
           text: Text
         resource MyResource
           start
-          [{"text": "asdf"}]
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           foo: reads MyEntity
