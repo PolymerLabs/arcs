@@ -18,7 +18,10 @@ load(
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_schema = "arcs_kt_schema",
 )
+load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 load(":sigh.bzl", "sigh_command")
+
+
 
 # Re-export rules from various other files.
 
@@ -39,6 +42,16 @@ arcs_manifest = _arcs_manifest
 arcs_manifest_bundle = _arcs_manifest_bundle
 
 kt_jvm_and_js_library = _kt_jvm_and_js_library
+
+_IS_BAZEL = not hasattr(native, "genmpm")
+
+def arcs_kt_jvm_library(**kwargs):
+  if not _IS_BAZEL:
+    kwargs["disable_lint_checks"] = [
+              "PackageName",
+              "TopLevelName",
+          ]
+  kt_jvm_library(**kwargs)
 
 def arcs_ts_test(name, src, deps):
     """Runs a TypeScript test file using `sigh test`."""
