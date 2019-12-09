@@ -35,9 +35,9 @@ object ParcelableCrdtEntity {
         /** Don't use this directly; use the [ParcelableReferencable] base class instead. */
         internal companion object CREATOR : Parcelable.Creator<ReferenceImpl> {
             override fun createFromParcel(parcel: Parcel): ReferenceImpl {
-                val id = requireNotNull(parcel.readString(), {
+                val id = requireNotNull(parcel.readString()) {
                     "ID not found in parcel when reading ParcelableCrdtEntity.ReferenceImpl"
-                })
+                }
                 return ReferenceImpl(CrdtEntity.ReferenceImpl(id))
             }
 
@@ -59,8 +59,8 @@ object ParcelableCrdtEntity {
             parcel.writeInt(actual.singletons.size)
             actual.singletons.forEach { (field, value) ->
                 parcel.writeString(field)
-                parcel.writeTypedObject(ParcelableCrdtSingleton.Data(
-                    value.data as CrdtSingleton.Data<Referencable>), flags
+                parcel.writeTypedObject(
+                    (value.data as CrdtSingleton.Data<Referencable>).toParcelable(), flags
                 )
             }
 
@@ -68,7 +68,8 @@ object ParcelableCrdtEntity {
             actual.collections.forEach { (field, value) ->
                 parcel.writeString(field)
                 parcel.writeTypedObject(
-                    ParcelableCrdtSet.Data(value.data as CrdtSet.Data<Referencable>), flags)
+                    (value.data as CrdtSet.Data<Referencable>).toParcelable(), flags
+                )
             }
         }
 
@@ -77,17 +78,17 @@ object ParcelableCrdtEntity {
         companion object CREATOR : Parcelable.Creator<Data> {
             @Suppress("UNCHECKED_CAST")
             override fun createFromParcel(parcel: Parcel): Data {
-                val versionMap = requireNotNull(
-                    parcel.readTypedObject(ParcelableVersionMap.CREATOR)
-                ) { "No VersionMap found in parcel when reading ParcelableCrdtEntity.Data" }
+                val versionMap = requireNotNull(parcel.readVersionMap()) {
+                    "No VersionMap found in parcel when reading ParcelableCrdtEntity.Data"
+                }
 
                 val singletons = mutableMapOf<FieldName, CrdtSingleton<CrdtEntity.Reference>>()
                 val numSingletons = parcel.readInt()
                 repeat(numSingletons) {
                     val field = requireNotNull(parcel.readString())
                     val data = requireNotNull(
-                        parcel.readTypedObject(ParcelableCrdtSingleton.Data.CREATOR)
-                    ).actual
+                        parcel.readTypedObject(ParcelableCrdtSingleton.Data.CREATOR)?.actual
+                    )
                     singletons[field] = CrdtSingleton.createWithData(
                         data as CrdtSingleton.Data<CrdtEntity.Reference>
                     )
@@ -98,13 +99,13 @@ object ParcelableCrdtEntity {
                 repeat(numCollections) {
                     val field = requireNotNull(parcel.readString())
                     val data = requireNotNull(
-                        parcel.readTypedObject(ParcelableCrdtSingleton.Data.CREATOR)
-                    ).actual
+                        parcel.readTypedObject(ParcelableCrdtSingleton.Data.CREATOR)?.actual
+                    )
                     collections[field] =
                         CrdtSet.createWithData(data as CrdtSet.Data<CrdtEntity.Reference>)
                 }
 
-                return Data(CrdtEntity.Data(versionMap.actual, singletons, collections))
+                return Data(CrdtEntity.Data(versionMap, singletons, collections))
             }
 
             override fun newArray(size: Int): Array<Data?> = arrayOfNulls(size)
@@ -144,10 +145,10 @@ object ParcelableCrdtEntity {
             companion object CREATOR : Parcelable.Creator<SetSingleton> {
                 override fun createFromParcel(parcel: Parcel): SetSingleton {
                     val clock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtEntity.Operation.SetSingleton"
-                        }.actual
+                        }
                     val actor = requireNotNull(parcel.readString())
                     val field = requireNotNull(parcel.readString())
                     val value = requireNotNull(parcel.readReferencable()) as CrdtEntity.Reference
@@ -176,10 +177,10 @@ object ParcelableCrdtEntity {
             companion object CREATOR : Parcelable.Creator<ClearSingleton> {
                 override fun createFromParcel(parcel: Parcel): ClearSingleton {
                     val clock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtEntity.Operation.ClearSingleton"
-                        }.actual
+                        }
                     val actor = requireNotNull(parcel.readString())
                     val field = requireNotNull(parcel.readString())
                     return ClearSingleton(CrdtEntity.Operation.ClearSingleton(actor, clock, field))
@@ -206,10 +207,10 @@ object ParcelableCrdtEntity {
             companion object CREATOR : Parcelable.Creator<AddToSet> {
                 override fun createFromParcel(parcel: Parcel): AddToSet {
                     val clock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtEntity.Operation.AddToSet"
-                        }.actual
+                        }
                     val actor = requireNotNull(parcel.readString())
                     val field = requireNotNull(parcel.readString())
                     val added = requireNotNull(parcel.readReferencable()) as CrdtEntity.Reference
@@ -237,10 +238,10 @@ object ParcelableCrdtEntity {
             companion object CREATOR : Parcelable.Creator<RemoveFromSet> {
                 override fun createFromParcel(parcel: Parcel): RemoveFromSet {
                     val clock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtEntity.Operation.RemoveFromSet"
-                        }.actual
+                        }
                     val actor = requireNotNull(parcel.readString())
                     val field = requireNotNull(parcel.readString())
                     val removed = requireNotNull(parcel.readReferencable()) as CrdtEntity.Reference
@@ -265,7 +266,7 @@ object ParcelableCrdtEntity {
             override fun newArray(size: Int): Array<Operation?> = arrayOfNulls(size)
         }
 
-        override fun describeContents(): Int  = 0
+        override fun describeContents(): Int = 0
     }
 
     internal enum class OpType {

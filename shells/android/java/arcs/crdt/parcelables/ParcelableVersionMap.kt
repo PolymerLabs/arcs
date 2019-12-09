@@ -46,3 +46,6 @@ data class ParcelableVersionMap(
 
 /** Converts a [VersionMap] into a [ParcelableVersionMap]. */
 fun VersionMap.toParcelable(): ParcelableVersionMap = ParcelableVersionMap(this)
+
+/** Reads a [VersionMap] out of a [Parcel]. */
+fun Parcel.readVersionMap(): VersionMap? = readTypedObject(ParcelableVersionMap.CREATOR)?.actual

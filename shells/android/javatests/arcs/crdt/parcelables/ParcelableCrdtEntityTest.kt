@@ -40,10 +40,10 @@ class ParcelableCrdtEntityTest {
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencable()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(reference)
+        assertThat(unmarshalled).isEqualTo(reference)
     }
 
     @Test

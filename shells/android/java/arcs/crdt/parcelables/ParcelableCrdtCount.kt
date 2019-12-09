@@ -48,9 +48,9 @@ object ParcelableCrdtCount {
         companion object CREATOR : Parcelable.Creator<Data> {
             override fun createFromParcel(parcel: Parcel): Data {
                 // Read the version map.
-                val versionMap = requireNotNull(
-                    parcel.readTypedObject(ParcelableVersionMap.CREATOR)
-                ) { "No VersionMap found in parcel when reading ParcelableCrdtCountData" }
+                val versionMap = requireNotNull(parcel.readVersionMap()) {
+                    "No VersionMap found in parcel when reading ParcelableCrdtCountData"
+                }
                 val values = mutableMapOf<Actor, Int>()
 
                 // Read the item count hint.
@@ -60,7 +60,7 @@ object ParcelableCrdtCount {
                     values[requireNotNull(parcel.readString())] = parcel.readInt()
                 }
 
-                return Data(CrdtCount.Data(values, versionMap.actual))
+                return Data(CrdtCount.Data(values, versionMap))
             }
 
             override fun newArray(size: Int): Array<Data?> = arrayOfNulls(size)
