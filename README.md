@@ -110,8 +110,7 @@ $ git config core.hooksPath tools/hooks
 
 ## Starting Arcs
 
-After the full build (`npm install && tools/sigh`) run: (note that `npm
-start` will block, so you'll have to run the second command in a new shell):
+After the full build (`npm install && tools/sigh`) run:
 
 ```
 $ tools/sigh devServer
