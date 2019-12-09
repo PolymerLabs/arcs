@@ -5,21 +5,21 @@ import '../schemas/TVMazeShow.arcs'
 import '../schemas/Text.arcs'
 
 particle SlandleTVMazeAppShell in './js/TVMazeAppShell.js'
-  in [TVMazeShow] recentShows
-  inout TVMazeShow selected
-  in User user
-  in [TVMazeShow] boxedShows
-  in [TVMazeShow] foundShows
-  in [User] friends
-  in [UserName] boxedUserNames
-  inout [User] watchers
-  out Text watcherText
-  out [Description] descriptions
-  `consume Slot root
-    `provide Slot shows
-    `provide Slot recommended
-    `provide Slot searchbar
-    `provide Slot search
+  recentShows: reads [TVMazeShow]
+  selected: reads writes TVMazeShow
+  user: reads User
+  boxedShows: reads [TVMazeShow]
+  foundShows: reads [TVMazeShow]
+  friends: reads [User]
+  boxedUserNames: reads [UserName]
+  watchers: reads writes [User]
+  watcherText: writes Text
+  descriptions: writes [Description]
+  root: `consumes Slot
+    shows: `provides Slot
+    recommended: `provides Slot
+    searchbar: `provides Slot
+    search: `provides Slot
   // TODO: add better description,
   // or fix recipe description to  not crash if one is missing.
   description `manage my TV shows (using TVMaze) with Slandles`

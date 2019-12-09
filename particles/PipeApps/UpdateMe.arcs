@@ -1,10 +1,10 @@
 import './schemas/Json.arcs'
 
 particle UpdateMe in './source/UpdateMe.js'
-  out Json output
-  consume root
+  output: writes Json
+  root: consumes Slot
 
 recipe UpdateMe
-  create as output
+  output: create *
   UpdateMe
-    output = output
+    output: output

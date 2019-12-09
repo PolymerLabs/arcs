@@ -3,27 +3,27 @@ import '../Services/schemas/RandomData.arcs'
 import '../Services/particles/Random.arcs'
 
 schema Artist
-  Text type
-  Text name
-  Text source
+  type: Text
+  name: Text
+  source: Text
 
 particle SlandleRandomArtist in './source/RandomArtist.js'
-  in RandomData randomArtist
-  out Artist artist
+  randomArtist: reads RandomData
+  artist: writes Artist
 
 particle SlandleSuggestArtist in './source/SuggestArtist.js'
-  in Artist artist
-  out Json suggestion
-  `consume Slot app
+  artist: reads Artist
+  suggestion: writes Json
+  app: `consumes Slot
 
 recipe SlandleCom_spotify_music &autofill
-  create as artist
-  create as suggestion
+  artist: create *
+  suggestion: create *
   RandomParticle
-    randomData -> randomArtist
+    randomData: writes randomArtist
   SlandleRandomArtist
-    randomArtist <- randomArtist
-    artist = artist
+    randomArtist: reads randomArtist
+    artist: artist
   SlandleSuggestArtist
-    artist = artist
-    suggestion = suggestion
+    artist: artist
+    suggestion: suggestion

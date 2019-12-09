@@ -14,13 +14,11 @@ import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection.js';
 import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton.js';
 import {Particle} from '../particle.js';
-import {Entity, EntityClass} from '../entity.js';
+import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
 import {EntityType, Type} from '../type.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
-import {Storable} from '../handle.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
-import {SerializedEntity} from '../storage-proxy.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -105,9 +103,12 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   abstract onSync(): void;
 
   async onDesync(): Promise<void> {
-    await this.particle.callOnHandleDesync(
-        this,
-        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
+    assert(this.canRead, 'onSync should not be called for non-readable handles');
+    if (this.particle) {
+      await this.particle.callOnHandleDesync(
+          this,
+          e => this.reportUserExceptionInHost(e, this.particle, 'onHandleDesync'));
+    }
   }
 
   disable(particle?: Particle) {
@@ -132,7 +133,7 @@ export abstract class PreEntityMutationHandle<T extends CRDTTypeRecord> extends 
 
     const type = this.storageProxy.type.getContainedType() || this.storageProxy.type;
     if (type instanceof EntityType) {
-      this.entityClass = type.entitySchema.entityClass();
+      this.entityClass = Entity.createEntityClass(type.entitySchema, null);
     } else {
       throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
     }
@@ -268,7 +269,7 @@ export class CollectionHandle<T extends Entity> extends PreEntityMutationHandle<
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
-          this.toList() /*model*/,
+          await this.toList() /*model*/,
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }
@@ -337,7 +338,7 @@ export class SingletonHandle<T extends Entity> extends PreEntityMutationHandle<C
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
-          this.get() /*model*/,
+          await this.get() /*model*/,
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }

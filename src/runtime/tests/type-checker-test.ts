@@ -13,8 +13,6 @@ import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType} from '../type.js';
-import {Direction} from '../manifest-ast-nodes.js';
-import {Flags} from '../flags.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -259,7 +257,7 @@ describe('TypeChecker', () => {
     }
   });
 
-  it('SLANDLES SYNTAX correctly applies then resolves a one-sided Entity constraint', Flags.withPostSlandlesSyntax(async () => {
+  it('correctly applies then resolves a one-sided Entity constraint', async () => {
     const manifest = await Manifest.parse(`
       interface Interface
         item: reads ~a
@@ -288,38 +286,7 @@ describe('TypeChecker', () => {
 
     recipe.normalize();
     assert.strictEqual(true, recipe.isResolved());
-  }));
-
-  it('correctly applies then resolves a one-sided Entity constraint', Flags.withPreSlandlesSyntax(async () => {
-    const manifest = await Manifest.parse(`
-      interface Interface
-        in ~a item
-
-      particle Concrete
-        in Product {} item
-
-      particle Transformation
-        host Interface particle0
-        in [~a] collection
-
-      recipe
-        create as h0
-        Transformation
-          particle0 <- Concrete
-          collection <- h0
-    `);
-
-    const recipe = manifest.recipes[0];
-    const type = Handle.effectiveType(null, recipe.handles[0].connections);
-    assert.strictEqual(false, type.isResolved());
-    assert.strictEqual(true, type.canEnsureResolved());
-    assert.strictEqual(true, type.maybeEnsureResolved());
-    assert.strictEqual(true, type.isResolved());
-    assert.strictEqual('Product', (type.resolvedType() as CollectionType<EntityType>).collectionType.entitySchema.names[0]);
-
-    recipe.normalize();
-    assert.strictEqual(true, recipe.isResolved());
-  }));
+  });
 
   it(`doesn't resolve Entity and Collection`, async () => {
     const entity: TypeListInfo = {
@@ -389,8 +356,8 @@ describe('TypeChecker', () => {
 
   it(`doesn't modify an input baseType if invoked through Handle.effectiveType`, async () => {
     const baseType = TypeVariable.make('a');
-    const connection = {type: EntityType.make(['Thing'], {}), direction: 'inout' as Direction};
-    const newType = Handle.effectiveType(baseType, [connection]);
+    const newType = Handle.effectiveType(baseType, [
+      {type: EntityType.make(['Thing'], {}), direction: 'inout'}]);
     assert.notStrictEqual(baseType, newType);
     assert.isNull(baseType.variable.resolution);
     assert.isNotNull(newType instanceof TypeVariable && newType.variable.resolution);

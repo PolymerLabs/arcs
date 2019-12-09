@@ -324,7 +324,7 @@ class EntityDecoder extends StringDecoder {
       data[name] = this.decodeValue(typeChar);
       this.validate('|');
     }
-    const entity = new (this.schema.entityClass())(data);
+    const entity = new (Entity.createEntityClass(this.schema, null))(data);
     if (id !== '') {
       Entity.identify(entity, id);
     }

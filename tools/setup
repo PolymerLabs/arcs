@@ -2,7 +2,6 @@
 
 ROOT=$(dirname $0)/..
 NVM_VERSION="v0.34.0"
-BAZEL_VERSION="1.0.0"
 
 YLW="\033[33m"
 RED="\033[91m"
@@ -37,15 +36,12 @@ append_once() {
 case $(uname | tr '[:upper:]' '[:lower:]') in
   linux*)
     OS_NAME=linux
-    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh"
     ;;
   darwin*)
     OS_NAME=osx
-    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-darwin-x86_64.sh"
     ;;
   msys*)
     OS_NAME=windows
-    BAZEL_DEP="https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-windows-x86_64.exe"
     # TODO(alxr) investigate windows compatability
     fail "Windows is currently unsupported. Please follow install instructions in the README."
     ;;
@@ -54,8 +50,6 @@ case $(uname | tr '[:upper:]' '[:lower:]') in
     fail "Can't detect host OS"
     ;;
 esac
-
-BAZEL_SCRIPT_NAME=$(basename "$BAZEL_DEP")
 
 status "0. Pre-requisites"
 if [ "$OS_NAME" = "linux" ]; then
@@ -74,7 +68,7 @@ curl -L -s -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/in
 
 status "1.1 ensure nvm is in your current process"
 # shellcheck disable=SC1090
-. ~/.nvm/nvm.sh
+. $NVM_DIR/nvm.sh || fail "Nvm load failed"
 
 status "2. Install node"
 cd $ROOT && nvm install && nvm use || fail 'Failed to install target node version.'
@@ -84,7 +78,7 @@ status "3. Update npm to latest version"
 nvm install-latest-npm  || fail 'Failed to update npm to latest version.'
 
 status "4. Install dependencies"
-(cd $ROOT && npm install && npm --prefix=server install) || fail 'Failed to install dependencies.'
+(cd $ROOT && npm install && npm --prefix=cloud install) || fail 'Failed to install dependencies.'
 
 # chokidar is useful when developing, but we don't want to require it for all installations
 status "4.1. Install useful optional dependencies"
@@ -93,10 +87,7 @@ status "4.1. Install useful optional dependencies"
 status "5. Install Bazel"
 
 status "5.1. Downloading and running install script"
-curl -L -s -O "$BAZEL_DEP" --output "$BAZEL_SCRIPT_NAME"
-chmod +x "$BAZEL_SCRIPT_NAME"
-"./$BAZEL_SCRIPT_NAME" --user || fail "Failed to install Bazel"
-rm "$BAZEL_SCRIPT_NAME"
+(cd $ROOT && ./tools/install_bazel.sh)
 
 status "5.2. Updating PATH"
 append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile

@@ -1,12 +1,12 @@
 particle AnimatedTiles in 'source/AnimatedTiles.js'
-  consume root
+  root: consumes Slot
   description `animated tiles`
 
 recipe AnimatedTiles
   AnimatedTiles
 
 particle RepeaterTiles in 'source/RepeaterTiles.js'
-  consume root
+  root: consumes Slot
   description `repeater tiles`
 
 recipe RepeaterTiles

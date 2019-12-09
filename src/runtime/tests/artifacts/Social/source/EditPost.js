@@ -123,19 +123,19 @@ defineParticle(({DomParticle, html, log}) => {
                                  .buildManifest`
 ${renderParticle}
 recipe
-  map 'BOXED_avatar' as avatars
-  use #identities as people
-  use #user as user
-  use '{{item_id}}' as handle1
-  slot '{{slot_id}}' as slot1
+  avatars: map 'BOXED_avatar'
+  people: use #identities
+  user: use #user
+  handle1: use '{{item_id}}'
+  slot1: slot '{{slot_id}}'
   {{other_handles}}
   ${renderParticle.name}
-    ${renderParticle.connections[0].name} <- handle1
-    avatars <- avatars
-    people <- people
-    user <- user
+    ${renderParticle.connections[0].name}: reads handle1
+    avatars: reads avatars
+    people: reads people
+    user: reads user
     {{other_connections}}
-    consume item as slot1
+    item: consumes slot1
       `.trim();
         this._setState({renderParticleSpec, renderRecipe});
       }

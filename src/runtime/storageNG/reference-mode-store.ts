@@ -21,7 +21,7 @@ import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
 import {noAwait} from '../util.js';
-import {SerializedEntity} from '../storage-proxy.js';
+import {SerializedEntity} from '../entity.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on

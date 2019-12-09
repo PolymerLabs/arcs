@@ -9,6 +9,7 @@
  */
 
 import {Reference} from '../../build/runtime/reference.js';
+import {EntityType} from '../../build/runtime/type.js';
 import {crackStorageKey, simpleNameOfType} from './context-utils.js';
 import {Stores} from './stores.js';
 
@@ -65,7 +66,7 @@ const ContextStoresImpl = class {
     store.remove(`shared-${entity.id}`);
   }
   async createReferenceStore(context, schema, name, id, tags) {
-    const type = schema.type.collectionOf();
+    const type = (new EntityType(schema)).collectionOf();
     const store = await Stores.createStore(context, type, {name, id: `${id}`, tags});
     return store;
   }

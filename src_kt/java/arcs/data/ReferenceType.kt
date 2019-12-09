@@ -17,7 +17,7 @@ import arcs.type.TypeFactory
 import arcs.type.TypeLiteral
 
 /** [Type] representation of a reference. */
-class ReferenceType<T : Type>(referredType: T) :
+data class ReferenceType<T : Type>(private val referredType: T) :
     Type, Type.TypeContainer<T>, EntitySchemaProviderType {
     override val tag = Tag.Reference
     override val containedType: T = referredType

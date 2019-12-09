@@ -14,6 +14,7 @@ package arcs.storage
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtException
 import arcs.crdt.CrdtOperation
+import arcs.storage.Store.Companion.defaultFactory
 import arcs.type.Type
 
 /**
@@ -44,38 +45,54 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     val versionToken: String?
         get() = activeStore?.versionToken ?: parsedVersionToken
 
-    @Suppress("UNCHECKED_CAST")
-    suspend fun activate(): ActiveStore<Data, Op, ConsumerData> {
+    /**
+     * Activates the [Store] by instantiating an [ActiveStore].
+     *
+     * Supply a custom [activationFactory] to override the default behavior.
+     */
+    suspend fun activate(
+        /* ktlint-disable max-line-length */
+        activationFactory: (suspend (StoreOptions<Data, Op, ConsumerData>) -> ActiveStore<Data, Op, ConsumerData>)? = null
+        /* ktlint-enable max-line-length */
+    ): ActiveStore<Data, Op, ConsumerData> {
         activeStore?.let { return it }
 
-        CrdtException.require(mode in CONSTRUCTORS) { "StorageMode $mode not yet implemented" }
-        val constructor = CrdtException.requireNotNull(CONSTRUCTORS[mode]) {
-            "No constructor registered for mode $mode"
-        }
+        val options = StoreOptions(
+            storageKey = storageKey,
+            existenceCriteria = existenceCriteria,
+            type = type,
+            mode = mode,
+            baseStore = this,
+            versionToken = parsedVersionToken,
+            model = model
+        )
+        // If we were given a specific factory to use, use it; otherwise use the default factory.
+        val activeStore = (activationFactory ?: Companion::defaultFactory)(options)
 
-        val activeStore = CrdtException.requireNotNull(
-            constructor(
-                StoreOptions(
-                    storageKey = storageKey,
-                    existenceCriteria = existenceCriteria,
-                    type = type,
-                    mode = mode,
-                    baseStore = this,
-                    versionToken = parsedVersionToken,
-                    model = model
-                )
-            ) as? ActiveStore<Data, Op, ConsumerData>
-        ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
         existenceCriteria = ExistenceCriteria.ShouldExist
         this.activeStore = activeStore
         return activeStore
     }
 
     companion object {
-        private val CONSTRUCTORS = mapOf(
+        private val DEFAULT_CONSTRUCTORS = mapOf(
             StorageMode.Direct to DirectStore.CONSTRUCTOR,
             StorageMode.Backing to BackingStore.CONSTRUCTOR,
             StorageMode.ReferenceMode to ReferenceModeStore.CONSTRUCTOR
         )
+
+        @Suppress("UNCHECKED_CAST")
+        private suspend fun <Data, Op, ConsumerData> defaultFactory(
+            options: StoreOptions<Data, Op, ConsumerData>
+        ): ActiveStore<Data, Op, ConsumerData> where Data : CrdtData,
+                                                     Op : CrdtOperation {
+            val constructor = CrdtException.requireNotNull(DEFAULT_CONSTRUCTORS[options.mode]) {
+                "No constructor registered for mode ${options.mode}"
+            }
+
+            return CrdtException.requireNotNull(
+                constructor(options) as? ActiveStore<Data, Op, ConsumerData>
+            ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
+        }
     }
 }

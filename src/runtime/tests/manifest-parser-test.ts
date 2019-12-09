@@ -23,6 +23,27 @@ describe('manifest parser', () => {
     parse(`
       recipe Recipe`);
   });
+  it('fails to parse non-standard indentation (horizontal tab)', () => {
+    // Note: This is to protect against confusing whitespace issues caused by
+    // mixed tabs and spaces.
+    assert.throws(() => {
+    parse('\trecipe Recipe');
+    }, 'Expected space but "\\t" found.');
+  });
+  it('fails to parse non-standard indentation (vertical tab)', () => {
+    // Note: This is to protect against confusing whitespace issues caused by
+    // mixed tabs and spaces.
+    assert.throws(() => {
+    parse('\vrecipe Recipe');
+    }, 'Expected space but "\\x0B" found.');
+  });
+  it('fails to parse non-standard indentation (non-breaking space)', () => {
+    // Note: This is to protect against confusing whitespace issues caused by
+    // mixed tabs and spaces.
+    assert.throws(() => {
+    parse('\xA0recipe Recipe');
+    }, 'Expected space but "\xA0" found.');
+  });
   it('parses recipes that map handles', () => {
     parse(`
       recipe Thing

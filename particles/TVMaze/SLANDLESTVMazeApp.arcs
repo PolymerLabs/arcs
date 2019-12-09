@@ -10,117 +10,117 @@ import '../Layout/SLANDLESDetail.arcs'
 
 recipe SlandleTVMazeApp
   // all shows shared with me
-  map 'BOXED_shows-tiles' as boxedShows
+  boxedShows: map 'BOXED_shows-tiles'
   // filter out 'my' shows from boxedShows using user.id
-  map 'SYSTEM_user' as user
+  user: map 'SYSTEM_user'
   // why not just use profile instead of above?
-  map 'PROFILE_shows-tiles' as profileShows
+  profileShows: map 'PROFILE_shows-tiles'
   // all shows I've looked at on my device
-  map 'PROFILE_all_piped-all_tv_shows' as allPipedShows
+  allPipedShows: map 'PROFILE_all_piped-all_tv_shows'
   // most recent show(s)
-  //map 'PROFILE_piped-tv_show' as pipedShows
-  create #volatile as pipedShows
+  //pipedShows: map 'PROFILE_piped-tv_show'
+  pipedShows: create #volatile
   // selected show (for detail)
-  create #volatile #selected as selected
+  selected: create #volatile #selected
   // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
-  create #shows #tiles as myshows
+  myshows: create #shows #tiles
   // search results
-  create #volatile #found as foundshows
+  foundshows: create #volatile #found
   // friends ids
-  map 'PROFILE_friends' as friends
+  friends: map 'PROFILE_friends'
   // all the userNames
-  map 'BOXED_userName' as boxedUserNames
+  boxedUserNames: map 'BOXED_userName'
   // friends also watching selected show
-  create #volatile #watchers as watchers
+  watchers: create #volatile #watchers
   // text about friends watching selected show
-  create #volatile #alsoWatch as alsoWatch
+  alsoWatch: create #volatile #alsoWatch
   // internal description storage
-  create #volatile as descriptions
+  descriptions: create #volatile
   //
   SlandleTVMazeAppShell
-    user = user
-    boxedShows = boxedShows
-    selected = selected
-    recentShows = pipedShows
-    foundShows = foundshows
-    boxedUserNames = boxedUserNames
-    friends = friends
-    watchers = watchers
-    watcherText = alsoWatch
-    descriptions = descriptions
-    root `consume root
-      recommended `provide recommended
-      shows `provide shows
-      searchbar `provide searchbar
-      search `provide search
+    user: user
+    boxedShows: boxedShows
+    selected: selected
+    recentShows: pipedShows
+    foundShows: foundshows
+    boxedUserNames: boxedUserNames
+    friends: friends
+    watchers: watchers
+    watcherText: alsoWatch
+    descriptions: descriptions
+    root: `consumes root
+      recommended: `provides recommended
+      shows: `provides shows
+      searchbar: `provides searchbar
+      search: `provides search
   //
   // slot `shows` holds my primary show list
-  create #volatile #uniqueProfile as uniqueProfileShows
+  uniqueProfileShows: create #volatile #uniqueProfile
   SlandleTVMazeDeduplicate
-    shows = profileShows
-    uniqueShows = uniqueProfileShows
+    shows: profileShows
+    uniqueShows: uniqueProfileShows
   SlandleSelectableTiles
-    root `consume shows
-      tile `provide tile1
-      annotation `provide action1
-    list = uniqueProfileShows
-    selected = selected
+    root: `consumes shows
+      tile: `provides tile1
+      annotation: `provides action1
+    list: uniqueProfileShows
+    selected: selected
   SlandleTileMultiplexer
-    list = uniqueProfileShows
-    hostedParticle = SlandleTVMazeShowTile
-    tile `consume tile1
+    list: uniqueProfileShows
+    hostedParticle: SlandleTVMazeShowTile
+    tile: `consumes tile1
   //
   // slot `recommended` holds recommendations
   // which are pulled from `allPipedShows`
-  create #volatile #uniquePiped as uniquePipedShows
+  uniquePipedShows: create #volatile #uniquePiped
   SlandleTVMazeDeduplicate
-    shows = allPipedShows
-    uniqueShows = uniquePipedShows
+    shows: allPipedShows
+    uniqueShows: uniquePipedShows
   SlandleSelectableTiles
-    root `consume recommended
-      tile `provide tile2
-      annotation `provide action2
-    list = uniquePipedShows
-    selected = selected
+    root: `consumes recommended
+      tile: `provides tile2
+      annotation: `provides action2
+    list: uniquePipedShows
+    selected: selected
   SlandleTileMultiplexer
-    tile `consume tile2
-    list = uniquePipedShows
-    hostedParticle = SlandleTVMazeShowTile
+    tile: `consumes tile2
+    list: uniquePipedShows
+    hostedParticle: SlandleTVMazeShowTile
   SlandleActionMultiplexer
-    action `consume action2
-    list = uniquePipedShows
-    shows = myshows
-    hostedParticle = SlandleTVMazeShowActions
+    action: `consumes action2
+    list: uniquePipedShows
+    shows: myshows
+    hostedParticle: SlandleTVMazeShowActions
   //
   // slot `search` contains search ui
-  create #volatile #query as query
+  query: create #volatile #query
   SlandleTVMazeSearchBar
-    toproot `consume searchbar
-    query = query
+    toproot: `consumes searchbar
+    query: query
   SlandleTVMazeSearchShows
-    query = query
-    shows = foundshows
+    query: query
+    shows: foundshows
   SlandleSelectableTiles
-    root `consume search
-      tile `provide tile3
-      annotation `provide action3
-    list = foundshows
-    selected = selected
+    root: `consumes search
+      tile: `provides tile3
+      annotation: `provides action3
+    list: foundshows
+    selected: selected
   SlandleTileMultiplexer
-    tile `consume tile3
-    hostedParticle = SlandleTVMazeShowTile
-    list = foundshows
+    tile: `consumes tile3
+    hostedParticle: SlandleTVMazeShowTile
+    list: foundshows
   SlandleActionMultiplexer
-    action `consume action3
-    hostedParticle = SlandleTVMazeShowActions
-    list = foundshows
-    shows = myshows
+    action: `consumes action3
+    hostedParticle: SlandleTVMazeShowActions
+    list: foundshows
+    shows: myshows
   //
   // standard slot 'modal' holds detail view
   SlandleDetailSlider
-    selected = selected
+    selected: selected
   SlandleTVMazeShowPanel
-    show = selected
-    alsoWatch = alsoWatch
+    show: selected
+    alsoWatch: alsoWatch
   //
   description `${TVMazeAppShell}`

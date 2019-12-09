@@ -20,9 +20,8 @@ import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
-import {SerializedEntity} from '../../storage-proxy.js';
 import {Manifest} from '../../manifest.js';
-import {EntityClass, Entity} from '../../entity.js';
+import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
@@ -87,8 +86,8 @@ describe('CollectionHandle', async () => {
   before(async () => {
     const loader = new Loader();
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    barType = manifest.schemas.Bar.type as EntityType;
-    Bar = barType.getEntitySchema().entityClass();
+    barType = new EntityType(manifest.schemas.Bar);
+    Bar = Entity.createEntityClass(barType.getEntitySchema(), null);
   });
 
   it('can add and remove elements', async () => {

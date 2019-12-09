@@ -1,5 +1,5 @@
 particle SlandleBottomScrollTest in 'source/BottomScrollTest.js'
-  `consume Slot root
+  root: `consumes Slot
   description `bottom scroller`
 
 recipe SlandleBottomScrollTest

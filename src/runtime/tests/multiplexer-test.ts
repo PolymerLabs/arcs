@@ -25,12 +25,12 @@ describe('Multiplexer', () => {
       import 'src/runtime/tests/artifacts/test-particles.manifest'
 
       recipe
-        slot 'rootslotid-slotid' as slot0
-        use 'test:1' as handle0
+        slot0: slot 'rootslotid-slotid'
+        handle0: use 'test:1'
         Multiplexer
-          hostedParticle = ConsumerParticle
-          consume annotation as slot0
-          list <- handle0
+          hostedParticle: ConsumerParticle
+          annotation: consumes slot0
+          list: reads handle0
     `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];
@@ -68,16 +68,16 @@ describe('Multiplexer', () => {
     assert.strictEqual(slotsCreated, 3);
   });
 
-  it('SLANDLES SYNTAX Processes multiple inputs', Flags.withPostSlandlesSyntax(async () => {
+  it('Processes multiple inputs', async () => {
     const manifest = await Manifest.parse(`
-      import 'src/runtime/tests/artifacts/Common/SLANDLESMultiplexer.arcs'
-      import 'src/runtime/tests/artifacts/SLANDLEStest-particles.arcs'
+      import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
+      import 'src/runtime/tests/artifacts/test-particles.manifest'
 
       recipe
         slot0: slot 'rootslotid-slotid'
         handle0: use 'test:1'
-        SlandleMultiplexer
-          hostedParticle: SlandleConsumerParticle
+        Multiplexer
+          hostedParticle: ConsumerParticle
           annotation: consumes slot0
           list: reads handle0
     `, {loader: new Loader(), fileName: ''});
@@ -102,7 +102,6 @@ describe('Multiplexer', () => {
     recipe.handles[0].mapToStorage(barStore);
     const options = {errors: new Map()};
     const n = recipe.normalize(options);
-    console.log([...options.errors.entries()].map(x => x.map(x => x.toString())));
     assert(n, 'normalizes');
     assert(recipe.isResolved());
 
@@ -117,6 +116,6 @@ describe('Multiplexer', () => {
     await arc.idle;
 
     assert.strictEqual(slotsCreated, 3);
-  }));
+  });
 
 });

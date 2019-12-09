@@ -47,8 +47,8 @@ import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
-import {Entity} from './entity.js';
-import {SerializedEntity} from './storage-proxy.js';
+import {Entity, SerializedEntity} from './entity.js';
+import {Runtime} from './runtime.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -474,7 +474,7 @@ ${e.message}
 
     let items: AstNode.All[] = [];
     try {
-      items = parse(content) as AstNode.All[];
+      items = parse(content, {filename: fileName}) as AstNode.All[];
     } catch (e) {
       throw processError(e, true);
     }
@@ -1246,6 +1246,10 @@ ${e.message}
 
     if (Flags.useNewStorageStack) {
       const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+      if (storageKey instanceof RamDiskStorageKey) {
+        const memory = Runtime.getRuntime().getRamDiskMemory();
+        memory.deserialize(entities, storageKey.unique);
+      }
       return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
         description: item.description, version: item.version || null, source: item.source,
         origin: item.origin, referenceMode: false, model: entities});

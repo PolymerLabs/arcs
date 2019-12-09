@@ -1,6 +1,6 @@
 import './schemas/PipeEntity.arcs'
 
 particle SlandleTrigger in './source/Noop.js'
-  in PipeEntity pipe
-  `consume Slot root
-    `provide Slot app
+  pipe: reads PipeEntity
+  root: `consumes Slot
+    app: `provides Slot

@@ -2,20 +2,20 @@ import './schemas/PipeEntity.arcs'
 import './schemas/Json.arcs'
 
 particle SuggestPerson in './source/SuggestPerson.js'
-  in [PipeEntity] recentEntities
-  out Json suggestion
-  consume content
+  recentEntities: reads [PipeEntity]
+  suggestion: writes Json
+  content: consumes Slot
 
 particle RequireQuery in './source/Noop.js'
-  in PipeEntity query
+  query: reads PipeEntity
 
 recipe PeopleAutofill &autofill
-  use #autofill_com_google_android_gm as query
-  map 'pipe-entities' as recentEntities
-  create as suggestion
+  query: use #autofill_com_google_android_gm
+  recentEntities: map 'pipe-entities'
+  suggestion: create *
   RequireQuery
-    query = query
+    query: query
   SuggestPerson
-    recentEntities = recentEntities
-    suggestion = suggestion
+    recentEntities: recentEntities
+    suggestion: suggestion
   description `suggest person`

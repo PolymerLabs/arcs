@@ -4,34 +4,34 @@ import '../Services/schemas/RandomData.arcs'
 import '../Services/particles/Random.arcs'
 
 schema Artist
-  Text type
-  Text name
-  Text source
+  type: Text
+  name: Text
+  source: Text
 
 particle RandomArtist in './source/RandomArtist.js'
-  in RandomData randomArtist
-  out Artist artist
+  randomArtist: reads RandomData
+  artist: writes Artist
 
 particle SuggestArtist in './source/SuggestArtist.js'
-  in Artist artist
-  out Json suggestion
-  consume content
+  artist: reads Artist
+  suggestion: writes Json
+  content: consumes Slot
 
 particle RequireQuery in './source/Noop.js'
-  in PipeEntity query
+  query: reads PipeEntity
 
 recipe AutofillSpotifyMusic &artist_autofill
-  create as artist
-  create as suggestion
-  use #artist_autofill as query
+  artist: create *
+  suggestion: create *
+  query: use #artist_autofill
   RequireQuery
-    query = query
+    query: query
   RandomParticle
-    randomData -> randomArtist
+    randomData: writes randomArtist
   RandomArtist
-    randomArtist <- randomArtist
-    artist = artist
+    randomArtist: reads randomArtist
+    artist: artist
   SuggestArtist
-    artist = artist
-    suggestion = suggestion
+    artist: artist
+    suggestion: suggestion
   description `suggest artist`

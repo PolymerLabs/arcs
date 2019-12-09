@@ -38,8 +38,8 @@ describe('schema2graph', () => {
   it('empty graph', async () => {
     const manifest = await Manifest.parse(`
       particle E
-        consume root
-          provide tile
+        root: consumes Slot
+          tile: provides Slot
     `);
     const graph = new SchemaGraph(manifest.particles[0]);
     assert.isEmpty([...graph.walk()]);
@@ -110,11 +110,11 @@ describe('schema2graph', () => {
         p2: reads * {a: Text, c: Text}              //  3   4
         p3: reads * {a: Text, b: Text, d: Text}
         p4: reads * {a: Text, c: Text, e: Text}
-        v5: reads * {URL a}                         //  5   6
-        v6: reads * {URL c}                         //   7 8
-        v7: reads * {URL a, URL b}                  //    9
-        v8: reads * {URL c, URL d}
-        v9: reads * {URL a, URL b, URL c, URL d}
+        v5: reads * {a: URL}                        //  5   6
+        v6: reads * {c: URL}                        //   7 8
+        v7: reads * {a: URL, b: URL}                //    9
+        v8: reads * {c: URL, d: URL}
+        v9: reads * {a: URL, b: URL, c: URL, d: URL}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
 

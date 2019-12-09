@@ -122,8 +122,8 @@ describe('Rulesets', () => {
     const strategies = [InitPopulation, AssignFateA, AssignFateB];
     const context = await Manifest.parse(`
       recipe
-        ? 'id1' as handle1
-        ? 'id2' as handle2`);
+        handle1: ? 'id1'
+        handle2: ? 'id2'`);
     const statsNoRules = await planAndComputeStats({
       context,
       strategies
@@ -166,9 +166,9 @@ describe('Rulesets', () => {
     ];
     const context = await Manifest.parse(`
       recipe
-        ? 'id1' as handle1
-        ? 'id2' as handle2
-        ? 'id3' as handle3`);
+        handle1: ? 'id1'
+        handle2: ? 'id2'
+        handle3: ? 'id3'`);
     const statsNoRules = await planAndComputeStats({
       context,
       strategies

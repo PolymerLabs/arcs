@@ -14,12 +14,12 @@ import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
 import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
-import {Direction} from '../../runtime/manifest-ast-nodes.js';
+import {DirectionPreSlandles} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Dictionary} from '../../runtime/hot.js';
 
-type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
+type Obligation = {from: EndPoint, to: EndPoint, direction: DirectionPreSlandles};
 
 export class ConvertConstraintsToConnections extends Strategy {
   async generate(inputParams: StrategyParams): Promise<Descendant<Recipe>[]> {
@@ -135,7 +135,7 @@ export class ConvertConstraintsToConnections extends Strategy {
             });
           }
 
-          const unionDirections = (a: Direction, b: Direction): Direction => {
+          const unionDirections = (a: DirectionPreSlandles, b: DirectionPreSlandles): DirectionPreSlandles => {
             // TODO(jopra): Move to be with other handle direction + type resolution code.
             if (a === 'any') {
               return 'any';

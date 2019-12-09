@@ -7,53 +7,53 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Foo
-  Text bar
+  bar: Text
 
 particle ShowFoo in 'source/ShowFoo.js'
-  in Foo foo
-  consume item #item
-    provide annotation
+  foo: reads Foo
+  item: consumes Slot #item
+    annotation: provides? Slot
 
 particle ShowFooAnnotation in 'source/ShowFooAnnotation.js'
-  in Foo foo
-  consume annotation
+  foo: reads Foo
+  annotation: consumes Slot
 
 interface FooInterface
-  in Foo *
-  consume
-  provide
+  reads Foo
+  consumes Slot
+  provides? Slot
 
 interface FooAnnotationInterface
-  in Foo *
-  consume
+  reads Foo
+  consumes Slot
 
 particle Fooxer in '../../../runtime/tests/artifacts/Common/source/Multiplexer.js'
-  host FooInterface hostedParticle
-  in [Foo] list
-  consume set of item
-    provide set of annotation
+  hostedParticle: hosts FooInterface
+  list: reads [Foo]
+  item: consumes [Slot]
+    annotation: provides? [Slot]
 
 particle FooAnnotationMuxer in '../../../runtime/tests/artifacts/Common/source/Multiplexer.js'
-  host FooAnnotationInterface hostedParticle
-  in [Foo] list
-  consume set of annotation
+  hostedParticle: hosts FooAnnotationInterface
+  list: reads [Foo]
+  annotation: consumes [Slot]
 
 particle FooList in '../../../runtime/tests/artifacts/Common/source/List.js'
-  in [Foo] items
-  consume root
-    provide set of item
-    provide set of action // unused
+  items: reads [Foo]
+  root: consumes Slot
+    item: provides? [Slot]
+    action: provides? [Slot] // unused
 
 recipe
-  map 'myfoos' as myfoos
+  myfoos: map 'myfoos'
   FooList
-    items <- myfoos
+    items: reads myfoos
   Fooxer
-    list <- myfoos
-    hostedParticle = ShowFoo
+    list: reads myfoos
+    hostedParticle: ShowFoo
   FooAnnotationMuxer
-    list <- myfoos
-    hostedParticle = ShowFooAnnotation
+    list: reads myfoos
+    hostedParticle: ShowFooAnnotation
   description `test providing hosted particle slot`
 
 resource MyFoos

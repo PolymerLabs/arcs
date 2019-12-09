@@ -9,26 +9,29 @@
  */
 
 import {assert} from '../platform/chai-web.js';
+import {Entity} from '../runtime/entity.js';
 import {HostedSlotContext} from '../runtime/slot-context.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
+import {Manifest} from '../runtime/manifest.js';
+import {Runtime} from '../runtime/runtime.js';
+import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
-import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
-import {collectionHandleForTest} from '../runtime/testing/handle-for-test.js';
-import {Entity} from '../runtime/entity.js';
+import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
-    const helper = await PlanningTestHelper.create({
-      manifestFilename: './src/tests/particles/artifacts/polymorphic-muxing.recipes'
-    });
-    const context = helper.arc.context;
+    const loader = new StubLoader({});
+    const context = await Manifest.load(
+        './src/tests/particles/artifacts/polymorphic-muxing.recipes', loader);
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
-    const recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;
-    const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowTwo\n    post <- v1\n    consume item as s1`;
+    const recipeOne = `${showOneParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowOne\n    post: reads v1\n    item: consumes s1`;
+    const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowTwo\n    post: reads v1\n    item: consumes s1`;
     const postsStub = context.stores[0].castToStorageStub();
     postsStub.model.push({
       id: '1',
@@ -56,32 +59,38 @@ describe('Multiplexer', () => {
     });
     postsStub['referenceMode'] = false;
     // version could be set here, but doesn't matter for tests.
-    await helper.makePlans();
+    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+    const suggestions = await StrategyTestHelper.planForArc(arc);
+    assert.lengthOf(suggestions, 1);
 
     // Render 3 posts
-    helper.slotComposer
+    slotComposer
         .newExpectations()
         .expectRenderSlot('List', 'root', {contentTypes: ['template', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2, isOptional: true})
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2})
         .expectRenderSlot('ShowTwo', 'item', {contentTypes: ['template', 'templateName', 'model']});
-    await helper.acceptSuggestion({particles: ['PostMuxer', 'List']});
+
+    await suggestions[0].instantiate(arc);
+    await arc.idle;
 
     // Add and render one more post
-    helper.slotComposer
+    slotComposer
         .newExpectations()
         .expectRenderSlot('List', 'root', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
-    const postsStore = await collectionHandleForTest(helper.arc, helper.arc.findStoreById(helper.arc.activeRecipe.handles[0].id));
+    const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
     await postsStore.add(
         Entity.identify(new postsStore.entityClass({message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}), '4'));
-    await helper.idle();
-    assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
-    assert.lengthOf(helper.slotComposer.consumers, 6);
-    const itemSlot = checkDefined(helper.slotComposer.consumers.find(s => s.consumeConn.name === 'item'));
+    await arc.idle;
+    assert.lengthOf(slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
+    assert.lengthOf(slotComposer.consumers, 6);
+    const itemSlot = checkDefined(slotComposer.consumers.find(s => s.consumeConn.name === 'item'));
     const items = itemSlot.renderings.map(([subId, item]) => item);
 
     // verify model

@@ -1,2 +1,2 @@
 schema Thing
-  Text name
+  name: Text

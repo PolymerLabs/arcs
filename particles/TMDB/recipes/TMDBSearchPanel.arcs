@@ -13,19 +13,19 @@ recipe TMDBSearch
   description `search TMDB(tm)`
 
 recipe TMDBShowTiles
-  use as results
-  create #selected as selected
-  slot #root as parent
+  results: use *
+  selected: create * #selected
+  parent: slot * #root
   StyleSheet
-    consume parent as parent
-      provide container as container
+    parent: consumes parent
+      container: provides container
   SelectableTiles
-    consume root as container
-      provide tile as tile
+    root: consumes container
+      tile: provides tile
     list: results
     selected: selected
   TileMultiplexer
     hostedParticle: TMDBTile
-    consume tile as tile
+    tile: consumes tile
     list: results
   description `show ${SelectableTiles.list}`

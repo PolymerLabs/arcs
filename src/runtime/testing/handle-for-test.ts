@@ -18,8 +18,7 @@ import {Referenceable, CRDTCollectionTypeRecord} from '../crdt/crdt-collection.j
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
 import {Manifest} from '../manifest.js';
-import {SerializedEntity} from '../storage-proxy.js';
-import {Entity} from '../entity.js';
+import {Entity, SerializedEntity} from '../entity.js';
 import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
 import {ArcId} from '../../runtime/id.js';

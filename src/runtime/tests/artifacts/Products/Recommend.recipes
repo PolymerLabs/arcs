@@ -12,42 +12,41 @@ import '../People/Person.schema'
 import '../Common/Multiplexer.manifest'
 
 particle Recommend in 'source/Recommend.js'
-  in [Product] known
-  in [Product] population
-  out [Product] recommendations
+  known: reads [Product]
+  population: reads [Product]
+  recommendations: writes [Product]
   description `recommend products from ${known} and ${population}`
     //recommendations `products recommended based on ${known}._name_ and ${population}._name_`
     recommendations `${population}._name_`
 
 particle Chooser in 'source/Chooser.js'
-  in Person person
-  in [~a] choices
-  inout [~a] resultList
-  consume action
-    provide set of annotation
-      handle choices
+  person: reads Person
+  choices: reads [~a]
+  resultList: reads writes [~a]
+  action: consumes Slot
+    annotation: provides? [Slot {handle: choices}]
   description `add items from ${person}'s ${choices}`
 
 particle AlsoOn in 'source/AlsoOn.js'
-  in Thing product
-  in [Thing] choices
-  consume annotation
+  product: reads Thing
+  choices: reads [Thing]
+  annotation: consumes Slot
 
 recipe &addFromWishlist
-  use as shoplist
-  use #claire as person
-  map #wishlist as wishlist
-  create as choices
+  shoplist: use *
+  person: use #claire
+  wishlist: map #wishlist
+  choices: create *
   Recommend
-    population = wishlist
-    known = shoplist
-    recommendations = choices
+    population: wishlist
+    known: shoplist
+    recommendations: choices
   Chooser
-    choices = choices
-    resultList = shoplist
+    choices: choices
+    resultList: shoplist
   Multiplexer2
-    list = shoplist
-    others = choices
-    hostedParticle = AlsoOn
-    consume annotation as annotationSlot
+    list: shoplist
+    others: choices
+    hostedParticle: AlsoOn
+    annotation: consumes annotationSlot
 

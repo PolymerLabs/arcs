@@ -1,2 +1,2 @@
 particle Ml5 in './js/Ml5.js'
-  consume root
+  root: consumes Slot

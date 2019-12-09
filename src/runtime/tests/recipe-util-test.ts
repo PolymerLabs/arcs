@@ -19,16 +19,16 @@ describe('recipe-util', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
-        out S a
+        a: writes S
       particle B
-        out S b
+        b: writes S
 
       recipe Recipe
-        map as handle1
+        handle1: map *
         A
-          a -> handle1
+          a: writes handle1
         B
-          b -> handle1`);
+          b: writes handle1`);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
@@ -44,12 +44,12 @@ describe('recipe-util', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle B
-        out S b
+        b: writes S
 
       recipe Recipe
-        map as handle1
+        handle1: map *
         B
-          b -> handle1`);
+          b: writes handle1`);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
@@ -63,23 +63,23 @@ describe('recipe-util', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
-        out S a
+        a: writes S
       particle B
-        out S b
+        b: writes S
       particle C
-        out S c
+        c: writes S
 
       recipe Recipe
-        map as handle1
-        map as handle2
+        handle1: map *
+        handle2: map *
         A
-          a -> handle1
+          a: writes handle1
         B
-          b -> handle1
+          b: writes handle1
         A
-          a -> handle2
+          a: writes handle2
         C
-          c -> handle2`);
+          c: writes handle2`);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
       {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}, 'C': {'c': {handle: 'v'}}});
@@ -103,7 +103,7 @@ describe('recipe-util', () => {
       particle B
 
       recipe Recipe
-        map as h1
+        h1: map *
         A
         B`);
     const recipe = manifest.recipes[0];
@@ -119,16 +119,16 @@ describe('recipe-util', () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A
-        out S a
+        a: writes S
       particle B
-        out S b
+        b: writes S
 
       recipe Recipe
-        map as h1
+        h1: map *
         A
-          a -> //
+          a: writes //
         B
-          b -> //
+          b: writes //
         `);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B'], ['h'],
@@ -146,26 +146,26 @@ describe('recipe-util', () => {
       schema S
       schema T
       particle A
-        inout S s
-        inout T t
+        s: reads writes S
+        t: reads writes T
 
       recipe Recipe0
-        use 'id-s1' as h0
-        use 'id-t0' as h1
-        use 'id-t1' as h2
+        h0: use 'id-s1'
+        h1: use 'id-t0'
+        h2: use 'id-t1'
         A
-          s = h0
-          t = h1
+          s: h0
+          t: h1
         A
-          s = h0
-          t = h1
+          s: h0
+          t: h1
 
       recipe Recipe1
-        use 'id-s2' as h0
-        use 'id-t1' as h1
+        h0: use 'id-s2'
+        h1: use 'id-t1'
         A
-          s = h0
-          t = h1
+          s: h0
+          t: h1
     `);
     assert.isFalse(RecipeUtil.matchesRecipe(manifest.recipes[0], manifest.recipes[1]));
   });

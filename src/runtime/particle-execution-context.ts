@@ -181,16 +181,26 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
   getStorageEndpoint(storageProxy: StorageProxyNG<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
-    let id: Promise<number>;
+    let idPromise: Promise<number> = null;
+    let id: number = null;
     return {
       async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
-        message.id = await id;
+        if (idPromise == null) {
+          throw new Error('onProxyMessage called without first calling setCallback!');
+        }
+        if (id == null) {
+          id = await idPromise;
+          if (id == null) {
+            throw new Error('undefined id received .. somehow');
+          }
+        }
+        message.id = id;
         return new Promise((resolve) =>
           pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
       },
 
       setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-        id = new Promise<number>((resolve) =>
+        idPromise = new Promise<number>((resolve) =>
           pec.apiPort.Register(storageProxy, x => storageProxy.onMessage(x), retId => resolve(retId)));
       },
       reportExceptionInHost(exception: PropagatedException): void {
@@ -205,9 +215,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       async createHandle(type: Type, name: string, hostParticle?: Particle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
-            const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId});
+            const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId: Math.random() + '', particle: hostParticle});
             resolve(handle);
-            if (hostParticle) {
+            if (hostParticle && !Flags.useNewStorageStack) {
               proxy.register(hostParticle, handle);
             }
           }, arcId, type, name));
@@ -359,6 +369,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap,
                              registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[], p) {
     await particle.callSetHandles(handleMap, err => {
+      if (typeof err === 'string') {
+        err = new Error(err); // Convert to a real error.
+      }
       const exc = new UserException(err, 'setHandles', id, spec.name);
       this.apiPort.ReportExceptionInHost(exc);
     });
@@ -366,7 +379,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       if (proxy instanceof StorageProxy) {
         proxy.register(particle, handle);
       } else if (proxy instanceof StorageProxyNG) {
-        proxy.registerHandle(handle as HandleNG<CRDTTypeRecord>);
+        // NG Handles appear to register themselves on construction
       } else {
         throw new Error('Expecting a StorageProxy');
       }

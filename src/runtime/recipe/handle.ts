@@ -12,18 +12,16 @@ import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {Schema} from '../schema.js';
-import {Type, SlotType, TypeVariable} from '../type.js';
+import {Type, TypeVariable} from '../type.js';
 import {Slot} from './slot.js';
-import {SlotInfo} from '../slot-info.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Fate, Direction} from '../manifest-ast-nodes.js';
+import {Fate, DirectionPreSlandles} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
-import {Flags} from '../flags.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -213,7 +211,7 @@ export class Handle implements Comparable<Handle> {
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
 
-  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
+  static effectiveType(handleType: Type, connections: {type?: Type, direction?: DirectionPreSlandles}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
@@ -322,25 +320,14 @@ export class Handle implements Comparable<Handle> {
     // TODO: type? maybe output in a comment
     const result: string[] = [];
     const name = (nameMap && nameMap.get(this)) || this.localName;
-    if (Flags.defaultToPreSlandlesSyntax) {
-      result.push(this.fate);
-      if (this.id) {
-        result.push(`'${this.id}'`);
-      }
-      result.push(...this.tags.map(a => `#${a}`));
-      if (name) {
-        result.push(`as ${name}`);
-      }
-    } else {
-      if (name) {
-        result.push(`${name}:`);
-      }
-      result.push(this.fate);
-      if (this.id) {
-        result.push(`'${this.id}'`);
-      }
-      result.push(...this.tags.map(a => `#${a}`));
+    if (name) {
+      result.push(`${name}:`);
     }
+    result.push(this.fate);
+    if (this.id) {
+      result.push(`'${this.id}'`);
+    }
+    result.push(...this.tags.map(a => `#${a}`));
 
     // Debug information etc.
     if (this.type) {

@@ -3,35 +3,20 @@
 
 
 
-# arcs
+# Arcs
 
-A hosted version of Arcs is available in both tagged and bleeding edge forms.
-Neither is stable -- the runtime, database and front-end are all iterating rapidly.
+A hosted version of Arcs is available at https://live.arcs.dev.
 
 [TypeDoc](https://live.arcs.dev/dist/apidocs/)
 generated documentation is available for Arcs Runtime.
 
-## Tagged Releases
-
-Tagged release URLs have the form
-`https://cdn.rawgit.com/PolymerLabs/arcs-live/<release_number>/shells/web-shell`
-(the list of releases is
-[here](https://github.com/PolymerLabs/arcs-live/releases)). A tagged release (with an older
-path due to a previous version of shell code) is
-[v0.4.1](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.4.1/shell/apps/web/index.html).
-
-Bleeding edge often works and is available on:
-https://live.arcs.dev/
-
-
 ## Install
 
-Arcs is developed with a recent version of Node (v10.0.0 at the time of this
-writing), in particular as we use new ES6 features. You can check our [Travis
+Arcs is developed with a recent version of Node. You can check our [Travis
 config](https://github.com/PolymerLabs/arcs/blob/master/.travis.yml) to see what
 version is used for automated build status. More recent versions should work,
 but if for example you see test errors on a version that's a full release later
-(ex. v11+) you may want to try rolling back to an earlier version. We welcome
+you may want to try rolling back to an earlier version. We welcome
 patches that will allow more recent versions to operate, ideally without
 requiring an upgrade to our current version.
 
@@ -129,7 +114,7 @@ After the full build (`npm install && tools/sigh`) run: (note that `npm
 start` will block, so you'll have to run the second command in a new shell):
 
 ```
-$ npm start
+$ tools/sigh devServer
 ```
 
 Then open `http://localhost:8786/shells/web-shell/` in a web browser
@@ -150,16 +135,45 @@ See [devtools](devtools/README.md).
 ## IDE Setup
 Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
 
-### IntelliJ
+### Android Studio
 
-- Install IntelliJ, community edition is sufficient.
-- Open IntelliJ and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
-- Upon restarting IntelliJ, click "Import Bazel Project"
+- Install Android Studio. When prompted, install the needed SDK Android 10 (SDK version 29).
+- Open Android Studio and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
+- Upon restarting Android, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots. 
 - Navigate to the arcs folder, and select the `.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
+
+If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
+- Go to Android Studio -> Preferences -> Bazel Settings
+- Find the Bazel binary location, and click the three dots next to it.
+- Navigate to the correct location, and select the Bazel binary.
+  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
+- Click "Apply" then "OK"
+- Re-import the project by hitting the bazel logo in the upper right hand corner.
+
+### IntelliJ
+
+- Install IntelliJ. Community Edition is sufficient.
+- Open IntelliJ and install the Bazel extension.
+- Upon restarting IntelliJ, click "Import Bazel Project"
+- Select the workspace by navigating to the arcs folder, then click "Next".
+- Choose "Import project view file" and click on the three dots. 
+- Navigate to the arcs folder, and select the `intellij.bazelproject` file. Click "OK".
+- Click "Next".
+- Click "Finish".
+
+If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
+- Go to IntelliJ IDEA -> Preferences -> Bazel Settings
+- Find the Bazel binary location, and click the three dots next to it.
+- Navigate to the correct location, and select the Bazel binary.
+  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
+- Click "Apply" then "OK"
+- Re-import the project by hitting the bazel logo in the upper right hand corner.
+
+If you get an error related to the Android SDK not being installed, follow the prompts and then restart IntelliJ.
 
 ## Testing
 
@@ -168,26 +182,19 @@ commands will install all packages, run a build, start a background server,
 run all the tests, and kill the background server:
 
 ```
-$ npm install
-$ npm run test-with-start
+$ tools/sigh test && tools/sigh testShells && tools/sigh testWdioShells
+$ bazel test src_kt/... bazel test src/...
 ```
 
 There are additional targets provided to run subsets of those commands.
 
-- `npm start`: spins up a server (and blocks), serving on port 8786.
+- `tools/sigh devServer`: spins up a server (and blocks), serving on port 8786.
 - `./tools/sigh`: run a subset of tests and build packed artifacts.
-- `npm test`: run all tests (using currently built artifacts) against an
-  already-running server (assumed to be port 8786).
-- `npm run test-no-web`: run all non-web tests.
 
-To run a specific Selenium test using Mocha's 'grep' capability:
-
-- In one terminal: `npm start`
-- In another: `npm run test-wdio-shells -- --mochaOpts.grep 'regex'`
-
-This also works for unit tests: `./tools/sigh test --grep 'regex'`. In addition,
-for unit tests you can run only a single test case by using `it.only()` instead
-of `it()`, or a single suite using `describe.only()` instead of `describe()`.
+To run a specific Selenium test using Mocha's 'grep' capability: 
+`./tools/sigh test --grep 'regex'`. In addition, for unit tests you can run
+only a single test case by using `it.only()` instead of `it()`, or a single
+suite using `describe.only()` instead of `describe()`.
 
 ### WebAssembly tests
 
@@ -228,14 +235,15 @@ It will wait for you to attach your debugger before running the tests. Open
 heading. You can use `Ctrl-P` to open files (you may need to add the `build`
 folder to your workspace first). Hit "resume" to start running the unit tests.
 
-### Debugging Selenium Failures
+### Debugging WebDriver Failures
 
-Selenium failures are often easy to cause due to seemingly unrelated changes,
+WebDriver failures are often easy to cause due to seemingly unrelated changes,
 and difficult to diagnose.
 
-There are 2 main avenues to debug them in this system. The first is to have
-the browser run in a graphical manner (as opposed to the default headless
-configuration). The second is to actually debug the running selenium instance.
+There are 2 main avenues to debug them in this system. The first is to
+have the browser run in a graphical manner (as opposed to the default
+headless configuration). The second is to actually debug the running
+WebDriver instance.
 
 There are some debugging hints (code and configuration you can uncomment to
 make debugging easier) in `test/specs/starter-test.js` and `test/wdio.conf.js`
@@ -294,8 +302,7 @@ execution so you can debug in the browser. It may be worthwhile to add several
 will exit the debugger and continue execution of the test).
 
 At that point you can open up DevTools in the browser to debug the current
-state, or inspect it visually. Some utilities (those in `selenium-utils.js`,
-including `pierceShadows`) have already been loaded.
+state, or inspect it visually.
 
 There are also some commands available natively at that point, including
 `.help` and the `browser` variable (including methods such as
@@ -348,44 +355,3 @@ Integration](https://nodejs.org/api/debugger.html) which may be easier to use
 Adding `debugger;` statements may be the easiest way to activate the debugger.
 Using `browser.debug();` statements to pause execution to give you time to
 attach a debugger may be helpful as well.
-
-## Releasing
-
-Our release process is pretty minimal, but requires a few steps across the
-[arcs](https://github.com/PolymerLabs/arcs) and
-[arcs-live](https://github.com/PolymerLabs/arcs-live) repositories.
-
-Our standard is to have the stable versions start with clean (empty)
-databases, but to continue a single mainline/unstable database.
-
-1) Decide what your new mainline and stable versions will be. For an example
-  here, I'll use `0.3.5-alpha` as the old mainline, `0.3.6-alpha` as the new
-  mainline, and `0.3.5` as the new stable version.
-
-1) In order to keep the mainline data roughly consistent, clone the data at
-  the current firebase key to the new mainline release number. To do this, I
-  used the firebase web interface to "Export JSON" for the current tree, and
-  "Import JSON" to the new tree.
-
-  For example, clone from `<snip>/database/arcs-storage/data/0_3_5-alpha` to
-  `<snip>/database/arcs-storage/data/0_3_6-alpha`.
-
-  If the web interface is read-only due to too many nodes, you can visit the
-  new version's URL directly to Import JSON.
-
-1) Update the version in `shell/apps/common/firebase-config.js` to a
-  reasonable stable version (in our example, `0.3.5`). See
-  [#1114](https://github.com/PolymerLabs/arcs/pull/1114) for an example.
-  Update the links README.md (this file) to reflect this new version.
-
-1) Once the deploy is done to
-  [arcs-live](https://github.com/PolymerLabs/arcs-live), create a new
-  [release](https://github.com/PolymerLabs/arcs-live/releases). Note that we
-  remap the versions slightly between the two systems for legibility in
-  different systems - a version of `0_3_5` (in `firebase-config.js`) becomes
-  `v0.3.5` (in the arcs-live repo).
-
-1) Update the version in `shell/apps/common/firebase-config.js` to the
-  new mainline development version (perhaps using the `-alpha` suffix; in our
-  example, `0.3.6-alpha`).  See
-  [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.

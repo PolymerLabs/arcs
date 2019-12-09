@@ -737,27 +737,27 @@ resource GameIdJson
   [{"gameId": "${gameId}"}]
 
 recipe
-  map 'BOXED_avatar' as avatars
-  map 'BOXED_board' as boxedBoards
-  map 'BOXED_stats' as boxedStats
-  map 'BOXED_move' as boxedMoves
-  map GameId as gameId
-  use #identities as people
-  use #user as user
-  use '{{item_id}}' as handle1
-  slot '{{slot_id}}' as slot1
+  avatars: map 'BOXED_avatar'
+  boxedBoards: map 'BOXED_board'
+  boxedStats: map 'BOXED_stats'
+  boxedMoves: map 'BOXED_move'
+  gameId: map GameId
+  people: use #identities
+  user: use #user
+  handle1: use '{{item_id}}'
+  slot1: slot '{{slot_id}}'
   {{other_handles}}
   ${renderParticle.name}
-    ${renderParticle.connections[0].name} <- handle1
-    boxedBoards <- boxedBoards
-    boxedStats <- boxedStats
-    boxedMoves <- boxedMoves
-    gameId <- gameId
-    avatars <- avatars
-    people <- people
-    user <- user
+    ${renderParticle.connections[0].name}: reads handle1
+    boxedBoards: reads boxedBoards
+    boxedStats: reads boxedStats
+    boxedMoves: reads boxedMoves
+    gameId: reads gameId
+    avatars: reads avatars
+    people: reads people
+    user: reads user
     {{other_connections}}
-    consume item as slot1
+    item: consumes slot1
       `.trim();
     }
     */

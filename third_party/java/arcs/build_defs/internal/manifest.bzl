@@ -6,6 +6,12 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
 
     Generates a filegroup that can be included in e.g. an Android assets folder.
+
+    Args:
+      name: the name of the target to create
+      srcs: list of Arcs manifest files to include
+      deps: list of dependencies (other arcs_manifest targets)
+      visibility: list of visibilities
     """
     for src in srcs:
         if not src.endswith(".arcs"):

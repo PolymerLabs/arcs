@@ -25,13 +25,13 @@ describe('Arc integration', () => {
     });
     const manifest = await Manifest.parse(`
       schema Thing
-        Text name
+        name: Text
       particle P in 'p.js'
-        inout Thing thing
+        thing: reads writes Thing
       recipe
-        copy 'mything' as thingHandle
+        thingHandle: copy 'mything'
         P
-          thing = thingHandle
+          thing: thingHandle
       resource ThingResource
         start
         [

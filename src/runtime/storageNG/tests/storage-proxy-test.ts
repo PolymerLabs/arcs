@@ -157,8 +157,17 @@ describe('NoOpStorageProxy', () => {
       proto = Object.getPrototypeOf(proto);
     }
 
+    /**
+     * Private properties can't be overidden; nor does it really make any sense
+     * to do so as they can only be called from within the class.
+     */
+    const privateProperties = ['setSynchronized', 'clearSynchronized'];
+
     const noOpProperties = Object.getOwnPropertyNames(Object.getPrototypeOf(noOpStorageProxy));
     properties.forEach(property => {
+      if (privateProperties.includes(property)) {
+        return;
+      }
       assert(noOpProperties.indexOf(property) !== -1, 'Missing function: ' + property);
     });
   });

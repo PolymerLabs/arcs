@@ -9,7 +9,7 @@
 import '../Product.schema'
 
 particle ProductIsBook in 'source/ProductIsBook.js'
-  in Product product
-  out Product book
+  product: reads Product
+  book: writes Product
   description `filter books`
     book `book`

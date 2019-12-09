@@ -13,39 +13,39 @@ import '../Restaurants/SLANDLESRestaurantDisplay.arcs'
 import '../Restaurants/SLANDLESReservations.arcs'
 
 recipe SlandleRestaurantsDemo
-  create as location
-  create as restaurants
-  create #restaurant as selected
-  create #event as event
-  create as descriptions
-  `slot #toproot as toproot
+  location: create *
+  restaurants: create *
+  selected: create #restaurant
+  event: create #event
+  descriptions: create *
+  toproot: `slot #toproot
   SlandleReservationForm
-    restaurant = selected
-    event = event
-    action `consume toproot
+    restaurant: selected
+    event: event
+    action: `consumes toproot
   SlandleGeolocate
-    location = location
+    location: location
   SlandleRestaurantFind
-    location = location
-    restaurants = restaurants
+    location: location
+    restaurants: restaurants
   SlandleSelectableTiles
-    list = restaurants
-    selected = selected
+    list: restaurants
+    selected: selected
   SlandleTileMultiplexer
-    list = restaurants
-    hostedParticle = SlandleRestaurantTile
+    list: restaurants
+    hostedParticle: SlandleRestaurantTile
   SlandleAnnotationMultiplexer
-    list = restaurants
-    annotation = event
-    hostedParticle = SlandleReservationAnnotation
+    list: restaurants
+    annotation: event
+    hostedParticle: SlandleReservationAnnotation
   SlandleDetailSlider
-    selected = selected
+    selected: selected
   SlandleRestaurantDetail
-    restaurant = selected
-    content `consume
-      detailAction `provide actionSlot
+    restaurant: selected
+    content: `consumes
+      detailAction: `provides actionSlot
   SlandleReservationForm
-    restaurant = selected
-    event = event
-    action `consume actionSlot
+    restaurant: selected
+    event: event
+    action: `consumes actionSlot
   description `[demo] find restaurants and make reservations near ${RestaurantFind.location}`

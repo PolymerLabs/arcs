@@ -2,17 +2,17 @@ import './Ingestion.arcs'
 import './schemas/Json.arcs'
 
 particle SuggestPerson in './source/SuggestPerson.js'
-  in [IncomingEntity] recentEntities
-  out Json suggestion
-  consume root
+  recentEntities: reads [IncomingEntity]
+  suggestion: writes Json
+  root: consumes Slot
 
 //particle RequireQuery in './source/Noop.js'
-//  in IncomingEntity query
+//  query: reads IncomingEntity
 
 recipe PersonAutofill &autofill
-  map 'pipe-entities' as recentEntities
-  //create as recentEntities
-  create as suggestion
+  recentEntities: map 'pipe-entities'
+  //recentEntities: create *
+  suggestion: create *
   SuggestPerson
-    recentEntities = recentEntities
-    suggestion = suggestion
+    recentEntities: recentEntities
+    suggestion: suggestion

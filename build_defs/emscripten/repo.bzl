@@ -4,10 +4,13 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 # 1. Point to a new commit hash for the emsdk git repo.
 # 2. Choose a newer version of Emscripten to install. Versions numbers are
 #    listed here: https://github.com/emscripten-core/emsdk/blob/master/emscripten-releases-tags.txt
-## The directory structure might change between versions without warning, so
+# 3. You might also need to update the cache. See `emscripten_cache/README.md`
+#    for instructions.
+#
+# The directory structure might change between versions without warning, so
 # the emsdk.BUILD file might need updating too (also, the bundled version of
 # node might change too).
-_emsdk_commit_hash = "efc64876db1473312587a3f346be000a733bc16d"
+_emsdk_commit_hash = "a5082b232617c762cb65832429f896c838df2483"
 _emscripten_version = "1.38.43"
 
 def emsdk_repo():
@@ -20,7 +23,7 @@ def emsdk_repo():
     new_git_repository(
         name = "emsdk",
         commit = _emsdk_commit_hash,
-        shallow_since = "1567538206 -0700",
+        shallow_since = "1573752678 -0800",
         remote = "https://github.com/emscripten-core/emsdk.git",
         build_file = "//build_defs/emscripten:emsdk.BUILD",
         patch_cmds = [

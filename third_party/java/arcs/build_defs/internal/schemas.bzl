@@ -31,11 +31,11 @@ def _run_schema2wasm(name, src, out, language_name, language_flag, package):
                    language_flag + " " +
                    "--outdir $(dirname {OUT}) " +
                    "--outfile $(basename {OUT}) " +
-                   "--package " + package  + " " +
+                   "--package " + package + " " +
                    "{SRC}",
     )
 
-def arcs_cc_schema(name, src, out = None, package = 'arcs'):
+def arcs_cc_schema(name, src, out = None, package = "arcs"):
     """Generates a C++ header file for the given .arcs schema file."""
     out = out or _output_name(src, ".h")
     _run_schema2wasm(
@@ -44,11 +44,17 @@ def arcs_cc_schema(name, src, out = None, package = 'arcs'):
         out = out,
         language_flag = "--cpp",
         language_name = "C++",
-        package = package
+        package = package,
     )
 
-def arcs_kt_schema(name, srcs, package = 'arcs'):
-    """Generates a Kotlin file for the given .arcs schema file."""
+def arcs_kt_schema(name, srcs, package = "arcs"):
+    """Generates a Kotlin file for the given .arcs schema file.
+
+    Args:
+      name: name of the target to create
+      srcs: list of Arcs manifest files to include
+      package: package name to use for the generated source code
+    """
     outs = []
     for src in srcs:
         out = _output_name(src, "_GeneratedSchemas.kt")

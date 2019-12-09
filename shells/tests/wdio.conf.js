@@ -26,7 +26,7 @@ const debug =
   || process.argv.includes('--wdio-debug')
   || process.env['DEBUG'] === 'true'
   ;
-const chromeArgs = debug ? [] : ['--headless'];
+const chromeArgs = debug ? [] : ['--headless', '--disable-extensions', '--no-sandbox'];
 
 exports.config = {
   //
@@ -50,7 +50,7 @@ exports.config = {
   // directory is where your package.json resides, so `wdio` will be called from there.
   //
   specs: [
-    './shells/tests/specs/*.js'
+    './shells/tests/specs/*test.js'
   ],
   // Patterns to exclude.
   exclude: [

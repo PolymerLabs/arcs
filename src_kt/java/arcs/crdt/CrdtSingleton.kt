@@ -26,7 +26,7 @@ class CrdtSingleton<T : Referencable>(
     initialVersion: VersionMap = VersionMap(),
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
-) : CrdtModel<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?> {
+) : CrdtModel<Data<T>, CrdtSingleton.IOperation<T>, T?> {
     override val versionMap: VersionMap
         get() = set._data.versionMap.copy()
     private var set: CrdtSet<T>
@@ -87,7 +87,7 @@ class CrdtSingleton<T : Referencable>(
     override fun updateData(newData: Data<T>) = set.updateData(newData)
 
     /** Makes a deep copy of this [CrdtSingleton]. */
-    internal fun copy(): CrdtSingleton<T> = CrdtSingleton(singletonToCopy = this)
+    /* internal */ fun copy(): CrdtSingleton<T> = CrdtSingleton(singletonToCopy = this)
 
     override fun toString(): String = "CrdtSingleton(data=${set.data})"
 
@@ -135,6 +135,16 @@ class CrdtSingleton<T : Referencable>(
                 // After removal of all existing values, we simply need to add the new value.
                 return set.applyOperation(Add(clock, actor, value))
             }
+
+            override fun equals(other: Any?): Boolean =
+                other is Update<*> &&
+                    other.clock == clock &&
+                    other.actor == actor &&
+                    other.value == value
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Update($clock, $actor, $value)"
         }
 
         /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
@@ -151,6 +161,15 @@ class CrdtSingleton<T : Referencable>(
                 removeOps.forEach { set.applyOperation(it) }
                 return true
             }
+
+            override fun equals(other: Any?): Boolean =
+                other is Clear<*> &&
+                    other.clock == clock &&
+                    other.actor == actor
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
         }
     }
 

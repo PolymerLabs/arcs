@@ -1,17 +1,17 @@
 import '../schemas/TVMazeShow.arcs'
 
 particle SlandleTVMazeShowActions in './js/TVMazeShowActions.js'
-  in TVMazeShow show
-  inout [TVMazeShow] shows
-  `consume Slot action
+  show: reads TVMazeShow
+  shows: reads writes [TVMazeShow]
+  action: `consumes Slot
 
 interface SlandleHostedActionParticleInterface
-  in TVMazeShow show
-  inout [TVMazeShow] shows
-  `consume Slot action
+  show: reads TVMazeShow
+  shows: reads writes [TVMazeShow]
+  action: `consumes Slot
 
 particle SlandleActionMultiplexer in '../../List/source/Multiplexer.js'
-  host SlandleHostedActionParticleInterface hostedParticle
-  in [~a] list
-  in [TVMazeShow] shows
-  `consume [Slot] action
+  hostedParticle: hosts SlandleHostedActionParticleInterface
+  list: reads [~a]
+  shows: reads [TVMazeShow]
+  action: `consumes [Slot]

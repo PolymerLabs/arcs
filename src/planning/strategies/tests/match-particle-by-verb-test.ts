@@ -17,37 +17,39 @@ import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
+import {Entity} from '../../../runtime/entity.js';
+
 describe('MatchParticleByVerb', () => {
   const manifestStr = `
     schema Energy
     schema Height
     particle SimpleJumper &jump in 'A.js'
-      in Energy e
-      out Height h
+      e: reads Energy
+      h: writes Height
       modality dom
-      consume root
+      root: consumes Slot
     particle StarJumper &jump in 'AA.js'
-      in Energy e
-      inout Height h
+      e: reads Energy
+      h: reads writes Height
       modality dom
-      consume root
+      root: consumes Slot
     particle VoiceStarJumper &jump in 'AA.js'  // wrong modality
-      in Energy e
-      out Height h
+      e: reads Energy
+      h: writes Height
       modality voice
-      consume root
+      root: consumes Slot
     particle GalaxyJumper &jump in 'AA.js'  // wrong connections
-      in Energy e
+      e: reads Energy
       modality dom
-      consume root
+      root: consumes Slot
     particle StarFlyer &fly in 'AA.js'  // wrong verb
 
     recipe
-      use as height
-      use as energy
+      height: use *
+      energy: use *
       &jump
-        * = height
-        * <- energy
+        height
+        reads energy
   `;
 
   it('particles by verb strategy', async () => {
@@ -65,8 +67,8 @@ describe('MatchParticleByVerb', () => {
   it('particles by verb recipe fully resolved', async () => {
     const manifest = (await Manifest.parse(manifestStr));
     const recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
-    recipe.handles[1].mapToStorage({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
+    recipe.handles[0].mapToStorage({id: 'test1', type: Entity.createEntityClass(manifest.findSchemaByName('Height'), null).type});
+    recipe.handles[1].mapToStorage({id: 'test2', type: Entity.createEntityClass(manifest.findSchemaByName('Energy'), null).type});
 
     const arc = StrategyTestHelper.createTestArc(manifest, {modalityName: Modality.Name.Dom});
 

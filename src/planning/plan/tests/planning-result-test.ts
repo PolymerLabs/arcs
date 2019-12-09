@@ -10,57 +10,67 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Recipe} from '../../../runtime/recipe/recipe.js';
 import {Search} from '../../../runtime/recipe/search.js';
+import {Manifest} from '../../../runtime/manifest.js';
 import {Relevance} from '../../../runtime/relevance.js';
-import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
+import {Runtime} from '../../../runtime/runtime.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
+import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 describe('planning result', () => {
   async function testResultSerialization(manifestFilename) {
-    const helper = await PlanningTestHelper.createAndPlan({manifestFilename});
-    assert.isNotEmpty(helper.suggestions);
-    helper.suggestions.forEach(s => {
-      s.relevance = Relevance.create(helper.arc, s.plan);
-      s.relevance.apply(new Map([[s.plan.particles[0], [1]]]));
-    });
-    const result = new PlanningResult(helper.envOptions);
-    result.merge({suggestions: helper.suggestions}, helper.arc);
+    const loader = new StubLoader({});
+    const context = await Manifest.load(manifestFilename, loader);
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const suggestions = await StrategyTestHelper.planForArc(arc);
+
+    assert.isNotEmpty(suggestions);
+    const result = new PlanningResult({context, loader});
+    result.merge({suggestions}, arc);
 
     const serialization = result.toLiteral();
     assert(serialization.suggestions);
-    const resultNew = new PlanningResult(helper.envOptions);
+    const resultNew = new PlanningResult({context, loader});
     assert.isEmpty(resultNew.suggestions);
     await resultNew.fromLiteral({suggestions: serialization.suggestions});
-    assert.isTrue(resultNew.isEquivalent(helper.suggestions));
+    assert.isTrue(resultNew.isEquivalent(suggestions));
   }
   it('serializes and deserializes Products recipes', async () => {
     await testResultSerialization('./src/runtime/tests/artifacts/Products/Products.recipes');
   });
 
   it('appends search suggestions', async () => {
-    const helper = await PlanningTestHelper.createAndPlan(
-        {manifestFilename: './src/runtime/tests/artifacts/Products/Products.recipes'});
-    const result = new PlanningResult(helper.envOptions);
+    const loader = new StubLoader({});
+    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);
+    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const suggestions = await StrategyTestHelper.planForArc(arc);
+
+    const result = new PlanningResult({loader, context});
     // Appends new suggestion.
-    assert.isTrue(result.merge({suggestions: helper.suggestions}, helper.arc));
+    assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 1);
 
     // Tries to append already existing suggestions.
-    assert.isFalse(result.merge({suggestions: helper.suggestions}, helper.arc));
+    assert.isFalse(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 1);
 
     // init results.
-    const otherSuggestion = new Suggestion(helper.suggestions[0].plan, 'other-hash', 0, helper.arc);
+    const otherSuggestion = new Suggestion(suggestions[0].plan, 'other-hash', 0, arc);
     otherSuggestion.descriptionByModality['text'] = 'other description';
-    helper.suggestions.push(otherSuggestion);
-    assert.isTrue(result.merge({suggestions: helper.suggestions}, helper.arc));
+    suggestions.push(otherSuggestion);
+    assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 2);
 
-    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, helper.arc);
+    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, arc);
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
-    helper.suggestions.push(suggestionWithSearch);
-    assert.isTrue(result.merge({suggestions: helper.suggestions}, helper.arc));
+    suggestions.push(suggestionWithSearch);
+    assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 2);
     assert.deepEqual(result.suggestions[1].searchGroups, [[''], ['hello', 'world']]);
   });
@@ -69,41 +79,43 @@ describe('planning result', () => {
 describe('planning result merge', () => {
   const commonManifestStr = `
 schema Thing
-  Text foo
+  foo: Text
 resource ThingJson
   start
   [{"foo": "bar"}]
 store ThingStore of Thing 'thing-id-0' in ThingJson
 particle P1
-  out Thing thing
+  thing: writes Thing
 particle P2
-  in Thing thing
+  thing: reads Thing
     `;
   const recipeOneStr = `
 recipe R1
-  create as thingHandle
+  thingHandle: create *
   P1
-    thing -> thingHandle
+    thing: writes thingHandle
     `;
   const recipeTwoStr = `
 recipe R2
-  map 'thing-id-0' as thingHandle
+  thingHandle: map 'thing-id-0'
   P2
-    thing <- thingHandle
+    thing: reads thingHandle
       `;
   const recipeThreeStr = `
 recipe R3
-  copy 'thing-id-0' as thingHandle
+  thingHandle: copy 'thing-id-0'
   P1
-    thing -> thingHandle
+    thing: writes thingHandle
   P2
-    thing <- thingHandle
+    thing: reads thingHandle
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
-    const helper = await PlanningTestHelper.create();
+    const loader = new StubLoader({});
+    const runtime = new Runtime(loader, FakeSlotComposer);
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
-      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(helper.arc, plan));
+      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arc, plan));
       suggestion.descriptionByModality['text'] = plan.name;
       for (const handle of plan.handles) {
         if (handle.id) {
@@ -113,17 +125,17 @@ recipe R3
       return suggestion;
     };
     const manifestToResult = async (manifestStr) =>  {
-      const manifest = await PlanningTestHelper.parseManifest(manifestStr, helper.loader);
-      const result = new PlanningResult(helper.envOptions);
+      const manifest = await Manifest.parse(manifestStr, {loader, fileName: ''});
+      const result = new PlanningResult({context: arc.context, loader});
 
       const suggestions: Suggestion[] = await Promise.all(
           manifest.recipes.map(async plan => await planToSuggestion(plan)) as Promise<Suggestion>[]
       );
-      result.merge({suggestions}, helper.arc);
+      result.merge({suggestions}, arc);
       return result;
     };
     return {
-      helper,
+      arc,
       result1: await manifestToResult(manifestStr1),
       result2: await manifestToResult(manifestStr2)
     };
@@ -131,27 +143,27 @@ recipe R3
 
   it('merges suggestions unchanged', async () => {
     // merging equivalent suggestions.
-    const {helper, result1, result2} = await prepareMerge(
+    const {arc, result1, result2} = await prepareMerge(
         `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`,
         `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`);
     assert.lengthOf(result1.suggestions, 2);
-    assert.isFalse(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.isFalse(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
 
     // merging empty suggestions into existing ones.
-    assert.isFalse(result1.merge({suggestions: []}, helper.arc));
+    assert.isFalse(result1.merge({suggestions: []}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
   });
 
   it('merges suggestions union', async () => {
-    const {helper, result1, result2} = await prepareMerge(
+    const {arc, result1, result2} = await prepareMerge(
         `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`,
         `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
     assert.lengthOf(result1.suggestions, 2);
     assert.lengthOf(result2.suggestions, 2);
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 3);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2', 'R3']);
   });
@@ -159,39 +171,39 @@ recipe R3
   it('merges suggestions union with outdated suggestions', async () => {
     const recipeFourStr = `
 recipe R4
-  create as thing1Handle
-  create as thing2Handle
+  thing1Handle: create *
+  thing2Handle: create *
   P1
-    thing -> thing1Handle
+    thing: writes thing1Handle
   P1
-    thing -> thing1Handle
+    thing: writes thing1Handle
     `;
-    const {helper, result1, result2} = await prepareMerge(
+    const {arc, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeOneStr}${recipeTwoStr}${recipeThreeStr}`,
       `${commonManifestStr}${recipeThreeStr}${recipeFourStr}`);
     assert.lengthOf(result1.suggestions, 3);
     assert.lengthOf(result2.suggestions, 2);
     // All recipes using store 'thing-id-0' are outdated
-    helper.arc.getVersionByStore = () =>  ({'thing-id-0': 1});
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    arc.getVersionByStore = () =>  ({'thing-id-0': 1});
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R4']);
   });
 
   it('merges all outdated suggestions', async () => {
-    const {helper, result1, result2} = await prepareMerge(
+    const {arc, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeTwoStr}`,
       `${commonManifestStr}${recipeThreeStr}`);
     assert.lengthOf(result1.suggestions, 1);
     assert.lengthOf(result2.suggestions, 1);
     // All recipes using store 'thing-id-0' are outdated
-    helper.arc.getVersionByStore = () =>  ({'thing-id-0': 1});
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    arc.getVersionByStore = () =>  ({'thing-id-0': 1});
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.isEmpty(result1.suggestions);
   });
 
   it('merges same suggestion with newer store versions', async () => {
-    const {helper, result1, result2} = await prepareMerge(
+    const {arc, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeTwoStr}`,
       `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
     assert.lengthOf(result1.suggestions, 1);
@@ -199,7 +211,7 @@ recipe R4
 
     // Increment store 'thing-id-0' version in result1.
     result2.suggestions[0].versionByStore['thing-id-0'] = 1;
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.strictEqual(result1.suggestions[0].versionByStore['thing-id-0'], 1);
   });

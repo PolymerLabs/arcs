@@ -18,7 +18,7 @@ particle GiftList in 'source/GiftList.js'
 
 particle Arrivinator in 'source/Arrivinator.js'
   product: reads Product
-  annotation: consumes? Slot
+  annotation: consumes Slot
   description `estimate arrival date`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`
@@ -26,7 +26,7 @@ particle Arrivinator in 'source/Arrivinator.js'
 
 particle AlternateShipping in 'source/AlternateShipping.js'
   product: reads Product
-  annotation: consumes? Slot
+  annotation: consumes Slot
   description `find alternate shipping for products which won't make it on time`
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.

@@ -2,11 +2,11 @@ import '../SearchBar.arcs'
 import '../StyleSheet.arcs'
 
 recipe SearchBar
-  create #volatile as query
-  slot #toproot as parent
+  query: create #volatile
+  parent: slot #toproot
   StyleSheet
-    consume parent as parent
-      provide container as container
+    parent: consumes parent
+      container: provides container
   SearchBar
-    query = query
-    consume toproot as container
+    query: query
+    toproot: consumes container

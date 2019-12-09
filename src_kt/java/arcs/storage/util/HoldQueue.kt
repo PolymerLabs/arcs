@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class HoldQueue {
     private val mutex = Mutex()
-    internal val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
+    /* internal */ val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
 
     /**
      * Enqueues a collection of [Entities] into the [HoldQueue]. When they are ready, [onRelease]
@@ -78,7 +78,7 @@ class HoldQueue {
     data class Entity(val id: ReferenceId, val version: VersionMap)
 
     // Internal for testing.
-    internal data class Record(
+    /* internal */ data class Record(
         val ids: MutableMap<ReferenceId, VersionMap>,
         val onRelease: suspend () -> Unit
     )

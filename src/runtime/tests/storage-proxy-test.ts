@@ -231,7 +231,7 @@ class TestEngine {
   }
 
   newEntity(value): Entity {
-    const entity = new (this.schema.entityClass())({value});
+    const entity = new (Entity.createEntityClass(this.schema, null))({value});
     Entity.identify(entity, 'E' + this._idCounters[2]++);
     return entity;
   }

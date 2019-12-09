@@ -15,12 +15,13 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Storable} from './handle.js';
-import {SerializedEntity} from './storage-proxy.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from './hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 
 export type EntityRawData = {};
+
+export type SerializedEntity = {id: string, rawData: EntityRawData};
 
 /**
  * Represents mutable entity data. Instances will have mutable properties defined on them for all

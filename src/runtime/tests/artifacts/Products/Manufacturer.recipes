@@ -11,15 +11,15 @@ import '../Common/Multiplexer.manifest'
 import 'Product.schema'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
-  in Product product
-  consume annotation
+  product: reads Product
+  annotation: consumes Slot
   description `check manufacturer information`
 
 // Check manufacturer information for products.
 recipe ManufacturerInfo
-  use #shoplist as shoplist
+  shoplist: use #shoplist
   Multiplexer
-    list = shoplist
-    hostedParticle = ManufacturerInfo
+    list: shoplist
+    hostedParticle: ManufacturerInfo
 
 

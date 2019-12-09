@@ -16,7 +16,7 @@ import {Schema} from '../schema.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {DirectionPreSlandles} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -72,13 +72,13 @@ export class Recipe implements Cloneable<Recipe> {
     this._name = name;
   }
 
-  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
+  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: DirectionPreSlandles): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'constraint');
     this._connectionConstraints.push(result);
     return result;
   }
 
-  newObligation(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
+  newObligation(from: EndPoint, to: EndPoint, direction: DirectionPreSlandles): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'obligation');
     this._obligations.push(result);
     return result;

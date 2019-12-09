@@ -45,11 +45,11 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
   const manifest = await Manifest.parse(`
     import 'src/runtime/tests/artifacts/test-particles.manifest'
     recipe TestRecipe
-      use as handle0
-      use as handle1
+      handle0: use *
+      handle1: use *
       TestParticle
-        foo <- handle0
-        bar -> handle1
+        foo: reads handle0
+        bar: writes handle1
   `, {loader, fileName: process.cwd() + '/input.manifest'});
   const runtime = new Runtime(loader, FakeSlotComposer, manifest);
   const arc = runtime.newArc('test', storageKeyPrefix);
@@ -57,8 +57,8 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
   return {
     arc,
     recipe: manifest.recipes[0],
-    Foo: manifest.findSchemaByName('Foo').entityClass(),
-    Bar: manifest.findSchemaByName('Bar').entityClass(),
+    Foo: Entity.createEntityClass(manifest.findSchemaByName('Foo'), null),
+    Bar: Entity.createEntityClass(manifest.findSchemaByName('Bar'), null),
     loader
   };
 }
@@ -77,29 +77,29 @@ describe('Arc new storage', () => {
     const loader = new StubLoader({
       manifest: `
         schema Data
-          Text value
-          Number size
+          value: Text
+          size: Number
 
         particle TestParticle in 'a.js'
-          in Data var
-          out [Data] col
-          in Data refVar
+          var: reads Data
+          col: writes [Data]
+          refVar: reads Data
 
         recipe
-          use as handle0
-          use as handle1
-          use as handle2
+          handle0: use *
+          handle1: use *
+          handle2: use *
           TestParticle
-            var <- handle0
-            col -> handle1
-            refVar <- handle2
+            var: reads handle0
+            col: writes handle1
+            refVar: reads handle2
       `,
       'a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
     const manifest = await Manifest.load('manifest', loader);
-    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = ArcId.fromString('test');
     const storageKey = new VolatileStorageKey(id, 'unique');
     const arc = new Arc({id, storageKey, loader, context: manifest});
@@ -229,30 +229,30 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
-        Text value
+        value: Text
 
       particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
         description \`particle a two required handles and two optional handles\`
-        in Thing a
-          out Thing b
-        in? Thing c
-          out? Thing d
+        a: reads Thing
+          b: writes Thing
+        c: reads? Thing
+          d: writes? Thing
 
       recipe TestRecipe
-        use as thingA
-        use as thingB
-        use as maybeThingC
-        use as maybeThingD
+        thingA: use *
+        thingB: use *
+        maybeThingC: use *
+        maybeThingD: use *
         TestParticle
-          a <- thingA
-          b -> thingB
+          a: reads thingA
+          b: writes thingB
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -285,23 +285,23 @@ describe('Arc ' + storageKeyPrefix, () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle A in 'a.js'
-        in Thing thing
+        thing: reads Thing
       recipe CopyStoreFromContext // resolved
-        copy 'storeInContext' as h0
+        h0: copy 'storeInContext'
         A
-          thing = h0
+          thing: h0
       recipe UseStoreFromContext // unresolved
-        use 'storeInContext' as h0
+        h0: use 'storeInContext'
         A
-          thing = h0
+          thing: h0
       recipe CopyStoreFromArc // unresolved
-        copy 'storeInArc' as h0
+        h0: copy 'storeInArc'
         A
-          thing = h0
+          thing: h0
       recipe UseStoreFromArc // resolved
-        use 'storeInArc' as h0
+        h0: use 'storeInArc'
         A
-          thing = h0
+          thing: h0
       resource MyThing
         start
         [
@@ -331,7 +331,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     }
 
     const arc = await runtime.newArc('test2', storageKeyPrefix);
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const thingStore = await arc.createStore(thingClass.type, 'name', 'storeInArc');
     const resolver = new RecipeResolver(arc);
 
@@ -351,30 +351,30 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
-        Text value
+        value: Text
 
       particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
         description \`particle a two required handles and two optional handles\`
-        in Thing a
-          out Thing b
-        in? Thing c
-          out Thing d
+        a: reads Thing
+          b: writes Thing
+        c: reads? Thing
+          d: writes Thing
 
       recipe TestRecipe
-        use as thingA
-        use as thingB
-        use as maybeThingC
-        use as maybeThingD
+        thingA: use *
+        thingB: use *
+        maybeThingC: use *
+        maybeThingD: use *
         TestParticle
-          a <- thingA
-          b -> thingB
+          a: reads thingA
+          b: writes thingB
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -404,30 +404,30 @@ describe('Arc ' + storageKeyPrefix, () => {
       const loader = new Loader();
       const manifest = await Manifest.parse(`
         schema Thing
-          Text value
+          value: Text
 
         particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
           description \`particle a two required handles and two optional handles\`
-          in Thing a
-            out Thing b
-          in? Thing c
-            out? Thing d
+          a: reads Thing
+            b: writes Thing
+          c: reads? Thing
+            d: writes? Thing
 
         recipe TestRecipe
-          use as thingA
-          use as thingB
-          use as maybeThingC
-          use as maybeThingD
+          thingA: use *
+          thingB: use *
+          maybeThingC: use *
+          maybeThingD: use *
           TestParticle
-            a <- thingA
-            b -> thingB
-            d -> maybeThingD
+            a: reads thingA
+            b: writes thingB
+            d: writes maybeThingD
       `, {loader, fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
       const storageKey = storageKeyPrefix + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
       const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
       const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -449,31 +449,31 @@ describe('Arc ' + storageKeyPrefix, () => {
       const loader = new Loader();
       const manifest = await Manifest.parse(`
         schema Thing
-          Text value
+          value: Text
 
         particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
           description \`particle a two required handles and two optional handles\`
-          in Thing a
-            out Thing b
-          in? Thing c
-            out Thing d
+          a: reads Thing
+            b: writes Thing
+          c: reads? Thing
+            d: writes Thing
 
         recipe TestRecipe
-          use as thingA
-          use as thingB
-          use as maybeThingC
-          use as maybeThingD
+          thingA: use *
+          thingB: use *
+          maybeThingC: use *
+          maybeThingD: use *
           TestParticle
-            a <- thingA
-            b -> thingB
-            d -> maybeThingD
+            a: reads thingA
+            b: writes thingB
+            d: writes maybeThingD
       `, {loader, fileName: process.cwd() + '/input.manifest'});
 
       const id = ArcId.newForTest('test');
       const storageKey = storageKeyPrefix + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
       const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
       const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -498,30 +498,30 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
-        Text value
+        value: Text
 
       particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
         description \`particle a two required handles and two optional handles\`
-        in Thing a
-          out Thing b
-        in? Thing c
-          out? Thing d
+        a: reads Thing
+          b: writes Thing
+        c: reads? Thing
+          d: writes? Thing
 
       recipe TestRecipe
-        use as thingA
-        use as thingB
-        use as maybeThingC
-        use as maybeThingD
+        thingA: use *
+        thingB: use *
+        maybeThingC: use *
+        maybeThingD: use *
         TestParticle
-          a <- thingA
-          b -> thingB
-          c <- maybeThingC
+          a: reads thingA
+          b: writes thingB
+          c: reads maybeThingC
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -553,30 +553,30 @@ describe('Arc ' + storageKeyPrefix, () => {
       const loader = new Loader();
       const manifest = await Manifest.parse(`
         schema Thing
-          Text value
+          value: Text
 
         particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
           description \`particle a two required handles and two optional handles\`
-          in Thing a
-            out Thing b
-          in? Thing c
-            out Thing d
+          a: reads Thing
+            b: writes Thing
+          c: reads? Thing
+            d: writes Thing
 
         recipe TestRecipe
-          use as thingA
-          use as thingB
-          use as maybeThingC
-          use as maybeThingD
+          thingA: use *
+          thingB: use *
+          maybeThingC: use *
+          maybeThingD: use *
           TestParticle
-            a <- thingA
-            b -> thingB
-            c <- maybeThingC
+            a: reads thingA
+            b: writes thingB
+            c: reads maybeThingC
       `, {loader, fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
       const storageKey = storageKeyPrefix + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
       const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
       const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -602,31 +602,31 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
-        Text value
+        value: Text
 
       particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
         description \`particle a two required handles and two optional handles\`
-        in Thing a
-          out Thing b
-        in? Thing c
-          out? Thing d
+        a: reads Thing
+          b: writes Thing
+        c: reads? Thing
+          d: writes? Thing
 
       recipe TestRecipe
-        use as thingA
-        use as thingB
-        use as maybeThingC
-        use as maybeThingD
+        thingA: use *
+        thingB: use *
+        maybeThingC: use *
+        maybeThingD: use *
         TestParticle
-          a <- thingA
-          b -> thingB
-          c <- maybeThingC
-          d -> maybeThingD
+          a: reads thingA
+          b: writes thingB
+          c: reads maybeThingC
+          d: writes maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -659,31 +659,31 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
-        Text value
+        value: Text
 
       particle TestParticle in 'src/runtime/tests/artifacts/test-dual-input-particle.js'
         description \`particle a two required handles and two optional handles\`
-        in Thing a
-          out Thing b
-        in? Thing c
-          out Thing d
+        a: reads Thing
+          b: writes Thing
+        c: reads? Thing
+          d: writes Thing
 
       recipe TestRecipe
-        use as thingA
-        use as thingB
-        use as maybeThingC
-        use as maybeThingD
+        thingA: use *
+        thingB: use *
+        maybeThingC: use *
+        maybeThingD: use *
         TestParticle
-          a <- thingA
-          b -> thingB
-          c <- maybeThingC
-          d -> maybeThingD
+          a: reads thingA
+          b: writes thingB
+          c: reads maybeThingC
+          d: writes maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
-    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
     const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
     const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
@@ -765,12 +765,12 @@ describe('Arc ' + storageKeyPrefix, () => {
       import 'src/runtime/tests/artifacts/test-particles.manifest'
 
       recipe
-        slot 'rootslotid-slotid' as slot0
-        use as handle0
+        slot0: slot 'rootslotid-slotid'
+        handle0: use *
         Multiplexer
-          hostedParticle = ConsumerParticle
-          consume annotation as slot0
-          list <- handle0
+          hostedParticle: ConsumerParticle
+          annotation: consumes slot0
+          list: reads handle0
 
     `, {loader, fileName: ''});
 
@@ -823,29 +823,29 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new StubLoader({
       manifest: `
         schema Data
-          Text value
-          Number size
+          value: Text
+          size: Number
 
         particle TestParticle in 'a.js'
-          in Data var
-          out [Data] col
-          inout BigCollection<Data> big
+          var: reads Data
+          col: writes [Data]
+          big: reads writes BigCollection<Data>
 
         recipe
-          use as handle0
-          use as handle1
-          use as handle2
+          handle0: use *
+          handle1: use *
+          handle2: use *
           TestParticle
-            var <- handle0
-            col -> handle1
-            big = handle2
+            var: reads handle0
+            col: writes handle1
+            big: handle2
       `,
       'a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
     const manifest = await Manifest.load('manifest', loader);
-    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = Id.fromString('test');
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({id, storageKey, loader, context: manifest});
@@ -914,17 +914,17 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new StubLoader({
       manifest: `
         interface HostedInterface
-          in ~a *
+          reads ~a
 
         particle A in 'a.js'
-          host HostedInterface reader
+          reader: hosts HostedInterface
 
         particle B in 'b.js'
-          in Entity {} val
+          val: reads Entity {}
 
         recipe
           A
-            reader = B
+            reader: B
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
@@ -960,7 +960,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const id = ArcId.newForTest('test');
     const manifest = await Manifest.parse(`
       schema Data
-        Text value
+        value: Text
       recipe
         description \`abc\``);
     const storageKey = storageKeyPrefix + id.toString();
@@ -1016,12 +1016,12 @@ describe('Arc ' + storageKeyPrefix, () => {
 
             innerArc.loadRecipe(\`
               particle ${next} in '${next}.js'
-                consume root
+                root: consumes Slot
 
               recipe
-                slot '\` + hostedSlotId + \`' as hosted
+                hosted: slot '\` + hostedSlotId + \`'
                 ${next}
-                  consume root as hosted
+                  root: consumes hosted
             \`);
           }
 
@@ -1052,12 +1052,12 @@ describe('Arc ' + storageKeyPrefix, () => {
     });
     const context = await Manifest.parse(`
         particle A in 'A.js'
-          consume root
+          root: consumes Slot
 
         recipe
-          slot 'rootslotid-root' as root
+          root: slot 'rootslotid-root'
           A
-            consume root as root
+            root: consumes root
     `);
     const arc = new Arc({id: IdGenerator.newSession().newArcId('arcid'),
       storageKey: 'key', loader, slotComposer, context});
@@ -1077,24 +1077,24 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const manifest = await Manifest.parse(`
         schema FavoriteFood
-          Text food
+          food: Text
 
         particle FavoriteFoodPicker in 'particles/Profile/source/FavoriteFoodPicker.js'
-          inout [FavoriteFood] foods
+          foods: reads writes [FavoriteFood]
           description \`select favorite foods\`
             foods \`favorite foods\`
 
         recipe FavoriteFood
-          create #favoriteFoods as foods
+          foods: create #favoriteFoods
           FavoriteFoodPicker
-            foods = foods
+            foods: foods
         `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
     assert.isNotNull(arc);
 
-    const favoriteFoodClass = manifest.findSchemaByName('FavoriteFood').entityClass();
+    const favoriteFoodClass = Entity.createEntityClass(manifest.findSchemaByName('FavoriteFood'), null);
     assert.isNotNull(favoriteFoodClass);
 
     const recipe = manifest.recipes[0];
