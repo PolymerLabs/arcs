@@ -21,8 +21,10 @@ arcs_kt_jvm_library(
 kt_native_library(
     name = "arcs-wasm",
     srcs = glob(
-        ["**/*.kt"],
-        exclude = ["jvm/**"],
+        [
+            "*/*.kt",
+            "**/wasm/*.kt",
+        ],
     ),
     kotlincopts = KOTLINC_OPTS,
     visibility = ["//visibility:public"],
