@@ -26,7 +26,7 @@ export class StrategyTestHelper {
       id: options.arcId || ArcId.newForTest('test-arc'),
       loader: options.loader || new Loader(),
       context,
-      slotComposer: new FakeSlotComposer(options)
+      slotComposer: new FakeSlotComposer(/*options*/)
     });
   }
   static createTestStrategyArgs(arc: Arc, args?) {

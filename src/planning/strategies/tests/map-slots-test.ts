@@ -160,7 +160,7 @@ ${recipeManifest}
       id: ArcId.newForTest('test-plan-arc'),
       loader: new Loader(),
       context: new Manifest({id: ArcId.newForTest('test')}),
-      slotComposer: new FakeSlotComposer({containers: {root: {}, action: {}}})
+      slotComposer: new FakeSlotComposer(/*{containers: {root: {}, action: {}}}*/)
     });
 
     const particles = `

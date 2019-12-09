@@ -12,33 +12,29 @@ import {Arc} from './arc.js';
 import {Particle} from './recipe/particle.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SlotConnection} from './recipe/slot-connection.js';
+import {Dictionary} from './hot.js';
+
+type RenderPacket = {
+  content?
+  modality?: string
+  containerSlotName?: string
+  containerSlotId?: string
+  slotMap?: Dictionary<string>
+  particle?: {
+    name: string
+    id: string
+  }
+  outputSlotId?: string
+};
 
 const {log, warn} = logsFactory('UiSlotComposer', 'brown');
-
-export type SlotComposerOptions = {
-};
 
 export class UiSlotComposer {
   slotObserver?;
   arc?: Arc;
 
-  constructor(options?: SlotComposerOptions) {
-  }
-
   dispose(): void {
   }
-
-  async initializeRecipe(arc: Arc, particles: Particle[]) {
-    //const newConsumers = <SlotConsumer[]>[];
-    // Create slots for each of the recipe's particles slot connections.
-    //particles.forEach(p => this.initializeParticleSlots(p));
-  }
-
-  // initializeParticleSlots(particle: Particle) {
-  //   particle.getSlandleConnections().forEach(cs => {
-  //     //console.warn(cs);
-  //   });
-  // }
 
   createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
     // TODO(sjmiles): this slot-id is created dynamically and was not available to the particle
@@ -65,33 +61,32 @@ export class UiSlotComposer {
     }
   }
 
-  renderPacket(particle: Particle, content) {
+  renderPacket(particle: Particle, content): RenderPacket {
     //console.log(`RenderEx:delegateOutput for %c[${particle.spec.name}]::[${particle.id}]`, 'color: darkgreen; font-weight: bold;');
     // assemble a renderPacket to send to slot observer
-    const packet = {content};
+    const packet: RenderPacket = {content};
     // Set modality according to particle spec
     // TODO(sjmiles): particle.recipe?
-    packet['modality'] = this.collateModalities(particle.recipe.modality);
+    packet.modality = this.collateModalities(particle.recipe.modality);
     // will scan connections for container and slotMap
     const connections = particle.getSlandleConnections();
     // identify parent container
     const container = this.identifyContainer(connections[0]);
     Object.assign(packet, container);
     // build slot map
-    packet['slotMap'] = this.buildSlotMap(connections);
+    packet.slotMap = this.buildSlotMap(connections);
     // acquire particle id as String
     const pid = `${particle.id}`;
     // finalize packet
-    Object.assign(packet, {
-      particle: {
-        name: particle.name,
-        id: pid
-      },
-      // TODO(sjmiles): there is no clear concept for a particle's output channel, so there is no proper ID
-      // to use. The `particle.id` works for now, but it probably should be a combo of `particle.id` and the
-      // consumed slot id (neither of which are unique by themselves).
-      outputSlotId: pid
-    });
+    packet.particle = {
+      name: particle.name,
+      id: pid
+    };
+    // TODO(sjmiles): there is no clear concept for a particle's output channel, so there is no proper ID
+    // to use. The `particle.id` works for now, but it probably should be a combo of `particle.id` and the
+    // consumed slot id (neither of which are unique by themselves).
+    packet.outputSlotId = pid;
+    // return RenderPacket
     return packet;
   }
 

@@ -775,7 +775,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const recipe = manifest.recipes[0];
 
-    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new FakeSlotComposer(/*{rootContainer: {'slotid': 'dummy-container'}}*/);
 
     //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 

@@ -14,7 +14,6 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
-import {SlotComposerOptions} from '../../../runtime/ui-slot-composer.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
@@ -154,9 +153,6 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
         `, {loader, fileName: ''});
       class ModalitySlotComposer extends FakeSlotComposer {
         prototype: {};
-        constructor(options?: SlotComposerOptions) {
-          super({modalityName});
-        }
       }
       const runtime = new Runtime(loader, null /*ModalitySlotComposer*/, context);
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());

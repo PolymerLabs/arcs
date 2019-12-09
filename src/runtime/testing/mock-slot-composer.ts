@@ -10,10 +10,9 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Particle} from '../recipe/particle.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
-import {InterfaceType} from '../type.js';
-import {Arc} from '../arc.js';
-import {SlotComposerOptions} from '../ui-slot-composer.js';
+//import {StorageProviderBase} from '../storage/storage-provider-base.js';
+//import {InterfaceType} from '../type.js';
+//import {Arc} from '../arc.js';
 import {FakeSlotComposer} from './fake-slot-composer.js';
 
 const logging = false;
@@ -48,8 +47,8 @@ export class MockSlotComposer extends FakeSlotComposer {
    * |options| may contain:
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
    */
-  constructor(options: SlotComposerOptions & MockSlotComposerOptions = {}) {
-    super(options);
+  constructor(options: MockSlotComposerOptions = {}) {
+    super();
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options.strict != undefined ? options.strict : true;

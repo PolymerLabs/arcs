@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {UiSlotComposer as SlotComposer, SlotComposerOptions} from '../ui-slot-composer.js';
+import {UiSlotComposer as SlotComposer} from '../ui-slot-composer.js';
 import {Arc} from '../arc.js';
 import {Particle} from '../recipe/particle.js';
 
@@ -16,9 +16,6 @@ import {Particle} from '../recipe/particle.js';
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
  */
 export class FakeSlotComposer extends SlotComposer {
-  constructor(options: SlotComposerOptions = {}) {
-    super();
-  }
 }
 
 /**

@@ -544,7 +544,7 @@ describe('ConvertConstraintsToConnections', () => {
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(new Arc({
       id: ArcId.newForTest('test-plan-arc'),
-      slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
+      slotComposer: new FakeSlotComposer(/*{modalityName: Modality.Name.Vr}*/),
       context: manifest,
       loader: new Loader()
     }));
@@ -577,7 +577,7 @@ describe('ConvertConstraintsToConnections', () => {
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
     const cctc = new ConvertConstraintsToConnections(new Arc({
       id: ArcId.newForTest('test-plan-arc'),
-      slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
+      slotComposer: new FakeSlotComposer(/*{modalityName: Modality.Name.Vr}*/),
       context: manifest,
       loader: new Loader()
     }));

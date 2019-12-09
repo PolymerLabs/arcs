@@ -103,7 +103,7 @@ export class RecipeIndex {
       id: idGenerator.newArcId('index-stub'),
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
       loader: arc.loader,
-      slotComposer: new SlotComposer({noRoot: true}),
+      slotComposer: new SlotComposer(/*{noRoot: true}*/),
       stub: true
     });
     const strategizer = new Strategizer(

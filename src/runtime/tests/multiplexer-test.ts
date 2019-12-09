@@ -37,7 +37,7 @@ describe('Multiplexer', () => {
 
     const barType = checkDefined(manifest.findTypeByName('Bar'));
 
-    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new FakeSlotComposer(/*{rootContainer: {'slotid': 'dummy-container'}}*/);
 
     //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
@@ -85,7 +85,7 @@ describe('Multiplexer', () => {
 
     const barType = checkDefined(manifest.findTypeByName('Bar'));
 
-    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new FakeSlotComposer(/*{rootContainer: {'slotid': 'dummy-container'}}*/);
 
     //const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
