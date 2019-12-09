@@ -109,7 +109,7 @@ echo "ktlint --version"
 ktlint --version
 echo "\nNext, try the following:\n"
 echo "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
-echo "- Serve the project: $CMD\`npm start\`$END"
+echo "- Serve the project: $CMD\`./tools/sigh devServer\`$END"
 echo "- Run tests:"
 echo "  - $CMD\`./tools/sigh test\`$END"
 echo "  - $CMD\`./tools/test\`$END"
