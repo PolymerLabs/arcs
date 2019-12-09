@@ -32,9 +32,9 @@ object ParcelableCrdtSet {
 
         companion object CREATOR : Parcelable.Creator<DataValue> {
             override fun createFromParcel(parcel: Parcel): DataValue {
-                val versionMap = requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                val versionMap = requireNotNull(parcel.readVersionMap()) {
                     "VersionMap not found in parcel when reading ParcelableCrdtSet.DataValue"
-                }.actual
+                }
                 val value = requireNotNull(parcel.readReferencable())
                 return DataValue(CrdtSet.DataValue(versionMap, value))
             }
@@ -62,20 +62,20 @@ object ParcelableCrdtSet {
 
         companion object CREATOR : Parcelable.Creator<Data> {
             override fun createFromParcel(parcel: Parcel): Data {
-                val versionMap = requireNotNull(
-                    parcel.readTypedObject(ParcelableVersionMap.CREATOR)
-                ) { "No VersionMap found in parcel when reading ParcelableCrdtSet.Data" }
+                val versionMap = requireNotNull(parcel.readVersionMap()) {
+                    "No VersionMap found in parcel when reading ParcelableCrdtSet.Data"
+                }
 
                 val values = mutableMapOf<ReferenceId, CrdtSet.DataValue<Referencable>>()
                 val items = parcel.readInt()
                 repeat(items) {
                     values[requireNotNull(parcel.readString())] =
-                        requireNotNull(parcel.readTypedObject(DataValue.CREATOR)) {
+                        requireNotNull(parcel.readTypedObject(DataValue.CREATOR)?.actual) {
                             "No DataValue found in parcel when reading ParcelableCrdtSet.Data"
-                        }.actual
+                        }
                 }
 
-                return Data(CrdtSet.DataImpl(versionMap.actual, values))
+                return Data(CrdtSet.DataImpl(versionMap, values))
             }
 
             override fun newArray(size: Int): Array<Data?> = arrayOfNulls(size)
@@ -114,10 +114,10 @@ object ParcelableCrdtSet {
             companion object CREATOR : Parcelable.Creator<Add> {
                 override fun createFromParcel(parcel: Parcel): Add {
                     val clock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtSet.Operation.Add"
-                        }.actual
+                        }
                     val actor = requireNotNull(parcel.readString())
                     val added = requireNotNull(parcel.readReferencable())
                     return Add(CrdtSet.Operation.Add(clock, actor, added))
@@ -143,10 +143,10 @@ object ParcelableCrdtSet {
             companion object CREATOR : Parcelable.Creator<Remove> {
                 override fun createFromParcel(parcel: Parcel): Remove {
                     val clock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtSet.Operation.Remove"
-                        }.actual
+                        }
                     val actor = requireNotNull(parcel.readString())
                     val removed = requireNotNull(parcel.readReferencable())
                     return Remove(CrdtSet.Operation.Remove(clock, actor, removed))
@@ -181,12 +181,11 @@ object ParcelableCrdtSet {
             companion object CREATOR : Parcelable.Creator<FastForward> {
                 override fun createFromParcel(parcel: Parcel): FastForward {
                     val oldClock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)) {
+                        requireNotNull(parcel.readVersionMap()) {
                             "VersionMap not found in parcel when reading " +
                                 "ParcelableCrdtSet.Operation.FastForward"
-                        }.actual
-                    val newClock =
-                        requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR)).actual
+                        }
+                    val newClock = requireNotNull(parcel.readVersionMap())
 
                     val added = mutableListOf<CrdtSet.DataValue<Referencable>>()
                     val numAdded = parcel.readInt()

@@ -40,9 +40,9 @@ object ParcelableCrdtSingleton {
 
         companion object CREATOR : Parcelable.Creator<Data> {
             override fun createFromParcel(parcel: Parcel): Data {
-                val versionMap = requireNotNull(
-                    parcel.readTypedObject(ParcelableVersionMap.CREATOR)
-                ) { "No VersionMap found in parcel when reading ParcelableCrdtSingleton.Data" }
+                val versionMap = requireNotNull(parcel.readVersionMap()) {
+                    "No VersionMap found in parcel when reading ParcelableCrdtSingleton.Data"
+                }
 
                 val values = mutableMapOf<ReferenceId, CrdtSet.DataValue<Referencable>>()
                 val items = parcel.readInt()
@@ -55,7 +55,7 @@ object ParcelableCrdtSingleton {
                         }
                 }
 
-                return Data(CrdtSingleton.DataImpl(versionMap.actual, values))
+                return Data(CrdtSingleton.DataImpl(versionMap, values))
             }
 
             override fun newArray(size: Int): Array<Data?> = arrayOfNulls(size)
@@ -93,9 +93,9 @@ object ParcelableCrdtSingleton {
             companion object CREATOR : Parcelable.Creator<Update> {
                 override fun createFromParcel(parcel: Parcel): Update {
                     val actor = requireNotNull(parcel.readString())
-                    val clock = requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR))
+                    val clock = requireNotNull(parcel.readVersionMap())
                     val value = requireNotNull(parcel.readReferencable())
-                    return Update(CrdtSingleton.Operation.Update(actor, clock.actual, value))
+                    return Update(CrdtSingleton.Operation.Update(actor, clock, value))
                 }
 
                 override fun newArray(size: Int): Array<Update?> = arrayOfNulls(size)
@@ -116,8 +116,8 @@ object ParcelableCrdtSingleton {
             companion object CREATOR : Parcelable.Creator<Clear> {
                 override fun createFromParcel(parcel: Parcel): Clear {
                     val actor = requireNotNull(parcel.readString())
-                    val clock = requireNotNull(parcel.readTypedObject(ParcelableVersionMap.CREATOR))
-                    return Clear(CrdtSingleton.Operation.Clear(actor, clock.actual))
+                    val clock = requireNotNull(parcel.readVersionMap())
+                    return Clear(CrdtSingleton.Operation.Clear(actor, clock))
                 }
 
                 override fun newArray(size: Int): Array<Clear?> = arrayOfNulls(size)
@@ -134,7 +134,7 @@ object ParcelableCrdtSingleton {
             override fun newArray(size: Int): Array<Operation?> = arrayOfNulls(size)
         }
 
-        override fun describeContents(): Int  = 0
+        override fun describeContents(): Int = 0
     }
 
     /** Identifiers for the subtypes of [Operation]. */

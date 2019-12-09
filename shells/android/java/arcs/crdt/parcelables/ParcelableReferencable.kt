@@ -14,6 +14,7 @@ package arcs.crdt.parcelables
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.common.Referencable
+import arcs.crdt.CrdtEntity
 import arcs.data.RawEntity
 import java.lang.IllegalArgumentException
 import javax.annotation.OverridingMethodsMustInvokeSuper
@@ -33,7 +34,8 @@ interface ParcelableReferencable : Parcelable {
         val creator: Parcelable.Creator<out ParcelableReferencable>
     ) : Parcelable {
         // TODO: Add other ParcelableReferencable subclasses.
-        RawEntity(ParcelableRawEntity.CREATOR);
+        RawEntity(ParcelableRawEntity.CREATOR),
+        CrdtEntityReferenceImpl(ParcelableCrdtEntity.ReferenceImpl.CREATOR);
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             parcel.writeInt(ordinal)
@@ -54,7 +56,10 @@ interface ParcelableReferencable : Parcelable {
             when (this) {
                 // TODO: Add other ParcelableReferencable subclasses.
                 is ParcelableRawEntity -> Type.RawEntity
-                else -> throw IllegalArgumentException("Unsupported")
+                is ParcelableCrdtEntity.ReferenceImpl -> Type.CrdtEntityReferenceImpl
+                else -> throw IllegalArgumentException(
+                    "Unsupported Referencable type: ${this.javaClass}"
+                )
             },
             flags)
     }
@@ -67,7 +72,10 @@ interface ParcelableReferencable : Parcelable {
         operator fun invoke(actual: Referencable): ParcelableReferencable = when (actual) {
             // TODO: Add other ParcelableReferencable subclasses.
             is RawEntity -> ParcelableRawEntity(actual)
-            else -> throw IllegalArgumentException("Unsupported Referencable type: ${actual.javaClass}")
+            is CrdtEntity.ReferenceImpl -> ParcelableCrdtEntity.ReferenceImpl(actual)
+            else -> throw IllegalArgumentException(
+                "Unsupported Referencable type: ${actual.javaClass}"
+            )
         }
 
         object CREATOR : Parcelable.Creator<ParcelableReferencable> {
