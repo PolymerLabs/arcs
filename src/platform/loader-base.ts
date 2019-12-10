@@ -30,6 +30,7 @@ import '../runtime/handle-constructors.js';
 import '../runtime/noop-proxy.js';
 import '../runtime/storageNG/store-constructors.js';
 import '../runtime/entity-utils.js';
+import '../runtime/reference.js';
 
 type ParticleCtor = typeof Particle;
 

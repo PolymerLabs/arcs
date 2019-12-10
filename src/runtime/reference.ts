@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Collection, Storable, unifiedHandleFor} from './handle.js';
+import {HandleOld, Collection, Storable, unifiedHandleFor} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
@@ -125,3 +125,9 @@ export abstract class ClientReference extends Reference {
     };
   }
 }
+
+function makeReference(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext): Reference {
+ return new Reference(data, type, context);
+}
+
+HandleOld.makeReference = makeReference;
