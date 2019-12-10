@@ -81,6 +81,7 @@ type ExceptionHandler = Consumer<Error>;
 const systemHandlers = <ExceptionHandler[]>[];
 
 export function reportSystemException(exception: PropagatedException) {
+  console.log('reportSystemException');
   for (const handler of systemHandlers) {
     handler(exception);
   }
