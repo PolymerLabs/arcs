@@ -72,6 +72,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
+  buildifier: [buildifier],
   lint: [peg, build, lint, tslint, buildifier],
   tslint: [peg, build, tslint],
   check: [check],
@@ -550,7 +551,7 @@ function buildifier(args: string[]): boolean {
     buildifierOptions.push('--lint=warn', '--mode=check');
   }
 
-  const exclude = /\bnode_modules\b/;
+  const exclude = /^(node_modules|dist)$/;
   const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
   let allSucceeded = true;
   for (const file of findProjectFiles(process.cwd(), exclude, include)) {
