@@ -17,6 +17,14 @@ _KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
+def arcs_kt_jvm_library(**kwargs):
+    if not IS_BAZEL:
+        kwargs["disable_lint_checks"] = [
+            "PackageName",
+            "TopLevelName",
+        ]
+    kt_jvm_library(**kwargs)
+
 def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
     """Declares kotlin library targets for Kotlin particle sources."""
     kt_jvm_and_wasm_library(
@@ -77,7 +85,7 @@ def kt_jvm_and_wasm_library(
       visibility: List; List of visibilities
       **kwargs: other arguments to feed into kt_jvm_library and kt_native_library
     """
-    kt_jvm_library(
+    arcs_kt_jvm_library(
         name = name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
@@ -126,7 +134,7 @@ def kt_jvm_and_js_library(
             visibility = visibility,
         )
 
-    kt_jvm_library(
+    arcs_kt_jvm_library(
         name = kt_name,
         srcs = srcs,
         deps = [_to_jvm_dep(dep) for dep in deps],
@@ -211,7 +219,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
     if not srcs:
         srcs = native.glob(["*.kt"])
 
-    kt_jvm_library(
+    arcs_kt_jvm_library(
         name = name,
         srcs = srcs,
         testonly = True,
