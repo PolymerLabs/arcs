@@ -12,6 +12,7 @@ arcs_kt_jvm_library(
     name = "arcs",
     srcs = glob([
         "*.kt",
+        "**/addressable/*.kt",
         "**/jvm/*.kt",
     ]),
     kotlincopts = KOTLINC_OPTS + ["-Xallow-kotlin-package"],
@@ -22,7 +23,8 @@ kt_native_library(
     name = "arcs-wasm",
     srcs = glob(
         [
-            "*/*.kt",
+            "*.kt",
+            "**/addressable/*.kt",
             "**/wasm/*.kt",
         ],
     ),
