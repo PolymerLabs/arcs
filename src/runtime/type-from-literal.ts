@@ -10,8 +10,7 @@
 
 import {TypeLiteral, Type, EntityType, TypeVariable, CollectionType,
         BigCollectionType, RelationType, InterfaceType, SlotType, ReferenceType,
-        ArcType, HandleType, SingletonType} from './type.js';
-import {TypeVariableInfo} from './type-variable-info.js';
+        ArcType, HandleType, SingletonType, TypeVariableInfo} from './type.js';
 import {Schema} from './schema.js';
 import {InterfaceInfo} from './interface-info.js';
 import {SlotInfo} from './slot-info.js';

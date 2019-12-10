@@ -10,9 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 import {Schema} from '../schema.js';
-import {Type, TypeVariable} from '../type.js';
+import {Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';

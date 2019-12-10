@@ -10,9 +10,8 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';
+        ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
 
 // For reference, this is a list of all the types and their contained data:
