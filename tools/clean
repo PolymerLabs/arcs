@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# A basic script to clean all of the build artifacts and installed
+# modules.  Order matters, and it's easy to overlook something. In the
+# future this could be structured to be done via a single
+# one-build-tool-to-rule-them-all command, but currently we've a
+# plethora of tooling and this is at least a starting point.
+
+source $(dirname $0)/logging.sh
+
+cd $ROOT
+status "Cleaning all of the things."
+
+status "[1/4] Expunging the Bazel bits."
+bazel clean --expunge || fail "Unable to clean Bazel."
+
+status "[2/4] Cleaning with sigh."
+./tools/sigh clean || fail "Unable to clean sigh."
+
+status "[3/4] Removing installed node modules."
+rm -rf node_modules devtools/node_modules server/node_modules tools/vscode-language-client/node_modules || fail "Unable to delete node_modules."
+
+status "[4/4] Cleaning the npm cache."
+npm cache clean -f || fail "Unable to clean npm cache."

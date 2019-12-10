@@ -1,6 +1,0 @@
-#!/bin/sh
-
-ROOT=$(dirname $0)/..
-$ROOT/tools/sigh test
-(cd $ROOT/extension && npm test)
-(cd $ROOT/shell && npm test)

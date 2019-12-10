@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Simple script to run Android Kotlin and shell tests locally.
 
 echo "Building src_kt and shells/android"
 bazel build \

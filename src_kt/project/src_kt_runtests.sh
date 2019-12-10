@@ -1,1 +1,1 @@
-../../src_kt_runtests.sh
+../../tools/src_kt_runtests.sh
