@@ -8,7 +8,7 @@ load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "k
 load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
 load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_test")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_jvm_library")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
@@ -17,6 +17,14 @@ _JS_SUFFIX = "-js"
 _KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
+
+def arcs_kt_jvm_library(**kwargs):
+    if not IS_BAZEL:
+        kwargs["disable_lint_checks"] = [
+            "PackageName",
+            "TopLevelName",
+        ]
+    kt_jvm_library(**kwargs)
 
 def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
     """Declares kotlin library targets for Kotlin particle sources."""

@@ -7,6 +7,7 @@ load(
     _arcs_kt_jvm_test_suite = "arcs_kt_jvm_test_suite",
     _arcs_kt_library = "arcs_kt_library",
     _kt_jvm_and_js_library = "kt_jvm_and_js_library",
+    _arcs_kt_jvm_library = "arcs_kt_jvm_library",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
@@ -41,15 +42,7 @@ arcs_manifest_bundle = _arcs_manifest_bundle
 
 kt_jvm_and_js_library = _kt_jvm_and_js_library
 
-_IS_BAZEL = not hasattr(native, "genmpm")
-
-def arcs_kt_jvm_library(**kwargs):
-    if not _IS_BAZEL:
-        kwargs["disable_lint_checks"] = [
-            "PackageName",
-            "TopLevelName",
-        ]
-    kt_jvm_library(**kwargs)
+arcs_kt_jvm_library = _arcs_kt_jvm_library
 
 def arcs_ts_test(name, src, deps):
     """Runs a TypeScript test file using `sigh test`."""
