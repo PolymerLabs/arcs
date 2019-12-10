@@ -49,7 +49,7 @@ const spawnTestArc = async (loader) => {
   return arc;
 };
 
-describe('ui-particle-api', () => {
+describe.only('ui-particle-api', () => {
 
   describe('high-level handle operations', () => {
 
@@ -207,6 +207,7 @@ describe('ui-particle-api', () => {
       assert.equal(list, expected, 'Collection incorrect after adds');
       const resultData = await getSingletonData(arc, 0);
       assert.ok(resultData.ok, 'failed to throw on adding a value to a Singleton');
+      await arc.idle;
     });
 
     it('can `remove` things', async () => {
