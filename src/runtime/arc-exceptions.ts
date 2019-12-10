@@ -81,6 +81,7 @@ type ExceptionHandler = Consumer<PropagatedException>;
 const systemHandlers = <ExceptionHandler[]>[];
 
 export function reportSystemException(exception: PropagatedException) {
+  console.log('reportSystemException');
   for (const handler of systemHandlers) {
     handler(exception);
   }
@@ -99,7 +100,9 @@ export function removeSystemExceptionHandler(handler: ExceptionHandler) {
   }
 }
 
-registerSystemExceptionHandler((exception) => {
+export const defaultSystemExceptionHandler = (exception) => {
   console.log(exception.method, exception.particleName);
   throw exception;
-});
+};
+
+registerSystemExceptionHandler(defaultSystemExceptionHandler);
