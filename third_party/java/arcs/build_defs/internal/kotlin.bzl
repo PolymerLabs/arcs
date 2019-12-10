@@ -49,7 +49,7 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
 
         # Declare a library because g3 kt_native_binary doesn't take srcs
         kt_native_library(
-            name = libname,
+            name = libname + _WASM_SUFFIX,
             srcs = srcs,
             deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
             visibility = visibility,
