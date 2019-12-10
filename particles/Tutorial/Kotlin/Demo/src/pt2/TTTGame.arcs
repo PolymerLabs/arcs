@@ -1,0 +1,66 @@
+// Tutorial Demo
+// Shows how to use Arcs features to create a tic-tac-toe game.
+
+schema Person
+  name: Text
+  avatar: Text
+
+schema GameState
+  board: Text
+  currentPlayer: Number
+
+schema Event
+  type: Text
+  move: Number
+  time: Number
+
+schema Move
+  move: Number
+
+resource HumanDefault
+  start
+  [
+    {"name": "Human", "avatar": "X"}
+  ]
+
+store HumanStore of Person in HumanDefault
+
+particle TTTBoard in 'TTTBoard.wasm'
+  events: writes [Event]
+  gameState: reads GameState
+  boardSlot: consumes
+
+particle TTTGame in 'TTTGame.wasm'
+  gameState: reads writes GameState
+  playerOne: reads writes Person
+  playerOneMove: reads writes Move
+  events: reads writes [Event]
+  root: consumes
+    boardSlot: provides
+
+particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
+  gameState: reads GameState
+  events: reads [Event]
+  player: reads Person
+  myMove: writes Move
+
+recipe GamePlayersDemoRecipe
+  playerOne: use HumanStore
+  playerOneMove: create #humanMove
+  TTTGame
+    gameState: reads writes gameState
+    playerOne: reads writes playerOne
+    playerOneMove: reads writes playerOneMove
+    events: reads writes events
+    root: consumes
+      boardSlot: provides board
+  TTTBoard
+    gameState: reads gameState
+    events: writes events
+    boardSlot: consumes board
+  TTTHumanPlayer
+      gameState: reads gameState
+      events: reads events
+      myMove: writes playerOneMove
+      player: reads playerOne
+  description `Kotlin Tutorial TicTacToe Demo`
