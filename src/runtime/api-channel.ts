@@ -21,7 +21,7 @@ import {StorageProxy} from './storage-proxy.js';
 import {Content} from './slot-consumer.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {Type} from './type.js';
-import {PropagatedException} from './arc-exceptions.js';
+import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
@@ -238,7 +238,7 @@ export class APIPort {
   protected inspector: ArcInspector | null;
   protected attachStack: boolean;
   messageCount: number;
-  constructor(messagePort: MessagePort, prefix: string) {
+  constructor(messagePort: MessagePort, prefix: string, private onError: Consumer<Error>) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._port.onmessage = async e => this._processMessage(e);
@@ -266,7 +266,11 @@ export class APIPort {
           this._port['pecId'],
           e.data.stack);
     }
-    this['before' + e.data.messageType](e.data.messageBody);
+    try {
+      await this['before' + e.data.messageType](e.data.messageBody);
+    } catch (err) {
+      this.onError(err);
+    }
   }
 
   async send(name: string, args: {}) {
@@ -467,7 +471,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 
 export abstract class PECOuterPort extends APIPort {
   constructor(messagePort: MessagePort, arc: Arc) {
-    super(messagePort, 'o');
+    super(messagePort, 'o', reportGlobalException);
     this.inspector = arc.inspector;
     if (this.inspector) {
       this.inspector.onceActive.then(() => this.DevToolsConnected(), e => console.error(e));
@@ -553,7 +557,9 @@ export interface CursorNextValue {
 @AutoConstruct(PECOuterPort)
 export abstract class PECInnerPort extends APIPort {
   constructor(messagePort: MessagePort) {
-    super(messagePort, 'i');
+    // TODO(shanestephens): Try to feed some more information through to PropagatedException - can perhaps
+    // recover the method invoked and (sometimes) the particle.
+    super(messagePort, 'i', err => this.ReportExceptionInHost(new PropagatedException(err, '??', '??')));
   }
 
   abstract onStop();

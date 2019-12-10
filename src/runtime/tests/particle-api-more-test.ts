@@ -49,7 +49,7 @@ const spawnTestArc = async (loader) => {
   return arc;
 };
 
-describe.only('ui-particle-api', () => {
+describe('ui-particle-api', () => {
 
   describe('high-level handle operations', () => {
 
@@ -198,9 +198,9 @@ describe.only('ui-particle-api', () => {
           }
         });`
       });
-      //
+
       const arc = await spawnTestArc(loader);
-      //
+
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.value).sort());
       const expected = `["FooBarE0","FooBarE1","FooBarEntity"]`;

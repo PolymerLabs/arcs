@@ -9,7 +9,7 @@
  */
 import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../../runtime/arc-exceptions.js';
 
-let exceptions = [];
+let exceptions: Error[] = [];
 
 before(() => {
   removeSystemExceptionHandler(defaultSystemExceptionHandler);
