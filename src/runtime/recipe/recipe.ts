@@ -13,7 +13,7 @@ import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
 import {HandleConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
-import {InterfaceType, Type} from '../type.js';
+import {InterfaceType, Type, TypeVariableInfo} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
 import {DirectionPreSlandles} from '../manifest-ast-nodes.js';
@@ -27,7 +27,6 @@ import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
