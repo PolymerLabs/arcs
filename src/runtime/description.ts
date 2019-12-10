@@ -166,8 +166,8 @@ export class Description {
       const proxy = new StorageProxy('id', await store.activate(), store.type);
       const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
       if (handle instanceof SingletonHandle) {
-        const entityValue = await handle.get()
-        if (!!entityValue) {
+        const entityValue = await handle.get();
+        if (entityValue) {
           return {entityValue};
         }
       } else if (handle instanceof CollectionHandle) {
