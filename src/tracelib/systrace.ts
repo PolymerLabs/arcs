@@ -31,7 +31,7 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
 
 function traceAllFunctions(obj: object, client: Client) {
   const that: object = obj;
-  let boundSymbols: Array<{target: object | Function, symbol: string}> = [];
+  let boundSymbols: {target: object | Function, symbol: string}[] = [];
 
   // Collects all functions at the object's prototype chain.
   while (obj = Object.getPrototypeOf(obj)) {
