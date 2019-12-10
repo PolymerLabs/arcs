@@ -175,26 +175,23 @@ describe('ui-particle-api', () => {
               stuff: stuff
               thing: thing
         `,
-
         'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update() {
-            // add a POJO to a Collection
-            this.add('stuff', {value: 'FooBarPojo'});
             // add an Entity to a Collection
             this.add('stuff', new (this.handles.get('stuff').entityClass)({value: 'FooBarEntity'}));
-            // add an Array of POJO to a Collection
-            this.add('stuff', [{value: 'FooBarP0'}, {value: 'FooBarP1'}]);
             // add an Array of Entities to a Collection
             this.add('stuff', [
-              new (this.handles.get('thing').entityClass)({value: 'FooBarE0'}),
-              new (this.handles.get('thing').entityClass)({value: 'FooBarE1'})
+              new (this.handles.get('stuff').entityClass)({value: 'FooBarE0'}),
+              new (this.handles.get('stuff').entityClass)({value: 'FooBarE1'})
             ]);
             // try to add to a Singleton (expect exception)
             try {
               // TODO(sjmiles): await here because in spite of note above because
               // otherwise I couldn't figure out how to capture the exception
-              await this.add('thing', {value: 'OopsStuffIsCollection'});
+              await this.add(
+                  'thing',
+                  new (this.handles.get('thing').entityClass)({value: 'OopsStuffIsCollection'}));
             } catch(x) {
               this.set('result', {ok: true});
             }
@@ -206,7 +203,7 @@ describe('ui-particle-api', () => {
       //
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.value).sort());
-      const expected = `["FooBarE0","FooBarE1","FooBarEntity","FooBarP0","FooBarP1","FooBarPojo"]`;
+      const expected = `["FooBarE0","FooBarE1","FooBarEntity"]`;
       assert.equal(list, expected, 'Collection incorrect after adds');
       const resultData = await getSingletonData(arc, 0);
       assert.ok(resultData.ok, 'failed to throw on adding a value to a Singleton');
@@ -233,8 +230,13 @@ describe('ui-particle-api', () => {
           async update(inputs, state) {
             if (!state.tested) {
               state.tested = true;
-              // add an Array of POJO to a Collection
-              await this.add('stuff', [{value: 'FooBarP0'}, {value: 'FooBarP1'}, {value: 'FooBarP2'}, {value: 'FooBarP3'}]);
+              // add an Array of Entities to a Collection
+              await this.add('stuff', [
+                new (this.handles.get('stuff').entityClass)({value: 'FooBarP0'}),
+                new (this.handles.get('stuff').entityClass)({value: 'FooBarP1'}),
+                new (this.handles.get('stuff').entityClass)({value: 'FooBarP2'}),
+                new (this.handles.get('stuff').entityClass)({value: 'FooBarP3'})
+              ]);
               // remove an Entity
               const items = await this.handles.get('stuff').toList();
               await this.remove('stuff', items[0]);
@@ -249,10 +251,14 @@ describe('ui-particle-api', () => {
       //
       const arc = await spawnTestArc(loader);
       //
-      const thingData = await getCollectionData(arc, 1);
-      const list = JSON.stringify(thingData.map(thing => thing.value).sort());
-      const expected = `["FooBarP3"]`;
-      assert.equal(list, expected, 'Collection incorrect after removes');
+      await new Promise(resolve => setTimeout(async () => {
+        await arc.idle;
+        const thingData = await getCollectionData(arc, 1);
+        const list = JSON.stringify(thingData.map(thing => thing.value).sort());
+        const expected = `["FooBarP3"]`;
+        assert.equal(list, expected, 'Collection incorrect after removes');
+        resolve();
+      }, 100));
     });
   });
 });

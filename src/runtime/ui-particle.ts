@@ -127,7 +127,8 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
       //console.log('update.removed:', JSON.stringify(removed, null, '  '));
       const prop = this.props[name];
       if (Array.isArray(prop)) {
-        removed.forEach(removed => {
+        const removedList = Array.isArray(removed) ? removed : [removed];
+        removedList.forEach(removed => {
           // TODO(sjmiles): linear search is inefficient
           const index = prop.findIndex(entry => this.idFor(entry) === this.idFor(removed));
           if (index >= 0) {
