@@ -6,15 +6,23 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load(":kotlin.bzl", "arcs_kt_library")
 
-def _output_name(src, file_extension = ""):
+def _output_name(src, suffix = ""):
     """Cleans up the given file name, and replaces the .arcs extension."""
-    return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + file_extension
+    # For references to files in other build targets, extract the filename:
+    #   //src/wasm/tests:manifest.arcs -> manifest.arcs
+    if src.startswith("//"):
+      src = src.split(":")[1]
+    return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + suffix
 
 def _run_schema2wasm(name, src, out, language_name, language_flag, package):
     """Generates source code for the given .arcs schema file.
 
     Runs sigh schema2wasm to generate the output.
     """
+
+    if not src.endswith(".arcs"):
+        fail("src must be a .arcs file")
+
     sigh_command(
         name = name,
         srcs = [src],
@@ -42,27 +50,29 @@ def arcs_cc_schema(name, src, out = None, package = "arcs"):
         package = package,
     )
 
-def arcs_kt_schema(name, src, out = None, package = "arcs"):
+def arcs_kt_schema(name, srcs, package = "arcs"):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
       name: name of the target to create
-      src: an Arcs manifest file to process
-      out: filename for the generated source code
+      srcs: list of Arcs manifest files to include
       package: package name to use for the generated source code
     """
-    out = out or _output_name(src, "_GeneratedSchemas.kt")
-    _run_schema2wasm(
-        name = name + "_genrule",
-        src = src,
-        out = out,
-        language_flag = "--kotlin",
-        language_name = "Kotlin",
-        package = package,
-    )
+    outs = []
+    for src in srcs:
+        out = _output_name(src, "_GeneratedSchemas.kt")
+        outs.append(out)
+        _run_schema2wasm(
+            name = _output_name(src, "_genrule"),
+            src = src,
+            out = out,
+            language_flag = "--kotlin",
+            language_name = "Kotlin",
+            package = package,
+        )
 
     arcs_kt_library(
         name = name,
-        srcs = [out],
+        srcs = outs,
         deps = [],
     )

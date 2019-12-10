@@ -3,7 +3,7 @@ load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_bi
 
 arcs_cc_schema(
     name = "schemas",
-    src = "//src/wasm/tests:manifest-srcs",
+    src = "//src/wasm/tests:manifest.arcs",
     out = "entities.h",
 )
 

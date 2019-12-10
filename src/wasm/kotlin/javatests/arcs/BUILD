@@ -4,8 +4,7 @@ licenses(["notice"])
 
 arcs_kt_schema(
     name = "schemas",
-    src = "//src/wasm/tests:manifest-srcs",
-    out = "Test_GeneratedSchemas.kt",
+    srcs = ["//src/wasm/tests:manifest.arcs"],
     package = "sdk.kotlin.javatests.arcs",
 )
 
