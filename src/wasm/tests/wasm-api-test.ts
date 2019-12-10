@@ -22,7 +22,16 @@ import '../../services/random-service.js';
 
 
 class TestLoader extends Loader {
+  constructor(readonly env: string) {
+    super();
+  }
+
   resolve(path: string) {
+    // The manifest is in the same dir as this test file but the compiled wasm binaries
+    // are in language-specific dirs, so we need to adjust the loading path accordingly.
+    if (path.endsWith('$module.wasm')) {
+      return path.replace('tests/$module.wasm', `${this.env}/test-module.wasm`);
+    }
     return (path[0] === '$') ? `RESOLVED(${path})` : path;
   }
 
@@ -40,9 +49,9 @@ class TestLoader extends Loader {
       if (!global['testFlags'].bazel) {
         this.skip();
       } else {
-        const manifestText = `import 'src/wasm/${env}/schemas.arcs'`;
-        loader = new TestLoader();
-        manifestPromise = Manifest.parse(manifestText, {loader, fileName: process.cwd() + '/input.arcs'});
+        loader = new TestLoader(env);
+        manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`,
+                                         {loader, fileName: process.cwd() + '/manifest.arcs'});
       }
     });
 
