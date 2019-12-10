@@ -24,7 +24,6 @@ import '../../services/random-service.js';
 class TestLoader extends Loader {
   constructor(readonly env: string) {
     super();
-console.log(env);
   }
 
   resolve(path: string) {
