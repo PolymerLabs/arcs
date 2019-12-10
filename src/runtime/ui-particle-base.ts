@@ -138,7 +138,7 @@ export class UiParticleBase extends Particle {
   }
 
   private _requireEntity(value: Entity | {}, entityClass: EntityClass, id?: string): Entity {
-    return (value instanceof Entity) ?  value : new (entityClass)(value);
+    return (value instanceof Entity) ? value : new (entityClass)(value);
   }
 
   /**
@@ -156,7 +156,7 @@ export class UiParticleBase extends Particle {
     const data = Array.isArray(value) ? value : [value];
     return this.await(async p => Promise.all(
       data.map(async value => {
-        if (value instanceof Entity) {
+        if (value instanceof Entity && Entity.isIdentified(value)) {
           await handle.remove(value);
         }
       }
