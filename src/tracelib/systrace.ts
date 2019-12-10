@@ -31,37 +31,60 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
 
 function traceAllFunctions(obj: object, client: Client) {
   const that: object = obj;
-  let properties: string[] = [];
+  let boundSymbols: Array<{target: object | Function, symbol: string}> = [];
 
-  // Collects all functions at prototype chain.
+  // Collects all functions at the object's prototype chain.
   while (obj = Object.getPrototypeOf(obj)) {
     if (obj.constructor.name === 'Object') {
       break;
     }
-    properties = properties.concat(Object.getOwnPropertyNames(obj));
+    // Collects and binds instance functions
+    boundSymbols = boundSymbols.concat(
+        Object.getOwnPropertyNames(obj)
+            .filter((element, index, array) => {
+              return typeof obj[element] === 'function';
+            })
+            .map(element => ({target: that, symbol: element})));
+    // Collects and binds class static functions
+    boundSymbols = boundSymbols.concat(
+        Object.getOwnPropertyNames(obj.constructor)
+            .filter((element, index, array) => {
+              return typeof obj.constructor[element] === 'function';
+            })
+            .map(element => ({target: obj.constructor, symbol: element})));
   }
 
-  // Screens out constructor, duplicate/overridden properties
-  // and non-functions if any.
-  properties.sort().filter((element, index, array) => {
-    if (element !== 'constructor'
-        && element !== array[index + 1]
-        && typeof that[element] === 'function') {
-      return true;
-    } else {
-      return false;
-    }
+  // Sorts by symbols so as to remove duplicate properties later.
+  boundSymbols = boundSymbols.sort((element1, element2) => {
+    if (element1.symbol > element2.symbol) return 1;
+    else if (element1.symbol < element2.symbol) return -1;
+    else return 0;
   });
 
-  // Harnesses system tracing to all functions.
-  properties.forEach((element) => {
-    const tracedFunction = that[element];
+  // Filters out (don't harness system tracing to):
+  // a) constructors
+  // b) duplicate/overridden properties
+  //
+  // In reverse order to ensure keeping the innermost methods overriding
+  // their super-classes.
+  boundSymbols = boundSymbols.reverse().filter((element, index, array) => {
+    const next = array[index + 1];
+    if (element.symbol === 'constructor' ||
+        (next && element.symbol === next.symbol)) {
+      return false;
+    }
+    return true;
+  });
 
-    that[element] = (...args): ReturnType<typeof tracedFunction> => {
-      // TODO: async trace begin
-      const ret = tracedFunction.call(that, ...args);
-      // TODO: async trace end
-      return ret;
-    };
+  // Harnesses system tracing to all candidates.
+  boundSymbols.forEach((element) => {
+    const tracedFunction = element.target[element.symbol];
+    element.target[element.symbol] =
+        (...args): ReturnType<typeof tracedFunction> => {
+          // TODO: async trace begin
+          const ret = tracedFunction.call(element.target, ...args);
+          // TODO: async trace end
+          return ret;
+        };
   });
 }
