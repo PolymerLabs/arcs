@@ -11,6 +11,7 @@
 /** Arcs runtime flags. */
 
 class FlagDefaults {
+  // Use the new storage stack
   static useNewStorageStack = false;
 }
 
