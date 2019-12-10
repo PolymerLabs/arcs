@@ -10,9 +10,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {CRDTData, CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type} from '../type.js';
-import {Exists} from './drivers/driver-factory.js';
+import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
 import {UnifiedActiveStore} from './unified-store.js';

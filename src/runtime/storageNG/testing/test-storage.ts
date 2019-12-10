@@ -9,11 +9,12 @@
  */
 
 import {PropagatedException} from '../../arc-exceptions.js';
-import {CRDTConsumerType, CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
+import {CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
 import {Consumer} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
-import {Driver, Exists, ReceiveMethod, StorageDriverProvider} from '../drivers/driver-factory.js';
+import {StorageDriverProvider} from '../drivers/driver-factory.js';
+import {Driver, Exists, ReceiveMethod} from '../drivers/driver.js';
 import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';

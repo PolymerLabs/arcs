@@ -10,7 +10,7 @@
 
 import {assert} from '../../../../platform/chai-web.js';
 import {VolatileDriver, VolatileStorageKey, VolatileMemory, VolatileStorageDriverProvider} from '../volatile.js';
-import {Exists} from '../driver-factory.js';
+import {Exists} from '../driver.js';
 import {Runtime} from '../../../runtime.js';
 import {ArcId} from '../../../id.js';
 import {RamDiskStorageKey} from '../ramdisk.js';

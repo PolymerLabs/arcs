@@ -548,6 +548,7 @@ describe('particle-api', () => {
                 inHandle.set(new resultHandle.entityClass({value: 'success'}));
                 resultHandle.set(new resultHandle.entityClass({value: 'done'}));
               } catch (e) {
+                console.log(e);
                 resultHandle.set(new resultHandle.entityClass({value: e}));
               }
             }

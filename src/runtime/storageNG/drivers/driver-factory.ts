@@ -9,10 +9,8 @@
  */
 
 import {StorageKey} from '../storage-key.js';
-
-export enum Exists {ShouldExist, ShouldCreate, MayExist}
-
-export type ReceiveMethod<T> = (model: T, version: number) => void;
+import {StorageKeyParser} from '../storage-key-parser.js';
+import {Exists, Driver} from './driver.js';
 
 export interface StorageDriverProvider {
   // information on the StorageDriver and characteristics
@@ -21,43 +19,10 @@ export interface StorageDriverProvider {
   driver<Data>(storageKey: StorageKey, exists: Exists): Promise<Driver<Data>>;
 }
 
-// Interface that drivers must support.
-//
-// Note the threading of a version number here; each model provided
-// by the driver to the Store (using the receiver) is paired with a version,
-// as is each model sent from the Store to the driver (using Driver.send()).
-//
-// This threading is used to track whether driver state has changed while
-// the Store is processing a particular model. send() should always fail
-// if the version isn't exactly 1 greater than the current internal version.
-export abstract class Driver<Data> {
-  storageKey: StorageKey;
-  exists: Exists;
-  constructor(storageKey: StorageKey, exists: Exists) {
-    this.storageKey = storageKey;
-    this.exists = exists;
-  }
-  abstract registerReceiver(receiver: ReceiveMethod<Data>, token?: string): void;
-  abstract async send(model: Data, version: number): Promise<boolean>;
-
-  // Return a token that represents the current state of the data.
-  // This can be provided to registerReceiver, and will impact what
-  // data is delivered on initialization (only "new" data should be
-  // delivered, though note that this can be satisfied by sending
-  // a model for merging rather than by remembering a set of ops)
-  abstract getToken(): string | null;
-
-  // these methods only available to Backing Stores and will
-  // be removed once entity mutation is performed on CRDTs
-  // tslint:disable-next-line: no-any
-  abstract async write(key: StorageKey, value: any): Promise<void>;
-  // tslint:disable-next-line: no-any
-  abstract async read(key: StorageKey): Promise<any>;
-}
-
 export class DriverFactory {
   static clearRegistrationsForTesting() {
     this.providers = new Set();
+    StorageKeyParser.reset();
   }
   static providers: Set<StorageDriverProvider> = new Set();
   static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {

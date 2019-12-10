@@ -8,11 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
+import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
+import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
+import {StorageKeyParser} from '../storage-key-parser.js';
 
 export {firebase};
 
@@ -220,6 +222,7 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
 
   static register(cacheService: RuntimeCacheService) {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
+    StorageKeyParser.addParser('firebase', FirebaseStorageKey.fromString);
   }
 }
 

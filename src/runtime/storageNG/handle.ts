@@ -204,7 +204,7 @@ class ImmediateSerializer implements Serializer<ParticleSpec, Referenceable> {
     return {id, rawData: value};
   }
 
-  ensureHasId(vlue) {
+  ensureHasId(entity) {
     // ID is checked in serialize method.
   }
 

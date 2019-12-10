@@ -11,9 +11,10 @@
 
 import {firebase, FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache} from '../drivers/firebase.js';
 import {StorageKey} from '../storage-key.js';
-import {Exists, DriverFactory} from '../drivers/driver-factory.js';
-import {RuntimeCacheService} from '../../runtime-cache.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
+import {Exists} from '../drivers/driver.js';
 import {assert} from '../../../platform/chai-web.js';
+import {RuntimeCacheService} from '../../runtime-cache.js';
 
 /**
  * These classes are intended to mimic firebase behaviour, including asynchrony.
