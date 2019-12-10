@@ -17,7 +17,7 @@ import {EntityType, InterfaceType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId, IdGenerator} from '../id.js';
 import {NoOpStorageProxy} from '../storage-proxy.js';
-// database providers are optional, this tests uses these provider(s)
+// database providers are optional, these tests use these provider(s)
 import '../storage/pouchdb/pouch-db-provider.js';
 
 describe('Handle', () => {

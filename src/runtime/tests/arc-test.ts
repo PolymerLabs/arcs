@@ -37,7 +37,7 @@ import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
-// database providers are optional, this tests uses these provider(s)
+// database providers are optional, these tests use these provider(s)
 import '../storage/firebase/firebase-provider.js';
 import '../storage/pouchdb/pouch-db-provider.js';
 

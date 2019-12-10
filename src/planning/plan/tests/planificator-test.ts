@@ -17,7 +17,7 @@ import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
-// database providers are optional, this tests uses these provider(s)
+// database providers are optional, these tests use these provider(s)
 import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
