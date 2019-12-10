@@ -57,9 +57,9 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
 
         deps = [":" + libname]
 
-    binname = name + "_bin"
+    bin_name = name + "_bin"
     kt_native_binary(
-        name = binname,
+        name = bin_name,
         entry_point = "arcs.main",
         deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
         tags = ["manual"],
@@ -68,7 +68,7 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
 
     wasm_kt_binary(
         name = name,
-        kt_target = ":" + binname,
+        kt_target = ":" + bin_name,
     )
 
 def kt_jvm_and_wasm_library(
