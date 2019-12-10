@@ -10,6 +10,12 @@
 
 import {getClientClass, Client} from './systrace-clients.js';
 
+// Describes a traced symbol.
+interface Symbol {
+  target: object | Function;
+  symbol: string;
+}
+
 // Determines the client class asap at the very first script evaluation.
 const clientClass: ReturnType<typeof getClientClass> = getClientClass();
 
@@ -19,19 +25,25 @@ const clientClass: ReturnType<typeof getClientClass> = getClientClass();
  */
 // tslint:disable-next-line:enforce-name-casing
 export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
-  return class extends ctor {
-    constructor(...args) {
-      super(...args);
-      traceAllFunctions(this, new clientClass());
-    }
-  };
+  if (!clientClass) {
+    // Do not change any bit of contracts at the decorated class when
+    // system tracing is disabled (no &systrace url parameter specified).
+    return ctor;
+  } else {
+    return class extends ctor {
+      constructor(...args) {
+        super(...args);
+        traceAllFunctions(this, new clientClass());
+      }
+    };
+  }
 }
 
 // TODO: dynamic injection of system tracing capabilities
 
 function traceAllFunctions(obj: object, client: Client) {
   const that: object = obj;
-  let boundSymbols: {target: object | Function, symbol: string}[] = [];
+  let boundSymbols: Symbol[] = [];
 
   // Collects all functions at the object's prototype chain.
   while (obj = Object.getPrototypeOf(obj)) {
