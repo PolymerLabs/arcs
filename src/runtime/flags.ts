@@ -11,7 +11,7 @@
 /** Arcs runtime flags. */
 
 class FlagDefaults {
-  static useNewStorageStack = true;
+  static useNewStorageStack = false;
 }
 
 export class Flags extends FlagDefaults {

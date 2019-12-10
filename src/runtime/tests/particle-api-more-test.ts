@@ -49,7 +49,7 @@ const spawnTestArc = async (loader) => {
   return arc;
 };
 
-describe.only('ui-particle-api', () => {
+describe('ui-particle-api', () => {
 
   describe('high-level handle operations', () => {
 
