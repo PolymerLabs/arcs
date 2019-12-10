@@ -24,6 +24,11 @@ const PREBUILT_CACHES = [
   './shell.js',
 ];
 
+// The files/resources are never served/cached by the Arcs Cache Manager.
+const BLACKLIST = [
+  'cache-mgr.js',
+];
+
 self.addEventListener('install', event => {
   async function buildCache() {
     console.log('building Arcs caches');
@@ -73,6 +78,12 @@ self.addEventListener('fetch', event => {
   // workstation assets when enabling debug.arcs.runtime.load_workstation_assets
   if (event.request.url.indexOf(self.location.host) === -1) {
     return;
+  }
+  // Bypass the resources and files in the blacklist
+  for (const res of BLACKLIST) {
+    if (event.request.url.endsWith(res)) {
+      return;
+    }
   }
   event.respondWith(cachedFetch(event));
 });
