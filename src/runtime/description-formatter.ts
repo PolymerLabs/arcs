@@ -17,6 +17,7 @@ import {Particle} from './recipe/particle.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
 import {ModelValue} from './storage/crdt-collection-model.js';
 import {Dictionary} from './hot.js';
+import {Flags} from './flags.js';
 
 export type ParticleDescription = {
   _particle: Particle,
@@ -375,11 +376,11 @@ export class DescriptionFormatter {
   }
 
   _formatCollection(handleName, values) {
-    if (values[0].rawData.name) {
+    if ((Flags.useNewStorageStack ? values[0] : values[0].rawData).name) {
       if (values.length > 2) {
-        return `${values[0].rawData.name} plus ${values.length-1} other items`;
+        return `${(Flags.useNewStorageStack ? values[0] : values[0].rawData).name} plus ${values.length-1} other items`;
       }
-      return values.map(v => v.rawData.name).join(', ');
+      return values.map(v => (Flags.useNewStorageStack ? v : v.rawData).name).join(', ');
     } else {
       return `${values.length} items`;
     }

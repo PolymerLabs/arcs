@@ -11,6 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {CombinedDescriptionsOptions, DescriptionFormatter, ParticleDescription} from './description-formatter.js';
+import {Flags} from './flags.js';
 
 export class DescriptionDomFormatter extends DescriptionFormatter {
   private nextID = 0;
@@ -201,16 +202,22 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
 
   _formatCollection(handleName, values) {
     const handleKey = `${handleName}${++this.nextID}`;
-    if (values[0].rawData.name) {
+    if ((Flags.useNewStorageStack ? values[0] : values[0].rawData).name) {
       if (values.length > 2) {
         return {
           template: `<b>{{${handleKey}FirstName}}</b> plus <b>{{${handleKey}OtherCount}}</b> other items`,
-          model: {[`${handleKey}FirstName`]: values[0].rawData.name, [`${handleKey}OtherCount`]: values.length - 1}
+          model: {
+            [`${handleKey}FirstName`]: (Flags.useNewStorageStack ? values[0] : values[0].rawData).name,
+            [`${handleKey}OtherCount`]: values.length - 1
+          }
         };
       }
       return {
         template: values.map((v, i) => `<b>{{${handleKey}${i}}}</b>`).join(', '),
-        model: Object.assign({}, ...values.map((v, i) => ({[`${handleKey}${i}`]: v.rawData.name} )))
+        model: Object.assign(
+          {},
+          ...values.map(
+              (v, i) => ({[`${handleKey}${i}`]: (Flags.useNewStorageStack ? v : v.rawData).name} )))
       };
     }
     return {
