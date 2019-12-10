@@ -48,7 +48,7 @@ module.exports = {
       },
       onDetected({module, paths, compilation}) {
         numCyclesDetected++;
-        //compilation.warnings.push(new Error(paths.join(' -> ')));
+        compilation.warnings.push(new Error(paths.join(' -> ')));
       },
       onEnd({compilation}) {
         if (numCyclesDetected > MAX_CYCLES) {
