@@ -19,7 +19,6 @@ load(
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_schema = "arcs_kt_schema",
 )
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 load(":sigh.bzl", "sigh_command")
 
 # Re-export rules from various other files.
