@@ -43,6 +43,10 @@ export class BaseNode {
   location: SourceLocation;
 }
 
+export class BaseNodeWithRefinement extends BaseNode {
+    refinement: Refinement|null;
+}
+
 //  PARTICLE TYPES
 export interface BigCollectionType extends BaseNode {
   kind: 'big-collection-type';
@@ -495,29 +499,39 @@ export interface SchemaField extends BaseNode {
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
 
-export interface SchemaPrimitiveType extends BaseNode {
+export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';
   type: 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
 }
 
-export interface SchemaCollectionType extends BaseNode {
+export interface SchemaCollectionType extends BaseNodeWithRefinement {
   kind: 'schema-collection';
   schema: SchemaType;
 }
 
-export interface SchemaReferenceType extends BaseNode {
+export interface SchemaReferenceType extends BaseNodeWithRefinement {
   kind: 'schema-reference';
   schema: SchemaType;
 }
 
-export interface SchemaUnionType extends BaseNode {
+export interface SchemaUnionType extends BaseNodeWithRefinement {
   kind: 'schema-union';
   types: string[];
 }
 
-export interface SchemaTupleType extends BaseNode {
+export interface SchemaTupleType extends BaseNodeWithRefinement {
   kind: 'schema-tuple';
   types: string[];
+}
+
+export interface Refinement extends BaseNode {
+    kind: 'refinement';
+    expression: Expression;
+}
+
+export interface Expression extends BaseNode {
+    kind: 'expression';
+    statement: string;
 }
 
 export interface SchemaInline extends BaseNode {

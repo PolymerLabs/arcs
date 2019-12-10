@@ -72,6 +72,7 @@ describe('ArcStoresFetcher', () => {
               fields: {
                 value: {
                   kind: 'schema-primitive',
+                  refinement: null,
                   type: 'Text'
                 }
               },

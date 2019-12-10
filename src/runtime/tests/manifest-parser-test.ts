@@ -284,6 +284,30 @@ describe('manifest parser', () => {
         outRef: writes Reference<Bar>
     `);
   });
+  it('parses refinement types in a schema', () => {
+      parse(`
+        schema Foo
+          num: Number [num > 10]
+      `);
+  });
+  it('parses refinement types in a particle', () => {
+    parse(`
+    particle Foo
+      input: reads Something {value: Text [value is lower case]}
+    `);
+  });
+  it('does not parse sq brackets in the refinement expression', () => {
+    //TODO(ragdev): Improve the error message to be more accurate as the expression syntax evolves.
+      let data;
+      assert.throws(() => {
+      const manifestAst = parse(`
+      particle Foo
+        input: reads Something {value: Text [value [] is lower case]}
+      `);
+      data = JSON.parse(manifestAst[1].data);
+      }, `Expected "alias", "external", "import", "meta", "particle", "recipe", "resource", "schema", "store", a particle item, a trigger for a recipe, an annotation (e.g. @foo), or an interface but "i" found.`);
+      assert.strictEqual(data, undefined);
+  });
   it('parses require section using local name', () => {
     parse(`
       recipe

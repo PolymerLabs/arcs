@@ -1278,14 +1278,27 @@ SchemaField
     return toAstNode<AstNode.SchemaField>(field);
   }
 
+// SchemaType
+//   = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
+
 SchemaType
-  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
+  = type:(SchemaReferenceType 
+  / SchemaCollectionType 
+  / SchemaPrimitiveType 
+  / SchemaUnionType 
+  / SchemaTupleType
+  ) whiteSpace? refinement:Refinement?
+  {
+      type.refinement = refinement;
+      return type;
+  }
 
 SchemaCollectionType = '[' whiteSpace* schema:SchemaReferenceType whiteSpace* ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: 'schema-collection',
-      schema
+      schema,
+      refinement: null
     });
   }
 
@@ -1293,7 +1306,8 @@ SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) 
   {
     return toAstNode<AstNode.SchemaReferenceType>({
       kind: 'schema-reference',
-      schema
+      schema,
+      refinement: null
     });
   }
 
@@ -1302,7 +1316,8 @@ SchemaPrimitiveType
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
-      type
+      type,
+      refinement: null
     });
   }
 
@@ -1313,7 +1328,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types});
+    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null});
   }
 
 SchemaTupleType
@@ -1323,7 +1338,19 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types});
+    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null});
+  }
+
+Refinement
+= '[' expression:Expression ']'
+  {
+      return toAstNode<AstNode.Refinement>({kind: 'refinement', expression});
+  }
+
+Expression
+  = statement: [^\]]*
+  {
+      return toAstNode<AstNode.Expression>({kind: 'expression', statement});
   }
 
 Version "a version number (e.g. @012)"

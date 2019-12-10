@@ -36,7 +36,7 @@ export class Schema {
     this.fields = {};
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
-        this.fields[name] = {kind: 'schema-primitive', type: field};
+        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
       } else {
         this.fields[name] = field;
       }
