@@ -183,6 +183,9 @@ describe('FindHostedParticle', () => {
       particleSpec = await (particleSpecStore as SingletonStorageProvider).get();
     }
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
-    delete particleSpec.id;    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
+    delete particleSpec.id;
+    await arc.idle;
+    console.log('arc idle');
+    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
   });
 });
