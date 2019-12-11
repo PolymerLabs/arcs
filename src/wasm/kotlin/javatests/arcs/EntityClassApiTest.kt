@@ -18,8 +18,8 @@ import kotlin.native.Retain
 
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<EntityClassApiTest_Errors>(ctor) {
-    private val unused1 = Singleton(this, "data", { EntityClassApiTest_Data() })
-    private val unused2 = Singleton(this, "empty", { EntityClassApiTest_Empty() })
+    private val unused1 = Singleton(this, "data") { EntityClassApiTest_Data() }
+    private val unused2 = Singleton(this, "empty") { EntityClassApiTest_Empty() }
 
     /** Run tests on particle initialization */
     override fun init() {

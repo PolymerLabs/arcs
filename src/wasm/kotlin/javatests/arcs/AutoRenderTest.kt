@@ -19,7 +19,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class AutoRenderTest : Particle() {
-    private val data = Singleton(this, "data", { AutoRenderTest_Data() })
+    private val data = Singleton(this, "data") { AutoRenderTest_Data() }
 
     override fun init() = renderOutput()
     override fun onHandleUpdate(handle: Handle) = renderOutput()

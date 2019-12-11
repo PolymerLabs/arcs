@@ -18,9 +18,9 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class SingletonApiTest : Particle() {
-    private val in_ = Singleton(this, "inHandle", { SingletonApiTest_InHandle() })
-    private val out_ = Singleton(this, "outHandle", { SingletonApiTest_OutHandle() })
-    private val io_ = Singleton(this, "ioHandle", { SingletonApiTest_IoHandle() })
+    private val in_ = Singleton(this, "inHandle") { SingletonApiTest_InHandle() }
+    private val out_ = Singleton(this, "outHandle") { SingletonApiTest_OutHandle() }
+    private val io_ = Singleton(this, "ioHandle") { SingletonApiTest_IoHandle() }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
