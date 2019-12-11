@@ -34,6 +34,7 @@ import arcs.storage.service.StorageServiceBindingDelegate
 import arcs.storage.service.StorageServiceConnection
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
