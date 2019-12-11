@@ -687,7 +687,7 @@ export class RelationType extends Type {
 export interface HandleConnection {
   type: Type;
   name?: string|TypeVariable;
-  direction?: AstNode.DirectionPreSlandles; // TODO make required
+  direction?: AstNode.Direction; // TODO make required
 }
 
 // TODO(lindner) only tests use optional props
@@ -1175,7 +1175,7 @@ export class TypeVariableInfo {
 export interface HandleConnectionLiteral {
   type?: TypeLiteral;
   name?: string|TypeLiteral;
-  direction?: AstNode.DirectionPreSlandles;
+  direction?: AstNode.Direction;
 }
 
 export interface SlotLiteral {
@@ -1196,7 +1196,7 @@ export interface InterfaceInfoLiteral {
   slots: SlotLiteral[];
 }
 
-export type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.DirectionPreSlandles};
+export type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.Direction};
 
 type Maker = (name: string, handleConnections: HandleConnection[], slots: Slot[]) => InterfaceInfo;
 type HandleConnectionMatcher = (interfaceHandleConnection: HandleConnection, particleHandleConnection: HandleConnection) => boolean|MatchResult[];
