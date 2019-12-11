@@ -424,7 +424,7 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onReportExceptionInHost(exception: PropagatedException) {
-    if (!exception.particleName) {
+    if (!exception.particleName && exception.particleId) {
       exception.particleName = this.arc.loadedParticleInfo.get(exception.particleId).spec.name;
     }
     reportSystemException(exception);
