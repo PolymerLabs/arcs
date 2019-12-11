@@ -12,6 +12,7 @@ import {Entity, EntityClass} from './entity.js';
 import {Handle, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
+import {Consumer} from './hot.js';
 
 export interface UiParticleConfig {
   handleNames: string[];
@@ -98,7 +99,7 @@ export class UiParticleBase extends Particle {
    */
   // tslint:disable-next-line: no-any
   async await(task: (p: this) => Promise<any>) {
-    return await this.invokeSafely(task, err => { throw err; });
+    return await this.invokeSafely(task, this.onError);
   }
 
   /**

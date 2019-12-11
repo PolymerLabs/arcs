@@ -46,6 +46,7 @@ export class Particle {
 
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
   private capabilities: Capabilities;
+  protected onError: Consumer<Error>;
 
   constructor() {
     // Typescript only sees this.constructor as a Function type.
@@ -90,6 +91,7 @@ export class Particle {
     this.handles = handles;
     await this.invokeSafely(async p => p.setHandles(handles), onException);
     this._handlesToSync = this._countInputHandles(handles);
+    this.onError = onException;
     if (!this._handlesToSync) {
       // onHandleSync is called IFF there are input handles, otherwise we are ready now
       this.ready();

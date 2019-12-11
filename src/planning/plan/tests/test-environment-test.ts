@@ -7,17 +7,20 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {registerSystemExceptionHandler} from '../../../runtime/arc-exceptions.js';
+import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../../../runtime/arc-exceptions.js';
 
-let exceptions = [];
+let exceptions: Error[] = [];
 
-beforeEach(() => registerSystemExceptionHandler((exception) => exceptions.push(exception)));
+before(() => {
+  removeSystemExceptionHandler(defaultSystemExceptionHandler);
+  registerSystemExceptionHandler(exception => exceptions.push(exception));
+});
 
 afterEach(function() {
   if (exceptions.length > 0) {
-    for (const exception of exceptions) {
-      this.test.ctx.currentTest.err = exception;
-    }
+    const exception = exceptions[0];
     exceptions = [];
+    // Error function not yet included in mocha typescript declarations...
+    this.test['error'](exception);
   }
 });

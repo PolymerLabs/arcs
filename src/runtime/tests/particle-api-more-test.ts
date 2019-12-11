@@ -198,15 +198,16 @@ describe('ui-particle-api', () => {
           }
         });`
       });
-      //
+
       const arc = await spawnTestArc(loader);
-      //
+
       const thingData = await getCollectionData(arc, 1);
       const list = JSON.stringify(thingData.map(thing => thing.value).sort());
       const expected = `["FooBarE0","FooBarE1","FooBarEntity"]`;
       assert.equal(list, expected, 'Collection incorrect after adds');
       const resultData = await getSingletonData(arc, 0);
       assert.ok(resultData.ok, 'failed to throw on adding a value to a Singleton');
+      await arc.idle;
     });
 
     it('can `remove` things', async () => {

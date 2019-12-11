@@ -76,11 +76,17 @@ export class UserException extends PropagatedException {
   }
 }
 
-type ExceptionHandler = Consumer<PropagatedException>;
+type ExceptionHandler = Consumer<Error>;
 
 const systemHandlers = <ExceptionHandler[]>[];
 
 export function reportSystemException(exception: PropagatedException) {
+  for (const handler of systemHandlers) {
+    handler(exception);
+  }
+}
+
+export function reportGlobalException(exception: Error) {
   for (const handler of systemHandlers) {
     handler(exception);
   }
@@ -99,7 +105,9 @@ export function removeSystemExceptionHandler(handler: ExceptionHandler) {
   }
 }
 
-registerSystemExceptionHandler((exception) => {
+export const defaultSystemExceptionHandler = (exception) => {
   console.log(exception.method, exception.particleName);
   throw exception;
-});
+};
+
+registerSystemExceptionHandler(defaultSystemExceptionHandler);

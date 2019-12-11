@@ -777,6 +777,8 @@ function runTests(args: string[]): boolean {
               });
             });
         process.on('unhandledRejection', (reason, promise) => {
+          console.error('Uncaught Exception');
+          console.error(reason);
           runner.abort();
           throw reason;
         });
