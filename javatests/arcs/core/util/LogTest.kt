@@ -1,4 +1,4 @@
-package arcs.util
+package arcs.core.util
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.fail

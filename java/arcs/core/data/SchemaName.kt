@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.data
+package arcs.core.data
 
 /** The name (or one of several names) for a [Schema]. */
 // Inline classes are still experimental, but so is wasm, so ¯\_(ツ)_/¯

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util
+package arcs.core.util
 
 /** Extension function to decode a base64 string into a [ByteArray]. */
 fun String.toBase64Bytes(): ByteArray = Base64.decode(this)

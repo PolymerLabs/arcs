@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage
+package arcs.core.storage
 
 /**
  * Parses storage key string representations back into real StorageKey

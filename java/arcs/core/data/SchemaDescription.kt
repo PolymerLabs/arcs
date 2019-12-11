@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.data
+package arcs.core.data
 
 // TODO: lots?
 data class SchemaDescription(val pattern: String? = null, val plural: String? = null)

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage
+package arcs.core.storage
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update

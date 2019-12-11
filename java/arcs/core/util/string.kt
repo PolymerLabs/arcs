@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util
+package arcs.core.util
 
 /** Returns a JSON-representation of the [String]. */
 fun String.toJson(): String = "\"$this\""

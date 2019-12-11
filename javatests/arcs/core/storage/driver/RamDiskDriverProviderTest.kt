@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage.driver
+package arcs.core.storage.driver
 
 import arcs.common.ArcId
 import arcs.storage.DriverFactory

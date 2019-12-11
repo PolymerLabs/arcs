@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util
+package arcs.core.util
 
 /** Simple success/failure result type. */
 sealed class Result<T> {

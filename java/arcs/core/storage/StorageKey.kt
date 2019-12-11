@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage
+package arcs.core.storage
 
 /** Locator for a specific piece of data within the storage layer. */
 abstract class StorageKey(val protocol: String) {

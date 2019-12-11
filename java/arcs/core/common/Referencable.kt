@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.common
+package arcs.core.common
 
 /** An identifier for a [Referencable]. */
 typealias ReferenceId = String

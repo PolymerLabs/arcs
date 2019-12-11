@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage.util
+package arcs.core.storage.util
 
 import arcs.crdt.CrdtData
 import arcs.crdt.CrdtOperation

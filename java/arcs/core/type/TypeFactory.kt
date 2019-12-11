@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.type
+package arcs.core.type
 
 import arcs.common.Literal
 

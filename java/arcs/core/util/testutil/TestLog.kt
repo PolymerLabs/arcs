@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util.testutil
+package arcs.core.util.testutil
 
 import arcs.util.Log
 import java.io.PrintWriter

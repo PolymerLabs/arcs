@@ -1,4 +1,4 @@
-package arcs.stringEncoder
+package arcs.core.stringEncoder
 
 import arcs.StringEncoder
 import com.google.common.truth.Truth.assertThat

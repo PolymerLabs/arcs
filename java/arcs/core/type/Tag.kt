@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.type
+package arcs.core.type
 
 /** The allowable types of [Type]s. */
 // Commented-out tags are unused so far in the Kotlin codebase.

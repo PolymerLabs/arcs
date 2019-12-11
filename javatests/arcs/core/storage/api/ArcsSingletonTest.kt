@@ -1,4 +1,4 @@
-package arcs.storage.api
+package arcs.core.storage.api
 
 import arcs.data.RawEntity
 import arcs.data.Schema

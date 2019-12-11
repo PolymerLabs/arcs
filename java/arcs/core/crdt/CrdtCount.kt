@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.crdt
+package arcs.core.crdt
 
 import arcs.crdt.internal.Actor
 import arcs.crdt.internal.Version

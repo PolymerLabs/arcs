@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.data
+package arcs.core.data
 
 /** The name of a field within an entity. */
 typealias FieldName = String

@@ -1,4 +1,4 @@
-package arcs.storage.referencemode
+package arcs.core.storage.referencemode
 
 import arcs.storage.StorageKeyParser
 import arcs.storage.driver.RamDiskStorageKey

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.crdt
+package arcs.core.crdt
 
 /** Exception describing an issue which has occurred while working with CRDT data. */
 class CrdtException(message: String, cause: Throwable? = null) : Exception(message, cause) {

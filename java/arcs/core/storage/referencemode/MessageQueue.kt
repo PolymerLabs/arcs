@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage.referencemode
+package arcs.core.storage.referencemode
 
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred

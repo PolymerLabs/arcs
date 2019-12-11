@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage.driver
+package arcs.core.storage.driver
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

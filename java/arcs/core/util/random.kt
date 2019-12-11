@@ -1,4 +1,4 @@
-package arcs.util
+package arcs.core.util
 
 import kotlin.math.pow
 import kotlin.random.Random as KotlinRandom

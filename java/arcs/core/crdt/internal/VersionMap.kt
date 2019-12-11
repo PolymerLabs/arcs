@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.crdt.internal
+package arcs.core.crdt.internal
 
 import kotlin.math.max
 

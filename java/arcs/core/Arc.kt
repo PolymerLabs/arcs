@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs
+package arcs.core
 
 class Arc {
     // TODO: everything(?)

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage
+package arcs.core.storage
 
 /** Storage existence criteria for data. */
 enum class ExistenceCriteria {

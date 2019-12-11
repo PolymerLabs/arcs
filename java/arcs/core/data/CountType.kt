@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.data
+package arcs.core.data
 
 import arcs.crdt.CrdtCount
 import arcs.crdt.CrdtModelType

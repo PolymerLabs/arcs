@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.common
+package arcs.core.common
 
 import arcs.util.Random
 import arcs.util.nextSafeRandomLong

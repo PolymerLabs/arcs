@@ -1,4 +1,4 @@
-package arcs.util
+package arcs.core.util
 
 import arcs.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat

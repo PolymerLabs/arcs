@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util
+package arcs.core.util
 
 /** Splits an [Int] into its four component bytes. */
 fun Int.toByteArray(): ByteArray = byteArrayOf(

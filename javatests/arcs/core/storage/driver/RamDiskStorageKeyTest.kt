@@ -1,4 +1,4 @@
-package arcs.storage.driver
+package arcs.core.storage.driver
 
 import arcs.storage.StorageKeyParser
 import com.google.common.truth.Truth.assertThat

@@ -11,7 +11,7 @@
 
 @file:Suppress("RemoveRedundantQualifierName")
 
-package arcs.crdt
+package arcs.core.crdt
 
 import arcs.common.Referencable
 import arcs.common.ReferenceId

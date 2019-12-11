@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.storage.referencemode
+package arcs.core.storage.referencemode
 
 import arcs.storage.StorageKey
 import arcs.storage.StorageKeyParser

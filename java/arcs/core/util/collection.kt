@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util
+package arcs.core.util
 
 /** Implementation of Java's `compute` which expects, and returns, a non-null result. */
 fun <K, V> MutableMap<K, V>.computeNotNull(key: K, updater: (K, V?) -> V): V =

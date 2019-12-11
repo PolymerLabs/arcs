@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.data
+package arcs.core.data
 
 import arcs.common.Referencable
 import arcs.crdt.CrdtModel

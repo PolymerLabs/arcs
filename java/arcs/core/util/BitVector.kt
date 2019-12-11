@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.util
+package arcs.core.util
 
 /**
  * Implementation of a bit vector as an array of bytes. Supports iterating over arbitrarily-sized

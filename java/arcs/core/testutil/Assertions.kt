@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.testutil
+package arcs.core.testutil
 
 import java.lang.AssertionError
 import kotlin.reflect.KClass

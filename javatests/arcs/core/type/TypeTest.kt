@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.type
+package arcs.core.type
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

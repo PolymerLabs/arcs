@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.common
+package arcs.core.common
 
 /**
  * An interface which denotes a particular (and immutable) class as being a serializable/copyable
