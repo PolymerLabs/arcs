@@ -16,6 +16,8 @@ interface Symbol {
   symbol: string;
 }
 
+const IS_TRACED_PROPERTY = 'isTraced';
+
 // Determines the client class asap at the very first script evaluation.
 const clientClass: ReturnType<typeof getClientClass> = getClientClass();
 
@@ -33,7 +35,15 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
     return class extends ctor {
       constructor(...args) {
         super(...args);
-        traceAllFunctions(this, new clientClass());
+        // The very first instance harnesses system tracing installation
+        // on the decorated class and its super-classes.
+        if (!this.constructor.hasOwnProperty(IS_TRACED_PROPERTY)) {
+          Object.defineProperty(this.constructor, IS_TRACED_PROPERTY, {
+            value: true,
+            writable: false
+          });
+          traceAllFunctions(this, new clientClass());
+        }
       }
     };
   }
