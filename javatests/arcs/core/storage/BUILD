@@ -9,7 +9,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "storage",
-    package = "arcs.storage",
+    package = "arcs.core.storage",
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",

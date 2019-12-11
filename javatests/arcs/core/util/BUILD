@@ -17,7 +17,7 @@ arcs_kt_jvm_test_suite(
         ["*.kt"],
         exclude = PERFORMANCE_SRCS,
     ),
-    package = "arcs.util",
+    package = "arcs.core.util",
     deps = [
         "//java/arcs/core/testutil",
         "//java/arcs/core/util",
@@ -32,7 +32,7 @@ arcs_kt_jvm_test_suite(
 arcs_kt_jvm_test_suite(
     name = "util_performance",
     srcs = PERFORMANCE_SRCS,
-    package = "arcs.util",
+    package = "arcs.core.util",
     # Disabled due to unreliable performance characteristics.
     tags = [
         "manual",

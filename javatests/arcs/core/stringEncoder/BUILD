@@ -9,7 +9,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "stringEncoder",
-    package = "arcs.stringEncoder",
+    package = "arcs.core.stringEncoder",
     deps = [
         "//src/wasm/kotlin/java/arcs",
         "//third_party/java/junit",

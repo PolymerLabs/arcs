@@ -9,7 +9,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "common",
-    package = "arcs.common",
+    package = "arcs.core.common",
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/util",

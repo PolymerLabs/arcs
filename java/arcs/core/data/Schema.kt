@@ -37,7 +37,7 @@ data class Schema(
         val names: List<SchemaName>,
         val fields: SchemaFields,
         val description: SchemaDescription
-    ) : arcs.common.Literal {
+    ) : arcs.core.common.Literal {
         fun toJson(): String {
             // TODO: Actually use a json serializer when we're ready for it.
             return "{\"names\":[\"${names.joinToString { "\"$it\"" }}\"]}"
@@ -45,7 +45,7 @@ data class Schema(
     }
 
     companion object {
-        fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.common.Literal): Schema {
+        fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
             TODO("Implement me.")
         }
     }

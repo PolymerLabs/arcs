@@ -9,7 +9,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "referencemode",
-    package = "arcs.storage.referencemode",
+    package = "arcs.core.storage.referencemode",
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",

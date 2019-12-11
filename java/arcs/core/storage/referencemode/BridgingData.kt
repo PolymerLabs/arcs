@@ -38,7 +38,7 @@ suspend fun RefModeStoreData.toBridgingData(
     storageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
     itemVersionGetter: suspend (RawEntity) -> VersionMap
-): arcs.util.Result<BridgingData> = resultOfSuspend {
+): arcs.core.util.Result<BridgingData> = resultOfSuspend {
     when (this) {
         is RefModeStoreData.Set -> BridgingData(
             this.values.values.map { it.value }, // So many values.
