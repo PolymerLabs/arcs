@@ -13,9 +13,9 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.common.Referencable
-import arcs.crdt.CrdtEntity
-import arcs.data.RawEntity
+import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.RawEntity
 import java.lang.IllegalArgumentException
 import javax.annotation.OverridingMethodsMustInvokeSuper
 import kotlin.reflect.KClass

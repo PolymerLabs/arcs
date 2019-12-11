@@ -13,11 +13,11 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.common.Referencable
-import arcs.crdt.CrdtEntity
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSingleton
-import arcs.data.FieldName
+import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.FieldName
 
 /** Container of [Parcelable] implementations for the data and ops classes of [CrdtEntity]. */
 object ParcelableCrdtEntity {

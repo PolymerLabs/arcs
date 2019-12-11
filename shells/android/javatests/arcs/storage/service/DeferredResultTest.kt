@@ -12,9 +12,9 @@
 package arcs.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.crdt.CrdtException
+import arcs.core.crdt.CrdtException
 import arcs.crdt.parcelables.toParcelable
-import arcs.testutil.assertSuspendingThrows
+import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay

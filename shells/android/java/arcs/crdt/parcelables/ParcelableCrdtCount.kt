@@ -13,9 +13,9 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.crdt.CrdtCount
-import arcs.crdt.internal.Actor
-import arcs.crdt.internal.VersionMap
+import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.internal.Actor
+import arcs.core.crdt.internal.VersionMap
 
 /** Container of [Parcelable] implementations for [CrdtCount]'s data and ops classes. */
 object ParcelableCrdtCount {

@@ -13,13 +13,13 @@ package arcs.type.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.data.CollectionType
-import arcs.data.CountType
-import arcs.data.EntityType
-import arcs.data.ReferenceType
-import arcs.data.SingletonType
-import arcs.type.Tag
-import arcs.type.Type
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.ReferenceType
+import arcs.core.data.SingletonType
+import arcs.core.type.Tag
+import arcs.core.type.Type
 
 /** Wrappers for [Type] classes which implements [Parcelable]. */
 sealed class ParcelableType(open val actual: Type) : Parcelable {
@@ -30,9 +30,9 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
 
     override fun describeContents(): Int = 0
 
-    /** [Parcelable] variant of [arcs.data.CollectionType]. */
+    /** [Parcelable] variant of [arcs.core.data.CollectionType]. */
     data class CollectionType(
-        override val actual: arcs.data.CollectionType<*>
+        override val actual: arcs.core.data.CollectionType<*>
     ) : ParcelableType(actual) {
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
@@ -47,9 +47,9 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
-    /** [Parcelable] variant of [arcs.data.CollectionType]. */
+    /** [Parcelable] variant of [arcs.core.data.CollectionType]. */
     data class CountType(
-        override val actual: arcs.data.CountType = arcs.data.CountType()
+        override val actual: arcs.core.data.CountType = arcs.core.data.CountType()
     ) : ParcelableType(actual) {
         // No need to override writeToParcel.
 
@@ -59,9 +59,9 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
-    /** [Parcelable] variant of [arcs.data.EntityType]. */
+    /** [Parcelable] variant of [arcs.core.data.EntityType]. */
     data class EntityType(
-        override val actual: arcs.data.EntityType
+        override val actual: arcs.core.data.EntityType
     ) : ParcelableType(actual) {
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
@@ -76,9 +76,9 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
-    /** [Parcelable] variant of [arcs.data.ReferenceType]. */
+    /** [Parcelable] variant of [arcs.core.data.ReferenceType]. */
     class ReferenceType(
-        override val actual: arcs.data.ReferenceType<*>
+        override val actual: arcs.core.data.ReferenceType<*>
     ) : ParcelableType(actual) {
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
@@ -93,9 +93,9 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
-    /** [Parcelable] variant of [arcs.data.SingletonType]. */
+    /** [Parcelable] variant of [arcs.core.data.SingletonType]. */
     data class SingletonType(
-        override val actual: arcs.data.SingletonType<*>
+        override val actual: arcs.core.data.SingletonType<*>
     ) : ParcelableType(actual) {
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)

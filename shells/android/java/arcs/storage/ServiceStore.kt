@@ -16,9 +16,9 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
 import arcs.crdt.parcelables.ParcelableCrdtType
 import arcs.storage.parcelables.toParcelable
 import arcs.storage.service.ConnectionFactory
@@ -28,8 +28,12 @@ import arcs.storage.service.IStorageService
 import arcs.storage.service.ParcelableProxyMessageChannel
 import arcs.storage.service.ParcelableProxyMessageChannel.MessageAndResult
 import arcs.storage.service.StorageServiceConnection
-import arcs.storage.util.ProxyCallbackManager
-import arcs.storage.util.SendQueue
+import arcs.core.storage.util.ProxyCallbackManager
+import arcs.core.storage.util.SendQueue
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.ProxyCallback
+import arcs.core.storage.ActiveStore
+import arcs.core.storage.ProxyMessage
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope

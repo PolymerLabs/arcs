@@ -12,9 +12,9 @@
 package arcs.crdt.parcelables
 
 import android.os.Parcelable
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtModel
-import arcs.crdt.CrdtOperation
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtModel
+import arcs.core.crdt.CrdtOperation
 
 /** Enumeration of the parcelable [CrdtModel] types. */
 enum class ParcelableCrdtType(

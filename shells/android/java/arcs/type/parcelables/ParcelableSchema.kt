@@ -13,8 +13,8 @@ package arcs.type.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.data.Schema
-import arcs.data.SchemaName
+import arcs.core.data.Schema
+import arcs.core.data.SchemaName
 
 /** [Parcelable] variant of [Schema]. */
 data class ParcelableSchema(val actual: Schema) : Parcelable {

@@ -13,8 +13,8 @@ package arcs.type.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.data.FieldName
-import arcs.data.SchemaFields
+import arcs.core.data.FieldName
+import arcs.core.data.SchemaFields
 
 data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {

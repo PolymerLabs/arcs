@@ -11,7 +11,7 @@
 
 package arcs.storage.service
 
-import arcs.crdt.CrdtException
+import arcs.core.crdt.CrdtException
 import arcs.crdt.parcelables.ParcelableCrdtException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred

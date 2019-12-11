@@ -13,7 +13,7 @@ package arcs.type.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.data.SchemaDescription
+import arcs.core.data.SchemaDescription
 
 /** [Parcelable] variant of [SchemaDescription]. */
 data class ParcelableSchemaDescription(val actual: SchemaDescription) : Parcelable {

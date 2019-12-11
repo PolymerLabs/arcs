@@ -16,7 +16,7 @@ import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
 import arcs.crdt.parcelables.ParcelableCrdtType
-import arcs.storage.StoreOptions
+import arcs.core.storage.StoreOptions
 import arcs.storage.parcelables.ParcelableStoreOptions
 import arcs.storage.parcelables.toParcelable
 import kotlin.coroutines.CoroutineContext
