@@ -15,8 +15,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
-import arcs.crdt.parcelables.ParcelableCrdtType
 import arcs.core.storage.ProxyMessage
+import arcs.crdt.parcelables.ParcelableCrdtType
 import arcs.storage.parcelables.ParcelableProxyMessage
 import arcs.storage.parcelables.toParcelable
 import com.google.common.truth.Truth.assertThat

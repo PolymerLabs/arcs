@@ -13,11 +13,11 @@ package arcs.storage.service
 
 import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtException
+import arcs.core.storage.util.SendQueue
+import arcs.core.util.TaggedLog
 import arcs.crdt.parcelables.toParcelable
 import arcs.storage.parcelables.ParcelableProxyMessage
 import arcs.storage.service.ParcelableProxyMessageChannel.MessageAndResult
-import arcs.core.storage.util.SendQueue
-import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName

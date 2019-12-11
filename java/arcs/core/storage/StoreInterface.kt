@@ -30,9 +30,12 @@ interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
  * well as provide ample information to support looking the constructor up by expected types.
  */
 data class StoreConstructor(
-    /* internal */ val dataClass: KClass<out CrdtData>,
-    /* internal */ val opClass: KClass<out CrdtOperation>,
-    /* internal */ val consumerDataClass: KClass<*>,
+    /* internal */
+    val dataClass: KClass<out CrdtData>,
+    /* internal */
+    val opClass: KClass<out CrdtOperation>,
+    /* internal */
+    val consumerDataClass: KClass<*>,
     private val constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
 ) {
     val typeParamString: String

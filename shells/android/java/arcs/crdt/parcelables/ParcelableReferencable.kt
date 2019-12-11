@@ -18,7 +18,6 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
 import java.lang.IllegalArgumentException
 import javax.annotation.OverridingMethodsMustInvokeSuper
-import kotlin.reflect.KClass
 
 /**
  * Parcelable variant of the [Referencable] interface.

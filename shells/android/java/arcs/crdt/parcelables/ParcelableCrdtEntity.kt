@@ -45,7 +45,6 @@ object ParcelableCrdtEntity {
         }
     }
 
-
     /** Parcelable variant of [CrdtEntity.Data]. */
     data class Data(
         override val actual: CrdtEntity.Data

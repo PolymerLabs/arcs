@@ -15,13 +15,13 @@ import android.os.Parcel
 import android.os.Parcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.crdt.parcelables.ParcelableCrdtType
-import arcs.crdt.parcelables.readModelData
-import arcs.crdt.parcelables.writeModelData
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
+import arcs.crdt.parcelables.ParcelableCrdtType
+import arcs.crdt.parcelables.readModelData
+import arcs.crdt.parcelables.writeModelData
 import arcs.type.parcelables.readType
 import arcs.type.parcelables.writeType
 

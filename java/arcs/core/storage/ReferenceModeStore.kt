@@ -50,7 +50,6 @@ import arcs.core.util.Random
 import arcs.core.util.Result
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 
@@ -73,8 +72,10 @@ import kotlinx.coroutines.Job
  */
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
-    /* internal */ val backingStore: BackingStore,
-    /* internal */ val containerStore: DirectStore
+    /* internal */
+    val backingStore: BackingStore,
+    /* internal */
+    val containerStore: DirectStore
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
@@ -333,7 +334,7 @@ class ReferenceModeStore private constructor(
         when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
                 val containerOps = proxyMessage.operations
-                opLoop@for (op in containerOps) {
+                opLoop@ for (op in containerOps) {
                     val reference = when (op) {
                         is CrdtSet.Operation.Add<*> -> op.added as Reference
                         is CrdtSet.Operation.Remove<*> -> op.removed as Reference
