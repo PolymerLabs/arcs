@@ -62,7 +62,6 @@ def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
         name = bin_name,
         entry_point = "arcs.main",
         deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
-        tags = ["manual"],
         visibility = visibility,
     )
 
