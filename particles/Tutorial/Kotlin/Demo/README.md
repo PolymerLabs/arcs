@@ -385,3 +385,36 @@ and using the DevTools can see our handles update accordingly.
 Next, we'll implement our players so you can actually play the
 game!
 
+## Creating the Human Player Layer
+
+Currently you should have a tic-tac-toe board that does nothing.
+Sure, you can click it and see the Events populate, but that is
+still rather boring. Let's make it more fun by adding a human 
+player. By now, that original design we made in the first section
+is probably not in the forefront of your mind, so we'll start by
+looking at our design diagram.
+
+![Tic Tac Toe Design](diagrams/TTT.jpg)  
+
+From this, we can see that the Human Player needs a Player and
+Move handle, and these handles connect the Game and Human Player.
+We also need to populate the information about the player, so
+we create a store. This updates our Arcs Manifest File to 
+the one [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.arcs).
+
+Next, we create the human player to take the events stream and
+convert it to a move. This can be viewed in TTTHumanPlayer.kt 
+[here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTHumanPlayer.kt).
+
+Next, we need to update the game particle to update the board
+based on the move. This gives us the updated TTTGame file 
+[here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.kt).
+
+And finally, as always, we need to add the HumanPlayer to the
+[BUILD file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/BUILD).
+
+By building and running this, when you click on a cell it should
+be populate with the avatar set in the resource. By using this
+sample code, this is an "X".
+
+Next up, adding the computer player!
