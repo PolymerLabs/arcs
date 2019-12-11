@@ -19,13 +19,9 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class RenderTest : Particle() {
-    private val flags = Singleton { RenderTest_Flags() }
+    private val flags = Singleton(this, "flags") { RenderTest_Flags() }
     private var shouldTemplate: Boolean = true
     private var shouldPopulate: Boolean = true
-
-    init {
-        registerHandle("flags", flags)
-    }
 
     override fun init() {
         renderOutput()

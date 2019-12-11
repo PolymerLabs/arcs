@@ -26,12 +26,12 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton { TTTGame_GameState() }
-    private val playerOne = Singleton { TTTGame_PlayerOne() }
-    private val playerOneMove = Singleton { TTTGame_PlayerOneMove() }
-    private val playerTwo = Singleton { TTTGame_PlayerTwo() }
-    private val playerTwoMove = Singleton { TTTGame_PlayerTwoMove() }
-    private val events = Collection { TTTGame_Events() }
+    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
+    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
+    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
+    private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
+    private val playerTwoMove = Singleton(this, "playerTwoMove") { TTTGame_PlayerTwoMove() }
+    private val events = Collection(this, "events") { TTTGame_Events() }
 
     private val winningSequences = arrayOf(
         arrayOf(0, 1, 2),
@@ -49,15 +49,6 @@ class TTTGame : Particle() {
         currentPlayer = (0..1).random().toDouble(),
         gameOver = false
     )
-
-    init {
-        registerHandle("gameState", gameState)
-        registerHandle("playerOne", playerOne)
-        registerHandle("playerOneMove", playerOneMove)
-        registerHandle("playerTwo", playerTwo)
-        registerHandle("playerTwoMove", playerTwoMove)
-        registerHandle("events", events)
-    }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get()?.board == null) {

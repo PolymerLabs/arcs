@@ -22,11 +22,7 @@ import kotlin.native.Retain
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class CollectionsParticle : Particle() {
-    private val people = Collection { CollectionsParticle_InputData() }
-
-    init {
-        registerHandle("inputData", people)
-    }
+    private val people = Collection(this, "inputData") { CollectionsParticle_InputData() }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
