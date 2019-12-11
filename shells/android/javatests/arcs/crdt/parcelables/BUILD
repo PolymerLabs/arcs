@@ -12,9 +12,9 @@ arcs_kt_android_test_suite(
     manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
     package = "arcs.crdt.parcelables",
     deps = [
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/crdt/internal",
         "//shells/android/java/arcs/crdt/parcelables",
-        "//src_kt/java/arcs/crdt",
-        "//src_kt/java/arcs/crdt/internal",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit",

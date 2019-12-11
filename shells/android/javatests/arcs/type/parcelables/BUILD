@@ -22,9 +22,9 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
             srcs = [src_file],
             manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
             deps = [
+                "//java/arcs/core/data",
+                "//java/arcs/core/type",
                 "//shells/android/java/arcs/type/parcelables",
-                "//src_kt/java/arcs/data",
-                "//src_kt/java/arcs/type",
                 "//third_party/android/androidx_test/core",
                 "//third_party/android/androidx_test/ext/junit",
                 "//third_party/java/junit",
