@@ -13,7 +13,7 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.crdt.CrdtException
+import arcs.core.crdt.CrdtException
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

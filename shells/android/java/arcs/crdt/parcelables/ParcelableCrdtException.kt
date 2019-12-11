@@ -13,7 +13,7 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.crdt.CrdtException
+import arcs.core.crdt.CrdtException
 
 /** [Parcelable] wrapper for a [CrdtException]. */
 class ParcelableCrdtException(

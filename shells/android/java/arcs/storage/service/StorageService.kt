@@ -15,8 +15,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import arcs.storage.Store
-import arcs.storage.StoreOptions
+import arcs.core.storage.Store
+import arcs.core.storage.StoreOptions
 import arcs.storage.parcelables.ParcelableStoreOptions
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineName

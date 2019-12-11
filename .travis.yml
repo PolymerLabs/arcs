@@ -30,6 +30,8 @@ jobs:
       name: "Bazel: //particles/... + testShells"
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... && bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
       name: "Bazel: //src_kt/... "
+    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //java/... //javatests/... && bazel --bazelrc=tools/travis.bazelrc test //java/... //javatests/..."
+      name: "Bazel: //java/... and //javatests/..."
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
       name: "Bazel: //src/..."
     # run ktlint against every kotlin file in the diff between the branch and master's head.

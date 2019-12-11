@@ -29,9 +29,9 @@ import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
+import {ArcType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
+        RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
-import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
 import {Runtime} from './runtime.js';

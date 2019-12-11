@@ -13,8 +13,8 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.crdt.CrdtCount
-import arcs.crdt.internal.VersionMap
+import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

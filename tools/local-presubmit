@@ -12,7 +12,7 @@ cd $ROOT
 status "Testing all of the things (except shells/android and javaharness)."
 
 ./tools/sigh webpack
-bazel test //src_kt/... //src/... //particles/...
+bazel test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
 ./tools/ktlint
 ./tools/sigh lint

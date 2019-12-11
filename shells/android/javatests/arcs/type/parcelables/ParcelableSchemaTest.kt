@@ -13,10 +13,10 @@ package arcs.type.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.data.Schema
-import arcs.data.SchemaDescription
-import arcs.data.SchemaFields
-import arcs.data.SchemaName
+import arcs.core.data.Schema
+import arcs.core.data.SchemaDescription
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

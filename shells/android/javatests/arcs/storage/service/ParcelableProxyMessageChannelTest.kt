@@ -12,11 +12,11 @@
 package arcs.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyMessage
 import arcs.crdt.parcelables.ParcelableCrdtType
-import arcs.storage.ProxyMessage
 import arcs.storage.parcelables.ParcelableProxyMessage
 import arcs.storage.parcelables.toParcelable
 import com.google.common.truth.Truth.assertThat

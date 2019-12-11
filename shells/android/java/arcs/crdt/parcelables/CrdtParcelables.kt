@@ -13,14 +13,14 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.common.Referencable
-import arcs.crdt.CrdtCount
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtEntity
-import arcs.crdt.CrdtOperation
-import arcs.crdt.CrdtOperationAtTime
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSingleton
+import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
 
 /** Base interface for [Parcelable] implementations of [CrdtData] classes. */
 interface ParcelableCrdtData<T : CrdtData> : CrdtData, Parcelable {

@@ -12,17 +12,17 @@
 package arcs.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.crdt.CrdtCount
-import arcs.crdt.internal.VersionMap
+import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.CountType
+import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.Store
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.crdt.parcelables.ParcelableCrdtType
-import arcs.data.CountType
-import arcs.storage.ExistenceCriteria
-import arcs.storage.ProxyMessage
-import arcs.storage.Store
-import arcs.storage.StoreOptions
-import arcs.storage.driver.RamDisk
-import arcs.storage.driver.RamDiskDriverProvider
-import arcs.storage.driver.RamDiskStorageKey
 import arcs.storage.parcelables.toParcelable
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
