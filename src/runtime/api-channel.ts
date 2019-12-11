@@ -311,6 +311,9 @@ function convert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingM
   if (info === undefined) {
     return;
   }
+  if (value === null) {
+    return null;
+  }
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -387,7 +390,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         const requestedId = descriptor.findIndex(d => d.identifier || false);
 
         /** @this APIPort */
-        const impl = async function(this: APIPort, ...args) {
+        const impl = function(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
             if (i === initializer) {
@@ -410,7 +413,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             }
           }
 
-          await this.send(f, messageBody);
+          void this.send(f, messageBody);
         };
 
 
