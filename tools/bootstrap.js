@@ -17,8 +17,8 @@ function spawn(cmd, ...args) {
   return res.status === 0 && !res.error;
 }
 
-const src = 'tools/sigh.ts';
-const dst = 'build/sigh.js';
+const src = './sigh.ts';
+const dst = 'builds/sigh.js';
 
 const quiet = process.argv[2] === '--quiet';
 
@@ -26,9 +26,9 @@ if (!fs.existsSync(dst) || fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) 
   if (!quiet) {
     console.log('Building sigh');
   }
-  if (!spawn('node_modules/.bin/tsc', '-p', 'tools')) {
+  if (!spawn('node_modules/.bin/tsc', '-p', './')) {
     process.exit(1);
   }
 }
 
-process.exit(!spawn('node', 'build/sigh.js', ...process.argv.slice(2)));
+process.exit(!spawn('node', 'builds/sigh.js', ...process.argv.slice(2)));

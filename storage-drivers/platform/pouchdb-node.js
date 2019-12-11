@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-//import Mocha from '../../tools/node_modules/mocha';
-//export const mocha = new Mocha();
+import PouchDB from 'pouchdb';
+import PouchDbMemory from 'pouchdb-adapter-memory';
+import PouchDbDebug from 'pouchdb-debug';
 
-export * from '../../tools/platform/mocha-node.js';
+export {PouchDB, PouchDbMemory, PouchDbDebug};

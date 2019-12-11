@@ -10,7 +10,7 @@
 
 import {AbstractDevtoolsChannel} from '../devtools-connector/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
-import WebSocket from 'ws';
+import WebSocket from '../../tools/node_modules/ws';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   server: WebSocket.Server;
