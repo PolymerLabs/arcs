@@ -26,8 +26,8 @@ notifications:
 jobs:
   include:
     - stage: test
-      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src_kt/... && bazel --bazelrc=tools/travis.bazelrc test //src_kt/..."
-      name: "Bazel: //src_kt/... "
+      script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //java/... //javatests/... && bazel --bazelrc=tools/travis.bazelrc test //java/... //javatests/..."
+      name: "Bazel: //java/... and //javatests/..."
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
       name: "Bazel: //src/..."
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc test //particles/... && tools/sigh testShells"

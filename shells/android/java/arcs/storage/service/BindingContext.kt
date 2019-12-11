@@ -12,18 +12,18 @@
 package arcs.storage.service
 
 import androidx.annotation.VisibleForTesting
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ActiveStore
+import arcs.core.storage.ProxyCallback
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.Store
+import arcs.core.storage.util.SendQueue
 import arcs.crdt.parcelables.ParcelableCrdtType
 import arcs.crdt.parcelables.toParcelable
-import arcs.storage.ActiveStore
-import arcs.storage.ProxyCallback
-import arcs.storage.ProxyMessage
-import arcs.storage.Store
 import arcs.storage.parcelables.ParcelableProxyMessage
 import arcs.storage.parcelables.toParcelable
-import arcs.storage.util.SendQueue
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName

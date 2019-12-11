@@ -13,9 +13,9 @@ package arcs.crdt.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.common.Referencable
-import arcs.data.FieldName
-import arcs.data.RawEntity
+import arcs.core.common.Referencable
+import arcs.core.data.FieldName
+import arcs.core.data.RawEntity
 
 /** Parcelable variant of [RawEntity]. */
 data class ParcelableRawEntity(

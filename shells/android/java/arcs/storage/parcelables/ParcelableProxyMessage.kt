@@ -14,15 +14,15 @@ package arcs.storage.parcelables
 import android.annotation.SuppressLint
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.ProxyMessage.Type
 import arcs.crdt.parcelables.ParcelableCrdtType
 import arcs.crdt.parcelables.readModelData
 import arcs.crdt.parcelables.readOperations
 import arcs.crdt.parcelables.writeModelData
 import arcs.crdt.parcelables.writeOperations
-import arcs.storage.ProxyMessage
-import arcs.storage.ProxyMessage.Type
 
 /** Defines parcelable variants of the [ProxyMessage]s. */
 sealed class ParcelableProxyMessage(

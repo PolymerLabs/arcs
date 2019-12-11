@@ -9,13 +9,13 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "//shells/android/java/arcs/common:AndroidManifest.xml",
     deps = [
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/storage",
         "//shells/android/java/arcs/crdt/parcelables",
         "//shells/android/java/arcs/storage/parcelables",
         "//shells/android/java/arcs/storage/service",
-        "//src_kt/java/arcs/common",
-        "//src_kt/java/arcs/crdt",
-        "//src_kt/java/arcs/crdt/internal",
-        "//src_kt/java/arcs/storage",
         "//third_party/java/androidx/lifecycle",
     ],
 )
