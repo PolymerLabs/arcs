@@ -107,13 +107,17 @@ class TestParticle : Particle() {
                  </table>""".trimIndent()
     }
 
-    private val data = Singleton(this, "data") { TestParticle_Data() }
-    private val res = Singleton(this, "res") { TestParticle_Res() }
-    private val info = Collection(this, "info") { TestParticle_Info() }
+    private val data = Singleton { TestParticle_Data() }
+    private val res = Singleton { TestParticle_Res() }
+    private val info = Collection { TestParticle_Info() }
     private var updated = 0
     private var storeCount = 0
 
     init {
+        registerHandle("data", data)
+        registerHandle("res", res)
+        registerHandle("info", info)
+
         eventHandler("add") {
           val newData = data.get() ?: TestParticle_Data()
           newData.num = newData.num?.let { it + 2 } ?: 0.0

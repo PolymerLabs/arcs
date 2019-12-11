@@ -4,18 +4,18 @@
 
 So from our introductory tutorials, we have the following definition of a particle:
 
-> *Particle* - Modular component of functionality. Ideally small units so particles can be reusable.
+> *Particle* - Modular component of functionality. Ideally small units so particles can be reusable. 
 
 While that tells us _what_ a particle is, it does not say _how_ a particle should be used and _how_
 a recipe should be divided into particles. To better understand how to design a system in Arcs, it
-is important to have a full mental picture of particles. Just as there are multiple sides to any
+is important to have a full mental picture of particles. Just as there are multiple sides to any 
 person, particles have multiple faces. To fully understand them, we must look below the surface to
 see the soul of particles.
 
 #### Smallest Components
 Even from the definition of particles, we know they should be small components. Just as with object
 oriented programming, this lets us have easily interchangeable components. One can envision a world
-where particles are made by external developers and combined to form recipes - much the way
+where particles are made by external developers and combined to form recipes - much the way 
 developers use external libraries in object-oriented languages.
 
 However, making particles as small as possible leads us towards a "turtles all the way down"
@@ -25,13 +25,13 @@ particles must be balanced against having too many.
 #### Bounds of Data Knowledge
 Arcs' mission statement says that users have sovereignty over their data and its use. To ensure
 data only travels as intended, Arcs uses data flow analysis to make guarantees about data flow. But,
-for this to work properly, particles must delineate knowledge boundaries. Just as each nation has a
-border so customs and immigration can know where to operate, we need to create systems with well
+for this to work properly, particles must delineate knowledge boundaries. Just as each nation has a 
+border so customs and immigration can know where to operate, we need to create systems with well 
 defined boundaries so Arcs can know where data should (and more importantly, shouldn't) go.
 
 
 #### Functional Components
-When we create recipes, there are going to be occasions when it makes sense to extract some
+When we create recipes, there are going to be occasions when it makes sense to extract some 
 functionality into its own particle. This is easiest to understand with an example, which we provide in
 more detail below.
 
@@ -46,28 +46,28 @@ engineering project, we need a set of requirements. Here are ours:
  5. The system should say who's turn it is.
  6. The system should congratulate the winner by name.
  7. The system should let you reset the game.
-
-Based on these requirements, we can see right off the bat that we are going to need to have some
+ 
+Based on these requirements, we can see right off the bat that we are going to need to have some 
 way to create a barrier since since the winner must be congratulated by name, but we want to restrict the
 particles that know any personal information. To meet this requirement, we will devide the system into a
 main game particle that can know personal information, and a board which cannot. We also know
-we need a human and computer player. Thus, we start with these four particles.
+we need a human and computer player. Thus, we start with these four particles. 
 
-![Tic Tac Toe Particles](diagrams/TTTParticles.jpg)
+![Tic Tac Toe Particles](diagrams/TTTParticles.jpg) 
 
 Now you might be wondering how does this relate to the three ways of thinking about particles we
-talked about above?
+talked about above? 
 
-![Tic Tac Toe Particle Types](diagrams/TTTParticleTypes.jpg)
+![Tic Tac Toe Particle Types](diagrams/TTTParticleTypes.jpg) 
 
-Ok, so now we've got 4 particles, but they currently have no way of communicating. Let's add some
+Ok, so now we've got 4 particles, but they currently have no way of communicating. Let's add some 
 handles to our system! To start off, we know the Board is going to need to communicate when things
 have been clicked - be it a cell or the reset button. Let's call these Events. We know the Human
 needs these events to determine their move. The Game will need it as well to enable resets.
 
-![Tic Tac Toe Events](diagrams/TTTEvents.jpg)
+![Tic Tac Toe Events](diagrams/TTTEvents.jpg) 
 
-Next, the Game needs a way of communicating the current state of things to everyone. This will
+Next, the Game needs a way of communicating the current state of things to everyone. This will 
 include things like what the board should look like and the current player.
 
 ![Tic Tac Toe GameState](diagrams/TTTGameState.jpg)
@@ -79,29 +79,29 @@ change it.  We need them to be able to pass moves to the game!
 
 And finally, we need a way to hold information about the players.
 
-![Tic Tac Toe Design](diagrams/TTT.jpg)
+![Tic Tac Toe Design](diagrams/TTT.jpg)  
 
-Phew, there we have it. Now let's think about to our requirements. We had one that said the main UI
+Phew, there we have it. Now let's think about to our requirements. We had one that said the main UI 
 could not be trusted with any personal information. The personal information is held in PlayerOne and
 PlayerTwo, and our main UI is the Board. Have we protected this data? Well, by looking at the diagram
 with the untrusted particle highlighted, we can see the handles with personal data do not directly
 connect to the Board. So the data should be safe.
 
-![Tic Tac Toe Untrusted](diagrams/TTTUntrusted.jpg)
+![Tic Tac Toe Untrusted](diagrams/TTTUntrusted.jpg) 
 
 ## Designing the Best Manifest
 
 Alright, so now we've got the basic design for our system, it's
 time to go put it all together! Let's start by writing our Arcs
-Manifest file. To do this, we know the particles and handles,
-and how they fit together. But we don't know what the entities
+Manifest file. To do this, we know the particles and handles, 
+and how they fit together. But we don't know what the entities 
 the handles point to look like.
 
 By looking at our diagram again, it becomes obvious we need four
 schemas: Person, GameState, Event, and Move. These different types
 are colored in the graph below to show where schemas are reused.
 
-![Tic Tac Toe Handle Types](diagrams/TTTHandleTypes.jpg)
+![Tic Tac Toe Handle Types](diagrams/TTTHandleTypes.jpg) 
 
 For now, let's not worry about what fields each of these schemas
 has. This will become apparent as we start implementing the
@@ -109,10 +109,10 @@ system.
 
 To start with, let's create the Board and the Game.  To do this,
 we will also need to implement at least basic versions of the
-GameState and Event handles. The Board needs to know what it
+GameState and Event handles. The Board needs to know what it 
 should display, thus GameState must include a representation of
-the board. Meanwhile, the Board needs to provide the type of
-move (it could be a reset or an actual move) and the move.
+the board. Meanwhile, the Board needs to provide the type of 
+move (it could be a reset or an actual move) and the move. 
 Because collections are not ordered, we also need some sort of
 time so we can sort the Events and ensure only the most recent
 Event is processed. In total, this gives us the following Schemas.
@@ -187,8 +187,13 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
+    private val gameState = Singleton { TTTGame_GameState() }
+    private val events = Collection { TTTGame_Events() }
+
+    init {
+        registerHandle("gameState", gameState)
+        registerHandle("events", events)
+    }
 
     // We represent the board as a comma seperated string
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
@@ -228,15 +233,18 @@ import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
-    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
-    private val events = Collection(this, "events") { TTTBoard_Events() }
-
+    private val gameState = Singleton { TTTBoard_GameState() }
+    private val events = Collection { TTTBoard_Events() }
+    
     // We use clicks as the way to sort Events in other particles.
     private var clicks = 0.0
     // The empty board will be used in multiple null checks.
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
     init {
+        registerHandle("gameState", gameState)
+        registerHandle("events", events)
+
         // When a cell is clicked, add the click to the Events.
         eventHandler("onClick") { eventData ->
             events.store(TTTBoard_Events(
@@ -284,7 +292,7 @@ class TTTBoard : Particle() {
                 grid-template-columns: 50px 50px 50px;
                 grid-column-gap: 0px;
               }
-
+            
               .valid-butt {
                 border: 1px outset blue;
                 height: 50px;
@@ -292,7 +300,7 @@ class TTTBoard : Particle() {
                 cursor: pointer;
                 background-color: lightblue;
               }
-
+            
               .valid-butt:hover {
                 background-color: blue;
                 color: white;
@@ -342,11 +350,11 @@ probably don't believe this, and your probably would like to see
 something working. But how can we do this?
 
 This is where the DevTools are your new best friend. Go ahead and
-load your recipe in the Web Shell and then open the DevTools in
+load your recipe in the Web Shell and then open the DevTools in 
 Chrome, make sure you've gone to the Arcs tab, and selected the
 correct recipe.
 
-![Tic Tac Toe DevTools](diagrams/TTTDevTools.png)
+![Tic Tac Toe DevTools](diagrams/TTTDevTools.png) 
 
 We can see here our particles are correct connected using the
 handles we specified in the recipe. This is cool, but in our case
@@ -364,7 +372,7 @@ Now if you click on Events, then values, then object you can see
 the value of the event! In our case, we clicked on the first cell
 which you can see because the move has a value of 0.
 
-![Tic Tac Toe Event Move](diagrams/TTTDevToolsOnMove.png)
+![Tic Tac Toe Event Move](diagrams/TTTDevToolsOnMove.png) 
 
 You can also click reset, and see this update in Events. In this
 case, we can also see that the `time` is also updating properly.

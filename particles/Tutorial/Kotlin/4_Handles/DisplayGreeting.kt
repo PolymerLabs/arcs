@@ -22,9 +22,13 @@ import kotlin.native.Retain
  * Sample WASM Particle.
  */
 class DisplayGreetingParticle : Particle() {
-    private val person = Singleton(this, "person") { DisplayGreeting_Person() }
+    private val person = Singleton { DisplayGreeting_Person() }
 
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
+
+    init {
+        registerHandle("person", person)
+    }
 
     override fun onHandleUpdate(handle: Handle) {
         this.renderOutput()
