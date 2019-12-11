@@ -13,22 +13,11 @@ package sdk.kotlin.javatests.arcs
 
 import arcs.addressable.toAddress
 import arcs.Particle
-import arcs.Singleton
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
-class EventsTest : Particle() {
-    private val output = Singleton { EventsTest_Output() }
-
-    init {
-        registerHandle("output", output)
-    }
-
-    override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
-        output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))
-    }
-}
+class MissingRegisterHandleTest : Particle()
 
 @Retain
-@ExportForCppRuntime("_newEventsTest")
-fun constructEventTest() = EventsTest().toAddress()
+@ExportForCppRuntime("_newMissingRegisterHandleTest")
+fun constructMissingRegisterHandleTest() = MissingRegisterHandleTest().toAddress()

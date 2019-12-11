@@ -3,7 +3,7 @@ Welcome to developing using Arcs! By using Arcs as the platform for your system,
 
 Before we get to code, it is important that we are all speaking the same language, so we present two definitions to start.
 
->- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable.
+>- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable. 
 >- *Recipe* - A combination of particles to create features and systems.
 
 Particles and recipes are defined using the Arcs Manifest Language and implemented in Javascript, Kotlin, or C++.  The best way to understand this is to jump into some code. Let’s look at how Hello World is implemented.
@@ -141,9 +141,9 @@ Now your code should say “Hello, Human!”. You can update this by changing wh
 
 But, as promised, let’s get to understanding root. We start with a definition:
 
-> Slots - an element of the Arcs platform that allows particles to render on a user interface.
+> Slots - an element of the Arcs platform that allows particles to render on a user interface. 
 
-As a matter of notation, we say that particles consume slots when they fill a slot, and provide slots when they make slots available to other particles. Particles can also delegate by providing and consuming a slot. Root is the base slot that Arcs provides for particles to use.
+As a matter of notation, we say that particles consume slots when they fill a slot, and provide slots when they make slots available to other particles. Particles can also delegate by providing and consuming a slot. Root is the base slot that Arcs provides for particles to use. 
 
 This all is a bit theoretical, so let's get to an example. To show how particles can provide and consume slots, this time we will have two particles.
 
@@ -228,7 +228,7 @@ arcs_kt_binary(
 
 And there you have it! The mystery of root solved, and a basic understanding of slots. Slots are a large part of the power of Arcs to hide user data, so we'll be using them a lot going forward. So don't worry if you don't fully understand them yet, there will plenty more examples to come!
 
-# Getting a Grip on Handles
+# Getting a Grip on Handles 
 So now we’ve seen how multiple particles can be used in a single recipe. But what if we wanted the particles in our recipe to pass data? Well, to achieve this we need to use a few new Arcs concepts, as always we start with some definitions:
 
 >- *Schema* - Composition of data to create a new type.
@@ -237,18 +237,18 @@ So now we’ve seen how multiple particles can be used in a single recipe. But w
 
 Those were some dense definitions. Let’s take a step back and understand how these concepts work in harmony to create working systems.
 
-Schemas are used to define the data type. Entities are data, defined by a schema (data type). We use handles to pass this data between particles. The interaction between the handle and particle can be read and/or write. But don’t worry about this for the moment, we’ll cover these relationships in more detail in upcoming tutorials.
+Schemas are used to define the data type. Entities are data, defined by a schema (data type). We use handles to pass this data between particles. The interaction between the handle and particle can be read and/or write. But don’t worry about this for the moment, we’ll cover these relationships in more detail in upcoming tutorials. 
 
 To make this all a bit more clear, consider this diagram. Throughout Arcs documentation and developer tools, you’ll find handles are represented as ovals and particles are rectangles.
 
 ![Handle Image](../screenshots/handle-diagram.png)
 
-Hopefully this is at least as clear as a cup of strong coffee. To help, let’s get to a practical example. To make it a little bit more fun, we’re going to have the user input their name and then say hello to them.
+Hopefully this is at least as clear as a cup of strong coffee. To help, let’s get to a practical example. To make it a little bit more fun, we’re going to have the user input their name and then say hello to them. 
 
-As usual, we start with the Arcs Manifest file. Because we are going to be using a handle, we will need to define a schema and two particles as outlined below.
+As usual, we start with the Arcs Manifest file. Because we are going to be using a handle, we will need to define a schema and two particles as outlined below. 
 
 ```
-// Define a schema that allows us to store a person's name
+// Define a schema that allows us to store a person's name 
 schema Person
   name: Text
 
@@ -269,7 +269,7 @@ particle DisplayGreeting in 'DisplayGreeting.wasm'
 recipe HandleRecipe
   GetPerson
     // Pass the output person to the handle recipePerson.
-    person: writes recipePerson
+    person: writes recipePerson 
     root: consumes
       greetingSlot: provides greeting
   DisplayGreeting
@@ -279,8 +279,8 @@ recipe HandleRecipe
   description `Kotlin Tutorial 4: Handles`
 ```
 
-Before we get to the code, we need to understand a little bit more about how schemas, entities, and handles work under the hood in Kotlin-Wasm.
-We know that an entity is defined by a schema, just as an object is defined by its class. In Kotlin, we take advantage of
+Before we get to the code, we need to understand a little bit more about how schemas, entities, and handles work under the hood in Kotlin-Wasm. 
+We know that an entity is defined by a schema, just as an object is defined by its class. In Kotlin, we take advantage of 
 this analogy by implementing schemas as classes and entities as object instantiations.
 So now we have a way to represent the data, but we need to connect everything. Luckily we have handle classes to do this!
 Setting up handles is done in two steps: type setting and registration. We will show how this is done in the code below.
@@ -295,10 +295,9 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class GetPersonParticle : Particle() {
-    // We start by setting the type of the handle and associating it with the name defined in the Arcs manifest file.
-    // Note that this is a Singleton handle, as we will only have one person. The GetPerson_Person() entity class is
-    // autogenerated from the Bazel build rules.
-    private val person = Singleton(this, "person") { GetPerson_Person() }
+    // We start by setting the type of the handle. Note that this is a Singleton handle, as we will only have one person.
+    // the GetPerson_Person() entity class is autogenerated from the Bazel build rules. 
+    private val person = Singleton { GetPerson_Person() }
 
     override fun getTemplate(slotName: String) = """
         <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
@@ -306,6 +305,10 @@ class GetPersonParticle : Particle() {
     """.trimIndent()
 
     init {
+        // Here we register the handle "person" as defined in our Arcs manifest file to the local person variable
+        // created above.
+        registerHandle("person", person)
+
         // When the name is changed, we want to assign the new name to the person. So we register an event handler
         // on the element.
         eventHandler("onNameInputChange") { eventData ->
@@ -336,11 +339,15 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class DisplayGreetingParticle : Particle() {
-    // Note that this autogenerated schema class has a different name from the GetPersonParticle. This is due to the
+    // Note that this autogenerated schema class has a different name from the GetPersonParticle. This is due to the 
     // autogenerated naming convention as we will explain below.
-    private val person = Singleton(this, "person") { DisplayGreeting_Person() }
+    private val person = Singleton { DisplayGreeting_Person() }
 
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
+
+    init {
+        registerHandle("person", person)
+    }
 
     override fun onHandleUpdate(handle: Handle) {
         this.renderOutput()
@@ -358,7 +365,7 @@ class DisplayGreetingParticle : Particle() {
 fun _newDisplayGreeting() = DisplayGreetingParticle().toAddress()
 ```
 
-And finally, the BUILD file. Note the `arcs_kt_schema` rule which will generate schemas of the form
+And finally, the BUILD file. Note the `arcs_kt_schema` rule which will generate schemas of the form 
 '$ParticleName_EntityName'. This is why `DisplayGreeting.kt` referenced `GetPerson_Person()` while `DisplayGreeting.kt`
 referenced `DisplayGreeting_Person()`.
 ```build
@@ -383,12 +390,12 @@ arcs_kt_binary(
 )
 ```
 
-Phew, we made it. We made our first human-interactive recipe using handles. There were a lot of new concepts required
-to get there. If you don’t understand entities, schemas and handles, don’t overly stress as all of the following tutorials
+Phew, we made it. We made our first human-interactive recipe using handles. There were a lot of new concepts required 
+to get there. If you don’t understand entities, schemas and handles, don’t overly stress as all of the following tutorials 
 use these concepts, so you will have plenty more examples to contemplate.
 
 # The Template Interpolation Revisitation
-So it’s time for a small confession. We didn’t give the full picture of how handles work in the previous section.
+So it’s time for a small confession. We didn’t give the full picture of how handles work in the previous section. 
 To understand the full picture, we need a new definition, and to update our definition of handles:
 
 >- *Stores* - A store represents a data location
@@ -449,7 +456,11 @@ import kotlin.native.Retain
  */
 class CollectionsParticle : Particle() {
     // Note this is a Collection handle instead of a Singleton.
-   private val people = Collection(this, "inputData") { CollectionsParticle_InputData() }
+   private val people = Collection { CollectionsParticle_InputData() }
+
+   init {
+       registerHandle("inputData", people)
+   }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         // We begin by generating the list of models that should fill the template. Our template
@@ -470,7 +481,7 @@ class CollectionsParticle : Particle() {
                 // can access the properties in this model (name and age) via placeholders.
                 "models" to peopleList
             )
-        )
+        )   
     }
 
     override fun getTemplate(slotName: String): String {
@@ -521,24 +532,24 @@ the Arcs Manifest file (as a `resource`), we're going to load it from a separate
  schema PersonDetails
    name: Text
    age: Number
-
+ 
  // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
  store PersonToGreetStore of PersonDetails in 'data.json'
-
+ 
  particle JsonStoreParticle in 'JsonStore.wasm'
    // This particle has an input parameter called inputData. We can use this parameter in the particle's Kotlin file.
    inputData: reads PersonDetails
    root: consumes
-
+ 
  recipe JsonStoreRecipe
    // This line connects this recipe to the data store above. It also creates a local alias for it called "data", which is how we will refer to
    // it inside the scope of this recipe.
    data: map PersonToGreetStore
-
+ 
    JsonStoreParticle
      // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
      inputData: reads data
-
+ 
    description `Kotlin Tutorial 6: JSON Store`
 ```
 
@@ -566,11 +577,14 @@ import kotlin.native.Retain
  */
 class JsonStoreParticle : Particle() {
 
-    private val res = Singleton(this, "inputData") { JsonStoreParticle_InputData() }
+    private val res = Singleton { JsonStoreParticle_InputData() }
+    init {
+        registerHandle("inputData", res)
+    }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val person = res.get() ?: JsonStoreParticle_InputData("", 0.0);
-
+    
         return model + mapOf(
             "name" to person.name,
             "age" to person.age
@@ -579,7 +593,7 @@ class JsonStoreParticle : Particle() {
 
     override fun getTemplate(slotName: String): String {
         return "<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"
-    }
+    }   
 }
 
 @Retain
@@ -590,7 +604,7 @@ fun constructJsonStoreParticle() = JsonStoreParticle().toAddress()
 
 Before we finish, let’s go over all of the concepts we have introduced in these tutorials.
 
->- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable.
+>- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable. 
 >- *Recipe* - A combination of particles to create features and systems.
 >- *Template Interpolation* - A mechanism to substitute formatted data into renderable elements.
 >- *Slots* - An element of the Arcs platform that allows particles to render on a user interface.

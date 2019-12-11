@@ -115,3 +115,8 @@ public:
 };
 
 DEFINE_PARTICLE(ServicesTest)
+
+
+class MissingRegisterHandleTest : public arcs::Particle {};
+
+DEFINE_PARTICLE(MissingRegisterHandleTest)

@@ -24,10 +24,17 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
-    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
+    private val gameState = Singleton { TTTGame_GameState() }
+    private val playerOne = Singleton { TTTGame_PlayerOne() }
+    private val playerOneMove = Singleton { TTTGame_PlayerOneMove() }
+    private val events = Collection { TTTGame_Events() }
+
+    init {
+        registerHandle("gameState", gameState)
+        registerHandle("playerOne", playerOne)
+        registerHandle("playerOneMove", playerOneMove)
+        registerHandle("events", events)
+    }
 
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 

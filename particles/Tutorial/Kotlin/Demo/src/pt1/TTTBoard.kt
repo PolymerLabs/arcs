@@ -23,12 +23,15 @@ import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
-    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
-    private val events = Collection(this, "events") { TTTBoard_Events() }
+    private val gameState = Singleton { TTTBoard_GameState() }
+    private val events = Collection { TTTBoard_Events() }
     private var clicks = 0.0
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
     init {
+        registerHandle("gameState", gameState)
+        registerHandle("events", events)
+
         eventHandler("onClick") { eventData ->
             events.store(TTTBoard_Events(
                     type = "move",
@@ -68,7 +71,7 @@ class TTTBoard : Particle() {
                 grid-template-columns: 50px 50px 50px;
                 grid-column-gap: 0px;
               }
-
+            
               .valid-butt {
                 border: 1px outset blue;
                 height: 50px;
@@ -76,7 +79,7 @@ class TTTBoard : Particle() {
                 cursor: pointer;
                 background-color: lightblue;
               }
-
+            
               .valid-butt:hover {
                 background-color: blue;
                 color: white;

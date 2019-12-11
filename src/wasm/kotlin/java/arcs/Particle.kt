@@ -23,12 +23,16 @@ abstract class Particle {
     open fun init() = Unit
 
     /**
-     * Called during Handle construction to build the handles map.
+     * Associate a handle name to a handle object.
      *
+     * @param name Name of handle from particle in manifest
      * @param handle Singleton or Collection, defined in this particle class
      */
-    fun registerHandle(handle: Handle) {
-        handles[handle.name] = handle
+    fun registerHandle(name: String, handle: Handle) {
+        handle.name = name
+        handle.particle = this
+        handles[name] = handle
+        log("Registering $name")
     }
 
     /**
@@ -197,16 +201,15 @@ abstract class Particle {
 
 enum class Direction { Unconnected, In, Out, InOut }
 
-abstract class Handle(val name: String, val particle: Particle) {
-    init { particle.registerHandle(this) }
-
+abstract class Handle {
+    lateinit var name: String
+    lateinit var particle: Particle
     var direction: Direction = Direction.Unconnected
     abstract fun sync(encoded: String?)
     abstract fun update(added: String?, removed: String?)
 }
 
-open class Singleton<T : Entity<T>>(particle: Particle, name: String, private val entityCtor: () -> T) :
-        Handle(name, particle) {
+open class Singleton<T : Entity<T>>(val entityCtor: () -> T) : Handle() {
     private var entity: T? = null
 
     override fun sync(encoded: String?) {
@@ -235,8 +238,8 @@ open class Singleton<T : Entity<T>>(particle: Particle, name: String, private va
     }
 }
 
-class Collection<T : Entity<T>>(particle: Particle, name: String, private val entityCtor: () -> T) :
-        Handle(name, particle), Iterable<T> {
+class Collection<T : Entity<T>>(private val entityCtor: () -> T) : Handle(), Iterable<T> {
+
     private val entities: MutableMap<String, T> = mutableMapOf()
 
     val size: Int
