@@ -18,11 +18,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class EventsTest : Particle() {
-    private val output = Singleton { EventsTest_Output() }
-
-    init {
-        registerHandle("output", output)
-    }
+    private val output = Singleton(this, "output") { EventsTest_Output() }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))

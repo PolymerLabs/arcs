@@ -24,17 +24,10 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {
-    private val gameState = Singleton { TTTHumanPlayer_GameState() }
-    private val events = Collection { TTTHumanPlayer_Events() }
-    private val myMove = Singleton { TTTHumanPlayer_MyMove() }
-    private val player = Singleton { TTTHumanPlayer_Player() }
-
-    init {
-        registerHandle("gameState", gameState)
-        registerHandle("events", events)
-        registerHandle("myMove", myMove)
-        registerHandle("player", player)
-    }
+    private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState() }
+    private val events = Collection(this, "events") { TTTHumanPlayer_Events() }
+    private val myMove = Singleton(this, "myMove") { TTTHumanPlayer_MyMove() }
+    private val player = Singleton(this, "player") { TTTHumanPlayer_Player() }
 
     override fun onHandleUpdate(handle: Handle) {
         if (events.size <= 0 || gameState.get()?.currentPlayer != player.get()?.id) return

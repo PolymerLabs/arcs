@@ -62,15 +62,6 @@ recipe ServicesTest
 
 // -----------------------------------------------------------------------------------------------
 
-particle MissingRegisterHandleTest in '$module.wasm'
-  input: reads * {n: Number}
-
-recipe MissingRegisterHandleTest
-  MissingRegisterHandleTest
-    input: reads h1
-
-// -----------------------------------------------------------------------------------------------
-
 particle EntityClassApiTest in '$module.wasm'
   data: reads * {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: Reference<Foo {val: Text}>}
   empty: reads * {}

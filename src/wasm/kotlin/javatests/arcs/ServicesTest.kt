@@ -18,11 +18,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class ServicesTest : Particle() {
-    private val output = Collection { ServicesTest_Output() }
-
-    init {
-        registerHandle("output", output)
-    }
+    private val output = Collection(this, "output") { ServicesTest_Output() }
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")

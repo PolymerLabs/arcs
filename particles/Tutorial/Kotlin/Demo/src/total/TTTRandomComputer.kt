@@ -22,15 +22,9 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {
-    private val gameState = Singleton { TTTRandomComputer_GameState() }
-    private val myMove = Singleton { TTTRandomComputer_MyMove() }
-    private val player = Singleton { TTTRandomComputer_Player() }
-
-    init {
-        registerHandle("gameState", gameState)
-        registerHandle("myMove", myMove)
-        registerHandle("player", player)
-    }
+    private val gameState = Singleton(this, "gameState") { TTTRandomComputer_GameState() }
+    private val myMove = Singleton(this, "myMove") { TTTRandomComputer_MyMove() }
+    private val player = Singleton(this, "player") { TTTRandomComputer_Player() }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
 

@@ -17,11 +17,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 
 class SpecialSchemaFieldsTest(ctor: (String) -> SpecialSchemaFieldsTest_Errors) : TestBase<SpecialSchemaFieldsTest_Errors>(ctor) {
-    private val unused = Singleton { SpecialSchemaFieldsTest_Fields() }
-
-    init {
-        registerHandle("fields", unused)
-    }
+    private val unused = Singleton(this, "fields") { SpecialSchemaFieldsTest_Fields() }
 
     /** Run tests on particle initialization */
     override fun init() {

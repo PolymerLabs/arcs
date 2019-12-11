@@ -170,12 +170,6 @@ class TestLoader extends Loader {
       assert.match(clock.payload, /^value:20[0-9]{2}-[0-9]{2}-[0-9]{2};$/);  // eg. 'value:2019-11-07;'
     });
 
-    // TODO: fix PEC -> host error handling
-    it.skip('missing registerHandle', async () => {
-      await assertThrowsAsync(async () => await setup('MissingRegisterHandleTest'),
-                              `Wasm particle failed to connect handle 'input'`);
-    });
-
     // Some wasm tests print out lists of test cases, and it is much more readable if these can be
     // printed after the main test name.
     function prefix(title, fn) {
