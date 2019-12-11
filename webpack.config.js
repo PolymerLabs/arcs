@@ -14,7 +14,7 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 const lib = './shells/lib';
 
 // Decrease MAX_CYCLES every time you eliminate circular dependencies from the codebase.
-const MAX_CYCLES = 3;
+const MAX_CYCLES = 0;
 let numCyclesDetected = 0;
 
 module.exports = {

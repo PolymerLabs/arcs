@@ -13,9 +13,8 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator} from './id.js';
-import {InterfaceInfo} from './interface-info.js';
-import {HandleConnection as InterfaceInfoHandleConnection} from './interface-info.js';
-import {Slot as InterfaceInfoSlot} from './interface-info.js';
+import {HandleConnection as InterfaceInfoHandleConnection} from './type.js';
+import {Slot as InterfaceInfoSlot} from './type.js';
 import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
@@ -33,7 +32,8 @@ import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Schema} from './schema.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
+        ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
@@ -768,7 +768,7 @@ ${e.message}
       });
     }
     // TODO: move interface to recipe/ and add interface builder?
-    const ifaceInfo = new InterfaceInfo(interfaceItem.name, handles, slots);
+    const ifaceInfo = InterfaceInfo.make(interfaceItem.name, handles, slots);
     manifest._interfaces.push(ifaceInfo);
   }
 

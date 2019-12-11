@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,29 +8,27 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-
 import {Predicate} from '../runtime/hot.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Type, TypeVariable, TypeLiteral} from './type.js';
-import {ParticleSpec} from './particle-spec.js';
+import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
+        TypeVarReference, HandleConnectionLiteral, SlotLiteral,
+        InterfaceInfoLiteral, MatchResult} from './type.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {Flags} from './flags.js';
+import {ParticleSpec} from './particle-spec.js';
 
-function _typeFromLiteral(member: TypeLiteral): Type {
-  return Type.fromLiteral(member);
-}
+const handleConnectionFields = ['type', 'name', 'direction'];
+const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
 function _typeVarOrStringFromLiteral(member: TypeLiteral | string): TypeVariable | string {
   if (typeof member === 'object') {
-    return _typeFromLiteral(member) as TypeVariable;
+    return Type.fromLiteral(member) as TypeVariable;
   }
   return member;
 }
 
 function _HandleConnectionFromLiteral({type, name, direction}: HandleConnectionLiteral): HandleConnection {
   return {
-    type: type ? _typeFromLiteral(type) : undefined,
+    type: type ? Type.fromLiteral(type) : undefined,
     name: name ?  _typeVarOrStringFromLiteral(name) : undefined,
     direction: direction || 'any'
   };
@@ -71,65 +69,10 @@ function _SlotToLiteral({name, direction, isRequired, isSet}:Slot): SlotLiteral 
   };
 }
 
-const handleConnectionFields = ['type', 'name', 'direction'];
-const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
-
-export interface HandleConnection {
-  type: Type;
-  name?: string|TypeVariable;
-  direction?: AstNode.DirectionPreSlandles; // TODO make required
-}
-
-interface HandleConnectionLiteral {
-  type?: TypeLiteral;
-  name?: string|TypeLiteral;
-  direction?: AstNode.DirectionPreSlandles;
-}
-
-// TODO(lindner) only tests use optional props
-export interface Slot {
-  name?: string|TypeVariable;
-  direction?: AstNode.SlotDirection;
-  isRequired?: boolean;
-  isSet?: boolean;
-}
-
-interface SlotLiteral {
-  name?: string|TypeLiteral;
-  direction?: AstNode.SlotDirection;
-  isRequired?: boolean;
-  isSet?: boolean;
-}
-
-export interface TypeVarReference {
-  object: HandleConnection|Slot;
-  field: string;
-}
-
-export interface InterfaceInfoLiteral {
-  name: string;
-  handleConnections: HandleConnectionLiteral[];
-  slots: SlotLiteral[];
-}
-
-type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.DirectionPreSlandles};
-
-export class InterfaceInfo {
-  name: string;
-  handleConnections: HandleConnection[];
-  slots: Slot[];
-
-  // TODO(lindner) only accessed in tests
-  public readonly typeVars: TypeVarReference[];
+class InterfaceInfoImpl extends InterfaceInfo {
 
   constructor(name: string, handleConnections: HandleConnection[], slots: Slot[]) {
-    assert(name);
-    assert(handleConnections !== undefined);
-    assert(slots !== undefined);
-    this.name = name;
-    this.handleConnections = handleConnections;
-    this.slots = slots;
-    this.typeVars = [];
+    super(name, handleConnections, slots);
     for (const handleConnection of handleConnections) {
       for (const field of handleConnectionFields) {
         if (InterfaceInfo.isTypeVar(handleConnection[field])) {
@@ -147,23 +90,29 @@ export class InterfaceInfo {
     }
   }
 
-  toPrettyString(): string {
-    return 'InterfaceInfo';
+  static makeImpl(name: string, handleConnections: HandleConnection[], slots: Slot[]) {
+    return new InterfaceInfoImpl(name, handleConnections, slots);
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
-    this.typeVars.forEach(({object, field}) => object[field] = (object[field] as Type).mergeTypeVariablesByName(variableMap));
+  static fromLiteral(data: InterfaceInfoLiteral) : InterfaceInfo {
+    const handleConnections = data.handleConnections.map(_HandleConnectionFromLiteral);
+    const slots = data.slots.map(_SlotFromLiteral);
+    return new InterfaceInfoImpl(data.name, handleConnections, slots);
   }
 
-  get canReadSubset() {
+  toLiteral(): InterfaceInfoLiteral {
+    const handleConnections = this.handleConnections.map(_HandleConnectionToLiteral);
+    const slots = this.slots.map(_SlotToLiteral);
+    return {name: this.name, handleConnections, slots};
+  }  get canReadSubset() : InterfaceInfo {
     return this._cloneAndUpdate(typeVar => typeVar.canReadSubset);
   }
 
-  get canWriteSuperset() {
+  get canWriteSuperset() : InterfaceInfo {
     return this._cloneAndUpdate(typeVar => typeVar.canWriteSuperset);
   }
 
-  isMoreSpecificThan(other: InterfaceInfo) {
+  isMoreSpecificThan(other: InterfaceInfo) : boolean {
     if (this.handleConnections.length !== other.handleConnections.length ||
         this.slots.length !== other.slots.length) {
       return false;
@@ -180,7 +129,7 @@ export class InterfaceInfo {
     return true;
   }
 
-  _applyExistenceTypeTest(test: Predicate<TypeVarReference>) {
+  _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean {
     for (const typeRef of this.typeVars) {
       if (test(typeRef.object[typeRef.field])) {
         return true;
@@ -215,28 +164,16 @@ export class InterfaceInfo {
       .join('\n');
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()
-  toString() {
+  toString() : string {
     return `interface ${this.name}
 ${this._handleConnectionsToManifestString()}
 ${this._slotsToManifestString()}`;
   }
 
-  static fromLiteral(data: InterfaceInfoLiteral) {
-    const handleConnections = data.handleConnections.map(_HandleConnectionFromLiteral);
-    const slots = data.slots.map(_SlotFromLiteral);
-    return new InterfaceInfo(data.name, handleConnections, slots);
-  }
-
-  toLiteral(): InterfaceInfoLiteral {
-    const handleConnections = this.handleConnections.map(_HandleConnectionToLiteral);
-    const slots = this.slots.map(_SlotToLiteral);
-    return {name: this.name, handleConnections, slots};
-  }
-
   clone(variableMap: Map<string, Type>) : InterfaceInfo {
     const handleConnections = this.handleConnections.map(({name, direction, type}) => ({name, direction, type: type ? type.clone(variableMap) : undefined}));
     const slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new InterfaceInfo(this.name, handleConnections, slots);
+    return new InterfaceInfoImpl(this.name, handleConnections, slots);
   }
 
   cloneWithResolutions(variableMap: Map<string, Type>) {
@@ -246,10 +183,10 @@ ${this._slotsToManifestString()}`;
   _cloneWithResolutions(variableMap: Map<string, Type>) {
     const handleConnections = this.handleConnections.map(({name, direction, type}) => ({name, direction, type: type ? type._cloneWithResolutions(variableMap) : undefined}));
     const slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new InterfaceInfo(this.name, handleConnections, slots);
+    return new InterfaceInfoImpl(this.name, handleConnections, slots);
   }
 
-  canEnsureResolved() {
+  canEnsureResolved() : boolean {
     for (const typeVar of this.typeVars) {
       if (!typeVar.object[typeVar.field].canEnsureResolved()) {
         return false;
@@ -258,7 +195,7 @@ ${this._slotsToManifestString()}`;
     return true;
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved() : boolean {
     for (const typeVar of this.typeVars) {
       let variable = typeVar.object[typeVar.field];
       variable = variable.clone(new Map());
@@ -321,14 +258,14 @@ ${this._slotsToManifestString()}`;
       handleConnectionList.push({name: handleConnection.name || otherHandleConnection.name, direction: handleConnection.direction || otherHandleConnection.direction, type: resultType});
     }
     const slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new InterfaceInfo(this.name, handleConnectionList, slots);
+    return new InterfaceInfoImpl(this.name, handleConnectionList, slots);
   }
 
-  resolvedType() {
+  resolvedType() : InterfaceInfo {
     return this._cloneAndUpdate(typeVar => typeVar.resolvedType());
   }
 
-  equals(other: InterfaceInfo) {
+  equals(other: InterfaceInfo) : boolean {
     if (this.handleConnections.length !== other.handleConnections.length) {
       return false;
     }
@@ -375,18 +312,6 @@ ${this._slotsToManifestString()}`;
     const copy = this.clone(new Map());
     copy.typeVars.forEach(typeVar => InterfaceInfo._updateTypeVar(typeVar, update));
     return copy;
-  }
-
-  static _updateTypeVar(typeVar: TypeVarReference, update: (t: Type) => Type): void {
-    typeVar.object[typeVar.field] = update(typeVar.object[typeVar.field]);
-  }
-
-  static isTypeVar(reference: TypeVariable | Type | string | boolean): boolean {
-    return reference instanceof TypeVariable || reference instanceof Type && reference.hasVariable;
-  }
-
-  static mustMatch(reference: TypeVariable | Type | string | boolean): boolean {
-    return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
   }
 
   static handleConnectionsMatch(interfaceHandleConnection: HandleConnection, particleHandleConnection: HandleConnection): boolean|MatchResult[] {
@@ -511,3 +436,8 @@ ${this._slotsToManifestString()}`;
     return true;
   }
 }
+
+InterfaceInfo.make = InterfaceInfoImpl.makeImpl;
+InterfaceInfo.handleConnectionsMatch = InterfaceInfoImpl.handleConnectionsMatch;
+InterfaceInfo.fromLiteral = InterfaceInfoImpl.fromLiteral;
+InterfaceInfo.slotsMatch = InterfaceInfoImpl.slotsMatch;

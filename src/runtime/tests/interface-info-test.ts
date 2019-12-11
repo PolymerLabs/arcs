@@ -9,10 +9,9 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {InterfaceInfo} from '../interface-info.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {CollectionType, EntityType, InterfaceType, Type, TypeVariable} from '../type.js';
+import {CollectionType, EntityType, InterfaceInfo, InterfaceType, Type, TypeVariable} from '../type.js';
 
 describe('interface', () => {
   it('round trips interface info', async () => {
@@ -30,14 +29,14 @@ describe('interface', () => {
   });
 
   it('finds type variable references in handle connections', () => {
-    const iface = new InterfaceInfo('Test', [{type: TypeVariable.make('a')}], []);
+    const iface = InterfaceInfo.make('Test', [{type: TypeVariable.make('a')}], []);
     assert.lengthOf(iface.typeVars, 1);
     assert.strictEqual(iface.typeVars[0].field, 'type');
     assert.strictEqual(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', () => {
-    const iface = new InterfaceInfo('Test', [], [
+    const iface = InterfaceInfo.make('Test', [], [
       {name: TypeVariable.make('a'), direction: 'consume', isRequired: false, isSet: false}]);
     assert.lengthOf(iface.typeVars, 1);
     assert.strictEqual(iface.typeVars[0].field, 'name');
@@ -95,7 +94,7 @@ describe('interface', () => {
           foo: writes NotTest
       `);
     const type = new EntityType(manifest.schemas.Test);
-    const iface = new InterfaceInfo('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'in', type: TypeVariable.make('b')}, {type}], []);
+    const iface = InterfaceInfo.make('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'in', type: TypeVariable.make('b')}, {type}], []);
     assert(!iface.particleMatches(manifest.particles[0]));
     assert(iface.particleMatches(manifest.particles[1]));
     assert(iface.particleMatches(manifest.particles[2]));
@@ -125,7 +124,7 @@ describe('interface', () => {
             randomSlot: provides? [Slot]
       `);
     const type = new EntityType(manifest.schemas.Test);
-    const iface = new InterfaceInfo('Test', [
+    const iface = InterfaceInfo.make('Test', [
       {direction: 'in', type}], [
         {name: 'one'},
         {direction: 'provide', isSet: true}]);
@@ -137,13 +136,13 @@ describe('interface', () => {
   });
 
   it('Cannot ensure resolved an unresolved type variable', () => {
-    const iface = new InterfaceInfo('Test', [{type: TypeVariable.make('a')}], []);
+    const iface = InterfaceInfo.make('Test', [{type: TypeVariable.make('a')}], []);
     assert.isFalse(iface.canEnsureResolved());
   });
 
   it('Can ensure resolved a schema type', () => {
     const type = EntityType.make(['Thing'], {});
-    const iface = new InterfaceInfo('Test', [{type, name: 'foo'}, {type, direction: 'in'}, {type}], []);
+    const iface = InterfaceInfo.make('Test', [{type, name: 'foo'}, {type, direction: 'in'}, {type}], []);
     assert.isTrue(iface.canEnsureResolved());
     assert.isTrue(iface.maybeEnsureResolved());
   });
@@ -158,7 +157,7 @@ describe('interface', () => {
     const unconstrainedType = TypeVariable.make('c');
     const allTypes = [constrainedType1, constrainedType2, unconstrainedType];
 
-    const allTypesIface = new InterfaceInfo('Test',
+    const allTypesIface = InterfaceInfo.make('Test',
       [{type: constrainedType1}, {type: unconstrainedType}, {type: constrainedType2}], []);
     assert.isTrue(allTypes.every(t => !t.isResolved()));
     assert.isFalse(allTypesIface.canEnsureResolved());
@@ -167,7 +166,7 @@ describe('interface', () => {
     assert.isTrue(allTypes.every(t => !t.isResolved()),
         'Types should not have been modified by a failed maybeEnsureResolved()');
 
-    const constrainedOnlyIface = new InterfaceInfo('Test',
+    const constrainedOnlyIface = InterfaceInfo.make('Test',
       [{type: constrainedType1}, {type: constrainedType2}], []);
     assert.isTrue(allTypes.every(t => !t.isResolved()));
     assert.isTrue(constrainedOnlyIface.canEnsureResolved());
