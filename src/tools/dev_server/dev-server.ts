@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import express from 'express';
 import http from 'http';
-import minimist from 'minimist';
-import morgan from 'morgan';
+
+import express from '../../../tools/node_modules/express';
+import minimist from '../../../tools/node_modules/minimist';
+import morgan from '../../../tools/node_modules/morgan';
 
 import {status} from './status-handler.js';
 import {ExplorerProxy, green, bold} from './explorer-proxy.js';

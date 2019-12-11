@@ -8,4 +8,4 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export * from '../../storage/platform/pouchdb-node.js';
+export * from '../../storage-drivers/platform/pouchdb-node.js';

@@ -24,6 +24,7 @@ const _DO_NOT_USE_spawn = require('child_process').spawn;
 
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
+console.log(`note: cd ${projectRoot}`);
 
 let keepProcessAlive = false;
 let globalOptions = {
@@ -440,9 +441,11 @@ function buildPath(path: string, preprocess: () => void): () => boolean {
   return fn;
 }
 
+const tscBinPath = 'tools/node_modules/.bin/tsc';
+
 function tsc(path: string): boolean {
-  sighLog(saneSpawnSyncWithOutput('node_modules/.bin/tsc',  ['--version']).stdout);
-  const result = saneSpawnSyncWithOutput('node_modules/.bin/tsc', ['--diagnostics', '-p', path]);
+  sighLog(saneSpawnSyncWithOutput(tscBinPath,  ['--version']).stdout);
+  const result = saneSpawnSyncWithOutput(tscBinPath, ['--diagnostics', '-p', path]);
   if (result.success) {
     sighLog(result.stdout);
   }

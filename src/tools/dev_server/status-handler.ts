@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Request, Response, NextFunction} from 'express';
+import {Request, Response, NextFunction} from '../../../tools/node_modules/express';
 import {ExplorerProxy} from './explorer-proxy.js';
 
 /**

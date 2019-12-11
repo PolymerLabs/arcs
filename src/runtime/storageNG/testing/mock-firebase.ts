@@ -10,7 +10,7 @@
 
 
 import {FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache} from '../drivers/firebase.js';
-import {firebase} from '../../../../storage/platform/firebase-web.js';
+import {firebase} from '../../../../storage-drivers/platform/firebase-web.js';
 
 import {StorageKey} from '../storage-key.js';
 import {Exists, DriverFactory} from '../drivers/driver-factory.js';

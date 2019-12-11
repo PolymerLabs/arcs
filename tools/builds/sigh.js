@@ -20,6 +20,7 @@ const _DO_NOT_USE_spawnSync = require('child_process').spawnSync;
 const _DO_NOT_USE_spawn = require('child_process').spawn;
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
+console.log(`note: cd ${projectRoot}`);
 let keepProcessAlive = false;
 let globalOptions = {
     install: false,
@@ -62,6 +63,7 @@ const steps = {
     webpackTools: [peg, build, webpackTools],
     build: [peg, build],
     watch: [watch],
+    buildifier: [buildifier],
     lint: [peg, build, lint, tslint, buildifier],
     tslint: [peg, build, tslint],
     check: [check],
@@ -384,9 +386,10 @@ function buildPath(path, preprocess) {
     Object.defineProperty(fn, 'name', { value: `build ${path.slice(2)}` });
     return fn;
 }
+const tscBinPath = 'tools/node_modules/.bin/tsc';
 function tsc(path) {
-    sighLog(saneSpawnSyncWithOutput('node_modules/.bin/tsc', ['--version']).stdout);
-    const result = saneSpawnSyncWithOutput('node_modules/.bin/tsc', ['--diagnostics', '-p', path]);
+    sighLog(saneSpawnSyncWithOutput(tscBinPath, ['--version']).stdout);
+    const result = saneSpawnSyncWithOutput(tscBinPath, ['--diagnostics', '-p', path]);
     if (result.success) {
         sighLog(result.stdout);
     }
@@ -481,14 +484,14 @@ function buildifier(args) {
     const options = minimist(args, {
         boolean: ['fix'],
     });
-    const buildifierOptions = ['--warnings=-module-docstring,-bzl-visibility'];
+    const buildifierOptions = ['--warnings=+out-of-order-load,-module-docstring,-bzl-visibility'];
     if (options.fix) {
         buildifierOptions.push('--lint=fix', '--mode=fix');
     }
     else {
         buildifierOptions.push('--lint=warn', '--mode=check');
     }
-    const exclude = /\bnode_modules\b/;
+    const exclude = /^(node_modules|dist)$/;
     const include = /(WORKSPACE|BUILD|BUILD\.bazel|\.bzl)$/;
     let allSucceeded = true;
     for (const file of findProjectFiles(process.cwd(), exclude, include)) {

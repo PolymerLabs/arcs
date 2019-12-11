@@ -26,9 +26,9 @@ if (!fs.existsSync(dst) || fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) 
   if (!quiet) {
     console.log('Building sigh');
   }
-  if (!spawn('node_modules/.bin/tsc', '-p', './')) {
+  if (!spawn('tools/node_modules/.bin/tsc', '-p', './')) {
     process.exit(1);
   }
 }
 
-process.exit(!spawn('node', 'builds/sigh.js', ...process.argv.slice(2)));
+process.exit(!spawn('node', 'tools/builds/sigh.js', ...process.argv.slice(2)));

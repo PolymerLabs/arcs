@@ -8,4 +8,4 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export * from '../../storage/platform/firebase-node.js';
+export * from '../../storage-drivers/platform/firebase-node.js';

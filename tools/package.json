@@ -9,7 +9,7 @@
   "module": "dist/webmain.js",
   "main": "dist/index.es.js",
   "scripts": {
-    "prepare": "cross-env sigh check",
+    "Xprepare": "cross-env sigh check",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix cloud run test:licenses",
     "build:rollup": "rollup -c --sourcemap",
@@ -79,6 +79,7 @@
     "npm": ">= 6.9.0"
   },
   "dependencies": {
+    "@types/mocha": "^5.2.7",
     "protobufjs": "^6.8.8"
   }
 }

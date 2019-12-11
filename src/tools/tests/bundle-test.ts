@@ -10,7 +10,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import JSZip from 'jszip';
+import JSZip from '../../../tools/node_modules/jszip';
 
 import {bundle, bundleListing, BundleEntry} from '../bundle.js';
 import {assert} from '../../platform/chai-web.js';

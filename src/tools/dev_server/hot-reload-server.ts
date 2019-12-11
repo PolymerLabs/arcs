@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import WebSocket from 'ws';
+import WebSocket from '../../../tools/node_modules/ws';
 import * as fs from 'fs';
 
 /**
