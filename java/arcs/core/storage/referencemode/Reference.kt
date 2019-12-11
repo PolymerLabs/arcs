@@ -11,10 +11,10 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.internal.VersionMap
-import arcs.storage.StorageKey
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.storage.StorageKey
 
 /**
  * [arcs.store.ReferenceModeStore] uses an expanded notion of Reference that also includes a

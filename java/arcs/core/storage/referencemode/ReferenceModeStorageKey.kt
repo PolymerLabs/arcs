@@ -11,8 +11,8 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.storage.StorageKey
-import arcs.storage.StorageKeyParser
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 
 const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 

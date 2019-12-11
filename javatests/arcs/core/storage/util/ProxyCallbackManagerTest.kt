@@ -11,12 +11,12 @@
 
 package arcs.core.storage.util
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
-import arcs.crdt.internal.VersionMap
-import arcs.storage.MultiplexedProxyCallback
-import arcs.storage.ProxyCallback
-import arcs.storage.ProxyMessage
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.storage.MultiplexedProxyCallback
+import arcs.core.storage.ProxyCallback
+import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.Executors
 import kotlin.random.Random

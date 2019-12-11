@@ -11,15 +11,15 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperationAtTime
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSingleton
-import arcs.crdt.internal.Actor
-import arcs.crdt.internal.VersionMap
-import arcs.data.RawEntity
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.internal.Actor
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.RawEntity
 
 /**
  * This file defines several classes and interfaces used to allow clients to interact with

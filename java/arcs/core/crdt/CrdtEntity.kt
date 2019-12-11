@@ -11,19 +11,19 @@
 
 package arcs.core.crdt
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.CrdtSet.Data as SetData
-import arcs.crdt.CrdtSet.IOperation as ISetOp
-import arcs.crdt.CrdtSet.Operation as SetOp
-import arcs.crdt.CrdtSingleton.Data as SingletonData
-import arcs.crdt.CrdtSingleton.IOperation as ISingletonOp
-import arcs.crdt.CrdtSingleton.Operation as SingletonOp
-import arcs.crdt.internal.Actor
-import arcs.crdt.internal.VersionMap
-import arcs.data.FieldName
-import arcs.data.RawEntity
-import arcs.data.util.ReferencablePrimitive
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtSet.Data as SetData
+import arcs.core.crdt.CrdtSet.IOperation as ISetOp
+import arcs.core.crdt.CrdtSet.Operation as SetOp
+import arcs.core.crdt.CrdtSingleton.Data as SingletonData
+import arcs.core.crdt.CrdtSingleton.IOperation as ISingletonOp
+import arcs.core.crdt.CrdtSingleton.Operation as SingletonOp
+import arcs.core.crdt.internal.Actor
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.FieldName
+import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named

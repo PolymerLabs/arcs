@@ -1,6 +1,6 @@
 package arcs.core.stringEncoder
 
-import arcs.StringEncoder
+import arcs.core.StringEncoder
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

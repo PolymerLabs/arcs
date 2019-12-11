@@ -11,8 +11,8 @@
 
 package arcs.core.common
 
-import arcs.util.Random
-import arcs.util.nextSafeRandomLong
+import arcs.core.util.Random
+import arcs.core.util.nextSafeRandomLong
 
 /** Convenience extension to convert a string to an [Id]. */
 fun String.toId(): Id = Id.fromString(this)

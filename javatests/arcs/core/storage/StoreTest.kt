@@ -11,13 +11,13 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtCount
-import arcs.crdt.CrdtCount.Operation.Increment
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
-import arcs.crdt.internal.VersionMap
-import arcs.data.CountType
+import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtCount.Operation.Increment
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.CountType
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.anyOrNull

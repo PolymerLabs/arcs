@@ -11,14 +11,14 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.common.Referencable
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperationAtTime
-import arcs.crdt.internal.VersionMap
-import arcs.storage.ProxyMessage
-import arcs.storage.referencemode.Message.PreEnqueuedFromBackingStore
-import arcs.storage.referencemode.Message.PreEnqueuedFromContainer
-import arcs.storage.referencemode.Message.PreEnqueuedFromStorageProxy
+import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.referencemode.Message.PreEnqueuedFromBackingStore
+import arcs.core.storage.referencemode.Message.PreEnqueuedFromContainer
+import arcs.core.storage.referencemode.Message.PreEnqueuedFromStorageProxy
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Executors

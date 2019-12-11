@@ -11,8 +11,8 @@
 
 package arcs.core.data
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
 
 /** Minimal representation of an unresolved [Entity]. */
 data class RawEntity(

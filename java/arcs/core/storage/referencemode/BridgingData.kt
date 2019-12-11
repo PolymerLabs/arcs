@@ -11,15 +11,15 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtModel
-import arcs.crdt.CrdtOperationAtTime
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSingleton
-import arcs.crdt.internal.VersionMap
-import arcs.data.RawEntity
-import arcs.storage.StorageKey
-import arcs.util.resultOfSuspend
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtModel
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.RawEntity
+import arcs.core.storage.StorageKey
+import arcs.core.util.resultOfSuspend
 
 /**
  * Result of converting an incoming CRDT model into updated data for the backing and collection

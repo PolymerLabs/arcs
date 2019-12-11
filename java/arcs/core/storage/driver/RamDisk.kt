@@ -11,12 +11,12 @@
 
 package arcs.core.storage.driver
 
-import arcs.storage.Driver
-import arcs.storage.DriverFactory
-import arcs.storage.DriverProvider
-import arcs.storage.ExistenceCriteria
-import arcs.storage.StorageKey
-import arcs.storage.StorageKeyParser
+import arcs.core.storage.Driver
+import arcs.core.storage.DriverFactory
+import arcs.core.storage.DriverProvider
+import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the ramdisk driver. */
 const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"

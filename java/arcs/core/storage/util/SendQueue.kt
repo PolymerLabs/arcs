@@ -11,9 +11,9 @@
 
 package arcs.core.storage.util
 
-import arcs.common.ReferenceId
-import arcs.crdt.internal.VersionMap
-import arcs.storage.referencemode.Reference
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.storage.referencemode.Reference
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 

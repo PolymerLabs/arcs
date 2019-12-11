@@ -11,13 +11,13 @@
 
 package arcs.core.crdt
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.CrdtSingleton.Data
-import arcs.crdt.CrdtSingleton.IOperation
-import arcs.crdt.CrdtSingleton.Operation.Clear
-import arcs.crdt.CrdtSingleton.Operation.Update
-import arcs.crdt.internal.VersionMap
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtSingleton.Data
+import arcs.core.crdt.CrdtSingleton.IOperation
+import arcs.core.crdt.CrdtSingleton.Operation.Clear
+import arcs.core.crdt.CrdtSingleton.Operation.Update
+import arcs.core.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test

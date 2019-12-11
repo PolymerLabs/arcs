@@ -11,16 +11,16 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtCount
-import arcs.crdt.CrdtCount.Operation.Increment
-import arcs.crdt.CrdtCount.Operation.MultiIncrement
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtModel
-import arcs.crdt.CrdtOperation
-import arcs.data.CountType
-import arcs.storage.driver.RamDisk
-import arcs.storage.driver.RamDiskDriverProvider
-import arcs.storage.driver.RamDiskStorageKey
+import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtCount.Operation.Increment
+import arcs.core.crdt.CrdtCount.Operation.MultiIncrement
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtModel
+import arcs.core.crdt.CrdtOperation
+import arcs.core.data.CountType
+import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.atomicfu.atomic

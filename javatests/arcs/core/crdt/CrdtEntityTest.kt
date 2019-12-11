@@ -11,14 +11,14 @@
 
 package arcs.core.crdt
 
-import arcs.crdt.CrdtEntity.Operation.AddToSet
-import arcs.crdt.CrdtEntity.Operation.ClearSingleton
-import arcs.crdt.CrdtEntity.Operation.RemoveFromSet
-import arcs.crdt.CrdtEntity.Operation.SetSingleton
-import arcs.crdt.CrdtEntity.ReferenceImpl as Reference
-import arcs.crdt.internal.VersionMap
-import arcs.data.RawEntity
-import arcs.testutil.assertThrows
+import arcs.core.crdt.CrdtEntity.Operation.AddToSet
+import arcs.core.crdt.CrdtEntity.Operation.ClearSingleton
+import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
+import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
+import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.RawEntity
+import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -1,8 +1,8 @@
 package arcs.core.util
 
-import arcs.util.Log.formatter
-import arcs.util.Log.toString
-import arcs.util.Log.writer
+import arcs.core.util.Log.formatter
+import arcs.core.util.Log.toString
+import arcs.core.util.Log.writer
 import kotlinx.atomicfu.atomic
 /**
  * Arcs-specific logging utility.

@@ -1,6 +1,6 @@
 package arcs.core.storage.driver
 
-import arcs.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyParser
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

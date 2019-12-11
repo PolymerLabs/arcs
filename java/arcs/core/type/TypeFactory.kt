@@ -11,7 +11,7 @@
 
 package arcs.core.type
 
-import arcs.common.Literal
+import arcs.core.common.Literal
 
 /**
  * Registry for functions to turn a [TypeLiteral] into a [Type].

@@ -11,9 +11,9 @@
 
 package arcs.core.crdt
 
-import arcs.crdt.CrdtChange.Data
-import arcs.crdt.internal.VersionMap
-import arcs.type.Type
+import arcs.core.crdt.CrdtChange.Data
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.type.Type
 
 /**
  * A [CrdtModel] can:

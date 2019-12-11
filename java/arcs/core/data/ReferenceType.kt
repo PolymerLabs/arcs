@@ -11,10 +11,10 @@
 
 package arcs.core.data
 
-import arcs.type.Tag
-import arcs.type.Type
-import arcs.type.TypeFactory
-import arcs.type.TypeLiteral
+import arcs.core.type.Tag
+import arcs.core.type.Type
+import arcs.core.type.TypeFactory
+import arcs.core.type.TypeLiteral
 
 /** [Type] representation of a reference. */
 data class ReferenceType<T : Type>(private val referredType: T) :

@@ -11,8 +11,8 @@
 
 package arcs.core.common
 
-import arcs.util.RandomBuilder
-import arcs.util.nextSafeRandomLong
+import arcs.core.util.RandomBuilder
+import arcs.core.util.nextSafeRandomLong
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test

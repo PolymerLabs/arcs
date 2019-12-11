@@ -11,9 +11,9 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
-import arcs.type.Type
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.type.Type
 
 /**
  * Representation of an *active* store.

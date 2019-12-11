@@ -11,13 +11,13 @@
 
 package arcs.core.data
 
-import arcs.crdt.CrdtEntity
-import arcs.crdt.CrdtModel
-import arcs.crdt.CrdtModelType
-import arcs.type.Tag
-import arcs.type.Type
-import arcs.type.TypeFactory
-import arcs.type.TypeLiteral
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtModel
+import arcs.core.crdt.CrdtModelType
+import arcs.core.type.Tag
+import arcs.core.type.Type
+import arcs.core.type.TypeFactory
+import arcs.core.type.TypeLiteral
 
 /** [Type] representation of an entity. */
 data class EntityType(override val entitySchema: Schema) :

@@ -1,6 +1,6 @@
 package arcs.core.util
 
-import arcs.testutil.assertThrows
+import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex

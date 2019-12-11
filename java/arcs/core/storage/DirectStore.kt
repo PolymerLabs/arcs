@@ -11,16 +11,16 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtChange
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtModel
-import arcs.crdt.CrdtModelType
-import arcs.crdt.CrdtOperation
-import arcs.storage.DirectStore.State.Name.AwaitingDriverModel
-import arcs.storage.DirectStore.State.Name.AwaitingResponse
-import arcs.storage.DirectStore.State.Name.Idle
-import arcs.util.TaggedLog
+import arcs.core.crdt.CrdtChange
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtModel
+import arcs.core.crdt.CrdtModelType
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.DirectStore.State.Name.AwaitingDriverModel
+import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
+import arcs.core.storage.DirectStore.State.Name.Idle
+import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic

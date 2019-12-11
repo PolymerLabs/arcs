@@ -11,10 +11,10 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
-import arcs.storage.referencemode.ReferenceModeStorageKey
-import arcs.type.Type
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /** Base interface which all store implementations must extend from. */

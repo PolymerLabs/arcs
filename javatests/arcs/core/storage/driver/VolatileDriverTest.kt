@@ -11,9 +11,9 @@
 
 package arcs.core.storage.driver
 
-import arcs.common.ArcId
-import arcs.storage.ExistenceCriteria
-import arcs.storage.StorageKey
+import arcs.core.common.ArcId
+import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest

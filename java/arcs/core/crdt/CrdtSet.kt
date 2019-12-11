@@ -13,12 +13,12 @@
 
 package arcs.core.crdt
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.CrdtChange.Operations
-import arcs.crdt.CrdtSet.Data
-import arcs.crdt.internal.Actor
-import arcs.crdt.internal.VersionMap
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtChange.Operations
+import arcs.core.crdt.CrdtSet.Data
+import arcs.core.crdt.internal.Actor
+import arcs.core.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
 class CrdtSet<T : Referencable>(

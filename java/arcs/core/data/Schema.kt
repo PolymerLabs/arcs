@@ -11,9 +11,9 @@
 
 package arcs.core.data
 
-import arcs.crdt.CrdtEntity
-import arcs.crdt.internal.VersionMap
-import arcs.type.Type
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.type.Type
 
 data class Schema(
     val names: List<SchemaName>,

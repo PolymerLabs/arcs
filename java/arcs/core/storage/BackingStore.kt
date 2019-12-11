@@ -11,12 +11,12 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
-import arcs.storage.ProxyMessage.ModelUpdate
-import arcs.storage.ProxyMessage.Operations
-import arcs.storage.ProxyMessage.SyncRequest
-import arcs.storage.util.ProxyCallbackManager
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyMessage.ModelUpdate
+import arcs.core.storage.ProxyMessage.Operations
+import arcs.core.storage.ProxyMessage.SyncRequest
+import arcs.core.storage.util.ProxyCallbackManager
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch

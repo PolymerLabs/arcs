@@ -11,11 +11,11 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
-import arcs.storage.Store.Companion.defaultFactory
-import arcs.type.Type
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.Store.Companion.defaultFactory
+import arcs.core.type.Type
 
 /**
  * A representation of a store.

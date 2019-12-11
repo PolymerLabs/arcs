@@ -11,16 +11,16 @@
 
 package arcs.core.storage.driver
 
-import arcs.common.ArcId
-import arcs.common.toArcId
-import arcs.storage.Driver
-import arcs.storage.DriverFactory
-import arcs.storage.DriverProvider
-import arcs.storage.ExistenceCriteria
-import arcs.storage.StorageKey
-import arcs.storage.StorageKeyParser
-import arcs.util.Random
-import arcs.util.TaggedLog
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
+import arcs.core.storage.Driver
+import arcs.core.storage.DriverFactory
+import arcs.core.storage.DriverProvider
+import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
+import arcs.core.util.Random
+import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 
 /** Protocol to be used with the volatile driver. */

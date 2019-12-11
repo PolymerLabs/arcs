@@ -11,9 +11,9 @@
 
 package arcs.core.crdt
 
-import arcs.crdt.internal.Actor
-import arcs.crdt.internal.Version
-import arcs.crdt.internal.VersionMap
+import arcs.core.crdt.internal.Actor
+import arcs.core.crdt.internal.Version
+import arcs.core.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing an increasing [Int] value. */
 class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {

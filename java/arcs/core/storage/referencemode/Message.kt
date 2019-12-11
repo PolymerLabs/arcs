@@ -11,15 +11,15 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
-import arcs.crdt.CrdtOperationAtTime
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSingleton
-import arcs.storage.ProxyMessage
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.storage.ProxyMessage
 import kotlinx.coroutines.CompletableDeferred
 
 /**

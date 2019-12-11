@@ -11,13 +11,13 @@
 
 package arcs.core.data
 
-import arcs.common.Referencable
-import arcs.crdt.CrdtModelType
-import arcs.crdt.CrdtSingleton
-import arcs.type.Tag
-import arcs.type.Type
-import arcs.type.TypeFactory
-import arcs.type.TypeLiteral
+import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtModelType
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.type.Tag
+import arcs.core.type.Type
+import arcs.core.type.TypeFactory
+import arcs.core.type.TypeLiteral
 
 /** [Type] representation for a singleton. */
 data class SingletonType<T : Type>(override val containedType: T) :

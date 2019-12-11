@@ -11,9 +11,9 @@
 
 package arcs.core.storage
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
-import arcs.storage.ProxyMessage.Type
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyMessage.Type
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(

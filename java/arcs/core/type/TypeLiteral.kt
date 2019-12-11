@@ -11,7 +11,7 @@
 
 package arcs.core.type
 
-import arcs.common.Literal
+import arcs.core.common.Literal
 
 /** Serialized form of a [Type]. */
 interface TypeLiteral : Literal {

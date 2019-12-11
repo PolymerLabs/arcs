@@ -11,10 +11,10 @@
 
 package arcs.core.data.util
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.util.Base64
-import arcs.util.toBase64Bytes
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.util.Base64
+import arcs.core.util.toBase64Bytes
 import kotlin.reflect.KClass
 
 /**

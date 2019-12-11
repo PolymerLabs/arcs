@@ -11,10 +11,10 @@
 
 package arcs.core.storage.driver
 
-import arcs.common.ArcId
-import arcs.storage.DriverFactory
-import arcs.storage.ExistenceCriteria
-import arcs.storage.StorageKey
+import arcs.core.common.ArcId
+import arcs.core.storage.DriverFactory
+import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After

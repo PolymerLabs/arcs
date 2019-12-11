@@ -11,12 +11,12 @@
 
 package arcs.core.crdt
 
-import arcs.common.Referencable
-import arcs.common.ReferenceId
-import arcs.crdt.CrdtSet.Data
-import arcs.crdt.CrdtSet.IOperation
-import arcs.crdt.internal.Actor
-import arcs.crdt.internal.VersionMap
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtSet.Data
+import arcs.core.crdt.CrdtSet.IOperation
+import arcs.core.crdt.internal.Actor
+import arcs.core.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Before

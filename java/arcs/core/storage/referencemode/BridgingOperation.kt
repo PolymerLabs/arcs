@@ -11,18 +11,18 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.crdt.CrdtException
-import arcs.crdt.CrdtOperation
-import arcs.crdt.CrdtOperationAtTime
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSingleton
-import arcs.crdt.internal.VersionMap
-import arcs.data.RawEntity
-import arcs.storage.StorageKey
-import arcs.storage.referencemode.BridgingOperation.AddToSet
-import arcs.storage.referencemode.BridgingOperation.ClearSingleton
-import arcs.storage.referencemode.BridgingOperation.RemoveFromSet
-import arcs.storage.referencemode.BridgingOperation.UpdateSingleton
+import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.RawEntity
+import arcs.core.storage.StorageKey
+import arcs.core.storage.referencemode.BridgingOperation.AddToSet
+import arcs.core.storage.referencemode.BridgingOperation.ClearSingleton
+import arcs.core.storage.referencemode.BridgingOperation.RemoveFromSet
+import arcs.core.storage.referencemode.BridgingOperation.UpdateSingleton
 
 /**
  * Represents a bridge between the [CrdtSet]/[CrdtSingleton]'s operations from the

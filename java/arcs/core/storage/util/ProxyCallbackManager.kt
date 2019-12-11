@@ -11,10 +11,10 @@
 
 package arcs.core.storage.util
 
-import arcs.crdt.CrdtData
-import arcs.crdt.CrdtOperation
-import arcs.storage.ProxyCallback
-import arcs.storage.ProxyMessage
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyCallback
+import arcs.core.storage.ProxyMessage
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

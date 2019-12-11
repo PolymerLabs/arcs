@@ -11,16 +11,16 @@
 
 package arcs.core.data
 
-import arcs.common.Referencable
-import arcs.crdt.CrdtModel
-import arcs.crdt.CrdtModelType
-import arcs.crdt.CrdtSet
-import arcs.crdt.CrdtSet.Data
-import arcs.crdt.CrdtSet.IOperation
-import arcs.type.Tag
-import arcs.type.Type
-import arcs.type.TypeFactory
-import arcs.type.TypeLiteral
+import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtModel
+import arcs.core.crdt.CrdtModelType
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSet.Data
+import arcs.core.crdt.CrdtSet.IOperation
+import arcs.core.type.Tag
+import arcs.core.type.Type
+import arcs.core.type.TypeFactory
+import arcs.core.type.TypeLiteral
 
 /** Extension function to wrap any type in a collection type. */
 fun <T : Type> T?.collectionOf(): CollectionType<T>? =
