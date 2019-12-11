@@ -19,8 +19,8 @@ arcs_kt_jvm_test_suite(
     ),
     package = "arcs.util",
     deps = [
-        "//src_kt/java/arcs/testutil",
-        "//src_kt/java/arcs/util",
+        "//java/arcs/core/testutil",
+        "//java/arcs/core/util",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
@@ -39,7 +39,7 @@ arcs_kt_jvm_test_suite(
         "notap",
     ],
     deps = [
-        "//src_kt/java/arcs/util",
+        "//java/arcs/core/util",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",

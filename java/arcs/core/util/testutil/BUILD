@@ -9,6 +9,6 @@ kt_jvm_library(
     testonly = True,
     srcs = glob(["*.kt"]),
     deps = [
-        "//src_kt/java/arcs/util",
+        "//java/arcs/core/util",
     ],
 )

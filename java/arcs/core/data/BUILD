@@ -15,10 +15,10 @@ kt_jvm_and_js_library(
     ],
     deps = [
         ":entity",
-        "//src_kt/java/arcs/common",
-        "//src_kt/java/arcs/crdt",
-        "//src_kt/java/arcs/crdt/internal",
-        "//src_kt/java/arcs/type",
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/type",
     ],
 )
 
@@ -29,6 +29,6 @@ kt_jvm_and_js_library(
         "RawEntity.kt",
     ],
     deps = [
-        "//src_kt/java/arcs/common",
+        "//java/arcs/core/common",
     ],
 )

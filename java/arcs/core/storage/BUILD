@@ -29,15 +29,15 @@ kt_jvm_and_js_library(
     deps = [
         ":proxy",
         ":storage_key",
-        "//src_kt/java/arcs/common",
-        "//src_kt/java/arcs/crdt",
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         # TODO: should we move VersionMap to the top-level crdt package if it's being used here?
-        "//src_kt/java/arcs/crdt/internal",
-        "//src_kt/java/arcs/data",
-        "//src_kt/java/arcs/type",
-        "//src_kt/java/arcs/storage/referencemode",
-        "//src_kt/java/arcs/storage/util",
-        "//src_kt/java/arcs/util",
+        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/data",
+        "//java/arcs/core/type",
+        "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/storage/util",
+        "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",
     ],
@@ -52,6 +52,6 @@ kt_jvm_and_js_library(
     name = "proxy",
     srcs = PROXY_SRCS,
     deps = [
-        "//src_kt/java/arcs/crdt",
+        "//java/arcs/core/crdt",
     ],
 )

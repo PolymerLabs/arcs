@@ -11,6 +11,6 @@ kt_jvm_and_js_library(
     name = "common",
     srcs = glob(["*.kt"]),
     deps = [
-        "//src_kt/java/arcs/util",
+        "//java/arcs/core/util",
     ],
 )

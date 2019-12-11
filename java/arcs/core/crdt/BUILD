@@ -11,11 +11,11 @@ kt_jvm_and_js_library(
     name = "crdt",
     srcs = glob(["*.kt"]),
     deps = [
-        "//src_kt/java/arcs/common",
-        "//src_kt/java/arcs/crdt/internal",
-        "//src_kt/java/arcs/data/util",
-        "//src_kt/java/arcs/type",
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/data/util",
+        "//java/arcs/core/type",
         # This may get unwieldy with avoiding circular deps as entity is implemented. We'll see.
-        "//src_kt/java/arcs/data:entity",
+        "//java/arcs/core/data:entity",
     ],
 )

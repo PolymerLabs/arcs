@@ -11,9 +11,9 @@ arcs_kt_jvm_test_suite(
     name = "driver",
     package = "arcs.storage.driver",
     deps = [
-        "//src_kt/java/arcs/common",
-        "//src_kt/java/arcs/storage",
-        "//src_kt/java/arcs/storage/driver",
+        "//java/arcs/core/common",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/driver",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",
