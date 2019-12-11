@@ -42,48 +42,50 @@ public:
   void test_field_methods() {
     arcs::EntityClassApiTest_Data d1;
 
-    IS_FALSE(d1.has_num());
+    // TODO: restore has/clear methods when optional fields are supported
+
+    //IS_FALSE(d1.has_num());
     EQUAL(d1.num(), 0);
     d1.set_num(7.3);
-    IS_TRUE(d1.has_num());
+    //IS_TRUE(d1.has_num());
     EQUAL(d1.num(), 7.3);
-    d1.clear_num();
-    IS_FALSE(d1.has_num());
+    //d1.clear_num();
+    //IS_FALSE(d1.has_num());
     d1.set_num(0);
-    IS_TRUE(d1.has_num());
+    //IS_TRUE(d1.has_num());
     EQUAL(d1.num(), 0);
 
-    IS_FALSE(d1.has_txt());
+    //IS_FALSE(d1.has_txt());
     EQUAL(d1.txt(), "");
     d1.set_txt("abc");
-    IS_TRUE(d1.has_txt());
+    //IS_TRUE(d1.has_txt());
     EQUAL(d1.txt(), "abc");
-    d1.clear_txt();
-    IS_FALSE(d1.has_txt());
+    //d1.clear_txt();
+    //IS_FALSE(d1.has_txt());
     d1.set_txt("");
-    IS_TRUE(d1.has_txt());
+    //IS_TRUE(d1.has_txt());
     EQUAL(d1.txt(), "");
 
-    IS_FALSE(d1.has_lnk());
+    //IS_FALSE(d1.has_lnk());
     EQUAL(d1.lnk(), "");
     d1.set_lnk("url");
-    IS_TRUE(d1.has_lnk());
+    //IS_TRUE(d1.has_lnk());
     EQUAL(d1.lnk(), "url");
-    d1.clear_lnk();
-    IS_FALSE(d1.has_lnk());
+    //d1.clear_lnk();
+    //IS_FALSE(d1.has_lnk());
     d1.set_lnk("");
-    IS_TRUE(d1.has_lnk());
+    //IS_TRUE(d1.has_lnk());
     EQUAL(d1.lnk(), "");
 
-    IS_FALSE(d1.has_flg());
+    //IS_FALSE(d1.has_flg());
     IS_FALSE(d1.flg());
     d1.set_flg(true);
-    IS_TRUE(d1.has_flg());
+    //IS_TRUE(d1.has_flg());
     IS_TRUE(d1.flg());
-    d1.clear_flg();
-    IS_FALSE(d1.has_flg());
+    //d1.clear_flg();
+    //IS_FALSE(d1.has_flg());
     d1.set_flg(false);
-    IS_TRUE(d1.has_flg());
+    //IS_TRUE(d1.has_flg());
     IS_FALSE(d1.flg());
 
     EQUAL(d1.ref(), arcs::Ref<arcs::EntityClassApiTest_Data_Ref>());
@@ -98,7 +100,7 @@ public:
     arcs::EntityClassApiTest_Data_Ref foo;
     Accessor::set_id(&foo, "foo-id");
     foo.set_val("bar");
-    d2.bind_ref(foo);
+    d2.set_ref(foo);
     EQUAL(arcs::entity_to_str(d2), "{data-id}, ref: REF<foo-id|key|[{foo-id}, val: bar]>");
   }
 
@@ -128,17 +130,17 @@ public:
   void test_number_field_equality() {
     arcs::EntityClassApiTest_Data d1, d2;
 
-    // unset vs default value
-    d2.set_num(0);
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs default value
+    //d2.set_num(0);
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
-    // unset vs other value
-    d2.set_num(5);
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs other value
+    //d2.set_num(5);
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
     // default vs default
     d1.set_num(0);
@@ -170,17 +172,17 @@ public:
   void test_text_field_equality() {
     arcs::EntityClassApiTest_Data d1, d2;
 
-    // unset vs default value
-    d2.set_txt("");
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs default value
+    //d2.set_txt("");
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
-    // unset vs other value
-    d2.set_txt("a");
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs other value
+    //d2.set_txt("a");
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
     // default vs default
     d1.set_txt("");
@@ -212,17 +214,17 @@ public:
   void test_url_field_equality() {
     arcs::EntityClassApiTest_Data d1, d2;
 
-    // unset vs default value
-    d2.set_lnk("");
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs default value
+    //d2.set_lnk("");
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
-    // unset vs other value
-    d2.set_lnk("a");
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs other value
+    //d2.set_lnk("a");
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
     // default vs default
     d1.set_lnk("");
@@ -254,17 +256,17 @@ public:
   void test_boolean_field_equality() {
     arcs::EntityClassApiTest_Data d1, d2;
 
-    // unset vs default value
-    d2.set_flg(false);
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs default value
+    //d2.set_flg(false);
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
-    // unset vs other value
-    d2.set_flg(true);
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
+    // TODO: unset vs other value
+    //d2.set_flg(true);
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
 
     // default vs default
     d1.set_flg(false);
@@ -373,21 +375,21 @@ public:
     IS_FALSE(arcs::fields_equal(d1, d2));
     NOT_EQUAL(hash(d1), hash(d2));
 
-    // d1.lnk && !d2.lnk implies d1 > d2 (takes precedence over flg from above)
-    d2.clear_lnk();
-    NOT_EQUAL(d1, d2);
-    NOT_LESS(d1, d2);
-    LESS(d2, d1);
-    IS_FALSE(arcs::fields_equal(d1, d2));
-    NOT_EQUAL(hash(d1), hash(d2));
+    // TODO: d1.lnk && !d2.lnk implies d1 > d2 (takes precedence over flg from above)
+    //d2.clear_lnk();
+    //NOT_EQUAL(d1, d2);
+    //NOT_LESS(d1, d2);
+    //LESS(d2, d1);
+    //IS_FALSE(arcs::fields_equal(d1, d2));
+    //NOT_EQUAL(hash(d1), hash(d2));
 
-    // !d1.num && d2.num implies d1 < d2 (takes precedence over lnk and flg from above)
-    d1.clear_num();
-    NOT_EQUAL(d1, d2);
-    LESS(d1, d2);
-    NOT_LESS(d2, d1);
-    IS_FALSE(arcs::fields_equal(d1, d2));
-    NOT_EQUAL(hash(d1), hash(d2));
+    // TODO: !d1.num && d2.num implies d1 < d2 (takes precedence over lnk and flg from above)
+    //d1.clear_num();
+    //NOT_EQUAL(d1, d2);
+    //LESS(d1, d2);
+    //NOT_LESS(d2, d1);
+    //IS_FALSE(arcs::fields_equal(d1, d2));
+    //NOT_EQUAL(hash(d1), hash(d2));
   }
 
   void test_clone_entity() {
@@ -423,13 +425,13 @@ public:
 
     d.set_num(6);
     d.set_txt("boo");
-    d.set_flg(false);
-    EQUAL(arcs::entity_to_str(d), "{}, num: 6, txt: boo, flg: false");
-    EQUAL(arcs::entity_to_str(d, "|"), "{}|num: 6|txt: boo|flg: false");
+    d.set_flg(true);
+    EQUAL(arcs::entity_to_str(d), "{}, num: 6, txt: boo, flg: true");
+    EQUAL(arcs::entity_to_str(d, "|"), "{}|num: 6|txt: boo|flg: true");
 
     Accessor::set_id(&d, "id");
-    d.clear_flg();
-    EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo");
+    d.set_flg(false);  // TODO: d.clear_flg();
+    EQUAL(arcs::entity_to_str(d), "{id}, num: 6, txt: boo, flg: false");
   }
 
   void test_stl_vector() {
@@ -598,15 +600,11 @@ public:
   void test_language_keyword_field() {
     arcs::SpecialSchemaFieldsTest_Fields s;
 
-    IS_FALSE(s.has_for());
+    // TODO: test optional 'for' field
     EQUAL(s._for(), "");
     s.set_for("abc");
-    IS_TRUE(s.has_for());
     EQUAL(s._for(), "abc");
-    s.clear_for();
-    IS_FALSE(s.has_for());
     s.set_for("");
-    IS_TRUE(s.has_for());
     EQUAL(s._for(), "");
   }
 
@@ -615,15 +613,10 @@ public:
     arcs::SpecialSchemaFieldsTest_Fields s;
     Accessor::set_id(&s, "real");
 
-    IS_FALSE(s.has_internal_id());
     EQUAL(s.internal_id(), 0);
     s.set_internal_id(76);
-    IS_TRUE(s.has_internal_id());
     EQUAL(s.internal_id(), 76);
-    s.clear_internal_id();
-    IS_FALSE(s.has_internal_id());
     s.set_internal_id(0);
-    IS_TRUE(s.has_internal_id());
     EQUAL(s.internal_id(), 0);
 
     EQUAL(Accessor::get_id(s), "real");
@@ -654,7 +647,7 @@ public:
     EQUAL(hash(s1), hash(s2));
 
     // different fields
-    s1.clear_for();
+    s1.set_for("");  // TODO: s1.clear_for();
     NOT_EQUAL(s1, s2);
     LESS(s1, s2);
     NOT_LESS(s2, s1);

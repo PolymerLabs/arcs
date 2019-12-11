@@ -194,6 +194,7 @@ public:
 
     // populated and dereferenced
     data_.set_num(99);
+    data_.set_txt("abc");
     arcs::Ref<arcs::ReferenceClassApiTest_Data> r2;
     Accessor::decode_entity(&r2, make_encoded("3:idA|4:keyA|").c_str());
     dereference(r2, [] {});
@@ -214,7 +215,7 @@ public:
 
     std::vector<std::string> expected = {
       "REF<>",
-      "REF<idA|keyA|[{idA}, num: 99]>",
+      "REF<idA|keyA|[{idA}, num: 99, txt: abc]>",
       "REF<idB|keyB>",
       "REF<idA|keyA>"
     };
@@ -226,6 +227,7 @@ public:
     arcs::Ref<arcs::ReferenceClassApiTest_Data> r1;
 
     // dereferenced
+    data_.set_num(47);
     data_.set_txt("zz");
     arcs::Ref<arcs::ReferenceClassApiTest_Data> r2;
     Accessor::decode_entity(&r2, make_encoded("3:idA|4:keyA|").c_str());
@@ -247,7 +249,7 @@ public:
 
     std::vector<std::string> expected = {
       "REF<>",
-      "REF<idA|keyA|[{idA}, txt: zz]>",
+      "REF<idA|keyA|[{idA}, num: 47, txt: zz]>",
       "REF<idB|keyB>"
     };
     CHECK_UNORDERED(s, converter(), expected);
@@ -258,6 +260,7 @@ public:
     arcs::Ref<arcs::ReferenceClassApiTest_Data> r1;
 
     // dereferenced
+    data_.set_num(585);
     data_.set_txt("xtx");
     arcs::Ref<arcs::ReferenceClassApiTest_Data> r2;
     Accessor::decode_entity(&r2, make_encoded("3:idA|4:keyA|").c_str());
@@ -279,7 +282,7 @@ public:
 
     std::vector<std::string> expected = {
       "REF<>",
-      "REF<idA|keyA|[{idA}, txt: xtx]>",
+      "REF<idA|keyA|[{idA}, num: 585, txt: xtx]>",
       "REF<idB|keyB>"
     };
     CHECK_UNORDERED(s, converter(), expected);

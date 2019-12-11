@@ -59,7 +59,7 @@ public:
 
   std::string getTemplate(const std::string& slot_name) override {
     const arcs::AutoRenderTest_Data& data = data_.get();
-    return data.has_txt() ? data.txt() : "empty";
+    return data.txt();
   }
 
   arcs::Singleton<arcs::AutoRenderTest_Data> data_{this, "data"};

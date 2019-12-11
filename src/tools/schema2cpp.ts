@@ -32,6 +32,7 @@ const typeMap = {
   'U': {type: 'URL',         defaultVal: ' = ""',    isString: true},
   'N': {type: 'double',      defaultVal: ' = 0',     isString: false},
   'B': {type: 'bool',        defaultVal: ' = false', isString: false},
+  'R': {type: '',            defaultVal: ' = {}',    isString: false},
 };
 
 export class Schema2Cpp extends Schema2Base {
@@ -47,6 +48,9 @@ export class Schema2Cpp extends Schema2Base {
 #define ${headerGuard}
 
 // GENERATED CODE - DO NOT EDIT
+#ifndef _ARCS_H
+#error arcs.h must be included before entity class headers
+#endif
 `;
   }
 
@@ -81,38 +85,55 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  addField(field: string, typeChar: string) {
-    const {type, defaultVal, isString} = typeMap[typeChar];
-    const [r1, r2] = isString ? ['const ', '&'] : ['', ''];
+  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
     const fixed = fixName(field);
     const valid = `${field}_valid_`;
+    let {type, defaultVal, isString} = typeMap[typeChar];
+    if (typeChar === 'R') {
+      type = `Ref<${refClassName}>`;
+    }
 
     this.fields.push(`${type} ${field}_${defaultVal};`,
                      `bool ${valid} = false;`,
                      ``);
 
-    this.api.push(`${r1}${type}${r2} ${fixed}() const { return ${field}_; }`,
-                  `void set_${field}(${r1}${type}${r2} value) { ${field}_ = value; ${valid} = true; }`,
-                  `void clear_${field}() { ${field}_${defaultVal}; ${valid} = false; }`,
-                  `bool has_${field}() const { return ${valid}; }`,
-                  ``);
+    if (typeChar === 'R') {
+      this.api.push(`const ${type}& ${fixed}() const { return ${field}_; }`,
+                    `void set_${field}(const ${refClassName}& value) { internal::Accessor::bind(&${field}_, value); }`);
+    } else {
+      const [r1, r2] = isString ? ['const ', '&'] : ['', ''];
+      this.api.push(`${r1}${type}${r2} ${fixed}() const { return ${field}_; }`,
+                    `void set_${field}(${r1}${type}${r2} value) { ${field}_ = value; ${valid} = true; }`);
+    }
+    if (isOptional) {
+      this.api.push(`void clear_${field}() { ${field}_${defaultVal}; ${valid} = false; }`,
+                    `bool has_${field}() const { return ${valid}; }`);
+    }
+    this.api.push(``);
 
     this.ctor.push(`${field}_(other.${fixed}()), ${valid}(other.has_${field}())`);
 
     this.clone.push(`clone.${field}_ = entity.${field}_;`,
                     `clone.${valid} = entity.${valid};`);
 
-    this.hash.push(`if (entity.${valid})`,
-                   `  internal::hash_combine(h, entity.${field}_);`);
+    this.decode.push(`} else if (name == "${field}") {`,
+                     `  decoder.validate("${typeChar}");`,
+                     `  decoder.decode(entity->${field}_);`,
+                     `  entity->${valid} = true;`);
 
-    this.equals.push(`(a.${valid} ? (b.${valid} && a.${field}_ == b.${field}_) : !b.${valid})`);
+    if (isOptional) {
+      this.equals.push(`(a.${valid} ? (b.${valid} && a.${field}_ == b.${field}_) : !b.${valid})`);
 
-    this.less.push(`if (a.${valid} != b.${valid}) {`,
-                   `  return !a.${valid};`);
+      this.less.push(`if (a.${valid} != b.${valid}) {`,
+                     `  return !a.${valid};`);
+    } else {
+      this.equals.push(`(a.${field}_ == b.${field}_)`);
+
+      this.less.push(`if (0) {`);
+    }
     if (isString) {
-      this.less.push(`} else {`,
-                     `  cmp = a.${field}_.compare(b.${field}_);`,
-                     `  if (cmp != 0) return cmp < 0;`,
+      this.less.push(`} else if (int cmp = a.${field}_.compare(b.${field}_)) {`,
+                     `  return cmp < 0;`,
                      `}`);
     } else {
       this.less.push(`} else if (a.${field}_ != b.${field}_) {`,
@@ -120,51 +141,12 @@ class CppGenerator implements ClassGenerator {
                      `}`);
     }
 
-    this.decode.push(`} else if (name == "${field}") {`,
-                     `  decoder.validate("${typeChar}");`,
-                     `  decoder.decode(entity->${field}_);`,
-                     `  entity->${valid} = true;`);
+    const ifValid = isOptional ? `if (entity.${valid}) ` : '';
+    this.hash.push(`${ifValid}internal::hash_combine(h, entity.${field}_);`);
+    this.encode.push(`${ifValid}encoder.encode("${field}:${typeChar}", entity.${field}_);`);
 
-    this.encode.push(`if (entity.${valid})`,
-                     `  encoder.encode("${field}:${typeChar}", entity.${field}_);`);
-
-    this.stringify.push(`if (entity.${valid})`,
-                        `  printer.add("${field}: ", entity.${field}_);`);
-  }
-
-  addReference(field: string, refName: string) {
-    const type = `Ref<${refName}>`;
-    const fixed = fixName(field);
-
-    this.fields.push(`${type} ${field}_;`,
-                     ``);
-
-    this.api.push(`const ${type}& ${fixed}() const { return ${field}_; }`,
-                  `void bind_${field}(const ${refName}& value) { internal::Accessor::bind(&${field}_, value); }`,
-                  ``);
-
-    this.ctor.push(`${field}_(other.${fixed}())`);
-
-    this.clone.push(`clone.${field}_ = entity.${field}_;`);
-
-    this.hash.push(`if (entity.${field}_._internal_id_ != "")`,
-                   `  internal::hash_combine(h, entity.${field}_);`);
-
-    this.equals.push(`(a.${field}_ == b.${field}_)`);
-
-    this.less.push(`if (a.${field}_ != b.${field}_) {`,
-                   `  return a.${field}_ < b.${field}_;`,
-                   `}`);
-
-    this.decode.push(`} else if (name == "${field}") {`,
-                     `  decoder.validate("R");`,
-                     `  decoder.decode(entity->${field}_);`);
-
-    this.encode.push(`if (entity.${field}_._internal_id_ != "")`,
-                     `  encoder.encode("${field}:R", entity.${field}_);`);
-
-    this.stringify.push(`if (entity.${field}_._internal_id_ != "")`,
-                        `  printer.add("${field}: ", entity.${field}_);`);
+    // For convenience, don't include unset required fields in the entity_to_str output.
+    this.stringify.push(`if (entity.${valid}) printer.add("${field}: ", entity.${field}_);`);
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -215,9 +197,10 @@ ${templateCtor}
 
   // For STL containers.
   friend bool operator<(const ${name}& a, const ${name}& b) {
-    int cmp = a._internal_id_.compare(b._internal_id_);
-    if (cmp != 0) return cmp < 0;
-    ${this.less.join('\n    ')};
+    if (int cmp = a._internal_id_.compare(b._internal_id_)) {
+      return cmp < 0;
+    }
+    ${this.less.join('\n    ')}
     return false;
   }
 

@@ -27,11 +27,10 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
-  'U': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
-  'N': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+  'T': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`},
+  'U': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`},
+  'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0'},
   'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
-  'R': {type: '', decodeFn: '', defaultVal: ''},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -96,7 +95,11 @@ class KotlinGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode) {}
 
-  addField(field: string, typeChar: string) {
+  // TODO: allow optional fields in kotlin
+  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+    // TODO: support reference types in kotlin
+    if (typeChar === 'R') return;
+
     const {type, decodeFn, defaultVal} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
     const set = `_${fixed}Set`;
@@ -125,10 +128,6 @@ class KotlinGenerator implements ClassGenerator {
                      `}`);
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
-  }
-
-  addReference(field: string, refName: string) {
-    // TODO: support reference types in kotlin
   }
 
   generate(schemaHash: string, fieldCount: number): string {
