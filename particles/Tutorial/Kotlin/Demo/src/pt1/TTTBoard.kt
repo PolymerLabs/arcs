@@ -23,8 +23,8 @@ import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
-    private val gameState = Singleton(this, "gameState", { TTTBoard_GameState() })
-    private val events = Collection(this, "events", { TTTBoard_Events() })
+    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
+    private val events = Collection(this, "events") { TTTBoard_Events() }
     private var clicks = 0.0
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 

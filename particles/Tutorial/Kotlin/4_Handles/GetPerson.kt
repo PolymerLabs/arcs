@@ -21,7 +21,7 @@ import kotlin.native.Retain
  * Sample WASM Particle.
  */
 class GetPersonParticle : Particle() {
-    private val person = Singleton(this, "person", { GetPerson_Person() })
+    private val person = Singleton(this, "person") { GetPerson_Person() }
 
     override fun getTemplate(slotName: String) = """
         <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">

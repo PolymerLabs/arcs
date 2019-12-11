@@ -26,12 +26,12 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState", { TTTGame_GameState() })
-    private val playerOne = Singleton(this, "playerOne", { TTTGame_PlayerOne() })
-    private val playerOneMove = Singleton(this, "playerOneMove", { TTTGame_PlayerOneMove() })
-    private val playerTwo = Singleton(this, "playerTwo", { TTTGame_PlayerTwo() })
-    private val playerTwoMove = Singleton(this, "playerTwoMove", { TTTGame_PlayerTwoMove() })
-    private val events = Collection(this, "events", { TTTGame_Events() })
+    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
+    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
+    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
+    private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
+    private val playerTwoMove = Singleton(this, "playerTwoMove") { TTTGame_PlayerTwoMove() }
+    private val events = Collection(this, "events") { TTTGame_Events() }
 
     private val winningSequences = arrayOf(
         arrayOf(0, 1, 2),
