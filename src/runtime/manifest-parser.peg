@@ -1278,9 +1278,6 @@ SchemaField
     return toAstNode<AstNode.SchemaField>(field);
   }
 
-// SchemaType
-//   = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
-
 SchemaType
   = type:(SchemaReferenceType 
   / SchemaCollectionType 
@@ -1342,15 +1339,15 @@ SchemaTupleType
   }
 
 Refinement
-= '[' expression:Expression ']'
+  = '[' expression:RefinementExpression ']'
   {
       return toAstNode<AstNode.Refinement>({kind: 'refinement', expression});
   }
 
-Expression
-  = statement: [^\]]*
+RefinementExpression
+  = expression: [^\]]*
   {
-      return toAstNode<AstNode.Expression>({kind: 'expression', statement});
+      return toAstNode<AstNode.RefinementExpression>({kind: 'refinement-expression', expression});
   }
 
 Version "a version number (e.g. @012)"

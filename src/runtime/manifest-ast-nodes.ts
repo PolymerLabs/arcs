@@ -44,7 +44,7 @@ export class BaseNode {
 }
 
 export class BaseNodeWithRefinement extends BaseNode {
-    refinement: Refinement|null;
+    refinement?: Refinement;
 }
 
 //  PARTICLE TYPES
@@ -526,12 +526,12 @@ export interface SchemaTupleType extends BaseNodeWithRefinement {
 
 export interface Refinement extends BaseNode {
     kind: 'refinement';
-    expression: Expression;
+    expression: RefinementExpression;
 }
 
-export interface Expression extends BaseNode {
-    kind: 'expression';
-    statement: string;
+export interface RefinementExpression extends BaseNode {
+    kind: 'refinement-expression';
+    expression: string;
 }
 
 export interface SchemaInline extends BaseNode {
