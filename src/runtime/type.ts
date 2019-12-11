@@ -10,7 +10,6 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Id} from './id.js';
-import {InterfaceInfo, HandleConnection, Slot} from './interface-info.js';
 import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
 import {Predicate, Literal} from './hot.js';
@@ -19,6 +18,8 @@ import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
+import * as AstNode from './manifest-ast-nodes.js';
+import {ParticleSpec} from './particle-spec.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -683,6 +684,19 @@ export class RelationType extends Type {
   }
 }
 
+export interface HandleConnection {
+  type: Type;
+  name?: string|TypeVariable;
+  direction?: AstNode.DirectionPreSlandles; // TODO make required
+}
+
+// TODO(lindner) only tests use optional props
+export interface Slot {
+  name?: string|TypeVariable;
+  direction?: AstNode.SlotDirection;
+  isRequired?: boolean;
+  isSet?: boolean;
+}
 
 export class InterfaceType extends Type {
   readonly interfaceInfo: InterfaceInfo;
@@ -693,7 +707,7 @@ export class InterfaceType extends Type {
   }
 
   static make(name: string, handleConnections: HandleConnection[], slots: Slot[]) {
-    return new InterfaceType(new InterfaceInfo(name, handleConnections, slots));
+    return new InterfaceType(InterfaceInfo.make(name, handleConnections, slots));
   }
 
   get isInterface(): boolean {
@@ -741,7 +755,7 @@ export class InterfaceType extends Type {
   }
 
   _cloneWithResolutions(variableMap): InterfaceType {
-    return new InterfaceType(this.interfaceInfo._cloneWithResolutions(variableMap));
+    return new InterfaceType(this.interfaceInfo.cloneWithResolutions(variableMap));
   }
 
   toLiteral(): TypeLiteral {
@@ -1155,5 +1169,114 @@ export class TypeVariableInfo {
   isResolved(): boolean {
     return this._resolution && this._resolution.isResolved();
   }
+}
+
+// The interface for InterfaceInfo must live here to avoid circular dependencies.
+export interface HandleConnectionLiteral {
+  type?: TypeLiteral;
+  name?: string|TypeLiteral;
+  direction?: AstNode.DirectionPreSlandles;
+}
+
+export interface SlotLiteral {
+  name?: string|TypeLiteral;
+  direction?: AstNode.SlotDirection;
+  isRequired?: boolean;
+  isSet?: boolean;
+}
+
+export interface TypeVarReference {
+  object: HandleConnection|Slot;
+  field: string;
+}
+
+export interface InterfaceInfoLiteral {
+  name: string;
+  handleConnections: HandleConnectionLiteral[];
+  slots: SlotLiteral[];
+}
+
+export type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.DirectionPreSlandles};
+
+type Maker = (name: string, handleConnections: HandleConnection[], slots: Slot[]) => InterfaceInfo;
+type HandleConnectionMatcher = (interfaceHandleConnection: HandleConnection, particleHandleConnection: HandleConnection) => boolean|MatchResult[];
+type Deliteralizer = (data: InterfaceInfoLiteral) => InterfaceInfo;
+type SlotMatcher = (interfaceSlot: Slot, particleSlot: Slot) => boolean;
+
+export abstract class InterfaceInfo {
+  name: string;
+  handleConnections: HandleConnection[];
+  slots: Slot[];
+
+  // TODO(lindner) only accessed in tests
+  public readonly typeVars: TypeVarReference[];
+
+  constructor(name: string, handleConnections: HandleConnection[], slots: Slot[]) {
+    assert(name);
+    assert(handleConnections !== undefined);
+    assert(slots !== undefined);
+    this.name = name;
+    this.handleConnections = handleConnections;
+    this.slots = slots;
+    this.typeVars = [];
+  }
+
+  toPrettyString(): string {
+    return 'InterfaceInfo';
+  }
+
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+    this.typeVars.forEach(({object, field}) => object[field] = (object[field] as Type).mergeTypeVariablesByName(variableMap));
+  }
+
+  abstract readonly canReadSubset : InterfaceInfo;
+
+  abstract readonly  canWriteSuperset : InterfaceInfo;
+
+  abstract isMoreSpecificThan(other: InterfaceInfo) : boolean;
+
+  abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
+
+  abstract toString() : string;
+
+  static make : Maker = null;
+
+  static fromLiteral : Deliteralizer = null;
+
+  abstract toLiteral(): InterfaceInfoLiteral;
+
+  abstract clone(variableMap: Map<string, Type>) : InterfaceInfo;
+
+  abstract cloneWithResolutions(variableMap: Map<string, Type>) : InterfaceInfo;
+
+  abstract canEnsureResolved() : boolean;
+
+  abstract maybeEnsureResolved() : boolean;
+
+  abstract tryMergeTypeVariablesWith(other: InterfaceInfo) : InterfaceInfo;
+
+  abstract resolvedType() : InterfaceInfo;
+
+  abstract equals(other: InterfaceInfo) : boolean;
+
+  static _updateTypeVar(typeVar: TypeVarReference, update: (t: Type) => Type): void {
+    typeVar.object[typeVar.field] = update(typeVar.object[typeVar.field]);
+  }
+
+  static isTypeVar(reference: TypeVariable | Type | string | boolean): boolean {
+    return reference instanceof TypeVariable || reference instanceof Type && reference.hasVariable;
+  }
+
+  static mustMatch(reference: TypeVariable | Type | string | boolean): boolean {
+    return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
+  }
+
+  static handleConnectionsMatch : HandleConnectionMatcher = null;
+
+  static slotsMatch : SlotMatcher = null;
+
+  abstract particleMatches(particleSpec: ParticleSpec): boolean;
+
+  abstract restrictType(particleSpec: ParticleSpec): boolean;
 }
 

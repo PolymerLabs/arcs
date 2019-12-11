@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge, FlowCheck, FlowModifier} from './graph-internals.js';
-import {Slot} from '../../runtime/interface-info.js';
+import {Slot} from '../../runtime/type.js';
 import {ParticleNode} from './particle-node.js';
 import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
 

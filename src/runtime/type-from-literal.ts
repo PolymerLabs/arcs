@@ -10,9 +10,8 @@
 
 import {TypeLiteral, Type, EntityType, TypeVariable, CollectionType,
         BigCollectionType, RelationType, InterfaceType, SlotType, ReferenceType,
-        ArcType, HandleType, SingletonType, TypeVariableInfo} from './type.js';
+        ArcType, HandleType, SingletonType, TypeVariableInfo, InterfaceInfo} from './type.js';
 import {Schema} from './schema.js';
-import {InterfaceInfo} from './interface-info.js';
 import {SlotInfo} from './slot-info.js';
 
 function fromLiteral(literal: TypeLiteral) : Type {
