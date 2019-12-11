@@ -1,6 +1,6 @@
 directories:
-  src_kt/java
-  src_kt/javatests
+  java
+  javatests
   build_defs
   tools
   third_party
@@ -10,11 +10,11 @@ directories:
   javaharness/javatests
 
 targets:
-  //src_kt/java/...
-  //src_kt/javatests/...
+  //java/...
+  //javatests/...
 
 test_sources:
-  src_kt/javatests/
+  javatests/
 
 java_language_level: 8
 

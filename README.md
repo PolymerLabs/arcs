@@ -140,7 +140,7 @@ Arcs can be developed in the IDE of your choice. Here are some helpful hints to 
 - Open Android Studio and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
 - Upon restarting Android, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
-- Choose "Import project view file" and click on the three dots. 
+- Choose "Import project view file" and click on the three dots.
 - Navigate to the arcs folder, and select the `.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
@@ -159,7 +159,7 @@ If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, 
 - Open IntelliJ and install the Bazel extension.
 - Upon restarting IntelliJ, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
-- Choose "Import project view file" and click on the three dots. 
+- Choose "Import project view file" and click on the three dots.
 - Navigate to the arcs folder, and select the `intellij.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
@@ -182,7 +182,7 @@ run all the tests, and kill the background server:
 
 ```
 $ tools/sigh test && tools/sigh testShells && tools/sigh testWdioShells
-$ bazel test src_kt/... bazel test src/...
+$ tools/local-presubmit
 ```
 
 There are additional targets provided to run subsets of those commands.
@@ -190,7 +190,7 @@ There are additional targets provided to run subsets of those commands.
 - `tools/sigh devServer`: spins up a server (and blocks), serving on port 8786.
 - `./tools/sigh`: run a subset of tests and build packed artifacts.
 
-To run a specific Selenium test using Mocha's 'grep' capability: 
+To run a specific Selenium test using Mocha's 'grep' capability:
 `./tools/sigh test --grep 'regex'`. In addition, for unit tests you can run
 only a single test case by using `it.only()` instead of `it()`, or a single
 suite using `describe.only()` instead of `describe()`.
