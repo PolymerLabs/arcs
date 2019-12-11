@@ -92,12 +92,6 @@ export function reportGlobalException(exception: Error) {
   }
 }
 
-export function reportGlobalException(exception: Error) {
-  for (const handler of systemHandlers) {
-    handler(exception);
-  }
-}
-
 export function registerSystemExceptionHandler(handler: ExceptionHandler) {
   if (!systemHandlers.includes(handler)) {
     systemHandlers.push(handler);
