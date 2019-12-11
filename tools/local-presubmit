@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # A basic script to locally semi-simulate the build and test
 # operations performed by our continuous integration service. Note

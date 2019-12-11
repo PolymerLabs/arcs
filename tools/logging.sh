@@ -1,4 +1,4 @@
-#!/bin/sh
+# Utility routines and constants for use by Arcs shell tools.
 
 ROOT=$(dirname $0)/..
 

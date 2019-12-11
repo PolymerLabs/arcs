@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # A basic script to clean all of the build artifacts and installed
 # modules.  Order matters, and it's easy to overlook something. In the
