@@ -187,20 +187,21 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
-
-    // We represent the board as a comma seperated string
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
+    private val gameState = Singleton(this, "gameState") { defaultGame }
+    private val events = Collection(this, "events") { TTTGame_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    ) }
+
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        // If the gameState doesn't exist, set it.
-        if (gameState.get()?.board == null) {
+        if (gameState.get() == null) {
             gameState.set(defaultGame)
         }
     }
 
-    // Provide the boardSlot
     override fun getTemplate(slotName: String): String = """
         <div slotid="boardSlot"></div>
         """.trimIndent()
@@ -228,16 +229,22 @@ import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
-    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
-    private val events = Collection(this, "events") { TTTBoard_Events() }
+    private val defaultGameState = TTTBoard_GameState(
+        board = ",,,,,,,,"
+    )
 
-    // We use clicks as the way to sort Events in other particles.
+    private val defaultEvent = TTTBoard_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    )
+
+    private val gameState = Singleton(this, "gameState") { defaultGameState }
+    private val events = Collection(this, "events") { defaultEvent }
     private var clicks = 0.0
-    // The empty board will be used in multiple null checks.
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
     init {
-        // When a cell is clicked, add the click to the Events.
         eventHandler("onClick") { eventData ->
             events.store(TTTBoard_Events(
                     type = "move",
@@ -247,33 +254,27 @@ class TTTBoard : Particle() {
             clicks++
         }
 
-        // When the reset button is clicked, add it to the Events.
         eventHandler("reset") {
-            events.store(TTTBoard_Events(type = "reset", time = clicks))
+            events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
             clicks++
         }
     }
 
-    // When a handle is updated, we want to update the board.
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        // We use template interpolation to easily create the board. To
-        // do this, we need to create a model of the board to return.
-        val boardList = gameState.get()?.board?.split(",") ?: emptyBoard
+        val gs = gameState.get() ?: defaultGameState
+        val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()
         boardList.forEachIndexed { index, cell ->
-            // Map what should be displayed in the cell and the index.
-            // This is what lets the onClick work as "value" becomes
-            // the move.
             boardModel.add(mapOf("cell" to cell, "value" to index.toString()))
         }
 
         return mapOf(
-                "buttons" to mapOf(
-                        "\$template" to "button",
-                        "models" to boardModel
-                )
+            "buttons" to mapOf(
+                "\$template" to "button",
+                "models" to boardModel
+            )
         )
     }
 

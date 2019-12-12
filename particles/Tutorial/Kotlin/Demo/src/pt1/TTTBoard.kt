@@ -65,10 +65,10 @@ class TTTBoard : Particle() {
         }
 
         return mapOf(
-                "buttons" to mapOf(
-                        "\$template" to "button",
-                        "models" to boardModel
-                )
+            "buttons" to mapOf(
+                "\$template" to "button",
+                "models" to boardModel
+            )
         )
     }
 
