@@ -284,6 +284,40 @@ describe('manifest parser', () => {
         outRef: writes Reference<Bar>
     `);
   });
+  it('parses refinement types in a schema', () => {
+      parse(`
+        schema Foo
+          num: Number [num > 10]
+      `);
+  });
+  it('parses refinement types in a particle', () => {
+    parse(`
+    particle Foo
+      input: reads Something {value: Text [ (square - 5) < 11 and (square * square > 5) or square == 0] }
+    `);
+  });
+  it('does not parse invalid refinement expressions', () => {
+      assert.throws(() => {
+      const manifestAst = parse(`
+      particle Foo
+        input: reads Something {value: Text [value <<>>>>> ]}
+      `);
+      }, `a valid refinement expression`);
+
+      assert.throws(() => {
+        const manifestAst = parse(`
+        particle Foo
+          input: reads Something {value: Text [ [[ value *- 2 ]}
+        `);
+        }, `a valid refinement expression`);
+
+      assert.throws(() => {
+        const manifestAst = parse(`
+        particle Foo
+          input: reads Something {value: Text [ value */ 2 ]}
+        `);
+        }, `a valid refinement expression`);
+  });
   it('parses require section using local name', () => {
     parse(`
       recipe

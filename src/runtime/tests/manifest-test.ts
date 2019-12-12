@@ -33,7 +33,7 @@ import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
   delete copy.location;
-  assert.deepEqual(copy, {kind: 'schema-primitive', type});
+  assert.deepEqual(copy, {kind: 'schema-primitive', refinement: null, type});
 }
 
 describe('manifest', async () => {
