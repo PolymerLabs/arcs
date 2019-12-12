@@ -11,18 +11,21 @@
 
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class JsonStoreParticle : Particle() {
 
-    private val res = Singleton(this, "inputData") { JsonStoreParticle_InputData() }
+    private val res = Singleton(this, "inputData") { JsonStoreParticle_InputData(
+        name = "",
+        age = 0.0
+    ) }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
         val person = res.get() ?: JsonStoreParticle_InputData("", 0.0)
