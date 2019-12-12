@@ -73,8 +73,9 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   build: [peg, build],
   watch: [watch],
   buildifier: [buildifier],
-  lint: [peg, build, lint, tslint, buildifier],
+  lint: [peg, build, lint, tslint, cycles, buildifier],
   tslint: [peg, build, tslint],
+  cycles: [cycles],
   check: [check],
   clean: [clean],
   unit: [unit],
@@ -86,7 +87,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   run: [peg, build, runNodeScript],
   licenses: [build],
   default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack,
-            webpackTools, lint, tslint, devServerAsync, testWdioShells],
+            webpackTools, lint, tslint, buildifier, cycles, devServerAsync, testWdioShells],
 };
 
 /**
@@ -561,6 +562,27 @@ function buildifier(args: string[]): boolean {
     }
   }
   return allSucceeded;
+}
+
+/** Reports on cyclic dependencies. */
+function cycles(args: string[]): boolean {
+  // TODO Use the madge API instead. This requires handling a Promise, though,
+  // which currently interferes with the keepProcessAlive mechanism. Once the users
+  // of that are refactored to themselves use never-resolving Promises, this can
+  // be changed.
+  sighLog('Counting circular dependencies in runtime code');
+  sighLog('This is informative only until all cycles have been removed');
+  // This logs straight to the console, not through sighLog.
+  // TODO saneSpawnSyncWithOutput would be better, but requires significant parsing
+  // of the output.
+  // We are interested only in the runtime code, not the shells or devtools
+  // TS support in madge 3.6.0 can't cope with our compiler version, 3.7.2 as of 12/12/19,
+  // so we analyze the JS output in ./build rather than the TS.
+  saneSpawnSync('node_modules/.bin/madge', ['--circular', './build']);
+  // TODO For now this is just informative, so always succeeds. Once all circular
+  // dependencies are removed, it should return the result code to fail if any
+  // are found.
+  return true;
 }
 
 function licenses(): boolean {

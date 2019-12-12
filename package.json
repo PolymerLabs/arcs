@@ -91,6 +91,7 @@
     "jsrsasign": "8.0.12",
     "jsrsasign-util": "1.0.0",
     "jszip": "3.2.2",
+    "madge": "3.6.0",
     "node-fetch": "2.6.0",
     "pouchdb": "7.1.1",
     "pouchdb-adapter-memory": "7.1.1",
