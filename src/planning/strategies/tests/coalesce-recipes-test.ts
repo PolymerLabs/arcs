@@ -170,7 +170,7 @@ describe('CoalesceRecipes', () => {
     `);
   });
 
-  it('evaluates fates of handles of required slot in coalesced recipes', async () => {
+  describe('evaluates fates of handles of required slot in coalesced recipes', async () => {
     const parseManifest = async (options) => {
       return `
         schema Thing
@@ -200,32 +200,46 @@ describe('CoalesceRecipes', () => {
       `;
     };
 
-    await doCoalesceRecipes(await parseManifest({fateA: 'map'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'map', fateB: 'map'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'map', fateB: 'use'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'map', fateB: '?'}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'map', fateB: 'use', outThingB: true}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'map', fateB: 'copy'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'copy'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'copy', fateB: 'map'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'copy', fateB: 'copy'}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'copy', fateB: 'create'}));
+    const expectSuccessData = [
+      {fateA: 'map'},
+      {fateA: 'map', fateB: 'map'},
+      {fateA: 'map', fateB: 'use'},
+      {fateA: 'map', fateB: '?'},
+      {fateA: 'copy'},
+      {fateA: 'copy', fateB: 'map'},
+      {fateA: 'copy', fateB: 'copy'},
+      {fateA: 'use', fateB: 'use'},
+      {fateA: 'use', fateB: 'use', outThingB: true},
+      {fateA: 'use', fateB: '?'},
+      {fateA: 'use', fateB: '?', outThingB: true},
+      {fateA: 'create'},
+      {fateA: 'create', fateB: '?'},
+      {fateA: 'create', fateB: 'use'},
+      {fateA: 'create', fateB: 'use', outThingB: true}
+    ];
 
-    await doCoalesceRecipes(await parseManifest({fateA: 'use', fateB: 'use'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'use', fateB: 'use', outThingB: true}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'use', fateB: '?'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'use', fateB: '?', outThingB: true}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'use', fateB: 'create'}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'use', fateB: 'map'}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'use', fateB: 'copy'}));
+    for (const setup of expectSuccessData) {
+      it(`parse with options: ${JSON.stringify(setup)}`, async () => {
+        await doCoalesceRecipes(await parseManifest(setup));
+      });
+    }
 
-    await doCoalesceRecipes(await parseManifest({fateA: 'create'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: '?'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'use'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'use', outThingB: true}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'create'}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'map'}));
-    await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'copy'}));
+    const expectFailureData = [
+      {fateA: 'map', fateB: 'use', outThingB: true},
+      {fateA: 'map', fateB: 'copy'},
+      {fateA: 'copy', fateB: 'create'},
+      {fateA: 'use', fateB: 'create'},
+      {fateA: 'use', fateB: 'map'},
+      {fateA: 'use', fateB: 'copy'},
+      {fateA: 'create', fateB: 'create'},
+      {fateA: 'create', fateB: 'map'},
+      {fateA: 'create', fateB: 'copy'}
+    ];
+    for (const setup of expectFailureData) {
+      it(`parse with options: ${JSON.stringify(setup)}`, async () => {
+        await doNotCoalesceRecipes(await parseManifest(setup));
+      });
+    }
   });
 
   it('coalesces multiple handles', async () => {

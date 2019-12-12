@@ -292,7 +292,7 @@ describe('references', () => {
   it('can construct references in schemas', async () => {
     // This test looks at different scenarios for creating references
     // inside schemas. It:
-    // * reads a single value from the inout connection 'out'
+    // * reads a single value from the reads writes connection 'out'
     // * reads the single 'inFoo'
     // * reads a collction of Results from 'inResult'.
     // * puts a Result into each of the Foos retrieved from 'out' and 'inFoo'

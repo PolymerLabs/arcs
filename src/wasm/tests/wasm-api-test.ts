@@ -224,8 +224,8 @@ class TestLoader extends Loader {
       };
 
       // clear() on out/io with pre-populated stores
-      await outStore.set({id: 'i1', rawData: {txt: 'out'}});
-      await ioStore.set({id: 'i2', rawData: {txt: 'inout'}});
+      await outStore.set({id: 'i1', rawData: {txt: 'writes'}});
+      await ioStore.set({id: 'i2', rawData: {txt: 'reads writes'}});
       await sendEvent('case1');
       assert.isNull(await outStore.get());
       assert.isNull(await ioStore.get());

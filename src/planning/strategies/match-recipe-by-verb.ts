@@ -16,7 +16,7 @@ import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
-import {DirectionPreSlandles} from '../../runtime/manifest-ast-nodes.js';
+import {Direction} from '../../runtime/manifest-ast-nodes.js';
 import {Type} from '../../runtime/type.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Dictionary} from '../../runtime/hot.js';
@@ -32,7 +32,7 @@ import {Dictionary} from '../../runtime/hot.js';
 // Note that the recipe may have the slot pattern multiple times over, but
 // this strategy currently only connects the first instance of the pattern up
 // if there are multiple instances.
-type HandleConstraint = {handle: Handle, direction: DirectionPreSlandles};
+type HandleConstraint = {handle: Handle, direction: Direction};
 type SlotConstraint = {targetSlot: Slot, providedSlots: Dictionary<Slot>};
 
 export class MatchRecipeByVerb extends Strategy {
@@ -240,14 +240,14 @@ export class MatchRecipeByVerb extends Strategy {
     }
     return true;
   }
-  static connectionMatchesConstraint(connection: {direction: DirectionPreSlandles}, handleConstraint: HandleConstraint): boolean {
+  static connectionMatchesConstraint(connection: {direction: Direction}, handleConstraint: HandleConstraint): boolean {
     if (connection.direction !== handleConstraint.direction) {
       return false;
     }
     if (!handleConstraint.handle) {
       return true;
     }
-    const connections: {type?: Type, direction?: DirectionPreSlandles}[] = [...handleConstraint.handle.connections, connection];
+    const connections: {type?: Type, direction?: Direction}[] = [...handleConstraint.handle.connections, connection];
     return Boolean(Handle.effectiveType(handleConstraint.handle.mappedType, connections));
   }
 

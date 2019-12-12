@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {DirectionPreSlandles, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
+import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
@@ -23,7 +23,7 @@ import * as AstNode from './manifest-ast-nodes.js';
 // TODO: clean up the real vs. literal separation in this file
 
 type SerializedHandleConnectionSpec = {
-  direction: DirectionPreSlandles,
+  direction: Direction,
   name: string,
   type: Type | TypeLiteral,
   isOptional: boolean,
@@ -66,7 +66,7 @@ export function isRoot({name, tags, id, type, fate}: {name: string, tags: string
 export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   private rawData: SerializedHandleConnectionSpec;
   discriminator: 'HCS';
-  direction: DirectionPreSlandles;
+  direction: Direction;
   name: string;
   type: Type;
   isOptional: boolean;
@@ -126,12 +126,12 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   get isInput() {
     // TODO: we probably don't really want host to be here.
     // TODO: do we want to consider any here?
-    return this.direction === 'in' || this.direction === 'inout' || this.direction === 'host';
+    return this.direction === 'reads' || this.direction === 'reads writes' || this.direction === 'hosts';
   }
 
   get isOutput() {
     // TODO: do we want to consider any here?
-    return this.direction === 'out' || this.direction === 'inout';
+    return this.direction === 'writes' || this.direction === 'reads writes';
   }
 
   isCompatibleType(type: Type) {
@@ -179,7 +179,7 @@ export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInter
 
   // Getters to 'fake' being a Handle.
   get isOptional(): boolean { return !this.isRequired; }
-  get direction(): string { return '`consume'; }
+  get direction(): string { return '`consumes'; }
   get type(): Type {
     //TODO(jopra): FIXME make the null handle optional.
     const slotT = SlotType.make(this.formFactor, null);
@@ -423,10 +423,10 @@ export class ParticleSpec {
     this.trustChecks.forEach(check => results.push(`  ${check.toManifestString()}`));
 
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
-    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
+    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, indent: string):void => {
       const tokens: string[] = [];
       tokens.push(`${s.name}:`);
-      tokens.push(`${direction}s${s.isRequired ? '' : '?'}`);
+      tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
 
       const fieldSet = [];
       // TODO(jopra): Move the formFactor and handle to the slot type information.
@@ -448,12 +448,12 @@ export class ParticleSpec {
       results.push(`${indent}${tokens.join(' ')}`);
       if (s.provideSlotConnections) {
         // Provided slots.
-        s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));
+        s.provideSlotConnections.forEach(p => slotToString(p, 'provides', indent+'  '));
       }
     };
 
     this.slotConnections.forEach(
-      s => slotToString(s, 'consume', '  ')
+      s => slotToString(s, 'consumes', '  ')
     );
     // Description
     if (this.pattern) {
@@ -505,9 +505,9 @@ export class ParticleSpec {
             if (!handle) {
               throw new Error(`Can't make a check on unknown handle ${handleName}.`);
             }
-            if (handle.direction === '`consume' || handle.direction === '`provide') {
+            if (handle.direction === '`consumes' || handle.direction === '`provides') {
               // Do slandles versions of slots checks and claims.
-              if (handle.direction === '`consume') {
+              if (handle.direction === '`consumes') {
                   throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
 
               }

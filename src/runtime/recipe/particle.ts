@@ -279,7 +279,7 @@ export class Particle implements Comparable<Particle> {
 
   getSlandleConnections(): SlotConnection[] {
     // TODO(jopra): Revisit when slots are removed.
-    return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.direction === '`consume' && conn.toSlotConnection()).filter(conn => conn)];
+    return [...Object.values(this._consumedSlotConnections), ...this.allConnections().map(conn => conn.direction === '`consumes' && conn.toSlotConnection()).filter(conn => conn)];
   }
 
   getSlotConnections(): SlotConnection[] {
@@ -327,7 +327,7 @@ export class Particle implements Comparable<Particle> {
     const connectionSpec = this.spec.getConnectionByName(name);
     connection.type = connectionSpec.type;
     if (connection.direction !== connectionSpec.direction) {
-      assert(connection.direction === 'inout',
+      assert(connection.direction === 'reads writes',
              `Unnamed connection cannot adjust direction ${connection.direction} to ${name}'s direction ${connectionSpec.direction}`);
       connection.direction = connectionSpec.direction;
     }

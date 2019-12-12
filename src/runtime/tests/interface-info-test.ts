@@ -37,7 +37,7 @@ describe('interface', () => {
 
   it('finds type variable references in slots', () => {
     const iface = InterfaceInfo.make('Test', [], [
-      {name: TypeVariable.make('a'), direction: 'consume', isRequired: false, isSet: false}]);
+      {name: TypeVariable.make('a'), direction: 'consumes', isRequired: false, isSet: false}]);
     assert.lengthOf(iface.typeVars, 1);
     assert.strictEqual(iface.typeVars[0].field, 'name');
     assert.strictEqual(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
@@ -94,7 +94,7 @@ describe('interface', () => {
           foo: writes NotTest
       `);
     const type = new EntityType(manifest.schemas.Test);
-    const iface = InterfaceInfo.make('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'in', type: TypeVariable.make('b')}, {type}], []);
+    const iface = InterfaceInfo.make('Test', [{name: 'foo', type: TypeVariable.make('a')}, {direction: 'reads', type: TypeVariable.make('b')}, {type}], []);
     assert(!iface.particleMatches(manifest.particles[0]));
     assert(iface.particleMatches(manifest.particles[1]));
     assert(iface.particleMatches(manifest.particles[2]));
@@ -125,9 +125,9 @@ describe('interface', () => {
       `);
     const type = new EntityType(manifest.schemas.Test);
     const iface = InterfaceInfo.make('Test', [
-      {direction: 'in', type}], [
+      {direction: 'reads', type}], [
         {name: 'one'},
-        {direction: 'provide', isSet: true}]);
+        {direction: 'provides', isSet: true}]);
 
     assert(!iface.particleMatches(manifest.particles[0]));
     assert(!iface.particleMatches(manifest.particles[1]));
@@ -142,17 +142,17 @@ describe('interface', () => {
 
   it('Can ensure resolved a schema type', () => {
     const type = EntityType.make(['Thing'], {});
-    const iface = InterfaceInfo.make('Test', [{type, name: 'foo'}, {type, direction: 'in'}, {type}], []);
+    const iface = InterfaceInfo.make('Test', [{type, name: 'foo'}, {type, direction: 'reads'}, {type}], []);
     assert.isTrue(iface.canEnsureResolved());
     assert.isTrue(iface.maybeEnsureResolved());
   });
 
   it('Maybe ensure resolved does not mutate on failure', () => {
     const constrainedType1 = TypeChecker.processTypeList(
-      TypeVariable.make('a'), [{type: EntityType.make(['Thing'], {}), direction: 'in'}]
+      TypeVariable.make('a'), [{type: EntityType.make(['Thing'], {}), direction: 'reads'}]
     );
     const constrainedType2 = TypeChecker.processTypeList(
-      TypeVariable.make('b'), [{type: EntityType.make(['Thing'], {}), direction: 'out'}]
+      TypeVariable.make('b'), [{type: EntityType.make(['Thing'], {}), direction: 'writes'}]
     );
     const unconstrainedType = TypeVariable.make('c');
     const allTypes = [constrainedType1, constrainedType2, unconstrainedType];
@@ -282,7 +282,7 @@ describe('interface', () => {
     const hostParticle = recipe.particles.find(p => p.name === 'Host');
     const hostedInterface = (hostParticle.spec.getConnectionByName('hosted').type as InterfaceType).interfaceInfo;
 
-    const check = name => hostedInterface.particleMatches(manifest.findParticleByName(name));
+    const check = (name: string) => hostedInterface.particleMatches(manifest.findParticleByName(name));
 
     // reads writes Thing is not be compatible with in Instrument input
     // reads writes LesPaul is not be compatible with out Gibson output

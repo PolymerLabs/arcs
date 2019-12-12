@@ -207,8 +207,8 @@ import './src/runtime/tests/artifacts/People/Person.schema'
 store User of Person 'User' in './src/runtime/tests/artifacts/Things/empty.json'
 import './src/runtime/tests/artifacts/Products/Product.schema'
 particle ShowProduct in 'show-product.js'
-  in Product product
-  consume item
+  product: reads Product
+  item: consumes Slot
   `;
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, storageKey),

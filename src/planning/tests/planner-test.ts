@@ -266,7 +266,7 @@ describe('Planner', () => {
           P1
             one: \`provides s0
       `);
-    }, 'not compatible with \'`consume\'');
+    }, 'not compatible with \'`consumes\'');
   });
 
   it('SLANDLES cannot resolve multiple consumed set slots with incorrect directions', async () => {
@@ -280,7 +280,7 @@ describe('Planner', () => {
           P1
             one: \`provides s0
       `);
-    }, 'not compatible with \'`consume\'');
+    }, 'not compatible with \'`consumes\'');
   });
 
   it('SLANDLES resolves particles with multiple consumed slots', async () => {

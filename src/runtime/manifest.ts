@@ -366,7 +366,7 @@ export class Manifest {
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => !!Handle.effectiveType(
-      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
+      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
@@ -920,7 +920,7 @@ ${e.message}
       items.byParticle.set(particle, item);
 
       for (const slotConnectionItem of item.slotConnections) {
-        if (slotConnectionItem.direction === 'provide') {
+        if (slotConnectionItem.direction === 'provides') {
           throw new ManifestError(item.location, `invalid slot connection: provide slot must be dependent`);
         }
         let slotConn = particle.getSlotConnectionByName(slotConnectionItem.param);
@@ -947,7 +947,7 @@ ${e.message}
         }
         slotConn.tags = slotConnectionItem.tags || [];
         slotConnectionItem.dependentSlotConnections.forEach(ps => {
-          if (ps.direction === 'consume') {
+          if (ps.direction === 'consumes') {
             throw new ManifestError(item.location, `invalid slot connection: consume slot must not be dependent`);
           }
           if (ps.dependentSlotConnections.length !== 0) {
@@ -1038,7 +1038,7 @@ ${e.message}
             const handle = recipe.newHandle();
             handle.tags = [];
             handle.localName = connectionItem.target.name;
-            if (connection.direction === '`consume' || connection.direction === '`provide') {
+            if (connection.direction === '`consumes' || connection.direction === '`provides') {
               // TODO(jopra): This is something of a hack to catch users who have not forward-declared their slandles.
               handle.fate = '`slot';
             } else {

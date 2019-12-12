@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
+import {RecipeUtil, DirectionCounts} from '../../runtime/recipe/recipe-util.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
@@ -38,14 +38,14 @@ export class AssignHandles extends Strategy {
         // TODO: using the connection to retrieve type information is wrong.
         // Once validation of recipes generates type information on the handle
         // we should switch to using that instead.
-        const counts = RecipeUtil.directionCounts(handle);
+        const counts: DirectionCounts = RecipeUtil.directionCounts(handle);
         if (counts['any'] > 0) { // Number of unknown handle directions.
           return undefined;
         }
 
         const score = this._getScore(counts, handle.tags);
 
-        if (counts.out > 0 && handle.fate === 'map') {
+        if (counts.writes > 0 && handle.fate === 'map') {
           return undefined;
         }
         const stores = self.getMappableStores(handle.fate, handle.type, handle.tags, counts);
@@ -74,10 +74,10 @@ export class AssignHandles extends Strategy {
         return responses;
       }
 
-      _getScore(counts, tags) {
+      _getScore(counts: DirectionCounts, tags: string[]) {
         let score = -1;
-        if (counts.in === 0 || counts.out === 0) {
-          if (counts.out === 0) {
+        if (counts.reads === 0 || counts.writes === 0) {
+          if (counts.writes === 0) {
             score = 1;
           } else {
             score = 0;
@@ -94,7 +94,7 @@ export class AssignHandles extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags: string[], counts): Map<UnifiedStore, string> {
+  getMappableStores(fate, type, tags: string[], counts: DirectionCounts): Map<UnifiedStore, string> {
     const stores: Map<UnifiedStore, string> = new Map();
 
     if (fate === 'use' || fate === '?') {
@@ -102,7 +102,7 @@ export class AssignHandles extends Strategy {
     }
     if (fate === 'map' || fate === 'copy' || fate === '?') {
       this.arc.context.findStoresByType(type, {tags, subtype: true}).forEach(
-          store => stores.set(store, fate === '?' ? (counts.out > 0 ? 'copy' : 'map') : fate));
+          store => stores.set(store, fate === '?' ? (counts.writes > 0 ? 'copy' : 'map') : fate));
     }
     return stores;
   }

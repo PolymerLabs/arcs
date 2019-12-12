@@ -13,25 +13,25 @@ import {ParticleSpec, HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {DirectionPreSlandles} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
 
-export function reverseDirection(direction: DirectionPreSlandles): DirectionPreSlandles {
+export function reverseDirection(direction: Direction): Direction {
   switch (direction) {
-    case 'in':
-      return 'out';
-    case 'out':
-      return 'in';
-    case 'inout':
-      return 'inout';
-    case '`consume':
-      return '`provide';
-    case '`provide':
-      return '`consume';
+    case 'reads':
+      return 'writes';
+    case 'writes':
+      return 'reads';
+    case 'reads writes':
+      return 'reads writes';
+    case '`consumes':
+      return '`provides';
+    case '`provides':
+      return '`consumes';
     case 'any':
       return 'any';
     default:
@@ -40,30 +40,30 @@ export function reverseDirection(direction: DirectionPreSlandles): DirectionPreS
   }
 }
 
-export function connectionMatchesHandleDirection(connectionDirection: DirectionPreSlandles, handleDirection: DirectionPreSlandles): boolean {
+export function connectionMatchesHandleDirection(connectionDirection: Direction, handleDirection: Direction): boolean {
   return acceptedDirections(connectionDirection).includes(handleDirection);
 }
 
-export function acceptedDirections(direction: DirectionPreSlandles): DirectionPreSlandles[] {
+export function acceptedDirections(direction: Direction): Direction[] {
   // @param direction: the direction of a handleconnection.
   // @return acceptedDirections: the list of directions a handle can have that
   // are allowed with this handle connection.
   //
   switch (direction) {
     case 'any':
-      return ['any', 'in', 'out', 'inout', 'host', '`consume', '`provide'];
-    case 'in':
-      return ['any', 'in', 'inout', 'host', '`consume'];
-    case 'out':
-      return ['any', 'out', 'inout', '`provide'];
-    case 'inout':
-      return ['any', 'inout'];
-    case 'host':
-      return ['any', 'host'];
-    case '`consume':
-      return ['any', '`consume'];
-    case '`provide':
-      return ['any', '`provide'];
+      return ['any', 'reads', 'writes', 'reads writes', 'hosts', '`consumes', '`provides'];
+    case 'reads':
+      return ['any', 'reads', 'reads writes', 'hosts', '`consumes'];
+    case 'writes':
+      return ['any', 'writes', 'reads writes', '`provides'];
+    case 'reads writes':
+      return ['any', 'reads writes'];
+    case 'hosts':
+      return ['any', 'hosts'];
+    case '`consumes':
+      return ['any', '`consumes'];
+    case '`provides':
+      return ['any', '`provides'];
     default:
       // Catch nulls and unsafe values from javascript.
       throw new Error(`Bad direction ${direction}`);
@@ -92,9 +92,9 @@ class Shape {
     }
   }
 }
-type DirectionCounts = {[K in DirectionPreSlandles]: number};
+export type DirectionCounts = {[K in Direction]: number};
 
-export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: DirectionPreSlandles};
+export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: Direction};
 
 type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
 
@@ -440,12 +440,12 @@ export class RecipeUtil {
   }
 
   static directionCounts(handle: Handle): DirectionCounts {
-    const counts: DirectionCounts = {'in': 0, 'out': 0, 'inout': 0, 'host': 0, '`consume': 0, '`provide': 0, 'any': 0};
+    const counts: DirectionCounts = {'reads': 0, 'writes': 0, 'reads writes': 0, 'hosts': 0, '`consumes': 0, '`provides': 0, 'any': 0};
     for (const connection of handle.connections) {
       counts[connection.direction]++;
     }
-    counts.in += counts.inout;
-    counts.out += counts.inout;
+    counts.reads += counts['reads writes'];
+    counts.writes += counts['reads writes'];
     return counts;
   }
 

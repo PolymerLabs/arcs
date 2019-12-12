@@ -13,11 +13,11 @@
         ],
         "description": "Insert particle definition"
     },
-    "consume": {
-        "prefix": "consume",
+    "consumes": {
+        "prefix": "consumes",
         "body": [
-            "consume ${1:slot}$0"
+            "consumes Slot"
         ],
-        "description": "Insert consume slot"
+        "description": "Insert consumes slot"
     }
 }
