@@ -20,8 +20,8 @@ import arcs.abort
 import arcs.addressable.toAddress
 import arcs.log
 import kotlin.Exception
-import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
