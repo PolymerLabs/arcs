@@ -316,7 +316,7 @@ describe('manifest parser', () => {
         particle Foo
           input: reads Something {value: Text [ value */ 2 ]}
         `);
-        }, `a valid refinement expression`);      
+        }, `a valid refinement expression`);
   });
   it('parses require section using local name', () => {
     parse(`
