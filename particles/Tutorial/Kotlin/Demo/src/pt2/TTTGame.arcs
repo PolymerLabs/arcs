@@ -7,7 +7,6 @@ schema Person
 
 schema GameState
   board: Text
-  currentPlayer: Number
 
 schema Event
   type: Text

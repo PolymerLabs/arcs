@@ -24,10 +24,19 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState() }
-    private val events = Collection(this, "events") { TTTHumanPlayer_Events() }
-    private val myMove = Singleton(this, "myMove") { TTTHumanPlayer_MyMove() }
-    private val player = Singleton(this, "player") { TTTHumanPlayer_Player() }
+    private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState(
+        board = ",,,,,,,,"
+    ) }
+    private val events = Collection(this, "events") { TTTHumanPlayer_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    ) }
+    private val myMove = Singleton(this, "myMove") { TTTHumanPlayer_MyMove(-1.0) }
+    private val player = Singleton(this, "player") { TTTHumanPlayer_Player(
+        name = "PlayerOne",
+        avatar = ""
+    ) }
 
     override fun onHandleUpdate(handle: Handle) {
         if (events.size <= 0) return
@@ -35,7 +44,7 @@ class TTTHumanPlayer : Particle() {
         // Get the element with the largest time as this will be the most recent.
         val event = events.sortedBy { it.time }.last()
         // Set the move
-        if (event.type == "move") {
+        if (event.type == "move" && event.time > -1.0) {
             myMove.set(TTTHumanPlayer_MyMove(event.move))
         }
     }
