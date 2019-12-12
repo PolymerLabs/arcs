@@ -25,7 +25,6 @@ const _DO_NOT_USE_spawn = require('child_process').spawn;
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
 
-let keepProcessAlive = false;
 let globalOptions = {
   install: false,
   quiet: false,
@@ -61,7 +60,7 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
-const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
+const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   languageServer: [peg, build, buildLS, webpackLS],
   peg: [peg, railroad],
   railroad: [railroad],
@@ -565,20 +564,22 @@ function buildifier(args: string[]): boolean {
 }
 
 /** Reports on cyclic dependencies. */
-function cycles(args: string[]): boolean {
-  // TODO Use the madge API instead. This requires handling a Promise, though,
-  // which currently interferes with the keepProcessAlive mechanism. Once the users
-  // of that are refactored to themselves use never-resolving Promises, this can
-  // be changed.
+async function cycles(args: string[]): Promise<boolean> {
   sighLog('Counting circular dependencies in runtime code');
   sighLog('This is informative only until all cycles have been removed');
-  // This logs straight to the console, not through sighLog.
-  // TODO saneSpawnSyncWithOutput would be better, but requires significant parsing
-  // of the output.
   // We are interested only in the runtime code, not the shells or devtools
   // TS support in madge 3.6.0 can't cope with our compiler version, 3.7.2 as of 12/12/19,
   // so we analyze the JS output in ./build rather than the TS.
-  saneSpawnSync('node_modules/.bin/madge', ['--circular', './build']);
+  const madge = require('madge');
+  const res = (await madge('./build')).circular();
+  if (res.length) {
+    sighLog(`⭯ Found ${res.length} circular dependencies:\n`);
+    for (let i = 0; i < res.length; i++) {
+      sighLog(`${i + 1}) ${res[i].join(' > ')}`);
+    }
+    sighLog('');
+  }
+
   // TODO For now this is just informative, so always succeeds. Once all circular
   // dependencies are removed, it should return the result code to fail if any
   // are found.
@@ -676,7 +677,7 @@ function saneSpawnSyncWithOutput(cmd: string, args: string[], opts?: SpawnOption
   return {success: spawnWasSuccessful(result, opts), stdout: result.stdout.toString(), stderr: result.stderr.toString()};
 }
 
-function runTestsOrHealthOnCron(args: string[]): boolean {
+async function runTestsOrHealthOnCron(args: string[]): Promise<boolean> {
   if (isTravisDaily) {
     // The travis cron job should add the following arguments when running the health command.
     args.push('--all', '--uploadCodeHealthStats');
@@ -857,7 +858,7 @@ function runTests(args: string[]): boolean {
 }
 
 // Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
-function watch(args: string[]): boolean {
+async function watch(args: string[]): Promise<boolean> {
   const [chokidar] = getOptionalDependencies(['chokidar'], 'The watch command');
 
   const options = minimist(args, {
@@ -871,7 +872,6 @@ function watch(args: string[]): boolean {
     ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|bazel-.*/)`),
     persistent: true
   });
-  keepProcessAlive = true; // Tell the runner to not exit.
   let timeout = null;
   const changes = new Set();
   watcher.on('change', path => {
@@ -879,17 +879,17 @@ function watch(args: string[]): boolean {
       clearTimeout(timeout);
     }
     changes.add(path);
-    timeout = setTimeout(() => {
+    timeout = setTimeout(async () => {
       sighLog(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
-      runSteps(command, options._);
+      await runSteps(command, options._);
       timeout = null;
     }, 500);
   });
-  return true;
+  return new Promise(() => {});  // never resolves, so the script will stay alive indefinitely
 }
 
-function health(args: string[]): boolean {
+async function health(args: string[]): Promise<boolean> {
   const options = minimist(args, {
     boolean: ['migration', 'types', 'tests', 'nullChecks', 'uploadCodeHealthStats', 'all'],
   });
@@ -948,11 +948,12 @@ function health(args: string[]): boolean {
   }
 
   // Generating coverage report from tests.
-  const testResult = runSteps('test', testOptions);
+  const testResult = await runSteps('test', testOptions);
 
   if (options.tests) {
     return saneSpawnSync('node_modules/.bin/c8', ['report']);
   }
+
 
   const healthInformation: string[] = [];
 
@@ -997,32 +998,32 @@ function health(args: string[]): boolean {
   line();
 
   if (options.uploadCodeHealthStats) {
-    uploadCodeHealthStats(request, healthInformation, testResult);
+    return uploadCodeHealthStats(request, healthInformation, testResult);
   }
   return testResult;
 }
 
-function uploadCodeHealthStats(request, data: string[], testResult: boolean) {
+async function uploadCodeHealthStats(request, data: string[], testResult: boolean): Promise<boolean> {
   sighLog('Uploading health data');
   const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
 
   const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
   const branchFrom = process.env.TRAVIS_PULL_REQUEST_BRANCH || 'unknown-branch';
+  const date = new Date().toString();
 
-  const info = [branchTo, branchFrom, new Date().toString()];
-
-  request.post(trigger, {
-    json: [[...info, ...data]]
-  }, (error, response, body) => {
-    if (error || response.statusCode !== 200) {
-      console.error(error);
-      console.error(response.toJSON());
-    } else {
-      sighLog(`Upload response status: ${response.statusCode}`);
-    }
-    process.exit(testResult ? 0 : 1);
+  return new Promise<boolean>((resolve, reject) => {
+    request.post(trigger, {
+      json: [[branchTo, branchFrom, date, ...data]]
+    }, (error, response) => {
+      if (error) {
+        reject(error);
+      } else if (response.statusCode !== 200) {
+        reject(response.toJSON());
+      } else {
+        resolve(testResult);
+      }
+    });
   });
-  keepProcessAlive = true; // Tell the runner to not exit.
 }
 
 // Single place to put all common node flags for running node tools.
@@ -1098,7 +1099,7 @@ function runNodeScriptSteps(scriptName: string) {
 }
 
 // Looks up the steps for `command` and runs each with `args`.
-function runSteps(command: string, args: string[]): boolean {
+async function runSteps(command: string, args: string[]): Promise<boolean> {
   const funcs = steps[command];
   if (funcs === undefined) {
     sighLog(`Unknown command: '${command}'`);
@@ -1121,7 +1122,7 @@ function runSteps(command: string, args: string[]): boolean {
   try {
     for (const func of funcs) {
       sighLog(`🙋 ${func.name}`);
-      if (!func(args)) {
+      if (!await func(args)) {
         sighLog(`🙅 ${func.name}`);
         return false;
       }
@@ -1148,8 +1149,4 @@ if (args[0] === '--quiet') {
   args = args.slice(1);
 }
 
-const result = runSteps(args[0] || 'default', args.slice(1));
-
-if (!keepProcessAlive) { // the watch command is running.
-  process.exit(result ? 0 : 1);
-}
+void runSteps(args[0] || 'default', args.slice(1)).then(res => process.exit(res ? 0 : 1));
