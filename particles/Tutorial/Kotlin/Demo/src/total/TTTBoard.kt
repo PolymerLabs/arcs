@@ -18,12 +18,26 @@ import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
 import arcs.addressable.toAddress
+import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
-    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
-    private val events = Collection(this, "events") { TTTBoard_Events() }
+    private val defaultGameState = TTTBoard_GameState(
+        board = ",,,,,,,,",
+        currentPlayer = (0..1).random().toDouble(),
+        gameOver = false,
+        winnerAvatar = ""
+    )
+
+    private val defaultEvent = TTTBoard_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    )
+
+    private val gameState = Singleton(this, "gameState") { defaultGameState }
+    private val events = Collection(this, "events") { defaultEvent }
     private var clicks = 0.0
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
@@ -38,7 +52,7 @@ class TTTBoard : Particle() {
         }
 
         eventHandler("reset") {
-            events.store(TTTBoard_Events(type = "reset", time = clicks))
+            events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
             clicks++
         }
     }
@@ -46,7 +60,8 @@ class TTTBoard : Particle() {
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val boardList = gameState.get()?.board?.split(",") ?: emptyBoard
+        val gs = gameState.get() ?: defaultGameState
+        val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()
         boardList.forEachIndexed { index, cell ->
             boardModel.add(mapOf("cell" to cell, "value" to index.toString()))

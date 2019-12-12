@@ -11,18 +11,18 @@
 
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
  */
 class DisplayGreetingParticle : Particle() {
-    private val person = Singleton(this, "person") { DisplayGreeting_Person() }
+    private val person = Singleton(this, "person") { DisplayGreeting_Person("Human") }
 
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 
