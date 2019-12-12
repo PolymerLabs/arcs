@@ -11,6 +11,8 @@
 
 package arcs
 
+import kotlin.Exception
+
 /**
  * Base class for all Particles.
  */
@@ -84,8 +86,12 @@ abstract class Particle {
      * @see [eventHandler]
      */
     open fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
-        eventHandlers[eventName]?.invoke(eventData)
-        renderOutput()
+        try {
+            eventHandlers[eventName]?.invoke(eventData)
+            renderOutput()
+        } catch (e: Exception) {
+            log("I caught ${e.message}")
+        }
     }
 
     /** @param handle Handle to synchronize */
@@ -120,6 +126,11 @@ abstract class Particle {
     /** Rendering through UiBroker */
     fun renderOutput() {
         log("renderOutput")
+        try {
+            throw Exception("I'm throwing")
+        } catch (e: Exception) {
+            log("I caught ${e.message}")
+        }
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
