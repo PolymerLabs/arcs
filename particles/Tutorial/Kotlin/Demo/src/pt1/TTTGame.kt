@@ -22,13 +22,17 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
-
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
+    private val gameState = Singleton(this, "gameState") { defaultGame }
+    private val events = Collection(this, "events") { TTTGame_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    ) }
+
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.get()?.board == null) {
+        if (gameState.get() == null) {
             gameState.set(defaultGame)
         }
     }
