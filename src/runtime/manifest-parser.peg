@@ -1339,15 +1339,98 @@ SchemaTupleType
   }
 
 Refinement
-  = '[' expression:RefinementExpression ']'
+  = '[' whiteSpace? expression:RefinementExpression whiteSpace? ']'
   {
       return toAstNode<AstNode.Refinement>({kind: 'refinement', expression});
   }
+  / '[' { expected("a valid refinement expression"); }
 
 RefinementExpression
-  = expression: [^\]]*
+  = OrExpression
+
+OrExpression
+  = leftExpr:AndExpression tail:(whiteSpace 'or' whiteSpace AndExpression)*
   {
-      return toAstNode<AstNode.RefinementExpression>({kind: 'refinement-expression', expression});
+    for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+AndExpression
+  = leftExpr:EqualityExpression tail:(whiteSpace 'and' whiteSpace EqualityExpression)*
+  {
+    for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+EqualityExpression
+  = leftExpr:ComparisonExpression tail:(whiteSpace? ('==' / '!=') whiteSpace? ComparisonExpression)*
+  {
+    for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+ComparisonExpression
+  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<' / '<=' / '>' / '>=') whiteSpace? AdditiveExpression)*
+  {
+    for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+AdditiveExpression
+  = leftExpr:MultiplicativeExpression tail:(whiteSpace? ('+' / '-') whiteSpace? MultiplicativeExpression)*
+  {
+    for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+MultiplicativeExpression
+  = leftExpr:PrimaryExpression tail:(whiteSpace? ('*' / '/') whiteSpace? PrimaryExpression)*
+  {
+    for (const part of tail) {
+      const operator = part[1];
+      const rightExpr = part[3];
+      leftExpr = toAstNode<AstNode.BinaryExpressionNode>({kind: 'binary-expression-node', leftExpr, rightExpr, operator});
+    }
+    return leftExpr;
+  }
+
+PrimaryExpression
+  = '(' whiteSpace? expr:RefinementExpression whiteSpace? ')'
+  {
+    return expr;
+  }
+  / op:(('not' whiteSpace) / ('-' whiteSpace?)) expr:PrimaryExpression
+  {
+    const operator = op[0];
+    return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
+  }
+  / NumberType
+  / fieldName
+
+NumberType
+  = whole:[0-9]+ fractional:('.' [0-9]+)?
+  {
+    return Number(text());
   }
 
 Version "a version number (e.g. @012)"

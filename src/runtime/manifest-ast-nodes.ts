@@ -9,6 +9,7 @@
  */
 import {ClaimType} from './particle-claim.js';
 import {CheckType} from './particle-check.js';
+import { type } from 'os';
 
 /**
  * Complete set of tokens used by `manifest-parser.peg`. To use this you
@@ -525,13 +526,25 @@ export interface SchemaTupleType extends BaseNodeWithRefinement {
 }
 
 export interface Refinement extends BaseNode {
-    kind: 'refinement';
-    expression: RefinementExpression;
+  kind: 'refinement';
+  expression: RefinementExpression;
 }
 
-export interface RefinementExpression extends BaseNode {
-    kind: 'refinement-expression';
-    expression: string;
+export type RefinementExpression = BinaryExpressionNode | UnaryExpressionNode | fieldName | number
+
+export interface ExpressionNode extends BaseNode {
+  operator: string;
+}
+
+export interface BinaryExpressionNode extends ExpressionNode {
+  kind: 'binary-expression-node';
+  leftExpr: RefinementExpression;
+  rightExpr: RefinementExpression;
+}
+
+export interface UnaryExpressionNode extends ExpressionNode {
+  kind: 'unary-expression-node';
+  expr: RefinementExpression;
 }
 
 export interface SchemaInline extends BaseNode {
