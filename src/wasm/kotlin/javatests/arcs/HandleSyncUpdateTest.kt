@@ -11,25 +11,41 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class HandleSyncUpdateTest : Particle() {
-    private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng() }
-    private val col = Collection(this, "col") { HandleSyncUpdateTest_Col() }
-    private val res = Collection(this, "res") { HandleSyncUpdateTest_Res() }
+    private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng(
+        num = 0.0,
+        txt = "",
+        lnk = "",
+        flg = false
+    ) }
+    private val col = Collection(this, "col") { HandleSyncUpdateTest_Col(
+        num = 0.0,
+        txt = "",
+        lnk = "",
+        flg = false
+    ) }
+    private val res = Collection(this, "res") { HandleSyncUpdateTest_Res(
+        txt = "",
+        num = 0.0
+    ) }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced"))
+        res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val out = HandleSyncUpdateTest_Res()
+        val out = HandleSyncUpdateTest_Res(
+            txt = "",
+            num = 0.0
+        )
         out.txt = "update:${handle.name}"
         if (handle.name == "sng") {
             val data = (handle as Singleton<*>).get() as HandleSyncUpdateTest_Sng
