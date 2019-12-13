@@ -22,6 +22,7 @@ import arcs.TTTGame_PlayerOneMove
 import arcs.TTTGame_PlayerTwo
 import arcs.TTTGame_PlayerTwoMove
 import arcs.addressable.toAddress
+import arcs.log
 import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
@@ -92,8 +93,10 @@ class TTTGame : Particle() {
         val cpAvatar = if (gs.currentPlayer == p1.id) p1.avatar else p2.avatar
 
         val congratsMessage = gs.winnerAvatar.let {
-            if (it == p1.avatar) p1.name else p2.name
-        }.let { "Congratulations $it, you won!" } ?: "It's a tie!"
+            if (it == p1.avatar) "Congratulations ${p1.name}, you won!"
+            else if (it == p2.avatar) "Congratulations ${p2.name}, you won!"
+            else "It's a tie!"
+        }
 
         return mapOf(
             "message" to congratsMessage,
@@ -129,9 +132,17 @@ class TTTGame : Particle() {
             }
         }
         if (hasReset()) {
-            gameState.set(defaultGame)
-            playerOneMove.set(defaultPlayerOneMove)
-            playerTwoMove.set(defaultPlayerTwoMove)
+            log("default game board: ${defaultGame.board}")
+            gameState.set(TTTGame_GameState(
+                board = ",,,,,,,,",
+                currentPlayer = (0..1).random().toDouble(),
+                gameOver = false,
+                winnerAvatar = ""
+            ))
+            mv1.move = -1.0
+            mv2.move = -1.0
+            playerOneMove.set(mv1)
+            playerTwoMove.set(mv2)
             events.clear()
         }
         renderOutput()
@@ -153,8 +164,7 @@ class TTTGame : Particle() {
         boardList[mv] = avatar
         gs.board = boardList.joinToString(",")
 
-        val cp = gs.currentPlayer ?: 0.0
-        gs.currentPlayer = (cp + 1) % 2
+        gs.currentPlayer = (gs.currentPlayer + 1) % 2
         gameState.set(gs)
 
         gameState.set(checkGameOver(boardList, gs, avatar))
