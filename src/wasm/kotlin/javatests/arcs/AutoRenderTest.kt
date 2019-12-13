@@ -11,15 +11,15 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
-import arcs.Particle
 import arcs.Handle
+import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class AutoRenderTest : Particle() {
-    private val data = Singleton(this, "data") { AutoRenderTest_Data() }
+    private val data = Singleton(this, "data") { AutoRenderTest_Data("") }
 
     override fun init() = renderOutput()
     override fun onHandleUpdate(handle: Handle) = renderOutput()
