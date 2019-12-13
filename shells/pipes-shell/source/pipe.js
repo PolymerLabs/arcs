@@ -61,7 +61,7 @@ const populateDispatcher = (dispatcher, storage, context) => {
     // TODO: consolidate runArc and uiEvent with spawn and event, as well as
     // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, bus, runtime);
+      return await runArc(msg, bus, runtime, storage);
     },
     uiEvent: async (msg, tid, bus) => {
       return await uiEvent(msg, runtime);
