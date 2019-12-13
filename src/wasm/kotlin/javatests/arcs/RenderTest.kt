@@ -11,15 +11,15 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class RenderTest : Particle() {
-    private val flags = Singleton(this, "flags") { RenderTest_Flags() }
+    private val flags = Singleton(this, "flags") { RenderTest_Flags(false, false) }
     private var shouldTemplate: Boolean = true
     private var shouldPopulate: Boolean = true
 
