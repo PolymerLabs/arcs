@@ -8,15 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {getClientClass, Client} from './systrace-clients.js';
+import {Client, getClientClass} from './systrace-clients.js';
 
-// Describes a traced symbol.
+/** Interface that describes a traced symbol. */
 interface Symbol {
   target: object | Function;
-  symbol: string;
+  prototype: Function;
+  property: string;
 }
 
-const IS_TRACED_PROPERTY = 'isTraced';
+// Identifies whether a class has already been traced in any of its
+// inheritance hierarchies.
+const SYSTEM_TRACED_PROPERTY = '_systemTraced';
 
 // Determines the client class asap at the very first script evaluation.
 const clientClass: ReturnType<typeof getClientClass> = getClientClass();
@@ -35,14 +38,9 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
     return class extends ctor {
       constructor(...args) {
         super(...args);
-        // The very first instance harnesses system tracing installation
-        // on the decorated class and its super-classes.
-        if (!this.constructor.hasOwnProperty(IS_TRACED_PROPERTY)) {
-          Object.defineProperty(this.constructor, IS_TRACED_PROPERTY, {
-            value: true,
-            writable: false
-          });
-          traceAllFunctions(this, new clientClass());
+        // Stops re-entrance of harnessing system tracing
+        if (!this.constructor.hasOwnProperty(SYSTEM_TRACED_PROPERTY)) {
+          harnessSystemTracing(this, new clientClass());
         }
       }
     };
@@ -51,7 +49,7 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
 
 // TODO: dynamic injection of system tracing capabilities
 
-function traceAllFunctions(obj: object, client: Client) {
+function harnessSystemTracing(obj: object, client: Client) {
   const that: object = obj;
   let boundSymbols: Symbol[] = [];
 
@@ -60,48 +58,51 @@ function traceAllFunctions(obj: object, client: Client) {
     if (obj.constructor.name === 'Object') {
       break;
     }
+
+    // Don't harness system tracing to the harnessed classes.
+    // Class inheritance hierarchy might has the partial of super-classes
+    // that have already been harnessed.
+    if (obj.constructor.hasOwnProperty(SYSTEM_TRACED_PROPERTY)) {
+      continue;
+    }
+    Object.defineProperty(
+        obj.constructor,
+        SYSTEM_TRACED_PROPERTY,
+        {value: true, writable: false});
+
     // Collects and binds instance functions
     boundSymbols = boundSymbols.concat(
         Object.getOwnPropertyNames(obj)
             .filter((element, index, array) => {
               return typeof obj[element] === 'function';
             })
-            .map(element => ({target: that, symbol: element})));
+            .map(element => ({
+                   target: that,
+                   prototype: obj as Function,  // Foo.prototype
+                   property: element
+                 })));
+
     // Collects and binds class static functions
     boundSymbols = boundSymbols.concat(
         Object.getOwnPropertyNames(obj.constructor)
             .filter((element, index, array) => {
               return typeof obj.constructor[element] === 'function';
             })
-            .map(element => ({target: obj.constructor, symbol: element})));
+            .map(element => ({
+                   target: obj.constructor,
+                   prototype: obj.constructor,  // Foo.prototype.constructor
+                   property: element
+                 })));
   }
 
-  // Sorts by symbols so as to remove duplicate properties later.
-  boundSymbols = boundSymbols.sort((element1, element2) => {
-    if (element1.symbol > element2.symbol) return 1;
-    else if (element1.symbol < element2.symbol) return -1;
-    else return 0;
-  });
+  // Property filters (don't harness system tracing to):
+  boundSymbols = boundSymbols.filter(
+      (element, index, array) => element.property !== 'constructor');
 
-  // Filters out (don't harness system tracing to):
-  // a) constructors
-  // b) duplicate/overridden properties
-  //
-  // In reverse order to ensure keeping the innermost methods overriding
-  // their super-classes.
-  boundSymbols = boundSymbols.reverse().filter((element, index, array) => {
-    const next = array[index + 1];
-    if (element.symbol === 'constructor' ||
-        (next && element.symbol === next.symbol)) {
-      return false;
-    }
-    return true;
-  });
-
-  // Harnesses system tracing to all candidates.
+  // Harnesses system tracing to all property candidates.
   boundSymbols.forEach((element) => {
-    const tracedFunction = element.target[element.symbol];
-    element.target[element.symbol] =
+    const tracedFunction = element.prototype[element.property];
+    element.prototype[element.property] =
         (...args): ReturnType<typeof tracedFunction> => {
           // TODO: async trace begin
           const ret = tracedFunction.call(element.target, ...args);
