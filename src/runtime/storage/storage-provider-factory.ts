@@ -51,7 +51,13 @@ export class StorageProviderFactory {
   }
 
   private getInstance(key: string) {
-    const instance = this._storageInstances[key.split(':')[0]];
+    let name = key.split(':')[0];
+    // HACKALERT: this is the easiest option to support ramdisk storage before
+    // storageNG migration is complete.
+    if (name === 'ramdisk') {
+      name = 'volatile';
+    }
+    const instance = this._storageInstances[name];
     if (!instance) {
       throw new Error(`unknown storage protocol: ${key}`);
     }

@@ -18,7 +18,11 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {ArcId} from '../id.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+<<<<<<< HEAD
 import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
+=======
+import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
+>>>>>>> Distinguish between 'ramdisk' and 'volatile' in runtime.ts and java code.
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -86,9 +90,9 @@ describe('Runtime', () => {
           t2: writes Thing
           t3: writes [Thing]
         recipe
-          t1: create #shared
-          t2: create *
-          t3: create #shared #things
+          t1: create
+          t2: create * #volatile
+          t3: create #things
           MyParticle
             t1: writes t1
             t2: writes t2
@@ -97,12 +101,23 @@ describe('Runtime', () => {
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
     const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     manifest.recipes[0].normalize();
-    await arc.instantiate(manifest.recipes[0]);
-    assert.lengthOf(arc.context.stores, 2);
-    arc.dispose();
-    assert.lengthOf(arc.context.stores, 0);
+    const volatileArc = runtime.runArc('test-arc-1', volatileStorageKeyPrefixForTest());
+    const ramdiskArc = runtime.runArc('test-arc-2', ramDiskStorageKeyPrefixForTest());
+    assert.equal(runtime.context, ramdiskArc.context);
+    assert.equal(runtime.context, volatileArc.context);
+
+    await volatileArc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(runtime.context.stores, 0);
+
+    await ramdiskArc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(runtime.context.stores, 2);
+
+    volatileArc.dispose();
+    assert.lengthOf(runtime.context.stores, 2);
+
+    ramdiskArc.dispose();
+    assert.lengthOf(runtime.context.stores, 0);
   });
 });

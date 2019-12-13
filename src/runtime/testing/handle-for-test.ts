@@ -19,6 +19,7 @@ import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
 import {Manifest} from '../manifest.js';
 import {Entity, SerializedEntity} from '../entity.js';
+import {RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
 import {ArcId} from '../../runtime/id.js';
@@ -86,6 +87,15 @@ export function storageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey)
     return arcId => new VolatileStorageKey(arcId, '');
   }
   return 'volatile://';
+}
+export function volatileStorageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey) {
+  return storageKeyPrefixForTest();
+}
+export function ramDiskStorageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey) {
+  if (Flags.useNewStorageStack) {
+    return arcId => new RamDiskStorageKey('');
+  }
+  return 'ramdisk://';
 }
 
 export function storageKeyForTest(arcId: ArcId): string|StorageKey {
