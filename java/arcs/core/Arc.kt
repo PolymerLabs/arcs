@@ -12,5 +12,5 @@
 package arcs.core
 
 class Arc {
-    // TODO: everything(?)
+    // TODO: everything(!?)
 }
