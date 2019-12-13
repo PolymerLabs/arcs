@@ -15,6 +15,7 @@ interface Symbol {
   target: object | Function;
   prototype: Function;
   property: string;
+  tag: string;
 }
 
 // Identifies whether a class has already been traced in any of its
@@ -23,6 +24,31 @@ const SYSTEM_TRACED_PROPERTY = '_systemTraced';
 
 // Determines the client class asap at the very first script evaluation.
 const clientClass: ReturnType<typeof getClientClass> = getClientClass();
+
+// Generates unique ids and cookies to identify tracing sessions or function
+// calls among contexts and tracing sessions or function calls.
+const idGenerator = new class {
+  private cookie: number = Date.now();
+
+  /**
+   * An id is used to identify execution context (main runtime, workers, etc).
+   *
+   * Relies on v8 pseudo-random number generator (PRNG).
+   * The random number is derived from an internal state, which is altered by
+   * a fixed algorithm for every new random number.
+   */
+  getUniqueId(): string {
+    return '::' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * A cookie is a rolling sequence being used to identify an unique
+   * asynchronous tracing session or function call.
+   */
+  getCookie(): number {
+    return this.cookie++;
+  }
+}();
 
 /**
  * Class decorator for installing system tracing capability
@@ -47,10 +73,9 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
   }
 }
 
-// TODO: dynamic injection of system tracing capabilities
-
 function harnessSystemTracing(obj: object, client: Client) {
   const that: object = obj;
+  const contextId: string = idGenerator.getUniqueId();
   let boundSymbols: Symbol[] = [];
 
   // Collects all functions at the object's prototype chain.
@@ -79,7 +104,8 @@ function harnessSystemTracing(obj: object, client: Client) {
             .map(element => ({
                    target: that,
                    prototype: obj as Function,  // Foo.prototype
-                   property: element
+                   property: element,
+                   tag: 'o' + obj.constructor.name + '::' + element + contextId,
                  })));
 
     // Collects and binds class static functions
@@ -91,7 +117,8 @@ function harnessSystemTracing(obj: object, client: Client) {
             .map(element => ({
                    target: obj.constructor,
                    prototype: obj.constructor,  // Foo.prototype.constructor
-                   property: element
+                   property: element,
+                   tag: 's' + obj.constructor.name + '::' + element + contextId,
                  })));
   }
 
@@ -104,9 +131,10 @@ function harnessSystemTracing(obj: object, client: Client) {
     const tracedFunction = element.prototype[element.property];
     element.prototype[element.property] =
         (...args): ReturnType<typeof tracedFunction> => {
-          // TODO: async trace begin
+          const cookie = idGenerator.getCookie();
+          client.asyncTraceBegin(element.tag, cookie);
           const ret = tracedFunction.call(element.target, ...args);
-          // TODO: async trace end
+          client.asyncTraceEnd(element.tag, cookie);
           return ret;
         };
   });
