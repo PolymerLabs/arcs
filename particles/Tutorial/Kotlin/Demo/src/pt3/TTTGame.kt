@@ -26,62 +26,71 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
-    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
-    private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
-    private val playerTwoMove = Singleton(this, "playerTwoMove") { TTTGame_PlayerTwoMove() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
-
-    private val winningSequences = arrayOf(
-        arrayOf(0, 1, 2),
-        arrayOf(3, 4, 5),
-        arrayOf(6, 7, 8),
-        arrayOf(0, 3, 6),
-        arrayOf(1, 4, 7),
-        arrayOf(2, 5, 8),
-        arrayOf(0, 4, 8),
-        arrayOf(2, 4, 6)
-    )
-
     private val defaultGame = TTTGame_GameState(
         board = ",,,,,,,,",
-        currentPlayer = 0.0
+        currentPlayer = (0..1).random().toDouble()
     )
+    private val defaultPlayerOne = TTTGame_PlayerOne(
+        name = "PlayerOne",
+        avatar = "",
+        id = -1.0
+    )
+    private val defaultPlayerOneMove = TTTGame_PlayerOneMove(-1.0)
+    private val defaultPlayerTwo = TTTGame_PlayerTwo(
+        name = "PlayerTwo",
+        avatar = "",
+        id = -1.0
+    )
+    private val defaultPlayerTwoMove = TTTGame_PlayerTwoMove(-1.0)
+
+    private val gameState = Singleton(this, "gameState") { defaultGame }
+    private val playerOne = Singleton(this, "playerOne") { defaultPlayerOne }
+    private val playerOneMove = Singleton(this, "playerOneMove") { defaultPlayerOneMove }
+    private val playerTwo = Singleton(this, "playerTwo") { defaultPlayerTwo }
+    private val playerTwoMove = Singleton(this, "playerTwoMove") { defaultPlayerOneMove }
+    private val events = Collection(this, "events") { TTTGame_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    ) }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get()?.board == null) {
             gameState.set(defaultGame)
         }
         if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
-            val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+            val p1 = playerOne.get() ?: defaultPlayerOne
             p1.id = 0.0
             playerOne.set(p1)
         }
         if (handle.name == "playerTwo" && playerTwo.get()?.id != 1.0) {
-            val p2 = playerTwo.get() ?: TTTGame_PlayerOne()
+            val p2 = playerTwo.get() ?: defaultPlayerTwo
             p2.id = 1.0
             playerTwo.set(p2)
         }
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.get() ?: TTTGame_GameState()
+        val gs = gameState.get() ?: defaultGame
+        val p1 = playerOne.get() ?: defaultPlayerOne
+        val p2 = playerTwo.get() ?: defaultPlayerTwo
+        val mv1 = playerOneMove.get() ?: defaultPlayerOneMove
+        val mv2 = playerTwoMove.get() ?: defaultPlayerTwoMove
+
         // Apply the moves
-        val board = gs.board ?: defaultGame.board!!
-        val boardList = board.split(",").toMutableList()
+        val boardList = gs.board.split(",").toMutableList()
         // Check the handle updated matches the current player
         if (handle.name == "playerOneMove" && gs.currentPlayer == 0.0) {
             applyMove(
-                mv = playerOneMove.get()?.move?.toInt() ?: -1,
-                avatar = playerOne.get()?.avatar ?: "",
+                mv = mv1.move.toInt(),
+                avatar = p1.avatar,
                 boardList = boardList,
                 gs = gs
             )
         } else if (handle.name == "playerTwoMove" && gs.currentPlayer == 1.0) {
             applyMove(
-                mv = playerTwoMove.get()?.move?.toInt() ?: -1,
-                avatar = playerTwo.get()?.avatar ?: "",
+                mv = mv2.move.toInt(),
+                avatar = p2.avatar,
                 boardList = boardList,
                 gs = gs
             )
@@ -103,8 +112,7 @@ class TTTGame : Particle() {
         boardList[mv] = avatar
         gs.board = boardList.joinToString(",")
 
-        val cp = gs.currentPlayer ?: 0.0
-        gs.currentPlayer = (cp + 1) % 2
+        gs.currentPlayer = (gs.currentPlayer + 1) % 2
         gameState.set(gs)
     }
 
