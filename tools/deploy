@@ -8,6 +8,7 @@ nvm use
 npm install -g "npm@$(jq -r '.engines.npm' package.json)"
 # Produce build artifacts
 npm install
+tools/sigh webpackStorage
 tools/sigh webpack
 npm run build:typedoc
 # Move deployment artifacts to project root

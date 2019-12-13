@@ -20,7 +20,6 @@ import {ReferenceType} from '../../runtime/type.js';
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
 
-
 class TestLoader extends Loader {
   constructor(readonly env: string) {
     super();
@@ -43,8 +42,10 @@ class TestLoader extends Loader {
 ['cpp/tests', 'kotlin/javatests/arcs'].forEach(env => {
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
+
     let loader;
     let manifestPromise;
+
     before(function() {
       if (!global['testFlags'].bazel) {
         this.skip();

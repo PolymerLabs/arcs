@@ -7,5 +7,5 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import './build/firebase.js';
+import '../../concrete-storage/build/firebase.js';
 import '../../build/runtime/storage/firebase/firebase-provider.js';

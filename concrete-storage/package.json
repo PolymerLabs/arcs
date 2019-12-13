@@ -1,0 +1,21 @@
+{
+  "name": "storage",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "6.0.4",
+    "pouchdb": "7.1.1",
+    "pouchdb-adapter-memory": "7.1.1",
+    "pouchdb-debug": "7.1.1"
+  },
+  "devDependencies": {
+    "webpack": "4.41.2",
+    "webpack-cli": "3.3.10"
+  }
+}

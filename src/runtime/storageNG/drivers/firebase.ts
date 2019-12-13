@@ -10,10 +10,11 @@
 
 import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
 import {StorageKey} from '../storage-key.js';
-
-import {firebase} from '../../../platform/firebase-web.js';
 import {Runtime} from '../../runtime.js';
 import {assert} from '../../../platform/assert-web.js';
+import {firebase} from '../../../../concrete-storage/firebase.js';
+
+export {firebase};
 
 export class FirebaseStorageKey extends StorageKey {
   public readonly databaseURL: string;

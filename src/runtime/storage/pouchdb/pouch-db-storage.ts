@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {PouchDB, PouchDbDebug, PouchDbMemory} from '../../../platform/pouchdb-web.js';
+import {PouchDB, PouchDbDebug, PouchDbMemory} from '../../../../concrete-storage/pouchdb.js';
 import {Id} from '../../id.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, ReferenceType, Type} from '../../type.js';
 import {StorageBase} from '../storage-provider-base.js';

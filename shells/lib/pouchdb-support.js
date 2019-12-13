@@ -7,5 +7,5 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import './build/pouchdb.js';
+import '../../concrete-storage/build/pouchdb.js';
 import '../../build/runtime/storage/pouchdb/pouch-db-provider.js';

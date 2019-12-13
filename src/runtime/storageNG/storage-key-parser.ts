@@ -9,8 +9,8 @@
  */
 import {StorageKey} from './storage-key.js';
 import {VolatileStorageKey} from './drivers/volatile.js';
-import {FirebaseStorageKey} from './drivers/firebase.js';
 import {RamDiskStorageKey} from './drivers/ramdisk.js';
+import {FirebaseStorageKey} from './drivers/firebase.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
 type ParserTopLevel = (key: string) => StorageKey;

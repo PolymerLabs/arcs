@@ -7,8 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../../runtime/storage/firebase/firebase-provider.js';
-import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
@@ -24,8 +22,10 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
 import {PlanningModalityHandler} from '../../planning-modality-handler.js';
-import {Planner} from '../../planner.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+// database providers are optional, these tests use these provider(s)
+import '../../../runtime/storage/firebase/firebase-provider.js';
+import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
 async function createPlanConsumer(storageKeyBase, arc) {
   arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
@@ -48,14 +48,14 @@ async function storeResults(consumer, suggestions) {
       const loader = new StubLoader({});
       const context =  await Manifest.parse(`
         import './src/runtime/tests/artifacts/Products/Products.recipes'
-        
+
         particle Test1 in './src/runtime/tests/artifacts/consumer-particle.js'
           products: reads [Product]
           root: consumes Slot
             other: provides? Slot
         particle Test2 in './src/runtime/tests/artifacts/consumer-particle.js'
           other: consumes Slot
-        
+
         recipe
           list: use #shoplist
           Test1

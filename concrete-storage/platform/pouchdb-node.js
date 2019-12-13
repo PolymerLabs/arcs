@@ -7,8 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-/* eslint-disable import/extensions */
-import firebase from 'firebase/app';
-import 'firebase/database';
-import 'firebase/storage';
-export {firebase};
+
+import PouchDB from 'pouchdb';
+import PouchDbMemory from 'pouchdb-adapter-memory';
+import PouchDbDebug from 'pouchdb-debug';
+
+export {PouchDB, PouchDbMemory, PouchDbDebug};

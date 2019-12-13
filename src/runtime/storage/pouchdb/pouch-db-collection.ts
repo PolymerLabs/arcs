@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {PouchDB} from '../../../platform/pouchdb-web.js';
+import {PouchDB} from '../../../../concrete-storage/pouchdb.js';
 import {Type, TypeLiteral} from '../../type.js';
 import {Mutex} from '../../mutex.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from '../crdt-collection-model.js';

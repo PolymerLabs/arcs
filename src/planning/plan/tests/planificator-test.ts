@@ -17,13 +17,17 @@ import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
+// database providers are optional, these tests use these provider(s)
+import '../../../runtime/storage/firebase/firebase-provider.js';
+import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime(new StubLoader({}), FakeSlotComposer);
     const arc = runtime.newArc(
         'demo',
-        'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo');
+        'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo'
+    );
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);

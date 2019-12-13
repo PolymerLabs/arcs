@@ -33,6 +33,7 @@ devtools/build
 server/log.txt
 pack-stats.json
 default.profraw
+concrete-storage/package-lock.json
 # pouch local database
 user-test
 test-output
