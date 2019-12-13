@@ -11,44 +11,49 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
-
-class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<EntityClassApiTest_Errors>(ctor) {
-    private val unused1 = Singleton(this, "data") { EntityClassApiTest_Data() }
+class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
+    TestBase<EntityClassApiTest_Errors>(ctor) {
+    private val unused1 = Singleton(this, "data") { EntityClassApiTest_Data(
+        num = 0.0,
+        txt = "",
+        lnk = "",
+        flg = false
+    ) }
     private val unused2 = Singleton(this, "empty") { EntityClassApiTest_Empty() }
 
     /** Run tests on particle initialization */
     override fun init() {
         testFieldMutation()
-
     }
 
     @Test
     fun testFieldMutation() {
-        val d1 = EntityClassApiTest_Data()
+        val d1 = EntityClassApiTest_Data(
+            num = 0.0,
+            txt = "",
+            lnk = "",
+            flg = false
+        )
 
-        assertNull("num field is null before it's initialized", d1.num)
+        assertEquals("num field is defualt value before it's initialized", 0.0, d1.num)
         d1.num = 7.3
-        assertNotNull("num field is set", d1.num)
         assertEquals("setting num property is successful", 7.3, d1.num)
 
-        assertNull("txt field is null before it's initialized", d1.txt)
+        assertEquals("txt field is default value before it's initialized", "", d1.txt)
         d1.txt = "test"
-        assertNotNull("txt field is set", d1.txt)
         assertEquals("setting txt property is successful", "test", d1.txt)
 
-        assertNull("lnk field is null before it's initialized", d1.lnk)
+        assertEquals("lnk field is default value before it's initialized", "", d1.lnk)
         d1.lnk = "https://google.com"
-        assertNotNull("lnk field is set", d1.lnk)
         assertEquals("setting lnk property is successful", "https://google.com", d1.lnk)
 
-        assertNull("flg field is null before it's initialized", d1.flg)
+        assertEquals("flg field is default value before it's initialized", false, d1.flg)
         d1.flg = true
-        assertNotNull("flg field is set", d1.flg)
         assertTrue("setting flg property is successful: true", d1.flg as Boolean)
         d1.flg = false
         assertNotNull("flg field is set", d1.flg)
@@ -57,20 +62,49 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors): TestBase<
 
     @Test
     fun testEncodingDecoding() {
-        val empty = EntityClassApiTest_Data()
+        val empty = EntityClassApiTest_Data(
+            num = 0.0,
+            txt = "",
+            lnk = "",
+            flg = false
+        )
         val emptyStr = empty.encodeEntity()
-        val decodedEmpty = EntityClassApiTest_Data().decodeEntity(emptyStr)
-        assertEquals("Encoding and Decoding an empty entity results in the same entity", empty, decodedEmpty)
+        val decodedEmpty = EntityClassApiTest_Data(
+            num = 10.0,
+            txt = "20",
+            lnk = "https://thirty.net",
+            flg = true
+        ).decodeEntity(emptyStr)
+        assertEquals(
+            "Encoding and Decoding an empty entity results in the same entity",
+            empty,
+            decodedEmpty
+        )
 
-        val full = EntityClassApiTest_Data(num=10.0, txt="20", lnk="https://thirty.net", flg=true)
+        val full = EntityClassApiTest_Data(
+            num = 10.0,
+            txt = "20",
+            lnk = "https://thirty.net",
+            flg = true
+        )
         val fullStr = full.encodeEntity()
-        val decodedFull = EntityClassApiTest_Data().decodeEntity(fullStr)
-        assertEquals("Encoding and Decoding an full entity results in the same entity", full, decodedFull)
+        println("fullStr $fullStr")
+        val decodedFull = EntityClassApiTest_Data(
+            num = 10.0,
+            txt = "20",
+            lnk = "https://thirty.net",
+            flg = true
+        ).decodeEntity(fullStr)
+        assertEquals(
+            "Encoding and Decoding an full entity results in the same entity",
+            full,
+            decodedFull
+        )
     }
-
 }
-
 
 @Retain
 @ExportForCppRuntime("_newEntityClassApiTest")
-fun constructEntityClassApiTest() = EntityClassApiTest { txt: String -> EntityClassApiTest_Errors(txt) }.toAddress()
+fun constructEntityClassApiTest() = EntityClassApiTest { txt: String ->
+    EntityClassApiTest_Errors(txt)
+}.toAddress()
