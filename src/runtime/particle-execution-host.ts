@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {getExternalTraceApis} from '../tracelib/systrace-helpers.js';
 
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
@@ -405,5 +406,12 @@ class PECOuterPortImpl extends PECOuterPort {
   async onServiceRequest(particle: Particle, request: {}, callback: number): Promise<void> {
     const response = await Services.request(request);
     this.SimpleCallback(callback, response);
+  }
+
+  onSystemTraceCall(api: string, tag: string, cookie: number) {
+    const systemTraceApis = getExternalTraceApis();
+    if (api in systemTraceApis) {
+      systemTraceApis[api](tag, cookie);
+    }
   }
 }

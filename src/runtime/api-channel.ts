@@ -550,6 +550,8 @@ export abstract class PECOuterPort extends APIPort {
   // TODO(sjmiles): experimental `services` impl
   abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
 
+  abstract onSystemTraceCall(api: string, tag: string, cookie: number);
+
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
   @NoArgs DevToolsConnected() {}
@@ -618,6 +620,8 @@ export abstract class PECInnerPort extends APIPort {
 
   // TODO(sjmiles): experimental `services` impl
   ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
+
+  SystemTraceCall(@Direct api: string, @Direct tag: string, @Direct cookie: number) {}
 
   ArcCreateSlot(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: Consumer<string>, hostedSlotId: string);

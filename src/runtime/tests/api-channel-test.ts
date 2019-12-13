@@ -94,6 +94,7 @@ describe('API channel', function() {
       onInitializeProxy() {}
       onRegister() {}
       onProxyMessage() {}
+      onSystemTraceCall() {}
     }(port, arc);
 
 
