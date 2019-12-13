@@ -62,8 +62,8 @@ class CollectionApiTest : Particle() {
                 val iter = _in.iterator()
                 d1.flg = iter.hasNext()
                 val i1 = iter.next()
-                d1.txt = "{${i1.internalId}}, num: ${i1.num?.toInt()}"
-                d1.num = i1.num?.let { it * 2 }
+                d1.txt = "{${i1.internalId}}, num: ${i1.num.toInt()}"
+                d1.num = i1.num.let { it * 2 }
                 out.store(d1)
 
                 val d2 = CollectionApiTest_OutHandle(
@@ -110,7 +110,7 @@ class CollectionApiTest : Particle() {
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
                 val res = mutableListOf<String>()
                 for (data in io) {
-                    res.add("{${data.internalId}}, num: ${data.num?.toInt()}")
+                    res.add("{${data.internalId}}, num: ${data.num.toInt()}")
                 }
 
                 res

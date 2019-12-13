@@ -54,10 +54,10 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
 
         assertEquals("flg field is default value before it's initialized", false, d1.flg)
         d1.flg = true
-        assertTrue("setting flg property is successful: true", d1.flg as Boolean)
+        assertTrue("setting flg property is successful: true", d1.flg)
         d1.flg = false
         assertNotNull("flg field is set", d1.flg)
-        assertFalse("setting flg property is successful: false", d1.flg as Boolean)
+        assertFalse("setting flg property is successful: false", d1.flg)
     }
 
     @Test

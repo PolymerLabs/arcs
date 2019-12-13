@@ -43,7 +43,7 @@ class SingletonApiTest : Particle() {
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
                 )
-                d.num = d.num?.times(2)
+                d.num = d.num.times(2)
                 out_.set(d)
             }
             "case3" -> {
@@ -52,7 +52,7 @@ class SingletonApiTest : Particle() {
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
                 )
-                d.num = d.num?.times(3)
+                d.num = d.num.times(3)
                 io_.set(d)
             }
         }

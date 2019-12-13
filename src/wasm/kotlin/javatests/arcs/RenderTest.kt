@@ -34,8 +34,8 @@ class RenderTest : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
         flags.get()?.let {
-            shouldTemplate = it.template ?: true
-            shouldPopulate = it.model ?: true
+            shouldTemplate = it.template
+            shouldPopulate = it.model
         }
         renderOutput()
     }
