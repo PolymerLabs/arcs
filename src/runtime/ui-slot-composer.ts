@@ -53,7 +53,15 @@ export class UiSlotComposer {
     this.arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
   }
 
-  // TODO(sjmiles): needs factoring
+  observeSlots(slotObserver) {
+    this['slotObserver'] = slotObserver;
+    // TODO(sjmiles): this is weird, fix
+    slotObserver.dispatch = (pid, eventlet) => {
+      console.log('ui-slot-composer dispatch for pid', pid, eventlet);
+      this.sendEvent(pid, eventlet);
+    };
+  }
+
   delegateOutput(arc: Arc, particle: Particle, content) {
     if (content && this.slotObserver) {
       const packet = this.renderPacket(particle, content);

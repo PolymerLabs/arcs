@@ -157,7 +157,7 @@ export class Particle implements Comparable<Particle> {
       return true;
     }
     if (!this.name && !this.primaryVerb) {
-      // Must have either name of a verb
+      // Must have either name or a verb
       if (options && options.errors) {
         options.errors.set(this, `Particle has no name and no verb`);
       }
@@ -345,11 +345,20 @@ export class Particle implements Comparable<Particle> {
 
 
   addSlotConnection(name: string) : SlotConnection {
+    // TODO(sjmiles); getSlotConnectionByName dereferences _consumedSlotConnections
     assert(!this.getSlotConnectionByName(name), 'slot connection already exists');
+    // TODO(sjmiles): spec.connections are handleConnections
+    // TODO(sjmiles): there should be a method on spec for finding connections by name
     const slandle = this.spec && this.spec.connections.find(conn => conn.name === name);
     const isSlandle = slandle && slandle.type.isSlot();
     const isSetSlandle = slandle && slandle.type.isCollectionType() && slandle.type.getContainedType().isSlot();
+    // TODO(sjmiles): fail if none of these are true
+    // (1) there is no spec
+    // (2) or spec.slotConnections has 'name'
+    // (3) or spec.connections.find(name) exists and is .type.isSlot()
+    // (4) or spec.connections.find(name) exists and is .type.isCollectionType() and is .type.getContainedType().isSlot()
     assert(!this.spec || this.spec.slotConnections.has(name) || isSlandle || isSetSlandle, `slot connection '${name}' is not in particle spec`);
+
     const slotConn = this.addSlotConnectionAsCopy(name);
     const slotSpec = this.getSlotSpecByName(name);
     if (slotSpec) {

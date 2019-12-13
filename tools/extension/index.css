@@ -1,0 +1,42 @@
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+body {
+  font-family: sans-serif;
+  font-size: 100%;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+
+  min-height: 640px;
+  min-width: 320px;
+}
+demo-frame {
+  flex: 1;
+  background-color: white;
+}
+demo-frame {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+#particle-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin-bottom: 25px;
+  overflow: auto;
+  overflow-x: hidden;
+}
+#particle-container > * {
+  flex: 1;
+}

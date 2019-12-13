@@ -1,0 +1,8 @@
+particle P in 'Slot.js'
+  root: consumes Slot
+
+recipe
+  root: slot 'rootslotid-root'
+  P
+    //root: consumes root
+

@@ -1,0 +1,39 @@
+{
+  "description": "DevTools Extension for Arcs",
+  "name": "arcs-devtools",
+  "version": "0.0.0",
+  "dependencies": {
+    "@polymer/iron-a11y-keys-behavior": "3.0.1",
+    "@polymer/iron-autogrow-textarea": "3.0.1",
+    "@polymer/iron-dropdown": "3.0.1",
+    "@polymer/iron-icons": "3.0.1",
+    "@polymer/iron-list": "3.1.0",
+    "@polymer/polymer": "3.3.1",
+    "@vaadin/vaadin-split-layout": "4.1.1",
+    "@webcomponents/webcomponentsjs": "2.4.0",
+    "diff": "4.0.1",
+    "golden-layout": "1.5.9",
+    "jquery": "3.4.1",
+    "vis": "4.21.0-EOL",
+    "web-animations-js": "2.3.2"
+  },
+  "devDependencies": {
+    "@shaper42/compassion": "1.0.0",
+    "cross-env": "5.2.1",
+    "js-green-licenses": "1.1.0"
+  },
+  "scripts": {
+    "postinstall": "cross-env empathy install -a deps && cross-env tools/css-module-wrap ./node_modules/vis/dist/vis-timeline-graph2d.min.css ./node_modules/golden-layout/src/css/goldenlayout-base.css ./node_modules/golden-layout/src/css/goldenlayout-light-theme.css",
+    "test:licenses": "jsgl --local ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PolymerLabs/arcs.git"
+  },
+  "author": "The Polymer Project Authors",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/PolymerLabs/arcs",
+  "bugs": {
+    "url": "https://github.com/PolymerLabs/arcs/issues"
+  }
+}

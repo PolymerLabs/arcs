@@ -137,7 +137,9 @@ export abstract class LoaderBase {
       return path;
     }
     prefix = this.path(prefix);
-    path = this.normalizeDots(`${prefix}${path}`);
+    // TODO(sjmiles): if we normalize prior to resolving, we can elide macros ($thing) which breaks the path
+    //path = this.normalizeDots(`${prefix}${path}`);
+    path = `${prefix}${path}`;
     return path;
   }
   // TODO(sjmiles): public because it's used in manifest.ts, can we simplify?

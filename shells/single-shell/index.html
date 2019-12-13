@@ -33,22 +33,22 @@ http://polymer.github.io/PATENTS.txt
 <script>window.logLevel = 2;</script>
 
 <script type="module">
-  import '../services/ml5-service.js';
   import '../configuration/whitelisted.js';
   import {Runtime} from '../../build/runtime/runtime.js';
-  import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
+  import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
+  import {SlotObserver} from '../lib/xen-renderer.js';
+
   import {App} from './app.js';
+
+  const runtime = Runtime.init('../..');
 
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);
   }
-  const runtime = Runtime.init('../..');
+  const manifest = getUrlParam('manifest') || `Arcs/Login.arcs`;
 
-  const composer = new DomSlotComposer({
-    rootContainer: document.body
-  });
-
-  const manifest = getUrlParam('manifest') || `Arcs/Login.recipe`;
+  const composer = new UiSlotComposer();
+  composer.observeSlots(new SlotObserver(document.body));
 
   (async () => {
     try {

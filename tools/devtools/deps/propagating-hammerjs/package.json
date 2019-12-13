@@ -1,0 +1,56 @@
+{
+  "_from": "propagating-hammerjs@^1.4.6",
+  "_id": "propagating-hammerjs@1.4.7",
+  "_inBundle": false,
+  "_integrity": "sha512-oW9Wd+W2Tp5uOz6Fh4mEU7p+FoyU85smLH/mPga83Loh0pHa6AH4ZHGywvwMk3TWP31l7iUsvJyW265p4Ipwrg==",
+  "_location": "/propagating-hammerjs",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "propagating-hammerjs@^1.4.6",
+    "name": "propagating-hammerjs",
+    "escapedName": "propagating-hammerjs",
+    "rawSpec": "^1.4.6",
+    "saveSpec": null,
+    "fetchSpec": "^1.4.6"
+  },
+  "_requiredBy": [
+    "/vis"
+  ],
+  "_resolved": "https://registry.npmjs.org/propagating-hammerjs/-/propagating-hammerjs-1.4.7.tgz",
+  "_shasum": "671ab1791a7f88b9dccce8fd8b14a9655950e7d6",
+  "_spec": "propagating-hammerjs@^1.4.6",
+  "_where": "C:\\Users\\SCOTTJ~1.MIL\\AppData\\Local\\Temp\\asset_stagedFxBXk\\node_modules\\vis",
+  "author": {
+    "name": "Jos de Jong"
+  },
+  "bugs": {
+    "url": "https://github.com/josdejong/propagating-hammerjs/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "hammerjs": "^2.0.8"
+  },
+  "deprecated": false,
+  "description": "Extend hammer.js with event propagation",
+  "homepage": "https://github.com/josdejong/propagating-hammerjs",
+  "keywords": [
+    "hammerjs",
+    "touch",
+    "gestures",
+    "event",
+    "propagation"
+  ],
+  "license": "MIT",
+  "main": "propagating.js",
+  "name": "propagating-hammerjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josdejong/propagating-hammerjs.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.4.7"
+}

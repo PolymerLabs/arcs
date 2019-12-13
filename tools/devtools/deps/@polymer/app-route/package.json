@@ -1,0 +1,70 @@
+{
+  "_from": "@polymer/app-route@^3.0.1",
+  "_id": "@polymer/app-route@3.0.2",
+  "_inBundle": false,
+  "_integrity": "sha512-8Y34evmsaYh7ONr+zLwLzXaU0iOZZQj1E2uB3iaToQHbOP1POhKlnmAycBQ/eFB8BwrdSUBaDQk+rZhio78FQw==",
+  "_location": "/@polymer/app-route",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@polymer/app-route@^3.0.1",
+    "name": "@polymer/app-route",
+    "escapedName": "@polymer%2fapp-route",
+    "scope": "@polymer",
+    "rawSpec": "^3.0.1",
+    "saveSpec": null,
+    "fetchSpec": "^3.0.1"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@polymer/app-route/-/app-route-3.0.2.tgz",
+  "_shasum": "749096fb610fb15d27c7b68446406f30786cf93d",
+  "_spec": "@polymer/app-route@^3.0.1",
+  "_where": "C:\\Users\\SCOTTJ~1.MIL\\AppData\\Local\\Temp\\asset_stageRATWs3",
+  "author": {
+    "name": "The Polymer Authors"
+  },
+  "bugs": {
+    "url": "https://github.com/PolymerElements/app-route/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@polymer/iron-location": "^3.0.0-pre.26",
+    "@polymer/polymer": "^3.0.0"
+  },
+  "deprecated": false,
+  "description": "App routing expressed as Polymer Custom Elements.",
+  "devDependencies": {
+    "@polymer/gen-typescript-declarations": "^1.5.1",
+    "@polymer/iron-ajax": "^3.0.0-pre.26",
+    "@polymer/iron-demo-helpers": "^3.0.1",
+    "@polymer/iron-icons": "^3.0.0-pre.26",
+    "@polymer/iron-pages": "^3.0.0-pre.26",
+    "@polymer/iron-test-helpers": "^3.0.0-pre.26",
+    "@polymer/paper-button": "^3.0.0-pre.26",
+    "@polymer/paper-card": "^3.0.0-pre.26",
+    "@polymer/paper-icon-button": "^3.0.0-pre.26",
+    "@polymer/paper-input": "^3.0.0-pre.26",
+    "@polymer/paper-spinner": "^3.0.0-pre.26",
+    "@polymer/paper-styles": "^3.0.0-pre.26",
+    "@polymer/paper-toggle-button": "^3.0.0-pre.26",
+    "@webcomponents/webcomponentsjs": "^2.0.0",
+    "wct-browser-legacy": "^1.0.1",
+    "webmat": "^0.2.2"
+  },
+  "homepage": "https://github.com/PolymerElements/app-route",
+  "license": "BSD-3-Clause",
+  "name": "@polymer/app-route",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/PolymerElements/app-route.git"
+  },
+  "scripts": {
+    "format": "webmat",
+    "generate-types": "gen-typescript-declarations --deleteExisting --outDir . --verify",
+    "prepare": "npm run generate-types"
+  },
+  "version": "3.0.2"
+}

@@ -31,13 +31,19 @@ export class ResolveWalker extends RecipeWalker {
     this.options = options;
   }
 
+  error(value, label: string) {
+    if (this.options && this.options.errors) {
+      this.options.errors.set(value, label);
+    }
+    return [];
+  }
+
+  bindErrorValue(value) {
+    return label => this.error(value, label);
+  }
+
   onHandle(recipe: Recipe, handle: Handle): Continuation<Recipe, Handle[]> {
-    const error = (label: string) => {
-      if (this.options && this.options.errors) {
-        this.options.errors.set(handle, label);
-      }
-      return [];
-    };
+    const error = this.bindErrorValue(handle);
     if (handle.fate === '`slot') {
       return [];
     }
@@ -119,57 +125,48 @@ export class ResolveWalker extends RecipeWalker {
   }
 
   onSlotConnection(_recipe: Recipe, slotConnection: SlotConnection): Continuation<Recipe, SlotConnection[]> {
-    const error = (label: string) => {
-      if (this.options && this.options.errors) {
-        this.options.errors.set(slotConnection, label);
-      }
-      return [];
-    };
-    const arc = this.arc;
+    const error = this.bindErrorValue(slotConnection);
     if (slotConnection.isConnected()) {
       return error('Slot connection is already connected');
     }
-
-    const slotSpec = slotConnection.getSlotSpec();
-    const particle = slotConnection.particle;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
-
-    const allSlots = [...local, ...remote];
-
-     // SlotUtils handles a multi-slot case.
-    if (allSlots.length !== 1) {
+    const allSlots = this.getConnectedSlots(slotConnection.particle, slotConnection.getSlotSpec());
+    // SlotUtils handles a multi-slot case.
+    if (allSlots.length > 1) {
       return error('There are multiple matching slots (match is ambiguous)');
     }
-
-    const selectedSlot = allSlots[0];
+    // use the first matching slot, if it exists
+    const slot = allSlots[0];
+    if (!slot) {
+      return error('There are no matching slots');
+    }
     return (recipe, slotConnection) => {
-      SlotUtils.connectSlotConnection(slotConnection, selectedSlot);
+      SlotUtils.connectSlotConnection(slotConnection, slot);
       return 1;
     };
   }
 
   onPotentialSlotConnection(_recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
-    const error = (label: string) => {
-      if (this.options && this.options.errors) {
-        this.options.errors.set(particle, label);
-      }
-      return [];
-    };
-    const arc = this.arc;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
-    const allSlots = [...local, ...remote];
-
+    const error = this.bindErrorValue(particle);
+    const allSlots = this.getConnectedSlots(particle, slotSpec);
     // SlotUtils handles a multi-slot case.
-    if (allSlots.length !== 1) {
+    if (allSlots.length > 1) {
       return error('There are multiple matching slots for this slot spec (match is ambiguous)');
     }
-
-    const selectedSlot = allSlots[0];
+    // use the first matching slot, if it exists
+    const slot = allSlots[0];
+    if (!slot) {
+      return error('There are no matching slots');
+    }
     return (_recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) => {
       const newSlotConnection = particle.addSlotConnection(slotSpec.name);
-      SlotUtils.connectSlotConnection(newSlotConnection, selectedSlot);
+      SlotUtils.connectSlotConnection(newSlotConnection, slot);
       return 1;
     };
+  }
+
+  getConnectedSlots(particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
+    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, this.arc);
+    return [...local, ...remote];
   }
 
   // TODO(lindner): add typeof checks here and figure out where handle is coming from.

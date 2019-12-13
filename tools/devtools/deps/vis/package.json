@@ -1,0 +1,101 @@
+{
+  "_from": "vis@4.21.0-EOL",
+  "_id": "vis@4.21.0-EOL",
+  "_inBundle": false,
+  "_integrity": "sha512-JVS1mywKg5S88XbkDJPfCb3n+vlg5fMA8Ae2hzs3KHAwD4ryM5qwlbFZ6ReDfY8te7I4NLCpuCoywJQEehvJlQ==",
+  "_location": "/vis",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "vis@4.21.0-EOL",
+    "name": "vis",
+    "escapedName": "vis",
+    "rawSpec": "4.21.0-EOL",
+    "saveSpec": null,
+    "fetchSpec": "4.21.0-EOL"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/vis/-/vis-4.21.0-EOL.tgz",
+  "_shasum": "e397085d439de6f6ff1f3c46287e5bef51b47b03",
+  "_spec": "vis@4.21.0-EOL",
+  "_where": "C:\\Users\\SCOTTJ~1.MIL\\AppData\\Local\\Temp\\asset_stagedFxBXk",
+  "bugs": {
+    "url": "https://github.com/almende/vis/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "emitter-component": "^1.1.1",
+    "hammerjs": "^2.0.8",
+    "keycharm": "^0.2.0",
+    "moment": "^2.18.1",
+    "propagating-hammerjs": "^1.4.6"
+  },
+  "deprecated": "Please consider using https://github.com/visjs",
+  "description": "A dynamic, browser-based visualization library.",
+  "devDependencies": {
+    "async": "^2.5.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.1",
+    "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-runtime": "^6.23.0",
+    "babelify": "^7.3.0",
+    "canvas": "^1.6.5",
+    "clean-css": "^4.1.7",
+    "eslint": "^4.3.0",
+    "gulp": "^3.9.1",
+    "gulp-clean-css": "^3.7.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-eslint": "^4.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-util": "^3.0.8",
+    "jsdom": "9.12.0",
+    "jsdom-global": "^2.1.1",
+    "merge-stream": "^1.0.1",
+    "mocha": "^3.4.2",
+    "mocha-jsdom": "^1.1.0",
+    "nyc": "^11.2.1",
+    "rimraf": "^2.6.1",
+    "test-console": "^1.0.0",
+    "uglify-js": "^2.8.29",
+    "uuid": "^3.1.0",
+    "webpack": "^3.3.0",
+    "yargs": "^8.0.2"
+  },
+  "homepage": "http://visjs.org/",
+  "keywords": [
+    "vis",
+    "visualization",
+    "web based",
+    "browser based",
+    "javascript",
+    "chart",
+    "linechart",
+    "timeline",
+    "graph",
+    "network",
+    "browser"
+  ],
+  "license": "(Apache-2.0 OR MIT)",
+  "main": "./dist/vis.js",
+  "name": "vis",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/almende/vis.git"
+  },
+  "scripts": {
+    "build": "gulp",
+    "lint": "gulp lint",
+    "test": "mocha --compilers js:babel-core/register",
+    "test-cov": "nyc --reporter=lcov mocha --compilers js:babel-core/register",
+    "watch": "gulp watch",
+    "watch-dev": "gulp watch --bundle"
+  },
+  "version": "4.21.0-EOL"
+}

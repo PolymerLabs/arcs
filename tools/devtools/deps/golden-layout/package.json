@@ -1,0 +1,127 @@
+{
+  "_from": "golden-layout@1.5.9",
+  "_id": "golden-layout@1.5.9",
+  "_inBundle": false,
+  "_integrity": "sha1-o5vB9qZ+b4hreXwBbdkk6UJrp38=",
+  "_location": "/golden-layout",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "golden-layout@1.5.9",
+    "name": "golden-layout",
+    "escapedName": "golden-layout",
+    "rawSpec": "1.5.9",
+    "saveSpec": null,
+    "fetchSpec": "1.5.9"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/golden-layout/-/golden-layout-1.5.9.tgz",
+  "_shasum": "a39bc1f6a67e6f886b797c016dd924e9426ba77f",
+  "_spec": "golden-layout@1.5.9",
+  "_where": "C:\\Users\\SCOTTJ~1.MIL\\AppData\\Local\\Temp\\asset_stagedFxBXk",
+  "author": {
+    "name": "deepstreamHub GmbH"
+  },
+  "bugs": {
+    "url": "https://github.com/deepstreamIO/golden-layout/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "jquery": "*"
+  },
+  "deprecated": false,
+  "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-less": "^1.4.1",
+    "grunt-contrib-watch": "0.5.3",
+    "grunt-gulp": "^1.0.1",
+    "grunt-karma": "^2.0.0",
+    "grunt-release": "0.13.*",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-continuous-concat": "^0.1.1",
+    "gulp-insert": "^0.5.0",
+    "gulp-uglify": "^1.5.3",
+    "gulp-watch": "^4.3.5",
+    "handlebars": "2.0.0-alpha.2",
+    "karma": "0.13.*",
+    "karma-chrome-launcher": "~0.1.4",
+    "karma-coverage": "0.2.4",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-ie-launcher": "~0.1.5",
+    "karma-jasmine": "~0.1.5",
+    "karma-phantomjs-launcher": "^1.0.2",
+    "tslint": "^3.7.3",
+    "tslint-config-typings": "^0.2.2",
+    "typescript": "^1.8.9",
+    "typings": "^0.7.12",
+    "walker": "1.0.6"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "homepage": "https://github.com/deepstreamIO/golden-layout",
+  "jspm": {
+    "main": "dist/goldenlayout",
+    "format": "global",
+    "registry": "jspm",
+    "dependencies": {
+      "jquery": "^2.1.0"
+    },
+    "shim": {
+      "dist/goldenlayout": [
+        "jquery"
+      ]
+    }
+  },
+  "keywords": [
+    "layout manager",
+    "javascript",
+    "docker",
+    "layout",
+    "popouts"
+  ],
+  "license": "MIT",
+  "main": "./dist/goldenlayout.js",
+  "name": "golden-layout",
+  "npmFileMap": [
+    {
+      "basePath": "/dist/",
+      "files": [
+        "goldenlayout.js",
+        "goldenlayout.min.js"
+      ]
+    },
+    {
+      "basePath": "/src/css/",
+      "files": [
+        "goldenlayout.base.css",
+        "goldenlayout-dark-theme.css",
+        "goldenlayout-light-theme.css"
+      ]
+    },
+    {
+      "basePath": "/",
+      "files": [
+        "typings.json"
+      ]
+    }
+  ],
+  "npmName": "golden-layout",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepstreamIO/golden-layout.git"
+  },
+  "scripts": {
+    "prepublish": "typings install",
+    "publish": "npm -s run tslint",
+    "test": "grunt test && npm run tslint",
+    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\""
+  },
+  "typings": "./index.d.ts",
+  "version": "1.5.9"
+}

@@ -7,8 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import '../../../runtime/storage/firebase/firebase-provider.js';
-import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
@@ -23,6 +21,9 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+// database providers are optional, these tests use these provider(s)
+import '../../../runtime/storage/firebase/firebase-provider.js';
+import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
 async function createPlanConsumer(storageKeyBase, arc) {
   arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
@@ -41,7 +42,7 @@ async function storeResults(consumer, suggestions) {
 
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
-  describe.skip('plan consumer for ' + storageKeyBase, () => {
+  describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
       const loader = new StubLoader({});
       const context =  await Manifest.parse(`
@@ -64,7 +65,7 @@ async function storeResults(consumer, suggestions) {
             other: consumes other
           description \`Test Recipe\`
       `, {loader, fileName: ''});
-      const runtime = new Runtime(loader, null /*FakeSlotComposer*/, context);
+      const runtime = new Runtime(loader, null, context);
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       let suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -76,6 +77,7 @@ async function storeResults(consumer, suggestions) {
       let visibleSuggestionsChangeCount = 0;
       const visibleSuggestionsCallback = (suggestions) => { ++visibleSuggestionsChangeCount; };
       consumer.registerVisibleSuggestionsChangedCallback(visibleSuggestionsCallback);
+      
       assert.isEmpty(consumer.getCurrentSuggestions());
 
       // Updates suggestions.

@@ -38,7 +38,7 @@ export class SlotUtils {
     return clonedSlot;
   }
 
-  // Connect the given slot connection to the selectedSlot, create the slot, if needed.
+  // Connect the given slotConnection to the selectedSlot, create the slot, if needed.
   static connectSlotConnection(slotConnection: SlotConnection, selectedSlot: Slot): void {
     const recipe = slotConnection.recipe;
     if (!slotConnection.targetSlot) {
@@ -48,11 +48,9 @@ export class SlotUtils {
     if (!slotConnection.targetSlot) {
       throw new Error('missing targetSlot');
     }
-
     assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id === slotConnection.targetSlot.id),
             `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
     slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
-
     // TODO: need to concat to existing tags and dedup?
     slotConnection.targetSlot.tags = [...selectedSlot.tags];
   }

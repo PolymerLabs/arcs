@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import '../storage/firebase/firebase-provider.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Id, ArcId} from '../id.js';
@@ -22,6 +21,8 @@ import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Flags} from '../flags.js';
+// database providers are optional, these tests use these provider(s)
+import '../storage/firebase/firebase-provider.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';

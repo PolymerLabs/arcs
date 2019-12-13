@@ -15,6 +15,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {EntityType} from '../runtime/type.js';
 import {StorageProviderFactory} from '../runtime/storage/storage-provider-factory.js';
 import {resetStorageForTesting} from '../runtime/storage/firebase/firebase-storage.js';
+// database providers are optional, these tests use these provider(s)
 import '../runtime/storage/firebase/firebase-provider.js';
 import '../runtime/storage/pouchdb-provider.js';
 

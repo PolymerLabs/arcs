@@ -323,4 +323,5 @@ export class Runtime {
   static async spawnArc(args: SpawnArgs): Promise<Arc> {
     return this.getRuntime().spawnArc(args);
   }
+
 }

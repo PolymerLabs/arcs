@@ -1,0 +1,24 @@
+{
+  "name" : "Arcs Explorer",
+  "version" : "0.1",
+  "description" : "Inspection tools for Arcs Runtime.",
+  "devtools_page": "src/devtools.html",
+  "background" : {
+    "scripts": ["src/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/contentScript.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "permissions": ["<all_urls>", "activeTab", "webNavigation"],
+  "web_accessible_resources" : [
+    "shared/*.js",
+    "src/run-mark-connected.js",
+    "img/*.png"
+  ],
+  "manifest_version": 2
+}

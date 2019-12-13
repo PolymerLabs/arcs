@@ -1,0 +1,27 @@
+<!--
+Copyright (c) 2017 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<!doctype html>
+<title>Arcs: Chrome Extension Redirect</title>
+
+<!--
+  By default the extension runs against a local server. To start one, go
+  into the arcs directory and run:
+
+  arcs> npm start
+-->
+<meta http-equiv="refresh"
+      content="0; http://localhost:8080/shell/apps/web/?arc=*">
+
+<!--
+  Alternately, you can run against the latest deployed version. Comment out
+  the redirect above, and uncomment this one:
+
+<meta http-equiv="refresh"
+      content="0; https://live.arcs.dev/shell/apps/chrome-extension/?arc=*">
+-->
