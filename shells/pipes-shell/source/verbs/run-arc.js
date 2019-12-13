@@ -17,7 +17,7 @@ import {portIndustry} from '../pec-port.js';
 const {log, warn} = logsFactory('pipe');
 
 // The implementation was forked from verbs/spawn.js
-export const runArc = async (msg, bus, runtime) => {
+export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
   const {recipe, arcId, storageKeyPrefix, pecId, particles} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
@@ -28,7 +28,7 @@ export const runArc = async (msg, bus, runtime) => {
     warn(`found no recipes matching [${recipe}]`);
     return null;
   }
-  const arc = runtime.runArc(arcId, storageKeyPrefix || 'volatile://', {
+  const arc = runtime.runArc(arcId, storageKeyPrefix || defaultStorageKeyPrefix, {
     fileName: './serialized.manifest',
     pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
     loader: runtime.loader,

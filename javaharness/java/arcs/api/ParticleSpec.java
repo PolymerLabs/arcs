@@ -43,11 +43,13 @@ class ParticleSpec {
     }
 
     boolean isInput() {
-      return this.direction.equals("in") || this.direction.equals("inout");
+      return this.direction.equals("in") || this.direction.equals("inout")
+          || this.direction.equals("reads") || this.direction.equals("reads writes");
     }
 
     boolean isOutput() {
-      return this.direction.equals("out") || this.direction.equals("inout");
+      return this.direction.equals("out") || this.direction.equals("inout")
+          || this.direction.equals("writes") || this.direction.equals("reads writes");
     }
 
     static HandleConnectionSpec fromJson(PortableJson json) {
