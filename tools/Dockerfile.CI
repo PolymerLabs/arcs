@@ -44,6 +44,22 @@ RUN chmod +x /usr/bin/ktlint
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get install -y nodejs
 
+# Install Android SDK
+ENV ANDROID_HOME "/sdk"
+ENV PATH "$PATH:${ANDROID_HOME}/tools"
+RUN curl -s https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip > /sdk.zip && \
+    unzip /sdk.zip -d /sdk && \
+    rm -v /sdk.zip
+RUN mkdir -p $ANDROID_HOME/licenses/ && \
+    echo "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+ADD ./tools/android-sdk-packages.txt /sdk
+RUN mkdir -p /root/.android && \
+  touch /root/.android/repositories.cfg && \
+  ${ANDROID_HOME}/tools/bin/sdkmanager --update 
+RUN while read -r package; do PACKAGES="${PACKAGES}${package} "; done < /sdk/android-sdk-packages.txt && \
+    ${ANDROID_HOME}/tools/bin/sdkmanager ${PACKAGES}
+RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
+
 # Install Project
 COPY package.json $WORKSPACE/package.json
 RUN npm install
