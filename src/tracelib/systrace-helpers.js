@@ -16,18 +16,18 @@ const getGlobalScope = () => {
 };
 
 export const getExternalTraceApis = () => {
-  return getGlobalScope().ExternalTraceApis;
+  return getGlobalScope().ExternalTraceApis || {};
 };
 
 export const delegateExternalTraceApis = port => {
   const gs = getGlobalScope();
   if (!gs.ExternalTraceApis && port) {
-    gs.SystemTraceApis = new class extends Client {
+    gs.ExternalTraceApis = new class extends Client {
       asyncTraceBegin(...args) {
-        port.asyncTraceBegin(...args);
+        port.ExternalTraceBegin(...args);
       }
       asyncTraceEnd(...args) {
-        port.asyncTraceEnd(...args);
+        port.ExternalTraceEnd(...args);
       }
     }();
   }

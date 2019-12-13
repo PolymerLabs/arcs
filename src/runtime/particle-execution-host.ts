@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {getExternalTraceApis} from '../tracelib/systrace-helpers.js';
 
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
@@ -33,6 +32,7 @@ import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {getExternalTraceApis} from '../tracelib/systrace-helpers.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -408,10 +408,17 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(callback, response);
   }
 
-  onSystemTraceCall(api: string, tag: string, cookie: number) {
-    const systemTraceApis = getExternalTraceApis();
-    if (api in systemTraceApis) {
-      systemTraceApis[api](tag, cookie);
+  onExternalTraceBegin(tag: string, cookie: number) {
+    const api = getExternalTraceApis().asyncTraceBegin;
+    if (api) {
+      api(tag, cookie);
+    }
+  }
+
+  onExternalTraceEnd(tag: string, cookie: number) {
+    const api = getExternalTraceApis().asyncTraceEnd;
+    if (api) {
+      api(tag, cookie);
     }
   }
 }
