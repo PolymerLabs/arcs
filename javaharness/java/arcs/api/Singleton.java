@@ -1,6 +1,6 @@
 package arcs.api;
 
-class Singleton extends Handle {
+public class Singleton extends Handle {
   public Singleton(
       StorageProxy storage,
       IdGenerator idGenerator,
