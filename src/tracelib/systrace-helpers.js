@@ -11,8 +11,10 @@
 import {Client} from './systrace-clients.js';
 
 const getGlobalScope = () => {
-  return [self, window, global, {}].find(
-      element => typeof element !== 'undefined');
+  if (self !== 'undefined') return self;
+  if (window !== 'undefined') return window;
+  if (global !== 'undefined') return global;
+  return {};
 };
 
 export const getExternalTraceApis = () => {
