@@ -153,3 +153,16 @@ recipe SchemaReferenceFieldsTest
     input: reads h1
     output: writes h2
     res: writes h3
+
+// -----------------------------------------------------------------------------------------------
+
+particle UnicodeTest in '$module.wasm'
+  sng: reads * {pass: Text, src: Text}
+  col: reads [* {pass: Text, src: Text}]
+  res: writes [* {pass: Text, src: Text}]
+
+recipe UnicodeTest
+  UnicodeTest
+    sng: reads h1
+    col: reads h2
+    res: writes h3

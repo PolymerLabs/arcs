@@ -28,6 +28,6 @@ kt_native_library(
             "**/wasm/*.kt",
         ],
     ),
-    kotlincopts = KOTLINC_OPTS,
+    kotlincopts = KOTLINC_OPTS + ["-Xinline-classes"],
     visibility = ["//visibility:public"],
 )

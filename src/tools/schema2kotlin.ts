@@ -51,10 +51,12 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.Particle;
+${withCustomPackage(`import arcs.Particle
+import arcs.NullTermByteArray
 import arcs.Entity
 import arcs.StringEncoder
 import arcs.StringDecoder
+import arcs.utf8ToString
 `)}`;
   }
 
@@ -103,7 +105,7 @@ class KotlinGenerator implements ClassGenerator {
 
 ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  ')}\n`) }) : Entity<${name}>() {
 
-  override fun decodeEntity(encoded: String): ${name}? {
+  override fun decodeEntity(encoded: ByteArray): ${name}? {
     if (encoded.isEmpty()) return null
 
     val decoder = StringDecoder(encoded)
@@ -111,7 +113,7 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
     decoder.validate("|")
     ${withFields(`  for (_i in 0 until ${fieldCount}) {
          if (decoder.done()) break
-         val name = decoder.upTo(":")
+         val name = utf8ToString(decoder.upTo(':'))
          when (name) {
            ${this.decode.join('\n           ')}
          }
@@ -122,11 +124,11 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
     return this
   }
 
-  override fun encodeEntity(): String {
+  override fun encodeEntity(): NullTermByteArray {
     val encoder = StringEncoder()
     encoder.encode("", internalId)
     ${this.encode.join('\n    ')}
-    return encoder.result()
+    return encoder.toNullTermByteArray()
   }
   ${withoutFields(`
   override fun toString(): String {

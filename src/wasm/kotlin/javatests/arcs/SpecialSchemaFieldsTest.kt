@@ -12,6 +12,7 @@
 package sdk.kotlin.javatests.arcs
 
 import arcs.Singleton
+import arcs.utf8ToString
 import arcs.addressable.toAddress
 import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
@@ -52,8 +53,8 @@ class SpecialSchemaFieldsTest(
             internal_id = 0.0,
             internalId_ = 0.0
         )
-        val encoding: String = s.encodeEntity()
-        assertTrue("The encoding uses the language keyword", encoding.contains("for"))
+        val encoding = utf8ToString(s.encodeEntity().bytes)
+        assertTrue("The encoding uses the language keyword", encoding.contains("|for:"))
     }
 
     @Test
@@ -83,8 +84,8 @@ class SpecialSchemaFieldsTest(
             internal_id = 0.0,
             internalId_ = 10.0
         )
-        val encoding: String = s.encodeEntity()
-        assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("internalId"))
+        val encoding = utf8ToString(s.encodeEntity().bytes)
+        assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("|internalId:"))
     }
 }
 

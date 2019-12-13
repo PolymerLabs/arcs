@@ -68,13 +68,13 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
             lnk = "",
             flg = false
         )
-        val emptyStr = empty.encodeEntity()
+        val encodedEmpty = empty.encodeEntity()
         val decodedEmpty = EntityClassApiTest_Data(
             num = 10.0,
             txt = "20",
             lnk = "https://thirty.net",
             flg = true
-        ).decodeEntity(emptyStr)
+        ).decodeEntity(encodedEmpty.bytes)
         assertEquals(
             "Encoding and Decoding an empty entity results in the same entity",
             empty,
@@ -87,14 +87,13 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
             lnk = "https://thirty.net",
             flg = true
         )
-        val fullStr = full.encodeEntity()
-        println("fullStr $fullStr")
+        val encodedFull = full.encodeEntity()
         val decodedFull = EntityClassApiTest_Data(
             num = 10.0,
             txt = "20",
             lnk = "https://thirty.net",
             flg = true
-        ).decodeEntity(fullStr)
+        ).decodeEntity(encodedFull.bytes)
         assertEquals(
             "Encoding and Decoding an full entity results in the same entity",
             full,
