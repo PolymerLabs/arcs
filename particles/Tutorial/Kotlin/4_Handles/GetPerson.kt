@@ -11,17 +11,17 @@
 
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
  */
 class GetPersonParticle : Particle() {
-    private val person = Singleton(this, "person") { GetPerson_Person() }
+    private val person = Singleton(this, "person") { GetPerson_Person("Human") }
 
     override fun getTemplate(slotName: String) = """
         <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
@@ -29,7 +29,7 @@ class GetPersonParticle : Particle() {
 
     init {
         eventHandler("onNameInputChange") { eventData ->
-            val p = person.get() ?: GetPerson_Person()
+            val p = person.get() ?: GetPerson_Person("Human")
             p.name = eventData["value"] ?: "Human"
             person.set(p)
         }

@@ -11,18 +11,22 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Particle
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class ServicesTest : Particle() {
-    private val output = Collection(this, "output") { ServicesTest_Output() }
+    private val output = Collection(this, "output") { ServicesTest_Output(
+        call = "",
+        tag = "",
+        payload = ""
+    ) }
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
-        output.store(ServicesTest_Output("resolveUrl", payload = url))
+        output.store(ServicesTest_Output("resolveUrl", tag = "", payload = url))
 
         serviceRequest("random.next", mapOf(), "first")
         serviceRequest("random.next", mapOf(), "second")

@@ -22,17 +22,31 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTRandomComputer_GameState() }
-    private val myMove = Singleton(this, "myMove") { TTTRandomComputer_MyMove() }
-    private val player = Singleton(this, "player") { TTTRandomComputer_Player() }
+    private val defaultGameState = TTTRandomComputer_GameState(
+        board = ",,,,,,,,",
+        currentPlayer = (0..1).random().toDouble(),
+        gameOver = false,
+        winnerAvatar = ""
+    )
+    private val defaultMove = TTTRandomComputer_MyMove(-1.0)
+    private val defaultPlayer = TTTRandomComputer_Player(
+        name = "Computer",
+        avatar = "",
+        id = -1.0
+    )
+
+    private val gameState = Singleton(this, "gameState") { defaultGameState }
+    private val myMove = Singleton(this, "myMove") { defaultMove }
+    private val player = Singleton(this, "player") { defaultPlayer }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
 
     override fun onHandleUpdate(handle: Handle) {
         if (gameState.get()?.currentPlayer != player.get()?.id) return
 
-        val board = gameState.get()?.board ?: ",,,,,,,,"
-        val boardArr = board.split(",")
+        val gs = gameState.get() ?: defaultGameState
+
+        val boardArr = gs.board.split(",")
         val emptyCells = mutableListOf<Double>()
 
         // Find all the empty cells

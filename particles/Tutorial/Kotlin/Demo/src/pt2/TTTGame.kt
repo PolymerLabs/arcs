@@ -24,29 +24,38 @@ import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
-    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
-
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
+    private val defaultPlayerOne = TTTGame_PlayerOne(
+        name = "PlayerOne",
+        avatar = ""
+    )
+    private val defaultMove = TTTGame_PlayerOneMove(-1.0)
+
+    private val gameState = Singleton(this, "gameState") { defaultGame }
+    private val playerOne = Singleton(this, "playerOne") { defaultPlayerOne }
+    private val playerOneMove = Singleton(this, "playerOneMove") { defaultMove }
+    private val events = Collection(this, "events") { TTTGame_Events(
+        type = "",
+        move = -1.0,
+        time = -1.0
+    ) }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.get()?.board == null) {
+        if (gameState.get() == null) {
             gameState.set(defaultGame)
         }
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.get() ?: TTTGame_GameState()
-        // Apply the moves
-        val board = gs.board ?: defaultGame.board!!
-        val boardList = board.split(",").toMutableList()
+        val gs = gameState.get() ?: defaultGame
+        val p1 = playerOne.get() ?: defaultPlayerOne
+        val mv = playerOneMove.get() ?: defaultMove
+        val boardList = gs.board.split(",").toMutableList()
         // Check the handle updated matches the current player
         if (handle.name == "playerOneMove") {
             applyMove(
-                    mv = playerOneMove.get()?.move?.toInt() ?: -1,
-                    avatar = playerOne.get()?.avatar ?: "",
+                    mv = mv.move.toInt(),
+                    avatar = p1.avatar,
                     boardList = boardList,
                     gs = gs
             )

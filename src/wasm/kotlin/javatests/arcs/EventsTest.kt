@@ -11,14 +11,14 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.addressable.toAddress
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 class EventsTest : Particle() {
-    private val output = Singleton(this, "output") { EventsTest_Output() }
+    private val output = Singleton(this, "output") { EventsTest_Output("") }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))

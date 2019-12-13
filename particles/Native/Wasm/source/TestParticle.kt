@@ -9,7 +9,6 @@
  */
 package arcs.test
 
-import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
@@ -18,10 +17,11 @@ import arcs.TestParticle_Data
 import arcs.TestParticle_Info
 import arcs.TestParticle_Res
 import arcs.abort
+import arcs.addressable.toAddress
 import arcs.log
 import kotlin.Exception
-import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
@@ -107,18 +107,39 @@ class TestParticle : Particle() {
                  </table>""".trimIndent()
     }
 
-    private val data = Singleton(this, "data") { TestParticle_Data() }
-    private val res = Singleton(this, "res") { TestParticle_Res() }
-    private val info = Collection(this, "info") { TestParticle_Info() }
+    private val defaultData = TestParticle_Data(
+        num = 0.0,
+        txt = "",
+        lnk = "",
+        flg = false
+    )
+    private val defaultRes = TestParticle_Res(
+        num = 0.0,
+        txt = "",
+        lnk = "",
+        flg = false
+    )
+    private val defaultInfo = TestParticle_Info(
+        for_ = "",
+        val_ = 0.0
+    )
+    private val data = Singleton(this, "data") { defaultData }
+    private val res = Singleton(this, "res") { defaultRes }
+    private val info = Collection(this, "info") { defaultInfo }
     private var updated = 0
     private var storeCount = 0
 
     init {
         eventHandler("add") {
-          val newData = data.get() ?: TestParticle_Data()
-          newData.num = newData.num?.let { it + 2 } ?: 0.0
-          newData.txt = "${newData.txt}!!!!!!"
-          this.data.set(newData)
+            val newData = data.get() ?: TestParticle_Data(
+                num = 0.0,
+                txt = "",
+                lnk = "",
+                flg = false
+            )
+            newData.num = newData.num.let { it + 2 }
+            newData.txt = "${newData.txt}!!!!!!"
+            this.data.set(newData)
         }
 
         eventHandler("dataclear") {
@@ -126,7 +147,10 @@ class TestParticle : Particle() {
         }
 
         eventHandler("store") {
-            val info = TestParticle_Info()
+            val info = TestParticle_Info(
+                for_ = "",
+                val_ = 0.0
+            )
             info.internalId = "wasm" + (++storeCount)
             info.val_ = (this.info.size + storeCount).toDouble()
             this.info.store(info)
