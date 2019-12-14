@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Client} from './systrace-clients.js';
-
 const getGlobalScope = () => {
   if (self !== 'undefined') return self;
   if (window !== 'undefined') return window;
@@ -24,7 +22,7 @@ export const getExternalTraceApis = () => {
 export const delegateExternalTraceApis = port => {
   const gs = getGlobalScope();
   if (!gs.ExternalTraceApis && port) {
-    gs.ExternalTraceApis = new class extends Client {
+    gs.ExternalTraceApis = new class {
       asyncTraceBegin(...args) {
         port.ExternalTraceBegin(...args);
       }

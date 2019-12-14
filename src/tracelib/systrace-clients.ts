@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {getExternalTraceApis} from './systrace-helpers.js';
+
 const SELECTOR_URL_PARAMETER = 'systrace';
 const CONSOLE_CLIENT_NAME = 'console';
 const ANDROID_CLIENT_NAME = 'android';
@@ -30,7 +32,21 @@ class ConsoleClient extends Client {
 }
 
 /** Client: Android Arcs Tracing */
-// TODO: impl.
+class AndroidClient extends Client {
+  asyncTraceBegin(tag: string, cookie: number) {
+    const api = getExternalTraceApis().asyncTraceBegin;
+    if (api) {
+      api(tag, cookie);
+    }
+  }
+
+  asyncTraceEnd(tag: string, cookie: number) {
+    const api = getExternalTraceApis().asyncTraceEnd;
+    if (api) {
+      api(tag, cookie);
+    }
+  }
+}
 
 /**
  * System Trace Client Selector
@@ -46,6 +62,9 @@ export const getClientClass =
       switch (params.get(SELECTOR_URL_PARAMETER)) {
         case CONSOLE_CLIENT_NAME:
           clientClass = ConsoleClient;
+          break;
+        case ANDROID_CLIENT_NAME:
+          clientClass = AndroidClient;
           break;
         default:
           break;
