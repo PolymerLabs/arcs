@@ -97,6 +97,12 @@ describe('Runtime', () => {
             t1: writes t1
             t2: writes t2
             t3: writes t3
+        particle MyOtherParticle in './my-other-particle.js'
+          t4: reads [Thing]
+        recipe
+          t4: map #things
+          MyOtherParticle
+            t4: reads t4
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
@@ -114,10 +120,22 @@ describe('Runtime', () => {
     await ramdiskArc.instantiate(manifest.recipes[0]);
     assert.lengthOf(runtime.context.stores, 2);
 
+    const volatileArc1 = runtime.runArc('test-arc-v1', volatileStorageKeyPrefixForTest());
+    const recipe1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
+    assert.isTrue(recipe1 && recipe1.isResolved());
+    await volatileArc1.instantiate(recipe1);
+    volatileArc1.dispose();
+
     volatileArc.dispose();
     assert.lengthOf(runtime.context.stores, 2);
 
     ramdiskArc.dispose();
-    assert.lengthOf(runtime.context.stores, 0);
+    assert.lengthOf(runtime.context.stores, 2);
+
+    const volatileArc2 = runtime.runArc('test-arc-v1', volatileStorageKeyPrefixForTest());
+    const recipe2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
+    assert.isTrue(recipe2 && recipe2.isResolved());
+    await volatileArc2.instantiate(recipe2);
+
   });
 });
