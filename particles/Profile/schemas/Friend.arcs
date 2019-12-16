@@ -3,4 +3,4 @@ schema Friend
 
 import 'Share.arcs'
 schema FriendShare extends Share
-  ref: Reference<Friend>
+  ref: &Friend

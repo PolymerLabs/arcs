@@ -243,7 +243,7 @@ describe('manifest parser', () => {
   it('parses a schema with a reference field', () => {
     parse(`
       schema Product
-        review: Reference<Review>
+        review: &Review
     `);
   });
   it('parses a schema with a reference field (with sugar)', () => {
@@ -255,7 +255,7 @@ describe('manifest parser', () => {
   it('parses a schema with a referenced inline schema', () => {
     parse(`
       schema Product
-        review: Reference<Review {reviewText: Text}>
+        review: &Review {reviewText: Text}
     `);
   });
   it('parses a schema with a referenced inline schema (with sugar)', () => {
@@ -267,7 +267,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a reference to a schema', () => {
     parse(`
       particle Foo
-        inReview: reads Product {review: Reference<Review>}
+        inReview: reads Product {review: &Review}
     `);
   });
   it('parses an inline schema with a reference to a schema (with sugar)', () => {
@@ -279,7 +279,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
-        inResult: reads Product {review: [Reference<Review>]}
+        inResult: reads Product {review: [&Review]}
     `);
   });
   it('parses an inline schema with a collection of references to schemas (with sugar)', () => {
@@ -291,7 +291,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
-      inReview: reads Product {review: Reference<Review {reviewText: Text}> }
+      inReview: reads Product {review: &Review {reviewText: Text} }
     `);
   });
   it('parses an inline schema with a referenced inline schema (with sugar)', () => {
@@ -303,7 +303,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a collection of references to inline schemas', () => {
     parse(`
       particle Foo
-        productReviews: reads Product {review: [Reference<Review {reviewText: Text}>]}
+        productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
   it('parses an inline schema with a collection of references to inline schemas (with sugar)', () => {
@@ -322,8 +322,8 @@ describe('manifest parser', () => {
   it('parses reference types (with sugar)', () => {
     parse(`
       particle Foo
-        inRef: reads &Reference<Foo>
-        outRef: writes &Reference<Bar>
+        inRef: reads &Foo
+        outRef: writes &Bar
     `);
   });
   it('parses refinement types in a schema', () => {
