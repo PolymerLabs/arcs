@@ -63,7 +63,7 @@ import kotlin.reflect.KProperty`;
     return new KotlinGenerator(node);
   }
 
-  fileFooter(): string { 
+  fileFooter(): string {
     console.log(`child`);
     return `
 class TextDelegate {
@@ -123,7 +123,7 @@ class KotlinGenerator implements ClassGenerator {
 
     this.fields.push(`${fixed}: ${type}`);
     this.fieldVals.push(`var ${fixed} by ${delegate}`);
-    this.fieldSets.push(`this.${fixed} = ${fixed}`)
+    this.fieldSets.push(`this.${fixed} = ${fixed}`);
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
@@ -188,6 +188,6 @@ class ${name}() : Entity<${name}>() {
     }`)}
   }
 ${typeDecls}
-`
+`;
   }
 }
