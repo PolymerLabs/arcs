@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {getExternalTraceApis} from './systrace-helpers.js';
+import {getExternalTraceApis, getSystemTraceChannel} from './systrace-helpers.js';
 
-const SELECTOR_URL_PARAMETER = 'systrace';
 const CONSOLE_CLIENT_NAME = 'console';
 const ANDROID_CLIENT_NAME = 'android';
 
@@ -50,16 +49,14 @@ class AndroidClient extends Client {
 
 /**
  * System Trace Client Selector
- * Query the target class of system tracing client by ${SELECTOR_URL_PARAMETER}
- * ${SELECTOR_URL_PARAMETER}:
+ * Options:
  *   ${CONSOLE_CLIENT_NAME}: using console.log
  *   ${ANDROID_CLIENT_NAME}: using Android Arcs Tracing APIs
  */
 export const getClientClass =
-    (): (typeof Client & {new (...args): Client}) | undefined => {
-      const params = new URLSearchParams(location.search);
+    (): (typeof Client & {new(...args): Client}) | undefined => {
       let clientClass = undefined;
-      switch (params.get(SELECTOR_URL_PARAMETER)) {
+      switch (getSystemTraceChannel()) {
         case CONSOLE_CLIENT_NAME:
           clientClass = ConsoleClient;
           break;

@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+const CHANNEL_URL_PARAMETER = 'systrace';
+
 const getGlobalScope = () => {
   if (self !== 'undefined') return self;
   if (window !== 'undefined') return window;
@@ -16,13 +18,13 @@ const getGlobalScope = () => {
 };
 
 export const getExternalTraceApis = () => {
-  return getGlobalScope().ExternalTraceApis || {};
+  return getGlobalScope().externalTraceApis || {};
 };
 
 export const delegateExternalTraceApis = port => {
   const gs = getGlobalScope();
-  if (!gs.ExternalTraceApis && port) {
-    gs.ExternalTraceApis = new class {
+  if (!gs.externalTraceApis && port) {
+    gs.externalTraceApis = new class {
       asyncTraceBegin(...args) {
         port.ExternalTraceBegin(...args);
       }
@@ -31,4 +33,11 @@ export const delegateExternalTraceApis = port => {
       }
     }();
   }
+};
+
+export const getSystemTraceChannel = () => {
+  const params = new URLSearchParams(location.search);
+  return params.get(CHANNEL_URL_PARAMETER) ||
+      getGlobalScope().systemTraceChannel ||
+      '';
 };

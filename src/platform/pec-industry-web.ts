@@ -18,10 +18,11 @@ export const pecIndustry = (loader): PecFactory => {
   const remap = expandUrls(loader.urlMap);
   // get real path from meta path
   const workerUrl = loader.resolve(WORKER_PATH);
+  const urlParams = new URLSearchParams(window.location.search);
   // use service worker cache instead of generating blobs
-  const useCache =
-    location.protocol === 'https:' &&
-    (new URLSearchParams(window.location.search)).has('use-cache');
+  const useCache = location.protocol === 'https:' && urlParams.has('use-cache');
+  // get system tracing channel (default: '', namely don't trace)
+  const systemTraceChannel = urlParams.get('systrace') || '';
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
   let workerBlobUrl;
   if (!useCache) {
@@ -34,7 +35,14 @@ export const pecIndustry = (loader): PecFactory => {
     }
     const worker = new Worker(workerBlobUrl || workerUrl);
     const channel = new MessageChannel();
-    worker.postMessage({id: `${id}:inner`, base: remap, logLevel: window['logLevel']}, [channel.port1]);
+    worker.postMessage(
+        {
+          id: `${id}:inner`,
+          base: remap,
+          logLevel: window['logLevel'],
+          traceChannel: systemTraceChannel,
+        },
+        [channel.port1]);
     return channel.port2;
   };
   // TODO(sjmiles): PecFactory type is defined against custom `MessageChannel` and `MessagePort` objects, not the
