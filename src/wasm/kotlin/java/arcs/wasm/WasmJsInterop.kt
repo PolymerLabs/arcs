@@ -69,7 +69,7 @@ external fun ByteArray.addressOfElement(index: Int): CPointer<ByteVar>
 /** Convert a Kotlin String into a WasmAddress */
 fun String.toWasmString(): WasmString {
     // Ugh, this isn't null terminated
-    val array = this.toUtf8()
+    val array = this.encodeToByteArray()
     // So we have to make a copy to add a null
     val array2 = ByteArray(array.size + 1)
     array.copyInto(array2)
@@ -118,7 +118,6 @@ fun connectHandle(
     canRead: Boolean,
     canWrite: Boolean
 ): WasmAddress {
-    log("Connect called")
     return particlePtr
         .toObject<Particle>()
         ?.connectHandle(handleName.toKString(), canRead, canWrite)
@@ -134,12 +133,9 @@ fun init(particlePtr: WasmAddress) {
 @Retain
 @ExportForCppRuntime("_syncHandle")
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
-    log("Getting handle")
     val handle = handlePtr.toObject<Handle>()
     val encodedStr: String? = encoded.toNullableKString()
     handle?.let {
-        log("Handle is '${handle.name}' syncing '$encodedStr'")
-        log("Invoking sync on handle on particle")
         it.sync(encodedStr)
         particlePtr.toObject<Particle>()?.sync(it)
     }
@@ -168,8 +164,8 @@ fun renderSlot(
     sendTemplate: Boolean,
     sendModel: Boolean
 ) {
-    particlePtr.toObject<Particle>()
-        ?.renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
+    @Suppress("DEPRECATION")
+    particlePtr.toObject<Particle>()?.renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
 }
 
 @Retain
@@ -265,4 +261,3 @@ fun log(msg: String) {
     write(msg.toWasmString())
     flush()
 }
-
