@@ -45,8 +45,6 @@ abstract class Particle {
      * @see [onHandleSync]
      */
     fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
-        log("Connect called internal '$name'")
-
         handles[name]?.let {
             if (canRead) {
                 toSync.add(it)
@@ -90,7 +88,6 @@ abstract class Particle {
 
     /** @param handle Handle to synchronize */
     fun sync(handle: Handle) {
-        log("Particle.sync called")
         toSync.remove(handle)
         onHandleSync(handle, toSync.isEmpty())
     }
@@ -119,7 +116,6 @@ abstract class Particle {
 
     /** Rendering through UiBroker */
     fun renderOutput() {
-        log("renderOutput")
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
@@ -153,6 +149,7 @@ abstract class Particle {
 
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
+    @Suppress("UNUSED_PARAMETER")
     fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
         log("ignoring renderSlot")
     }
