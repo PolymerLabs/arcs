@@ -19,18 +19,30 @@ export abstract class Client {
   asyncTraceEnd(tag: string, cookie: number): void {}
 }
 
-/** Client: JS Console Logging */
+/**
+ * Client: JS Console Logging
+ *
+ * This client implements more precise performance/latency measurement
+ * at both of the main renderer and dedicated workers.
+ */
 class ConsoleClient extends Client {
   asyncTraceBegin(tag: string, cookie: number) {
-    console.log(`S|${tag}|${cookie}`);
+    console.log(`S|${tag}|${cookie}|${Date.now()}`);
   }
 
   asyncTraceEnd(tag: string, cookie: number) {
-    console.log(`F|${tag}|${cookie}`);
+    console.log(`F|${tag}|${cookie}|${Date.now()}`);
   }
 }
 
-/** Client: Android Arcs Tracing */
+/**
+ * Client: Android Arcs Tracing
+ *
+ * This client implement more coarse performance/latency measurement
+ * at dedicated workers due to the overhead of passing messages from workers
+ * to the main renderer and also at the main renderer due to the singleton
+ * JavaBridge thread waiting for messages at the browser process.
+ */
 class AndroidClient extends Client {
   asyncTraceBegin(tag: string, cookie: number) {
     const api = getExternalTraceApis().asyncTraceBegin;

@@ -18,7 +18,7 @@ interface Symbol {
   tag: string;
 }
 
-// Identifies whether a class has already been traced in any of its
+// Identifies whether a class has already been traced in its
 // inheritance hierarchies.
 const SYSTEM_TRACED_PROPERTY = '_systemTraced';
 
@@ -58,7 +58,7 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
       super(...args);
       const clientClass: ReturnType<typeof getClientClass> = getClientClass();
 
-      // Don't harness system tracing when:
+      // Don't harness system tracing when any of:
       // a) clientClass is undefined, namely system tracing is not requested
       //    via url parameter.
       // b) re-entrance is detected.
