@@ -56,7 +56,7 @@ import arcs.Entity
 import arcs.StringEncoder
 import arcs.StringDecoder
 `)}
-import kotlin.reflect.KProperty`;
+import kotlin.reflect.KProperty\n`;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
