@@ -337,6 +337,14 @@ describe('manifest parser', () => {
     particle Foo
       input: reads Something {value: Text [ (square - 5) < 11 and (square * square > 5) or square == 0] }
     `);
+    parse(`
+    particle Foo
+      input: reads Something {value: Number [value > 0], price: Number [price > 0]} [value > 10 and price < 5]
+    `);
+    parse(`
+    particle Foo
+      input: reads Something {value: Number, price: Number} [value > 10 and price < 5]
+    `);
   });
   it('tests the refinement syntax tree', () => {
     const manifestAst = parse(`
@@ -377,21 +385,21 @@ describe('manifest parser', () => {
   });
   it('does not parse invalid refinement expressions', () => {
       assert.throws(() => {
-      const manifestAst = parse(`
+      parse(`
       particle Foo
         input: reads Something {value: Text [value <<>>>>> ]}
       `);
       }, `a valid refinement expression`);
 
       assert.throws(() => {
-        const manifestAst = parse(`
+        parse(`
         particle Foo
           input: reads Something {value: Text [ [[ value *- 2 ]}
         `);
         }, `a valid refinement expression`);
 
       assert.throws(() => {
-        const manifestAst = parse(`
+        parse(`
         particle Foo
           input: reads Something {value: Text [ value */ 2 ]}
         `);

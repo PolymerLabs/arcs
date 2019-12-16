@@ -403,10 +403,26 @@ export class ParticleSpec {
     }
     results.push(line);
     const indent = '  ';
+
+    const expressionString = (expr) => {
+      if (expr.kind == 'binary-expression-node') {
+        return '(' + Schema._expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + Schema._expressionString(expr.rightExpr) + ')';
+      } else if (expr.kind == 'unary-expression-node') {
+        return '(' + expr.operator + ' ' + expr.expr + ')';
+      } return String(expr);
+    };
+
+    const refinementString = (type) => {
+      if (!type.refinement) {
+        return '';
+      }
+      return '[' + expressionString(type.refinement.expression) + ']';
+    };
+
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
-      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
+      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${refinementString(connection.type)}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }

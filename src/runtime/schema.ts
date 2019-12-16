@@ -14,6 +14,7 @@ import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/cr
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
+import {Refinement} from './manifest-ast-nodes.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
@@ -175,11 +176,27 @@ export class Schema {
     };
   }
 
+  static _expressionString(expr) : string {
+    if (expr.kind == 'binary-expression-node') {
+      return '(' + Schema._expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + Schema._expressionString(expr.rightExpr) + ')';
+    } else if (expr.kind == 'unary-expression-node') {
+      return '(' + expr.operator + ' ' + expr.expr + ')';
+    } return String(expr);
+  }
+
+  static _refinementString(type) : string {
+    if (!type.refinement) {
+      return '';
+    }
+    return '[' + Schema._expressionString(type.refinement.expression) + ']';
+  }
+
   // TODO(jopra): Enforce that 'type' of a field is a Type.
   // tslint:disable-next-line: no-any
   static fieldToString([name, type]: [string, any]) {
     const typeStr = Schema._typeString(type);
-    return `${name}: ${typeStr}`;
+    const refExpr = Schema._refinementString(type);
+    return `${name}: ${typeStr}${refExpr}`;
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {

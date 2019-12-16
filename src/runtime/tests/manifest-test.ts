@@ -29,6 +29,7 @@ import {Entity} from '../entity.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
+import {RefinementExpression, BinaryExpressionNode} from '../manifest-ast-nodes.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -542,6 +543,46 @@ ${particleStr1}
       verifyPrimitiveType(opt.t.types[0], 'Number');
       verifyPrimitiveType(opt.t.types[1], 'Number');
       verifyPrimitiveType(opt.t.types[2], 'Boolean');
+    };
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString()));
+  });
+  it('can construct manifest containing schema with refinement types', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        test: Text [num < 5]`);
+    const verify = (manifest: Manifest) => {
+      const ref = manifest.schemas.Foo.fields.test.refinement;
+      assert.strictEqual(ref.kind, 'refinement');
+      assert.strictEqual(ref.expression.kind, 'binary-expression-node');
+      assert.strictEqual(ref.expression.leftExpr, 'num');
+      assert.strictEqual(ref.expression.rightExpr, 5);
+      assert.strictEqual(ref.expression.operator, '<');
+    };
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString()));
+  });
+  it('can construct manifest containing a particle with refinement types', async () => {
+    const manifest = await Manifest.parse(`
+    particle Foo
+      input: reads Something {value: Number [value > 0], price: Number [price > 0]} [value > 10 and price < 2]`);
+    const verify = (manifest: Manifest) => {
+      const entity = manifest.particles[0].handleConnectionMap.get('input').type;
+      assert.strictEqual(entity.tag, 'Entity');
+      // tslint:disable-next-line: no-any
+      const ref = (entity as any).refinement;
+      assert.exists(ref);
+      assert.strictEqual(ref.kind, 'refinement');
+      assert.strictEqual(ref.expression.kind, 'binary-expression-node');
+      assert.strictEqual(ref.expression.operator, 'and');
+      assert.strictEqual(ref.expression.leftExpr.kind, 'binary-expression-node');
+      assert.strictEqual(ref.expression.leftExpr.operator, '>');
+      assert.strictEqual(ref.expression.leftExpr.leftExpr, 'value');
+      assert.strictEqual(ref.expression.leftExpr.rightExpr, 10);
+      assert.strictEqual(ref.expression.rightExpr.kind, 'binary-expression-node');
+      assert.strictEqual(ref.expression.rightExpr.operator, '<');
+      assert.strictEqual(ref.expression.rightExpr.leftExpr, 'price');
+      assert.strictEqual(ref.expression.rightExpr.rightExpr, 2);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));

@@ -304,10 +304,12 @@ export class SingletonType<T extends Type> extends Type {
 
 export class EntityType extends Type {
   readonly entitySchema: Schema;
+  readonly refinement?: AstNode.Refinement;
 
-  constructor(schema: Schema) {
+  constructor(schema: Schema, refinement?: AstNode.Refinement) {
     super('Entity');
     this.entitySchema = schema;
+    this.refinement = refinement ? refinement : null;
   }
 
   static make(names: string[], fields: {}, description?): EntityType {

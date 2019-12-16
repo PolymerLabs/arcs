@@ -77,7 +77,8 @@ describe('ArcStoresFetcher', () => {
                 }
               },
               names: ['Foo']
-            }
+            },
+            refinement: null,
           },
           tag: 'Singleton',
         },
