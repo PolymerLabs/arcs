@@ -57,7 +57,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   get type(): Type {
-    return this.storageProxy.type.getContainedType() || this.storageProxy.type;
+    return this.storageProxy.type;
   }
 
   // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
