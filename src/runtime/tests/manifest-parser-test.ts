@@ -312,13 +312,19 @@ describe('manifest parser', () => {
         productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
+  it('parses typenames with reserved type names as a prefix (Boolean)', () => {
+    parse(`
+      particle Foo
+        inRef: reads Booleanlike
+    `);
+  });
   it('fails to parse reserved type names (Boolean)', () => {
     assert.throws(() => {
       parse(`
         particle Foo
           inRef: reads Boolean
       `);
-    }, 'Expected type but "\xA0" found.');
+    }, 'Expected an upper case identifier but "Boolean" found.');
   });
   it('fails to parse reserved type names (URL)', () => {
     assert.throws(() => {
@@ -326,7 +332,7 @@ describe('manifest parser', () => {
         particle Foo
           outRef: writes URL
       `);
-    }, 'Expected type but "\xA0" found.');
+    }, 'Expected an upper case identifier but "URL" found.');
   });
   it('parses reference types', () => {
     parse(`

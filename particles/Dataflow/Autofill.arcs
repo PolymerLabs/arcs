@@ -9,12 +9,12 @@ schema CapturedEntity
 
 particle ContentCapture in 'empty.js'
   recentApps: reads * {}
-  text: writes Text {}
+  text: writes Input {}
   source: writes Source {}
   claim source is trusted
 
 particle TextClassifier in 'empty.js'
-  text: reads Text {}
+  text: reads Input {}
   entities: writes [Entity {}]
 
 particle CaptureEntity in 'empty.js'

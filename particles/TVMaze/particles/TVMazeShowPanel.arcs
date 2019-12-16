@@ -1,10 +1,10 @@
 import '../../Common/schemas/Description.arcs'
 import '../schemas/TVMazeShow.arcs'
-import '../schemas/Text.arcs'
+import '../schemas/Info.arcs'
 
 particle TVMazeShowPanel in './js/TVMazeShowPanel.js'
   show: reads TVMazeShow
-  alsoWatch: reads? Text
+  alsoWatch: reads? Info
   descriptions: writes [Description]
   content: consumes #tv_show_panel
     action: provides?

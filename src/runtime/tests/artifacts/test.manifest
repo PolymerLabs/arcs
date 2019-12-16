@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema Text
+schema Greeting
   value: Text
 
 particle Hello in 'hello.js'
-  text: writes Text {value}
+  text: writes Greeting {value}
 
 recipe
   handleA: create *

@@ -41,11 +41,11 @@ describe('Runtime', () => {
   });
   it('parses a Manifest', async () => {
     const content = `
-    schema Text
+    schema Greeting
       value: Text
 
     particle Hello in 'hello.js'
-      text: writes Text {value}
+      text: writes Greeting {value}
 
     recipe
       handleA: create *

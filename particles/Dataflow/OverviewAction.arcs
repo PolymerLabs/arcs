@@ -10,17 +10,17 @@ particle LongPressListener in 'empty.js'
 particle OCR in 'empty.js'
   image: reads * {}
   coords: reads Coords {}
-  result: writes Text {}
+  result: writes ScreenText {}
 
 particle TextClassifier in 'empty.js'
-  text: reads Text {}
-  model: reads Model
+  text: reads ScreenText {}
+  model: reads Model {}
   selectedRange: writes Range {}
 
 particle SelectionUI in 'empty.js'
-  text: reads Text {}
+  text: reads ScreenText {}
   selectedRange: reads writes Range {}
-  selectedText: writes Text {}
+  selectedText: writes ScreenText {}
 
   // The text to be selected must have come from the screen.
   check text is from store 'screen'
@@ -30,7 +30,7 @@ particle SelectionUI in 'empty.js'
   claim selectedText derives from text
 
 particle MatchMaker in 'empty.js'
-  selectedText: reads Text {}
+  selectedText: reads ScreenText {}
   action: writes Action {}
 
 particle ActionUX in 'empty.js'

@@ -1479,6 +1479,14 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 }) " "* { return text(); }
 
 // Should only be used as a negative match.
+UpperReservedWord
+  = keyword:( SchemaPrimitiveType
+  ) &([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
+{
+  expected(`an upper case identifier`);
+}
+
+// Should only be used as a negative match.
 ReservedWord
   = keyword:( Direction
   / SlotDirection
@@ -1503,7 +1511,7 @@ backquotedString "a `backquoted string`"
 id "an identifier (e.g. 'id')"
   = "'" id:[^'\n]+ ("'" / . { expected('\' at the end of an identifier'); }) { return id.join(''); }
 upperIdent "an uppercase identifier (e.g. Foo)"
-  = !ReservedWord [A-Z][a-z0-9_]i* { return text(); }
+  = !UpperReservedWord [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord unsafeLowerIdent { return text(); }
 unsafeLowerIdent "a lowercase identifier or keyword"
