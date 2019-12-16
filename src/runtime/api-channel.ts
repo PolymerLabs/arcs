@@ -393,7 +393,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         const requestedId = descriptor.findIndex(d => d.identifier || false);
 
         /** @this APIPort */
-        const impl = function(this: APIPort, ...args) {
+        const impl = async function(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
             if (i === initializer) {
@@ -416,7 +416,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             }
           }
 
-          void this.send(f, messageBody);
+          await this.send(f, messageBody);
         };
 
 
