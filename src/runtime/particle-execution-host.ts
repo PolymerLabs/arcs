@@ -409,16 +409,16 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onExternalTraceBegin(tag: string, cookie: number) {
-    const api = getExternalTraceApis().asyncTraceBegin;
-    if (api) {
-      api(tag, cookie);
+    if (getExternalTraceApis().asyncTraceBegin) {
+      ((...args) => getExternalTraceApis().asyncTraceBegin(...args))(
+          tag, cookie);
     }
   }
 
   onExternalTraceEnd(tag: string, cookie: number) {
-    const api = getExternalTraceApis().asyncTraceEnd;
-    if (api) {
-      api(tag, cookie);
+    if (getExternalTraceApis().asyncTraceEnd) {
+      ((...args) => getExternalTraceApis().asyncTraceEnd(...args))(
+          tag, cookie);
     }
   }
 }
