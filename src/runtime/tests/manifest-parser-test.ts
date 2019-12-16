@@ -354,10 +354,10 @@ describe('manifest parser', () => {
     const particle = manifestAst[0];
     const handle = particle.args[0];
     const htype = handle.type;
-    assert.deepEqual(htype.kind, "schema-inline", "Unexpected handle type.");
+    assert.deepEqual(htype.kind, 'schema-inline', 'Unexpected handle type.');
     const refExpr = htype.fields[0].type.refinement.expression;
-    
-    var root = refExpr;
+
+    let root = refExpr;
     assert.deepEqual(root.kind, 'binary-expression-node');
     assert.deepEqual(root.operator, 'and');
 

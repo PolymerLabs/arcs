@@ -177,11 +177,12 @@ export class Schema {
   }
 
   static _expressionString(expr) : string {
-    if (expr.kind == 'binary-expression-node') {
+    if (expr.kind === 'binary-expression-node') {
       return '(' + Schema._expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + Schema._expressionString(expr.rightExpr) + ')';
-    } else if (expr.kind == 'unary-expression-node') {
+    } else if (expr.kind === 'unary-expression-node') {
       return '(' + expr.operator + ' ' + expr.expr + ')';
-    } return String(expr);
+    }
+    return expr.toString();
   }
 
   static _refinementString(type) : string {
