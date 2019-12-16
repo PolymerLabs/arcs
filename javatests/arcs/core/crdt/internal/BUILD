@@ -12,7 +12,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.crdt.internal",
     deps = [
         "//java/arcs/core/crdt/internal",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
     ],
 )

@@ -6,3 +6,8 @@ alias(
     name = "truth",
     actual = "@maven//:com_google_truth_truth",
 )
+
+alias(
+    name = "truth-android",
+    actual = "@maven//:com_google_truth_truth",
+)
