@@ -895,7 +895,7 @@ export class ReferenceType extends Type {
   }
 
   toString(options = undefined): string {
-    return 'Reference<' + this.referredType.toString() + '>';
+    return '&' + this.referredType.toString();
   }
 
   toPrettyString(): string {

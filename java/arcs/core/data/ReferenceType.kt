@@ -45,10 +45,10 @@ data class ReferenceType<T : Type>(private val referredType: T) :
 
     override fun toLiteral() = Literal(tag, containedType.toLiteral())
 
-    override fun toString() = "Reference<$containedType>"
+    override fun toString() = "&$containedType"
 
     override fun toString(options: Type.ToStringOptions): String =
-        "Reference<${containedType.toString(options)}>"
+        "&${containedType.toString(options)}"
 
     data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 

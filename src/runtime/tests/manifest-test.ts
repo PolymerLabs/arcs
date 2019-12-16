@@ -1909,7 +1909,7 @@ resource SomeName
       schema Foo
         far: Text
       particle P
-        bar: reads Bar {foo: Reference<Foo>}
+        bar: reads Bar {foo: &Foo}
       recipe
         h0: create
         P
@@ -1925,14 +1925,14 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {foo: Reference<Foo {far: Text}>}
+  bar: reads Bar {foo: &Foo {far: Text}}
   modality dom`);
   });
   it('can resolve a particle with an inline schema reference', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
       particle P
-        bar: reads Bar {foo: Reference<Foo {far: Text}>}
+        bar: reads Bar {foo: &Foo {far: Text}}
       recipe
         h0: create
         P
@@ -1948,7 +1948,7 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {foo: Reference<Foo {far: Text}>}
+  bar: reads Bar {foo: &Foo {far: Text}}
   modality dom`);
   });
   it('can resolve a particle with a collection of schema references', async () => {
@@ -1956,7 +1956,7 @@ resource SomeName
       schema Foo
         far: Text
       particle P
-        bar: reads Bar {foo: [Reference<Foo>]}
+        bar: reads Bar {foo: [&Foo]}
       recipe
         h0: create
         P
@@ -1972,13 +1972,13 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
+  bar: reads Bar {foo: [&Foo {far: Text}]}
   modality dom`);
   });
   it('can resolve a particle with a collection of inline schema references', async () => {
     const manifest = await Manifest.parse(`
       particle P
-        bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
+        bar: reads Bar {foo: [&Foo {far: Text}]}
       recipe
         h0: create
         P
@@ -1994,7 +1994,7 @@ resource SomeName
 
     assert.strictEqual(manifest.particles[0].toString(),
 `particle P
-  bar: reads Bar {foo: [Reference<Foo {far: Text}>]}
+  bar: reads Bar {foo: [&Foo {far: Text}]}
   modality dom`);
   });
   it('can resolve inline schemas against out of line schemas', async () => {

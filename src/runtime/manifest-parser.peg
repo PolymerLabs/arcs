@@ -595,6 +595,13 @@ ReferenceType
       type,
     });
   }
+  / '&' type:ParticleHandleConnectionType
+  {
+    return toAstNode<AstNode.ReferenceType>({
+      kind: 'reference-type',
+      type,
+    });
+  }
 
 TypeVariable "a type variable (e.g. ~foo)"
   = '~' name:lowerIdent constraint:(whiteSpace 'with' whiteSpace type:ParticleHandleConnectionType)?
@@ -1283,7 +1290,7 @@ SchemaType
       return type;
   }
 
-SchemaCollectionType = '[' whiteSpace* schema:SchemaReferenceType whiteSpace* ']'
+SchemaCollectionType = '[' whiteSpace? schema:SchemaReferenceType whiteSpace? ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: 'schema-collection',
@@ -1292,7 +1299,14 @@ SchemaCollectionType = '[' whiteSpace* schema:SchemaReferenceType whiteSpace* ']
     });
   }
 
-SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) whiteSpace* '>'
+SchemaReferenceType = 'Reference<' whiteSpace? schema:(SchemaInline / TypeName) whiteSpace? '>'
+  {
+    return toAstNode<AstNode.SchemaReferenceType>({
+      kind: 'schema-reference',
+      schema
+    });
+  }
+  / '&' whiteSpace? schema:(SchemaInline / TypeName) whiteSpace?
   {
     return toAstNode<AstNode.SchemaReferenceType>({
       kind: 'schema-reference',
