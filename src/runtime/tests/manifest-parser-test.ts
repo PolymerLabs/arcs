@@ -312,6 +312,22 @@ describe('manifest parser', () => {
         productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
+  it('fails to parse reserved type names (Boolean)', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          inRef: reads Boolean
+      `);
+    }, 'Expected type but "\xA0" found.');
+  });
+  it('fails to parse reserved type names (URL)', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          outRef: writes URL
+      `);
+    }, 'Expected type but "\xA0" found.');
+  });
   it('parses reference types', () => {
     parse(`
       particle Foo
