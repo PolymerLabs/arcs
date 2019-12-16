@@ -557,7 +557,11 @@ ParticleHandleConnectionType
   / BigCollectionType
   / ReferenceType
   / SlotType
-  / SchemaInline
+  / type: SchemaInline whiteSpace? refinement:Refinement? 
+  {
+    type.refinement = refinement;
+    return type;
+  }
   / TypeName
 
 SingletonType

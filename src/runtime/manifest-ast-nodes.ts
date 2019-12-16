@@ -547,7 +547,7 @@ export interface UnaryExpressionNode extends ExpressionNode {
   expr: RefinementExpression;
 }
 
-export interface SchemaInline extends BaseNode {
+export interface SchemaInline extends BaseNodeWithRefinement {
   kind: 'schema-inline';
   names: string[];
   fields: SchemaInlineField[];
