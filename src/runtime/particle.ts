@@ -263,9 +263,6 @@ export class Particle {
         if (typeof bits[i] === 'string') {
           bitStr = bits[i];
         } else {
-          if (!bits[i].toManifestString) {
-            console.log(bits[i]);
-          }
           bitStr = bits[i].toManifestString();
         }
         bitStr = bitStr.replace(/(\n)/g, '$1' + indent);
