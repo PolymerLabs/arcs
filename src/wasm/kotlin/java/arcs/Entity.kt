@@ -11,6 +11,8 @@
 
 package arcs
 
+import kotlin.reflect.KProperty
+
 typealias URL = String
 
 abstract class Entity<T> {
@@ -139,5 +141,44 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
 
     fun encode(prefix: String, flag: Boolean) {
         sb.append("$prefix${if (flag) "1" else "0"}|")
+    }
+}
+
+class TextDelegate {
+    private var isSet = false
+    private var v = ""
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+        return v
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
+        this.isSet = true
+        this.v = value
+    }
+}
+
+class NumDelegate {
+    private var isSet = false
+    private var v = 0.0
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Double {
+        return v
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
+        this.isSet = true
+        this.v = value
+    }
+}
+
+class BooleanDelegate {
+    private var isSet = false
+    private var v = false
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
+        return v
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+        this.isSet = true
+        this.v = value
     }
 }

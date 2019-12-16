@@ -51,60 +51,19 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.Particle;
+${withCustomPackage(`import arcs.BooleanDelegate
 import arcs.Entity
+import arcs.NumDelegate
+import arcs.Particle;
 import arcs.StringEncoder
 import arcs.StringDecoder
+import arcs.TextDelegate
 `)}
-import kotlin.reflect.KProperty\n`;
+`;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
     return new KotlinGenerator(node);
-  }
-
-  fileFooter(): string {
-    console.log(`child`);
-    return `
-class TextDelegate {
-    var isSet = false
-    var v = ""
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
-        return v
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-        this.isSet = true
-        this.v = value
-    }
-}
-
-class NumDelegate {
-    var isSet = false
-    var v = 0.0
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Double {
-        return v
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
-        this.isSet = true
-        this.v = value
-    }
-}
-
-class BooleanDelegate {
-    var isSet = false
-    var v = false
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
-        return v
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
-        this.isSet = true
-        this.v = value
-    }
-}
-`;
   }
 }
 
@@ -129,7 +88,7 @@ class KotlinGenerator implements ClassGenerator {
                      `    decoder.validate("${typeChar}")`,
                      `    this.${fixed} = decoder.${decodeFn}`,
                      `}`);
-                     
+
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
   }
 
@@ -154,10 +113,11 @@ class ${name}() : Entity<${name}>() {
 
     ${ withFields(`${this.fieldVals.join('\n    ')}`) }
 
-    constructor(${ withFields(`\n        ${this.fields.join(',\n        ')}\n    `) }): this() {
-        ${ withFields(`${this.fieldSets.join('\n        ')}`)}
-    }
-  
+    ${withFields(`constructor(
+        ${this.fields.join(',\n        ')}
+    ): this() {
+        ${this.fieldSets.join('\n        ')}
+    }`)}
 
     override fun decodeEntity(encoded: String): ${name}? {
         if (encoded.isEmpty()) return null
