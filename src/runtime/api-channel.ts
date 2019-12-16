@@ -345,6 +345,9 @@ function unconvert<T>(info: MappingInfo<T> | undefined, value: any, mapper: Thin
   if (info === undefined) {
     return;
   }
+  if (value === null) {
+    return null;
+  }
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.thingForIdentifier(value);

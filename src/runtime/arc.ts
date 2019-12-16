@@ -610,7 +610,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 
-    if (Flags.useNewStorageStack && !(store.type.handleConstructor)) {
+    if (Flags.useNewStorageStack && !(store.type.handleConstructor())) {
       throw new Error(`Type not supported by new storage stack: '${store.type.tag}'`);
     }
     this.storesById.set(store.id, store);

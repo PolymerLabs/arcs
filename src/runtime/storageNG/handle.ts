@@ -57,7 +57,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   get type(): Type {
-    return this.storageProxy.type.getContainedType() || this.storageProxy.type;
+    return this.storageProxy.type;
   }
 
   // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
@@ -76,6 +76,10 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
       return Entity.createEntityClass(this.type.entitySchema, null);
+    }
+    const containedType = this.type.getContainedType();
+    if (containedType instanceof EntityType) {
+      return Entity.createEntityClass(containedType.entitySchema, null);
     }
     return null;
   }
@@ -103,8 +107,12 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.canWrite = canWrite;
 
     this.clock = this.storageProxy.registerHandle(this);
+    // TODO(shans): Be more principled about how to determine whether this is an
+    // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
       this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e));
+    } else if (this.type.getContainedType() instanceof EntityType) {
+      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e));
     } else {
       this.serializer = new ImmediateSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
