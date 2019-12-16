@@ -382,6 +382,20 @@ describe('manifest parser', () => {
         `);
         }, `a valid refinement expression`);
   });
+  it('parses nested referenced inline schemas', () => {
+    parse(`
+      particle Foo
+        mySchema: reads MySchema {value: &OtherSchema {name: Text}}
+    `);
+  });
+  it('fails to parse nested (non-referenced) inline schemas', () => {
+    assert.throws(() => {
+    parse(`
+      particle Foo
+        mySchema: reads MySchema {value: OtherSchema {name: Text}}
+    `);
+    }, 'a schema type');
+  });
   it('parses require section using local name', () => {
     parse(`
       recipe

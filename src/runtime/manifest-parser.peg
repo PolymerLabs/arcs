@@ -1279,11 +1279,12 @@ SchemaField
   }
 
 SchemaType
-  = type:(SchemaReferenceType 
-  / SchemaCollectionType 
-  / SchemaPrimitiveType 
-  / SchemaUnionType 
+  = type:(SchemaReferenceType
+  / SchemaCollectionType
+  / SchemaPrimitiveType
+  / SchemaUnionType
   / SchemaTupleType
+  / [^\n\]}]* { expected('a schema type'); }
   ) whiteSpace? refinement:Refinement?
   {
       type.refinement = refinement;
