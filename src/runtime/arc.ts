@@ -582,7 +582,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         throw new Error(`Can't use string storage keys with the new storage stack.`);
       }
       // Wrap entity types in a singleton.
-      if (type.isEntity) {
+      if (type.isEntity || type.isInterface) {
         // TODO: Once recipes can handle singleton types this conversion can be removed.
         type = new SingletonType(type);
       }

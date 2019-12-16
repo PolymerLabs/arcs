@@ -174,7 +174,8 @@ describe('FindHostedParticle', () => {
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType);
+    // TODO(shans): This is not really the right way to look for stores on an arc...
+    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType || store.type.getContainedType() instanceof InterfaceType);
     let particleSpec;
     if (Flags.useNewStorageStack) {
       const handle = await singletonHandleForTest(arc, particleSpecStore);
