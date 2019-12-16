@@ -1,11 +1,8 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles")
 
-arcs_kt_binary(
-    name = "ParentParticle",
-    srcs = ["ParentParticle.kt"],
-)
+licenses(["notice"])
 
-arcs_kt_binary(
-    name = "ChildParticle",
-    srcs = ["ChildParticle.kt"],
+arcs_kt_particles(
+    name = "RenderSlots",
+    srcs = glob(["*.kt"]),
 )

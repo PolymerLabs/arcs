@@ -316,22 +316,20 @@ fun constructTTTBoard() = TTTBoard().toAddress()
 
 And finally, to build it all we need the BUILD file:
 ```BUILD
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+)
 
 arcs_kt_schema(
     name = "game_schemas",
     srcs = ["TTTGame.arcs"],
 )
 
-arcs_kt_binary(
-    name = "TTTBoard",
-    srcs = ["TTTBoard.kt"],
-    deps = [":game_schemas"],
-)
-
-arcs_kt_binary(
-    name = "TTTGame",
-    srcs = ["TTTGame.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = glob("*.kt"),
     deps = [":game_schemas"],
 )
 ```
@@ -382,25 +380,25 @@ game!
 
 Currently you should have a tic-tac-toe board that does nothing.
 Sure, you can click it and see the Events populate, but that is
-still rather boring. Let's make it more fun by adding a human 
+still rather boring. Let's make it more fun by adding a human
 player. By now, that original design we made in the first section
 is probably not in the forefront of your mind, so we'll start by
 looking at our design diagram.
 
-![Tic Tac Toe Design](diagrams/TTT.jpg)  
+![Tic Tac Toe Design](diagrams/TTT.jpg)
 
 From this, we can see that the Human Player needs a Player and
 Move handle, and these handles connect the Game and Human Player.
 We also need to populate the information about the player, so
-we create a store. This updates our Arcs Manifest File to 
+we create a store. This updates our Arcs Manifest File to
 the one [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.arcs).
 
 Next, we create the human player to take the events stream and
-convert it to a move. This can be viewed in TTTHumanPlayer.kt 
+convert it to a move. This can be viewed in TTTHumanPlayer.kt
 [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTHumanPlayer.kt).
 
 Next, we need to update the game particle to update the board
-based on the move. This gives us the updated TTTGame file 
+based on the move. This gives us the updated TTTGame file
 [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.kt).
 
 And finally, as always, we need to add the HumanPlayer to the

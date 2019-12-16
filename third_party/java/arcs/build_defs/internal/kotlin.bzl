@@ -34,41 +34,50 @@ def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
         visibility = visibility,
     )
 
-def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
+def arcs_kt_particles(name, srcs = [], deps = [], visibility = None):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
       name: name of the target to create
-      srcs: list of source files to include
+      srcs: List of source files to include. Each file must contain a Kotlin
+        class of the same name, which must match the name of a particle defined
+        in a .arcs file.
       deps: list of dependencies
       visibility: list of visibilities
     """
+    deps = _ARCS_KOTLIN_LIBS + deps
+    wasm_deps = [_to_wasm_dep(dep) for dep in deps]
 
-    if srcs:
-        libname = name + "_lib"
-
-        # Declare a library because g3 kt_native_binary doesn't take srcs
+    # Create a library for each particle.
+    wasm_particle_libs = []
+    for src in srcs:
+        if not src.endswith(".kt"):
+            fail("%s is not a Kotlin file (must end in .kt)" % src)
+        particle = src[:-3]
+        wasm_lib = particle + _WASM_SUFFIX + "-lib"
         kt_native_library(
-            name = libname + _WASM_SUFFIX,
-            srcs = srcs,
-            deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
-            visibility = visibility,
+            name = wasm_lib,
+            srcs = [src],
+            deps = wasm_deps,
         )
+        wasm_particle_libs.append(wasm_lib)
 
-        deps = [":" + libname]
-
-    bin_name = name + "_bin"
+    # Create a kt_native_binary that groups everything together.
+    native_binary_name = name + _WASM_SUFFIX
     kt_native_binary(
-        name = bin_name,
+        name = native_binary_name,
         entry_point = "arcs.main",
-        deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
+        deps = wasm_particle_libs,
+        # Don't build this manually. Build the wasm_kt_binary rule below
+        # instead; otherwise this rule will build a non-wasm binary.
         tags = ["manual", "notap"],
-        visibility = visibility,
     )
 
+    # Create a wasm binary from the native binary.
     wasm_kt_binary(
         name = name,
-        kt_target = ":" + bin_name,
+        kt_target = ":" + native_binary_name,
+        visibility = visibility,
     )
 
 def kt_jvm_and_wasm_library(

@@ -1,12 +1,15 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_cc_schema",
-    "arcs_kt_binary",
+    "arcs_kt_particles",
     "arcs_kt_schema",
     "arcs_manifest",
     "arcs_manifest_bundle",
 )
-load("//third_party/java/arcs/build_defs/emscripten:build_defs.bzl", "cc_wasm_binary")
+load(
+    "//third_party/java/arcs/build_defs/emscripten:build_defs.bzl",
+    "cc_wasm_binary",
+)
 
 licenses(["notice"])
 
@@ -28,12 +31,12 @@ arcs_kt_schema(
     srcs = ["Harness.arcs"],
 )
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "service_particle",
     srcs = ["source/ServiceParticle.kt"],
 )
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "test_particle",
     srcs = ["source/TestParticle.kt"],
     deps = [":wasm_schemas"],

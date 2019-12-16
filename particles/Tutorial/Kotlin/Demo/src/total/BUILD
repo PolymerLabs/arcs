@@ -1,30 +1,18 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+)
+
+licenses(["notice"])
 
 arcs_kt_schema(
     name = "game_schemas",
     srcs = ["TTTGame.arcs"],
 )
 
-arcs_kt_binary(
-    name = "TTTBoard",
-    srcs = ["TTTBoard.kt"],
-    deps = [":game_schemas"],
-)
-
-arcs_kt_binary(
-    name = "TTTGame",
-    srcs = ["TTTGame.kt"],
-    deps = [":game_schemas"],
-)
-
-arcs_kt_binary(
-    name = "TTTHumanPlayer",
-    srcs = ["TTTHumanPlayer.kt"],
-    deps = [":game_schemas"],
-)
-
-arcs_kt_binary(
-    name = "TTTRandomComputer",
-    srcs = ["TTTRandomComputer.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = glob(["*.kt"]),
     deps = [":game_schemas"],
 )
