@@ -169,23 +169,16 @@ describe('Arc new storage', () => {
     assert.deepEqual(refVarData, d4);
   }));
 });
-
-['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
-describe('Arc ' + storageKeyPrefix, () => {
+describe('Arc', () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.newArc('test', 'volatile://');
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
 
-  it('applies existing stores to a particle', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
-
-    const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
+  it('applies existing stores to a particle', async () => {
+    const {arc, recipe, Foo, Bar} = await setup('volatile://');
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
@@ -200,13 +193,8 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.deepStrictEqual(await barHandle.get(), {value: 'a Foo1'});
   });
 
-  it('applies new stores to a particle ', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
-
-    const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
+  it('applies new stores to a particle ', async () => {
+    const {arc, recipe, Foo, Bar} = await setup('volatile://');
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
@@ -221,12 +209,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.deepStrictEqual(await barHandle.get(), {value: 'a Foo1'});
   });
 
-  it('optional provided handles do not resolve without parent', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
-
+  it('optional provided handles do not resolve without parent', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -250,7 +233,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -278,11 +261,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.isNull(await dHandle.get());
   });
 
-  it('instantiates recipes only if fate is correct ' + storageKeyPrefix, async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
+  it('instantiates recipes only if fate is correct', async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       particle A in 'a.js'
@@ -321,17 +300,17 @@ describe('Arc ' + storageKeyPrefix, () => {
     const runtime = new Runtime(loader, FakeSlotComposer, manifest);
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
-    await runtime.newArc('test0', storageKeyPrefix).instantiate(manifest.recipes[0]);
+    await runtime.newArc('test0', 'volatile://').instantiate(manifest.recipes[0]);
 
     // Fails instantiating a recipe with 'use' handle for store in a context.
     try {
-      await runtime.newArc('test1', storageKeyPrefix).instantiate(manifest.recipes[1]);
+      await runtime.newArc('test1', 'volatile://').instantiate(manifest.recipes[1]);
       assert.fail();
     } catch (e) {
       assert.isTrue(e.toString().includes('store \'storeInContext\' was not found'));
     }
 
-    const arc = await runtime.newArc('test2', storageKeyPrefix);
+    const arc = await runtime.newArc('test2', 'volatile://');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     const thingStore = await arc.createStore(thingClass.type, 'name', 'storeInArc');
     const resolver = new RecipeResolver(arc);
@@ -343,12 +322,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     await arc.instantiate(recipe3);
   });
 
-  it('required provided handles do not resolve without parent', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
-
+  it('required provided handles do not resolve without parent', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -372,7 +346,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -425,7 +399,7 @@ describe('Arc ' + storageKeyPrefix, () => {
             d: writes maybeThingD
       `, {loader, fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
-      const storageKey = storageKeyPrefix + id.toString();
+      const storageKey = 'volatile://' + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -471,7 +445,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       `, {loader, fileName: process.cwd() + '/input.manifest'});
 
       const id = ArcId.newForTest('test');
-      const storageKey = storageKeyPrefix + id.toString();
+      const storageKey = 'volatile://' + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -491,11 +465,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     /.*unresolved handle-connection: parent connection 'c' missing/)
     );
 
-  it('optional provided handles are not required to resolve with dependencies', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
+  it('optional provided handles are not required to resolve with dependencies', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -519,7 +489,7 @@ describe('Arc ' + storageKeyPrefix, () => {
           c: reads maybeThingC
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -574,7 +544,7 @@ describe('Arc ' + storageKeyPrefix, () => {
             c: reads maybeThingC
       `, {loader, fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
-      const storageKey = storageKeyPrefix + id.toString();
+      const storageKey = 'volatile://' + id.toString();
       const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -594,12 +564,7 @@ describe('Arc ' + storageKeyPrefix, () => {
         /.*unresolved particle: unresolved connections/)
     );
 
-  it('optional provided handles can resolve with parent 1', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
-
+  it('optional provided handles can resolve with parent 1', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -624,7 +589,7 @@ describe('Arc ' + storageKeyPrefix, () => {
           d: writes maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -652,11 +617,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.deepStrictEqual(await dHandle.get(), {value: 'from_c1'});
   });
 
-  it('required provided handles can resolve with parent 2', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
+  it('required provided handles can resolve with parent 2', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -681,7 +642,7 @@ describe('Arc ' + storageKeyPrefix, () => {
           d: writes maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -713,7 +674,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const slotComposer = new FakeSlotComposer();
     const loader = new Loader();
     const id = Id.fromString('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({slotComposer, loader, id, storageKey, context: undefined});
 
     const serialization = await arc.serialize();
@@ -723,13 +684,8 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 
-  it('deserializing a simple serialized arc produces that arc', async function() {
-    if (!storageKeyPrefix.startsWith('volatile')) {
-      // TODO(lindner): fix pouch/firebase timing
-      this.skip();
-    }
-
-    const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
+  it('deserializing a simple serialized arc produces that arc', async () => {
+    const {arc, recipe, Foo, Bar, loader} = await setup('volatile://');
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     const fooStoreCallbacks = await CallbackTracker.create(fooStore, 1);
@@ -789,7 +745,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     };
 
     const id = Id.fromString('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader()});
 
     const barType = manifest.findTypeByName('Bar');
@@ -815,12 +771,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.strictEqual(slotsCreated, 1);
   });
 
-  it('serialization roundtrip preserves data for volatile stores', async function() {
-    if (storageKeyPrefix.startsWith('pouchdb')) {
-      // pouchdb does not support BigCollection
-      this.skip();
-    }
-
+  it('serialization roundtrip preserves data for volatile stores', async () => {
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -848,7 +799,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const manifest = await Manifest.load('manifest', loader);
     const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = Id.fromString('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, loader, context: manifest});
 
     const varStore = await arc.createStore(dataClass.type, undefined, 'test:0');
@@ -932,7 +883,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const manifest = await Manifest.load('manifest', loader);
     const id = Id.fromString('test');
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
@@ -964,7 +915,7 @@ describe('Arc ' + storageKeyPrefix, () => {
         value: Text
       recipe
         description \`abc\``);
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
     const recipe = manifest.recipes[0];
     recipe.normalize();
@@ -972,9 +923,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const serialization = await arc.serialize();
     await arc.persistSerialization(serialization);
 
-    const key = storageKeyPrefix.includes('volatile')
-      ? storageKeyPrefix + `${id}^^arc-info`
-      : storageKeyPrefix + `${id}/arc-info`;
+    const key = 'volatile://' + `${id}^^arc-info`;
 
     const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as SingletonStorageProvider;
     const callbackTracker = await CallbackTracker.create(store, 0);
@@ -987,7 +936,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
     data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
 
-    const expected = `meta name: '${id}' storageKey: '${storageKeyPrefix}${id}' @active recipe description \`abc\``;
+    const expected = `meta name: '${id}' storageKey: 'volatile://${id}' @active recipe description \`abc\``;
     assert.deepEqual({id: id.toString(), serialization: expected}, data);
 
     // TODO Simulate a cold-load to catch reference mode issues.
@@ -1091,7 +1040,7 @@ describe('Arc ' + storageKeyPrefix, () => {
             foods: foods
         `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    const storageKey = storageKeyPrefix + id.toString();
+    const storageKey = 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
     assert.isNotNull(arc);
 
@@ -1127,8 +1076,8 @@ describe('Arc ' + storageKeyPrefix, () => {
   it('registers and deregisters its own volatile storage', async () => {
     const id1 = ArcId.newForTest('test1');
     const id2 = ArcId.newForTest('test2');
-    const storageKey1 = storageKeyPrefix + id1.toString();
-    const storageKey2 = storageKeyPrefix + id2.toString();
+    const storageKey1 = 'volatile://' + id1.toString();
+    const storageKey2 = 'volatile://' + id2.toString();
 
     DriverFactory.clearRegistrationsForTesting();
     assert.isEmpty(DriverFactory.providers);
@@ -1146,7 +1095,6 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.isEmpty(DriverFactory.providers);
   });
 });
-}); // forEach storageKeyPrefix
 
 describe('Arc storage migration', () => {
   describe('when new storage enabled', () => {
