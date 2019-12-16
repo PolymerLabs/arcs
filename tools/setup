@@ -92,7 +92,7 @@ echo "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
 echo "- Serve the project: $CMD\`./tools/sigh devServer\`$END"
 echo "- Run tests:"
 echo "  - $CMD\`./tools/sigh test\`$END"
-echo "  - $CMD\`./tools/test\`$END"
+echo "  - $CMD\`./tools/local-presubmit\`$END"
 
 echo "\nPlease source the updated environment variables:"
 echo "  - $CMD\`source ~/.profile\`$END"
