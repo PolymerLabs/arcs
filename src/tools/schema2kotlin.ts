@@ -81,7 +81,7 @@ class KotlinGenerator implements ClassGenerator {
                      `  this.${fixed} = decoder.${decodeFn}`,
                      `}`);
 
-    this.encode.push(`${fixed}?.let { encoder.encode("${field}:${typeChar}", it) }`);
+    this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", it) }`);
   }
 
   addReference(field: string, refName: string) {
