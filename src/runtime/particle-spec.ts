@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
 import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Schema} from './schema.js';
+import {Schema, refinementString} from './schema.js';
 import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
@@ -403,22 +403,6 @@ export class ParticleSpec {
     }
     results.push(line);
     const indent = '  ';
-
-    const expressionString = (expr) => {
-      if (expr.kind === 'binary-expression-node') {
-        return '(' + Schema._expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + Schema._expressionString(expr.rightExpr) + ')';
-      } else if (expr.kind === 'unary-expression-node') {
-        return '(' + expr.operator + ' ' + expr.expr + ')';
-      }
-      return expr.toString();
-    };
-
-    const refinementString = (type) => {
-      if (!type.refinement) {
-        return '';
-      }
-      return '[' + expressionString(type.refinement.expression) + ']';
-    };
 
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
